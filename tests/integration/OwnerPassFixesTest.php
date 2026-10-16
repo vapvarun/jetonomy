@@ -119,6 +119,20 @@ class OwnerPassFixesTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'Join Request Result', $body );
 	}
 
+	public function test_an_email_login_members_profile_link_resolves_and_never_shows_the_email(): void {
+		$id   = self::factory()->user->create( array( 'user_login' => 'lee@example.test' ) );
+		$user = get_userdata( $id );
+		$url  = \Jetonomy\community_profile_url( $id );
+
+		$this->assertStringNotContainsString( 'example.test/', str_replace( home_url(), '', $url ), 'the login is not in the link' );
+		// WP_MatchesMapRegex urlencodes the match, parse_str decodes it once: the slug that arrives.
+		parse_str( 'slug=' . urlencode( rtrim( basename( $url ), '/' ) ), $q );
+		$this->assertSame( $id, \Jetonomy\profile_user( $q['slug'] )->ID ?? 0, 'the link opens the profile' );
+		$this->assertSame( $id, \Jetonomy\profile_user( 'lee@example.test' )->ID ?? 0, 'links shared with the login still open' );
+		$this->assertNull( \Jetonomy\profile_user( 'nobody-' . uniqid() ) );
+		$this->assertStringNotContainsString( '@example.test', \Jetonomy\user_handle( $user ), 'the public handle is not the email' );
+	}
+
 	public function test_the_owners_mention_subject_is_used(): void {
 		update_option(
 			'jetonomy_email_templates',

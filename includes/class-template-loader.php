@@ -1079,7 +1079,7 @@ class Template_Loader {
 						// Resolve the slug to the member's real handle rather
 						// than echoing whatever the URL was hit with, so the
 						// title agrees with the typeahead and the schema.
-						$jt_pu          = get_user_by( 'login', (string) $data['slug'] );
+						$jt_pu          = \Jetonomy\profile_user( (string) $data['slug'] );
 						$parts['title'] = '@' . ( $jt_pu ? \Jetonomy\user_handle( $jt_pu ) : (string) $data['slug'] );
 						break;
 					case 'tag':
@@ -1315,13 +1315,13 @@ class Template_Loader {
 						}
 						break;
 					case 'profile':
-						$user = get_user_by( 'login', (string) $data['slug'] );
+						$user = \Jetonomy\profile_user( (string) $data['slug'] );
 						if ( $user ) {
 							$profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
 							$bio     = $profile && ! empty( $profile->bio ) ? wp_strip_all_tags( (string) $profile->bio ) : '';
 							$title   = user_display_name( $user );
 							/* translators: 1: user login, 2: site title. */
-							$desc      = $bio !== '' ? $bio : sprintf( __( 'Community profile for @%1$s on %2$s.', 'jetonomy' ), $user->user_login, $site_name );
+							$desc      = $bio !== '' ? $bio : sprintf( __( 'Community profile for @%1$s on %2$s.', 'jetonomy' ), \Jetonomy\user_handle( $user ), $site_name );
 							$url       = \Jetonomy\get_profile_url( (int) $user->ID );
 							$image     = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
 							$image_alt = user_display_name( $user );
@@ -1662,7 +1662,7 @@ class Template_Loader {
 				break;
 
 			case 'profile':
-				if ( $slug && ! get_user_by( 'login', $slug ) ) {
+				if ( $slug && ! \Jetonomy\profile_user( $slug ) ) {
 					status_header( 404 );
 				}
 				break;

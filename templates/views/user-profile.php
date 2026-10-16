@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $user_login = $data['slug'] ?? '';
-$user       = get_user_by( 'login', $user_login );
+$user       = \Jetonomy\profile_user( (string) $user_login );
 
 if ( ! $user ) {
 	status_header( 404 );

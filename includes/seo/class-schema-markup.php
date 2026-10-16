@@ -330,7 +330,7 @@ class Schema_Markup {
 			return null;
 		}
 
-		$user = get_user_by( 'login', $login );
+		$user = \Jetonomy\profile_user( (string) $login );
 		if ( ! $user ) {
 			return null;
 		}
@@ -489,7 +489,7 @@ class Schema_Markup {
 		// leaderboard / search / moderation. Each route produces a 2-item
 		// chain (Community → page-name) so crawlers see proper hierarchy.
 		if ( 'profile' === $route && $slug ) {
-			$user = get_user_by( 'login', $slug );
+			$user = \Jetonomy\profile_user( (string) $slug );
 			if ( $user ) {
 				$items[] = array(
 					// The handle, not the login - this is the name a crawler
