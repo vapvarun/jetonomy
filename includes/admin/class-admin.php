@@ -859,6 +859,11 @@ class Admin {
 			// An unchecked checkbox submits nothing, so absence inside a
 			// General-tab save means OFF - the same rule front_page above uses.
 			$clean['allow_space_admin_purge'] = ! empty( $input['allow_space_admin_purge'] );
+			// Arming data removal on delete is for whoever can delete plugins; a
+			// delegated settings manager keeps the stored value.
+			if ( current_user_can( 'manage_options' ) ) {
+				$clean['remove_data_on_uninstall'] = ! empty( $input['remove_data_on_uninstall'] );
+			}
 		}
 
 		// ── Permissions tab ──

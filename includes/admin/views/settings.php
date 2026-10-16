@@ -436,6 +436,26 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
+			<!-- Data -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Data', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'What happens to your community when the plugin is deleted.', 'jetonomy' ); ?></p>
+				</div>
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
+					<tr>
+						<th scope="row"><?php esc_html_e( 'On delete', 'jetonomy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jetonomy_settings[remove_data_on_uninstall]" value="1" <?php checked( ! empty( $settings['remove_data_on_uninstall'] ) ); ?> <?php disabled( ! current_user_can( 'manage_options' ) ); ?>>
+								<?php esc_html_e( 'Remove all community data when Jetonomy is deleted', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php /* translators: 1: space label, plural, lowercase. 2: topic label, plural, lowercase. 3: reply label, plural, lowercase. */ echo esc_html( sprintf( __( 'Off by default, so deleting and reinstalling the plugin keeps everything. When on, deleting Jetonomy from the Plugins screen permanently removes all %1$s, %2$s, %3$s, profiles and settings, and Jetonomy Pro data too. Deactivating never removes anything.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
 		<?php elseif ( 'permissions' === $active_tab ) : ?>
 
 			<?php

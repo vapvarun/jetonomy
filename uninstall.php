@@ -3,8 +3,9 @@
  * Jetonomy Uninstall
  *
  * Runs when a site administrator deletes the Jetonomy plugin from wp-admin.
- * Removes all database tables, options, capabilities, cron jobs, and transients
- * created by the plugin.
+ * Only when Settings > General > Data > "Remove all community data" is on, it
+ * removes all database tables, options, capabilities, cron jobs, and transients
+ * created by the plugin. Otherwise it leaves everything in place.
  *
  * This file is intentionally standalone — it does not require or include any
  * other plugin files so it remains safe to execute after the plugin files have
@@ -18,6 +19,13 @@
 // Bail immediately if this file is accessed directly.
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 defined( 'ABSPATH' ) || exit;
+
+// Keep everything unless the owner ticked Settings > General > Data. A
+// community is years of other people's writing; deleting the plugin to
+// reinstall it must not erase it.
+if ( empty( get_option( 'jetonomy_settings', array() )['remove_data_on_uninstall'] ) ) {
+	return;
+}
 
 global $wpdb;
 
