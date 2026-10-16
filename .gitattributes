@@ -1,0 +1,36 @@
+# Composer (Packagist) installs Jetonomy from GitHub's tag zipball, which is
+# built by `git archive`. Everything marked export-ignore stays out of that
+# zip, so a Composer install gets the same runtime files as the release zip.
+# Keep this list in step with the EXCLUDES heredoc in bin/build-release.sh.
+# composer.json is kept on purpose: Composer users need it.
+
+/includes/qa export-ignore
+/.github export-ignore
+/.githooks export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/.git-blame-ignore-revs export-ignore
+/.wp-env.json export-ignore
+/.distignore export-ignore
+/.eslintrc* export-ignore
+/.contract-audit-baseline.json export-ignore
+/.wbcom-i18n.json export-ignore
+/tests export-ignore
+/plan export-ignore
+/audit export-ignore
+/marketing export-ignore
+/bin export-ignore
+/tools export-ignore
+/docs export-ignore
+/phpstan-stubs export-ignore
+/phpcs.xml export-ignore
+/phpstan* export-ignore
+/phpunit.xml.dist export-ignore
+/playwright.config.js export-ignore
+composer.lock export-ignore
+.gitkeep export-ignore
+/package.json export-ignore
+/package-lock.json export-ignore
+/Gruntfile.js export-ignore
+/languages/*.po export-ignore
+*.md export-ignore
