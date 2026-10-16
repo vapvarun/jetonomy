@@ -87,11 +87,15 @@ function base_url(): string {
  * reads it here so a renamed base can never show up in one place and not
  * another.
  *
+ * An empty stored value also means 'community': a blank base would mount the
+ * community on the site root and every community URL would 404.
+ *
  * @return string Base slug without slashes.
  */
 function base_slug(): string {
 	$settings = get_option( 'jetonomy_settings', array() );
-	return (string) ( $settings['base_slug'] ?? 'community' );
+	$slug     = (string) ( $settings['base_slug'] ?? '' );
+	return '' !== $slug ? $slug : 'community';
 }
 
 /**

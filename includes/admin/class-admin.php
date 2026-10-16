@@ -782,10 +782,10 @@ class Admin {
 		// ── General tab ──
 		// Only process if base_slug is present (General tab was submitted).
 		if ( isset( $input['base_slug'] ) ) {
-			$new_slug = sanitize_title( $input['base_slug'] ?? 'community' );
-			// An unsaved key means the site has been running on the default, so
-			// that is the base its old links point at.
-			$old_base = sanitize_title( $existing['base_slug'] ?? 'community' );
+			// The base the site is running on now; old links point at it.
+			$old_base = \Jetonomy\base_slug();
+			// A cleared field keeps that base: an empty one would unmount the community.
+			$new_slug = sanitize_title( $input['base_slug'] ) ?: $old_base;
 			if ( $new_slug !== $old_base ) {
 				// Delete the versioned flush key so Router re-registers rules on next load.
 				delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );

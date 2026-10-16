@@ -33,7 +33,7 @@ class Setup_Handler {
 		// on a missing POST would silently revert admin-customized base_slugs after any
 		// re-trip through the wizard (e.g. accidental re-run after an update).
 		if ( isset( $_POST['base_slug'] ) ) {
-			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) );
+			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) ) ?: \Jetonomy\base_slug();
 		} elseif ( empty( $settings['base_slug'] ) ) {
 			$settings['base_slug'] = 'community';
 		}
@@ -111,7 +111,7 @@ class Setup_Handler {
 		// Same preservation rule as ajax_setup_save — never default base_slug
 		// back to 'community' on missing POST.
 		if ( isset( $_POST['base_slug'] ) ) {
-			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) );
+			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) ) ?: \Jetonomy\base_slug();
 		} elseif ( empty( $settings['base_slug'] ) ) {
 			$settings['base_slug'] = 'community';
 		}

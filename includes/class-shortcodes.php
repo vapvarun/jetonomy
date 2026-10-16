@@ -637,14 +637,13 @@ class Shortcodes {
 		// i18n.*) so the embed works on any WP page. wp_interactivity_state
 		// merges keys across callers, so this is additive.
 		if ( function_exists( 'wp_interactivity_state' ) ) {
-			$settings = (array) get_option( 'jetonomy_settings', array() );
 			wp_interactivity_state(
 				'jetonomy',
 				array(
 					'apiBase'       => rest_url( 'jetonomy/v1' ),
 					'_nonce'        => wp_create_nonce( 'wp_rest' ),
 					'nonce'         => wp_create_nonce( 'wp_rest' ),
-					'communityBase' => home_url( '/' . ( isset( $settings['base_slug'] ) ? (string) $settings['base_slug'] : 'community' ) ),
+					'communityBase' => base_url(),
 					// The same strings as community pages, so the composer never shows English fallbacks here.
 					'i18n'          => array_merge(
 						Template_Loader::app_i18n(),
