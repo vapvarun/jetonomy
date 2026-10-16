@@ -992,6 +992,26 @@ const _n = ( single, plural, n, domain ) => {
     return ( translated === single || translated === plural ) ? ( 1 === n ? single : plural ) : translated;
 };
 
+// Handlers that delete nodes by hand inside the router region (resolve a flag,
+// approve, remove a bookmark) leave the router's virtual DOM pointing at nodes
+// that are gone, and the next soft navigation patches the new page into them:
+// the Trash tab after a Remove rendered its count but an empty list. Once that
+// has happened, the next navigation is a full page load. Removals the router
+// makes itself are discarded right after each navigation (takeRecords).
+let regionDirty = false;
+const regionObserver = 'undefined' !== typeof MutationObserver
+    ? new MutationObserver( ( records ) => {
+        if ( records.some( ( r ) => r.removedNodes.length ) ) regionDirty = true;
+    } )
+    : null;
+const watchRegion = () => {
+    const region = document.querySelector( '[data-wp-router-region="jetonomy/main"]' );
+    if ( ! regionObserver || ! region ) return;
+    regionObserver.disconnect();
+    regionObserver.observe( region, { childList: true, subtree: true } );
+};
+watchRegion();
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -1107,10 +1127,15 @@ const { state, actions } = store( 'jetonomy', {
             // full-load; default is client-side navigation — no allow-list to keep.
             const editorRoute = 's' === seg[ 0 ] && [ 't', 'new' ].includes( seg[ 2 ] );
             if ( editorRoute ) return; // full-page load
+            if ( regionDirty || ( regionObserver && regionObserver.takeRecords().some( ( r ) => r.removedNodes.length ) ) ) return; // full-page load
             event.preventDefault();
             try {
                 const router = yield import( '@wordpress/interactivity-router' );
                 yield router.actions.navigate( href );
+                // The swap was the router's own work, not a hand edit.
+                regionDirty = false;
+                watchRegion();
+                if ( regionObserver ) regionObserver.takeRecords();
 
                 // The iAPI store auto-hydrates swapped content, but classic
                 // content scripts (Load More, link previews) bind on page load

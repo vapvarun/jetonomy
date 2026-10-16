@@ -156,6 +156,78 @@ class OwnerPassFixesTest extends WP_UnitTestCase {
 		$this->assertSame( 1, \Jetonomy\list_page() );
 	}
 
+	public function test_public_rest_payloads_never_carry_an_email_login(): void {
+		$author = self::factory()->user->create(
+			array(
+				'user_login'   => 'kim@example.test',
+				'display_name' => 'Kim',
+			)
+		);
+		$space  = $this->space(
+			array(
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+			)
+		);
+		SpaceMember::add( $space, $author, 'member' );
+		$post = (int) Post::create(
+			array(
+				'space_id'  => $space,
+				'author_id' => $author,
+				'title'     => 'Email login topic',
+				'content'   => 'Body',
+				'status'    => 'publish',
+			)
+		);
+		\Jetonomy\Models\Reply::create(
+			array(
+				'post_id'   => $post,
+				'space_id'  => $space,
+				'author_id' => $author,
+				'content'   => 'A reply',
+				'status'    => 'publish',
+			)
+		);
+
+		wp_set_current_user( 0 );
+		foreach ( array( "/posts/{$post}", "/spaces/{$space}/posts", "/posts/{$post}/replies" ) as $route ) {
+			$res = $this->rest( 'GET', $route );
+			$this->assertSame( 200, $res->get_status(), $route );
+			$this->assertStringNotContainsString( 'kim@example.test', (string) wp_json_encode( $res->get_data() ), $route . ' leaks the login' );
+		}
+		$this->assertSame( \Jetonomy\user_handle( $author ), $this->rest( 'GET', "/posts/{$post}" )->get_data()['author_login'], 'the field still carries the public handle' );
+	}
+
+	public function test_the_removed_content_email_gives_the_author_no_mod_queue_button(): void {
+		$space = $this->space(
+			array(
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+			)
+		);
+		$post  = (int) Post::create(
+			array(
+				'space_id'  => $space,
+				'author_id' => $this->member,
+				'title'     => 'Removed topic',
+				'content'   => 'Body',
+				'status'    => 'publish',
+			)
+		);
+		( new Notifier() )->on_content_moderated( 'trash', 'post', $post, $this->admin );
+
+		$to   = get_userdata( $this->member )->user_email;
+		$body = '';
+		foreach ( (array) tests_retrieve_phpmailer_instance()->mock_sent as $mail ) {
+			if ( $to === $mail['to'][0][0] ) {
+				$body = (string) $mail['body'];
+			}
+		}
+		$this->assertStringContainsString( 'Open the Community', $body );
+		$this->assertStringNotContainsString( 'Review in Mod Queue', $body, 'the author has no mod queue' );
+		$this->assertStringContainsString( 'Your ' . \Jetonomy\jetonomy_label( 'topic', false, true ) . ' was removed', $body );
+	}
+
 	public function test_the_owners_mention_subject_is_used(): void {
 		update_option(
 			'jetonomy_email_templates',

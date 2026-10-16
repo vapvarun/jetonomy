@@ -313,9 +313,9 @@ class Users_Controller extends Base_Controller {
 				// the server could not resolve whenever the two differ (a login
 				// of `john.smith` has the nicename `john-smith`).
 				'handle'       => \Jetonomy\user_handle( $u ),
-				// Kept for third-party consumers that already read it. Not what
-				// the composer inserts.
-				'login'        => $u->user_login,
+				// Kept for third-party consumers that already read it, but the
+				// handle too: user_login is an email on email-as-username sites.
+				'login'        => \Jetonomy\user_handle( $u ),
 				// RAW on purpose: the mention picker renders name and handle as
 				// two separate fields (composer.js jt-mention-name /
 				// jt-mention-login), so applying the "both" mode here would

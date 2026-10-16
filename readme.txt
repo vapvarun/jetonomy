@@ -371,6 +371,8 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Fix      - Taking back a vote no longer leaves "0 people voted" in the bell.
 * Fix      - Removing the last bookmark shows the empty state straight away.
 * Fix      - Re-importing demo data no longer awards the site admin the same badge again.
+* Fix      - After removing a reported topic, opening the Trash tab shows it straight away instead of an empty list.
+* Fix      - The email telling a member a moderator removed or approved their content names it with your Terminology and links to the community, not to a mod queue they cannot open.
 * Fix      - Next and Previous on member lists, tag pages, notifications and moderation queues no longer end on a 404 on sites that rewrite paged links.
 * Fix      - Profile links work for members whose username is an email address or contains spaces or other special characters, and older profile links still open.
 * Fix      - The email telling a member their join request was answered is headed "Your join request was answered".
@@ -400,6 +402,7 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Security - Access rules need a value that can work, so a trust level rule with no level can no longer admit every member.
 * Security - Space admins can no longer edit a space a site admin archived or locked; unarchiving still works where allowed.
 * Security - Topics in hidden spaces now answer exactly like missing ones, so a guessed link no longer confirms they exist.
+* Security - The REST API no longer returns members' usernames (an email address on some sites) to visitors; the author_login, actor_login and mention-suggest login fields now carry the public handle.
 * Security - A profile page's meta description shows the member's public handle instead of their username, which on some sites is an email address.
 * Dev      - New filter jetonomy_space_preview_limit sets how many spaces a category previews, and REST user responses add trust_level_label.
 * Dev      - A pre-commit check now fails on hardcoded space, topic, reply, member or category nouns in translatable text.

@@ -12146,7 +12146,8 @@
             "type": "integer"
           },
           "author_login": {
-            "type": "string"
+            "type": "string",
+            "description": "The author's public handle (user_nicename), the same string @mentions and profile links use. Since 2.0.2 it is never the WordPress login, which can be an email address."
           }
         }
       }

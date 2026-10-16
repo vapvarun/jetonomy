@@ -612,7 +612,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 				// API clients (mobile app) render initials from author_name — the
 				// same fallback the web templates use. Never the Gravatar mystery-man.
 				'author_avatar'       => $user ? \Jetonomy\Avatar::display_url( $uid, 64 ) : '',
-				'author_login'        => $user ? $user->user_login : '',
+				// Key kept for API clients; the value is the public handle (nicename), never user_login, which is an email on email-as-username sites.
+				'author_login'        => $user ? \Jetonomy\user_handle( $user ) : '',
 				'trust_level'         => $profile ? (int) $profile->trust_level : 0,
 				'reputation'          => $profile ? (int) $profile->reputation : 0,
 				'profile_url'         => $uid ? \Jetonomy\get_profile_url( $uid ) : '',
@@ -773,7 +774,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			// already fetched above — passed through to avoid a second query.
 			$author_name   = \Jetonomy\Author::for_display( $author_id, $post, $author ?: null )['name'] ?: __( 'Anonymous', 'jetonomy' );
 			$author_avatar = $author ? \Jetonomy\Avatar::display_url( $author_id, 64 ) : '';
-			$author_login  = $author ? $author->user_login : '';
+			$author_login  = $author ? \Jetonomy\user_handle( $author ) : '';
 			$trust_level   = $profile ? (int) $profile->trust_level : 0;
 			$reputation    = $profile ? (int) $profile->reputation : 0;
 			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';

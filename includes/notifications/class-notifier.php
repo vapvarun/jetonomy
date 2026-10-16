@@ -1085,11 +1085,14 @@ class Notifier {
 			$object_type,
 			$object_id,
 			sprintf(
-				/* translators: 1: object type (post/reply), 2: action label */
+				/* translators: 1: the owner-configured noun for a topic or reply, lowercase; 2: action label (approved, removed...). */
 				__( 'Your %1$s was %2$s by a moderator', 'jetonomy' ),
-				$object_type,
+				\Jetonomy\jetonomy_label( 'reply' === $object_type ? 'reply' : 'topic', false, true ),
 				$action_labels[ $action ] ?? $action
-			)
+			),
+			'',
+			// The author has no mod queue to review; staff flag notices keep that button.
+			array( 'cta_text' => __( 'Open the Community', 'jetonomy' ) )
 		);
 	}
 
@@ -1673,7 +1676,7 @@ class Notifier {
 			'user_welcome'        => __( 'Open the Community', 'jetonomy' ),
 			'message'             => __( 'Read Message', 'jetonomy' ),
 		);
-		$cta_text   = $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' );
+		$cta_text   = (string) ( $extra['cta_text'] ?? $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' ) );
 
 		// Build the $ctx array passed into the template file. Each template
 		// (base.php + optional per-type overrides) reads from this. Keys

@@ -357,7 +357,7 @@ class Notifications_Controller extends Base_Controller {
 			'message'        => $notification->message ?? '',
 			'actor_name'     => $is_actor_anonymous ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? \Jetonomy\user_display_name( $actor ) : __( 'System', 'jetonomy' ) ),
 			'actor_avatar'   => $actor ? \Jetonomy\Avatar::display_url( $actor_id, 64 ) : '',
-			'actor_login'    => $actor ? $actor->user_login : '',
+			'actor_login'    => $actor ? \Jetonomy\user_handle( $actor ) : '',
 			'time_ago'       => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 			'profile_url'    => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
 			'object_url'     => $this->resolve_notification_url( $notification, $object_type, $object_id ),
