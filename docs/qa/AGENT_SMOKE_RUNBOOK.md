@@ -254,22 +254,22 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.reply-create
 **Covers:** templates/views/single-post.php, includes/api/class-replies-controller.php, includes/models/class-reply.php, includes/notifications/class-notifier.php
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** a member can post a reply on any topic they can see; the reply appears inline, increments the topic's reply count, and triggers a notification to the OP (unless OP unsubscribed). A reply cannot be created under a parent that is missing, trashed, spam or in another topic. A private reply is not sent to thread subscribers.
 
 ### C.member.reply-quote
 **Covers:** templates/partials/reply-card.php, assets/js/view.js, assets/js/composer.js
-**Verified:** 83f00772
+**Verified:** 75301a65
 **What to verify:** a member can quote an existing reply and the quoted content is visually preserved as a blockquote in the new reply. Choosing Reply on a reply shows "Replying to <name>" with the first line of that reply quoted and linking back to it.
 
 ### C.member.mention
 **Covers:** includes/class-mentions.php, includes/notifications/class-notifier.php, includes/api/class-posts-controller.php, includes/api/class-replies-controller.php
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** using `@username` in a post or reply produces a notification for that user AND renders as a link to their profile in the saved content. Mentioning someone in a private reply notifies them only if they may read it. The mention email uses the owner's saved Mention subject and body (Settings > Emails), like every other email.
 
 ### C.member.vote
 **Covers:** includes/api/class-votes-controller.php, includes/models/class-vote.php, assets/js/view.js, templates/views/single-post.php, templates/partials/reply-card.php
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** a member can vote up/down on posts and replies, the score updates on screen, the vote persists across page reloads, and re-clicking the same vote toggles it off. The active vote button reads "Remove your upvote" / "Remove your downvote", and every vote on a topic or reply shows one toast, "Vote added" or "Vote removed" (never two). A member at the daily vote limit can still take a vote back. A logged-in member who may not vote sees the score as a disabled control that explains why on hover or click, not a button that does nothing. Taking back a vote removes the author's grouped "X people voted" notification once no votes remain; it never shows "0 people voted".
 
 ### C.member.flag
@@ -279,27 +279,27 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.subscribe-thread-and-space
 **Covers:** includes/api/class-subscriptions-controller.php, includes/models/class-subscription.php, includes/notifications/class-notifier.php
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** a member can subscribe to a thread and to a space; a subsequent reply (thread) or new post (space) produces a notification; unsubscribing stops new notifications. A member who creates a space from the front end follows it automatically. Thread subscribers are not notified about private replies.
 
 ### C.member.accept-answer
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/api/class-replies-controller.php, includes/models/class-reply.php
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** on Q&A-typed spaces, the OP can mark a reply as the accepted answer, the reply is visibly promoted, and a second acceptance replaces the first per contract. A private reply is never shown in the accepted-answer callout to people who may not read it, and merging or splitting topics keeps exactly one accepted answer.
 
 ### C.member.profile-edit
 **Covers:** templates/views/edit-profile.php, includes/api/class-users-controller.php, includes/models/class-user-profile.php
-**Verified:** 83f00772
+**Verified:** 75301a65
 **What to verify:** a member can edit their display name, bio, avatar, social links, and notification preferences; changes save, reload cleanly, and reflect across the site. The bio is the WordPress Biographical Info field, so wp-admin and the community profile always match. A display name that is a reserved word (such as admin) saves. The avatar upload controls appear only for a member with the Upload media permission; others see "Your Gravatar is used as your photo." The notification preferences list "Answer to my request to join a space" (email on by default).
 
 ### C.member.bookmarks
 **Covers:** templates/views/bookmarks.php, includes/api/class-bookmarks-controller.php, includes/models/class-bookmark.php
 **Verified:** 83f00772
-**What to verify:** a member can bookmark a post, find it in their bookmarks view, and unbookmark it; count reflects the change. Removing the last bookmark shows the empty state immediately, without a reload.
+**What to verify:** a member can bookmark a post, find it in their bookmarks view, and unbookmark it; count reflects the change. Removing the last bookmark shows the empty state immediately, without a reload, and the next tab you open shows its full content (after a hand-made DOM change the next navigation is a full page load).
 
 ### C.member.share
 **Covers:** templates/views/single-post.php, assets/js/view.js, assets/js/lib/smart-dropdown.js
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** the Share control on a topic opens a dropdown anchored to the button, offers Copy Link + X + Facebook + LinkedIn, Copy Link actually writes the URL to the clipboard, external links open on the right platform, and the dropdown closes when the user scrolls or clicks outside.
 
 ### C.member.scheduled-post
@@ -359,18 +359,18 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.akismet-staff-bypass
 **Covers:** includes/moderation/class-akismet.php, includes/api/class-base-controller.php
-**Verified:** d1392e03
+**Verified:** 75301a65
 **What to verify:** staff-role submissions are NOT routed through Akismet; they post instantly with no spam-check lag. Staff includes site admins, space admins and moderators, and site moderators (the Moderate capability). This is a customer-experience contract, not an optimization.
 
 ### C.notifications
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php, includes/api/class-notifications-controller.php, templates/views/notifications.php
-**Verified:** 5b60f854
+**Verified:** 75301a65
 **What to verify:** every notification-triggering event (reply to subscribed thread, mention, flag resolution, badge award, admin announcement) produces a new notification for the correct recipient; the bell badge count updates; clicking through takes the user to the correct destination. Join requests and their answers, reactions and reviewed reports also produce notifications that read correctly. Withdrawing a join request removes the staff's "new join request" notices. Unread count endpoint is accurate; mark-all-read zeroes it out. Names in notifications follow the Name display setting.
 
 ### C.notifications.email
 **Covers:** includes/adapters/class-wp-mail-adapter.php, templates/emails/*.php, includes/notifications/class-notifier.php, includes/notifications/class-verification-reminder.php
-**Verified:** dc84ba02
-**What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work. A member is emailed the answer to a join request (approved or declined), headed "Your join request was answered" (the Settings > Emails name), never "Join Request Result". Mention emails use the owner's saved subject and body. The confirmation email's subject and intro follow Settings > Emails, with the link always added.
+**Verified:** 75301a65
+**What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work. A member is emailed the answer to a join request (approved or declined), headed "Your join request was answered" (the Settings > Emails name), never "Join Request Result". Mention emails use the owner's saved subject and body. When a moderator removes or approves a member's content, the member's email names it with the owner's terminology ("Your topic was removed by a moderator") and its button reads "Open the Community", never "Review in Mod Queue" (staff flag emails keep that button). The confirmation email's subject and intro follow Settings > Emails, with the link always added.
 
 ### C.search
 **Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/search/class-search-indexer.php, includes/api/class-search-controller.php
@@ -504,6 +504,8 @@ Each row is a repro of a past bug that caused customer pain. These rows stay spe
 | D.mail-sender-scoped | 1.9.7. A `From:` header alone does not survive: `wp_mail()` parses it, then passes the address through `wp_mail_from`, so any plugin filtering site-wide gets the last word. Learnomy's `Notification_Service::filter_mail_from()` returns its own sender at priority 20 without inspecting the incoming value, so a community configured as community@example.com sent as the WordPress admin address, breaking SPF/DKIM alignment on every notification. Jetonomy now registers `wp_mail_from` / `wp_mail_from_name` at `PHP_INT_MAX` around its OWN send and removes them in a `finally` | With Learnomy active and a distinct sender configured in Jetonomy Settings > Email, trigger a Jetonomy notification and read the delivered message (Mailpit at `:10112`, or `wp_mail` capture): the From must be the CONFIGURED sender. **Then send a non-Jetonomy `wp_mail()` in the same request and assert it is UNTOUCHED** - if the scoped filters leaked we have simply pointed the same bug outward, which is the same bug. Third: make a send throw from `phpmailer_init` and assert the filters are still gone afterwards, since one failed send would otherwise strand them for the whole request. Unit cover: `tests/unit/adapters/WpMailAdapterSenderTest.php` |
 | D.tags-deep-pagination | 1.9.7. `GET /tags` accepted a `limit` capped at 100 and hard-coded `offset => 0` while returning a real `COUNT(*)` as the total, so the response advertised a total the caller could never reach. Tag 101 was unreachable at every parameter combination and the truncation was SILENT - the mobile app fetched one alphabetical page with no way to know more existed. A bbPress import passes 100 tags easily | Seed 150+ tags. For BOTH `sort=alphabetical` and `sort=popular`: `GET /jetonomy/v1/tags?limit=100&offset=0` returns 100 rows, `&offset=100` returns the remainder, `meta.offset` echoes the request, and the two pages share ZERO ids. Walking every page must reproduce `meta.total` exactly - no gaps, no repeats; a per-page eyeball would miss overlapping windows. `offset` past the end returns an empty page, not an error. Remove the seeded tags afterwards. Unit cover: `tests/unit/models/TagListPopularOffsetTest.php` |
 | D.list-pagination-pg | 2.0.2 (Zoho #42138). Members, tag, notifications, moderation and space-moderation lists linked Next with WordPress's `?paged`; sites that redirect it to `/page/N/` (a path no community route has) sent Next to a 404 | On a space with 26+ members, `/community/s/{slug}/members/` Next is `?pg=2` and loads "Page 2 of N". No Prev/Next link on those five lists contains `paged=`. A legacy `?pg` link and an old `?paged=2` link (on a site that does not rewrite it) both open page 2. Regression test: `OwnerPassFixesTest::test_list_pagination_never_links_with_the_wordpress_paged_param` |
+| D.rest-no-login | 2.0.2 smoke walk. `author_login` (topics, replies), `actor_login` (notifications) and `/users/suggest` `login` returned `user_login`, which is an email on email-as-username sites, to anyone who could read the content | Logged out, `GET /wp-json/jetonomy/v1/spaces/{public}/posts` and `/posts/{id}/replies`: no field contains a login that differs from the nicename; `author_login` equals the author's handle (as in their `/u/{handle}/` profile link). Test: `OwnerPassFixesTest::test_public_rest_payloads_never_carry_an_email_login` |
+| D.mod-trash-after-remove | 2.0.2 smoke walk. In a space's mod queue, Remove on a flag card and then the Trash tab (no reload) rendered "Topics 1" over an empty list: the card was removed by hand inside the router region and the soft navigation patched into the detached node | As a moderator on `/community/s/{slug}/mod/`, Remove a flag, click Trash: the removed topic is listed with Restore. Switching Flags / Awaiting approval / Trash with no Remove in between stays a soft navigation (no full reload) |
 | D.breadcrumb-filter-seam | 1.9.7. Eighteen views render the trail through one shared partial and nothing filtered it, so a site wanting to restyle or relocate the breadcrumb had to override all eighteen templates. `jetonomy_breadcrumb_html` now wraps the partial. Its KNOWN CEILING is the point of this row: every view calls the partial immediately BEFORE opening `<main>` and no view exposes a hook inside `<main>`, so suppressing here and re-emitting inside the main region still needs one template override - this removes the need to override eighteen files, not the need to override any | On a category page, assert `.jt-crumb` renders by default. Add a filter returning `''` and assert `.jt-crumb` count is 0. Add a filter returning custom markup and assert it renders WITH the `$crumbs` array passed through (count matches the real depth, so a consumer can rebuild rather than reparse). Remove the filter and assert the default is restored. Structurally the hook must appear in `audit/manifest.json` `hooks_fired` and in `docs/website/developer-guide/02a-hooks-index.md` - a seam a developer cannot discover is not a seam |
 | D.breadcrumb-placement | 2.0.1. Placement is now a filter: `jetonomy_breadcrumb_placement` returning `inside_main` moves the trail to the first child of `<main>` on all 18 views; the default stays before `<main>`. Check: on category, space, topic, roadmap, profile, search, subscriptions and moderation, `nav.jt-crumb` sits immediately before the content by default (the previous sibling of `main`, or of `.jt-two-col` on views with a sidebar) and `main.firstElementChild` with the filter. Roadmap gained the `<main>` landmark it never had, and My Subscriptions shows its trail (it passed the crumbs under the wrong key and printed nothing). |
 | D.mod-queue-live-counts | 2.0.1. The flags panel shows the pending count in three places: the subtitle ("N pending flags"), the queue badge and the "Flags N" section tab. Check: as a moderator with 2+ pending flags in one space, dismiss them one by one without reloading. All three fall together, singular at 1 ("1 pending flag"), and at 0 the subtitle reads "0 pending flags" and the tab count is gone, matching a fresh load. |
@@ -528,7 +530,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.reactions
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, assets/js/view.js
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; the reactor's avatar appears in the hover-card listing reactors. Removing must work on a reaction you just added, *without reloading the page* - that chip is built in JS and is exactly the one a person is most likely to click again to undo.
 
 ### E.analytics
@@ -548,7 +550,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.advanced-moderation
 **Covers:** includes/moderation/class-moderation-service.php, includes/api/class-base-controller.php
-**Verified:** 83f00772
+**Verified:** 75301a65
 **What to verify:** an admin can create a moderation rule (pattern + action), posting content matching the rule triggers the action (hold / spam / auto-delete), and rule stats reflect hits over time.
 
 ### E.ai
@@ -563,7 +565,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.email-digest
 **Covers:** includes/adapters/interface-email-adapter.php, includes/notifications/class-notifier.php
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** users subscribed to the digest actually receive one at the configured cadence; a manual test-send from admin dispatches within 30s; the stats endpoint reports sends without error. When the digest's own sender is blank it uses the sender from Settings > Emails.
 
 ### E.reply-by-email
@@ -578,12 +580,12 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.web-push
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** the browser push subscription flow completes end-to-end, a test push reaches the subscribed browser. VAPID keys and service worker endpoints respond correctly.
 
 ### E.webhooks
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-post.php
-**Verified:** dc84ba02
+**Verified:** 75301a65
 **What to verify:** an admin can create a webhook bound to one or more events; triggering one of those events actually fires a request to the configured URL; the test-fire button delivers a payload the receiver can parse.
 
 ---
@@ -612,7 +614,7 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 
 ### F.a11y
 **Covers:** templates/partials/header.php, templates/partials/composer.php, templates/partials/reply-card.php, assets/js/view.js
-**Verified:** 83f00772
+**Verified:** 75301a65
 **What to verify:** the main interactive surfaces have a visible keyboard focus ring (not suppressed by theme), tab order is logical, main content is reachable within a reasonable number of tabs from the top of the page, and icon-only buttons have `aria-label`. Screen-reader critical labels are present on composers, voting controls, share controls, and moderation actions. The report dialog is a labelled radio group, focuses its first reason on open, and closes on Escape.
 
 ---
