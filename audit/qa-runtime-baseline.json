@@ -184,7 +184,6 @@
         "hook:jetonomy_theme_light_tokens",
         "hook:jetonomy_trust_evaluation",
         "hook:jetonomy_use_frontend_space_edit",
-        "hook:jetonomy_user_handle",
         "hook:jetonomy_user_pending_verification",
         "hook:jetonomy_verification_reminder_sent",
         "rest:GET /admin/demo-data",
