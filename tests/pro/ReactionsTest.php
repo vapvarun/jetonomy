@@ -118,6 +118,28 @@ class ReactionsTest extends WP_UnitTestCase {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * A topic in a hidden space answers exactly like a missing one, for reading
+	 * and for reacting; a 403 there used to confirm the topic exists.
+	 */
+	public function test_a_hidden_topic_answers_like_a_missing_one(): void {
+		$hidden = Space::create( [ 'title' => 'Hidden', 'slug' => 'hidden-' . uniqid(), 'category_id' => Category::create( [ 'name' => 'H', 'slug' => 'h-' . uniqid() ] ), 'visibility' => 'hidden' ] );
+		$post   = (int) Post::create( [ 'space_id' => $hidden, 'title' => 'Secret', 'slug' => 'secret-' . uniqid(), 'content' => 'x', 'status' => 'publish' ] );
+		wp_set_current_user( $this->user_id );
+
+		foreach ( [ 'GET', 'POST' ] as $method ) {
+			$answers = [];
+			foreach ( [ $post, 999999 ] as $id ) {
+				$request = new WP_REST_Request( $method, "/jetonomy/v1/posts/{$id}/reactions" );
+				$request->set_body_params( [ 'emoji' => 'thumbsup' ] );
+				$res       = $this->server->dispatch( $request );
+				$answers[] = [ $res->get_status(), $res->get_data()['code'] ?? '' ];
+			}
+			$this->assertSame( 404, $answers[0][0], "{$method}: hidden topic is not found" );
+			$this->assertSame( $answers[1], $answers[0], "{$method}: same answer as a missing id" );
+		}
+	}
+
+	/**
 	 * The first toggle for a user on a post must respond with action=added.
 	 */
 	public function test_toggle_reaction_on_returns_action_added(): void {

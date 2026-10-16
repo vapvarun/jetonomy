@@ -519,6 +519,40 @@ class Permission_Engine {
 	}
 
 	/**
+	 * Of these members, the ones who may read this topic: the set-based form of
+	 * can_read_post() for notification fan-outs, two queries at most however many
+	 * ids are passed. A private or hidden space keeps its members; a private topic
+	 * keeps its author and the space's admins and moderators.
+	 *
+	 * Shortcut: bans, role caps and membership-plugin access rules are not applied
+	 * here (no set-based form yet); the member meets them when opening the link.
+	 *
+	 * @param \stdClass $post     Post row (space_id, is_private, author_id).
+	 * @param int[]     $user_ids Candidate recipients.
+	 * @return int[]
+	 */
+	// phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint -- \stdClass for PHPStan, `object` hint as in can_read_post().
+	public static function readers_among( object $post, array $user_ids ): array {
+		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
+		$space_id = (int) $post->space_id;
+		if ( ! $user_ids || ! $space_id ) {
+			return $user_ids;
+		}
+		$space = Space::find( $space_id );
+		if ( ! $space ) {
+			return array();
+		}
+		if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
+			$user_ids = array_values( array_intersect( $user_ids, SpaceMember::members_among( $space_id, $user_ids ) ) );
+		}
+		if ( ! empty( $post->is_private ) && $user_ids ) {
+			$allowed  = array_merge( array_keys( SpaceMember::roles_for_users( $space_id, $user_ids ) ), array( (int) $post->author_id ) );
+			$user_ids = array_values( array_intersect( $user_ids, $allowed ) );
+		}
+		return $user_ids;
+	}
+
+	/**
 	 * Check if a user can read a specific post, considering status and private visibility.
 	 *
 	 * @param int       $user_id WP user ID (0 for guest).

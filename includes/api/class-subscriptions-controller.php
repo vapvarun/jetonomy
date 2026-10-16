@@ -13,6 +13,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use Jetonomy\API\REST_Auth;
+use Jetonomy\Models\Space;
 use Jetonomy\Models\Subscription;
 
 class Subscriptions_Controller extends Base_Controller {
@@ -148,10 +149,13 @@ class Subscriptions_Controller extends Base_Controller {
 		}
 
 		if ( 'post' === $object_type ) {
-			$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $object_id );
+			$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $object_id, $user_id );
 			if ( is_wp_error( $live ) ) {
 				return $live;
 			}
+		} elseif ( ! Space::find( $object_id ) || ! \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'read', $object_id ) ) {
+			// Same answer for a missing space and one this member may not read.
+			return $this->not_found( 'Space' );
 		}
 
 		$id = Subscription::subscribe( $user_id, $object_type, $object_id, $via );

@@ -114,7 +114,7 @@ class Votes_Controller extends Base_Controller {
 
 		// A trashed or unpublished post/reply takes no new votes (409).
 		// handle_unvote() stays open so an old vote can still be withdrawn.
-		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( $type, $id );
+		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( $type, $id, $user_id );
 		if ( is_wp_error( $live ) ) {
 			return $live;
 		}

@@ -15,6 +15,7 @@ use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\UserProfile;
+use Jetonomy\Permissions\Permission_Engine;
 use Jetonomy\Adapters\Adapter_Registry;
 use function Jetonomy\now;
 
@@ -524,10 +525,12 @@ class Notifier {
 	 * @param array    $hook_args   Leading args for that hook (the cursor is appended).
 	 * @param callable $notify      fn( int $user_id ): void.
 	 */
-	private function fanout_batches( string $object_type, int $object_id, int $after, string $hook, array $hook_args, callable $notify ): void {
+	private function fanout_batches( string $object_type, int $object_id, int $after, string $hook, array $hook_args, callable $notify, object $topic ): void {
 		do {
 			$batch = Subscription::get_subscribers( $object_type, $object_id, $after, self::FANOUT_BATCH );
-			foreach ( $batch as $user_id ) {
+			// A subscriber who cannot read the topic (left a private space, never
+			// joined a hidden one, or the topic is private) hears nothing of it.
+			foreach ( Permission_Engine::readers_among( $topic, $batch ) as $user_id ) {
 				$notify( $user_id );
 			}
 			if ( count( $batch ) < self::FANOUT_BATCH ) {
@@ -535,6 +538,17 @@ class Notifier {
 			}
 			$after = (int) end( $batch );
 		} while ( ! $this->enqueue_fanout( $hook, array_merge( $hook_args, array( $after ) ) ) );
+	}
+
+	/**
+	 * Members @mentioned in a topic or reply, keyed by user id. Mentions::notify_for()
+	 * sends them the mention notice, so the other create notices skip them.
+	 *
+	 * @param object $content Post or reply row.
+	 * @return array<int,true>
+	 */
+	private static function mentioned_in( object $content ): array {
+		return array_fill_keys( array_map( 'intval', \Jetonomy\Mentions::extract_user_ids( (string) ( $content->content ?? '' ) ) ), true );
 	}
 
 	/**
@@ -579,9 +593,11 @@ class Notifier {
 		// Actor is the post author; an anonymous post must not leak the real
 		// author via the notification row's actor_id (avatar/name/profile).
 		$is_anon = (bool) ( $post->is_anonymous ?? false );
+		// Someone @mentioned in the topic already has the mention notice.
+		$told = self::mentioned_in( $post );
 
-		$notify = function ( int $sub_user_id ) use ( $actor_id, $post_id, $space_name, $post, $post_url, $is_anon ): void {
-			if ( $sub_user_id === $actor_id ) {
+		$notify = function ( int $sub_user_id ) use ( $actor_id, $post_id, $space_name, $post, $post_url, $is_anon, $told ): void {
+			if ( $sub_user_id === $actor_id || isset( $told[ $sub_user_id ] ) ) {
 				return;
 			}
 			$this->create_and_maybe_email(
@@ -603,7 +619,7 @@ class Notifier {
 			);
 		};
 
-		$this->fanout_batches( 'space', $space_id, $after, 'jetonomy_fanout_post_subscribers', array( $post_id, $space_id ), $notify );
+		$this->fanout_batches( 'space', $space_id, $after, 'jetonomy_fanout_post_subscribers', array( $post_id, $space_id ), $notify, $post );
 	}
 
 	/**
@@ -629,9 +645,11 @@ class Notifier {
 		$reply_url = $this->get_reply_url( $post, $reply_id );
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
 		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
+		// One notice per person per reply: a mention wins over every notice below.
+		$told = self::mentioned_in( $reply );
 
 		// 1. Notify post author (if not the replier).
-		if ( (int) $post->author_id !== $actor_id ) {
+		if ( (int) $post->author_id !== $actor_id && ! isset( $told[ (int) $post->author_id ] ) ) {
 			$this->create_and_maybe_email(
 				(int) $post->author_id,
 				$actor_id,
@@ -659,6 +677,8 @@ class Notifier {
 			// author, staff, and the reply author are) — never notify someone
 			// about words they will only ever see as a tombstone.
 			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id
+				&& (int) $parent_reply->author_id !== (int) $post->author_id // Told by branch 1.
+				&& ! isset( $told[ (int) $parent_reply->author_id ] )
 				&& \Jetonomy\Permissions\Permission_Engine::can_read_reply( (int) $parent_reply->author_id, $reply, $post ) ) {
 				$this->create_and_maybe_email(
 					(int) $parent_reply->author_id,
@@ -711,9 +731,17 @@ class Notifier {
 		$reply_url = $this->get_reply_url( $post, $reply_id );
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
 		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
+		// Already told by on_reply_created(): anyone mentioned, and the parent reply's author.
+		$told = self::mentioned_in( $reply );
+		if ( ! empty( $reply->parent_id ) ) {
+			$parent_reply = Reply::find( (int) $reply->parent_id );
+			if ( $parent_reply ) {
+				$told[ (int) $parent_reply->author_id ] = true;
+			}
+		}
 
-		$notify = function ( int $sub_user_id ) use ( $actor_id, $reply_id, $reply, $post, $reply_url, $ctx_extra, $is_anon ): void {
-			if ( $sub_user_id === $actor_id || $sub_user_id === (int) $post->author_id ) {
+		$notify = function ( int $sub_user_id ) use ( $actor_id, $reply_id, $reply, $post, $reply_url, $ctx_extra, $is_anon, $told ): void {
+			if ( $sub_user_id === $actor_id || $sub_user_id === (int) $post->author_id || isset( $told[ $sub_user_id ] ) ) {
 				return;
 			}
 			$this->create_and_maybe_email(
@@ -734,7 +762,7 @@ class Notifier {
 			);
 		};
 
-		$this->fanout_batches( 'post', $post_id, $after, 'jetonomy_fanout_reply_subscribers', array( $reply_id, $post_id ), $notify );
+		$this->fanout_batches( 'post', $post_id, $after, 'jetonomy_fanout_reply_subscribers', array( $reply_id, $post_id ), $notify, $post );
 	}
 
 	/**

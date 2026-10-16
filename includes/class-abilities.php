@@ -1438,7 +1438,7 @@ class Abilities {
 		$object_id   = (int) $input['object_id'];
 		$value       = (int) $input['value'];
 
-		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( $object_type, $object_id );
+		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( $object_type, $object_id, $user_id );
 		if ( is_wp_error( $live ) ) {
 			return $live;
 		}

@@ -153,16 +153,33 @@ class Content_Gate {
 	 * trashed topic is a write to the trashed topic. A missing target returns
 	 * true: the caller already owns its 404.
 	 *
+	 * Pass $viewer from any route that has not already checked read access. A
+	 * target that viewer cannot read, or that does not exist, then answers the
+	 * same 404, so the trashed / not published answer never tells a member
+	 * anything about a topic they are not allowed to see.
+	 *
 	 * Removals (unvote, unbookmark, unfollow) deliberately do not call this,
 	 * so a member can still undo what they did before the item was trashed.
 	 *
-	 * @param string $type 'post' or 'reply'.
-	 * @param int    $id   Object ID.
-	 * @return true|\WP_Error 409 when the target is trashed or unpublished.
+	 * @param string   $type   'post' or 'reply'.
+	 * @param int      $id     Object ID.
+	 * @param int|null $viewer Member to check read access for, or null when the caller already did.
+	 * @return true|\WP_Error 404 when the viewer may not read it, 409 when it is trashed or unpublished.
 	 */
-	public static function target_is_live( string $type, int $id ) {
+	public static function target_is_live( string $type, int $id, ?int $viewer = null ) {
+		$reply = 'reply' === $type ? Reply::find( $id ) : null;
+		$post  = Post::find( $reply ? (int) $reply->post_id : $id );
+
+		if ( null !== $viewer && ! self::viewer_may_read( $viewer, $post, $reply, $type ) ) {
+			return new \WP_Error(
+				'jetonomy_not_found',
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' === $type ? 'reply' : 'topic' ) ),
+				array( 'status' => 404 )
+			);
+		}
+
 		if ( 'reply' === $type ) {
-			$reply = Reply::find( $id );
 			if ( ! $reply ) {
 				return true;
 			}
@@ -170,13 +187,31 @@ class Content_Gate {
 			if ( $error ) {
 				return $error;
 			}
-			$id = (int) $reply->post_id;
 		}
-
-		$post = Post::find( $id );
 
 		return ( $post ? self::status_error( $post ) : null ) ?? true;
 	}
+
+	/**
+	 * Whether the viewer could read the target were it published: the status is
+	 * left out on purpose, target_is_live() answers that part with its 409.
+	 *
+	 * @param int         $viewer Member.
+	 * @param object|null $post   Topic row.
+	 * @param object|null $reply  Reply row, for a reply target.
+	 * @param string      $type   'post' or 'reply'.
+	 */
+	private static function viewer_may_read( int $viewer, ?object $post, ?object $reply, string $type ): bool {
+		if ( ! $post || ( 'reply' === $type && ! $reply ) ) {
+			return false;
+		}
+		$as_published = (object) array_merge( (array) $post, array( 'status' => 'publish' ) );
+		if ( ! Permission_Engine::can_read_post( $viewer, $as_published ) ) {
+			return false;
+		}
+		return ! $reply || Permission_Engine::can_read_reply( $viewer, $reply, $post );
+	}
+
 
 	/**
 	 * The one "this item is in the trash" error, shared with

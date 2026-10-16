@@ -271,29 +271,14 @@ class Mentions {
 		$post          = 'reply' === $object_type ? Models\Post::find( (int) $object->post_id ) : $object;
 		$actor_id      = (int) $object->author_id;
 		$context_title = 'reply' === $object_type ? ( $post->title ?? sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ) : (string) $object->title;
-		$space_id      = (int) ( $post->space_id ?? 0 );
-		$is_private    = (bool) ( $post->is_private ?? false );
 
 		$actor_name      = \Jetonomy\Author::for_display( $actor_id, $object )['name'] ?: __( 'Someone', 'jetonomy' );
 		$actor_anonymous = (bool) ( $object->is_anonymous ?? false );
 
-		// Visibility filter: never notify a user who can't read the mentioned
-		// content. Done ONCE, set-based, before the loop — no per-recipient
-		// permission check (that would be an N+1 at scale). A public space needs
-		// no filtering (everyone can read); a private/hidden space is gated to
-		// its members; an is_private post is gated to author + space staff.
-		if ( $space_id ) {
-			$space = Models\Space::find( $space_id );
-			if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
-				$members  = Models\SpaceMember::members_among( $space_id, $user_ids );
-				$user_ids = array_values( array_intersect( $user_ids, $members ) );
-			}
-			if ( $is_private && ! empty( $user_ids ) ) {
-				// is_private post: only the author + space admins/moderators.
-				$staff    = array_keys( Models\SpaceMember::roles_for_users( $space_id, $user_ids ) );
-				$allowed  = array_merge( $staff, array( $actor_id ) ); // actor filtered out below anyway.
-				$user_ids = array_values( array_intersect( $user_ids, $allowed ) );
-			}
+		// Never notify a user who can't read the mentioned content. Set-based,
+		// once, before the loop; the same filter the subscriber fan-outs use.
+		if ( $post ) {
+			$user_ids = \Jetonomy\Permissions\Permission_Engine::readers_among( $post, $user_ids );
 		}
 
 		// A private reply: only the people who may read it hear about it (a handful of names, so per-user checks are fine).
