@@ -3143,6 +3143,39 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Block a user (profile ⋯ menu) ──
+        //
+        // POST /users/me/blocks after a confirm whose wording the server
+        // rendered (translated), then reload so the profile shows the blocked
+        // state and every read surface applies it.
+        *blockMember( event ) {
+            const trigger = triggerOf( event );
+            if ( ! trigger?.dataset.userId ) return;
+
+            const ok = yield jetonomyConfirm( trigger.dataset.confirm, {
+                title: trigger.dataset.confirmTitle,
+                confirmLabel: trigger.dataset.confirmLabel,
+                danger: true,
+            } );
+            if ( ! ok ) return;
+
+            trigger.disabled = true;
+            try {
+                const res = yield window.jetonomyRest.restFetch( '/users/me/blocks', {
+                    method: 'POST',
+                    body: { user_id: parseInt( trigger.dataset.userId, 10 ) },
+                } );
+                if ( res.ok ) {
+                    window.location.reload();
+                    return;
+                }
+                if ( window.bnToast ) window.bnToast( res.data?.message || state.i18n?.failedSave || 'Failed to save.' );
+            } catch {
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+            }
+            trigger.disabled = false;
+        },
+
         // ── Accept reply as best answer (Q&A) ──
         //
         // Server-side mutation reloads the page on success because the

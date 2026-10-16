@@ -58,6 +58,12 @@ if ( $jt_can_moderate ) {
 	);
 	$jt_restriction = $jt_rows[0] ?? null;
 }
+// Member-to-member controls (Report, Block) for someone else's profile. Mirrors
+// BlockedUser::block(): moderators and admins cannot be blocked.
+$jt_is_other_member = $jt_viewer_id && $jt_viewer_id !== $profile_user_id;
+$jt_blocked         = $jt_is_other_member && \Jetonomy\Models\BlockedUser::is_blocked( $jt_viewer_id, $profile_user_id );
+$jt_blockable       = $jt_is_other_member && ! user_can( $profile_user_id, 'manage_options' ) && ! user_can( $profile_user_id, 'jetonomy_moderate' );
+
 $jt_restriction_label = '';
 if ( $jt_restriction ) {
 	$jt_restriction_label = 'silence' === $jt_restriction->type
@@ -170,14 +176,36 @@ $crumbs = array(
 								<?php esc_html_e( 'Message', 'jetonomy' ); ?>
 							</a>
 						<?php endif; ?>
-						<?php if ( is_user_logged_in() && get_current_user_id() !== $profile_user_id ) : ?>
-							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
-								data-wp-on--click="actions.flagUser"
-								data-user-id="<?php echo absint( $profile_user_id ); ?>"
-								title="<?php esc_attr_e( 'Report User', 'jetonomy' ); ?>">
-								<?php jetonomy_echo_icon( 'flag', 14 ); ?>
-								<?php esc_html_e( 'Report', 'jetonomy' ); ?>
-							</button>
+						<?php
+						// Report and Block live in one menu so the header keeps a single
+						// visible action (Message). Moderators cannot be blocked
+						// (BlockedUser::block()), so they get no Block item.
+						if ( $jt_is_other_member ) :
+							$jt_name = \Jetonomy\user_display_name( $user );
+							?>
+							<div class="jt-more-menu jt-flex-shrink-0">
+								<button class="jt-btn jt-btn-ghost jt-more-trigger" type="button"
+									aria-haspopup="menu"
+									aria-label="<?php /* translators: %s: member display name. */ echo esc_attr( sprintf( __( 'More actions for %s', 'jetonomy' ), $jt_name ) ); ?>"
+									data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
+								<div class="jt-more-dropdown" hidden>
+									<button class="jt-more-item" type="button"
+										data-wp-on--click="actions.flagUser"
+										data-user-id="<?php echo absint( $profile_user_id ); ?>"><?php jetonomy_echo_icon( 'flag', 14 ); ?> <?php esc_html_e( 'Report', 'jetonomy' ); ?></button>
+									<?php if ( $jt_blocked ) : ?>
+										<button class="jt-more-item" type="button"
+											data-wp-on--click="actions.unblockUser"
+											data-user-id="<?php echo absint( $profile_user_id ); ?>"><?php jetonomy_echo_icon( 'user-check', 14 ); ?> <?php /* translators: %s: member display name. */ echo esc_html( sprintf( __( 'Unblock %s', 'jetonomy' ), $jt_name ) ); ?></button>
+									<?php elseif ( $jt_blockable ) : ?>
+										<button class="jt-more-item jt-more-item--danger" type="button"
+											data-wp-on--click="actions.blockMember"
+											data-user-id="<?php echo absint( $profile_user_id ); ?>"
+											data-confirm-title="<?php /* translators: %s: member display name. */ echo esc_attr( sprintf( __( 'Block %s?', 'jetonomy' ), $jt_name ) ); ?>"
+											data-confirm="<?php /* translators: 1: plural topic label, lowercase, 2: plural reply label, lowercase. */ echo esc_attr( sprintf( __( 'Their %1$s and %2$s will be hidden from you, and they will not be able to message you. They are not told. You can unblock them at any time from your profile settings.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"
+											data-confirm-label="<?php esc_attr_e( 'Block', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'x-circle', 14 ); ?> <?php /* translators: %s: member display name. */ echo esc_html( sprintf( __( 'Block %s', 'jetonomy' ), $jt_name ) ); ?></button>
+									<?php endif; ?>
+								</div>
+							</div>
 						<?php endif; ?>
 
 						<?php // Moderator member-moderation controls (frontend parity). ?>
@@ -214,6 +242,9 @@ $crumbs = array(
 						</div>
 					</div>
 
+					<?php if ( $jt_blocked ) : ?>
+						<p class="jt-profile-blocked-note"><?php jetonomy_echo_icon( 'x-circle', 14 ); ?> <?php /* translators: 1: singular member label, lowercase, 2: plural topic label, lowercase, 3: plural reply label, lowercase. */ echo esc_html( sprintf( __( 'You blocked this %1$s. Their %2$s and %3$s are hidden from you.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
+					<?php endif; ?>
 					<?php if ( ! empty( $profile->bio ) ) : ?>
 						<p class="jt-profile-bio">
 							<?php echo esc_html( $profile->bio ); ?>
