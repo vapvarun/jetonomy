@@ -170,6 +170,31 @@ class Permission_Engine {
 		return self::$memo[ $key ];
 	}
 
+	/** Actions a silenced member loses; reading continues. */
+	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
+
+	/**
+	 * The account restriction that refuses this action, as the error to show the
+	 * member, or null when none applies. One source for the wording, so every
+	 * surface says "silenced" or "banned" instead of a generic permission error.
+	 *
+	 * @param int    $user_id Member.
+	 * @param string $action  Permission slug.
+	 * @return \WP_Error|null
+	 */
+	public static function restriction_error( int $user_id, string $action ): ?\WP_Error {
+		if ( ! $user_id ) {
+			return null;
+		}
+		if ( Restriction::is_banned( $user_id ) ) {
+			return new \WP_Error( 'jetonomy_user_banned', __( 'Your account has been banned from this community.', 'jetonomy' ), array( 'status' => 403 ) );
+		}
+		if ( in_array( $action, self::SILENCED_WRITE_ACTIONS, true ) && Restriction::is_silenced( $user_id ) ) {
+			return new \WP_Error( 'jetonomy_user_silenced', __( 'Your account is currently silenced and cannot post.', 'jetonomy' ), array( 'status' => 403 ) );
+		}
+		return null;
+	}
+
 	/**
 	 * Internal uncached resolution — called by can().
 	 */
@@ -187,8 +212,7 @@ class Permission_Engine {
 
 		// Layer 0b: Silence check — can read but not write.
 		if ( $user_id && class_exists( 'Jetonomy\Models\Restriction' ) && Restriction::is_silenced( $user_id ) ) {
-			$write_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
-			if ( in_array( $action, $write_actions, true ) ) {
+			if ( in_array( $action, self::SILENCED_WRITE_ACTIONS, true ) ) {
 				return false;
 			}
 			// Allow read actions to continue through the normal flow.

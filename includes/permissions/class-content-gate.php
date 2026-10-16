@@ -26,7 +26,6 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
-use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
 
 class Content_Gate {
@@ -71,20 +70,9 @@ class Content_Gate {
 			}
 		}
 
-		if ( Restriction::is_banned( $user_id ) ) {
-			return new \WP_Error(
-				'jetonomy_user_banned',
-				__( 'Your account has been banned from this community.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		if ( Restriction::is_silenced( $user_id ) ) {
-			return new \WP_Error(
-				'jetonomy_user_silenced',
-				__( 'Your account is currently silenced and cannot post.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
+		$restricted = Permission_Engine::restriction_error( $user_id, 'create_replies' );
+		if ( $restricted ) {
+			return $restricted;
 		}
 
 		$space_id = (int) ( $post->space_id ?? 0 );
