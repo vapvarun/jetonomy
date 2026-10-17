@@ -519,6 +519,37 @@ class Users_Controller extends Base_Controller {
 			return $user_id;
 		}
 
+		// Name parts are checked together with display_name before anything is
+		// written, so a refused display name leaves the whole profile untouched
+		// instead of saving half the form.
+		$name_parts = array();
+		foreach ( array( 'first_name', 'last_name', 'nickname' ) as $meta_key ) {
+			if ( null !== $request->get_param( $meta_key ) ) {
+				$name_parts[ $meta_key ] = sanitize_text_field( (string) $request->get_param( $meta_key ) );
+			}
+		}
+
+		// display_name must be one the member already owns: any string would let a member
+		// publish as "Administrator", take another member's exact name, and override the
+		// value the owner picked in wp-admin - site-wide, not just in the forum. It is
+		// checked against the name parts in this request, so setting a first name and
+		// selecting "First Last" in one save works.
+		$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
+		if ( '' !== $display_name ) {
+			$wp_user_now = get_userdata( $user_id );
+			$allowed     = $wp_user_now ? \Jetonomy\display_name_choices( $wp_user_now, $name_parts ) : array();
+			if ( ! in_array( $display_name, $allowed, true ) ) {
+				return new WP_Error(
+					'jetonomy_invalid_display_name',
+					__( 'Choose a display name from your own name fields.', 'jetonomy' ),
+					array(
+						'status'  => 400,
+						'allowed' => $allowed,
+					)
+				);
+			}
+		}
+
 		$profile_data = array();
 
 		if ( null !== $request->get_param( 'bio' ) ) {
@@ -580,41 +611,16 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
-		// Name parts first, so display_name is validated against the values the
-		// member is submitting rather than the ones already stored - otherwise
-		// setting a first name and selecting "First Last" in one save would be
-		// rejected for a permutation that does not exist yet.
-		foreach ( array( 'first_name', 'last_name', 'nickname' ) as $meta_key ) {
-			if ( null !== $request->get_param( $meta_key ) ) {
-				update_user_meta( $user_id, $meta_key, sanitize_text_field( (string) $request->get_param( $meta_key ) ) );
-			}
+		foreach ( $name_parts as $meta_key => $value ) {
+			update_user_meta( $user_id, $meta_key, $value );
 		}
-
-		// display_name must be one the member already owns: any string would let a member
-		// publish as "Administrator", take another member's exact name, and override the
-		// value the owner picked in wp-admin - site-wide, not just in the forum.
-		if ( null !== $request->get_param( 'display_name' ) ) {
-			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
-			if ( ! empty( $display_name ) ) {
-				$wp_user_now = get_userdata( $user_id );
-				$allowed     = $wp_user_now ? \Jetonomy\display_name_choices( $wp_user_now ) : array();
-				if ( ! in_array( $display_name, $allowed, true ) ) {
-					return new WP_Error(
-						'jetonomy_invalid_display_name',
-						__( 'Choose a display name from your own name fields.', 'jetonomy' ),
-						array(
-							'status'  => 400,
-							'allowed' => $allowed,
-						)
-					);
-				}
-				wp_update_user(
-					array(
-						'ID'           => $user_id,
-						'display_name' => $display_name,
-					)
-				);
-			}
+		if ( '' !== $display_name ) {
+			wp_update_user(
+				array(
+					'ID'           => $user_id,
+					'display_name' => $display_name,
+				)
+			);
 		}
 
 		if ( ! empty( $profile_data ) ) {

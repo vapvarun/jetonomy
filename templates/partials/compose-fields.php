@@ -141,7 +141,7 @@ endif;
 ?>
 
 <div class="jt-form-group">
-	<label class="jt-label"><?php esc_html_e( 'Content', 'jetonomy' ); ?></label>
+	<label class="jt-label" id="jt-post-body-label"<?php echo 'textarea' === $_body_mode ? ' for="jt-post-body"' : ''; ?>><?php esc_html_e( 'Content', 'jetonomy' ); ?></label>
 	<?php if ( 'textarea' === $_body_mode ) : ?>
 		<textarea
 			class="jt-input jt-compose-topic-body"
@@ -166,7 +166,7 @@ endif;
 				<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it. ?>
 				<button type="button" data-cmd="emoji" title="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-haspopup="menu" aria-expanded="false" aria-controls="jt-emoji-picker"><?php jetonomy_echo_icon( 'smile-plus', 16 ); ?></button>
 			</div>
-			<div class="jt-editor-body" contenteditable="true" data-placeholder="<?php echo esc_attr( sprintf( /* translators: %s: singular topic label. */ __( 'Write your %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>"></div>
+			<div class="jt-editor-body" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="jt-post-body-label" data-placeholder="<?php echo esc_attr( sprintf( /* translators: %s: singular topic label. */ __( 'Write your %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>"></div>
 		</div>
 	<?php endif; ?>
 </div>

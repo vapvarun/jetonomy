@@ -819,13 +819,17 @@ function user_handle( $user ): string {
  * make saving the form fail or silently rename the member. New arbitrary values
  * still cannot be introduced.
  *
- * @param \WP_User $user User to build choices for.
+ * @param \WP_User $user    User to build choices for.
+ * @param array    $pending Name parts being saved in the same request
+ *                          (first_name, last_name, nickname), used instead of
+ *                          the stored ones so a save can be checked before it
+ *                          writes anything.
  * @return string[] Unique, non-empty candidate names.
  */
-function display_name_choices( \WP_User $user ): array {
-	$first = (string) get_user_meta( $user->ID, 'first_name', true );
-	$last  = (string) get_user_meta( $user->ID, 'last_name', true );
-	$nick  = (string) get_user_meta( $user->ID, 'nickname', true );
+function display_name_choices( \WP_User $user, array $pending = array() ): array {
+	$first = (string) ( $pending['first_name'] ?? get_user_meta( $user->ID, 'first_name', true ) );
+	$last  = (string) ( $pending['last_name'] ?? get_user_meta( $user->ID, 'last_name', true ) );
+	$nick  = (string) ( $pending['nickname'] ?? get_user_meta( $user->ID, 'nickname', true ) );
 
 	$choices = array(
 		(string) $user->display_name,

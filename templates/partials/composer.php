@@ -56,6 +56,8 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 	</div>
 	<div class="jt-editor-body"
 		contenteditable="true"
+		role="textbox"
+		aria-multiline="true"
 		data-placeholder="<?php echo esc_attr( $_placeholder ); ?>"
 		data-wp-on--input="actions.onEditorInput"
 		id="jt-composer-<?php echo (int) $_post_id; ?>"

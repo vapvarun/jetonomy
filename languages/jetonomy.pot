@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-17T06:43:26+00:00\n"
+"POT-Creation-Date: 2026-10-17T06:58:50+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -374,7 +374,7 @@ msgstr ""
 
 #. translators: %s: space name
 #: includes/admin/ajax/class-settings-handler.php:76
-#: includes/notifications/class-notifier.php:1779
+#: includes/notifications/class-notifier.php:1781
 #, php-format
 msgid "Your request to join %s was approved"
 msgstr ""
@@ -837,7 +837,7 @@ msgstr ""
 #: templates/partials/feed-card.php:67
 #: templates/partials/moderation/flag-card.php:74
 #: templates/partials/post-card.php:163
-#: templates/partials/reply-card.php:149
+#: templates/partials/reply-card.php:157
 #: templates/views/moderation.php:533
 #: templates/views/notifications.php:316
 #: templates/views/search.php:306
@@ -874,9 +874,9 @@ msgstr ""
 #: templates/partials/avatar.php:17
 #: templates/partials/feed-card.php:31
 #: templates/partials/post-card.php:124
-#: templates/partials/reply-card.php:119
-#: templates/partials/reply-card.php:265
-#: templates/partials/reply-card.php:271
+#: templates/partials/reply-card.php:127
+#: templates/partials/reply-card.php:273
+#: templates/partials/reply-card.php:279
 #: templates/views/notifications.php:226
 #: templates/views/single-post.php:313
 #: templates/views/single-post.php:503
@@ -1075,7 +1075,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:30
 #: includes/class-template-loader.php:1073
 #: includes/class-template-loader.php:1240
-#: includes/notifications/class-notifier.php:1678
+#: includes/notifications/class-notifier.php:1680
 #: includes/seo/class-schema-markup.php:525
 #: templates/partials/header.php:96
 #: templates/partials/header.php:98
@@ -1248,7 +1248,7 @@ msgid "%s join request"
 msgstr ""
 
 #: includes/admin/class-admin.php:419
-#: includes/notifications/class-notifier.php:1681
+#: includes/notifications/class-notifier.php:1683
 msgid "Your join request was answered"
 msgstr ""
 
@@ -1496,7 +1496,7 @@ msgstr ""
 #: jetonomy.php:634
 #: templates/partials/icon-picker.php:164
 #: templates/partials/post-badges.php:20
-#: templates/partials/reply-card.php:168
+#: templates/partials/reply-card.php:176
 #: templates/views/single-post.php:516
 msgid "Private"
 msgstr ""
@@ -1620,7 +1620,7 @@ msgstr ""
 #: includes/admin/views/replies.php:247
 #: includes/admin/views/spaces.php:281
 #: includes/admin/views/tags.php:154
-#: templates/partials/reply-card.php:293
+#: templates/partials/reply-card.php:301
 #: templates/views/my-spaces.php:136
 #: templates/views/single-post.php:760
 #: templates/views/space-edit.php:62
@@ -1639,7 +1639,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:595
 #: includes/admin/views/tags.php:81
 #: includes/admin/views/tags.php:155
-#: templates/partials/reply-card.php:315
+#: templates/partials/reply-card.php:323
 #: templates/views/notifications.php:210
 #: templates/views/notifications.php:340
 #: templates/views/single-post.php:808
@@ -1686,7 +1686,7 @@ msgstr ""
 #: includes/class-template-loader.php:474
 #: includes/class-template-loader.php:1770
 #: templates/partials/compose-fields.php:258
-#: templates/partials/composer.php:90
+#: templates/partials/composer.php:92
 #: templates/views/edit-profile.php:153
 #: templates/views/edit-profile.php:297
 #: templates/views/new-space.php:176
@@ -1969,7 +1969,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:136
 #: includes/admin/views/moderation.php:247
 #: includes/admin/views/replies.php:273
-#: includes/functions.php:1602
+#: includes/functions.php:1606
 #: templates/views/moderation.php:314
 #: templates/views/space-moderation.php:226
 msgid "Trash"
@@ -1980,7 +1980,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:246
 #: includes/admin/views/replies.php:286
 #: includes/class-template-loader.php:1798
-#: includes/functions.php:1601
+#: includes/functions.php:1605
 #: templates/partials/moderation/flag-card.php:31
 #: templates/views/moderation.php:222
 msgid "Spam"
@@ -4478,20 +4478,20 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:120
 #: includes/admin/views/spaces.php:83
-#: includes/functions.php:1654
+#: includes/functions.php:1658
 #: templates/partials/feed-card.php:125
 msgid "Open"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:121
 #: includes/admin/views/spaces.php:84
-#: includes/functions.php:1656
+#: includes/functions.php:1660
 msgid "Requires Approval"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:122
 #: includes/admin/views/spaces.php:85
-#: includes/functions.php:1658
+#: includes/functions.php:1662
 #: templates/partials/space-header.php:122
 msgid "Invite Only"
 msgstr ""
@@ -4499,21 +4499,21 @@ msgstr ""
 #: includes/admin/views/space-edit.php:130
 #: includes/admin/views/spaces.php:93
 #: includes/admin/views/spaces.php:171
-#: includes/functions.php:1631
+#: includes/functions.php:1635
 msgid "Active"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:131
 #: includes/admin/views/spaces.php:94
 #: includes/admin/views/spaces.php:172
-#: includes/functions.php:1633
+#: includes/functions.php:1637
 msgid "Archived"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:132
 #: includes/admin/views/spaces.php:95
 #: includes/admin/views/spaces.php:173
-#: includes/functions.php:1635
+#: includes/functions.php:1639
 msgid "Locked"
 msgstr ""
 
@@ -4571,7 +4571,7 @@ msgstr ""
 #: templates/partials/feed-card.php:50
 #: templates/partials/managed-by-card.php:23
 #: templates/partials/post-card.php:132
-#: templates/partials/reply-card.php:131
+#: templates/partials/reply-card.php:139
 #: templates/views/my-spaces.php:102
 #: templates/views/single-post.php:812
 #: templates/views/space-members.php:143
@@ -5367,8 +5367,8 @@ msgstr ""
 
 #: includes/api/class-base-controller.php:80
 #: includes/class-template-loader.php:1805
-#: templates/partials/reply-card.php:279
-#: templates/partials/reply-card.php:280
+#: templates/partials/reply-card.php:287
+#: templates/partials/reply-card.php:288
 #: templates/views/single-post.php:704
 #: templates/views/single-post.php:705
 #: templates/views/user-profile.php:194
@@ -5814,31 +5814,31 @@ msgstr ""
 msgid "The `id` parameter is required for space or post scope."
 msgstr ""
 
-#: includes/api/class-users-controller.php:532
-msgid "You do not have permission to upload a profile picture."
-msgstr ""
-
-#: includes/api/class-users-controller.php:604
+#: includes/api/class-users-controller.php:544
 msgid "Choose a display name from your own name fields."
 msgstr ""
 
-#: includes/api/class-users-controller.php:683
+#: includes/api/class-users-controller.php:563
+msgid "You do not have permission to upload a profile picture."
+msgstr ""
+
+#: includes/api/class-users-controller.php:689
 msgid "Site administrators can't delete their account from the app. Use the WordPress admin Users screen instead."
 msgstr ""
 
-#: includes/api/class-users-controller.php:691
+#: includes/api/class-users-controller.php:697
 msgid "Too many attempts. Please wait a while and try again."
 msgstr ""
 
-#: includes/api/class-users-controller.php:707
+#: includes/api/class-users-controller.php:713
 msgid "Type DELETE to confirm you want to permanently delete your account."
 msgstr ""
 
-#: includes/api/class-users-controller.php:722
+#: includes/api/class-users-controller.php:728
 msgid "That password is incorrect."
 msgstr ""
 
-#: includes/api/class-users-controller.php:766
+#: includes/api/class-users-controller.php:772
 msgid "We couldn't delete your account. Please try again or contact support."
 msgstr ""
 
@@ -6310,7 +6310,7 @@ msgstr ""
 
 #: includes/class-blocks.php:835
 #: includes/class-blocks.php:859
-#: templates/views/home.php:65
+#: templates/views/home.php:73
 msgid "Log in"
 msgstr ""
 
@@ -6409,7 +6409,7 @@ msgstr ""
 #: includes/notifications/class-notifier.php:692
 #: includes/notifications/class-notifier.php:756
 #: includes/notifications/class-notifier.php:784
-#: includes/notifications/class-notifier.php:1833
+#: includes/notifications/class-notifier.php:1835
 #: templates/views/notifications.php:226
 msgid "Someone"
 msgstr ""
@@ -6515,7 +6515,7 @@ msgid "On (object ID)"
 msgstr ""
 
 #: includes/class-privacy.php:348
-#: includes/notifications/class-notifier.php:1671
+#: includes/notifications/class-notifier.php:1673
 #: includes/permissions/class-capabilities.php:268
 msgid "Vote"
 msgstr ""
@@ -6674,7 +6674,7 @@ msgstr ""
 #: includes/class-template-loader.php:289
 #: includes/class-template-loader.php:292
 #: templates/partials/compose-topic-embed.php:210
-#: templates/partials/composer.php:97
+#: templates/partials/composer.php:99
 #: templates/views/new-post.php:120
 #, php-format
 msgid "Post %s"
@@ -6937,9 +6937,9 @@ msgstr ""
 #: includes/class-template-loader.php:1126
 #: includes/class-template-loader.php:1428
 #: includes/functions.php:526
-#: includes/notifications/class-notifier.php:1667
 #: includes/notifications/class-notifier.php:1669
-#: includes/notifications/class-notifier.php:1676
+#: includes/notifications/class-notifier.php:1671
+#: includes/notifications/class-notifier.php:1678
 #: templates/views/drafts.php:69
 #: templates/views/new-space.php:45
 #, php-format
@@ -7085,7 +7085,7 @@ msgid "Roadmap status updated"
 msgstr ""
 
 #: includes/class-template-loader.php:1768
-#: templates/partials/reply-card.php:165
+#: templates/partials/reply-card.php:173
 msgid "Accepted"
 msgstr ""
 
@@ -7587,21 +7587,21 @@ msgid "New Status"
 msgstr ""
 
 #. translators: 1: visibility level, e.g. "Private". 2: what it means.
-#: includes/functions.php:1558
+#: includes/functions.php:1562
 #, php-format
 msgctxt "space visibility option"
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: includes/functions.php:1599
+#: includes/functions.php:1603
 msgid "Published"
 msgstr ""
 
-#: includes/functions.php:1600
+#: includes/functions.php:1604
 msgid "Pending"
 msgstr ""
 
-#: includes/functions.php:1605
+#: includes/functions.php:1609
 #: templates/views/notifications.php:113
 #: templates/views/search.php:216
 msgid "All"
@@ -7835,7 +7835,7 @@ msgstr ""
 
 #. translators: %s: singular reply label.
 #: includes/integrations/class-buddypress.php:1043
-#: templates/partials/composer.php:84
+#: templates/partials/composer.php:86
 #: templates/views/user-profile.php:403
 #, php-format
 msgid "Private %s"
@@ -8946,9 +8946,9 @@ msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #: includes/notifications/class-notifier.php:590
-#: includes/notifications/class-notifier.php:1770
-#: includes/notifications/class-notifier.php:1790
-#: includes/notifications/class-notifier.php:1808
+#: includes/notifications/class-notifier.php:1772
+#: includes/notifications/class-notifier.php:1792
+#: includes/notifications/class-notifier.php:1810
 #, php-format
 msgid "the %s"
 msgstr ""
@@ -9038,9 +9038,9 @@ msgid "Your %1$s was %2$s by a moderator"
 msgstr ""
 
 #: includes/notifications/class-notifier.php:1123
-#: includes/notifications/class-notifier.php:1701
 #: includes/notifications/class-notifier.php:1703
-#: includes/notifications/class-notifier.php:1704
+#: includes/notifications/class-notifier.php:1705
+#: includes/notifications/class-notifier.php:1706
 msgid "Open the Community"
 msgstr ""
 
@@ -9049,88 +9049,88 @@ msgstr ""
 msgid "New content flag requires review"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1670
+#: includes/notifications/class-notifier.php:1672
 msgid "Mention"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1672
+#: includes/notifications/class-notifier.php:1674
 msgid "Reaction"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1673
+#: includes/notifications/class-notifier.php:1675
 msgid "Answer Accepted"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1674
+#: includes/notifications/class-notifier.php:1676
 msgid "Roadmap Update"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1677
+#: includes/notifications/class-notifier.php:1679
 msgid "Achievement"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1679
+#: includes/notifications/class-notifier.php:1681
 msgid "Report Reviewed"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1680
+#: includes/notifications/class-notifier.php:1682
 msgid "Join Request"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1682
+#: includes/notifications/class-notifier.php:1684
 #: templates/partials/icon-picker.php:53
-#: templates/views/home.php:51
+#: templates/views/home.php:57
 msgid "Welcome"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1683
+#: includes/notifications/class-notifier.php:1685
 msgid "Private Message"
 msgstr ""
 
 #. translators: %s: the topic or reply label, singular or plural.
-#: includes/notifications/class-notifier.php:1688
-#: includes/notifications/class-notifier.php:1692
+#: includes/notifications/class-notifier.php:1690
+#: includes/notifications/class-notifier.php:1694
 #: templates/partials/feed-card.php:116
 #, php-format
 msgid "View %s"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1696
+#: includes/notifications/class-notifier.php:1698
 msgid "View Answer"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1697
+#: includes/notifications/class-notifier.php:1699
 msgid "View Idea"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1699
+#: includes/notifications/class-notifier.php:1701
 msgid "View Your Badges"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1700
+#: includes/notifications/class-notifier.php:1702
 msgid "Review in Mod Queue"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1702
+#: includes/notifications/class-notifier.php:1704
 msgid "Review Request"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1705
+#: includes/notifications/class-notifier.php:1707
 msgid "Read Message"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1707
+#: includes/notifications/class-notifier.php:1709
 msgid "View in Community"
 msgstr ""
 
 #. translators: %s: space name
-#: includes/notifications/class-notifier.php:1798
+#: includes/notifications/class-notifier.php:1800
 #, php-format
 msgid "Your request to join %s was not approved"
 msgstr ""
 
 #. translators: 1: user display name, 2: space name
-#: includes/notifications/class-notifier.php:1832
+#: includes/notifications/class-notifier.php:1834
 #, php-format
 msgid "%1$s requested to join %2$s"
 msgstr ""
@@ -9779,21 +9779,21 @@ msgid "Upload Image"
 msgstr ""
 
 #. translators: %s: singular reply label.
-#: templates/partials/composer.php:62
+#: templates/partials/composer.php:64
 #, php-format
 msgid "%s editor"
 msgstr ""
 
-#: templates/partials/composer.php:77
+#: templates/partials/composer.php:79
 msgid "Use the toolbar to format."
 msgstr ""
 
-#: templates/partials/composer.php:78
+#: templates/partials/composer.php:80
 msgid "Use the toolbar to format · Ctrl+Enter to submit"
 msgstr ""
 
 #. translators: %s: singular topic label.
-#: templates/partials/composer.php:82
+#: templates/partials/composer.php:84
 #, php-format
 msgid "Only you, the %s author, and moderators will be able to read it."
 msgstr ""
@@ -9807,7 +9807,7 @@ msgstr ""
 #: templates/partials/feed-card.php:51
 #: templates/partials/managed-by-card.php:24
 #: templates/partials/post-card.php:133
-#: templates/partials/reply-card.php:132
+#: templates/partials/reply-card.php:140
 #: templates/views/my-spaces.php:102
 msgid "Mod"
 msgstr ""
@@ -10055,7 +10055,7 @@ msgstr ""
 
 #. translators: %s: the singular label of the item (the configured noun).
 #: templates/partials/post-card.php:56
-#: templates/partials/reply-card.php:223
+#: templates/partials/reply-card.php:231
 #: templates/views/single-post.php:619
 #, php-format
 msgid "Vote on this %s"
@@ -10092,79 +10092,79 @@ msgstr ""
 msgid "Private %1$s, visible to the %2$s author and moderators."
 msgstr ""
 
-#: templates/partials/reply-card.php:144
+#: templates/partials/reply-card.php:152
 msgid "OP"
 msgstr ""
 
 #. translators: %s: singular reply label.
-#: templates/partials/reply-card.php:156
+#: templates/partials/reply-card.php:164
 #, php-format
 msgid "Permalink to this %s"
 msgstr ""
 
 #. translators: 1: singular topic label; 2: singular reply label.
-#: templates/partials/reply-card.php:168
+#: templates/partials/reply-card.php:176
 #, php-format
 msgid "Only you, the %1$s author, and moderators can read this %2$s."
 msgstr ""
 
 #. translators: %s: display name of the member whose reply this answers.
-#: templates/partials/reply-card.php:176
+#: templates/partials/reply-card.php:184
 #, php-format
 msgid "in reply to %s"
 msgstr ""
 
-#: templates/partials/reply-card.php:252
-#: templates/partials/reply-card.php:253
+#: templates/partials/reply-card.php:260
+#: templates/partials/reply-card.php:261
 #: templates/views/single-post.php:651
 #: templates/views/single-post.php:652
 msgid "Log in to vote"
 msgstr ""
 
-#: templates/partials/reply-card.php:272
-#: templates/partials/reply-card.php:273
+#: templates/partials/reply-card.php:280
+#: templates/partials/reply-card.php:281
 #: assets/js/composer.js:548
 msgid "Quote"
 msgstr ""
 
-#: templates/partials/reply-card.php:286
-#: templates/partials/reply-card.php:287
+#: templates/partials/reply-card.php:294
+#: templates/partials/reply-card.php:295
 #: templates/views/single-post.php:753
 #: templates/views/single-post.php:754
 msgid "More options"
 msgstr ""
 
-#: templates/partials/reply-card.php:299
+#: templates/partials/reply-card.php:307
 #: templates/views/single-post.php:764
 msgid "Make Private"
 msgstr ""
 
-#: templates/partials/reply-card.php:299
+#: templates/partials/reply-card.php:307
 #: templates/views/single-post.php:764
 msgid "Make Public"
 msgstr ""
 
 #. translators: %s: singular topic label.
-#: templates/partials/reply-card.php:308
+#: templates/partials/reply-card.php:316
 #, php-format
 msgid "Split to %s"
 msgstr ""
 
-#: templates/partials/reply-card.php:343
-#: templates/partials/reply-card.php:344
+#: templates/partials/reply-card.php:351
+#: templates/partials/reply-card.php:352
 msgid "Accept as best answer"
 msgstr ""
 
-#: templates/partials/reply-card.php:345
+#: templates/partials/reply-card.php:353
 msgid "Accept"
 msgstr ""
 
-#: templates/partials/reply-card.php:366
-#: templates/partials/reply-card.php:367
+#: templates/partials/reply-card.php:374
+#: templates/partials/reply-card.php:375
 msgid "Remove accepted answer"
 msgstr ""
 
-#: templates/partials/reply-card.php:368
+#: templates/partials/reply-card.php:376
 msgid "Unaccept"
 msgstr ""
 
@@ -10471,34 +10471,40 @@ msgid "Save Profile"
 msgstr ""
 
 #. translators: %s: plural space label.
-#: templates/views/home.php:47
+#: templates/views/home.php:51
 #, php-format
 msgid "Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the %s you care about."
 msgstr ""
 
-#: templates/views/home.php:59
+#. translators: %s: plural space label.
+#: templates/views/home.php:53
+#, php-format
+msgid "Ask questions, share what you build, and join the discussion. Log in to post, vote, and follow the %s you care about."
+msgstr ""
+
+#: templates/views/home.php:65
 msgid "this week"
 msgstr ""
 
-#: templates/views/home.php:64
+#: templates/views/home.php:71
 #: templates/views/invite.php:57
 msgid "Create free account"
 msgstr ""
 
 #. translators: 1: singular space label, 2: plural space label, 3: plural topic label, 4: plural member label.
-#: templates/views/home.php:90
+#: templates/views/home.php:98
 #, php-format
 msgid "Open any %1$s to read or start a discussion - %3$s live inside %2$s, each with its own %4$s and rules."
 msgstr ""
 
 #. translators: %s: plural category label.
-#: templates/views/home.php:112
+#: templates/views/home.php:120
 #, php-format
 msgid "No %s yet. Check back soon!"
 msgstr ""
 
 #. translators: %s: the plural space label the site owner configured (e.g. spaces, groups).
-#: templates/views/home.php:168
+#: templates/views/home.php:176
 #, php-format
 msgid "Other %s"
 msgstr ""

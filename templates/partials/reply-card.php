@@ -77,6 +77,14 @@ $jt_rp_can_split = $jt_reply_viewer && $jt_rp_pe::can( $jt_reply_viewer, 'move_p
 // reactions - Content_Gate answers all of them with a 409.
 $jt_thread_live = 'publish' === ( $post->status ?? 'publish' ) && 'publish' === ( $reply->status ?? 'publish' );
 
+// Reply and Quote fill the composer under the thread, so they show only when
+// single-post.php renders it: the viewer may reply in this space and the topic
+// is open, or they moderate it. Otherwise the buttons did nothing.
+$jt_card_viewer = get_current_user_id();
+$jt_can_reply   = $jt_thread_live && $jt_card_viewer
+	&& \Jetonomy\Permissions\Permission_Engine::can( $jt_card_viewer, 'create_replies', (int) $post->space_id )
+	&& ( empty( $post->is_closed ) || \Jetonomy\Permissions\Permission_Engine::can( $jt_card_viewer, 'moderate', (int) $post->space_id ) );
+
 // Shareable permalink for THIS reply — the affordance that makes a reply a
 // linkable thing rather than something only a notification can reach. The
 // timestamp carries it (Discourse/Reddit/GitHub convention), so there is no
@@ -258,7 +266,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			<?php endif; ?>
 		</div>
 		<?php endif; ?>
-		<?php if ( $jt_thread_live && is_user_logged_in() ) : ?>
+		<?php if ( $jt_can_reply ) : ?>
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"
 				data-reply-id="<?php echo (int) $reply->id; ?>"

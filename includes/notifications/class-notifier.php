@@ -1146,7 +1146,9 @@ class Notifier {
 				'moderation',
 				$object_type,
 				$object_id,
-				__( 'New content flag requires review', 'jetonomy' )
+				__( 'New content flag requires review', 'jetonomy' ),
+				// The email's "Review in Mod Queue" button opens the queue, not the home page.
+				\Jetonomy\route_url( 'moderation' )
 			);
 		}
 	}

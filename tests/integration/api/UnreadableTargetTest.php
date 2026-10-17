@@ -87,6 +87,9 @@ class UnreadableTargetTest extends WP_UnitTestCase {
 		$this->assertSame( 404, $res->get_status() );
 	}
 
+	/**
+	 * @covers-existing The unreadable-target fix must not hide a trashed topic from someone who can read it.
+	 */
 	public function test_a_readable_trashed_topic_still_says_it_is_trashed(): void {
 		$res = $this->call( 'POST', '/bookmarks', array( 'post_id' => $this->topic( $this->space( 'public' ), 'trash' ) ) );
 		$this->assertSame( 409, $res->get_status(), 'the control case: a public trashed topic keeps its 409' );
