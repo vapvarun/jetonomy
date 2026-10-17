@@ -217,6 +217,7 @@ $crumbs = array(
 						<?php // Moderator member-moderation controls (frontend parity). ?>
 						<?php if ( $jt_can_moderate && $jt_restriction ) : ?>
 							<span class="jt-badge jt-badge-danger jt-flex-shrink-0"><?php echo esc_html( $jt_restriction_label ); ?></span>
+							<?php if ( null === \Jetonomy\Moderation\Moderation_Permissions::lift_error( $jt_viewer_id, $jt_restriction ) ) : // Lifting needs the authority that issued it. ?>
 							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
 								data-wp-on--click="actions.liftRestriction"
 								data-restriction-id="<?php echo absint( $jt_restriction->id ); ?>"
@@ -225,6 +226,7 @@ $crumbs = array(
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
 								<?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?>
 							</button>
+							<?php endif; ?>
 						<?php elseif ( $jt_can_moderate ) : ?>
 							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
 								data-wp-on--click="actions.restrictMember"

@@ -169,7 +169,9 @@ $restriction_labels = array(
 							<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a><?php echo current_user_can( 'jetonomy_moderate' ) ? ' | ' : ''; ?></span>
 							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<?php if ( $jt_restriction ) : ?>
+									<?php if ( null === \Jetonomy\Moderation\Moderation_Permissions::lift_error( get_current_user_id(), $jt_restriction ) ) : // Lifting needs the authority that issued it. ?>
 							<span class="ban"><a href="#" class="jetonomy-unban-user" data-restriction-id="<?php echo absint( $jt_restriction->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></a> | </span>
+								<?php endif; ?>
 							<?php else : ?>
 							<span class="ban"><a href="#" class="jetonomy-ban-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-username="<?php echo esc_attr( $u->user_login ); ?>"><?php esc_html_e( 'Ban', 'jetonomy' ); ?></a> | </span>
 							<?php endif; ?>

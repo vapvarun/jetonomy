@@ -366,6 +366,7 @@ $crumbs = array(
 							<div class="jt-mod-flag-excerpt"><?php echo esc_html( (string) $jt_ban->reason ); ?></div>
 						<?php endif; ?>
 						<div class="jt-mod-flag-foot">
+							<?php if ( null === Moderation_Permissions::lift_error( $user_id, $jt_ban ) ) : // Lifting needs the authority that issued it. ?>
 							<button type="button"
 								class="jt-btn jt-btn-ghost jt-btn-sm jt-flex-shrink-0"
 								data-wp-on--click="actions.liftRestriction"
@@ -374,6 +375,7 @@ $crumbs = array(
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
 								<?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?>
 							</button>
+							<?php endif; ?>
 						</div>
 					</li>
 				<?php endforeach; ?>

@@ -500,6 +500,9 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo esc_html( $issuer ? $issuer->display_name : __( 'System', 'jetonomy' ) );
 									break;
 								case 'actions':
+									if ( null !== \Jetonomy\Moderation\Moderation_Permissions::lift_error( get_current_user_id(), $ban ) ) {
+										break; // Lifting needs the authority that issued it.
+									}
 									?>
 									<button type="button" class="jt-btn jt-btn-sm jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></button>
 									<?php
