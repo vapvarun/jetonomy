@@ -890,20 +890,15 @@ class Template_Loader {
 	 * got a body reading "Post not found" and a <title> reading the private
 	 * topic's real title, and a viewer who had blocked the author got their
 	 * post title in their browser tab beside a "you blocked this user" body.
+	 * That gate is now title_withheld(), asked by the caller before this runs.
 	 *
 	 * @param string              $route 'post' | 'space'.
 	 * @param string              $slug  Object slug from the route.
 	 * @param array<string,mixed> $seo   Resolved seo_settings().
-	 * @return string|null Title fragment; '' when the object cannot be resolved
-	 *                     (caller falls back to the slug label — that is just the
-	 *                     URL echoed back, so it reveals nothing); null when the
-	 *                     object EXISTS but this viewer may not be shown its text,
-	 *                     which the caller must render as a neutral label. The two
-	 *                     are distinct on purpose: the slug is derived from the
-	 *                     title, so falling back to it for a gated post would
-	 *                     re-leak in hyphens the words the gate just withheld.
+	 * @return string Title fragment; '' when the object cannot be resolved
+	 *                (caller falls back to the slug label).
 	 */
-	private static function seo_title_from_pattern( string $route, string $slug, array $seo ): ?string {
+	private static function seo_title_from_pattern( string $route, string $slug, array $seo ): string {
 		$key     = 'post' === $route ? 'seo_post_title' : 'seo_space_title';
 		$pattern = (string) ( $seo[ $key ] ?? '' );
 		if ( '' === $pattern || '' === $slug ) {
@@ -923,12 +918,6 @@ class Template_Loader {
 			if ( ! $post ) {
 				return '';
 			}
-			// The gate the rest of the <head> already had. Same predicate as the
-			// og:* / description branch in set_seo_meta() so the tab title and the
-			// tags beneath it can never disagree about the same post again.
-			if ( ! \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
-				return null;
-			}
 			$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 			return str_replace(
 				array( '{post_title}', '{space_name}' ),
@@ -941,13 +930,36 @@ class Template_Loader {
 		if ( ! $space ) {
 			return '';
 		}
-		// Concealed space: the tab title must not name it. NULL (not '') for the
-		// same reason as the gated-post branch above — the slug fallback would
-		// re-leak in hyphens the words this gate withholds.
-		if ( \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
-			return null;
-		}
 		return str_replace( '{space_name}', (string) $space->title, $pattern );
+	}
+
+	/**
+	 * Must this route's title leave out the object it names?
+	 *
+	 * True when the topic or space exists but the viewer may not be shown its
+	 * words: a gated or blocked-author topic, a hidden space, or a private space
+	 * a guest is not shown (Space::name_withheld_from_viewer()). Asked once, up
+	 * front, for every route that names a space or topic, because each title
+	 * below (pattern, display name, slug fallback) is built from those words -
+	 * the slug included, so falling back to it would re-leak them in hyphens.
+	 *
+	 * @param array $data Route data (route, slug).
+	 */
+	private static function title_withheld( array $data ): bool {
+		$slug    = (string) ( $data['slug'] ?? '' );
+		$user_id = get_current_user_id();
+		if ( '' === $slug ) {
+			return false;
+		}
+		if ( 'post' === $data['route'] ) {
+			$post = \Jetonomy\Models\Post::find_by_slug( $slug );
+			return $post && ! \Jetonomy\Permissions\Permission_Engine::can_render_post_text( $user_id, $post );
+		}
+		if ( in_array( $data['route'], array( 'space', 'space-members', 'space-roadmap', 'space-moderation', 'new-post' ), true ) ) {
+			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
+			return $space && \Jetonomy\Models\Space::name_withheld_from_viewer( $space, $user_id );
+		}
+		return false;
 	}
 
 	/**
@@ -968,10 +980,13 @@ class Template_Loader {
 	private static function seo_display_name( string $route, string $slug, string $fallback ): string {
 		if ( in_array( $route, array( 'space', 'space-members', 'space-roadmap', 'space-moderation', 'new-post' ), true ) ) {
 			$sp = \Jetonomy\Models\Space::find_by_slug( $slug );
-			// Concealed spaces must not leak their title into <title> — the
-			// viewer gets the prettified slug they themselves typed, nothing
-			// more (pairs with the 404 in maybe_set_404).
-			if ( $sp && ! empty( $sp->title ) && ! \Jetonomy\Models\Space::concealed_from_viewer( $sp, get_current_user_id() ) ) {
+			// Asked here as well as in title_withheld(): the composer's og/meta
+			// reaches this without the title gate. Neutral name, not the slug,
+			// which is built from the withheld title.
+			if ( $sp && \Jetonomy\Models\Space::name_withheld_from_viewer( $sp, get_current_user_id() ) ) {
+				return community_title();
+			}
+			if ( $sp && ! empty( $sp->title ) ) {
 				return (string) $sp->title;
 			}
 		} elseif ( 'category' === $route ) {
@@ -996,7 +1011,9 @@ class Template_Loader {
 	 */
 	private static function compose_route_title( string $slug, string $slug_pretty ): string {
 		$space = '' !== $slug ? \Jetonomy\Models\Space::find_by_slug( $slug ) : null;
-		$label = \Jetonomy\compose_label( $space ? (string) $space->type : '' );
+		// A withheld space's type ("Ask a Question") says something about it too.
+		$shown = $space && ! \Jetonomy\Models\Space::name_withheld_from_viewer( $space, get_current_user_id() );
+		$label = \Jetonomy\compose_label( $shown ? (string) $space->type : '' );
 
 		if ( '' === $slug ) {
 			return $label;
@@ -1026,6 +1043,12 @@ class Template_Loader {
 					$parts['title'] = __( 'Page not available', 'jetonomy' );
 					return $parts;
 				}
+				// The topic or space exists but this viewer may not be shown its
+				// words: the neutral community title, as on the refusal page.
+				if ( self::title_withheld( $data ) ) {
+					$parts['title'] = community_title();
+					return $parts;
+				}
 				$slug_pretty = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
 
 				// Owner-configurable title patterns (Settings → SEO). These are the
@@ -1039,15 +1062,6 @@ class Template_Loader {
 				$seo = \Jetonomy\seo_settings();
 				if ( 'post' === $data['route'] || 'space' === $data['route'] ) {
 					$patterned = self::seo_title_from_pattern( $data['route'], (string) $data['slug'], $seo );
-					// null = the post exists but this viewer may not be shown its
-					// text (private/pending/trashed, or they blocked the author).
-					// Neutral label rather than the slug fallback below, which is
-					// built FROM the title and would hand back the same words
-					// (1.8.0).
-					if ( null === $patterned ) {
-						$parts['title'] = community_title();
-						return $parts;
-					}
 					if ( '' !== $patterned ) {
 						$parts['title'] = $patterned;
 						return $parts;
@@ -1205,10 +1219,9 @@ class Template_Loader {
 					case 'space-roadmap':
 					case 'space-moderation':
 						$space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
-						// A concealed space's <head> must look exactly like a
-						// missing space's: no title/desc/og/image (pairs with the
-						// 404 in maybe_set_404).
-						if ( $space && \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+						// A space the viewer may not see by name gets the <head>
+						// of a missing space: no title/desc/og/image.
+						if ( $space && \Jetonomy\Models\Space::name_withheld_from_viewer( $space, get_current_user_id() ) ) {
 							$space = null;
 						}
 						if ( $space ) {

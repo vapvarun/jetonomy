@@ -122,6 +122,27 @@ class SpaceMember extends Model {
 		} else {
 			$source = in_array( $source, array( 'manual', 'invite', 'rule', 'tier' ), true ) ? $source : 'manual';
 
+			// A 'tier' row no rule grants any more reads as no membership (see
+			// live_role()) but is still in the table, so this grant takes it
+			// over: otherwise a person added by hand keeps the 'tier' label and
+			// the next roster sweep removes them.
+			$written = static::db()->update(
+				static::table(),
+				array(
+					'role'   => $role,
+					'source' => $source,
+				),
+				array(
+					'space_id' => $space_id,
+					'user_id'  => $user_id,
+					'source'   => 'tier',
+				)
+			);
+			if ( $written ) {
+				self::bust_privileged_cache( $space_id );
+				return true;
+			}
+
 			// IGNORE + the (space_id, user_id) key: when two requests join at
 			// once, only the one whose row lands counts the member and fires
 			// the join hooks; the other is a no-op, not a second join.
@@ -523,14 +544,17 @@ class SpaceMember extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = static::db()->get_results(
 			static::db()->prepare(
-				'SELECT space_id, role FROM ' . static::table() . " WHERE user_id = %d AND space_id IN ({$placeholders})",
+				'SELECT space_id, role, source FROM ' . static::table() . " WHERE user_id = %d AND space_id IN ({$placeholders})",
 				array_merge( array( $user_id ), $space_ids )
 			)
 		) ?: array();
 
+		// shortcut: live_role() resolves the rules once per 'tier' row (one memoized
+		// rule query per such space); fine for the handful of plan spaces a member
+		// holds, batch the rule lists if a viewer ever holds hundreds.
 		$found = array();
 		foreach ( $rows as $row ) {
-			$found[ (int) $row->space_id ] = (string) $row->role;
+			$found[ (int) $row->space_id ] = self::live_role( $row, $user_id );
 		}
 		foreach ( $space_ids as $sid ) {
 			self::$role_cache[ $sid . '|' . $user_id ] = $found[ $sid ] ?? null;
@@ -559,18 +583,38 @@ class SpaceMember extends Model {
 
 		$key = $space_id . '|' . $user_id;
 		if ( ! array_key_exists( $key, self::$role_cache ) ) {
-			$value = static::db()->get_var(
+			$row = static::db()->get_row(
 				static::db()->prepare(
-					'SELECT role FROM ' . static::table() . ' WHERE space_id = %d AND user_id = %d',
+					'SELECT space_id, role, source FROM ' . static::table() . ' WHERE space_id = %d AND user_id = %d',
 					$space_id,
 					$user_id
 				)
 			);
 
-			self::$role_cache[ $key ] = null !== $value ? (string) $value : null;
+			self::$role_cache[ $key ] = $row ? self::live_role( $row, $user_id ) : null;
 		}
 
 		return self::$role_cache[ $key ];
+	}
+
+	/**
+	 * The role a roster row stands for right now.
+	 *
+	 * A 'tier' row was written by Sync Members or a membership event on the
+	 * strength of an access rule, so it counts only while a rule still admits
+	 * the person, and for no more than that rule grants. Without this a deleted
+	 * or narrowed rule kept every synced person posting until the hourly
+	 * reconcile removed the row.
+	 *
+	 * @param object $row     Row with space_id, role and source.
+	 * @param int    $user_id Member.
+	 */
+	private static function live_role( object $row, int $user_id ): ?string {
+		if ( 'tier' !== ( $row->source ?? '' ) ) {
+			return (string) $row->role;
+		}
+		$access = AccessRule::resolve_access( $user_id, (int) $row->space_id );
+		return $access ? AccessRule::cap_space_role( (string) $access['grants'], (string) $row->role, (string) $access['rule_type'] ) : null;
 	}
 
 	/**
@@ -1138,16 +1182,20 @@ class SpaceMember extends Model {
 	 * @param int $last_space Space id of the previous page's last row.
 	 * @param int $last_user  User id of the previous page's last row.
 	 * @param int $limit      Page size.
+	 * @param int $only_space Limit to one space; 0 for every space.
 	 * @return object[] Rows with space_id, user_id.
 	 */
-	public static function list_tier_rows_after( int $last_space, int $last_user, int $limit ): array {
+	public static function list_tier_rows_after( int $last_space, int $last_user, int $limit, int $only_space = 0 ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
 				'SELECT space_id, user_id FROM ' . static::table() . "
 				 WHERE source = 'tier'
+				   AND ( %d = 0 OR space_id = %d )
 				   AND ( space_id > %d OR ( space_id = %d AND user_id > %d ) )
 				 ORDER BY space_id ASC, user_id ASC
 				 LIMIT %d",
+				$only_space,
+				$only_space,
 				$last_space,
 				$last_space,
 				$last_user,

@@ -50,7 +50,7 @@ Every member of a space holds one of four roles.
 | **Moderator** | Yes | Yes | Yes | No |
 | **Admin** | Yes | Yes | Yes | Yes |
 
-**Viewer** is read-only. A viewer is on the space's member list but cannot post, reply or vote there. Use it for people you want to follow a space without taking part. It is also the role that **Read** access rules give out.
+**Viewer** can read and report. A viewer is on the space's member list but cannot post, reply or vote there. Use it for people you want to follow a space without taking part. It is also the role that **Read** access rules give out.
 
 **Member** is the default for anyone who joins.
 

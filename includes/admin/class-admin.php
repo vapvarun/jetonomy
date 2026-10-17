@@ -28,6 +28,7 @@ class Admin {
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
+		add_action( 'admin_page_access_denied', array( $this, 'explain_access_rules_refusal' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_notices', array( $this, 'render_permalink_notice' ) );
 		add_action( 'admin_init', array( $this, 'maybe_render_setup_wizard' ) );
@@ -1498,6 +1499,37 @@ class Admin {
 		$total_pages = (int) ceil( $tags_total / $per_page );
 
 		include JETONOMY_DIR . 'includes/admin/views/tags.php';
+	}
+
+	/**
+	 * Tell a space admin why the Access Rules screen is closed to them.
+	 *
+	 * Rules are managed by site administrators only (jetonomy_manage_spaces).
+	 * WordPress refuses the page before Jetonomy runs, with a sentence that
+	 * reads like a broken link; this runs on WordPress's own refusal hook and
+	 * answers the space admin of that space in plain words instead.
+	 */
+	public function explain_access_rules_refusal(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only routing of a refusal page.
+		if ( 'jetonomy-spaces' !== ( $_GET['page'] ?? '' ) || 'access' !== ( $_GET['tab'] ?? '' ) ) {
+			return;
+		}
+		$space = Space::find( absint( $_GET['space_id'] ?? 0 ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		if ( ! $space || ! \Jetonomy\Permissions\Permission_Engine::is_space_admin( get_current_user_id(), (int) $space->id ) ) {
+			return;
+		}
+		wp_die(
+			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+			esc_html( sprintf( __( 'Only site administrators can manage access rules for this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
+			esc_html__( 'Access Rules', 'jetonomy' ),
+			array(
+				'response'  => 403,
+				'link_url'  => esc_url( \Jetonomy\route_url( 'space', $space->slug ) ),
+				/* translators: %s: space title. */
+				'link_text' => esc_html( sprintf( __( 'Back to %s', 'jetonomy' ), $space->title ) ),
+			)
+		);
 	}
 
 	public function render_spaces(): void {

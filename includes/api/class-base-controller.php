@@ -100,6 +100,25 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * A space, or a 404 when this viewer may not know it exists.
+	 *
+	 * 404 rather than 403 for a hidden space (or one in a hidden category):
+	 * a 403 would confirm to a stranger that the space exists, which the
+	 * page itself never does. Every space-scoped read route asks this first,
+	 * then refuses a listed private space with 403.
+	 *
+	 * @param int $id Space ID.
+	 * @return object|WP_Error
+	 */
+	protected function find_unconcealed_space( int $id ) {
+		$space = \Jetonomy\Models\Space::find( $id );
+		if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+			return $this->not_found( 'Space' );
+		}
+		return $space;
+	}
+
+	/**
 	 * Standard validation error.
 	 */
 	protected function validation_error( string $message ): WP_Error {

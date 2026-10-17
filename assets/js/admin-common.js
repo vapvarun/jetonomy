@@ -87,7 +87,7 @@
 				// A rule admits; it does not restrict, so no "but not take part".
 				grants: {
 					/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
-					read:        sprintf( __( 'read posts and %s', 'jetonomy' ), REPLIES ),
+					read:        sprintf( __( 'read and report posts and %s', 'jetonomy' ), REPLIES ),
 					participate: __( 'read, post, reply, vote and report', 'jetonomy' ), // jt-terms-ok: "reply" is the verb here, not the noun.
 					full:        sprintf( /* translators: %s: topic label, plural lowercase (e.g. "topics"). */ __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s %s', 'jetonomy' ), TOPICS ), // jt-terms-ok: "reply" is the verb; the noun is the placeholder.
 				},
@@ -1178,11 +1178,12 @@
 				}
 
 				// Roster role is derived, never chosen: read -> viewer,
-				// participate -> member, full -> moderator. Matches
-				// AccessRule::cap_space_role() on the server, which is the
-				// authority - this only keeps the hidden field honest.
+				// participate and full -> member (a rule never makes a
+				// moderator). Matches AccessRule::cap_space_role() on the
+				// server, which is the authority - this only keeps the hidden
+				// field and the preview honest.
 				function syncDerivedRole() {
-					var map = { read: 'viewer', participate: 'member', full: 'moderator' };
+					var map = { read: 'viewer', participate: 'member', full: 'member' };
 					$('#rule-space-role').val(map[$('#rule-grants').val()] || 'viewer');
 				}
 
@@ -1239,9 +1240,8 @@
 					space_id: $btn.data('space-id'),
 					rule_value: $btn.data('value'),
 					// The server reads the rule by id and derives the roster role
-					// from its grants; space_role is sent only for older builds.
-					rule_id: $btn.data('id'),
-					space_role: $btn.data('role')
+					// from its grants.
+					rule_id: $btn.data('id')
 				}).done(function(res) {
 					if (res.success) {
 						self.toast(res.data.message);

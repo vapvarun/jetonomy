@@ -103,9 +103,20 @@ class Search_Controller extends Base_Controller {
 	 * GET /jetonomy/v1/search — Full-text search across posts, replies, or spaces.
 	 */
 	public function search( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$q         = trim( (string) $request->get_param( 'q' ) );
-		$type      = $request->get_param( 'type' ) ?? 'post';
-		$space_id  = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
+		$q        = trim( (string) $request->get_param( 'q' ) );
+		$type     = $request->get_param( 'type' ) ?? 'post';
+		$space_id = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
+		// A space the viewer cannot read is refused as /spaces/{id}/posts
+		// refuses it, not answered with an empty list that hides the refusal.
+		if ( $space_id ) {
+			$space = $this->find_unconcealed_space( $space_id );
+			if ( is_wp_error( $space ) ) {
+				return $space;
+			}
+			if ( ! $this->check_permission( 'read', $space_id ) ) {
+				return $this->permission_error();
+			}
+		}
 		$date_from = $request->get_param( 'date_from' ) ? sanitize_text_field( $request->get_param( 'date_from' ) ) : null;
 		$date_to   = $request->get_param( 'date_to' ) ? sanitize_text_field( $request->get_param( 'date_to' ) ) : null;
 		$author_id = $request->get_param( 'author_id' ) ? absint( $request->get_param( 'author_id' ) ) : null;

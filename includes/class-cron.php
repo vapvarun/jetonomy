@@ -95,8 +95,8 @@ class Cron {
 	 */
 	public static function unschedule(): void {
 		// The recurring jobs plus the one-off ones: trust-sweep batches, per-member
-		// Gravatar checks and the scheduled-topic publisher.
-		$hooks = array_merge( array_keys( self::RECURRING ), array( 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK ) );
+		// Gravatar checks, the scheduled-topic publisher and the per-space roster sweep.
+		$hooks = array_merge( array_keys( self::RECURRING ), array( 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK, Membership_Roster_Sync::SWEEP_HOOK ) );
 		foreach ( $hooks as $hook ) {
 			Queue::cancel( $hook );
 		}

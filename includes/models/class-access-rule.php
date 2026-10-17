@@ -33,6 +33,12 @@ class AccessRule extends Model {
 			),
 			$data
 		);
+		// The stored role is what the rules table shows and what a sync would
+		// write, so it is capped on the way in for every writer (REST, wp-admin,
+		// Pro provisioners), not only on the way out.
+		if ( isset( $data['space_role'] ) ) {
+			$data['space_role'] = self::cap_space_role( (string) ( $data['grants'] ?? 'read' ), (string) $data['space_role'] );
+		}
 
 		$id = static::insert( $data );
 
@@ -86,8 +92,12 @@ class AccessRule extends Model {
 	}
 
 	public static function delete( int $id ): bool|\WP_Error {
+		$rule   = static::find( $id );
 		$result = parent::delete( $id );
 		self::reset_memo();
+		if ( $rule && true === $result ) {
+			\Jetonomy\Membership_Roster_Sync::queue_space_sweep( (int) $rule->space_id );
+		}
 		return $result;
 	}
 
@@ -368,19 +378,18 @@ class AccessRule extends Model {
 	 * upgrade - the stored value is left alone, but it cannot buy more power than the
 	 * rule advertises.
 	 *
-	 * A `membership` rule is capped harder still: never above `member`, whatever
-	 * its grants say. A membership rule means "everyone holding this plan", and
-	 * nobody should become a space moderator by buying something - moderation is
-	 * an appointment, made per person on the Members tab. Role, capability and
-	 * trust-level rules are deliberate administrative choices about a known
-	 * group, so they keep the full ladder.
+	 * No rule ever records anyone above `member`, whatever its type or grants
+	 * (owner decision 2026-10-17): Full is full participation, never moderation.
+	 * Moderators and admins are appointed per person on the Members tab.
 	 *
 	 * @param string $grants     read | participate | full.
 	 * @param string $space_role Requested roster role.
-	 * @param string $rule_type  Rule type; `membership` is capped at member.
+	 * @param string $rule_type  Rule type. Unused since every type shares one
+	 *                           ladder; kept because adapters pass it.
 	 * @return string The requested role, or the highest the rule justifies.
 	 */
 	public static function cap_space_role( string $grants, string $space_role, string $rule_type = '' ): string {
+		unset( $rule_type );
 		$ladder  = array(
 			'viewer'    => 1,
 			'member'    => 2,
@@ -390,15 +399,10 @@ class AccessRule extends Model {
 		$ceiling = array(
 			'read'        => 'viewer',
 			'participate' => 'member',
-			'full'        => 'moderator',
+			'full'        => 'member',
 		);
 
-		$max = $ceiling[ $grants ] ?? 'viewer';
-
-		if ( 'membership' === $rule_type && $ladder[ $max ] > $ladder['member'] ) {
-			$max = 'member';
-		}
-
+		$max  = $ceiling[ $grants ] ?? 'viewer';
 		$want = $ladder[ $space_role ] ?? 1;
 
 		return $want > $ladder[ $max ] ? $max : $space_role;
