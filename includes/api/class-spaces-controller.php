@@ -491,7 +491,9 @@ class Spaces_Controller extends Base_Controller {
 							if ( null !== $visibility && $space->visibility !== $visibility ) {
 								return false;
 							}
-							return \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $space->id );
+							// An archived or locked space refuses every new topic, so it is no target.
+							return \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $space->id )
+								&& true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $space->id );
 						}
 					)
 				);
@@ -731,14 +733,16 @@ class Spaces_Controller extends Base_Controller {
 		$id    = absint( $request->get_param( 'id' ) );
 		$space = Space::find( $id );
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
-		}
-
+		// Authorise before looking the space up: a non-admin gets the same 403 for a
+		// space that exists and one that does not (site admins still get the 404).
 		$user_id = get_current_user_id();
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
 			return $this->permission_error();
+		}
+
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
 		}
 
 		// An archived or locked space is read-only to its own admins: a site
@@ -891,14 +895,16 @@ class Spaces_Controller extends Base_Controller {
 		$id    = absint( $request->get_param( 'id' ) );
 		$space = Space::find( $id );
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
-		}
-
+		// Authorise before looking the space up: a non-admin gets the same 403 for a
+		// space that exists and one that does not (site admins still get the 404).
 		$user_id = get_current_user_id();
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
 			return $this->permission_error();
+		}
+
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
 		}
 
 		// Deleting a space defaults to TRANSFER, never to destroying content.
@@ -1329,6 +1335,13 @@ class Spaces_Controller extends Base_Controller {
 		$role    = sanitize_text_field( $request->get_param( 'role' ) );
 		$space   = Space::find( $id );
 
+		$current_user_id = get_current_user_id();
+
+		// Before the lookup: a missing space and a refused one look the same.
+		if ( ! $this->is_space_admin( $id, $current_user_id ) ) {
+			return $this->permission_error();
+		}
+
 		if ( ! $space ) {
 			return $this->not_found( 'Space' );
 		}
@@ -1338,12 +1351,6 @@ class Spaces_Controller extends Base_Controller {
 				/* translators: %s: comma-separated list of valid space roles. */
 				sprintf( __( 'Invalid role. Allowed: %s.', 'jetonomy' ), implode( ', ', self::VALID_ROLES ) )
 			);
-		}
-
-		$current_user_id = get_current_user_id();
-
-		if ( ! $this->is_space_admin( $id, $current_user_id ) ) {
-			return $this->permission_error();
 		}
 
 		if ( ! SpaceMember::is_member( $id, $user_id ) ) {
@@ -1396,14 +1403,16 @@ class Spaces_Controller extends Base_Controller {
 		$id    = absint( $request->get_param( 'id' ) );
 		$space = Space::find( $id );
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
-		}
-
+		// Authorise before looking the space up: a non-admin gets the same 403 for a
+		// space that exists and one that does not (site admins still get the 404).
 		$user_id = get_current_user_id();
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
 			return $this->permission_error();
+		}
+
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
 		}
 
 		$max_uses   = absint( $request->get_param( 'max_uses' ) );
@@ -1460,17 +1469,18 @@ class Spaces_Controller extends Base_Controller {
 		$id    = absint( $request->get_param( 'id' ) );
 		$space = Space::find( $id );
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
-		}
-
 		// Space ADMIN, not merely privileged — matching generate_invite(). An
 		// invite token is a bearer credential into a space that may be hidden;
 		// listing them is disclosing them, so a moderator is not enough. Note
 		// the route's permission_callback is only the community-visibility
-		// gate; this is the check that actually authorises the caller.
+		// gate; this is the check that actually authorises the caller. Checked
+		// before the lookup so a missing space and a refused one look the same.
 		if ( ! $this->is_space_admin( $id, get_current_user_id() ) ) {
 			return $this->permission_error();
+		}
+
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
 		}
 
 		$pagination = $this->get_pagination( $request );
@@ -1493,12 +1503,14 @@ class Spaces_Controller extends Base_Controller {
 		$invite_id = absint( $request->get_param( 'invite_id' ) );
 		$space     = Space::find( $id );
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
-		}
-
+		// Authorise before looking the space up: a non-admin gets the same 403 for a
+		// space that exists and one that does not (site admins still get the 404).
 		if ( ! $this->is_space_admin( $id, get_current_user_id() ) ) {
 			return $this->permission_error();
+		}
+
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
 		}
 
 		// InviteLink::revoke() scopes its DELETE to BOTH the row id and the

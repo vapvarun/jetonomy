@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.recount",
-  "free": "c2c2406a",
-  "pro": "04c8303",
-  "walked_at": "2026-10-17T09:52:59Z",
+  "free": "5680944e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T12:40:17Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -18,24 +18,19 @@
   "checks": {
     "c-admin-recount.1": {
       "result": "pass",
-      "evidence": "Set Help Desk member_count 24->999 and topic 5279 reply_count 6->99 in the DB; Recount counters -> confirm dialog -> button 'Recounting\u2026' disabled -> notice 'Counters rebuilt from your content.'; values back to 24 and 6"
+      "evidence": "Set Help Desk member_count 24->999 and topic 5279 reply_count 6->99 in the DB; Recount counters -> confirm dialog -> button 'Recounting…' disabled -> notice 'Counters rebuilt from your content.'; values back to 24 and 6"
     },
     "c-admin-recount.2": {
       "result": "pass",
       "evidence": "vote_score of 'Dark mode for the community on phones' set 0->77; POST /admin/recount type=votes -> 200 status ok, post_vote_scores 1, score back to 0 (sum of votes)"
     },
     "c-admin-recount.3": {
-      "result": "fail",
-      "expected": "type outside all/posts/spaces/votes/users is refused by the enum",
-      "actual": "type=spaces -> 200 with space_post_counts, space_member_counts, category_space_counts (ok), but type='bogus' -> 200 and it ran the full recount (post_reply_counts, vote scores, user counts...). The enum is not enforced",
-      "url": "http://forums.local/wp-json/jetonomy/v1/admin/recount"
+      "result": "pass",
+      "evidence": "POST /admin/recount type=spaces -> 200 {space_post_counts:0, space_member_counts:0, category_space_counts:1}; type=bogus -> 400 rest_invalid_param 'type is not one of all, posts, spaces, votes, and users.'"
     },
     "c-admin-recount.4": {
-      "result": "fail",
-      "expected": "`wp jetonomy recount users` prints rows updated and the profile count is correct",
-      "actual": "Positional form errors 'Too many positional arguments: users' (the command takes --type=users). With `--type=users` after setting carlos post_count 14->99: printed 'user_post_counts: 1 rows', count back to 14",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "maya post_count set 19 -> 99; `wp jetonomy recount --type=users` printed 'user_post_counts: 1 rows', 'user_reply_counts: 0 rows', 'Recount complete.'; count back to 19"
     },
     "c-admin-recount.5": {
       "result": "pass",
@@ -43,21 +38,19 @@
     },
     "c-admin-recount.6": {
       "result": "untested",
-      "needs": "Importing demo data adds sample content to the shared site (demo data already present: only 'Remove All Demo Data' shows); needs docker site"
+      "needs": "docker site: loading demo data adds content to the shared community"
     },
     "c-admin-recount.7": {
       "result": "untested",
-      "needs": "Needs a bbPress import run (bbPress inactive, seeding not allowed); needs docker site"
+      "needs": "docker site: a bbPress import to the end would add rows to the shared community"
     },
     "c-admin-recount.8": {
       "result": "untested",
-      "needs": "Needs a freshly upgraded site with drifted counters. On this site after the recounts: 0 spaces and 0 topics with a counter different from the real count; singular '1 reply' not checked in the UI"
+      "needs": "docker site: a freshly upgraded site with drifted counters"
     },
     "c-admin-recount.9": {
-      "result": "fail",
-      "expected": "bob POST /admin/recount -> 403 jetonomy_forbidden, nothing changes",
-      "actual": "403 returned and no change, but the code is rest_forbidden, not jetonomy_forbidden",
-      "url": "http://forums.local/wp-json/jetonomy/v1/admin/recount"
+      "result": "untested",
+      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
     },
     "c-admin-recount.10": {
       "result": "pass",
@@ -69,7 +62,7 @@
     },
     "c-admin-recount.12": {
       "result": "untested",
-      "needs": "Needs 2000 topics (site has 257). On 257: button turns to 'Recounting\u2026' and is disabled while the request runs, then the page reloads with the notice"
+      "needs": "docker site: 2000 topics (site has 259; there the button asks for a confirm, then recounts and reloads with a notice)"
     },
     "c-admin-recount.13": {
       "result": "pass",
@@ -82,6 +75,21 @@
     "c-admin-recount.15": {
       "result": "pass",
       "evidence": "bob created 'Which text editor settings do you keep for long-form writing?' in General Discussion: guest home stayed '256 topics' (cached) while the sum of space post_count and real published topics were both 257 (Overview total right). Topic then permanently deleted"
+    },
+    "c-admin-recount.16": {
+      "result": "pass",
+      "evidence": "POST /admin/recount type=bogus as admin -> 400 rest_invalid_param (rest_not_in_enum), counters untouched"
+    },
+    "c-admin-recount.17": {
+      "result": "pass",
+      "evidence": "`wp jetonomy recount --type=users` prints rows updated; `wp jetonomy recount users` -> 'Error: Too many positional arguments: users' (a one-line error, not the usage block)"
+    },
+    "c-admin-recount.19": {
+      "result": "fail",
+      "expected": "error dialog names the cause (offline / server error)",
+      "actual": "With the recount request blocked after Confirm the dialog reads 'Could not get a valid response from the server.' with an OK button - same generic text",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy",
+      "screenshot": "qa-artifacts/203-walk2/laneA/recount-offline.png"
     }
   },
   "proposed_checks": [
@@ -90,5 +98,5 @@
     "- `c-admin-recount.18` @moderator #admin !refuse: test_moderator opens the Overview -> WordPress refuses (Overview is manage_options only); decide whether staff with Moderate should see a read-only Overview.",
     "- `c-admin-recount.19` @admin #admin +offline: recount request fails -> the error dialog names the cause (offline / server error) rather than 'Could not get a valid response from the server.'."
   ],
-  "notes": "DB values corrupted for the checks were all restored by the recount itself (member_count 2776, reply_count 5279, vote_score 5349, post_count 2776, carlos post_count) and verified. Created and permanently deleted one topic as bob. No setting changed."
+  "notes": "maya's post_count temporarily set to 99 then recounted back to 19; no settings changed."
 }

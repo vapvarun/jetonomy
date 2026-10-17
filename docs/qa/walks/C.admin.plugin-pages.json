@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.plugin-pages",
-  "free": "c2c2406a",
-  "pro": "04c8303",
-  "walked_at": "2026-10-17T09:38:03Z",
+  "free": "5680944e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T12:40:17Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -33,15 +33,12 @@
       "evidence": "Dashboard 'Review flags' link -> admin.php?page=jetonomy-moderation&tab=flags"
     },
     "c-admin-plugin-pages.5": {
-      "result": "fail",
-      "expected": "every label says topics/replies per Terminology",
-      "actual": "Settings sidebar rows all have dashicons and read fine, but Settings > Permissions role table lists 'Create posts', 'Edit own posts', 'Delete own posts', 'Edit others' posts', 'Delete others' posts', 'Move posts between spaces' (source includes/permissions/class-capabilities.php:264-270, plain __() strings that ignore the Terminology topic label)",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-settings&tab=permissions",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneA/tab-jetonomy_settings_tab_permissions.png"
+      "result": "pass",
+      "evidence": "Settings sidebar: General, Permissions, Email, Appearance, SEO, Anti-Spam, Integrations, License, Email Digest, Reactions, Branding all with an icon; Permissions labels read Create topics, Create replies, Edit own topics and replies, Delete own topics and replies, Upload media, Edit others' topics and replies..., no 'posts' (capability slugs shown beneath are code names)"
     },
     "c-admin-plugin-pages.6": {
-      "result": "untested",
-      "needs": "Saving Settings was blocked by the permission classifier, so 'saved template still there after reload' could not be proven. Verified: Email tab lists Reaction on your topic, Your report was reviewed, Space join request, Your join request was answered and Confirm your email (new accounts), each with subject/body fields"
+      "result": "pass",
+      "evidence": "Email tab lists Reaction on your topic, Your report was reviewed, Space join request, Your join request was answered, Confirm your email (new accounts) (+ welcome, verification reminder, reply-by-email refused). Saved 5 custom subjects, 'Settings saved.' notice, all 5 still there after reload (restored afterwards)"
     },
     "c-admin-plugin-pages.7": {
       "result": "pass",
@@ -60,19 +57,16 @@
       "evidence": "Anonymous topic 'QA-RFT anon topic' shows author Anonymous in admin Content list; Revisions shows 'Not recorded' for author, no login. Activity Log: only the Pro reveal audit row mentions it, showing 'Real author: 2018' (a user ID, not a login) - by design for an admin reveal but see proposed check"
     },
     "c-admin-plugin-pages.11": {
-      "result": "untested",
-      "needs": "Needs a Branding settings save (Save was blocked by the permission classifier)"
+      "result": "pass",
+      "evidence": "Branding > Brand Name 'Harbor Community' saved: menu, 'Harbor Community Dashboard', 'Harbor Community Settings' and footer 'Thank you for building your community with Harbor Community.'; cleared -> 'Jetonomy' everywhere again. qa-artifacts/203-walk2/laneA/branding-harbor.png"
     },
     "c-admin-plugin-pages.12": {
       "result": "pass",
       "evidence": "Setup wizard step 1 offers Forum, Q&A, Ideas, Feed"
     },
     "c-admin-plugin-pages.13": {
-      "result": "fail",
-      "expected": "test_editor holds Manage spaces and opens Spaces",
-      "actual": "test_editor is Ethan Brooks, WP role subscriber with no jetonomy_manage_* capability (checked allcaps), so Spaces, Users, Extensions and Overview ALL answer 'Sorry, you are not allowed to access this page.' The persona does not match the check",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "test_editor (subscriber): admin.php?page=jetonomy-spaces, -users, -extensions and jetonomy all 403 'Sorry, you are not allowed to access this page.'; no Jetonomy menu in wp-admin"
     },
     "c-admin-plugin-pages.14": {
       "result": "pass",
@@ -80,23 +74,59 @@
     },
     "c-admin-plugin-pages.15": {
       "result": "untested",
-      "needs": "Needs 2000 topics (site has 257). On 257: Content list pages at 20 ('1-20 of 257'), loads in 147 ms; but column headers are not sortable links, so 'sorting by date works' has no UI to test"
+      "needs": "docker site: 2000 topics (site has 257); on 257 the Content list pages at 20 and loads in about 150 ms"
     },
     "c-admin-plugin-pages.16": {
       "result": "untested",
-      "needs": "Needs a dark admin colour scheme; WordPress admin has none here and changing the user admin colour is out of lane"
+      "needs": "a real dark admin: WordPress ships none. With the Midnight scheme only the sidebar and bar go dark; the Overview content stays #f0f0f0 with 9 white cards (normal WP behaviour), so no contrast failure can be shown or ruled out"
     },
     "c-admin-plugin-pages.17": {
-      "result": "untested",
-      "needs": "Settings Save is a plain form submit, not AJAX, and saving was blocked by the permission classifier"
+      "result": "fail",
+      "expected": "blocking the save request shows a failure message and the form keeps the edited values",
+      "actual": "Settings Save is a full form POST (not AJAX); with the request blocked the browser shows its own ERR_INTERNET_DISCONNECTED page and the edited values are lost. Check text says AJAX, code does not use it",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-settings&tab=email",
+      "screenshot": "qa-artifacts/203-walk2/laneA/settings-offline-save.png",
+      "check_wrong": true
+    },
+    "c-admin-plugin-pages.18": {
+      "result": "pass",
+      "evidence": "Settings > Permissions: 'Create topics', 'Edit own topics and replies', 'Delete own topics and replies', 'Edit others' topics and replies', 'Move topics between spaces', 'Close topics', 'Pin topics'"
+    },
+    "c-admin-plugin-pages.19": {
+      "result": "fail",
+      "expected": "dormant notice shows and the browser tab title is 'Conversations'",
+      "actual": "Notice 'Private Messaging is dormant on this site...' shows but document.title is '‹ forums — WordPress' (no page name)",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-pro-conversations",
+      "screenshot": ""
+    },
+    "c-admin-plugin-pages.20": {
+      "result": "fail",
+      "expected": "the Anonymous Author Revealed row never prints the real author's ID or login",
+      "actual": "Row reads 'varundubey 17 hours ago Anonymous Author Revealed QA-RFT anon topic Real author: 2018' - the real author's ID is printed in the list",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-activity&action_type=anonymous_author_revealed",
+      "screenshot": "qa-artifacts/203-walk2/laneA/activity-anon-reveal.png"
+    },
+    "c-admin-plugin-pages.21": {
+      "result": "fail",
+      "expected": "Spaces list with 50+ spaces has a search box and sortable columns",
+      "actual": "46 spaces over 3 pages of 20 (1-20 of 46); no search input and none of the 8 column headers is a sort link",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces",
+      "screenshot": "qa-artifacts/203-walk2/laneA/spaces-list.png"
+    },
+    "c-admin-plugin-pages.22": {
+      "result": "fail",
+      "expected": "Content and Spaces list column headers sort with the active sort shown",
+      "actual": "Spaces headers (Title, Type, Category, Members, Topics, Status, Join Policy, Visibility) are plain text, not sort links; Content headers also not links (seen earlier)",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-content",
+      "screenshot": ""
     }
   },
   "proposed_checks": [
     "- `c-admin-plugin-pages.18` @admin #admin: open Settings > Permissions -> capability labels read 'Create topics', 'Edit own topics' etc. per Terminology, never 'posts'.",
-    "- `c-admin-plugin-pages.19` @admin #admin: open admin.php?page=jetonomy-pro-conversations while WPMediaVerse is active -> the dormant notice shows AND the browser tab title is 'Conversations', not blank ('\u2039 forums \u2014 WordPress').",
+    "- `c-admin-plugin-pages.19` @admin #admin: open admin.php?page=jetonomy-pro-conversations while WPMediaVerse is active -> the dormant notice shows AND the browser tab title is 'Conversations', not blank ('‹ forums — WordPress').",
     "- `c-admin-plugin-pages.20` @admin #admin: open Activity Log filtered to Anonymous Author Revealed -> the row never prints the real author's ID or login in the list (reveal is audited, identity kept out of the table).",
     "- `c-admin-plugin-pages.21` @admin #admin +many: Spaces list with 50+ spaces -> a search box and sortable columns exist (currently 3 pages of 20, no search, no sort).",
     "- `c-admin-plugin-pages.22` @admin #admin: Content and Spaces list column headers sort (date, replies) with the active sort shown."
   ],
-  "notes": "No settings changed (Settings save attempts were blocked; the unsaved edits to 5 email-template subject fields were discarded by navigating away). Persona note: qa-config says space_admin test_editor holds Manage spaces; it does not."
+  "notes": "Settings changed and restored: jetonomy_email_templates restored byte-equal from backup; Branding Brand Name set to Harbor Community then cleared (jetonomy_settings later restored whole from backup); admin user colour scheme set to midnight for the dark check and restored to modern."
 }

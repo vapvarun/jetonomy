@@ -661,6 +661,23 @@ function jetonomy_render_space_meta_badges( $space ): void {
 		echo '</span>';
 	}
 
+	// The viewer's own membership replaces the join policy, the same rule the
+	// space header uses to drop its Join / Request CTA. Callers rendering a
+	// grid warm the roles first (SpaceMember::warm_viewer_roles()).
+	$viewer_id = get_current_user_id();
+	$role      = $viewer_id > 0 && ! empty( $space->id ) ? \Jetonomy\Models\SpaceMember::get_role( (int) $space->id, $viewer_id ) : null;
+	if ( null !== $role ) {
+		$role_labels = array(
+			'admin'     => __( 'Admin', 'jetonomy' ),
+			'moderator' => __( 'Moderator', 'jetonomy' ),
+		);
+		echo '<span class="jt-space-card-badge jt-space-card-badge-member jt-space-card-badge-member-' . esc_attr( $role ) . '">';
+		jetonomy_echo_icon( 'user-check', 12 );
+		echo esc_html( $role_labels[ $role ] ?? __( 'Member', 'jetonomy' ) ); // jt-terms-ok: space role name.
+		echo '</span>';
+		return;
+	}
+
 	$policy_label = jetonomy_space_join_policy_label( $join_policy );
 	if ( '' !== $policy_label ) {
 		$icon = 'invite' === $join_policy ? 'key' : 'user-check';

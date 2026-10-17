@@ -307,6 +307,18 @@ class Activity_List_Table extends \WP_List_Table {
 	}
 
 	public function column_snippet( $item ): string {
+		// Pro's anonymous reveal logs the real author's user id; show who it is.
+		if ( 'anonymous_author_revealed' === (string) ( $item->action ?? '' ) ) {
+			$real_id = (int) ( self::metadata( $item )['real_author'] ?? 0 );
+			$user    = $real_id > 0 ? get_userdata( $real_id ) : false;
+			/* translators: %s: the singular member label, lowercase (e.g. "member"). */
+			$deleted = sprintf( __( 'Deleted %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) );
+			$who     = $user
+				? sprintf( '<a href="%1$s">%2$s</a>', esc_url( \Jetonomy\community_profile_url( $real_id ) ), esc_html( $user->display_name ?: $user->user_login ) )
+				: esc_html( $deleted );
+			/* translators: %s: the revealed author's name, linked to their profile. */
+			return sprintf( esc_html__( 'Real author: %s', 'jetonomy' ), $who );
+		}
 		$text = self::details_text( $item );
 		return '' === $text ? '&mdash;' : esc_html( $text );
 	}
@@ -334,6 +346,9 @@ class Activity_List_Table extends \WP_List_Table {
 				$ids[ $type ][] = (int) $row->object_id;
 			}
 			$ids['user'][] = (int) ( $row->user_id ?? 0 );
+			if ( 'anonymous_author_revealed' === (string) ( $row->action ?? '' ) ) {
+				$ids['user'][] = (int) ( self::metadata( $row )['real_author'] ?? 0 );
+			}
 		}
 
 		$replies = Reply::list_by_ids( $ids['reply'] );

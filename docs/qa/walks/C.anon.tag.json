@@ -1,7 +1,7 @@
 {
   "journey": "C.anon.tag",
-  "free": "c2c2406a",
-  "pro": "04c8303",
+  "free": "5680944e",
+  "pro": "d8d053b",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -22,16 +22,13 @@
       "evidence": "/community/tag/search/: header '22 topics', list shows 22 distinct topics; DB total for the tag is 24 (2 are private)"
     },
     "c-anon-tag.2": {
-      "result": "untested",
-      "needs": "fixture: no tag is used only in private topics; the closest case, 'search' (24 uses, 2 private) lists 22 and names no private topic"
+      "result": "pass",
+      "evidence": "guest opens /community/tag/partner-pricing/ (only on the Partner Program topic 'Referral fees for 2026'): '0 topics', 'No topics with this tag yet.', no private title; tag absent from guest Popular tags and GET /tags",
+      "screenshot": "qa-artifacts/203-walk2/laneB/tag-partner-pricing-guest.png"
     },
     "c-anon-tag.3": {
-      "result": "fail",
-      "expected": "GET /tags/<tag>/posts and /tags as guest",
-      "actual": "GET /tags/<slug>/posts and /tags/<id> do not exist as GET routes (rest_no_route 404). GET /tags works: counts exclude private topics (search 22, webhooks 43, migration 40, equal to guest tag pages)",
-      "url": "http://forums.local/wp-json/jetonomy/v1/tags",
-      "screenshot": "",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "GET /jetonomy/v1/tags?per_page=100 as guest -> 200, 12 tags (migration 39, email 36, search 36 ...); partner-pricing is not listed, counts equal the tag pages"
     },
     "c-anon-tag.4": {
       "result": "pass",
@@ -43,28 +40,31 @@
     },
     "c-anon-tag.6": {
       "result": "pass",
-      "evidence": "bob (member of Insiders / Beta) on /community/tag/search/: '24 topics', 24 listed and sidebar 24; guest sees 22"
+      "evidence": "bob (admin of Partner Program) on /community/tag/partner-pricing/: '1 topic' listing 'Referral fees for 2026: what changed'; guest sees 0",
+      "screenshot": "qa-artifacts/203-walk2/laneB/tag-partner-pricing-bob.png"
     },
     "c-anon-tag.7": {
-      "result": "fail",
-      "expected": "GET /tags/no-such-tag -> 404 jetonomy_tag_not_found",
-      "actual": "Route does not exist: 404 rest_no_route",
-      "url": "http://forums.local/wp-json/jetonomy/v1/tags/no-such-tag",
-      "screenshot": "",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "/community/tag/no-such-tag/ -> HTTP 404 with 'Tag not found.' inside the community layout, no PHP error",
+      "screenshot": "qa-artifacts/203-walk2/laneB/tag-404.png"
     },
     "c-anon-tag.8": {
       "result": "pass",
-      "evidence": "webhooks (43): page 1 shows 30, 'Next' -> ?pg=2 shows 13, no duplicate across pages"
+      "evidence": "/community/tag/migration/ header '39 topics': page 1 lists 30 with a Next link, page 2 (?sort=latest&pg=2) lists the other 9; no duplicates"
     },
     "c-anon-tag.9": {
       "result": "pass",
-      "evidence": "390 dark: webhooks rows end at x=290, scrollWidth 390 (tag-390.png)"
+      "evidence": "/community/tag/migration/ at 390: scrollWidth 390, no horizontal scroll",
+      "screenshot": "qa-artifacts/203-walk2/laneB/tag-390.png"
+    },
+    "c-anon-tag.10": {
+      "result": "pass",
+      "evidence": "all 12 tags: GET /tags count equals the '<N> topics' header on each tag page for a guest (0 mismatches)"
     }
   },
   "proposed_checks": [
     "- `c-anon-tag.10` @guest #rest: GET /tags -> every tag count equals the topics its tag page lists for a guest."
   ],
-  "notes": "No settings changed.",
-  "walked_at": "2026-10-17T09:42:01Z"
+  "notes": "No settings changed. | Re-walk lane B 2026-10-17: walked .2 .3 .6 .7 .8 .9 .10 (.4/.5 previously passing, .5 re-seen: sidebar counts equal API counts). Pagination on tag pages is a Next link (pg=2), not Load More.",
+  "walked_at": "2026-10-17T12:17:37Z"
 }

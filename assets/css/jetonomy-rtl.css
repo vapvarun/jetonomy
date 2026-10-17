@@ -665,7 +665,11 @@
      embeds get the same ceiling in the post-body rules further down. */
   .jt-post-body pre, .jt-reply-body pre { max-width: 100%; }
   .jt-post-body pre, .jt-reply-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
-  .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-border); color: var(--jt-text-secondary); }
+  /* The bar uses the tertiary text tone, not --jt-border: a border-tone bar
+     measured ~1.35:1 on the dark surface; tertiary holds >= 3:1 in both modes.
+     inline-end: 0 drops a theme's physical border-left, which an RTL quote
+     showed as a second bar. */
+  .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-text-tertiary); border-inline-end: 0; color: var(--jt-text-secondary); }
   .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-3); border-top: 1px solid var(--jt-border); }
 
   /* ── Action buttons ── */
@@ -1296,10 +1300,12 @@
    */
   .jt-space-card-badge-policy-approval { background: var(--jt-warn-light, var(--jt-bg-muted)); color: var(--jt-warn-strong, var(--jt-text-secondary)); }
   .jt-space-card-badge-policy-invite { background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
+  /* The viewer's own membership (Member / Moderator / Admin): you are in, nothing owed. */
+  .jt-space-card-badge-member { background: var(--jt-success-light, var(--jt-bg-muted)); color: var(--jt-success-strong, var(--jt-text-secondary)); }
 
   /* ── Space status banner ── */
   .jt-status-banner { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; font-weight: 500; margin-bottom: 12px; }
-  .jt-status-banner--archived { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); }
+  .jt-status-banner--archived, .jt-status-banner--pending { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); }
   .jt-status-banner--locked { background: var(--jt-warn-light); color: var(--jt-warn-strong); border: 1px solid var(--jt-warn-border); }
 
   /* ── Status badges ── */
@@ -1426,8 +1432,10 @@
   /* ── Quote blockquote ── */
   /* Logical sides: the quote carries dir="auto", so an Arabic quote in an English
      thread puts its bar on the right, where the text starts. */
-  .jt-quote { border-inline-start: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); color: var(--jt-text-secondary); padding-block: var(--jt-space-2); padding-inline: var(--jt-space-3); border-radius: 0; border-start-end-radius: var(--jt-radius); border-end-end-radius: var(--jt-radius); margin-block: var(--jt-space-2); margin-inline: 0; font-size: 0.9375rem; }
-  .jt-quote cite { display: block; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-tertiary); font-style: normal; margin-block-end: var(--jt-space-1); }
+  .jt-quote { border-inline-start: 3px solid var(--jt-accent); border-inline-end: 0; background: var(--jt-bg-subtle); color: var(--jt-text-secondary); padding-block: var(--jt-space-2); padding-inline: var(--jt-space-3); border-radius: 0; border-start-end-radius: var(--jt-radius); border-end-end-radius: var(--jt-radius); margin-block: var(--jt-space-2); margin-inline: 0; font-size: 0.9375rem; }
+  /* fit-content: the cite has its own dir (so the quote's dir="auto" reads the
+     quoted text); a shrink-wrapped block then sits on the quote's start side. */
+  .jt-quote cite { display: block; inline-size: fit-content; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-tertiary); font-style: normal; margin-block-end: var(--jt-space-1); }
   .jt-quote :is(ul, ol) { margin-block: 0; padding-inline-start: var(--jt-space-5); }
   .jt-quote cite::before { content: '\2014 '; }
   .jt-quote p { margin: 0; color: var(--jt-text-secondary); line-height: 1.5; }
@@ -2042,7 +2050,9 @@
   .jt-row-stat .jt-row-time { white-space: normal; text-wrap: balance; }
   /* A state shown in a button's place (Invite Only, Awaiting Approval): not clickable. */
   .jt-app .jt-btn--status { cursor: default; opacity: 0.7; text-align: center; }
-  .jt-app .jt-invite-landing { text-align: center; padding-block: var(--jt-space-12); }
+  /* A standalone card, so it centres; .jt-narrow itself stays start-aligned
+     for the composer, which lines up with the breadcrumb. */
+  .jt-app .jt-invite-landing { text-align: center; padding-block: var(--jt-space-12); margin-inline: auto; }
   @media (max-width: 640px) {
     /* Full-width primary actions on a phone, like every other primary CTA. */
     .jt-invite-landing .jt-invite-actions { flex-direction: column; align-items: stretch; }

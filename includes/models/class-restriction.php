@@ -130,7 +130,7 @@ class Restriction extends Model {
 	/**
 	 * Issue a ban or silence restriction.
 	 *
-	 * @param int         $user_id    Target user.
+	 * @param int         $user_id    Target user (ignored and stored as 0 for 'ip_ban').
 	 * @param string      $type       Restriction type: 'global_ban', 'space_ban', 'silence' or 'ip_ban'.
 	 * @param int         $issued_by  ID of the moderator/admin issuing the restriction.
 	 * @param int|null    $space_id   Scoped space ID, or null for global restrictions.
@@ -147,6 +147,11 @@ class Restriction extends Model {
 		?string $reason = null,
 		?string $expires_at = null
 	): int {
+		// An IP ban blocks an address, not an account: it is stored with no member.
+		if ( 'ip_ban' === $type ) {
+			$user_id = 0;
+		}
+
 		$blocked = self::actor_may_restrict( $user_id, $issued_by );
 		if ( is_wp_error( $blocked ) ) {
 			return 0;

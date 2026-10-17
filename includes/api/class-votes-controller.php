@@ -132,7 +132,7 @@ class Votes_Controller extends Base_Controller {
 			// Rate_Limiter::message() names the allowance and the real wait.
 			// A bare "Rate limit exceeded. Please try again later." would not tell a member
 			// whether "later" means a minute or a day.
-			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'vote', $trust ) );
+			return \Jetonomy\Permissions\Rate_Limiter::error( $user_id, 'vote', $trust );
 		}
 
 		$result = Vote::cast( $user_id, $type, $id, $value );

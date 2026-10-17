@@ -34,6 +34,7 @@
 		recountConfirm: wp.i18n.sprintf( wp.i18n.__( 'Rebuild the %1$s, %2$s, %3$s and vote counts from your content? It can take a minute on a large community.', 'jetonomy' ), lbl( 'topic', 'many_lower', 'topics' ), lbl( 'reply', 'many_lower', 'replies' ), lbl( 'member', 'many_lower', 'members' ) ),
 		recounting:    wp.i18n.__( 'Recounting…', 'jetonomy' ),
 		error:         wp.i18n.__( 'Something went wrong.', 'jetonomy' ),
+		network:       wp.i18n.__( 'Network error. Please try again.', 'jetonomy' ),
 	};
 
 	// Modal toolkit (jetonomy-modals.js) is a hard dependency on every
@@ -63,7 +64,9 @@
 					.catch(function (err) {
 						btn.disabled = false;
 						btn.replaceChildren.apply(btn, label);
-						_alert((err && err.message) || i18n.error);
+						// apiFetch reports a request that never got an answer as
+						// fetch_error with core's generic wording; name the cause.
+						_alert(err && 'fetch_error' === err.code ? i18n.network : ((err && err.message) || i18n.error));
 					});
 			});
 		});

@@ -215,7 +215,7 @@ $_partial_space = $_space ? $_space : (object) array(
 		?>
 
 		<div class="jt-compose-topic-actions">
-			<p class="jt-compose-topic-error"
+			<p class="jt-compose-topic-error" role="alert"
 				data-wp-text="context.error"
 				data-wp-class--is-shown="context.error"></p>
 			<button type="submit"

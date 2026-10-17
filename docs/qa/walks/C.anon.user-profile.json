@@ -54,12 +54,12 @@
       "evidence": "/community/u/no-such-person/ -> 404 'User not found.' (no link back in the body)"
     },
     "c-anon-user-profile.10": {
-      "result": "untested",
-      "needs": "lane A: Jetonomy Pro messaging stands down while WPMediaVerse is active, so no Message button shows for bob on alice's profile (only Report and Block); needs WPMediaVerse deactivated or a jetonomy_member_message_url filter. Guest: no button (pass)"
+      "result": "pass",
+      "evidence": "lane A: with WPMediaVerse deactivated (restored after) and Pro messaging on, bob sees 'Message' on alice's profile linking to /community/messages/?to=alice; guest sees none. With WPMediaVerse active there is no Message button at all (only Report and Block) - see proposed check"
     },
     "c-anon-user-profile.11": {
-      "result": "untested",
-      "needs": "lane A: turn Jetonomy messaging off"
+      "result": "pass",
+      "evidence": "lane A: private-messaging removed from jetonomy_pro_extensions (restored): bob sees no Message button and no Messages links on alice's profile or header, and /community/messages/ is 404 'This page is not available.'"
     },
     "c-anon-user-profile.12": {
       "result": "pass",
@@ -74,8 +74,8 @@
       "evidence": "finn profile opens 200; his -4 post 'Check out my SEO service...' shows -4; no restriction/silence wording on the page"
     },
     "c-anon-user-profile.15": {
-      "result": "untested",
-      "needs": "lane A: switch site language to Arabic (RTL)"
+      "result": "pass",
+      "evidence": "lane A, site language ar: Omar's profile as guest: avatar/name/bio right-aligned, badges wrap from the right, tab bar Votes/Replies/Topics reads right to left with Topics selected on the right. qa-artifacts/203-walk2/laneA/ar-profile.png"
     },
     "c-anon-user-profile.16": {
       "result": "pass",
@@ -84,8 +84,9 @@
   },
   "proposed_checks": [
     "- `c-anon-user-profile.17` @guest #rest !refuse: GET /users/<silenced id> -> no restriction field naming silence or ban for a guest (currently restriction:'silence' for finn).",
-    "- `c-anon-user-profile.18` @member #ui: on a site with WPMediaVerse messaging active (chat bubble shown) open a member's profile -> a Message button opens a conversation with them."
+    "- `c-anon-user-profile.18` @member #ui: on a site with WPMediaVerse messaging active (chat bubble shown) open a member's profile -> a Message button opens a conversation with them.",
+    "- `c-anon-user-profile.19` @member #ui: with WPMediaVerse active and Pro messaging dormant, open alice's profile as bob -> a Message button that opens a WPMediaVerse conversation shows, or the site owner is told messaging is unavailable (today neither: only Report and Block)."
   ],
-  "notes": "No settings changed. Email-login member and private reply not in the data.",
+  "notes": "No settings changed. Email-login member and private reply not in the data. | lane A (re-walk 2026-10-17):",
   "walked_at": "2026-10-17T09:42:01Z"
 }

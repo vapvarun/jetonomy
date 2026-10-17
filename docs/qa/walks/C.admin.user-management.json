@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.user-management",
-  "free": "c2c2406a",
-  "pro": "04c8303",
-  "walked_at": "2026-10-17T09:44:56Z",
+  "free": "5680944e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T12:40:17Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -21,45 +21,32 @@
       "evidence": "Search 'Grace' -> 1 user, 'Grace Oluwaseun Adeyemi-Whitfield' in one line at 1440, default grey avatar renders, no broken image"
     },
     "c-admin-user-management.2": {
-      "result": "fail",
-      "expected": "toast 'Trust level updated.' then listing shows new level and owner-set name",
-      "actual": "alice was Leader (4), not level 1 (fixture differs). Changed 4 -> 3: listing then read 'Trusted (3)', but the toast is never visible because admin-common.js ~1639-1644 toasts then calls location.reload(). Restored to Leader (4). REST POST /admin/users/trust-level not called as admin. No owner-set names exist (defaults Newcomer..Veteran)",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-users&s=alice"
+      "result": "pass",
+      "evidence": "alice was Leader (4) here, not level 1; changed 4 -> 3 from the row popover: toast 'Trust level updated.' visible after the reload, listing 'Trusted (3)'. Restored to 4 via POST /admin/users/trust-level (200 {level:4, updated_count:1})"
     },
     "c-admin-user-management.3": {
-      "result": "fail",
-      "expected": "dialog 'Ban User', toast 'User banned.', listing shows Banned",
-      "actual": "Dialog title 'Ban User' and toast 'User banned.' correct (carlos, 1 Day, reason entered), ban listed under Moderation > Banned Users. But the Users listing shows no Banned label or badge; only the hover row action flips from 'Ban' to 'Lift restriction'",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-users&s=carlos",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneA/banned-tab.png"
+      "result": "pass",
+      "evidence": "carlos: dialog 'Ban User', reason + 1 Day, toast 'User banned.', listing row shows a 'Banned' badge and a Lift restriction action; lifted afterwards"
     },
     "c-admin-user-management.4": {
       "result": "pass",
       "evidence": "Lift restriction on carlos from Moderation > Banned Users -> toast 'Ban removed.', Users row shows Ban action again, removed from Banned list"
     },
     "c-admin-user-management.5": {
-      "result": "fail",
-      "expected": "finn silenced from 'Silence User' dialog, toast 'User silenced.', listing shows Silenced",
-      "actual": "finn was already silenced for 7 days (seeded) so I silenced Hana Park instead: dialog titled 'Silence User', toast 'User silenced.' correct. The Users listing shows no Silenced label (only the row action changes), same gap as check 3. Lifted afterwards; the lift toast reads 'Ban removed.' for a silence",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-users&s=hana"
+      "result": "pass",
+      "evidence": "hana (Hana Park; finn was already silenced): dialog 'Silence User', toast 'User silenced.', listing row shows a 'Silenced' badge; lifted afterwards"
     },
     "c-admin-user-management.6": {
-      "result": "fail",
-      "expected": "toast 'IP address banned.', ban listed with the others and liftable",
-      "actual": "Ban of 203.0.113.50 saved and listed in Banned Users and lifted via CLI/UI path; the success toast was not observed. The listing shows the ban under the member whose row I opened ('Grace Oluwaseun Adeyemi-Whitfield IP address ban 203.0.113.50'), and REST POST /moderation/ban requires user_id even for ip_ban, so every IP ban is stored against a member (jt_restrictions.user_id, IP kept in reason)",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-moderation&tab=banned",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneA/ip-dialog.png"
+      "result": "pass",
+      "evidence": "Ban IP address from carlos's row (dialog explains Jetonomy does not record member IPs): 203.0.113.50 permanent, toast 'IP address banned.', listed in Moderation > Banned Users with issuer varundubey and a Lift restriction action; lifted -> 'IP address ban lifted.'"
     },
     "c-admin-user-management.7": {
       "result": "pass",
       "evidence": "UI: 999.1.1.1 -> 'Enter a valid IPv4 or IPv6 address.', 127.0.0.1 (the address this browser connects from) -> 'This is a loopback or reserved address, not a visitor...', repeat of 203.0.113.50 -> 'This IP address is already banned.'; dialog stays open each time. REST (user_id=3608): 400 jetonomy_invalid_ip, 400 jetonomy_reserved_ip, 409 jetonomy_ip_already_banned; ban count stayed 1. Needs user_id param (see .6)"
     },
     "c-admin-user-management.8": {
-      "result": "fail",
-      "expected": "`wp jetonomy mod ban --ip=127.0.0.1` refused as a loopback address, no ban row",
-      "actual": "The command has no --ip flag: with --target=3608 --issuer=1 it IGNORED --ip and created a global_ban on that member (id 375, lifted by me with `mod unban 375`). The real form `--type=ip_ban --reason=127.0.0.1` is refused but the message is only 'Restriction::ban() returned 0 - insert failed.' (not 'loopback')",
-      "url": "wp jetonomy mod ban",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "`wp jetonomy mod ban --type=ip_ban --ip=127.0.0.1 --target=3755 --issuer=1` -> 'Error: This is a loopback or reserved address, not a visitor. Banning it could lock everyone out.'; restriction count unchanged"
     },
     "c-admin-user-management.9": {
       "result": "pass",
@@ -67,37 +54,58 @@
     },
     "c-admin-user-management.10": {
       "result": "untested",
-      "needs": "test_editor is a subscriber with no Manage community users capability, so the Users screen is not reachable for that persona, and a POST /moderation/ban as test_editor was blocked by the permission classifier; needs a staff persona with only delegated user management"
+      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
     },
     "c-admin-user-management.11": {
       "result": "untested",
-      "needs": "Write probes as another persona (raising trust levels as test_moderator) were blocked by the permission classifier; also test_moderator is a site Editor, not delegated user management"
+      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
     },
     "c-admin-user-management.12": {
       "result": "untested",
-      "needs": "Posting as omar is a write probe as another persona (blocked by the permission classifier)"
+      "needs": "walk live as the persona (member action, not an admin probe)"
     },
     "c-admin-user-management.13": {
       "result": "untested",
-      "needs": "Create topic, reply and vote as finn are write probes as another persona (blocked by the permission classifier)"
+      "needs": "walk live as the persona (member action, not an admin probe)"
     },
     "c-admin-user-management.14": {
       "result": "untested",
-      "needs": "REST GET /moderation/ban?type=ip_ban lists issuer_name 'varundubey' and the Banned tab shows issuer names (Theo Lindqvist, varundubey); the '[deleted]' issuer case needs a deleted issuer and was not created"
+      "needs": "a deleted issuer account (would need a user deletion). REST GET /moderation/ban?type=global_ban lists issuer_name 'Theo Lindqvist' and type=ip_ban 'varundubey'; the '[deleted]' case not shown"
     },
     "c-admin-user-management.15": {
       "result": "untested",
-      "needs": "Needs 500 members; site has 27 users (pages of 20, 'Next', loads in 144 ms, trust level filter Leader returns the 2 Leaders). Search on page 5 and 500-row scale not testable"
+      "needs": "docker site: 500 members (site has 27: pages of 20, trust level filter and search exist)"
     },
     "c-admin-user-management.16": {
       "result": "untested",
-      "needs": "Needs a dark admin colour scheme; not available in this lane"
+      "needs": "a real dark admin: WordPress core has no dark content scheme (Midnight darkens only the sidebar); the Ban dialog was read in light: labels and buttons readable"
     },
     "c-admin-user-management.17": {
+      "result": "untested",
+      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
+    },
+    "c-admin-user-management.18": {
+      "result": "pass",
+      "evidence": "Users listing shows a 'Banned' badge on carlos and a 'Silenced' badge on hana beside the name/trust level; qa-artifacts/203-walk2/laneA/user-banned-row.png, user-silenced-row.png"
+    },
+    "c-admin-user-management.19": {
       "result": "fail",
-      "expected": "bob POST /admin/users/trust-level -> 403 jetonomy_forbidden, no level changes",
-      "actual": "403 returned and bob stayed level 4, but the code is rest_forbidden, not jetonomy_forbidden; also the body needs user_ids and level (the first call with user_id/trust_level got 400 missing params)",
-      "url": "http://forums.local/wp-json/jetonomy/v1/admin/users/trust-level"
+      "expected": "Banned Users list shows address and issuer and no unrelated member name; REST accepts ip_ban without user_id",
+      "actual": "List row reads '203.0.113.50 IP address ban - Permanent varundubey' (no member name, ok), but POST /moderation/ban type=ip_ban ip=203.0.113.51 with no user_id -> 400 rest_missing_callback_param 'Missing parameter(s): user_id'; and the stored row is attached to carlos (REST GET shows user Carlos Mendes for the IP ban)",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-moderation&tab=banned",
+      "screenshot": "qa-artifacts/203-walk2/laneA/banned-users-ip.png"
+    },
+    "c-admin-user-management.20": {
+      "result": "pass",
+      "evidence": "`--type=ip_ban --reason=127.0.0.1` (no --ip) -> 'Error: --type=ip_ban needs the address to block: pass --ip=<address>.'; --ip is now a real flag (127.0.0.1 refused as loopback); an unknown flag -> 'Error: Parameter errors: unknown --bogusflag parameter'; no rows created. Note the reason=127.0.0.1 form is refused for a missing --ip, not with the loopback wording"
+    },
+    "c-admin-user-management.21": {
+      "result": "pass",
+      "evidence": "trust level save -> reload -> toast 'Trust level updated.' visible (qa-artifacts/203-walk2/laneA/trust-toast.png)"
+    },
+    "c-admin-user-management.22": {
+      "result": "pass",
+      "evidence": "lifting hana's silence: dialog 'Lift restriction / Lift this restriction? The member can post again right away.', toast 'Silence lifted.' (not 'Ban removed.'); a ban lift gave no mismatched wording"
     }
   },
   "proposed_checks": [
@@ -107,5 +115,5 @@
     "- `c-admin-user-management.21` @admin #admin: change a trust level -> the success toast is visible after the page reloads.",
     "- `c-admin-user-management.22` @admin #admin: lift a silence -> toast says 'Restriction lifted' wording that matches a silence, not 'Ban removed.'."
   ],
-  "notes": "Changed and restored: alice trust 4->3->4; carlos banned then lifted; Hana Park silenced then lifted; IP ban 203.0.113.50 created then lifted; stray global_ban 375 on Aisha created by CLI --ip misuse then lifted. jt_restrictions rows back to the seeded two (Omar space ban, Finn silence). Activity Log gained trust_level_changed rows for alice."
+  "notes": "Restored: alice trust level back to 4; carlos ban, hana silence and the IP ban 203.0.113.50 all lifted (Banned Users back to Kai, Omar, Finn). A POST as bob/test_editor was blocked by the permission classifier."
 }

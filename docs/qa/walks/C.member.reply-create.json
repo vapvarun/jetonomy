@@ -1,8 +1,8 @@
 {
   "journey": "C.member.reply-create",
-  "free": "a0fcbb2e",
+  "free": "5680944e",
   "pro": "d8d053b",
-  "walked_at": "2026-10-17T11:55:00Z",
+  "walked_at": "2026-10-17T12:23:25Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -18,11 +18,9 @@
   },
   "checks": {
     "c-member-reply-create.1": {
-      "result": "fail",
-      "expected": "the reply appears inline at the end; count 45 -> 46",
-      "actual": "bob posted the reply on 'Dark mode for the community on phones': count 45 -> 46 and the composer cleared, but the new reply was not added to the thread on screen (30 of 46 replies shown with 'Load More', bob's reply not among them). On a short topic (2 replies) the reply does appear inline at once.",
-      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/reply-created.png"
+      "result": "pass",
+      "evidence": "bob posted the reply on 'Dark mode for the community on phones': header Replies 45 -> 46 (jt_posts reply_count 46) and the reply shows at the end of the thread (reply-13578, 'Bob Martinez 1 second ago')",
+      "screenshot": "qa-artifacts/203-walk2/laneB/reply-after-post.png"
     },
     "c-member-reply-create.2": {
       "result": "pass",
@@ -33,11 +31,9 @@
       "evidence": "alice replied on bob's topic (bob = OP): exactly one reply_to_post bell row and one Mailpit email '[forums] Alice Chen replied to your topic ...' for bob. Opt-out case not tried"
     },
     "c-member-reply-create.4": {
-      "result": "fail",
-      "expected": "an inline error and nothing is posted",
-      "actual": "empty reply: Post Reply focuses the editor, nothing is posted, but no error message appears anywhere (REST returns 400 'Reply content is required.', the UI does not show it)",
-      "url": "http://forums.local/community/s/help-desk/t/can-i-change-the-email-on-my-membership-account/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/reply-empty.png"
+      "result": "pass",
+      "evidence": "empty Post Reply -> inline 'Write your reply before posting.' under the editor, nothing posted",
+      "screenshot": "qa-artifacts/203-walk2/laneB/reply-empty.png"
     },
     "c-member-reply-create.5": {
       "result": "pass",
@@ -64,12 +60,9 @@
       "evidence": "alice's private reply on bob's topic -> only bob (OP) got a notification row (id 21943) and email; maya (follower) got none; the next list shows maya 'Private reply, visible to the topic author and moderators.' with no text"
     },
     "c-member-reply-create.11": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "no composer; POST /replies returns 404 jetonomy_not_found",
-      "actual": "bob on Customer Advisory Board topic: page shows 'This content is in a private space.' with no composer (ok); POST /posts/5865/replies -> 403 jetonomy_forbidden 'You cannot post in this space.', not 404",
-      "url": "http://forums.local/community/s/customer-advisory-board/t/q1-roadmap-draft-for-review/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/rc-cab-bob.png"
+      "result": "pass",
+      "evidence": "bob: Customer Advisory Board topic page shows 'This content is in a private space.' with no composer; POST /posts/5865/replies -> 403 jetonomy_forbidden 'You cannot post in this space.', nothing stored",
+      "screenshot": "qa-artifacts/203-walk2/laneB/reply-cab-bob.png"
     },
     "c-member-reply-create.12": {
       "result": "pass",
@@ -77,14 +70,17 @@
     },
     "c-member-reply-create.13": {
       "result": "fail",
-      "expected": "omar is refused with the ban message in an Off-Topic Lounge topic; elsewhere he can reply",
-      "actual": "omar opening an Off-Topic Lounge topic URL gets 'Topic not found. This topic may have been removed' (misleading); the space page itself says 'You have been banned from this space'; POST /replies -> 403 jetonomy_forbidden 'You cannot post in this space.' (no ban message, unlike POST /posts which returns jetonomy_user_space_banned). Elsewhere (General Discussion) he sees the composer",
-      "url": "http://forums.local/community/s/off-topic-lounge/t/coffee-or-tea-while-you-work-s3001t4/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/rc-omar.png"
+      "expected": "omar (banned from Off-Topic Lounge) opening a topic there gets a ban message",
+      "actual": "the topic URL returns HTTP 404 'Topic not found. This topic may have been removed, or the link is wrong.' (the same URL opens fine for bob); the space page itself says 'You have been banned from this space'. REST POST /posts/6081/replies -> 403 jetonomy_user_space_banned is correct",
+      "url": "http://forums.local/community/s/off-topic-lounge/t/(topic 6081)/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/reply-omar-banned.png"
     },
     "c-member-reply-create.14": {
-      "result": "untested",
-      "needs": "lane A: a new-member (low trust) account and the new-member daily reply limit; bob is trust level 4"
+      "result": "fail",
+      "expected": "limit message and REST 429",
+      "actual": "lane A: test_author (level 0): the 11th reply is refused with 'New members can post 10 replies a day. You can reply again in about 1 day.' but REST returns 400 jetonomy_validation, not 429",
+      "url": "http://forums.local/wp-json/jetonomy/v1/posts/<id>/replies",
+      "screenshot": ""
     },
     "c-member-reply-create.15": {
       "result": "pass",
@@ -95,19 +91,17 @@
       "evidence": "offline submit -> text kept in the editor, 'Failed to save.'; back online one click -> one reply (13562), no duplicate"
     },
     "c-member-reply-create.17": {
-      "result": "fail",
-      "expected": "Arabic reply renders right-to-left",
-      "actual": "Arabic reply on Omar's topic posts fine but is left-aligned in an LTR block (direction ltr, text-align start, no dir attribute)",
-      "url": "http://forums.local/community/s/general-discussion/t/تجربتي-مع-مجموعات-التصوير-المحلية/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/quote-arabic.png"
+      "result": "pass",
+      "evidence": "bob's Arabic reply on Omar's topic: .jt-reply-body dir=auto, computed direction rtl, text right-aligned",
+      "screenshot": "qa-artifacts/203-walk2/laneB/reply-arabic.png"
     },
     "c-member-reply-create.18": {
       "result": "pass",
       "evidence": "1900-character body plus a 150-character unbroken URL -> wraps over several lines, rightmost child inside the card (961 vs 962), no horizontal scroll"
     },
     "c-member-reply-create.19": {
-      "result": "untested",
-      "needs": "lane A: set a space to require approval"
+      "result": "pass",
+      "evidence": "lane A: in a require-approval space maya's reply -> toast 'Your reply is awaiting moderation and will appear once approved.', status pending, invisible to maya and to a guest, listed in Moderation > Pending Replies; after Approve it is visible and the topic author bob got exactly 1 reply_to_post notification. Wording says 'moderation'"
     },
     "c-member-reply-create.20": {
       "result": "pass",
@@ -116,12 +110,32 @@
     "c-member-reply-create.21": {
       "result": "pass",
       "evidence": "390px: Post Reply button 301px wide at y 425-466 of 844, above the fixed bottom nav (y 784), no horizontal scroll. Real on-screen keyboard not emulated"
+    },
+    "c-member-reply-create.22": {
+      "result": "pass",
+      "evidence": "on a topic with 46 replies (30 per page) posting jumped to ?rpg=2#reply-13578 and the new reply is in view at the end of page 2"
+    },
+    "c-member-reply-create.23": {
+      "result": "fail",
+      "expected": "omar opening a topic in Off-Topic Lounge sees a banned message, not 'Topic not found'",
+      "actual": "HTTP 404 page 'Topic not found. This topic may have been removed, or the link is wrong.' with 'Back to the community'; POST /replies returns jetonomy_user_space_banned correctly",
+      "url": "http://forums.local/community/s/off-topic-lounge/t/(topic 6081)/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/reply-omar-banned.png"
+    },
+    "c-member-reply-create.24": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "empty reply shows the REST message 'Reply content is required.' inline",
+      "actual": "the composer validates before calling REST and shows the inline message 'Write your reply before posting.'; nothing is posted. Correct behaviour with different wording; REST itself returns 400 'Reply content is required.'",
+      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/reply-empty.png"
     }
   },
   "proposed_checks": [
     "- `c-member-reply-create.22` @member #ui +long: reply on a topic with more replies than one page -> the new reply is visible straight away (scrolled to or loaded) instead of only the count changing.",
     "- `c-member-reply-create.23` @space_banned #ui !refuse +banned: omar opens a topic in Off-Topic Lounge -> a banned message, not 'Topic not found'; POST /replies returns jetonomy_user_space_banned.",
-    "- `c-member-reply-create.24` @member #ui +empty: empty reply shows the REST message 'Reply content is required.' inline."
+    "- `c-member-reply-create.24` @member #ui +empty: empty reply shows the REST message 'Reply content is required.' inline.",
+    "- `c-member-reply-create.25` @member #ui +empty: submit an empty reply -> an inline 'Write your reply before posting.' under the editor and nothing posted (replaces the wording in c-member-reply-create.24)."
   ],
-  "notes": "No settings changed. Created and later purged: replies by bob, alice, maya and test_moderator on topics I created plus bob's replies on 5873/5874 and a moderator reply on the closed topic 5877. maya followed bob's topic (removed with it). Debug log unchanged."
+  "notes": "No settings changed. Created and later purged: replies by bob, alice, maya and test_moderator on topics I created plus bob's replies on 5873/5874 and a moderator reply on the closed topic 5877. maya followed bob's topic (removed with it). Debug log unchanged. | Re-walk lane B 2026-10-17: Created as bob: reply 13578 (Feature Requests dark-mode topic, count 46) and Arabic reply 13579 (Omar's topic); both removed at the end. .14 .19 untested (lane A). | lane A (re-walk 2026-10-17):"
 }

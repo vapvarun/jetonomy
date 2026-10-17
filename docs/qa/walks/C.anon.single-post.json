@@ -94,8 +94,8 @@
       "evidence": "Grace's topic at 1440 and 390: title wraps, list + quote + code block present, code block scrolls inside itself (scrollWidth 496 in 292 box), URL wraps, scrollWidth 390 (grace-390.png). Console shows 1 error: GET /link-preview?url=photoclub.example.org... 400 for the unresolvable fixture URL"
     },
     "c-anon-single-post.20": {
-      "result": "untested",
-      "needs": "lane A: switch site language to Arabic (RTL)"
+      "result": "pass",
+      "evidence": "lane A, site language ar (RTL): Omar's Arabic topic as guest: html dir=rtl, title dir=auto right-aligned, body and replies right-aligned, vote/React controls and sidebar mirrored. Plugin strings stay English and time reads 'ago شهرين' (mixed order). qa-artifacts/203-walk2/laneA/ar-single-post.png"
     },
     "c-anon-single-post.21": {
       "result": "pass",
@@ -123,6 +123,6 @@
     "- `c-anon-single-post.27` @guest #ui: open a topic whose body links to an unreachable site -> no console error and the link shows as a plain link.",
     "- `c-anon-single-post.28` @guest #ui !refuse: open a topic in Partner Program -> HTTP status and title match the private-space message (currently 404 'Page not available')."
   ],
-  "notes": "No settings changed. Seed has no edited, nested or private replies and the closed topic has a reply, so those checks need a fixture.",
+  "notes": "No settings changed. Seed has no edited, nested or private replies and the closed topic has a reply, so those checks need a fixture. | lane A (re-walk 2026-10-17):",
   "walked_at": "2026-10-17T09:42:01Z"
 }

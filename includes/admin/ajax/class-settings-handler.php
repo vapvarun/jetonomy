@@ -216,8 +216,10 @@ class Settings_Handler {
 			'{url}'     => $fixture['url'],
 		);
 
-		$subject = '' !== $subject_override ? strtr( $subject_override, $placeholders ) : strtr( '[{site}] {message}', $placeholders );
-		$body    = '' !== $body_override ? strtr( $body_override, $placeholders ) : $fixture['message'];
+		// A blank field previews the default the send path uses for it.
+		$default = Notifier::get_default_template( $type );
+		$subject = strtr( '' !== $subject_override ? $subject_override : ( '' !== $default['subject'] ? $default['subject'] : '[{site}] {message}' ), $placeholders );
+		$body    = '' !== $body_override ? strtr( $body_override, $placeholders ) : ( '' !== $default['body'] ? strtr( $default['body'], $placeholders ) : $fixture['message'] );
 
 		$html = Notifier::render_email_template(
 			$type,

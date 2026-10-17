@@ -12,6 +12,12 @@ class CategoryTest extends WP_UnitTestCase {
 		Schema::create_tables();
 	}
 
+	/** A listed category holds at least one space the viewer can see (empty ones are not found). */
+	private function with_space( int $category_id ): int {
+		\Jetonomy\Models\Space::create( [ 'title' => 'S ' . uniqid(), 'slug' => 's-' . uniqid(), 'category_id' => $category_id, 'visibility' => 'public' ] );
+		return $category_id;
+	}
+
 	public function test_create_returns_id(): void {
 		$id = Category::create( [ 'name' => 'Test', 'slug' => 'test-' . uniqid(), 'visibility' => 'public' ] );
 		$this->assertGreaterThan( 0, $id );
@@ -26,7 +32,7 @@ class CategoryTest extends WP_UnitTestCase {
 	}
 
 	public function test_find_by_slug(): void {
-		Category::create( [ 'name' => 'Design', 'slug' => 'design' ] );
+		$this->with_space( Category::create( [ 'name' => 'Design', 'slug' => 'design' ] ) );
 		$cat = Category::find_by_slug( 'design' );
 		$this->assertNotNull( $cat );
 		$this->assertEquals( 'Design', $cat->name );
@@ -41,9 +47,9 @@ class CategoryTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_top_level_excludes_children(): void {
-		$parent = Category::create( [ 'name' => 'Parent', 'slug' => 'parent-' . uniqid() ] );
+		$parent = $this->with_space( Category::create( [ 'name' => 'Parent', 'slug' => 'parent-' . uniqid() ] ) );
 		Category::create( [ 'name' => 'Child', 'slug' => 'child-' . uniqid(), 'parent_id' => $parent ] );
-		Category::create( [ 'name' => 'Other', 'slug' => 'other-' . uniqid() ] );
+		$this->with_space( Category::create( [ 'name' => 'Other', 'slug' => 'other-' . uniqid() ] ) );
 
 		$top   = Category::list_top_level();
 		$names = array_map( fn( $c ) => $c->name, $top );
@@ -56,8 +62,8 @@ class CategoryTest extends WP_UnitTestCase {
 		// Use unique names so this test is robust against rows leaked from other
 		// tests (custom jt_* tables aren't covered by WP_UnitTestCase transactions).
 		$suffix = uniqid();
-		Category::create( [ 'name' => "B-$suffix", 'slug' => "b-$suffix", 'sort_order' => 2 ] );
-		Category::create( [ 'name' => "A-$suffix", 'slug' => "a-$suffix", 'sort_order' => 1 ] );
+		$this->with_space( Category::create( [ 'name' => "B-$suffix", 'slug' => "b-$suffix", 'sort_order' => 2 ] ) );
+		$this->with_space( Category::create( [ 'name' => "A-$suffix", 'slug' => "a-$suffix", 'sort_order' => 1 ] ) );
 		$top   = Category::list_top_level();
 		$names = array_map( fn( $c ) => $c->name, $top );
 		$idx_a = array_search( "A-$suffix", $names, true );
@@ -69,8 +75,8 @@ class CategoryTest extends WP_UnitTestCase {
 
 	public function test_list_children_returns_correct_children(): void {
 		$parent = Category::create( [ 'name' => 'Root', 'slug' => 'root-' . uniqid() ] );
-		Category::create( [ 'name' => 'Child1', 'slug' => 'child1-' . uniqid(), 'parent_id' => $parent ] );
-		Category::create( [ 'name' => 'Child2', 'slug' => 'child2-' . uniqid(), 'parent_id' => $parent ] );
+		$this->with_space( Category::create( [ 'name' => 'Child1', 'slug' => 'child1-' . uniqid(), 'parent_id' => $parent ] ) );
+		$this->with_space( Category::create( [ 'name' => 'Child2', 'slug' => 'child2-' . uniqid(), 'parent_id' => $parent ] ) );
 		Category::create( [ 'name' => 'Other', 'slug' => 'other2-' . uniqid() ] );
 
 		$children = Category::list_children( $parent );

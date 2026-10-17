@@ -52,9 +52,12 @@ if ( 'ideas' === ( $space->type ?? '' ) ) {
 	);
 }
 
-// Space moderators can reach the members page (and its pending join-request
-// approval panel) without knowing the direct URL.
-$jt_show_members = is_user_logged_in();
+// One rule: the Members tab shows to whoever may open the Members page, and
+// that page (like GET /spaces/{id}/members) admits anyone who can read the
+// space - guests included on a public space. Gating the tab on login left
+// guests a page reachable by URL with no tab, and an ideas space showing
+// guests a different tab row than a forum space.
+$jt_show_members = \Jetonomy\Models\Space::readable_by_viewer( $space, get_current_user_id() );
 
 if ( $jt_show_members ) {
 	$jt_space_tabs['members'] = array(
@@ -77,7 +80,7 @@ if ( $jt_show_members ) {
  *
  * @param array<string,array{label:string,url:string,active?:bool}> $jt_space_tabs Ordered tab map.
  * @param object $space           The space being viewed.
- * @param bool   $jt_show_members Whether the Members tab is shown (viewer logged in).
+ * @param bool   $jt_show_members Whether the Members tab is shown (viewer can read the space).
  */
 $jt_space_tabs = apply_filters( 'jetonomy_space_tabs', $jt_space_tabs, $space, $jt_show_members );
 

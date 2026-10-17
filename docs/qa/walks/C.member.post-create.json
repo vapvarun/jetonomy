@@ -1,8 +1,8 @@
 {
   "journey": "C.member.post-create",
-  "free": "a0fcbb2e",
+  "free": "5680944e",
   "pro": "d8d053b",
-  "walked_at": "2026-10-17T11:10:00Z",
+  "walked_at": "2026-10-17T12:19:07Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -23,11 +23,8 @@
       "evidence": "bob in Help Desk > Ask a Question, title 'How do I reset my membership password?' + 2 paragraphs -> landed on /s/help-desk/t/how-do-i-reset-my-membership-password/, listed first in Help Desk"
     },
     "c-member-post-create.2": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "POST /jetonomy/v1/posts then GET /posts?space_id=",
-      "actual": "POST /jetonomy/v1/spaces/3004/posts -> 201 (id 5946) and GET /spaces/3004/posts lists it first; /posts and /posts?space_id= return rest_no_route 404. Behaviour right, route in the check is wrong.",
-      "url": "/wp-json/jetonomy/v1/spaces/3004/posts"
+      "result": "pass",
+      "evidence": "bob POST /jetonomy/v1/spaces/3004/posts {title 'How do I reset my membership password?'} -> 201 id 6080; the route in the check is now the real one (POST /posts returns rest_no_route)"
     },
     "c-member-post-create.3": {
       "result": "pass",
@@ -42,8 +39,8 @@
       "evidence": "tags 'backup, profile', Private checkbox and Schedule 2026-10-18 08:00 -> saved topic shows 'Scheduled to publish on October 18, 2026 8:00 am. It is hidden from the community until then.', Private badge, #backup #profile; status draft, published_at 2026-10-18 08:00:00"
     },
     "c-member-post-create.6": {
-      "result": "untested",
-      "needs": "lane A: Settings > Notifications, enable email for 'New topic in a followed space' (new_post_in_sub email is off by default and on this site). Seen with alice following Help Desk (notify_via both): exactly one bell notification (new_post_in_sub for topic 5942), no email, as configured."
+      "result": "pass",
+      "evidence": "lane A: New topic in a followed space email on (default for new_post_in_sub off, restored), owner subject saved for new_post_in_sub; alice followed Help Desk, bob posted via the composer: alice got exactly 1 notification (new_post_in_sub) and 1 Mailpit email with the owner's saved subject, not two. (My test subject used a placeholder that does not exist so its {actor...} part rendered empty; not a product fault)"
     },
     "c-member-post-create.7": {
       "result": "pass",
@@ -54,23 +51,20 @@
       "evidence": "Upload image button -> file chooser -> png uploaded and shown inline in the editor (390px image from /wp-content/uploads). Paste and drop not exercised. Attachment deleted afterwards"
     },
     "c-member-post-create.9": {
-      "result": "untested",
-      "needs": "lane A: remove Upload media from the Member role"
+      "result": "pass",
+      "evidence": "lane A: Upload media removed from the Member (subscriber) role: bob's composer toolbar loses 'Upload image' (Bold, Italic, Code, Code block, Link, Blockquote, Emoji, Add Poll remain; with the cap it is there); a pasted image shows 'You do not have permission to upload images.'; qa-artifacts/203-walk2/laneA/paste-no-upload.png. Cap restored"
     },
     "c-member-post-create.10": {
-      "result": "untested",
-      "needs": "lane A: remove Upload media from the Member role"
+      "result": "pass",
+      "evidence": "lane A: without Upload media bob POST /jetonomy/v1/media with a PNG -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'; nothing stored. Cap restored"
     },
     "c-member-post-create.11": {
       "result": "pass",
       "evidence": "/s/2025-hackathon/new/ -> 'This space is archived or locked and no longer accepts new content.' with 'Back to 2025 Hackathon', no form. Locked space not tried (none seeded)"
     },
     "c-member-post-create.12": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "403 jetonomy_space_archived",
-      "actual": "403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new topics.' on POST /spaces/36/posts; nothing created. Refused correctly, code name differs.",
-      "url": "/wp-json/jetonomy/v1/spaces/36/posts"
+      "result": "pass",
+      "evidence": "POST /spaces/36/posts as bob -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.'; wp jetonomy post create --space=36 -> same error; 0 posts in space 36"
     },
     "c-member-post-create.13": {
       "result": "pass",
@@ -85,16 +79,15 @@
       "evidence": "omar on /s/off-topic-lounge/new/ -> 'You have been banned from this space and cannot take part in it.', no form; REST 403 jetonomy_user_space_banned; /s/general-discussion/new/ shows the form"
     },
     "c-member-post-create.16": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "compose page shows the gate; POST /posts returns 404 jetonomy_not_found",
-      "actual": "UI ok: /s/customer-advisory-board/new/ redirects to the space gate 'Customer Advisory Board is invite-only. You need an invitation to join.' with no form. REST POST /spaces/38/posts returns 403 jetonomy_forbidden, not 404. The space is listed in the public directory as 'Private | Invite only', so 403 may be intended.",
-      "url": "/wp-json/jetonomy/v1/spaces/38/posts",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/new-cab.png"
+      "result": "pass",
+      "evidence": "POST /spaces/38/posts as bob (Customer Advisory Board) -> 403 jetonomy_forbidden 'You cannot post in this space.', nothing stored; UI gate from the earlier walk still refuses without a form"
     },
     "c-member-post-create.17": {
-      "result": "untested",
-      "needs": "lane A: a new-member (low trust) account and the new-member daily topic limit; bob is trust level 4 and has no limit"
+      "result": "fail",
+      "expected": "limit message and REST 429",
+      "actual": "lane A: test_author (trust level 0) hit the new-member limit on the 4th topic: UI and REST message 'New members can post 3 topics a day. You can post again in about 24 hours.' (shown twice in the UI); but REST answers 400 jetonomy_validation, not 429",
+      "url": "http://forums.local/wp-json/jetonomy/v1/spaces/3004/posts",
+      "screenshot": "qa-artifacts/203-walk2/laneA/new-member-topic-limit.png"
     },
     "c-member-post-create.18": {
       "result": "pass",
@@ -105,15 +98,13 @@
       "evidence": "double-click Post Question on an Arabic topic -> exactly one row created (id 5949)"
     },
     "c-member-post-create.20": {
-      "result": "fail",
-      "expected": "Arabic title and body render right-to-left",
-      "actual": "glyphs are right-to-left but the title and paragraph are left-aligned in an LTR block (direction ltr, text-align start, no dir attribute). Arabic text reads as an LTR-aligned block. A site in Arabic locale was not tested (lane A).",
-      "url": "http://forums.local/community/s/help-desk/t/كيف-أغير-كلمة-المرور-الخاصة-بحسابي؟/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/arabic-topic.png"
+      "result": "pass",
+      "evidence": "bob posted Arabic title and body in Off-Topic Lounge: h1 and .jt-post-body carry dir=auto and compute direction rtl",
+      "screenshot": "qa-artifacts/203-walk2/laneB/topic-arabic.png"
     },
     "c-member-post-create.21": {
-      "result": "untested",
-      "needs": "lane A: set a space to require approval"
+      "result": "pass",
+      "evidence": "lane A: new public space with 'Require approval' ticked: bob's topic -> toast 'Your topic is awaiting moderation and will appear once approved.' (the form stays open with the text still in it), topic status pending, guest gets 404 for it and does not see it in the list, it shows in Moderation > Pending Topics, alice (follower) had 0 notifications before approval and exactly 1 after clicking Approve. Wording says 'moderation' not 'approval'; qa-artifacts/203-walk2/laneA/approval-topic-bob.png"
     },
     "c-member-post-create.22": {
       "result": "pass",
@@ -126,6 +117,29 @@
     "c-member-post-create.24": {
       "result": "pass",
       "evidence": "dark via theme toggle at 390: page #23262f, editor and title text #e5e5e5, toolbar icons visible, Post Question light blue with dark text"
+    },
+    "c-member-post-create.25": {
+      "result": "fail",
+      "expected": "a visible character counter or limit message before the title field stops accepting input",
+      "actual": "typing 300 characters in the Help Desk title field stops silently at 255 (maxlength=255); no counter, no message anywhere in the field area",
+      "url": "http://forums.local/community/s/help-desk/new/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/compose-long-title.png"
+    },
+    "c-member-post-create.26": {
+      "result": "fail",
+      "expected": "offline submit -> exactly one 'Failed to save.' message",
+      "actual": "offline submit shows 'Failed to save.' twice at once: an inline jt-form-error and a toast. Title and body are kept",
+      "url": "http://forums.local/community/s/help-desk/new/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/compose-offline.png"
+    },
+    "c-member-post-create.27": {
+      "result": "pass",
+      "evidence": "Arabic topic on the LTR site: h1 dir=auto (rtl) and .jt-post-body dir=auto (rtl), text right-aligned",
+      "screenshot": "qa-artifacts/203-walk2/laneB/topic-arabic.png"
+    },
+    "c-member-post-create.28": {
+      "result": "pass",
+      "evidence": "the home page has no recent-topics feed; the 'N topics' stat on home read 258 before and the topic table holds 260 published topics after bob's two new topics"
     }
   },
   "proposed_checks": [
@@ -134,5 +148,5 @@
     "- `c-member-post-create.27` @member #ui +rtl: post an Arabic topic on an LTR site -> the title and body are right-aligned via dir=auto on user content.",
     "- `c-member-post-create.28` @member_b #ui: a space has no recent-topics feed on the community home page -> decide whether the check 'home feed' count means the directory counts."
   ],
-  "notes": "Site settings untouched. Lane B created: topics 5942, 5946, 5947, 5948 (scheduled draft), 5949, 5950; alice's follow of Help Desk (subscription 18668, own preference); one uploaded image (deleted). Topics are reused by post-edit, post-delete and search journeys and deleted at the end. Debug log unchanged (112327 bytes)."
+  "notes": "Site settings untouched. Lane B created: topics 5942, 5946, 5947, 5948 (scheduled draft), 5949, 5950; alice's follow of Help Desk (subscription 18668, own preference); one uploaded image (deleted). Topics are reused by post-edit, post-delete and search journeys and deleted at the end. Debug log unchanged (112327 bytes). | Re-walk lane B 2026-10-17: bob created 2 real-looking topics (6080 Help Desk, 6081 Arabic in Off-Topic Lounge) reused by post-edit/delete/reply walks and removed afterwards. .6 .9 .10 .17 .21 left untested (lane A). Navigating away from a half-filled composer raises a browser beforeunload prompt. | lane A (re-walk 2026-10-17): lane A: test space (Photo Walks) created, require-approval toggled, topics/replies cleaned up and the space purged; test_author's 3 topics and 10 replies deleted; settings and role caps restored."
 }

@@ -86,6 +86,27 @@ if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true 
 	}
 }
 
+// A member banned from a public space cannot read its topics (can_read_post()
+// below says no), but a 404 on a public topic reads as a broken link. Say why,
+// as the space page does. Template_Loader::topic_ban_error() is the one rule
+// (the pre-flight already sent the 403); it stays null wherever the topic
+// would be unreadable anyway, so the message never confirms a hidden topic.
+$jt_ban_error = \Jetonomy\Template_Loader::topic_ban_error( $post, (int) $jt_viewer_id );
+if ( $jt_ban_error ) {
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		array(
+			'icon'      => 'lock',
+			'message'   => $jt_ban_error->get_error_message(),
+			/* translators: %s: plural space label the site owner configured (e.g. spaces). */
+			'cta_label' => sprintf( __( 'Browse other %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+			'cta_url'   => \Jetonomy\base_url() . '/',
+			'tone'      => 'forbidden',
+		)
+	);
+	return;
+}
+
 // Per-post privacy gate. Before 1.3.6 a subscriber with space access could
 // reach a private topic via direct URL because neither the template nor the
 // status/visibility checks above looked at is_private on the post itself

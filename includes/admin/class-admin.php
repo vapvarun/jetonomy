@@ -1532,10 +1532,17 @@ class Admin {
 		$filter_type     = sanitize_text_field( $_GET['type'] ?? '' );
 		$filter_status   = sanitize_text_field( $_GET['status'] ?? '' );
 
+		$search_query = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
+		$orderby      = sanitize_key( wp_unslash( $_GET['orderby'] ?? '' ) );
+		$order        = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
+
 		$filters  = array(
 			'category_id' => $filter_category,
 			'type'        => $filter_type,
 			'status'      => $filter_status,
+			'search'      => $search_query,
+			'orderby'     => $orderby,
+			'order'       => $order,
 		);
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = absint( $_GET['per_page'] ?? 20 );
@@ -1546,7 +1553,7 @@ class Admin {
 
 		// Inside one category (and nothing else filtered) the list follows the
 		// manual order members see, so drag-reorder has a coherent target.
-		$can_reorder = $filter_category > 0 && ! $filter_type && ! $filter_status;
+		$can_reorder = $filter_category > 0 && ! $filter_type && ! $filter_status && '' === $search_query && '' === $orderby;
 
 		$total       = Space::count_for_admin( $filters );
 		$total_pages = (int) ceil( $total / $per_page );
@@ -1873,10 +1880,15 @@ class Admin {
 
 		// "Scheduled" is a pseudo-status (a draft with a published_at) and "All"
 		// leaves out the trash; Post::list_for_admin() owns both rules.
+		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'created_at' ) );
+		$order   = 'ASC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'DESC' ) ) ) ? 'ASC' : 'DESC';
+
 		$filters = array(
 			'space_id' => $current_space,
 			'status'   => $current_status,
 			'search'   => $search_query,
+			'orderby'  => $orderby,
+			'order'    => $order,
 		);
 
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );

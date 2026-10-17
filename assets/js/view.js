@@ -3477,8 +3477,11 @@ const { state, actions } = store( 'jetonomy', {
 
             // Build the blockquote: the reply's paragraphs, lists and code,
             // trimmed to ~300 characters of text. dir="auto" lets a quote in
-            // another script take its own direction (and its bar's side).
+            // another script take its own direction (and its bar's side). The
+            // cite carries its own dir so that resolution skips the (often
+            // Latin) author name and reads the quoted text.
             const cite = document.createElement( 'cite' );
+            cite.dir = 'auto';
             cite.textContent = authorName;
             const blockquote = document.createElement( 'blockquote' );
             blockquote.className = 'jt-quote';
@@ -4175,9 +4178,7 @@ const { state, actions } = store( 'jetonomy', {
                 }
             }
             if ( o.collectSchedule && 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
-                const msg = state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.';
-                writeError( msg );
-                if ( window.bnToast ) window.bnToast( msg );
+                writeError( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
                 setIdle();
                 return;
             }
@@ -4249,8 +4250,9 @@ const { state, actions } = store( 'jetonomy', {
                 const errMsg = ( result.data && result.data.message )
                     ? result.data.message
                     : ( state.i18n?.failedSave || 'Failed to save.' );
+                // Inline only: the form's role="alert" line already announces
+                // it, and a toast on top showed the same words twice.
                 writeError( errMsg );
-                if ( window.bnToast ) window.bnToast( errMsg );
                 setIdle();
                 return;
             }

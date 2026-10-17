@@ -96,7 +96,9 @@ $_post_type               = $_space_type_to_post_type[ $_space_type ] ?? 'topic'
 		<input type="text" id="jt-post-title" name="title" dir="auto" class="jt-input jt-compose-topic-title"
 			placeholder="<?php echo esc_attr( $_title_placeholder ); ?>"
 			data-space-id="<?php echo (int) $space->id; ?>"
-			maxlength="255"<?php echo ( $_submit_label ) ? ' required autofocus' : ''; ?>>
+			maxlength="255" aria-describedby="jt-post-title-count"<?php echo ( $_submit_label ) ? ' required autofocus' : ''; ?>>
+		<?php // Filled by composer.js near the limit, so typing does not just stop silently. ?>
+		<p id="jt-post-title-count" class="jt-form-hint jt-title-count" aria-live="polite" hidden></p>
 		<?php if ( $_submit_label ) : ?>
 			<div id="jt-similar-topics" class="jt-similar" hidden>
 				<div class="jt-similar-head">

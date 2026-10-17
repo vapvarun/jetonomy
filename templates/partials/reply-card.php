@@ -58,7 +58,7 @@ $jt_is_masked = (int) $display['id'] !== (int) $reply->author_id;
 $profile      = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
 $trust        = $profile ? (int) $profile->trust_level : 0;
 $time_ago     = human_time_diff( strtotime( $reply->created_at ), time() );
-$is_op        = (int) $reply->author_id === (int) $post->author_id;
+$is_op        = (int) $reply->author_id > 0 && (int) $reply->author_id === (int) $post->author_id; // Two deleted accounts (author 0) are not one person.
 $is_accepted  = (int) $reply->is_accepted;
 
 $jt_reply_viewer = get_current_user_id();

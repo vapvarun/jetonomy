@@ -58,6 +58,13 @@ class Posts_Controller extends Base_Controller {
 								'default' => 'latest',
 								'enum'    => array( 'latest', 'popular', 'oldest', 'newest', 'unanswered' ),
 							),
+							// WordPress clients send `orderby`; it was silently
+							// ignored. Same values as `sort`, so an unknown one is a 400.
+							'orderby'  => array(
+								'type'        => 'string',
+								'description' => 'Alias of sort; used when sort is not sent.',
+								'enum'        => array( 'latest', 'popular', 'oldest', 'newest', 'unanswered' ),
+							),
 						)
 					),
 				),
@@ -310,6 +317,9 @@ class Posts_Controller extends Base_Controller {
 		$is_privileged = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
 
 		$pagination = $this->get_pagination( $request );
+		if ( ! isset( $request->get_query_params()['sort'] ) && null !== $request->get_param( 'orderby' ) ) {
+			$pagination['sort'] = (string) $request->get_param( 'orderby' );
+		}
 
 		// Resolve limit: explicit query-param from client → Space::get_posts_per_page()
 		// (space → global → 20). Use raw query params, NOT get_param(), because route
@@ -453,7 +463,7 @@ class Posts_Controller extends Base_Controller {
 			// Rate_Limiter::message() names the allowance and the real wait.
 			// A bare "Rate limit exceeded. Please try again later." would not tell a member
 			// whether "later" means a minute or a day.
-			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_posts', $trust ) );
+			return \Jetonomy\Permissions\Rate_Limiter::error( $user_id, 'create_posts', $trust );
 		}
 
 		// CAPTCHA verification (skipped for trust level 2+ users and admins).

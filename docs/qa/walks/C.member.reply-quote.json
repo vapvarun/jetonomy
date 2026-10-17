@@ -1,8 +1,8 @@
 {
   "journey": "C.member.reply-quote",
-  "free": "a0fcbb2e",
+  "free": "5680944e",
   "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:00:00Z",
+  "walked_at": "2026-10-17T12:25:05Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -30,11 +30,9 @@
       "evidence": "x on the chip removes it; the next reply posted as plain (parent_id null)"
     },
     "c-member-reply-quote.4": {
-      "result": "fail",
-      "expected": "quote keeps list, code block and long URL structure without overflow",
-      "actual": "quoting a reply that has a list, a code block and a 100-character URL saved a blockquote with one flat <p>: list items and code are separated only by blank lines, the ul and pre are gone. No overflow. (My typed comment also landed in the middle of the quoted URL after Ctrl+End; probably caret handling in my driver, not claimed as a defect.)",
-      "url": "http://forums.local/community/s/help-desk/t/can-i-change-the-email-on-my-membership-account/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/quote-long.png"
+      "result": "pass",
+      "evidence": "bob quoted alice's reply (paragraph, 3-item list, code block, 137-character URL link): the composer and the saved blockquote keep the ul, the pre/code and the link; link text is shortened with an ellipsis; blockquote right edge 945 inside the 962 reply box, long code line scrolls inside its block",
+      "screenshot": "qa-artifacts/203-walk2/laneB/quote-posted.png"
     },
     "c-member-reply-quote.5": {
       "result": "pass",
@@ -54,15 +52,33 @@
     },
     "c-member-reply-quote.9": {
       "result": "fail",
-      "expected": "blockquote and attribution render right-to-left",
-      "actual": "quote of an Arabic reply: blockquote direction ltr, bar on the left (border-inline-start 3px), attribution '-Aisha Khan' and Arabic text left-aligned",
-      "url": "http://forums.local/community/s/general-discussion/t/تجربتي-مع-مجموعات-التصوير-المحلية/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/quote-arabic.png"
+      "expected": "quote of an Arabic reply renders right-to-left (blockquote and attribution)",
+      "actual": "quoting bob's Arabic reply: blockquote has dir=auto but computes direction ltr (the first strong character is the Latin cite 'Bob Martinez'), the bar is on the left (border-left 3px), the Arabic paragraph inside is direction ltr and left-aligned with its full stop at the left edge",
+      "url": "http://forums.local/community/s/general-discussion/t/(Omar's Arabic topic)/#reply-13582",
+      "screenshot": "qa-artifacts/203-walk2/laneB/quote-dark.png"
     },
     "c-member-reply-quote.10": {
       "result": "pass",
-      "evidence": "dark via theme toggle: blockquote bg ~#34373f, text ~#cbcbcd, cite ~#b9babc on card; readable. The left bar is only 12% white so it is faint (quote-dark.png)",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/quote-dark.png"
+      "evidence": "dark mode: quote text is light grey (0.80) on dark grey (0.20) and readable; the bar is faint but visible (see .12)",
+      "screenshot": "qa-artifacts/203-walk2/laneB/quote-dark.png"
+    },
+    "c-member-reply-quote.11": {
+      "result": "pass",
+      "evidence": "Quote on alice's reply posts a threaded reply: the saved reply shows 'in reply to Alice Chen' above the blockquote (parent_id set, same as Reply). That is the contract the code has today; owner to confirm"
+    },
+    "c-member-reply-quote.12": {
+      "result": "fail",
+      "expected": "the quote bar has enough contrast in dark mode",
+      "actual": "the bar is still rgba white at 12% alpha: blended it is about 1.35:1 against the dark surface, below the 3:1 a graphical element needs",
+      "url": "http://forums.local/community/s/general-discussion/t/(Omar's Arabic topic)/#reply-13582",
+      "screenshot": "qa-artifacts/203-walk2/laneB/quote-dark.png"
+    },
+    "c-member-reply-quote.13": {
+      "result": "fail",
+      "expected": "a reply from a deleted account does not carry the OP badge",
+      "actual": "guest on /community/s/london-chapter/t/qa-rft-poll-topic/: reply 10190 by '[deleted]' carries an 'OP' badge (the topic's author is also user 0, so the two match)",
+      "url": "http://forums.local/community/s/london-chapter/t/qa-rft-poll-topic/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/deleted-user-reply.png"
     }
   },
   "proposed_checks": [
@@ -70,5 +86,5 @@
     "- `c-member-reply-quote.12` @member #ui +dark: the quote bar has enough contrast in dark mode (today 12% white).",
     "- `c-member-reply-quote.13` @guest #ui +deleted: a reply from a deleted account does not carry the OP badge."
   ],
-  "notes": "No settings changed. All replies and topics created for this journey were deleted and purged from Moderation > Trash. The 'Scheduled maintenance on Saturday' topic is now named 'Scheduled maintenance on Saturday: what to expect'. Debug log unchanged (112327 bytes)."
+  "notes": "No settings changed. All replies and topics created for this journey were deleted and purged from Moderation > Trash. The 'Scheduled maintenance on Saturday' topic is now named 'Scheduled maintenance on Saturday: what to expect'. Debug log unchanged (112327 bytes). | Re-walk lane B 2026-10-17: Created alice reply 13580 (list/code/URL), bob quote replies 13581 and 13582; removed at the end. Typing right after clicking Quote lands below the blockquote (checked); .7 re-seen: quote of the deleted account shows '[deleted]'."
 }

@@ -89,11 +89,9 @@ class Notifier {
 	 * read from this map, so the strings can never drift between the two
 	 * sites.
 	 *
-	 * Subjects are wrapped in `[{site}]` to match the legacy `'[{site}] {message}'`
-	 * fallback used by Notifier::send_email_notification when no override is
-	 * saved — admins see consistent default copy whether they clear the field
-	 * (falls back at send time) or click Reset (writes the same template into
-	 * the field).
+	 * Blank fields: send_email_notification() sends these when a field is blank, so the
+	 * placeholder Settings > Email shows is what goes out, whether the owner
+	 * clears the field or clicks Reset (which writes the same template in).
 	 *
 	 * Bodies use the documented placeholder set: {site}, {user}, {message},
 	 * {type}, {url}, plus the 1.3.6 enriched placeholders {post_title},
@@ -1549,10 +1547,15 @@ class Notifier {
 			'{space_title}'        => (string) ( $extra['space_title'] ?? '' ),
 		);
 
-		$subject_tpl = isset( $tpl['subject'] ) && '' !== $tpl['subject'] ? (string) $tpl['subject'] : '[{site}] {message}';
+		// A blank field sends the default Settings > Email shows for it (the
+		// field's placeholder), from the same get_default_template() map. It used
+		// to send the bare "[site] {message}" instead. Types with no default (an
+		// add-on's) keep that legacy pair.
+		$default     = self::get_default_template( $type );
+		$subject_tpl = isset( $tpl['subject'] ) && '' !== $tpl['subject'] ? (string) $tpl['subject'] : ( '' !== $default['subject'] ? $default['subject'] : '[{site}] {message}' );
 		$subject     = strtr( $subject_tpl, $placeholders );
 
-		$body_tpl = isset( $tpl['body'] ) && '' !== $tpl['body'] ? (string) $tpl['body'] : $message;
+		$body_tpl = isset( $tpl['body'] ) && '' !== $tpl['body'] ? (string) $tpl['body'] : ( '' !== $default['body'] ? $default['body'] : $message );
 		$body     = strtr( $body_tpl, $placeholders );
 
 		/**

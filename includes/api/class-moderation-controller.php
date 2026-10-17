@@ -230,17 +230,14 @@ class Moderation_Controller extends Base_Controller {
 				'callback'            => array( $this, 'ban_user' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => array(
-					'user_id'    => array(
-						'type'     => 'integer',
-						'required' => true,
-					),
+					// Required for every type except ip_ban, which blocks an address on its own.
+					'user_id'    => array( 'type' => 'integer' ),
 					'type'       => array(
 						'type'     => 'string',
 						'required' => true,
 						'enum'     => array( 'global_ban', 'space_ban', 'silence', 'ip_ban' ),
 					),
-					// Required when type is ip_ban: the address to block. user_id names the
-					// member it was seen on, so the same target rules apply.
+					// Required when type is ip_ban: the address to block.
 					'ip'         => array( 'type' => 'string' ),
 					'reason'     => array( 'type' => 'string' ),
 					'space_id'   => array( 'type' => 'integer' ),
@@ -734,6 +731,17 @@ class Moderation_Controller extends Base_Controller {
 			}
 		}
 
+		// An IP ban stands alone: no member is named or stored, so the
+		// member-target rules below do not apply (validate_ip_ban() keeps it
+		// administrator-only and refuses the actor's own address).
+		if ( 'ip_ban' === $type ) {
+			$ip = Restriction::validate_ip_ban( (string) $request->get_param( 'ip' ), $actor_id );
+			if ( is_wp_error( $ip ) ) {
+				return $ip;
+			}
+			return $this->issue_restriction( 0, $type, null, $ip, $expires_at, $ip );
+		}
+
 		if ( ! get_userdata( $user_id ) ) {
 			return $this->not_found( 'User' );
 		}
@@ -771,17 +779,20 @@ class Moderation_Controller extends Base_Controller {
 			);
 		}
 
-		// An ip_ban stores the address in `reason` (the column is_ip_banned() matches).
-		$ip = null;
-		if ( 'ip_ban' === $type ) {
-			$ip = Restriction::validate_ip_ban( (string) $request->get_param( 'ip' ), $actor_id );
-			if ( is_wp_error( $ip ) ) {
-				return $ip;
-			}
-			$reason   = $ip;
-			$space_id = null;
-		}
+		return $this->issue_restriction( $user_id, $type, $space_id, $reason, $expires_at, null );
+	}
 
+	/**
+	 * Store a restriction ban_user() has cleared and answer 201.
+	 *
+	 * @param int         $user_id    Member (0 for an IP ban).
+	 * @param string      $type       Restriction type.
+	 * @param int|null    $space_id   Space for a space ban.
+	 * @param string|null $reason     Reason, or the address for an IP ban.
+	 * @param string|null $expires_at Expiry or null.
+	 * @param string|null $ip         The banned address (IP ban only).
+	 */
+	private function issue_restriction( int $user_id, string $type, ?int $space_id, ?string $reason, ?string $expires_at, ?string $ip ): WP_REST_Response|WP_Error {
 		$restriction_id = Restriction::ban(
 			$user_id,
 			$type,
@@ -906,12 +917,13 @@ class Moderation_Controller extends Base_Controller {
 			$items[] = array(
 				'id'             => (int) $row->id,
 				'user_id'        => $uid,
-				'user'           => array(
+				// An IP ban belongs to no member (user_id 0), so it has no user rather than a "[deleted]" one.
+				'user'           => $uid ? array(
 					'id'           => $uid,
 					'display_name' => $banned ? $banned->display_name : __( '[deleted]', 'jetonomy' ),
 					'user_login'   => $banned ? $banned->user_login : '',
 					'avatar_url'   => $banned ? \Jetonomy\Avatar::display_url( $uid, 64 ) : '',
-				),
+				) : null,
 				'type'           => (string) $row->type,
 				'space_id'       => $row->space_id ? (int) $row->space_id : null,
 				'space_title'    => $space ? $space->title : null,

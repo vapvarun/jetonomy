@@ -1,9 +1,9 @@
 {
   "journey": "C.admin.blocks-shortcodes-widgets",
-  "free": "a0fcbb2e",
+  "free": "5680944e",
   "pro": "d8d053b",
   "walker": "lane A",
-  "walked_at": "2026-10-17T11:45:00Z",
+  "walked_at": "2026-10-17T12:40:17Z",
   "env": {
     "themes": [
       "reign",
@@ -21,11 +21,8 @@
   },
   "checks": {
     "c-admin-blocks-shortcodes-widgets.1": {
-      "result": "fail",
-      "expected": "each Jetonomy block previews in the editor the same content the community shows",
-      "actual": "all 8 registered blocks (login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel, navigation) insert and show no error, but in the editor each is a static labelled placeholder ('Jetonomy · Leaderboard - Top members by reputation', 'Jetonomy · Forum Feed - Latest topics from all spaces'), not the live list. The block names in the check also do not match: there is no recent-topics, spaces, space-members or user-profile block (they are forum-feed, space-list, user-panel; space members exists only as a shortcode).",
-      "url": "http://forums.local/wp-admin/post.php?post=1332&action=edit (draft since deleted)",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk1-editor.png"
+      "result": "pass",
+      "evidence": "Draft page with forum-feed, trending, space-list, leaderboard, navigation, user-panel, login and compose-topic: editor shows each as a labelled placeholder ('Jetonomy · Forum Feed - Latest topics from all spaces', 'Jetonomy · Trending Topics', ... 'Jetonomy · Login'; compose-topic 'Compose Topic: space picker'); the 8 published QA pages render live community content (feed rows, trending list, spaces, leaderboard ranks, navigation tree, user card, login form, compose form). qa-artifacts/203-walk2/laneA/editor-blocks.png"
     },
     "c-admin-blocks-shortcodes-widgets.2": {
       "result": "pass",
@@ -51,11 +48,8 @@
       "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk6-compose-after.png, laneA-blk6-compose-guest.png"
     },
     "c-admin-blocks-shortcodes-widgets.7": {
-      "result": "fail",
-      "expected": "finn using the compose-topic block is refused with 'Your account is currently silenced and cannot post.'",
-      "actual": "the block gives finn an empty space picker and the text 'You have not joined any space yet. Join one to start posting.' although he is a member of 19 spaces; no silenced message. REST POST /spaces/2996/posts as finn is refused correctly (403 jetonomy_user_silenced, 'Your account is currently silenced and cannot post.') and no topic was stored.",
-      "url": "http://forums.local/jt-qa-block-compose-topic/",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk7-finn.png"
+      "result": "pass",
+      "evidence": "finn on /jt-qa-block-compose-topic/ reads 'Your account is currently silenced and cannot post.' (no empty picker); qa-artifacts/203-walk2/laneA/block-compose-finn.png"
     },
     "c-admin-blocks-shortcodes-widgets.8": {
       "result": "pass",
@@ -94,7 +88,29 @@
     },
     "c-admin-blocks-shortcodes-widgets.16": {
       "result": "untested",
-      "needs": "docker site: a 2000-topic seed. (On this 266-topic site count=50 renders in 99 ms warm, 1047 ms on a cold first load.)"
+      "needs": "docker site: a 2000-topic seed (site has about 260 topics)"
+    },
+    "c-admin-blocks-shortcodes-widgets.17": {
+      "result": "fail",
+      "expected": "archived spaces (2025 Hackathon) are not in the compose-topic space picker",
+      "actual": "bob's picker on the compose-topic block page (jt-qa-block-compose-topic) and on the [jetonomy_compose_topic] page lists '2025 Hackathon' (archived) and 'Partner Program'; the first option after 'Select space...' is 2025 Hackathon",
+      "url": "http://forums.local/jt-qa-block-compose-topic/",
+      "screenshot": "qa-artifacts/203-walk2/laneA/block-compose-bob.png"
+    },
+    "c-admin-blocks-shortcodes-widgets.18": {
+      "result": "pass",
+      "evidence": "finn sees the silenced notice 'Your account is currently silenced and cannot post.' instead of 'You have not joined any space yet'"
+    },
+    "c-admin-blocks-shortcodes-widgets.19": {
+      "result": "fail",
+      "expected": "seeded QA pages use slugs or valid ids so the pages show the roster",
+      "actual": "/jt-qa-sc-space-members/ still holds [jetonomy_space_members space_id=\"1\"] and renders an empty content area (space 1 no longer exists); /jt-qa-sc-user-profile/ holds user_id=\"1\" and shows varundubey (works but is the admin, not a community member)",
+      "url": "http://forums.local/jt-qa-sc-space-members/",
+      "screenshot": ""
+    },
+    "c-admin-blocks-shortcodes-widgets.20": {
+      "result": "pass",
+      "evidence": "Runbook .1 now names exactly the 8 real blocks (forum feed, trending, space list, leaderboard, navigation, user panel, login, compose topic), the same 8 the editor registers"
     }
   },
   "proposed_checks": [
@@ -103,5 +119,5 @@
     "- `c-admin-blocks-shortcodes-widgets.19` @admin #block: seeded QA pages use stale ids ([jetonomy_space_members space_id=\"1\"], user_profile user_id=\"1\"); re-seed or rewrite them with slugs so the pages show the roster.",
     "- `c-admin-blocks-shortcodes-widgets.20` @admin #block: the check names eight blocks that do not exist; replace with login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel and navigation."
   ],
-  "notes": "Changes made and restored: four widgets added to sidebar-right then deleted (sidebars identical to the saved snapshot); temp pages (block draft, two shortcode pages, latest topics, roster) deleted; temporary space 'Cape Town Chapter' deleted; bob's compose topic deleted (his gamification points for it remain). Reign dark toggle was set in the lane A browser only (localStorage) and set back to light. Theme repeats on BuddyX and Twenty Twenty-Five for +390/+dark/+long: see below if a theme pass was done. Theme pass (lane A, 2026-10-17): BuddyX (with its own dark toggle) and Twenty Twenty-Five (no dark scheme) were activated then Reign restored. Screenshots: laneA-theme-buddyx-hl390.png, laneA-theme-buddyx-hl-dark.png, laneA-theme-tt25-hl390.png."
+  "notes": "Created a draft page (id 1339) to insert the blocks in the editor and deleted it. Read-only visits as bob, finn and guest. No settings changed."
 }

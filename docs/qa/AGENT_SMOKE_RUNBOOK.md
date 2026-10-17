@@ -386,6 +386,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-user-profile.16` @guest #ui +dark: toggle dark -> badges and stats readable.
 - `c-anon-user-profile.17` @guest #rest !refuse: GET /users/<silenced id> -> no restriction field naming silence or ban for a guest (currently restriction:'silence' for finn).
 - `c-anon-user-profile.18` @member #ui: on a site with WPMediaVerse messaging active (chat bubble shown) open a member's profile -> a Message button opens a conversation with them.
+- `c-anon-user-profile.19` @member #ui: with WPMediaVerse active and Pro messaging dormant, open alice's profile as bob -> a Message button that opens a WPMediaVerse conversation shows, or the site owner is told messaging is unavailable (today neither: only Report and Block).
 
 ### C.anon.tag
 **Covers:** templates/views/tag.php, includes/models/class-tag.php, includes/api/class-tags-controller.php
@@ -429,7 +430,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **Why it matters:** this is how customers find existing answers; a broken search drives support tickets.
 
 **Checks:**
-- `c-anon-search.1` @guest #ui: search "dark mode" -> "Dark mode for the community on phones" appears first and every result shares a meaningful token with the query.
+- `c-anon-search.1` @guest #ui: search "dark mode" -> topics with the exact phrase in the title rank above titles with only one of the words or a hyphenated form, and every result shares a meaningful token with the query.
 - `c-anon-search.2` @guest #ui +empty: search "qzxvbnm" -> a clean empty state ("No results") with no raw error.
 - `c-anon-search.3` @guest #ui !refuse: search a phrase only present in Customer Advisory Board and Moderators' Room topics -> no results from either.
 - `c-anon-search.4` @guest #rest !refuse: GET /jetonomy/v1/search?q=<same phrase> -> 200 with an empty list, the total does not count private/hidden rows.
@@ -545,13 +546,13 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-post-delete.7` @member #ui !refuse +settings-off: remove "Delete own posts" from Member -> the Delete item disappears and DELETE returns 403.
 - `c-member-post-delete.8` @member #ui: delete a topic with 3 replies -> the replies follow the contract (cascaded or orphaned) and the space reply count and the replies of those authors' profiles drop accordingly.
 - `c-member-post-delete.9` @member #ui: check space post count, home count and profile post count after deleting -> each fell by one.
-- `c-member-post-delete.10` @member #ui: delete a topic that carries an accepted answer -> reputation given for the vote is reversed per contract and the notifications about it disappear.
+- `c-member-post-delete.10` @member #ui: delete a topic that carries an accepted answer -> reputation already earned is kept (documented: deleting a topic does not change reputation; only Spam applies a penalty), and the notifications about that topic no longer show in the bell or GET /notifications.
 - `c-member-post-delete.11` @member_b #ui +deleted: alice had bookmarked or subscribed to the deleted topic -> her Bookmarks list no longer shows a broken row and her bell shows no dead link.
 - `c-member-post-delete.12` @moderator #ui: test_moderator removes bob's topic -> it moves to Trash with a Restore option for staff and bob is not told the wrong reason.
 - `c-member-post-delete.13` @member #ui +concurrent: delete the same topic from two tabs -> the second shows "already deleted" or not found, not a PHP error.
 - `c-member-post-delete.14` @member #ui +offline: delete while offline -> the topic stays in the list with an error toast.
 - `c-member-post-delete.15` @silenced #ui !refuse +silenced: finn deletes his -4 post -> refused with the silenced notice.
-- `c-member-post-delete.16` @member_b #ui +deleted: alice followed a topic that is then deleted -> My Subscriptions shows no 'No longer available' row (today a dead row with an Unfollow button remains).
+- `c-member-post-delete.16` @member_b #ui +deleted: alice followed a topic that is then deleted -> My Subscriptions marks it 'No longer available' with an Unfollow button (a trashed topic can be restored, so the follow is kept and stays manageable), and alice gets no further notifications from it.
 - `c-member-post-delete.17` @member #ui: delete a topic that has replies -> its replies are not left as published rows under a trashed parent, or the contract says so and the counters follow.
 - `c-member-post-delete.18` @moderator #ui: restore the deleted topic from Moderation > Trash -> the topic, its replies, the accepted answer and the counts come back.
 
@@ -584,7 +585,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-reply-create.21` @member #ui +390: reply at 390px with the keyboard open -> the Submit button stays reachable.
 - `c-member-reply-create.22` @member #ui +long: reply on a topic with more replies than one page -> the new reply is visible straight away (scrolled to or loaded) instead of only the count changing.
 - `c-member-reply-create.23` @space_banned #ui !refuse +banned: omar opens a topic in Off-Topic Lounge -> a banned message, not 'Topic not found'; POST /replies returns jetonomy_user_space_banned.
-- `c-member-reply-create.24` @member #ui +empty: empty reply shows the REST message 'Reply content is required.' inline.
+- `c-member-reply-create.24` @member #ui +empty: submit an empty reply -> an inline 'Write your reply before posting.' under the editor, announced to screen readers, nothing posted; POST /replies with empty content returns 400 'Reply content is required.'.
 
 ### C.member.reply-quote
 **Covers:** templates/partials/reply-card.php, assets/js/view.js, assets/js/composer.js
@@ -948,7 +949,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-plugin-pages.14` @member #admin !refuse: bob opens /wp-admin/admin.php?page=jetonomy -> WordPress refuses with "Sorry, you are not allowed to access this page.".
 - `c-admin-plugin-pages.15` @admin #admin +many: with 2000 topics open the Content list -> it pages at 20 per page with a total, loads under 2 seconds, and sorting by date works.
 - `c-admin-plugin-pages.16` @admin #admin +dark: open Overview in a dark admin colour scheme -> cards and charts keep readable contrast and no raw white panels.
-- `c-admin-plugin-pages.17` @admin #admin +offline: on Settings, block the AJAX request and click Save -> the screen shows a failure message and the form keeps the edited values.
+- `c-admin-plugin-pages.17` @admin #admin +offline: on Settings, edit a value and Save while the server is unreachable -> the save is a normal form post, so the browser reports the failure and Back returns to the form; once the server answers, Save stores the value and the screen shows 'Settings saved.'.
 - `c-admin-plugin-pages.18` @admin #admin: open Settings > Permissions -> capability labels read 'Create topics', 'Edit own topics' etc. per Terminology, never 'posts'.
 - `c-admin-plugin-pages.19` @admin #admin: open admin.php?page=jetonomy-pro-conversations while WPMediaVerse is active -> the dormant notice shows AND the browser tab title is 'Conversations', not blank ('‹ forums — WordPress').
 - `c-admin-plugin-pages.20` @admin #admin: open Activity Log filtered to Anonymous Author Revealed -> the row never prints the real author's ID or login in the list (reveal is audited, identity kept out of the table).
@@ -986,6 +987,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-category-and-space-crud.23` @admin #rest !refuse: bob POSTs /categories and /spaces -> both return the same error code.
 - `c-admin-category-and-space-crud.24` @admin #cli: after deleting a space, jt_space_members, jt_subscriptions and jt_read_status hold no rows for its id (251 orphan member rows exist for spaces 179, 306-555).
 - `c-admin-category-and-space-crud.25` @admin #admin +many: Spaces list with 50+ spaces -> a search box exists.
+- `c-admin-category-and-space-crud.26` @admin #cli: after deleting spaces 179, 306-555, 3061-3064 earlier, jt_space_members still holds 256 rows for spaces that no longer exist -> a one-off cleanup (or recount step) removes them and a count query returns 0.
 
 ### C.admin.user-management
 **Covers:** includes/admin/ajax/class-users-handler.php, includes/admin/views/users.php, includes/trust/class-trust-levels.php, includes/permissions/class-capabilities.php, includes/trust/class-trust-evaluator.php
@@ -1004,7 +1006,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-user-management.9` @admin #admin: open the ban dialog and look at the choices -> only site-wide actions are offered, and a space ban is made from that space's Members screen.
 - `c-admin-user-management.10` @space_admin #admin !refuse: test_editor tries "Ban IP address" -> the option is absent for non-administrators, and POST /moderation/ban type=ip_ban returns 403.
 - `c-admin-user-management.11` @moderator #admin !refuse: a staff member with only delegated user management raises their own trust level, then another staff member's -> both refused, and the Users screen still opens with the Manage community users permission.
-- `c-admin-user-management.12` @space_banned #ui !refuse: omar (banned from Off-Topic Lounge only) opens Off-Topic Lounge and tries to post -> refused with "Your account has been banned from this community." there, while posting in General Discussion still works.
+- `c-admin-user-management.12` @space_banned #ui !refuse +banned: omar (banned from Off-Topic Lounge only) opens Off-Topic Lounge and tries to post -> refused with "You have been banned from this space and cannot take part in it." (REST jetonomy_user_space_banned), while posting in General Discussion still works.
 - `c-admin-user-management.13` @silenced #ui #rest !refuse: finn tries to create a topic, reply and vote -> create and reply return 403 jetonomy_user_silenced, and vote shows "Voting is not available to you here.".
 - `c-admin-user-management.14` @admin #rest: ban a member and GET /moderation/ban?type=global_ban -> the ban is listed with the issuer name, and a deleted issuer reads "[deleted]".
 - `c-admin-user-management.15` @admin #admin +many: with 500 members open the Users screen -> it pages, the search still finds a member on page 5, and trust level filters work.
@@ -1041,6 +1043,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-invite-links.17` @member #rest !refuse: a non-member POSTs /spaces/{id}/invite for a private space and for a non-existent id -> both answer the same code.
 - `c-admin-invite-links.18` @admin #admin: delete a space that has an invite -> its invite rows and join requests are removed with it (no orphan rows).
 - `c-admin-invite-links.19` @admin #admin: space Members tab -> a Join Requests list with approve/deny and a total exists in wp-admin as well as the front end.
+- `c-admin-invite-links.20` @guest #ui +390: open a valid invite link logged out at 390px -> the invitation card fills the width, is centred and the Log in button is reachable.
 
 ### C.admin.recount
 **Covers:** includes/class-recount.php, includes/class-recount-backfill.php, includes/admin/ajax/class-settings-handler.php, includes/api/class-admin-controller.php, includes/class-cache.php, assets/js/admin-settings.js
@@ -1312,11 +1315,13 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-quick-login-and-captcha.12` @member_b #block !refuse: a banned account logs in -> the answer says the account is banned (jetonomy_user_banned) without a generic invalid-password message.
 - `c-anon-quick-login-and-captcha.13` @guest #block +dark: view the Login block on Reign dark mode -> the card follows the dark surface and the title keeps contrast of at least 4.5:1.
 - `c-anon-quick-login-and-captcha.14` @guest #block +390: use the Login block at 390px -> fields and the submit button are at least 40px tall and nothing scrolls sideways.
-- `c-anon-quick-login-and-captcha.15` @guest #block +offline: submit login with the request failing -> the form shows an error, the password field keeps its focus, and the button is enabled again.
-- `c-anon-quick-login-and-captcha.16` @guest #block +long: register with a 60-character display name -> the form accepts or trims it with a message, and the profile shows it wrapped.
-- `c-anon-quick-login-and-captcha.17` @guest #block: the Login block 'Register' form offers a display name field, or the check says username only.
+- `c-anon-quick-login-and-captcha.15` @guest #block +offline: submit login with the request failing -> the form shows an error that takes focus and is announced (role=alert), the typed username and password stay in their fields, and the button is enabled again.
+- `c-anon-quick-login-and-captcha.16` @guest #block +long: register with a 60-character username -> the form accepts it or refuses it with a message, and the profile shows the name wrapped, never overflowing.
+- `c-anon-quick-login-and-captcha.17` @guest #block: the Login block 'Register' form asks for username, email and password only (no display name field); the display name defaults to the username and is edited on the profile.
 - `c-anon-quick-login-and-captcha.18` @guest #rest !refuse: POST /auth/register 6 times in a minute -> 429 from the 6th (register bucket limit 5).
 - `c-anon-quick-login-and-captcha.19` @guest #block: Resend confirmation email after registering -> 'If an account is waiting on confirmation for that email, a new link is on its way.' and a new email arrives.
+- `c-anon-quick-login-and-captcha.20` @guest #block: click Resend confirmation email -> the 'a new link is on its way' sentence replaces the error and is styled as a success (today it is appended in red under the error).
+- `c-anon-quick-login-and-captcha.21` @guest #block: click Resend confirmation email twice within 60 seconds -> the second click tells the member to wait (today it shows the same success sentence and sends nothing).
 
 ### C.member.space-create-and-join
 **Covers:** templates/views/new-space.php, templates/views/my-spaces.php, templates/partials/icon-picker.php, assets/js/jetonomy-icon-picker.js, includes/models/class-join-request.php

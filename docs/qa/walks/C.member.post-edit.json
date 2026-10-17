@@ -1,8 +1,8 @@
 {
   "journey": "C.member.post-edit",
-  "free": "a0fcbb2e",
+  "free": "5680944e",
   "pro": "d8d053b",
-  "walked_at": "2026-10-17T11:20:00Z",
+  "walked_at": "2026-10-17T12:20:22Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -45,8 +45,8 @@
       "evidence": "test_moderator (WP role editor, moderator of Bug Reports): menu '[icon] Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete' on two Bug Reports topics. In Show & Tell (not a space he moderates) he gets the same full menu because the editor role carries site-wide moderation caps (Capabilities map), so the second half of the check needs a moderator with a member-level site role"
     },
     "c-member-post-edit.8": {
-      "result": "untested",
-      "needs": "lane A: remove 'Edit own posts' from the Member role"
+      "result": "pass",
+      "evidence": "lane A: 'Edit own posts' removed from Member role: bob's own topic shows no Edit item, PATCH /posts/<id> -> 403 jetonomy_forbidden, content unchanged. Cap restored"
     },
     "c-member-post-edit.9": {
       "result": "pass",
@@ -61,11 +61,9 @@
       "evidence": "edited with a bullet list, blockquote, code block and a 120-character URL -> after Save and reload all four survive, no horizontal overflow"
     },
     "c-member-post-edit.12": {
-      "result": "fail",
-      "expected": "the second save does not silently discard the first without notice, and a revision is kept",
-      "actual": "two tabs on the same topic: tab one saved, then tab two saved -> tab two's text replaced tab one's with no conflict warning or notice at all. A revision of tab one's version was kept (jt_revisions id 237), so nothing is lost, but the member is not told.",
-      "url": "http://forums.local/community/s/help-desk/t/can-i-change-the-email-on-my-membership-account/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/edit-conflict.png"
+      "result": "pass",
+      "evidence": "two tabs on topic 6080: tab one saved, tab two then saved -> tab two's save was refused and tab one's text stayed (after reload only tab one's text is present); no silent overwrite",
+      "screenshot": "qa-artifacts/203-walk2/laneB/edit-conflict-tab2.png"
     },
     "c-member-post-edit.13": {
       "result": "pass",
@@ -74,6 +72,19 @@
     "c-member-post-edit.14": {
       "result": "pass",
       "evidence": "admin (read only) wp-admin/admin.php?page=jetonomy-revisions&object_type=post&object_id=5946 -> '4 revisions recorded', rows with Bob Martinez and 'View diff', oldest 'Original'"
+    },
+    "c-member-post-edit.15": {
+      "result": "pass",
+      "evidence": "tab two's save showed the toast 'This topic was changed by someone else. Reload to see their changes.' instead of overwriting"
+    },
+    "c-member-post-edit.16": {
+      "result": "untested",
+      "needs": "fixture: a moderator who moderates only Bug Reports and holds the Member WP role does not exist (test_moderator is a WP editor); needs that account created, not a lane B action"
+    },
+    "c-member-post-edit.17": {
+      "result": "pass",
+      "evidence": "alice opening bob's topic URL + /edit/ gets the plain theme 404 (HTTP 404); on the topic page she has no Edit, Delete or Make Private item. Contract = plain 404 today; owner to confirm it stays the contract",
+      "screenshot": "qa-artifacts/203-walk2/laneB/edit-url-alice.png"
     }
   },
   "proposed_checks": [
@@ -81,5 +92,5 @@
     "- `c-member-post-edit.16` @moderator #ui: a moderator with a Member WP role who moderates only Bug Reports opens a Show & Tell topic menu -> only the actions his role grants show (the test_moderator account is a WP editor so it sees everything).",
     "- `c-member-post-edit.17` @member_b #ui !refuse: open the topic URL with /edit/ appended -> decide the contract: a refusal page or the plain 404 it returns today."
   ],
-  "notes": "No settings changed. test_moderator closed bob's topic 5950 (own content) for check 9; to be deleted with the other walk topics. Debug log unchanged."
+  "notes": "No settings changed. test_moderator closed bob's topic 5950 (own content) for check 9; to be deleted with the other walk topics. Debug log unchanged. | Re-walk lane B 2026-10-17: .8 stays untested (lane A). Edited topic 6080 (created by bob for this walk, removed afterwards). The conflict guard rejects the second save with a toast; the revision part (jt_revisions) was verified in the earlier walk. | lane A (re-walk 2026-10-17):"
 }

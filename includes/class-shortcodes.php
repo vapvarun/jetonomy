@@ -700,7 +700,8 @@ class Shortcodes {
 		$spaces = array();
 		foreach ( $memberships as $m ) {
 			$sid = (int) $m->space_id;
-			if ( ! \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', $sid ) ) {
+			// Same rule as REST postable_by_me: archived and locked spaces take no topics.
+			if ( ! \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', $sid ) || true !== \Jetonomy\Permissions\Content_Gate::space_accepts_content( $sid ) ) {
 				continue;
 			}
 			$space = \Jetonomy\Models\Space::find( $sid );

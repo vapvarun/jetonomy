@@ -11,6 +11,7 @@ use Jetonomy\CLI\Journey_Result;
 use Jetonomy\Models\Flag;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
+use Jetonomy\Models\Subscription;
 use Jetonomy\Models\Vote;
 use Jetonomy\Moderation\Moderation_Service;
 use Jetonomy\Permissions\Content_Gate;
@@ -101,6 +102,14 @@ final class Content_Journey {
 
 		if ( $screened['flag'] ) {
 			Moderation_Service::auto_flag( 'post', (int) $result );
+		}
+
+		// The side effects REST runs after a create: the author follows the
+		// topic, and the create hook drives activity, notifications, mentions
+		// and the Pro listeners (null request, as every non-REST writer passes).
+		if ( 'draft' !== $data['status'] ) {
+			Subscription::subscribe( $author_id, 'post', (int) $result );
+			do_action( 'jetonomy_after_create_post', (int) $result, $space_id, null );
 		}
 
 		$post = Post::find( (int) $result );
@@ -271,6 +280,10 @@ final class Content_Journey {
 		if ( $screened['flag'] ) {
 			Moderation_Service::auto_flag( 'reply', (int) $result );
 		}
+
+		// Same create hook REST fires: the topic author's and followers'
+		// notifications, activity and mentions hang off it.
+		do_action( 'jetonomy_after_create_reply', (int) $result, (int) $input['post_id'], null );
 
 		return Journey_Result::ok(
 			array(

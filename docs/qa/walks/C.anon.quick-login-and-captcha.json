@@ -1,9 +1,9 @@
 {
   "journey": "C.anon.quick-login-and-captcha",
-  "free": "a0fcbb2e",
+  "free": "5680944e",
   "pro": "d8d053b",
   "walker": "lane A",
-  "walked_at": "2026-10-17T12:20:00Z",
+  "walked_at": "2026-10-17T12:40:17Z",
   "env": {
     "themes": [
       "reign",
@@ -87,21 +87,40 @@
     },
     "c-anon-quick-login-and-captcha.15": {
       "result": "fail",
-      "expected": "request fails -> error shown, password field keeps its focus, button enabled",
-      "actual": "error 'Network error. Please try again.' shows and the button is enabled again with the typed password kept, but after clicking Log in the focus is on BODY (pressing Enter in the password field keeps focus on it)",
+      "expected": "form shows an error, password field keeps its focus, button enabled again",
+      "actual": "With the login request aborted: 'Network error. Please try again.' shows, button enabled, typed password kept (13 chars), but focus moves to the error paragraph (P), not the password field, after both Enter and a click. Focusing the alert is a defensible accessibility choice, so the check text is probably what is wrong",
       "url": "http://forums.local/jt-qa-block-login/",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-login15-offline.png"
+      "screenshot": "qa-artifacts/203-walk2/laneA/login-offline.png",
+      "check_wrong": true
     },
     "c-anon-quick-login-and-captcha.16": {
       "result": "pass",
       "evidence": "the Register form has a username, not a display name: registered a 58-character username/display name; form 390 no sideways scroll; profile h1 wraps to 110px tall at 390 inside the page, scrollWidth 390",
       "screenshot": "qa-artifacts/203-walk2/laneA/laneA-login16-profile390.png"
+    },
+    "c-anon-quick-login-and-captcha.17": {
+      "result": "fail",
+      "expected": "Register form offers a display name field, or the check says username only",
+      "actual": "Register form has Username, Email, Password (+ hidden honeypot 'website') and no display name; check .16 still says 'register with a 60-character display name', so the two checks disagree",
+      "url": "http://forums.local/jt-qa-block-login/",
+      "screenshot": "qa-artifacts/203-walk2/laneA/login-block-register.png",
+      "check_wrong": true
+    },
+    "c-anon-quick-login-and-captcha.18": {
+      "result": "pass",
+      "evidence": "6 guest POSTs /auth/register with username/email/password present but invalid: five 400 jetonomy_missing_fields, the 6th 429 jetonomy_rate_limited 'Too many attempts. Please wait a minute and try again.' (an empty body never reaches the limiter: 400 rest_missing_callback_param every time)"
+    },
+    "c-anon-quick-login-and-captcha.19": {
+      "result": "pass",
+      "evidence": "Registered walk.newcomer with email verification on: 'Account created. Check w***@example.com for a confirmation link...'; trying to log in gave 'Confirm your email...' with a Resend confirmation email link; clicking it showed 'If an account is waiting on confirmation for that email, a new link is on its way.' and a second 'Confirm your email to finish signing up' message arrived in Mailpit (a click inside 60 s of the previous mail sends nothing, by the per-account cooldown). The success sentence is appended in red error styling under the original error"
     }
   },
   "proposed_checks": [
     "- `c-anon-quick-login-and-captcha.17` @guest #block: the Login block 'Register' form offers a display name field, or the check says username only.",
     "- `c-anon-quick-login-and-captcha.18` @guest #rest !refuse: POST /auth/register 6 times in a minute -> 429 from the 6th (register bucket limit 5).",
-    "- `c-anon-quick-login-and-captcha.19` @guest #block: Resend confirmation email after registering -> 'If an account is waiting on confirmation for that email, a new link is on its way.' and a new email arrives."
+    "- `c-anon-quick-login-and-captcha.19` @guest #block: Resend confirmation email after registering -> 'If an account is waiting on confirmation for that email, a new link is on its way.' and a new email arrives.",
+    "- `c-anon-quick-login-and-captcha.20` @guest #block: click Resend confirmation email -> the 'a new link is on its way' sentence replaces the error and is styled as a success (today it is appended in red under the error).",
+    "- `c-anon-quick-login-and-captcha.21` @guest #block: click Resend confirmation email twice within 60 seconds -> the second click tells the member to wait (today it shows the same success sentence and sends nothing)."
   ],
-  "notes": "Changed and restored: WP users_can_register 0 -> 1 -> 0; jetonomy_settings require_email_verification false -> true -> false and captcha_provider/site_key/secret_key added (Turnstile public test keys) then removed (settings identical to the pre-walk snapshot); passwords of bob, kai_brennan and finn were set to a known value for the walk and their original hashes written back (verified equal). Users priya.raman and the 58-character username were deleted (29 users again, no orphan Jetonomy data). Mailpit still holds the 2 confirmation emails. debug.log did not grow. Theme pass: BuddyX and Twenty Twenty-Five activated then Reign restored (screenshots laneA-theme-*)."
+  "notes": "Settings changed and restored: users_can_register 1 -> 0 (original 0), require_email_verification on -> jetonomy_settings restored byte-equal from backup; test account walk.newcomer created through the Login block and deleted; its Mailpit messages remain."
 }

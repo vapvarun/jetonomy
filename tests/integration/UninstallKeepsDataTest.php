@@ -12,6 +12,15 @@ use WP_UnitTestCase;
 
 class UninstallKeepsDataTest extends WP_UnitTestCase {
 
+	/**
+	 * uninstall.php strips role caps from the shared in-memory roles; give them
+	 * back so later tests still post as members.
+	 */
+	public function tear_down(): void {
+		\Jetonomy\Permissions\Capabilities::register();
+		parent::tear_down();
+	}
+
 	public function test_uninstall_keeps_tables_and_settings_by_default(): void {
 		global $wpdb;
 		update_option( 'jetonomy_settings', array( 'base_slug' => 'community' ) );

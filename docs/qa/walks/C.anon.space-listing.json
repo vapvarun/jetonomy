@@ -1,7 +1,7 @@
 {
   "journey": "C.anon.space-listing",
-  "free": "c2c2406a",
-  "pro": "04c8303",
+  "free": "5680944e",
+  "pro": "d8d053b",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -18,12 +18,9 @@
   },
   "checks": {
     "c-anon-space-listing.1": {
-      "result": "fail",
-      "expected": "Feature Requests lists topics and page 2 loads",
-      "actual": "Feature Requests has 13 topics, all on one page (no page 2, X-WP-Total 13). Pagination is a Load More button (?pg=2) and works on the QA Paging space: 1 -> 2 topics, button stays while one remains",
-      "url": "http://forums.local/community/s/feature-requests/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/paging.png",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "QA Paging space (posts_per_page 1, 3 topics): page 1 shows 'QA paging fixture post 3', Load More appends post 2, then 'Zarquon paging needle QA-1904', button disappears; no repeats",
+      "screenshot": "qa-artifacts/203-walk2/laneB/space-paging.png"
     },
     "c-anon-space-listing.2": {
       "result": "pass",
@@ -31,10 +28,10 @@
     },
     "c-anon-space-listing.3": {
       "result": "fail",
-      "expected": "same header with Discussions, Members and Roadmap tabs",
-      "actual": "Guest sees only 'Ideas | Roadmap' (or no tab row on forum spaces); signed-in members see 'Discussions | Members' on forum spaces. /members/ works for a guest by typing the URL but has no tab link. Header content (description, counts, cover) is the same on Ideas, Roadmap and Members",
-      "url": "http://forums.local/community/s/feature-requests/",
-      "screenshot": ""
+      "expected": "the same header (cover, description, counts, Join/Follow) and the Discussions, Members and Roadmap tabs on one space",
+      "actual": "guest header is identical on /s/general-discussion/, /members/ and /s/feature-requests/roadmap/, but the tab row differs: a guest sees no tab row on General Discussion and only 'Ideas | Roadmap' on Feature Requests; signed-in bob sees 'Discussions | Members'. /community/s/general-discussion/members/ returns 200 for a guest with the member list, so the page is open but has no tab link",
+      "url": "http://forums.local/community/s/general-discussion/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/space-feature-requests.png"
     },
     "c-anon-space-listing.4": {
       "result": "pass",
@@ -49,20 +46,27 @@
       "evidence": "bob on Amsterdam Chapter: 'Join Space' -> click -> 'Leave Space', members 3 -> 4; then Leave (confirm dialog 'Leave this space? You can rejoin at any time.') restored 3 members and Join Space"
     },
     "c-anon-space-listing.7": {
-      "result": "untested",
-      "needs": "needs a logged-in non-member of Insiders / Beta: bob, alice and maya are all members. Invite-only Customer Advisory Board as bob: 'is invite-only. You need an invitation to join.' with no request form (pass)"
+      "result": "pass",
+      "evidence": "hana (not a member of Insiders / Beta) sees the gate 'Insiders / Beta is private. Request to join and an admin will review it.' with a Request to join button; Customer Advisory Board says 'is invite-only. You need an invitation to join.' with no request form",
+      "screenshot": "qa-artifacts/203-walk2/laneB/space-hana-insiders.png"
     },
     "c-anon-space-listing.8": {
-      "result": "untested",
-      "needs": "fixture: no public space with join_policy approval exists (Partner Program and Insiders / Beta are private)"
+      "result": "fail",
+      "expected": "header Request to join on a public approval space -> optional message form, then 'Your request to join <Space> is awaiting approval' with a Withdraw request button",
+      "actual": "bob on Mentorship Circle (public, approval): header Request to join opens a dialog 'Tell the admins why you want to join (optional)'; after submit the header shows only an 'Awaiting Approval' pill. No 'Your request to join Mentorship Circle is awaiting approval' message and no Withdraw request button (that gate exists in space.php only for private approval spaces). Request row stored (id 241, message kept)",
+      "url": "http://forums.local/community/s/mentorship-circle/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/space-request-pending.png"
     },
     "c-anon-space-listing.9": {
-      "result": "untested",
-      "needs": "fixture: needs the request from .8"
+      "result": "fail",
+      "expected": "click Withdraw request -> UI back to the Request to join form; DELETE /spaces/<id>/join-requests/mine -> 200 once, 404 on second",
+      "actual": "REST part works: DELETE /spaces/3010/join-requests/mine -> 200 {status withdrawn}, second call -> 404 jetonomy_no_pending_request, and the header returns to 'Request to join'. The UI has no Withdraw request button on a public approval space, so the click part could not be done",
+      "url": "http://forums.local/community/s/mentorship-circle/"
     },
     "c-anon-space-listing.10": {
-      "result": "untested",
-      "needs": "fixture: needs the request from .8/.9"
+      "result": "pass",
+      "evidence": "bob's request created join_request notifications for maya (space admin), user 142 and admin (rows 21982-21984); after withdrawal no join_request rows remain for space 3010",
+      "screenshot": ""
     },
     "c-anon-space-listing.11": {
       "result": "pass",
@@ -101,51 +105,52 @@
       "evidence": "Help Desk at 1440: 288-char description in its own full-width row above the stats and Log in to post (helpdesk-1440.png)"
     },
     "c-anon-space-listing.20": {
-      "result": "fail",
-      "expected": "description wraps in own row at 1024 and 390",
-      "actual": "1024 Reign OK (full, no overlap, no h-scroll). At 390 the description is clamped to two lines with an ellipsis and the rest cannot be read. BuddyX and Twenty Twenty-Five not run: lane A theme pass",
-      "url": "http://forums.local/community/s/help-desk/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/helpdesk-390-dark.png"
+      "result": "untested",
+      "needs": "lane A theme pass (BuddyX and Twenty Twenty-Five). Reign part passes: Help Desk description unclamped, full text in its own block above the stats, at 1440 (72px), 1024 (96px), 390 (191px), no horizontal scroll",
+      "screenshot": "qa-artifacts/203-walk2/laneB/space-helpdesk-390.png"
     },
     "c-anon-space-listing.21": {
       "result": "pass",
       "evidence": "General Discussion at 1440: Grace's 159-char title wraps to 3 lines inside the row, scrollWidth 1440 = clientWidth (gd-1440.png); the 100-char URL is in the topic body, covered by single-post.19"
     },
     "c-anon-space-listing.22": {
-      "result": "untested",
-      "needs": "lane A: switch site language to Arabic (RTL locale). Observed in LTR: Omar's Arabic title renders left-aligned (direction ltr, text-align start)"
+      "result": "pass",
+      "evidence": "lane A, site language ar: General Discussion list as guest mirrors (sidebar left, list right, vote column right); Omar's Arabic title right-aligned, row 719-1189. qa-artifacts/203-walk2/laneA/ar-space-listing.png"
     },
     "c-anon-space-listing.23": {
       "result": "pass",
       "evidence": "Help Desk dark at 390: header, tabs, Answered/Needs answer badges readable (helpdesk-390-dark.png)"
     },
     "c-anon-space-listing.24": {
-      "result": "fail",
-      "expected": "GET /posts?space_id=<id>&orderby=popular",
-      "actual": "Route is /spaces/<id>/posts and param is sort: /spaces/2768/posts?orderby=popular returns the latest order, ?sort=popular returns popular order (9-vote topic first); X-WP-Total 13 matches the UI",
-      "url": "http://forums.local/wp-json/jetonomy/v1/spaces/2768/posts?sort=popular",
-      "screenshot": "",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "GET /spaces/2996/posts?sort=popular -> 200, X-WP-Total 13, order: Dark mode toggle in user preferences (9 votes), Better defaults (5), Idea: improve (4), Weekly digest (3); sort=bogus -> 400 rest_not_in_enum"
     },
     "c-anon-space-listing.25": {
-      "result": "fail",
-      "expected": "finn sees a notice that he is silenced instead of New Topic",
-      "actual": "finn (REST restriction 'silence') sees General Discussion with no New Topic button and no notice at all; the control just disappears",
-      "url": "http://forums.local/community/s/general-discussion/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/finn-gd.png"
+      "result": "pass",
+      "evidence": "finn on General Discussion: no New Topic button, notice 'Your account is currently silenced and cannot post.'",
+      "screenshot": "qa-artifacts/203-walk2/laneB/space-finn.png"
     },
     "c-anon-space-listing.26": {
+      "result": "pass",
+      "evidence": "omar on Off-Topic Lounge: 'You have been banned from this space and cannot take part in it.' with 'Browse other spaces', no Join/Follow/New Topic",
+      "screenshot": "qa-artifacts/203-walk2/laneB/space-omar.png"
+    },
+    "c-anon-space-listing.27": {
       "result": "fail",
-      "expected": "omar sees a banned notice and no Join or New Topic",
-      "actual": "omar (space ban on Off-Topic Lounge until 2026-10-20) sees 'Follow' and 'Leave Space' and no banned notice; New Topic is absent",
-      "url": "http://forums.local/community/s/off-topic-lounge/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/omar-lounge.png"
+      "expected": "?orderby=popular is either sorted popular or 400, never a silent latest order",
+      "actual": "GET /spaces/2996/posts?orderby=popular and ?orderby=bogus both return 200 in latest order (Dark mode for the community on phones first), ignoring the parameter",
+      "url": "http://forums.local/wp-json/jetonomy/v1/spaces/2996/posts?orderby=popular"
+    },
+    "c-anon-space-listing.28": {
+      "result": "pass",
+      "evidence": "bob (not a member) on Mentorship Circle (public, approval) sees header 'Request to join'",
+      "screenshot": "qa-artifacts/203-walk2/laneB/space-request-form.png"
     }
   },
   "proposed_checks": [
     "- `c-anon-space-listing.27` @guest #rest !refuse: GET /spaces/<id>/posts?orderby=popular -> either sorted popular or 400, never a silent latest order.",
     "- `c-anon-space-listing.28` @member #ui: open a public approval space as a non-member -> header 'Request to join' (needs a seeded public approval space)."
   ],
-  "notes": "No settings changed. Member checks written in the member pass below.",
-  "walked_at": "2026-10-17T09:42:01Z"
+  "notes": "No settings changed. Member checks written in the member pass below. | Re-walk lane B 2026-10-17: Created and withdrew one join request as bob on Mentorship Circle (request row 241 now status withdrawn, notification rows removed). .22 stays untested lane A. No settings changed. | lane A (re-walk 2026-10-17):",
+  "walked_at": "2026-10-17T12:16:33Z"
 }

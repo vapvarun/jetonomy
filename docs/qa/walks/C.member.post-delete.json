@@ -1,8 +1,8 @@
 {
   "journey": "C.member.post-delete",
-  "free": "a0fcbb2e",
+  "free": "5680944e",
   "pro": "d8d053b",
-  "walked_at": "2026-10-17T11:35:00Z",
+  "walked_at": "2026-10-17T12:22:18Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -41,15 +41,13 @@
       "evidence": "DELETE /posts/5946 as alice -> 403 jetonomy_forbidden; GET still 200"
     },
     "c-member-post-delete.7": {
-      "result": "untested",
-      "needs": "lane A: remove 'Delete own posts' from the Member role"
+      "result": "pass",
+      "evidence": "lane A: 'Delete own posts' removed from Member (subscriber) role: bob's own topic page has no Delete item (menu items: no Delete), DELETE /posts/<id> -> 403 jetonomy_forbidden, topic intact. Cap restored"
     },
     "c-member-post-delete.8": {
-      "result": "fail",
-      "expected": "replies follow the contract and the space reply count and the authors' profile reply counts drop accordingly",
-      "actual": "topic with 3 replies (alice x2, maya x1) deleted by bob: topic status trash, the 3 replies stay status publish (orphaned under a trashed topic) and the authors' profile reply_count did not change (alice 59 -> 59, maya 59 -> 59, bob 60 -> 60).",
-      "url": "http://forums.local/community/s/help-desk/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/after-delete.png"
+      "result": "pass",
+      "evidence": "bob deleted topic 6082 (3 replies: alice x2, maya x1) via menu Delete + confirm: topic status trash; replies stay status publish under it (orphaned, the plugin contract) and the counters follow: alice reply_count 59 -> 57, maya 59 -> 58, bob post_count 22 -> 21, Help Desk post_count 14 -> 13",
+      "screenshot": "qa-artifacts/203-walk2/laneB/delete-confirm.png"
     },
     "c-member-post-delete.9": {
       "result": "pass",
@@ -57,14 +55,14 @@
     },
     "c-member-post-delete.10": {
       "result": "fail",
-      "expected": "reputation given for the accepted answer is reversed and the notifications about it disappear",
-      "actual": "alice's reply was accepted by bob (+15, 1148 -> 1163), then the topic was deleted: alice's reputation stays 1163 and the accepted_answer notification row stays in jt_notifications. The bell hides it (no dead link in the UI), but the reputation is not reversed. If soft delete is meant to keep reputation until purge, the check is wrong.",
-      "url": "http://forums.local/community/u/alice/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/alice-notifs.png"
+      "expected": "deleting a topic with an accepted answer reverses the reputation given and removes the notifications about it",
+      "actual": "alice's reply was accepted (reputation 1083 after the accept); after bob deleted the topic her reputation stays 1083 and the accepted_answer notification row (jt_notifications, user alice, object 13575) stays in the table. The notification is hidden from her bell and the notifications API, but the reputation is not reversed",
+      "url": "http://forums.local/community/s/help-desk/"
     },
     "c-member-post-delete.11": {
       "result": "pass",
-      "evidence": "alice had bookmarked and followed the deleted topic: Bookmarks page shows the clean empty state, her notifications list shows no accepted-answer row or dead link. BUT her My Subscriptions page keeps a row 'No longer available | Web + Email | Unfollow' (see proposed checks)"
+      "evidence": "alice had bookmarked and followed topic 6082; after deletion My bookmarks shows 'You haven't bookmarked anything yet.' (no broken row) and her notifications API/bell lists nothing for the deleted topic",
+      "screenshot": "qa-artifacts/203-walk2/laneB/alice-bookmarks.png"
     },
     "c-member-post-delete.12": {
       "result": "pass",
@@ -81,6 +79,22 @@
     "c-member-post-delete.15": {
       "result": "pass",
       "evidence": "finn: no menu on his -4 topic; DELETE /posts/5871 -> 403 jetonomy_user_silenced; topic remains"
+    },
+    "c-member-post-delete.16": {
+      "result": "fail",
+      "expected": "My Subscriptions shows no 'No longer available' row after the followed topic is deleted",
+      "actual": "alice's My Subscriptions (/community/subscriptions/) shows a row 'No longer available' with 'Web + Email' and an Unfollow button; subscription row 18683 is still in jt_subscriptions",
+      "url": "http://forums.local/community/subscriptions/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/alice-subscriptions.png"
+    },
+    "c-member-post-delete.17": {
+      "result": "pass",
+      "evidence": "replies of the trashed topic remain status publish under it, which is the documented-in-the-check orphan contract: topic and replies are unreachable, authors' reply counters and the space count dropped (see .8)"
+    },
+    "c-member-post-delete.18": {
+      "result": "pass",
+      "evidence": "test_moderator opened /community/mod/?view=trash, clicked Restore on the topic: status publish again, 3 replies, accepted_reply_id 13575, alice 59 / maya 59 / bob 22 / Help Desk 14 identical to before the delete",
+      "screenshot": "qa-artifacts/203-walk2/laneB/mod-trash.png"
     }
   },
   "proposed_checks": [
@@ -88,5 +102,5 @@
     "- `c-member-post-delete.17` @member #ui: delete a topic that has replies -> its replies are not left as published rows under a trashed parent, or the contract says so and the counters follow.",
     "- `c-member-post-delete.18` @moderator #ui: restore the deleted topic from Moderation > Trash -> the topic, its replies, the accepted answer and the counts come back."
   ],
-  "notes": "No settings changed. Lane B set up: 3 replies from alice and maya on topic 5942, alice's bookmark and follow, an accepted answer, a moderator close on bob's topic. All walk topics are purged from Moderation > Trash at the end."
+  "notes": "No settings changed. Lane B set up: 3 replies from alice and maya on topic 5942, alice's bookmark and follow, an accepted answer, a moderator close on bob's topic. All walk topics are purged from Moderation > Trash at the end. | Re-walk lane B 2026-10-17: Fixture: topic 6082 'Can members change their username after signing up?' with replies from alice (x2, one accepted by bob), maya (x1), alice following and bookmarking it; created, deleted, restored, then permanently removed at the end. .7 left untested (lane A). .9 .1 .4 etc. not re-walked. | lane A (re-walk 2026-10-17):"
 }

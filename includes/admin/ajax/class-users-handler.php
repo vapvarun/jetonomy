@@ -32,12 +32,15 @@ class Users_Handler {
 		$duration = sanitize_text_field( wp_unslash( $_POST['duration'] ?? 'permanent' ) );
 		$space_id = absint( $_POST['space_id'] ?? 0 );
 
-		if ( ! $user_id ) {
-			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
-		}
-
 		if ( ! in_array( $type, array( 'global_ban', 'space_ban', 'silence', 'ip_ban' ), true ) ) {
 			$type = 'global_ban';
+		}
+
+		// An IP ban blocks an address on its own; Restriction::ban() stores no member for it.
+		if ( 'ip_ban' === $type ) {
+			$user_id = 0;
+		} elseif ( ! $user_id ) {
+			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
 		}
 
 		if ( 'space_ban' === $type && ! $space_id ) {

@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.setup-wizard",
-  "free": "a0fcbb2e",
+  "free": "5680944e",
   "pro": "d8d053b",
-  "walked_at": "2026-10-17T11:30:00Z",
+  "walked_at": "2026-10-17T12:40:17Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -40,22 +40,19 @@
     },
     "c-admin-setup-wizard.5": {
       "result": "untested",
-      "needs": "docker site: 'Import the demo community instead' seeds demo users and content into the shared walk community"
+      "needs": "docker site: 'Import the demo community instead' seeds demo users and content into the shared community"
     },
     "c-admin-setup-wizard.6": {
       "result": "untested",
-      "needs": "docker site: remove demo data wipes the shared community"
+      "needs": "docker site: removing demo data wipes shared community rows"
     },
     "c-admin-setup-wizard.7": {
       "result": "untested",
-      "needs": "docker site: remove demo data on a site with real topics would delete shared rows"
+      "needs": "docker site: removing demo data on a site with real topics would delete shared rows"
     },
     "c-admin-setup-wizard.8": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "bob posting jetonomy_setup_save and jetonomy_setup_create_sample is answered 'Permission denied.' (403)",
-      "actual": "both answered 403 with body -1: the nonce check runs before the capability check, and bob cannot obtain a valid nonce (it is only printed on the admin-only wizard page). /wp-admin wizard page for bob: 403 'Sorry, you are not allowed to access this page.' Nothing created (no category or space named Nope).",
-      "url": "http://forums.local/wp-admin/admin-ajax.php"
+      "result": "untested",
+      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
     },
     "c-admin-setup-wizard.9": {
       "result": "pass",
@@ -80,16 +77,31 @@
       "evidence": "admin-ajax aborted: 'Network error. Please try again.' shown, Create Space re-enabled; retry created exactly one 'Reseller Resources' category and one space"
     },
     "c-admin-setup-wizard.14": {
-      "result": "fail",
-      "expected": "layout mirrors, progress steps right to left, text reads correctly",
-      "actual": "layout mirrors and steps run 1,2,3 right to left, but the whole wizard stays in English (no Arabic strings) and the URL preview renders as '/http://forums.local/community' with the leading slash on the wrong side (bidi not isolated, should be dir=ltr).",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-setup (site language ar)",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz14-rtl.png"
+      "result": "pass",
+      "evidence": "WPLANG=ar: html dir=rtl, wizard mirrors (card text right-aligned) and the progress steps run 1,2,3 from right to left (x 829, 688, 576). The plugin has no Arabic translation so wizard text stays English, with its full stops/! landing at the line start (.Let's... / !Done); qa-artifacts/203-walk2/laneA/wizard-arabic.png"
     },
     "c-admin-setup-wizard.15": {
       "result": "pass",
       "evidence": "WordPress admin has no dark scheme and the wizard has no dark rules; with prefers-color-scheme dark it stays light: text rgb(15,23,42) on rgb(248,250,252) inputs, contrast far above 4.5:1",
       "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz15-dark.png"
+    },
+    "c-admin-setup-wizard.16": {
+      "result": "pass",
+      "evidence": "Arabic admin: URL preview reads 'http://forums.local/community/' left to right with the slash at the end, link icon on the right"
+    },
+    "c-admin-setup-wizard.17": {
+      "result": "fail",
+      "expected": "second run with the same names says they exist or merges, no duplicate",
+      "actual": "Wizard run with category 'Community' and space 'General Discussion' (both already exist) finished with 'Your community is ready!' and created a second category 'Community' and a second space 'General Discussion' (slug general-discussion-1); no warning. Category::create is called unconditionally in includes/admin/ajax/class-setup-handler.php. Duplicates deleted afterwards",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-setup",
+      "screenshot": "qa-artifacts/203-walk2/laneA/wizard-step3-dup.png"
+    },
+    "c-admin-setup-wizard.18": {
+      "result": "fail",
+      "expected": "floating Messages button does not cover Create Space / Next at 390px",
+      "actual": "At 390x844 the WPMediaVerse chat bubble (322-370 x 776-824) overlaps the right end of 'Next: First Space' (172-334 x 760-804) by 12px; the corner of the button is covered. qa-artifacts/203-walk2/laneA/wizard-390-step1-bottom.png (could be treated as a theme/MediaVerse issue 'for', no horizontal scroll)",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-setup",
+      "screenshot": "qa-artifacts/203-walk2/laneA/wizard-390-step1-bottom.png"
     }
   },
   "proposed_checks": [
@@ -97,5 +109,5 @@
     "- `c-admin-setup-wizard.17` @admin #admin !refuse: run the wizard twice with the same category and space names -> the second run says the names already exist or merges, and does not add a duplicate 'Getting Started' category (a second 'Getting Started' space was created beside the seeded one).",
     "- `c-admin-setup-wizard.18` @admin #admin +390: the floating Messages button does not cover the Create Space or Next buttons at 390px."
   ],
-  "notes": "Changed during the walk: jetonomy_setup_complete set true by the wizard (restored to unset/false), site language switched to ar for c-14 (restored to en_US, WPLANG empty). jetonomy_settings was byte-identical before and after. Categories and spaces made by the wizard (Product Questions/Getting Started, long-name category/Partner Setup Help, Reseller Resources/Reseller Q&A) were deleted; counts back to 7 categories and 45 spaces. Wizard can be re-run on a site that is already set up, creating another category and space each time. Theme repeats (+long/+390/+dark): the wizard and the import screen are wp-admin pages, which the front-end theme does not style, so they were walked once; the long-name results were also checked on the guest home in Reign only."
+  "notes": "Wizard run once as admin on duplicate names, which wrote jetonomy_settings and set jetonomy_setup_complete: duplicates purged (space + category), jetonomy_setup_complete deleted (it did not exist before), jetonomy_settings restored from backup (byte-equal). Site language set to Arabic for .14/.16 and restored to the empty WPLANG."
 }

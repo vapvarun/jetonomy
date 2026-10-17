@@ -2402,12 +2402,25 @@ class Post extends Model {
 	/**
 	 * Published topics created since a moment.
 	 *
-	 * @param string $since UTC MySQL datetime.
+	 * @param string   $since  UTC MySQL datetime.
+	 * @param int|null $viewer Null = every topic; a user id (0 = guest) counts
+	 *                         only topics in spaces that viewer can read.
 	 * @return int
 	 */
-	public static function count_published_since( string $since ): int {
+	public static function count_published_since( string $since, ?int $viewer = null ): int {
+		if ( null === $viewer ) {
+			return (int) static::db()->get_var(
+				static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'publish' AND created_at >= %s", $since )
+			);
+		}
+		[ $where, $values ] = Space::content_visibility_sql( $viewer, 's' );
 		return (int) static::db()->get_var(
-			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'publish' AND created_at >= %s", $since )
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is literal SQL plus %d placeholders from content_visibility_sql().
+				'SELECT COUNT(*) FROM ' . static::table() . ' p INNER JOIN ' . \Jetonomy\table( 'spaces' ) . " s ON s.id = p.space_id WHERE p.status = 'publish' AND p.created_at >= %s AND {$where}",
+				$since,
+				...$values
+			)
 		);
 	}
 
@@ -2458,23 +2471,27 @@ class Post extends Model {
 	}
 
 	/**
-	 * The wp-admin Content screen's topics, newest first, with space title and slug.
+	 * The wp-admin Content screen's topics with space title and slug: newest
+	 * first, or by a column sort (orderby: title, created_at, reply_count,
+	 * view_count; order: ASC|DESC).
 	 *
-	 * @param array{space_id?:int,status?:string,search?:string} $filters Filters.
-	 * @param int                                                $limit   Max rows.
-	 * @param int                                                $offset  Offset.
+	 * @param array{space_id?:int,status?:string,search?:string,orderby?:string,order?:string} $filters Filters.
+	 * @param int                                                                              $limit   Max rows.
+	 * @param int                                                                              $offset  Offset.
 	 * @return object[]
 	 */
 	public static function list_for_admin( array $filters, int $limit, int $offset ): array {
 		[ $where, $args ] = self::admin_where( $filters );
 		$spaces           = \Jetonomy\table( 'spaces' );
+		$column           = in_array( $filters['orderby'] ?? '', array( 'title', 'created_at', 'reply_count', 'view_count' ), true ) ? $filters['orderby'] : 'created_at';
+		$dir              = 'ASC' === strtoupper( (string) ( $filters['order'] ?? '' ) ) ? 'ASC' : 'DESC';
 		return static::db()->get_results(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $column is allow-listed, $dir is ASC/DESC.
 				'SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM ' . static::table() . " p
 				 LEFT JOIN {$spaces} s ON s.id = p.space_id
 				 WHERE {$where}
-				 ORDER BY p.created_at DESC
+				 ORDER BY p.{$column} {$dir}, p.id {$dir}
 				 LIMIT %d OFFSET %d",
 				...array_merge( $args, array( $limit, $offset ) )
 			)

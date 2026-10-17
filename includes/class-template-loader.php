@@ -1623,6 +1623,33 @@ class Template_Loader {
 	}
 
 	/**
+	 * The ban that keeps a member out of a topic everyone else may read.
+	 *
+	 * A member banned from a public space cannot read its topics, but the
+	 * topic itself is public, so answering "not found" only confuses them. The
+	 * topic route answers 403 and the view shows this message instead, the
+	 * same one the space page shows. Null when the viewer is not space-banned
+	 * or the topic would stay unreadable to them without the ban (private
+	 * space, private or unpublished topic, concealed category): those keep
+	 * the 404.
+	 *
+	 * @param object $post    Topic row.
+	 * @param int    $user_id Viewer.
+	 * @return \WP_Error|null
+	 */
+	public static function topic_ban_error( object $post, int $user_id ): ?\WP_Error {
+		$space_id = (int) $post->space_id;
+		if ( $user_id <= 0 || ! \Jetonomy\Models\Restriction::is_space_banned( $user_id, $space_id ) ) {
+			return null;
+		}
+		$space = \Jetonomy\Models\Space::find( $space_id );
+		if ( ! $space || 'public' !== ( $space->visibility ?? '' ) || 'publish' !== (string) ( $post->status ?? 'publish' ) || ! empty( $post->is_private ) || \Jetonomy\Models\Space::concealed_from_viewer( $space, $user_id ) ) {
+			return null;
+		}
+		return \Jetonomy\Permissions\Permission_Engine::restriction_error( $user_id, 'read', $space_id );
+	}
+
+	/**
 	 * Pre-flight 404 check — runs BEFORE get_header() sends HTTP headers.
 	 *
 	 * This ensures that non-existent spaces, posts, users, and tags return
@@ -1657,6 +1684,11 @@ class Template_Loader {
 					// in-template gates run after the theme has begun output, which is why the
 					// status is decided here.
 					if ( ! $post || ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+						if ( $post && self::topic_ban_error( $post, get_current_user_id() ) ) {
+							// A public topic is no secret: say it is a ban, not that it is gone.
+							status_header( 403 );
+							break;
+						}
 						$missing = true;
 					}
 				}
@@ -1677,6 +1709,17 @@ class Template_Loader {
 			case 'category':
 				if ( $slug && ! \Jetonomy\Models\Category::find_by_slug( $slug ) ) {
 					$missing = true;
+				}
+				break;
+
+			case 'invite':
+				// The landing page explains an unknown or used-up link; the status
+				// tells crawlers and link checkers the same (404 unknown, 410 expired).
+				$invite = '' !== $slug ? \Jetonomy\Models\InviteLink::find_by_token( $slug ) : null;
+				if ( ! $invite || ! \Jetonomy\Models\Space::find( (int) $invite->space_id ) ) {
+					status_header( 404 );
+				} elseif ( ! \Jetonomy\Models\InviteLink::is_valid( $invite ) ) {
+					status_header( 410 );
 				}
 				break;
 		}

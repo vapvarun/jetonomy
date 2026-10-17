@@ -240,7 +240,7 @@ class Replies_Controller extends Base_Controller {
 			// Rate_Limiter::message() names the allowance and the real wait.
 			// A bare "Rate limit exceeded. Please try again later." would not tell a member
 			// whether "later" means a minute or a day.
-			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_replies', $trust ) );
+			return \Jetonomy\Permissions\Rate_Limiter::error( $user_id, 'create_replies', $trust );
 		}
 
 		// CAPTCHA verification (skipped for trust level 2+ users and admins).

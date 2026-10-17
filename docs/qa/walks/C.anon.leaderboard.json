@@ -1,7 +1,7 @@
 {
   "journey": "C.anon.leaderboard",
-  "free": "c2c2406a",
-  "pro": "04c8303",
+  "free": "5680944e",
+  "pro": "d8d053b",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -26,15 +26,12 @@
       "evidence": "This week -> ?period=week: list changes (Olivia Grant 361, Ethan Brooks 270...), 'This week' pill highlighted (class on)"
     },
     "c-anon-leaderboard.3": {
-      "result": "fail",
-      "expected": "invalid period returns 400",
-      "actual": "period=week and month return the same list, all and year the all-time list (200 each); period=bogus returns 200 with the all-time list, not 400",
-      "url": "http://forums.local/wp-json/jetonomy/v1/leaderboards?period=bogus",
-      "screenshot": ""
+      "result": "pass",
+      "evidence": "GET /leaderboards?period=week and month: 11 members (Maya 1901, Alice 1066, Bob 670 ...); period=all: 20 members with Theo Lindqvist 1615 at #2; period=bogus and year -> 400 rest_invalid_param 'period is not one of all, month, and week.'"
     },
     "c-anon-leaderboard.4": {
       "result": "untested",
-      "needs": "fixture: no period in the selector (month, week, all) is empty; week lists 6+ members"
+      "needs": "fixture: every period (all, month, week) lists members, so no empty-period state to open; needs a window with no activity, or a docker site"
     },
     "c-anon-leaderboard.5": {
       "result": "pass",
@@ -46,15 +43,12 @@
     },
     "c-anon-leaderboard.7": {
       "result": "untested",
-      "needs": "fixture: no site-wide banned member exists (only omar's space ban in jt_restrictions)"
+      "needs": "fixture: kai_brennan (global_ban) has no reputation row, and a rank needs reputation > 0, so he is absent for that reason and the ban exclusion is not proven; needs a site-wide banned member with reputation > 0 (would need a data write, not done in lane B). Code in leaderboard_period_where() has no ban filter."
     },
     "c-anon-leaderboard.8": {
-      "result": "fail",
-      "expected": "badges beside names with Pro active",
-      "actual": "Pro is active and members have badges (Bob has 9) but the leaderboard shows no badges column or icons; neither leaderboard.php nor the custom-badges extension renders badges there",
-      "url": "http://forums.local/community/leaderboard/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/lb-1440.png",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "leaderboard page rows show rank, name, REP and TOPICS only; no badge column or icons (Pro active), matching the new check text",
+      "screenshot": "qa-artifacts/203-walk2/laneB/leaderboard-1440.png"
     },
     "c-anon-leaderboard.9": {
       "result": "pass",
@@ -63,11 +57,15 @@
     "c-anon-leaderboard.10": {
       "result": "pass",
       "evidence": "390 dark: rows fit (0 elements past 391px, scrollWidth 390), names/numbers readable (lb-390-dark.png)"
+    },
+    "c-anon-leaderboard.11": {
+      "result": "pass",
+      "evidence": "GET /leaderboards?period=bogus -> 400 rest_invalid_param, message 'Invalid parameter(s): period', detail 'period is not one of all, month, and week.'"
     }
   },
   "proposed_checks": [
     "- `c-anon-leaderboard.11` @guest #rest !refuse: GET /leaderboards?period=bogus -> 400 invalid period (currently 200 all-time)."
   ],
-  "notes": "No settings changed.",
-  "walked_at": "2026-10-17T09:42:01Z"
+  "notes": "No settings changed. | Re-walk lane B 2026-10-17: walked .3 .4 .7 .8 .11. .7 not provable on current data (see needs).",
+  "walked_at": "2026-10-17T12:09:15Z"
 }

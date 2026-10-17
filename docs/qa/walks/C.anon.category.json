@@ -1,7 +1,7 @@
 {
   "journey": "C.anon.category",
-  "free": "c2c2406a",
-  "pro": "04c8303",
+  "free": "5680944e",
+  "pro": "d8d053b",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -22,20 +22,26 @@
       "evidence": "Local Chapters lists 14 cards each linking /community/s/<slug>/ (screenshot cat-local-1440.png)"
     },
     "c-anon-category.2": {
-      "result": "untested",
-      "needs": "lane A: private teasers on (guest). Logged-in bob sees the Partner Program card with a Private badge and 'Approval required', so the badge renderer exists"
+      "result": "pass",
+      "evidence": "lane A, Show private spaces to logged-out visitors on: guest sees Partner Program card with 'Private' badge, 'Approval required' and 'Request to join and the partner team reviews it.'; qa-artifacts/203-walk2/laneA/cat-partner-guest-teaser.png"
     },
     "c-anon-category.3": {
-      "result": "untested",
-      "needs": "lane A: private teasers on (guest)"
+      "result": "pass",
+      "evidence": "lane A, teasers on: Customer Advisory Board card reads 'Private | Forum | Invite only | Invite-only group of long-time customers...' with no Join button"
     },
     "c-anon-category.4": {
-      "result": "untested",
-      "needs": "fixture: no category holds only hidden spaces; Moderators' Room sits in public Help & Support next to 4 visible spaces. Not-found for a missing category verified in .8"
+      "result": "fail",
+      "expected": "hidden-only category (Staff, holding only Release Planning) returns the same not-found page as a missing slug",
+      "actual": "/community/category/staff/ answers 200 with the title 'Staff', description 'Internal spaces for the team.' and 'No spaces in this category yet.', while /category/nope-missing/ is 404 'Category not found.'; same with teasers on and off",
+      "url": "http://forums.local/community/category/staff/",
+      "screenshot": ""
     },
     "c-anon-category.5": {
-      "result": "untested",
-      "needs": "fixture: no hidden-only category exists to request by id"
+      "result": "fail",
+      "expected": "GET /categories/<hidden-only category id> -> 404 jetonomy_not_found; list omits it",
+      "actual": "GET /categories/1553 as guest -> 200 {name:'Staff', description:'Internal spaces for the team.', space_count:0, spaces:[]}; GET /categories?per_page=100 lists Staff (space_count 0) among 5 categories. The hidden space is not leaked but the category is",
+      "url": "http://forums.local/wp-json/jetonomy/v1/categories/1553",
+      "screenshot": ""
     },
     "c-anon-category.6": {
       "result": "pass",
@@ -50,11 +56,8 @@
       "evidence": "HTTP 404, title 'Page not available', 'Category not found.'; no CTA in body, Community tab above links home"
     },
     "c-anon-category.9": {
-      "result": "fail",
-      "expected": "Archived marker on the 2025 Hackathon card",
-      "actual": "Card shows 'Forum' badge only, no Archived marker (card renderer has no archived/private badge)",
-      "url": "http://forums.local/community/category/labs/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/cat-labs.png"
+      "result": "pass",
+      "evidence": "Labs category: '2025 Hackathon | Archived | Forum | Archive of last year's hackathon projects. Read-only.' card carries an Archived badge"
     },
     "c-anon-category.10": {
       "result": "pass",
@@ -65,25 +68,31 @@
       "evidence": "390: Help Desk excerpt clamped to 2 lines (overflow hidden, 174px content in 39px box), stays inside card"
     },
     "c-anon-category.12": {
-      "result": "untested",
-      "needs": "lane A: private teasers on; Archived badge does not exist at all (see .9); the Private badge is legible in light at 1440 (cat-bob-partner.png)"
+      "result": "pass",
+      "evidence": "lane A, dark mode, teasers on: Private and 'Approval required' badges on the Partner Program card are legible (light text on dark surface). There is no Archived badge to check (see .9); qa-artifacts/203-walk2/laneA/cat-dark-teaser.png"
     },
     "c-anon-category.13": {
       "result": "fail",
-      "expected": "bob (a member of Partner Program) sees it as a member, alice (non-member) sees a request card",
-      "actual": "Bob's Partner Program card shows 'Private' + 'Approval required' and the description 'Request to join...' with no member marker. Data: alice is also a member (so the check's non-member case needs someone else, e.g. grace)",
+      "expected": "bob (admin of Partner Program) sees the card open the space for him / member marker",
+      "actual": "bob's Partner Program card reads 'Private | Forum | Approval required | ... Request to join and the partner team reviews it.' - same wording as a non-member, no member marker (bob is role admin in jt_space_members)",
       "url": "http://forums.local/community/category/product-engineering/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/cat-bob-partner.png",
-      "check_wrong": true
+      "screenshot": "qa-artifacts/203-walk2/laneB/cat-bob-partner.png"
     },
     "c-anon-category.14": {
       "result": "pass",
-      "evidence": "maya (moderator of Moderators' Room) sees 'Moderators' Room' with Hidden + Invite only badges in Help & Support; bob gets the 404 'Space not found.' at /s/moderators-room/"
+      "evidence": "maya (moderator of Moderators' Room) on Help & Support sees 'Moderators' Room | Hidden | Forum | Invite only'; bob's Help & Support list shows only Help Desk, Troubleshooting etc, no Moderators' Room"
+    },
+    "c-anon-category.15": {
+      "result": "fail",
+      "expected": "member marker such as 'Member' on the card",
+      "actual": "bob (member) card shows no member marker, still 'Approval required' and 'Request to join' description",
+      "url": "http://forums.local/community/category/product-engineering/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/cat-bob-partner.png"
     }
   },
   "proposed_checks": [
     "- `c-anon-category.15` @member #ui +private: as a member of Partner Program, open its category -> the card carries a visible member marker (for example 'Member'), not the 'Request to join' wording."
   ],
-  "notes": "No settings changed. Earlier note that the card helper has no Private badge was wrong: badges come from jetonomy_render_space_meta_badges() in jetonomy.php; there is no archived branch.",
-  "walked_at": "2026-10-17T09:42:01Z"
+  "notes": "No settings changed. Earlier note that the card helper has no Private badge was wrong: badges come from jetonomy_render_space_meta_badges() in jetonomy.php; there is no archived branch. | Re-walk lane B 2026-10-17: walked .4 .5 .9 .13 .14 .15; .2 .3 .12 left untested (lane A private teasers). Non-member (hana) variant of .13 not walked. .10 .11 re-confirmed at 390/1440 (no overflow, description clamped to 2 lines). | lane A (re-walk 2026-10-17): lane A: guest_private_teasers set true in jetonomy_settings for the teaser checks, then jetonomy_settings restored byte-equal from backup.",
+  "walked_at": "2026-10-17T12:06:41Z"
 }
