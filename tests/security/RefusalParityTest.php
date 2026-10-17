@@ -132,6 +132,7 @@ class RefusalParityTest extends WP_UnitTestCase {
 		$this->assertSame( array( 404, 'jetonomy_not_found' ), array( $status, $code ) );
 	}
 
+	/** @covers-existing Guard: the new 404 rule must not swallow the 403 a reader without the role already got. */
 	public function test_a_member_who_can_read_the_topic_still_gets_403_for_the_role(): void {
 		// Control: the 404 above is concealment, not a guard that refuses everyone.
 		[ $status, $code ] = $this->call( $this->member, 'PATCH', '/posts/' . $this->topic, array( 'title' => 'Not my topic to edit' ) );
@@ -165,6 +166,7 @@ class RefusalParityTest extends WP_UnitTestCase {
 		$this->assertSame( array( 404, 'jetonomy_not_found' ), array( $status, $code ) );
 	}
 
+	/** @covers-existing Guard: the new 404 rule must not hide the named ban message banned members already got. */
 	public function test_a_banned_member_is_told_why_for_every_id_alike(): void {
 		Restriction::ban( $this->author, 'global_ban', 1 );
 		\Jetonomy\Cache::flush();
