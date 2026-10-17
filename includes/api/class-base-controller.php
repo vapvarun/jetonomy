@@ -30,6 +30,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		$allowed = Permission_Engine::can( get_current_user_id(), $action, $space_id );
 		if ( ! $allowed ) {
 			$this->denied_action = $action;
+			$this->denied_space  = $space_id;
 		}
 		return $allowed;
 	}
@@ -43,20 +44,23 @@ abstract class Base_Controller extends WP_REST_Controller {
 	private string $denied_action = '';
 
 	/**
+	 * Space of the last failed check_permission(), so a ban from it is named.
+	 *
+	 * @var int|null
+	 */
+	private ?int $denied_space = null;
+
+	/**
 	 * Standard permission denied error.
 	 */
 	protected function permission_error(): WP_Error {
 		$restricted = '' !== $this->denied_action
-			? Permission_Engine::restriction_error( get_current_user_id(), $this->denied_action )
+			? Permission_Engine::restriction_error( get_current_user_id(), $this->denied_action, $this->denied_space )
 			: null;
 		if ( $restricted ) {
 			return $restricted;
 		}
-		return new WP_Error(
-			'jetonomy_forbidden',
-			__( 'You do not have permission to perform this action.', 'jetonomy' ),
-			array( 'status' => 403 )
-		);
+		return REST_Auth::forbidden();
 	}
 
 	/**

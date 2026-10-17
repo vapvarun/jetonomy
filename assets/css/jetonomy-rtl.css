@@ -1168,7 +1168,8 @@
 
     /* Compact space hero - the first screen showed header + hero + stats and
        no topics. Identity goes back to one row (icon beside title), the cover
-       shrinks to a band, the description clamps to two lines and the stats
+       shrinks to a band, the description wraps in full (it was clamped with
+       no way to read the rest) and the stats
        sit inline with their labels. */
     .jt-space-cover { min-height: 0; }
     .jt-space-cover--image { min-height: 96px; }
@@ -1179,7 +1180,7 @@
     .jt-space-head { flex-direction: row; flex-wrap: wrap; align-items: center; text-align: start; gap: var(--jt-space-2); padding-block: var(--jt-space-3); margin-bottom: var(--jt-space-4); }
     .jt-space-head__meta, .jt-space-nums { flex: 1 1 100%; }
     .jt-space-head__meta { justify-content: flex-start; }
-    .jt-space-desc { margin-top: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .jt-space-desc { margin-top: 0; }
     .jt-space-nums { gap: var(--jt-space-4); margin-inline-start: 0; }
     .jt-num { display: inline-flex; align-items: baseline; gap: var(--jt-space-1); }
     .jt-num-val { font-size: var(--jt-text-base); }
@@ -1267,13 +1268,13 @@
   .jt-space-card-body { min-width: 0; flex: 1; }
   .jt-space-card-title { font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .jt-space-card-excerpt { font-size: 0.8125rem; color: var(--jt-text-tertiary); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .jt-space-card-stats { display: flex; gap: var(--jt-space-3); margin-top: 6px; min-width: 0; }
+  .jt-space-card-stats { display: flex; flex-wrap: wrap; column-gap: var(--jt-space-3); row-gap: var(--jt-space-1); margin-block-start: var(--jt-space-2); min-width: 0; }
   .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); white-space: nowrap; flex: 0 0 auto; }
   .jt-space-card-stat strong { color: var(--jt-text-secondary); font-weight: 600; }
   /* Recency signal on space cards (1.5.0) so a newcomer can tell at a glance
      which spaces are alive. Same gap as the other stats: pushed to the end
-     with an auto margin it floated a different distance on every card. */
-  .jt-space-card-activity { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+     with an auto margin it floated a different distance on every card.
+     Wraps to its own line when the card is narrow, never cut to "Active 5…". */
   /* .jt-app scope: the `.jt-app p` reset (0,1,1) otherwise zeroes this margin and the link touches the grid. */
   .jt-app .jt-space-grid-more { margin-block-start: var(--jt-space-4); text-align: center; }
   .jt-space-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-block-end: 6px; }
@@ -2312,8 +2313,9 @@
   .jt-pagination-btn { min-width: 200px; justify-content: center; }
 
   /* ── Prism.js override for theme consistency ── */
-  .jt-app pre[class*="language-"], .jt-app code[class*="language-"] { font-family: var(--jt-font-mono); }
-  .jt-dark .jt-app pre[class*="language-"] { filter: invert(1) hue-rotate(180deg); }
+  /* Highlighted and plain code blocks share one dark panel in both schemes. */
+  .jt-app pre[class*="language-"], .jt-app code[class*="language-"] { font-family: var(--jt-font-mono); text-shadow: none; }
+  .jt-app pre[class*="language-"] { background: var(--jt-code-bg); color: var(--jt-code-fg); }
 
   /* ── User profile links ── */
   .jt-user-link { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
@@ -3480,6 +3482,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 @media (max-width: 640px) {
 	/* Welcome hero stacks; actions go full-width so the CTA stays tappable. */
 	.jt-home-welcome { flex-direction: column; align-items: stretch; }
+	/* The 320px basis is a desktop width; stacked it would become a 320px height. */
+	.jt-home-welcome-body { flex-basis: auto; }
 	.jt-home-welcome-actions { width: 100%; }
 	.jt-home-welcome-actions .jt-btn { flex: 1 1 auto; justify-content: center; }
 }

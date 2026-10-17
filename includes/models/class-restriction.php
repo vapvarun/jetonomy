@@ -512,6 +512,18 @@ class Restriction extends Model {
 	 * @return array<int,string> [user_id => 'global_ban'|'space_ban'|'silence']
 	 */
 	public static function active_map_for_users( array $user_ids ): array {
+		return array_map( static fn( object $row ): string => $row->type, self::active_rows_for_users( $user_ids ) );
+	}
+
+	/**
+	 * Map user IDs to their single most-severe active restriction row (id and
+	 * type), in one query: the same lookup as active_map_for_users(), with the
+	 * id a list needs to offer "Lift restriction".
+	 *
+	 * @param int[] $user_ids
+	 * @return array<int,object{id:int,type:string}>
+	 */
+	public static function active_rows_for_users( array $user_ids ): array {
 		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
 		if ( empty( $ids ) ) {
 			return array();
@@ -521,11 +533,11 @@ class Restriction extends Model {
 		$in   = implode( ',', $ids );
 		$rows = static::db()->get_results(
 			static::db()->prepare(
-				'SELECT user_id, type FROM ' . static::table() . "
+				'SELECT id, user_id, type FROM ' . static::table() . "
 				WHERE user_id IN ($in)
 				  AND type IN ('global_ban','space_ban','silence')
 				  AND (expires_at IS NULL OR expires_at > %s)
-				ORDER BY FIELD(type,'global_ban','space_ban','silence')",
+				ORDER BY FIELD(type,'global_ban','space_ban','silence'), id DESC",
 				now()
 			)
 		);
@@ -535,7 +547,10 @@ class Restriction extends Model {
 			$uid = (int) $row->user_id;
 			// First row per user is the most severe (FIELD ordering above).
 			if ( ! isset( $map[ $uid ] ) ) {
-				$map[ $uid ] = (string) $row->type;
+				$map[ $uid ] = (object) array(
+					'id'   => (int) $row->id,
+					'type' => (string) $row->type,
+				);
 			}
 		}
 

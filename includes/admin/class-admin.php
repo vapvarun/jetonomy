@@ -288,6 +288,37 @@ class Admin {
 	}
 
 	/**
+	 * Fingerprint of the fields an admin edit form writes, as the form loaded them.
+	 *
+	 * The form posts it back and the save is refused when the row no longer
+	 * matches, so a stale tab cannot silently revert a newer save. Not
+	 * updated_at: spaces bump it on every new topic and member, which would
+	 * refuse saves on any active space, and categories have no such column.
+	 *
+	 * @param object   $row    Row as stored.
+	 * @param string[] $fields Columns the form writes.
+	 * @return string
+	 */
+	public static function edit_token( object $row, array $fields ): string {
+		$values = array();
+		foreach ( $fields as $field ) {
+			$values[ $field ] = $row->$field ?? null;
+		}
+		return md5( (string) wp_json_encode( $values ) );
+	}
+
+	/**
+	 * Message for a save refused by edit_token(), naming the owner's noun.
+	 *
+	 * @param string $noun Label key (space, category).
+	 * @return string
+	 */
+	public static function edit_conflict_message( string $noun ): string {
+		/* translators: %s: the owner-configured noun, lowercase (e.g. "space", "category"). */
+		return sprintf( __( 'This %s was changed by someone else. Reload to see their changes.', 'jetonomy' ), \Jetonomy\jetonomy_label( $noun, false, true ) );
+	}
+
+	/**
 	 * The product name wp-admin shows in headings, banners and help text.
 	 *
 	 * One source for every "Jetonomy ..." heading, so Pro's White Label (which
@@ -397,28 +428,30 @@ class Admin {
 		$topic = \Jetonomy\jetonomy_label( 'topic', false, true );
 		$types = array(
 			/* translators: %s: member label, lowercase (e.g. "member"). */
-			'user_welcome'          => array( sprintf( __( 'Welcome: new %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ), false ),
+			'user_welcome'           => array( sprintf( __( 'Welcome: new %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ), false ),
 			/* translators: 1: reply label (e.g. "Reply"). 2: the item replied to, lowercase (e.g. "topic" or "reply"). */
-			'reply_to_post'         => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $topic ), true ),
+			'reply_to_post'          => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $topic ), true ),
 			/* translators: 1: reply label (e.g. "Reply"). 2: the item replied to, lowercase (e.g. "topic" or "reply"). */
-			'reply_to_reply'        => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), true ),
-			'mention'               => array( __( 'Mention (@username)', 'jetonomy' ), true ),
-			'accepted_answer'       => array( __( 'Your answer accepted', 'jetonomy' ), true ),
-			'idea_status_changed'   => array( __( 'Your idea roadmap status changed', 'jetonomy' ), true ),
+			'reply_to_reply'         => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), true ),
+			'mention'                => array( __( 'Mention (@username)', 'jetonomy' ), true ),
+			'accepted_answer'        => array( __( 'Your answer accepted', 'jetonomy' ), true ),
+			'idea_status_changed'    => array( __( 'Your idea roadmap status changed', 'jetonomy' ), true ),
 			/* translators: 1: singular topic label, lowercase. 2: singular space label, lowercase. */
-			'new_post_in_sub'       => array( sprintf( __( 'New %1$s in subscribed %2$s', 'jetonomy' ), $topic, \Jetonomy\space_label( false, true ) ), true ),
-			'badge_earned'          => array( __( 'Badge earned', 'jetonomy' ), true ),
+			'new_post_in_sub'        => array( sprintf( __( 'New %1$s in subscribed %2$s', 'jetonomy' ), $topic, \Jetonomy\space_label( false, true ) ), true ),
+			'badge_earned'           => array( __( 'Badge earned', 'jetonomy' ), true ),
 			/* translators: %s: singular topic label, lowercase. */
-			'vote_on_post'          => array( sprintf( __( 'Vote on your %s', 'jetonomy' ), $topic ), true ),
+			'vote_on_post'           => array( sprintf( __( 'Vote on your %s', 'jetonomy' ), $topic ), true ),
 			/* translators: %s: singular topic label, lowercase. */
-			'reaction'              => array( sprintf( __( 'Reaction on your %s', 'jetonomy' ), $topic ), true ),
-			'moderation'            => array( __( 'Moderator action on your content', 'jetonomy' ), true ),
-			'flag_resolved'         => array( __( 'Your report was reviewed', 'jetonomy' ), true ),
+			'reaction'               => array( sprintf( __( 'Reaction on your %s', 'jetonomy' ), $topic ), true ),
+			'moderation'             => array( __( 'Moderator action on your content', 'jetonomy' ), true ),
+			'flag_resolved'          => array( __( 'Your report was reviewed', 'jetonomy' ), true ),
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			'join_request'          => array( sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ), true ),
-			'join_request_result'   => array( __( 'Your join request was answered', 'jetonomy' ), true ),
-			'verification'          => array( __( 'Confirm your email (new accounts)', 'jetonomy' ), false, __( 'The confirmation link is always added below your text. Placeholders here: {site} and {user}.', 'jetonomy' ) ),
-			'verification_reminder' => array( __( 'Verification reminder', 'jetonomy' ), false ),
+			'join_request'           => array( sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ), true ),
+			'join_request_result'    => array( __( 'Your join request was answered', 'jetonomy' ), true ),
+			'verification'           => array( __( 'Confirm your email (new accounts)', 'jetonomy' ), false, __( 'The confirmation link is always added below your text. Placeholders here: {site} and {user}.', 'jetonomy' ) ),
+			'verification_reminder'  => array( __( 'Verification reminder', 'jetonomy' ), false ),
+			/* translators: %s: reply label, lowercase (e.g. "reply"). */
+			'reply_by_email_refused' => array( sprintf( __( 'Emailed %s not posted', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), false ),
 		);
 		// Pro private messages go through Notifier too, but only while that extension is live.
 		if ( \Jetonomy\messaging_active() ) {
@@ -1797,6 +1830,8 @@ class Admin {
 		$total       = UserProfile::count_for_admin( $filter_trust, $search );
 		$users       = UserProfile::list_for_admin( $filter_trust, $search, $per_page, $offset );
 		$total_pages = ceil( $total / $per_page );
+		// One query for the whole page, so each row can name its active restriction.
+		$restrictions = Restriction::active_rows_for_users( array_map( static fn( $u ) => (int) $u->user_id, $users ) );
 
 		include JETONOMY_DIR . 'includes/admin/views/users.php';
 	}

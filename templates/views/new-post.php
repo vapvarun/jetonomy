@@ -64,7 +64,10 @@ if ( is_wp_error( $jt_closed ) ) {
 }
 
 if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts', (int) $space->id ) ) {
-	$jt_can_join = ( 'open' === \Jetonomy\Models\Space::effective_join_policy( $space ) )
+	// A silenced or banned member is told why, and never offered a Join that cannot help.
+	$jt_restriction = \Jetonomy\Permissions\Permission_Engine::restriction_error( $jt_user_id, 'create_posts', (int) $space->id );
+	$jt_can_join    = ! $jt_restriction
+		&& ( 'open' === \Jetonomy\Models\Space::effective_join_policy( $space ) )
 		&& ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $jt_user_id );
 
 	\Jetonomy\Template_Loader::partial(
@@ -94,8 +97,10 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 			: array(
 				'icon'      => 'lock',
 				'icon_size' => 48,
-				/* translators: %s: space label (e.g. space, forum) */
-				'message'   => sprintf( __( 'You do not have permission to post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				'message'   => $jt_restriction
+					? $jt_restriction->get_error_message()
+					/* translators: %s: space label (e.g. space, forum) */
+					: sprintf( __( 'You do not have permission to post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				/* translators: %s: where the link returns to - the configured space label, or a specific space title. */
 				'cta_label' => sprintf( __( 'Back to %s', 'jetonomy' ), \Jetonomy\space_label() ),
 				'cta_url'   => $space_url,

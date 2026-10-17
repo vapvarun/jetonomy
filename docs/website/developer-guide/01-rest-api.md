@@ -364,7 +364,8 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | GET | `/posts/{id}/flags` *(new in 1.4.1)* | Moderator | The flags raised against a specific post |
 | GET | `/moderation/flags` | Moderator | List all open flags |
 | POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag (`valid` or `dismissed`) |
-| POST | `/moderation/ban` | Moderator | Ban a user (global ban, space ban, or silence) |
+| GET | `/moderation/ban` | Moderator | List active restrictions. An IP address ban carries the address in `ip` and a null `reason` |
+| POST | `/moderation/ban` | Moderator | Ban a user (global ban, space ban, silence) or an IP address (`type: ip_ban` with `ip`) |
 | DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
 | GET | `/spaces/{id}/moderation/flags` | Space Admin | List flags filed within a specific space |
 | POST | `/spaces/{id}/moderation/flags/{flag_id}/resolve` | Space Admin | Resolve a flag within a specific space |

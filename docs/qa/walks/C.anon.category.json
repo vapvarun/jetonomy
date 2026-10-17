@@ -1,0 +1,89 @@
+{
+  "journey": "C.anon.category",
+  "free": "c2c2406a",
+  "pro": "04c8303",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-anon-category.1": {
+      "result": "pass",
+      "evidence": "Local Chapters lists 14 cards each linking /community/s/<slug>/ (screenshot cat-local-1440.png)"
+    },
+    "c-anon-category.2": {
+      "result": "untested",
+      "needs": "lane A: private teasers on (guest). Logged-in bob sees the Partner Program card with a Private badge and 'Approval required', so the badge renderer exists"
+    },
+    "c-anon-category.3": {
+      "result": "untested",
+      "needs": "lane A: private teasers on (guest)"
+    },
+    "c-anon-category.4": {
+      "result": "untested",
+      "needs": "fixture: no category holds only hidden spaces; Moderators' Room sits in public Help & Support next to 4 visible spaces. Not-found for a missing category verified in .8"
+    },
+    "c-anon-category.5": {
+      "result": "untested",
+      "needs": "fixture: no hidden-only category exists to request by id"
+    },
+    "c-anon-category.6": {
+      "result": "pass",
+      "evidence": "guest REST space_count: Help & Support 4 (of 6, hides Moderators' Room + Insiders Beta), Product & Engineering 5 (of 6, hides Partner Program), Community 5 (of 6)"
+    },
+    "c-anon-category.7": {
+      "result": "pass",
+      "evidence": "Amsterdam, Nairobi, Lisbon, Seoul, Mexico City show 0 topics, 3 members, no error"
+    },
+    "c-anon-category.8": {
+      "result": "pass",
+      "evidence": "HTTP 404, title 'Page not available', 'Category not found.'; no CTA in body, Community tab above links home"
+    },
+    "c-anon-category.9": {
+      "result": "fail",
+      "expected": "Archived marker on the 2025 Hackathon card",
+      "actual": "Card shows 'Forum' badge only, no Archived marker (card renderer has no archived/private badge)",
+      "url": "http://forums.local/community/category/labs/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/cat-labs.png"
+    },
+    "c-anon-category.10": {
+      "result": "pass",
+      "evidence": "390: cards one per row at x=31 width 328, scrollWidth 390"
+    },
+    "c-anon-category.11": {
+      "result": "pass",
+      "evidence": "390: Help Desk excerpt clamped to 2 lines (overflow hidden, 174px content in 39px box), stays inside card"
+    },
+    "c-anon-category.12": {
+      "result": "untested",
+      "needs": "lane A: private teasers on; Archived badge does not exist at all (see .9); the Private badge is legible in light at 1440 (cat-bob-partner.png)"
+    },
+    "c-anon-category.13": {
+      "result": "fail",
+      "expected": "bob (a member of Partner Program) sees it as a member, alice (non-member) sees a request card",
+      "actual": "Bob's Partner Program card shows 'Private' + 'Approval required' and the description 'Request to join...' with no member marker. Data: alice is also a member (so the check's non-member case needs someone else, e.g. grace)",
+      "url": "http://forums.local/community/category/product-engineering/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/cat-bob-partner.png",
+      "check_wrong": true
+    },
+    "c-anon-category.14": {
+      "result": "pass",
+      "evidence": "maya (moderator of Moderators' Room) sees 'Moderators' Room' with Hidden + Invite only badges in Help & Support; bob gets the 404 'Space not found.' at /s/moderators-room/"
+    }
+  },
+  "proposed_checks": [
+    "- `c-anon-category.15` @member #ui +private: as a member of Partner Program, open its category -> the card carries a visible member marker (for example 'Member'), not the 'Request to join' wording."
+  ],
+  "notes": "No settings changed. Earlier note that the card helper has no Private badge was wrong: badges come from jetonomy_render_space_meta_badges() in jetonomy.php; there is no archived branch.",
+  "walked_at": "2026-10-17T09:42:01Z"
+}

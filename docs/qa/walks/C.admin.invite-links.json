@@ -1,0 +1,98 @@
+{
+  "journey": "C.admin.invite-links",
+  "free": "c2c2406a",
+  "pro": "04c8303",
+  "walked_at": "2026-10-17T09:49:27Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-admin-invite-links.1": {
+      "result": "pass",
+      "evidence": "Space edit > Members tab, limit 2, expiry 2026-10-18 -> toast 'Invite link generated.', list row '.../community/invite/3vtMk.../ 0 / 2 October 18, 2026' (site date format, site tz UTC)"
+    },
+    "c-admin-invite-links.2": {
+      "result": "fail",
+      "expected": "logged-out page shows the space with a Join button and 'Please log in to use this invite.'",
+      "actual": "Logged-out page shows an invitation card ('You've been invited to join Customer Advisory Board', description) with only a 'Log in to accept invite' link to wp-login.php (redirect back to the invite); no Join button, no 'Please log in to use this invite.' text. No membership created",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=38&tab=members",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneA/invite-guest.png",
+      "check_wrong": true
+    },
+    "c-admin-invite-links.3": {
+      "result": "pass",
+      "evidence": "bob opened the link, clicked 'Join Space' -> landed on /community/s/customer-advisory-board/, jt_space_members role member, link use count 0 -> 1"
+    },
+    "c-admin-invite-links.4": {
+      "result": "pass",
+      "evidence": "bob opened the link without clicking: 0 membership rows and use_count 0 after the visit"
+    },
+    "c-admin-invite-links.5": {
+      "result": "pass",
+      "evidence": "Link with limit 1 used by alice; carlos (not alice) then clicked Join and the page said 'This invite link has expired or reached its usage limit.', carlos not added. Alice was already a non-member so the roles are swapped but the message and refusal match"
+    },
+    "c-admin-invite-links.6": {
+      "result": "pass",
+      "evidence": "alice and carlos clicked Join on a limit-1 link at the same moment (Promise.all): exactly one added (alice, use_count 1), the other got the limit message"
+    },
+    "c-admin-invite-links.7": {
+      "result": "untested",
+      "needs": "Past date refused with 'Choose an expiry date in the future.' and no row saved (seen); an unreadable date cannot be typed because the field is type=date, so that half needs a REST call as another writer"
+    },
+    "c-admin-invite-links.8": {
+      "result": "untested",
+      "needs": "Today's date (2026-10-17, site tz UTC, 09:47) link was valid and listed 'October 17, 2026' (seen); 'works in the evening, fails next morning' needs the clock to move"
+    },
+    "c-admin-invite-links.9": {
+      "result": "pass",
+      "evidence": "Revoke -> confirm dialog 'Revoke this invite link? Anyone holding it will no longer be able to join.' -> toast 'Invite link revoked.', link then reads 'Invalid invite link.'"
+    },
+    "c-admin-invite-links.10": {
+      "result": "pass",
+      "evidence": "bob (admin of Partner Program, id 37) GET /spaces/37/invites -> 200 (empty list, no links exist); test_editor GET -> 403 jetonomy_forbidden"
+    },
+    "c-admin-invite-links.11": {
+      "result": "fail",
+      "expected": "bob POST /spaces/38/invite as a non-member of Customer Advisory Board -> 404",
+      "actual": "403 jetonomy_forbidden 'You do not have permission to perform this action.' (bob had been removed from the space again first); a 403 confirms the private space exists",
+      "url": "http://forums.local/wp-json/jetonomy/v1/spaces/38/invite"
+    },
+    "c-admin-invite-links.12": {
+      "result": "untested",
+      "needs": "Needs 60 invite links and 40 join requests (seeding); no admin join-request list exists on the space Members tab, only the front-end Requests view"
+    },
+    "c-admin-invite-links.13": {
+      "result": "pass",
+      "evidence": "hana requested to join Insiders / Beta (page shows 'Your request ... is awaiting approval.' + 'Withdraw request'), jt_join_requests row pending and join_request notices for admin 1 and 142 created; after Withdraw request the row and both notices were gone"
+    },
+    "c-admin-invite-links.14": {
+      "result": "fail",
+      "expected": "page says 'The space for this invite no longer exists.'",
+      "actual": "Created space 'Pop-up Workshop' with an invite, deleted the space, bob opened the link: HTTP 200, 'Invalid invite link.' (invite rows go with the space), no PHP error. Behaviour is safe, wording differs from the check",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=38&tab=members",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneA/invite-deleted-space.png",
+      "check_wrong": true
+    },
+    "c-admin-invite-links.15": {
+      "result": "pass",
+      "evidence": "390px as bob: 'Join Space' button 40px tall x 108 wide, description wraps to 2 lines, no horizontal scroll (scrollWidth 390). Reign only; BuddyX/Twenty Twenty-Five repeat not run"
+    }
+  },
+  "proposed_checks": [
+    "- `c-admin-invite-links.16` @guest #ui: open the invite link logged out -> the page shows the space name, description and either a Join button that leads to login or the text of the login link, and says what the link is.",
+    "- `c-admin-invite-links.17` @member #rest !refuse: a non-member POSTs /spaces/{id}/invite for a private space and for a non-existent id -> both answer the same code.",
+    "- `c-admin-invite-links.18` @admin #admin: delete a space that has an invite -> its invite rows and join requests are removed with it (no orphan rows).",
+    "- `c-admin-invite-links.19` @admin #admin: space Members tab -> a Join Requests list with approve/deny and a total exists in wp-admin as well as the front end."
+  ],
+  "notes": "Created and removed: 3 invite links on Customer Advisory Board (revoked), space Pop-up Workshop (deleted), hana join request (withdrawn). Memberships added and removed again: bob and alice in Customer Advisory Board (removed from wp-admin Members tab; side effect: joining paid gamification points to them, not reverted). Carlos was never added. Theme passes (BuddyX, Twenty Twenty-Five) for the +390 check were not run (a site-wide theme switch would disturb lane B)."
+}

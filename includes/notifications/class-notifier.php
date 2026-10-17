@@ -109,70 +109,74 @@ class Notifier {
 		$topic    = \Jetonomy\jetonomy_label( 'topic', false, true );
 		$reply    = \Jetonomy\jetonomy_label( 'reply', false, true );
 		$defaults = array(
-			'user_welcome'          => array(
+			'user_welcome'           => array(
 				'subject' => __( '[{site}] Welcome to the community', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\nWelcome to {site}. Your account is ready. Jump in and introduce yourself, ask a question, or browse the latest discussions.\n\n{message}", 'jetonomy' ),
 			),
-			'reply_to_post'         => array(
+			'reply_by_email_refused' => array(
+				'subject' => sprintf( /* translators: %s: singular reply label, lowercase; {site} is replaced before sending. */ __( '[{site}] Your emailed %s was not posted', 'jetonomy' ), $reply ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nNothing was posted, so you can open the discussion and try again there if it still applies.", 'jetonomy' ),
+			),
+			'reply_to_post'          => array(
 				'subject' => sprintf( /* translators: %s: singular topic or reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $topic ),
 				'body'    => sprintf( /* translators: %s: the singular Reply label, lowercase; {user} and {message} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the discussion to read the full %s and join the conversation.", 'jetonomy' ), $reply ),
 			),
-			'reply_to_reply'        => array(
+			'reply_to_reply'         => array(
 				'subject' => sprintf( /* translators: %s: singular topic or reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $reply ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nClick through to read the full thread.", 'jetonomy' ),
 			),
-			'mention'               => array(
+			'mention'                => array(
 				'subject' => __( '[{site}] You were mentioned by {actor_display_name}', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the discussion to respond.", 'jetonomy' ),
 			),
-			'accepted_answer'       => array(
+			'accepted_answer'        => array(
 				'subject' => __( '[{site}] Your answer was accepted', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nNice work. Your reputation just went up.", 'jetonomy' ),
 			),
-			'idea_status_changed'   => array(
+			'idea_status_changed'    => array(
 				'subject' => __( '[{site}] Your idea was updated', 'jetonomy' ),
 				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nThanks for sharing your idea. Open the %s to see the latest updates.", 'jetonomy' ), $topic ),
 			),
-			'new_post_in_sub'       => array(
+			'new_post_in_sub'        => array(
 				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] New %s in {space_title}', 'jetonomy' ), $topic ),
 				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to read more.", 'jetonomy' ), $topic ),
 			),
-			'badge_earned'          => array(
+			'badge_earned'           => array(
 				'subject' => __( '[{site}] You earned a new badge', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nKeep contributing to unlock more.", 'jetonomy' ),
 			),
-			'vote_on_post'          => array(
+			'vote_on_post'           => array(
 				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] Your %s received a vote', 'jetonomy' ), $topic ),
 				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to see the discussion.", 'jetonomy' ), $topic ),
 			),
-			'reaction'              => array(
+			'reaction'               => array(
 				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] Someone reacted to your %s', 'jetonomy' ), $topic ),
 				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to see the discussion.", 'jetonomy' ), $topic ),
 			),
-			'flag_resolved'         => array(
+			'flag_resolved'          => array(
 				'subject' => __( '[{site}] Your report was reviewed', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nThanks for helping keep {site} healthy.", 'jetonomy' ),
 			),
-			'moderation'            => array(
+			'moderation'             => array(
 				'subject' => __( '[{site}] A moderator reviewed your content', 'jetonomy' ),
 				// jt-terms-ok: "reply" is the verb here, not the noun.
 				'body'    => __( "Hi {user},\n\n{message}\n\nIf you think this was a mistake, reply to a moderator in the community.", 'jetonomy' ),
 			),
-			'join_request'          => array(
+			'join_request'           => array(
 				/* translators: %s: the singular space label; {site} is replaced with the site name before sending. */
 				'subject' => sprintf( __( '[{site}] New %s join request', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nReview the request and approve or decline it.", 'jetonomy' ),
 			),
-			'verification'          => array(
+			'verification'           => array(
 				'subject' => __( '[{site}] Confirm your email to finish signing up', 'jetonomy' ),
 				'body'    => __( 'Thanks for joining {site}. Confirm your email to finish creating your account.', 'jetonomy' ),
 			),
-			'join_request_result'   => array(
+			'join_request_result'    => array(
 				/* translators: %s: the singular space label; {site} is replaced with the site name before sending. */
 				'subject' => sprintf( __( '[{site}] Your %s join request was answered', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'body'    => __( "Hi {user},\n\n{message}.", 'jetonomy' ),
 			),
-			'verification_reminder' => array(
+			'verification_reminder'  => array(
 				'subject' => __( '[{site}] Confirm your email to finish signing up', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\nWe noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.\n\nThis link expires in 24 hours.", 'jetonomy' ),
 			),
@@ -421,6 +425,7 @@ class Notifier {
 
 		$allowed = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post );
 		if ( is_wp_error( $allowed ) ) {
+			$this->tell_sender_reply_refused( $user_id, $post, $allowed );
 			return;
 		}
 
@@ -433,6 +438,7 @@ class Notifier {
 		);
 		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) $post->space_id, $user_id );
 		if ( is_wp_error( $screened ) ) {
+			$this->tell_sender_reply_refused( $user_id, $post, $screened );
 			return;
 		}
 		$data['status'] = $screened['status'];
@@ -451,6 +457,38 @@ class Notifier {
 		// WP_REST_Request, mirroring the post-create hook's null request arg
 		// (class-abilities.php, models/class-post.php).
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, null );
+	}
+
+	/**
+	 * One email telling the member why their emailed reply was not posted.
+	 *
+	 * The inbound webhook has already answered "handled", so without this the
+	 * reply vanished silently. The email carries no reply token (only reply
+	 * notifications get a Reply-To), so an auto-responder cannot loop back in.
+	 *
+	 * @param int       $user_id Sender.
+	 * @param object    $post    Topic they replied to.
+	 * @param \WP_Error $reason  Why it was refused.
+	 */
+	private function tell_sender_reply_refused( int $user_id, object $post, \WP_Error $reason ): void {
+		$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+		// A topic the sender can no longer read is not linked or named.
+		$readable = \Jetonomy\Permissions\Permission_Engine::can_read_post( $user_id, $post );
+		$message  = sprintf(
+			/* translators: 1: singular reply label; 2: the reason it was refused. */
+			__( 'Your %1$s sent by email was not posted. %2$s', 'jetonomy' ),
+			\Jetonomy\jetonomy_label( 'reply', false, true ),
+			$reason->get_error_message()
+		);
+		self::send_email_notification(
+			$user_id,
+			'reply_by_email_refused',
+			$message,
+			'',
+			0,
+			$readable && $space ? \Jetonomy\route_url( 'post', $space->slug, $post->slug ) : \Jetonomy\base_url() . '/',
+			array( 'post_title' => $readable ? (string) $post->title : '' )
+		);
 	}
 
 	/**
@@ -1666,45 +1704,48 @@ class Notifier {
 
 		$type_labels = array(
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			'reply_to_post'       => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+			'reply_to_post'          => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			'reply_to_reply'      => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
-			'mention'             => __( 'Mention', 'jetonomy' ),
-			'vote_on_post'        => __( 'Vote', 'jetonomy' ),
-			'reaction'            => __( 'Reaction', 'jetonomy' ),
-			'accepted_answer'     => __( 'Answer Accepted', 'jetonomy' ),
-			'idea_status_changed' => __( 'Roadmap Update', 'jetonomy' ),
+			'reply_to_reply'         => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+			'mention'                => __( 'Mention', 'jetonomy' ),
+			'vote_on_post'           => __( 'Vote', 'jetonomy' ),
+			'reaction'               => __( 'Reaction', 'jetonomy' ),
+			'accepted_answer'        => __( 'Answer Accepted', 'jetonomy' ),
+			'idea_status_changed'    => __( 'Roadmap Update', 'jetonomy' ),
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			'new_post_in_sub'     => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-			'badge_earned'        => __( 'Achievement', 'jetonomy' ),
-			'moderation'          => __( 'Moderation', 'jetonomy' ),
-			'flag_resolved'       => __( 'Report Reviewed', 'jetonomy' ),
-			'join_request'        => __( 'Join Request', 'jetonomy' ),
-			'join_request_result' => __( 'Your join request was answered', 'jetonomy' ),
-			'user_welcome'        => __( 'Welcome', 'jetonomy' ),
-			'message'             => __( 'Private Message', 'jetonomy' ),
+			'new_post_in_sub'        => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+			'badge_earned'           => __( 'Achievement', 'jetonomy' ),
+			'moderation'             => __( 'Moderation', 'jetonomy' ),
+			'flag_resolved'          => __( 'Report Reviewed', 'jetonomy' ),
+			'join_request'           => __( 'Join Request', 'jetonomy' ),
+			'join_request_result'    => __( 'Your join request was answered', 'jetonomy' ),
+			'user_welcome'           => __( 'Welcome', 'jetonomy' ),
+			'message'                => __( 'Private Message', 'jetonomy' ),
+			/* translators: %s: singular reply label. */
+			'reply_by_email_refused' => sprintf( __( '%s not posted', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 		);
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
 		/* translators: %s: the topic or reply label, singular or plural. */
 		$view_topic = sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 		$cta_labels = array(
-			'reply_to_post'       => $view_topic,
+			'reply_to_post'          => $view_topic,
 			/* translators: %s: the topic or reply label, singular or plural. */
-			'reply_to_reply'      => sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
-			'mention'             => $view_topic,
-			'vote_on_post'        => $view_topic,
-			'reaction'            => $view_topic,
-			'accepted_answer'     => __( 'View Answer', 'jetonomy' ),
-			'idea_status_changed' => __( 'View Idea', 'jetonomy' ),
-			'new_post_in_sub'     => $view_topic,
-			'badge_earned'        => __( 'View Your Badges', 'jetonomy' ),
-			'moderation'          => __( 'Review in Mod Queue', 'jetonomy' ),
-			'flag_resolved'       => __( 'Open the Community', 'jetonomy' ),
-			'join_request'        => __( 'Review Request', 'jetonomy' ),
-			'join_request_result' => __( 'Open the Community', 'jetonomy' ),
-			'user_welcome'        => __( 'Open the Community', 'jetonomy' ),
-			'message'             => __( 'Read Message', 'jetonomy' ),
+			'reply_to_reply'         => sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+			'mention'                => $view_topic,
+			'vote_on_post'           => $view_topic,
+			'reaction'               => $view_topic,
+			'accepted_answer'        => __( 'View Answer', 'jetonomy' ),
+			'idea_status_changed'    => __( 'View Idea', 'jetonomy' ),
+			'new_post_in_sub'        => $view_topic,
+			'badge_earned'           => __( 'View Your Badges', 'jetonomy' ),
+			'moderation'             => __( 'Review in Mod Queue', 'jetonomy' ),
+			'flag_resolved'          => __( 'Open the Community', 'jetonomy' ),
+			'join_request'           => __( 'Review Request', 'jetonomy' ),
+			'join_request_result'    => __( 'Open the Community', 'jetonomy' ),
+			'user_welcome'           => __( 'Open the Community', 'jetonomy' ),
+			'message'                => __( 'Read Message', 'jetonomy' ),
+			'reply_by_email_refused' => __( 'Open the Discussion', 'jetonomy' ),
 		);
 		$cta_text   = (string) ( $extra['cta_text'] ?? $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' ) );
 

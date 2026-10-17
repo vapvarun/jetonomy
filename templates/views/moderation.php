@@ -340,13 +340,18 @@ $crumbs = array(
 					$jt_ban_label   = $jt_ban_types[ $jt_ban->type ] ?? $jt_ban_types['global_ban'];
 					$jt_ban_age     = human_time_diff( strtotime( $jt_ban->created_at ), time() );
 					$jt_ban_space   = $jt_ban->space_id ? ( $jt_ban_spaces[ (int) $jt_ban->space_id ] ?? null ) : null;
+					$jt_is_ip_ban   = 'ip_ban' === $jt_ban->type;
 					?>
 					<li class="jt-mod-flag-row">
 						<div class="jt-mod-flag-row-head">
 							<span class="jt-badge jt-badge-danger"><?php echo esc_html( $jt_ban_label ); ?></span>
+							<?php if ( $jt_is_ip_ban ) : // An IP ban blocks an address, not the member it was issued from. ?>
+								<code class="jt-mod-flag-space"><?php echo esc_html( (string) $jt_ban->reason ); ?></code>
+							<?php else : ?>
 							<a class="jt-mod-flag-space" href="<?php echo esc_url( $jt_banned_user ? \Jetonomy\get_profile_url( (int) $jt_banned_user->ID ) : '' ); ?>">
 								<?php echo esc_html( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : __( '[deleted]', 'jetonomy' ) ); ?>
 							</a>
+							<?php endif; ?>
 							<?php if ( $jt_ban_space ) : ?>
 								<span class="jt-mod-flag-type"><?php echo esc_html( $jt_ban_space->title ); ?></span>
 							<?php endif; ?>
@@ -357,7 +362,7 @@ $crumbs = array(
 								?>
 							</span>
 						</div>
-						<?php if ( ! empty( $jt_ban->reason ) ) : ?>
+						<?php if ( ! empty( $jt_ban->reason ) && ! $jt_is_ip_ban ) : ?>
 							<div class="jt-mod-flag-excerpt"><?php echo esc_html( (string) $jt_ban->reason ); ?></div>
 						<?php endif; ?>
 						<div class="jt-mod-flag-foot">
@@ -365,7 +370,7 @@ $crumbs = array(
 								class="jt-btn jt-btn-ghost jt-btn-sm jt-flex-shrink-0"
 								data-wp-on--click="actions.liftRestriction"
 								data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
-								data-user-name="<?php echo esc_attr( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : '' ); ?>">
+								data-user-name="<?php echo esc_attr( $jt_is_ip_ban ? (string) $jt_ban->reason : ( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : '' ) ); ?>">
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
 								<?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?>
 							</button>

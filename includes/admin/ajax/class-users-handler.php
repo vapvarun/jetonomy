@@ -131,12 +131,25 @@ class Users_Handler {
 			wp_send_json_error( __( 'Invalid restriction ID.', 'jetonomy' ) );
 		}
 
+		// Read the type first: the answer names what was lifted, not always "ban".
+		$restriction = Restriction::find( $restriction_id );
+		if ( ! $restriction ) {
+			wp_send_json_error( __( 'This restriction was already lifted.', 'jetonomy' ) );
+		}
+
 		$result = Restriction::remove_ban( $restriction_id );
 		if ( ! $result ) {
 			wp_send_json_error( __( 'Failed to remove ban.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Ban removed.', 'jetonomy' ) ) );
+		$messages = array(
+			'silence'   => __( 'Silence lifted.', 'jetonomy' ),
+			/* translators: %s: space label (e.g. "Space"). */
+			'space_ban' => sprintf( __( '%s ban lifted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
+			'ip_ban'    => __( 'IP address ban lifted.', 'jetonomy' ),
+		);
+
+		wp_send_json_success( array( 'message' => $messages[ $restriction->type ] ?? __( 'Ban lifted.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_change_trust_level(): void {

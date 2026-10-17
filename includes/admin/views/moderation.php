@@ -465,6 +465,12 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						'cell'      => static function ( $ban, string $key ): void {
 							switch ( $key ) {
 								case 'user':
+									// An IP ban blocks an address, not the member whose row it was issued from
+									// (it never restricts that account), so the row names the address.
+									if ( 'ip_ban' === (string) $ban->type ) {
+										echo '<code>' . esc_html( (string) $ban->reason ) . '</code>';
+										break;
+									}
 									echo '<strong>' . esc_html( $ban->display_name ?? $ban->user_login ?? __( 'Unknown', 'jetonomy' ) ) . '</strong>';
 									break;
 								case 'type':
@@ -479,7 +485,8 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo '<span class="jetonomy-badge jetonomy-badge--ban">' . esc_html( $jt_ban_label ) . '</span>';
 									break;
 								case 'reason':
-									echo esc_html( $ban->reason ? $ban->reason : '—' );
+									// An IP ban's `reason` column holds the address, shown in the first column.
+									echo esc_html( $ban->reason && 'ip_ban' !== (string) $ban->type ? $ban->reason : '—' );
 									break;
 								case 'expires':
 									if ( $ban->expires_at ) {

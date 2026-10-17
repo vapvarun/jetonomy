@@ -1,0 +1,102 @@
+{
+  "journey": "C.admin.plugin-pages",
+  "free": "c2c2406a",
+  "pro": "04c8303",
+  "walked_at": "2026-10-17T09:38:03Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-admin-plugin-pages.1": {
+      "result": "pass",
+      "evidence": "17 admin pages (Dashboard, Categories, Tags, Spaces, Content, Moderation, Activity, Revisions, Users, Import, Settings, Extensions, Community Media, Analytics, Badges, Custom Fields, Polls) all 200, no Notice/Warning/Fatal text, debug.log unchanged"
+    },
+    "c-admin-plugin-pages.2": {
+      "result": "pass",
+      "evidence": "11 Settings tabs and 4 Moderation tabs (Pending Topics, Pending Replies, Flags, Banned) load with no failed request or console error; Content has no tabs (single list)"
+    },
+    "c-admin-plugin-pages.3": {
+      "result": "pass",
+      "evidence": "Analytics, Badges, Custom Fields, Polls render in the Free page layout; White Label is Settings > Branding and renders; Conversations shows the 'Private Messaging is dormant' notice because WPMediaVerse is active (full list not reachable here)"
+    },
+    "c-admin-plugin-pages.4": {
+      "result": "pass",
+      "evidence": "Dashboard 'Review flags' link -> admin.php?page=jetonomy-moderation&tab=flags"
+    },
+    "c-admin-plugin-pages.5": {
+      "result": "fail",
+      "expected": "every label says topics/replies per Terminology",
+      "actual": "Settings sidebar rows all have dashicons and read fine, but Settings > Permissions role table lists 'Create posts', 'Edit own posts', 'Delete own posts', 'Edit others' posts', 'Delete others' posts', 'Move posts between spaces' (source includes/permissions/class-capabilities.php:264-270, plain __() strings that ignore the Terminology topic label)",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-settings&tab=permissions",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneA/tab-jetonomy_settings_tab_permissions.png"
+    },
+    "c-admin-plugin-pages.6": {
+      "result": "untested",
+      "needs": "Saving Settings was blocked by the permission classifier, so 'saved template still there after reload' could not be proven. Verified: Email tab lists Reaction on your topic, Your report was reviewed, Space join request, Your join request was answered and Confirm your email (new accounts), each with subject/body fields"
+    },
+    "c-admin-plugin-pages.7": {
+      "result": "pass",
+      "evidence": "Activity Log rows read 'Gained 50 reputation points' with reason 'They earned a badge', actor and object titles shown; retention is its own 'Activity Log / Keep entries for [90] days' card on Settings > General. No 'Lost N' row exists in seeded data, so that wording was not seen"
+    },
+    "c-admin-plugin-pages.8": {
+      "result": "pass",
+      "evidence": "390px: role table scrolls inside .jt-matrix-scroll (576 wide in 366), first column is position:sticky and stayed visible at scrollLeft 210; trust level name inputs styled like other inputs"
+    },
+    "c-admin-plugin-pages.9": {
+      "result": "pass",
+      "evidence": "Revisions list: 'Which backup plugin do you trust for a membership site? (deleted)' and reply 'Adding a note: I switched last month... (deleted)'"
+    },
+    "c-admin-plugin-pages.10": {
+      "result": "pass",
+      "evidence": "Anonymous topic 'QA-RFT anon topic' shows author Anonymous in admin Content list; Revisions shows 'Not recorded' for author, no login. Activity Log: only the Pro reveal audit row mentions it, showing 'Real author: 2018' (a user ID, not a login) - by design for an admin reveal but see proposed check"
+    },
+    "c-admin-plugin-pages.11": {
+      "result": "untested",
+      "needs": "Needs a Branding settings save (Save was blocked by the permission classifier)"
+    },
+    "c-admin-plugin-pages.12": {
+      "result": "pass",
+      "evidence": "Setup wizard step 1 offers Forum, Q&A, Ideas, Feed"
+    },
+    "c-admin-plugin-pages.13": {
+      "result": "fail",
+      "expected": "test_editor holds Manage spaces and opens Spaces",
+      "actual": "test_editor is Ethan Brooks, WP role subscriber with no jetonomy_manage_* capability (checked allcaps), so Spaces, Users, Extensions and Overview ALL answer 'Sorry, you are not allowed to access this page.' The persona does not match the check",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces",
+      "check_wrong": true
+    },
+    "c-admin-plugin-pages.14": {
+      "result": "pass",
+      "evidence": "bob GET /wp-admin/admin.php?page=jetonomy -> 'Sorry, you are not allowed to access this page.'"
+    },
+    "c-admin-plugin-pages.15": {
+      "result": "untested",
+      "needs": "Needs 2000 topics (site has 257). On 257: Content list pages at 20 ('1-20 of 257'), loads in 147 ms; but column headers are not sortable links, so 'sorting by date works' has no UI to test"
+    },
+    "c-admin-plugin-pages.16": {
+      "result": "untested",
+      "needs": "Needs a dark admin colour scheme; WordPress admin has none here and changing the user admin colour is out of lane"
+    },
+    "c-admin-plugin-pages.17": {
+      "result": "untested",
+      "needs": "Settings Save is a plain form submit, not AJAX, and saving was blocked by the permission classifier"
+    }
+  },
+  "proposed_checks": [
+    "- `c-admin-plugin-pages.18` @admin #admin: open Settings > Permissions -> capability labels read 'Create topics', 'Edit own topics' etc. per Terminology, never 'posts'.",
+    "- `c-admin-plugin-pages.19` @admin #admin: open admin.php?page=jetonomy-pro-conversations while WPMediaVerse is active -> the dormant notice shows AND the browser tab title is 'Conversations', not blank ('\u2039 forums \u2014 WordPress').",
+    "- `c-admin-plugin-pages.20` @admin #admin: open Activity Log filtered to Anonymous Author Revealed -> the row never prints the real author's ID or login in the list (reveal is audited, identity kept out of the table).",
+    "- `c-admin-plugin-pages.21` @admin #admin +many: Spaces list with 50+ spaces -> a search box and sortable columns exist (currently 3 pages of 20, no search, no sort).",
+    "- `c-admin-plugin-pages.22` @admin #admin: Content and Spaces list column headers sort (date, replies) with the active sort shown."
+  ],
+  "notes": "No settings changed (Settings save attempts were blocked; the unsaved edits to 5 email-template subject fields were discarded by navigating away). Persona note: qa-config says space_admin test_editor holds Manage spaces; it does not."
+}

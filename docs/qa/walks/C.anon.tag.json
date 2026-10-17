@@ -1,0 +1,70 @@
+{
+  "journey": "C.anon.tag",
+  "free": "c2c2406a",
+  "pro": "04c8303",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-anon-tag.1": {
+      "result": "pass",
+      "evidence": "/community/tag/search/: header '22 topics', list shows 22 distinct topics; DB total for the tag is 24 (2 are private)"
+    },
+    "c-anon-tag.2": {
+      "result": "untested",
+      "needs": "fixture: no tag is used only in private topics; the closest case, 'search' (24 uses, 2 private) lists 22 and names no private topic"
+    },
+    "c-anon-tag.3": {
+      "result": "fail",
+      "expected": "GET /tags/<tag>/posts and /tags as guest",
+      "actual": "GET /tags/<slug>/posts and /tags/<id> do not exist as GET routes (rest_no_route 404). GET /tags works: counts exclude private topics (search 22, webhooks 43, migration 40, equal to guest tag pages)",
+      "url": "http://forums.local/wp-json/jetonomy/v1/tags",
+      "screenshot": "",
+      "check_wrong": true
+    },
+    "c-anon-tag.4": {
+      "result": "pass",
+      "evidence": "/community/tag/no-such-tag/ -> HTTP 404 'Tag not found.', no fatal"
+    },
+    "c-anon-tag.5": {
+      "result": "pass",
+      "evidence": "sidebar Popular tags vs tag pages: search 22 = 22, webhooks 43 = 43 (header and list)"
+    },
+    "c-anon-tag.6": {
+      "result": "pass",
+      "evidence": "bob (member of Insiders / Beta) on /community/tag/search/: '24 topics', 24 listed and sidebar 24; guest sees 22"
+    },
+    "c-anon-tag.7": {
+      "result": "fail",
+      "expected": "GET /tags/no-such-tag -> 404 jetonomy_tag_not_found",
+      "actual": "Route does not exist: 404 rest_no_route",
+      "url": "http://forums.local/wp-json/jetonomy/v1/tags/no-such-tag",
+      "screenshot": "",
+      "check_wrong": true
+    },
+    "c-anon-tag.8": {
+      "result": "pass",
+      "evidence": "webhooks (43): page 1 shows 30, 'Next' -> ?pg=2 shows 13, no duplicate across pages"
+    },
+    "c-anon-tag.9": {
+      "result": "pass",
+      "evidence": "390 dark: webhooks rows end at x=290, scrollWidth 390 (tag-390.png)"
+    }
+  },
+  "proposed_checks": [
+    "- `c-anon-tag.10` @guest #rest: GET /tags -> every tag count equals the topics its tag page lists for a guest."
+  ],
+  "notes": "No settings changed.",
+  "walked_at": "2026-10-17T09:42:01Z"
+}

@@ -629,7 +629,16 @@ function jetonomy_render_space_meta_badges( $space ): void {
 	$join_policy = \Jetonomy\Models\Space::effective_join_policy( $space );
 	$visibility  = (string) ( $space->visibility ?? 'public' );
 
-	// Private and hidden come first: they decide whether you can get in at all.
+	// Archived and locked come first: nobody can post there any more.
+	$status = (string) ( $space->status ?? '' );
+	if ( in_array( $status, array( 'archived', 'locked' ), true ) ) {
+		echo '<span class="jt-space-card-badge jt-space-card-badge-' . esc_attr( $status ) . '">';
+		jetonomy_echo_icon( 'lock', 12 );
+		echo esc_html( 'archived' === $status ? __( 'Archived', 'jetonomy' ) : __( 'Locked', 'jetonomy' ) );
+		echo '</span>';
+	}
+
+	// Private and hidden next: they decide whether you can get in at all.
 	if ( 'public' !== $visibility ) {
 		$vis_label = 'hidden' === $visibility ? __( 'Hidden', 'jetonomy' ) : __( 'Private', 'jetonomy' );
 		$vis_aria  = 'hidden' === $visibility

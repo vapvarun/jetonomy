@@ -44,17 +44,17 @@ class Moderation_Controller extends Base_Controller {
 				'permission_callback' => array( $this, 'require_moderate' ),
 				'args'                => array(
 					'status' => array(
-						'type'              => 'string',
-						'required'          => false,
-						'default'           => 'pending',
-						'enum'              => array( 'pending', 'spam', 'all' ),
-						'sanitize_callback' => 'sanitize_key',
+						'type'     => 'string',
+						'required' => false,
+						'default'  => 'pending',
+						// No sanitize_callback: a custom one replaces rest_parse_request_arg(), so the enum would never be checked.
+						'enum'     => array( 'pending', 'spam', 'all' ),
 					),
 					'type'   => array(
-						'type'              => 'string',
-						'required'          => false,
-						'enum'              => array( 'post', 'reply' ),
-						'sanitize_callback' => 'sanitize_key',
+						'type'     => 'string',
+						'required' => false,
+						// No sanitize_callback: a custom one replaces rest_parse_request_arg(), so the enum would never be checked.
+						'enum'     => array( 'post', 'reply' ),
 					),
 				),
 			)
@@ -181,10 +181,10 @@ class Moderation_Controller extends Base_Controller {
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
 				'args'                => array(
 					'action' => array(
-						'type'              => 'string',
-						'required'          => true,
-						'enum'              => array( 'approve', 'spam', 'trash' ),
-						'sanitize_callback' => 'sanitize_key',
+						'type'     => 'string',
+						'required' => true,
+						// No sanitize_callback: a custom one replaces rest_parse_request_arg(), so the enum would never be checked.
+						'enum'     => array( 'approve', 'spam', 'trash' ),
 					),
 					'items'  => array(
 						'type'     => 'array',
@@ -420,8 +420,9 @@ class Moderation_Controller extends Base_Controller {
 	public function create_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = get_current_user_id();
 
-		if ( Restriction::is_silenced( $user_id ) ) {
-			return new WP_Error( 'jetonomy_user_silenced', __( 'You are currently silenced.', 'jetonomy' ), array( 'status' => 403 ) );
+		$restricted = \Jetonomy\Permissions\Permission_Engine::restriction_error( $user_id, 'flag' );
+		if ( $restricted ) {
+			return $restricted;
 		}
 
 		$object_type = sanitize_text_field( (string) $request->get_param( 'object_type' ) );
@@ -964,7 +965,10 @@ class Moderation_Controller extends Base_Controller {
 				'type'           => (string) $row->type,
 				'space_id'       => $row->space_id ? (int) $row->space_id : null,
 				'space_title'    => $space ? $space->title : null,
-				'reason'         => null !== $row->reason ? (string) $row->reason : null,
+				// An IP ban blocks an address, not this member: the address is in `reason`, so it is
+				// returned as `ip` and the ban carries no reason of its own.
+				'ip'             => 'ip_ban' === $row->type ? (string) $row->reason : null,
+				'reason'         => null !== $row->reason && 'ip_ban' !== $row->type ? (string) $row->reason : null,
 				'issued_by'      => (int) $row->issued_by,
 				'issuer_name'    => $issuer ? \Jetonomy\user_display_name( $issuer ) : ( (int) $row->issued_by ? __( '[deleted]', 'jetonomy' ) : __( 'System', 'jetonomy' ) ),
 				'expires_at'     => $row->expires_at ?: null,

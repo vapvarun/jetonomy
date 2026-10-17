@@ -94,12 +94,7 @@ class Content_Gate {
 		 * tests, or the display/enforce split just moves rather than closes.
 		 */
 		if ( ! empty( $post->is_closed ) && ! Permission_Engine::can( $user_id, 'moderate', $space_id ) ) {
-			return new \WP_Error(
-				'jetonomy_post_closed',
-				/* translators: 1: singular topic label; 2: plural reply label. */
-				sprintf( __( 'This %1$s is closed and cannot receive new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-				array( 'status' => 403 )
-			);
+			return self::closed_error();
 		}
 
 		/*
@@ -243,6 +238,21 @@ class Content_Gate {
 			'jetonomy_not_published',
 			__( 'This content is not published, so it cannot be replied to, voted on or reacted to.', 'jetonomy' ),
 			array( 'status' => 409 )
+		);
+	}
+
+	/**
+	 * The refusal for a reply to a closed topic. The topic page shows the same
+	 * message, so the notice and the server never disagree.
+	 *
+	 * @return \WP_Error
+	 */
+	public static function closed_error(): \WP_Error {
+		return new \WP_Error(
+			'jetonomy_post_closed',
+			/* translators: 1: singular topic label; 2: plural reply label. */
+			sprintf( __( 'This %1$s is closed and cannot receive new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+			array( 'status' => 403 )
 		);
 	}
 }

@@ -13,6 +13,11 @@ use Jetonomy\Models\Category;
 
 class Categories_Handler {
 
+	/**
+	 * Columns the category edit modal writes; their fingerprint is the modal's edit token.
+	 */
+	public const EDIT_FIELDS = array( 'name', 'slug', 'description', 'parent_id', 'icon', 'color', 'visibility' );
+
 	public function __construct() {
 		add_action( 'wp_ajax_jetonomy_create_category', array( $this, 'ajax_create_category' ) );
 		add_action( 'wp_ajax_jetonomy_update_category', array( $this, 'ajax_update_category' ) );
@@ -85,6 +90,15 @@ class Categories_Handler {
 		if ( ! $id ) {
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
+		}
+
+		// A tab loaded before someone else's save would otherwise write its stale copy over it.
+		// shortcut: check-then-write, not atomic; two saves in the same instant can still race.
+		if ( isset( $_POST['edit_token'] ) ) {
+			$current = Category::find( $id );
+			if ( $current && ! hash_equals( \Jetonomy\Admin\Admin::edit_token( $current, self::EDIT_FIELDS ), sanitize_text_field( wp_unslash( $_POST['edit_token'] ) ) ) ) {
+				wp_send_json_error( \Jetonomy\Admin\Admin::edit_conflict_message( 'category' ) );
+			}
 		}
 
 		$data = array();

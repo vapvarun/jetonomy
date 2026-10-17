@@ -1,0 +1,110 @@
+{
+  "journey": "C.anon.home",
+  "free": "c2c2406a",
+  "pro": "04c8303",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-anon-home.1": {
+      "result": "fail",
+      "expected": "real content and a way in, nothing cut off",
+      "actual": "Page renders 5 category blocks, Log in button; but 19 'Active N minutes ago' labels on space cards are cut off with an ellipsis ('Active 22 minutes ...') at 1440 and 390",
+      "url": "http://forums.local/community/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/home-1440.png"
+    },
+    "c-anon-home.2": {
+      "result": "fail",
+      "expected": "six spaces visible with View all",
+      "actual": "Local Chapters spaces are collapsed behind a 'Local Chapters 14' chevron chip by default; once expanded exactly six cards plus 'View all 14 spaces' -> /community/category/local-chapters/",
+      "url": "http://forums.local/community/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/home-expanded.png",
+      "check_wrong": true
+    },
+    "c-anon-home.3": {
+      "result": "pass",
+      "evidence": "Labs has 2 spaces and shows no View all link; Local Chapters (14) has the link"
+    },
+    "c-anon-home.4": {
+      "result": "fail",
+      "expected": "last five empty city spaces show 0 topics on home",
+      "actual": "Home shows only the first six (all with topics); the five empty ones are only on the category page where they show 0 topics without error",
+      "url": "http://forums.local/community/",
+      "screenshot": "",
+      "check_wrong": true
+    },
+    "c-anon-home.5": {
+      "result": "untested",
+      "needs": "lane A: Settings > General > Registration off (registration is already closed site-wide, users_can_register=0, and home shows Log in only with no Register)"
+    },
+    "c-anon-home.6": {
+      "result": "pass",
+      "evidence": "teasers setting guest_private_teasers=false; Partner Program, Customer Advisory Board, Moderators' Room absent from home text"
+    },
+    "c-anon-home.7": {
+      "result": "untested",
+      "needs": "lane A: Show private spaces to logged-out visitors on"
+    },
+    "c-anon-home.8": {
+      "result": "untested",
+      "needs": "lane A: Show private spaces to logged-out visitors on (with it off: /community/s/moderators-room/ is 404 'Space not found.' identical to a missing slug)"
+    },
+    "c-anon-home.9": {
+      "result": "pass",
+      "evidence": "guest GET /feed (all pages, 242 items) and /spaces contain no space 37/38/39; /spaces/39 404, /spaces/37,38 403"
+    },
+    "c-anon-home.10": {
+      "result": "fail",
+      "expected": "159-char Grace title wraps in a feed card on home",
+      "actual": "Home has no feed cards (spaces + trending only); Grace's topic lives in General Discussion; covered by c-anon-space-listing.21",
+      "url": "http://forums.local/community/",
+      "screenshot": "",
+      "check_wrong": true
+    },
+    "c-anon-home.11": {
+      "result": "fail",
+      "expected": "Omar's Arabic topic card in the home feed",
+      "actual": "Home has no feed cards; covered by space-listing.22",
+      "url": "http://forums.local/community/",
+      "screenshot": "",
+      "check_wrong": true
+    },
+    "c-anon-home.12": {
+      "result": "fail",
+      "expected": "cards stack, no h-scroll, tidy welcome",
+      "actual": "No h-scroll (scrollWidth 390), cards one column; but the welcome card has a ~150px empty gap between stats and the Log in button",
+      "url": "http://forums.local/community/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/home-390.png"
+    },
+    "c-anon-home.13": {
+      "result": "pass",
+      "evidence": "dark mode at 390: cards, chips, text use dark tokens, readable, no white panels (home-390-dark.png)"
+    },
+    "c-anon-home.14": {
+      "result": "untested",
+      "needs": "docker site: needs fresh community without posts"
+    },
+    "c-anon-home.15": {
+      "result": "pass",
+      "evidence": "trending titles (5) and top-member names (Maya, Theo, Alice) all 200"
+    }
+  },
+  "proposed_checks": [
+    "- `c-anon-home.16` @guest #ui +1440: look at any space card stats line -> 'Active N minutes ago' shows in full, not cut off with an ellipsis.",
+    "- `c-anon-home.17` @guest #ui: look at the home page category blocks -> the Community category shows its own name as a heading like the other blocks (the first block shows only its description).",
+    "- `c-anon-home.18` @guest #ui: look at Other Spaces -> no QA fixture spaces (QA Q&A space etc.) show on a customer-facing home."
+  ],
+  "notes": "No settings changed. Registration is closed site-wide so only Log in is offered.",
+  "walked_at": "2026-10-17T09:26:56Z"
+}

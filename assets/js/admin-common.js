@@ -117,6 +117,7 @@
 		},
 
 		init: function() {
+			this.showPendingToast();
 			this.bindDashboard();
 			this.bindCategoryActions();
 			this.bindSpaceActions();
@@ -180,6 +181,30 @@
 			setTimeout(function() {
 				$toast.remove();
 			}, 3200);
+		},
+
+		// A toast fired right before a reload or navigation dies with the page,
+		// so the message is parked in sessionStorage and shown on the next load.
+		reloadWithToast: function(message, url) {
+			try {
+				window.sessionStorage.setItem('jetonomyAdminToast', String(message || ''));
+			} catch (e) {}
+			if (url) {
+				window.location.href = url;
+			} else {
+				window.location.reload();
+			}
+		},
+
+		showPendingToast: function() {
+			var message = '';
+			try {
+				message = window.sessionStorage.getItem('jetonomyAdminToast') || '';
+				window.sessionStorage.removeItem('jetonomyAdminToast');
+			} catch (e) {}
+			if (message) {
+				this.toast(message);
+			}
 		},
 
 		// ── Spinner Helper ──
@@ -335,8 +360,7 @@
 					visibility: $('#cat-visibility').val()
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						location.reload();
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -367,6 +391,7 @@
 					});
 				})();
 				$('#edit-cat-visibility').val($link.data('visibility'));
+				$('#edit-cat-id').data('edit-token', $link.attr('data-edit-token') || '');
 
 				// Re-initialize color picker in modal
 				var $color = $('#edit-cat-color');
@@ -396,6 +421,7 @@
 
 				self.ajax('jetonomy_update_category', {
 					id: id,
+					edit_token: $('#edit-cat-id').data('edit-token') || '',
 					name: name,
 					slug: $('#edit-cat-slug').val(),
 					description: $('#edit-cat-description').val(),
@@ -405,8 +431,7 @@
 					visibility: $('#edit-cat-visibility').val()
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						location.reload();
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -612,8 +637,7 @@
 					cover_image: $('#space-cover-image').val()
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						window.location.href = 'admin.php?page=jetonomy-spaces&action=edit&space_id=' + res.data.id;
+						self.reloadWithToast(res.data.message, 'admin.php?page=jetonomy-spaces&action=edit&space_id=' + res.data.id);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -637,6 +661,7 @@
 
 				self.ajax('jetonomy_update_space', {
 					id: spaceId,
+					edit_token: $form.attr('data-edit-token') || '',
 					title: $('#space-title').val(),
 					slug: $('#space-slug').val(),
 					description: $('#space-description').val(),
@@ -650,6 +675,8 @@
 					cover_image: $('#space-cover-image').val()
 				}).done(function(res) {
 					if (res.success) {
+						// The form stays open, so its next save is checked against what was just saved.
+						$form.attr('data-edit-token', res.data.edit_token || '');
 						self.toast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
@@ -702,13 +729,13 @@
 					if (!ok) return;
 					self.ajax('jetonomy_delete_space', { id: id, mode: mode }).done(function(res) {
 						if (res.success) {
-							self.toast(res.data.message);
 							// An archived space still exists, so the row stays and
 							// is reloaded; only a purge removes it from the list.
 							if (res.data && res.data.removed) {
+								self.toast(res.data.message);
 								$row.fadeOut(300, function() { $(this).remove(); });
 							} else {
-								window.location.reload();
+								self.reloadWithToast(res.data.message);
 							}
 						} else {
 							self.toast(res.data || self.i18n.error, 'error');
@@ -793,9 +820,12 @@
 
 				self.ajax('jetonomy_update_space', {
 					id: spaceId,
+					edit_token: $form.attr('data-edit-token') || '',
 					settings: JSON.stringify(settings)
 				}).done(function(res) {
 					if (res.success) {
+						// The form stays open, so its next save is checked against what was just saved.
+						$form.attr('data-edit-token', res.data.edit_token || '');
 						self.toast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
@@ -880,8 +910,7 @@
 					role: role
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						location.reload();
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -1187,8 +1216,7 @@
 					priority: $('#rule-priority').val()
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						location.reload();
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -1445,7 +1473,7 @@
 							$row.fadeOut(300, function() {
 								$(this).remove();
 								if (!$table.find('tbody tr').length) {
-									location.reload();
+									self.reloadWithToast(res.data.message);
 								}
 							});
 						} else {
@@ -1555,7 +1583,8 @@
 			});
 
 			// Unban User
-			$(document).on('click', '.jetonomy-unban-user', function() {
+			$(document).on('click', '.jetonomy-unban-user', function(e) {
+				e.preventDefault();
 				var $btn = $(this);
 				var $row = $btn.closest('tr');
 				var restrictionId = $btn.data('restriction-id');
@@ -1575,6 +1604,7 @@
 							self.toast(res.data.message);
 							// On Users page: restore Ban link. On Moderation page: remove row.
 							if ($row.find('.ban').length) {
+								$row.find('.jetonomy-restriction-label').remove();
 								// The name is member-chosen text: set it as an attribute, never splice it into HTML.
 								$row.find('.ban').empty().append(
 									$('<a href="#" class="jetonomy-ban-trigger"></a>')
@@ -1636,12 +1666,8 @@
 					trust_level: trustLevel
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						// Update badge in table
-						var $badge = $('.jetonomy-trust-badge[data-user-id="' + userId + '"]');
-						$badge.attr('class', 'jetonomy-trust-badge jetonomy-trust-badge--' + trustLevel);
-						// Reload for clean label update
-						location.reload();
+						// Reload for a clean label update; the toast follows the reload.
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -1740,8 +1766,14 @@
 						if ('ip_ban' === banType) {
 							return;
 						}
-						// Toggle row action: Ban → Unban
+						// Toggle row action: Ban → Unban, and name the restriction as the server render does.
 						var $row = $('tr[data-user-id="' + userId + '"]');
+						$row.find('.jetonomy-restriction-label').remove();
+						$row.find('.column-username strong').first().after(
+							' ',
+							$('<span class="jetonomy-badge jetonomy-badge--ban jetonomy-restriction-label"></span>')
+								.text('silence' === banType ? __('Silenced', 'jetonomy') : __('Banned', 'jetonomy'))
+						);
 						$row.find('.ban').html(
 							'<a href="#" class="jetonomy-unban-user" data-restriction-id="' + res.data.restriction_id + '">' +
 							self.i18n.unban +

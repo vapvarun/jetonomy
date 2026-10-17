@@ -301,29 +301,34 @@ class Mentions {
 			// Resolve the deep link once — reused for the action payload and the email CTA.
 			$content_url = notification_deep_link( $object_type, $object_id );
 
-			$notification_id = Models\Notification::create(
-				array(
-					'user_id'         => $uid,
-					'actor_id'        => $actor_id,
-					'actor_anonymous' => $actor_anonymous ? 1 : 0,
-					'type'            => 'mention',
-					'object_type'     => $object_type,
-					'object_id'       => $object_id,
-					'message'         => $message,
-					'created_at'      => now(),
-				)
-			);
-
-			// Routed through the shared emitter so the push gate applies here too
-			// (1.8.0). This path fired the hook raw, so @mentioning someone who
-			// had blocked you put your words on their phone.
-			\Jetonomy\Notifications\Notifier::emit_notification_created( $notification_id, $uid, $actor_id, 'mention', $object_type, $object_id, $message, $content_url, $actor_anonymous );
-
-			// Check email preference via the shared gate (master kill-switch +
-			// per-user per-type + admin default). $user_prefs already loaded.
 			$profile    = Models\UserProfile::find_by_user( $uid );
 			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : array();
 			$user_prefs = $settings['notifications'] ?? array();
+
+			// The web row (and its push mirror) follows the member's web preference,
+			// as Notifier::create_and_maybe_email() does for every other type.
+			if ( \Jetonomy\Notifications\Notifier::should_web( $uid, 'mention', $user_prefs ) ) {
+				$notification_id = Models\Notification::create(
+					array(
+						'user_id'         => $uid,
+						'actor_id'        => $actor_id,
+						'actor_anonymous' => $actor_anonymous ? 1 : 0,
+						'type'            => 'mention',
+						'object_type'     => $object_type,
+						'object_id'       => $object_id,
+						'message'         => $message,
+						'created_at'      => now(),
+					)
+				);
+
+				// Routed through the shared emitter so the push gate applies here too
+				// (1.8.0). This path fired the hook raw, so @mentioning someone who
+				// had blocked you put your words on their phone.
+				\Jetonomy\Notifications\Notifier::emit_notification_created( $notification_id, $uid, $actor_id, 'mention', $object_type, $object_id, $message, $content_url, $actor_anonymous );
+			}
+
+			// Email preference via the shared gate (master kill-switch +
+			// per-user per-type + admin default).
 
 			// Block gate — Notifier::create_and_maybe_email() has had one since
 			// 1.7.1, but this second, parallel email path never got it, so a

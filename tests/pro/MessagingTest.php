@@ -187,8 +187,8 @@ class MessagingTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A user who is not a participant in a conversation must receive 403
-	 * when attempting to read that conversation's messages.
+	 * A user who is not a participant in a conversation must receive the
+	 * same 404 as for a conversation that does not exist.
 	 */
 	public function test_non_participant_cannot_read_conversation(): void {
 		// Admin creates a conversation between admin and recipient only.
@@ -214,8 +214,8 @@ class MessagingTest extends WP_UnitTestCase {
 			$this->sender_id
 		);
 
-		$this->assertEquals( 403, $response->get_status(),
-			'A non-participant must receive 403 when reading a conversation.' );
+		$this->assertEquals( 404, $response->get_status(),
+			'A non-participant must get the same 404 as a missing conversation.' );
 	}
 
 	/**

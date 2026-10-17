@@ -1,0 +1,128 @@
+{
+  "journey": "C.anon.single-post",
+  "free": "c2c2406a",
+  "pro": "04c8303",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-anon-single-post.1": {
+      "result": "pass",
+      "evidence": "'Dark mode for the community on phones': title, body, author Sofia Romano, vote 0, 45 replies render (post-1440.png)"
+    },
+    "c-anon-single-post.2": {
+      "result": "pass",
+      "evidence": "guest vote, react and Reply are links to wp-login.php?redirect_to=<topic>; 'Log in to reply' button shown; no silent 403. Subscribe control is not offered to guests at all. Return-after-login not walked"
+    },
+    "c-anon-single-post.3": {
+      "result": "pass",
+      "evidence": "POST /posts/5349/replies and /posts/5349/vote as guest -> 401 rest_not_logged_in (core code, not jetonomy_login_required)"
+    },
+    "c-anon-single-post.4": {
+      "result": "untested",
+      "needs": "fixture: no reply in the data has edited_at set (checked every jt_replies row)"
+    },
+    "c-anon-single-post.5": {
+      "result": "untested",
+      "needs": "fixture: no edited replies exist in the data"
+    },
+    "c-anon-single-post.6": {
+      "result": "untested",
+      "needs": "fixture: no nested reply (parent_id>0) exists in the data"
+    },
+    "c-anon-single-post.7": {
+      "result": "pass",
+      "evidence": "guest sees 'No replies yet.' + Log in to reply; bob on 'Introducing our new moderator: Theo' sees 'No replies yet. Be the first to reply!' with the composer"
+    },
+    "c-anon-single-post.8": {
+      "result": "untested",
+      "needs": "fixture: closed topic 'Scheduled maintenance on Saturday: what to expect' now has 1 reply, so the zero-count wording cannot be seen. Observed: Closed badge, no composer, 'This topic is closed and no longer accepts replies.'"
+    },
+    "c-anon-single-post.9": {
+      "result": "untested",
+      "needs": "fixture: no closed zero-reply topic. test_moderator on the closed maintenance topic (1 reply): composer present and 'This topic is closed. As a moderator, you can st...' note"
+    },
+    "c-anon-single-post.10": {
+      "result": "pass",
+      "evidence": "Partner Program topic as guest: 'This content is in a private space.' with no body. Note HTTP status is 404 and page title 'Page not available'"
+    },
+    "c-anon-single-post.11": {
+      "result": "pass",
+      "evidence": "hidden Moderators' Room topic = 404 'Topic not found. ... Back to the community', same text and title as a missing topic; does not name the space or topic"
+    },
+    "c-anon-single-post.12": {
+      "result": "pass",
+      "evidence": "GET /replies/<Moderators' Room reply 11861> and a missing id 9999999 -> identical 404 jetonomy_not_found 'Reply not found.'"
+    },
+    "c-anon-single-post.13": {
+      "result": "pass",
+      "evidence": "GET /replies/11860 (Customer Advisory Board) -> 404 jetonomy_not_found, same body as missing id (not 403); also 11858, 11859 (Partner Program) 404"
+    },
+    "c-anon-single-post.14": {
+      "result": "pass",
+      "evidence": "GET /updates?scope=post&id=5341 (hidden) -> 404 jetonomy_not_found 'Topic not found.', same as id 9999999"
+    },
+    "c-anon-single-post.15": {
+      "result": "pass",
+      "evidence": "GET /updates?scope=post&id=5349&since=... -> 200 with reply id list [11871,...]"
+    },
+    "c-anon-single-post.16": {
+      "result": "pass",
+      "evidence": "GET /updates?scope=global and scope=space&id=2768 as guest -> 401 jetonomy_unauthorized"
+    },
+    "c-anon-single-post.17": {
+      "result": "untested",
+      "needs": "fixture: no private reply (is_private=1) exists in the data"
+    },
+    "c-anon-single-post.18": {
+      "result": "untested",
+      "needs": "fixture: no private reply exists in the data"
+    },
+    "c-anon-single-post.19": {
+      "result": "pass",
+      "evidence": "Grace's topic at 1440 and 390: title wraps, list + quote + code block present, code block scrolls inside itself (scrollWidth 496 in 292 box), URL wraps, scrollWidth 390 (grace-390.png). Console shows 1 error: GET /link-preview?url=photoclub.example.org... 400 for the unresolvable fixture URL"
+    },
+    "c-anon-single-post.20": {
+      "result": "untested",
+      "needs": "lane A: switch site language to Arabic (RTL)"
+    },
+    "c-anon-single-post.21": {
+      "result": "pass",
+      "evidence": "45-reply topic: 30 replies render, 'Load More' (?rpg=2), count badge reads 45"
+    },
+    "c-anon-single-post.22": {
+      "result": "pass",
+      "evidence": "QA-RFT poll topic reply by a deleted account: author '[deleted]' with anonymous avatar placeholder, no PHP warning"
+    },
+    "c-anon-single-post.23": {
+      "result": "pass",
+      "evidence": "Grace (long name, no avatar) as TOPIC author at 390: name wraps, 'GR' initials avatar shown, no overlap. Grace has no reply as author in the data"
+    },
+    "c-anon-single-post.24": {
+      "result": "pass",
+      "evidence": "dark mode on Grace's topic: blockquote #cbcbcd on #2b323c, body #e5e5e5; the code block stays a light panel (black on #f5f2f0), readable (grace-390-dark.png)"
+    },
+    "c-anon-single-post.25": {
+      "result": "pass",
+      "evidence": "breadcrumb on topic: Home / Product & Engineering / Feature Requests / topic title with working links"
+    }
+  },
+  "proposed_checks": [
+    "- `c-anon-single-post.26` @guest #ui +dark: view a topic with a code block in dark mode -> the code block uses dark tokens, not a bright white panel.",
+    "- `c-anon-single-post.27` @guest #ui: open a topic whose body links to an unreachable site -> no console error and the link shows as a plain link.",
+    "- `c-anon-single-post.28` @guest #ui !refuse: open a topic in Partner Program -> HTTP status and title match the private-space message (currently 404 'Page not available')."
+  ],
+  "notes": "No settings changed. Seed has no edited, nested or private replies and the closed topic has a reply, so those checks need a fixture.",
+  "walked_at": "2026-10-17T09:42:01Z"
+}

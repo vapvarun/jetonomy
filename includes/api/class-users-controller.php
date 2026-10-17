@@ -403,7 +403,7 @@ class Users_Controller extends Base_Controller {
 			// avatar_url = the raw stored upload (null when none) for the edit flow;
 			// avatar_display = the resolved render value ('' => client shows initials).
 			'avatar_url'        => $profile->avatar_url ?? null,
-			'avatar_display'    => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
+			'avatar_display'    => ( $profile->avatar_url ?? '' ) ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'        => $wp_user->user_registered ?? null,
 			'last_seen_at'      => $profile->last_seen_at ?? null,
 			// Has the CURRENT viewer blocked this profile? Backs the app's
@@ -425,7 +425,7 @@ class Users_Controller extends Base_Controller {
 			 * null when unrestricted. Same server-owned-rule, server-published-flag
 			 * pattern as can_block_author and can_downvote.
 			 */
-			'restriction'       => \Jetonomy\Models\Restriction::active_map_for_users( array( $id ) )[ $id ] ?? null,
+			'restriction'       => $this->restriction_for_viewer( $id ),
 			// Server-authoritative ban eligibility (viewer must moderate; staff
 			// and self are never bannable) so the profile screen hides Ban on an
 			// admin (ban button shown for administrators).
@@ -474,7 +474,7 @@ class Users_Controller extends Base_Controller {
 			'reply_count'       => (int) ( $profile->reply_count ?? 0 ),
 			'bio'               => $profile->bio ?? null,
 			'avatar_url'        => $profile->avatar_url ?? null,
-			'avatar_display'    => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
+			'avatar_display'    => ( $profile->avatar_url ?? '' ) ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'        => $wp_user->user_registered ?? null,
 			'last_seen_at'      => $profile->last_seen_at ?? null,
 			'is_blocked'        => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
@@ -493,7 +493,7 @@ class Users_Controller extends Base_Controller {
 			 * null when unrestricted. Same server-owned-rule, server-published-flag
 			 * pattern as can_block_author and can_downvote.
 			 */
-			'restriction'       => \Jetonomy\Models\Restriction::active_map_for_users( array( $id ) )[ $id ] ?? null,
+			'restriction'       => $this->restriction_for_viewer( $id ),
 			// Server-authoritative ban eligibility (viewer must moderate; staff
 			// and self are never bannable) so the profile screen hides Ban on an
 			// admin (ban button shown for administrators).
@@ -977,7 +977,7 @@ class Users_Controller extends Base_Controller {
 			'trust_level'    => (int) ( $profile->trust_level ?? 0 ),
 			'bio'            => $profile->bio ?? null,
 			'avatar_url'     => $profile->avatar_url ?? null,
-			'avatar_display' => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( (int) ( $profile->user_id ?? 0 ), 96 ),
+			'avatar_display' => ( $profile->avatar_url ?? '' ) ?: \Jetonomy\Avatar::display_url( (int) ( $profile->user_id ?? 0 ), 96 ),
 			'last_seen_at'   => $profile->last_seen_at ?? null,
 			'created_at'     => $profile->created_at ?? null,
 			'updated_at'     => $profile->updated_at ?? null,
@@ -1043,5 +1043,22 @@ class Users_Controller extends Base_Controller {
 				'required' => false,
 			),
 		);
+	}
+
+	/**
+	 * A member's active restriction, for staff and for the member themself.
+	 *
+	 * Silences and bans are moderation records. Anyone else, guests included,
+	 * gets null, as if the member were unrestricted.
+	 *
+	 * @param int $id Member.
+	 * @return string|null Restriction type, or null.
+	 */
+	private function restriction_for_viewer( int $id ): ?string {
+		$viewer = get_current_user_id();
+		if ( ! $viewer || ( $viewer !== $id && ! current_user_can( 'jetonomy_moderate' ) ) ) {
+			return null;
+		}
+		return \Jetonomy\Models\Restriction::active_map_for_users( array( $id ) )[ $id ] ?? null;
 	}
 }

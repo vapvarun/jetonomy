@@ -84,6 +84,10 @@
     "space_banned": {
       "autologin": "omar",
       "note": "Omar Haddad: banned from Off-Topic Lounge only; posts in Arabic"
+    },
+    "banned": {
+      "autologin": "kai_brennan",
+      "note": "Kai Brennan: banned site-wide for selling followers; has one topic in General Discussion"
     }
   },
   "themes": [
@@ -93,6 +97,9 @@
         "toggle": ".bx-color-mode-toggle__btn",
         "until": "html[data-bx-mode=\"dark\"]"
       }
+    },
+    {
+      "slug": "buddyx"
     },
     {
       "slug": "twentytwentyfive"

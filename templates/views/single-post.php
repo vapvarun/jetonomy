@@ -1019,9 +1019,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			</div>
 
 			<!-- Composer -->
+			<?php
+			$jt_restriction = ( $jt_is_live && ! $jt_can_reply_here )
+				? \Jetonomy\Permissions\Permission_Engine::restriction_error( (int) $jt_viewer_id, 'create_replies', (int) $post->space_id )
+				: null;
+			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
-					<?php printf( /* translators: 1: singular topic label; 2: plural reply label. */ esc_html__( 'This %1$s is closed and no longer accepts %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+					<?php echo esc_html( \Jetonomy\Permissions\Content_Gate::closed_error()->get_error_message() ); ?>
 				</div>
 			<?php elseif ( $jt_can_reply_here ) : ?>
 				<?php if ( $post->is_closed ) : ?>
@@ -1043,6 +1048,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					);
 					?>
 				</div>
+			<?php elseif ( $jt_restriction ) : ?>
+				<?php // A silenced or banned member is told why there is no reply box. ?>
+				<p class="jt-notice jt-notice-warning"><?php echo esc_html( $jt_restriction->get_error_message() ); ?></p>
 			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<?php
 				// Guests get the composer partial's own logged-out state (the

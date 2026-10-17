@@ -1,0 +1,128 @@
+{
+  "journey": "C.admin.category-and-space-crud",
+  "free": "c2c2406a",
+  "pro": "04c8303",
+  "walked_at": "2026-10-17T09:38:41Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-admin-category-and-space-crud.1": {
+      "result": "fail",
+      "expected": "toast 'Category created.' shows, category appears on home",
+      "actual": "Category saved (row added, slug product-questions, shown on /community/) but no toast is ever visible: assets/js/admin-common.js ~line 336 calls self.toast() and immediately location.reload(), destroying the toast; a polling wait for .jetonomy-toast timed out",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-categories",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneA/cat-create.png"
+    },
+    "c-admin-category-and-space-crud.2": {
+      "result": "pass",
+      "evidence": "Renamed Seasonal Campaigns -> Holiday Campaigns via Edit; dragged it above Product Questions; order kept after reload; GET /categories lists Holiday Campaigns:3, Product Questions:4"
+    },
+    "c-admin-category-and-space-crud.3": {
+      "result": "pass",
+      "evidence": "Delete of Holiday Campaigns (had Gardening Tips) -> toast 'Cannot delete this category while it contains spaces. Move or delete the spaces first.', space intact; delete of Product Questions (had child Regional Meetups) -> 'Cannot delete this category while it has sub-categories. Delete them first.'"
+    },
+    "c-admin-category-and-space-crud.4": {
+      "result": "fail",
+      "expected": "toast 'Space created.', opens at /community/s/gardening-tips/ and shows in My Spaces",
+      "actual": "Space 2986 created and /community/s/gardening-tips/ returns 200 titled 'Gardening Tips', but the toast is never visible (admin-common.js ~line 615 toasts then sets window.location.href at once). My Spaces not checked",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces&action=new",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneA/space-created.png"
+    },
+    "c-admin-category-and-space-crud.5": {
+      "result": "fail",
+      "expected": "note 'Hidden spaces are invite-only, so the join policy was switched to Invite only.'",
+      "actual": "Behaviour right (join policy switches to Invite Only) but the note reads 'Hidden spaces must use Invite Only. Join policy switched.'",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces&action=new",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneA/space-hidden.png",
+      "check_wrong": true
+    },
+    "c-admin-category-and-space-crud.6": {
+      "result": "fail",
+      "expected": "note 'Private spaces need approval or an invite, so the join policy was switched to Approval required.'",
+      "actual": "Behaviour right (Open -> Requires Approval) but the note reads 'Private spaces need approval or an invite. Join policy switched to Approval Required.'",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces&action=new",
+      "check_wrong": true
+    },
+    "c-admin-category-and-space-crud.7": {
+      "result": "pass",
+      "evidence": "The admin edit form has no settings keys, so done through REST PATCH /spaces/2986: who_can_post=member, then who_can_reply=member -> both kept; who_can_post='' removed only that key and who_can_reply stayed"
+    },
+    "c-admin-category-and-space-crud.8": {
+      "result": "pass",
+      "evidence": "wp-admin has no member roster screen; on my own test space 2986 (me the only admin) REST PATCH role=member -> 400 jetonomy_cannot_self_demote, DELETE member -> 400 jetonomy_last_admin_required, roster kept the admin. Help Desk itself has two admins (varundubey, test_editor), so 'only admin' was not the seeded state"
+    },
+    "c-admin-category-and-space-crud.9": {
+      "result": "untested",
+      "needs": "No space has more than 16 topics and seeding is not allowed; needs docker site"
+    },
+    "c-admin-category-and-space-crud.10": {
+      "result": "untested",
+      "needs": "Needs a database failure injected; not possible on this live site"
+    },
+    "c-admin-category-and-space-crud.11": {
+      "result": "untested",
+      "needs": "2025 Hackathon is already Archived with 0 topics, and hand-over changes ownership of a shared fixture that cannot be undone; needs docker site"
+    },
+    "c-admin-category-and-space-crud.12": {
+      "result": "untested",
+      "needs": "Needs bob to attempt a reply (write probe as another persona was blocked by the permission classifier); 2025 Hackathon already shows Archived in admin"
+    },
+    "c-admin-category-and-space-crud.13": {
+      "result": "pass",
+      "evidence": "Help Desk description stored complete at 288 chars (edit form); Spaces list row shows no description at all so nothing to truncate and the table did not widen (1236/1236)"
+    },
+    "c-admin-category-and-space-crud.14": {
+      "result": "pass",
+      "evidence": "Second 'Product Questions' saved with slug product-questions-1 beside product-questions, original untouched (check's '-2' is an example only)"
+    },
+    "c-admin-category-and-space-crud.15": {
+      "result": "fail",
+      "expected": "each of the last five empty city spaces lists 'No topics yet' in the admin and the front end",
+      "actual": "Front end (Amsterdam, Nairobi, Lisbon, Seoul, Mexico City) says 'No topics yet' and edit page opens; the admin Spaces list shows a topics count of 0 instead, no 'No topics yet' wording. Delete not run on seeded spaces",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces",
+      "check_wrong": true
+    },
+    "c-admin-category-and-space-crud.16": {
+      "result": "untested",
+      "needs": "DELETE as test_editor is a write probe as another persona and was blocked by the permission classifier; also test_editor has no manage_spaces so the screen is not reachable"
+    },
+    "c-admin-category-and-space-crud.17": {
+      "result": "fail",
+      "expected": "bob POST /spaces and /categories -> 403 jetonomy_forbidden for both",
+      "actual": "POST /spaces -> 403 jetonomy_forbidden; POST /categories -> 403 rest_forbidden (different code). Nothing created",
+      "url": "http://forums.local/wp-json/jetonomy/v1/categories"
+    },
+    "c-admin-category-and-space-crud.18": {
+      "result": "pass",
+      "evidence": "Created 'Q&A: Roadmap & Plans': DB title and REST title have a bare &, Spaces list, front page <title> and h1 all read 'Q&A: Roadmap & Plans', slug qa-roadmap-plans. Space page has no breadcrumb element to compare"
+    },
+    "c-admin-category-and-space-crud.19": {
+      "result": "fail",
+      "expected": "both concurrent edits persist",
+      "actual": "Two tabs on Gardening Tips edit: tab A saved description 'Tips for growing vegetables on a balcony.', tab B (stale form) then saved sort order 5; afterwards description was empty again, sort order 5. Full-form save silently reverted the other tab's edit (settings JSON via REST did merge)",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=2986"
+    },
+    "c-admin-category-and-space-crud.20": {
+      "result": "pass",
+      "evidence": "After typed-name 'Delete permanently' ('Space and all its content were deleted.') of space 2987: 0 space row, 0 topics, 0 members for it; `wp jetonomy space list --category=1547` listed only the other space. Home counts not compared. Existing orphans: 251 jt_space_members rows point at spaces 179 and 306-555 that no longer exist (not caused by this walk)"
+    }
+  },
+  "proposed_checks": [
+    "- `c-admin-category-and-space-crud.21` @admin #admin: save a category, then a space -> a success toast stays visible (not removed by the immediate reload or redirect), or the page shows the notice after reload.",
+    "- `c-admin-category-and-space-crud.22` @admin #admin +concurrent: save the space form from a stale second tab -> fields the second tab did not change keep the first tab's newer values, or the stale save is refused with a message.",
+    "- `c-admin-category-and-space-crud.23` @admin #rest !refuse: bob POSTs /categories and /spaces -> both return the same error code.",
+    "- `c-admin-category-and-space-crud.24` @admin #cli: after deleting a space, jt_space_members, jt_subscriptions and jt_read_status hold no rows for its id (251 orphan member rows exist for spaces 179, 306-555).",
+    "- `c-admin-category-and-space-crud.25` @admin #admin +many: Spaces list with 50+ spaces -> a search box exists."
+  ],
+  "notes": "Created and fully removed: categories Product Questions (+ duplicate), Seasonal/Holiday Campaigns, Regional Meetups; spaces Gardening Tips, Q&A: Roadmap & Plans. No seeded data changed. Persona note: test_editor has no manage_spaces. Correction: wp-admin space edit has Members and Settings tabs (Members: roster with role select and Remove, invite links); checks 7 and 8 were exercised through REST on a throwaway space, the UI path was not walked. The check 5/6 texts ('Hidden spaces are invite-only, so the join policy was switched to Invite only.') exist in the FRONT-END space edit form (templates/views/space-edit.php:181-183), while the wp-admin form (admin-common.js) says 'Hidden spaces must use Invite Only. Join policy switched.' - the two forms disagree."
+}

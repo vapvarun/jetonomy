@@ -178,11 +178,12 @@ class Permission_Engine {
 	 * member, or null when none applies. One source for the wording, so every
 	 * surface says "silenced" or "banned" instead of a generic permission error.
 	 *
-	 * @param int    $user_id Member.
-	 * @param string $action  Permission slug.
+	 * @param int      $user_id  Member.
+	 * @param string   $action   Permission slug.
+	 * @param int|null $space_id Space the action is in, so a ban from that space is named too.
 	 * @return \WP_Error|null
 	 */
-	public static function restriction_error( int $user_id, string $action ): ?\WP_Error {
+	public static function restriction_error( int $user_id, string $action, ?int $space_id = null ): ?\WP_Error {
 		if ( ! $user_id ) {
 			return null;
 		}
@@ -191,6 +192,14 @@ class Permission_Engine {
 		}
 		if ( in_array( $action, self::SILENCED_WRITE_ACTIONS, true ) && Restriction::is_silenced( $user_id ) ) {
 			return new \WP_Error( 'jetonomy_user_silenced', __( 'Your account is currently silenced and cannot post.', 'jetonomy' ), array( 'status' => 403 ) );
+		}
+		if ( $space_id && Restriction::is_space_banned( $user_id, $space_id ) ) {
+			return new \WP_Error(
+				'jetonomy_user_space_banned',
+				/* translators: %s: singular space label the site owner configured (e.g. space). */
+				sprintf( __( 'You have been banned from this %s and cannot take part in it.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				array( 'status' => 403 )
+			);
 		}
 		return null;
 	}

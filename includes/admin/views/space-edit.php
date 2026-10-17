@@ -69,7 +69,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<?php /* translators: 1: category label, lowercase (e.g. category). 2: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<p class="jt-settings-card__desc"><?php echo esc_html( sprintf( __( 'Name, %1$s, visibility, and appearance of this %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
-		<form id="jetonomy-edit-space-form" class="jetonomy-space-form" data-space-id="<?php echo absint( $space->id ); ?>">
+		<form id="jetonomy-edit-space-form" class="jetonomy-space-form" data-space-id="<?php echo absint( $space->id ); ?>" data-edit-token="<?php echo esc_attr( \Jetonomy\Admin\Ajax\Spaces_Handler::edit_token( $space ) ); ?>">
 			<table class="form-table"><!-- jetonomy-audit-table-ok: WP core settings form, not a data list; core stacks form-table th/td below 782px -->
 				<tr>
 					<th scope="row"><label for="space-title"><?php esc_html_e( 'Title', 'jetonomy' ); ?> <span class="required">*</span></label></th>
@@ -613,7 +613,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<p class="jt-settings-card__desc"><?php echo esc_html( sprintf( __( 'These settings override the global defaults for this %s only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 				</div>
-			<form id="jetonomy-space-settings-form" data-space-id="<?php echo absint( $space->id ); ?>">
+			<form id="jetonomy-space-settings-form" data-space-id="<?php echo absint( $space->id ); ?>" data-edit-token="<?php echo esc_attr( \Jetonomy\Admin\Ajax\Spaces_Handler::edit_token( $space, true ) ); ?>">
 				<table class="form-table"><!-- jetonomy-audit-table-ok: WP core settings form, not a data list; core stacks form-table th/td below 782px -->
 					<tr>
 						<th scope="row"><label for="ss-who-can-post"><?php esc_html_e( 'Who Can Post', 'jetonomy' ); // jt-terms-ok: "post" is the verb here. ?></label></th>

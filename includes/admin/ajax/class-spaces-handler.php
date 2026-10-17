@@ -19,6 +19,34 @@ use function Jetonomy\now;
 
 class Spaces_Handler {
 
+	/**
+	 * Columns the space edit form writes; their fingerprint is the form's edit token.
+	 */
+	public const EDIT_FIELDS = array( 'title', 'slug', 'description', 'category_id', 'type', 'visibility', 'join_policy', 'status', 'sort_order', 'icon', 'cover_image' );
+
+	/**
+	 * Settings keys the space Settings tab writes. Only these are fingerprinted:
+	 * Pro (SEO, anonymous posting, tag spaces, Learnomy) stores its own keys in
+	 * the same column, and a change there is not a conflict with this form.
+	 */
+	public const SETTINGS_FIELDS = array( 'who_can_post', 'who_can_reply', 'require_approval', 'allow_voting', 'posts_per_page', 'enable_prefixes', 'prefixes' );
+
+	/**
+	 * Edit token for one of the space edit forms, read from the stored row.
+	 *
+	 * @param object $space    Space row.
+	 * @param bool   $settings True for the Settings tab, false for the details form.
+	 * @return string
+	 */
+	public static function edit_token( object $space, bool $settings = false ): string {
+		if ( ! $settings ) {
+			return \Jetonomy\Admin\Admin::edit_token( $space, self::EDIT_FIELDS );
+		}
+		// Decoded from the row, not Space::get_settings(): that is memoized for the request.
+		$decoded = json_decode( (string) ( $space->settings ?? '' ), true );
+		return \Jetonomy\Admin\Admin::edit_token( (object) ( is_array( $decoded ) ? $decoded : array() ), self::SETTINGS_FIELDS );
+	}
+
 	public function __construct() {
 		// Space AJAX
 		add_action( 'wp_ajax_jetonomy_create_space', array( $this, 'ajax_create_space' ) );
@@ -135,6 +163,17 @@ class Spaces_Handler {
 			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
+		// A tab loaded before someone else's save would otherwise write its stale copy over it.
+		// shortcut: check-then-write, not atomic; two saves in the same instant can still race.
+		// The details form and the Settings tab each carry their own token; the Settings tab is the one posting `settings`.
+		$is_settings_form = isset( $_POST['settings'] );
+		if ( isset( $_POST['edit_token'] ) ) {
+			$current = Space::find( $id );
+			if ( $current && ! hash_equals( self::edit_token( $current, $is_settings_form ), sanitize_text_field( wp_unslash( $_POST['edit_token'] ) ) ) ) {
+				wp_send_json_error( \Jetonomy\Admin\Admin::edit_conflict_message( 'space' ) );
+			}
+		}
+
 		$data           = array();
 		$allowed_fields = array(
 			'title'       => 'sanitize_text_field',
@@ -249,10 +288,13 @@ class Spaces_Handler {
 			wp_send_json_error( sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
+		$saved = Space::find( $id );
 		wp_send_json_success(
 			array(
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-				'message' => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
+				'message'    => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
+				// The form stays open after a save; its next save is checked against this.
+				'edit_token' => $saved ? self::edit_token( $saved, $is_settings_form ) : '',
 			)
 		);
 	}

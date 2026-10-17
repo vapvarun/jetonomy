@@ -46,17 +46,12 @@ $jt_can_moderate     = is_user_logged_in()
 	&& \Jetonomy\Moderation\Moderation_Permissions::can_view_admin_dashboard( $jt_viewer_id )
 	&& ! $jt_target_protected;
 
-// The member's newest active restriction (id + type) for the status badge + the
-// Lift control. Only queried for moderators.
+// The member's strongest active restriction (id + type) for the status badge + the
+// Lift control. Only queried for moderators. Not list_active(): an IP ban issued
+// from this member's row blocks an address and must not label the account.
 $jt_restriction = null;
 if ( $jt_can_moderate ) {
-	$jt_rows        = \Jetonomy\Models\Restriction::list_active(
-		array(
-			'user_id' => $profile_user_id,
-			'limit'   => 1,
-		)
-	);
-	$jt_restriction = $jt_rows[0] ?? null;
+	$jt_restriction = \Jetonomy\Models\Restriction::active_rows_for_users( array( $profile_user_id ) )[ $profile_user_id ] ?? null;
 }
 // Member-to-member controls (Report, Block) for someone else's profile. Mirrors
 // BlockedUser::block(): moderators and admins cannot be blocked.

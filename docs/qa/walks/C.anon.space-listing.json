@@ -1,0 +1,151 @@
+{
+  "journey": "C.anon.space-listing",
+  "free": "c2c2406a",
+  "pro": "04c8303",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-anon-space-listing.1": {
+      "result": "fail",
+      "expected": "Feature Requests lists topics and page 2 loads",
+      "actual": "Feature Requests has 13 topics, all on one page (no page 2, X-WP-Total 13). Pagination is a Load More button (?pg=2) and works on the QA Paging space: 1 -> 2 topics, button stays while one remains",
+      "url": "http://forums.local/community/s/feature-requests/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/paging.png",
+      "check_wrong": true
+    },
+    "c-anon-space-listing.2": {
+      "result": "pass",
+      "evidence": "Feature Requests ?sort=popular: 0-vote ties ordered by replies 45,6,5,5,5,2,2,1,1 after 9/8/5/2 vote topics"
+    },
+    "c-anon-space-listing.3": {
+      "result": "fail",
+      "expected": "same header with Discussions, Members and Roadmap tabs",
+      "actual": "Guest sees only 'Ideas | Roadmap' (or no tab row on forum spaces); signed-in members see 'Discussions | Members' on forum spaces. /members/ works for a guest by typing the URL but has no tab link. Header content (description, counts, cover) is the same on Ideas, Roadmap and Members",
+      "url": "http://forums.local/community/s/feature-requests/",
+      "screenshot": ""
+    },
+    "c-anon-space-listing.4": {
+      "result": "pass",
+      "evidence": "guest: 'Log in to post' only (no New Topic); bob: '+ Share an Idea' on Feature Requests, '+ New Topic' on Amsterdam"
+    },
+    "c-anon-space-listing.5": {
+      "result": "pass",
+      "evidence": "bob on Feature Requests: visible '+ Share an Idea' button (type-specific wording), plus Follow and Leave Space"
+    },
+    "c-anon-space-listing.6": {
+      "result": "pass",
+      "evidence": "bob on Amsterdam Chapter: 'Join Space' -> click -> 'Leave Space', members 3 -> 4; then Leave (confirm dialog 'Leave this space? You can rejoin at any time.') restored 3 members and Join Space"
+    },
+    "c-anon-space-listing.7": {
+      "result": "untested",
+      "needs": "needs a logged-in non-member of Insiders / Beta: bob, alice and maya are all members. Invite-only Customer Advisory Board as bob: 'is invite-only. You need an invitation to join.' with no request form (pass)"
+    },
+    "c-anon-space-listing.8": {
+      "result": "untested",
+      "needs": "fixture: no public space with join_policy approval exists (Partner Program and Insiders / Beta are private)"
+    },
+    "c-anon-space-listing.9": {
+      "result": "untested",
+      "needs": "fixture: needs the request from .8"
+    },
+    "c-anon-space-listing.10": {
+      "result": "untested",
+      "needs": "fixture: needs the request from .8/.9"
+    },
+    "c-anon-space-listing.11": {
+      "result": "pass",
+      "evidence": "bob on 2025 Hackathon: header 'Follow' only, 'This space is archived. New topics and replies are no longer accepted.', empty text 'No topics were posted here.', no New Topic"
+    },
+    "c-anon-space-listing.12": {
+      "result": "pass",
+      "evidence": "Amsterdam Chapter: 'No topics yet.' empty state with no button inside it (page header still offers 'Log in to post' to guests)"
+    },
+    "c-anon-space-listing.13": {
+      "result": "pass",
+      "evidence": "bob on Amsterdam Chapter (empty): 'No topics yet. Be the first t...' with '+ New Topic' button"
+    },
+    "c-anon-space-listing.14": {
+      "result": "pass",
+      "evidence": "finn on AI Assistant Experiments (empty ideas space, Join Space shown): plain 'No ideas yet.' and no post button. Q&A and feed variants not run: no empty Q&A or feed space in the data"
+    },
+    "c-anon-space-listing.15": {
+      "result": "pass",
+      "evidence": "Partner Program as guest: 'This space is private. Log in to request access.' plus Log In button, no topic titles; Register not offered because registration is closed"
+    },
+    "c-anon-space-listing.16": {
+      "result": "pass",
+      "evidence": "bob on Customer Advisory Board: gate names the space and shows its description 'Invite-only group of long-time customers who review roadmap drafts.', no topics"
+    },
+    "c-anon-space-listing.17": {
+      "result": "pass",
+      "evidence": "bob on /community/s/moderators-room/: 404 'Space not found.' title 'Page not available', space never named"
+    },
+    "c-anon-space-listing.18": {
+      "result": "pass",
+      "evidence": "Announcements: 'Scheduled maintenance on Saturday' topic shows Closed badge (feed layout, no Pinned on it)"
+    },
+    "c-anon-space-listing.19": {
+      "result": "pass",
+      "evidence": "Help Desk at 1440: 288-char description in its own full-width row above the stats and Log in to post (helpdesk-1440.png)"
+    },
+    "c-anon-space-listing.20": {
+      "result": "fail",
+      "expected": "description wraps in own row at 1024 and 390",
+      "actual": "1024 Reign OK (full, no overlap, no h-scroll). At 390 the description is clamped to two lines with an ellipsis and the rest cannot be read. BuddyX and Twenty Twenty-Five not run: lane A theme pass",
+      "url": "http://forums.local/community/s/help-desk/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/helpdesk-390-dark.png"
+    },
+    "c-anon-space-listing.21": {
+      "result": "pass",
+      "evidence": "General Discussion at 1440: Grace's 159-char title wraps to 3 lines inside the row, scrollWidth 1440 = clientWidth (gd-1440.png); the 100-char URL is in the topic body, covered by single-post.19"
+    },
+    "c-anon-space-listing.22": {
+      "result": "untested",
+      "needs": "lane A: switch site language to Arabic (RTL locale). Observed in LTR: Omar's Arabic title renders left-aligned (direction ltr, text-align start)"
+    },
+    "c-anon-space-listing.23": {
+      "result": "pass",
+      "evidence": "Help Desk dark at 390: header, tabs, Answered/Needs answer badges readable (helpdesk-390-dark.png)"
+    },
+    "c-anon-space-listing.24": {
+      "result": "fail",
+      "expected": "GET /posts?space_id=<id>&orderby=popular",
+      "actual": "Route is /spaces/<id>/posts and param is sort: /spaces/2768/posts?orderby=popular returns the latest order, ?sort=popular returns popular order (9-vote topic first); X-WP-Total 13 matches the UI",
+      "url": "http://forums.local/wp-json/jetonomy/v1/spaces/2768/posts?sort=popular",
+      "screenshot": "",
+      "check_wrong": true
+    },
+    "c-anon-space-listing.25": {
+      "result": "fail",
+      "expected": "finn sees a notice that he is silenced instead of New Topic",
+      "actual": "finn (REST restriction 'silence') sees General Discussion with no New Topic button and no notice at all; the control just disappears",
+      "url": "http://forums.local/community/s/general-discussion/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/finn-gd.png"
+    },
+    "c-anon-space-listing.26": {
+      "result": "fail",
+      "expected": "omar sees a banned notice and no Join or New Topic",
+      "actual": "omar (space ban on Off-Topic Lounge until 2026-10-20) sees 'Follow' and 'Leave Space' and no banned notice; New Topic is absent",
+      "url": "http://forums.local/community/s/off-topic-lounge/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/omar-lounge.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-anon-space-listing.27` @guest #rest !refuse: GET /spaces/<id>/posts?orderby=popular -> either sorted popular or 400, never a silent latest order.",
+    "- `c-anon-space-listing.28` @member #ui: open a public approval space as a non-member -> header 'Request to join' (needs a seeded public approval space)."
+  ],
+  "notes": "No settings changed. Member checks written in the member pass below.",
+  "walked_at": "2026-10-17T09:42:01Z"
+}

@@ -40,6 +40,23 @@ use WP_REST_Request;
 class REST_Auth {
 
 	/**
+	 * The one refusal for a signed-in caller who lacks the capability.
+	 *
+	 * Same code and default wording as Base_Controller::permission_error(), so a
+	 * client sees one answer whichever gate refused it.
+	 *
+	 * @param string $message Optional specific reason; the generic one otherwise.
+	 * @return WP_Error
+	 */
+	public static function forbidden( string $message = '' ): WP_Error {
+		return new WP_Error(
+			'jetonomy_forbidden',
+			'' !== $message ? $message : __( 'You do not have permission to perform this action.', 'jetonomy' ),
+			array( 'status' => 403 )
+		);
+	}
+
+	/**
 	 * Build a permission_callback for an authenticated mutation route.
 	 *
 	 * Enforces (in order):
@@ -47,7 +64,7 @@ class REST_Auth {
 	 *   2. Valid cookie nonce when the request is cookie-authenticated
 	 *      (403 rest_cookie_invalid_nonce if missing/invalid). Header-auth
 	 *      requests (Application Passwords, OAuth, JWT) skip the nonce check.
-	 *   3. At least one of the supplied capabilities (403 rest_forbidden if
+	 *   3. At least one of the supplied capabilities (403 jetonomy_forbidden if
 	 *      none match).
 	 *   4. Optional post-author check via `$opts['author_of_post']`. The
 	 *      callable receives the WP_REST_Request and must return an int
@@ -150,11 +167,7 @@ class REST_Auth {
 					}
 				}
 				if ( ! $passed ) {
-					return new WP_Error(
-						'rest_forbidden',
-						__( 'You do not have permission to perform this action.', 'jetonomy' ),
-						array( 'status' => 403 )
-					);
+					return self::forbidden();
 				}
 			}
 
@@ -176,12 +189,8 @@ class REST_Auth {
 						}
 					}
 					if ( ! $is_author ) {
-						return new WP_Error(
-							'rest_forbidden',
-							/* translators: %s: plural topic label. */
-							sprintf( __( 'You can only edit your own %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-							array( 'status' => 403 )
-						);
+						/* translators: %s: plural topic label. */
+						return self::forbidden( sprintf( __( 'You can only edit your own %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) );
 					}
 				}
 			}

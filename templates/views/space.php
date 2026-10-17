@@ -55,6 +55,24 @@ $_jt_unmet_membership = $_jt_user_id
 	? \Jetonomy\Models\AccessRule::unmet_membership_requirements( $_jt_user_id, (int) $space->id )
 	: array();
 
+// A member banned from this space cannot read its topics (Permission_Engine
+// refuses every action there), so the space shows the ban, not a list of
+// topics that would each answer 404.
+if ( $_jt_user_id && ! $_jt_is_admin && \Jetonomy\Models\Restriction::is_space_banned( $_jt_user_id, (int) $space->id ) ) {
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		array(
+			'icon'      => 'lock',
+			'message'   => \Jetonomy\Permissions\Permission_Engine::restriction_error( $_jt_user_id, 'read', (int) $space->id )->get_error_message(),
+			/* translators: %s: plural space label the site owner configured (e.g. spaces). */
+			'cta_label' => sprintf( __( 'Browse other %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+			'cta_url'   => \Jetonomy\base_url() . '/',
+			'tone'      => 'forbidden',
+		)
+	);
+	return;
+}
+
 if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) {
 	// The gate names what is behind it: the space's own description, briefly.
 	$_jt_gate_about = wp_trim_words( wp_strip_all_tags( (string) ( $space->description ?? '' ) ), 30 );
@@ -391,6 +409,15 @@ $crumbs[] = array(
 					</a>
 				<?php endif; ?>
 			</div>
+
+			<?php
+			// A silenced or banned member gets no New Topic button; say why
+			// instead of leaving them to guess.
+			$_jt_restriction = $is_restricted ? null : \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'create_posts', (int) $space->id );
+			if ( $_jt_restriction ) :
+				?>
+				<p class="jt-notice jt-notice-warning"><?php echo esc_html( $_jt_restriction->get_error_message() ); ?></p>
+			<?php endif; ?>
 
 			<?php if ( empty( $posts ) ) : ?>
 				<?php

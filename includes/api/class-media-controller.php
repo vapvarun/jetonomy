@@ -43,8 +43,9 @@ class Media_Controller extends Base_Controller {
 					// Read-only listing scoped to Jetonomy member uploads.
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'list_media' ),
+					// Guests keep core's 401; a signed-in member gets the plugin's one refusal.
 					'permission_callback' => static function () {
-						return current_user_can( 'jetonomy_manage_settings' );
+						return current_user_can( 'jetonomy_manage_settings' ) ? true : ( is_user_logged_in() ? REST_Auth::forbidden() : false );
 					},
 					'args'                => array(
 						'page'     => array(
@@ -130,14 +131,11 @@ class Media_Controller extends Base_Controller {
 		// Capabilities are enforced by the route's auth_mutation matrix; here we
 		// add the restriction layer caps don't cover. A silenced member (can log
 		// in, cannot create content) or a banned account whose session outlived
-		// the ban must not be able to push files into the media library.
-		$uid = get_current_user_id();
-		if ( \Jetonomy\Models\Restriction::is_banned( $uid ) || \Jetonomy\Models\Restriction::is_silenced( $uid ) ) {
-			return new WP_Error(
-				'jetonomy_upload_forbidden',
-				__( 'You are not allowed to upload media.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
+		// the ban must not be able to push files into the media library. Same
+		// wording as every other refused write.
+		$restricted = \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'create_posts' );
+		if ( $restricted ) {
+			return $restricted;
 		}
 
 		if ( empty( $_FILES['file'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing — REST nonce already verified by core.

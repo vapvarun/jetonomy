@@ -43,11 +43,11 @@ class Leaderboards_Controller extends Base_Controller {
 						'minimum' => 0,
 					),
 					'period' => array(
-						'type'              => 'string',
-						'default'           => 'all',
-						'enum'              => array( 'all', 'month', 'week' ),
-						'description'       => 'Time period: all, month, or week.',
-						'sanitize_callback' => 'sanitize_key',
+						'type'        => 'string',
+						'default'     => 'all',
+						// No sanitize_callback: a custom one replaces rest_parse_request_arg(), so the enum would never be checked.
+						'enum'        => array( 'all', 'month', 'week' ),
+						'description' => 'Time period: all, month, or week.',
 					),
 				),
 			)
@@ -60,10 +60,8 @@ class Leaderboards_Controller extends Base_Controller {
 	public function list_items( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$limit  = (int) $request->get_param( 'limit' );
 		$offset = (int) $request->get_param( 'offset' );
-		$period = $request->get_param( 'period' ) ?? 'all';
-		if ( ! in_array( $period, array( 'all', 'month', 'week' ), true ) ) {
-			$period = 'all';
-		}
+		// The route's enum refuses anything else with a 400, and its default fills 'all'.
+		$period = (string) $request->get_param( 'period' );
 
 		/**
 		 * Filter user/leaderboard query parameters before execution.

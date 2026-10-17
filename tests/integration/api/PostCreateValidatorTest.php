@@ -89,6 +89,20 @@ class PostCreateValidatorTest extends WP_UnitTestCase {
 	/* ──────────────────────────────────────────────────────────────────── */
 
 	/**
+	 * A member banned from one space is told so, not "you do not have permission".
+	 */
+	public function test_space_banned_member_is_told_why_a_topic_is_refused(): void {
+		$space_id = $this->make_space( 'forum' );
+		\Jetonomy\Models\Restriction::ban( $this->user_id, 'space_ban', 1, $space_id, 'Repeated off-topic posting.' );
+		\Jetonomy\Cache::reset_memos();
+
+		$res = $this->dispatch_create( $space_id, array( 'title' => 'Weekend plans', 'content' => 'Anyone hiking on Saturday?' ) );
+
+		$this->assertSame( 403, $res->get_status() );
+		$this->assertSame( 'jetonomy_user_space_banned', $res->get_data()['code'] ?? '', 'A space ban must be named, not a generic permission error' );
+	}
+
+	/**
 	 * A silenced member is told they are silenced, not "you do not have permission"
 	 * (replies already said so; topic create fell through to the generic error).
 	 */

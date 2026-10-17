@@ -20,6 +20,11 @@
  *   - Awkward real-world shapes: a long space description (Help Desk), a
  *     150-character title, a long name with no avatar (Grace), Arabic RTL
  *     text (Omar), an unbroken URL, a 45-reply thread, a closed topic.
+ *   - Journey states: an edited, a nested and a private reply, a category
+ *     holding only a hidden space (Staff), a private-only tag
+ *     (partner-pricing), a site-wide ban (Kai Brennan), a public approval
+ *     space (Mentorship Circle), a closed unanswered topic, and a member who
+ *     logs in with an email address (Lucia Romero).
  *   - The access-matrix personas (bin/seed-qa-users.php) renamed to real
  *     people with their own content: test_subscriber = Riley Thompson,
  *     qatester = Jordan Ellis, test_author = Nina Alvarez, test_editor =
@@ -250,6 +255,32 @@ for ( $i = 0; $i < 45; $i++ ) { // Past one page of replies (30 by default).
 }
 $post( $requests, $u( 'sofia' ), 'Dark mode for the community on phones', 'Most of our members read late in the evening. A dark scheme that follows the phone setting would help a lot.', $thread );
 $post( $space_id( 'Announcements' ), $u( 'maya' ), 'Scheduled maintenance on Saturday: what to expect', 'The community will be read-only for about an hour on Saturday morning while we upgrade the server. This thread is closed; questions go in Help Desk.', array( array( $u( 'theo' ), 'Done, everything is back. Thanks for your patience.' ) ), array( 'is_closed' => 1 ) );
+
+// 7. States the journey checks need, each on a real member so a walker can
+// name it: an edited reply, a nested reply, a private reply, a category whose
+// only space is hidden, a tag used only in a private space, a site-wide ban, a
+// public space that needs approval, a closed topic nobody answered, and a
+// member who logs in with an email address.
+global $wpdb;
+$lens = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . ' WHERE space_id = %d AND title = %s', $general, 'Favourite lens for street photography?' ) );
+if ( $lens ) {
+	$first = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'replies' ) . ' WHERE post_id = %d ORDER BY id LIMIT 1', $lens ) );
+	Reply::update( $first, array( 'content' => '<p>35mm. You will get closer to the action and it is more forgiving at dusk. Edit: a fast f/1.8 matters more than the brand.</p>', 'edited_at' => gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) ) );
+	Reply::create( array( 'post_id' => $lens, 'parent_id' => $first, 'author_id' => $u( 'test_subscriber' ), 'content' => '<p>Good point on the aperture. I will try a 35mm f/1.8 first.</p>', 'status' => 'publish' ) );
+	Reply::create( array( 'post_id' => $lens, 'author_id' => $u( 'qatester' ), 'content' => '<p>Sending you the shop I bought mine from privately, they price-match.</p>', 'status' => 'publish', 'is_private' => 1 ) );
+}
+$staff = $cat_id( 'Staff' ) ?: (int) Category::create( array( 'name' => 'Staff', 'slug' => 'staff', 'description' => 'Internal spaces for the team.' ) );
+$make_space( array( 'title' => 'Release Planning', 'slug' => 'release-planning', 'category_id' => $staff, 'visibility' => 'hidden', 'join_policy' => 'invite', 'description' => 'Where the team plans each release before it is announced.' ) );
+$referral = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . ' WHERE space_id = %d AND title = %s', $partner, 'Referral fees for 2026: what changed' ) );
+$referral && \Jetonomy\Models\Tag::attach_to_post( $referral, \Jetonomy\Models\Tag::find_or_create( 'partner-pricing' ) );
+$kai = username_exists( 'kai_brennan' ) ?: wp_insert_user( array( 'user_login' => 'kai_brennan', 'user_pass' => wp_generate_password(), 'user_email' => 'kai.brennan@example.com', 'display_name' => 'Kai Brennan', 'role' => 'subscriber' ) );
+if ( ! is_wp_error( $kai ) ) {
+	$post( $general, (int) $kai, 'Cheap followers for your community, 1000 for $5', 'Grow fast with real-looking accounts. Message me.' );
+	Restriction::is_banned( (int) $kai ) || Restriction::ban( (int) $kai, 'global_ban', $u( 'theo' ), null, 'Spam accounts and follower selling.' );
+}
+$make_space( array( 'title' => 'Mentorship Circle', 'slug' => 'mentorship-circle', 'category_id' => $community, 'visibility' => 'public', 'join_policy' => 'approval', 'description' => 'Pair up with an experienced member for six weeks. Anyone can read; ask to join to be matched.' ) );
+$post( $space_id( 'Announcements' ), $u( 'maya' ), 'Community guidelines updated for 2026', 'We tightened the self-promotion rule and added a section on AI-generated images. Read the full text in Community Guidelines.', array(), array( 'is_closed' => 1 ) );
+username_exists( 'lucia.romero@example.com' ) || wp_insert_user( array( 'user_login' => 'lucia.romero@example.com', 'user_pass' => wp_generate_password(), 'user_email' => 'lucia.romero@example.com', 'display_name' => 'Lucia Romero', 'role' => 'subscriber' ) );
 
 \Jetonomy\Cache::flush(); wp_cache_flush();
 echo "COMMUNITY seeded: demo community + realistic extras. Log in with ?autologin=<login>.\n";
