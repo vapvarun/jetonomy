@@ -15,6 +15,7 @@ use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
+use Jetonomy\Models\Subscription;
 use Jetonomy_Pro\Extensions\Email_Digest\Extension;
 
 class EmailDigestReplacesInstantTest extends WP_UnitTestCase {
@@ -121,5 +122,42 @@ class EmailDigestReplacesInstantTest extends WP_UnitTestCase {
 		$digest = $this->ext->compile_digest( $bob, 'daily' );
 
 		$this->assertNotContains( $topic, array_map( static fn( $r ) => (int) $r->post_id, $digest['replies_to_user'] ) );
+	}
+
+	public function test_another_members_private_topic_never_reaches_a_digest(): void {
+		$alice = self::factory()->user->create();
+		$bob   = self::factory()->user->create();
+		$staff = self::factory()->user->create();
+		SpaceMember::add( $this->space, $staff, 'moderator' );
+		Subscription::subscribe( $bob, 'space', $this->space );
+		$secret = (int) Post::create( array( 'space_id' => $this->space, 'author_id' => $alice, 'title' => 'Private medical question', 'content' => '<p>P</p>', 'status' => 'publish', 'is_private' => 1, 'vote_score' => 50, 'reply_count' => 9 ) );
+		\Jetonomy\Cache::flush();
+
+		$ids = static function ( array $digest ): array {
+			$rows = array_merge( $digest['top_posts'], $digest['subscribed_posts'], $digest['trending'] ? array( $digest['trending'] ) : array() );
+			return array_map( static fn( $r ) => (int) $r->id, $rows );
+		};
+
+		$this->assertNotContains( $secret, $ids( $this->ext->compile_digest( $bob, 'daily' ) ), 'Another member must not see a private topic in any digest section' );
+		$this->assertContains( $secret, $ids( $this->ext->compile_digest( $alice, 'daily' ) ), 'The author still sees her own private topic' );
+		$this->assertContains( $secret, $ids( $this->ext->compile_digest( $staff, 'daily' ) ), 'Space staff may read private topics' );
+	}
+
+	public function test_subscriptions_badge_reflects_a_digest_replacing_new_topic_emails(): void {
+		$bob = self::factory()->user->create();
+		update_option(
+			'jetonomy_settings',
+			array(
+				'notification_defaults' => array(
+					'new_post_in_sub' => array(
+						'web'   => true,
+						'email' => true,
+					),
+				),
+			)
+		);
+		$this->assertSame( 'both', \Jetonomy\Notifications\Notifier::delivery_channel( $bob, 'new_post_in_sub' ) );
+		update_user_meta( $bob, 'jetonomy_pro_digest_frequency', 'weekly' );
+		$this->assertSame( 'web', \Jetonomy\Notifications\Notifier::delivery_channel( $bob, 'new_post_in_sub' ) );
 	}
 }

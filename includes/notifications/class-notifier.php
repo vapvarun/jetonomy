@@ -1556,9 +1556,10 @@ class Notifier {
 	 * @param string     $type            Notification type.
 	 * @param array|null $user_prefs      Pre-loaded per-user notifications map.
 	 * @param array|null $global_defaults Pre-loaded admin notification_defaults map.
+	 * @param string     $email_key       Email template key when it differs from $type (e.g. reply_in_followed).
 	 * @return string 'both' | 'web' | 'email' | 'none'.
 	 */
-	public static function delivery_channel( int $user_id, string $type, ?array $user_prefs = null, ?array $global_defaults = null ): string {
+	public static function delivery_channel( int $user_id, string $type, ?array $user_prefs = null, ?array $global_defaults = null, string $email_key = '' ): string {
 		if ( null === $user_prefs ) {
 			$user_prefs = self::user_prefs( $user_id );
 		}
@@ -1566,7 +1567,9 @@ class Notifier {
 			$global_defaults = get_option( 'jetonomy_settings', array() )['notification_defaults'] ?? array();
 		}
 		$web   = self::should_web( $user_id, $type, $user_prefs, $global_defaults );
-		$email = self::should_email( $user_id, $type, $user_prefs, $global_defaults );
+		// Same filter as the send path, so a digest that replaces the email shows here too.
+		$email = self::should_email( $user_id, $type, $user_prefs, $global_defaults )
+			&& apply_filters( 'jetonomy_send_instant_email', true, $user_id, '' !== $email_key ? $email_key : $type, $type );
 
 		if ( $web && $email ) {
 			return 'both';
