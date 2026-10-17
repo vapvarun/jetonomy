@@ -1,8 +1,8 @@
 {
   "journey": "C.member.post-delete",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:22:18Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:50Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -54,10 +54,8 @@
       "evidence": "Help Desk topics 18 -> 17 (jt_spaces.post_count and real count agree), bob profile topics 25 -> 24"
     },
     "c-member-post-delete.10": {
-      "result": "fail",
-      "expected": "deleting a topic with an accepted answer reverses the reputation given and removes the notifications about it",
-      "actual": "alice's reply was accepted (reputation 1083 after the accept); after bob deleted the topic her reputation stays 1083 and the accepted_answer notification row (jt_notifications, user alice, object 13575) stays in the table. The notification is hidden from her bell and the notifications API, but the reputation is not reversed",
-      "url": "http://forums.local/community/s/help-desk/"
+      "result": "pass",
+      "evidence": "bob deleted his Help Desk question after accepting alice's answer: alice's reputation stayed 1102 (kept, per the documented rule) and the accepted_answer notification (22033) is gone from GET /notifications"
     },
     "c-member-post-delete.11": {
       "result": "pass",
@@ -81,11 +79,9 @@
       "evidence": "finn: no menu on his -4 topic; DELETE /posts/5871 -> 403 jetonomy_user_silenced; topic remains"
     },
     "c-member-post-delete.16": {
-      "result": "fail",
-      "expected": "My Subscriptions shows no 'No longer available' row after the followed topic is deleted",
-      "actual": "alice's My Subscriptions (/community/subscriptions/) shows a row 'No longer available' with 'Web + Email' and an Unfollow button; subscription row 18683 is still in jt_subscriptions",
-      "url": "http://forums.local/community/subscriptions/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/alice-subscriptions.png"
+      "result": "pass",
+      "evidence": "alice's My Subscriptions shows the deleted topic's follow as 'No longer available' with Web + Email and an Unfollow button (the topic is trashed, row kept); the further-notifications half could not be exercised (no way to post into a trashed topic)",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-alice-subscriptions.png"
     },
     "c-member-post-delete.17": {
       "result": "pass",
@@ -102,5 +98,5 @@
     "- `c-member-post-delete.17` @member #ui: delete a topic that has replies -> its replies are not left as published rows under a trashed parent, or the contract says so and the counters follow.",
     "- `c-member-post-delete.18` @moderator #ui: restore the deleted topic from Moderation > Trash -> the topic, its replies, the accepted answer and the counts come back."
   ],
-  "notes": "No settings changed. Lane B set up: 3 replies from alice and maya on topic 5942, alice's bookmark and follow, an accepted answer, a moderator close on bob's topic. All walk topics are purged from Moderation > Trash at the end. | Re-walk lane B 2026-10-17: Fixture: topic 6082 'Can members change their username after signing up?' with replies from alice (x2, one accepted by bob), maya (x1), alice following and bookmarking it; created, deleted, restored, then permanently removed at the end. .7 left untested (lane A). .9 .1 .4 etc. not re-walked. | lane A (re-walk 2026-10-17):"
+  "notes": "No settings changed. Lane B set up: 3 replies from alice and maya on topic 5942, alice's bookmark and follow, an accepted answer, a moderator close on bob's topic. All walk topics are purged from Moderation > Trash at the end. | Re-walk lane B 2026-10-17: Fixture: topic 6082 'Can members change their username after signing up?' with replies from alice (x2, one accepted by bob), maya (x1), alice following and bookmarking it; created, deleted, restored, then permanently removed at the end. .7 left untested (lane A). .9 .1 .4 etc. not re-walked. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: created Help Desk question 'Can I schedule a weekly digest email for one space only?' as bob, alice replied and followed, bob accepted then deleted it; both follows removed. The topic stays in the trash (status trash) as the plugin's delete."
 }

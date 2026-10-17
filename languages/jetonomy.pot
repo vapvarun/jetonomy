@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-17T13:11:04+00:00\n"
+"POT-Creation-Date: 2026-10-17T13:44:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -489,7 +489,7 @@ msgstr ""
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #: includes/admin/ajax/class-spaces-handler.php:356
 #: includes/admin/class-admin.php:1511
-#: includes/admin/class-admin.php:1921
+#: includes/admin/class-admin.php:1923
 #: includes/api/class-base-controller.php:97
 #: includes/api/class-spaces-controller.php:343
 #: includes/api/class-spaces-controller.php:362
@@ -829,7 +829,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:534
 #: includes/admin/views/spaces.php:57
 #: includes/admin/views/spaces.php:240
-#: includes/admin/views/users.php:253
+#: includes/admin/views/users.php:259
 #: includes/class-privacy.php:378
 #: templates/views/new-space.php:79
 #: templates/views/space-edit.php:157
@@ -866,9 +866,9 @@ msgstr ""
 #: templates/views/notifications.php:316
 #: templates/views/search.php:373
 #: templates/views/single-post.php:532
-#: templates/views/user-profile.php:424
-#: templates/views/user-profile.php:553
-#: templates/views/user-profile.php:677
+#: templates/views/user-profile.php:435
+#: templates/views/user-profile.php:564
+#: templates/views/user-profile.php:688
 #, php-format
 msgid "%s ago"
 msgstr ""
@@ -1061,7 +1061,7 @@ msgstr ""
 #: includes/admin/views/content.php:86
 #: includes/admin/views/replies.php:125
 #: includes/admin/views/spaces.php:210
-#: includes/admin/views/users.php:94
+#: includes/admin/views/users.php:95
 msgid "Filter"
 msgstr ""
 
@@ -1134,7 +1134,7 @@ msgstr ""
 
 #: includes/admin/class-admin.php:231
 #: includes/admin/class-admin.php:232
-#: includes/admin/views/users.php:36
+#: includes/admin/views/users.php:37
 #: templates/partials/icon-picker.php:48
 msgid "Users"
 msgstr ""
@@ -1720,8 +1720,8 @@ msgstr ""
 #: includes/admin/views/replies.php:234
 #: includes/admin/views/spaces.php:143
 #: includes/admin/views/tags.php:249
-#: includes/admin/views/users.php:239
-#: includes/admin/views/users.php:290
+#: includes/admin/views/users.php:245
+#: includes/admin/views/users.php:296
 #: includes/class-template-loader.php:414
 #: includes/class-template-loader.php:474
 #: includes/class-template-loader.php:1813
@@ -1808,7 +1808,7 @@ msgstr ""
 #: includes/admin/views/dashboard.php:176
 #: includes/admin/views/moderation.php:366
 #: includes/admin/views/moderation.php:474
-#: includes/admin/views/users.php:184
+#: includes/admin/views/users.php:190
 #: includes/class-abilities.php:1584
 #: includes/notifications/class-notifier.php:1078
 #: templates/partials/moderation/flag-card.php:71
@@ -1995,7 +1995,7 @@ msgstr ""
 
 #: includes/admin/views/content.php:228
 #: includes/admin/views/replies.php:231
-#: includes/admin/views/users.php:238
+#: includes/admin/views/users.php:244
 #: includes/class-template-loader.php:1814
 msgid "Save"
 msgstr ""
@@ -2009,7 +2009,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:136
 #: includes/admin/views/moderation.php:247
 #: includes/admin/views/replies.php:273
-#: includes/functions.php:1606
+#: includes/functions.php:1628
 #: templates/views/moderation.php:314
 #: templates/views/space-moderation.php:226
 msgid "Trash"
@@ -2020,7 +2020,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:246
 #: includes/admin/views/replies.php:286
 #: includes/class-template-loader.php:1841
-#: includes/functions.php:1605
+#: includes/functions.php:1627
 #: templates/partials/moderation/flag-card.php:31
 #: templates/views/moderation.php:222
 msgid "Spam"
@@ -2072,7 +2072,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:50
 #: includes/admin/views/space-edit.php:51
 #: includes/admin/views/spaces.php:370
-#: includes/admin/views/users.php:298
+#: includes/admin/views/users.php:304
 msgid "PRO"
 msgstr ""
 
@@ -2092,14 +2092,14 @@ msgstr ""
 #: includes/admin/views/settings.php:1167
 #: includes/admin/views/settings.php:1364
 #: includes/admin/views/spaces.php:374
-#: includes/admin/views/users.php:301
+#: includes/admin/views/users.php:307
 msgid "Upgrade to Pro"
 msgstr ""
 
 #: includes/admin/views/content.php:482
 #: includes/admin/views/import.php:362
 #: includes/admin/views/spaces.php:376
-#: includes/admin/views/users.php:303
+#: includes/admin/views/users.php:309
 msgid "View Docs"
 msgstr ""
 
@@ -2213,8 +2213,8 @@ msgstr ""
 #: includes/admin/views/replies.php:327
 #: includes/admin/views/space-edit.php:301
 #: includes/admin/views/space-edit.php:817
-#: includes/admin/views/users.php:198
-#: includes/admin/views/users.php:201
+#: includes/admin/views/users.php:204
+#: includes/admin/views/users.php:207
 #: includes/api/class-base-controller.php:894
 #: includes/api/class-notifications-controller.php:361
 #: includes/api/class-replies-controller.php:889
@@ -2595,7 +2595,7 @@ msgstr ""
 
 #: includes/admin/views/moderation.php:315
 #: includes/admin/views/moderation.php:447
-#: includes/admin/views/users.php:273
+#: includes/admin/views/users.php:279
 msgid "Reason"
 msgstr ""
 
@@ -2642,20 +2642,20 @@ msgid "Issued By"
 msgstr ""
 
 #: includes/admin/views/moderation.php:478
-#: includes/admin/views/users.php:256
+#: includes/admin/views/users.php:262
 msgid "Global Ban"
 msgstr ""
 
 #: includes/admin/views/moderation.php:479
-#: includes/admin/views/users.php:170
-#: includes/admin/views/users.php:257
+#: includes/admin/views/users.php:176
+#: includes/admin/views/users.php:263
 #: includes/class-template-loader.php:463
-#: templates/views/user-profile.php:225
+#: templates/views/user-profile.php:236
 msgid "Silence"
 msgstr ""
 
 #: includes/admin/views/moderation.php:480
-#: includes/admin/views/users.php:259
+#: includes/admin/views/users.php:265
 #: templates/views/moderation.php:216
 msgid "IP address ban"
 msgstr ""
@@ -2668,16 +2668,16 @@ msgid "%s ban"
 msgstr ""
 
 #: includes/admin/views/moderation.php:495
-#: includes/admin/views/users.php:280
+#: includes/admin/views/users.php:286
 msgid "Permanent"
 msgstr ""
 
 #: includes/admin/views/moderation.php:504
-#: includes/admin/views/users.php:166
+#: includes/admin/views/users.php:172
 #: includes/class-template-loader.php:466
 #: includes/class-template-loader.php:467
 #: templates/views/moderation.php:375
-#: templates/views/user-profile.php:215
+#: templates/views/user-profile.php:226
 #: assets/js/admin-common.js:45
 msgid "Lift restriction"
 msgstr ""
@@ -3234,10 +3234,10 @@ msgstr ""
 #. translators: %s: trust level name.
 #: includes/admin/views/settings.php:494
 #: includes/admin/views/settings.php:510
-#: includes/admin/views/users.php:125
+#: includes/admin/views/users.php:126
 #: includes/class-privacy.php:467
 #: includes/integrations/class-buddypress.php:1103
-#: templates/views/user-profile.php:266
+#: templates/views/user-profile.php:277
 msgid "Reputation"
 msgstr ""
 
@@ -4523,20 +4523,20 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:120
 #: includes/admin/views/spaces.php:86
-#: includes/functions.php:1658
+#: includes/functions.php:1680
 #: templates/partials/feed-card.php:125
 msgid "Open"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:121
 #: includes/admin/views/spaces.php:87
-#: includes/functions.php:1660
+#: includes/functions.php:1682
 msgid "Requires Approval"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:122
 #: includes/admin/views/spaces.php:88
-#: includes/functions.php:1662
+#: includes/functions.php:1684
 #: templates/partials/space-header.php:122
 msgid "Invite Only"
 msgstr ""
@@ -4544,14 +4544,14 @@ msgstr ""
 #: includes/admin/views/space-edit.php:130
 #: includes/admin/views/spaces.php:96
 #: includes/admin/views/spaces.php:180
-#: includes/functions.php:1635
+#: includes/functions.php:1657
 msgid "Active"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:131
 #: includes/admin/views/spaces.php:97
 #: includes/admin/views/spaces.php:181
-#: includes/functions.php:1637
+#: includes/functions.php:1659
 #: jetonomy.php:637
 msgid "Archived"
 msgstr ""
@@ -4559,7 +4559,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:132
 #: includes/admin/views/spaces.php:98
 #: includes/admin/views/spaces.php:182
-#: includes/functions.php:1639
+#: includes/functions.php:1661
 #: jetonomy.php:637
 msgid "Locked"
 msgstr ""
@@ -4650,7 +4650,7 @@ msgid "Role"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:262
-#: includes/admin/views/users.php:137
+#: includes/admin/views/users.php:138
 msgid "Joined"
 msgstr ""
 
@@ -4827,7 +4827,7 @@ msgid "Logged In"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:485
-#: includes/admin/views/users.php:121
+#: includes/admin/views/users.php:122
 #: includes/class-privacy.php:463
 msgid "Trust Level"
 msgstr ""
@@ -4989,7 +4989,8 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:784
 #: includes/class-privacy.php:379
-#: templates/views/user-profile.php:171
+#: templates/views/user-profile.php:174
+#: templates/views/user-profile.php:182
 msgid "Message"
 msgstr ""
 
@@ -5129,7 +5130,7 @@ msgstr ""
 msgid "Update Tag"
 msgstr ""
 
-#: includes/admin/views/users.php:29
+#: includes/admin/views/users.php:30
 #: includes/class-template-loader.php:409
 #: templates/views/moderation.php:212
 #: templates/views/user-profile.php:66
@@ -5138,172 +5139,178 @@ msgid "Banned"
 msgstr ""
 
 #. translators: %s: space label, lowercase (e.g. "space").
-#: includes/admin/views/users.php:31
+#: includes/admin/views/users.php:32
 #, php-format
 msgid "Banned from a %s"
 msgstr ""
 
-#: includes/admin/views/users.php:32
+#: includes/admin/views/users.php:33
 #: templates/views/moderation.php:215
 #: templates/views/user-profile.php:65
 #: assets/js/admin-common.js:1775
 msgid "Silenced"
 msgstr ""
 
-#: includes/admin/views/users.php:40
+#: includes/admin/views/users.php:41
 msgid "How users, roles, and trust levels fit together"
 msgstr ""
 
 #. translators: %s: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/users.php:42
+#: includes/admin/views/users.php:43
 #, php-format
 msgid "Community %1$s ARE your WordPress users, with no separate registration. Anyone who can log in is counted among them; their community profile is created automatically the first time they visit a community page while logged in. Three independent layers decide what each person can do:"
 msgstr ""
 
-#: includes/admin/views/users.php:45
+#: includes/admin/views/users.php:46
 msgid "WordPress role"
 msgstr ""
 
 #. translators: %1$s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/views/users.php:46
+#: includes/admin/views/users.php:47
 #, php-format
 msgid "Subscriber, Editor, Administrator… Controls wp-admin access and which %1$s capabilities (moderate, manage settings) a person holds. Assign roles on the WordPress Users screen; edit which capabilities each role carries under %1$s → Settings → Permissions."
 msgstr ""
 
-#: includes/admin/views/users.php:49
+#: includes/admin/views/users.php:50
 msgid "Trust level (0-5)"
 msgstr ""
 
 #. translators: %s: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/users.php:50
+#: includes/admin/views/users.php:51
 #, php-format
 msgid "Earned automatically through participation: posting links, images, and editing privileges unlock as %s prove themselves. Override per user below; tune thresholds under Settings → Trust."
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
-#: includes/admin/views/users.php:54
+#: includes/admin/views/users.php:55
 #, php-format
 msgid "%s role"
 msgstr ""
 
 #. translators: 1: singular space label, 2: singular space label, 3: member label, plural (e.g. "Members").
-#: includes/admin/views/users.php:56
+#: includes/admin/views/users.php:57
 #, php-format
 msgid "Member, moderator, or admin of ONE %1$s, granted on that %2$s’s %3$s screen. Never implies wp-admin access."
 msgstr ""
 
 #. translators: 1: name of the highest trust level, 2: link to the full guide, 3: space label, lowercase (e.g. "space").
-#: includes/admin/views/users.php:63
+#: includes/admin/views/users.php:64
 #, php-format
 msgid "A Subscriber can be a Level 5 %1$s and admin of any %3$s: community standing and wp-admin access are separate on purpose. %2$s"
 msgstr ""
 
-#: includes/admin/views/users.php:74
+#: includes/admin/views/users.php:75
 msgid "Browse the setup guides"
 msgstr ""
 
-#: includes/admin/views/users.php:87
+#: includes/admin/views/users.php:88
 msgid "Search users..."
 msgstr ""
 
-#: includes/admin/views/users.php:89
+#: includes/admin/views/users.php:90
 msgid "All Trust Levels"
 msgstr ""
 
 #. translators: %s: number of users
-#: includes/admin/views/users.php:101
+#: includes/admin/views/users.php:102
 #, php-format
 msgid "%s user"
 msgid_plural "%s users"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/admin/views/users.php:114
+#: includes/admin/views/users.php:115
 #: includes/class-blocks.php:869
 msgid "Username"
 msgstr ""
 
-#: includes/admin/views/users.php:117
+#: includes/admin/views/users.php:118
 #: includes/class-privacy.php:451
 msgid "Display Name"
 msgstr ""
 
-#: includes/admin/views/users.php:141
+#: includes/admin/views/users.php:142
 msgid "Last Seen"
 msgstr ""
 
-#: includes/admin/views/users.php:147
+#: includes/admin/views/users.php:148
 msgid "No users match these filters"
 msgstr ""
 
 #. translators: %s: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/users.php:149
+#: includes/admin/views/users.php:150
 #, php-format
 msgid "Try clearing a filter or broadening your search to see more %s."
 msgstr ""
 
+#. translators: %s: space name.
 #: includes/admin/views/users.php:162
-msgid "View Profile"
-msgstr ""
-
-#: includes/admin/views/users.php:163
-msgid "Change Trust Level"
+#, php-format
+msgid "Banned from %s"
 msgstr ""
 
 #: includes/admin/views/users.php:168
+msgid "View Profile"
+msgstr ""
+
+#: includes/admin/views/users.php:169
+msgid "Change Trust Level"
+msgstr ""
+
+#: includes/admin/views/users.php:174
 #: includes/class-template-loader.php:453
-#: templates/views/user-profile.php:234
+#: templates/views/user-profile.php:245
 #: assets/js/admin-common.js:46
 msgid "Ban"
 msgstr ""
 
-#: includes/admin/views/users.php:172
+#: includes/admin/views/users.php:178
 #: assets/js/admin-common.js:1699
 msgid "Ban IP address"
 msgstr ""
 
-#: includes/admin/views/users.php:201
+#: includes/admin/views/users.php:207
 #: assets/js/admin-common.js:59
 msgid "Never"
 msgstr ""
 
-#: includes/admin/views/users.php:248
-#: includes/admin/views/users.php:289
+#: includes/admin/views/users.php:254
+#: includes/admin/views/users.php:295
 #: assets/js/admin-common.js:1697
 msgid "Ban User"
 msgstr ""
 
-#: includes/admin/views/users.php:265
+#: includes/admin/views/users.php:271
 msgid "IP address"
 msgstr ""
 
 #. translators: 1: product name shown in wp-admin (default "Jetonomy"). 2: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/users.php:269
+#: includes/admin/views/users.php:275
 #, php-format
 msgid "%1$s does not record the IP addresses of %2$s. Copy the address from your server logs or security plugin. Everyone using it, signed in or not, loses access to the community."
 msgstr ""
 
-#: includes/admin/views/users.php:277
+#: includes/admin/views/users.php:283
 msgid "Duration"
 msgstr ""
 
-#: includes/admin/views/users.php:281
+#: includes/admin/views/users.php:287
 msgid "1 Day"
 msgstr ""
 
-#: includes/admin/views/users.php:282
+#: includes/admin/views/users.php:288
 msgid "7 Days"
 msgstr ""
 
-#: includes/admin/views/users.php:283
+#: includes/admin/views/users.php:289
 msgid "30 Days"
 msgstr ""
 
-#: includes/admin/views/users.php:299
+#: includes/admin/views/users.php:305
 msgid "Custom Badges & Advanced Moderation"
 msgstr ""
 
-#: includes/admin/views/users.php:300
+#: includes/admin/views/users.php:306
 msgid "Auto-award badges based on activity, create custom fields for profiles, and set up keyword-based auto-moderation rules."
 msgstr ""
 
@@ -5326,7 +5333,7 @@ msgstr ""
 
 #: includes/api/class-auth-controller.php:340
 #: includes/api/class-auth-controller.php:662
-#: includes/api/class-auth-controller.php:1016
+#: includes/api/class-auth-controller.php:1035
 msgid "CAPTCHA verification failed. Please try again."
 msgstr ""
 
@@ -5414,7 +5421,7 @@ msgid "This confirmation link has expired. Request a new one from the sign-in pa
 msgstr ""
 
 #: includes/api/class-auth-controller.php:818
-#: includes/api/class-auth-controller.php:991
+#: includes/api/class-auth-controller.php:1010
 msgid "Too many attempts. Please wait a few minutes and try again."
 msgstr ""
 
@@ -5422,11 +5429,19 @@ msgstr ""
 msgid "If an account is waiting on confirmation for that email, a new link is on its way."
 msgstr ""
 
-#: includes/api/class-auth-controller.php:1004
+#. translators: %d: seconds to wait.
+#: includes/api/class-auth-controller.php:845
+#, php-format
+msgid "A link was just sent. Please wait %d second before asking for another."
+msgid_plural "A link was just sent. Please wait %d seconds before asking for another."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/api/class-auth-controller.php:1023
 msgid "Enter your username or email."
 msgstr ""
 
-#: includes/api/class-auth-controller.php:1035
+#: includes/api/class-auth-controller.php:1054
 msgid "If an account matches, a reset link is on its way to that account's email."
 msgstr ""
 
@@ -5436,7 +5451,7 @@ msgstr ""
 #: templates/partials/reply-card.php:288
 #: templates/views/single-post.php:726
 #: templates/views/single-post.php:727
-#: templates/views/user-profile.php:189
+#: templates/views/user-profile.php:200
 msgid "Report"
 msgstr ""
 
@@ -5600,10 +5615,6 @@ msgstr ""
 
 #: includes/api/class-posts-controller.php:152
 msgid "Pin (true) or unpin (false). Omit to toggle."
-msgstr ""
-
-#: includes/api/class-posts-controller.php:265
-msgid "Invalid URL."
 msgstr ""
 
 #: includes/api/class-posts-controller.php:477
@@ -6323,7 +6334,7 @@ msgstr ""
 #: includes/class-blocks.php:734
 #: templates/views/edit-profile.php:38
 #: templates/views/edit-profile.php:49
-#: templates/views/user-profile.php:166
+#: templates/views/user-profile.php:169
 msgid "Edit Profile"
 msgstr ""
 
@@ -6646,8 +6657,8 @@ msgstr ""
 #: templates/views/single-post.php:996
 #: templates/views/space-members.php:342
 #: templates/views/space.php:450
-#: templates/views/user-profile.php:377
-#: templates/views/user-profile.php:641
+#: templates/views/user-profile.php:388
+#: templates/views/user-profile.php:652
 #, php-format
 msgid "No %s yet."
 msgstr ""
@@ -6687,7 +6698,7 @@ msgstr ""
 #. translators: %d: trust level number (0-5).
 #: includes/class-shortcodes.php:475
 #: templates/views/user-profile.php:160
-#: templates/views/user-profile.php:279
+#: templates/views/user-profile.php:290
 #, php-format
 msgid "Trust level %d"
 msgstr ""
@@ -6762,8 +6773,8 @@ msgstr ""
 #: includes/class-template-loader.php:1817
 #: assets/js/admin-dashboard.js:37
 #: assets/js/login-block.js:184
-#: assets/js/login-block.js:300
-#: assets/js/login-block.js:353
+#: assets/js/login-block.js:314
+#: assets/js/login-block.js:367
 #: assets/js/setup-wizard.js:117
 msgid "Network error. Please try again."
 msgstr ""
@@ -7622,21 +7633,21 @@ msgid "New Status"
 msgstr ""
 
 #. translators: 1: visibility level, e.g. "Private". 2: what it means.
-#: includes/functions.php:1562
+#: includes/functions.php:1584
 #, php-format
 msgctxt "space visibility option"
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: includes/functions.php:1603
+#: includes/functions.php:1625
 msgid "Published"
 msgstr ""
 
-#: includes/functions.php:1604
+#: includes/functions.php:1626
 msgid "Pending"
 msgstr ""
 
-#: includes/functions.php:1609
+#: includes/functions.php:1631
 #: templates/views/notifications.php:113
 #: templates/views/search.php:283
 msgid "All"
@@ -7857,7 +7868,7 @@ msgstr ""
 
 #: includes/integrations/class-buddypress.php:961
 #: includes/integrations/class-fluent-community.php:948
-#: templates/views/user-profile.php:328
+#: templates/views/user-profile.php:339
 msgid "Bookmarks"
 msgstr ""
 
@@ -7871,7 +7882,7 @@ msgstr ""
 #. translators: %s: singular reply label.
 #: includes/integrations/class-buddypress.php:1043
 #: templates/partials/composer.php:98
-#: templates/views/user-profile.php:398
+#: templates/views/user-profile.php:409
 #, php-format
 msgid "Private %s"
 msgstr ""
@@ -9826,7 +9837,7 @@ msgid "More publishing options"
 msgstr ""
 
 #: templates/partials/compose-fields.php:286
-#: templates/views/user-profile.php:559
+#: templates/views/user-profile.php:570
 msgid "Publish now"
 msgstr ""
 
@@ -10406,8 +10417,9 @@ msgstr ""
 #: templates/views/connect-app.php:92
 #: assets/js/composer.js:820
 #: assets/js/login-block.js:168
-#: assets/js/login-block.js:283
-#: assets/js/login-block.js:340
+#: assets/js/login-block.js:235
+#: assets/js/login-block.js:297
+#: assets/js/login-block.js:354
 #: assets/js/setup-wizard.js:112
 msgid "Something went wrong. Please try again."
 msgstr ""
@@ -10587,7 +10599,7 @@ msgstr ""
 
 #. translators: %s: member display name.
 #: templates/views/edit-profile.php:265
-#: templates/views/user-profile.php:193
+#: templates/views/user-profile.php:204
 #, php-format
 msgid "Unblock %s"
 msgstr ""
@@ -11079,7 +11091,7 @@ msgid "Unread"
 msgstr ""
 
 #: templates/views/notifications.php:117
-#: templates/views/user-profile.php:322
+#: templates/views/user-profile.php:333
 msgid "Votes"
 msgstr ""
 
@@ -11619,7 +11631,7 @@ msgstr ""
 
 #. translators: %s: join date.
 #: templates/views/space-members.php:386
-#: templates/views/user-profile.php:253
+#: templates/views/user-profile.php:264
 #, php-format
 msgid "Joined %s"
 msgstr ""
@@ -11872,111 +11884,111 @@ msgid "Tag pagination"
 msgstr ""
 
 #. translators: %s: member display name.
-#: templates/views/user-profile.php:184
+#: templates/views/user-profile.php:195
 #, php-format
 msgid "More actions for %s"
 msgstr ""
 
 #. translators: %s: member display name.
-#: templates/views/user-profile.php:198
+#: templates/views/user-profile.php:209
 #, php-format
 msgid "Block %s?"
 msgstr ""
 
 #. translators: 1: plural topic label, lowercase, 2: plural reply label, lowercase.
-#: templates/views/user-profile.php:199
+#: templates/views/user-profile.php:210
 #, php-format
 msgid "Their %1$s and %2$s will be hidden from you, and they will not be able to message you. They are not told. You can unblock them at any time from your profile settings."
 msgstr ""
 
 #. translators: 1: plural topic label, lowercase, 2: plural reply label, lowercase.
-#: templates/views/user-profile.php:200
+#: templates/views/user-profile.php:211
 msgid "Block"
 msgstr ""
 
 #. translators: %s: member display name.
-#: templates/views/user-profile.php:200
+#: templates/views/user-profile.php:211
 #, php-format
 msgid "Block %s"
 msgstr ""
 
-#: templates/views/user-profile.php:213
+#: templates/views/user-profile.php:224
 msgid "Lift this restriction"
 msgstr ""
 
 #. translators: %s: singular member label.
-#: templates/views/user-profile.php:223
+#: templates/views/user-profile.php:234
 #, php-format
 msgid "Silence this %s"
 msgstr ""
 
 #. translators: %s: singular member label.
-#: templates/views/user-profile.php:232
+#: templates/views/user-profile.php:243
 #, php-format
 msgid "Ban this %s from the community"
 msgstr ""
 
 #. translators: 1: singular member label, lowercase, 2: plural topic label, lowercase, 3: plural reply label, lowercase.
-#: templates/views/user-profile.php:241
+#: templates/views/user-profile.php:252
 #, php-format
 msgid "You blocked this %1$s. Their %2$s and %3$s are hidden from you."
 msgstr ""
 
-#: templates/views/user-profile.php:332
+#: templates/views/user-profile.php:343
 msgid "Drafts"
 msgstr ""
 
 #. translators: %s: plural reply label.
-#: templates/views/user-profile.php:376
+#: templates/views/user-profile.php:387
 #, php-format
 msgid "You have not replied to anything yet. Jump into a discussion and your %s will show here."
 msgstr ""
 
 #. translators: %s: post title
-#: templates/views/user-profile.php:414
+#: templates/views/user-profile.php:425
 #, php-format
 msgid "on %s"
 msgstr ""
 
 #. translators: 1: plural topic label; 2: plural reply label.
-#: templates/views/user-profile.php:441
+#: templates/views/user-profile.php:452
 #, php-format
 msgid "You have not voted yet. Upvote %1$s and %2$s you find helpful and they will show here."
 msgstr ""
 
 #. translators: 1: plural topic label; 2: plural reply label.
-#: templates/views/user-profile.php:442
+#: templates/views/user-profile.php:453
 msgid "No votes yet."
 msgstr ""
 
 #. translators: %s: human-readable time difference.
-#: templates/views/user-profile.php:475
+#: templates/views/user-profile.php:486
 #, php-format
 msgid "voted %s ago"
 msgstr ""
 
-#: templates/views/user-profile.php:491
+#: templates/views/user-profile.php:502
 msgid "No drafts yet. Save a draft and it will appear here."
 msgstr ""
 
 #. translators: %s: scheduled date/time
-#: templates/views/user-profile.php:535
+#: templates/views/user-profile.php:546
 #, php-format
 msgid "Scheduled: %s"
 msgstr ""
 
-#: templates/views/user-profile.php:539
+#: templates/views/user-profile.php:550
 msgid "Draft"
 msgstr ""
 
 #. translators: %s: plural topic label.
-#: templates/views/user-profile.php:574
+#: templates/views/user-profile.php:585
 #, php-format
 msgid "No bookmarks yet. Bookmark %s to find them here later."
 msgstr ""
 
 #. translators: %s: human-readable time difference.
-#: templates/views/user-profile.php:626
+#: templates/views/user-profile.php:637
 #, php-format
 msgid "saved %s ago"
 msgstr ""
@@ -12721,19 +12733,19 @@ msgstr ""
 msgid "Resend confirmation email"
 msgstr ""
 
-#: assets/js/login-block.js:226
+#: assets/js/login-block.js:234
 msgid "If an account is waiting on confirmation, a new link is on its way."
 msgstr ""
 
-#: assets/js/login-block.js:292
+#: assets/js/login-block.js:306
 msgid "Account created. Check your email to confirm."
 msgstr ""
 
-#: assets/js/login-block.js:297
+#: assets/js/login-block.js:311
 msgid "Account created."
 msgstr ""
 
-#: assets/js/login-block.js:348
+#: assets/js/login-block.js:362
 msgid "Reset link sent."
 msgstr ""
 
@@ -12754,7 +12766,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: number of new replies.
-#: assets/js/view.js:4678
+#: assets/js/view.js:4687
 #, js-format
 msgid "%s new reply. Click to refresh."
 msgid_plural "%s new replies. Click to refresh."

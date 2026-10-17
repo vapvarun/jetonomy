@@ -1,8 +1,8 @@
 {
   "journey": "C.member.post-create",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:19:07Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:50Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -119,18 +119,14 @@
       "evidence": "dark via theme toggle at 390: page #23262f, editor and title text #e5e5e5, toolbar icons visible, Post Question light blue with dark text"
     },
     "c-member-post-create.25": {
-      "result": "fail",
-      "expected": "a visible character counter or limit message before the title field stops accepting input",
-      "actual": "typing 300 characters in the Help Desk title field stops silently at 255 (maxlength=255); no counter, no message anywhere in the field area",
-      "url": "http://forums.local/community/s/help-desk/new/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/compose-long-title.png"
+      "result": "pass",
+      "evidence": "bob on Help Desk new topic: 'Title 15 characters left' counter shows at 240 characters, and at 255 the hint reads 'Titles can be up to 255 characters.'",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-compose-long-title.png"
     },
     "c-member-post-create.26": {
-      "result": "fail",
-      "expected": "offline submit -> exactly one 'Failed to save.' message",
-      "actual": "offline submit shows 'Failed to save.' twice at once: an inline jt-form-error and a toast. Title and body are kept",
-      "url": "http://forums.local/community/s/help-desk/new/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/compose-offline.png"
+      "result": "pass",
+      "evidence": "offline submit: exactly one visible 'Failed to save.' (inline jt-form-error, role alert, no toast); title (56) and body (110) kept",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-compose-offline.png"
     },
     "c-member-post-create.27": {
       "result": "pass",

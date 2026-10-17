@@ -1,9 +1,9 @@
 {
   "journey": "C.admin.blocks-shortcodes-widgets",
-  "free": "5680944e",
-  "pro": "d8d053b",
+  "free": "b6017483",
+  "pro": "44f7338",
   "walker": "lane A",
-  "walked_at": "2026-10-17T12:40:17Z",
+  "walked_at": "2026-10-17T13:28:34Z",
   "env": {
     "themes": [
       "reign",
@@ -91,22 +91,16 @@
       "needs": "docker site: a 2000-topic seed (site has about 260 topics)"
     },
     "c-admin-blocks-shortcodes-widgets.17": {
-      "result": "fail",
-      "expected": "archived spaces (2025 Hackathon) are not in the compose-topic space picker",
-      "actual": "bob's picker on the compose-topic block page (jt-qa-block-compose-topic) and on the [jetonomy_compose_topic] page lists '2025 Hackathon' (archived) and 'Partner Program'; the first option after 'Select space...' is 2025 Hackathon",
-      "url": "http://forums.local/jt-qa-block-compose-topic/",
-      "screenshot": "qa-artifacts/203-walk2/laneA/block-compose-bob.png"
+      "result": "pass",
+      "evidence": "bob's compose-topic picker on /jt-qa-block-compose-topic/ and on the [jetonomy_compose_topic] page lists 25 spaces incl. Partner Program (his), no 2025 Hackathon (archived)"
     },
     "c-admin-blocks-shortcodes-widgets.18": {
       "result": "pass",
       "evidence": "finn sees the silenced notice 'Your account is currently silenced and cannot post.' instead of 'You have not joined any space yet'"
     },
     "c-admin-blocks-shortcodes-widgets.19": {
-      "result": "fail",
-      "expected": "seeded QA pages use slugs or valid ids so the pages show the roster",
-      "actual": "/jt-qa-sc-space-members/ still holds [jetonomy_space_members space_id=\"1\"] and renders an empty content area (space 1 no longer exists); /jt-qa-sc-user-profile/ holds user_id=\"1\" and shows varundubey (works but is the admin, not a community member)",
-      "url": "http://forums.local/jt-qa-sc-space-members/",
-      "screenshot": ""
+      "result": "untested",
+      "needs": "lane A cannot fix: re-run bin/seed-qa-pages.php (not allowed on the shared site). The seeder now writes a slug (space_id=<slug>), but the live pages still hold [jetonomy_space_members space_id=\"1\"] (page 1073, renders an empty content area) and [jetonomy_user_profile user_id=\"1\"] (page 1072, shows the admin)"
     },
     "c-admin-blocks-shortcodes-widgets.20": {
       "result": "pass",
@@ -119,5 +113,5 @@
     "- `c-admin-blocks-shortcodes-widgets.19` @admin #block: seeded QA pages use stale ids ([jetonomy_space_members space_id=\"1\"], user_profile user_id=\"1\"); re-seed or rewrite them with slugs so the pages show the roster.",
     "- `c-admin-blocks-shortcodes-widgets.20` @admin #block: the check names eight blocks that do not exist; replace with login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel and navigation."
   ],
-  "notes": "Created a draft page (id 1339) to insert the blocks in the editor and deleted it. Read-only visits as bob, finn and guest. No settings changed."
+  "notes": "Created a draft page (id 1339) to insert the blocks in the editor and deleted it. Read-only visits as bob, finn and guest. No settings changed. | Re-walk 2 (lane A): no settings changed."
 }

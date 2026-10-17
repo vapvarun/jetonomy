@@ -102,6 +102,41 @@ class AdminQaWalkFixesTest extends WP_Ajax_UnitTestCase {
 		$this->assertStringContainsString( 'jetonomy-ban-trigger', $row( $html, $clean ) );
 	}
 
+	// Card 10415498781 item 9: a space ban names its space, from one batched title lookup.
+	public function test_users_list_names_the_space_a_member_is_banned_from(): void {
+		$cat_id = Category::create( array( 'name' => 'Lounge cat', 'slug' => 'qw-cat-' . uniqid() ) );
+		$space  = static fn( string $title ): int => (int) Space::create( array( 'title' => $title, 'slug' => 'qw-sp-' . uniqid(), 'category_id' => $cat_id ) );
+		$omar   = $this->member();
+		$silent = $this->member();
+		Restriction::ban( $omar, 'space_ban', $this->admin, $space( 'Off-Topic Lounge' ) );
+		Restriction::ban( $silent, 'silence', $this->admin );
+
+		$render = static function (): array {
+			global $wpdb;
+			$before = $wpdb->num_queries;
+			ob_start();
+			( new Admin() )->render_users();
+			$html = (string) ob_get_clean();
+			return array( $html, $wpdb->num_queries - $before );
+		};
+		$row = static function ( string $html, int $id ): string {
+			preg_match( '#<tr[^>]*data-user-id="' . $id . '".*?</tr>#s', $html, $m );
+			return $m[0] ?? '';
+		};
+
+		list( $html, $queries_one ) = $render();
+		$this->assertStringContainsString( '>Banned from Off-Topic Lounge<', $row( $html, $omar ) );
+		$this->assertStringContainsString( '>Silenced<', $row( $html, $silent ), 'a silence keeps its wording' );
+
+		// Three more members banned from three more spaces: the page costs no extra query.
+		foreach ( array( 'Help Desk', 'Showcase', 'Jobs' ) as $title ) {
+			Restriction::ban( $this->member(), 'space_ban', $this->admin, $space( $title ) );
+		}
+		list( $html, $queries_four ) = $render();
+		$this->assertStringContainsString( '>Banned from Jobs<', $html );
+		$this->assertSame( $queries_one, $queries_four, 'space titles are batch-loaded, not fetched per row' );
+	}
+
 	// Finding 2b: lifting answers with what was lifted.
 	public function test_lifting_a_silence_says_silence_lifted(): void {
 		$id = Restriction::ban( $this->member(), 'silence', $this->admin );

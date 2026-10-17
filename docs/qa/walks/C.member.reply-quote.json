@@ -1,8 +1,8 @@
 {
   "journey": "C.member.reply-quote",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:25:05Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:50Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -51,11 +51,9 @@
       "evidence": "bob posted a private reply, then quoted it; maya sees both as 'Private reply, visible to the topic author and moderators.' tombstones and neither the page nor REST contains the text"
     },
     "c-member-reply-quote.9": {
-      "result": "fail",
-      "expected": "quote of an Arabic reply renders right-to-left (blockquote and attribution)",
-      "actual": "quoting bob's Arabic reply: blockquote has dir=auto but computes direction ltr (the first strong character is the Latin cite 'Bob Martinez'), the bar is on the left (border-left 3px), the Arabic paragraph inside is direction ltr and left-aligned with its full stop at the left edge",
-      "url": "http://forums.local/community/s/general-discussion/t/(Omar's Arabic topic)/#reply-13582",
-      "screenshot": "qa-artifacts/203-walk2/laneB/quote-dark.png"
+      "result": "pass",
+      "evidence": "bob quoted Aisha's Arabic reply: posted blockquote dir=auto computes rtl, bar on the right (border-inline-start 3px, right 3px, left 0), Arabic paragraph rtl, text-align start",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-quote-arabic.png"
     },
     "c-member-reply-quote.10": {
       "result": "pass",
@@ -67,18 +65,13 @@
       "evidence": "Quote on alice's reply posts a threaded reply: the saved reply shows 'in reply to Alice Chen' above the blockquote (parent_id set, same as Reply). That is the contract the code has today; owner to confirm"
     },
     "c-member-reply-quote.12": {
-      "result": "fail",
-      "expected": "the quote bar has enough contrast in dark mode",
-      "actual": "the bar is still rgba white at 12% alpha: blended it is about 1.35:1 against the dark surface, below the 3:1 a graphical element needs",
-      "url": "http://forums.local/community/s/general-discussion/t/(Omar's Arabic topic)/#reply-13582",
-      "screenshot": "qa-artifacts/203-walk2/laneB/quote-dark.png"
+      "result": "pass",
+      "evidence": "dark mode: quote bar rgb ~(185,186,188) on surface rgb ~(52,55,63), about 6:1 contrast",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-quote-dark.png"
     },
     "c-member-reply-quote.13": {
-      "result": "fail",
-      "expected": "a reply from a deleted account does not carry the OP badge",
-      "actual": "guest on /community/s/london-chapter/t/qa-rft-poll-topic/: reply 10190 by '[deleted]' carries an 'OP' badge (the topic's author is also user 0, so the two match)",
-      "url": "http://forums.local/community/s/london-chapter/t/qa-rft-poll-topic/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/deleted-user-reply.png"
+      "result": "pass",
+      "evidence": "guest on /s/london-chapter/t/qa-rft-poll-topic/: '[deleted]' reply 10190 carries no OP badge"
     }
   },
   "proposed_checks": [

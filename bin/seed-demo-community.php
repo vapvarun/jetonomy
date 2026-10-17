@@ -265,7 +265,7 @@ global $wpdb;
 $lens = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . ' WHERE space_id = %d AND title = %s', $general, 'Favourite lens for street photography?' ) );
 if ( $lens ) {
 	$first = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'replies' ) . ' WHERE post_id = %d ORDER BY id LIMIT 1', $lens ) );
-	Reply::update( $first, array( 'content' => '<p>35mm. You will get closer to the action and it is more forgiving at dusk. Edit: a fast f/1.8 matters more than the brand.</p>', 'edited_at' => gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) ) );
+	Reply::update( $first, array( 'content' => '<p>35mm. You will get closer to the action and it is more forgiving at dusk. Edit: a fast f/1.8 matters more than the brand.</p>', 'created_at' => gmdate( 'Y-m-d H:i:s', time() - 4 * HOUR_IN_SECONDS ), 'edited_at' => gmdate( 'Y-m-d H:i:s', time() - 2 * HOUR_IN_SECONDS ) ) ); // Posted 4h ago, edited 2h later: edited_at must follow created_at or no "edited" mark shows.
 	Reply::create( array( 'post_id' => $lens, 'parent_id' => $first, 'author_id' => $u( 'test_subscriber' ), 'content' => '<p>Good point on the aperture. I will try a 35mm f/1.8 first.</p>', 'status' => 'publish' ) );
 	Reply::create( array( 'post_id' => $lens, 'author_id' => $u( 'qatester' ), 'content' => '<p>Sending you the shop I bought mine from privately, they price-match.</p>', 'status' => 'publish', 'is_private' => 1 ) );
 }

@@ -626,6 +626,28 @@ function member_message_url( \WP_User $member ): string {
 }
 
 /**
+ * The DOM event a profile's Message button fires, or '' for none.
+ *
+ * For a messenger that opens in the page rather than at a URL (WPMediaVerse's
+ * chat panel listens for `mvs-open-conversation`). The button dispatches the
+ * event on `document` with `detail.userId`; the messenger does the rest. Only
+ * consulted when member_message_url() is ''.
+ *
+ * @param \WP_User $member The member being viewed.
+ */
+function member_message_event( \WP_User $member ): string {
+	/**
+	 * Filter the DOM event a profile's Message button dispatches ('' hides it).
+	 *
+	 * @since 2.0.3
+	 *
+	 * @param string   $event  Event name, or '' for no button.
+	 * @param \WP_User $member The member being viewed.
+	 */
+	return (string) apply_filters( 'jetonomy_member_message_event', '', $member );
+}
+
+/**
  * Resolve the requesting client's IP, honouring a trusted reverse-proxy chain.
  *
  * Single source of truth for "who is this request from" — used by IP-bans and

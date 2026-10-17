@@ -1,7 +1,7 @@
 {
   "journey": "C.anon.user-profile",
-  "free": "c2c2406a",
-  "pro": "04c8303",
+  "free": "b6017483",
+  "pro": "44f7338",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -38,12 +38,13 @@
       "evidence": "bob has 1 topic in a private space (DB); not on his Posts tab, and REST /users/3601/posts lists 9 topics all from public spaces"
     },
     "c-anon-user-profile.6": {
-      "result": "untested",
-      "needs": "fixture: no private reply exists in the data"
+      "result": "pass",
+      "evidence": "guest on /u/qatester/replies/: row 'Private reply on Favourite lens for street photography?' with no text, next to the visible reply",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-profile-private-reply.png"
     },
     "c-anon-user-profile.7": {
-      "result": "untested",
-      "needs": "fixture: no member whose login is an email address exists"
+      "result": "pass",
+      "evidence": "lucia.romero@example.com opens at /community/u/lucia-romeroexample-com/ (200); title and meta description say '@lucia-romeroexample-com' and no email address appears in the page; the old login URL (also %40-encoded) opens with 200"
     },
     "c-anon-user-profile.8": {
       "result": "pass",
@@ -80,6 +81,24 @@
     "c-anon-user-profile.16": {
       "result": "pass",
       "evidence": "Grace profile dark at 390: stats card, badges, name readable on dark tokens (grace-profile-dark.png)"
+    },
+    "c-anon-user-profile.17": {
+      "result": "pass",
+      "evidence": "guest GET /users/3770 (finn, silenced) -> restriction null; no silence or ban field"
+    },
+    "c-anon-user-profile.18": {
+      "result": "fail",
+      "expected": "on a site with WPMediaVerse messaging active (chat bubble shown) open a member's profile -> a Message button opens a conversation",
+      "actual": "WPMediaVerse is active (chat bubble and Messages panel show for bob) but bob on /community/u/alice/ sees only Report and Block Alice Chen, no Message button",
+      "url": "http://forums.local/community/u/alice/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-profile-alice-bob.png"
+    },
+    "c-anon-user-profile.19": {
+      "result": "fail",
+      "expected": "with WPMediaVerse active and Pro messaging dormant, a Message button that opens a WPMediaVerse conversation, or the owner is told messaging is unavailable",
+      "actual": "bob on alice's profile: neither, only Report and Block (same as today's note in the check)",
+      "url": "http://forums.local/community/u/alice/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-profile-alice-bob.png"
     }
   },
   "proposed_checks": [
@@ -87,6 +106,6 @@
     "- `c-anon-user-profile.18` @member #ui: on a site with WPMediaVerse messaging active (chat bubble shown) open a member's profile -> a Message button opens a conversation with them.",
     "- `c-anon-user-profile.19` @member #ui: with WPMediaVerse active and Pro messaging dormant, open alice's profile as bob -> a Message button that opens a WPMediaVerse conversation shows, or the site owner is told messaging is unavailable (today neither: only Report and Block)."
   ],
-  "notes": "No settings changed. Email-login member and private reply not in the data. | lane A (re-walk 2026-10-17):",
-  "walked_at": "2026-10-17T09:42:01Z"
+  "notes": "No settings changed. Email-login member and private reply not in the data. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: WPMediaVerse is active on this site; ids 18 and 19 fail because no Message button shows.",
+  "walked_at": "2026-10-17T13:28:50Z"
 }

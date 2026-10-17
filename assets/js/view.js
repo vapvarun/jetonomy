@@ -2675,6 +2675,15 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Message button for an in-page messenger (jetonomy_member_message_event) ──
+        // Jetonomy only announces the request; the messenger opens the conversation.
+        openMessenger() {
+            const el = getElement();
+            const userId = parseInt( el.ref.dataset.userId, 10 );
+            if ( ! el.ref.dataset.messageEvent || ! userId ) return;
+            document.dispatchEvent( new CustomEvent( el.ref.dataset.messageEvent, { detail: { userId } } ) );
+        },
+
         // ── Flag / report user ──
         *flagUser( event ) {
             const el = getElement();

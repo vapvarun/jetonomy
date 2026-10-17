@@ -1,8 +1,8 @@
 {
   "journey": "C.cli.qa-actions",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:40:17Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:34Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -72,18 +72,12 @@
       "evidence": "reply create into closed topic 5875 -> [jetonomy_post_closed] 'This topic is closed and cannot receive new replies.'; post create as finn (silenced) -> [jetonomy_user_silenced]; as kai_brennan (site ban) -> [jetonomy_user_banned]; no rows added (posts 259, replies 1246). No topic exists in the archived space 36 to try the archived-topic reply"
     },
     "c-cli-qa-actions.14": {
-      "result": "fail",
-      "expected": "`wp jetonomy reply create --author=alice` on bob's topic gives bob the reply notification",
-      "actual": "reply 13588 created by alice on bob's topic 5711 (status publish) but bob's unread count stayed 6 and no reply_to_post row appeared in jt_notifications after 5+ seconds (the pending Action Scheduler jobs are only the recurring ones); the CLI path does not notify. Reply deleted afterwards",
-      "url": "wp jetonomy reply create --post=5711 --author=3754 --content=...",
-      "screenshot": ""
+      "result": "pass",
+      "evidence": "`wp jetonomy reply create --post=5864 --author=3754` (alice) on bob's topic created reply 13601 and a reply_to_post row (id 22022) for bob appeared at once; bob's unread count went 6 -> 7. Reply and the notification row deleted afterwards. Note: wp_mail from WP-CLI does not reach Mailpit on this site, so the email half is covered by the browser reply in plugin-pages.6"
     },
     "c-cli-qa-actions.15": {
-      "result": "fail",
-      "expected": "home topic total equals the sum of the topics under the visible spaces, or private and hidden topics are left out",
-      "actual": "Guest home says '258 topics' = every published topic; topics in public spaces total 244, so 14 topics in private and hidden spaces are counted in the guest total",
-      "url": "http://forums.local/community/",
-      "screenshot": ""
+      "result": "pass",
+      "evidence": "Guest home reads '244 topics'; published topics in public spaces total 244 (all published topics 258), so private and hidden space topics are left out"
     }
   },
   "proposed_checks": [
@@ -91,5 +85,5 @@
     "- `c-cli-qa-actions.14` @admin #cli: `wp jetonomy reply create --author=alice` on bob's topic -> bob gets the reply notification, same as a reply made in the browser.",
     "- `c-cli-qa-actions.15` @guest #ui: compare the home page topic total with the sum of the topics listed under the visible spaces -> the totals agree, or private and hidden space topics are left out of the guest total (home says 261, the listed public spaces sum to 247)."
   ],
-  "notes": "Scenario runs created and removed their own fixtures (verified by before/after counts). Created reply 13588 as alice for .14 and deleted it. Refusal attempts created no rows. No settings changed."
+  "notes": "Scenario runs created and removed their own fixtures (verified by before/after counts). Created reply 13588 as alice for .14 and deleted it. Refusal attempts created no rows. No settings changed. | Re-walk 2 (lane A): test replies deleted; notification row removed."
 }

@@ -1,9 +1,9 @@
 {
   "journey": "C.anon.quick-login-and-captcha",
-  "free": "5680944e",
-  "pro": "d8d053b",
+  "free": "b6017483",
+  "pro": "44f7338",
   "walker": "lane A",
-  "walked_at": "2026-10-17T12:40:17Z",
+  "walked_at": "2026-10-17T13:28:34Z",
   "env": {
     "themes": [
       "reign",
@@ -86,12 +86,8 @@
       "screenshot": "qa-artifacts/203-walk2/laneA/laneA-login14-390.png"
     },
     "c-anon-quick-login-and-captcha.15": {
-      "result": "fail",
-      "expected": "form shows an error, password field keeps its focus, button enabled again",
-      "actual": "With the login request aborted: 'Network error. Please try again.' shows, button enabled, typed password kept (13 chars), but focus moves to the error paragraph (P), not the password field, after both Enter and a click. Focusing the alert is a defensible accessibility choice, so the check text is probably what is wrong",
-      "url": "http://forums.local/jt-qa-block-login/",
-      "screenshot": "qa-artifacts/203-walk2/laneA/login-offline.png",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "Login request aborted: 'Network error. Please try again.' in a p.jt-login-message role=alert tabindex=-1 that has focus, typed username and 14-char password kept, submit button enabled again"
     },
     "c-anon-quick-login-and-captcha.16": {
       "result": "pass",
@@ -99,12 +95,8 @@
       "screenshot": "qa-artifacts/203-walk2/laneA/laneA-login16-profile390.png"
     },
     "c-anon-quick-login-and-captcha.17": {
-      "result": "fail",
-      "expected": "Register form offers a display name field, or the check says username only",
-      "actual": "Register form has Username, Email, Password (+ hidden honeypot 'website') and no display name; check .16 still says 'register with a 60-character display name', so the two checks disagree",
-      "url": "http://forums.local/jt-qa-block-login/",
-      "screenshot": "qa-artifacts/203-walk2/laneA/login-block-register.png",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "With registration on, the Register form has Username, Email, Password (+ hidden honeypot website and loaded_at) and no display name, matching the check"
     },
     "c-anon-quick-login-and-captcha.18": {
       "result": "pass",
@@ -113,6 +105,20 @@
     "c-anon-quick-login-and-captcha.19": {
       "result": "pass",
       "evidence": "Registered walk.newcomer with email verification on: 'Account created. Check w***@example.com for a confirmation link...'; trying to log in gave 'Confirm your email...' with a Resend confirmation email link; clicking it showed 'If an account is waiting on confirmation for that email, a new link is on its way.' and a second 'Confirm your email to finish signing up' message arrived in Mailpit (a click inside 60 s of the previous mail sends nothing, by the per-account cooldown). The success sentence is appended in red error styling under the original error"
+    },
+    "c-anon-quick-login-and-captcha.20": {
+      "result": "fail",
+      "expected": "after Resend confirmation email the 'a new link is on its way' sentence replaces the error and is styled as a success",
+      "actual": "From the login path the red error 'Confirm your email to finish signing up...' stays and the resend sentence is appended after it as the underlined button text in the same red (rgb 222,76,76); only the post-registration path is green",
+      "url": "http://forums.local/jt-qa-block-login/",
+      "screenshot": "qa-artifacts/203-walk2/laneA/rw2-resend-after-click.png"
+    },
+    "c-anon-quick-login-and-captcha.21": {
+      "result": "fail",
+      "expected": "a second Resend click within 60 seconds tells the member to wait",
+      "actual": "Resend 17s after the registration email and again about 45s later both showed 'If an account is waiting on confirmation for that email, a new link is on its way.' and no email was sent (Mailpit); only a later fourth click inside a minute showed 'Too many attempts. Please wait a few minutes and try again.' - the cooldown is silent",
+      "url": "http://forums.local/jt-qa-block-login/",
+      "screenshot": "qa-artifacts/203-walk2/laneA/rw2-resend-1.png"
     }
   },
   "proposed_checks": [
@@ -122,5 +128,5 @@
     "- `c-anon-quick-login-and-captcha.20` @guest #block: click Resend confirmation email -> the 'a new link is on its way' sentence replaces the error and is styled as a success (today it is appended in red under the error).",
     "- `c-anon-quick-login-and-captcha.21` @guest #block: click Resend confirmation email twice within 60 seconds -> the second click tells the member to wait (today it shows the same success sentence and sends nothing)."
   ],
-  "notes": "Settings changed and restored: users_can_register 1 -> 0 (original 0), require_email_verification on -> jetonomy_settings restored byte-equal from backup; test account walk.newcomer created through the Login block and deleted; its Mailpit messages remain."
+  "notes": "Settings changed and restored: users_can_register 1 -> 0 (original 0), require_email_verification on -> jetonomy_settings restored byte-equal from backup; test account walk.newcomer created through the Login block and deleted; its Mailpit messages remain. | Re-walk 2 (lane A): changed and restored: users_can_register 0 -> 1 -> 0, jetonomy_settings require_email_verification false -> true, then whole option restored from backup; test account dana.whitaker created for .20/.21 and deleted."
 }

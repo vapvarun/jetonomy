@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.user-management",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:40:17Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:34Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -61,12 +61,12 @@
       "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
     },
     "c-admin-user-management.12": {
-      "result": "untested",
-      "needs": "walk live as the persona (member action, not an admin probe)"
+      "result": "pass",
+      "evidence": "omar on /community/s/off-topic-lounge/: 'You have been banned from this space and cannot take part in it.'; POST /spaces/3001/posts -> 403 jetonomy_user_space_banned with that message, nothing stored; POST /spaces/2999/posts (General Discussion) -> 201 (test topic deleted afterwards)"
     },
     "c-admin-user-management.13": {
-      "result": "untested",
-      "needs": "walk live as the persona (member action, not an admin probe)"
+      "result": "pass",
+      "evidence": "finn: POST /spaces/2999/posts and POST /posts/5762/replies -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; the vote button on the topic is disabled with the label 'Score 0. Voting is not available to you here.' (REST vote also 403 jetonomy_user_silenced)"
     },
     "c-admin-user-management.14": {
       "result": "untested",
@@ -89,11 +89,8 @@
       "evidence": "Users listing shows a 'Banned' badge on carlos and a 'Silenced' badge on hana beside the name/trust level; qa-artifacts/203-walk2/laneA/user-banned-row.png, user-silenced-row.png"
     },
     "c-admin-user-management.19": {
-      "result": "fail",
-      "expected": "Banned Users list shows address and issuer and no unrelated member name; REST accepts ip_ban without user_id",
-      "actual": "List row reads '203.0.113.50 IP address ban - Permanent varundubey' (no member name, ok), but POST /moderation/ban type=ip_ban ip=203.0.113.51 with no user_id -> 400 rest_missing_callback_param 'Missing parameter(s): user_id'; and the stored row is attached to carlos (REST GET shows user Carlos Mendes for the IP ban)",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-moderation&tab=banned",
-      "screenshot": "qa-artifacts/203-walk2/laneA/banned-users-ip.png"
+      "result": "pass",
+      "evidence": "POST /moderation/ban type=ip_ban ip=203.0.113.51 with no user_id -> 201, user_id 0, user null; Banned Users row reads '203.0.113.51 IP address ban - Permanent varundubey' with no member name; lifted afterwards from the list (dialog 'Lift this restriction?')"
     },
     "c-admin-user-management.20": {
       "result": "pass",
@@ -115,5 +112,5 @@
     "- `c-admin-user-management.21` @admin #admin: change a trust level -> the success toast is visible after the page reloads.",
     "- `c-admin-user-management.22` @admin #admin: lift a silence -> toast says 'Restriction lifted' wording that matches a silence, not 'Ban removed.'."
   ],
-  "notes": "Restored: alice trust level back to 4; carlos ban, hana silence and the IP ban 203.0.113.50 all lifted (Banned Users back to Kai, Omar, Finn). A POST as bob/test_editor was blocked by the permission classifier."
+  "notes": "Restored: alice trust level back to 4; carlos ban, hana silence and the IP ban 203.0.113.50 all lifted (Banned Users back to Kai, Omar, Finn). A POST as bob/test_editor was blocked by the permission classifier. | Re-walk 2 (lane A): ip ban created and lifted again; omar test topic in General Discussion deleted; no settings changed."
 }

@@ -762,6 +762,12 @@
   .jt-app :is(.jt-post-body, .jt-reply-body) > :first-child { margin-block-start: 0; }
   .jt-app :is(.jt-post-body, .jt-reply-body) > :last-child,
   .jt-app :is(.jt-post-body, .jt-reply-body) :is(blockquote, li, td, th) > :last-child { margin-block-end: 0; }
+  /* Links a member wrote must read as links, not by colour alone (WCAG 1.4.1):
+     .jt-app a resets every app link to text colour with no underline, which
+     left body links indistinguishable from prose. Mentions and preview cards
+     keep their own styling. */
+  .jt-app :is(.jt-post-body, .jt-reply-body) a:not(.jt-mention, .jt-link-preview) { color: var(--jt-accent-strong); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.15em; }
+  .jt-app :is(.jt-post-body, .jt-reply-body) a:not(.jt-mention, .jt-link-preview):hover { color: var(--jt-accent-strong); text-decoration-thickness: 2px; }
   .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-1); }
   .jt-accepted-tag { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: 0.8125rem; font-weight: 600; color: var(--jt-success-strong); white-space: nowrap; }
   .jt-accepted-tag svg { flex-shrink: 0; }
@@ -1013,8 +1019,6 @@
   @media (max-width: 640px) {
     /* Container + app wrapper */
     .jt-container { padding: var(--jt-space-4); }
-    /* Leave room for theme mobile bottom tab bar (Reign/BuddyNext/BuddyX). */
-    .jt-app { padding-bottom: calc(var(--jt-space-12) + var(--jt-space-8)); }
 
     /* Topic listing rows — `.jt-row, a.jt-row` specificity match is
        load-bearing (desktop `a.jt-row` is 0,1,1). */
@@ -2957,8 +2961,10 @@
 }
 @media (max-width: 640px) {
   .jt-mobile-tabs { display: flex; justify-content: space-around; align-items: center; }
-  /* Add bottom padding to body so content isn't hidden behind the tab bar */
-  .jt-app { padding-bottom: 68px; }
+  /* Clear the fixed tab bar (about 60px) plus the iOS home-indicator inset, so the
+     last control on the page (a composer's Post button) stays above the bar when
+     no theme footer follows the app. 68px left the bar over Post on a notched phone. */
+  .jt-app { padding-bottom: calc(var(--jt-space-12) + var(--jt-space-8) + env(safe-area-inset-bottom, 0px)); }
 }
 .jt-mobile-tab {
   display: flex; flex-direction: column; align-items: center; gap: 2px;

@@ -1433,7 +1433,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-link-preview.2` @member #rest: GET /link-preview?url=<normal page> -> 200 with title, description, image, site_name, favicon and provider.
 - `c-member-link-preview.3` @member #ui: paste a YouTube URL and an X post URL -> the card shows the oEmbed player or the X card.
 - `c-member-link-preview.4` @guest #ui: view the same published topic logged out -> the card is identical to what the member sees.
-- `c-member-link-preview.5` @member #rest !refuse: GET /link-preview with http://localhost/, http://127.0.0.1/, http://169.254.169.254/latest/meta-data/, a 10.x address and file:///etc/passwd -> each returns 400 jetonomy_blocked_url "That URL could not be fetched." with the same wording for all.
+- `c-member-link-preview.5` @member #rest !refuse: GET /link-preview with http://localhost/, http://127.0.0.1/, http://169.254.169.254/latest/meta-data/, a 10.x address and file:///etc/passwd -> each returns 200 with an empty preview (no title, description, image or embed), identical for all, and nothing is fetched.
 - `c-member-link-preview.6` @member #rest !refuse: use a hostname that resolves to a private address, and a redirect from a public URL to 127.0.0.1 -> both refused with the same message.
 - `c-member-link-preview.7` @member #ui +offline: paste a URL whose server hangs for 30 seconds -> posting is not blocked, the fetch gives up near 6 seconds, and the topic publishes with a plain link.
 - `c-member-link-preview.8` @member #rest: request a URL that returns HTTP 500 -> the response is a quiet failure, not a PHP error, and a retry within 10 minutes uses the short negative cache.

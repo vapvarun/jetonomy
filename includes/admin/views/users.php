@@ -9,7 +9,8 @@
  * @var int        $total_pages
  * @var string     $search
  * @var int|string $filter_trust
- * @var array      $restrictions user_id => active restriction {id, type} (Restriction::active_rows_for_users()).
+ * @var array      $restrictions user_id => active restriction {id, type, space_id} (Restriction::active_rows_for_users()).
+ * @var array      $space_titles space id => title, for the spaces named by a space ban.
  *
  * @package Jetonomy
  */
@@ -148,14 +149,19 @@ $restriction_labels = array(
 				/* translators: %s: member label, plural, lowercase (e.g. "members"). */
 				'body'  => sprintf( __( 'Try clearing a filter or broadening your search to see more %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 			),
-			'cell'      => function ( $u, $col ) use ( $trust_labels, $restrictions, $restriction_labels ) {
+			'cell'      => function ( $u, $col ) use ( $trust_labels, $restrictions, $restriction_labels, $space_titles ) {
 				switch ( $col ) {
 					case 'username':
 						echo get_avatar( $u->user_id, 24 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core markup.
 						echo '<strong>' . esc_html( $u->user_login ) . '</strong>';
 						$jt_restriction = $restrictions[ (int) $u->user_id ] ?? null;
 						if ( $jt_restriction && isset( $restriction_labels[ $jt_restriction->type ] ) ) {
-							echo ' <span class="jetonomy-badge jetonomy-badge--ban jetonomy-restriction-label">' . esc_html( $restriction_labels[ $jt_restriction->type ] ) . '</span>';
+							$jt_label = $restriction_labels[ $jt_restriction->type ];
+							if ( 'space_ban' === $jt_restriction->type && isset( $space_titles[ $jt_restriction->space_id ] ) ) {
+								/* translators: %s: space name. */
+								$jt_label = sprintf( __( 'Banned from %s', 'jetonomy' ), $space_titles[ $jt_restriction->space_id ] );
+							}
+							echo ' <span class="jetonomy-badge jetonomy-badge--ban jetonomy-restriction-label">' . esc_html( $jt_label ) . '</span>';
 						}
 						?>
 						<div class="row-actions">

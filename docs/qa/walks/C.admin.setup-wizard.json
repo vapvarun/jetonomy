@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.setup-wizard",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:40:17Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:34Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -90,18 +90,15 @@
       "evidence": "Arabic admin: URL preview reads 'http://forums.local/community/' left to right with the slash at the end, link icon on the right"
     },
     "c-admin-setup-wizard.17": {
-      "result": "fail",
-      "expected": "second run with the same names says they exist or merges, no duplicate",
-      "actual": "Wizard run with category 'Community' and space 'General Discussion' (both already exist) finished with 'Your community is ready!' and created a second category 'Community' and a second space 'General Discussion' (slug general-discussion-1); no warning. Category::create is called unconditionally in includes/admin/ajax/class-setup-handler.php. Duplicates deleted afterwards",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-setup",
-      "screenshot": "qa-artifacts/203-walk2/laneA/wizard-step3-dup.png"
+      "result": "pass",
+      "evidence": "Ran the wizard with category 'Community' and space 'General Discussion' (both exist): ended on 'Your community is ready!' and counts stayed 7 categories / 45 spaces, still one of each name (existing ones reused, no duplicate)"
     },
     "c-admin-setup-wizard.18": {
       "result": "fail",
-      "expected": "floating Messages button does not cover Create Space / Next at 390px",
-      "actual": "At 390x844 the WPMediaVerse chat bubble (322-370 x 776-824) overlaps the right end of 'Next: First Space' (172-334 x 760-804) by 12px; the corner of the button is covered. qa-artifacts/203-walk2/laneA/wizard-390-step1-bottom.png (could be treated as a theme/MediaVerse issue 'for', no horizontal scroll)",
+      "expected": "floating Messages button does not cover Create Space or Next at 390px",
+      "actual": "At 390x844 scrolled to the bottom the WPMediaVerse 'Open messages' bubble (322-370 x 776-824) still overlaps the right end of 'Next: First Space' (172-334 x 760-804) by 12px",
       "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-setup",
-      "screenshot": "qa-artifacts/203-walk2/laneA/wizard-390-step1-bottom.png"
+      "screenshot": "qa-artifacts/203-walk2/laneA/rw2-wizard-390-step1-bottom.png"
     }
   },
   "proposed_checks": [
@@ -109,5 +106,5 @@
     "- `c-admin-setup-wizard.17` @admin #admin !refuse: run the wizard twice with the same category and space names -> the second run says the names already exist or merges, and does not add a duplicate 'Getting Started' category (a second 'Getting Started' space was created beside the seeded one).",
     "- `c-admin-setup-wizard.18` @admin #admin +390: the floating Messages button does not cover the Create Space or Next buttons at 390px."
   ],
-  "notes": "Wizard run once as admin on duplicate names, which wrote jetonomy_settings and set jetonomy_setup_complete: duplicates purged (space + category), jetonomy_setup_complete deleted (it did not exist before), jetonomy_settings restored from backup (byte-equal). Site language set to Arabic for .14/.16 and restored to the empty WPLANG."
+  "notes": "Wizard run once as admin on duplicate names, which wrote jetonomy_settings and set jetonomy_setup_complete: duplicates purged (space + category), jetonomy_setup_complete deleted (it did not exist before), jetonomy_settings restored from backup (byte-equal). Site language set to Arabic for .14/.16 and restored to the empty WPLANG. | Re-walk 2 (lane A): jetonomy_settings unchanged by the wizard run (compared with backup)."
 }

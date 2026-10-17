@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.search",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:10:39Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:50Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -18,12 +18,8 @@
   },
   "checks": {
     "c-anon-search.1": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "search 'dark mode' -> 'Dark mode for the community on phones' first",
-      "actual": "6 results, all contain 'dark mode'; order is Dark mode toggle in user preferences (9 votes), New: dark mode is now available..., Dark mode toggle resets after navigating..., then 'Dark mode for the community on phones' 4th. No topic is titled exactly 'dark mode', so nothing is an exact match; searching the full title 'Dark mode for the community on phones' (REST and page) puts it first",
-      "url": "http://forums.local/community/search/?q=dark+mode",
-      "screenshot": "qa-artifacts/203-walk2/laneB/search-dark-mode.png"
+      "result": "pass",
+      "evidence": "search 'dark mode': the four titles with the exact phrase rank first (toggle in preferences 9 votes, 'New: dark mode is now available', 'Dark mode toggle resets...', 'Dark mode for the community on phones'), the two hyphenated 'dark-mode' titles come after; every result shares the token"
     },
     "c-anon-search.2": {
       "result": "pass",
@@ -78,15 +74,16 @@
     },
     "c-anon-search.14": {
       "result": "pass",
-      "evidence": "overlay with 'dark mode' then Enter -> /community/search/?q=dark+mode&filter=all (full results page)"
+      "evidence": "Jetonomy overlay (press / on a community page), type 'dark mode', Enter -> /community/search/?q=dark%20mode opens with the results. Note: the Reign magnifier in the site header is the theme's own search and goes to /?s= (WordPress search), not the forum",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-overlay.png"
     },
     "c-anon-search.15": {
       "result": "pass",
-      "evidence": "overlay and results page list the same order for 'dark mode' (toggle in user preferences, New: dark mode..., ...); for 'Dark mode for the community' both put 'Dark mode for the community on phones' first, then 'Jetonomy 1.4.2 - accessibility and dark-mode polish'"
+      "evidence": "overlay suggestions list the same order as the results page (preferences 9 votes, New: dark mode..., resets..., 'Dark mode for the community on phones', then the two hyphenated titles) plus a 'See all results' link"
     },
     "c-anon-search.16": {
       "result": "pass",
-      "evidence": "'Referral fees' (Partner Program topic): guest none, maya (not a member) none, alice (member) and bob (admin of the space) see 'Referral fees for 2026: what changed'"
+      "evidence": "'Referral fees for 2026' (Partner Program): bob and alice (members) find it, maya (not a member) gets 0 via REST (X-WP-Total 0) and no row on the results page"
     }
   },
   "proposed_checks": [

@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.category-and-space-crud",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:40:17Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:34Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -62,7 +62,7 @@
     },
     "c-admin-category-and-space-crud.12": {
       "result": "untested",
-      "needs": "walk live as the persona (member action, not an admin probe)"
+      "needs": "a topic inside an archived space: 2025 Hackathon has 0 topics after the reseed, so 'topics are readable' and 'a reply attempt returns 403' cannot be shown. Verified as bob: the space page says 'This space is archived. New topics and replies are no longer accepted.' with no New topic button or composer, and POST /spaces/36/posts returns 403 jetonomy_space_restricted"
     },
     "c-admin-category-and-space-crud.13": {
       "result": "pass",
@@ -113,11 +113,12 @@
       "evidence": "Space with an invite, a subscription and the owner's member row deleted from the admin: 0 rows left in jt_space_members, jt_invite_links, jt_join_requests, jt_subscriptions for it. Legacy orphans are still there: 256 jt_space_members rows for spaces 179, 306-555, 3061-3064 (from earlier deletes), none new"
     },
     "c-admin-category-and-space-crud.25": {
-      "result": "fail",
-      "expected": "search box on a Spaces list with 50+ spaces",
-      "actual": "46 spaces over 3 pages of 20 and the list has no search box and no sortable headers at all (Title, Type, Category, Members, Topics, Status, Join Policy, Visibility are plain text)",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces",
-      "screenshot": "qa-artifacts/203-walk2/laneA/spaces-list.png"
+      "result": "pass",
+      "evidence": "Spaces list (46 spaces, 3 pages of 20) has a 'Search spaces...' box; s=Help returns 'Help Desk' 1-1 of 1; Title, Members and Topics headers are sort links with the active one marked (sorted desc)"
+    },
+    "c-admin-category-and-space-crud.26": {
+      "result": "pass",
+      "evidence": "Before: scan-orphans showed 256 jt_space_members rows for deleted spaces. `wp jetonomy space purge-orphans` removed 516 orphan rows (259 deleted spaces); count query now 0 and a second run says 'No orphaned space data'. Note: recount itself does not remove them, the CLI cleanup does"
     }
   },
   "proposed_checks": [
@@ -126,7 +127,8 @@
     "- `c-admin-category-and-space-crud.23` @admin #rest !refuse: bob POSTs /categories and /spaces -> both return the same error code.",
     "- `c-admin-category-and-space-crud.24` @admin #cli: after deleting a space, jt_space_members, jt_subscriptions and jt_read_status hold no rows for its id (251 orphan member rows exist for spaces 179, 306-555).",
     "- `c-admin-category-and-space-crud.25` @admin #admin +many: Spaces list with 50+ spaces -> a search box exists.",
-    "- `c-admin-category-and-space-crud.26` @admin #cli: after deleting spaces 179, 306-555, 3061-3064 earlier, jt_space_members still holds 256 rows for spaces that no longer exist -> a one-off cleanup (or recount step) removes them and a count query returns 0."
+    "- `c-admin-category-and-space-crud.26` @admin #cli: after deleting spaces 179, 306-555, 3061-3064 earlier, jt_space_members still holds 256 rows for spaces that no longer exist -> a one-off cleanup (or recount step) removes them and a count query returns 0.",
+    "- `c-admin-category-and-space-crud.27` @member #ui +archived: open a topic inside an archived space -> the topic is readable, no reply composer shows, and a reply POST returns 403 jetonomy_space_restricted (needs a topic in the archived 2025 Hackathon; the reseed left it empty)."
   ],
-  "notes": "Re-walk lane A on free 5680944e / pro d8d053b. Created and removed: categories Product Questions and Product Questions Archive (deleted), spaces Gardening Tips (deleted via admin modal) and Pop-up Workshop (purged via REST). No settings changed."
+  "notes": "Re-walk lane A on free 5680944e / pro d8d053b. Created and removed: categories Product Questions and Product Questions Archive (deleted), spaces Gardening Tips (deleted via admin modal) and Pop-up Workshop (purged via REST). No settings changed. | Re-walk 2 (lane A): orphan purge ran on the shared site (removed only rows whose space no longer exists: 256 members, 2 notifications, 1 subscription, 257 activity rows). Posting attempt in the archived space was refused, nothing stored."
 }

@@ -65,6 +65,24 @@ class MemberFacingTemplateFixesTest extends WP_UnitTestCase {
 		return (string) ob_get_clean();
 	}
 
+	// User-profile .18/.19: an in-page messenger (WPMediaVerse) gets the same Message
+	// button, which fires its DOM event instead of following a link.
+	public function test_profile_message_button_fires_an_in_page_messengers_event(): void {
+		$alice = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$slug  = get_userdata( $alice )->user_nicename;
+		add_filter( 'jetonomy_member_message_event', static fn() => 'acme-open-chat' );
+
+		wp_set_current_user( $this->member );
+		$html = $this->render_view( 'user-profile', array( 'slug' => $slug ) );
+		$this->assertMatchesRegularExpression( '#<button[^>]*actions\.openMessenger"[^>]*data-message-event="acme-open-chat"[^>]*data-user-id="' . $alice . '"#', $html );
+
+		wp_set_current_user( $alice );
+		$this->assertStringNotContainsString( 'openMessenger', $this->render_view( 'user-profile', array( 'slug' => $slug ) ), 'not on your own profile' );
+
+		wp_set_current_user( 0 );
+		$this->assertStringNotContainsString( 'openMessenger', $this->render_view( 'user-profile', array( 'slug' => $slug ) ), 'not for guests' );
+	}
+
 	public function test_search_marks_the_searched_words_ignoring_case_and_accents(): void {
 		$this->space( 'Café <b>corner</b> meetups', 'Where the CAFE regulars plan the week.' );
 		wp_set_current_user( $this->member );

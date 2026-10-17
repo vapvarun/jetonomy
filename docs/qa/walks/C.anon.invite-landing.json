@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.invite-landing",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:08:22Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:50Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -82,11 +82,9 @@
       "evidence": "logged-out invite to Moderators' Room -> only 'You've been invited to join Moderators' Room', its one-line description and the login button; no members, topics or counts"
     },
     "c-anon-invite-landing.16": {
-      "result": "fail",
-      "expected": "unknown well-formed token -> 'Invalid invite link.' page with HTTP 404",
-      "actual": "/community/invite/ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ/ shows 'Invalid invite link.' but the response status is HTTP 200 (soft 404)",
-      "url": "http://forums.local/community/invite/ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/invite-unknown.png"
+      "result": "pass",
+      "evidence": "/community/invite/ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ/ now answers HTTP 404 and shows 'Invalid invite link.'",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-invite-unknown.png"
     },
     "c-anon-invite-landing.17": {
       "result": "pass",

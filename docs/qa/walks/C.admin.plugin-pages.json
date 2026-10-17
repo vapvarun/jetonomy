@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.plugin-pages",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:40:17Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:34Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -38,7 +38,7 @@
     },
     "c-admin-plugin-pages.6": {
       "result": "pass",
-      "evidence": "Email tab lists Reaction on your topic, Your report was reviewed, Space join request, Your join request was answered, Confirm your email (new accounts) (+ welcome, verification reminder, reply-by-email refused). Saved 5 custom subjects, 'Settings saved.' notice, all 5 still there after reload (restored afterwards)"
+      "evidence": "Email tab lists Reaction on your topic, Your report was reviewed, Space join request, Your join request was answered, Confirm your email (new accounts); saved templates kept (earlier walk). OWNER DECISION on blank templates, walked live: saved a custom Reply to your topic template (subject '[{site}] CUSTOM {actor_display_name} answered your topic'), a reply to bob's topic sent exactly that (Mailpit 3kpUL3U9...); then cleared both subject and body, Save, and the next reply sent subject '[forums] varundubey replied to your topic' and the body 'Hi Bob Martinez, varundubey replied to your topic ... Open the discussion to read the full reply and join the conversation.' = the placeholder text the screen shows for that template. Template option restored byte-equal"
     },
     "c-admin-plugin-pages.7": {
       "result": "pass",
@@ -81,44 +81,28 @@
       "needs": "a real dark admin: WordPress ships none. With the Midnight scheme only the sidebar and bar go dark; the Overview content stays #f0f0f0 with 9 white cards (normal WP behaviour), so no contrast failure can be shown or ruled out"
     },
     "c-admin-plugin-pages.17": {
-      "result": "fail",
-      "expected": "blocking the save request shows a failure message and the form keeps the edited values",
-      "actual": "Settings Save is a full form POST (not AJAX); with the request blocked the browser shows its own ERR_INTERNET_DISCONNECTED page and the edited values are lost. Check text says AJAX, code does not use it",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-settings&tab=email",
-      "screenshot": "qa-artifacts/203-walk2/laneA/settings-offline-save.png",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "Settings is a normal form POST to options.php. With that request aborted the browser showed its own ERR_INTERNET_DISCONNECTED page; Back returned the Email tab with the edited (cleared) values still in the fields; with the server reachable Save stored it and the screen showed 'Settings saved.'"
     },
     "c-admin-plugin-pages.18": {
       "result": "pass",
       "evidence": "Settings > Permissions: 'Create topics', 'Edit own topics and replies', 'Delete own topics and replies', 'Edit others' topics and replies', 'Move topics between spaces', 'Close topics', 'Pin topics'"
     },
     "c-admin-plugin-pages.19": {
-      "result": "fail",
-      "expected": "dormant notice shows and the browser tab title is 'Conversations'",
-      "actual": "Notice 'Private Messaging is dormant on this site...' shows but document.title is '‹ forums — WordPress' (no page name)",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-pro-conversations",
-      "screenshot": ""
+      "result": "pass",
+      "evidence": "admin.php?page=jetonomy-pro-conversations: tab title 'Conversations ‹ forums — WordPress' and the page shows 'Private Messaging is dormant on this site. WPMediaVerse is active...'"
     },
     "c-admin-plugin-pages.20": {
-      "result": "fail",
-      "expected": "the Anonymous Author Revealed row never prints the real author's ID or login",
-      "actual": "Row reads 'varundubey 17 hours ago Anonymous Author Revealed QA-RFT anon topic Real author: 2018' - the real author's ID is printed in the list",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-activity&action_type=anonymous_author_revealed",
-      "screenshot": "qa-artifacts/203-walk2/laneA/activity-anon-reveal.png"
+      "result": "pass",
+      "evidence": "Anonymous Author Revealed row now reads 'varundubey 18 hours ago Anonymous Author Revealed QA-RFT anon topic Real author: Deleted member': no numeric ID and no login. Code (class-activity-list-table.php column_snippet) prints the revealed member's display name as a profile link when the member still exists; that case could not be shown live (the real author of the only row was removed by the reseed), see proposed check"
     },
     "c-admin-plugin-pages.21": {
-      "result": "fail",
-      "expected": "Spaces list with 50+ spaces has a search box and sortable columns",
-      "actual": "46 spaces over 3 pages of 20 (1-20 of 46); no search input and none of the 8 column headers is a sort link",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces",
-      "screenshot": "qa-artifacts/203-walk2/laneA/spaces-list.png"
+      "result": "pass",
+      "evidence": "Spaces list with 46 spaces over 3 pages has a search box (Help -> Help Desk, 1-1 of 1) and sortable Title, Members, Topics headers (orderby=member_count DESC puts Help Desk first, header marked sorted desc)"
     },
     "c-admin-plugin-pages.22": {
-      "result": "fail",
-      "expected": "Content and Spaces list column headers sort with the active sort shown",
-      "actual": "Spaces headers (Title, Type, Category, Members, Topics, Status, Join Policy, Visibility) are plain text, not sort links; Content headers also not links (seen earlier)",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-content",
-      "screenshot": ""
+      "result": "pass",
+      "evidence": "Content headers Title, Replies, Views and Date are sort links with Date shown as the active sort (sorted desc); Spaces headers Title, Members, Topics sort and show the active one"
     }
   },
   "proposed_checks": [
@@ -126,7 +110,8 @@
     "- `c-admin-plugin-pages.19` @admin #admin: open admin.php?page=jetonomy-pro-conversations while WPMediaVerse is active -> the dormant notice shows AND the browser tab title is 'Conversations', not blank ('‹ forums — WordPress').",
     "- `c-admin-plugin-pages.20` @admin #admin: open Activity Log filtered to Anonymous Author Revealed -> the row never prints the real author's ID or login in the list (reveal is audited, identity kept out of the table).",
     "- `c-admin-plugin-pages.21` @admin #admin +many: Spaces list with 50+ spaces -> a search box and sortable columns exist (currently 3 pages of 20, no search, no sort).",
-    "- `c-admin-plugin-pages.22` @admin #admin: Content and Spaces list column headers sort (date, replies) with the active sort shown."
+    "- `c-admin-plugin-pages.22` @admin #admin: Content and Spaces list column headers sort (date, replies) with the active sort shown.",
+    "- `c-admin-plugin-pages.23` @admin #admin: open the Activity Log row for Anonymous Author Revealed where the real author still exists -> the row names the revealed member as an audit record visible to admins only, and is not visible in any member-facing or exported surface (today it prints the display name as a profile link)."
   ],
-  "notes": "Settings changed and restored: jetonomy_email_templates restored byte-equal from backup; Branding Brand Name set to Harbor Community then cleared (jetonomy_settings later restored whole from backup); admin user colour scheme set to midnight for the dark check and restored to modern."
+  "notes": "Settings changed and restored: jetonomy_email_templates restored byte-equal from backup; Branding Brand Name set to Harbor Community then cleared (jetonomy_settings later restored whole from backup); admin user colour scheme set to midnight for the dark check and restored to modern. | Re-walk 2 (lane A): Settings > Email save re-writes the whole jetonomy_settings option (adds empty email_* keys and notification_defaults) so jetonomy_settings and jetonomy_email_templates were restored byte-equal from backup after the email test; test replies and their notifications on bob's 'Resources worth bookmarking for show & tell' were deleted; plugin-pages.20 test used no new reveal."
 }

@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.invite-links",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:40:17Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:34Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -22,11 +22,8 @@
       "evidence": "Space edit > Members tab, limit 2, expiry 2026-10-18 -> toast 'Invite link generated.', list row '.../community/invite/3vtMk.../ 0 / 2 October 18, 2026' (site date format, site tz UTC)"
     },
     "c-admin-invite-links.2": {
-      "result": "fail",
-      "expected": "an invitation card, centred, naming the space and description, with a Log in to accept invite link that returns to the invite",
-      "actual": "Content is right (You've been invited to join Gardening Tips, description, button to wp-login.php?redirect_to=<invite>, no membership), but the card (div.jt-narrow, 860px) sits at x=174 inside a 1092px container with no auto margin, so it is about 116px left of the page centre and looks lopsided under the tab bar",
-      "url": "http://forums.local/community/invite/<token>/",
-      "screenshot": "qa-artifacts/203-walk2/laneA/invite-guest-regoff.png"
+      "result": "pass",
+      "evidence": "Logged out on /community/invite/<token>/ for General Discussion: card says 'You've been invited to join General Discussion', description, 'Log in to accept invite' -> wp-login.php?redirect_to=<invite>; card left 290 / right 290 px at 1440 (centred), no membership created"
     },
     "c-admin-invite-links.3": {
       "result": "pass",
@@ -81,11 +78,8 @@
       "evidence": "390px as bob: 'Join Space' button 40px tall x 108 wide, description wraps to 2 lines, no horizontal scroll (scrollWidth 390). Reign only; BuddyX/Twenty Twenty-Five repeat not run"
     },
     "c-admin-invite-links.16": {
-      "result": "fail",
-      "expected": "page shows space name, description and a Join button leading to login or the login link, and says what the link is",
-      "actual": "Shows 'You've been invited to join <space>', description and 'Log in to accept invite' (correct), but the card is off-centre by about 116px (jt-narrow box has no auto margin)",
-      "url": "http://forums.local/community/invite/<token>/",
-      "screenshot": "qa-artifacts/203-walk2/laneA/invite-guest-regoff.png"
+      "result": "pass",
+      "evidence": "Same page: space name, description and a login button that returns to the invite; card centred (290/290 px at 1440), button 44px tall"
     },
     "c-admin-invite-links.17": {
       "result": "untested",
@@ -98,6 +92,10 @@
     "c-admin-invite-links.19": {
       "result": "pass",
       "evidence": "Space edit (Mentorship Circle) has a Join Requests tab: 'Pending Join Requests (0)', columns User / Message / Requested / Actions, empty state 'No pending join requests'. No pending request exists to show the Approve/Deny buttons themselves; qa-artifacts/203-walk2/laneA/space-join-requests-tab.png"
+    },
+    "c-admin-invite-links.20": {
+      "result": "pass",
+      "evidence": "At 390x844 the card is 328px wide with 31px each side (centred), Log in to accept invite is 40px tall and fully on screen, no horizontal scroll"
     }
   },
   "proposed_checks": [
@@ -107,5 +105,5 @@
     "- `c-admin-invite-links.19` @admin #admin: space Members tab -> a Join Requests list with approve/deny and a total exists in wp-admin as well as the front end.",
     "- `c-admin-invite-links.20` @guest #ui +390: open a valid invite link logged out at 390px -> the invitation card fills the width, is centred and the Log in button is reachable."
   ],
-  "notes": "Created invite links only on temporary spaces (Gardening Tips, Pop-up Workshop), both deleted; no settings changed. Unknown invite token still returns HTTP 200 'Invalid invite link.' (soft 404)."
+  "notes": "Created invite links only on temporary spaces (Gardening Tips, Pop-up Workshop), both deleted; no settings changed. Unknown invite token still returns HTTP 200 'Invalid invite link.' (soft 404). | Re-walk 2 (lane A): no settings changed; invite link was only opened as a guest."
 }

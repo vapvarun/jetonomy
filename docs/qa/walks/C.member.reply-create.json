@@ -1,8 +1,8 @@
 {
   "journey": "C.member.reply-create",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:23:25Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:50Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -69,11 +69,9 @@
       "evidence": "finn on a public Help Desk topic: no composer, 'Your account is currently silenced and cannot post.' at the foot of the thread; POST -> 403 jetonomy_user_silenced"
     },
     "c-member-reply-create.13": {
-      "result": "fail",
-      "expected": "omar (banned from Off-Topic Lounge) opening a topic there gets a ban message",
-      "actual": "the topic URL returns HTTP 404 'Topic not found. This topic may have been removed, or the link is wrong.' (the same URL opens fine for bob); the space page itself says 'You have been banned from this space'. REST POST /posts/6081/replies -> 403 jetonomy_user_space_banned is correct",
-      "url": "http://forums.local/community/s/off-topic-lounge/t/(topic 6081)/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/reply-omar-banned.png"
+      "result": "pass",
+      "evidence": "omar opening a topic in Off-Topic Lounge gets HTTP 403 'You have been banned from this space and cannot take part in it.' (not Topic not found); no composer; REST POST /replies -> 403 jetonomy_user_space_banned; elsewhere he replied on the lens topic (201, then removed)",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-omar-banned-topic.png"
     },
     "c-member-reply-create.14": {
       "result": "fail",
@@ -116,26 +114,22 @@
       "evidence": "on a topic with 46 replies (30 per page) posting jumped to ?rpg=2#reply-13578 and the new reply is in view at the end of page 2"
     },
     "c-member-reply-create.23": {
-      "result": "fail",
-      "expected": "omar opening a topic in Off-Topic Lounge sees a banned message, not 'Topic not found'",
-      "actual": "HTTP 404 page 'Topic not found. This topic may have been removed, or the link is wrong.' with 'Back to the community'; POST /replies returns jetonomy_user_space_banned correctly",
-      "url": "http://forums.local/community/s/off-topic-lounge/t/(topic 6081)/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/reply-omar-banned.png"
+      "result": "pass",
+      "evidence": "same: ban message with HTTP 403, REST jetonomy_user_space_banned",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-omar-banned-topic.png"
     },
     "c-member-reply-create.24": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "empty reply shows the REST message 'Reply content is required.' inline",
-      "actual": "the composer validates before calling REST and shows the inline message 'Write your reply before posting.'; nothing is posted. Correct behaviour with different wording; REST itself returns 400 'Reply content is required.'",
-      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/reply-empty.png"
+      "result": "pass",
+      "evidence": "empty reply: inline 'Write your reply before posting.' (role alert) and nothing posted; POST /replies with empty content -> 400 jetonomy_validation 'Reply content is required.'",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-reply-empty.png"
     }
   },
   "proposed_checks": [
     "- `c-member-reply-create.22` @member #ui +long: reply on a topic with more replies than one page -> the new reply is visible straight away (scrolled to or loaded) instead of only the count changing.",
     "- `c-member-reply-create.23` @space_banned #ui !refuse +banned: omar opens a topic in Off-Topic Lounge -> a banned message, not 'Topic not found'; POST /replies returns jetonomy_user_space_banned.",
     "- `c-member-reply-create.24` @member #ui +empty: empty reply shows the REST message 'Reply content is required.' inline.",
-    "- `c-member-reply-create.25` @member #ui +empty: submit an empty reply -> an inline 'Write your reply before posting.' under the editor and nothing posted (replaces the wording in c-member-reply-create.24)."
+    "- `c-member-reply-create.25` @member #ui +empty: submit an empty reply -> an inline 'Write your reply before posting.' under the editor and nothing posted (replaces the wording in c-member-reply-create.24).",
+    "- `c-member-reply-create.25` @member_b #ui +poll !refuse: as a non-member of a public approval space (alice on Mentorship Circle) open a topic with a poll -> the question and the results show, the options are disabled with 'Join this space to vote.', and POST /polls/<id>/vote returns 403 jetonomy_join_required with the count unchanged."
   ],
-  "notes": "No settings changed. Created and later purged: replies by bob, alice, maya and test_moderator on topics I created plus bob's replies on 5873/5874 and a moderator reply on the closed topic 5877. maya followed bob's topic (removed with it). Debug log unchanged. | Re-walk lane B 2026-10-17: Created as bob: reply 13578 (Feature Requests dark-mode topic, count 46) and Arabic reply 13579 (Omar's topic); both removed at the end. .14 .19 untested (lane A). | lane A (re-walk 2026-10-17):"
+  "notes": "No settings changed. Created and later purged: replies by bob, alice, maya and test_moderator on topics I created plus bob's replies on 5873/5874 and a moderator reply on the closed topic 5877. maya followed bob's topic (removed with it). Debug log unchanged. | Re-walk lane B 2026-10-17: Created as bob: reply 13578 (Feature Requests dark-mode topic, count 46) and Arabic reply 13579 (Omar's topic); both removed at the end. .14 .19 untested (lane A). | lane A (re-walk 2026-10-17): | Re-walk 2 lane B poll decision (owner): Mentorship Circle had no topics, so maya (space admin) created a poll topic 'Which mentoring format would you prefer for the next cohort?' (poll 'How should mentor pairs meet?', 3 options), voted once herself, then deleted the topic (status trash; poll row 103 remains in jt_pro_polls). alice (non-member of the public approval space) saw the poll and its results (100% / 0% / 0%, 1 voter), radios disabled, text '0 voters/1 voter - Join this space to vote.'; her POST /polls/103/vote -> 403 jetonomy_join_required 'Join this space to vote.' and the vote count stayed 0 (then 1 from maya). Behaviour matches the owner decision. Screenshots rw2-poll-alice-mentor.png, rw2-poll-alice-results.png. omar posted one reply in General Discussion and it was deleted."
 }

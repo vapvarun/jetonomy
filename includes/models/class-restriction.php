@@ -526,7 +526,7 @@ class Restriction extends Model {
 	 * id a list needs to offer "Lift restriction".
 	 *
 	 * @param int[] $user_ids
-	 * @return array<int,object{id:int,type:string}>
+	 * @return array<int,object{id:int,type:string,space_id:int}>
 	 */
 	public static function active_rows_for_users( array $user_ids ): array {
 		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
@@ -538,7 +538,7 @@ class Restriction extends Model {
 		$in   = implode( ',', $ids );
 		$rows = static::db()->get_results(
 			static::db()->prepare(
-				'SELECT id, user_id, type FROM ' . static::table() . "
+				'SELECT id, user_id, type, space_id FROM ' . static::table() . "
 				WHERE user_id IN ($in)
 				  AND type IN ('global_ban','space_ban','silence')
 				  AND (expires_at IS NULL OR expires_at > %s)
@@ -553,8 +553,9 @@ class Restriction extends Model {
 			// First row per user is the most severe (FIELD ordering above).
 			if ( ! isset( $map[ $uid ] ) ) {
 				$map[ $uid ] = (object) array(
-					'id'   => (int) $row->id,
-					'type' => (string) $row->type,
+					'id'       => (int) $row->id,
+					'type'     => (string) $row->type,
+					'space_id' => (int) $row->space_id,
 				);
 			}
 		}

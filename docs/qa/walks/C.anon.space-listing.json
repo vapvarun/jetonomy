@@ -1,7 +1,7 @@
 {
   "journey": "C.anon.space-listing",
-  "free": "5680944e",
-  "pro": "d8d053b",
+  "free": "b6017483",
+  "pro": "44f7338",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -27,11 +27,9 @@
       "evidence": "Feature Requests ?sort=popular: 0-vote ties ordered by replies 45,6,5,5,5,2,2,1,1 after 9/8/5/2 vote topics"
     },
     "c-anon-space-listing.3": {
-      "result": "fail",
-      "expected": "the same header (cover, description, counts, Join/Follow) and the Discussions, Members and Roadmap tabs on one space",
-      "actual": "guest header is identical on /s/general-discussion/, /members/ and /s/feature-requests/roadmap/, but the tab row differs: a guest sees no tab row on General Discussion and only 'Ideas | Roadmap' on Feature Requests; signed-in bob sees 'Discussions | Members'. /community/s/general-discussion/members/ returns 200 for a guest with the member list, so the page is open but has no tab link",
-      "url": "http://forums.local/community/s/general-discussion/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/space-feature-requests.png"
+      "result": "pass",
+      "evidence": "guest on Feature Requests: header (cover, title, description, 13 topics / 23 members) and the tab row Ideas | Roadmap | Members are identical on the listing, /members/ and /roadmap/; General Discussion shows Discussions | Members. A public space shows guests no Join button, only 'Log in to post'",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-space-gdr.png"
     },
     "c-anon-space-listing.4": {
       "result": "pass",
@@ -51,22 +49,18 @@
       "screenshot": "qa-artifacts/203-walk2/laneB/space-hana-insiders.png"
     },
     "c-anon-space-listing.8": {
-      "result": "fail",
-      "expected": "header Request to join on a public approval space -> optional message form, then 'Your request to join <Space> is awaiting approval' with a Withdraw request button",
-      "actual": "bob on Mentorship Circle (public, approval): header Request to join opens a dialog 'Tell the admins why you want to join (optional)'; after submit the header shows only an 'Awaiting Approval' pill. No 'Your request to join Mentorship Circle is awaiting approval' message and no Withdraw request button (that gate exists in space.php only for private approval spaces). Request row stored (id 241, message kept)",
-      "url": "http://forums.local/community/s/mentorship-circle/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/space-request-pending.png"
+      "result": "pass",
+      "evidence": "bob on Mentorship Circle: header Request to join opens a dialog 'Tell the admins why you want to join (optional)'; after submit the page shows 'Your request to join Mentorship Circle is awaiting approval.' and a 'Withdraw request' button",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-mentor-bob-requested.png"
     },
     "c-anon-space-listing.9": {
-      "result": "fail",
-      "expected": "click Withdraw request -> UI back to the Request to join form; DELETE /spaces/<id>/join-requests/mine -> 200 once, 404 on second",
-      "actual": "REST part works: DELETE /spaces/3010/join-requests/mine -> 200 {status withdrawn}, second call -> 404 jetonomy_no_pending_request, and the header returns to 'Request to join'. The UI has no Withdraw request button on a public approval space, so the click part could not be done",
-      "url": "http://forums.local/community/s/mentorship-circle/"
+      "result": "pass",
+      "evidence": "clicking Withdraw request sent DELETE /spaces/3010/join-requests/mine -> 200 and the header returned to 'Request to join'; two further DELETE calls -> 404 jetonomy_no_pending_request",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-mentor-bob-withdrawn.png"
     },
     "c-anon-space-listing.10": {
       "result": "pass",
-      "evidence": "bob's request created join_request notifications for maya (space admin), user 142 and admin (rows 21982-21984); after withdrawal no join_request rows remain for space 3010",
-      "screenshot": ""
+      "evidence": "maya (space admin, no WP moderator persona used) had notification 22026 'Bob Martinez requested to join Mentorship Circle' before the withdrawal; after it her notifications list and page hold no such notice"
     },
     "c-anon-space-listing.11": {
       "result": "pass",
@@ -136,10 +130,8 @@
       "screenshot": "qa-artifacts/203-walk2/laneB/space-omar.png"
     },
     "c-anon-space-listing.27": {
-      "result": "fail",
-      "expected": "?orderby=popular is either sorted popular or 400, never a silent latest order",
-      "actual": "GET /spaces/2996/posts?orderby=popular and ?orderby=bogus both return 200 in latest order (Dark mode for the community on phones first), ignoring the parameter",
-      "url": "http://forums.local/wp-json/jetonomy/v1/spaces/2996/posts?orderby=popular"
+      "result": "pass",
+      "evidence": "guest GET /spaces/2996/posts?orderby=popular -> 200 sorted popular (preferences 9 votes, 5 votes, 4 votes); ?orderby=bogus and ?orderby=votes -> 400 rest_invalid_param 'orderby is not one of latest, popular'"
     },
     "c-anon-space-listing.28": {
       "result": "pass",
@@ -151,6 +143,6 @@
     "- `c-anon-space-listing.27` @guest #rest !refuse: GET /spaces/<id>/posts?orderby=popular -> either sorted popular or 400, never a silent latest order.",
     "- `c-anon-space-listing.28` @member #ui: open a public approval space as a non-member -> header 'Request to join' (needs a seeded public approval space)."
   ],
-  "notes": "No settings changed. Member checks written in the member pass below. | Re-walk lane B 2026-10-17: Created and withdrew one join request as bob on Mentorship Circle (request row 241 now status withdrawn, notification rows removed). .22 stays untested lane A. No settings changed. | lane A (re-walk 2026-10-17):",
-  "walked_at": "2026-10-17T12:16:33Z"
+  "notes": "No settings changed. Member checks written in the member pass below. | Re-walk lane B 2026-10-17: Created and withdrew one join request as bob on Mentorship Circle (request row 241 now status withdrawn, notification rows removed). .22 stays untested lane A. No settings changed. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: bob requested to join Mentorship Circle and withdrew; maya checked for the staff notice; request withdrawn, nothing left.",
+  "walked_at": "2026-10-17T13:28:50Z"
 }

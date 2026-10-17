@@ -261,20 +261,20 @@ class Posts_Controller extends Base_Controller {
 	 */
 	public function link_preview( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$url = (string) $request->get_param( 'url' );
-		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
-			return new \WP_Error( 'jetonomy_invalid_url', __( 'Invalid URL.', 'jetonomy' ), array( 'status' => 400 ) );
-		}
 		// SSRF guard: wp_http_validate_url() misses 169.254/16 (cloud metadata),
 		// 100.64/10 and IPv6 loopback/ULA/link-local. This endpoint is reachable
 		// unauthenticated in public mode, so resolve + reject internal addresses
 		// before fetching (the fetcher repeats the check on every redirect hop).
-		$guard = \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url );
-		if ( is_wp_error( $guard ) ) {
-			return $guard;
+		// A URL we will not fetch (no DNS, internal, malformed) answers the same
+		// empty preview a failed fetch does: "no preview" is not an error, and a
+		// 400 here logged a failed request in every reader's console for a post
+		// linking to a dead host. One answer for every refusal keeps it
+		// non-enumerating.
+		if ( '' === $url || ! wp_http_validate_url( $url ) || is_wp_error( \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url ) ) ) {
+			$preview = \Jetonomy\Services\Links\Preview_Data::empty_for( $url );
+		} else {
+			$preview = ( new \Jetonomy\Services\Links\Preview_Service() )->fetch( $url );
 		}
-
-		$service = new \Jetonomy\Services\Links\Preview_Service();
-		$preview = $service->fetch( $url );
 
 		$response = new \WP_REST_Response( $preview->to_array(), 200 );
 		// Clients (web + mobile) can layer their own cache; 10-minute

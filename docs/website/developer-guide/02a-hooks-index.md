@@ -195,6 +195,7 @@ Plugin version: 2.0.2 - 114 actions, 139 filters.
 | `jetonomy_max_space_pins` |  | includes/api/class-posts-controller.php:905 |
 | `jetonomy_media_is_referenced` | $referenced (bool), $attachment_id (int) | includes/class-media-library.php (Media_Library::is_referenced) |
 | `jetonomy_member_message_url` | url, member | includes/functions.php |
+| `jetonomy_member_message_event` | event, member | includes/functions.php |
 | `jetonomy_membership_adapter_labels` | $labels (array<string,string>, adapter id => display name) | includes/adapters/class-adapter-registry.php (Adapter_Registry::membership_labels) |
 | `jetonomy_membership_upgrade_url` | $url (string, "" when none resolved), $level_id (string), $adapter_id (string, "" when unknown) | includes/adapters/class-adapter-registry.php (Adapter_Registry::membership_level_url) |
 | `jetonomy_moderation_flag_resolution` | flag_status, action, type, id, user_id | includes/moderation/class-moderation-service.php apply_object_status() — filters the status applied to an object's pending flags when content is moderated directly (default approve=dismissed, spam/trash=valid, hold=''). Return '' to leave flags pending. |

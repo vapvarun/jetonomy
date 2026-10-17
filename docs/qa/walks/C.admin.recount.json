@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.recount",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:40:17Z",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:34Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -85,11 +85,8 @@
       "evidence": "`wp jetonomy recount --type=users` prints rows updated; `wp jetonomy recount users` -> 'Error: Too many positional arguments: users' (a one-line error, not the usage block)"
     },
     "c-admin-recount.19": {
-      "result": "fail",
-      "expected": "error dialog names the cause (offline / server error)",
-      "actual": "With the recount request blocked after Confirm the dialog reads 'Could not get a valid response from the server.' with an OK button - same generic text",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy",
-      "screenshot": "qa-artifacts/203-walk2/laneA/recount-offline.png"
+      "result": "pass",
+      "evidence": "With the recount request aborted, after Confirm the dialog reads 'Network error. Please try again.' with OK and the button is usable again. With a 500 JSON reply it shows the server's own message instead of the generic text"
     }
   },
   "proposed_checks": [
@@ -98,5 +95,5 @@
     "- `c-admin-recount.18` @moderator #admin !refuse: test_moderator opens the Overview -> WordPress refuses (Overview is manage_options only); decide whether staff with Moderate should see a read-only Overview.",
     "- `c-admin-recount.19` @admin #admin +offline: recount request fails -> the error dialog names the cause (offline / server error) rather than 'Could not get a valid response from the server.'."
   ],
-  "notes": "maya's post_count temporarily set to 99 then recounted back to 19; no settings changed."
+  "notes": "maya's post_count temporarily set to 99 then recounted back to 19; no settings changed. | Re-walk 2 (lane A): nothing stored; request was blocked/faked in the browser only."
 }

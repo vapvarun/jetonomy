@@ -1,7 +1,7 @@
 {
   "journey": "C.anon.single-post",
-  "free": "c2c2406a",
-  "pro": "04c8303",
+  "free": "b6017483",
+  "pro": "44f7338",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -31,27 +31,30 @@
     },
     "c-anon-single-post.4": {
       "result": "untested",
-      "needs": "fixture: no reply in the data has edited_at set (checked every jt_replies row)"
+      "needs": "fixture: reply 13384 on 'Favourite lens for street photography?' has edited_at 09:07:50 one hour BEFORE its created_at 10:07:50, so no edited mark shows (correct for that data). Reseed it with edited_at 2 hours after created_at. The mark itself works: topic 'QA-RFT custom field topic' shows 'edited 18 hours ago' with the exact time (October 16, 2026 6:54 pm) on hover"
     },
     "c-anon-single-post.5": {
       "result": "untested",
-      "needs": "fixture: no edited replies exist in the data"
+      "needs": "fixture: no reply edited 30 seconds after posting. Unedited replies 13385 and 13437 show no edited mark; reply 13384 (edited_at before created_at) shows none either"
     },
     "c-anon-single-post.6": {
-      "result": "untested",
-      "needs": "fixture: no nested reply (parent_id>0) exists in the data"
+      "result": "pass",
+      "evidence": "reply 13437 shows 'in reply to Yuki Tanaka' linking to #reply-13384; clicking it scrolls to and highlights Yuki's reply",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-single-post-lens.png"
     },
     "c-anon-single-post.7": {
       "result": "pass",
       "evidence": "guest sees 'No replies yet.' + Log in to reply; bob on 'Introducing our new moderator: Theo' sees 'No replies yet. Be the first to reply!' with the composer"
     },
     "c-anon-single-post.8": {
-      "result": "untested",
-      "needs": "fixture: closed topic 'Scheduled maintenance on Saturday: what to expect' now has 1 reply, so the zero-count wording cannot be seen. Observed: Closed badge, no composer, 'This topic is closed and no longer accepts replies.'"
+      "result": "pass",
+      "evidence": "guest on closed 'Community guidelines updated for 2026': Closed badge, no composer, 'This topic is closed and cannot receive new replies.', and 'No replies yet.'; the Quote button exists but is hidden",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-closed-empty-guest.png"
     },
     "c-anon-single-post.9": {
-      "result": "untested",
-      "needs": "fixture: no closed zero-reply topic. test_moderator on the closed maintenance topic (1 reply): composer present and 'This topic is closed. As a moderator, you can st...' note"
+      "result": "pass",
+      "evidence": "test_moderator on the same closed topic: composer and 'Post Reply' present, empty line 'No replies yet. Be the first to reply!' and 'This topic is closed. As a moderator, you can still take part.'",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-closed-empty-moderator.png"
     },
     "c-anon-single-post.10": {
       "result": "pass",
@@ -82,12 +85,12 @@
       "evidence": "GET /updates?scope=global and scope=space&id=2768 as guest -> 401 jetonomy_unauthorized"
     },
     "c-anon-single-post.17": {
-      "result": "untested",
-      "needs": "fixture: no private reply (is_private=1) exists in the data"
+      "result": "pass",
+      "evidence": "guest sees tombstone 'Private reply, visible to the topic author and moderators.' for reply 13438; the topic author (test_subscriber), the reply author (qatester) and admin see the text with a 'Private' badge; test_moderator (not a moderator of General Discussion) sees the tombstone"
     },
     "c-anon-single-post.18": {
-      "result": "untested",
-      "needs": "fixture: no private reply exists in the data"
+      "result": "pass",
+      "evidence": "guest GET /replies/13438 -> 200 with content '' and content_plain '' and is_private_hidden true (the original body never returned). Note: the author name, login and profile URL of the private reply are still in the response"
     },
     "c-anon-single-post.19": {
       "result": "pass",
@@ -116,13 +119,25 @@
     "c-anon-single-post.25": {
       "result": "pass",
       "evidence": "breadcrumb on topic: Home / Product & Engineering / Feature Requests / topic title with working links"
+    },
+    "c-anon-single-post.26": {
+      "result": "pass",
+      "evidence": "topic 5872 (code block) in dark mode: the code block is #1e1e1e with #d4d4d4 text on the dark page (#23262f), not a white panel"
+    },
+    "c-anon-single-post.27": {
+      "result": "fail",
+      "expected": "topic body links to an unreachable site -> no console error and the link shows as a plain link",
+      "actual": "the page logs a console error 'Failed to load resource: 400' because GET /jetonomy/v1/link-preview?url=https://photoclub.example.org/... answers 400 for the unreachable host. Also the link has the same colour as the body text (rgb 64,72,85) and no underline, so it cannot be told apart from plain text",
+      "url": "http://forums.local/community/s/general-discussion/t/after-moving-our-12-year-old-photography-forum-from-phpbb-what-is-the-best-way-to-keep-old-links-signatures-and-the-accepted-answers-people-still-search-for/",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-unreachable-link.png"
     }
   },
   "proposed_checks": [
     "- `c-anon-single-post.26` @guest #ui +dark: view a topic with a code block in dark mode -> the code block uses dark tokens, not a bright white panel.",
     "- `c-anon-single-post.27` @guest #ui: open a topic whose body links to an unreachable site -> no console error and the link shows as a plain link.",
-    "- `c-anon-single-post.28` @guest #ui !refuse: open a topic in Partner Program -> HTTP status and title match the private-space message (currently 404 'Page not available')."
+    "- `c-anon-single-post.28` @guest #ui !refuse: open a topic in Partner Program -> HTTP status and title match the private-space message (currently 404 'Page not available').",
+    "- `c-anon-single-post.28` @guest #ui +fixture: reseed reply 13384 with edited_at two hours AFTER created_at (today it is one hour before), and add a reply edited 30 seconds after posting, so checks 4 and 5 can run."
   ],
-  "notes": "No settings changed. Seed has no edited, nested or private replies and the closed topic has a reply, so those checks need a fixture. | lane A (re-walk 2026-10-17):",
-  "walked_at": "2026-10-17T09:42:01Z"
+  "notes": "No settings changed. Seed has no edited, nested or private replies and the closed topic has a reply, so those checks need a fixture. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: no site setting changed. Walked on 'Favourite lens for street photography?' (edited, nested and private reply fixtures) and the closed zero-reply topic. Reply 13384 fixture has edited_at before created_at.",
+  "walked_at": "2026-10-17T13:28:50Z"
 }
