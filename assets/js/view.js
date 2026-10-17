@@ -2809,8 +2809,11 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
+                // Send the state the button showed, so a stale tab cannot undo
+                // another moderator's pin.
                 fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/pin`, {
                     method: 'POST',
+                    body: { pinned: el.ref.dataset.pin === '1' },
                 } ),
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {
@@ -2828,7 +2831,8 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Close / reopen topic (moderators) ──
-        // POSTs to /posts/:id/close, which toggles is_closed server-side. We
+        // POSTs to /posts/:id/close with the state the button showed (a stale
+        // tab must not reopen a topic another moderator just closed). We
         // reload on success because closing/reopening flips the composer guard
         // and the closed banner — let the page re-render rather than mirror that
         // state across the whole post view.
@@ -2841,6 +2845,7 @@ const { state, actions } = store( 'jetonomy', {
                 apply: () => null,
                 fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/close`, {
                     method: 'POST',
+                    body: { closed: el.ref.dataset.close === '1' },
                 } ),
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {

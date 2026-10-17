@@ -121,6 +121,13 @@ class Posts_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'close_post' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				'args'                => array(
+					'closed' => array(
+						'type'        => 'boolean',
+						// jt-terms-ok: REST schema description for API developers.
+						'description' => __( 'Close (true) or reopen (false). Omit to toggle.', 'jetonomy' ),
+					),
+				),
 			)
 		);
 
@@ -131,6 +138,13 @@ class Posts_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'pin_post' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				'args'                => array(
+					'pinned' => array(
+						'type'        => 'boolean',
+						// jt-terms-ok: REST schema description for API developers.
+						'description' => __( 'Pin (true) or unpin (false). Omit to toggle.', 'jetonomy' ),
+					),
+				),
 			)
 		);
 
@@ -1006,9 +1020,10 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Toggle: reopen if already closed, close if open (mirrors pin_post). One
-		// route serves both so the frontend's single Close/Reopen control works.
-		$new_value = $post->is_closed ? 0 : 1;
+		// `closed` sets the state the moderator saw on the button, so a second
+		// moderator or a retried request cannot reopen a topic someone just
+		// closed. Without it the route toggles, as it always has for API clients.
+		$new_value = null !== $request->get_param( 'closed' ) ? (int) (bool) $request->get_param( 'closed' ) : ( $post->is_closed ? 0 : 1 );
 		Post::update( $id, array( 'is_closed' => $new_value ) );
 
 		$updated = Post::find( $id );
@@ -1087,8 +1102,8 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Toggle: unpin if already pinned, pin if not.
-		$new_value = $post->is_sticky ? 0 : 1;
+		// `pinned` sets the state the button showed (see close_post); omitted, it toggles.
+		$new_value = null !== $request->get_param( 'pinned' ) ? (int) (bool) $request->get_param( 'pinned' ) : ( $post->is_sticky ? 0 : 1 );
 
 		// Pinning a trashed or unpublished topic is refused; unpinning stays open.
 		if ( 1 === $new_value ) {

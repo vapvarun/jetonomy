@@ -121,8 +121,8 @@ Posts are individual discussion threads (topics) inside a Space.
 | GET | `/posts/{id}` | Public | Get a single post. Does not count a view |
 | PATCH | `/posts/{id}` | Author / Moderator | Update a post |
 | DELETE | `/posts/{id}` | Author / Moderator | Move a post to trash. `?force=true` deletes it permanently with all its replies (space moderators and admins only). Restore with `POST /spaces/{space_id}/moderation/approve/post/{id}` |
-| POST | `/posts/{id}/close` | Moderator / Admin | Toggle closed status |
-| POST | `/posts/{id}/pin` | Moderator / Admin | Toggle pinned status |
+| POST | `/posts/{id}/close` | Moderator / Admin | Close (`closed: true`) or reopen (`false`); omitted, it toggles |
+| POST | `/posts/{id}/pin` | Moderator / Admin | Pin (`pinned: true`) or unpin (`false`); omitted, it toggles |
 | POST | `/posts/{id}/view` | Public (no nonce) | Count one view of a published topic the requester can read. Counted at most once per IP per topic every 30 minutes; returns `{ "counted": bool }`. Missing, unpublished and unreadable topics all return the same 404. The topic page calls it once per browser session; custom clients call it once when they display a topic |
 | POST | `/posts/{id}/move` | Moderator / Admin | Move to another space |
 | POST | `/posts/{id}/merge` | Moderator / Admin | Merge into another post |

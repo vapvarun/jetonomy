@@ -5112,7 +5112,7 @@
         ],
         "summary": "Close or reopen a post",
         "operationId": "closePost",
-        "description": "Toggle whether a post accepts new replies. Requires author or moderator.",
+        "description": "Set whether a post accepts new replies (`closed`), or toggle it when `closed` is omitted. Requires author or moderator.",
         "responses": {
           "200": {
             "description": "Success",
@@ -5152,7 +5152,8 @@
                 "type": "object",
                 "properties": {
                   "closed": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Close (true) or reopen (false). Send it: a client that omits it toggles, so a retry or a second moderator can undo the first."
                   }
                 }
               }
@@ -5480,7 +5481,7 @@
         ],
         "summary": "Pin or unpin a post",
         "operationId": "pinPost",
-        "description": "Pin/unpin a post within its space (capped per space). Requires space moderator.",
+        "description": "Pin or unpin a post within its space (`pinned`; omitted, it toggles) (capped per space). Requires space moderator.",
         "responses": {
           "200": {
             "description": "Success",
@@ -5520,7 +5521,8 @@
                 "type": "object",
                 "properties": {
                   "pinned": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Pin (true) or unpin (false). Send it: a client that omits it toggles, so a retry or a second moderator can undo the first."
                   }
                 }
               }

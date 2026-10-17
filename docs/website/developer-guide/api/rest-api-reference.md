@@ -158,8 +158,8 @@ GET    /posts/{id}                 Get (does not count a view since 2.0.1)
 POST   /posts/{id}/view             Count a view (public, no nonce; one per IP and topic per 30 min; 2.0.1)
 PATCH  /posts/{id}                  Update / publish a draft
 DELETE /posts/{id}                  Trash
-POST   /posts/{id}/close            Close/reopen to new replies
-POST   /posts/{id}/pin              Pin/unpin (capped per space)
+POST   /posts/{id}/close            Close/reopen to new replies (closed: true|false)
+POST   /posts/{id}/pin              Pin/unpin, capped per space (pinned: true|false)
 POST   /posts/{id}/move             Move to another space
 POST   /posts/{id}/merge            Merge into another post
 POST   /posts/{id}/idea-status      Set roadmap status (Ideas spaces only)

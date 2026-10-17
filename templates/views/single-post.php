@@ -783,11 +783,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
+									data-pin="<?php echo $post->is_sticky ? '0' : '1'; ?>"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo esc_html( $jt_pin_label ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_close ) : ?>
 									<button class="jt-more-item"
 										data-wp-on--click="actions.toggleClose"
+										data-close="<?php echo empty( $post->is_closed ) ? '1' : '0'; ?>"
 										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Reopen %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) : esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_move ) : ?>
