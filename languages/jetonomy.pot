@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-17T06:58:50+00:00\n"
+"POT-Creation-Date: 2026-10-17T07:01:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -3141,14 +3141,16 @@ msgstr ""
 msgid "On delete"
 msgstr ""
 
+#. translators: %s: product name shown in wp-admin (default "Jetonomy").
 #: includes/admin/views/settings.php:451
-msgid "Remove all community data when Jetonomy is deleted"
+#, php-format
+msgid "Remove all community data when %s is deleted"
 msgstr ""
 
-#. translators: 1: space label, plural, lowercase. 2: topic label, plural, lowercase. 3: reply label, plural, lowercase.
+#. translators: 1: space label, plural, lowercase. 2: topic label, plural, lowercase. 3: reply label, plural, lowercase. 4: product name shown in wp-admin (default "Jetonomy").
 #: includes/admin/views/settings.php:453
 #, php-format
-msgid "Off by default, so deleting and reinstalling the plugin keeps everything. When on, deleting Jetonomy from the Plugins screen permanently removes all %1$s, %2$s, %3$s, profiles and settings, and Jetonomy Pro data too. Deactivating never removes anything."
+msgid "Off by default, so deleting and reinstalling the plugin keeps everything. When on, deleting %4$s from the Plugins screen permanently removes all %1$s, %2$s, %3$s, profiles and settings, and the Pro add-on's data too. Deactivating never removes anything."
 msgstr ""
 
 #. translators: 1: trust level number, 2: trust level name.
@@ -12037,7 +12039,7 @@ msgstr ""
 #. translators: %s: member label, plural lowercase (e.g. "members").
 #: assets/js/admin-common.js:99
 #, js-format
-msgid "Matches %s at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it."
+msgid "Matches %s at or above this trust level, 1 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it."
 msgstr ""
 
 #. translators: 1: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. 2: member label, plural lowercase.

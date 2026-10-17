@@ -98,7 +98,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<div class="jt-settings-sidebar-brand">
 				<img class="jt-settings-brand-icon" src="<?php echo esc_url( JETONOMY_URL . 'assets/images/jetonomy-mark.svg' ); ?>" width="36" height="36" alt="" aria-hidden="true" />
 				<div class="jt-settings-brand-text">
-					<p class="jt-settings-brand-name">Jetonomy</p>
+					<p class="jt-settings-brand-name"><?php echo esc_html( \Jetonomy\Admin\Admin::brand_name() ); ?></p>
 					<p class="jt-settings-brand-sub"><?php esc_html_e( 'Settings', 'jetonomy' ); ?></p>
 				</div>
 			</div>
@@ -448,9 +448,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td>
 							<label>
 								<input type="checkbox" name="jetonomy_settings[remove_data_on_uninstall]" value="1" <?php checked( ! empty( $settings['remove_data_on_uninstall'] ) ); ?> <?php disabled( ! current_user_can( 'manage_options' ) ); ?>>
-								<?php esc_html_e( 'Remove all community data when Jetonomy is deleted', 'jetonomy' ); ?>
+								<?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( 'Remove all community data when %s is deleted', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?>
 							</label>
-							<p class="description"><?php /* translators: 1: space label, plural, lowercase. 2: topic label, plural, lowercase. 3: reply label, plural, lowercase. */ echo esc_html( sprintf( __( 'Off by default, so deleting and reinstalling the plugin keeps everything. When on, deleting Jetonomy from the Plugins screen permanently removes all %1$s, %2$s, %3$s, profiles and settings, and Jetonomy Pro data too. Deactivating never removes anything.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
+							<p class="description"><?php /* translators: 1: space label, plural, lowercase. 2: topic label, plural, lowercase. 3: reply label, plural, lowercase. 4: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( 'Off by default, so deleting and reinstalling the plugin keeps everything. When on, deleting %4$s from the Plugins screen permanently removes all %1$s, %2$s, %3$s, profiles and settings, and the Pro add-on\'s data too. Deactivating never removes anything.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></p>
 						</td>
 					</tr>
 				</table>

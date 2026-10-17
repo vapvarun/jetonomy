@@ -96,7 +96,7 @@
 					role:        sprintf( __( 'Matches anyone holding this WordPress role. Most %s hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ), MEMBERS ),
 					capability:  __( 'Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.', 'jetonomy' ),
 					/* translators: %s: member label, plural lowercase (e.g. "members"). */
-					trust_level: sprintf( __( 'Matches %s at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ), MEMBERS ),
+					trust_level: sprintf( __( 'Matches %s at or above this trust level, 1 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ), MEMBERS ),
 				},
 				// %1$s stays a literal %s, filled with the adapter name at runtime.
 				membershipNote: sprintf( /* translators: 1: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. 2: member label, plural lowercase. */ __( 'Matches %2$s who hold the %1$s level you pick below.', 'jetonomy' ), '%s', MEMBERS ),
