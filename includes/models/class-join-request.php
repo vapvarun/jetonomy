@@ -175,6 +175,19 @@ class JoinRequest extends Model {
 	}
 
 	/**
+	 * The confirmation a reviewer sees after deciding a request, shared by the
+	 * wp-admin screen and the front-end Members tab (via REST `message`).
+	 *
+	 * @param string $status 'approved' or 'denied'.
+	 * @return string
+	 */
+	public static function decision_message( string $status ): string {
+		return 'approved' === $status
+			? __( 'Join request approved.', 'jetonomy' )
+			: __( 'Join request denied.', 'jetonomy' );
+	}
+
+	/**
 	 * Settle every pending request on a space that has stopped taking
 	 * requests (Space::update() calls this when join_mode() leaves 'request').
 	 *

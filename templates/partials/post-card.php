@@ -19,7 +19,9 @@ $has_unread = isset( $has_unread ) ? (bool) $has_unread : false;
 // 1.5.0: the My Bookmarks page passes show_bookmark_toggle so each card
 // offers a one-click "Remove bookmark" — the bookmarks list was otherwise a
 // dead end (no way to manage the very bookmarks it exists to show).
+// show_space: lists that mix spaces (bookmarks, tag, drafts) name each topic's space.
 $show_bookmark_toggle = isset( $show_bookmark_toggle ) ? (bool) $show_bookmark_toggle : false;
+$show_space           = isset( $show_space ) ? (bool) $show_space : false;
 $initials             = '' !== $display['name'] ? strtoupper( mb_substr( $display['name'], 0, 2 ) ) : '??';
 $trust                = $profile ? (int) $profile->trust_level : 0;
 $post_url             = \Jetonomy\route_url( 'post', ( $space->slug ?? '' ), $post->slug );
@@ -51,6 +53,7 @@ if ( $prefix_name && $space ) {
 }
 ?>
 <div class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
+	data-jt-key="post-<?php echo absint( $post->id ); ?>"
 	data-wp-interactive="jetonomy">
 	<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 		<div class="jt-votes" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Vote on this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
@@ -120,6 +123,9 @@ if ( $prefix_name && $space ) {
 		</a>
 		<div class="jt-row-sub">
 			<?php echo esc_html( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>
+			<?php if ( $show_space && $space ) : ?>
+				<a class="jt-row-space" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>" dir="auto"><?php echo esc_html( $space->title ); ?></a>
+			<?php endif; ?>
 			<?php
 			// 1.4.0 G3: render role pill (Admin / Mod) when this user holds a
 			// privileged role IN THIS POST'S SPACE. Reads the warmed cache

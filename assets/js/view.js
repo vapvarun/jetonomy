@@ -835,6 +835,17 @@ function notifUpdateBulkbar() {
 
 /** Set the cover-image preview within a form. Shared by the new-space +
  * edit-space cover uploaders (data-jt-cover-* markup is identical on both). */
+// The schedule picked in templates/partials/schedule-fields.php, as the
+// site-timezone wall-clock value the server expects ('' when date or time is
+// missing). Not stamped with the browser's zone: the time means "this time in
+// the site's timezone", wherever the author is - the core post scheduler's rule.
+function jtScheduleValue( form ) {
+    const dateVal   = form.querySelector( '[name="published_date"]' )?.value?.trim() || '';
+    const hourVal   = form.querySelector( '[name="published_hour"]' )?.value?.trim() || '';
+    const minuteVal = form.querySelector( '[name="published_minute"]' )?.value?.trim() || '';
+    return dateVal && hourVal && minuteVal ? `${ dateVal }T${ hourVal }:${ minuteVal }:00` : '';
+}
+
 // Approve/deny a pending join request from the space-members mod panel.
 // Returns a promise so the Interactivity action can `yield` it. On success
 // the row is removed; when the last row goes, the whole panel is removed.
@@ -848,6 +859,9 @@ function jtModerateJoinRequest( btn, action ) {
         '/spaces/' + parseInt( spaceId, 10 ) + '/join-requests/' + parseInt( requestId, 10 ) + '/' + action,
         { method: 'POST', body: {} }
     ).then( ( res ) => {
+        if ( res && res.ok && res.data && res.data.message && window.bnToast ) {
+            window.bnToast( res.data.message );
+        }
         if ( ! res || ! res.ok ) {
             const msg = ( res && res.data && res.data.message ) || 'Could not update the request. Please try again.';
             if ( window.bnToast ) window.bnToast( msg, 'error' );
@@ -1852,6 +1866,40 @@ const { state, actions } = store( 'jetonomy', {
                 btn.disabled = false;
                 if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.genericError || 'Could not publish.' );
             }
+        },
+        // ── Move / cancel a scheduled topic's publish time (topic page) ──
+        *reschedulePost( event ) {
+            if ( event ) event.preventDefault();
+            const form = triggerOf( event )?.closest( '.jt-reschedule' ) || getElement().ref;
+            const id = form && parseInt( form.getAttribute( 'data-post-id' ), 10 );
+            if ( ! id ) return;
+            const when = jtScheduleValue( form );
+            if ( ! when ) {
+                if ( window.bnToast ) window.bnToast( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
+                return;
+            }
+            const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { published_at: when } } );
+            if ( res.ok ) {
+                window.location.reload(); // the notice re-renders with the new time
+            } else if ( window.bnToast ) {
+                window.bnToast( ( res.data && res.data.message ) || state.i18n?.networkError || 'Network error. Please try again.' );
+            }
+        },
+        *cancelSchedule( event ) {
+            const btn = triggerOf( event ) || getElement().ref;
+            const form = btn && btn.closest( '.jt-reschedule' );
+            const id = form && parseInt( form.getAttribute( 'data-post-id' ), 10 );
+            if ( ! id ) return;
+            const confirmMsg = btn.getAttribute( 'data-confirm' );
+            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg ) ) ) return;
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { published_at: '' } } );
+            if ( res.ok ) {
+                window.location.reload();
+                return;
+            }
+            btn.disabled = false;
+            if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.networkError || 'Network error. Please try again.' );
         },
         toggleNotifSelectAll( event ) {
             const selectAll = triggerOf( event );
@@ -4184,23 +4232,10 @@ const { state, actions } = store( 'jetonomy', {
             const postStatus = ctx.postStatus || 'publish';
             let publishedAt  = '';
             if ( o.collectSchedule && ctx.showScheduler ) {
-                const dateVal   = form.querySelector( '[name="published_date"]' )?.value?.trim() || '';
-                const hourVal   = form.querySelector( '[name="published_hour"]' )?.value?.trim() || '';
-                const minuteVal = form.querySelector( '[name="published_minute"]' )?.value?.trim() || '';
-                const timeVal   = hourVal && minuteVal ? `${ hourVal }:${ minuteVal }` : '';
-                // Send the plain wall-clock value the user picked. The server
-                // interprets it in the SITE timezone (the WordPress Settings ->
-                // General timezone) and converts to UTC for storage, matching
-                // the core post scheduler. We intentionally do NOT stamp the
-                // browser's timezone here — the scheduled time means "this time
-                // in the site's timezone", regardless of where the author is.
-                //
                 // Date AND time are both required. A missing time would fall back to midnight, so
                 // "today, no time picked" would already be in the past and go live at the next run.
                 // The server rejects a past or time-less schedule too; this only saves the trip.
-                if ( dateVal && timeVal ) {
-                    publishedAt = dateVal + 'T' + timeVal + ':00';
-                }
+                publishedAt = jtScheduleValue( form );
             }
             if ( o.collectSchedule && 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
                 writeError( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
@@ -4821,14 +4856,20 @@ if ( window.wp?.i18n?.setLocaleData && state.localeData ) {
         meta.appendChild( el( 'span', 'jt-link-preview-domain', data.site_name || data.domain ) );
         body.appendChild( meta );
 
+        // dir="auto": a page in Arabic or Hebrew lays out right to left even
+        // inside a left-to-right post, and the reverse.
         if ( data.title ) {
-            body.appendChild( el( 'strong', 'jt-link-preview-title', data.title ) );
+            const title = el( 'strong', 'jt-link-preview-title', data.title );
+            title.dir = 'auto';
+            body.appendChild( title );
         }
         if ( data.description ) {
             const desc = data.description.length > DESC_MAX
                 ? data.description.slice( 0, DESC_MAX ).trim() + '…'
                 : data.description;
-            body.appendChild( el( 'p', 'jt-link-preview-desc', desc ) );
+            const descEl = el( 'p', 'jt-link-preview-desc', desc );
+            descEl.dir = 'auto';
+            body.appendChild( descEl );
         }
         if ( data.author || data.published_at ) {
             const foot = el( 'div', 'jt-link-preview-foot' );

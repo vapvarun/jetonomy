@@ -100,7 +100,7 @@ class Leaderboards_Controller extends Base_Controller {
 		if ( $lb_cacheable ) {
 			$cached = \Jetonomy\Cache::get( $lb_cache_key );
 			if ( is_array( $cached ) && isset( $cached['items'], $cached['total'] ) ) {
-				$items = (array) apply_filters( 'jetonomy_leaderboard_items', $cached['items'], $request );
+				$items = (array) apply_filters( 'jetonomy_leaderboard_items', $this->viewer_presence( $cached['items'] ), $request );
 
 				return $this->paginated_response(
 					$items,
@@ -215,7 +215,7 @@ class Leaderboards_Controller extends Base_Controller {
 		 * @param array            $items   Leaderboard rows.
 		 * @param WP_REST_Request  $request Original REST request.
 		 */
-		$items = (array) apply_filters( 'jetonomy_leaderboard_items', $items, $request );
+		$items = (array) apply_filters( 'jetonomy_leaderboard_items', $this->viewer_presence( $items ), $request );
 
 		return $this->paginated_response(
 			$items,
@@ -225,5 +225,22 @@ class Leaderboards_Controller extends Base_Controller {
 				'period' => $period,
 			)
 		);
+	}
+
+	/**
+	 * Presence as this viewer may see it. Runs after the cache: the cached
+	 * rows are shared by every viewer, the shaping is per viewer.
+	 *
+	 * @param array<int, array<string, mixed>> $items Leaderboard rows.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function viewer_presence( array $items ): array {
+		foreach ( $items as &$row ) {
+			$seen                    = \Jetonomy\Models\UserProfile::last_seen_for_viewer( (int) ( $row['user_id'] ?? 0 ), $row['last_seen_at'] ?? null );
+			$row['last_seen_at']     = $seen;
+			$row['last_seen_at_gmt'] = \Jetonomy\to_iso8601_z( $seen );
+		}
+		unset( $row );
+		return $items;
 	}
 }

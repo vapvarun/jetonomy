@@ -409,7 +409,7 @@ class Users_Controller extends Base_Controller {
 			'avatar_url'        => $profile->avatar_url ?? null,
 			'avatar_display'    => ( $profile->avatar_url ?? '' ) ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'        => $wp_user->user_registered ?? null,
-			'last_seen_at'      => $profile->last_seen_at ?? null,
+			'last_seen_at'      => UserProfile::last_seen_for_viewer( $id, $profile->last_seen_at ?? null ),
 			// Has the CURRENT viewer blocked this profile? Backs the app's
 			// Block/Unblock button. blocked_ids() is memoized per-request, so
 			// this is never a fresh query. Always false for guests.
@@ -480,7 +480,7 @@ class Users_Controller extends Base_Controller {
 			'avatar_url'        => $profile->avatar_url ?? null,
 			'avatar_display'    => ( $profile->avatar_url ?? '' ) ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'        => $wp_user->user_registered ?? null,
-			'last_seen_at'      => $profile->last_seen_at ?? null,
+			'last_seen_at'      => UserProfile::last_seen_for_viewer( $id, $profile->last_seen_at ?? null ),
 			'is_blocked'        => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
 
 			/*
@@ -982,7 +982,7 @@ class Users_Controller extends Base_Controller {
 			'bio'            => $profile->bio ?? null,
 			'avatar_url'     => $profile->avatar_url ?? null,
 			'avatar_display' => ( $profile->avatar_url ?? '' ) ?: \Jetonomy\Avatar::display_url( (int) ( $profile->user_id ?? 0 ), 96 ),
-			'last_seen_at'   => $profile->last_seen_at ?? null,
+			'last_seen_at'   => UserProfile::last_seen_for_viewer( (int) ( $profile->user_id ?? 0 ), $profile->last_seen_at ?? null ),
 			'created_at'     => $profile->created_at ?? null,
 			'updated_at'     => $profile->updated_at ?? null,
 		);

@@ -645,7 +645,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 			// instead of drifting to "Anonymous". Passing the already-batch-loaded $user avoids
 			// a redundant get_userdata() per row (author_id > 0 case).
 			$item_obj    = is_object( $item ) ? $item : (object) $item;
-			$author_name = \Jetonomy\Author::for_display( $uid, $item_obj, $user )['name'];
+			$display     = \Jetonomy\Author::for_display( $uid, $item_obj, $user );
+			$author_name = $display['name'];
 
 			$enrichment = array(
 				'author_name'         => $author_name ?: __( 'Anonymous', 'jetonomy' ),
@@ -660,7 +661,9 @@ abstract class Base_Controller extends WP_REST_Controller {
 				'profile_url'         => $uid ? \Jetonomy\get_profile_url( $uid ) : '',
 				// Presence source for API clients: the app derives an "online" dot
 				// from this (last_seen_at within 5 min), matching the web's badge.
-				'author_last_seen_at' => $profile ? $profile->last_seen_at : null,
+				// Viewer-shaped here too: some lists ship enriched rows as-is.
+				// A masked (anonymous) author has no presence to show.
+				'author_last_seen_at' => UserProfile::last_seen_for_viewer( (int) $display['id'], $profile ? $profile->last_seen_at : null ),
 			);
 
 			if ( is_object( $item ) ) {
@@ -834,6 +837,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 			$profile_url   = $display['url'];
 		}
 
+		$author_last_seen = UserProfile::last_seen_for_viewer( $author_id, $post->author_last_seen_at ?? null );
+
 		// Resolve prefix color from space settings.
 		$prefix_name  = $post->prefix ?? null;
 		$prefix_color = null;
@@ -887,8 +892,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'author_name'             => $author_name,
 			'author_avatar'           => $author_avatar,
 			'author_login'            => $author_login,
-			'author_last_seen_at'     => $post->author_last_seen_at ?? null,
-			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $post->author_last_seen_at ?? null ),
+			'author_last_seen_at'     => $author_last_seen,
+			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $author_last_seen ),
 			'trust_level'             => $trust_level,
 			'reputation'              => $reputation,
 			'time_ago'                => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',

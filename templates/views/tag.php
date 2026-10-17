@@ -124,7 +124,15 @@ $crumbs = array(
 				<div class="jt-topics">
 					<?php \Jetonomy\prime_post_cards( $posts ); ?>
 					<?php foreach ( $posts as $post ) : ?>
-						<?php \Jetonomy\Template_Loader::partial( 'post-card', array( 'post' => $post ) ); ?>
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'post-card',
+							array(
+								'post'       => $post,
+								'show_space' => true,
+							)
+						);
+						?>
 					<?php endforeach; ?>
 				</div>
 

@@ -764,22 +764,32 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
-		// Backdate: accept published_at to rewrite the date. Gated to manage_options.
 		$raw_published_at = $request->get_param( 'published_at' );
-		if ( null !== $raw_published_at && '' !== $raw_published_at ) {
+		if ( 'draft' === ( $post->status ?? '' ) ) {
+			// On a draft, published_at is its schedule, and whoever may edit the
+			// draft may move or cancel it ('' = cancel, back to a plain draft).
+			// Post::update() re-arms the publish job either way.
+			if ( '' === $raw_published_at ) {
+				$update_data['published_at'] = null;
+			} elseif ( null !== $raw_published_at ) {
+				$schedule = $this->sanitize_backdate( $raw_published_at );
+				if ( is_wp_error( $schedule ) ) {
+					return $schedule;
+				}
+				$schedule_error = $this->validate_schedule( (string) $raw_published_at, (string) $schedule );
+				if ( $schedule_error ) {
+					return $schedule_error;
+				}
+				$update_data['published_at'] = $schedule;
+			}
+		} elseif ( null !== $raw_published_at && '' !== $raw_published_at ) {
+			// Backdate a live post: rewrites its date. Gated to manage_options.
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return $this->permission_error();
 			}
 			$backdate = $this->sanitize_backdate( $raw_published_at );
 			if ( is_wp_error( $backdate ) ) {
 				return $backdate;
-			}
-			// On a draft, published_at is the schedule, not a backdate.
-			if ( null !== $backdate && 'draft' === ( $post->status ?? '' ) ) {
-				$schedule_error = $this->validate_schedule( (string) $raw_published_at, $backdate );
-				if ( $schedule_error ) {
-					return $schedule_error;
-				}
 			}
 			if ( null !== $backdate ) {
 				$update_data['published_at']  = $backdate;

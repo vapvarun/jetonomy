@@ -221,7 +221,9 @@ class Mentions {
 				if ( '' === $url ) {
 					return $matches[0]; // Not a real user — leave as typed.
 				}
-				return '<a href="' . esc_url( $url ) . '" class="jt-mention">@' . esc_html( $username ) . '</a>';
+				// dir="ltr" isolates the handle (always Latin, see MENTION_PATTERN), so
+				// inside right-to-left text it reads "@omar", not "omar@".
+				return '<a href="' . esc_url( $url ) . '" class="jt-mention" dir="ltr">@' . esc_html( $username ) . '</a>';
 			},
 			$text
 		);

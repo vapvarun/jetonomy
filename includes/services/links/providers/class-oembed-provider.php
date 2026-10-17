@@ -80,7 +80,7 @@ final class OEmbed_Provider implements Provider_Interface {
 		// Only accept iframe/video embeds — never render arbitrary third-party
 		// HTML inline. kses with an iframe allowlist gates the output.
 		$raw_html = (string) ( $data->html ?? '' );
-		if ( '' !== $raw_html && in_array( $embed_type, array( 'video', 'rich' ), true ) ) {
+		if ( '' !== $raw_html && in_array( $embed_type, array( 'video', 'rich' ), true ) && ! \Jetonomy\Embeds::is_wp_post_embed( $raw_html ) ) {
 			$out->embed_html = $this->sanitize_embed( $raw_html );
 		}
 

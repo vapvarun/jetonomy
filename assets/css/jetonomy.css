@@ -390,8 +390,9 @@
   .jt-mention-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-block-end: 1px solid var(--jt-border); }
   .jt-mention-row:last-child { border-block-end: none; }
   .jt-mention-row:hover, .jt-mention-row.is-selected { background: var(--jt-bg-hover); }
-  .jt-mention-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
-  .jt-mention-name { font-weight: 600; color: var(--jt-text); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jt-mention-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; font-size: 0.625rem; }
+  /* Full name, wrapped: two members can share a first name, so a cut name can pick the wrong person. */
+  .jt-mention-name { font-weight: 600; color: var(--jt-text); flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
   .jt-mention-login { color: var(--jt-text-tertiary); font-size: 0.8125rem; }
   .jt-mention-empty { padding: 10px 12px; color: var(--jt-text-tertiary); font-size: 0.875rem; }
 
@@ -490,7 +491,7 @@
   .jt-space-card-head { display: flex; align-items: flex-start; gap: 12px; }
   .jt-space-card-titlewrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
   .jt-space-card-title { font-size: 1rem; font-weight: 700; color: var(--jt-text); margin: 0; line-height: 1.3; }
-  .jt-space-card-desc { color: var(--jt-text-secondary); font-size: 0.875rem; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .jt-space-card-desc { color: var(--jt-text-secondary); font-size: 0.875rem; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
   .jt-space-card-meta { color: var(--jt-text-tertiary); font-size: 0.8125rem; margin: 0; }
 
   /* Footer action row — pill-shaped buttons divided from the card body
@@ -519,6 +520,8 @@
   /* Everything on the meta line (author, tags, role/state pills, prefixes)
      shares the line's one size; tag chips are compact and centred on the
      author text instead of a 15px pill beside 13px text. */
+  .jt-app .jt-row-sub .jt-row-space { color: var(--jt-text-secondary); font-weight: 500; text-decoration: none; overflow-wrap: anywhere; }
+  .jt-app .jt-row-sub .jt-row-space:hover { color: var(--jt-text); text-decoration: underline; }
   .jt-row-sub :is(.jt-tag, .jt-prefix, .jt-role-pill, .jt-qa-pill, .jt-idea-pill, [class*="jt-badge"], time) { font-size: inherit; line-height: inherit; }
   .jt-row-sub .jt-tag { padding: 0 var(--jt-space-2); }
   .jt-row-stat { text-align: center; white-space: nowrap; }
@@ -1275,7 +1278,8 @@
   .jt-space-card-inner { display: flex; align-items: flex-start; gap: var(--jt-space-3); }
   .jt-space-card-emoji { font-size: 1.75em; flex-shrink: 0; line-height: 1; }
   .jt-space-card-body { min-width: 0; flex: 1; }
-  .jt-space-card-title { font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Wrapped, not cut: two spaces can share a long common prefix. */
+  .jt-space-card-title { font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 4px; overflow-wrap: anywhere; }
   .jt-space-card-excerpt { font-size: 0.8125rem; color: var(--jt-text-tertiary); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .jt-space-card-stats { display: flex; flex-wrap: wrap; column-gap: var(--jt-space-3); row-gap: var(--jt-space-1); margin-block-start: var(--jt-space-2); min-width: 0; }
   .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); white-space: nowrap; flex: 0 0 auto; }
@@ -1450,6 +1454,14 @@
   .jt-notice-warning { background: var(--jt-warn-light); color: var(--jt-warn-dark); border-left: 4px solid var(--jt-warn); }
   /* Moderator Restore / Delete permanently on a trashed topic. Wraps under 390px. */
   .jt-notice-actions { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); margin-block-start: var(--jt-space-3); }
+  .jt-reschedule { margin-block-start: var(--jt-space-3); }
+  /* Connect-app screen: Connect and Cancel side by side (stacked on phones),
+     and the account switch is a full tap target, not a 20px text line. */
+  .jt-connect-app-actions { display: flex; flex-wrap: wrap; gap: var(--jt-space-3); margin-block: var(--jt-space-4); }
+  .jt-connect-app-switch { display: inline-flex; align-items: center; min-height: var(--jt-tap); }
+  @media (max-width: 640px) { .jt-connect-app-actions > .jt-btn { flex: 1 1 100%; justify-content: center; } }
+  .jt-reschedule fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .jt-reschedule legend { padding: 0; margin-block-end: var(--jt-space-2); }
 
   /* ── View count ── */
   .jt-view-count { display: inline-flex; align-items: center; gap: 4px; font-size: var(--jt-text-sm); color: var(--jt-text-tertiary); }
@@ -2341,6 +2353,10 @@
 
   /* ── Pagination ── */
   .jt-pagination-btn { min-width: 200px; justify-content: center; }
+  .jt-pagination:has(.jt-pagination-error) { flex-wrap: wrap; }
+  .jt-pagination .jt-pagination-error { flex-basis: 100%; margin: 0; text-align: center; }
+  /* A thumb-sized target across the column on phones. */
+  @media (max-width: 640px) { .jt-pagination-btn { width: 100%; } }
 
   /* ── Prism.js override for theme consistency ── */
   /* Highlighted and plain code blocks share one dark panel in both schemes. */
@@ -2899,7 +2915,8 @@
 .jt-blocked-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
 .jt-blocked-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; }
 .jt-blocked-row + .jt-blocked-row { border-top: 1px solid var(--jt-border); }
-.jt-blocked-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--jt-text); }
+/* Wrapped, not cut: the full name is how a member knows whom they blocked. */
+.jt-blocked-name { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--jt-text); }
 .jt-blocked-pager { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); }
 @media (max-width: 480px) { .jt-blocked-pager { flex-wrap: wrap; } }
 .jt-notif-optout { display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
@@ -3397,15 +3414,22 @@
 /* ── Discussion row hover effects (non-anchor rows) ── */
 .jt-row { box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.1s; }
 .jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
-/* Bookmarks page: the per-card "Remove bookmark" toggle (1.5.0). The card is
-   a CSS grid, so a plain child lands in an implicit cell — pin it top-right
-   instead. Scoped with :has() so only cards that carry the toggle are
-   affected (the My Bookmarks list), never every post row. */
-.jt-row:has(.jt-bookmark-toggle) { position: relative; }
+/* Bookmarks page: the per-card "Remove bookmark" toggle (1.5.0). It gets its
+   own last grid column; pinned absolutely over the row it covered the
+   "1 week ago" cell at desktop and the reply count on phones. Scoped with
+   :has() so only cards that carry the toggle (My Bookmarks) change. */
+.jt-row:has(.jt-bookmark-toggle) { grid-template-columns: 48px minmax(0, 1fr) 96px 104px var(--jt-tap); }
+.jt-row:not(:has(.jt-votes)):has(.jt-bookmark-toggle) { grid-template-columns: minmax(0, 1fr) 96px 104px var(--jt-tap); }
+@media (max-width: 640px) {
+	/* The time cell is hidden on phones (it is no longer :last-child here). */
+	.jt-row:has(.jt-bookmark-toggle) { grid-template-columns: 36px minmax(0, 1fr) 48px var(--jt-tap); }
+	.jt-row:not(:has(.jt-votes)):has(.jt-bookmark-toggle) { grid-template-columns: minmax(0, 1fr) 48px var(--jt-tap); }
+	.jt-row:has(.jt-bookmark-toggle) .jt-row-stat:has(.jt-row-time) { display: none; }
+}
 .jt-bookmark-toggle {
-	position: absolute;
-	top: 0.5rem;
-	inset-inline-end: 0.5rem;
+	position: relative;
+	z-index: 1;
+	justify-self: end;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;

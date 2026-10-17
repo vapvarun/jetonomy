@@ -68,7 +68,7 @@ You are taken to the scheduled post, which shows when it will publish. It does n
 
 A schedule needs both a date and a time, and the time must be in the future. Scheduling the same title for the same time twice is refused, so a double click never queues a second copy.
 
-Scheduled posts appear in your **Drafts** tab with a "Scheduled" label and the publish date/time displayed. You can click into a scheduled post to edit the content or change the publish time at any point before it goes live.
+Scheduled posts appear in your **Drafts** tab with a "Scheduled" label and the publish date/time displayed. You can click into a scheduled post to edit the content at any point before it goes live. The notice at the top of a scheduled post has a date and time picker: choose a new time and click **Save time**, or click **Cancel schedule** to keep it as a plain draft.
 
 To publish a scheduled post early, click **Publish now** on its row in the **Drafts** tab.
 

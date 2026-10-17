@@ -218,31 +218,7 @@ if ( '' !== $_extras_html ) {
 			<label class="jt-label">
 				<?php esc_html_e( 'Publish on', 'jetonomy' ); ?>
 			</label>
-			<div class="jt-datetime-split">
-				<input type="date" id="jt-post-published-date" name="published_date" class="jt-input jt-input--date" aria-label="<?php esc_attr_e( 'Date', 'jetonomy' ); ?>">
-				<?php
-				// Two select dropdowns for the time — works consistently on every
-				// desktop browser (Firefox Desktop has no popup for <input type="time">,
-				// which would block scheduling there). Mobile browsers
-				// render these as native scroll wheels. view.js combines them into
-				// the hidden published_at value before submit.
-				?>
-				<div class="jt-time-split" aria-label="<?php esc_attr_e( 'Time', 'jetonomy' ); ?>">
-					<select id="jt-post-published-hour" name="published_hour" class="jt-input jt-input--time-part" aria-label="<?php esc_attr_e( 'Hour', 'jetonomy' ); ?>">
-						<option value=""><?php esc_html_e( 'HH', 'jetonomy' ); ?></option>
-						<?php for ( $_h = 0; $_h < 24; $_h++ ) : ?>
-							<option value="<?php echo esc_attr( str_pad( (string) $_h, 2, '0', STR_PAD_LEFT ) ); ?>"><?php echo esc_html( str_pad( (string) $_h, 2, '0', STR_PAD_LEFT ) ); ?></option>
-						<?php endfor; ?>
-					</select>
-					<span class="jt-time-split-sep" aria-hidden="true">:</span>
-					<select id="jt-post-published-minute" name="published_minute" class="jt-input jt-input--time-part" aria-label="<?php esc_attr_e( 'Minute', 'jetonomy' ); ?>">
-						<option value=""><?php esc_html_e( 'MM', 'jetonomy' ); ?></option>
-						<?php for ( $_m = 0; $_m < 60; $_m += 5 ) : ?>
-							<option value="<?php echo esc_attr( str_pad( (string) $_m, 2, '0', STR_PAD_LEFT ) ); ?>"><?php echo esc_html( str_pad( (string) $_m, 2, '0', STR_PAD_LEFT ) ); ?></option>
-						<?php endfor; ?>
-					</select>
-				</div>
-			</div>
+			<?php \Jetonomy\Template_Loader::partial( 'schedule-fields' ); ?>
 			<input type="hidden" name="published_at" value="">
 			<p class="jt-label-hint">
 				<?php echo esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Your %s will be published automatically at this date and time.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
