@@ -927,7 +927,7 @@ Common error codes:
 | Code | HTTP | Meaning |
 |------|------|---------|
 | `rest_forbidden` | 401/403 | Not logged in, or a missing or expired nonce |
-| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this |
+| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this. Only given for something you can see: a topic, reply or hidden space you cannot read answers `jetonomy_not_found` instead, on write routes too |
 | `jetonomy_user_banned` | 403 | The authenticated user is banned from the community (mutation routes) |
 | `jetonomy_pending_verification` | 403 | The authenticated user has not confirmed their email yet (mutation routes) |
 | `jetonomy_not_found` | 404 | Resource does not exist (or is not visible to you) |

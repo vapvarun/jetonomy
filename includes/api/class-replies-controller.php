@@ -206,10 +206,9 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$post_id = absint( $request->get_param( 'post_id' ) );
-		$post    = Post::find( $post_id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post    = $this->find_unconcealed_post( $post_id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$space_id = (int) $post->space_id;
@@ -422,16 +421,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$id    = absint( $request->get_param( 'id' ) );
-		$reply = Reply::find( $id );
-
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found = $this->find_unconcealed_reply( $id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		$space_id  = (int) $post->space_id;
 		$is_author = (int) $reply->author_id === $user_id;
@@ -566,16 +560,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$id    = absint( $request->get_param( 'id' ) );
-		$reply = Reply::find( $id );
-
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found = $this->find_unconcealed_reply( $id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		$space_id  = (int) $post->space_id;
 		$is_author = (int) $reply->author_id === $user_id;
@@ -658,16 +647,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$id    = absint( $request->get_param( 'id' ) );
-		$reply = Reply::find( $id );
-
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found = $this->find_unconcealed_reply( $id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		$space_id       = (int) $post->space_id;
 		$post_author_id = (int) $post->author_id;
@@ -708,15 +692,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$id    = absint( $request->get_param( 'id' ) );
-		$reply = Reply::find( $id );
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found = $this->find_unconcealed_reply( $id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		$space_id       = (int) $post->space_id;
 		$post_author_id = (int) $post->author_id;
@@ -750,16 +730,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$reply_id = absint( $request->get_param( 'id' ) );
-		$reply    = \Jetonomy\Models\Reply::find( $reply_id );
-
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found    = $this->find_unconcealed_reply( $reply_id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = \Jetonomy\Models\Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		// Require moderator permission.
 		if ( ! $this->check_permission( 'move_posts', (int) $post->space_id ) ) {

@@ -334,8 +334,10 @@ class SpaceMember extends Model {
 			);
 		}
 
+		// A hidden space this member was not let into answers like a missing
+		// one: an invite-only refusal would confirm the id exists.
 		$space = Space::find( $space_id );
-		if ( ! $space ) {
+		if ( ! $space || Space::concealed_from_viewer( $space, $user_id ) ) {
 			return new \WP_Error(
 				'jetonomy_not_found',
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
@@ -362,9 +364,8 @@ class SpaceMember extends Model {
 		/*
 		 * A hidden space is not discoverable, so there is no such thing as
 		 * asking it for entry - the only way in is an invite, redeemed through
-		 * InviteLink::redeem(). Same refusal as invite-only, and deliberately
-		 * the same error, so the response cannot be used to tell a hidden space
-		 * apart from an invite-only one by probing ids.
+		 * InviteLink::redeem(). A stranger got the 404 above; a viewer who may
+		 * see it (an access rule admits them) gets the invite-only refusal.
 		 */
 		if ( 'invite' === $mode ) {
 			return new \WP_Error(

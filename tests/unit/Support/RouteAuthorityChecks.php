@@ -342,17 +342,18 @@ trait Route_Authority_Checks {
 	 * Owner policy: content the viewer may not know exists answers like missing
 	 * (404). Only a publicly listed private space may say 403 instead.
 	 *
-	 * @param int   $id     Fixture the probe pointed at.
-	 * @param int[] $refuse The entry's declared refusal statuses.
+	 * Nothing else may say 403: a topic in that private space answers 404, as
+	 * GET /posts/{id} does. There is no per-route exemption, so a route that
+	 * goes back to confirming an id exists fails here.
+	 *
+	 * @param string $kind   Fixture kind the probe pointed at.
+	 * @param int    $id     Fixture the probe pointed at.
+	 * @param int[]  $refuse The entry's declared refusal statuses.
 	 * @return int[]
 	 */
-	private function refusal_for( int $id, array $refuse, array $entry ): array {
-		if ( (int) $this->fx['private_space'] === $id ) {
-			return $refuse;
-		}
-		// A recorded, reported parity gap: refused with no data, but with a status
-		// (the entry's refuse list) that confirms the object exists.
-		return empty( $entry['known_gap'] ) ? array( 404 ) : $refuse;
+	private function refusal_for( string $kind, int $id, array $refuse ): array {
+		// Kind as well as id: a post id can equal the private space's id.
+		return 'space' === $kind && (int) $this->fx['private_space'] === $id ? $refuse : array( 404 );
 	}
 
 	/**
@@ -547,7 +548,7 @@ trait Route_Authority_Checks {
 					[ $status, $code, $body ] = $this->dispatch( $key, $user_id, $id );
 					$label                    = "{$key} [{$who}, {$kind} #{$id}] {$status}" . ( $code ? " {$code}" : '' );
 					$body                     = str_ireplace( $this->sent_values( $entry ), '', $body );
-					$allowed                  = null === $refuse || 'user' === $kind ? null : $this->refusal_for( $id, $refuse, $entry );
+					$allowed                  = null === $refuse || 'user' === $kind ? null : $this->refusal_for( $kind, $id, $refuse );
 
 					if ( in_array( $code, array( 'rest_missing_callback_param', 'rest_invalid_param' ), true ) ) {
 						$problems[] = $label . ' - the probe never reached the route. Give it schema-valid probe_params / probe_body.';

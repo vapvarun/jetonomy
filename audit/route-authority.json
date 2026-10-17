@@ -47,7 +47,6 @@
       "audience": "owner",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler allows the author or a moderator. Observed: another member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "post",
       "refuse": [
         403,
@@ -63,7 +62,6 @@
       "audience": "owner",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler allows the reply author or a moderator. Observed: another member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "reply",
       "refuse": [
         403,
@@ -74,7 +72,6 @@
       "audience": "owner",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler allows the topic author or a moderator to un-accept. Observed: another member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "reply",
       "refuse": [
         403,
@@ -90,7 +87,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires the space owner/admin or a site admin (Space::can_hand_over for transfer). Observed: a plain member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "space",
       "refuse": [
         403,
@@ -326,7 +322,6 @@
       "audience": "public",
       "permission_callback": "Visibility::rest_check",
       "reason": "Guest-read gate passes, the handler decides: observed signed out on a public space: 403. Only a space admin or site admin lists invites; a hidden space answers 404 (probed).",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "observed_anon": 403,
       "probe": "space",
       "refuse": [
@@ -468,7 +463,6 @@
       "audience": "owner",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler allows the author (jetonomy_edit_own_posts) or a moderator (jetonomy_edit_others_posts / space moderator / manage_options). Observed: another member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "post",
       "probe_body": {
         "title": "G2 probe edit"
@@ -482,7 +476,6 @@
       "audience": "owner",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler allows the reply author or a moderator. Observed: another member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "reply",
       "probe_body": {
         "content": "G2 probe edit"
@@ -496,7 +489,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires space admin or jetonomy_manage_spaces. Observed: a plain member of the space is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "space",
       "probe_body": {
         "title": "G2 probe rename"
@@ -659,7 +651,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires jetonomy_close_posts or space moderator. Observed: a member who did not write it is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "post",
       "refuse": [
         403,
@@ -670,13 +661,11 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires moderator rights in the Ideas space. Observed: a member who is not a moderator is refused 403.",
-      "known_gap": "Refused, but a non-member gets 400 jetonomy_not_ideas_space for a private-space topic: the space-type check runs before the access check, so it confirms the topic exists and what kind of space holds it. Owner policy wants 404. Reported in G2.",
       "probe": "post",
       "probe_body": {
         "idea_status": "planned"
       },
       "refuse": [
-        400,
         403,
         404
       ]
@@ -685,7 +674,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires moderator rights over both topics. Observed: a plain member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "post",
       "probe_body": {
         "target_post_id": "{post}"
@@ -699,7 +687,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires jetonomy_move_posts or moderator rights in both spaces. Observed: a plain member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "post",
       "probe_body": {
         "target_space_id": "{space}"
@@ -713,7 +700,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires jetonomy_pin_posts or space moderator. Observed: a plain member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "post",
       "refuse": [
         403,
@@ -747,7 +733,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires read access to the topic (Permission_Engine::can_read_reply / Content_Gate) and participate rights in its space. A non-member replying to a private-space topic is refused (probed).",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "post",
       "probe_body": {
         "content": "G2 probe reply"
@@ -761,7 +746,6 @@
       "audience": "owner",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler allows the topic author (Q&A) or a moderator to accept an answer. Observed: another member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "reply",
       "refuse": [
         403,
@@ -772,7 +756,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires moderator rights in the reply's space. Observed: a plain member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "reply",
       "probe_body": {
         "title": "G2 split topic"
@@ -809,7 +792,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires space admin (or site admin) to mint an invite link. Observed: a plain member is refused 403.",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "space",
       "refuse": [
         403,
@@ -830,7 +812,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler applies the space's join policy (open joins, private asks, hidden/invite-only refuse). A non-member joining a listed private space gets 202 (a join request is queued, nothing is read), a hidden space is refused (probed).",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "space",
       "refuse": [
         202,
@@ -852,7 +833,6 @@
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
       "reason": "auth_mutation(read) gate; the handler requires post rights in the space (Permission_Engine + Content_Gate::check_post). A non-member posting into a private or hidden space is refused (probed).",
-      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
       "probe": "space",
       "probe_body": {
         "title": "G2 probe topic",

@@ -263,13 +263,15 @@ class Content_Gate {
 	/**
 	 * Whether the viewer could read the target were it published: the status is
 	 * left out on purpose, target_is_live() answers that part with its 409.
+	 * False means the viewer may not know it exists: the REST write routes
+	 * (Base_Controller::find_unconcealed_post/_reply) answer it with a 404.
 	 *
 	 * @param int         $viewer Member.
 	 * @param object|null $post   Topic row.
 	 * @param object|null $reply  Reply row, for a reply target.
 	 * @param string      $type   'post' or 'reply'.
 	 */
-	private static function viewer_may_read( int $viewer, ?object $post, ?object $reply, string $type ): bool {
+	public static function viewer_may_read( int $viewer, ?object $post, ?object $reply, string $type ): bool {
 		if ( ! $post || ( 'reply' === $type && ! $reply ) ) {
 			return false;
 		}
