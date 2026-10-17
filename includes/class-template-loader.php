@@ -1929,6 +1929,7 @@ class Template_Loader {
 			'flagDismissed'         => __( 'Flag dismissed', 'jetonomy' ),
 			'failed'                => __( 'Failed', 'jetonomy' ),
 			'failedSaveProfile'     => __( 'Failed to save profile.', 'jetonomy' ),
+			'markReadFailed'        => __( 'Could not mark notifications as read. Check your connection and try again.', 'jetonomy' ),
 			'schedule'              => __( 'Schedule', 'jetonomy' ),
 			/* translators: %s: the label of the item being edited (the configured noun). */
 			'editPost'              => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),

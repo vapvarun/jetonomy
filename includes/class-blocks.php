@@ -706,7 +706,7 @@ class Blocks {
 				<a href="<?php echo esc_url( $profile_url ); ?>" <?php echo $jt_link_attrs( 'profile_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
 					<span class="jt-userpanel-link-label"><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
 				</a>
-				<a href="<?php echo esc_url( $notifs_url ); ?>" <?php echo $jt_link_attrs( 'notifs_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
+				<a href="<?php echo esc_url( $notifs_url ); ?>" data-jt-unread-host="jt-userpanel-badge" <?php echo $jt_link_attrs( 'notifs_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
 					<span class="jt-userpanel-link-label"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></span>
 					<?php if ( $unread > 0 ) : ?>
 						<span class="jt-userpanel-badge"><?php echo esc_html( (string) $unread ); ?></span>

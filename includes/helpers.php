@@ -49,27 +49,7 @@ if ( ! function_exists( 'jetonomy_post_title_or_excerpt' ) ) {
 			return '';
 		}
 
-		$plain = preg_replace( '/\s+/u', ' ', $plain );
-
-		if ( function_exists( 'mb_strlen' ) && mb_strlen( $plain ) > $len ) {
-			$truncated = mb_substr( $plain, 0, $len );
-			$last_sp   = mb_strrpos( $truncated, ' ' );
-			$cut       = ( false !== $last_sp && $last_sp > 0 )
-				? mb_substr( $truncated, 0, $last_sp )
-				: $truncated;
-			return rtrim( $cut ) . '…';
-		}
-
-		if ( strlen( $plain ) > $len ) {
-			$truncated = substr( $plain, 0, $len );
-			$last_sp   = strrpos( $truncated, ' ' );
-			$cut       = ( false !== $last_sp && $last_sp > 0 )
-				? substr( $truncated, 0, $last_sp )
-				: $truncated;
-			return rtrim( $cut ) . '…';
-		}
-
-		return $plain;
+		return \Jetonomy\short_title( $plain, $len );
 	}
 }
 

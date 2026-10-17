@@ -218,6 +218,16 @@ if ( ! $cancel_url ) {
 				<input type="checkbox" name="email_opt_out" value="1" <?php checked( $jt_email_opt_out ); ?>>
 				<span><?php esc_html_e( 'Pause all email notifications. You will still see web notifications in the community.', 'jetonomy' ); ?></span>
 			</label>
+			<?php
+			/**
+			 * Fires inside the member's notification settings, below the email
+			 * pause switch. Jetonomy Pro adds the email digest choice here.
+			 *
+			 * @since 2.0.3
+			 * @param int $user_id The member editing their profile.
+			 */
+			do_action( 'jetonomy_profile_notification_fields', $current_user->ID );
+			?>
 		</div>
 
 		<?php

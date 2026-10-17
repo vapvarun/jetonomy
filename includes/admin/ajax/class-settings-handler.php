@@ -14,11 +14,26 @@ defined( 'ABSPATH' ) || exit;
 class Settings_Handler {
 
 	/**
+	 * Sample values for the enriched placeholders, so a preview or test email
+	 * reads like a real one instead of "[site]  replied to your topic".
+	 *
+	 * @return array{post_title: string, actor_display_name: string, reply_excerpt: string, space_title: string}
+	 */
+	private static function sample_extra(): array {
+		return array(
+			'post_title'         => 'Getting started with Jetonomy',
+			'actor_display_name' => 'Alice Chen',
+			'reply_excerpt'      => __( 'Thanks for the walkthrough, the setup steps worked for me.', 'jetonomy' ),
+			'space_title'        => 'General Discussion',
+		);
+	}
+
+	/**
 	 * Sample copy shown when admins preview or send-test for a specific
 	 * notification type. Keeps the preview concrete without pulling real
-	 * community data.
+	 * community data. `type` names the real type behind an email variant.
 	 *
-	 * @return array<string, array{message: string, url: string}>
+	 * @return array<string, array{message: string, url: string, type?: string}>
 	 */
 	private static function sample_fixtures(): array {
 		return array(
@@ -30,6 +45,11 @@ class Settings_Handler {
 				/* translators: %s: singular topic label, lowercase. */
 				'message' => sprintf( __( 'Alice replied to your %s "Getting started with Jetonomy".', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 				'url'     => \Jetonomy\route_url( 'post', 'general', 'getting-started-with-jetonomy' ),
+			),
+			'reply_in_followed'      => array(
+				'message' => __( 'Alice Chen replied in "Getting started with Jetonomy"', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'post', 'general', 'getting-started-with-jetonomy' ),
+				'type'    => 'reply_to_post',
 			),
 			'reply_to_reply'         => array(
 				'message' => __( 'Bob replied to your comment on "Hosting recommendations".', 'jetonomy' ),
@@ -87,6 +107,11 @@ class Settings_Handler {
 			'moderation'             => array(
 				'message' => __( 'A moderator reviewed your recent content.', 'jetonomy' ),
 				'url'     => \Jetonomy\route_url( 'moderation' ),
+			),
+			'flag_created'           => array(
+				'message' => __( 'New content flag requires review', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'moderation' ),
+				'type'    => 'moderation',
 			),
 			'join_request'           => array(
 				/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
@@ -171,11 +196,12 @@ class Settings_Handler {
 
 		Notifier::send_email_notification(
 			(int) $admin_user->ID,
-			$type,
+			$fixture['type'] ?? $type,
 			$fixture['message'],
 			'preview',
 			0,
-			$fixture['url']
+			$fixture['url'],
+			self::sample_extra() + array( 'email_template' => $type )
 		);
 
 		wp_send_json_success(
@@ -208,13 +234,7 @@ class Settings_Handler {
 
 		$user = wp_get_current_user();
 
-		$placeholders = array(
-			'{site}'    => get_bloginfo( 'name' ),
-			'{user}'    => $user->display_name,
-			'{message}' => $fixture['message'],
-			'{type}'    => $type,
-			'{url}'     => $fixture['url'],
-		);
+		$placeholders = Notifier::email_placeholders( $user, $fixture['type'] ?? $type, $fixture['message'], $fixture['url'], self::sample_extra() );
 
 		// A blank field previews the default the send path uses for it.
 		$default = Notifier::get_default_template( $type );
@@ -222,11 +242,12 @@ class Settings_Handler {
 		$body    = '' !== $body_override ? strtr( $body_override, $placeholders ) : ( '' !== $default['body'] ? strtr( $default['body'], $placeholders ) : $fixture['message'] );
 
 		$html = Notifier::render_email_template(
-			$type,
+			$fixture['type'] ?? $type,
 			$body,
 			$user,
 			'',
-			$fixture['url']
+			$fixture['url'],
+			self::sample_extra()
 		);
 
 		wp_send_json_success(

@@ -1172,7 +1172,7 @@ function get_profile_action_url( string $action, int $user_id ): string {
 		'edit'                  => $edit,
 		'notification-settings' => $edit . '#notification-preferences',
 		'badges'                => $base . '#jt-badges',
-		'digest'                => $base . '#digest-preferences',
+		'digest'                => $edit . '#digest-preferences',
 	);
 	$url  = $urls[ $action ] ?? $base;
 
@@ -1273,6 +1273,30 @@ function reply_permalink( string $space_slug, string $post_slug, int $reply_id, 
 	}
 
 	return $url . '#reply-' . $reply_id;
+}
+
+/**
+ * Shorten text to at most $len characters at a word boundary, with an ellipsis
+ * when anything was cut. The one way titles are shortened in notices and emails,
+ * so a title never ends mid-word ("...knowledge ba").
+ *
+ * @param string $text Plain text (a title or excerpt).
+ * @param int    $len  Maximum characters kept before the ellipsis.
+ * @return string
+ */
+function short_title( string $text, int $len = 50 ): string {
+	$text = trim( (string) preg_replace( '/\s+/u', ' ', $text ) );
+	if ( mb_strlen( $text ) <= $len ) {
+		return $text;
+	}
+	$cut = mb_substr( $text, 0, $len );
+	// Byte offset of an ASCII space, so substr() never splits a multibyte character.
+	// One long word (or a language without spaces) is cut at the length instead.
+	$space = strrpos( $cut, ' ' );
+	if ( $space ) {
+		$cut = substr( $cut, 0, $space );
+	}
+	return rtrim( $cut, " \t,.;:-" ) . '…';
 }
 
 /**

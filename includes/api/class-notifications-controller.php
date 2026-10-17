@@ -256,13 +256,10 @@ class Notifications_Controller extends Base_Controller {
 		$id           = absint( $request->get_param( 'id' ) );
 		$notification = Notification::find( $id );
 
-		if ( ! $notification ) {
+		// Someone else's notification answers exactly like a missing one, so the
+		// response never confirms that an id exists.
+		if ( ! $notification || (int) $notification->user_id !== $user_id ) {
 			return $this->not_found( 'Notification' );
-		}
-
-		// Verify the notification belongs to the current user.
-		if ( (int) $notification->user_id !== $user_id ) {
-			return $this->permission_error();
 		}
 
 		Notification::mark_read( $id );

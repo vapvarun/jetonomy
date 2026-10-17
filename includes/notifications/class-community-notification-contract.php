@@ -115,7 +115,7 @@ class Community_Notification_Contract {
 			$post     = $reply ? Post::find( (int) $reply->post_id ) : null;
 			if ( $post ) {
 				$topic_link  = \Jetonomy\notification_deep_link( 'post', (int) $post->id );
-				$title       = mb_substr( (string) $post->title, 0, 50 );
+				$title       = \Jetonomy\short_title( (string) $post->title );
 				$object_type = 'post';
 				$object_id   = (int) $post->id;
 				$link        = '' !== $topic_link ? $topic_link : $link;

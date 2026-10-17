@@ -854,7 +854,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<?php esc_html_e( 'Customize subject and intro copy per notification type. Leave blank to use defaults.', 'jetonomy' ); ?>
 						<br>
 						<?php esc_html_e( 'Placeholders:', 'jetonomy' ); ?>
-						<code>{site}</code> <code>{user}</code> <code>{message}</code> <code>{type}</code> <code>{url}</code>
+						<?php foreach ( \Jetonomy\Notifications\Notifier::EMAIL_PLACEHOLDERS as $jt_placeholder ) : ?>
+							<code><?php echo esc_html( $jt_placeholder ); ?></code>
+						<?php endforeach; ?>
 					</p>
 				</div>
 				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
