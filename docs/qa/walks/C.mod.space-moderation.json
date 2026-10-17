@@ -1,0 +1,128 @@
+{
+  "journey": "C.mod.space-moderation",
+  "checks": {
+    "c-mod-space-moderation.1": {
+      "result": "pass",
+      "evidence": "test_moderator /community/s/bug-reports/mod/ -> only Bug Reports: 2 flags (title, start of text, reason chip, reporter note) and Awaiting approval 1. Screenshot qa-artifacts/203-walk3/laneA/w3A-bugreports-mod.png"
+    },
+    "c-mod-space-moderation.2": {
+      "result": "pass",
+      "evidence": "Remove on flag 379 and Dismiss on flag 380 as test_moderator -> both cards left, POST /spaces/2995/moderation/flags/{id}/resolve returned 200 each, topic 5706 trashed and 5705 kept, each reporter got exactly one flag_resolved notification."
+    },
+    "c-mod-space-moderation.3": {
+      "result": "pass",
+      "evidence": "Removed flag on Carlos's topic 5704, clicked Trash -> topic listed (Restore button); switching Flags / Awaiting approval / Trash left window.__marker intact, so it is a soft navigation (URL gains ?view=trash)."
+    },
+    "c-mod-space-moderation.4": {
+      "result": "pass",
+      "evidence": "two pending flags: subtitle '2 pending flags' + badge '2 pending' + tab 'Flags 2' -> '1 pending flag' / '1 pending' / 'Flags 1' -> '0 pending flags', badge gone, tab 'Flags' without a count, 'Queue cleared.'"
+    },
+    "c-mod-space-moderation.5": {
+      "result": "pass",
+      "evidence": "28 pending flags seeded through Flag::create in Bug Reports: header '28 pending flags', page 1 has 25 cards and nav 'Moderation queue pagination' with Next -> ?pg=2, page 2 has the remaining 3. Seeded rows deleted afterwards."
+    },
+    "c-mod-space-moderation.6": {
+      "result": "pass",
+      "evidence": "Bug Reports /mod/ as test_moderator: no ban, silence, restrict or suspend control anywhere on the page."
+    },
+    "c-mod-space-moderation.7": {
+      "result": "pass",
+      "evidence": "test_editor opens /community/s/help-desk/mod/ -> queue renders (0 pending flags); the restriction control 'Ban from space' is on /community/s/help-desk/members/, not on the mod page."
+    },
+    "c-mod-space-moderation.8": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "test_moderator opening Help Desk /mod/ gets 'You do not have permission to moderate this space.' or 404",
+      "actual": "test_moderator is a WordPress Editor, and the Editor role carries jetonomy_moderate (jetonomy_role_caps), so he is a site-wide moderator: Help Desk /mod/ opens for him. With a true space-only moderator (alice given the moderator role in Bug Reports for the check, then restored) Help Desk /mod/ reads 'You do not have permission to moderate this space.' and Bug Reports opens. The fixture description (moderator of Bug Reports and Moderators' Room only) is wrong.",
+      "url": "http://forums.local/community/s/help-desk/mod/"
+    },
+    "c-mod-space-moderation.9": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "POST /spaces/{help-desk}/moderation/trash/post/{id} as test_moderator -> 403 or 404, post unchanged",
+      "actual": "As test_moderator the call returned 200 and trashed Help Desk topic 5806 (restored straight away through moderation approve; the author got two moderator notices). Same site-wide Editor moderation as check 8. With a space-only moderator (alice) the same call returned 403 jetonomy_forbidden and the topic stayed published.",
+      "url": "POST /wp-json/jetonomy/v1/spaces/3004/moderation/trash/post/5806"
+    },
+    "c-mod-space-moderation.10": {
+      "result": "fail",
+      "expected": "GET /spaces/{Moderators' Room}/moderation/flags as bob (not a member of the hidden space) -> 404 as if the space did not exist",
+      "actual": "bob gets 403 jetonomy_forbidden for the existing hidden space 39, but 404 jetonomy_not_found 'Space not found.' for a nonexistent id 99999 - the two answers differ, so a member can tell a hidden space exists.",
+      "url": "GET /wp-json/jetonomy/v1/spaces/39/moderation/flags"
+    },
+    "c-mod-space-moderation.11": {
+      "result": "pass",
+      "evidence": "bob /community/s/bug-reports/mod/ -> 'You do not have permission to moderate this space.', no queue."
+    },
+    "c-mod-space-moderation.12": {
+      "result": "pass",
+      "evidence": "logged out /community/s/bug-reports/mod/ redirects to wp-login.php?redirect_to=..."
+    },
+    "c-mod-space-moderation.13": {
+      "result": "fail",
+      "expected": "finn refused; a silenced real moderator is refused with 'Your account is currently silenced and cannot post.'",
+      "actual": "finn (silenced, not a moderator) POST trash -> 403 jetonomy_forbidden (generic message). test_moderator silenced site-wide (restriction 399): POST /spaces/2995/moderation/trash/post/6148 -> 200 and the topic was trashed; a silenced moderator can still moderate. Restriction lifted, topic deleted.",
+      "url": "POST /wp-json/jetonomy/v1/spaces/2995/moderation/trash/post/6148"
+    },
+    "c-mod-space-moderation.14": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "bob sees a Closed badge and the notice 'This topic is closed and no longer accepts replies.' with no composer",
+      "actual": "/community/s/announcements/t/scheduled-maintenance-on-saturday-what-to-expect/ shows the Closed badge, no composer, and the notice 'This topic is closed and cannot receive new replies.' (same wording as the REST error). Title on the site is 'Scheduled maintenance on Saturday: what to expect'.",
+      "url": "http://forums.local/community/s/announcements/t/scheduled-maintenance-on-saturday-what-to-expect/",
+      "screenshot": "qa-artifacts/203-walk3/laneA/w3A-closed-bob.png"
+    },
+    "c-mod-space-moderation.15": {
+      "result": "pass",
+      "evidence": "bob POST /posts/5875/replies -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'; no reply stored."
+    },
+    "c-mod-space-moderation.16": {
+      "result": "pass",
+      "evidence": "bob POST /posts/5875/vote value 1 -> 200 {action:created,score:1}, GET shows vote_score 1; vote taken back afterwards (score 0)."
+    },
+    "c-mod-space-moderation.17": {
+      "result": "pass",
+      "evidence": "bob POST /bookmarks {post_id:5875} -> 200 {bookmarked:true}, topic is_bookmarked true and listed in GET /bookmarks; toggled off afterwards. (The route needs post_id, not object_id.)"
+    },
+    "c-mod-space-moderation.18": {
+      "result": "pass",
+      "evidence": "alice Share on the closed topic -> dropdown 'Copy link / Twitter / X / Facebook / LinkedIn'; scrolling 500px detaches it (menu gone). Copy-to-clipboard result not read. Screenshot qa-artifacts/203-walk3/laneA/w3A-share-closed.png"
+    },
+    "c-mod-space-moderation.19": {
+      "result": "pass",
+      "evidence": "alice Report (Spam) on the closed topic -> toast 'Reported. Thank you.', flag appears in /community/s/announcements/mod/ (then dismissed)."
+    },
+    "c-mod-space-moderation.20": {
+      "result": "pass",
+      "evidence": "test_moderator on the closed topic: notice 'This topic is closed. As a moderator, you can still take part.', composer present, reply posted from the UI, topic still shows Closed. Reply deleted afterwards. Screenshot qa-artifacts/203-walk3/laneA/w3A-closed-mod.png"
+    },
+    "c-mod-space-moderation.21": {
+      "result": "pass",
+      "evidence": "test_editor (space admin) More options > Close topic on Help Desk topic 5807 -> Closed badge and menu switches to Reopen topic; Reopen topic removes the badge. Members replying again after reopening not exercised."
+    },
+    "c-mod-space-moderation.90": {
+      "result": "pass",
+      "evidence": "POST /posts/5807/close closed:true twice -> 200 both, is_closed true; POST /posts/5807/pin pinned:true twice -> 200 both, is_sticky true; reopened and unpinned afterwards (is_closed false, is_sticky false)."
+    }
+  },
+  "proposed_checks": [
+    "- `c-mod-space-moderation.91` @space_admin #rest !refuse: a space-only moderator (WordPress role Subscriber, moderator row in Bug Reports) POSTs a moderation action in Help Desk -> 403, and the Help Desk /mod/ page says 'You do not have permission to moderate this space.' (test_moderator is an Editor, so use a persona that is not.)",
+    "- `c-mod-space-moderation.92` @member #rest !refuse: GET /spaces/{hidden id}/moderation/flags and GET /spaces/99999/moderation/flags answer the same status and body.",
+    "- `c-mod-space-moderation.93` @moderator #rest !refuse: a silenced moderator POSTs /spaces/{id}/moderation/trash/post/{id} -> refused and the topic is unchanged."
+  ],
+  "notes": "lane A. Changed and restored: Bug Reports (2995) space settings require_approval then NULL; alice given moderator role in Bug Reports then back to member; test_moderator silenced (399) then lifted; theo-style restrictions n/a. Created and removed: flags 379-411, held topic 6147, throwaway topic 6148 (force deleted), reply 13662 (force deleted). Left in trash: topics 5706 and 5704 (removed by the flag checks). Topic 5806 was trashed by test_moderator in check 9 and restored, which sent the author two moderator notices. Closed-topic checks used Announcements topic 5875 (bob vote/bookmark taken back).",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:35:11Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "dark"
+    ]
+  }
+}

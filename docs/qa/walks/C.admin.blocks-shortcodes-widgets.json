@@ -22,7 +22,7 @@
   "checks": {
     "c-admin-blocks-shortcodes-widgets.1": {
       "result": "pass",
-      "evidence": "Draft page with forum-feed, trending, space-list, leaderboard, navigation, user-panel, login and compose-topic: editor shows each as a labelled placeholder ('Jetonomy · Forum Feed - Latest topics from all spaces', 'Jetonomy · Trending Topics', ... 'Jetonomy · Login'; compose-topic 'Compose Topic: space picker'); the 8 published QA pages render live community content (feed rows, trending list, spaces, leaderboard ranks, navigation tree, user card, login form, compose form). qa-artifacts/203-walk2/laneA/editor-blocks.png"
+      "evidence": "Draft page with forum-feed, trending, space-list, leaderboard, navigation, user-panel, login and compose-topic: editor shows each as a labelled placeholder ('Jetonomy \u00b7 Forum Feed - Latest topics from all spaces', 'Jetonomy \u00b7 Trending Topics', ... 'Jetonomy \u00b7 Login'; compose-topic 'Compose Topic: space picker'); the 8 published QA pages render live community content (feed rows, trending list, spaces, leaderboard ranks, navigation tree, user card, login form, compose form). qa-artifacts/203-walk2/laneA/editor-blocks.png"
     },
     "c-admin-blocks-shortcodes-widgets.2": {
       "result": "pass",
@@ -87,8 +87,13 @@
       "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk14-390-long.png"
     },
     "c-admin-blocks-shortcodes-widgets.16": {
-      "result": "untested",
-      "needs": "docker site: a 2000-topic seed (site has about 260 topics)"
+      "result": "fail",
+      "expected": "Recent topics block at 50 items on a 2000-topic site renders in one query pass and under 1 second",
+      "actual": "50 items rendered in 0.11s but Query Monitor showed 270 queries (Author::for_display per row, not one query pass)",
+      "url": "http://localhost:8095/jt-qa-sc-recent-posts/?autologin=1",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/recent-50.png",
+      "evidence": "50 items, QM 0.11s 270Q. Threshold: under 1s AND one query pass. Time pass, query-pass fail.",
+      "site": "docker jt203-scale"
     },
     "c-admin-blocks-shortcodes-widgets.17": {
       "result": "pass",
@@ -113,5 +118,5 @@
     "- `c-admin-blocks-shortcodes-widgets.19` @admin #block: seeded QA pages use stale ids ([jetonomy_space_members space_id=\"1\"], user_profile user_id=\"1\"); re-seed or rewrite them with slugs so the pages show the roster.",
     "- `c-admin-blocks-shortcodes-widgets.20` @admin #block: the check names eight blocks that do not exist; replace with login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel and navigation."
   ],
-  "notes": "Created a draft page (id 1339) to insert the blocks in the editor and deleted it. Read-only visits as bob, finn and guest. No settings changed. | Re-walk 2 (lane A): no settings changed."
+  "notes": "Created a draft page (id 1339) to insert the blocks in the editor and deleted it. Read-only visits as bob, finn and guest. No settings changed. | Re-walk 2 (lane A): no settings changed. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
 }

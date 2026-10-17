@@ -1,9 +1,9 @@
 {
   "journey": "C.anon.quick-login-and-captcha",
-  "free": "b6017483",
-  "pro": "44f7338",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
   "walker": "lane A",
-  "walked_at": "2026-10-17T13:28:34Z",
+  "walked_at": "2026-10-17T17:09:42Z",
   "env": {
     "themes": [
       "reign",
@@ -107,18 +107,12 @@
       "evidence": "Registered walk.newcomer with email verification on: 'Account created. Check w***@example.com for a confirmation link...'; trying to log in gave 'Confirm your email...' with a Resend confirmation email link; clicking it showed 'If an account is waiting on confirmation for that email, a new link is on its way.' and a second 'Confirm your email to finish signing up' message arrived in Mailpit (a click inside 60 s of the previous mail sends nothing, by the per-account cooldown). The success sentence is appended in red error styling under the original error"
     },
     "c-anon-quick-login-and-captcha.20": {
-      "result": "fail",
-      "expected": "after Resend confirmation email the 'a new link is on its way' sentence replaces the error and is styled as a success",
-      "actual": "From the login path the red error 'Confirm your email to finish signing up...' stays and the resend sentence is appended after it as the underlined button text in the same red (rgb 222,76,76); only the post-registration path is green",
-      "url": "http://forums.local/jt-qa-block-login/",
-      "screenshot": "qa-artifacts/203-walk2/laneA/rw2-resend-after-click.png"
+      "result": "pass",
+      "evidence": "registered dana.whitfield with verification on, then login -> red 'Confirm your email...' error; clicking Resend replaced it with a single .jt-login-message.is-success in green (rgb 63,176,105): 'If an account is waiting on confirmation for that email, a new link is on its way.' Screenshot qa-artifacts/203-walk3/laneA/w3A-resend-after1.png"
     },
     "c-anon-quick-login-and-captcha.21": {
-      "result": "fail",
-      "expected": "a second Resend click within 60 seconds tells the member to wait",
-      "actual": "Resend 17s after the registration email and again about 45s later both showed 'If an account is waiting on confirmation for that email, a new link is on its way.' and no email was sent (Mailpit); only a later fourth click inside a minute showed 'Too many attempts. Please wait a few minutes and try again.' - the cooldown is silent",
-      "url": "http://forums.local/jt-qa-block-login/",
-      "screenshot": "qa-artifacts/203-walk2/laneA/rw2-resend-1.png"
+      "result": "pass",
+      "evidence": "second Resend click ~2s later -> 'A link was just sent. Please wait 52 seconds before asking for another.' (429 jetonomy_resend_cooldown, countdown 52 -> 51); Mailpit shows only 2 mails to the account (registration + first resend), none for the second click. Screenshot qa-artifacts/203-walk3/laneA/w3A-resend-after2.png"
     }
   },
   "proposed_checks": [
@@ -128,5 +122,5 @@
     "- `c-anon-quick-login-and-captcha.20` @guest #block: click Resend confirmation email -> the 'a new link is on its way' sentence replaces the error and is styled as a success (today it is appended in red under the error).",
     "- `c-anon-quick-login-and-captcha.21` @guest #block: click Resend confirmation email twice within 60 seconds -> the second click tells the member to wait (today it shows the same success sentence and sends nothing)."
   ],
-  "notes": "Settings changed and restored: users_can_register 1 -> 0 (original 0), require_email_verification on -> jetonomy_settings restored byte-equal from backup; test account walk.newcomer created through the Login block and deleted; its Mailpit messages remain. | Re-walk 2 (lane A): changed and restored: users_can_register 0 -> 1 -> 0, jetonomy_settings require_email_verification false -> true, then whole option restored from backup; test account dana.whitaker created for .20/.21 and deleted."
+  "notes": "Settings changed and restored: users_can_register 1 -> 0 (original 0), require_email_verification on -> jetonomy_settings restored byte-equal from backup; test account walk.newcomer created through the Login block and deleted; its Mailpit messages remain. | Re-walk 2 (lane A): changed and restored: users_can_register 0 -> 1 -> 0, jetonomy_settings require_email_verification false -> true, then whole option restored from backup; test account dana.whitaker created for .20/.21 and deleted. | lane A re-walk 3: set jetonomy_settings.require_email_verification=1 and users_can_register=1 for the resend checks (originals: key unset, users_can_register=0); account dana.whitfield created via the Login block. Restores listed at the end of the session record."
 }

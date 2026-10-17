@@ -72,8 +72,10 @@
       "evidence": "dark mode at 390: cards, chips, text use dark tokens, readable, no white panels (home-390-dark.png)"
     },
     "c-anon-home.14": {
-      "result": "untested",
-      "needs": "docker site: needs fresh community without posts"
+      "result": "pass",
+      "evidence": "After wiping jt_posts/replies/spaces/categories: guest /community/ shows Welcome + 'Log in to post\u2026' + Log in button + 'No categories yet. Check back soon!', not a blank column. Pulse numbers were stale (5,000 members / 2,316 topics) after the wipe.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/empty-home.png",
+      "site": "docker jt203-scale"
     },
     "c-anon-home.15": {
       "result": "pass",
@@ -88,8 +90,9 @@
   "proposed_checks": [
     "- `c-anon-home.16` @guest #ui +1440: look at any space card stats line -> 'Active N minutes ago' shows in full, not cut off with an ellipsis.",
     "- `c-anon-home.17` @guest #ui: look at the home page category blocks -> the Community category shows its own name as a heading like the other blocks (the first block shows only its description).",
-    "- `c-anon-home.18` @guest #ui: look at Other Spaces -> no QA fixture spaces (QA Q&A space etc.) show on a customer-facing home."
+    "- `c-anon-home.18` @guest #ui: look at Other Spaces -> no QA fixture spaces (QA Q&A space etc.) show on a customer-facing home.",
+    "- `c-anon-home.19` @guest #ui +empty: after all topics are deleted, the home welcome pulse updates immediately (here it still said 2,316 topics / 5,000 members after jt_posts=0)."
   ],
-  "notes": "No settings changed. Registration is closed site-wide so only Log in is offered. | Re-walk lane B 2026-10-17: walked .1 .2 .4 .10 .11 .12 .16; .5 .7 .8 left untested lane A, .14 docker site. Related defect recorded in C.anon.category.4/5: Staff category (only a hidden space) is listed on the home page for a guest. | lane A (re-walk 2026-10-17): lane A: registration and private teasers toggled and restored (users_can_register back to 0, jetonomy_settings restored byte-equal).",
+  "notes": "No settings changed. Registration is closed site-wide so only Log in is offered. | Re-walk lane B 2026-10-17: walked .1 .2 .4 .10 .11 .12 .16; .5 .7 .8 left untested lane A, .14 docker site. Related defect recorded in C.anon.category.4/5: Staff category (only a hidden space) is listed on the home page for a guest. | lane A (re-walk 2026-10-17): lane A: registration and private teasers toggled and restored (users_can_register back to 0, jetonomy_settings restored byte-equal). | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095.",
   "walked_at": "2026-10-17T12:06:57Z"
 }

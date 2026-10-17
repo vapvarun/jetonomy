@@ -132,7 +132,6 @@ Plugin version: 2.0.2 - 114 actions, 139 filters.
 | `jetonomy_admin_menu_label` | label | includes/admin/class-admin.php |
 | `jetonomy_after_post_content` | '' (html), $post | templates/views/single-post.php |
 | `jetonomy_after_reply_content` | $html, $reply | templates/partials/reply-card.php |
-| `jetonomy_allow_self_upvote` | allowed, user_id, type, id | includes/api/class-votes-controller.php — whether a member may upvote their own content (default true). Return false to block self-upvote for a stricter reputation economy. Self-downvote is always blocked. |
 | `jetonomy_app_config` | $data, $request | includes/api/class-app-config-controller.php |
 | `jetonomy_app_connect_bridge` | $info (array{owner, connect_url, connect_schemes}) | includes/integrations/class-app-connect.php (App_Connect::bridge_info) |
 | `jetonomy_app_connect_schemes` | $schemes (string[], default ["jetonomyapp"]) | includes/integrations/class-app-connect.php (App_Connect::schemes) |
@@ -196,6 +195,8 @@ Plugin version: 2.0.2 - 114 actions, 139 filters.
 | `jetonomy_media_is_referenced` | $referenced (bool), $attachment_id (int) | includes/class-media-library.php (Media_Library::is_referenced) |
 | `jetonomy_member_message_url` | url, member | includes/functions.php |
 | `jetonomy_member_message_event` | event, member | includes/functions.php |
+| `jetonomy_send_instant_email` | send, user_id, email_key, type | includes/notifications/class-notifier.php - false stops an instant email the member's chosen digest covers (Pro email digest). |
+| `jetonomy_profile_notification_fields` | user_id | templates/views/edit-profile.php - action: extra fields inside the profile's notification settings (Pro: digest choice). |
 | `jetonomy_membership_adapter_labels` | $labels (array<string,string>, adapter id => display name) | includes/adapters/class-adapter-registry.php (Adapter_Registry::membership_labels) |
 | `jetonomy_membership_upgrade_url` | $url (string, "" when none resolved), $level_id (string), $adapter_id (string, "" when unknown) | includes/adapters/class-adapter-registry.php (Adapter_Registry::membership_level_url) |
 | `jetonomy_moderation_flag_resolution` | flag_status, action, type, id, user_id | includes/moderation/class-moderation-service.php apply_object_status() — filters the status applied to an object's pending flags when content is moderated directly (default approve=dismissed, spam/trash=valid, hold=''). Return '' to leave flags pending. |

@@ -1,0 +1,140 @@
+{
+  "journey": "C.notifications",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-notifications.1": {
+      "result": "fail",
+      "expected": "bob's bell count goes up by 1 and /community/notifications/ lists \"Alice replied to your topic\".",
+      "actual": "alice replied to bob's topic: bell +1 and the list shows 'Alice Chen replied to your topic ...', but the topic title inside the sentence is hard-cut at about 50 characters mid-word: 'Local meetup photo walk: who can host the route br\"', 'Where can I see which replies were marked as the a\"'. Reads broken on the page, in the bell and in emails",
+      "url": "http://forums.local/community/notifications/",
+      "screenshot": "qa-artifacts/203-walk3/laneB/notifications-1440.png"
+    },
+    "c-notifications.2": {
+      "result": "pass",
+      "evidence": "maya @-mentioned bob in a reply: Mentions filter (?filter=mentions) lists exactly 'Maya Okafor mentioned you in \"Local meetup photo walk...\"' (tab count 1)"
+    },
+    "c-notifications.3": {
+      "result": "fail",
+      "expected": "it opens the reply on the right page of the thread (for the 45-reply Dark mode topic, page 2) and the item turns read.",
+      "actual": "clicking 'Alice Chen replied in Dark mode for the community on phones' opened ...?rpg=2#reply-13626 and reply 13626 was in view on page 2 (correct destination), but the notification stayed unread: REST is_read false for 22106 and unread-count stayed 17 after the click-through; the link is a plain anchor (no mark-read handler, only the row menu marks read)",
+      "url": "http://forums.local/community/notifications/"
+    },
+    "c-notifications.4": {
+      "result": "pass",
+      "evidence": "Mark all as read with 17 unread: bell badge, sidebar count and Unread tab count disappear without reload, 0 unread rows, GET /notifications/unread-count -> 0. (All/Replies/Mentions/Badges tab numbers are totals and stay)",
+      "screenshot": "qa-artifacts/203-walk3/laneB/notifications-after-markall-1440.png"
+    },
+    "c-notifications.5": {
+      "result": "pass",
+      "evidence": "PATCH /notifications/22175 {read:true} -> unread 4 -> 3; POST /notifications/bulk {ids:[22174,22173],action:mark_read} -> affected 2, unread 1; the other item stayed unread"
+    },
+    "c-notifications.6": {
+      "result": "untested",
+      "needs": "a member with no notifications (every seeded member has some; admin is lane A and a fresh account needs registration on); the empty copy was not seen"
+    },
+    "c-notifications.7": {
+      "result": "pass",
+      "evidence": "81 notifications: page shows 20 with Load More (?pg=2); 'Select all on page' selected 20 of 20 (counter 20); Delete removed exactly those 20 (total 81 -> 61); remaining test rows bulk-deleted afterwards"
+    },
+    "c-notifications.8": {
+      "result": "pass",
+      "evidence": "test_moderator dismissed bob's report (POST /moderation/flags/364/resolve {status:dismissed}): bob got one flag_resolved 'Your report was reviewed. Thanks for helping keep the community healthy.' (unread +1)"
+    },
+    "c-notifications.9": {
+      "result": "pass",
+      "evidence": "david requested to join Mentorship Circle: space admin maya's bell got 'David Kim requested to join Mentorship Circle' (join_request); when david withdrew, those notices disappeared from her list. (Alice's earlier handled request notice 22337 stayed after approval)"
+    },
+    "c-notifications.10": {
+      "result": "pass",
+      "evidence": "after maya approved: 'Your request to join Mentorship Circle was approved' (alice, bob); after she denied david: 'Your request to join Mentorship Circle was not approved'"
+    },
+    "c-notifications.11": {
+      "result": "untested",
+      "needs": "an admin awarding a badge or raising a trust level for a member (lane A), to watch the notice appear once"
+    },
+    "c-notifications.12": {
+      "result": "pass",
+      "evidence": "moderator trashed alice's reply 13626: alice got one 'Your reply was removed by a moderator'"
+    },
+    "c-notifications.13": {
+      "result": "untested",
+      "needs": "removing bob from the private Partner Program space and re-adding him (admin action)"
+    },
+    "c-notifications.14": {
+      "result": "pass",
+      "evidence": "maya (member of Customer Advisory Board) replied there with @bob: bob's unread count and Mailpit unchanged, no notification created for bob"
+    },
+    "c-notifications.15": {
+      "result": "pass",
+      "evidence": "alice deleted her reply 13651 that had notified bob: the notification (22175) disappears from bob's list (total 25 -> 24), no broken link"
+    },
+    "c-notifications.16": {
+      "result": "untested",
+      "needs": "lane A: change Settings > Name display (username / full name) and restore it"
+    },
+    "c-notifications.17": {
+      "result": "pass",
+      "evidence": "maya's anonymous reply on bob's topic: notification reads 'Anonymous replied to your topic ...' with actor 'Anonymous', no maya name"
+    },
+    "c-notifications.18": {
+      "result": "pass",
+      "evidence": "Grace Oluwaseun Adeyemi-Whitfield replied to bob's topic: at 390 the row wraps her full name inside the card (x32-358, 191px tall, no overflow, no horizontal scroll)"
+    },
+    "c-notifications.19": {
+      "result": "fail",
+      "expected": "the second tab's bell updates on its next poll.",
+      "actual": "bob had /community/ open with the bell at 10; another session (REST) marked all read (GET /notifications/unread-count -> 0); after 100 seconds the open page still showed 10 (header bell and Alerts tab): the badge never polls, it only changes on navigation or reload",
+      "url": "http://forums.local/community/"
+    },
+    "c-notifications.20": {
+      "result": "untested",
+      "needs": "a thread with 200 followers (seed data) and a reply to it"
+    },
+    "c-notifications.21": {
+      "result": "pass",
+      "evidence": "GET /notifications and /notifications/unread-count as guest -> 401 jetonomy_unauthorized"
+    },
+    "c-notifications.22": {
+      "result": "fail",
+      "expected": "404 not found (not 403) and bob's item stays unread.",
+      "actual": "alice PATCH /notifications/22172 (bob's) -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'; a nonexistent id returns 404 jetonomy_not_found, so the 403 reveals that bob's notification id exists. Bob's item stayed unread (and bulk/delete for alice affected 0)"
+    },
+    "c-notifications.23": {
+      "result": "untested",
+      "needs": "lane A: send an admin announcement from wp-admin"
+    },
+    "c-notifications.24": {
+      "result": "pass",
+      "evidence": "notifications at 390 dark: unread rows tinted oklab(0.38 ...) (dark, well under 100 per channel), text rgb(229,229,229), no horizontal scroll",
+      "screenshot": "qa-artifacts/203-walk3/laneB/notifications-390-dark.png"
+    },
+    "c-notifications.25": {
+      "result": "fail",
+      "expected": "the badge rolls back to its old count and an error shows.",
+      "actual": "Mark all as read clicked offline with 3 unread: nothing changes (bell 3, 3 unread rows) and no error toast or message appears, so the failure is silent",
+      "url": "http://forums.local/community/notifications/"
+    }
+  },
+  "proposed_checks": [
+    "- `c-notifications.26` @member #ui +long: a notice about a topic with a long title cuts the title at a word boundary with an ellipsis, not mid-word with a closing quote (\"...the route br\").",
+    "- `c-notifications.27` @member #ui: the header bell and the Alerts tab pick up a mark-all-read done in another tab or device within one minute.",
+    "- `c-notifications.28` @member_b #rest !refuse: PATCH a notification id that belongs to someone else and a nonexistent id -> the same 404, never a 403 for the existing one."
+  ],
+  "notes": "60 test notifications created with wp jetonomy notification trigger and deleted; bob marked all read twice."
+}

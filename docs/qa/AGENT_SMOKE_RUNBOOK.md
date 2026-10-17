@@ -270,6 +270,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-home.14` @guest #ui +empty: on a fresh community with no posts (jt-qa seed cleaned) -> the home shows an empty state that invites a visitor to log in, not a blank column.
 - `c-anon-home.15` @guest #ui: click a feed card title and the author name -> the topic page and the author's profile open with 200.
 - `c-anon-home.16` @guest #ui +1440: look at any space card stats line -> 'Active N minutes ago' shows in full, not cut off with an ellipsis.
+- `c-anon-home.19` @guest #ui +empty: after all topics are deleted, the home welcome pulse updates immediately (here it still said 2,316 topics / 5,000 members after jt_posts=0).
 
 ### C.anon.category
 **Covers:** templates/views/category.php, includes/models/class-category.php, includes/api/class-categories-controller.php, templates/partials/breadcrumb.php, templates/partials/category-chips.php
@@ -422,6 +423,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-leaderboard.9` @member #ui: open the leaderboard as bob -> his own row is highlighted or marked.
 - `c-anon-leaderboard.10` @guest #ui +390: open the leaderboard at 390px in dark mode -> rows do not overflow and text is readable.
 - `c-anon-leaderboard.11` @guest #rest !refuse: GET /leaderboards?period=bogus -> 400 invalid period (currently 200 all-time).
+- `c-anon-leaderboard.12` @guest #ui !refuse: a site-banned member with reputation is absent from week, month and all time and from REST /leaderboards; a quiet week says "No activity this week." with a "See all time" link.
 
 ### C.anon.search
 **Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/api/class-search-controller.php, includes/adapters/interface-search-adapter.php, includes/adapters/interface-search-query-adapter.php, templates/partials/empty-state.php
@@ -616,12 +618,12 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **Checks:**
 - `c-member-mention.1` @member #ui: bob writes "@alice thanks, that fixed it for me" in a reply -> the saved reply shows @alice as a link to her profile.
 - `c-member-mention.2` @member_b #ui: alice opens the bell -> exactly one mention notification linking to the reply.
-- `c-member-mention.3` @member_b #email: read alice's Mailpit email -> its subject and body come from the owner's saved Mention template (Settings > Emails), not the default text.
+- `c-member-mention.3` @member_b #email: read alice's Mailpit email -> subject is "[forums] You were mentioned by Bob Martinez" (actor name present) and the body comes from the owner's saved Mention template or the Settings > Emails default.
 - `c-member-mention.4` @member_b #email card:10412885103: bob replies mentioning @alice who is the topic author (OP) -> alice gets one notification and one email, not two.
 - `c-member-mention.5` @member_b #email card:10412885103: bob replies mentioning @maya, who follows the thread -> maya gets one notification and one email, not a reply notice plus a mention notice.
 - `c-member-mention.6` @member #ui: mention the same person twice in one reply -> one link each and still one notification.
 - `c-member-mention.7` @member #ui: write a mention in a new post body -> the post saves with the link and the mentioned user is notified once.
-- `c-member-mention.8` @member #rest: POST a reply with "@alice" -> 201, content_html holds the profile link, GET /notifications as alice shows it.
+- `c-member-mention.8` @member #rest: POST a reply with "@alice" -> 201, content keeps the raw @alice (no content_html field), the page render links it, and GET /notifications as alice shows it.
 - `c-member-mention.9` @member #ui !refuse: bob writes @nobodyhere (no such user) -> the text stays plain with no link and no error.
 - `c-member-mention.10` @member_b #email !refuse: bob mentions @alice in a private reply she may not read -> no notification and no email; if she may read it, she gets exactly one.
 - `c-member-mention.11` @member #ui !refuse: bob mentions @alice inside Customer Advisory Board where alice is not a member (bob cannot post there) -> and in Moderators' Room, a mention of a non-member produces no notification.
@@ -631,6 +633,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-mention.15` @member #ui: mention yourself -> no notification to bob.
 - `c-member-mention.16` @member #ui +rtl: mention @omar inside Arabic text -> the link renders correctly inside the right-to-left sentence.
 - `c-member-mention.17` @member #ui +deleted: edit the reply to remove the mention -> the old notification stays/goes per contract and no second notification is sent when other text is edited.
+- `c-member-mention.18` @member #ui: choose a member from the @ autocomplete with Enter, then keep typing -> a space follows the handle ("@grace could ...") and the saved reply links to her profile.
+- `c-member-mention.19` @member #ui +long: the autocomplete row for a member without an avatar shows initials, not a broken image, and the long name is not cut with an ellipsis.
 
 ### C.member.vote
 **Covers:** includes/api/class-votes-controller.php, includes/models/class-vote.php, assets/js/view.js, templates/views/single-post.php, templates/partials/reply-card.php, assets/js/lib/optimistic.js, assets/js/jetonomy-rest.js, includes/api/class-rest-auth.php, includes/permissions/class-rate-limiter.php, templates/partials/feed-card.php, pro:includes/extensions/reactions/*.php, pro:assets/js/pro-view.js
@@ -640,12 +644,12 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **Checks:**
 - `c-member-vote.1` @member #ui: bob upvotes alice's reply -> the score rises by 1 on screen, one toast "Vote added" shows, and the button reads "Remove your upvote".
 - `c-member-vote.2` @member #ui: reload the page -> the vote is still active and the score unchanged.
-- `c-member-vote.3` @member #ui: click the active upvote again -> score returns, one toast "Vote removed", button label back to "Upvote".
+- `c-member-vote.3` @member #ui: click the active upvote again -> score returns, one toast "Vote removed", button label back to "Vote up".
 - `c-member-vote.4` @member #ui: downvote a reply -> the button reads "Remove your downvote"; switching from up to down moves the score by 2.
 - `c-member-vote.5` @member #rest: POST /posts/<id>/vote with value 1, then -1, then -1 again (which takes the vote back) -> each response carries the new score, and value 0 returns 400 rest_invalid_param.
 - `c-member-vote.6` @member #ui: vote on a topic (not a reply) and on a feed card -> the same toast appears once and the score matches on the topic page, space list and feed.
-- `c-member-vote.7` @member #ui !refuse: bob tries to upvote his own reply -> blocked with "You cannot upvote your own content." and the score is unchanged.
-- `c-member-vote.8` @member #rest !refuse: POST a downvote on his own content -> 400 with "You cannot downvote your own content.".
+- `c-member-vote.7` @member #ui !refuse: bob looks at his own reply -> the vote control is disabled with the reason "You cannot vote on your own content."; no vote is recorded and the score is unchanged.
+- `c-member-vote.8` @member #rest !refuse: POST /posts/{id}/vote with value 1 and with value -1 on his own content -> each 400 jetonomy_self_vote "You cannot vote on your own content."; taking back an older vote on own content is still allowed.
 - `c-member-vote.9` @member #ui +limit !refuse: reach the daily vote limit -> the next new vote shows "You can vote again in about X." and REST returns 429.
 - `c-member-vote.10` @member #ui +limit: at the daily limit click an active vote to take it back -> the vote is removed with "Vote removed" even though he is at the cap.
 - `c-member-vote.11` @member #ui !refuse: sign in as a member who lacks the vote permission -> the score shows as a disabled control that explains why on hover or click, not a dead button.
@@ -661,6 +665,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-vote.21` @member #ui: check finn's -4 post -> the negative score is shown with a minus sign and the up/down state is correct.
 - `c-member-vote.22` @member #ui: with Pro Reactions active, add a reaction beside the vote -> vote and reaction act independently.
 - `c-member-vote.23` @member #ui +dark +390: voting controls at 390px in dark mode -> tap targets stay at least 40px and the active state is visible.
+- `c-member-vote.24` @silenced #ui !refuse +silenced: finn clicks the disabled score on a reply -> the toast says his account is silenced (the REST text "Your account is currently silenced and cannot post."), not the generic "Voting is not available to you here.".
+- `c-member-vote.25` @member_b #ui: the grouped vote notice reads "2 people voted on your reply" without quotation marks around "your reply".
 
 ### C.member.flag
 **Covers:** includes/api/class-moderation-controller.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php, assets/js/jetonomy-modals.js, assets/js/jetonomy-rest.js, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php
@@ -672,7 +678,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-flag.2` @member #ui !refuse: submit with no reason -> the hint "Choose a reason." shows and nothing is sent.
 - `c-member-flag.3` @member #ui: submit with Spam -> toast "Reported. Thank you." appears.
 - `c-member-flag.4` @moderator #ui: test_moderator opens the moderation queue -> the report is listed with reason Spam and the reporter name.
-- `c-member-flag.5` @member #ui !refuse: bob reports the same reply again -> toast "You already reported this." and no second queue row.
+- `c-member-flag.5` @member #ui !refuse: bob reports the same reply again -> toast "You have already reported this content." (REST 409 jetonomy_already_flagged) and no second queue row.
 - `c-member-flag.6` @member #rest: POST /moderation/flags with target and reason -> 201; invalid reason returns 400.
 - `c-member-flag.7` @member #ui: report a reply and report a member profile -> both reach the queue with the right target type.
 - `c-member-flag.8` @member #rest !refuse: report your own content -> 400 jetonomy_flag_self.
@@ -686,6 +692,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-flag.16` @member #ui +long: type 2000 characters into details -> the field shows its limit and saves or blocks, never a 500.
 - `c-member-flag.17` @member #ui +390 +dark: open the dialog at 390px in dark mode -> it fits the screen, the reason list scrolls, buttons are reachable.
 - `c-member-flag.18` @member #ui +rtl: report Omar's Arabic topic -> dialog direction is right-to-left.
+- `c-member-flag.19` @member #rest !refuse: GET /replies/<id> of a private reply bob may not read -> 404 jetonomy_not_found like the flag and vote refusals (today 200 with empty content but author_id and created_at).
+- `c-member-flag.20` @member #rest +long: POST /flags with a 100000-character description -> 400 with a message (not a 500), and the details box shows a character limit.
+- `c-member-flag.21` @member #ui +many: three members report the same reply -> the moderator sees one card with "3 reports" and their reasons; resolving it resolves all three and each reporter is told once.
 
 ### C.member.subscribe-thread-and-space
 **Covers:** includes/api/class-subscriptions-controller.php, includes/models/class-subscription.php, includes/notifications/class-notifier.php, templates/views/subscriptions.php, assets/js/lib/optimistic.js
@@ -694,7 +703,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 **Checks:**
 - `c-member-subscribe-thread-and-space.1` @member #ui: bob clicks Follow on the Feature Requests topic -> the button changes to Following and /community/subscriptions/ lists it.
-- `c-member-subscribe-thread-and-space.2` @member_b #ui: alice replies in that topic -> bob gets one bell notification and one email.
+- `c-member-subscribe-thread-and-space.2` @member_b #ui: alice replies in the thread bob follows -> bob gets one bell notification and one email whose subject says he follows the thread ("[forums] Alice Chen replied in <topic>"), not "replied to your topic" when bob is not the author.
 - `c-member-subscribe-thread-and-space.3` @member #ui: bob unfollows -> the button reverts; the next reply produces no notification for him.
 - `c-member-subscribe-thread-and-space.4` @member #ui: follow Help Desk (space) -> a new topic by alice there produces one notification for bob.
 - `c-member-subscribe-thread-and-space.5` @member #rest: POST /subscriptions then DELETE it -> 201 then 200; unfollowing a thread removes that subscription and not the newest one.
@@ -703,13 +712,13 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-subscribe-thread-and-space.8` @member_b #email !refuse: bob subscribes to a thread; alice posts a private reply -> bob gets no notification or email unless he may read it.
 - `c-member-subscribe-thread-and-space.9` @member #ui !refuse: following a Moderators' Room topic id via REST as bob -> 404 jetonomy_not_found.
 - `c-member-subscribe-thread-and-space.10` @member #ui +private: bob follows Partner Program and is later removed -> his notifications about it disappear and he stops receiving mail.
-- `c-member-subscribe-thread-and-space.11` @guest #ui !refuse: Follow as guest -> sends to login; REST returns 401.
+- `c-member-subscribe-thread-and-space.11` @guest #ui !refuse: a guest sees no Follow control; /community/subscriptions/ redirects to wp-login.php?redirect_to=...; POST /subscriptions returns 401.
 - `c-member-subscribe-thread-and-space.12` @member #ui +offline: follow offline -> the button rolls back and an error toast shows.
 - `c-member-subscribe-thread-and-space.13` @member #ui +concurrent: click Follow twice quickly -> one subscription row.
 - `c-member-subscribe-thread-and-space.14` @member #ui +empty: open /community/subscriptions/ with none -> a clean empty state.
 - `c-member-subscribe-thread-and-space.15` @member #ui +many: with more than 30 subscriptions -> the list paginates and counts match.
 - `c-member-subscribe-thread-and-space.16` @member #ui +archived: follow 2025 Hackathon -> Follow works (not Join) and yields no notices as nothing posts.
-- `c-member-subscribe-thread-and-space.17` @member #ui +deleted: a followed topic is deleted -> it vanishes from the subscriptions list.
+- `c-member-subscribe-thread-and-space.17` @member #ui +deleted: a followed topic is deleted -> its row stays as "No longer available" with Unfollow (owner decision).
 - `c-member-subscribe-thread-and-space.18` @member #ui +dark +390: subscriptions page at 390px dark -> rows fit.
 
 ### C.member.accept-answer
@@ -733,6 +742,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-accept-answer.13` @member #ui +deleted: delete the accepted reply -> the topic reverts to unanswered.
 - `c-member-accept-answer.14` @member #ui +long: accepted answer with long code block -> callout does not overflow at 390.
 - `c-member-accept-answer.15` @member #ui +offline: accept offline -> badge rolls back and an error shows.
+- `c-member-accept-answer.16` @member #ui: the Accepted callout is shown above the replies when the accepted reply is not the first one.
 
 ### C.member.profile-edit
 **Covers:** templates/views/edit-profile.php, includes/api/class-users-controller.php, includes/models/class-user-profile.php, includes/class-avatar.php, pro:includes/extensions/custom-fields/*.php, pro:assets/js/admin-custom-fields.js
@@ -743,21 +753,22 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-profile-edit.1` @member #ui: bob changes his display name and bio and saves -> both show on his community profile and in his posts' author line.
 - `c-member-profile-edit.2` @admin #admin: open wp-admin > Users > bob -> Biographical Info equals the community bio just saved.
 - `c-member-profile-edit.3` @admin #admin: edit the bio in wp-admin -> the community profile shows the new bio on reload.
-- `c-member-profile-edit.4` @member #rest: PATCH /users/me with display_name -> 200 and GET shows it.
-- `c-member-profile-edit.5` @member #ui +settings-off: set display name to "admin" (reserved word) -> saves with no error.
+- `c-member-profile-edit.4` @member #rest: PATCH /users/me with a display_name built from his own first, last or nickname fields -> 200; any other display_name -> 400 jetonomy_invalid_display_name.
+- `c-member-profile-edit.5` @member #ui: a reserved word such as admin cannot be chosen as the display name (400), even when the nickname is admin.
 - `c-member-profile-edit.6` @member #ui: upload an avatar as a member holding Upload media -> it shows in the header, topics and replies.
 - `c-member-profile-edit.7` @member #ui !refuse +settings-off: member without Upload media -> upload controls are hidden and the text "Your Gravatar is used as your photo." shows.
 - `c-member-profile-edit.8` @member #rest !refuse +settings-off: POST an avatar upload without the permission -> 403.
 - `c-member-profile-edit.9` @member #ui: open notification preferences -> the list includes "Answer to my request to join a space" with email on by default.
 - `c-member-profile-edit.10` @member #ui: turn that preference off, save, reload -> still off, and a later join answer sends no email.
-- `c-member-profile-edit.11` @member_b #ui !refuse: alice opens /community/u/bob/edit -> refused; PATCH /users/<bob's id> returns 403.
-- `c-member-profile-edit.12` @member #ui !refuse +empty: blank display name -> an inline error and it keeps the old name.
+- `c-member-profile-edit.11` @member_b #ui !refuse: alice opens /community/u/bob/edit/ -> she gets her own edit form (the slug is ignored) or a refusal; she cannot see or change bob's data.
+- `c-member-profile-edit.12` @member #rest !refuse +empty: PATCH display_name "" -> 200 and the old name stays.
 - `c-member-profile-edit.13` @member #ui +long: a 200-character display name and a 2000-character bio -> either limited with a message or wrapped without breaking the header.
 - `c-member-profile-edit.14` @member #ui: remove the avatar -> Gravatar/initials return.
 - `c-member-profile-edit.15` @member #ui +offline: save offline -> an error and the form keeps typed values.
 - `c-member-profile-edit.16` @member #ui: with Pro Custom Fields, fill in a field -> it shows on the public profile; required empty field blocks the save.
 - `c-member-profile-edit.17` @member #ui +390 +dark: the form at 390px dark -> labels and inputs readable.
 - `c-member-profile-edit.18` @silenced #ui +silenced: finn edits his profile -> allowed (silencing stops posting only).
+- `c-member-profile-edit.19` @member #ui: after switching the display name to the username a member can switch back (the old option stays selectable).
 
 ### C.member.bookmarks
 **Covers:** templates/views/bookmarks.php, includes/api/class-bookmarks-controller.php, includes/models/class-bookmark.php, assets/js/lib/optimistic.js, templates/partials/empty-state.php
@@ -769,9 +780,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-bookmarks.2` @member #ui: open /community/bookmarks/ -> the topic is listed with its title and space.
 - `c-member-bookmarks.3` @member #ui: unbookmark from the list -> the row disappears and the count drops by one.
 - `c-member-bookmarks.4` @member #ui +empty: remove the last bookmark -> the empty state shows immediately without a reload, and clicking another tab shows its full content.
-- `c-member-bookmarks.5` @member #rest: POST /bookmarks then DELETE -> 201 then 200; repeating POST does not duplicate.
+- `c-member-bookmarks.5` @member #rest: POST /bookmarks -> 200 {bookmarked:true}; a second POST toggles it off ({bookmarked:false}); DELETE /bookmarks/<id> -> 200 {deleted:true} and a repeat DELETE is also 200; never a duplicate row.
 - `c-member-bookmarks.6` @member #rest !refuse: bookmark a topic id from Moderators' Room -> 404 jetonomy_not_found.
-- `c-member-bookmarks.7` @guest #ui !refuse: bookmark as guest -> redirected to login; /community/bookmarks/ shows a login prompt.
+- `c-member-bookmarks.7` @guest #ui !refuse: a guest sees no bookmark button; /community/bookmarks/ redirects to wp-login.php?redirect_to=/community/bookmarks/; POST /bookmarks returns 401.
 - `c-member-bookmarks.8` @member_b #ui !refuse: alice opens bob's bookmark list -> sees only her own.
 - `c-member-bookmarks.9` @member #ui +deleted: bookmark then have the topic deleted -> the list omits it and shows no broken row.
 - `c-member-bookmarks.10` @member #ui +private: bookmark a Partner Program topic and leave the space -> it disappears from the list.
@@ -779,6 +790,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-bookmarks.12` @member #ui +offline: bookmark offline -> the icon rolls back with an error.
 - `c-member-bookmarks.13` @member #ui +long: Grace's long-title topic in the list -> wraps inside the row.
 - `c-member-bookmarks.14` @member #ui +390 +dark: bookmarks page at 390px dark -> readable.
+- `c-member-bookmarks.15` @member #ui +390: a bookmark row at 390 keeps the reply count and the relative time readable and not under the bookmark button.
 
 ### C.member.share
 **Covers:** templates/views/single-post.php, assets/js/view.js, assets/js/lib/smart-dropdown.js, includes/api/class-oembed-controller.php
@@ -793,19 +805,19 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-share.5` @member #ui: press Escape with the dropdown open -> it closes and focus returns to the button.
 - `c-member-share.6` @guest #ui: Share on a public topic as guest -> works the same.
 - `c-member-share.7` @member #ui !refuse: a Partner Program topic -> either Share shows a note that only members can open the link, or the link is the same private URL; it never exposes the body.
-- `c-member-share.8` @guest #rest: GET /oembed?url=<public topic> -> 200 with title and author; for a hidden topic 404 jetonomy_not_found.
+- `c-member-share.8` @guest #rest: GET /oembed?url=<public topic> -> 200 with title and author; for a hidden or private topic 404 jetonomy_oembed_not_found.
 - `c-member-share.9` @member #ui +long: share Grace's 159-character title -> encoded link works and the dropdown stays in view.
 - `c-member-share.10` @member #ui +390 +rtl: open the dropdown at 390px in RTL near the screen edge -> it stays inside the viewport.
 - `c-member-share.11` @member #ui +offline: clipboard denied -> a fallback message shows instead of a silent failure.
 
 ### C.member.scheduled-post
-**Covers:** templates/partials/compose-fields.php, assets/js/composer.js, includes/api/class-posts-controller.php, includes/class-cron.php
+**Covers:** templates/partials/compose-fields.php, assets/js/composer.js, includes/api/class-posts-controller.php, includes/class-cron.php, templates/partials/schedule-fields.php, assets/js/view.js, templates/views/single-post.php
 **Verified:** 64212bb5
 **What to verify:** a member can schedule a post for a future date/time using the composer's schedule mode, picking both hour and minute; the scheduled post is stored with the correct `published_at`, does not appear on public listings before that time, and appears automatically when the time arrives. The HH:MM picker works in every supported browser (Chromium proven here; Firefox + Safari iOS in `manual_required`).
 
 **Checks:**
 - `c-member-scheduled-post.1` @member #ui: bob schedules a topic "Meetup recap - planning the March community call" for tomorrow 14:35 using hour and minute pickers -> the form accepts it and confirms "scheduled".
-- `c-member-scheduled-post.2` @member #rest: POST /posts with status scheduled and a future published_at -> 201 and published_at is stored as UTC for 14:35 in the site timezone.
+- `c-member-scheduled-post.2` @member #rest: POST /spaces/<id>/posts with status draft and a future published_at -> 201 and published_at is stored for that time in the site timezone.
 - `c-member-scheduled-post.3` @guest #ui !refuse: before the time arrives view the space and search -> the scheduled topic is not in listings, search or its URL (404).
 - `c-member-scheduled-post.4` @member #ui: bob opens Drafts or his scheduled list -> the topic is listed there with its release time.
 - `c-member-scheduled-post.5` @member #ui: advance time past 14:35 and run `wp cron event run` -> the topic appears on the listing with publish time as its date and subscribers get one notification.
@@ -819,6 +831,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-scheduled-post.13` @silenced #ui !refuse +silenced: finn schedules -> refused.
 - `c-member-scheduled-post.14` @member #ui: the picker works in Chromium; Firefox and Safari iOS -> noted in manual_required if not available.
 - `c-member-scheduled-post.15` @member #ui +dark +390: schedule picker on a phone in dark mode -> usable.
+- `c-member-scheduled-post.16` @member #ui +390: the "More publishing options" menu (Publish now, Save as draft, Schedule...) is fully above the fixed mobile tab bar and every item is tappable.
+- `c-member-scheduled-post.17` @member #ui: a member can change the release time of a scheduled topic from its page.
+- `c-member-scheduled-post.18` @member #ui: the author changes a scheduled topic's time from the topic page (Save time), then picks Cancel schedule -> the publish job moves, then the topic stays a draft; PATCH published_at as another member -> refused.
 
 ### C.member.space-pagination
 **Covers:** templates/views/space.php, templates/partials/pagination.php, assets/js/pagination-frontend.js, assets/js/pagination-hydrator.js, templates/partials/feed-card.php
@@ -831,13 +846,15 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-space-pagination.3` @member #ui: scroll to the bottom without clicking -> nothing loads.
 - `c-member-space-pagination.4` @member #ui: click Load More until the end -> the button disappears after the last page.
 - `c-member-space-pagination.5` @member #ui +many: Feature Requests with 30+ topics at 30 per page -> the first batch is 30, Load More adds the next batch, the total equals the REST X-WP-Total.
-- `c-member-space-pagination.6` @member #rest: GET /posts?space_id=&page=2 and a page beyond the last -> page 2 returns the next batch; beyond the last returns an empty list or 400, not 500.
+- `c-member-space-pagination.6` @member #rest: GET /spaces/<id>/posts?offset=20 returns the next batch, offset beyond the total returns an empty list, and ?page=N is either honoured or rejected, not silently ignored.
 - `c-member-space-pagination.7` @member #ui +empty: a space with zero or fewer posts than one page -> no Load More button.
 - `c-member-space-pagination.8` @member #ui +concurrent: a new topic is posted while page 1 is open, then Load More is clicked -> no duplicate row and no skipped row.
 - `c-member-space-pagination.9` @member #ui +offline: click Load More offline -> the button stays and an error shows; retry works.
 - `c-member-space-pagination.10` @member #ui: change the Settings > posts_per_page value -> the first batch size follows it.
 - `c-member-space-pagination.11` @guest #ui !refuse: Load More in Partner Program as guest -> no topics, only the login prompt.
 - `c-member-space-pagination.12` @member #ui +390 +dark: Load More at 390px dark -> the button is full width and focus moves sensibly for keyboard users.
+- `c-member-space-pagination.13` @member #ui +concurrent: Load More after a new topic was posted shows no duplicate row.
+- `c-member-space-pagination.14` @member #ui +offline: Load More offline shows an error message and keeps the button.
 
 ### C.member.profile-mobile-tabs
 **Covers:** templates/views/user-profile.php, templates/views/drafts.php
@@ -872,6 +889,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-online-indicator.9` @member #ui +banned: omar (banned from one space) while active -> the dot shows normally; finn silenced shows normally.
 - `c-member-online-indicator.10` @member #ui +390 +dark: dot at 390px dark mode -> a visible ring separates it from the avatar and it is not clipped.
 - `c-member-online-indicator.11` @member #ui +deleted: reply by deleted account -> no dot and no error.
+- `c-member-online-indicator.12` @guest #rest !refuse: GET /users/<id> logged out does not return the exact last_seen_at of a member.
 
 ### C.mod.queue-and-actions
 **Covers:** templates/views/moderation.php, templates/partials/moderation/*.php, includes/api/class-moderation-controller.php, includes/moderation/class-moderation-service.php, assets/js/jetonomy-modals.js, includes/models/class-restriction.php, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php, templates/partials/pagination-nav.php, templates/partials/empty-state.php, pro:includes/extensions/advanced-moderation/*.php, pro:assets/js/moderation-admin.js, pro:includes/extensions/ai/*.php
@@ -902,6 +920,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-mod-queue-and-actions.21` @moderator #ui +concurrent: two moderators open the same held topic and one approves it, then the other clicks Reject -> the second sees a clear "already handled" message and the topic stays published, with no second notification to the author.
 - `c-mod-queue-and-actions.22` @moderator #ui +offline: go offline and click Approve -> the card stays in the list, an error toast shows, and reconnecting then clicking Approve works once.
 - `c-mod-queue-and-actions.23` @moderator #ui #rest +settings-off: with the Pro Advanced Moderation extension off, hold a topic by an auto-rule match -> no rule-held items appear, and with it on a keyword rule "Hold for Approval" puts a new topic from a trust level 0 member in Awaiting approval.
+- `c-mod-queue-and-actions.24` @moderator #ui: open a held topic card in Awaiting approval -> a Mark as spam control sits beside Approve and Reject, or the check is dropped.
+- `c-mod-queue-and-actions.25` @moderator #rest !refuse +concurrent: a stale Reject, Approve, Trash or Spam on a topic another moderator already approved -> 409 jetonomy_already_handled, the topic stays published and no notice or email goes out.
+- `c-mod-queue-and-actions.26` @guest #rest !refuse: GET /moderation/queue logged out -> 401 rest_not_logged_in like the other write routes.
 
 ### C.mod.flag-resolution
 **Covers:** templates/partials/moderation/flag-card.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php
@@ -927,6 +948,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-mod-flag-resolution.16` @moderator #ui +deleted: flag a reply, then its author deletes it, then open Flags -> the card shows the reply as removed (no PHP notice, no blank card) and can be dismissed.
 - `c-mod-flag-resolution.17` @moderator #ui +rtl: flag Omar's Arabic topic -> the flagged text renders right-to-left inside the card and the buttons keep their position.
 - `c-mod-flag-resolution.18` @moderator #ui +dark: open a flag card in dark mode -> reason chips, note and buttons keep readable contrast (4.5:1).
+- `c-mod-flag-resolution.19` @moderator #rest !refuse +concurrent: resolve or dismiss the same flag twice -> the second call answers 409 jetonomy_already_handled, and the reporter gets exactly one bell row and one email.
+- `c-mod-flag-resolution.20` @moderator #ui: remove a flag on a reply, then open Trash -> the Trash tab opens on the Replies sub-tab (or the one that holds the item) instead of 'No topics in the trash.'.
 
 ### C.admin.plugin-pages
 **Covers:** includes/admin/class-admin.php, includes/admin/views/*.php, assets/css/admin.css, assets/js/admin-common.js, assets/js/admin-confirm.js, assets/js/admin-content.js, assets/js/admin-dashboard.js, assets/js/admin-media-grid.js, assets/js/admin-nav-menus.js, assets/js/admin-replies.js, assets/js/admin-revisions.js, assets/js/admin-settings.js, assets/js/admin-tags.js, includes/admin/class-activity-list-table.php, includes/admin/class-revisions-list-table.php, includes/admin/ajax/class-content-handler.php, includes/admin/ajax/class-moderation-handler.php, includes/admin/ajax/class-tags-handler.php, includes/class-activity-tracker.php, includes/class-admin-bar.php, includes/class-nav-menus.php, includes/models/class-activity-log.php, includes/models/class-revision.php, pro:includes/extensions/white-label/*.php, pro:includes/extensions/analytics/views/*.php, pro:includes/extensions/custom-fields/views/*.php, pro:includes/extensions/private-messaging/views/*.php
@@ -956,6 +979,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-plugin-pages.20` @admin #admin: open Activity Log filtered to Anonymous Author Revealed -> the row never prints the real author's ID or login in the list (reveal is audited, identity kept out of the table).
 - `c-admin-plugin-pages.21` @admin #admin +many: Spaces list with 50+ spaces -> a search box and sortable columns exist (currently 3 pages of 20, no search, no sort).
 - `c-admin-plugin-pages.22` @admin #admin: Content and Spaces list column headers sort (date, replies) with the active sort shown.
+- `c-admin-plugin-pages.23` @admin #admin: open the Activity Log row for Anonymous Author Revealed where the real author still exists -> the row names the revealed member as an audit record visible to admins only, and is not visible in any member-facing or exported surface (today it prints the display name as a profile link).
 
 ### C.admin.category-and-space-crud
 **Covers:** includes/admin/ajax/class-categories-handler.php, includes/admin/ajax/class-spaces-handler.php, includes/admin/views/categories.php, includes/admin/views/spaces.php, includes/models/class-space.php, includes/models/class-category.php, includes/api/class-categories-controller.php, includes/class-space-purge.php, includes/models/class-model.php, pro:includes/class-space-relations.php
@@ -989,6 +1013,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-category-and-space-crud.24` @admin #cli: after deleting a space, jt_space_members, jt_subscriptions and jt_read_status hold no rows for its id (251 orphan member rows exist for spaces 179, 306-555).
 - `c-admin-category-and-space-crud.25` @admin #admin +many: Spaces list with 50+ spaces -> a search box exists.
 - `c-admin-category-and-space-crud.26` @admin #cli: after deleting spaces 179, 306-555, 3061-3064 earlier, jt_space_members still holds 256 rows for spaces that no longer exist -> a one-off cleanup (or recount step) removes them and a count query returns 0.
+- `c-admin-category-and-space-crud.27` @member #ui +archived: open a topic inside an archived space -> the topic is readable, no reply composer shows, and a reply POST returns 403 jetonomy_space_restricted (needs a topic in the archived 2025 Hackathon; the reseed left it empty).
 
 ### C.admin.user-management
 **Covers:** includes/admin/ajax/class-users-handler.php, includes/admin/views/users.php, includes/trust/class-trust-levels.php, includes/permissions/class-capabilities.php, includes/trust/class-trust-evaluator.php
@@ -1036,7 +1061,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-invite-links.9` @admin #admin: revoke a link -> toast "Invite link revoked.", the link then returns "Invalid invite link." or the expired message.
 - `c-admin-invite-links.10` @space_admin #rest: bob (space admin of Partner Program) GETs /spaces/{id}/invites -> he sees his space's links, and test_editor GET for Partner Program returns 403.
 - `c-admin-invite-links.11` @member #rest !refuse: bob POSTs /spaces/{id}/invite on Customer Advisory Board where he is not a member -> 403 jetonomy_forbidden (private spaces are listed publicly, so the refusal reveals nothing), nothing is created.
-- `c-admin-invite-links.12` @admin #admin +many: create 60 links and 40 join requests -> both lists page and show the total.
+- `c-admin-invite-links.12` @admin #admin +many: create 60 invite links and 40 join requests -> the front-end Members tab pages the links with a total, and the 40 join requests page in wp-admin.
 - `c-admin-invite-links.13` @member #ui: bob requests to join Insiders / Beta, then withdraws -> the request leaves the admin's join-request list and the staff "new join request" notice goes away.
 - `c-admin-invite-links.14` @member #ui +deleted: open an invite link after its space was deleted -> the page says "Invalid invite link.", no PHP error, and no invite or join-request rows remain for that space.
 - `c-admin-invite-links.15` @member #ui +390: open the invite page at 390px -> the Join button is at least 40px tall and the space description wraps.
@@ -1090,7 +1115,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-akismet-staff-bypass.11` @admin #ui: Settings > Anti-Spam with Akismet active but no key -> the page says Akismet is active but not protecting the community because no key is set.
 
 ### C.notifications
-**Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php, includes/api/class-notifications-controller.php, templates/views/notifications.php, includes/notifications/class-community-notification-contract.php, includes/api/class-updates-controller.php, pro:includes/extensions/web-push/*.php
+**Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php, includes/api/class-notifications-controller.php, templates/views/notifications.php, includes/notifications/class-community-notification-contract.php, includes/api/class-updates-controller.php, pro:includes/extensions/web-push/*.php, includes/functions.php, assets/js/jetonomy-rest.js
 **Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** every notification-triggering event (reply to subscribed thread, mention, flag resolution, badge award, admin announcement) produces a new notification for the correct recipient; the bell badge count updates; clicking through takes the user to the correct destination. Join requests and their answers, reactions and reviewed reports also produce notifications that read correctly. Withdrawing a join request removes the staff's "new join request" notices. Unread count endpoint is accurate; mark-all-read zeroes it out. Names in notifications follow the Name display setting.
 
@@ -1120,16 +1145,19 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-notifications.23` @admin #admin: send an admin announcement -> every member gets one "admin announcement" notice and the bell increments.
 - `c-notifications.24` @member #ui +dark: open the page in dark mode -> the unread row tint is dark (average channel under 100) and text stays readable.
 - `c-notifications.25` @member #ui +offline: click "Mark all as read" while offline -> the badge rolls back to its old count and an error shows.
+- `c-notifications.26` @member #ui +long: a notice about a topic with a long title cuts the title at a word boundary with an ellipsis, not mid-word with a closing quote ("...the route br").
+- `c-notifications.27` @member #ui: the header bell and the Alerts tab pick up a mark-all-read done in another tab or device within one minute.
+- `c-notifications.28` @member_b #rest !refuse: PATCH a notification id that belongs to someone else and a nonexistent id -> the same 404, never a 403 for the existing one.
 
 ### C.notifications.email
-**Covers:** includes/adapters/class-wp-mail-adapter.php, templates/emails/*.php, includes/notifications/class-notifier.php, includes/notifications/class-verification-reminder.php, pro:includes/extensions/email-digest/*.php, pro:includes/extensions/reply-by-email/*.php
+**Covers:** includes/adapters/class-wp-mail-adapter.php, templates/emails/*.php, includes/notifications/class-notifier.php, includes/notifications/class-verification-reminder.php, pro:includes/extensions/email-digest/*.php, pro:includes/extensions/reply-by-email/*.php, pro:includes/extensions/email-digest/class-extension.php
 **Verified:** 64212bb5 pro:4d9b361
 **What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work. A member is emailed the answer to a join request (approved or declined), headed "Your join request was answered" (the Settings > Emails name), never "Join Request Result". Mention emails use the owner's saved subject and body. When a moderator removes or approves a member's content, the member's email names it with the owner's terminology ("Your topic was removed by a moderator") and its button reads "Open the Community", never "Review in Mod Queue" (staff flag emails keep that button). The confirmation email's subject and intro follow Settings > Emails, with the link always added.
 
 **Checks:**
 - `c-notifications-email.1` @member_b #email: alice replies to bob's topic with instant emails on -> Mailpit shows "[site] Alice replied to your topic" to bob once, with a View in Community button.
 - `c-notifications-email.2` @member #email +settings-off: bob ticks "Pause all email notifications" and a reply arrives -> no email is sent, the bell notice still appears.
-- `c-notifications-email.3` @member #email: bob chooses daily digest only -> no instant email for a reply, and the Pro digest email arrives at the digest run with an unsubscribe link.
+- `c-notifications-email.3` @member #email: bob picks daily or weekly digest on his profile edit page -> a reply to his topic and a new topic in a followed space arrive only in the digest (no instant email), a reply in a topic he follows still emails at once, and a member on the site default gets both.
 - `c-notifications-email.4` @member #email: click the digest unsubscribe link logged out -> a confirmation page shows and the next digest is not sent.
 - `c-notifications-email.5` @member #email: carlos is approved to join Insiders / Beta -> he receives "Your join request was answered" (never "Join Request Result") with the approval text.
 - `c-notifications-email.6` @member #email: a request is declined -> the same subject "Your join request was answered" with the decline text.
@@ -1145,6 +1173,10 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-notifications-email.16` @silenced #email !refuse: finn tries to trigger a mention email -> no content is created, so no email is sent.
 - `c-notifications-email.17` @admin #admin: open Settings > Emails > preview for each type -> every email type renders in the preview and "Send test email" delivers one to Mailpit.
 - `c-notifications-email.18` @member #email +dark: view the email in a dark-mode mail client -> the accent button and text keep contrast.
+- `c-notifications-email.19` @member #ui #email: after unsubscribing from the digest, the profile settings page offers a way to pick a digest frequency again (the unsubscribe page says to re-enable it there).
+- `c-notifications-email.20` @moderator #email: a member flags a topic -> the staff alert subject says a report needs review and does not read 'A moderator reviewed your content' or tell the staff to reply to a moderator.
+- `c-notifications-email.21` @member #email +long: a reply to a topic with a title over 50 characters -> the intro sentence names the title with an ellipsis or whole, never cut mid-word.
+- `c-notifications-email.22` @member #email !refuse: a member who lost access to a private space gets no email for a reply there, and another member's private topic never appears in a digest.
 
 ### C.search
 **Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/search/class-search-indexer.php, includes/api/class-search-controller.php, includes/adapters/interface-search-adapter.php, includes/adapters/interface-search-query-adapter.php
@@ -1152,7 +1184,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** the full search page handles query, tag filter, date filter, author filter, and sort (relevance / newest / votes) without breakage; relevance sort actually ranks by relevance, not just recency, and votes sort breaks ties by reply count. Private replies and unreadable spaces never appear in results, and tag results count only readable topics.
 
 **Checks:**
-- `c-search.1` @guest #ui: search "dark mode" at /community/search/ -> the "Dark mode for the community on phones" topic is first, with the result count and snippet.
+- `c-search.1` @guest #ui: search "dark mode" at /community/search/ -> results with the count and highlighted snippets, ordered by relevance ("Dark mode toggle in user preferences" first).
 - `c-search.2` @member #ui: filter by tag, by author "Grace", and by date range together -> only matching topics show and each filter is shown as active and removable.
 - `c-search.3` @member #ui: sort Relevance, then Newest, then Votes -> relevance does not just equal recency, newest is by created date, and votes ties break by reply count.
 - `c-search.4` @member #rest: GET /search?q=dark%20mode&sort=votes -> results ordered by vote score with the same ids as the page.
@@ -1160,8 +1192,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-search.6` @guest #rest !refuse: GET /search for the same phrase and with space_id of a private space -> empty result or 404, never 403, and no hint it exists.
 - `c-search.7` @member #ui !refuse: bob searches a phrase that appears only in a private reply -> the topic is not listed through that reply.
 - `c-search.8` @member #ui: open a tag page and read the tag count -> the count equals the readable topics on the page, not including private ones.
-- `c-search.9` @member #ui !refuse: search with one character "a" -> the page says "Try different or fewer keywords (search needs at least 2 characters), or browse the community.", and REST returns "Search query must be at least 2 characters.".
-- `c-search.10` @member #ui +empty: open /community/search/ with no query -> "Enter a search term above to find discussions, replies, and tags.".
+- `c-search.9` @member #ui !refuse: q=a shows "Search query must be at least 2 characters."; an ordinary no-result search shows "Try different or fewer keywords, or browse the community." and no length hint.
+- `c-search.10` @member #ui +empty: open /community/search/ with no query -> "Enter a search term above to find discussions, spaces, and tags.".
 - `c-search.11` @member #ui: filter-only search (a tag with no text) -> returns that tag's topics instead of an error.
 - `c-search.12` @member #ui +rtl: search for an Arabic word -> Omar's Arabic topic is found and the snippet renders right-to-left.
 - `c-search.13` @member #ui +long: search a word inside Grace's 159-character title -> the result card wraps the title and the unbroken URL does not widen the page.
@@ -1170,6 +1202,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-search.16` @member #ui +deleted: delete a topic and search its title -> it no longer appears.
 - `c-search.17` @member #ui +390: search at 390px -> input, filters and cards stack and nothing scrolls sideways.
 - `c-search.18` @member #ui +dark: search in dark mode -> highlighted matches keep contrast.
+- `c-search.19` @guest #ui +empty: a long query with no hits shows "No results for ..." without the 2-character hint.
+- `c-search.20` @member #ui +many: the "N results" header equals the REST total on every page.
 
 ### C.cron
 **Covers:** includes/class-cron.php, includes/class-queue.php
@@ -1264,7 +1298,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-import.13` @member #ui +rtl: open an imported topic with Arabic text -> it renders right to left.
 - `c-admin-import.14` @admin #admin: look for imported HTML with `&amp;` in titles -> no row in spaces, categories or topics has an entity-encoded title.
 - `c-admin-import.15` @admin #admin: look at the step list during a run with a private forum -> a Members step is shown before Topics, matching the 'Adding members to private and group spaces...' message.
-- `c-admin-import.16` @admin #admin: after a re-import, the 'imported before (N items)' note and the '(M) already imported' result agree (shows 177 and 178 on the same screen).
+- `c-admin-import.16` @admin #admin: after a re-import, the "imported before (N)" count equals the "N already imported" result and the Last imported line.
 - `c-admin-import.17` @member #ui +rtl: an imported or posted Arabic topic is right-aligned (dir=auto on the post body) on an LTR site.
 - `c-admin-import.18` @admin #admin: the imported category slug is readable (it is imported-bbpress-1792234737 here, a timestamp) and the category name is 'Imported from bbPress'.
 - `c-admin-import.19` @admin #cli: delete an imported space with `Space::delete` / the admin Delete button -> its topics and replies go with it (here the 127 topics and 47 replies stayed behind after the space row was deleted).
@@ -1335,7 +1369,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-space-create-and-join.3` @member #ui: choose Public with Open join, then Hidden -> hidden forces Invite only with the note "Hidden spaces are invite-only, so the join policy was switched to Invite only.".
 - `c-member-space-create-and-join.4` @member #ui: pick Private while Open -> the join policy flips to Approval required with its note.
 - `c-member-space-create-and-join.5` @member_b #ui: alice opens the private Insiders / Beta page and clicks Request to join with an answer -> the button reads as pending, and carlos's earlier request is shown unchanged.
-- `c-member-space-create-and-join.6` @space_admin #ui: the space admin opens the requests list -> alice's request and answer show, Approve works with "Join request approved.", Decline with "Join request denied.".
+- `c-member-space-create-and-join.6` @space_admin #ui: the admin opens /community/s/<space>/members/ -> alice's request and answer show; Approve and Deny (with a confirm) work and the row leaves, and a confirmation toast appears.
 - `c-member-space-create-and-join.7` @member_b #ui: after approval alice opens My Spaces -> the space is listed, and after a decline she sees the outcome message and can request again.
 - `c-member-space-create-and-join.8` @member_b #ui +concurrent: two admins approve and deny the same request at once -> one wins, the other sees "This request has already been handled.", and alice is either a member or not, never both states.
 - `c-member-space-create-and-join.9` @member #ui +settings-off: with space creation reserved for admins open /community/new-space/ as bob -> "Creating spaces is reserved for community administrators." and no form.
@@ -1348,6 +1382,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-space-create-and-join.16` @member #ui +390: create a space at 390px -> the icon picker and form fit, and buttons are at least 40px tall.
 - `c-member-space-create-and-join.17` @member #ui: withdraw a pending request -> it leaves the admin's request list and no stale notice is left.
 - `c-member-space-create-and-join.18` @member_b #email: the approval is emailed "Your join request was answered", once.
+- `c-member-space-create-and-join.19` @member #ui +long: the My Spaces card wraps a 120-character title instead of cutting it with an ellipsis.
 
 ### C.mod.space-moderation
 **Covers:** templates/views/space-moderation.php, includes/api/class-space-moderation-controller.php
@@ -1377,6 +1412,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-mod-space-moderation.20` @moderator #ui #rest +closed card:10415367196: test_moderator (moderator of that space) opens the closed topic -> the composer shows with "This topic is closed. As a moderator, you can still take part.", his POST reply returns 201, and the topic is still closed afterwards.
 - `c-mod-space-moderation.21` @space_admin #ui: close an open topic with the "Close topic" control, then "Reopen topic" -> the badge appears and disappears and members can reply again after reopening.
 - `c-mod-space-moderation.90` @moderator @member_c #ui #rest +concurrent: two moderators have the same topic open; one closes it, the other (stale tab still showing "Close topic") clicks Close -> the topic stays closed, and the same holds for Pin; POST /posts/<id>/close with closed:true twice leaves is_closed true.
+- `c-mod-space-moderation.91` @space_admin #rest !refuse: a space-only moderator (WordPress role Subscriber, moderator row in Bug Reports) POSTs a moderation action in Help Desk -> 403, and the Help Desk /mod/ page says 'You do not have permission to moderate this space.' (test_moderator is an Editor, so use a persona that is not.)
+- `c-mod-space-moderation.92` @member #rest !refuse: GET /spaces/{hidden id}/moderation/flags and GET /spaces/99999/moderation/flags answer the same status and body.
+- `c-mod-space-moderation.93` @moderator #rest !refuse: a silenced moderator POSTs /spaces/{id}/moderation/trash/post/{id} -> refused and the topic is unchanged.
 
 ### C.member.block-user
 **Covers:** includes/api/class-blocks-controller.php, includes/models/class-blocked-user.php
@@ -1384,7 +1422,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** A member blocks another member from a post or profile; that author's content collapses to a tombstone for the blocker only, and unblocking from the tombstone restores it after reload. The blocked member sees no change and cannot tell, and a member cannot block themselves or a moderator-level account in a way that hides moderation. Check 1440 and 390 widths.
 
 **Checks:**
-- `c-member-block-user.1` @member #ui: bob blocks alice from her reply menu, confirming "Block this user?" -> alice's replies collapse to a tombstone "You blocked this member. Their topics and replies are hidden from you." for bob only.
+- `c-member-block-user.1` @member #ui: bob opens alice's profile, More actions > "Block Alice Chen", confirms "Block Alice Chen?" -> her replies collapse to "Content hidden because you blocked this user." with an Unblock button for bob only.
 - `c-member-block-user.2` @member #ui: click Unblock on the tombstone and reload -> alice's replies show again.
 - `c-member-block-user.3` @member #rest: POST /users/me/blocks {user_id} then GET /users/me/blocks and DELETE /users/me/blocks/{id} -> 200 with blocked true, the list contains her, and deleted true removes her.
 - `c-member-block-user.4` @member #rest: block the same person twice -> both calls return 200 (already blocked is fine) and only one row exists.
@@ -1400,6 +1438,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-block-user.14` @member #ui +dark: view a tombstone in dark mode -> text and border keep contrast.
 - `c-member-block-user.15` @member #ui +offline: block while offline -> the reply does not collapse and an error shows.
 - `c-member-block-user.16` @member #email: a blocked person's reply to bob's topic -> bob gets no notification or email from her.
+- `c-member-block-user.17` @member #ui +long +390: the Blocked members list on the edit-profile page wraps a long name instead of cutting it with an ellipsis.
 
 ### C.member.connect-app
 **Covers:** templates/views/connect-app.php, assets/js/connect-app.js, includes/integrations/class-app-connect.php, includes/api/class-app-config-controller.php, includes/api/class-rest-auth.php
@@ -1423,6 +1462,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-connect-app.14` @member #ui +dark: view the page in dark mode -> card and text keep contrast.
 - `c-member-connect-app.15` @member #ui +offline: click Connect while offline -> "Something went wrong. Please try again." and the button re-enables.
 - `c-member-connect-app.16` @member #ui: with BuddyNext active open /community/connect-app -> it forwards to BuddyNext's connect URL with the same query.
+- `c-member-connect-app.17` @member #ui +390: the connect page has a Cancel button and the "Not you? Sign in as someone else" link is at least 40px tall.
 
 ### C.member.link-preview
 **Covers:** includes/services/links/*.php, includes/services/links/providers/*.php
@@ -1445,6 +1485,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-link-preview.13` @member #ui +390: view a card at 390px -> image scales, text wraps, tap target is at least 40px.
 - `c-member-link-preview.14` @member #ui +dark: view a card in dark mode on Reign -> card background follows the dark surface and the title stays readable.
 - `c-member-link-preview.15` @member #ui +rtl: link to an Arabic page -> the card title renders right to left.
+- `c-member-link-preview.16` @guest #rest: GET /link-preview for a public URL logged out -> either 401 or a rate-limited answer (today it is an open server-side fetch).
+- `c-member-link-preview.17` @member #ui: a standalone wordpress.org post link shows a card with title, image and site name (today only a quote box with the link because the oEmbed iframe is blocked).
 
 ### C.member.privacy-export-erase
 **Covers:** includes/class-privacy.php
@@ -1512,6 +1554,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-site-host-integrations.14` @member #ui +rtl: switch the site to Arabic on Reign -> the community mirrors and the sidebar swaps sides.
 - `c-site-host-integrations.15` @guest #ui !refuse: view the community while the site is in maintenance mode -> the maintenance page shows and Jetonomy pages do not leak.
 - `c-site-host-integrations.16` @admin #ui: set "Community as homepage" -> the root `/` shows the community and still obeys the maintenance gate.
+- `c-site-host-integrations.17` @admin #admin: set Settings > Appearance > Sidebar to 'Hide on community pages' on a theme that shows a sidebar (BuddyX) -> the theme sidebar goes and the Jetonomy sidebar stays, or the option says which one it hides.
 
 ### C.integration.abilities-api
 **Covers:** includes/class-abilities.php
@@ -1534,6 +1577,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-integration-abilities-api.13` @member #rest: run jetonomy/join-space on Partner Program (open) and Insiders / Beta (approval) -> the first joins, the second creates a pending request.
 - `c-integration-abilities-api.14` @admin #rest +settings-off: on WordPress below 6.9 activate the plugin -> no abilities are registered and no PHP error shows.
 - `c-integration-abilities-api.15` @member #rest +many: run jetonomy/list-posts with limit=100 on a 2000-topic space -> returns 100 with paging data in under 1 second.
+- `c-integration-abilities-api.16` @member #rest !refuse: run jetonomy/vote on your own topic with value 1 and -1 -> refused with the same jetonomy_self_vote message as POST /posts/{id}/vote, score unchanged.
+- `c-integration-abilities-api.17` @member_b #rest: run jetonomy/flag-content with reason off-topic and with reason inappropriate -> a flag is created with the REST enum value (off_topic, offensive) and shows in the moderator queue with the reporter's name.
+- `c-integration-abilities-api.18` @member_b #rest !refuse: run jetonomy/flag-content on your own reply, on a reply you cannot read (Customer Advisory Board) and on content you already reported -> the same refusals as POST /flags.
 **Depth note:** no viewport applies; the surface is REST only.
 
 ### C.admin.uninstall
@@ -1553,6 +1599,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-uninstall.9` @member #admin !refuse: bob opens /wp-admin/plugins.php -> WordPress refuses, and no uninstall can be started.
 - `c-admin-uninstall.10` @admin #admin +many: delete with 2000 topics and 500 members -> uninstall finishes without a timeout.
 - `c-admin-uninstall.11` @admin #admin +390: open the Plugins screen at 390px and 1440px -> the Delete confirmation and the row actions are reachable.
+- `c-admin-uninstall.12` @admin #cli: run the PHPUnit UninstallKeepsDataTest (and an opt-in test that also asserts every jt_ table is dropped and no jetonomy_ capability remains) in the wp-env tests-cli container -> all green, so checks 2 to 5 have an automatic proof.
 
 ## C.gating - Access rules and who gets in
 
@@ -1563,7 +1610,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 Setup once: a **public** space with open joining, a **private** space with invite-only joining, and a plain subscriber-role test user who is a member of neither.
 
 ### C.gating.rule-never-locks-out
-**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/permissions/class-content-gate.php
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/permissions/class-content-gate.php, includes/admin/class-admin.php, includes/api/class-rest-auth.php, assets/js/admin-common.js, assets/css/admin.css
 **Verified:** 64212bb5
 **What to verify:** note what the subscriber can do in the public space. Add a Logged In rule to that space. Everything they could do before, they can still do. (A Role, Capability, Trust Level or Membership rule switches a public space to Private by design - the Access Rules tab says so - so a member outside the roster can then read but not post.)
 **Promise:** "A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy."
@@ -1579,8 +1626,9 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-rule-never-locks-out.7` @member_b #ui: an existing roster member of the space keeps posting after any rule is added -> yes, unchanged.
 - `c-gating-rule-never-locks-out.8` @admin #admin: open the Access Rules tab intro -> it says a rule lets more people in and does not restrict.
 - `c-gating-rule-never-locks-out.9` @member #rest !refuse: POST /spaces/{id}/access-rules as the subscriber -> 403 jetonomy_forbidden and no rule is created.
-- `c-gating-rule-never-locks-out.10` @space_admin #admin: test_editor adds a rule to Help Desk -> works for her space, refused for another space.
+- `c-gating-rule-never-locks-out.10` @space_admin #rest !refuse: test_editor (space admin of Help Desk) GETs and POSTs /spaces/{id}/access-rules -> 403 jetonomy_forbidden "Only site administrators can manage access rules for this space."; the wp-admin Access Rules tab URL shows that sentence with a "Back to Help Desk" link.
 - `c-gating-rule-never-locks-out.11` @admin #admin +390: open the Access Rules tab at 390px -> the form stacks and buttons are 40px.
+- `c-gating-rule-never-locks-out.12` @admin #admin: add a Role rule to a public open-join space -> the toast and the General tab say the join policy changed too (it silently moves from Open to Approval today).
 
 ### C.gating.read-on-public
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
@@ -1608,7 +1656,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-read-on-private.3` @member #ui: the subscriber reads the space and its topics -> topics show.
 - `c-gating-read-on-private.4` @member #ui !refuse: the subscriber tries to post, reply and vote -> the composer is absent, and the vote shows a message instead of changing the score.
 - `c-gating-read-on-private.5` @member #rest !refuse: POST a topic, a reply and a vote -> each returns 403 jetonomy_forbidden "You cannot post in this space." and no row is stored.
-- `c-gating-read-on-private.6` @member #rest !refuse: POST /posts/{id}/vote value 1 and a flag -> 403 for both.
+- `c-gating-read-on-private.6` @member #rest: a Read-rule member votes -> 403 jetonomy_forbidden; POST /flags on a topic there -> 201 and the report is stored (Read is read and report).
 - `c-gating-read-on-private.7` @guest #ui !refuse: a guest opens the same private space -> not readable (login prompt or 404), the rule did not apply to guests.
 - `c-gating-read-on-private.8` @admin #admin: remove the rule -> the next load by the subscriber is a refusal again.
 - `c-gating-read-on-private.9` @member #ui +long: read a topic with the 159-character title in it -> the title wraps and no link is clipped.
@@ -1638,7 +1686,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 ### C.gating.full-is-not-moderation
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
 **Verified:** 64212bb5
-**What to verify:** with a **Full** rule on the private space, an ordinary subscriber gets exactly what Participate gives and cannot edit, delete, close or pin anyone else's topic.
+**What to verify:** with a **Full** rule on the private space, an ordinary subscriber gets exactly what Participate gives and cannot edit, delete, close or pin anyone else's topic. Full is recorded as Member for every rule type, never Moderator.
 **Promise:** "For an ordinary member this behaves exactly like Participate."
 **Why it matters:** "Full" reads like "everything". It is not, and never has been.
 
@@ -1653,9 +1701,9 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-full-is-not-moderation.8` @moderator #ui: test_moderator (site Moderate capability) in the same space moderates -> yes, from his WordPress role, not from the rule.
 
 ### C.gating.no-rule-hands-out-moderation
-**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/class-membership-roster-sync.php
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/class-membership-roster-sync.php, includes/admin/ajax/class-spaces-handler.php
 **Verified:** 64212bb5
-**What to verify:** try every grant level, and set the rule's Space Role as high as the screen allows. A subscriber matched by that rule still cannot moderate, edit others' posts, delete others' posts, or pin. (A site moderator holding the Moderate capability does moderate in spaces they can read, but that comes from their WordPress role, never from a rule.)
+**What to verify:** try every grant level, and set the rule's Space Role as high as the screen allows. A subscriber matched by that rule still cannot moderate, edit others' posts, delete others' posts, or pin. (A site moderator holding the Moderate capability does moderate in spaces they can read, but that comes from their WordPress role, never from a rule.) Full is recorded as Member for every rule type, never Moderator.
 **Promise:** "A rule can never hand out moderation."
 **Why it matters:** **this is the 1.9.1 escalation.** Before the fix, a rule set to Read with an elevated space role made every matched person a space admin. If this step ever fails again, it is a security bug - file it immediately and say so in the title.
 
@@ -1668,11 +1716,12 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-no-rule-hands-out-moderation.6` @admin #admin: open the Members tab after the matches -> nobody admitted by the rule is Moderator or Admin.
 - `c-gating-no-rule-hands-out-moderation.7` @member #ui: the subscriber opens the space /mod/ page -> permission message.
 - `c-gating-no-rule-hands-out-moderation.8` @moderator #ui: test_moderator in the space still moderates -> yes, via the Moderate capability.
+- `c-gating-no-rule-hands-out-moderation.9` @admin #admin: on the Access Rules tab choose Full for each rule type and read the live preview -> it says "They are recorded as Member." and never Moderator.
 
 ### C.gating.roster-role-is-a-per-person-decision
 **Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-space-member.php, templates/views/space-members.php
 **Verified:** d44f151c
-**What to verify:** after anyone is admitted by a rule - including via an LMS or membership plugin enrolment if one is installed - open the space **Members** tab. Nobody added by a rule is listed as Moderator or Admin.
+**What to verify:** after anyone is admitted by a rule - including via an LMS or membership plugin enrolment if one is installed - open the space **Members** tab. Nobody added by a rule is listed as Moderator or Admin. Full is recorded as Member for every rule type, never Moderator.
 **Promise:** "To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule."
 
 **Checks:**
@@ -1686,6 +1735,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-roster-role-is-a-per-person-decision.8` @admin #admin +many: the Members tab with 300 people -> it pages and search finds Grace by name.
 - `c-gating-roster-role-is-a-per-person-decision.9` @admin #admin +long: Grace's full name in the Members tab -> wraps in the row.
 - `c-gating-roster-role-is-a-per-person-decision.10` @admin #admin +390: the Members tab at 390px -> rows stack.
+- `c-gating-roster-role-is-a-per-person-decision.11` @admin #rest: POST /spaces/{id}/members with another user's id -> the person is added to the roster (today the route only joins the caller and answers 409 'You are already in this space.' for anyone a rule already admits).
 
 ### C.gating.admission-without-a-roster-row
 **Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/adapters/class-adapter-registry.php, includes/adapters/class-member-press-adapter.php, includes/adapters/class-pmpro-adapter.php, includes/adapters/class-wp-roles-adapter.php, includes/adapters/interface-membership-adapter.php
@@ -1706,7 +1756,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-admission-without-a-roster-row.10` @space_banned #ui !refuse: omar matches a rule for Off-Topic Lounge -> the ban wins, he cannot enter.
 
 ### C.gating.access-ends-by-itself
-**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/class-membership-roster-sync.php, includes/models/class-space-member.php, includes/notifications/class-notifier.php, pro:includes/adapters/class-tag-space-integration.php
 **Verified:** 64212bb5
 **What to verify:** remove the rule (or let the membership lapse where a plugin provides one). Access closes on the next page load, with no admin action.
 **Promise:** "Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand."
@@ -1722,9 +1772,11 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-access-ends-by-itself.8` @member #email: no email arrives for new replies in the space after access ended.
 - `c-gating-access-ends-by-itself.9` @member #ui +concurrent: access ends while he is typing a reply -> the submit is refused with a message and his text is preserved.
 - `c-gating-access-ends-by-itself.10` @admin #admin: re-add the rule -> access returns on the next load without Sync.
+- `c-gating-access-ends-by-itself.11` @admin #admin: delete a membership rule after Sync Members was pressed -> the synced people lose access on the next load (today the roster rows stay until the hourly reconcile, so they keep posting).
+- `c-gating-access-ends-by-itself.12` @member #email: after access ends, a reply to the person's own topic in that space sends no email and no bell row.
 
 ### C.gating.builder-explains-itself
-**Covers:** includes/admin/views/space-edit.php, includes/admin/views/spaces.php, includes/models/class-access-rule.php
+**Covers:** includes/admin/views/space-edit.php, includes/admin/views/spaces.php, includes/models/class-access-rule.php, includes/admin/class-admin.php, includes/api/class-rest-auth.php, assets/js/admin-common.js, assets/css/admin.css
 **Verified:** 64212bb5
 **What to verify:** on the Access Rules tab, step through every entry in the Rule type dropdown. The tab intro and empty state say a rule only lets more people in; visibility and join policy decide who else gets in. Each type shows a second sentence under the live preview saying **who** the rule catches, and the value box carries an example for that type. **Everyone** and **Logged In** show no value box at all. A rule needs a value that can work: a trust level rule with no level (or outside 1-5), a role that does not exist, or an empty capability or membership value is refused with a message, so it can never admit every member.
 **Why it matters:** picking the wrong rule is silent - it saves, the space looks configured, and the mistake only surfaces when the wrong people are in the room.
@@ -1737,14 +1789,15 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-builder-explains-itself.5` @admin #admin !refuse: save a Role rule with the role "ghost_role" -> refused with "Choose a role that exists on this site.".
 - `c-gating-builder-explains-itself.6` @admin #admin !refuse: save an empty Capability and an empty Membership value -> refused with "Enter a value for this rule." and no rule is created.
 - `c-gating-builder-explains-itself.7` @admin #rest !refuse: POST /spaces/{id}/access-rules with the same bad values -> 400 with the same messages, and GET /spaces/{id}/access-rules does not list them.
-- `c-gating-builder-explains-itself.8` @space_admin #admin: test_editor builds a rule on Help Desk -> works and shows the same explanations.
+- `c-gating-builder-explains-itself.8` @space_admin #admin !refuse: test_editor opens the Access Rules tab URL for Help Desk -> "Only site administrators can manage access rules for this space." and a link back to the space; no builder.
 - `c-gating-builder-explains-itself.9` @member #rest !refuse: the subscriber POSTs a rule -> 403.
 - `c-gating-builder-explains-itself.10` @admin #admin +390: the builder at 390px -> dropdown, preview and sentence stack and the Add button is 40px.
 - `c-gating-builder-explains-itself.11` @admin #admin +dark: builder in a dark scheme -> text readable.
 - `c-gating-builder-explains-itself.12` @admin #admin +rtl: builder in Arabic -> the example text is right to left.
+- `c-gating-builder-explains-itself.13` @admin #admin: pick Full with any rule type (Logged In, Role, Capability, Trust Level, or a membership plan) -> the preview says "They are recorded as Member."; after Add Rule the Space Role column shows Member; POST /spaces/{id}/access-rules with grants=full and space_role=admin stores space_role member.
 
 ### C.gating.surfaces-agree
-**Covers:** includes/class-visibility.php, includes/permissions/class-permission-engine.php, includes/search/class-fulltext-search.php, templates/views/home.php, templates/partials/sidebar.php
+**Covers:** includes/class-visibility.php, includes/permissions/class-permission-engine.php, includes/search/class-fulltext-search.php, templates/views/home.php, templates/partials/sidebar.php, includes/api/class-search-controller.php, includes/api/class-base-controller.php, includes/api/class-posts-controller.php, includes/class-template-loader.php, includes/models/class-space.php
 **Verified:** 83f00772
 **What to verify:** for a person who is NOT admitted to a private space, confirm every surface agrees they cannot see its topics: the space page, its topics, site search, tag pages and tag counts, the community home feed, the sidebar, the sitemap and the live-updates feed. A topic URL inside a hidden space returns the same 404 page as a missing topic. The one allowed difference is the optional locked preview card for logged-out visitors (Settings > General > Access Control, off by default), which shows the space name and how to request access but never its topics. A surface that shows content another surface refuses is a bug even when neither is obviously "wrong".
 **Why it matters:** admission is answered in more than one place in the code. Several past bugs were one surface disagreeing with another, and only a human comparing screens catches that.
@@ -1758,7 +1811,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-surfaces-agree.4` @member #ui !refuse: bob opens the tag pages for tags used there -> the topics are not listed and the tag count excludes them.
 - `c-gating-surfaces-agree.5` @member #ui !refuse: bob loads the community home feed and the sidebar (trending, recent) -> no topic or space name from there appears.
 - `c-gating-surfaces-agree.6` @guest #rest !refuse: the guest fetches /community-sitemap.xml and /wp-json/jetonomy/v1/updates?scope=global -> neither lists that space's topics (updates answers 401 for global).
-- `c-gating-surfaces-agree.7` @member #rest !refuse: bob GET /posts/{id}, /spaces/{id}/posts, /posts/{id}/replies and /search?space_id= for that space -> each returns 404, never 403.
+- `c-gating-surfaces-agree.7` @member #rest !refuse: bob GET /posts/{id} and /posts/{id}/replies in Partner Program -> 404; GET /spaces/{id}, /spaces/{id}/posts and /search?space_id={id} -> 403 jetonomy_forbidden; the same three for a hidden space or id 99999 -> 404 with the same body.
 - `c-gating-surfaces-agree.8` @guest #rest !refuse: GET /updates?scope=post&id=<private post> -> refused (403 for private, matching the 404 posture for reads) and the 15-second poll on a public topic gives 200.
 - `c-gating-surfaces-agree.9` @guest #ui +settings-off: with the locked preview off (default) open Partner Program logged out -> no preview card, no title.
 - `c-gating-surfaces-agree.10` @guest #ui: turn on Settings > General > Access Control locked preview -> a card shows the space name and how to request access, and still no topics.
@@ -1767,6 +1820,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-surfaces-agree.13` @member #ui +concurrent: remove bob from Partner Program in one tab and reload each surface in another -> every surface drops its topics together on the next load.
 - `c-gating-surfaces-agree.14` @member #rest +old-data: topics created before a space became private -> they vanish from every surface for non-members, not just the space page.
 - `c-gating-surfaces-agree.15` @member #ui +many: with 2000 topics across private spaces, open home -> counts and lists load in one pass and no topic leaks on page 2.
+- `c-gating-surfaces-agree.16` @guest #ui: open a private space URL logged out with the locked preview off -> the document title is the site name only, never the space name.
 
 ## D - Known-regression guards
 

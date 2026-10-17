@@ -78,8 +78,10 @@
       "evidence": "tab two's save showed the toast 'This topic was changed by someone else. Reload to see their changes.' instead of overwriting"
     },
     "c-member-post-edit.16": {
-      "result": "untested",
-      "needs": "fixture: a moderator who moderates only Bug Reports and holds the Member WP role does not exist (test_moderator is a WP editor); needs that account created, not a lane B action"
+      "result": "pass",
+      "evidence": "harbor_space_mod (WP subscriber, moderator of Bug Reports 7 only, member of Show & Tell 12). Show & Tell topic 2001: 0 .jt-more-trigger (no moderator menu). Bug Reports topic: menu Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete \u2014 no Admin link.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/harbor-showtell-dom.png",
+      "site": "docker jt203-scale"
     },
     "c-member-post-edit.17": {
       "result": "pass",
@@ -92,5 +94,5 @@
     "- `c-member-post-edit.16` @moderator #ui: a moderator with a Member WP role who moderates only Bug Reports opens a Show & Tell topic menu -> only the actions his role grants show (the test_moderator account is a WP editor so it sees everything).",
     "- `c-member-post-edit.17` @member_b #ui !refuse: open the topic URL with /edit/ appended -> decide the contract: a refusal page or the plain 404 it returns today."
   ],
-  "notes": "No settings changed. test_moderator closed bob's topic 5950 (own content) for check 9; to be deleted with the other walk topics. Debug log unchanged. | Re-walk lane B 2026-10-17: .8 stays untested (lane A). Edited topic 6080 (created by bob for this walk, removed afterwards). The conflict guard rejects the second save with a toast; the revision part (jt_revisions) was verified in the earlier walk. | lane A (re-walk 2026-10-17):"
+  "notes": "No settings changed. test_moderator closed bob's topic 5950 (own content) for check 9; to be deleted with the other walk topics. Debug log unchanged. | Re-walk lane B 2026-10-17: .8 stays untested (lane A). Edited topic 6080 (created by bob for this walk, removed afterwards). The conflict guard rejects the second save with a toast; the revision part (jt_revisions) was verified in the earlier walk. | lane A (re-walk 2026-10-17): | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
 }

@@ -1,9 +1,9 @@
 {
   "journey": "C.member.reply-create",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walked_at": "2026-10-17T13:28:50Z",
-  "walker": "lane B",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T17:09:42Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -74,11 +74,8 @@
       "screenshot": "qa-artifacts/203-walk2/laneB/rw2-omar-banned-topic.png"
     },
     "c-member-reply-create.14": {
-      "result": "fail",
-      "expected": "limit message and REST 429",
-      "actual": "lane A: test_author (level 0): the 11th reply is refused with 'New members can post 10 replies a day. You can reply again in about 1 day.' but REST returns 400 jetonomy_validation, not 429",
-      "url": "http://forums.local/wp-json/jetonomy/v1/posts/<id>/replies",
-      "screenshot": ""
+      "result": "pass",
+      "evidence": "test_author (trust 0, limit 10 replies/day): REST POST /posts/5806/replies -> HTTP 429 jetonomy_rate_limited 'New members can post 10 replies a day. You can reply again in about 19 hours.'; UI Post Reply shows one toast with that sentence (count 1). Nothing stored. Screenshot qa-artifacts/203-walk3/laneA/w3A-reply-limit-ui.png"
     },
     "c-member-reply-create.15": {
       "result": "pass",

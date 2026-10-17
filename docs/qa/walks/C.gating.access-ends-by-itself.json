@@ -1,0 +1,72 @@
+{
+  "journey": "C.gating.access-ends-by-itself",
+  "checks": {
+    "c-gating-access-ends-by-itself.1": {
+      "result": "pass",
+      "evidence": "Delete on the membership rule -> confirm 'Are you sure? This cannot be undone.', row removed, toast 'Access rule deleted.'"
+    },
+    "c-gating-access-ends-by-itself.2": {
+      "result": "fail",
+      "expected": "the matched subscriber reloads the space -> closed on the next load, no admin action",
+      "actual": "closed for gating_t6, who was never synced (locked card, composer gone). NOT closed for people who were put on the roster with Sync Members: gating_t2 (roster row source 'tier') still posted topic 'Mounting tape or corners for fine art prints?' after the rule was deleted; the row only disappears when the hourly roster reconcile runs.",
+      "url": "http://forums.local/community/s/print-lab-circle/"
+    },
+    "c-gating-access-ends-by-itself.3": {
+      "result": "fail",
+      "expected": "POST reply right after -> 403 jetonomy_forbidden",
+      "actual": "403 jetonomy_forbidden 'You cannot post in this space.' for the never-synced gating_t6 (reply and topic); the synced gating_t2 was still accepted (topic created) until the reconcile ran.",
+      "url": "POST /wp-json/jetonomy/v1/spaces/3078/posts"
+    },
+    "c-gating-access-ends-by-itself.4": {
+      "result": "pass",
+      "evidence": "membership lapse: running Membership_Roster_Sync::reconcile() after the rule was gone removed the three 'tier' roster rows (3837, 3838, 3839) and kept the manual row."
+    },
+    "c-gating-access-ends-by-itself.5": {
+      "result": "untested",
+      "needs": "a member with bookmarks, subscriptions and notifications from the space; not seeded"
+    },
+    "c-gating-access-ends-by-itself.6": {
+      "result": "pass",
+      "evidence": "gating_t5 (manual roster member) kept his row through the reconcile, so a person who is on the roster by hand keeps access."
+    },
+    "c-gating-access-ends-by-itself.7": {
+      "result": "pass",
+      "evidence": "gating_t6's topic URL after the rule was deleted -> 404 'Page not available', same page as a missing topic."
+    },
+    "c-gating-access-ends-by-itself.8": {
+      "result": "fail",
+      "expected": "no email for new replies in the space after access ended",
+      "actual": "gating_t2 lost the roster row (reconcile) and then got '[forums] varundubey replied to your topic' by email with the reply text 'Thanks for the question, answers coming this week.' and a link into the private space; no bell row was created.",
+      "url": "mailpit is9TgSf9eThKN8msHfkyLA"
+    },
+    "c-gating-access-ends-by-itself.9": {
+      "result": "pass",
+      "evidence": "gating_t6 typed a reply, the rule was deleted from another session, Post Reply -> toast 'You cannot post in this space.' and the text stayed. Screenshot qa-artifacts/203-walk3/laneA/w3A-access-ended-typing.png"
+    },
+    "c-gating-access-ends-by-itself.10": {
+      "result": "pass",
+      "evidence": "membership rule re-added (no sync): gating_t6 opened the private topic and had the composer on the next load."
+    }
+  },
+  "proposed_checks": [
+    "- `c-gating-access-ends-by-itself.11` @admin #admin: delete a membership rule after Sync Members was pressed -> the synced people lose access on the next load (today the roster rows stay until the hourly reconcile, so they keep posting).",
+    "- `c-gating-access-ends-by-itself.12` @member #email: after access ends, a reply to the person's own topic in that space sends no email and no bell row."
+  ],
+  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. ",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:58:06Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  }
+}

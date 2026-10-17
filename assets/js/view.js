@@ -4753,6 +4753,10 @@ const { state, actions } = store( 'jetonomy', {
                             interval = Math.min( interval * 2, MAX_INTERVAL ); // idle -> back off
                         }
                         lastCheck = Date.now();
+                    } else if ( [ 401, 403, 404, 410 ].includes( response.status ) ) {
+                        return; // Topic deleted or access lost while open: stop asking.
+                    } else {
+                        interval = Math.min( interval * 2, MAX_INTERVAL );
                     }
                 } catch {
                     // silent — transient network blip; keep current cadence

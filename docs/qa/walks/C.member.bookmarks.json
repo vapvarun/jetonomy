@@ -1,0 +1,96 @@
+{
+  "journey": "C.member.bookmarks",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-bookmarks.1": {
+      "result": "pass",
+      "evidence": "bob bookmarked 'Dark mode for the community on phones': toast 'Bookmarked', button gets class bookmarked, aria-pressed true, label 'Remove bookmark'"
+    },
+    "c-member-bookmarks.2": {
+      "result": "fail",
+      "expected": "the topic is listed with its title and space.",
+      "actual": "the list shows the topic title and author but not the space it is in ('Dark mode...  Sofia Romano  45 replies  1 week ago'); also the 'ago' text box (x841-945,y415-438) overlaps the bookmark button (x921-953,y389-425) by 10px at 1440",
+      "url": "http://forums.local/community/bookmarks/",
+      "screenshot": "qa-artifacts/203-walk3/laneB/bookmarks-1440.png"
+    },
+    "c-member-bookmarks.3": {
+      "result": "pass",
+      "evidence": "unbookmark from the list: row removed at once, toast 'Bookmark removed', server total 2 -> 1. The page shows no bookmark count number to drop"
+    },
+    "c-member-bookmarks.4": {
+      "result": "pass",
+      "evidence": "removing the last bookmark shows 'You haven't bookmarked anything yet.' at once with no reload; clicking the Leaderboard tab then loads full content (ranks 1-8 listed)"
+    },
+    "c-member-bookmarks.5": {
+      "result": "fail",
+      "expected": "201 then 200; repeating POST does not duplicate.",
+      "actual": "POST /bookmarks {post_id} -> 200 {bookmarked:true} (not 201); a repeat POST toggles it OFF (bookmarked:false) rather than staying one row; DELETE /bookmarks/<id> -> 200 {deleted:true}, repeat DELETE also 200. No duplicate rows ever (total stays 1)",
+      "url": "http://forums.local/community/bookmarks/",
+      "check_wrong": true
+    },
+    "c-member-bookmarks.6": {
+      "result": "pass",
+      "evidence": "POST /bookmarks for Moderators' Room topic 5866 and Customer Advisory Board topic 5865 -> 404 jetonomy_not_found"
+    },
+    "c-member-bookmarks.7": {
+      "result": "fail",
+      "expected": "redirected to login; /community/bookmarks/ shows a login prompt.",
+      "actual": "guest sees no bookmark button; /community/bookmarks/ redirects to wp-login.php?redirect_to=%2Fcommunity%2Fbookmarks%2F (a login page, not an in-page login prompt); POST /bookmarks as guest -> 401",
+      "url": "http://forums.local/community/bookmarks/",
+      "check_wrong": true
+    },
+    "c-member-bookmarks.8": {
+      "result": "pass",
+      "evidence": "alice's /community/bookmarks/ and REST /bookmarks list only her own (0) while bob had a bookmark; /community/u/bob/bookmarks/ and /u/bob/ as alice do not list bob's bookmarked topic (no Bookmarks tab for others)"
+    },
+    "c-member-bookmarks.9": {
+      "result": "pass",
+      "evidence": "bookmarked a new topic, deleted it (soft delete, REST 200): /bookmarks total 1 -> 0 and the search no longer finds it; no broken row"
+    },
+    "c-member-bookmarks.10": {
+      "result": "untested",
+      "needs": "leaving and re-joining the private Partner Program space (approval-to-join); lane B may not change membership that only an admin can restore"
+    },
+    "c-member-bookmarks.11": {
+      "result": "pass",
+      "evidence": "42 bookmarks: page 1 shows 20 with 'Load More' (?pg=2), page 2 20, page 3 2, REST meta total 42"
+    },
+    "c-member-bookmarks.12": {
+      "result": "pass",
+      "evidence": "bookmark click offline: toast 'Failed to save.', button back to unpressed"
+    },
+    "c-member-bookmarks.13": {
+      "result": "pass",
+      "evidence": "159-char title topic in the list wraps to 3 lines inside the row; no horizontal scroll (scrollWidth 1440)"
+    },
+    "c-member-bookmarks.14": {
+      "result": "fail",
+      "expected": "readable.",
+      "actual": "at 390 (dark) the reply count '46 replies' of a bookmark row sits under the 40x40 bookmark button (count box x298-346, button x310-350, both y478-501): the number is hidden and only 'replies' is visible; '1 week ago' also wraps into a 36px-wide column",
+      "url": "http://forums.local/community/bookmarks/",
+      "screenshot": "qa-artifacts/203-walk3/laneB/bookmarks-390-dark.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-bookmarks.5` (corrected) @member #rest: POST /bookmarks -> 200 {bookmarked:true}; a second POST toggles it off ({bookmarked:false}); DELETE /bookmarks/<id> -> 200 {deleted:true} and a repeat DELETE is also 200; never a duplicate row.",
+    "- `c-member-bookmarks.7` (corrected) @guest #ui !refuse: a guest sees no bookmark button; /community/bookmarks/ redirects to wp-login.php?redirect_to=/community/bookmarks/; POST /bookmarks returns 401.",
+    "- `c-member-bookmarks.15` @member #ui +390: a bookmark row at 390 keeps the reply count and the relative time readable and not under the bookmark button."
+  ],
+  "notes": "42 temporary bookmarks were created for pagination and all removed."
+}

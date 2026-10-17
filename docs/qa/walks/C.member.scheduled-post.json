@@ -1,0 +1,96 @@
+{
+  "journey": "C.member.scheduled-post",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-scheduled-post.1": {
+      "result": "pass",
+      "evidence": "bob on General Discussion > New Topic: the split button's 'More publishing options' menu has Publish now / Save as draft / Schedule...; Schedule shows a 'Publish on' panel with a date field and HH (00-23) and MM (00,05..55) selects; 'Meetup recap - planning the March community call' for 2026-10-18 14:35 saved and the page says 'Scheduled to publish on October 18, 2026 2:35 pm. It is hidden from the community until then.'",
+      "screenshot": "qa-artifacts/203-walk3/laneB/schedule-picker-1440.png"
+    },
+    "c-member-scheduled-post.2": {
+      "result": "fail",
+      "expected": "201 and published_at is stored as UTC for 14:35 in the site timezone.",
+      "actual": "POST /spaces/2999/posts with status 'scheduled' is refused 400 rest_invalid_param (status enum); a schedule is status 'draft' plus published_at: 201, stored published_at 2026-10-19 09:15:00 (site timezone is UTC, gmt_offset 0, so identical in UTC). The check names the wrong status value",
+      "check_wrong": true
+    },
+    "c-member-scheduled-post.3": {
+      "result": "pass",
+      "evidence": "before release time a guest and alice get 404 on the topic URL, it is absent from the space list and from /search (guest and bob: 0 hits), and GET /posts/<id> as guest/alice is 404 jetonomy_not_found"
+    },
+    "c-member-scheduled-post.4": {
+      "result": "pass",
+      "evidence": "bob's /community/u/bob/drafts lists 'Meetup recap - planning the March community call  Scheduled: October 18, 2026 2:35 pm  General Discussion' with a Publish now button"
+    },
+    "c-member-scheduled-post.5": {
+      "result": "pass",
+      "evidence": "set that post's published_at to 2 minutes ago and fired the publisher hook jetonomy_publish_scheduled (the action the scheduler runs): the topic became status publish, created_at = the run time, it showed to guests (200), in the space list and in search. No subscriber of that space existed, so the 'subscribers get one notification' part was not observable. Time could not be advanced, so the hook was fired by hand"
+    },
+    "c-member-scheduled-post.6": {
+      "result": "pass",
+      "evidence": "POST with status draft and published_at '2026-10-20' (date only) or an unparseable value -> 400 jetonomy_schedule_time_required 'Choose a time as well as a date to schedule this.'"
+    },
+    "c-member-scheduled-post.7": {
+      "result": "pass",
+      "evidence": "published_at 2026-10-01 09:00:00 (past) -> 400 jetonomy_schedule_in_past 'The scheduled time has already passed. Choose a time in the future, or publish now.'"
+    },
+    "c-member-scheduled-post.8": {
+      "result": "pass",
+      "evidence": "the same scheduled post submitted twice -> 409 jetonomy_duplicate_scheduled 'You already scheduled this for the same time. Find it in your profile under Drafts.'"
+    },
+    "c-member-scheduled-post.9": {
+      "result": "fail",
+      "expected": "the new time is saved.",
+      "actual": "no way to change the release time of a scheduled topic: the topic's Edit (More options > Edit) only edits the body with Cancel/Save, and PATCH /posts/<id> {published_at, edit_token} returns 403 jetonomy_forbidden for the author, so the time stays as first set",
+      "url": "http://forums.local/community/s/general-discussion/t/meetup-recap-planning-the-march-community-call/"
+    },
+    "c-member-scheduled-post.10": {
+      "result": "pass",
+      "evidence": "DELETE /posts/6210 (scheduled) -> 200; it is gone from bob's Drafts list and its URL is 404 for a guest"
+    },
+    "c-member-scheduled-post.11": {
+      "result": "pass",
+      "evidence": "alice opens bob's scheduled topic URL and GET /posts/<id>: 404 jetonomy_not_found"
+    },
+    "c-member-scheduled-post.12": {
+      "result": "untested",
+      "needs": "lane A: a space with 'require approval' posting (no such space exists for a member; setting change)"
+    },
+    "c-member-scheduled-post.13": {
+      "result": "pass",
+      "evidence": "finn (silenced) schedules -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+    },
+    "c-member-scheduled-post.14": {
+      "result": "pass",
+      "evidence": "the date, hour and minute pickers work in this Chromium; Firefox and Safari iOS not available here (manual_required)"
+    },
+    "c-member-scheduled-post.15": {
+      "result": "fail",
+      "expected": "usable.",
+      "actual": "at 390 the 'More publishing options' menu opens at the bottom of the form and the fixed mobile tab bar (y784-844) covers 'Schedule...' (y770-810): Playwright reports the nav intercepts the click, and with the page scrolled to its end there is nothing left to scroll, so on a phone a member cannot tap Schedule. The Publish on panel itself fits (date/hour/minute 42px tall, x48-342, no sideways scroll)",
+      "url": "http://forums.local/community/s/general-discussion/new/",
+      "screenshot": "qa-artifacts/203-walk3/laneB/schedule-menu-390.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-scheduled-post.2` (corrected) @member #rest: POST /spaces/<id>/posts with status draft and a future published_at -> 201 and published_at is stored for that time in the site timezone.",
+    "- `c-member-scheduled-post.16` @member #ui +390: the \"More publishing options\" menu (Publish now, Save as draft, Schedule...) is fully above the fixed mobile tab bar and every item is tappable.",
+    "- `c-member-scheduled-post.17` @member #ui: a member can change the release time of a scheduled topic from its page."
+  ],
+  "notes": "Time cannot be advanced here: the publisher hook jetonomy_publish_scheduled was fired by hand after moving a post's published_at into the past (own post)."
+}

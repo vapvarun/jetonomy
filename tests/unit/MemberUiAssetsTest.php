@@ -85,4 +85,12 @@ class MemberUiAssetsTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( "body: { published_at: '' }", $js );
 		$this->assertStringContainsString( 'data-wp-on--submit="actions.reschedulePost"', $this->src( 'templates/views/single-post.php' ) );
 	}
+
+	public function test_reply_polling_stops_when_the_topic_is_gone_and_backs_off_on_errors(): void {
+		$js   = $this->src( 'assets/js/view.js' );
+		$poll = substr( $js, strpos( $js, 'initReplyPolling()' ), 4000 );
+		// A topic deleted while open used to be polled at the same pace forever.
+		$this->assertMatchesRegularExpression( '/\[ 401, 403, 404, 410 \]\.includes\( response\.status \) \) \{\s*return;/', $poll );
+		$this->assertMatchesRegularExpression( '/\} else \{\s*interval = Math\.min\( interval \* 2, MAX_INTERVAL \);\s*\}\s*\} catch/', $poll );
+	}
 }

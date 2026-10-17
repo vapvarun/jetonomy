@@ -1,0 +1,95 @@
+{
+  "journey": "C.member.connect-app",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-connect-app.1": {
+      "result": "pass",
+      "evidence": "bob opens /community/connect-app?scheme=jetonomyapp&app_name=Jetonomy Mobile: 'Connect Jetonomy Mobile to your account? You are signed in as Bob Martinez (bob). The app gets its own access key...' with 'Yes, connect the app' and 'Not you? Sign in as someone else' (the app name comes from app_name; without it the heading says 'the app'; the account line shows the login, not the email)"
+    },
+    "c-member-connect-app.2": {
+      "result": "pass",
+      "evidence": "Yes, connect the app -> 'Connected. Opening the app...' with an 'Open the app' link jetonomyapp://auth?site_url=...&user_login=bob&password=<key>&state=; POST /auth/app-connect {scheme,bridge_token} -> 200 {site_url,user_login,uuid,deep_link}"
+    },
+    "c-member-connect-app.3": {
+      "result": "pass",
+      "evidence": "GET /app/config as guest -> 200 with app_name, labels, features, accent_color, logo/login bg, terms_url, privacy_url, pro_active, attachments and auth.connect_url; no member data. There is no separate base URL field (auth.connect_url carries the site URL)"
+    },
+    "c-member-connect-app.4": {
+      "result": "pass",
+      "evidence": "GET /app/config with the new app key (Basic auth bob:<key>) -> 200 features {messaging,reactions,polls,badges,custom_fields,blocking true; web_push,native_push,anonymous,attachments false}, pro_active true; attachments are disabled on this site (max_files 0), so the 'max 5 files, 10 MB' numbers could not be seen"
+    },
+    "c-member-connect-app.5": {
+      "result": "pass",
+      "evidence": "deleted bob's application password (WP-CLI, same list as the profile screen): the next call with that key -> 401 incorrect_password; app loses access"
+    },
+    "c-member-connect-app.6": {
+      "result": "pass",
+      "evidence": "guest on /community/connect-app?scheme=jetonomyapp -> wp-login.php?redirect_to=/community/connect-app/?scheme=jetonomyapp (return URL kept; the login itself was not performed)"
+    },
+    "c-member-connect-app.7": {
+      "result": "pass",
+      "evidence": "scheme=evilapp, http and javascript -> 'This connection link is not valid' with a back link; nothing minted"
+    },
+    "c-member-connect-app.8": {
+      "result": "pass",
+      "evidence": "POST /auth/app-connect with an unknown/expired bridge_token -> 410 jetonomy_app_bridge_expired 'This connection screen has expired. Go back to the app and try connecting again.'; unknown scheme -> 400 jetonomy_app_bad_scheme"
+    },
+    "c-member-connect-app.9": {
+      "result": "pass",
+      "evidence": "valid bridge tokens: 4 connects 200 then 429 jetonomy_rate_limited 'Too many connection attempts. Please wait a while and try again.' (limit reached before 15; invalid tokens alone never hit it, 19 x 410)"
+    },
+    "c-member-connect-app.10": {
+      "result": "untested",
+      "needs": "lane A: turn Application Passwords off (filter/setting) to see 403 'Application passwords are not available on this site.'"
+    },
+    "c-member-connect-app.11": {
+      "result": "pass",
+      "evidence": "finn (silenced) connected (200, app key issued), read /users/me with it 200, and POST a topic with it -> 403 jetonomy_user_silenced; key deleted afterwards"
+    },
+    "c-member-connect-app.12": {
+      "result": "pass",
+      "evidence": "Grace Oluwaseun Adeyemi-Whitfield at 390: 'You are signed in as Grace Oluwaseun Adeyemi-Whitfield (grace)...' wraps over 5 lines inside the card x31-359",
+      "screenshot": "qa-artifacts/203-walk3/laneB/connect-app-390-dark.png"
+    },
+    "c-member-connect-app.13": {
+      "result": "fail",
+      "expected": "Connect and Cancel are at least 40px tall and no sideways scroll.",
+      "actual": "at 390 'Yes, connect the app' is 41px tall but the page has no Cancel button, and the 'Not you? Sign in as someone else' link is 20px tall; no sideways scroll",
+      "url": "http://forums.local/community/connect-app/?scheme=jetonomyapp",
+      "screenshot": "qa-artifacts/203-walk3/laneB/connect-app-390-dark.png"
+    },
+    "c-member-connect-app.14": {
+      "result": "pass",
+      "evidence": "dark: body rgb(35,38,47), text rgb(229,229,229), button visible",
+      "screenshot": "qa-artifacts/203-walk3/laneB/connect-app-390-dark.png"
+    },
+    "c-member-connect-app.15": {
+      "result": "pass",
+      "evidence": "Connect clicked offline: 'Something went wrong. Please try again.' appears and the button is enabled again"
+    },
+    "c-member-connect-app.16": {
+      "result": "untested",
+      "needs": "lane A: activate BuddyNext (the page forwards to BuddyNext only when its AppConnectService class exists; it is inactive here)"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-connect-app.17` @member #ui +390: the connect page has a Cancel button and the \"Not you? Sign in as someone else\" link is at least 40px tall."
+  ],
+  "notes": "Application passwords minted for bob and finn were deleted; BuddyNext and the App Passwords switch need lane A."
+}

@@ -1,0 +1,108 @@
+{
+  "journey": "C.mod.flag-resolution",
+  "checks": {
+    "c-mod-flag-resolution.1": {
+      "result": "pass",
+      "evidence": "alice reported Grace's 159-char General Discussion topic (reason Spam) from the topic Report button -> modal 'Why are you reporting this topic?', toast 'Reported. Thank you.'; flag row created (REST POST /flags returns 201 {created:true,id}). Screenshot qa-artifacts/203-walk3/laneA/w3A-flag-toast.png"
+    },
+    "c-mod-flag-resolution.2": {
+      "result": "pass",
+      "evidence": "admin opened /community/s/general-discussion/mod/ -> card 'POST | Spam | Alice Chen 4 minutes ago', topic title, excerpt, and the note 'Looks like a link-drop promo...'. The all-spaces overview (/community/mod/) card shows reporter and reason but not the note; its 'Review in queue' link opens the per-space card."
+    },
+    "c-mod-flag-resolution.3": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "bell reads the thank-you line and Mailpit holds one email '[site] Your report was reviewed'",
+      "actual": "Dismiss: card left, alice's bell row 'Your report was reviewed. Thanks for helping keep the community healthy.' (flag_resolved, id 22108). No email: Settings > Email default for 'Your report was reviewed' is Email off. With the default turned on, dismissing flags 369 and 370 sent '[forums] Your report was reviewed' once each. Default restored to off.",
+      "url": "http://forums.local/community/s/general-discussion/mod/"
+    },
+    "c-mod-flag-resolution.4": {
+      "result": "pass",
+      "evidence": "Remove on the flag for maya's help-desk reply 13620 -> card left (header 'Queue cleared.'), reply status trash, flag status valid, maya's reputation 1887 -> 1857. Trash tab lists 2 replies, but opens on the empty 'Topics' sub-tab ('No topics in the trash.') so the removed reply is one click away."
+    },
+    "c-mod-flag-resolution.5": {
+      "result": "pass",
+      "evidence": "omar: reputation 156 before flags, 136 after flags on his reply 13624 and topic 5873, 156 after dismissing both - reply and topic parity."
+    },
+    "c-mod-flag-resolution.6": {
+      "result": "fail",
+      "expected": "second resolve of the same flag returns Flag not found / already resolved and sends no second notification",
+      "actual": "POST /moderation/flags/370/resolve status=dismissed twice -> 200 {resolved:true} both times, and the reporter got a second bell row and a second '[forums] Your report was reviewed' email (alice notifications 2 -> 5 after dismissing 369, 370, 370 again). A flag that is not pending should be refused.",
+      "url": "POST /wp-json/jetonomy/v1/moderation/flags/370/resolve"
+    },
+    "c-mod-flag-resolution.7": {
+      "result": "pass",
+      "evidence": "alice POST /flags on her own reply 13621 -> 400 jetonomy_flag_self 'You cannot report your own content.'; the Report button is not rendered on her own reply in the UI; no flag created."
+    },
+    "c-mod-flag-resolution.8": {
+      "result": "pass",
+      "evidence": "alice reported topic 5873 then again -> 409 jetonomy_already_flagged 'You have already reported this content.'. Also still blocked after the first flag was dismissed."
+    },
+    "c-mod-flag-resolution.9": {
+      "result": "pass",
+      "evidence": "alice POST /flags for reply 13623 in Customer Advisory Board -> 404 jetonomy_flag_target_missing 'The reported content no longer exists.', identical to a missing id 99999999."
+    },
+    "c-mod-flag-resolution.10": {
+      "result": "pass",
+      "evidence": "finn POST /flags -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+    },
+    "c-mod-flag-resolution.11": {
+      "result": "pass",
+      "evidence": "guest POST /flags -> 401 rest_not_logged_in; logged-out topic page renders no Report control."
+    },
+    "c-mod-flag-resolution.12": {
+      "result": "pass",
+      "evidence": "bob POST /moderation/flags/368/resolve -> 403 jetonomy_forbidden; flag stayed pending until the admin resolved it."
+    },
+    "c-mod-flag-resolution.13": {
+      "result": "fail",
+      "expected": "404 as if the flag did not exist",
+      "actual": "admin flagged Referral fees topic in private Partner Program (flag 371); test_moderator POST /moderation/flags/371/resolve -> 403 jetonomy_forbidden 'You cannot resolve this flag.', while a nonexistent flag id answers 404 'Report not found.' - a moderator who cannot read the space can tell the flag exists.",
+      "url": "POST /wp-json/jetonomy/v1/moderation/flags/371/resolve"
+    },
+    "c-mod-flag-resolution.14": {
+      "result": "pass",
+      "evidence": "admin silenced theo in Help Desk (restriction 396) and banned IP 203.0.113.45; Banned members list shows 'Silenced | Theo Lindqvist | HELP DESK' and 'IP address ban | 203.0.113.45', every action button reads 'Lift restriction' (confirm 'Lift the restriction on 203.0.113.45? They regain full access right away.'). theo: reply refused 403 jetonomy_user_silenced before, 201 after DELETE /moderation/ban/396."
+    },
+    "c-mod-flag-resolution.15": {
+      "result": "pass",
+      "evidence": "General Discussion flag cards with the 159-char title: 1440 scrollWidth 1440, 390 scrollWidth 390, no element past the viewport, buttons 40px tall. Screenshots qa-artifacts/203-walk3/laneA/w3A-flag-long-1440.png, w3A-flag-long-390.png"
+    },
+    "c-mod-flag-resolution.16": {
+      "result": "fail",
+      "expected": "card shows the reply as removed and can be dismissed",
+      "actual": "maya flagged alice's reply 13621, alice deleted it (status trash). /community/s/knowledge-base/mod/ still shows the flag card with the reply text exactly as a live reply and offers Remove; nothing says it is already removed. No PHP notice or blank card.",
+      "url": "http://forums.local/community/s/knowledge-base/mod/",
+      "screenshot": "qa-artifacts/203-walk3/laneA/w3A-flag-deleted-reply.png"
+    },
+    "c-mod-flag-resolution.17": {
+      "result": "pass",
+      "evidence": "flag card for Omar's Arabic topic: paragraph dir=auto, computed direction rtl, text-align start, buttons keep their position; at 390 the Arabic excerpt sits right aligned (w3A-flag-long-390.png)."
+    },
+    "c-mod-flag-resolution.18": {
+      "result": "pass",
+      "evidence": "dark scheme (site rendered dark): lowest contrast on the card text is 4.8:1 (POST chip), every other text 6.3:1 or more, measured with a canvas luminance script. Screenshot w3A-flag-long-390.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-mod-flag-resolution.19` @moderator #rest !refuse: resolve the same flag twice -> the second call is refused (not 200) and the reporter gets exactly one bell row and one email.",
+    "- `c-mod-flag-resolution.20` @moderator #ui: remove a flag on a reply, then open Trash -> the Trash tab opens on the Replies sub-tab (or the one that holds the item) instead of 'No topics in the trash.'."
+  ],
+  "notes": "lane A. Changed and restored: jetonomy_settings.notification_defaults.flag_resolved.email false -> true -> false. Created: flags 368-374 (all resolved), restriction 396 and IP ban 397 lifted, theo reply 13630 and topic replies left in place, reply 13621 (alice) left in trash, maya reply 13620 left in trash (removed by check 4). Moderator persona: used admin for the UI because test_moderator only moderates Bug Reports and Moderators Room.",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:23:11Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "dark"
+    ]
+  }
+}

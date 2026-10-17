@@ -87,18 +87,13 @@
       "evidence": "guest GET /users/3770 (finn, silenced) -> restriction null; no silence or ban field"
     },
     "c-anon-user-profile.18": {
-      "result": "fail",
-      "expected": "on a site with WPMediaVerse messaging active (chat bubble shown) open a member's profile -> a Message button opens a conversation",
-      "actual": "WPMediaVerse is active (chat bubble and Messages panel show for bob) but bob on /community/u/alice/ sees only Report and Block Alice Chen, no Message button",
-      "url": "http://forums.local/community/u/alice/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-profile-alice-bob.png"
+      "result": "pass",
+      "evidence": "bob on /community/u/alice/ sees a Message button; click opens the WPMediaVerse chat panel with Alice Chen (Online), composer ready",
+      "screenshot": "qa-artifacts/203-walk3/laneB/rw3-profile-message-bob-alice.png"
     },
     "c-anon-user-profile.19": {
-      "result": "fail",
-      "expected": "with WPMediaVerse active and Pro messaging dormant, a Message button that opens a WPMediaVerse conversation, or the owner is told messaging is unavailable",
-      "actual": "bob on alice's profile: neither, only Report and Block (same as today's note in the check)",
-      "url": "http://forums.local/community/u/alice/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-profile-alice-bob.png"
+      "result": "pass",
+      "evidence": "same: Message button opens a WPMediaVerse conversation with alice"
     }
   },
   "proposed_checks": [
@@ -107,5 +102,5 @@
     "- `c-anon-user-profile.19` @member #ui: with WPMediaVerse active and Pro messaging dormant, open alice's profile as bob -> a Message button that opens a WPMediaVerse conversation shows, or the site owner is told messaging is unavailable (today neither: only Report and Block)."
   ],
   "notes": "No settings changed. Email-login member and private reply not in the data. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: WPMediaVerse is active on this site; ids 18 and 19 fail because no Message button shows.",
-  "walked_at": "2026-10-17T13:28:50Z"
+  "walked_at": "2026-10-17T17:05:14Z"
 }

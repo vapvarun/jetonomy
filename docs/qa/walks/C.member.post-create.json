@@ -1,9 +1,9 @@
 {
   "journey": "C.member.post-create",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walked_at": "2026-10-17T13:28:50Z",
-  "walker": "lane B",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T17:09:42Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -83,11 +83,8 @@
       "evidence": "POST /spaces/38/posts as bob (Customer Advisory Board) -> 403 jetonomy_forbidden 'You cannot post in this space.', nothing stored; UI gate from the earlier walk still refuses without a form"
     },
     "c-member-post-create.17": {
-      "result": "fail",
-      "expected": "limit message and REST 429",
-      "actual": "lane A: test_author (trust level 0) hit the new-member limit on the 4th topic: UI and REST message 'New members can post 3 topics a day. You can post again in about 24 hours.' (shown twice in the UI); but REST answers 400 jetonomy_validation, not 429",
-      "url": "http://forums.local/wp-json/jetonomy/v1/spaces/3004/posts",
-      "screenshot": "qa-artifacts/203-walk2/laneA/new-member-topic-limit.png"
+      "result": "pass",
+      "evidence": "test_author (trust 0, limit 3 topics/day, no setting change needed): REST POST /spaces/3004/posts x5 -> HTTP 429 jetonomy_rate_limited 'New members can post 3 topics a day. You can post again in about 19 hours.' UI composer /community/s/help-desk/new/ shows that sentence exactly once (.jt-form-error). Nothing stored. Screenshot qa-artifacts/203-walk3/laneA/w3A-topic-limit-ui.png"
     },
     "c-member-post-create.18": {
       "result": "pass",

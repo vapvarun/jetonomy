@@ -60,8 +60,9 @@
       "screenshot": "qa-artifacts/203-walk2/laneA/cli10-post-1440.png, cli10-post-390.png"
     },
     "c-cli-qa-actions.11": {
-      "result": "untested",
-      "needs": "docker site: bin/seed-scale.php adds 2000 topics to the shared walk site"
+      "result": "pass",
+      "evidence": "On 2000-topic seed: `wp jetonomy post get 1` 3ms; `wp jetonomy recount` 0.39s printed 'Recount complete.' Both under 3s. Overview after recount 4,267 topics / 4,175 replies.",
+      "site": "docker jt203-scale"
     },
     "c-cli-qa-actions.12": {
       "result": "pass",
@@ -85,5 +86,5 @@
     "- `c-cli-qa-actions.14` @admin #cli: `wp jetonomy reply create --author=alice` on bob's topic -> bob gets the reply notification, same as a reply made in the browser.",
     "- `c-cli-qa-actions.15` @guest #ui: compare the home page topic total with the sum of the topics listed under the visible spaces -> the totals agree, or private and hidden space topics are left out of the guest total (home says 261, the listed public spaces sum to 247)."
   ],
-  "notes": "Scenario runs created and removed their own fixtures (verified by before/after counts). Created reply 13588 as alice for .14 and deleted it. Refusal attempts created no rows. No settings changed. | Re-walk 2 (lane A): test replies deleted; notification row removed."
+  "notes": "Scenario runs created and removed their own fixtures (verified by before/after counts). Created reply 13588 as alice for .14 and deleted it. Refusal attempts created no rows. No settings changed. | Re-walk 2 (lane A): test replies deleted; notification row removed. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
 }

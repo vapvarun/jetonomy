@@ -30,8 +30,12 @@
       "evidence": "GET /leaderboards?period=week and month: 11 members (Maya 1901, Alice 1066, Bob 670 ...); period=all: 20 members with Theo Lindqvist 1615 at #2; period=bogus and year -> 400 rest_invalid_param 'period is not one of all, month, and week.'"
     },
     "c-anon-leaderboard.4": {
-      "result": "untested",
-      "needs": "fixture: every period (all, month, week) lists members, so no empty-period state to open; needs a window with no activity, or a docker site"
+      "result": "fail",
+      "expected": "plain 'No activity' empty state and no empty table",
+      "actual": "Empty week (last_seen shifted \u221221 days, week_eligible=0) shows 'No members yet.' plus reputation explainer and 'Be the first to start.' No table (hasTable=0). Copy is not 'No activity'.",
+      "url": "http://localhost:8095/community/leaderboard/?period=week",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/leaderboard-week-empty.png",
+      "site": "docker jt203-scale"
     },
     "c-anon-leaderboard.5": {
       "result": "pass",
@@ -42,8 +46,12 @@
       "evidence": "finn at rank 20 with real rep 63 (matches his profile); nothing about private spaces on the page"
     },
     "c-anon-leaderboard.7": {
-      "result": "untested",
-      "needs": "fixture: kai_brennan (global_ban) has no reputation row, and a rank needs reputation > 0, so he is absent for that reason and the ban exclusion is not proven; needs a site-wide banned member with reputation > 0 (would need a data write, not done in lane B). Code in leaderboard_period_where() has no ban filter."
+      "result": "fail",
+      "expected": "a member banned site-wide does not appear",
+      "actual": "kai_brennan (user 21, global_ban, reputation 120) listed on all-time (tied rank 12, 120 REP) and on week before the empty-period shift (Rank 1/2).",
+      "url": "http://localhost:8095/community/leaderboard/",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/leaderboard-all-kai.png",
+      "site": "docker jt203-scale"
     },
     "c-anon-leaderboard.8": {
       "result": "pass",
@@ -66,6 +74,6 @@
   "proposed_checks": [
     "- `c-anon-leaderboard.11` @guest #rest !refuse: GET /leaderboards?period=bogus -> 400 invalid period (currently 200 all-time)."
   ],
-  "notes": "No settings changed. | Re-walk lane B 2026-10-17: walked .3 .4 .7 .8 .11. .7 not provable on current data (see needs).",
+  "notes": "No settings changed. | Re-walk lane B 2026-10-17: walked .3 .4 .7 .8 .11. .7 not provable on current data (see needs). | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095.",
   "walked_at": "2026-10-17T12:09:15Z"
 }

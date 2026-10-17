@@ -1,0 +1,97 @@
+{
+  "journey": "C.member.link-preview",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-link-preview.1": {
+      "result": "fail",
+      "expected": "the published topic shows a card with title, image and site name.",
+      "actual": "bob published a topic whose body is only https://wordpress.org/news/ (a standalone link): the topic shows just a quote box with the link 'News' - no title, image or site name - because the URL goes through the WordPress oEmbed (blockquote + hidden iframe) and the browser logs 'Refused to display https://wordpress.org/ in a frame because X-Frame-Options is sameorigin'. A standalone github.com link in the same composer did give a proper card (GitHub badge, image, title, description). An inline link inside a sentence gets no card (only a standalone link does)",
+      "url": "http://forums.local/community/s/general-discussion/t/release-notes-worth-reading-before-the-next-upgrade/",
+      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-wp-1440.png"
+    },
+    "c-member-link-preview.2": {
+      "result": "pass",
+      "evidence": "GET /link-preview?url=https://wordpress.org/news/ -> 200 {url,title 'WordPress News',description,image,site_name,domain,favicon,type,provider generic,locale,...}"
+    },
+    "c-member-link-preview.3": {
+      "result": "pass",
+      "evidence": "standalone YouTube URL -> iframe player (Me at the zoo); standalone x.com/jack/status/20 -> twitter provider embed (tweet iframe); both render under their link",
+      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-embeds-1440.png"
+    },
+    "c-member-link-preview.4": {
+      "result": "pass",
+      "evidence": "guest on the github.com topic: the same card (GitHub, image, title, description) renders",
+      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-card-1440.png"
+    },
+    "c-member-link-preview.5": {
+      "result": "pass",
+      "evidence": "localhost, 127.0.0.1, 169.254.169.254, 10.0.0.5 and file:///etc/passwd -> each 200 with identical empty previews (no title/description/image/embed), per the owner's decision (no 400)"
+    },
+    "c-member-link-preview.6": {
+      "result": "pass",
+      "evidence": "127.0.0.1.nip.io, localtest.me and a public URL redirecting to 127.0.0.1 -> 200 empty preview, nothing fetched (owner decision: no 400 message)"
+    },
+    "c-member-link-preview.7": {
+      "result": "pass",
+      "evidence": "a URL whose server hangs 30s: /link-preview gave up at 6.08s with an empty preview; a topic containing it published in 55 ms as a plain link"
+    },
+    "c-member-link-preview.8": {
+      "result": "pass",
+      "evidence": "https://httpbin.org/status/503 -> 200 empty (no PHP error); the retry came back in 31 ms (first 1017 ms), i.e. the short negative cache"
+    },
+    "c-member-link-preview.9": {
+      "result": "pass",
+      "evidence": "the same good URL three times: 61 ms, 31 ms, 26 ms with identical data (cached)"
+    },
+    "c-member-link-preview.10": {
+      "result": "pass",
+      "evidence": "redirect chain of 6 hops and a 1000-hop redirect -> 200 empty (owner decision: no 400); chain of 6 took 6.7 s, so the follow is capped"
+    },
+    "c-member-link-preview.11": {
+      "result": "pass",
+      "evidence": "guest GET /link-preview for http://127.0.0.1/ -> 200 empty preview, no fetch. Security note: a guest also gets full previews for public URLs (wordpress.org returned title and image without login), so the endpoint is an anonymous server-side fetch"
+    },
+    "c-member-link-preview.12": {
+      "result": "pass",
+      "evidence": "146-character unbroken URL in a topic: the link wraps over 4 lines inside the column (x199-928) and the card stays x199-759; no horizontal scroll"
+    },
+    "c-member-link-preview.13": {
+      "result": "pass",
+      "evidence": "card at 390: x48-342, 346px tall, image scaled to 292x146, no horizontal scroll",
+      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-390-dark.png"
+    },
+    "c-member-link-preview.14": {
+      "result": "pass",
+      "evidence": "dark mode on Reign: card background srgb(.18,.19,.23) on page rgb(35,38,47), title rgb(229,229,229), description light grey, border white 12%",
+      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-390-dark.png"
+    },
+    "c-member-link-preview.15": {
+      "result": "fail",
+      "expected": "the card title renders right to left.",
+      "actual": "link to an Arabic page (aljazeera.net): the card title 'الجزيرة نت' and its Arabic description are laid out left-to-right and left-aligned (title has direction ltr, no dir=auto), with the Arabic comma at the start of lines; it does not render right to left",
+      "url": "http://forums.local/community/s/general-discussion/t/long-link-and-an-arabic-news-site-for-the-community-reading-list/",
+      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-arabic-1440.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-link-preview.16` @guest #rest: GET /link-preview for a public URL logged out -> either 401 or a rate-limited answer (today it is an open server-side fetch).",
+    "- `c-member-link-preview.17` @member #ui: a standalone wordpress.org post link shows a card with title, image and site name (today only a quote box with the link because the oEmbed iframe is blocked)."
+  ],
+  "notes": "Used github.com, youtube.com, x.com, aljazeera.net and httpbin.org as outside URLs; topics deleted afterwards."
+}

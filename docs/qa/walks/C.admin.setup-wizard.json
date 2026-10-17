@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.setup-wizard",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walked_at": "2026-10-17T13:28:34Z",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T17:09:42Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -39,16 +39,24 @@
       "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz4-admin.png"
     },
     "c-admin-setup-wizard.5": {
-      "result": "untested",
-      "needs": "docker site: 'Import the demo community instead' seeds demo users and content into the shared community"
+      "result": "fail",
+      "expected": "toast 'Demo data imported.', guest home counts include demo immediately, demo members have avatars and bios",
+      "actual": "Button advanced to 'Your community is ready!' with no 'Demo data imported.' toast. Guest home did include demo spaces immediately (General Discussion 11 topics) and pulse 5,000 members / 2,316 topics.",
+      "url": "http://localhost:8095/wp-admin/admin.php?page=jetonomy-setup",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/wizard-demo-import.png",
+      "site": "docker jt203-scale"
     },
     "c-admin-setup-wizard.6": {
-      "result": "untested",
-      "needs": "docker site: removing demo data wipes shared community rows"
+      "result": "pass",
+      "evidence": "Overview 'Remove All Demo Data' \u2192 notice 'All demo data has been removed.' Demo_Seeder::summary active=false, counts all 0. jetonomy_demo_data option gone.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/demo-removed.png",
+      "site": "docker jt203-scale"
     },
     "c-admin-setup-wizard.7": {
-      "result": "untested",
-      "needs": "docker site: removing demo data on a site with real topics would delete shared rows"
+      "result": "pass",
+      "evidence": "After remove on a site that also had scale+import rows: Overview still 3,525 topics / 2,983 replies / 29 spaces (Scale space 0 1,021 topics, Trails & Pines 350). Only demo rows left.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/guest-home-after-remove-demo.png",
+      "site": "docker jt203-scale"
     },
     "c-admin-setup-wizard.8": {
       "result": "untested",
@@ -95,10 +103,11 @@
     },
     "c-admin-setup-wizard.18": {
       "result": "fail",
+      "third_party": "wpmediaverse",
       "expected": "floating Messages button does not cover Create Space or Next at 390px",
-      "actual": "At 390x844 scrolled to the bottom the WPMediaVerse 'Open messages' bubble (322-370 x 776-824) still overlaps the right end of 'Next: First Space' (172-334 x 760-804) by 12px",
+      "actual": "Still the only overlap: WPMediaVerse bubble .mvs-chat-trigger (322-370 x 776-824) overlaps 'Next: First Space' (172-334 x 760-804) by 12px at 390x844, scrolled to bottom. No Jetonomy element is fixed-positioned. Belongs to WPMediaVerse, not Jetonomy.",
       "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-setup",
-      "screenshot": "qa-artifacts/203-walk2/laneA/rw2-wizard-390-step1-bottom.png"
+      "screenshot": "qa-artifacts/203-walk3/laneA/w3A-wizard-390.png"
     }
   },
   "proposed_checks": [
@@ -106,5 +115,5 @@
     "- `c-admin-setup-wizard.17` @admin #admin !refuse: run the wizard twice with the same category and space names -> the second run says the names already exist or merges, and does not add a duplicate 'Getting Started' category (a second 'Getting Started' space was created beside the seeded one).",
     "- `c-admin-setup-wizard.18` @admin #admin +390: the floating Messages button does not cover the Create Space or Next buttons at 390px."
   ],
-  "notes": "Wizard run once as admin on duplicate names, which wrote jetonomy_settings and set jetonomy_setup_complete: duplicates purged (space + category), jetonomy_setup_complete deleted (it did not exist before), jetonomy_settings restored from backup (byte-equal). Site language set to Arabic for .14/.16 and restored to the empty WPLANG. | Re-walk 2 (lane A): jetonomy_settings unchanged by the wizard run (compared with backup)."
+  "notes": "Wizard run once as admin on duplicate names, which wrote jetonomy_settings and set jetonomy_setup_complete: duplicates purged (space + category), jetonomy_setup_complete deleted (it did not exist before), jetonomy_settings restored from backup (byte-equal). Site language set to Arabic for .14/.16 and restored to the empty WPLANG. | Re-walk 2 (lane A): jetonomy_settings unchanged by the wizard run (compared with backup). | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
 }

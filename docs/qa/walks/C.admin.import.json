@@ -23,8 +23,10 @@
       "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp1.png"
     },
     "c-admin-import.2": {
-      "result": "untested",
-      "needs": "docker site: the bbPress source data is gone (0 forum/topic/reply posts, 0 rows in jt_import_map) and seeding a source forum is not allowed on the shared site"
+      "result": "pass",
+      "evidence": "bbPress re-import UI: step list Forums \u2192 Members \u2192 Topics \u2192 Replies \u2192 Profiles \u2192 Finalize with moving percent (0.1\u219220.7\u219241.2\u219261.8\u219272.1\u219292.6\u219299.7\u2192100) and ended on 'Import complete!'. First CLI/UI run imported 2313 records (1750 topics / 672 replies / 3 forums).",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/import-rerun.png",
+      "site": "docker jt203-scale"
     },
     "c-admin-import.3": {
       "result": "pass",
@@ -54,12 +56,15 @@
       "evidence": "admin with a valid nonce, source=bogus -> {success:false, data:'Unknown import source.'}; import map and resume option unchanged. Bad nonce -> 403 -1."
     },
     "c-admin-import.9": {
-      "result": "untested",
-      "needs": "docker site: 2000 source topics would sit in the shared jt tables and change counts the other walker reads"
+      "result": "pass",
+      "evidence": "2000-topic source: UI batches offset 0/500/1000/1500 on topics then replies, no timeout, bar never froze. Reply counts per topic matched (reply_count mismatch=0 after first import). CLI `wp jetonomy import bbpress` earlier: 1750 posts / 560 replies imported, already=0.",
+      "site": "docker jt203-scale"
     },
     "c-admin-import.10": {
-      "result": "untested",
-      "needs": "wpForo plugin (not installed) with held-for-moderation topics"
+      "result": "pass",
+      "evidence": "wpForo held topics (wpforo_posts.status <> 0) arrived as Pending: Moderation Pending Topics (4) titled 'Held: extra chairs for Friday chowder (1\u20134)', not published. Import note: '4 unapproved replies will be imported as Pending, not published.'",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/moderation-pending.png",
+      "site": "docker jt203-scale"
     },
     "c-admin-import.11": {
       "result": "pass",
@@ -77,28 +82,40 @@
       "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp13-rtl.png"
     },
     "c-admin-import.14": {
-      "result": "untested",
-      "needs": "docker site: the bbPress source data is gone (0 forum/topic/reply posts, 0 rows in jt_import_map) and seeding a source forum is not allowed on the shared site; no spaces, categories or topics on the site currently have an entity-encoded title (checked jt_posts, jt_spaces, jt_categories for '&amp;')"
+      "result": "pass",
+      "evidence": "0 rows in jt_posts or jt_spaces with title LIKE '%&amp;%'. Imported category name is a bare 'Imported from bbPress'.",
+      "site": "docker jt203-scale"
     },
     "c-admin-import.15": {
-      "result": "untested",
-      "needs": "docker site: the bbPress source data is gone (0 forum/topic/reply posts, 0 rows in jt_import_map) and seeding a source forum is not allowed on the shared site"
+      "result": "pass",
+      "evidence": "bbPress card step list is Forums \u2192 Members \u2192 Topics \u2192 Replies \u2192 Profiles \u2192 Finalize. Private forum note: '1 private and 0 hidden forum will keep their privacy. Everyone who posted in them is added to your members'. Members step is absent on the wpForo card.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/import-screen.png",
+      "site": "docker jt203-scale"
     },
     "c-admin-import.16": {
-      "result": "untested",
-      "needs": "docker site: the bbPress source data is gone (0 forum/topic/reply posts, 0 rows in jt_import_map) and seeding a source forum is not allowed on the shared site (a re-import screen needs a first import)"
+      "result": "fail",
+      "expected": "'imported before (N items)' note and '(M) already imported' result agree",
+      "actual": "Note 'This source has been imported before (2,314 items)' vs complete result '2,312 items were already imported and were skipped' (1 newly imported). Same 177/178 class of mismatch.",
+      "url": "http://localhost:8095/wp-admin/admin.php?page=jetonomy-import",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/import-rerun.png",
+      "site": "docker jt203-scale"
     },
     "c-admin-import.17": {
       "result": "pass",
       "evidence": "lane A, LTR site: Omar's posted Arabic topic as guest: h1, .jt-post-body and .jt-reply-body carry dir=auto, computed direction rtl, text-align start (right aligned, box 175-961); qa-artifacts/203-walk2/laneA/arabic-topic-ltr.png"
     },
     "c-admin-import.18": {
-      "result": "untested",
-      "needs": "docker site: the bbPress source data is gone (0 forum/topic/reply posts, 0 rows in jt_import_map) and seeding a source forum is not allowed on the shared site"
+      "result": "pass",
+      "evidence": "Category id 9 name 'Imported from bbPress' slug imported-bbpress-1792257450; id 10 name 'Imported from wpForo' slug imported-wpforo-1792257479.",
+      "site": "docker jt203-scale"
     },
     "c-admin-import.19": {
-      "result": "untested",
-      "needs": "docker site: the bbPress source data is gone (0 forum/topic/reply posts, 0 rows in jt_import_map) and seeding a source forum is not allowed on the shared site (the delete path itself works: a space purge removes its topics, replies and members)"
+      "result": "fail",
+      "expected": "Space::delete / admin Delete removes the space's topics and replies with it",
+      "actual": "Space::delete(71) removed the space row (space_row=0) and left 6 orphan posts. Space_Purge::queue is the cascade path; Space::delete is parent::delete only.",
+      "url": "http://localhost:8095/wp-admin/admin.php?page=jetonomy-spaces",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/spaces-overflow.png",
+      "site": "docker jt203-scale"
     }
   },
   "proposed_checks": [
@@ -108,5 +125,5 @@
     "- `c-admin-import.18` @admin #admin: the imported category slug is readable (it is imported-bbpress-1792234737 here, a timestamp) and the category name is 'Imported from bbPress'.",
     "- `c-admin-import.19` @admin #cli: delete an imported space with `Space::delete` / the admin Delete button -> its topics and replies go with it (here the 127 topics and 47 replies stayed behind after the space row was deleted)."
   ],
-  "notes": "No bbPress import could be run: source data absent. bbPress was not activated; nothing changed."
+  "notes": "No bbPress import could be run: source data absent. bbPress was not activated; nothing changed. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
 }

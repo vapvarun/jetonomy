@@ -45,8 +45,9 @@
       "evidence": "temp private space with a membership rule nobody holds and a source=tier row for maya; jetonomy_reconcile_rosters run -> tier row count 1 -> 0. Space, rule and row deleted afterwards."
     },
     "c-cron.8": {
-      "result": "untested",
-      "needs": "docker site: seeding 5000 users on the shared walk site would break the other walker's data"
+      "result": "pass",
+      "evidence": "5000 users / 5000 profiles. evaluate_trust_levels() set cursor 0 (2ms). evaluate_trust_batch() \u00d710: cursor 504,1004,1504,2004,2504,3004,3504,4004,4504,null; times 11,3,3,3,3,3,3,3,3,3 ms (max 11ms), each under the time limit.",
+      "site": "docker jt203-scale"
     },
     "c-cron.9": {
       "result": "pass",
@@ -54,7 +55,8 @@
     },
     "c-cron.10": {
       "result": "untested",
-      "needs": "docker site: removing Action Scheduler means disabling the plugin that bundles it, which would break the shared site mid-walk"
+      "needs": "RO plugin mount: docker exec mount --bind empty dir over libs/action-scheduler returned permission denied even with --privileged; host nsenter blocked. Notice code is in jetonomy.php:54\u201368 (admin_notices, no WSOD). Could not hide the directory without recreating the container.",
+      "site": "docker jt203-scale"
     },
     "c-cron.11": {
       "result": "pass",
@@ -69,5 +71,5 @@
     "- `c-cron.11` @admin #cli: run `wp action-scheduler action list --group=jetonomy --status=failed` after a deactivate/reactivate of Pro -> no failed 'no callbacks are registered' rows are added for jetonomy_pro_* hooks (older rows from 2026-10-10 show Pro jobs failing while Pro was off).",
     "- `c-cron.12` @admin #cli +old-data: run jetonomy_cleanup_expired with an expired invite link -> the expired jt_invite_links row is removed, or the check says expired invites are kept by design."
   ],
-  "notes": "Pro was deactivated and reactivated once in a single command (about 3 seconds) for .2 and .11; Pro active again. Test restriction and invite rows inserted for .6 and deleted."
+  "notes": "Pro was deactivated and reactivated once in a single command (about 3 seconds) for .2 and .11; Pro active again. Test restriction and invite rows inserted for .6 and deleted. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
 }

@@ -30,12 +30,16 @@
       "evidence": "POST /posts/5349/replies and /posts/5349/vote as guest -> 401 rest_not_logged_in (core code, not jetonomy_login_required)"
     },
     "c-anon-single-post.4": {
-      "result": "untested",
-      "needs": "fixture: reply 13384 on 'Favourite lens for street photography?' has edited_at 09:07:50 one hour BEFORE its created_at 10:07:50, so no edited mark shows (correct for that data). Reseed it with edited_at 2 hours after created_at. The mark itself works: topic 'QA-RFT custom field topic' shows 'edited 18 hours ago' with the exact time (October 16, 2026 6:54 pm) on hover"
+      "result": "pass",
+      "evidence": "Reply 3613 on Welcome (created then edited +2h): guest/admin show 'edited 1 hour ago' (relative to view time) with hover title 'October 17, 2026 4:11 pm'.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/edited-replies-guest.png",
+      "site": "docker jt203-scale"
     },
     "c-anon-single-post.5": {
-      "result": "untested",
-      "needs": "fixture: no reply edited 30 seconds after posting. Unedited replies 13385 and 13437 show no edited mark; reply 13384 (edited_at before created_at) shows none either"
+      "result": "pass",
+      "evidence": "Reply 3614 (edited +30s) and 3615 (unedited) on the same topic: neither shows an edited mark.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/edited-replies-newest.png",
+      "site": "docker jt203-scale"
     },
     "c-anon-single-post.6": {
       "result": "pass",
@@ -98,7 +102,7 @@
     },
     "c-anon-single-post.20": {
       "result": "pass",
-      "evidence": "lane A, site language ar (RTL): Omar's Arabic topic as guest: html dir=rtl, title dir=auto right-aligned, body and replies right-aligned, vote/React controls and sidebar mirrored. Plugin strings stay English and time reads 'ago شهرين' (mixed order). qa-artifacts/203-walk2/laneA/ar-single-post.png"
+      "evidence": "lane A, site language ar (RTL): Omar's Arabic topic as guest: html dir=rtl, title dir=auto right-aligned, body and replies right-aligned, vote/React controls and sidebar mirrored. Plugin strings stay English and time reads 'ago \u0634\u0647\u0631\u064a\u0646' (mixed order). qa-artifacts/203-walk2/laneA/ar-single-post.png"
     },
     "c-anon-single-post.21": {
       "result": "pass",
@@ -125,11 +129,9 @@
       "evidence": "topic 5872 (code block) in dark mode: the code block is #1e1e1e with #d4d4d4 text on the dark page (#23262f), not a white panel"
     },
     "c-anon-single-post.27": {
-      "result": "fail",
-      "expected": "topic body links to an unreachable site -> no console error and the link shows as a plain link",
-      "actual": "the page logs a console error 'Failed to load resource: 400' because GET /jetonomy/v1/link-preview?url=https://photoclub.example.org/... answers 400 for the unreachable host. Also the link has the same colour as the body text (rgb 64,72,85) and no underline, so it cannot be told apart from plain text",
-      "url": "http://forums.local/community/s/general-discussion/t/after-moving-our-12-year-old-photography-forum-from-phpbb-what-is-the-best-way-to-keep-old-links-signatures-and-the-accepted-answers-people-still-search-for/",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-unreachable-link.png"
+      "result": "pass",
+      "evidence": "guest, unreachable photoclub.example.org link: 0 console errors, GET /link-preview answers 200 with empty preview; link renders blue (rgb 17,71,131) underlined vs body text rgb 64,72,85",
+      "screenshot": "qa-artifacts/203-walk3/laneB/rw3-single-post-link.png"
     }
   },
   "proposed_checks": [
@@ -138,6 +140,6 @@
     "- `c-anon-single-post.28` @guest #ui !refuse: open a topic in Partner Program -> HTTP status and title match the private-space message (currently 404 'Page not available').",
     "- `c-anon-single-post.28` @guest #ui +fixture: reseed reply 13384 with edited_at two hours AFTER created_at (today it is one hour before), and add a reply edited 30 seconds after posting, so checks 4 and 5 can run."
   ],
-  "notes": "No settings changed. Seed has no edited, nested or private replies and the closed topic has a reply, so those checks need a fixture. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: no site setting changed. Walked on 'Favourite lens for street photography?' (edited, nested and private reply fixtures) and the closed zero-reply topic. Reply 13384 fixture has edited_at before created_at.",
-  "walked_at": "2026-10-17T13:28:50Z"
+  "notes": "No settings changed. Seed has no edited, nested or private replies and the closed topic has a reply, so those checks need a fixture. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: no site setting changed. Walked on 'Favourite lens for street photography?' (edited, nested and private reply fixtures) and the closed zero-reply topic. Reply 13384 fixture has edited_at before created_at. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095.",
+  "walked_at": "2026-10-17T17:05:14Z"
 }

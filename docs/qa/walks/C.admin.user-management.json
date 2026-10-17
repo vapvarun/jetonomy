@@ -73,8 +73,10 @@
       "needs": "a deleted issuer account (would need a user deletion). REST GET /moderation/ban?type=global_ban lists issuer_name 'Theo Lindqvist' and type=ip_ban 'varundubey'; the '[deleted]' case not shown"
     },
     "c-admin-user-management.15": {
-      "result": "untested",
-      "needs": "docker site: 500 members (site has 27: pages of 20, trust level filter and search exist)"
+      "result": "pass",
+      "evidence": "Users screen 501 users, 26 pages of 20. page5 QM 0.08s 168Q. Search harbor_m_162 \u2192 '1 user'. trust_level=1 \u2192 '5 users'.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/admin-users-500.png",
+      "site": "docker jt203-scale"
     },
     "c-admin-user-management.16": {
       "result": "untested",
@@ -112,5 +114,5 @@
     "- `c-admin-user-management.21` @admin #admin: change a trust level -> the success toast is visible after the page reloads.",
     "- `c-admin-user-management.22` @admin #admin: lift a silence -> toast says 'Restriction lifted' wording that matches a silence, not 'Ban removed.'."
   ],
-  "notes": "Restored: alice trust level back to 4; carlos ban, hana silence and the IP ban 203.0.113.50 all lifted (Banned Users back to Kai, Omar, Finn). A POST as bob/test_editor was blocked by the permission classifier. | Re-walk 2 (lane A): ip ban created and lifted again; omar test topic in General Discussion deleted; no settings changed."
+  "notes": "Restored: alice trust level back to 4; carlos ban, hana silence and the IP ban 203.0.113.50 all lifted (Banned Users back to Kai, Omar, Finn). A POST as bob/test_editor was blocked by the permission classifier. | Re-walk 2 (lane A): ip ban created and lifted again; omar test topic in General Discussion deleted; no settings changed. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
 }

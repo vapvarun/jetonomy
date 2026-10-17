@@ -2937,13 +2937,6 @@
       "consumed_by": "jetonomy-pro/attachments"
     },
     {
-      "name": "jetonomy_allow_self_upvote",
-      "type": "filter",
-      "args": "allowed, user_id, type, id",
-      "where": "includes/permissions/class-content-gate.php (Content_Gate::check_vote, shared by REST votes and WP-CLI) — whether a member may upvote their own content (default true). Return false to block self-upvote for a stricter reputation economy. Self-downvote is always blocked.",
-      "consumed_by": null
-    },
-    {
       "name": "jetonomy_app_config",
       "type": "filter",
       "args": "$data, $request",
@@ -3961,6 +3954,22 @@
       "where": "includes/functions.php",
       "consumed_by": "jetonomy-pro: Private_Messaging\\Extension::wpmediaverse_message_event (dormant mode)",
       "notes": "DOM event a profile's Message button dispatches on document with detail.userId when member_message_url() is ''. '' hides it. Pro returns mvs-open-conversation while WPMediaVerse owns messaging."
+    },
+    {
+      "name": "jetonomy_send_instant_email",
+      "type": "filter",
+      "args": "send, user_id, email_key, type",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": "jetonomy-pro: Email_Digest\\Extension::filter_instant_email",
+      "notes": "2.0.3. False stops an instant email the member's chosen digest covers; also read by delivery_channel() for the My Subscriptions badge."
+    },
+    {
+      "name": "jetonomy_profile_notification_fields",
+      "type": "action",
+      "args": "user_id",
+      "where": "templates/views/edit-profile.php",
+      "consumed_by": "jetonomy-pro: Email_Digest\\Extension::render_profile_choice",
+      "notes": "2.0.3. Renders extra fields inside #notification-preferences on the profile edit page (Pro: None/Daily/Weekly digest)."
     }
   ],
   "buddypress_integration": {
@@ -4398,7 +4407,8 @@
     "delta_2026_10_06_2_0_1_post_release": "Post-release reconciliation at the v2.0.1 tag. No route, AJAX, hook, table or capability change after the release delta. Shortcodes recent_posts / spaces / space leaders now break ordering ties by id. qa-actions: 472 pass + 1 environment skip (expected_total 473). docs/website/developer-guide/api/openapi.json stamped 2.0.1 and documents POST /posts/{id}/view, diffed against the live registry on a combo install (no other undocumented route).",
     "delta_2026_10_17_2_0_3_wave2_gates": "New Content_Gate::check_post/check_vote, Moderation_Service::check_flag shared by REST and CLI; Admin::edit_token/edit_conflict_message moved to Model; PATCH posts/replies take edit_token, 409 jetonomy_edit_conflict, shapes carry edit_token; postable_by_me meta.restriction; search meta.terms and title-first relevance (Fulltext_Search::query_terms); Importer::plain_text; topic publish transitions move repliers' reply_count, Recount counts replies in published topics only. No route/table/hook count change.",
     "delta_2026_10_17_2_0_3_wave3": "Category::viewer_visibility_sql (one EXISTS on jt_spaces via Space::listing_visibility_sql) applied to find_by_slug/find_visible/list_top_level/list_children/children_by_parent: a category with no space the viewer can see is not found and not listed; Category::find_top_level_by_name, Space::find_by_title_in_category (setup wizard reuses, jetonomy_setup_save returns reused); Rate_Limiter::error -> 429 jetonomy_rate_limited for posts/replies/votes; Template_Loader::topic_ban_error (topic route 403 + ban message for a space ban in a public space), invite route 404 unknown / 410 expired; GET /spaces/{id}/posts orderby enum (400 on unknown); POST /moderation/ban ip_ban needs no user_id and stores user 0, GET /moderation/ban user null for IP bans; space-admin routes check permission before existence (403 before 404); Space::sum_post_counts/Post::count_published_since take a viewer (guest pulse counts readable content only); postable_by_me and the compose picker skip spaces that do not accept content; admin Spaces search+sort and Content sort in SQL (jetonomy_admin_sort_header, jetonomy_admin_table sort/sortable); activity row names the revealed author; CLI create_post/create_reply fire jetonomy_after_create_post/reply with a null request; blank email template fields send Notifier::get_default_template; Pro polls vote/unvote require create_replies (403 jetonomy_join_required), payload can_vote + vote_refusal; Pro dormant Conversations page title. No route/table/hook count change.",
-    "delta_2026_10_17_2_0_3_wave4": "Profile Message button falls back to a DOM event (jetonomy_member_message_event filter; Pro returns mvs-open-conversation while WPMediaVerse owns messaging, gated on WPMediaVerse can_message and Jetonomy blocks); GET /link-preview answers 200 with an empty preview for every URL it will not fetch (malformed, no DNS, internal), was 400 jetonomy_invalid_url/jetonomy_blocked_url, still non-enumerating and nothing fetched; POST /auth/resend-verification adds 429 jetonomy_resend_cooldown with retry_after, keyed on the typed identifier; Restriction::active_rows_for_users rows include space_id and admin Users names the space of a space ban (one Space::list_by_ids per page); member-content links underlined + accent; mobile tab-bar clearance includes env(safe-area-inset-bottom). Hook count +1."
+    "delta_2026_10_17_2_0_3_wave4": "Profile Message button falls back to a DOM event (jetonomy_member_message_event filter; Pro returns mvs-open-conversation while WPMediaVerse owns messaging, gated on WPMediaVerse can_message and Jetonomy blocks); GET /link-preview answers 200 with an empty preview for every URL it will not fetch (malformed, no DNS, internal), was 400 jetonomy_invalid_url/jetonomy_blocked_url, still non-enumerating and nothing fetched; POST /auth/resend-verification adds 429 jetonomy_resend_cooldown with retry_after, keyed on the typed identifier; Restriction::active_rows_for_users rows include space_id and admin Users names the space of a space ban (one Space::list_by_ids per page); member-content links underlined + accent; mobile tab-bar clearance includes env(safe-area-inset-bottom). Hook count +1.",
+    "delta_2026_10_18_2_0_3_wave5": "Fix batch 5 (wave-3 walk + Docker lane). Notifications: Notifier::create_and_maybe_email is the one public static send path and checks the recipient can still read the post/reply at send time; Notifier::EMAIL_PLACEHOLDERS/email_placeholders(); Jetonomy\\short_title(); email templates flag_created and reply_in_followed (template-only rows); filter jetonomy_send_instant_email and action jetonomy_profile_notification_fields (Pro digest replaces covered instant emails, profile digest choice); PATCH /notifications/{id} answers 404 for another member's id. Moderation: Moderation_Service::create_flag single report path (REST, ability, CLI); set_object_status/apply_object_status take $expected and refuse 409 jetonomy_already_handled; optional 'from' on moderation action routes; Flag::REASONS, DESCRIPTION_MAX 2000, pending_for_object, pending_summary, $per_object on pending list/count methods (merged report cards); Moderation_Permissions::restriction_error (silenced staff refused); guests 401 on staff routes, hidden spaces 404 on every space-scoped staff route; Vote::self_vote_error, 400 jetonomy_self_vote, filter jetonomy_allow_self_upvote removed; accepted answer cleared on reply trash/delete and restored. Access rules: SpaceMember::live_role (synced tier rows count only while a rule admits them); one-off job jetonomy_sweep_space_roster queued by AccessRule::delete and Pro tag integration (Membership_Roster_Sync::queue_space_sweep/sweep_space/SWEEP_HOOK); AccessRule::cap_space_role and create() cap Full at Member for every rule type; Space::name_withheld_from_viewer gates titles and og/meta (seo_display_name); REST_Auth::auth_mutation forbidden_message; Admin::explain_access_rules_refusal on admin_page_access_denied; find_unconcealed_space moved to Base_Controller; search and /spaces/{id}/posts answer 404 hidden/missing, 403 listed-private. UI: UserProfile::last_seen_for_viewer/ONLINE_WINDOW (exact last_seen only for self and staff); JoinRequest::decision_message shared by AJAX and REST (response adds message); PATCH /posts/{id} on a draft moves or cancels published_at for whoever may edit it; Embeds::is_wp_post_embed; partial schedule-fields.php; smart-dropdown opens above .jt-mobile-tabs; pagination-frontend skips loaded rows. Docker cards: Space::delete cascades through Space_Purge::queue (WP_Error jetonomy_space_delete_failed); archived spaces show no composer; recent/trending/feed/BuddyPress/tag lists prime authors; invite links (?ipg=) and admin join requests (?jrpg=) page, AJAX jetonomy_list_invites pages (page, total, has_more); leaderboard excludes global bans (Restriction::not_banned_sql); Jetonomy\\leaderboard_empty_state; Importer::mapped_count/settle_tally, adopted in tally, one already-imported number. Post::private_reader_sql (digest privacy). Hooks +2 -1."
   },
   "static_analysis": {
     "dead_listeners": [

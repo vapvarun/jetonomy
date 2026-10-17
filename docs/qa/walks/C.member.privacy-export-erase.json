@@ -1,0 +1,84 @@
+{
+  "journey": "C.member.privacy-export-erase",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-privacy-export-erase.1": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.2": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.3": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.4": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.5": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.6": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.7": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.8": {
+      "result": "untested",
+      "needs": "lane A: a throwaway account (Lucas Moreau) registered through a registration-open setting; no persona may be deleted from lane B"
+    },
+    "c-member-privacy-export-erase.10": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.11": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.12": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.13": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.14": {
+      "result": "untested",
+      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+    },
+    "c-member-privacy-export-erase.15": {
+      "result": "pass",
+      "evidence": "bob opens /wp-admin/export-personal-data.php: HTTP 403 'WordPress > Error: Sorry, you are not allowed to access this page.'"
+    },
+    "c-member-privacy-export-erase.16": {
+      "result": "pass",
+      "evidence": "alice DELETE /users/3755, GET /users/3755/export, /users/3755/privacy and POST /users/3755/erase -> 404 rest_no_route (only /users/me exists and it acts on the caller)"
+    }
+  },
+  "proposed_checks": [],
+  "notes": "Admin and destructive steps are left for lane A; only the two member refusals were walked."
+}

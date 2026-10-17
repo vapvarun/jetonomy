@@ -62,7 +62,6 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | Hook | What it does | Args | Source |
 |---|---|---|---|
 | `jetonomy_after_vote`<br>_action_ | - | `user_id, object_type, object_id, vote_value` | `includes/class-abilities.php` |
-| `jetonomy_allow_self_upvote`<br>_filter_ | - | `allowed, user_id, type, id` | `includes/api/class-votes-controller.php` |
 | `jetonomy_before_vote`<br>_filter_ | Filter whether a vote should proceed. | `user_id, object_type, object_id, vote_value` | `includes/models/class-vote.php` |
 | `jetonomy_pro_poll_unvoted`<br>_action_ ·_Pro_ | Fires after a user's votes are removed from a poll. | `$poll_id, $user_id` | `includes/extensions/polls/class-extension.php` |
 | `jetonomy_pro_poll_voted`<br>_action_ ·_Pro_ | Fires after a vote is cast or changed on a poll. | `$poll_id, $user_id, $option_ids` | `includes/extensions/polls/class-extension.php` |

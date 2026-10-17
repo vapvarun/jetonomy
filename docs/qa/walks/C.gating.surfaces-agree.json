@@ -1,0 +1,96 @@
+{
+  "journey": "C.gating.surfaces-agree",
+  "checks": {
+    "c-gating-surfaces-agree.1": {
+      "result": "fail",
+      "expected": "bob opens Customer Advisory Board (private, not a member) -> the same page as a missing space (404)",
+      "actual": "200 with a locked card: page title 'Customer Advisory Board - forums' and the space name/description, while a missing space gives 404 'Page not available'. Hidden spaces (Moderators' Room) do answer 404. Looks like the intended 'private = visible but locked' behaviour, which this check does not describe.",
+      "check_wrong": true,
+      "url": "http://forums.local/community/s/customer-advisory-board/"
+    },
+    "c-gating-surfaces-agree.2": {
+      "result": "pass",
+      "evidence": "bob (and gating_t5) /community/s/customer-advisory-board/t/q1-roadmap-draft-for-review/ -> 404 'Page not available', same title as a missing topic."
+    },
+    "c-gating-surfaces-agree.3": {
+      "result": "pass",
+      "evidence": "bob searches 'roadmap draft for review' -> 'No results'; GET /search?q=roadmap returns no Customer Advisory Board topic."
+    },
+    "c-gating-surfaces-agree.4": {
+      "result": "pass",
+      "evidence": "gating_t5 (not in Insiders) tag 'email': header '36 topics' (40 total minus 4 private), 3 pages, none of the 4 Insiders topics listed; sidebar tag 'email 36'."
+    },
+    "c-gating-surfaces-agree.5": {
+      "result": "fail",
+      "expected": "no topic or space name from there appears on the home feed or sidebar",
+      "actual": "no private topic appears, but the home Spaces list shows the card 'Customer Advisory Board' (linked) to a non-member; the hidden Moderators' Room never appears.",
+      "check_wrong": true,
+      "url": "http://forums.local/community/"
+    },
+    "c-gating-surfaces-agree.6": {
+      "result": "pass",
+      "evidence": "guest /community-sitemap.xml -> sub-sitemaps of 40 spaces and 254 topics with none of the private ones; GET /updates?scope=global&since=0 -> 401 jetonomy_unauthorized."
+    },
+    "c-gating-surfaces-agree.7": {
+      "result": "fail",
+      "expected": "bob GET /posts/{id}, /spaces/{id}/posts, /posts/{id}/replies, /search?space_id= -> each 404, never 403",
+      "actual": "GET /posts/5865 404 and /posts/5865/replies 404 (as a missing id), but GET /spaces/38/posts and GET /spaces/38 -> 403 jetonomy_forbidden while a missing space is 404 'Space not found.', and /search?q=roadmap&space_id=38 -> 200 with an empty list.",
+      "url": "GET /wp-json/jetonomy/v1/spaces/38/posts"
+    },
+    "c-gating-surfaces-agree.8": {
+      "result": "pass",
+      "evidence": "guest GET /updates?scope=post&id=5865&since=0 -> 404 'Topic not found.' (the same answer as a missing topic; the check expects 403); the same call on public topic 5835 with a valid since -> 200 with reply ids."
+    },
+    "c-gating-surfaces-agree.9": {
+      "result": "fail",
+      "expected": "logged out Partner Program with the locked preview off shows no card and no title",
+      "actual": "the page body shows only 'This space is private. Log in to request access.', but the browser document title is 'Partner Program - forums' (the same for Print Lab Circle), so the name reaches a guest through the tab title and the HTML.",
+      "url": "http://forums.local/community/s/partner-program/"
+    },
+    "c-gating-surfaces-agree.10": {
+      "result": "pass",
+      "evidence": "guest_private_teasers on: the guest home lists Partner Program, Customer Advisory Board and Insiders / Beta by name with no topics; the space URL itself still shows only 'This space is private. Log in to request access.' Setting restored to off."
+    },
+    "c-gating-surfaces-agree.11": {
+      "result": "untested",
+      "needs": "a fresh topic in the private space to look for on the home feed and sidebar for a member; alice (Partner Program member) saw the older topic on the space page, search and topic URL, not on the home feed"
+    },
+    "c-gating-surfaces-agree.12": {
+      "result": "pass",
+      "evidence": "test_moderator sees Moderators' Room on the space page, in search and at the topic URL and its name on home; bob and a plain subscriber get 404 for the space and the topic and see nothing in search or home."
+    },
+    "c-gating-surfaces-agree.13": {
+      "result": "pass",
+      "evidence": "alice removed from Partner Program: the space page loses the topic link, search loses it, the topic URL becomes 404 on the next load (alice put back on the roster afterwards)."
+    },
+    "c-gating-surfaces-agree.14": {
+      "result": "untested",
+      "needs": "topics written before a space became private (old-data fixture)"
+    },
+    "c-gating-surfaces-agree.15": {
+      "result": "untested",
+      "needs": "2000 topics across private spaces (scale site)"
+    }
+  },
+  "proposed_checks": [
+    "- `c-gating-surfaces-agree.16` @guest #ui: open a private space URL logged out with the locked preview off -> the document title is the site name only, never the space name.",
+    "- `c-gating-surfaces-agree.17` @member #rest !refuse: GET /spaces/{private id} and /spaces/{private id}/posts as a non-member answer the same status as /spaces/99999."
+  ],
+  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. Setting guest_private_teasers set true then back to false. alice removed from Partner Program and re-added by hand (source manual instead of the original).",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:58:06Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  }
+}

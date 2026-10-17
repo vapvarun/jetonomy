@@ -1,0 +1,70 @@
+{
+  "journey": "C.gating.read-on-private",
+  "checks": {
+    "c-gating-read-on-private.1": {
+      "result": "pass",
+      "evidence": "gating_t4 opens /community/s/print-lab-circle/ before any rule: a locked card 'Print Lab Circle is invite-only. You need an invitation to join.' with the space description, no topics; its topic URL is a 404 'Page not available'. (Name and description of a private space are visible to any signed-in member.)"
+    },
+    "c-gating-read-on-private.2": {
+      "result": "pass",
+      "evidence": "Logged In + Read rule -> toast 'Access rule added.'"
+    },
+    "c-gating-read-on-private.3": {
+      "result": "pass",
+      "evidence": "gating_t4 reads the space and the topics 'Paper weight for fine art prints?' and the 159-character one."
+    },
+    "c-gating-read-on-private.4": {
+      "result": "pass",
+      "evidence": "no New Topic link, no composer; the vote buttons read 'Score 0. Voting is not available to you here.' and do not change the score. Screenshot qa-artifacts/203-walk3/laneA/w3A-private-readonly.png"
+    },
+    "c-gating-read-on-private.5": {
+      "result": "fail",
+      "expected": "POST topic, reply and vote -> each 403 jetonomy_forbidden 'You cannot post in this space.'",
+      "actual": "topic and reply return 403 jetonomy_forbidden 'You cannot post in this space.'; vote returns 403 jetonomy_forbidden with 'You do not have permission to perform this action.' (different sentence). Nothing stored.",
+      "check_wrong": true,
+      "url": "POST /wp-json/jetonomy/v1/posts/6158/vote"
+    },
+    "c-gating-read-on-private.6": {
+      "result": "fail",
+      "expected": "vote and a flag both return 403 for a Read-only member",
+      "actual": "vote -> 403, but POST /flags -> 201 and the flag is stored (flags 417, 418): a person matched by a Read rule can report, although Read is described as 'read' only and Participate as 'Read, plus post, reply, vote and report'.",
+      "url": "POST /wp-json/jetonomy/v1/flags"
+    },
+    "c-gating-read-on-private.7": {
+      "result": "pass",
+      "evidence": "guest /community/s/print-lab-circle/ -> 'This space is private and invite-only. Log in if you have an invitation.' no topics; topic URL 404."
+    },
+    "c-gating-read-on-private.8": {
+      "result": "pass",
+      "evidence": "rule deleted -> gating_t4's next load shows the locked state and the topic URL is 404."
+    },
+    "c-gating-read-on-private.9": {
+      "result": "pass",
+      "evidence": "159-character title and 118-character URL topic: title and link stay inside the card at 1440 (scrollWidth 1440) and 390 (title 48-342px, link 48-339px, scrollWidth 390). Screenshots qa-artifacts/203-walk3/laneA/w3A-long-private-1440.png, w3A-long-private-390.png"
+    },
+    "c-gating-read-on-private.10": {
+      "result": "pass",
+      "evidence": "390x844: the space and the long topic stack with scrollWidth 390."
+    }
+  },
+  "proposed_checks": [
+    "- `c-gating-read-on-private.11` @member #rest !refuse: a Read-rule member POSTs /flags -> 403 like vote (or the Read description says it includes reporting)."
+  ],
+  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. ",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:58:06Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  }
+}

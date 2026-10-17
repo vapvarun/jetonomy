@@ -62,8 +62,12 @@
       "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
     },
     "c-admin-invite-links.12": {
-      "result": "untested",
-      "needs": "docker site: 60 invite links and 40 join requests (seeding not allowed)"
+      "result": "fail",
+      "expected": "60 invite links and 40 join requests both lists page and show the total",
+      "actual": "FE /community/s/general-discussion/members/ dumped all 60 invite URLs with no pager and no total. Admin Join Requests tab shows 'Pending Join Requests (40)' and all 40 rows on one page (total yes, paging no). QM 0.10s 106Q (FE) / 0.10s 271Q (admin).",
+      "url": "http://localhost:8095/community/s/general-discussion/members/?autologin=1",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/invites-fe.png",
+      "site": "docker jt203-scale"
     },
     "c-admin-invite-links.13": {
       "result": "pass",
@@ -105,5 +109,5 @@
     "- `c-admin-invite-links.19` @admin #admin: space Members tab -> a Join Requests list with approve/deny and a total exists in wp-admin as well as the front end.",
     "- `c-admin-invite-links.20` @guest #ui +390: open a valid invite link logged out at 390px -> the invitation card fills the width, is centred and the Log in button is reachable."
   ],
-  "notes": "Created invite links only on temporary spaces (Gardening Tips, Pop-up Workshop), both deleted; no settings changed. Unknown invite token still returns HTTP 200 'Invalid invite link.' (soft 404). | Re-walk 2 (lane A): no settings changed; invite link was only opened as a guest."
+  "notes": "Created invite links only on temporary spaces (Gardening Tips, Pop-up Workshop), both deleted; no settings changed. Unknown invite token still returns HTTP 200 'Invalid invite link.' (soft 404). | Re-walk 2 (lane A): no settings changed; invite link was only opened as a guest. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
 }
