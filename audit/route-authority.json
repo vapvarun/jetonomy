@@ -1,0 +1,887 @@
+{
+  "_doc": [
+    "Declared authority for every REST route whose handler lives in this plugin. RouteAuthorityTest",
+    "(Pro: tests/pro/RouteAuthorityProTest.php in the free repo) walks the live registry and fails when a",
+    "route is missing here, when an entry has no live route, or when the code no longer matches it.",
+    "Seed or re-check with: wp eval-file bin/route-authority-scan.php [free|pro] (free repo).",
+    "audience: public = a signed-out caller passes the gate | member = any signed-in member, acting on their own",
+    "data | owner = the object owner (or staff) | admin = a staff capability | guarded = signed-in gate, the",
+    "handler resolves authority from the space or object.",
+    "permission_callback: the factory and captured capabilities, or the inline closure source; any change fails the test.",
+    "public routes carry observed_anon: the status a signed-out dispatch gets, re-checked on every run.",
+    "probe: the fixture kind to dispatch against PRIVATE copies of (post|reply|space|category|user|listing), or none.",
+    "refuse: statuses a refused probe may answer; anything a viewer may not know exists must answer 404."
+  ],
+  "routes": {
+    "DELETE /jetonomy/v1/access-rules/(?P<rule_id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_spaces; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_spaces) - the site-admin capability (only administrators hold it by default). Access rules are a site-admin decision (owner policy); a space admin is refused with that sentence. Observed: a subscriber is refused 403."
+    },
+    "DELETE /jetonomy/v1/admin/demo-data": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=manage_options; opts=)",
+      "reason": "auth_mutation(manage_options). Observed: a subscriber is refused, an administrator passes."
+    },
+    "DELETE /jetonomy/v1/bookmarks/(?P<post_id>\\d+)": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): removes the caller's own bookmark; the row is keyed by the caller, so another member's bookmark cannot be addressed."
+    },
+    "DELETE /jetonomy/v1/categories/(?P<id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_categories; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_categories). Observed: a subscriber is refused, an administrator passes."
+    },
+    "DELETE /jetonomy/v1/moderation/ban/(?P<id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_moderate; opts=)",
+      "reason": "auth_mutation(jetonomy_moderate). Observed: a subscriber is refused, an administrator passes."
+    },
+    "DELETE /jetonomy/v1/notifications/(?P<id>\\d+)": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): deletes only the caller's own notification: Notification::delete_for_user(caller, id), so another member's id deletes 0 rows."
+    },
+    "DELETE /jetonomy/v1/posts/(?P<id>\\d+)": {
+      "audience": "owner",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler allows the author or a moderator. Observed: another member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "post",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "DELETE /jetonomy/v1/posts/(?P<id>\\d+)/vote": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): withdraws the caller's own vote."
+    },
+    "DELETE /jetonomy/v1/replies/(?P<id>\\d+)": {
+      "audience": "owner",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler allows the reply author or a moderator. Observed: another member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "reply",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "DELETE /jetonomy/v1/replies/(?P<id>\\d+)/accept": {
+      "audience": "owner",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler allows the topic author or a moderator to un-accept. Observed: another member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "reply",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "DELETE /jetonomy/v1/replies/(?P<id>\\d+)/vote": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): withdraws the caller's own vote."
+    },
+    "DELETE /jetonomy/v1/spaces/(?P<id>\\d+)": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires the space owner/admin or a site admin (Space::can_hand_over for transfer). Observed: a plain member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "space",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "DELETE /jetonomy/v1/spaces/(?P<id>\\d+)/invites/(?P<invite_id>\\d+)": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires space admin to revoke an invite. Observed: a plain member is refused 403."
+    },
+    "DELETE /jetonomy/v1/spaces/(?P<id>\\d+)/join-requests/mine": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): withdraws the caller's own pending join request."
+    },
+    "DELETE /jetonomy/v1/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler lets a member remove themselves (leave) and space admins remove others. Observed: a member removing the space admin is refused 403."
+    },
+    "DELETE /jetonomy/v1/subscriptions/(?P<id>\\d+)": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): removes the caller's own subscription; the handler refuses a subscription whose user_id is not the caller."
+    },
+    "DELETE /jetonomy/v1/tags/(?P<id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_settings; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_settings). Observed: a subscriber is refused, an administrator passes."
+    },
+    "DELETE /jetonomy/v1/users/me": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=allow_banned=true,allow_unverified=true)",
+      "reason": "auth_mutation(read, allow_banned, allow_unverified): deletes the caller's own account; banned and unverified members keep this right (GDPR Art. 17 / Apple 5.1.1(v)). Rate limited; requires confirm."
+    },
+    "DELETE /jetonomy/v1/users/me/blocks/(?P<user_id>\\d+)": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): unblocks a member from the caller's own block list."
+    },
+    "GET /jetonomy/v1/admin/demo-data": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=manage_options; opts=)",
+      "reason": "auth_mutation(manage_options). Observed: a subscriber is refused, an administrator passes."
+    },
+    "GET /jetonomy/v1/app/config": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "reason": "Observed signed out: 200 with the pre-login app theme and feature flags (site name, colours, which features are on). Configuration only, no member or content data.",
+      "observed_anon": 200,
+      "probe": "listing"
+    },
+    "GET /jetonomy/v1/auth/nonce": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "reason": "Observed signed out: 200 with a REST nonce for user 0, which authorises nothing a stranger could not already do.",
+      "observed_anon": 200
+    },
+    "GET /jetonomy/v1/auth/verify-email": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "reason": "Observed signed out with a wrong token: 400 jetonomy_verification_failed. The emailed token is the authority; the link is opened from a mail client, so it cannot require a session.",
+      "observed_anon": 400,
+      "probe_params": {
+        "user_id": "{author}",
+        "token": "g2-wrong-token"
+      }
+    },
+    "GET /jetonomy/v1/bookmarks": {
+      "audience": "member",
+      "permission_callback": "Bookmarks_Controller::register_routes function () { return is_user_logged_in(); }",
+      "reason": "Signed-in only (is_user_logged_in); lists the caller's own bookmarks."
+    },
+    "GET /jetonomy/v1/categories": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with visible categories only; a hidden category is filtered by Category::listing_visibility_sql() and never appears (probed).",
+      "observed_anon": 200,
+      "probe": "listing"
+    },
+    "GET /jetonomy/v1/categories/(?P<id>\\d+)": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 for a public category; a hidden category answers 404 like a missing one (Category::find_visible(), probed).",
+      "observed_anon": 200,
+      "probe": "category",
+      "refuse": [
+        404
+      ]
+    },
+    "GET /jetonomy/v1/feed": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with topics from spaces a stranger can read; nothing from a private or hidden space (probed).",
+      "observed_anon": 200,
+      "probe": "listing"
+    },
+    "GET /jetonomy/v1/leaderboards": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with public reputation rankings (display name, avatar, score).",
+      "observed_anon": 200,
+      "probe": "listing"
+    },
+    "GET /jetonomy/v1/link-preview": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out for a private-space topic URL: 200 with an empty preview echoing only the URL sent. The route fetches remote pages server-side for anyone; Url_Guard::check_remote_url() is its SSRF guard and a refused or internal address gets the empty preview (probed).",
+      "observed_anon": 200,
+      "probe": "listing",
+      "probe_params": {
+        "url": "{private_post_url}"
+      }
+    },
+    "GET /jetonomy/v1/media": {
+      "audience": "admin",
+      "permission_callback": "Media_Controller::register_routes function () { return current_user_can( 'jetonomy_manage_settings' ) ? true : ( is_user_logged_in() ? REST_Auth::forbidden() : false ); }",
+      "reason": "jetonomy_manage_settings only: guests 401, members 403 jetonomy_forbidden. Observed: a subscriber is refused, an administrator passes."
+    },
+    "GET /jetonomy/v1/moderation/ban": {
+      "audience": "admin",
+      "permission_callback": "Moderation_Controller::require_moderate",
+      "reason": "require_moderate: signed in (401), then jetonomy_moderate (403 jetonomy_forbidden). Observed: a subscriber is refused, an administrator passes."
+    },
+    "GET /jetonomy/v1/moderation/flags": {
+      "audience": "admin",
+      "permission_callback": "Moderation_Controller::require_moderate",
+      "reason": "require_moderate: signed in (401), then jetonomy_moderate (403 jetonomy_forbidden). Observed: a subscriber is refused, an administrator passes."
+    },
+    "GET /jetonomy/v1/moderation/queue": {
+      "audience": "admin",
+      "permission_callback": "Moderation_Controller::require_moderate",
+      "reason": "require_moderate: signed in (401), then jetonomy_moderate (403 jetonomy_forbidden). Observed: a subscriber is refused, an administrator passes."
+    },
+    "GET /jetonomy/v1/notifications": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "reason": "__return_true gate; observed signed out: 401 from the handler (require_auth). A stranger gets nothing; a member only ever their own rows.",
+      "observed_anon": 401
+    },
+    "GET /jetonomy/v1/notifications/unread-count": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "reason": "__return_true gate; observed signed out: 401 from the handler. Member-only in practice: the count is the caller's own.",
+      "observed_anon": 401
+    },
+    "GET /jetonomy/v1/oembed": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out for a private-space topic URL: 404, the same answer as a missing topic; a public topic URL returns its embed card.",
+      "observed_anon": 404,
+      "probe": "listing",
+      "probe_params": {
+        "url": "{private_post_url}"
+      }
+    },
+    "GET /jetonomy/v1/posts/(?P<id>\\d+)": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 for a public topic; a topic in a private or hidden space answers 404 to a stranger and a non-member (probed).",
+      "observed_anon": 200,
+      "probe": "post",
+      "refuse": [
+        404
+      ]
+    },
+    "GET /jetonomy/v1/posts/(?P<id>\\d+)/flags": {
+      "audience": "admin",
+      "permission_callback": "Moderation_Controller::require_moderate",
+      "reason": "require_moderate: signed in (401), then jetonomy_moderate (403 jetonomy_forbidden). Observed: a subscriber is refused, an administrator passes."
+    },
+    "GET /jetonomy/v1/posts/(?P<post_id>\\d+)/replies": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with the replies of a public topic; a private-space topic answers 404 (probed).",
+      "observed_anon": 200,
+      "probe": "post",
+      "refuse": [
+        404
+      ]
+    },
+    "GET /jetonomy/v1/posts/drafts": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "reason": "__return_true gate; observed signed out: 401 from the handler. A member only ever lists their own drafts.",
+      "observed_anon": 401
+    },
+    "GET /jetonomy/v1/replies/(?P<id>\\d+)": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 for a reply on a public topic; a reply in a private space answers 404 (probed).",
+      "observed_anon": 200,
+      "probe": "reply",
+      "refuse": [
+        404
+      ]
+    },
+    "GET /jetonomy/v1/search": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on: an open search answers 200 from readable spaces. Observed signed out, scoped to a listed private space: 403 jetonomy_forbidden and none of its topics (probed). Scoped rather than keyword: the test DB uses temporary tables without FULLTEXT, so a keyword probe would error, not prove.",
+      "observed_anon": 403,
+      "probe": "listing",
+      "probe_params": {
+        "space_id": "{private_space}"
+      }
+    },
+    "GET /jetonomy/v1/spaces": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with listed spaces; a publicly listed private space shows its name, a hidden space and a space in a hidden category never appear (probed).",
+      "observed_anon": 200,
+      "probe": "listing"
+    },
+    "GET /jetonomy/v1/spaces/(?P<id>\\d+)": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 for a public space; a listed private space answers 403 (its existence is public), a hidden space 404 (probed).",
+      "observed_anon": 200,
+      "probe": "space",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "GET /jetonomy/v1/spaces/(?P<id>\\d+)/access-rules": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_spaces; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_spaces) - the site-admin capability (only administrators hold it by default). Access rules are a site-admin decision (owner policy); a space admin is refused with that sentence. Observed: a subscriber is refused 403."
+    },
+    "GET /jetonomy/v1/spaces/(?P<id>\\d+)/invites": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest-read gate passes, the handler decides: observed signed out on a public space: 403. Only a space admin or site admin lists invites; a hidden space answers 404 (probed).",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "observed_anon": 403,
+      "probe": "space",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "GET /jetonomy/v1/spaces/(?P<id>\\d+)/join-requests": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest-read gate passes, the handler decides: observed signed out: 403. Only the space's admins and moderators see pending requests; a hidden space answers 404 (probed).",
+      "observed_anon": 403,
+      "probe": "space",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "GET /jetonomy/v1/spaces/(?P<id>\\d+)/members": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with the member roster of a public space; a private space answers 403 and a hidden one 404 (probed).",
+      "observed_anon": 200,
+      "probe": "space",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "GET /jetonomy/v1/spaces/(?P<id>\\d+)/moderation/flags": {
+      "audience": "guarded",
+      "permission_callback": "Space_Moderation_Controller::require_view_space_queue",
+      "reason": "require_view_space_queue: signed in (401 otherwise), the space must not be concealed from the caller (404), then Moderation_Permissions::can_view_space_queue (403 jetonomy_forbidden).",
+      "probe": "space",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "GET /jetonomy/v1/spaces/(?P<id>\\d+)/privileged-members": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with the admins and moderators (name, avatar, role) of a public space - and of a listed private space, whose existence is already public; a hidden space answers 404 (probed).",
+      "observed_anon": 200,
+      "probe": "space",
+      "refuse": [
+        200,
+        403,
+        404
+      ]
+    },
+    "GET /jetonomy/v1/spaces/(?P<space_id>\\d+)/posts": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with a public space's topics; a private space answers 403, a hidden one 404, and neither lists a topic (probed).",
+      "observed_anon": 200,
+      "probe": "space",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "GET /jetonomy/v1/subscriptions": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "reason": "__return_true gate; observed signed out: 401 from the handler. A member only ever lists their own subscriptions.",
+      "observed_anon": 401
+    },
+    "GET /jetonomy/v1/tags": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with tag names and counts.",
+      "observed_anon": 200,
+      "probe": "listing"
+    },
+    "GET /jetonomy/v1/updates": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest-read gate passes, the handler decides: observed signed out with a valid since: 401 jetonomy_unauthorized. Member-only in practice; a signed-in non-member gets no private-space activity (probed).",
+      "observed_anon": 401,
+      "probe": "listing",
+      "probe_params": {
+        "since": "{since}"
+      }
+    },
+    "GET /jetonomy/v1/users": {
+      "audience": "admin",
+      "permission_callback": "Users_Controller::require_moderate",
+      "reason": "require_moderate: signed in (401), then jetonomy_moderate (403 jetonomy_forbidden). Observed: a subscriber is refused, an administrator passes."
+    },
+    "GET /jetonomy/v1/users/(?P<id>\\d+)": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with a public profile (name, avatar, reputation, counts); the probe author's private-space content does not appear.",
+      "observed_anon": 200,
+      "probe": "user"
+    },
+    "GET /jetonomy/v1/users/(?P<id>\\d+)/posts": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with the member's topics in spaces the caller can read; their private and hidden-space topics are filtered out (probed).",
+      "observed_anon": 200,
+      "probe": "user"
+    },
+    "GET /jetonomy/v1/users/by-login/(?P<login>[a-zA-Z0-9_\\-\\.]+)": {
+      "audience": "public",
+      "permission_callback": "Visibility::rest_check",
+      "reason": "Guest reading on. Observed signed out: 200 with the same public profile as /users/{id}, looked up by login.",
+      "observed_anon": 200,
+      "probe": "user"
+    },
+    "GET /jetonomy/v1/users/me": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "reason": "__return_true gate; observed signed out: 401 from the handler. A member gets only their own profile.",
+      "observed_anon": 401
+    },
+    "GET /jetonomy/v1/users/me/blocks": {
+      "audience": "member",
+      "permission_callback": "Blocks_Controller::register_routes function () { return is_user_logged_in(); }",
+      "reason": "Signed-in only; lists the caller's own block list."
+    },
+    "GET /jetonomy/v1/users/suggest": {
+      "audience": "member",
+      "permission_callback": "Users_Controller::register_routes function () { return is_user_logged_in(); }",
+      "reason": "Signed-in only; mention autocomplete. Returns members the caller may mention in the given space (display name, avatar)."
+    },
+    "PATCH /jetonomy/v1/categories/(?P<id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_categories; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_categories). Observed: a subscriber is refused, an administrator passes."
+    },
+    "PATCH /jetonomy/v1/notifications/(?P<id>\\d+)": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): marks only the caller's own notification read."
+    },
+    "PATCH /jetonomy/v1/posts/(?P<id>\\d+)": {
+      "audience": "owner",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler allows the author (jetonomy_edit_own_posts) or a moderator (jetonomy_edit_others_posts / space moderator / manage_options). Observed: another member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "post",
+      "probe_body": {
+        "title": "G2 probe edit"
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "PATCH /jetonomy/v1/replies/(?P<id>\\d+)": {
+      "audience": "owner",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler allows the reply author or a moderator. Observed: another member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "reply",
+      "probe_body": {
+        "content": "G2 probe edit"
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "PATCH /jetonomy/v1/spaces/(?P<id>\\d+)": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires space admin or jetonomy_manage_spaces. Observed: a plain member of the space is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "space",
+      "probe_body": {
+        "title": "G2 probe rename"
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "PATCH /jetonomy/v1/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires space admin to change a member's role. Observed: a plain member is refused 403."
+    },
+    "PATCH /jetonomy/v1/tags/(?P<id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_settings; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_settings). Observed: a subscriber is refused, an administrator passes."
+    },
+    "PATCH /jetonomy/v1/users/me": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): edits the caller's own profile."
+    },
+    "POST /jetonomy/v1/admin/demo-data": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=manage_options; opts=)",
+      "reason": "auth_mutation(manage_options). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/admin/recount": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=manage_options; opts=)",
+      "reason": "auth_mutation(manage_options). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/admin/users/trust-level": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_users; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_users). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/auth/app-connect": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): links the signed-in caller's own account to the mobile app via a bridge token."
+    },
+    "POST /jetonomy/v1/auth/login": {
+      "audience": "public",
+      "permission_callback": "REST_Auth::auth_public_write function ( WP_REST_Request $request ) { unset( $request ); return true; }",
+      "reason": "Observed signed out with a wrong password: 401 jetonomy_invalid_credentials. Signing in is for signed-out callers; per-IP rate limited in the handler (check_rate_limit).",
+      "observed_anon": 401,
+      "probe_body": {
+        "user_login": "{author_login}",
+        "user_password": "g2-wrong-password"
+      }
+    },
+    "POST /jetonomy/v1/auth/lost-password": {
+      "audience": "public",
+      "permission_callback": "REST_Auth::auth_public_write function ( WP_REST_Request $request ) { unset( $request ); return true; }",
+      "reason": "Observed signed out: 200 with the same answer whether or not the account exists; sends the reset email only to the account's own address. Per-IP rate limited.",
+      "observed_anon": 200,
+      "probe_body": {
+        "user_login": "{author_login}"
+      }
+    },
+    "POST /jetonomy/v1/auth/register": {
+      "audience": "public",
+      "permission_callback": "REST_Auth::auth_public_write function ( WP_REST_Request $request ) { unset( $request ); return true; }",
+      "reason": "Observed signed out with registration closed (core users_can_register off): 403 jetonomy_registration_disabled. When the owner opens registration, a stranger can create a subscriber account - that is the feature. Rate limited, disposable emails refused.",
+      "observed_anon": 403,
+      "probe_body": {
+        "username": "g2probe",
+        "email": "g2probe@example.org",
+        "password": "G2-probe-password-1"
+      }
+    },
+    "POST /jetonomy/v1/auth/resend-verification": {
+      "audience": "public",
+      "permission_callback": "REST_Auth::auth_public_write function ( WP_REST_Request $request ) { unset( $request ); return true; }",
+      "reason": "Observed signed out: 200 without saying whether the account exists; mails only the account's own address. Rate limited.",
+      "observed_anon": 200,
+      "probe_body": {
+        "user_login": "{author_login}"
+      }
+    },
+    "POST /jetonomy/v1/bookmarks": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): toggles the caller's own bookmark on a topic they can read.",
+      "probe": "post",
+      "probe_body": {
+        "post_id": "{private_post}"
+      }
+    },
+    "POST /jetonomy/v1/categories": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_categories; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_categories). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/flags": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_flag; opts=)",
+      "reason": "auth_mutation(jetonomy_flag): reports content the caller can read. Read-only access-rule members may report (owner policy). A private-space topic is refused to a non-member (probed).",
+      "probe": "post",
+      "probe_body": {
+        "object_type": "post",
+        "object_id": "{private_post}",
+        "reason": "spam"
+      }
+    },
+    "POST /jetonomy/v1/invite/(?P<token>[a-zA-Z0-9]+)": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): redeems an invite link; the unguessable token is the authority for joining that one space."
+    },
+    "POST /jetonomy/v1/media": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_upload_media|manage_options; opts=)",
+      "reason": "auth_mutation(jetonomy_upload_media|manage_options): uploads an image for the caller's own post; the upload capability is the owner's Upload media switch."
+    },
+    "POST /jetonomy/v1/moderation/approve/(?P<type>post|reply)/(?P<id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_moderate; opts=)",
+      "reason": "auth_mutation(jetonomy_moderate). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/moderation/ban": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires jetonomy_moderate (or manage_options) for a global ban and space admin (Permission_Engine::is_space_admin) for a space ban, and refuses banning staff. Observed: a plain member space-banning the space admin is refused 403."
+    },
+    "POST /jetonomy/v1/moderation/bulk": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_moderate; opts=)",
+      "reason": "auth_mutation(jetonomy_moderate). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/moderation/flags/(?P<id>\\d+)/resolve": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_moderate; opts=)",
+      "reason": "auth_mutation(jetonomy_moderate). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/moderation/spam/(?P<type>post|reply)/(?P<id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_moderate; opts=)",
+      "reason": "auth_mutation(jetonomy_moderate). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/moderation/trash/(?P<type>post|reply)/(?P<id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_moderate; opts=)",
+      "reason": "auth_mutation(jetonomy_moderate). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/notifications/bulk": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): bulk read/delete of the caller's own notifications."
+    },
+    "POST /jetonomy/v1/notifications/mark-all-read": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): marks the caller's own notifications read."
+    },
+    "POST /jetonomy/v1/posts/(?P<id>\\d+)/close": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires jetonomy_close_posts or space moderator. Observed: a member who did not write it is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "post",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/posts/(?P<id>\\d+)/idea-status": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires moderator rights in the Ideas space. Observed: a member who is not a moderator is refused 403.",
+      "known_gap": "Refused, but a non-member gets 400 jetonomy_not_ideas_space for a private-space topic: the space-type check runs before the access check, so it confirms the topic exists and what kind of space holds it. Owner policy wants 404. Reported in G2.",
+      "probe": "post",
+      "probe_body": {
+        "idea_status": "planned"
+      },
+      "refuse": [
+        400,
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/posts/(?P<id>\\d+)/merge": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires moderator rights over both topics. Observed: a plain member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "post",
+      "probe_body": {
+        "target_post_id": "{post}"
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/posts/(?P<id>\\d+)/move": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires jetonomy_move_posts or moderator rights in both spaces. Observed: a plain member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "post",
+      "probe_body": {
+        "target_space_id": "{space}"
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/posts/(?P<id>\\d+)/pin": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires jetonomy_pin_posts or space moderator. Observed: a plain member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "post",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/posts/(?P<id>\\d+)/view": {
+      "audience": "public",
+      "permission_callback": "REST_Auth::auth_public_write function ( WP_REST_Request $request ) { unset( $request ); return true; }",
+      "reason": "Observed signed out: 200 {counted} on a public topic. Counts a view only on a topic the caller can read (Permission_Engine::can_read_post); a private-space topic answers 404 (probed).",
+      "observed_anon": 200,
+      "probe": "post",
+      "refuse": [
+        404
+      ]
+    },
+    "POST /jetonomy/v1/posts/(?P<id>\\d+)/vote": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): votes as the caller on a topic they can read; self-votes refused (400 jetonomy_self_vote, observed); a private-space topic answers 404 to a non-member (probed).",
+      "probe": "post",
+      "probe_body": {
+        "value": 1
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/posts/(?P<post_id>\\d+)/replies": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires read access to the topic (Permission_Engine::can_read_reply / Content_Gate) and participate rights in its space. A non-member replying to a private-space topic is refused (probed).",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "post",
+      "probe_body": {
+        "content": "G2 probe reply"
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/replies/(?P<id>\\d+)/accept": {
+      "audience": "owner",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler allows the topic author (Q&A) or a moderator to accept an answer. Observed: another member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "reply",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/replies/(?P<id>\\d+)/split": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires moderator rights in the reply's space. Observed: a plain member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "reply",
+      "probe_body": {
+        "title": "G2 split topic"
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/replies/(?P<id>\\d+)/vote": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): votes as the caller on a reply they can read; self-votes refused; a private-space reply is refused to a non-member (probed).",
+      "probe": "reply",
+      "probe_body": {
+        "value": 1
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/spaces": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler allows only site admins, plus members when the owner opts in (Capabilities::can_create_space_frontend()). Observed: a subscriber is refused 403 by default."
+    },
+    "POST /jetonomy/v1/spaces/(?P<id>\\d+)/access-rules": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_spaces; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_spaces) - the site-admin capability (only administrators hold it by default). Access rules are a site-admin decision (owner policy); a space admin is refused with that sentence. Observed: a subscriber is refused 403."
+    },
+    "POST /jetonomy/v1/spaces/(?P<id>\\d+)/invite": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires space admin (or site admin) to mint an invite link. Observed: a plain member is refused 403.",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "space",
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/spaces/(?P<id>\\d+)/join-requests/(?P<request_id>\\d+)/approve": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires space admin or moderator. Observed: a plain member is refused 403."
+    },
+    "POST /jetonomy/v1/spaces/(?P<id>\\d+)/join-requests/(?P<request_id>\\d+)/deny": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires space admin or moderator. Observed: a plain member is refused 403."
+    },
+    "POST /jetonomy/v1/spaces/(?P<id>\\d+)/members": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler applies the space's join policy (open joins, private asks, hidden/invite-only refuse). A non-member joining a listed private space gets 202 (a join request is queued, nothing is read), a hidden space is refused (probed).",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "space",
+      "refuse": [
+        202,
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/spaces/(?P<id>\\d+)/moderation/(?P<action>approve|spam|trash)/(?P<type>post|reply)/(?P<obj_id>\\d+)": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires moderation rights in that space (Moderation_Permissions) and that the object belongs to it. Observed: a plain member is refused 403."
+    },
+    "POST /jetonomy/v1/spaces/(?P<id>\\d+)/moderation/flags/(?P<flag_id>\\d+)/resolve": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires moderation rights in that space. Observed: a plain member resolving a real flag is refused 403."
+    },
+    "POST /jetonomy/v1/spaces/(?P<space_id>\\d+)/posts": {
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) gate; the handler requires post rights in the space (Permission_Engine + Content_Gate::check_post). A non-member posting into a private or hidden space is refused (probed).",
+      "known_gap": "Refused, but with 403 jetonomy_forbidden on a private-space topic or hidden space where owner policy wants 404 (it confirms the id exists; no content is returned). Reported in G2; fix in the handler, then drop this key.",
+      "probe": "space",
+      "probe_body": {
+        "title": "G2 probe topic",
+        "content": "G2 probe topic body"
+      },
+      "refuse": [
+        403,
+        404
+      ]
+    },
+    "POST /jetonomy/v1/subscriptions": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): subscribes the caller to a topic or space they can read; a private-space topic is refused to a non-member (probed).",
+      "probe": "post",
+      "probe_body": {
+        "object_type": "post",
+        "object_id": "{private_post}"
+      }
+    },
+    "POST /jetonomy/v1/tags": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_settings; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_settings). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/users/me/blocks": {
+      "audience": "member",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read): adds to the caller's own block list; blocking yourself is refused."
+    }
+  }
+}
