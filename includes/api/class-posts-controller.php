@@ -444,17 +444,18 @@ class Posts_Controller extends Base_Controller {
 
 		$space_id = absint( $request->get_param( 'space_id' ) );
 
+		// A hidden space's id answers like a missing one; a listed space the
+		// member may not post in gets the gate's 403 below.
+		$space = $this->find_unconcealed_space( $space_id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
+		}
+
 		// Restrictions, archived/locked space and the create_posts permission:
-		// the one gate every post writer (REST, abilities, WP-CLI) runs. Before
-		// the 404, so a hidden space's id answers like a missing one.
+		// the one gate every post writer (REST, abilities, WP-CLI) runs.
 		$gate = \Jetonomy\Permissions\Content_Gate::check_post( $user_id, $space_id );
 		if ( is_wp_error( $gate ) ) {
 			return $gate;
-		}
-
-		$space = Space::find( $space_id );
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
 		}
 
 		// Rate limit check.
@@ -695,10 +696,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$space_id  = (int) $post->space_id;
@@ -945,10 +945,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$space_id  = (int) $post->space_id;
@@ -1031,10 +1030,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		if ( ! $this->check_permission( 'close_posts', (int) $post->space_id ) ) {
@@ -1066,10 +1064,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
@@ -1113,10 +1110,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		if ( ! $this->check_permission( 'pin_posts', (int) $post->space_id ) ) {
@@ -1181,10 +1177,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$source_space_id = (int) $post->space_id;
@@ -1198,9 +1193,9 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( sprintf( /* translators: 1: the singular Topic label, 2: the singular Space label, lowercase. */ __( '%1$s is already in the target %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ), \Jetonomy\space_label( false, true ) ) );
 		}
 
-		$target_space = Space::find( $target_space_id );
-		if ( ! $target_space ) {
-			return $this->not_found( 'Target space' );
+		$target_space = $this->find_unconcealed_space( $target_space_id, 'Target space' );
+		if ( is_wp_error( $target_space ) ) {
+			return $target_space;
 		}
 
 		// Require move_posts permission in both source and target spaces.
@@ -1230,17 +1225,15 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$source_id = absint( $request->get_param( 'id' ) );
-		$source    = Post::find( $source_id );
-
-		if ( ! $source ) {
-			return $this->not_found( 'Post' );
+		$source    = $this->find_unconcealed_post( $source_id );
+		if ( is_wp_error( $source ) ) {
+			return $source;
 		}
 
 		$target_id = absint( $request->get_param( 'target_post_id' ) );
-		$target    = Post::find( $target_id );
-
-		if ( ! $target ) {
-			return $this->not_found( 'Target post' );
+		$target    = $this->find_unconcealed_post( $target_id, 'Target post' );
+		if ( is_wp_error( $target ) ) {
+			return $target;
 		}
 
 		if ( $source_id === $target_id ) {

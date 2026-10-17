@@ -134,22 +134,32 @@ class AdminRefusalProofTest extends WP_Ajax_UnitTestCase {
 		$this->assertSame( 0, $this->rows( 'import_map' ) );
 	}
 
-	/** c-admin-invite-links.11 and .17 */
-	public function test_non_member_invite_gets_one_code_for_private_and_missing_spaces(): void {
-		$private = $this->space(
+	/**
+	 * c-admin-invite-links.11 and .17: a listed private space may say 403; a
+	 * hidden one answers exactly like a missing id (owner policy).
+	 */
+	public function test_non_member_invite_gets_one_code_for_hidden_and_missing_spaces(): void {
+		$private  = $this->space(
 			array(
 				'visibility'  => 'private',
 				'join_policy' => 'invite',
 			)
 		);
+		$hidden   = $this->space(
+			array(
+				'visibility'  => 'hidden',
+				'join_policy' => 'invite',
+			)
+		);
 		$outsider = $this->member();
 
-		$real    = $this->rest( 'POST', "/spaces/{$private}/invite", array(), $outsider );
+		$listed  = $this->rest( 'POST', "/spaces/{$private}/invite", array(), $outsider );
+		$real    = $this->rest( 'POST', "/spaces/{$hidden}/invite", array(), $outsider );
 		$missing = $this->rest( 'POST', '/spaces/999999/invite', array(), $outsider );
-		$this->assertSame( 403, $real->get_status() );
-		$this->assertSame( $real->get_status(), $missing->get_status() );
-		$this->assertSame( $real->as_error()->get_error_code(), $missing->as_error()->get_error_code() );
-		$this->assertSame( 0, InviteLink::count_by_space( $private ) );
+		$this->assertSame( 403, $listed->get_status() );
+		$this->assertSame( 404, $real->get_status() );
+		$this->assertSame( $real->get_data(), $missing->get_data() );
+		$this->assertSame( 0, InviteLink::count_by_space( $private ) + InviteLink::count_by_space( $hidden ) );
 	}
 
 	/** c-admin-recount.9 */

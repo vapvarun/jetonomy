@@ -105,17 +105,76 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * 404 rather than 403 for a hidden space (or one in a hidden category):
 	 * a 403 would confirm to a stranger that the space exists, which the
 	 * page itself never does. Every space-scoped read route asks this first,
-	 * then refuses a listed private space with 403.
+	 * then refuses a listed private space with 403. Write routes ask it
+	 * before their role check, so only a space the viewer can see says 403.
 	 *
-	 * @param int $id Space ID.
+	 * @param int    $id   Space ID.
+	 * @param string $what not_found() key: 'Space', or 'Target space' for a move.
 	 * @return object|WP_Error
 	 */
-	protected function find_unconcealed_space( int $id ) {
+	protected function find_unconcealed_space( int $id, string $what = 'Space' ) {
 		$space = \Jetonomy\Models\Space::find( $id );
 		if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
-			return $this->not_found( 'Space' );
+			return $this->not_found( $what );
 		}
 		return $space;
+	}
+
+	/**
+	 * A topic, or the 404 a missing one gets when this viewer may not know it exists.
+	 *
+	 * The topic twin of find_unconcealed_space(): every route that acts on a
+	 * topic asks it before its role, ownership or type check, so a topic in a
+	 * private space the viewer is not in answers exactly like a missing id,
+	 * as GET /posts/{id} does. A viewer who can read it still gets the route's
+	 * own 403 for lacking the role. Status is not judged here: a reader of a
+	 * trashed topic still gets the route's 409.
+	 *
+	 * @param int    $id   Post ID.
+	 * @param string $what not_found() key: 'Post', or 'Target post' for a merge.
+	 * @return object|WP_Error
+	 */
+	protected function find_unconcealed_post( int $id, string $what = 'Post' ) {
+		$post  = \Jetonomy\Models\Post::find( $id );
+		$error = $this->concealed_error( $post, null, $what );
+		return $error ?? $post;
+	}
+
+	/**
+	 * A reply and its topic, or the 404 a missing reply gets when this viewer
+	 * may not know it exists. See find_unconcealed_post().
+	 *
+	 * @param int $id Reply ID.
+	 * @return array{0: object, 1: object}|WP_Error The reply and its topic.
+	 */
+	protected function find_unconcealed_reply( int $id ) {
+		$reply = \Jetonomy\Models\Reply::find( $id );
+		$post  = $reply ? \Jetonomy\Models\Post::find( (int) $reply->post_id ) : null;
+		$error = $this->concealed_error( $post, $reply, 'Reply' );
+		return $error ?? array( $reply, $post );
+	}
+
+	/**
+	 * The refusal for a topic or reply this viewer may not know exists, or null.
+	 *
+	 * A ban is about the member, not the item, so it is named first: a global
+	 * ban the same way for every id, missing ones included, a space ban only
+	 * once the item is known to sit in that space.
+	 *
+	 * @param object|null $post  Topic row, null when missing.
+	 * @param object|null $reply Reply row for a reply route, else null.
+	 * @param string      $what  not_found() key.
+	 */
+	private function concealed_error( ?object $post, ?object $reply, string $what ): ?WP_Error {
+		$user_id    = get_current_user_id();
+		$restricted = Permission_Engine::restriction_error( $user_id, 'read', $post ? (int) $post->space_id : null );
+		if ( $restricted ) {
+			return $restricted;
+		}
+		if ( ! $post || ! \Jetonomy\Permissions\Content_Gate::viewer_may_read( $user_id, $post, $reply, 'Reply' === $what ? 'reply' : 'post' ) ) {
+			return $this->not_found( $what );
+		}
+		return null;
 	}
 
 	/**

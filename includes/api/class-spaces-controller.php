@@ -737,18 +737,17 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function update_item( $request ) {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
+		}
 
-		// Authorise before looking the space up: a non-admin gets the same 403 for a
-		// space that exists and one that does not (site admins still get the 404).
+		// Looked up first: a missing or hidden space answers 404 alike, and only
+		// a space this viewer can see refuses a non-admin with 403.
 		$user_id = get_current_user_id();
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
 			return $this->permission_error();
-		}
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
 		}
 
 		// An archived or locked space is read-only to its own admins: a site
@@ -899,18 +898,17 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function delete_item( $request ) {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
+		}
 
-		// Authorise before looking the space up: a non-admin gets the same 403 for a
-		// space that exists and one that does not (site admins still get the 404).
+		// Looked up first: a missing or hidden space answers 404 alike, and only
+		// a space this viewer can see refuses a non-admin with 403.
 		$user_id = get_current_user_id();
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
 			return $this->permission_error();
-		}
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
 		}
 
 		// Deleting a space defaults to TRANSFER, never to destroying content.
@@ -1323,17 +1321,16 @@ class Spaces_Controller extends Base_Controller {
 		$id      = absint( $request->get_param( 'id' ) );
 		$user_id = absint( $request->get_param( 'user_id' ) );
 		$role    = sanitize_text_field( $request->get_param( 'role' ) );
-		$space   = Space::find( $id );
+		$space   = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
+		}
 
 		$current_user_id = get_current_user_id();
 
-		// Before the lookup: a missing space and a refused one look the same.
+		// After the lookup: a hidden space answered 404 above, like a missing one.
 		if ( ! $this->is_space_admin( $id, $current_user_id ) ) {
 			return $this->permission_error();
-		}
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
 		}
 
 		if ( ! in_array( $role, self::VALID_ROLES, true ) ) {
@@ -1391,18 +1388,17 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function generate_invite( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
+		}
 
-		// Authorise before looking the space up: a non-admin gets the same 403 for a
-		// space that exists and one that does not (site admins still get the 404).
+		// Looked up first: a missing or hidden space answers 404 alike, and only
+		// a space this viewer can see refuses a non-admin with 403.
 		$user_id = get_current_user_id();
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
 			return $this->permission_error();
-		}
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
 		}
 
 		$max_uses   = absint( $request->get_param( 'max_uses' ) );
@@ -1457,20 +1453,19 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function get_invites( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
+		}
 
 		// Space ADMIN, not merely privileged — matching generate_invite(). An
 		// invite token is a bearer credential into a space that may be hidden;
 		// listing them is disclosing them, so a moderator is not enough. Note
 		// the route's permission_callback is only the community-visibility
-		// gate; this is the check that actually authorises the caller. Checked
-		// before the lookup so a missing space and a refused one look the same.
+		// gate; this is the check that actually authorises the caller. A hidden
+		// space already answered 404 above, like a missing one.
 		if ( ! $this->is_space_admin( $id, get_current_user_id() ) ) {
 			return $this->permission_error();
-		}
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
 		}
 
 		$pagination = $this->get_pagination( $request );
@@ -1491,16 +1486,15 @@ class Spaces_Controller extends Base_Controller {
 	public function revoke_invite( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id        = absint( $request->get_param( 'id' ) );
 		$invite_id = absint( $request->get_param( 'invite_id' ) );
-		$space     = Space::find( $id );
-
-		// Authorise before looking the space up: a non-admin gets the same 403 for a
-		// space that exists and one that does not (site admins still get the 404).
-		if ( ! $this->is_space_admin( $id, get_current_user_id() ) ) {
-			return $this->permission_error();
+		$space     = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		// Looked up first: a missing or hidden space answers 404 alike, and only
+		// a space this viewer can see refuses a non-admin with 403.
+		if ( ! $this->is_space_admin( $id, get_current_user_id() ) ) {
+			return $this->permission_error();
 		}
 
 		// InviteLink::revoke() scopes its DELETE to BOTH the row id and the

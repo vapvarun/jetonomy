@@ -1066,7 +1066,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-invite-links.14` @member #ui +deleted: open an invite link after its space was deleted -> the page says "Invalid invite link.", no PHP error, and no invite or join-request rows remain for that space.
 - `c-admin-invite-links.15` @member #ui +390: open the invite page at 390px -> the Join button is at least 40px tall and the space description wraps.
 - `c-admin-invite-links.16` @guest #ui: open the invite link logged out -> the page shows the space name, description and either a Join button that leads to login or the text of the login link, and says what the link is.
-- `c-admin-invite-links.17` @member #rest !refuse: a non-member POSTs /spaces/{id}/invite for a private space and for a non-existent id -> both answer the same code.
+- `c-admin-invite-links.17` @member #rest !refuse: a non-member POSTs /spaces/{id}/invite for a hidden space and for a non-existent id -> both answer the same 404 jetonomy_not_found (a listed private space answers 403, see .11).
 - `c-admin-invite-links.18` @admin #admin: delete a space that has an invite -> its invite rows and join requests are removed with it (no orphan rows).
 - `c-admin-invite-links.19` @admin #admin: space Members tab -> a Join Requests list with approve/deny and a total exists in wp-admin as well as the front end.
 - `c-admin-invite-links.20` @guest #ui +390: open a valid invite link logged out at 390px -> the invitation card fills the width, is centred and the Log in button is reachable.
