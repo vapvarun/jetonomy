@@ -1,0 +1,10 @@
+{
+  "escapes": [
+    {
+      "card": "10412885103",
+      "title": "Duplicate notifications when a reply @mentions the topic author, parent-reply author, or a subscriber",
+      "guard": "states:mention-one-notice",
+      "added": "2026-10-17"
+    }
+  ]
+}

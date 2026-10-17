@@ -106,10 +106,15 @@ fi
 # Exit 25. Requires wp-cli; skipped (with a loud note) when wp is absent.
 if command -v wp > /dev/null 2>&1; then
 	echo "==> Step 0d: i18n make-pot warning gate"
-	I18N_WARNINGS="$(wp i18n make-pot "$ROOT" /tmp/jetonomy-release-check.pot \
+	# make-pot's own failure must stop the build; only grep's "no match" is allowed.
+	I18N_OUT="$(wp i18n make-pot "$ROOT" /tmp/jetonomy-release-check.pot \
 		--slug=jetonomy --domain=jetonomy \
-		--exclude=node_modules,vendor,tests,build,libs,docs,dist 2>&1 \
-		| grep -cE '^Warning: The string' || true)"
+		--exclude=node_modules,vendor,tests,build,libs,docs,dist 2>&1)" || {
+		echo "FAIL: wp i18n make-pot did not run:" >&2
+		printf '%s\n' "$I18N_OUT" | tail -5 >&2
+		exit 25
+	}
+	I18N_WARNINGS="$(printf '%s\n' "$I18N_OUT" | grep -cE '^Warning: The string' || true)"
 	rm -f /tmp/jetonomy-release-check.pot
 	if [ "$I18N_WARNINGS" -gt 0 ]; then
 		echo "FAIL: wp i18n make-pot reports $I18N_WARNINGS string warning(s). Fix translator comments before tagging." >&2
