@@ -1156,6 +1156,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **Verified:** pending - new journey, not walked yet
 **What to verify:** A site admin on a fresh install walks the setup wizard end to end: pick the community base, create the first category and space, optionally seed demo content, and finish on a working /community/ page. A non-admin cannot reach the wizard or its AJAX handlers. Demo content can be removed again without leaving orphans. Check the wizard at 1440 and 390 widths (steps stack, buttons reachable, no horizontal scroll).
 
+**Depth note:** remove-demo-data checks (c-admin-setup-wizard.6, .7) wipe the shared community, so they run on the disposable Docker site, never on the shared walk site.
+
 **Checks:**
 - `c-admin-setup-wizard.1` @admin #admin: on a fresh install open the wizard -> it shows "Welcome to ..." with the Community URL Slug field, the Default Community Type choices (Forum, Q&A, Ideas, Feed) and a Next button.
 - `c-admin-setup-wizard.2` @admin #admin: submit the first-category step with the category name empty -> refused with "Please fill in the category and space name." and nothing is created.
@@ -1370,14 +1372,14 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **Checks:**
 - `c-member-privacy-export-erase.1` @admin #admin: run Tools > Export Personal Data for bob -> the file lists Jetonomy Profile, Jetonomy Posts, Replies, Bookmarks, Votes, Subscriptions, Notifications, Activity Log and Blocked Users groups with his real rows.
 - `c-member-privacy-export-erase.2` @admin #admin +many: export a member with 800 replies -> the export pages through all of them without a timeout and the counts match the profile.
-- `c-member-privacy-export-erase.3` @admin #admin: run Erase Personal Data for alice -> her bookmarks, votes, subscriptions, notifications, blocks and profile details are removed, and posts she wrote are removed or anonymised.
-- `c-member-privacy-export-erase.4` @guest #ui: open a thread alice wrote in that others replied to -> the other replies remain and her items show "[deleted]" or an anonymised name, with no broken threading.
-- `c-member-privacy-export-erase.5` @member #ui: bob's own reply to alice's erased topic -> still visible and its vote score unchanged.
+- `c-member-privacy-export-erase.3` @admin #admin: run Erase Personal Data for Hana (a demo member no persona depends on) -> her bookmarks, votes, subscriptions, notifications, blocks and profile details are removed, and posts she wrote are removed or anonymised.
+- `c-member-privacy-export-erase.4` @guest #ui: open a thread Hana wrote in that others replied to -> the other replies remain and her items show "[deleted]" or an anonymised name, with no broken threading.
+- `c-member-privacy-export-erase.5` @member #ui: bob's own reply to Hana's erased topic -> still visible and its vote score unchanged.
 - `c-member-privacy-export-erase.6` @admin #admin: after erasing, run `wp jetonomy recount` -> counts for spaces and topics match the remaining content.
 - `c-member-privacy-export-erase.7` @admin #admin: open Settings > Privacy > Policy Guide -> the Jetonomy suggested text appears ("When you open a discussion topic in our community, your browser notes the topic ID in session storage ...").
-- `c-member-privacy-export-erase.8` @member #rest: bob DELETEs his account from /users/me -> his content is handled like Erase and he gets signed out, and a 6th attempt in an hour is rate limited.
+- `c-member-privacy-export-erase.8` @member #rest: a member account registered for this check (Lucas Moreau, not bob) DELETEs itself through /users/me -> his content is handled like Erase and he gets signed out, and a 6th attempt in an hour is rate limited.
 - `c-member-privacy-export-erase.10` @member_b #ui +deleted: a user deleted from the WordPress Users screen -> their Jetonomy rows are cleaned, and an old deleted account is cleaned by the orphan purge.
-- `c-member-privacy-export-erase.11` @admin #admin +private: erase a member who posted in Customer Advisory Board -> the private space's rows are anonymised too.
+- `c-member-privacy-export-erase.11` @admin #admin +private: erase Hana after giving her a reply in Customer Advisory Board -> the private space's rows are anonymised too.
 - `c-member-privacy-export-erase.12` @admin #admin +long: export Grace (long name, no avatar) -> the export file has her full name and an empty avatar field without PHP notices.
 - `c-member-privacy-export-erase.13` @admin #admin +390: open the export and erase screens at 390px -> tables scroll inside their container and the page does not.
 - `c-member-privacy-export-erase.14` @admin #cli: run `wp jetonomy privacy scan` after erasing alice -> it reports no Jetonomy rows left for her, and `wp jetonomy privacy purge-orphans` removes rows of a user deleted outside WordPress's eraser.
@@ -2187,9 +2189,9 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 - `e-pro-privacy-and-abilities.1` @admin #admin: Tools > Export Personal Data for maya (who has DMs, reactions, poll votes, badges, custom field values and a push subscription) -> the export lists groups "Jetonomy Pro: Private Messages", "Reactions", "Custom Fields", "Badges", "Poll Votes" and "Push Devices" (with "Browser subscription"), each with real values.
 - `e-pro-privacy-and-abilities.2` @admin #admin: the export for a member with none of those -> has no empty group headings and no PHP notice; a member with >100 reactions pages correctly via `done:false`.
 - `e-pro-privacy-and-abilities.3` @admin #admin: the exported messages -> include only maya's own side and what she can lawfully receive; other participants' private data (their email, their other threads) is not in her file.
-- `e-pro-privacy-and-abilities.4` @admin #admin: Erase Personal Data for maya -> result text "Jetonomy Pro: Messages anonymized. Reactions, custom fields, badges, poll votes, and push subscriptions/devices deleted."; her reactions, field values, badges, poll votes and subscriptions are gone.
-- `e-pro-privacy-and-abilities.5` @member #ui: after erasure, bob's thread with maya still -> shows bob's messages and maya's as "Deleted User"; bob's own data, reactions and votes are untouched, and poll totals drop by exactly maya's votes.
-- `e-pro-privacy-and-abilities.6` @admin #cli: `wp user delete maya --reassign=1` -> clears the same Pro rows (orphan columns) with no orphan rows left in `jt_reactions`, `jt_poll_votes`, `jt_user_badges`, `jt_push_subscriptions`.
+- `e-pro-privacy-and-abilities.4` @admin #admin: Erase Personal Data for Jamal (a demo member no persona depends on) -> result text "Jetonomy Pro: Messages anonymized. Reactions, custom fields, badges, poll votes, and push subscriptions/devices deleted."; her reactions, field values, badges, poll votes and subscriptions are gone.
+- `e-pro-privacy-and-abilities.5` @member #ui: after erasure, bob's thread with Jamal still -> shows bob's messages and Jamal's as "Deleted User"; bob's own data, reactions and votes are untouched, and poll totals drop by exactly maya's votes.
+- `e-pro-privacy-and-abilities.6` @admin #cli: `wp user delete <a member registered for this check> --reassign=1` -> clears the same Pro rows (orphan columns) with no orphan rows left in `jt_reactions`, `jt_poll_votes`, `jt_user_badges`, `jt_push_subscriptions`.
 - `e-pro-privacy-and-abilities.7` @admin #admin +many: erase a member with 5,000 reactions across several requests (the per-request row limit) -> eventually done, no timeout.
 - `e-pro-privacy-and-abilities.8` @admin #admin: anonymous posts and attachments authored by the erased user -> are handled per the owner's policy (anonymised or removed) and not left linking to a real author id.
 - `e-pro-privacy-and-abilities.9` @admin #rest: on WP 6.9+, the abilities -> list contains messaging, analytics, polls, badges, webhooks, reactions, custom fields and moderation abilities only for extensions that are enabled and licensed; disabling Polls removes its abilities; with WPMediaVerse messaging active no messaging abilities are listed.
