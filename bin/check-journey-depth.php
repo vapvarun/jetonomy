@@ -91,6 +91,7 @@ $jd_parts = preg_split( '/^### /m', $jd_md );
 array_shift( $jd_parts );
 
 $jd_problems = array();
+$jd_waivable = array(); // Rule 4 (walk freshness): the only rule an owner release exception may waive.
 $jd_seen     = array();
 $jd_cards    = array();
 $jd_total    = 0;
@@ -157,11 +158,19 @@ foreach ( $jd_parts as $jd_part ) {
 		exit( $jd_why || ! $jd_checks ? 1 : 0 );
 	}
 	if ( ! $jd_ready && preg_match( '/^\*\*Verified:\*\*\s*([0-9a-f]{7,40})(?:\s+pro:([0-9a-f]{7,40}))?/m', $jd_part, $jd_v ) ) {
-		array_push( $jd_problems, ...jd_record_problems( $jd_id, array_keys( $jd_checks ), $jd_v[1], $jd_v[2] ?? '' ) );
+		array_push( $jd_waivable, ...jd_record_problems( $jd_id, array_keys( $jd_checks ), $jd_v[1], $jd_v[2] ?? '' ) );
 	}
 	if ( $jd_list ) {
 		printf( "  %-48s %2d checks\n", $jd_id, count( $jd_checks ) );
 	}
+}
+
+require_once __DIR__ . '/release-exception.php';
+$jd_exception = jetonomy_release_exception( $jd_root );
+if ( $jd_waivable && $jd_exception ) {
+	printf( "journey-depth: %d walk-record problem(s) WAIVED for %s by owner exception (%s, %s)\n", count( $jd_waivable ), $jd_exception['version'], $jd_exception['by'], $jd_exception['approved'] );
+} else {
+	array_push( $jd_problems, ...$jd_waivable );
 }
 
 if ( $jd_ready ) {
@@ -183,5 +192,5 @@ if ( $jd_problems ) {
 	printf( "\njourney-depth: %d problem(s) across %d journeys and %d checks.\n", count( $jd_problems ), count( $jd_parts ), $jd_total );
 	exit( 1 );
 }
-printf( "journey-depth: %d journeys, %d checks, every stamp backed by a complete walk record\n", count( $jd_parts ), $jd_total );
+printf( "journey-depth: %d journeys, %d checks, %s\n", count( $jd_parts ), $jd_total, $jd_waivable ? 'structure complete; walk records waived (see above)' : 'every stamp backed by a complete walk record' );
 exit( 0 );

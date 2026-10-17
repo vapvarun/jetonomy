@@ -99,6 +99,13 @@ foreach ( $jt_parts as $jt_part ) {
 	}
 }
 
+require_once __DIR__ . '/release-exception.php';
+$jt_exception = jetonomy_release_exception( $jt_root );
+if ( $jt_problems && $jt_exception ) {
+	echo implode( "\n", $jt_problems ), "\n";
+	printf( "\nrunbook-fresh: WAIVED for %s by owner exception (%s, %s): %s\n%d journey(s) not re-walked; walked instead: %s\n", $jt_exception['version'], $jt_exception['by'], $jt_exception['approved'], $jt_exception['reason'], count( $jt_problems ), implode( ', ', (array) ( $jt_exception['walked'] ?? array() ) ) );
+	exit( 0 );
+}
 if ( $jt_problems ) {
 	echo implode( "\n", $jt_problems ), "\n";
 	printf( "\nrunbook-fresh: %d of %d journey(s) need a walk. Walk each in the browser against the current code, fix its text if the behaviour changed, then set **Verified:** to the commits it passed at (`git rev-parse --short HEAD`, plus `pro:<sha>` for Pro files).\n", count( $jt_problems ), count( $jt_parts ) );

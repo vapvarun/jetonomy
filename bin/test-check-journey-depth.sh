@@ -10,7 +10,8 @@ SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/check-journey-depth.php"
 T="$(mktemp -d)"
 trap 'rm -rf "$T"' EXIT
 mkdir -p "$T/bin" "$T/docs/qa/walks" "$T/audit"
-cp "$SRC" "$T/bin/"
+cp "$SRC" "$(dirname "$SRC")/release-exception.php" "$T/bin/"
+printf '<?php\n/**\n * Version: 2.0.3\n */\n' > "$T/jetonomy.php"
 echo '{"personas":{"member":{},"member_b":{}}}' > "$T/docs/qa/qa-config.json"
 echo '{"escapes":[{"card":"111"}]}' > "$T/audit/escapes.json"
 
@@ -58,5 +59,16 @@ echo '{"free":"abc1234","checks":{"c-member-vote.1":{"result":"pass"},"c-member-
 expect 0 'stamp backed by a complete walk'
 expect 0 '--ready at the walked commit' --ready C.member.vote abc1234
 expect 1 '--ready at a newer commit' --ready C.member.vote 9999999
+
+# Owner release exception: waives walk freshness for its own version only, never structure.
+echo '{"free":"def5678","checks":{"c-member-vote.1":{"result":"pass"},"c-member-vote.2":{"result":"pass"}}}' > "$T/docs/qa/walks/C.member.vote.json"
+echo '{"version":"2.0.3","approved":"2026-10-18","by":"owner","reason":"test"}' > "$T/docs/qa/release-exception.json"
+expect 0 'release exception waives a stale walk record'
+runbook "${good[@]:0:4}"
+expect 1 'release exception never waives a missing refusal'
+runbook "${good[@]:0:2}" '**Verified:** abc1234' "${good[@]:2}"
+echo '{"version":"2.0.4","approved":"2026-10-18","by":"owner","reason":"test"}' > "$T/docs/qa/release-exception.json"
+expect 1 'release exception for another version waives nothing'
+rm "$T/docs/qa/release-exception.json"
 
 [ $fails -eq 0 ] && echo "check-journey-depth: every rule fails when broken and passes when met" || exit 1
