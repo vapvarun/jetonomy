@@ -114,7 +114,7 @@ Each rule has three parts:
 
 | Grant | Effect |
 |-------|--------|
-| Read | Can view posts and replies, cannot participate |
+| Read | Can view and report posts and replies, cannot post, reply or vote |
 | Participate | Can read, post, and reply |
 | Full | Everything Participate allows, plus the moderator actions the person's own WordPress capabilities already permit |
 

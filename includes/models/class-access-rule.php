@@ -86,8 +86,12 @@ class AccessRule extends Model {
 	}
 
 	public static function delete( int $id ): bool|\WP_Error {
+		$rule   = static::find( $id );
 		$result = parent::delete( $id );
 		self::reset_memo();
+		if ( $rule && true === $result ) {
+			\Jetonomy\Membership_Roster_Sync::queue_space_sweep( (int) $rule->space_id );
+		}
 		return $result;
 	}
 

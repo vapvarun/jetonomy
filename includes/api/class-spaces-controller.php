@@ -282,8 +282,14 @@ class Spaces_Controller extends Base_Controller {
 		 * Access rules. jt_access_rules is the table that decides who may enter a
 		 * space, and until 1.9.4 it had ZERO REST coverage - configurable only
 		 * from wp-admin, so no API-driven or app-based space-admin flow could
-		 * touch it. Capability matches the AJAX handler (jetonomy_manage_spaces).
+		 * touch it. Capability matches the AJAX handler (jetonomy_manage_spaces):
+		 * rules are a site-admin decision, so a space admin is refused with a
+		 * sentence that says so rather than the generic one.
 		 */
+		$rules_refusal = array(
+			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+			'forbidden_message' => sprintf( __( 'Only site administrators can manage access rules for this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+		);
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/access-rules',
@@ -291,12 +297,12 @@ class Spaces_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'list_access_rules' ),
-					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
 				),
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_access_rule' ),
-					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
 					'args'                => array(
 						'rule_type'  => array(
 							'type'     => 'string',
@@ -329,7 +335,7 @@ class Spaces_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'delete_access_rule' ),
-				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
 			)
 		);
 	}
@@ -1017,24 +1023,6 @@ class Spaces_Controller extends Base_Controller {
 		);
 
 		return rest_ensure_response( $items );
-	}
-
-	/**
-	 * A space, or a 404 when this viewer may not know it exists.
-	 *
-	 * 404 rather than 403 for a hidden space (or one in a hidden category):
-	 * a 403 would confirm to a stranger that the space exists, which the
-	 * page itself never does.
-	 *
-	 * @param int $id Space ID.
-	 * @return object|WP_Error
-	 */
-	private function find_unconcealed_space( int $id ) {
-		$space = Space::find( $id );
-		if ( ! $space || Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
-			return $this->not_found( 'Space' );
-		}
-		return $space;
 	}
 
 	/**

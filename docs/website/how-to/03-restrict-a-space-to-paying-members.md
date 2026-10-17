@@ -59,7 +59,7 @@ A sentence under the form reads your rule back in plain English. The rule then a
 
 | Grants | What a plan holder can do |
 |---|---|
-| **Read** | Read only |
+| **Read** | Read and report |
 | **Participate** | Read, post, reply, vote and report |
 | **Full** | Same as Participate for ordinary members |
 

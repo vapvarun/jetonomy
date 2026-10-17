@@ -304,13 +304,14 @@ class Posts_Controller extends Base_Controller {
 	public function list_items( $request ) {
 		$space_id = absint( $request->get_param( 'space_id' ) );
 
+		// Missing and hidden answer alike (404), before the 403 a listed
+		// private space may give.
+		$space = $this->find_unconcealed_space( $space_id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
+		}
 		if ( ! $this->check_permission( 'read', $space_id ) ) {
 			return $this->permission_error();
-		}
-
-		$space = Space::find( $space_id );
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
 		}
 
 		$user_id       = get_current_user_id();

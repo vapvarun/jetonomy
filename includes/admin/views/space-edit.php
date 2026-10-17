@@ -414,7 +414,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<tbody>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Lets matching people in to read. It takes nothing away from people who already get in another way, such as %s on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Lets matching people in to read and report. It takes nothing away from people who already get in another way, such as %s on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></td>
 						</tr>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
@@ -427,7 +427,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					</tbody>
 				</table>
 				<p class="description">
-					<?php /* jt-terms-ok: Viewer / Member / Moderator are space role names. */ /* translators: 1: member label (e.g. "Member"). 2: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%1$s lists show a matching role - Read is listed as Viewer, Participate as Member, Full as Moderator. To give one person a different role, change it on the %2$s tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
+					<?php /* jt-terms-ok: Viewer / Member / Moderator are space role names. */ /* translators: 1: member label (e.g. "Member"). 2: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%1$s lists show a matching role - Read is listed as Viewer, Participate as Member, Full as Moderator (Full as Member for a membership rule). To give one person a different role, change it on the %2$s tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
 				</p>
 				<p class="description">
 					<strong><?php esc_html_e( 'A rule can never hand out moderation.', 'jetonomy' ); ?></strong>
@@ -483,7 +483,19 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<option value="role"><?php esc_html_e( 'WP Role', 'jetonomy' ); ?></option>
 						<option value="capability"><?php esc_html_e( 'Capability', 'jetonomy' ); ?></option>
 						<option value="trust_level"><?php esc_html_e( 'Trust Level', 'jetonomy' ); ?></option>
-						<?php /* Dynamic membership adapter options injected by JS */ ?>
+						<?php
+						// Membership options are injected by JS, one per active adapter
+						// (wp-roles is left out there: it is the Role type above). With
+						// none, show the type disabled so the owner knows it exists.
+						$jt_membership_active = array_filter(
+							\Jetonomy\Adapters\Adapter_Registry::get_all_membership(),
+							static fn( $adapter, $id ) => 'wp-roles' !== $id && $adapter->is_active(),
+							ARRAY_FILTER_USE_BOTH
+						);
+						if ( ! $jt_membership_active ) :
+							?>
+							<option value="membership" disabled><?php esc_html_e( 'Membership (needs a membership plugin such as MemberPress or Paid Memberships Pro)', 'jetonomy' ); ?></option>
+						<?php endif; ?>
 					</select>
 					<input type="text" id="rule-value" class="regular-text" placeholder="<?php esc_attr_e( 'Value (e.g., administrator, 2)', 'jetonomy' ); ?>">
 					<div id="rule-value-membership-wrap" style="display:none;position:relative;">
@@ -582,7 +594,9 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								echo '<span class="jetonomy-badge jetonomy-badge--' . esc_attr( $rule->grants ) . '">' . esc_html( ucfirst( $rule->grants ) ) . '</span>';
 								break;
 							case 'role':
-								echo esc_html( ucfirst( $rule->space_role ) );
+								// The role a sync would actually store, not the raw column:
+								// a membership rule never records a moderator.
+								echo esc_html( ucfirst( \Jetonomy\Models\AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type ) ) );
 								break;
 							case 'actions':
 								echo '<div class="jetonomy-rule-actions">';

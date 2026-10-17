@@ -799,7 +799,7 @@ class Space extends Model {
 		} elseif ( $user_id <= 0 ) {
 			// Settings -> Access Control can list private spaces to guests as
 			// locked teasers; their topics stay behind can( 'read' ).
-			$guest_vis = ! empty( get_option( 'jetonomy_settings', array() )['guest_private_teasers'] ) ? "IN ('public','private')" : "= 'public'";
+			$guest_vis = self::guest_teasers_on() ? "IN ('public','private')" : "= 'public'";
 			$result    = array( "{$col}visibility {$guest_vis}" . self::parent_category_and( $user_id, $col ), array() );
 		} else {
 			$members_table = \Jetonomy\table( 'space_members' );
@@ -943,6 +943,32 @@ class Space extends Model {
 		// stranger - concealing the space from them would 404 the very people
 		// the rule exists to let in.
 		return ! self::admitted( (int) $space->id, (int) $user_id );
+	}
+
+	/**
+	 * Must this viewer be kept from the space's NAME (tab title, <head>)?
+	 *
+	 * Wider than concealed_from_viewer(): a private space answers 200 with a
+	 * gate, but a guest is only shown its name where the owner lists private
+	 * spaces to guests (Settings - Access Control - locked preview). With the
+	 * preview off the body says only "This space is private", so the title
+	 * must not say more.
+	 *
+	 * @param object   $space   Space row.
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 */
+	public static function name_withheld_from_viewer( object $space, ?int $user_id ): bool {
+		if ( self::concealed_from_viewer( $space, $user_id ) ) {
+			return true;
+		}
+		return ! $user_id && 'private' === ( $space->visibility ?? '' ) && ! self::guest_teasers_on();
+	}
+
+	/**
+	 * Whether the owner lists private spaces to guests as locked cards.
+	 */
+	private static function guest_teasers_on(): bool {
+		return ! empty( get_option( 'jetonomy_settings', array() )['guest_private_teasers'] );
 	}
 
 	/**

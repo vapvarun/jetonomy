@@ -684,8 +684,10 @@ class Notifier {
 		// One notice per person per reply: a mention wins over every notice below.
 		$told = self::mentioned_in( $reply );
 
-		// 1. Notify post author (if not the replier).
-		if ( (int) $post->author_id !== $actor_id && ! isset( $told[ (int) $post->author_id ] ) ) {
+		// 1. Notify post author (if not the replier) while they may still read it:
+		// an author whose access to the space ended gets nothing from it.
+		if ( (int) $post->author_id !== $actor_id && ! isset( $told[ (int) $post->author_id ] )
+			&& Permission_Engine::can_read_post( (int) $post->author_id, $post ) ) {
 			$this->create_and_maybe_email(
 				(int) $post->author_id,
 				$actor_id,

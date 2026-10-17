@@ -61,8 +61,10 @@ class MembershipRosterReconcileTest extends WP_UnitTestCase {
 
 		Membership_Roster_Sync::reconcile();
 
-		$this->assertFalse(
-			SpaceMember::is_member( $space, $lapsed ),
+		// The row itself, not is_member(): a lapsed tier row already reads as
+		// no membership before the sweep, so only the row proves the removal.
+		$this->assertNull(
+			SpaceMember::find_source( $space, $lapsed ),
 			'A tier row that nothing still grants must be removed by reconcile.'
 		);
 		$this->assertTrue(

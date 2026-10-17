@@ -84,7 +84,7 @@
 				// A rule admits; it does not restrict, so no "but not take part".
 				grants: {
 					/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
-					read:        sprintf( __( 'read posts and %s', 'jetonomy' ), REPLIES ),
+					read:        sprintf( __( 'read and report posts and %s', 'jetonomy' ), REPLIES ),
 					participate: __( 'read, post, reply, vote and report', 'jetonomy' ), // jt-terms-ok: "reply" is the verb here, not the noun.
 					full:        sprintf( /* translators: %s: topic label, plural lowercase (e.g. "topics"). */ __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s %s', 'jetonomy' ), TOPICS ), // jt-terms-ok: "reply" is the verb; the noun is the placeholder.
 				},
@@ -1110,6 +1110,7 @@
 						activeLevels = adapterMap[adapterId] || [];
 						$input.attr('placeholder', adapters.filter(function(a) { return a.id === adapterId; })[0].label + '...');
 					}
+					syncDerivedRole();
 					renderRulePreview();
 				});
 
@@ -1175,11 +1176,13 @@
 				}
 
 				// Roster role is derived, never chosen: read -> viewer,
-				// participate -> member, full -> moderator. Matches
-				// AccessRule::cap_space_role() on the server, which is the
-				// authority - this only keeps the hidden field honest.
+				// participate -> member, full -> moderator, or member for a
+				// membership rule. Matches AccessRule::cap_space_role() on the
+				// server, which is the authority - this only keeps the hidden
+				// field and the preview honest.
 				function syncDerivedRole() {
-					var map = { read: 'viewer', participate: 'member', full: 'moderator' };
+					var paid = ($('#rule-type').val() || '').indexOf('membership') === 0;
+					var map  = { read: 'viewer', participate: 'member', full: paid ? 'member' : 'moderator' };
 					$('#rule-space-role').val(map[$('#rule-grants').val()] || 'viewer');
 				}
 

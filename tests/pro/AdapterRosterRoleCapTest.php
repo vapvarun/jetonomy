@@ -57,6 +57,41 @@ class AdapterRosterRoleCapTest extends WP_UnitTestCase {
 			)
 		);
 		$this->user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		// The learner holds the course. A synced roster row counts only while a
+		// rule still admits the person, and with no LMS installed nothing
+		// would confirm the enrolment the hook below announces.
+		$this->saved_adapters = ( new \ReflectionProperty( \Jetonomy\Adapters\Adapter_Registry::class, 'membership' ) )->getValue();
+		\Jetonomy\Adapters\Adapter_Registry::register_membership(
+			'lrn-held',
+			new class( $this->user_id ) implements \Jetonomy\Adapters\Membership_Adapter {
+				public function __construct( private int $learner ) {}
+				public function is_active(): bool {
+					return true;
+				}
+				public function get_user_levels( int $user_id ): array {
+					return array();
+				}
+				public function user_has_level( int $user_id, string $level_id ): bool {
+					return $user_id === $this->learner && str_starts_with( $level_id, 'lrn_course_' );
+				}
+				public function get_all_levels(): array {
+					return array();
+				}
+				public function get_level_label( string $level_id ): string {
+					return $level_id;
+				}
+				public function register_hooks(): void {}
+			}
+		);
+	}
+
+	/** @var array<string, \Jetonomy\Adapters\Membership_Adapter> */
+	private array $saved_adapters = array();
+
+	public function tear_down(): void {
+		( new \ReflectionProperty( \Jetonomy\Adapters\Adapter_Registry::class, 'membership' ) )->setValue( null, $this->saved_adapters );
+		parent::tear_down();
 	}
 
 	/**

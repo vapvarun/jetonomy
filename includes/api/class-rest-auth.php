@@ -93,6 +93,9 @@ class REST_Auth {
 	 *                                           who never confirmed their email
 	 *                                           must still be able to delete the
 	 *                                           account they created. Default false.
+	 *     @type string        $forbidden_message Sentence for the 403 when the
+	 *                                           capability check fails, so the
+	 *                                           refusal says who may do this.
 	 * }
 	 * @return Closure(WP_REST_Request): (true|WP_Error)
 	 */
@@ -167,7 +170,7 @@ class REST_Auth {
 					}
 				}
 				if ( ! $passed ) {
-					return self::forbidden();
+					return self::forbidden( (string) ( $opts['forbidden_message'] ?? '' ) );
 				}
 			}
 

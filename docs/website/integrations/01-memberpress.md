@@ -42,7 +42,7 @@ An Access Rule has **one** setting that decides what a matching member can do:
 
 | Access level | What the member can do |
 |---|---|
-| Read | View topics and replies, but not post or reply |
+| Read | View and report topics and replies, but not post or reply |
 | Participate | Read, post topics, and reply (the usual choice for a course or paid space) |
 | Full | Participate, plus the moderator actions the member's own WordPress capabilities already permit |
 
@@ -86,7 +86,7 @@ Access is automatic; the **roster** is not. Someone who gets in through a member
 - are not included in the member count,
 - are not matched by space settings that act on roles, such as "who can post: members".
 
-**Sync Members** writes those roster rows, and nothing removes them again when a plan lapses - so treat it as a snapshot, not a subscription. Access itself is always correct regardless; the roster is a convenience. Automatic roster upkeep is planned.
+**Sync Members** writes those roster rows. A synced row counts only while a rule still admits the person: when their plan lapses, or you delete or change the rule, their access ends on their next page load, and the row is removed from the Members list in the background. Someone you added to the space by hand keeps their place.
 
 ## What a Visitor Without the Membership Sees
 
