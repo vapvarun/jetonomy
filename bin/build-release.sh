@@ -463,6 +463,11 @@ if ! php "$ROOT/bin/check-journey-coverage.php"; then
 	echo "      Add each to a journey's **Covers:** (pro: prefix for Pro), or exempt it with a reason in docs/qa/journey-exempt.txt." >&2
 	exit 33
 fi
+if ! php "$ROOT/bin/check-journey-depth.php"; then
+	echo "FAIL: a journey above has no checklist, or a stamp is not backed by a walk where every check passed." >&2
+	echo "      Walk every **Checks:** line, record it in docs/qa/walks/<id>.json, then bin/self-qa.sh --stamp <id>." >&2
+	exit 33
+fi
 
 # --- 6c. PHPUNIT GATE — run the free test matrix CI runs, locally ---------
 # The gap that let red CI ship in 1.8.0: nothing ran PHPUnit before the tag, so

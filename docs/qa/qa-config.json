@@ -68,6 +68,22 @@
     },
     "member_c": {
       "autologin": "maya"
+    },
+    "moderator": {
+      "autologin": "test_moderator",
+      "note": "Olivia Grant: site Editor, moderator of Bug Reports and the hidden Moderators' Room"
+    },
+    "space_admin": {
+      "autologin": "test_editor",
+      "note": "Ethan Brooks: space admin of Help Desk and Troubleshooting, a plain member elsewhere"
+    },
+    "silenced": {
+      "autologin": "finn",
+      "note": "Finn O'Brien: silenced site-wide for 7 days"
+    },
+    "space_banned": {
+      "autologin": "omar",
+      "note": "Omar Haddad: banned from Off-Topic Lounge only; posts in Arabic"
     }
   },
   "themes": [
@@ -333,6 +349,17 @@
         "kind": "admin",
         "root": "#wpbody-content"
       }
+    ]
+  },
+  "journey_depth": {
+    "_note": "Read by bin/check-journey-depth.php. Roles are guest plus the personas above; surfaces are where a check runs.",
+    "surfaces": [
+      "ui",
+      "admin",
+      "rest",
+      "cli",
+      "email",
+      "block"
     ]
   }
 }

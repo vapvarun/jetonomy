@@ -221,6 +221,15 @@ else
     warn "shipped files with no journey: php bin/check-journey-coverage.php --list (bin/build-release.sh blocks on this)"
 fi
 
+step "Journey depth: every journey has a checklist, every stamp a complete walk (report; blocks at release)"
+bash bin/test-check-journey-depth.sh >/dev/null 2>&1 || { fail "bin/check-journey-depth.php no longer fails when its rules are broken: bash bin/test-check-journey-depth.sh"; FAILED_GATES+=("journey-depth-selftest"); }
+if php bin/check-journey-depth.php >/dev/null 2>&1; then
+    ok "every journey has checks and every stamp is backed by a walk record"
+else
+    php bin/check-journey-depth.php 2>/dev/null | tail -2
+    warn "journeys without checks or walks: php bin/check-journey-depth.php (bin/build-release.sh blocks on this)"
+fi
+
 step "Data layer (free)"
 if bin/check-data-layer.sh; then
     ok "no new \$wpdb use outside models"

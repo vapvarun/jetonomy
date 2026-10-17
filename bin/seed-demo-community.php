@@ -17,6 +17,9 @@
  *     private+approval with a pending request (Insiders / Beta, from Carlos).
  *   - Avatars for most members (Grace, Omar, Finn left on the fallback).
  *   - A silenced member (Finn), a space ban (Omar), a -4 scored post.
+ *   - Awkward real-world shapes: a long space description (Help Desk), a
+ *     150-character title, a long name with no avatar (Grace), Arabic RTL
+ *     text (Omar), an unbroken URL, a 45-reply thread, a closed topic.
  *   - The access-matrix personas (bin/seed-qa-users.php) renamed to real
  *     people with their own content: test_subscriber = Riley Thompson,
  *     qatester = Jordan Ellis, test_author = Nina Alvarez, test_editor =
@@ -218,6 +221,35 @@ Restriction::is_space_banned( $u( 'omar' ), $space_id( 'Off-Topic Lounge' ) ) ||
 if ( ! JoinRequest::find_pending( $space_id( 'Insiders / Beta' ), $u( 'carlos' ) ) ) {
 	JoinRequest::create_request( $space_id( 'Insiders / Beta' ), $u( 'carlos' ), 'I run a 4,000-member hobby forum and would love to test the import tools early.' );
 }
+
+// 6. The awkward shapes real communities have, so layout bugs show on the
+// first walk instead of in QA: the 2.0.3 Reign header squeeze only appeared
+// with a long space description, and the seed had none over 200 characters.
+Space::update( $help_desk, array( 'description' => 'Stuck on something? Ask here and the support team or an experienced member will answer, usually within a day. Include your plugin and theme versions, what you expected, what happened instead, and a screenshot if you can. Search first: most setup questions already have an accepted answer.' ) );
+wp_update_user( array( 'ID' => $u( 'grace' ), 'display_name' => 'Grace Oluwaseun Adeyemi-Whitfield' ) ); // Long name, no avatar.
+$post(
+	$general,
+	$u( 'grace' ),
+	'After moving our 12-year-old photography forum from phpBB, what is the best way to keep old links, signatures and the accepted answers people still search for?',
+	'We finally moved off phpBB last weekend. The import went fine, but three things worry me:</p><ul><li>Old thread links from Google still point at viewtopic.php?t=1234.</li><li>Long-time members miss their signatures.</li><li>Our most-searched answers were marked solved in phpBB and now look unanswered.</li></ul><blockquote>We tried a redirect plugin but it only handled the first page of each thread.</blockquote><p>Our old archive lives at https://photoclub.example.org/archive/2014/members-gallery/autumn-landscapes-competition-results-and-judges-notes-final-version so you can see the structure.</p><pre><code>RewriteRule ^viewtopic\.php$ /community/ [R=301,L]</code></pre><p>Any advice from people who have done this before?',
+	array(
+		array( $u( 'theo' ), 'Redirects first: map each old topic id to its new URL with the import map, not a blanket rule, or Google drops the old pages.' ),
+		array( $u( 'priya' ), 'We did the same move last year. Accepted answers are worth re-marking by hand for your top 50 threads; the rest can wait.' ),
+	)
+);
+$post(
+	$general,
+	$u( 'omar' ),
+	'تجربتي مع مجموعات التصوير المحلية',
+	'انضممت إلى مجموعة التصوير في مدينتي قبل ستة أشهر. نلتقي كل أسبوعين ونتبادل الملاحظات على الصور. هل لديكم نصائح لتنظيم جولات تصوير ليلية؟',
+	array( array( $u( 'aisha' ), 'فكرة رائعة! نحن نختار مكاناً آمناً ونذهب في مجموعات صغيرة.' ) )
+);
+$thread = array();
+for ( $i = 0; $i < 45; $i++ ) { // Past one page of replies (30 by default).
+	$thread[] = array( $members[ $i % count( $members ) ], ( $i % 3 ) ? 'Still waiting on this one. Reading at night is hard on the eyes with the bright theme.' : '+1. Our members asked for it again in this week\'s survey.' );
+}
+$post( $requests, $u( 'sofia' ), 'Dark mode for the community on phones', 'Most of our members read late in the evening. A dark scheme that follows the phone setting would help a lot.', $thread );
+$post( $space_id( 'Announcements' ), $u( 'maya' ), 'Scheduled maintenance on Saturday: what to expect', 'The community will be read-only for about an hour on Saturday morning while we upgrade the server. This thread is closed; questions go in Help Desk.', array( array( $u( 'theo' ), 'Done, everything is back. Thanks for your patience.' ) ), array( 'is_closed' => 1 ) );
 
 \Jetonomy\Cache::flush(); wp_cache_flush();
 echo "COMMUNITY seeded: demo community + realistic extras. Log in with ?autologin=<login>.\n";

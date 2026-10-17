@@ -6,12 +6,15 @@
 #   bin/self-qa.sh                      # coverage + the journeys to walk now
 #   bin/self-qa.sh --list               # also every shipped file no journey walks
 #   bin/self-qa.sh --stamp C.member.vote E.polls
-#                                       # after those journeys PASSED in the browser
-#                                       # at the current code: record the commits
+#                                       # after every check of those journeys PASSED
+#                                       # in the browser at the current code, with a
+#                                       # walk record in docs/qa/walks/<id>.json
 #
-# Walk each listed journey from docs/qa/AGENT_SMOKE_RUNBOOK.md (or run
-# /wp-plugin-smoke on it) as every role it names, at 1440 and 390. Stamp only
-# what passed. bin/build-release.sh (Free and Pro) refuses to build while
+# Walk every **Checks:** line of each listed journey from
+# docs/qa/AGENT_SMOKE_RUNBOOK.md (or run /wp-plugin-smoke on it) as the roles
+# it names, on the realistic seeded community, and record each result in
+# docs/qa/walks/<id>.json. --stamp refuses a journey whose record is not at the
+# current commits with every check passed. bin/build-release.sh (Free and Pro) refuses to build while
 # anything here is outstanding, so this is the whole pre-release self-QA list.
 
 set -uo pipefail
@@ -34,6 +37,9 @@ if [ "${1:-}" = "--stamp" ]; then
 	PRO_SHA="${PRO:+$(git -C "$PRO" rev-parse --short HEAD)}"
 	for id in "$@"; do
 		grep -qE "^### ${id//./\\.}( |$)" "$RUNBOOK" || { echo "no journey '### $id' in the runbook"; exit 1; }
+		# Pro's commit only counts when the journey covers Pro files.
+		COVERS_PRO="$(awk -v h="### $id" '$0==h || index($0, h" ")==1 {on=1; next} /^### /{on=0} on && /^\*\*Covers:\*\*.*pro:/{print "y"}' "$RUNBOOK")"
+		php "$ROOT/bin/check-journey-depth.php" --ready "$id" "$FREE_SHA" ${COVERS_PRO:+"$PRO_SHA"} || { echo "not stamping $id: walk every check first."; exit 1; }
 		ID="$id" FREE="$FREE_SHA" PROSHA="$PRO_SHA" perl -0pi -e '
 			my ($id, $f, $p) = ($ENV{ID}, $ENV{FREE}, $ENV{PROSHA});
 			s{(^\#\#\# \Q$id\E(?: [^\n]*)?\n(?:(?!^\#\#\# ).*\n)*?)\*\*Verified:\*\*[^\n]*}{
@@ -49,6 +55,8 @@ fi
 
 status=0
 php bin/check-journey-coverage.php ${1:+"$1"} || status=1
+echo
+php bin/check-journey-depth.php || status=1
 echo
 if ! php bin/check-runbook-fresh.php; then
 	status=1

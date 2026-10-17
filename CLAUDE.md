@@ -53,7 +53,8 @@ extra careful; never fix blindly.
    - `wp jetonomy qa-actions` Phase 5 walks refusal paths (RF1-RF10); a phase that runs no checks fails the run.
    - `php bin/check-runbook-fresh.php`: each smoke-runbook journey names the files it covers (`**Covers:**`, Pro files as `pro:path`) and the commits it last passed a browser walk at (`**Verified:** <sha> pro:<sha>`); a release build fails while any is stale.
    - `php bin/check-journey-coverage.php`: every shipped Free and Pro file is in some journey's Covers (or exempt with a reason in `docs/qa/journey-exempt.txt`); a release build fails while any is not.
-   - `bin/self-qa.sh` is the one command for both: it lists what to walk, and `--stamp <id>...` records a passed walk. Self-QA through it is mandatory before every release.
+   - `php bin/check-journey-depth.php`: every journey has a **Checks:** list (one line per action: `@role #surface +state !refuse card:<id>`), every C/E journey refuses something and walks two roles, every `audit/escapes.json` card has a check, and every stamp is backed by `docs/qa/walks/<id>.json` with every check passed and no `proposed_checks` left. `bin/test-check-journey-depth.sh` proves each rule can fail.
+   - `bin/self-qa.sh` is the one command for both: it lists what to walk, and `--stamp <id>...` records a walk, refusing any journey whose walk record is not at the current commits with every check passed. Self-QA through it is mandatory before every release, on the realistic community from `bin/seed-demo-community.php`, never on throwaway fixtures.
 
 ## Build Rule (enforced)
 
