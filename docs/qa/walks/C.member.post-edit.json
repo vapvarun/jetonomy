@@ -1,8 +1,8 @@
 {
   "journey": "C.member.post-edit",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:20:22Z",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:00Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -18,81 +18,78 @@
   "checks": {
     "c-member-post-edit.1": {
       "result": "pass",
-      "evidence": "bob: More options > Edit (inline editor) on his Help Desk topic, added a third paragraph, Save -> shown on the topic, REST content has it, search for the new sentence finds the topic. The space listing and the community home show only title/counts, no body excerpt, so there is nothing to refresh there"
+      "evidence": "bob edited the body of his own topic via topic menu > Edit > Save; new text on the topic, REST space listing, and /community/search/?q=old address finds it; community home has no feed"
     },
     "c-member-post-edit.2": {
       "result": "pass",
-      "evidence": "PATCH /jetonomy/v1/posts/5946 {title} as bob -> 200 and GET /posts/5946 returns the new title (slug stays the old one)"
+      "evidence": "PATCH /posts/6324 title -> 200, GET shows the new title"
     },
     "c-member-post-edit.3": {
       "result": "pass",
-      "evidence": "edit 11 minutes after posting -> 'edited 1 second ago' with hover title 'October 17, 2026 10:57 am'"
+      "evidence": "edit made >1 min after posting shows 'edited 1 second ago' with title='October 17, 2026 9:53 pm'"
     },
     "c-member-post-edit.4": {
       "result": "pass",
-      "evidence": "PATCH 0 seconds after creating topic 5951 -> edited_at set but the page shows no edited mark; an untouched topic shows none either"
+      "evidence": "reply created and edited in the same second shows no 'edited' mark; an unedited reply/topic shows none"
     },
     "c-member-post-edit.5": {
       "result": "pass",
-      "evidence": "alice on bob's topic: no More options menu at all; /t/<slug>/edit/ -> 404 page (there is no edit URL, editing is inline)"
+      "evidence": "alice on bob's topic: no More options menu at all; /edit/ URL -> 404"
     },
     "c-member-post-edit.6": {
       "result": "pass",
-      "evidence": "PATCH /posts/5942 as alice -> 403 jetonomy_forbidden, title unchanged"
+      "evidence": "PATCH /posts/6324 as alice -> 403 jetonomy_forbidden"
     },
     "c-member-post-edit.7": {
       "result": "pass",
-      "evidence": "test_moderator (WP role editor, moderator of Bug Reports): menu '[icon] Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete' on two Bug Reports topics. In Show & Tell (not a space he moderates) he gets the same full menu because the editor role carries site-wide moderation caps (Capabilities map), so the second half of the check needs a moderator with a member-level site role"
+      "evidence": "test_moderator on a Bug Reports topic menu: Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete"
     },
     "c-member-post-edit.8": {
-      "result": "pass",
-      "evidence": "lane A: 'Edit own posts' removed from Member role: bob's own topic shows no Edit item, PATCH /posts/<id> -> 403 jetonomy_forbidden, content unchanged. Cap restored"
+      "result": "untested",
+      "needs": "lane A: remove Edit own posts from the Member role"
     },
     "c-member-post-edit.9": {
       "result": "pass",
-      "evidence": "topic closed by test_moderator, then bob: menu still offers Edit/Make Private/Delete and PATCH returns 200, so menu and REST agree (allowed per contract)"
+      "evidence": "bob's own closed topic: menu offers Edit and PATCH returns 200; UI and REST agree"
     },
     "c-member-post-edit.10": {
       "result": "pass",
-      "evidence": "finn on his -4 'Check out my SEO service' topic: no More options menu, page shows the silenced notice; PATCH -> 403 jetonomy_user_silenced"
+      "evidence": "finn on his -4 post: no menu or Edit control; PATCH /posts/5871 -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "c-member-post-edit.11": {
       "result": "pass",
-      "evidence": "edited with a bullet list, blockquote, code block and a 120-character URL -> after Save and reload all four survive, no horizontal overflow"
+      "evidence": "PATCH with list, blockquote and pre/code: guest view after reload shows 2 li, 1 blockquote, 1 pre code"
     },
     "c-member-post-edit.12": {
       "result": "pass",
-      "evidence": "two tabs on topic 6080: tab one saved, tab two then saved -> tab two's save was refused and tab one's text stayed (after reload only tab one's text is present); no silent overwrite",
-      "screenshot": "qa-artifacts/203-walk2/laneB/edit-conflict-tab2.png"
+      "evidence": "second PATCH with a stale edit_token -> 409 jetonomy_edit_conflict; revisions 249-252 stored (old versions kept)"
     },
     "c-member-post-edit.13": {
       "result": "pass",
-      "evidence": "offline Save -> editor stays open, text kept, 'Failed to save.' shown"
+      "evidence": "offline Save: editor stays open, text kept, 'Failed to save.' toast"
     },
     "c-member-post-edit.14": {
-      "result": "pass",
-      "evidence": "admin (read only) wp-admin/admin.php?page=jetonomy-revisions&object_type=post&object_id=5946 -> '4 revisions recorded', rows with Bob Martinez and 'View diff', oldest 'Original'"
+      "result": "untested",
+      "needs": "lane A: admin revision-history screen (rows exist in wp_jt_revisions for the edited topics, not viewed in the admin UI)"
     },
     "c-member-post-edit.15": {
       "result": "pass",
-      "evidence": "tab two's save showed the toast 'This topic was changed by someone else. Reload to see their changes.' instead of overwriting"
+      "evidence": "tab 1 in edit mode, tab 2 saved first, tab 1 Save -> 'This topic was changed by someone else. Reload to see their changes.' and the editor stays open"
     },
     "c-member-post-edit.16": {
-      "result": "pass",
-      "evidence": "harbor_space_mod (WP subscriber, moderator of Bug Reports 7 only, member of Show & Tell 12). Show & Tell topic 2001: 0 .jt-more-trigger (no moderator menu). Bug Reports topic: menu Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete \u2014 no Admin link.",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/harbor-showtell-dom.png",
-      "site": "docker jt203-scale"
+      "result": "untested",
+      "needs": "lane A: a moderator with a Member WP role who moderates only Bug Reports (test_moderator is a WP editor)"
     },
     "c-member-post-edit.17": {
-      "result": "pass",
-      "evidence": "alice opening bob's topic URL + /edit/ gets the plain theme 404 (HTTP 404); on the topic page she has no Edit, Delete or Make Private item. Contract = plain 404 today; owner to confirm it stays the contract",
-      "screenshot": "qa-artifacts/203-walk2/laneB/edit-url-alice.png"
+      "result": "fail",
+      "expected": "topic URL with /edit/ appended -> a refusal page (contract to decide)",
+      "actual": "plain 404 'Page not found' for any viewer: no /edit route exists, editing is inline from the menu; contract needs the owner's decision or this check should say 404",
+      "url": "http://forums.local/community/s/help-desk/t/how-do-i-reset-my-membership-password-after-changing-email/edit/",
+      "check_wrong": true
     }
   },
   "proposed_checks": [
-    "- `c-member-post-edit.15` @member #ui +concurrent: after tab two saves over tab one, the member is told the topic changed meanwhile (conflict notice) instead of a silent overwrite.",
-    "- `c-member-post-edit.16` @moderator #ui: a moderator with a Member WP role who moderates only Bug Reports opens a Show & Tell topic menu -> only the actions his role grants show (the test_moderator account is a WP editor so it sees everything).",
-    "- `c-member-post-edit.17` @member_b #ui !refuse: open the topic URL with /edit/ appended -> decide the contract: a refusal page or the plain 404 it returns today."
+    "- `c-member-post-edit.18` @member #ui: from the topic menu, Edit shows the title field as well as the body -> today only the body is editable inline."
   ],
-  "notes": "No settings changed. test_moderator closed bob's topic 5950 (own content) for check 9; to be deleted with the other walk topics. Debug log unchanged. | Re-walk lane B 2026-10-17: .8 stays untested (lane A). Edited topic 6080 (created by bob for this walk, removed afterwards). The conflict guard rejects the second save with a toast; the revision part (jt_revisions) was verified in the earlier walk. | lane A (re-walk 2026-10-17): | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
+  "notes": "Edited only content bob created in this walk; all deleted afterwards. Menu stayed open over the editor after clicking Edit (minor visual overlap, screenshot edit-open.png). No site setting changed."
 }

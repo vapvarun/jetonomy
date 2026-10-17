@@ -1,9 +1,9 @@
 {
   "journey": "C.admin.import",
-  "free": "5680944e",
-  "pro": "d8d053b",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:17:51Z",
   "walker": "lane A",
-  "walked_at": "2026-10-17T12:40:53Z",
   "env": {
     "themes": [
       "reign"
@@ -14,116 +14,93 @@
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "site": "docker jt203-scale http://localhost:8095 (bbPress 2,100 topics + wpForo 6 topics seeded; mounts the live Free and Pro plugin dirs at these commits); forums.local has no import source"
   },
   "checks": {
     "c-admin-import.1": {
       "result": "pass",
-      "evidence": "with no source plugin active the Import screen lists bbPress, wpForo, Asgaros each 'Not detected' with a disabled Import button (all three disabled)",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp1.png"
+      "evidence": "forums.local (no forum plugin active): Import screen shows 'No Forum Data Detected' and bbPress, wpForo and Asgaros each 'Not detected' with a disabled 'Import from ...' button. Docker site (bbPress + wpForo active) lists only the two detected sources and omits Asgaros altogether"
     },
     "c-admin-import.2": {
       "result": "pass",
-      "evidence": "bbPress re-import UI: step list Forums \u2192 Members \u2192 Topics \u2192 Replies \u2192 Profiles \u2192 Finalize with moving percent (0.1\u219220.7\u219241.2\u219261.8\u219272.1\u219292.6\u219299.7\u2192100) and ended on 'Import complete!'. First CLI/UI run imported 2313 records (1750 topics / 672 replies / 3 forums).",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/import-rerun.png",
-      "site": "docker jt203-scale"
+      "evidence": "docker site, bbPress Re-Import (source: 3 forums, 1,750 topics, 672 replies): step list 'Forums -> Members -> Topics -> Replies -> Profiles -> Finalize', bar 0% -> 72.1% -> 100%, ends on 'Import complete!' (all rows already mapped so it finishes in about 1 s). wpForo imported for the first time the same session"
     },
     "c-admin-import.3": {
       "result": "pass",
-      "evidence": "source 2 forums / 127 topics / 47 replies -> 2 spaces under one category 'Imported from bbPress', 127 topics (121 + 6), 47 replies (sum of reply_count 47); guest home 30 members / 391 topics equals user profiles 30 and published topics 391 straight after",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp3-home.png"
+      "evidence": "bbPress: 3 forums -> 3 spaces under one category 'Imported from bbPress'; 1,750 topics = 1,750 jt_posts; 560 replies imported = 672 source replies minus 112 whose topic was pending (screen says so). Guest home on the docker site reads 4,981 members and 1,052 topics = user profiles and public published topics (700 + 350 + 2) straight away"
     },
     "c-admin-import.4": {
       "result": "pass",
-      "evidence": "logged out: opened 3 imported topics (refunds topic with 2 replies, the closed 'Staging site habits (#7)' with the Closed badge and 'This topic is closed' note, the ampersand topic). Authors Tomas Berg / Nadia Haddad / Priya Nair and source dates (2 years ago, oldest first) kept; private forum title not on the guest home",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp4-closed.png"
+      "evidence": "guest opened 3 imported public threads (Gear list ropes & tarps (1), Quiet hours (26), Potluck (4)): titles, 4 replies, original authors (Nia Okonkwo, Sam Ellison, Priya Shah ...) show; reply timestamps are all identical (source seeded in one burst) so source order cannot be told apart. The closed source topics live in the private Members' kitchen: as admin 'Quiet hours (6)' shows the Closed badge and 'This topic is closed. As a moderator, you can still take part.'"
     },
     "c-admin-import.5": {
       "result": "pass",
-      "evidence": "Re-Import (after the custom Confirm dialog) -> '0 records imported - 176 already imported, skipped'; categories, spaces, topics and import map rows unchanged (177)",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp5-post.png"
+      "evidence": "second bbPress Re-Import after the confirm dialog: '0 records imported - 2,314 already imported, skipped'; jt_categories 2, jt_spaces 5, jt_posts 1,756, jt_replies 560, jt_import_map 2,323 unchanged before and after"
     },
     "c-admin-import.6": {
       "result": "pass",
-      "evidence": "private bbPress forum became a private space with join policy approval; its 3 participants were added as members; guest home does not list it"
+      "evidence": "private bbPress forum -> 'Members' kitchen' private space, join policy approval, 8 members (its participants); not listed to guests"
     },
     "c-admin-import.7": {
       "result": "untested",
-      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
+      "needs": "PHPUnit proof pending (owner decision: no live write probes as members against admin endpoints); lane A does not probe admin endpoints as a member"
     },
     "c-admin-import.8": {
       "result": "pass",
-      "evidence": "admin with a valid nonce, source=bogus -> {success:false, data:'Unknown import source.'}; import map and resume option unchanged. Bad nonce -> 403 -1."
+      "evidence": "admin with a valid nonce posts jetonomy_import_batch source=bogus -> {success:false, data:'Unknown import source.'}; import map and counts unchanged"
     },
     "c-admin-import.9": {
-      "result": "pass",
-      "evidence": "2000-topic source: UI batches offset 0/500/1000/1500 on topics then replies, no timeout, bar never froze. Reply counts per topic matched (reply_count mismatch=0 after first import). CLI `wp jetonomy import bbpress` earlier: 1750 posts / 560 replies imported, already=0.",
-      "site": "docker jt203-scale"
+      "result": "untested",
+      "needs": "a first-time import of 2,000 topics watched in batches: the docker bbPress source (1,750 topics) is already imported, a re-import skips every row in about a second, and re-seeding or resetting the docker import is an owner-approval action. Reply counts per topic are right (0 mismatches between reply_count and published replies across 1,756 topics)"
     },
     "c-admin-import.10": {
       "result": "pass",
-      "evidence": "wpForo held topics (wpforo_posts.status <> 0) arrived as Pending: Moderation Pending Topics (4) titled 'Held: extra chairs for Friday chowder (1\u20134)', not published. Import note: '4 unapproved replies will be imported as Pending, not published.'",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/moderation-pending.png",
-      "site": "docker jt203-scale"
+      "evidence": "wpForo held topics (first import this session): 4 jt_posts arrived status pending ('Held: extra chairs for Friday chowder (1-4)') and show under /community/mod/ Awaiting approval (4 held, Topics 4) as admin, not published; the 2 other topics are published. Note the screen warned about '4 unapproved replies' but the seed holds topics; 0 replies are pending"
     },
     "c-admin-import.11": {
       "result": "pass",
-      "evidence": "aborted admin-ajax after the first batch: 'Connection lost. You can resume this import later.'; after reload 'Import was interrupted at phase: forums (offset: 0). Started ...' with Resume Import and Start Over; Resume -> '0 records imported, 178 already imported, skipped'; import map stayed 177",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp11-reload.png"
+      "evidence": "the browser connection dropped while the wpForo run was in progress: the screen then showed 'Import Interrupted - Import was interrupted at phase: topics (offset: 0)' with Resume Import and Start Over; Resume finished with '0 records imported - 9 already imported, skipped'; no duplicates (9 map rows, 1,756 posts)"
     },
     "c-admin-import.12": {
       "result": "pass",
-      "evidence": "1440 and 390: scrollWidth == clientWidth, cards stack, Re-Import 40px tall, notes readable",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp12-390.png"
+      "evidence": "390px: Import screen cards stack in one column (10-378 of 390), Re-Import buttons 40px tall, scrollWidth 390 = clientWidth; at 1440 the two source cards sit side by side"
     },
     "c-admin-import.13": {
-      "result": "pass",
-      "evidence": "bob opened the imported Arabic topic: Arabic title and body shape and punctuate right to left correctly. The page stays LTR, so the Arabic block is left-aligned (dir not set per post).",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp13-rtl.png"
+      "result": "untested",
+      "needs": "an imported Arabic topic: the docker seed has no Arabic text (0 bbPress topics with Arabic characters) and forums.local has no import source"
     },
     "c-admin-import.14": {
       "result": "pass",
-      "evidence": "0 rows in jt_posts or jt_spaces with title LIKE '%&amp;%'. Imported category name is a bare 'Imported from bbPress'.",
-      "site": "docker jt203-scale"
+      "evidence": "0 rows with '&amp;' in jt_posts, jt_spaces or jt_categories titles; 'Trails & Pines' and 'Gear list: ropes & tarps ...' read with a plain ampersand"
     },
     "c-admin-import.15": {
       "result": "pass",
-      "evidence": "bbPress card step list is Forums \u2192 Members \u2192 Topics \u2192 Replies \u2192 Profiles \u2192 Finalize. Private forum note: '1 private and 0 hidden forum will keep their privacy. Everyone who posted in them is added to your members'. Members step is absent on the wpForo card.",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/import-screen.png",
-      "site": "docker jt203-scale"
+      "evidence": "run step list on the docker site (which has a private forum): 'Forums -> Members -> Topics -> Replies -> Profiles -> Finalize', Members before Topics; the 'Adding members to private ...' message itself flashed by too fast to read on a 1 s all-skipped run"
     },
     "c-admin-import.16": {
-      "result": "fail",
-      "expected": "'imported before (N items)' note and '(M) already imported' result agree",
-      "actual": "Note 'This source has been imported before (2,314 items)' vs complete result '2,312 items were already imported and were skipped' (1 newly imported). Same 177/178 class of mismatch.",
-      "url": "http://localhost:8095/wp-admin/admin.php?page=jetonomy-import",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/import-rerun.png",
-      "site": "docker jt203-scale"
+      "result": "pass",
+      "evidence": "after re-imports: 'This source has been imported before (2,314 items)' = '2,314 already imported, skipped' = Last imported line = 2,314 bbpress map rows; wpForo 9 = 9 = 9. The earlier 2,314 vs 2,312 mismatch is gone"
     },
     "c-admin-import.17": {
-      "result": "pass",
-      "evidence": "lane A, LTR site: Omar's posted Arabic topic as guest: h1, .jt-post-body and .jt-reply-body carry dir=auto, computed direction rtl, text-align start (right aligned, box 175-961); qa-artifacts/203-walk2/laneA/arabic-topic-ltr.png"
+      "result": "untested",
+      "needs": "an imported or posted Arabic topic on an LTR site: no Arabic content in the docker source; lane B posts Arabic topics (see C.member.post-create)"
     },
     "c-admin-import.18": {
-      "result": "pass",
-      "evidence": "Category id 9 name 'Imported from bbPress' slug imported-bbpress-1792257450; id 10 name 'Imported from wpForo' slug imported-wpforo-1792257479.",
-      "site": "docker jt203-scale"
+      "result": "fail",
+      "expected": "imported category slug is readable and the name is 'Imported from bbPress'",
+      "actual": "name 'Imported from bbPress' is right, but the slug is 'imported-bbpress-1792267460' (a Unix timestamp), and 'imported-wpforo-1792275287' for wpForo: not readable and not stable between imports",
+      "url": "http://localhost:8095/wp-admin/admin.php?page=jetonomy-categories"
     },
     "c-admin-import.19": {
-      "result": "fail",
-      "expected": "Space::delete / admin Delete removes the space's topics and replies with it",
-      "actual": "Space::delete(71) removed the space row (space_row=0) and left 6 orphan posts. Space_Purge::queue is the cascade path; Space::delete is parent::delete only.",
-      "url": "http://localhost:8095/wp-admin/admin.php?page=jetonomy-spaces",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/spaces-overflow.png",
-      "site": "docker jt203-scale"
+      "result": "untested",
+      "needs": "owner approval: deleting an imported space on the docker site (the seeded import data is shared and a delete cannot be reseeded here); a prior walk recorded Space::delete leaving 6 orphan posts, not re-proven at these commits"
     }
   },
   "proposed_checks": [
-    "- `c-admin-import.15` @admin #admin: look at the step list during a run with a private forum -> a Members step is shown before Topics, matching the 'Adding members to private and group spaces...' message.",
-    "- `c-admin-import.16` @admin #admin: after a re-import, the 'imported before (N items)' note and the '(M) already imported' result agree (shows 177 and 178 on the same screen).",
-    "- `c-admin-import.17` @member #ui +rtl: an imported or posted Arabic topic is right-aligned (dir=auto on the post body) on an LTR site.",
-    "- `c-admin-import.18` @admin #admin: the imported category slug is readable (it is imported-bbpress-1792234737 here, a timestamp) and the category name is 'Imported from bbPress'.",
-    "- `c-admin-import.19` @admin #cli: delete an imported space with `Space::delete` / the admin Delete button -> its topics and replies go with it (here the 127 topics and 47 replies stayed behind after the space row was deleted)."
+    "- `c-admin-import.20` @admin #admin: with bbPress and wpForo detected but Asgaros missing -> the Import screen either lists Asgaros as 'Not detected' or says only detected sources are shown (it currently drops the card).",
+    "- `c-admin-import.21` @admin #admin: wpForo source with unapproved topics -> the screen note says 'unapproved topics' when the held rows are topics (it says '4 unapproved replies' but the 4 held rows were topics).",
+    "- `c-admin-import.22` @guest #ui: open an imported topic on the docker site -> the browser tab title is the topic title, not '404 - Page not found - <site>' (the docker site titles every community page 404 while rendering it; not seen on forums.local)."
   ],
-  "notes": "No bbPress import could be run: source data absent. bbPress was not activated; nothing changed. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
+  "notes": "Ran on the docker site because forums.local has no forum source to import (nothing was reseeded or removed there; only the Import screen was read). Docker side effects: first wpForo import created 2 spaces, 1 category, 6 topics (4 pending) and 9 import-map rows; bbPress Re-Import twice (no new rows). No settings changed on either site. Debug log on forums.local unchanged. Screenshots under qa-artifacts/203-walk5/A/."
 }

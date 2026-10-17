@@ -1,60 +1,9 @@
 {
   "journey": "C.gating.read-on-private",
-  "checks": {
-    "c-gating-read-on-private.1": {
-      "result": "pass",
-      "evidence": "gating_t4 opens /community/s/print-lab-circle/ before any rule: a locked card 'Print Lab Circle is invite-only. You need an invitation to join.' with the space description, no topics; its topic URL is a 404 'Page not available'. (Name and description of a private space are visible to any signed-in member.)"
-    },
-    "c-gating-read-on-private.2": {
-      "result": "pass",
-      "evidence": "Logged In + Read rule -> toast 'Access rule added.'"
-    },
-    "c-gating-read-on-private.3": {
-      "result": "pass",
-      "evidence": "gating_t4 reads the space and the topics 'Paper weight for fine art prints?' and the 159-character one."
-    },
-    "c-gating-read-on-private.4": {
-      "result": "pass",
-      "evidence": "no New Topic link, no composer; the vote buttons read 'Score 0. Voting is not available to you here.' and do not change the score. Screenshot qa-artifacts/203-walk3/laneA/w3A-private-readonly.png"
-    },
-    "c-gating-read-on-private.5": {
-      "result": "fail",
-      "expected": "POST topic, reply and vote -> each 403 jetonomy_forbidden 'You cannot post in this space.'",
-      "actual": "topic and reply return 403 jetonomy_forbidden 'You cannot post in this space.'; vote returns 403 jetonomy_forbidden with 'You do not have permission to perform this action.' (different sentence). Nothing stored.",
-      "check_wrong": true,
-      "url": "POST /wp-json/jetonomy/v1/posts/6158/vote"
-    },
-    "c-gating-read-on-private.6": {
-      "result": "fail",
-      "expected": "vote and a flag both return 403 for a Read-only member",
-      "actual": "vote -> 403, but POST /flags -> 201 and the flag is stored (flags 417, 418): a person matched by a Read rule can report, although Read is described as 'read' only and Participate as 'Read, plus post, reply, vote and report'.",
-      "url": "POST /wp-json/jetonomy/v1/flags"
-    },
-    "c-gating-read-on-private.7": {
-      "result": "pass",
-      "evidence": "guest /community/s/print-lab-circle/ -> 'This space is private and invite-only. Log in if you have an invitation.' no topics; topic URL 404."
-    },
-    "c-gating-read-on-private.8": {
-      "result": "pass",
-      "evidence": "rule deleted -> gating_t4's next load shows the locked state and the topic URL is 404."
-    },
-    "c-gating-read-on-private.9": {
-      "result": "pass",
-      "evidence": "159-character title and 118-character URL topic: title and link stay inside the card at 1440 (scrollWidth 1440) and 390 (title 48-342px, link 48-339px, scrollWidth 390). Screenshots qa-artifacts/203-walk3/laneA/w3A-long-private-1440.png, w3A-long-private-390.png"
-    },
-    "c-gating-read-on-private.10": {
-      "result": "pass",
-      "evidence": "390x844: the space and the long topic stack with scrollWidth 390."
-    }
-  },
-  "proposed_checks": [
-    "- `c-gating-read-on-private.11` @member #rest !refuse: a Read-rule member POSTs /flags -> 403 like vote (or the Read description says it includes reporting)."
-  ],
-  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. ",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:46Z",
   "walker": "lane A",
-  "walked_at": "2026-10-17T17:58:06Z",
   "env": {
     "themes": [
       "reign"
@@ -66,5 +15,56 @@
     "schemes": [
       "light"
     ]
-  }
+  },
+  "checks": {
+    "c-gating-read-on-private.1": {
+      "result": "pass",
+      "evidence": "bob (WP role subscriber, not a member) opens private Customer Advisory Board: locked card 'Customer Advisory Board is invite-only. You need an invitation to join.' plus the description, no topics, no composer; the topic URL answers 404 'Page not available'"
+    },
+    "c-gating-read-on-private.2": {
+      "result": "pass",
+      "evidence": "wp-admin Spaces > Customer Advisory Board > Access Rules: Logged In + Read, Add Rule -> toast 'Access rule added.' (visible after the page reload); rule row id 33 grants read, space role viewer"
+    },
+    "c-gating-read-on-private.3": {
+      "result": "pass",
+      "evidence": "bob now opens the space: 'Q1 roadmap draft for review' (Maya Okafor, 2 replies) is listed and opens"
+    },
+    "c-gating-read-on-private.4": {
+      "result": "pass",
+      "evidence": "no New Topic button on the space and no reply composer in the thread; the vote control is disabled with 'Score 0. Voting is not available to you here.' and clicking it shows that message, score unchanged"
+    },
+    "c-gating-read-on-private.5": {
+      "result": "fail",
+      "expected": "POST a topic, a reply and a vote each return 403 jetonomy_forbidden 'You cannot post in this space.', no row stored",
+      "actual": "topic and reply POST: 403 jetonomy_forbidden 'You cannot post in this space.'; vote POST: 403 jetonomy_forbidden 'You do not have permission to perform this action.' (code matches, message is the generic one). Nothing stored: 1 post in the space, 3 replies on the topic, 0 votes by bob",
+      "url": "POST /wp-json/jetonomy/v1/posts/5865/vote",
+      "check_wrong": true
+    },
+    "c-gating-read-on-private.6": {
+      "result": "pass",
+      "evidence": "Read-rule member: POST vote 403 jetonomy_forbidden; POST /flags on the topic 201 (flag 449 stored as pending; dismissed afterwards). The Access Rules screen says Read 'Lets matching people in to read and report'"
+    },
+    "c-gating-read-on-private.7": {
+      "result": "pass",
+      "evidence": "logged out: space page answers 'This space is private and invite-only. Log in if you have an invitation.' with a Log In button and the tab title 'Community - forums' (no space name); topic URL 404 'This content is in a private space.'; REST GET /posts/5865 404 'Topic not found.'; the Logged In rule did not apply to guests"
+    },
+    "c-gating-read-on-private.8": {
+      "result": "pass",
+      "evidence": "rule deleted from the Access Rules tab (confirm 'Are you sure? This cannot be undone.', toast 'Access rule deleted.'): bob's next load is the invite-only locked card again with no topics and the topic URL 404"
+    },
+    "c-gating-read-on-private.9": {
+      "result": "pass",
+      "evidence": "own topic with the 159-character title and the unbroken 100-character example.org URL in the gated space (deleted afterwards): at 390 the title wraps over 5 lines inside 48-342 and the link wraps inside the column; at 1440 the title spans 199-850; scrollWidth equals clientWidth both times"
+    },
+    "c-gating-read-on-private.10": {
+      "result": "pass",
+      "evidence": "390px as bob: space list and topic stack in one column with no horizontal scroll (screenshot)"
+    }
+  },
+  "proposed_checks": [
+    "- c-gating-read-on-private.5 @member #rest !refuse: POST a topic and a reply -> 403 jetonomy_forbidden 'You cannot post in this space.'; POST a vote -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'; no row stored.",
+    "- `c-gating-read-on-private.11` @guest #ui: open a topic URL in a private space -> the 404 page says 'This content is in a private space.', which confirms to a stranger that the topic exists in a private space; compare with the missing-topic text.",
+    "- `c-gating-read-on-private.12` @member #ui: bob (not a member) opens a listed private space -> a 200 locked card with the description (surfaces-agree .1 expects a 404 identical to a missing space; decide which)."
+  ],
+  "notes": "Changed and restored: Customer Advisory Board got a Logged In + Read rule (added twice to capture the toast, deleted twice; 0 rules now). Created topic 6338 (deleted) and bob's report 449 (dismissed). No other settings touched. Debug log unchanged (112327 bytes; WP_DEBUG_LOG off)."
 }

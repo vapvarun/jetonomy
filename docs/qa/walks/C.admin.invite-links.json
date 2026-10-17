@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.invite-links",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walked_at": "2026-10-17T13:28:34Z",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:26:24Z",
   "walker": "lane A",
   "env": {
     "themes": [
@@ -19,95 +19,87 @@
   "checks": {
     "c-admin-invite-links.1": {
       "result": "pass",
-      "evidence": "Space edit > Members tab, limit 2, expiry 2026-10-18 -> toast 'Invite link generated.', list row '.../community/invite/3vtMk.../ 0 / 2 October 18, 2026' (site date format, site tz UTC)"
+      "evidence": "wp-admin Spaces > Customer Advisory Board > Members > Invite Links: max uses 2 + expiry 18/10/2026 -> toast 'Invite link generated.' (then 'Invite link copied to clipboard.'), list row '0 / 2 October 18, 2026' (site date format F j, Y); stored expires_at 2026-10-18 23:59:59"
     },
     "c-admin-invite-links.2": {
       "result": "pass",
-      "evidence": "Logged out on /community/invite/<token>/ for General Discussion: card says 'You've been invited to join General Discussion', description, 'Log in to accept invite' -> wp-login.php?redirect_to=<invite>; card left 290 / right 290 px at 1440 (centred), no membership created"
+      "evidence": "logged out: card 'You've been invited to join Customer Advisory Board' with the space description and 'Log in to accept invite' -> wp-login.php?redirect_to=<the invite URL>; no membership row created"
     },
     "c-admin-invite-links.3": {
       "result": "pass",
-      "evidence": "bob opened the link, clicked 'Join Space' -> landed on /community/s/customer-advisory-board/, jt_space_members role member, link use count 0 -> 1"
+      "evidence": "bob opens the link and clicks Join Space -> lands on /community/s/customer-advisory-board/ as member (source invite), use_count 0 -> 1"
     },
     "c-admin-invite-links.4": {
       "result": "pass",
-      "evidence": "bob opened the link without clicking: 0 membership rows and use_count 0 after the visit"
+      "evidence": "alice opened the link, did not click Join -> no space_members row, use_count unchanged"
     },
     "c-admin-invite-links.5": {
       "result": "pass",
-      "evidence": "Link with limit 1 used by alice; carlos (not alice) then clicked Join and the page said 'This invite link has expired or reached its usage limit.', carlos not added. Alice was already a non-member so the roles are swapped but the message and refusal match"
+      "evidence": "after two joins (bob, carlos) on a limit-2 link alice sees 'This invite link has expired or reached its usage limit.' with no Join button; she is not added"
     },
     "c-admin-invite-links.6": {
       "result": "pass",
-      "evidence": "alice and carlos clicked Join on a limit-1 link at the same moment (Promise.all): exactly one added (alice, use_count 1), the other got the limit message"
+      "evidence": "limit-1 link, alice and aisha clicked Join in two browser contexts at the same moment: exactly one joined (alice), the other saw the limit message; use_count 1"
     },
     "c-admin-invite-links.7": {
       "result": "pass",
-      "evidence": "REST POST /spaces/3068/invite: expires_at 'next blursday' -> 400 jetonomy_invalid_expiry 'Choose an expiry date in the future.'; 2020-01-01 -> same 400; today's wall-clock time already passed -> same 400; only the valid today link was saved (1 row)"
+      "evidence": "wp-admin: past date 10/10/2026 -> 'Choose an expiry date in the future.' and nothing saved; REST expires_at 'not a date' and '2026-10-10' -> 400 jetonomy_invalid_expiry same message; link count unchanged"
     },
     "c-admin-invite-links.8": {
       "result": "untested",
-      "needs": "clock move: Expiry 2026-10-17 stored as 2026-10-17 23:59:59 (end of day, site tz UTC) and the link was valid at 12:xx, but 'fails the next morning' needs the clock to move, and a non-UTC site timezone would need a site-wide change"
+      "needs": "waits for midnight: link x5oBCNky... for Customer Advisory Board expires 2026-10-17 23:59:59 site time (UTC). It opened fine at 22:10 UTC the same day (guest saw the invitation card); the 'fails the next morning' half needs a reopen after 00:00 UTC on 2026-10-18"
     },
     "c-admin-invite-links.9": {
       "result": "pass",
-      "evidence": "Revoke -> confirm dialog 'Revoke this invite link? Anyone holding it will no longer be able to join.' -> toast 'Invite link revoked.', link then reads 'Invalid invite link.'"
+      "evidence": "Revoke on a link: confirm 'Revoke this invite link? Anyone holding it will no longer be able to join.' -> toast 'Invite link revoked.'; reopening it shows 'Invalid invite link.'"
     },
     "c-admin-invite-links.10": {
       "result": "pass",
-      "evidence": "bob (admin of Partner Program, id 37) GET /spaces/37/invites -> 200 (empty list, no links exist); test_editor GET -> 403 jetonomy_forbidden"
+      "evidence": "bob (Partner Program admin) GET /spaces/37/invites -> 200 with his space's list (it was empty: no link exists there); test_editor GET /spaces/37/invites -> 403 jetonomy_forbidden; bob POST /spaces/38/invite -> 403"
     },
     "c-admin-invite-links.11": {
-      "result": "untested",
-      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
+      "result": "pass",
+      "evidence": "bob (not a member of Customer Advisory Board after cleanup) POST /spaces/38/invite -> 403 jetonomy_forbidden; invite link count unchanged"
     },
     "c-admin-invite-links.12": {
-      "result": "fail",
-      "expected": "60 invite links and 40 join requests both lists page and show the total",
-      "actual": "FE /community/s/general-discussion/members/ dumped all 60 invite URLs with no pager and no total. Admin Join Requests tab shows 'Pending Join Requests (40)' and all 40 rows on one page (total yes, paging no). QM 0.10s 106Q (FE) / 0.10s 271Q (admin).",
-      "url": "http://localhost:8095/community/s/general-discussion/members/?autologin=1",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/invites-fe.png",
-      "site": "docker jt203-scale"
+      "result": "untested",
+      "needs": "40 join requests from 40 distinct members (site has 29 users; seeding is not allowed). Invite half passed: 60 links created, the front-end Members tab pages them 20 per page ('Invite links pagination', ?ipg=2, heading 'Invite links 63'), REST /spaces/38/invites total 63 has_more; the 60 were deleted after. wp-admin has the Join Requests tab with a total (.19) but 40 requests could not be created to check its paging"
     },
     "c-admin-invite-links.13": {
       "result": "pass",
-      "evidence": "hana requested to join Insiders / Beta (page shows 'Your request ... is awaiting approval.' + 'Withdraw request'), jt_join_requests row pending and join_request notices for admin 1 and 142 created; after Withdraw request the row and both notices were gone"
+      "evidence": "bob requested to join Mentorship Circle (approval) with a message, then Withdraw request: the join_requests row and the staff join_request notifications are gone (admin, test_editor, maya)"
     },
     "c-admin-invite-links.14": {
       "result": "pass",
-      "evidence": "Invite on a space, space deleted, bob opened the link: 'Invalid invite link.', no PHP error, 0 invite or join-request rows left for that space"
+      "evidence": "own throwaway space 'Print Club Annex' with a link: after deleting the space the link opens 'Invalid invite link.', no PHP error, no invite or join-request rows left"
     },
     "c-admin-invite-links.15": {
       "result": "pass",
-      "evidence": "390px as bob: 'Join Space' button 40px tall x 108 wide, description wraps to 2 lines, no horizontal scroll (scrollWidth 390). Reign only; BuddyX/Twenty Twenty-Five repeat not run"
+      "evidence": "390px as bob on a valid link: Join Space 40px tall, full width, description wraps, scrollWidth 390"
     },
     "c-admin-invite-links.16": {
       "result": "pass",
-      "evidence": "Same page: space name, description and a login button that returns to the invite; card centred (290/290 px at 1440), button 44px tall"
+      "evidence": "logged out: space name, description and 'Log in to accept invite' (a login link button), plus the heading says what the link is"
     },
     "c-admin-invite-links.17": {
-      "result": "untested",
-      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
+      "result": "pass",
+      "evidence": "bob (non-member) POST /spaces/39/invite (hidden Moderators' Room) and /spaces/99999/invite -> both 404 jetonomy_not_found 'Space not found.' identical; listed private CAB answers 403 (.11)"
     },
     "c-admin-invite-links.18": {
       "result": "pass",
-      "evidence": "Space with an invite deleted from the admin modal: 0 jt_invite_links and 0 jt_join_requests rows for its id"
+      "evidence": "deleting the Print Club Annex space with 1 invite and 1 join request removed both rows (and the join_request notification); no orphans"
     },
     "c-admin-invite-links.19": {
       "result": "pass",
-      "evidence": "Space edit (Mentorship Circle) has a Join Requests tab: 'Pending Join Requests (0)', columns User / Message / Requested / Actions, empty state 'No pending join requests'. No pending request exists to show the Approve/Deny buttons themselves; qa-artifacts/203-walk2/laneA/space-join-requests-tab.png"
+      "evidence": "wp-admin Spaces > Insiders / Beta (approval policy) has a 'Join Requests (1)' tab: 'Pending Join Requests (1)' table with user, message, requested time and Approve / Deny buttons (screenshot), plus the front-end Members tab list; the tab only appears for approval-policy spaces (Customer Advisory Board, invite-only, has none)"
     },
     "c-admin-invite-links.20": {
       "result": "pass",
-      "evidence": "At 390x844 the card is 328px wide with 31px each side (centred), Log in to accept invite is 40px tall and fully on screen, no horizontal scroll"
+      "evidence": "390px, guest on a valid link: card fills the width (31-359 of 390), centred text, 'Log in to accept invite' 40px tall and reachable, no horizontal scroll"
     }
   },
   "proposed_checks": [
-    "- `c-admin-invite-links.16` @guest #ui: open the invite link logged out -> the page shows the space name, description and either a Join button that leads to login or the text of the login link, and says what the link is.",
-    "- `c-admin-invite-links.17` @member #rest !refuse: a non-member POSTs /spaces/{id}/invite for a private space and for a non-existent id -> both answer the same code.",
-    "- `c-admin-invite-links.18` @admin #admin: delete a space that has an invite -> its invite rows and join requests are removed with it (no orphan rows).",
-    "- `c-admin-invite-links.19` @admin #admin: space Members tab -> a Join Requests list with approve/deny and a total exists in wp-admin as well as the front end.",
-    "- `c-admin-invite-links.20` @guest #ui +390: open a valid invite link logged out at 390px -> the invitation card fills the width, is centred and the Log in button is reachable."
+    "- `c-admin-invite-links.21` @admin #ui: generate a link from the front-end Members tab -> a confirmation toast shows (the wp-admin screen toasts 'Invite link generated.', the front-end panel adds the row silently)."
   ],
-  "notes": "Created invite links only on temporary spaces (Gardening Tips, Pop-up Workshop), both deleted; no settings changed. Unknown invite token still returns HTTP 200 'Invalid invite link.' (soft 404). | Re-walk 2 (lane A): no settings changed; invite link was only opened as a guest. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
+  "notes": "Test data created and removed: invite links on Customer Advisory Board (only link 322, expiring 2026-10-17 23:59:59 UTC, is left on purpose for the .8 retest: after 00:00 UTC on 2026-10-18 open /community/invite/x5oBCNkyj4obgiJNFFlUvdkdvyAgP6o5/ as a guest, expect the expired message, then revoke it), 60 bulk links deleted, bob/carlos/alice added to Customer Advisory Board through invite links and removed again (members back to the 5 originals), throwaway space Print Club Annex created and deleted, bob's Mentorship Circle request withdrawn. No settings changed. Debug log unchanged (112327 bytes; WP_DEBUG_LOG off)."
 }

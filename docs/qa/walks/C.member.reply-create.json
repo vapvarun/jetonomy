@@ -1,9 +1,9 @@
 {
   "journey": "C.member.reply-create",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T17:09:42Z",
-  "walker": "lane A",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:00Z",
+  "walker": "lane B",
   "env": {
     "themes": [
       "reign"
@@ -19,114 +19,104 @@
   "checks": {
     "c-member-reply-create.1": {
       "result": "pass",
-      "evidence": "bob posted the reply on 'Dark mode for the community on phones': header Replies 45 -> 46 (jt_posts reply_count 46) and the reply shows at the end of the thread (reply-13578, 'Bob Martinez 1 second ago')",
-      "screenshot": "qa-artifacts/203-walk2/laneB/reply-after-post.png"
+      "evidence": "bob's reply on the Dark mode topic: appears inline (page 2, scrolled to it), count 45 -> 46"
     },
     "c-member-reply-create.2": {
       "result": "pass",
-      "evidence": "POST /jetonomy/v1/posts/5946/replies as alice -> 201 (id 13558) and GET /posts/5946/replies lists it"
+      "evidence": "POST /posts/6326/replies -> 201; GET /posts/6326/replies lists the new reply"
     },
     "c-member-reply-create.3": {
       "result": "pass",
-      "evidence": "alice replied on bob's topic (bob = OP): exactly one reply_to_post bell row and one Mailpit email '[forums] Alice Chen replied to your topic ...' for bob. Opt-out case not tried"
+      "evidence": "bob replied to alice's topic: alice got one bell notification (reply_to_post 22844) and one Mailpit email 'Bob Martinez replied to your topic'"
     },
     "c-member-reply-create.4": {
       "result": "pass",
-      "evidence": "empty Post Reply -> inline 'Write your reply before posting.' under the editor, nothing posted",
-      "screenshot": "qa-artifacts/203-walk2/laneB/reply-empty.png"
+      "evidence": "empty reply: inline 'Write your reply before posting.', nothing posted"
     },
     "c-member-reply-create.5": {
       "result": "pass",
-      "evidence": "POST with parent_id of a missing reply and of a reply of another topic -> 400 jetonomy_invalid_parent 'The reply you are answering is no longer available.'; parent a trashed reply -> 409 jetonomy_already_trashed; nothing created. A spam-status parent could not be set up (no way to mark spam from lane B)"
+      "evidence": "missing parent and a parent from another topic -> 400 jetonomy_invalid_parent 'The reply you are answering is no longer available.'; trashed parent -> 409 jetonomy_already_trashed; spam parent: no spam reply fixture"
     },
     "c-member-reply-create.6": {
       "result": "pass",
-      "evidence": "bob on the closed topic 'Community guidelines updated for 2026' (the Scheduled maintenance topic is now a different closed topic): Closed badge, no Reply/Quote buttons, no composer; moderator view of the same topic shows 'No replies yet.'"
+      "evidence": "bob on closed 'Scheduled maintenance on Saturday': no Reply/Quote buttons, no composer; zero-reply closed topic reads 'No replies yet.'"
     },
     "c-member-reply-create.7": {
       "result": "pass",
-      "evidence": "POST /posts/5877/replies as bob -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'"
+      "evidence": "POST reply to closed topic as bob -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'"
     },
     "c-member-reply-create.8": {
       "result": "pass",
-      "evidence": "test_moderator opens the closed topic: composer present, posted a reply, count 0 -> 1 (deleted afterwards)"
+      "evidence": "test_moderator on a closed topic: composer present, a reply posted (201 id 13755)"
     },
     "c-member-reply-create.9": {
       "result": "pass",
-      "evidence": "maya followed bob's topic; alice's public reply -> maya got one reply_to_post row and one email '[forums] Alice Chen replied in \"...\"'"
+      "evidence": "maya followed bob's thread; alice's public reply gave maya exactly one notification and one email ('Alice Chen replied in ...')"
     },
     "c-member-reply-create.10": {
       "result": "pass",
-      "evidence": "alice's private reply on bob's topic -> only bob (OP) got a notification row (id 21943) and email; maya (follower) got none; the next list shows maya 'Private reply, visible to the topic author and moderators.' with no text"
+      "evidence": "alice's private reply: OP bob got the notification, maya (thread follower) got no notification and no email"
     },
     "c-member-reply-create.11": {
-      "result": "pass",
-      "evidence": "bob: Customer Advisory Board topic page shows 'This content is in a private space.' with no composer; POST /posts/5865/replies -> 403 jetonomy_forbidden 'You cannot post in this space.', nothing stored",
-      "screenshot": "qa-artifacts/203-walk2/laneB/reply-cab-bob.png"
+      "result": "fail",
+      "expected": "bob (not a member) on a CAB topic: POST /replies returns 403 jetonomy_forbidden",
+      "actual": "POST /posts/5865/replies -> 404 jetonomy_not_found 'Topic not found.' (new rule: write routes on unreadable content answer 404); the topic page says 'This content is in a private space.' with HTTP 404 and no composer. Needs the owner's call on 403 vs 404 for listed private spaces",
+      "url": "http://forums.local/wp-json/jetonomy/v1/posts/5865/replies",
+      "check_wrong": true
     },
     "c-member-reply-create.12": {
       "result": "pass",
-      "evidence": "finn on a public Help Desk topic: no composer, 'Your account is currently silenced and cannot post.' at the foot of the thread; POST -> 403 jetonomy_user_silenced"
+      "evidence": "finn on a topic: no composer, 'Your account is currently silenced and cannot post.'; POST /replies -> 403 jetonomy_user_silenced"
     },
     "c-member-reply-create.13": {
-      "result": "pass",
-      "evidence": "omar opening a topic in Off-Topic Lounge gets HTTP 403 'You have been banned from this space and cannot take part in it.' (not Topic not found); no composer; REST POST /replies -> 403 jetonomy_user_space_banned; elsewhere he replied on the lens topic (201, then removed)",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-omar-banned-topic.png"
+      "result": "untested",
+      "needs": "fixture/lane A: omar has no space ban in Off-Topic Lounge"
     },
     "c-member-reply-create.14": {
-      "result": "pass",
-      "evidence": "test_author (trust 0, limit 10 replies/day): REST POST /posts/5806/replies -> HTTP 429 jetonomy_rate_limited 'New members can post 10 replies a day. You can reply again in about 19 hours.'; UI Post Reply shows one toast with that sentence (count 1). Nothing stored. Screenshot qa-artifacts/203-walk3/laneA/w3A-reply-limit-ui.png"
+      "result": "untested",
+      "needs": "lane A: new-member daily reply limit"
     },
     "c-member-reply-create.15": {
       "result": "pass",
-      "evidence": "double-click Post Reply -> exactly one reply row (13561)"
+      "evidence": "double-click Post Reply -> exactly one reply created (13768)"
     },
     "c-member-reply-create.16": {
       "result": "pass",
-      "evidence": "offline submit -> text kept in the editor, 'Failed to save.'; back online one click -> one reply (13562), no duplicate"
+      "evidence": "offline: text kept in composer and a 'Failed to save.' toast; retry created one reply, no duplicate"
     },
     "c-member-reply-create.17": {
       "result": "pass",
-      "evidence": "bob's Arabic reply on Omar's topic: .jt-reply-body dir=auto, computed direction rtl, text right-aligned",
-      "screenshot": "qa-artifacts/203-walk2/laneB/reply-arabic.png"
+      "evidence": "Arabic reply on Omar's topic: reply body dir=auto rtl, start aligned"
     },
     "c-member-reply-create.18": {
       "result": "pass",
-      "evidence": "1900-character body plus a 150-character unbroken URL -> wraps over several lines, rightmost child inside the card (961 vs 962), no horizontal scroll"
+      "evidence": "1740-character reply with a 120-character unbroken URL: body does not overflow its card, page width 1440"
     },
     "c-member-reply-create.19": {
-      "result": "pass",
-      "evidence": "lane A: in a require-approval space maya's reply -> toast 'Your reply is awaiting moderation and will appear once approved.', status pending, invisible to maya and to a guest, listed in Moderation > Pending Replies; after Approve it is visible and the topic author bob got exactly 1 reply_to_post notification. Wording says 'moderation'"
+      "result": "untested",
+      "needs": "lane A: set a space to require approval"
     },
     "c-member-reply-create.20": {
       "result": "pass",
-      "evidence": "topic reply count 45 -> 46 (Dark mode topic); bob profile replies 60 -> 64 after 4 published replies (trashed excluded). jt_spaces has no reply counter, so a space reply count could not be read"
+      "evidence": "after the replies: topic reply_count = actual rows (47/47), profile reply_count 69 = DB rows, Help Desk topic count 17 = DB"
     },
     "c-member-reply-create.21": {
-      "result": "pass",
-      "evidence": "390px: Post Reply button 301px wide at y 425-466 of 844, above the fixed bottom nav (y 784), no horizontal scroll. Real on-screen keyboard not emulated"
+      "result": "untested",
+      "needs": "needs a real on-screen keyboard (device/emulator); at 390 without keyboard Post Reply is reachable (bottom 764, tab bar 784)"
     },
     "c-member-reply-create.22": {
       "result": "pass",
-      "evidence": "on a topic with 46 replies (30 per page) posting jumped to ?rpg=2#reply-13578 and the new reply is in view at the end of page 2"
+      "evidence": "reply on page 2 of the 47-reply thread: URL went to ?rpg=2#reply-13756 and the new reply was visible"
     },
     "c-member-reply-create.23": {
-      "result": "pass",
-      "evidence": "same: ban message with HTTP 403, REST jetonomy_user_space_banned",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-omar-banned-topic.png"
+      "result": "untested",
+      "needs": "fixture/lane A: omar has no space ban in Off-Topic Lounge"
     },
     "c-member-reply-create.24": {
       "result": "pass",
-      "evidence": "empty reply: inline 'Write your reply before posting.' (role alert) and nothing posted; POST /replies with empty content -> 400 jetonomy_validation 'Reply content is required.'",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-reply-empty.png"
+      "evidence": "empty reply: 'Write your reply before posting.'; POST /posts/5874/replies content '' -> 400 jetonomy_validation 'Reply content is required.'"
     }
   },
-  "proposed_checks": [
-    "- `c-member-reply-create.22` @member #ui +long: reply on a topic with more replies than one page -> the new reply is visible straight away (scrolled to or loaded) instead of only the count changing.",
-    "- `c-member-reply-create.23` @space_banned #ui !refuse +banned: omar opens a topic in Off-Topic Lounge -> a banned message, not 'Topic not found'; POST /replies returns jetonomy_user_space_banned.",
-    "- `c-member-reply-create.24` @member #ui +empty: empty reply shows the REST message 'Reply content is required.' inline.",
-    "- `c-member-reply-create.25` @member #ui +empty: submit an empty reply -> an inline 'Write your reply before posting.' under the editor and nothing posted (replaces the wording in c-member-reply-create.24).",
-    "- `c-member-reply-create.25` @member_b #ui +poll !refuse: as a non-member of a public approval space (alice on Mentorship Circle) open a topic with a poll -> the question and the results show, the options are disabled with 'Join this space to vote.', and POST /polls/<id>/vote returns 403 jetonomy_join_required with the count unchanged."
-  ],
-  "notes": "No settings changed. Created and later purged: replies by bob, alice, maya and test_moderator on topics I created plus bob's replies on 5873/5874 and a moderator reply on the closed topic 5877. maya followed bob's topic (removed with it). Debug log unchanged. | Re-walk lane B 2026-10-17: Created as bob: reply 13578 (Feature Requests dark-mode topic, count 46) and Arabic reply 13579 (Omar's topic); both removed at the end. .14 .19 untested (lane A). | lane A (re-walk 2026-10-17): | Re-walk 2 lane B poll decision (owner): Mentorship Circle had no topics, so maya (space admin) created a poll topic 'Which mentoring format would you prefer for the next cohort?' (poll 'How should mentor pairs meet?', 3 options), voted once herself, then deleted the topic (status trash; poll row 103 remains in jt_pro_polls). alice (non-member of the public approval space) saw the poll and its results (100% / 0% / 0%, 1 voter), radios disabled, text '0 voters/1 voter - Join this space to vote.'; her POST /polls/103/vote -> 403 jetonomy_join_required 'Join this space to vote.' and the vote count stayed 0 (then 1 from maya). Behaviour matches the owner decision. Screenshots rw2-poll-alice-mentor.png, rw2-poll-alice-results.png. omar posted one reply in General Discussion and it was deleted."
+  "proposed_checks": [],
+  "notes": "Replies created by bob/alice/maya/grace/test_moderator on bob's own temporary topics and a few seeded threads; all deleted afterwards (replies 13756, 13758, 13761, 13762, 13764, 13769 deleted individually, the rest went with their topics). maya's thread subscription removed. No site setting changed."
 }

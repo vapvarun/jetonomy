@@ -1,127 +1,9 @@
 {
   "journey": "C.mod.queue-and-actions",
-  "checks": {
-    "c-mod-queue-and-actions.1": {
-      "result": "pass",
-      "evidence": "admin /community/mod/ (document title 'Moderation Queue', heading 'Moderation Overview') shows Flags 8, Awaiting approval 6, Trash, Banned members each with a count, and the theme sidebar stays visible."
-    },
-    "c-mod-queue-and-actions.2": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "filter Content type to topics, then replies, then pick a status",
-      "actual": "Topics and Replies sub-tabs work (kind=post lists only TOPIC cards, kind=reply only REPLY cards, URL ?view=approvals&kind=...). There is no status picker: the status is the tab (Awaiting approval, Trash). The REST queue takes ?status=.",
-      "url": "http://forums.local/community/mod/?view=approvals&kind=post"
-    },
-    "c-mod-queue-and-actions.3": {
-      "result": "pass",
-      "evidence": "approved alice's held topic in Insiders / Beta from its card -> card left without reload, topic 6104 status publish, GET /moderation/queue?status=pending no longer lists it, alice got one 'Your topic was approved by a moderator' notification and one email. The page subtitle kept '6 submissions awaiting approval' while the badge dropped to 5."
-    },
-    "c-mod-queue-and-actions.4": {
-      "result": "pass",
-      "evidence": "Reject on held reply 13641 -> confirm 'Reject this submission? It moves to trash.', POST /spaces/3008/moderation/trash/reply/13641 (per-space route, not /moderation/trash/reply/{id}), card left, reply listed in Trash (kind=reply) with Restore and Delete permanently."
-    },
-    "c-mod-queue-and-actions.5": {
-      "result": "fail",
-      "expected": "mark a held topic as spam from the queue",
-      "actual": "Cards offer only Approve and Reject; there is no Mark as spam control in the queue UI. Through REST POST /spaces/3008/moderation/spam/post/6106 -> 200, topic is in ?status=spam and not in pending, alice's reputation 1101 -> 1081 (-20), the same drop as Reject/trash (1081 -> 1061).",
-      "url": "http://forums.local/community/mod/?view=approvals"
-    },
-    "c-mod-queue-and-actions.6": {
-      "result": "pass",
-      "evidence": "rejected topic 6105 (rep 1081 -> 1061), Restore from Trash -> topic published straight away and rep back to 1081, then Approve (REST) -> 200 and rep stays 1081, no extra points."
-    },
-    "c-mod-queue-and-actions.7": {
-      "result": "pass",
-      "evidence": "trashed topic 6107 with two replies, Delete permanently -> confirm 'Delete this topic and all its replies permanently? This cannot be undone.', after confirm topic and both replies are gone from the database. Dark scheme."
-    },
-    "c-mod-queue-and-actions.8": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "bulk approve 3 ids -> 200; action=bogus -> 'Invalid action; expected approve, spam, or trash.'; items=[] -> 'items must be a non-empty array.'",
-      "actual": "approve 3 held ids -> 200 with status ok for each; items=[] -> 400 'items must be a non-empty array.'; action=bogus -> 400 rest_invalid_param 'Invalid parameter(s): action ... action is not one of approve, spam, and trash.' (schema enum answers first, so the custom sentence never shows).",
-      "url": "POST /wp-json/jetonomy/v1/moderation/bulk"
-    },
-    "c-mod-queue-and-actions.9": {
-      "result": "untested",
-      "needs": "an emptied shared queue. Observed: Awaiting approval > Replies empty reads 'No replies are waiting for approval.' and the last approval leaves 'Nothing left awaiting approval.'; Flags and Trash could not be emptied without touching lane B's flags and real trash."
-    },
-    "c-mod-queue-and-actions.10": {
-      "result": "pass",
-      "evidence": "27 held topics (28 total with a reply): page 1 lists 25 cards under nav 'Awaiting approval pagination' with a Next link to ?view=approvals&kind=post&pg=2, page 2 shows the remaining 2, the badge and subtitle say 28. Screenshot qa-artifacts/203-walk3/laneA/w3A-approvals-pager.png"
-    },
-    "c-mod-queue-and-actions.11": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "subtitle reads 'N pending flags across the spaces you moderate'; the CAB flag is not listed or counted",
-      "actual": "A flag on the private Customer Advisory Board topic is not listed or counted for test_moderator (good), and held items in the private Insiders space are hidden. But the subtitle reads '7 pending flags across your community' and he sees flags from public spaces he does not moderate (Feature Requests, Announcements, Roadmap Ideas).",
-      "url": "http://forums.local/community/mod/"
-    },
-    "c-mod-queue-and-actions.12": {
-      "result": "fail",
-      "check_wrong": true,
-      "expected": "404 the same as a missing topic",
-      "actual": "test_moderator POST /moderation/approve/post/6111 (held, in private Insiders / Beta) -> 403 jetonomy_forbidden 'You cannot moderate this content.', and a nonexistent id answers the identical 403, so nothing leaks; the topic stayed held. Status is 403 for both, not 404.",
-      "url": "POST /wp-json/jetonomy/v1/moderation/approve/post/6111"
-    },
-    "c-mod-queue-and-actions.13": {
-      "result": "pass",
-      "evidence": "grace (plain member): /community/mod/ -> 'You do not have permission to view this page.', GET /moderation/queue -> 403 jetonomy_forbidden. bob now holds the space admin role in Partner Program (fixture changed), so /community/mod/ sends him to that space's own mod page; use a plain member for this check."
-    },
-    "c-mod-queue-and-actions.14": {
-      "result": "fail",
-      "expected": "guest page redirects to login and REST returns 401",
-      "actual": "/community/mod/ redirects to wp-login.php?redirect_to=... (good), but GET /moderation/queue logged out returns 403 jetonomy_forbidden 'You do not have permission to perform this action.', not 401 (POST /flags logged out returns 401).",
-      "url": "GET /wp-json/jetonomy/v1/moderation/queue"
-    },
-    "c-mod-queue-and-actions.15": {
-      "result": "pass",
-      "evidence": "theo silenced site-wide (restriction 398): thread shows 'Your account is currently silenced and cannot post.' in place of the composer, REST reply -> 403 jetonomy_user_silenced with that message; after DELETE /moderation/ban/398 the reply posted (201). Used theo instead of finn so finn's real silence stayed untouched."
-    },
-    "c-mod-queue-and-actions.16": {
-      "result": "pass",
-      "evidence": "with a held topic in Help Desk, test_editor's space page shows 'Moderation queue 1' linking to /community/s/help-desk/mod/?view=approvals (Approvals tab, not a flags view)."
-    },
-    "c-mod-queue-and-actions.17": {
-      "result": "pass",
-      "evidence": "titleless feed post in Events & Office Hours flagged by maya -> card shows an excerpt (first words as the heading, then the full text); a titled topic's card shows the linked title plus the start of the text. The heading line repeats the excerpt cut mid-word ('...same link as a')."
-    },
-    "c-mod-queue-and-actions.18": {
-      "result": "pass",
-      "evidence": "anonymous topic 'QA-RFT anon topic' put to pending for the walk (restored to publish): approval card reads 'by Anonymous', no member name or login."
-    },
-    "c-mod-queue-and-actions.19": {
-      "result": "pass",
-      "evidence": "banned IP 203.0.113.45 -> list entry 'IP address ban | 203.0.113.45', Lift restriction confirms 'Lift the restriction on 203.0.113.45? They regain full access right away.' and the entry is gone."
-    },
-    "c-mod-queue-and-actions.20": {
-      "result": "pass",
-      "evidence": "390x844: approvals and flags pages scrollWidth 390, Approve/Reject/Remove buttons 40px tall, cards stack. Screenshot qa-artifacts/203-walk3/laneA/w3A-approvals-390.png"
-    },
-    "c-mod-queue-and-actions.21": {
-      "result": "fail",
-      "expected": "second moderator's Reject on an already approved topic shows 'already handled', topic stays published, no second notification",
-      "actual": "POST approve on topic 6111 twice -> 200 both, then POST trash -> 200: the published topic went to trash and alice received 3 moderation notifications and 3 emails ('A moderator reviewed your content') for one topic. No already-handled guard on the server.",
-      "url": "POST /wp-json/jetonomy/v1/spaces/3008/moderation/trash/post/6111"
-    },
-    "c-mod-queue-and-actions.22": {
-      "result": "pass",
-      "evidence": "offline Approve -> card stays, toast 'Could not update this submission. It may have been handled by another moderator.'; back online the same Approve removed the card and published the topic once. Screenshot qa-artifacts/203-walk3/laneA/w3A-offline-approve.png"
-    },
-    "c-mod-queue-and-actions.23": {
-      "result": "pass",
-      "evidence": "Advanced Moderation enabled from Extensions: keyword rule 'walkholdword' (Hold) put lucia's (trust 0) new topic 6140 in Awaiting approval; with the extension off lucia's topic with the same word published (6141). Extension, rule and topics removed."
-    }
-  },
-  "proposed_checks": [
-    "- `c-mod-queue-and-actions.24` @moderator #ui: open a held topic card in Awaiting approval -> a Mark as spam control sits beside Approve and Reject, or the check is dropped.",
-    "- `c-mod-queue-and-actions.25` @moderator #rest !refuse +concurrent: POST trash on a topic that was already approved by another moderator -> refused with a clear message and the topic stays published.",
-    "- `c-mod-queue-and-actions.26` @guest #rest !refuse: GET /moderation/queue logged out -> 401 rest_not_logged_in like the other write routes."
-  ],
-  "notes": "lane A. Changed and restored: wp_jt_spaces.settings for Insiders / Beta (3008) and Help Desk (3004) set to require_approval then back to NULL; Advanced Moderation extension enabled then disabled (option back to original 9 entries), keyword rule 8 created and deleted; anonymous topic 4662 set pending then publish. Created and force-deleted: held/approved topics 6104-6141 and replies 13640/13641; theo silences 396 and 398 lifted, IP ban lifted; flags 375/376 resolved. Left behind: alice reputation 1101 -> 1079 (spam/trash penalties are not returned when the content is deleted), theo reply 13630/13652 and maya's trashed reply 13620.",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:06:46Z",
   "walker": "lane A",
-  "walked_at": "2026-10-17T17:30:47Z",
   "env": {
     "themes": [
       "reign"
@@ -131,7 +13,148 @@
       390
     ],
     "schemes": [
+      "light",
       "dark"
     ]
-  }
+  },
+  "checks": {
+    "c-mod-queue-and-actions.1": {
+      "result": "fail",
+      "expected": "page titled 'Moderation' with Flags, Awaiting approval, Trash and banned/silenced list each with its count, sidebar visible",
+      "actual": "Sections and sidebar present; h1 reads 'Moderation Overview' (tab title 'Moderation Queue'); only Flags (6) and Awaiting approval (2) carry a count badge, Trash and Banned members have none (Trash count is only in the subtitle on that tab)",
+      "url": "http://forums.local/community/mod/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/A/walkA-mod-1.png",
+      "check_wrong": true
+    },
+    "c-mod-queue-and-actions.2": {
+      "result": "fail",
+      "expected": "filter Content type to topics, then replies, then pick a status -> only that type/status listed, pager keeps the filter on Next",
+      "actual": "Content type filter (Topics/Replies) works and Next keeps view=approvals&kind=post&pg=2; there is no status control: status is the separate Awaiting approval / Trash views and the spam status has no UI list at all",
+      "url": "http://forums.local/community/mod/?view=approvals&kind=post",
+      "check_wrong": true
+    },
+    "c-mod-queue-and-actions.3": {
+      "result": "pass",
+      "evidence": "admin approved held 'Beta: Image captions...' (Insiders/Beta, private) from its card: card left with no reload, tab 29->28, status publish, REST queue total 28 and id absent, ONE moderation notification row and one email to the author. Fixture is alice not carlos (carlos has no held topic now); acted as admin because test_moderator cannot read Insiders/Beta"
+    },
+    "c-mod-queue-and-actions.4": {
+      "result": "pass",
+      "evidence": "held reply (alice, ext on) Reject -> confirm 'Reject this submission? It moves to trash.' -> card left, listed in Trash with Restore + Delete permanently; UI called POST /spaces/2994/moderation/trash/reply/13753 -> 200 (space-scoped route; global /moderation/trash/reply/{id} also exists)"
+    },
+    "c-mod-queue-and-actions.5": {
+      "result": "pass",
+      "evidence": "Spam on held topic 6328: POST /spaces/2994/moderation/spam/post/6328 200; REST queue status=spam lists it and status=pending does not; author rep -20 (post_removed), same -20 as Trash/Reject on reply 13753"
+    },
+    "c-mod-queue-and-actions.6": {
+      "result": "pass",
+      "evidence": "Restore on trashed topic 6288 (calls approve): published again, rep 903 -> 923 (+20 post_removed_revoked, exactly the -20 taken). Restore and Approve are one step in the UI"
+    },
+    "c-mod-queue-and-actions.7": {
+      "result": "pass",
+      "evidence": "dark mode: Delete permanently on a trashed topic that had a reply shows 'Delete this topic and all its replies permanently? This cannot be undone.'; after Confirm topic row and reply row both gone from DB; button contrast 4.6-5.6:1"
+    },
+    "c-mod-queue-and-actions.8": {
+      "result": "fail",
+      "expected": "bogus action -> 'Invalid action; expected approve, spam, or trash.'",
+      "actual": "approve with 3 ids 200 ok (note: per_page=3 was ignored and 20 held topics were approved); items=[] -> 400 jetonomy_validation 'items must be a non-empty array.'; action=bogus -> 400 rest_invalid_param 'action is not one of approve, spam, and trash.'",
+      "url": "POST /wp-json/jetonomy/v1/moderation/bulk",
+      "check_wrong": true
+    },
+    "c-mod-queue-and-actions.9": {
+      "result": "fail",
+      "expected": "empty queues read 'No pending flags anywhere. Your community is clean.', 'No topics are waiting for approval.', 'The trash is empty.'",
+      "actual": "Awaiting approval empty reads 'No topics are waiting for approval.' (match). An empty Topics sub-tab of Trash reads 'No topics in the trash.' while Replies holds items, not 'The trash is empty.'. Global empty Flags state not walked (would resolve every shared flag fixture)",
+      "url": "http://forums.local/community/s/help-desk/mod/?view=trash",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/A/walkA-flag20-trash-empty-topics.png"
+    },
+    "c-mod-queue-and-actions.10": {
+      "result": "pass",
+      "evidence": "admin with 29 held topics: Awaiting approval paged (25 per page), nav labelled 'Awaiting approval pagination', Next lands on ?view=approvals&kind=post&pg=2 with 4 cards, badge/tab show the true total 29"
+    },
+    "c-mod-queue-and-actions.11": {
+      "result": "fail",
+      "expected": "flag in a private space not listed/counted for test_moderator; subtitle 'N pending flags across the spaces you moderate'",
+      "actual": "Private-space flag (352, Insiders/Beta) is not listed or counted (6 vs 7 pending, 6 cards); but test_moderator is a site moderator (jetonomy_moderate), so the subtitle reads '6 pending flags across your community'; no flag exists in Customer Advisory Board and the premise 'moderator of two spaces only' is stale (he also moderates Moderators' Room and sees all public spaces)",
+      "url": "http://forums.local/community/mod/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/A/walkA-mod-1.png",
+      "check_wrong": true
+    },
+    "c-mod-queue-and-actions.12": {
+      "result": "untested",
+      "needs": "permission blocked: write probe (POST /moderation/approve/post/{id} on a held topic in a private space) as test_moderator was denied by the permission classifier; never worked around"
+    },
+    "c-mod-queue-and-actions.13": {
+      "result": "untested",
+      "needs": "lane B: REST GET /moderation/queue as a plain member (lane A does not probe admin endpoints as a member). UI half passed: alice, carlos and omar see 'You do not have permission to view this page.' at /community/mod/. bob is a Partner Program space admin, so he lands on that space's queue (check_wrong persona: use alice)"
+    },
+    "c-mod-queue-and-actions.14": {
+      "result": "pass",
+      "evidence": "logged out: /community/mod/ redirects to wp-login.php?redirect_to=/community/mod/; GET /moderation/queue -> 401 jetonomy_unauthorized"
+    },
+    "c-mod-queue-and-actions.15": {
+      "result": "pass",
+      "evidence": "finn (silenced): reply composer replaced by banner 'Your account is currently silenced and cannot post.'; REST reply and topic POST 403 jetonomy_user_silenced. Posting after lifting the silence is walked in C.admin.user-management.22 (see its record)"
+    },
+    "c-mod-queue-and-actions.16": {
+      "result": "pass",
+      "evidence": "test_editor on Help Desk with one held topic: link 'Moderation queue 1' -> /community/s/help-desk/mod/?view=approvals (Approvals tab, not Flags)"
+    },
+    "c-mod-queue-and-actions.17": {
+      "result": "pass",
+      "evidence": "per-space flag card on a titled topic shows type chip, reason, linked space, reporter name, the topic title as heading, start of text and the reporter's note; Arabic topic text right-aligned. No untitled feed-post flag exists in the seed so the excerpt-only variant was not seen"
+    },
+    "c-mod-queue-and-actions.18": {
+      "result": "pass",
+      "evidence": "anonymous topic (alice posted anonymously, held by keyword rule): approval card reads 'by Anonymous', card HTML has no alice name/login/id"
+    },
+    "c-mod-queue-and-actions.19": {
+      "result": "pass",
+      "evidence": "banned list at /community/mod/?view=banned after banning 45.33.32.156: entry labelled 'IP address ban' with the address, 'by varundubey', no member name; Lift restriction -> confirm 'Lift the restriction on 45.33.32.156? They regain full access right away.' -> entry removed"
+    },
+    "c-mod-queue-and-actions.20": {
+      "result": "pass",
+      "evidence": "390px: page scrollWidth 390=clientWidth, all 24 card buttons 40px tall, Approve/Spam/View on one row and Reject full width below; tab strip scrolls (Trash and Banned partly clipped, 'Tr' visible)"
+    },
+    "c-mod-queue-and-actions.21": {
+      "result": "pass",
+      "evidence": "stale Reject after another moderator approved topic 6300: UI POST .../trash/post/6300 -> 409 jetonomy_already_handled, toast 'This topic was already handled by a moderator. Reload to see where it is now.', topic stays published, no extra notification or email"
+    },
+    "c-mod-queue-and-actions.22": {
+      "result": "fail",
+      "expected": "offline Approve: card stays, error toast; reconnect then Approve works once",
+      "actual": "Card stayed, but the toast reads 'Could not update this submission. It may have been handled by another moderator.' for a network failure, which blames another moderator and gives no 'check your connection' hint; reconnect then Approve worked once (7 -> 6 cards)",
+      "url": "http://forums.local/community/mod/?view=approvals&kind=post"
+    },
+    "c-mod-queue-and-actions.23": {
+      "result": "pass",
+      "evidence": "Advanced Moderation OFF: topic and reply containing the keyword published (not held). ON (enabled from Extensions): same topic from alice and a reply both status pending and listed in Awaiting approval. Extension switched back off"
+    },
+    "c-mod-queue-and-actions.24": {
+      "result": "pass",
+      "evidence": "held topic card shows View, Approve, Spam, Reject: the Spam control sits beside Approve and Reject"
+    },
+    "c-mod-queue-and-actions.25": {
+      "result": "pass",
+      "evidence": "REST stale actions with from=<seen status> on topic 6320 already published: approve/trash/spam each 409 jetonomy_already_handled, topic stays published, notification and email counts unchanged. Calls without from are legitimate status changes (200) by design"
+    },
+    "c-mod-queue-and-actions.26": {
+      "result": "fail",
+      "expected": "GET /moderation/queue logged out -> 401 rest_not_logged_in",
+      "actual": "401 with code jetonomy_unauthorized 'You must be logged in.' (status matches, code differs)",
+      "url": "GET /wp-json/jetonomy/v1/moderation/queue",
+      "check_wrong": true
+    }
+  },
+  "proposed_checks": [
+    "- c-mod-queue-and-actions.26 @guest #rest !refuse: GET /moderation/queue logged out -> 401 jetonomy_unauthorized.",
+    "- c-mod-queue-and-actions.11 @moderator #ui: open the queue as test_moderator with a flag pending in Insiders / Beta (private) -> that flag is not listed or counted, and the subtitle reads 'N pending flags across your community' for a site moderator.",
+    "- c-mod-queue-and-actions.8 @moderator #rest: POST /moderation/bulk with action=approve and held ids, then action=bogus, then items=[] -> 200 per id, 400 rest_invalid_param 'action is not one of approve, spam, and trash.', 400 'items must be a non-empty array.'.",
+    "- c-mod-queue-and-actions.2 @moderator #ui: in Awaiting approval switch Topics/Replies, then use Next -> only that type is listed and the pager link keeps view and kind; status is switched with the Awaiting approval and Trash tabs.",
+    "- c-mod-queue-and-actions.1 @moderator #ui: open /community/mod/ -> the h1 'Moderation Overview' shows tabs Flags, Awaiting approval (both with counts), Trash and Banned members, and the sidebar stays visible.",
+    "- `c-mod-queue-and-actions.27` @moderator #ui: open the Trash tab in a space whose Topics sub-tab is empty but Replies holds items -> it opens on the sub-tab that holds items, never 'No topics in the trash.' above a non-empty Replies count.",
+    "- `c-mod-queue-and-actions.28` @moderator #ui: approve the last item of a filtered list -> the subtitle 'N submissions awaiting approval' updates with the badge (it kept the old total after an approve).",
+    "- `c-mod-queue-and-actions.29` @moderator #ui +offline: lose the connection and click Approve -> the toast says the request failed or to check the connection, not that another moderator handled it.",
+    "- `c-mod-queue-and-actions.30` @moderator #ui: per-space flag card -> the reporter shows with a 'Reported by' label (the per-space card prints the bare name before the age, which reads like the author)."
+  ],
+  "notes": "Changed and restored: Pro extension Advanced Moderation enabled for .23/.4 and disabled again (jetonomy_pro_extensions back to the 9 original). Shared data touched: bulk approve published 20 held Insiders/Beta and Help Desk topics (per_page ignored by the REST queue, so a 3-id bulk became 20), restored trashed topic 6288, trashed and re-approved 6320; created and removed my own topics 6327/6329/6330 and replies 13751-13754 (in trash or deleted). Screenshots under qa-artifacts/203-walk5/A/. Debug log unchanged (112327 bytes): WP_DEBUG_LOG is off on this site, so PHP warnings only show on screen (see C.admin.user-management.18)."
 }

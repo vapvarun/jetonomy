@@ -1,8 +1,8 @@
 {
   "journey": "C.member.vote",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:00Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -20,112 +20,105 @@
   "checks": {
     "c-member-vote.1": {
       "result": "pass",
-      "evidence": "bob upvoted Maya's reply 13391: score 0 -> 1, one toast 'Vote added', button aria-label 'Remove your upvote'"
+      "evidence": "bob upvoted alice's reply 13393: 0 -> 1, one 'Vote added' toast, button 'Remove your upvote'"
     },
     "c-member-vote.2": {
       "result": "pass",
-      "evidence": "after reload the button still reads 'Remove your upvote' (pressed) and score 1; server vote_score 1"
+      "evidence": "after reload: still 'Remove your upvote', score 1"
     },
     "c-member-vote.3": {
-      "result": "fail",
-      "expected": "score returns, one toast \"Vote removed\", button label back to \"Upvote\".",
-      "actual": "click active upvote: score back to 0 and one toast 'Vote removed' (correct), but the button label returns to 'Vote up', not 'Upvote' as the check says; label wording is by design",
-      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "click active upvote: 0, one 'Vote removed' toast, label back to 'Vote up'"
     },
     "c-member-vote.4": {
       "result": "pass",
-      "evidence": "downvote: label 'Remove your downvote', score -1; switching down -> up moved score -1 -> 1 (2 points)"
+      "evidence": "downvote: 'Remove your downvote', score -1; switching down -> up moved -1 to 1 (2)"
     },
     "c-member-vote.5": {
       "result": "pass",
-      "evidence": "POST /replies/13391/vote: 1 -> created/removed per prior state, -1 -> {action:created,score:-1}, -1 again -> {action:removed,score:0}; value 0 -> 400 rest_invalid_param 'value is not one of 1 and -1'. Route for replies is /replies/<id>/vote (also /posts/<id>/vote)"
+      "evidence": "POST /replies/13412/vote 1 -> score 1, -1 -> -1, -1 again -> 0; value 0 -> 400 rest_invalid_param"
     },
     "c-member-vote.6": {
       "result": "pass",
-      "evidence": "topic 5874 vote: one toast Vote added / Vote removed; space list row for the same topic shows score 1 and pressed state and one toast on the row; server score matched"
+      "evidence": "topic vote on the Dark mode topic: exactly one 'Vote added' toast (one .jt-toast), persisted after reload; feed-type space shows the same vote controls on cards; REST topic vote 1/0 consistent"
     },
     "c-member-vote.7": {
-      "result": "fail",
-      "expected": "blocked with \"You cannot upvote your own content.\" and the score is unchanged.",
-      "actual": "bob's upvote on his own reply 13394 is allowed: toast 'Vote added', score 0 -> 1, REST created score 1. Code (class-content-gate.php:177-187) allows self-upvote by default through filter jetonomy_allow_self_upvote (true); only self-downvote is refused",
-      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "bob on his own topic: score control is disabled with aria-label 'Score 0. You cannot vote on your own content.'; score unchanged"
     },
     "c-member-vote.8": {
       "result": "pass",
-      "evidence": "POST value -1 on own reply 13394 -> 400 jetonomy_validation 'You cannot downvote your own content.'; the UI hides the down arrow on own reply"
+      "evidence": "self vote +1 and -1 on own reply and own topic -> 400 jetonomy_self_vote 'You cannot vote on your own content.'; taking back an older own-content vote not exercised (no such fixture)"
     },
     "c-member-vote.9": {
-      "result": "pass",
-      "evidence": "test_subscriber (Newcomer, TL0, limit 5 votes/day): 5 votes OK, the 6th: REST 429 jetonomy_rate_limited 'New members can cast 5 votes a day. You can vote again in about 1 day.'; in the UI the toast reads '... You can vote again in about 24 hours.' (same limit, 1 day vs 24 hours wording)"
+      "result": "untested",
+      "needs": "lane A: set the daily vote limit"
     },
     "c-member-vote.10": {
-      "result": "pass",
-      "evidence": "at the cap clicking 'Remove your upvote' on an earlier vote works: toast 'Vote removed', button back to 'Vote up'; REST removed too. All test_subscriber votes removed afterwards (0 rows)"
+      "result": "untested",
+      "needs": "lane A: set the daily vote limit"
     },
     "c-member-vote.11": {
-      "result": "pass",
-      "evidence": "finn (silenced, can read) sees the score as <button aria-disabled=true class=jt-act-denied title='Voting is not available to you here.'> with aria-label 'Score 0. Voting is not available to you here.'; clicking it shows the toast 'Voting is not available to you here.' (not a dead button). omar (space-banned in Off-Topic Lounge) cannot open that space's topics at all (403)"
+      "result": "untested",
+      "needs": "lane A: remove the vote permission from a member"
     },
     "c-member-vote.12": {
       "result": "pass",
-      "evidence": "guest on a topic: every vote control is a link 'Log in to vote' to wp-login.php?redirect_to=<the topic>; POST /replies/<id>/vote as guest -> 401 rest_not_logged_in"
+      "evidence": "guest: vote is a link 'Log in to vote' with redirect_to; POST vote -> 401 rest_not_logged_in"
     },
     "c-member-vote.13": {
-      "result": "fail",
-      "expected": "her bell shows one grouped \"2 people voted\" notification.",
-      "actual": "bob and maya upvoted alice's reply: her bell shows one grouped notification, first 'Someone voted on \"your reply\"' then '2 people voted on \"your reply\"' (id 22408, unread). Grouping works, but the sentence puts quotes around the words your reply as if it were a title ('2 people voted on \"your reply\"')"
+      "result": "pass",
+      "evidence": "alice got one grouped notification '2 people voted on your reply' after bob and maya voted"
     },
     "c-member-vote.14": {
       "result": "pass",
-      "evidence": "bob took his vote back (notice -> '1 person voted'), then maya took hers back: the grouped notification disappeared from alice's list; it never read '0 people voted'"
+      "evidence": "bob then maya took back: '1 person voted on your reply', then the notification was removed; never '0 people voted'"
     },
     "c-member-vote.15": {
-      "result": "fail",
-      "expected": "refused with the silenced message.",
-      "actual": "finn (silenced) in the UI gets 'Voting is not available to you here.' on the score control; the silenced reason is not shown, whereas REST POST /replies/<id>/vote answers 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.' and the Report dialog shows that silenced text",
-      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/"
+      "result": "pass",
+      "evidence": "finn: POST votes -> 403 jetonomy_user_silenced; UI score is a disabled control with the silenced text"
     },
     "c-member-vote.16": {
       "result": "pass",
-      "evidence": "bob votes on reply 13436 in closed Announcements topic: UI toast 'Vote added', score 1, server 1; REST topic vote on closed 5875 -> 200 created/removed. Matches owner decision (members keep vote)"
+      "evidence": "bob voted on a reply of a closed topic: REST 200 and the UI shows vote buttons on closed topics (matches owner decision)"
     },
     "c-member-vote.17": {
       "result": "pass",
-      "evidence": "offline click on Vote up: optimistic change rolled back (score stays -4, 'Remove your downvote' kept) and toast 'Vote failed.'"
+      "evidence": "offline vote: score rolled back to 0, 'Vote failed.' toast"
     },
     "c-member-vote.18": {
       "result": "pass",
-      "evidence": "10 clicks 40ms apart on one reply: 10 alternating toasts (each real change), final UI 0/Vote up equals server 0"
+      "evidence": "10 rapid clicks: UI and server score both 2 (consistent), toasts one per change"
     },
     "c-member-vote.19": {
-      "result": "pass",
-      "evidence": "stale view showing 'Vote up' after a server-side vote: click toggled to removed, UI reconciled to server (score 0, toast 'Vote removed'); no wrong score"
+      "result": "untested",
+      "needs": "not walked: two simultaneous tabs of bob (single-session rapid test passed)"
     },
     "c-member-vote.20": {
       "result": "pass",
-      "evidence": "bob voted in Partner Program reply 13378 (200, then taken back); Customer Advisory Board reply 13380 and Moderators' Room reply 13381: POST vote and GET both 404 jetonomy_not_found"
+      "evidence": "POST /replies/13380 (Customer Advisory Board) -> 404 jetonomy_not_found; Moderators' Room and a private reply id also 404"
     },
     "c-member-vote.21": {
       "result": "pass",
-      "evidence": "finn's post 'Check out my SEO service' shows -4 with minus sign; bob's downvote shows 'Remove your downvote' pressed, up arrow unpressed"
+      "evidence": "finn's -4 topic shows '-4' with a minus sign and no active state for bob"
     },
     "c-member-vote.22": {
       "result": "pass",
-      "evidence": "Pro Reactions: Love reaction on reply 13392 gave counts heart:1 while vote stayed 0/Vote up; removed again via POST emoji=heart toggle"
+      "evidence": "React 'Like' on the reply set the reaction (thumbs 1) and the vote stayed active at score 2: independent"
     },
     "c-member-vote.23": {
       "result": "pass",
-      "evidence": "vote controls at 390: up 43x40, down 40x40 (>= 40px); in dark mode the active upvote shows a blue ring and 'Remove your upvote' state, toast 'Vote added'; no horizontal scroll",
-      "screenshot": "qa-artifacts/203-walk3/laneB/vote-390-dark.png"
+      "evidence": "390 dark: vote buttons 43x40, 40x40, 41x40; active upvote is light blue rgb(151,192,238) on dark rgb(59,67,80) (theme repeat skipped (short walk))"
+    },
+    "c-member-vote.24": {
+      "result": "pass",
+      "evidence": "finn clicking the disabled score: toast 'Your account is currently silenced and cannot post.'"
+    },
+    "c-member-vote.25": {
+      "result": "pass",
+      "evidence": "grouped notice reads '2 people voted on your reply' with no quotation marks around 'your reply'"
     }
   },
-  "proposed_checks": [
-    "- `c-member-vote.3` (corrected) @member #ui: click the active upvote again -> score returns, one toast \"Vote removed\", button label back to \"Vote up\".",
-    "- `c-member-vote.7` (corrected) @member #ui: bob upvotes his own reply -> allowed by default (filter jetonomy_allow_self_upvote, default true), score +1; his downvote control is hidden and POST value -1 on own content returns 400 \"You cannot downvote your own content.\".",
-    "- `c-member-vote.24` @silenced #ui !refuse +silenced: finn clicks the disabled score on a reply -> the toast says his account is silenced (the REST text \"Your account is currently silenced and cannot post.\"), not the generic \"Voting is not available to you here.\".",
-    "- `c-member-vote.25` @member_b #ui: the grouped vote notice reads \"2 people voted on your reply\" without quotation marks around \"your reply\"."
-  ],
-  "notes": "Lane B (members) with Reign light 1440 plus 390 dark spot checks. Changed and restored: none of the site settings. Created and removed: votes by bob, maya, test_subscriber and omar (all taken back), Help Desk question etc. (see report). test_subscriber (Newcomer TL0) was used for the daily vote limit."
+  "proposed_checks": [],
+  "notes": "All votes bob/maya cast were taken back at the end (13393, 13412, topic 5874). Score 2 on reply 13393 includes another voter I did not cast. No site setting changed."
 }

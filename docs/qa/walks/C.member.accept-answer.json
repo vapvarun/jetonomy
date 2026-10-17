@@ -1,8 +1,8 @@
 {
   "journey": "C.member.accept-answer",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:00Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -13,79 +13,88 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-accept-answer.1": {
-      "result": "pass",
-      "evidence": "bob (OP of 'Rate limits on the REST API' in API & Integrations, Q&A) clicked 'Accept as best answer': the reply gets a green frame with an 'Accepted' badge and an Unaccept control. With one reply there is no separate callout, so 'callout above the replies' was only seen on the topic page of the fresh question (see .13)",
-      "screenshot": "qa-artifacts/203-walk3/laneB/accept-answer-1440.png"
+      "result": "fail",
+      "expected": "clicking Accept promotes the reply with an Accepted badge and shows it in a callout above the replies",
+      "actual": "Accepted badge and green highlight appear in place and the topic gets a Resolved tag; no callout above the replies when the accepted reply is on the current page (by design: callout only when it falls on another page, see single-post.php lines 228-246 and 954-960)",
+      "url": "http://forums.local/community/s/help-desk/t/which-role-can-approve-held-posts-in-a-space/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/B/accept-top.png",
+      "check_wrong": true
     },
     "c-member-accept-answer.2": {
       "result": "pass",
-      "evidence": "POST /replies/12691/accept -> 200 reply body and GET /posts/5722 accepted_reply_id 12691; DELETE /replies/12691/accept -> 200 and accepted_reply_id null"
+      "evidence": "UI accept on reply 13759 then GET /posts/6326 accepted_reply_id 13759; moderator POST /replies/13761/accept -> 200 and GET /posts/6147 accepted_reply_id 13761"
     },
     "c-member-accept-answer.3": {
       "result": "pass",
-      "evidence": "Getting Started question 5670: accepting 12393 made 12395 lose its badge, exactly one accepted (server accepted_reply_id 12393, 1 tag); restored 12395 afterwards"
+      "evidence": "accepting a second reply moved the badge: 13759 lost it, 13760 gained it; exactly one accepted"
     },
     "c-member-accept-answer.4": {
       "result": "pass",
-      "evidence": "Unaccept clicked: accepted_reply_id null, tag gone, button back to 'Accept as best answer'"
+      "evidence": "'Remove accepted answer' cleared the state (REST accepted_reply_id null)"
     },
     "c-member-accept-answer.5": {
       "result": "pass",
-      "evidence": "alice (not the OP) on bob's question 5722: no Accept control (only a hidden WPMediaVerse chat 'Accept' button); POST /replies/<id>/accept -> 403 jetonomy_forbidden"
+      "evidence": "alice (not OP): no Accept control; POST /replies/13757/accept -> 403 jetonomy_forbidden"
     },
     "c-member-accept-answer.6": {
       "result": "pass",
-      "evidence": "test_moderator accepted priya's reply 12529 in Bug Reports question 5699 through the UI button: accepted_reply_id 12529, one Accepted tag; priya got notification 'Your answer was accepted in ...' (restored by unaccepting)"
+      "evidence": "test_moderator accepted bob's reply on alice's Bug Reports question: 200, answer author bob got an accepted_answer notification"
     },
     "c-member-accept-answer.7": {
       "result": "pass",
-      "evidence": "answer author priya: one accepted_answer notification (22256) and one email 'Your answer was accepted'; reputation 775 -> 790 on accept and back to 775 on unaccept"
+      "evidence": "each accept gave alice one accepted_answer notification (22852, 22854, 22855) and one 'Your answer was accepted' email each; reputation shown 984 (before/after delta not recorded)"
     },
     "c-member-accept-answer.8": {
       "result": "pass",
-      "evidence": "Lagos Chapter (forum) topic: no Accept control rendered; POST /replies/13366/accept -> 400 jetonomy_not_qa_space 'Accepted answers only apply to Q&A spaces.'"
+      "evidence": "forum-type Show & Tell topic: no Accept control; POST accept -> 400 jetonomy_not_qa_space 'Accepted answers only apply to Q&A spaces.'"
     },
     "c-member-accept-answer.9": {
       "result": "pass",
-      "evidence": "guest on a Q&A topic with an accepted answer: the 'Accepted' tag shows, no Accept or Unaccept control. The separate accepted callout block is not rendered for a guest when the accepted reply is already first (class jt-accepted-callout absent)"
+      "evidence": "guest on seeded accepted topic: Accepted badge visible, no Accept/Unaccept control"
     },
     "c-member-accept-answer.10": {
       "result": "pass",
-      "evidence": "bob accepted maya's private reply on his question (private to bob and maya): a guest's page has neither the reply text nor an accepted callout"
+      "evidence": "private reply accepted by OP: guest page shows no accepted callout and none of its text; guest REST GET /posts/6326 still carries accepted_reply_id 13760 (id only, no text)"
     },
     "c-member-accept-answer.11": {
-      "result": "pass",
-      "evidence": "bob made two Help Desk questions with one accepted answer each; moderator merged B into A (POST /posts/6144/merge): A kept exactly one accepted (13653), B's badge gone. Splitting the accepted reply out (POST /replies/13653/split -> new topic 6145) left A with accepted_reply_id null and is_resolved false: no stale or double state"
+      "result": "fail",
+      "expected": "merge a Q&A topic into another and split one out -> exactly one accepted answer per topic",
+      "actual": "merge works: POST /posts/6326/merge {target_post_id:6324} left exactly one accepted reply (13773) on the target; there is no split route or UI in the plugin, so the split half cannot be walked",
+      "url": "http://forums.local/wp-json/jetonomy/v1/posts/6326/merge",
+      "check_wrong": true
     },
     "c-member-accept-answer.12": {
       "result": "pass",
-      "evidence": "test_moderator closed bob's question 5722: bob can still accept (REST 200) and the closed topic page shows Closed badge, 'This topic is closed and cannot receive new replies.', the accepted tag and the Unaccept control, so UI matches REST; no composer. Restored: unaccepted and reopened"
+      "evidence": "bob (OP) accepted a reply in his closed Q&A topic: REST 200, UI shows 'Remove accepted answer' (matches)"
     },
     "c-member-accept-answer.13": {
-      "result": "fail",
-      "expected": "the topic reverts to unanswered.",
-      "actual": "bob created question 6101 in Help Desk, replied, accepted the reply, then deleted it (REST 200, row status trash): topic still has accepted_reply_id=13625 and is_resolved=1; the topic page still shows a Resolved badge and an ACCEPTED ANSWER callout with the deleted reply's full text and 'Replies 0'. Expected the topic to revert to unanswered",
-      "url": "http://forums.local/community/s/help-desk/t/how-do-i-make-help-desk-visible-only-to-customers-with-an-active-plan/",
-      "screenshot": "qa-artifacts/203-walk3/laneB/accept-deleted-callout-390.png"
+      "result": "pass",
+      "evidence": "alice deleted the accepted reply 13759: topic 6326 reverted to accepted_reply_id null and is_resolved false"
     },
     "c-member-accept-answer.14": {
       "result": "pass",
-      "evidence": "accepted answer with a 10,000px-wide code line at 390: reply card x31-359 inside the viewport, the pre scrolls horizontally (overflow-x auto), document scrollWidth 390",
-      "screenshot": "qa-artifacts/203-walk3/laneB/accept-answer-390.png"
+      "evidence": "390: accepted answer with a 2079px code line: pre scrolls inside (clientWidth 290, overflow auto), page width 390, card right 359"
     },
     "c-member-accept-answer.15": {
       "result": "pass",
-      "evidence": "accept offline: toast 'Failed to save.', no badge, button stays 'Accept as best answer'"
+      "evidence": "offline Accept: badge rolled back (not accepted) and 'Failed to save.' toast"
+    },
+    "c-member-accept-answer.16": {
+      "result": "fail",
+      "expected": "accepted callout is shown above the replies when the accepted reply is not the first one",
+      "actual": "topic 5808: accepted reply 13101 stays inline as the 2nd reply with a highlight, nothing above the list. The callout card exists only when the accepted reply is on another page of the thread",
+      "url": "http://forums.local/community/s/troubleshooting/t/community-pages-return-a-404-after-changing-the-base-slug-s3005t1/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/B/accept-callout-guest2.png",
+      "check_wrong": true
     }
   },
   "proposed_checks": [
-    "- `c-member-accept-answer.16` @member #ui: the Accepted callout is shown above the replies when the accepted reply is not the first one."
+    "- `c-member-accept-answer.17` @guest #ui: open a Q&A topic with 45 replies whose accepted answer is on page 2 -> page 1 shows the accepted-answer card above the replies, and page 2 shows the reply inline with its badge."
   ],
-  "notes": "Accepts on 5722 (restored), 5670 (swapped and restored to 12395), 5699 (priya's reply, unaccepted). Created a Help Desk question, merged/split it and removed it."
+  "notes": "Topics and replies created for this journey were deleted afterwards; reply 13761 (accepted by the moderator) deleted so 6147 reverted. Merge of my own two topics performed in the Help Desk. No site setting changed."
 }

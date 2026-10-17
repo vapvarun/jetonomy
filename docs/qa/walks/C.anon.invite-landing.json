@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.invite-landing",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walked_at": "2026-10-17T13:28:50Z",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:00Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -19,86 +19,83 @@
   },
   "checks": {
     "c-anon-invite-landing.1": {
-      "result": "pass",
-      "evidence": "lane A, registration on: guest opening a valid invite sees 'You've been invited to join Lisbon Chapter', its description, 'Create free account' (wp-login.php?action=register&redirect_to=<invite>) and 'Log in to accept invite'; no membership created. The card is off-centre (see c-admin-invite-links.2)"
+      "result": "untested",
+      "needs": "lane A: turn registration on (users_can_register is 0)",
+      "evidence": "guest sees 'You've been invited to join General Discussion' + description and 'Log in to accept invite'; use_count stayed 0, nobody added. 'Create free account' could not be seen because registration is off"
     },
     "c-anon-invite-landing.2": {
       "result": "pass",
-      "evidence": "Login link carries redirect_to=<invite url>; logged in as bob (via autologin on the invite URL, no password available) -> same invite page, button 'Join Space', bob has 0 rows in Lisbon Chapter"
+      "evidence": "'Log in to accept invite' links to wp-login.php?redirect_to=<invite url>; after autologin as bob the invite page shows he is already a member, nothing joined by the visit"
     },
     "c-anon-invite-landing.3": {
       "result": "pass",
-      "evidence": "bob clicked Join Space (POST + nonce) -> landed on /community/s/lisbon-chapter/; space member_count 3 -> 4, invite use_count 0 -> 1"
+      "evidence": "lucia (non-member) clicked 'Join Space' on the Off-Topic Lounge invite: POST with jt_invite_nonce, landed on /community/s/off-topic-lounge/, members 20 -> 21, invite use_count 0 -> 1"
     },
     "c-anon-invite-landing.4": {
       "result": "pass",
-      "evidence": "bob opens Berlin Chapter invite (already a member): page reads 'You are already a member of Berlin Chapter.' with a 'Go to Space' link; no extra membership row",
-      "screenshot": "qa-artifacts/203-walk2/laneB/invite-bob-berlin.png"
+      "evidence": "bob on General Discussion invite: 'You are already a member of General Discussion. Go to Space', one member row only"
     },
     "c-anon-invite-landing.5": {
       "result": "pass",
-      "evidence": "as bob, 2 GETs, a HEAD and a Purpose: prefetch GET all 200 and wp_jt_space_members for space 32 unchanged (3 rows, bob 0)"
+      "evidence": "lucia: two GETs and a HEAD of the invite URL -> membership rows for lucia in space 3001 stayed 0"
     },
     "c-anon-invite-landing.6": {
-      "result": "pass",
-      "evidence": "POST /jetonomy/v1/invite/<token> with cookie and no nonce -> 401 rest_not_logged_in; POST to the landing page with a bad jt_invite_nonce re-shows the Join button; bob not added"
+      "result": "fail",
+      "expected": "POST without nonce is rejected (403 or a nonce error) and the member is not added",
+      "actual": "member is not added, but the response is a silent 200 that re-renders the invite page with no error message (also for a wrong nonce); a member whose nonce expired gets no feedback",
+      "url": "http://forums.local/community/invite/BHTFtGCb9xqDEYeu8n4qYEm4zWBE5nEo/"
     },
     "c-anon-invite-landing.7": {
       "result": "pass",
-      "evidence": "lane A, registration off: the same invite shows only 'Log in to accept invite', no Create free account"
+      "evidence": "registration is already off: guest sees only 'Log in to accept invite', no Create free account (no setting changed by lane B)"
     },
     "c-anon-invite-landing.8": {
       "result": "pass",
-      "evidence": "/invite/does-not-exist/ -> theme 404 'Page not found' (hyphen does not match the token route); a well-formed bogus token /invite/doesnotexist123/ -> 'Invalid invite link.' No fatal. Wording differs from the check, see proposed checks"
+      "evidence": "/community/invite/doesnotexist/ -> HTTP 404, page text 'Invalid invite link.', no fatal"
     },
     "c-anon-invite-landing.9": {
       "result": "pass",
-      "evidence": "invite with expires_at 2026-10-01 -> 'This invite link has expired or reached its usage limit.', no Join button"
+      "evidence": "expired fixture invite (temporary, removed): HTTP 410 'This invite link has expired or reached its usage limit.', no Join button"
     },
     "c-anon-invite-landing.10": {
       "result": "pass",
-      "evidence": "one-use invite accepted by maya, then bob opens it -> 'This invite link has expired or reached its usage limit.', no Join button"
+      "evidence": "usage-limit fixture invite (max 1, used 1, temporary): HTTP 410 same message, no Join button"
     },
     "c-anon-invite-landing.11": {
       "result": "pass",
-      "evidence": "bob on invite to 2025 Hackathon -> 'This space is archived or locked and is not taking new members.', no Join button"
+      "evidence": "lucia on archived 2025 Hackathon invite: 'This space is archived or locked and is not taking new members.', no Join; no member row"
     },
     "c-anon-invite-landing.12": {
-      "result": "pass",
-      "evidence": "omar opens the Off-Topic Lounge invite: 'You have been banned from this space and cannot take part in it.' no Join button. Forced POST with a valid nonce not walked (page has no form to take a nonce from); omar already has a member row so a POST could not show a new row",
-      "screenshot": "qa-artifacts/203-walk2/laneB/invite-omar.png"
+      "result": "untested",
+      "needs": "fixture/lane A: omar has no space ban in Off-Topic Lounge (jt_restrictions has no row for him; he is a plain member)"
     },
     "c-anon-invite-landing.13": {
       "result": "pass",
-      "evidence": "alice and maya clicked Join together on a one-use invite in separate sessions -> alice joined and landed in the space, maya got the usage-limit error; use_count 1, 1 new member row"
+      "evidence": "one-use invite fixture (temporary): lucia and test_subscriber POSTed at the same moment with valid nonces -> exactly one member added (test_subscriber), the other saw 'expired or reached its usage limit'"
     },
     "c-anon-invite-landing.14": {
       "result": "pass",
-      "evidence": "390 dark guest: 'Log in to accept invite' button 328px wide in a 328px container (full width), light-blue button with dark text on #23262f, no h-scroll",
-      "screenshot": "qa-artifacts/203-walk2/laneB/invite-guest-390-dark.png"
+      "evidence": "guest at 390 dark: 'Log in to accept invite' is full width (328 of 328), 41px high, dark text on light blue, no horizontal scroll"
     },
     "c-anon-invite-landing.15": {
       "result": "pass",
-      "evidence": "logged-out invite to Moderators' Room -> only 'You've been invited to join Moderators' Room', its one-line description and the login button; no members, topics or counts"
+      "evidence": "guest on a hidden-space (Moderators' Room) invite token: shows only the space name and description with the login button, no members or topics"
     },
     "c-anon-invite-landing.16": {
       "result": "pass",
-      "evidence": "/community/invite/ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ/ now answers HTTP 404 and shows 'Invalid invite link.'",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-invite-unknown.png"
+      "evidence": "/community/invite/AbCdEf1234567890unknownTokenZZ/ -> HTTP 404 'Invalid invite link.'"
     },
     "c-anon-invite-landing.17": {
-      "result": "pass",
-      "evidence": "omar (still a member row in Off-Topic Lounge) opens its invite -> banned message shown instead of a silent redirect into the space"
+      "result": "untested",
+      "needs": "fixture/lane A: omar is not banned from Off-Topic Lounge in this data"
     },
     "c-anon-invite-landing.18": {
       "result": "pass",
-      "evidence": "existing member bob sees a visible 'You are already a member of Berlin Chapter.' page with 'Go to Space' (matches check 4); no silent redirect any more"
+      "evidence": "existing member opening an invite sees 'You are already a member of <space>. Go to Space' (matches check 4, no silent redirect)"
     }
   },
   "proposed_checks": [
-    "- `c-anon-invite-landing.16` @guest #ui !refuse: open /invite/<well-formed but unknown token>/ -> an 'Invalid invite link.' page with HTTP 404 (today it is HTTP 200, a soft 404).",
-    "- `c-anon-invite-landing.17` @space_banned #ui !refuse +banned: omar, who still has a member row in Off-Topic Lounge, opens its invite -> the page says he is banned instead of silently redirecting into the space.",
-    "- `c-anon-invite-landing.18` @member #ui: as an existing member open an invite to a space he is in -> decide the contract: either a visible 'You are already a member' page with a link (what check 4 says) or the silent redirect (what the code does); fix whichever is wrong."
+    "- `c-anon-invite-landing.19` @member #ui !refuse: submit the Join form with an expired or missing nonce -> a visible message tells the member to reload and try again, and nobody is added."
   ],
-  "notes": "Lane B created, via admin REST as varundubey, 7 invite links (spaces Lisbon, Berlin, Mexico City, Ai Assistant, 2025 Hackathon, Off-Topic Lounge, Moderators' Room); one expiry was backdated with a one-row update to make an expired invite. All invite rows deleted at the end; bob/maya/alice membership rows removed with SpaceMember::remove (member counts back to 3/3/1). No settings changed. users_can_register is 0 on the site, so the 'Create free account' path is untested. Debug log unchanged (112327 bytes). Screenshots: invite-*.png. | Re-walk lane B 2026-10-17: Invite route is /community/invite/<alnum token>/ (not /invite/). Created 9 invite rows via InviteLink::generate (Lisbon, Berlin, Mexico City, 2025 Hackathon, Off-Topic Lounge, Moderators Room, AI Assistant, limit-1 Tokyo, backdated-expiry Seoul) and deleted all afterwards (one remaining row, id 274, belongs to lane A). No membership rows or settings changed. .1 and .7 stay untested (lane A). A hyphenated bad slug /community/invite/does-not-exist/ gets the theme 404 (route regex [a-zA-Z0-9]+). | lane A (re-walk 2026-10-17): lane A: users_can_register toggled 1 then restored to 0; invite link created on Lisbon Chapter for the walk and removed."
+  "notes": "Fixtures: inserted five temporary rows into wp_jt_invite_links (expired, limit-reached, archived 2025 Hackathon, hidden Moderators' Room, one-use) and deleted them afterwards; lucia and test_subscriber memberships created by the joins were removed and member_count recomputed (3001 -> 20, 2990 -> 20); invite 283 use_count reset to 0. No site setting changed."
 }

@@ -1,8 +1,8 @@
 {
   "journey": "C.member.flag",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:00Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -20,94 +20,107 @@
   "checks": {
     "c-member-flag.1": {
       "result": "pass",
-      "evidence": "bob clicked Report on Maya's reply 13392: dialog 'Why are you reporting this reply?' with radios Spam, Offensive, Off-topic, Harassment, Other and optional details box"
+      "evidence": "Report on a reply opens 'Why are you reporting this reply?' with Spam, Offensive, Off-topic, Harassment, Other and a details box"
     },
     "c-member-flag.2": {
       "result": "pass",
-      "evidence": "Report with no reason: hint 'Choose a reason.' shown, dialog stays, no flag row created (DB checked)"
+      "evidence": "Report with no reason: 'Choose a reason.' shown, nothing sent"
     },
     "c-member-flag.3": {
       "result": "pass",
-      "evidence": "Spam + Report: toast 'Reported. Thank you.'; flag row 364 (reply 13392, spam, pending)"
+      "evidence": "Spam + details: toast 'Reported. Thank you.', dialog closed"
     },
     "c-member-flag.4": {
       "result": "pass",
-      "evidence": "test_moderator on /community/mod/ (Moderation Overview, Flags tab): 'SPAM  REPLY  Feature Requests ... Still waiting on this one... Reported by Bob Martinez' with a 'Review in queue' link to the space's /mod/ page (reason badge Spam, reporter name shown)",
-      "screenshot": "qa-artifacts/203-walk3/laneB/modqueue-flags-1440.png"
+      "evidence": "moderation queue (/community/mod/) lists the reply with reasons SPAM, OFFENSIVE, OTHER and 'Reported by Carlos Mendes and 2 others'; member report shows 'MEMBER SPAM Carlos Mendes ... Finn O'Brien'"
     },
     "c-member-flag.5": {
-      "result": "fail",
-      "expected": "toast \"You already reported this.\" and no second queue row.",
-      "actual": "second report of the same reply: toast reads 'You have already reported this content.' (REST 409 jetonomy_already_flagged), not 'You already reported this.'; no second row (DB has one). Wording differs from the check only",
-      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "second report of the same reply: toast 'You have already reported this content.'; REST 409 jetonomy_already_flagged; no second row"
     },
     "c-member-flag.6": {
-      "result": "pass",
-      "evidence": "POST /flags {object_type,object_id,reason,description} -> 201 {created:true,id:365}; reason 'bogus' -> 400 rest_invalid_param. Route is /flags, not /moderation/flags (that is the GET queue list)"
+      "result": "fail",
+      "expected": "POST /moderation/flags with target and reason -> 201; invalid reason 400",
+      "actual": "POST /moderation/flags has no POST route (GET only, 404 rest_no_route); the working route is POST /flags {object_type,object_id,reason}: 201 id 448, invalid reason -> 400 rest_invalid_param",
+      "url": "http://forums.local/wp-json/jetonomy/v1/flags",
+      "check_wrong": true
     },
     "c-member-flag.7": {
-      "result": "fail",
-      "expected": "both reach the queue with the right target type.",
-      "actual": "bob reported reply 13392 and Maya's member profile (both 'Reported. Thank you.'). As moderator: the reply flag shows in the queue as REPLY, but the member report (flag 366, object_type user) is counted in 'Flags 10 / 10 pending' and listed by GET /moderation/flags yet no card for it renders on /community/mod/ (9 cards for 10 flags), so a reported member never appears in the visible queue",
-      "url": "http://forums.local/community/mod/",
-      "screenshot": "qa-artifacts/203-walk3/laneB/modqueue-flags-1440.png"
+      "result": "pass",
+      "evidence": "reply report and member (user 3770) report both reach the queue with types REPLY and MEMBER"
     },
     "c-member-flag.8": {
       "result": "pass",
-      "evidence": "POST /flags on own reply 13394 -> 400 jetonomy_flag_self 'You cannot report your own content.'"
+      "evidence": "report own reply -> 400 jetonomy_flag_self 'You cannot report your own content.'"
     },
     "c-member-flag.9": {
-      "result": "pass",
-      "evidence": "report reply 13380 in Customer Advisory Board as bob -> 404 jetonomy_flag_target_missing, identical to a nonexistent id 99999999 (code name differs from the check's jetonomy_not_found but the two are indistinguishable)"
+      "result": "fail",
+      "expected": "reply in Customer Advisory Board as bob -> 404 jetonomy_not_found like a missing id",
+      "actual": "404 jetonomy_flag_target_missing 'The reported content no longer exists.' identical to a missing id (indistinguishable, but the code name differs from the check)",
+      "url": "http://forums.local/wp-json/jetonomy/v1/flags",
+      "check_wrong": true
     },
     "c-member-flag.10": {
-      "result": "pass",
-      "evidence": "report private reply 13438 (bob may not read) -> 404 jetonomy_flag_target_missing, same as a missing id. Side note: GET /replies/13438 as bob still returns 200 with empty content plus author_id/created_at (existence disclosed); see proposed check"
+      "result": "fail",
+      "expected": "private reply bob may not read -> same 404 as missing",
+      "actual": "404 jetonomy_flag_target_missing, identical to a missing id; code name differs from the check",
+      "url": "http://forums.local/wp-json/jetonomy/v1/flags",
+      "check_wrong": true
     },
     "c-member-flag.11": {
       "result": "pass",
-      "evidence": "POST /flags as guest -> 401 rest_not_logged_in"
+      "evidence": "POST /flags logged out -> 401 rest_not_logged_in"
     },
     "c-member-flag.12": {
       "result": "pass",
-      "evidence": "finn (silenced) submits the Report dialog: toast 'Your account is currently silenced and cannot post.' (REST 403 jetonomy_user_silenced); no flag row is created"
+      "evidence": "finn: POST /flags -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "c-member-flag.13": {
       "result": "pass",
-      "evidence": "POST /flags with reply id 99999999 -> 404 jetonomy_flag_target_missing"
+      "evidence": "report id 99999999 -> 404 jetonomy_flag_target_missing"
     },
     "c-member-flag.14": {
-      "result": "pass",
-      "evidence": "submit offline: toast 'Failed to submit report.' and the dialog stays open"
+      "result": "fail",
+      "expected": "offline submit -> error toast and the dialog stays open",
+      "actual": "error toast 'Failed to submit report.' appears but the dialog closes, so the reason and details are lost",
+      "url": "http://forums.local/community/s/general-discussion/t/%d8%aa%d8%ac%d8%b1%d8%a8%d8%aa%d9%8a-%d9%85%d8%b9-%d9%85%d8%ac%d9%85%d9%88%d8%b9%d8%a7%d8%aa-%d8%a7%d9%84%d8%aa%d8%b5%d9%88%d9%8a%d8%b1-%d8%a7%d9%84%d9%85%d8%ad%d9%84%d9%8a%d8%a9/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/B/flag-390-dark.png"
     },
     "c-member-flag.15": {
-      "result": "fail",
-      "expected": "two flags merge into one queue entry with count 2.",
-      "actual": "bob (spam, 18 min earlier), maya (spam) and alice (offensive) reported the same reply 13392: the queue shows separate cards (SPAM by Maya Okafor, OFFENSIVE by Alice Chen, SPAM by Bob Martinez) instead of one entry with count 2; same reason and same target are not merged and no count is shown",
-      "url": "http://forums.local/community/mod/",
-      "screenshot": "qa-artifacts/203-walk3/laneB/modqueue-flags-1440.png"
+      "result": "pass",
+      "evidence": "bob, maya and carlos reported reply 13412: one queue card with all three reasons (alice authored it so maya/carlos stood in for alice)"
     },
     "c-member-flag.16": {
-      "result": "fail",
-      "expected": "the field shows its limit and saves or blocks, never a 500.",
-      "actual": "2000 chars saved (201, 2000 stored) but the details box shows no limit or counter (no maxlength); a 100000-char description returns 500 jetonomy_flag_failed because the column is TEXT (65535). Expected a visible limit and a 400, never a 500",
-      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/"
+      "result": "pass",
+      "evidence": "details textarea has maxlength 2000; REST description of 100000 characters -> 400 jetonomy_validation 'Report details can be up to 2,000 characters.'"
     },
     "c-member-flag.17": {
       "result": "pass",
-      "evidence": "report dialog at 390 dark: panel x8-382, y210-634 inside the 844px viewport, five reasons plus details visible, Report/Cancel buttons 40px tall at x24-366",
-      "screenshot": "qa-artifacts/203-walk3/laneB/flag-dialog-390-dark.png"
+      "evidence": "390 dark: dialog 374px wide, 424px high inside 844, buttons 40px high, readable colours (theme repeat skipped (short walk))"
     },
     "c-member-flag.18": {
-      "result": "untested",
-      "needs": "lane A: an RTL locale (Arabic) to check the report dialog direction; in the LTR site the dialog is left-to-right"
+      "result": "fail",
+      "expected": "dialog direction is right-to-left when reporting Omar's Arabic topic",
+      "actual": "dialog is LTR (English text, site is LTR) as expected for an LTR site; the Arabic content itself renders RTL. The check should say the dialog follows the site direction",
+      "url": "http://forums.local/community/s/general-discussion/t/%d8%aa%d8%ac%d8%b1%d8%a8%d8%aa%d9%8a-%d9%85%d8%b9-%d9%85%d8%ac%d9%85%d9%88%d8%b9%d8%a7%d8%aa-%d8%a7%d9%84%d8%aa%d8%b5%d9%88%d9%8a%d8%b1-%d8%a7%d9%84%d9%85%d8%ad%d9%84%d9%8a%d8%a9/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/B/flag-rtl.png",
+      "check_wrong": true
+    },
+    "c-member-flag.19": {
+      "result": "pass",
+      "evidence": "GET /replies/13438 (private reply) as bob -> 404 jetonomy_not_found"
+    },
+    "c-member-flag.20": {
+      "result": "pass",
+      "evidence": "100000-character description -> 400 with a message, not a 500; details box shows maxlength 2000"
+    },
+    "c-member-flag.21": {
+      "result": "pass",
+      "evidence": "queue shows one card for 3 reporters ('Reported by Carlos Mendes and 2 others', wording is not '3 reports'); resolving one flag (dismissed) resolved all three and bob, maya and carlos each got exactly one 'Your report was reviewed' notification"
     }
   },
   "proposed_checks": [
-    "- `c-member-flag.5` (corrected) @member #ui !refuse: bob reports the same reply again -> toast \"You have already reported this content.\" (REST 409 jetonomy_already_flagged) and no second queue row.",
-    "- `c-member-flag.19` @member #rest !refuse: GET /replies/<id> of a private reply bob may not read -> 404 jetonomy_not_found like the flag and vote refusals (today 200 with empty content but author_id and created_at).",
-    "- `c-member-flag.20` @member #rest +long: POST /flags with a 100000-character description -> 400 with a message (not a 500), and the details box shows a character limit."
+    "- `c-member-flag.22` @member #ui: report a reply from the topic page, then reload -> the Report control shows the member has already reported it (or the second attempt says so) without opening a dialog first."
   ],
-  "notes": "Flags created by bob, alice and maya on replies 13391, 13392, a member profile and a topic were dismissed by test_moderator and the flag rows deleted; the 100000-char probe returned 500 and stored nothing."
+  "notes": "Flags created: 444-448 (reply 13412 x3, user 3770, reply 13393); all resolved as dismissed by test_moderator. Lane A was also resolving flags concurrently. No site setting changed."
 }
