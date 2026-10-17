@@ -22,21 +22,14 @@ defined( 'ABSPATH' ) || exit;
  * and the space graph is three times the size, so the same mistake here would
  * be three times as quiet.
  *
- * Why a purge exists before anything calls it
- * -------------------------------------------
- * Today `Space::delete()` deletes the row and nothing else, so every space
- * ever deleted left its posts, replies, members, join requests and
- * notifications behind, pointing at an id that no longer resolves. This class
- * is how that damage gets swept up (via Space_Backfill), and it is deliberately
- * NOT wired into `Space::delete()` yet.
- *
- * That ordering is the point. Deletion is due to default to TRANSFERRING a
- * space to its next moderator rather than destroying it, with a permanent
- * purge as an opt-in the site owner controls. Wiring the cascade in first
- * would turn today's recoverable orphans into real data loss — other members'
- * topics and replies — with no safe default in place to choose instead. So the
- * engine lands first and stays unarmed; the delete flow adopts it once transfer
- * exists.
+ * Every delete goes through here
+ * ------------------------------
+ * Before 2.0.3 `Space::delete()` deleted the row and nothing else, so a space
+ * deleted that way left its posts, replies, members, join requests and
+ * notifications behind, pointing at an id that no longer resolves. Space_Backfill
+ * sweeps that old damage up. The admin screen, REST and WP-CLI default to
+ * TRANSFERRING a space (archive and hand over) and only purge when asked;
+ * `Space::delete()` itself is now the purge, via queue().
  *
  * Resolution order
  * ----------------
@@ -113,7 +106,8 @@ final class Space_Purge {
 			return false;
 		}
 
-		$args = array( 'space_id' => $space_id );
+		self::$last_error = '';
+		$args             = array( 'space_id' => $space_id );
 
 		// Already handed off by an earlier request - let the runner have it
 		// rather than deleting the same slice from two directions.
@@ -129,6 +123,7 @@ final class Space_Purge {
 			$oversized = count( self::post_ids( $space_id, self::CHUNK + 1 ) ) > self::CHUNK;
 		} catch ( \RuntimeException $e ) {
 			// Cannot even size the space; leave it intact and try again shortly.
+			self::$last_error = $e->getMessage();
 			self::retry_later( $space_id );
 			return true;
 		}
@@ -139,7 +134,7 @@ final class Space_Purge {
 			// operator's next page load shows the truth instead of a space that
 			// was reported deleted and is still sitting in the list.
 			self::purge( $space_id );
-			if ( '' !== self::$last_error ) {
+			if ( '' !== self::last_error() ) {
 				self::retry_later( $space_id );
 			}
 			return true;
@@ -151,6 +146,7 @@ final class Space_Purge {
 		Models\Space::update( $space_id, array( 'status' => 'locked' ) );
 		$first = self::purge_step( $space_id );
 		if ( ! empty( $first['error'] ) ) {
+			self::$last_error = (string) $first['error'];
 			self::retry_later( $space_id );
 			return true;
 		}

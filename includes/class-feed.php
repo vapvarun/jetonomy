@@ -58,6 +58,11 @@ class Feed {
 		 */
 		$posts = (array) apply_filters( 'jetonomy_space_feed_posts', $posts, $space );
 
+		// Users and profiles for every item's author in one query each, not one per row.
+		$author_ids = array_map( static fn( $p ) => (int) $p->author_id, $posts );
+		cache_users( $author_ids );
+		Models\UserProfile::prime( $author_ids );
+
 		$space_url = route_url( 'space', rawurlencode( (string) $space->slug ) );
 		$self_url  = route_url( 'space-feed', rawurlencode( (string) $space->slug ) );
 		$newest    = ! empty( $posts ) ? (string) $posts[0]->created_at : (string) ( $space->created_at ?? now() );

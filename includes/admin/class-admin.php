@@ -1521,8 +1521,11 @@ class Admin {
 			$members_capped = ( (int) ( $space->member_count ?? 0 ) ) > count( $members ) && count( $members ) >= 1000;
 			$access_rules   = AccessRule::list_for_space( $space_id );
 			$space_settings = Space::get_settings( $space_id );
-			$join_requests  = JoinRequest::list_pending_for_space( $space_id );
 			$join_total     = JoinRequest::count_pending_for_space( $space_id );
+			$join_per_page  = 20;
+			$join_pages     = max( 1, (int) ceil( $join_total / $join_per_page ) );
+			$join_paged     = min( $join_pages, max( 1, absint( $_GET['jrpg'] ?? 1 ) ) );
+			$join_requests  = JoinRequest::list_pending_for_space( $space_id, $join_per_page, ( $join_paged - 1 ) * $join_per_page );
 			include JETONOMY_DIR . 'includes/admin/views/space-edit.php';
 			return;
 		}

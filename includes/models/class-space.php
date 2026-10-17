@@ -280,23 +280,36 @@ class Space extends Model {
 	}
 
 	/**
-	 * Delete a space, then invalidate its cache (both keys).
+	 * Delete a space and everything it owns.
 	 *
-	 * Model::delete() does not touch the cache, so without this override a
-	 * deleted space kept serving from space:{id} / space:slug:{slug} until the
-	 * TTL. Deletion funnels through here (admin AJAX handler, journeys), so this
-	 * is the single chokepoint.
+	 * A bare row delete orphaned every topic and reply in the space (700 topics
+	 * after one imported space), so this is the same purge the admin screen,
+	 * REST and WP-CLI run: a small space is gone on return, a large one is
+	 * locked and drained in the background. Space_Purge removes the space row
+	 * and busts its cache itself.
 	 *
 	 * @param int $id Space ID.
-	 * @return bool|\WP_Error Mirrors Model::delete() — do not narrow to bool, or a
-	 *                        WP_Error return would TypeError and callers that
-	 *                        is_wp_error() the result become dead code.
+	 * @return bool|\WP_Error True when the space is gone or its background
+	 *                        purge is under way, false when there is no such
+	 *                        space, WP_Error when the database refused (the
+	 *                        space and whatever it still holds are kept, and
+	 *                        the purge retries).
 	 */
 	public static function delete( int $id ): bool|\WP_Error {
-		$slug   = parent::find( $id )->slug ?? null;
-		$result = parent::delete( $id );
-		self::bust_cache( $id, $slug );
-		return $result;
+		if ( ! parent::find( $id ) ) {
+			return false;
+		}
+
+		\Jetonomy\Space_Purge::queue( $id );
+		if ( '' !== \Jetonomy\Space_Purge::last_error() ) {
+			return new \WP_Error(
+				'jetonomy_space_delete_failed',
+				/* translators: %s: space label, lowercase (e.g. "space"). */
+				sprintf( __( 'The %s could not be deleted, so it was kept with its content. Deletion will be retried shortly.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ),
+				array( 'status' => 500 )
+			);
+		}
+		return true;
 	}
 
 	/**

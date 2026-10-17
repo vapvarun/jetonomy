@@ -58,6 +58,9 @@
 			inviteUnlimited:      __( 'Unlimited', 'jetonomy' ),
 			inviteNever:          __( 'Never', 'jetonomy' ),
 			inviteExpired:        __( 'Expired', 'jetonomy' ),
+			/* translators: 1: invite links shown, 2: all invite links on the space. */
+			inviteShowing:        __( 'Showing %1$s of %2$s invite links.', 'jetonomy' ),
+			inviteLoadMore:       __( 'Load more', 'jetonomy' ),
 			// Column labels for JS-injected invite rows. They must match the
 			// headings jetonomy_admin_table() renders, because the responsive
 			// layout shows them as each cell's label on mobile.
@@ -1378,9 +1381,11 @@
 				return $tr;
 			}
 
-			// Load existing links for this space on tab render.
-			function loadInvites() {
-				self.ajax('jetonomy_list_invites', { space_id: spaceId }).done(function(res) {
+			// Load existing links for this space on tab render, one page at a
+			// time: a space with hundreds of links must not arrive in one dump.
+			function loadInvites(page) {
+				self.ajax('jetonomy_list_invites', { space_id: spaceId, page: page }).done(function(res) {
+					$('.jetonomy-invites-more').remove();
 					if (!res.success || !res.data || !res.data.invites || !res.data.invites.length) {
 						return;
 					}
@@ -1389,9 +1394,17 @@
 					res.data.invites.forEach(function(invite) {
 						$tbody.append(rowHtml(invite));
 					});
+					if (res.data.has_more) {
+						$('<p>', { 'class': 'jetonomy-invites-more' })
+							.text(sprintf(self.i18n.inviteShowing, $tbody.find('tr[data-invite-id]').length, res.data.total) + ' ')
+							.append($('<button>', { type: 'button', 'class': 'button' }).text(self.i18n.inviteLoadMore).on('click', function() {
+								loadInvites(page + 1);
+							}))
+							.insertAfter($table.parent());
+					}
 				});
 			}
-			loadInvites();
+			loadInvites(1);
 
 			// Copy a link to the clipboard.
 			function copyToClipboard(text) {

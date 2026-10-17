@@ -15,8 +15,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Why this class exists
  * ---------------------
- * `Space::delete()` has always been a bare row delete plus a cache bust.
- * Nothing cascaded. Every space ever deleted left its topics, replies, members,
+ * Before 2.0.3 `Space::delete()` was a bare row delete plus a cache bust.
+ * Nothing cascaded. Every space deleted that way left its topics, replies, members,
  * join requests, subscriptions, votes, flags and notifications in the database,
  * pointing at an id that no longer resolves.
  *

@@ -375,6 +375,10 @@ class UserProfile extends Model {
 		 */
 		$eligible = "{$is_member} AND reputation > 0";
 
+		// A member banned site-wide holds no rank either; same population rule,
+		// one anti-join on the restrictions (user_id, type) index.
+		$eligible .= Restriction::not_banned_sql( 'user_id', 0 );
+
 		if ( 'week' === $period ) {
 			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)";
 		}

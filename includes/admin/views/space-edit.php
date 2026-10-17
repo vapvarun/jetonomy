@@ -8,8 +8,11 @@
  * @var object[] $categories
  * @var array<int,object{user_id:int,role:string,space_role?:string,joined_at?:string,display_name?:string}> $members
  * @var object[] $access_rules
- * @var object[] $join_requests First page of pending join requests.
+ * @var object[] $join_requests The current page of pending join requests.
  * @var int      $join_total    Every pending join request on the space.
+ * @var int      $join_per_page Join requests per page.
+ * @var int      $join_paged    Current join requests page (?jrpg=).
+ * @var int      $join_pages    Join request page count.
  *
  * @package Jetonomy
  */
@@ -829,6 +832,40 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				)
 			);
 		?>
+			<?php if ( $join_pages > 1 ) : ?>
+			<div class="tablenav bottom">
+				<div class="tablenav-pages">
+					<span class="displaying-num">
+						<?php
+						$_jr_first = ( $join_paged - 1 ) * $join_per_page + 1;
+						$_jr_last  = min( $join_paged * $join_per_page, $join_total );
+						/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
+						printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_jr_first ) ), esc_html( number_format_i18n( $_jr_last ) ), esc_html( number_format_i18n( $join_total ) ) );
+						?>
+					</span>
+					<?php
+					$_jr_links = paginate_links(
+						array(
+							'base'    => add_query_arg(
+								array(
+									'tab'  => 'join_requests',
+									'jrpg' => '%#%',
+								),
+								$edit_url
+							),
+							'format'  => '',
+							'current' => $join_paged,
+							'total'   => $join_pages,
+							'type'    => 'array',
+						)
+					);
+					if ( $_jr_links ) {
+						echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $_jr_links ) ) . '</span>';
+					}
+					?>
+				</div>
+			</div>
+			<?php endif; ?>
 		</div>
 
 	<?php endif; ?>

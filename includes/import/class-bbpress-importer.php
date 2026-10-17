@@ -329,16 +329,7 @@ class BBPress_Importer extends Importer {
 			);
 		}
 
-		$already = Import_Map::count_for_source( self::SOURCE );
-		if ( $already > 0 ) {
-			$notes[] = sprintf(
-				/* translators: %s: number of previously imported items. */
-				_n( 'This source has been imported before (%s item). Running it again adds only what is missing and does not duplicate anything.', 'This source has been imported before (%s items). Running it again adds only what is missing and does not duplicate anything.', $already, 'jetonomy' ),
-				number_format_i18n( $already )
-			);
-		}
-
-		return $notes;
+		return array_merge( $notes, parent::get_import_notes() );
 	}
 
 	/**
