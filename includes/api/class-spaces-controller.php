@@ -1142,10 +1142,10 @@ class Spaces_Controller extends Base_Controller {
 	public function leave_space( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id      = absint( $request->get_param( 'id' ) );
 		$user_id = absint( $request->get_param( 'user_id' ) );
-		$space   = Space::find( $id );
+		$space   = $this->find_unconcealed_space( $id );
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
 		$current_user_id = get_current_user_id();
@@ -1189,9 +1189,9 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function get_join_requests( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 		if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( get_current_user_id(), $id ) ) {
 			return $this->permission_error();
@@ -1302,9 +1302,9 @@ class Spaces_Controller extends Base_Controller {
 	private function resolve_join_request( WP_REST_Request $request ): array {
 		$id         = absint( $request->get_param( 'id' ) );
 		$request_id = absint( $request->get_param( 'request_id' ) );
-		$space      = Space::find( $id );
-		if ( ! $space ) {
-			return array( null, null, $this->not_found( 'Space' ) );
+		$space      = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return array( null, null, $space );
 		}
 		if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( get_current_user_id(), $id ) ) {
 			return array( null, null, $this->permission_error() );

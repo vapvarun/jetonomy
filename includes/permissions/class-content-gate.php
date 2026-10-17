@@ -166,24 +166,10 @@ class Content_Gate {
 			return new \WP_Error( 'jetonomy_validation', __( 'Vote value must be 1 or -1.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
 
-		$is_self = $object && (int) ( $object->author_id ?? 0 ) === $user_id;
-
-		// A self-downvote drives the author's own score negative, against "I'm posting my view".
-		if ( -1 === $value && $is_self ) {
-			return new \WP_Error( 'jetonomy_validation', __( 'You cannot downvote your own content.', 'jetonomy' ), array( 'status' => 400 ) );
-		}
-
-		/**
-		 * Whether a member may upvote their own content.
-		 *
-		 * @param bool   $allowed Default true.
-		 * @param int    $user_id Voting user.
-		 * @param string $type    'post' or 'reply'.
-		 * @param int    $id      Object ID.
-		 */
-		if ( 1 === $value && $is_self
-			&& ! apply_filters( 'jetonomy_allow_self_upvote', true, $user_id, $type, $id ) ) {
-			return new \WP_Error( 'jetonomy_validation', __( 'You cannot upvote your own content.', 'jetonomy' ), array( 'status' => 400 ) );
+		// Your own vote never counts (owner policy), up or down. Vote::cast()
+		// holds the same rule for writers that skip this gate.
+		if ( $object && (int) ( $object->author_id ?? 0 ) === $user_id ) {
+			return \Jetonomy\Models\Vote::self_vote_error();
 		}
 
 		return true;

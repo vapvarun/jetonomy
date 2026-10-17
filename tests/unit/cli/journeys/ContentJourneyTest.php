@@ -235,14 +235,20 @@ class ContentJourneyTest extends WP_UnitTestCase {
 
 	public function test_vote_cast_created_then_undone(): void {
 		$post_id = $this->make_post();
+		$voter   = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 
-		$first = $this->journey->vote( $this->author_id, 'post', $post_id, 1 );
+		$first = $this->journey->vote( $voter, 'post', $post_id, 1 );
 		$this->assertTrue( $first->is_success() );
 		$this->assertSame( 'created', $first->data['action'] );
 
-		$second = $this->journey->vote( $this->author_id, 'post', $post_id, 1 );
+		$second = $this->journey->vote( $voter, 'post', $post_id, 1 );
 		$this->assertTrue( $second->is_success() );
 		$this->assertSame( 'removed', $second->data['action'] );
+
+		// Owner policy: your own vote never counts.
+		$own = $this->journey->vote( $this->author_id, 'post', $post_id, 1 );
+		$this->assertFalse( $own->is_success() );
+		$this->assertStringContainsString( 'jetonomy_self_vote', $own->first_error() );
 	}
 
 	public function test_vote_rejects_invalid_value(): void {

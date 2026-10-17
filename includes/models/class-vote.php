@@ -19,6 +19,14 @@ class Vote extends Model {
 	}
 
 	/**
+	 * The refusal for a vote on your own post or reply (owner policy: your own
+	 * vote never counts, up or down).
+	 */
+	public static function self_vote_error(): \WP_Error {
+		return new \WP_Error( 'jetonomy_self_vote', __( 'You cannot vote on your own content.', 'jetonomy' ), array( 'status' => 400 ) );
+	}
+
+	/**
 	 * Cast a vote for an object.
 	 *
 	 * Handles three scenarios:
@@ -30,7 +38,7 @@ class Vote extends Model {
 	 * @param string $object_type 'post' or 'reply'.
 	 * @param int    $object_id   Target object ID.
 	 * @param int    $value       Vote value (e.g. 1 or -1).
-	 * @return array{action: string, old_value: int|null}
+	 * @return array{action: string, old_value: int|null}|\WP_Error Refused for a new or changed vote on the voter's own content.
 	 */
 	public static function cast( int $user_id, string $object_type, int $object_id, int $value ): array|\WP_Error {
 		/**
@@ -55,6 +63,16 @@ class Vote extends Model {
 				$object_id
 			)
 		);
+
+		// Every writer lands here (REST, abilities, CLI, importers, the demo
+		// seeder), so this is where "your own vote never counts" holds. Taking
+		// back an old self-vote stays allowed.
+		if ( ! $existing || (int) $existing->value !== $value ) {
+			$target = 'reply' === $object_type ? Reply::find( $object_id ) : Post::find( $object_id );
+			if ( $target && (int) $target->author_id === $user_id ) {
+				return self::self_vote_error();
+			}
+		}
 
 		// The write below (insert / flip / retract) must be visible to the
 		// next get_user_vote() in this request — clear the memo before the

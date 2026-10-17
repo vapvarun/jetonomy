@@ -77,7 +77,8 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 	<footer class="jt-feed-card-foot">
 		<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 			<?php // "may actually vote here", not just "allows voting": a Read-grant admits without granting the vote, and the server 403s it. ?>
-			<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
+			<?php $jt_own_post = $viewer_id && (int) $post->author_id === $viewer_id; // Your own post takes no vote. ?>
+			<?php if ( ! $jt_own_post && jetonomy_viewer_can_vote( $space ) ) : ?>
 		<button type="button"
 			class="jt-feed-act <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
 			aria-pressed="<?php echo 1 === $viewer_vote ? 'true' : 'false'; ?>"
@@ -87,22 +88,17 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 				<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 			<span class="n jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 		</button>
-				<?php
-				// Downvote — keep both directions available (respect negative voices),
-				// hidden only on the member's own post to block self-downvote.
-				if ( (int) $post->author_id !== $viewer_id ) :
-					?>
+				<?php // Downvote — keep both directions available (respect negative voices). ?>
 		<button type="button"
 			class="jt-feed-act <?php echo -1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
 			aria-pressed="<?php echo -1 === $viewer_vote ? 'true' : 'false'; ?>"
 			data-wp-on--click="actions.voteDown"
 			data-post-id="<?php echo absint( $post->id ); ?>"
-					<?php echo jetonomy_vote_attrs( 'down', -1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
-					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+				<?php echo jetonomy_vote_attrs( 'down', -1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
+				<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 		</button>
-				<?php endif; ?>
 			<?php elseif ( is_user_logged_in() ) : ?>
-				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16 ); ?>
+				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16, $space, $jt_own_post ); ?>
 			<?php else : ?>
 				<?php // Guest: inert score, no clickable control the server would refuse. ?>
 		<span class="jt-feed-act" aria-hidden="true">

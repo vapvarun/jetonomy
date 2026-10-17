@@ -157,6 +157,10 @@ class Users_Controller extends Base_Controller {
 	 * jetonomy_moderate (admins hold it). Mirrors the moderation controller's gate.
 	 */
 	public function require_moderate(): bool|WP_Error {
+		$user_id = $this->require_auth(); // Guests are told to sign in (401), members refused (403).
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
 		return current_user_can( 'jetonomy_moderate' ) ? true : $this->permission_error();
 	}
 

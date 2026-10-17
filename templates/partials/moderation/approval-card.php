@@ -8,7 +8,7 @@
  * reason, and no flag row — just content waiting on a decision. That is why
  * this is a separate card rather than a variant of flag-card.
  *
- * Both actions post to the space-scoped route
+ * Every action posts to the space-scoped route
  * `/spaces/{id}/moderation/{action}/{type}/{obj_id}`, deliberately NOT the
  * site-wide `/moderation/{action}/...` one: the site-wide route requires the
  * `jetonomy_moderate` capability, which a space moderator does not hold, and
@@ -70,6 +70,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 <div class="jt-mod-flag jt-mod-item jt-mod-approval"
 	data-object-kind="<?php echo esc_attr( $kind ); ?>"
 	data-object-id="<?php echo absint( $item->id ); ?>"
+	data-object-status="<?php echo esc_attr( (string) ( $item->status ?? '' ) ); ?>"
 	data-act-endpoint="<?php echo esc_attr( $jt_endpoint ); ?>">
 	<div class="jt-mod-flag-head">
 		<span class="jt-mod-flag-type">
@@ -139,6 +140,15 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 			data-action-name="approve">
 			<?php jetonomy_echo_icon( 'check-circle', 14 ); ?>
 			<?php esc_html_e( 'Approve', 'jetonomy' ); ?>
+		</button>
+			<?php // Costs the author the same as Reject, but files the item under spam instead of trash. ?>
+		<button type="button"
+			class="jt-btn jt-btn-ghost jt-mod-approve"
+			data-wp-on--click="actions.moderateApproval"
+			data-action-name="spam"
+			data-confirm="<?php esc_attr_e( 'Mark this submission as spam? It leaves the queue and its author loses reputation.', 'jetonomy' ); ?>">
+			<?php jetonomy_echo_icon( 'shield', 14 ); ?>
+			<?php esc_html_e( 'Spam', 'jetonomy' ); ?>
 		</button>
 		<button type="button"
 			class="jt-btn jt-btn-ghost jt-btn-danger jt-mod-approve"

@@ -127,7 +127,7 @@ class Journey_Tests {
 			$this->cleanup[] = array( 'type' => 'reply', 'id' => (int) $reply_result->data['id'] );
 		}
 
-		$vote_result = $journey->vote( $author, 'post', $post_id, 1 );
+		$vote_result = $journey->vote( $this->discover_secondary_user(), 'post', $post_id, 1 ); // Your own vote never counts.
 		$this->record_result( 'content: vote', $vote_result );
 
 		$flag_result = $journey->flag(

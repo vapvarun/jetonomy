@@ -1844,7 +1844,9 @@ class Template_Loader {
 				'harassment' => __( 'Harassment', 'jetonomy' ),
 				'other'      => __( 'Other', 'jetonomy' ),
 			),
-			'reportDetails'         => __( 'Add details (optional)', 'jetonomy' ),
+			/* translators: %s: maximum number of characters. */
+			'reportDetails'         => sprintf( __( 'Add details (optional, up to %s characters)', 'jetonomy' ), number_format_i18n( \Jetonomy\Models\Flag::DESCRIPTION_MAX ) ),
+			'reportDetailsMax'      => \Jetonomy\Models\Flag::DESCRIPTION_MAX,
 			'reportSubmit'          => __( 'Report', 'jetonomy' ),
 			'reportChooseReason'    => __( 'Choose a reason.', 'jetonomy' ),
 			'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
