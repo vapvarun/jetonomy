@@ -1261,6 +1261,7 @@ class Spaces_Controller extends Base_Controller {
 		return new WP_REST_Response(
 			array(
 				'status'     => 'approved',
+				'message'    => JoinRequest::decision_message( 'approved' ),
 				'request_id' => (int) $jr->id,
 				'space_id'   => (int) $space->id,
 				'user_id'    => (int) $jr->user_id,
@@ -1285,6 +1286,7 @@ class Spaces_Controller extends Base_Controller {
 		return new WP_REST_Response(
 			array(
 				'status'     => 'denied',
+				'message'    => JoinRequest::decision_message( 'denied' ),
 				'request_id' => (int) $jr->id,
 				'space_id'   => (int) $space->id,
 				'user_id'    => (int) $jr->user_id,
@@ -1565,9 +1567,10 @@ class Spaces_Controller extends Base_Controller {
 	 * Format a space member row for API output.
 	 */
 	private function prepare_member( object $member ): array {
-		$user_id = (int) $member->user_id;
-		$user    = get_userdata( $user_id );
-		$profile = UserProfile::find_by_user( $user_id );
+		$user_id   = (int) $member->user_id;
+		$user      = get_userdata( $user_id );
+		$profile   = UserProfile::find_by_user( $user_id );
+		$last_seen = UserProfile::last_seen_for_viewer( $user_id, $profile ? $profile->last_seen_at : null );
 
 		return array(
 			'space_id'         => (int) $member->space_id,
@@ -1581,8 +1584,8 @@ class Spaces_Controller extends Base_Controller {
 			// Presence: mirrors the feed/reply author fields so the app can render
 			// the same "online" dot on member avatars. GMT variant is the
 			// clock-safe one the app prefers (see utils/presence.ts).
-			'last_seen_at'     => $profile ? $profile->last_seen_at : null,
-			'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $profile ? $profile->last_seen_at : null ),
+			'last_seen_at'     => $last_seen,
+			'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $last_seen ),
 			'profile_url'      => \Jetonomy\get_profile_url( (int) $user_id ),
 		);
 	}

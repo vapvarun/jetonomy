@@ -1006,11 +1006,21 @@ document.addEventListener( 'DOMContentLoaded', () => {
             row.setAttribute( 'role', 'option' );
             row.dataset.index = String( i );
 
-            var img = document.createElement( 'img' );
-            img.className = 'jt-mention-avatar';
-            img.alt = '';
-            img.src = m.avatar_url;
-            row.appendChild( img );
+            // '' means the member has no real avatar: an <img src=""> would load
+            // the page URL and show a broken image, so draw initials as the
+            // rest of the app does (templates/partials/avatar.php).
+            var avatar;
+            if ( m.avatar_url ) {
+                avatar = document.createElement( 'img' );
+                avatar.alt = '';
+                avatar.src = m.avatar_url;
+            } else {
+                avatar = document.createElement( 'span' );
+                avatar.setAttribute( 'aria-hidden', 'true' );
+                avatar.textContent = Array.from( m.display_name || m.handle || m.login || '?' ).slice( 0, 2 ).join( '' ).toUpperCase();
+            }
+            avatar.className = 'jt-avatar jt-mention-avatar';
+            row.appendChild( avatar );
 
             var name = document.createElement( 'span' );
             name.className = 'jt-mention-name';
@@ -1080,10 +1090,14 @@ document.addEventListener( 'DOMContentLoaded', () => {
         var after  = node.textContent.slice( caret );
         var stripped = before.replace( /@[a-zA-Z0-9_\-\.]{0,30}$/, '' );
         // Insert the HANDLE (user_nicename), which is what the server
-            // resolves. Falls back to login only for an older API response.
-            var pickHandle = pick.handle || pick.login;
-            node.textContent = stripped + '@' + pickHandle + ' ' + after;
-        var newOffset = stripped.length + ( '@' + pickHandle + ' ' ).length;
+        // resolves. Falls back to login only for an older API response.
+        var pickHandle = pick.handle || pick.login;
+        // A no-break space: a plain trailing space at the end of an editable
+        // line is collapsed, the caret snaps back before it, and the next word
+        // typed glued onto the handle ("@gracecould"), which no longer resolves.
+        var inserted = '@' + pickHandle + '\u00a0';
+        node.textContent = stripped + inserted + after.replace( /^ /, '' );
+        var newOffset = stripped.length + inserted.length;
         var newRange = document.createRange();
         newRange.setStart( node, newOffset );
         newRange.setEnd( node, newOffset );

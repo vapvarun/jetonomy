@@ -81,7 +81,13 @@ $crumbs = array(
 					// single-post.php serves to the author with edit controls
 					// (404s for everyone else), so the click flow lands on the
 					// edit composer for the draft.
-					\Jetonomy\Template_Loader::partial( 'post-card', array( 'post' => $draft_post ) );
+					\Jetonomy\Template_Loader::partial(
+						'post-card',
+						array(
+							'post'       => $draft_post,
+							'show_space' => true,
+						)
+					);
 					?>
 				<?php endforeach; ?>
 			</div>

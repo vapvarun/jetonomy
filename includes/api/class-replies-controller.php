@@ -857,6 +857,8 @@ class Replies_Controller extends Base_Controller {
 			$profile_url   = $display['url'];
 		}
 
+		$author_last_seen = UserProfile::last_seen_for_viewer( $author_id, $reply->author_last_seen_at ?? null );
+
 		$data = array(
 			'id'                      => (int) $reply->id,
 			'post_id'                 => (int) $reply->post_id,
@@ -882,8 +884,8 @@ class Replies_Controller extends Base_Controller {
 			'author_name'             => $author_name,
 			'author_avatar'           => $author_avatar,
 			'author_login'            => $author_login,
-			'author_last_seen_at'     => $reply->author_last_seen_at ?? null,
-			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $reply->author_last_seen_at ?? null ),
+			'author_last_seen_at'     => $author_last_seen,
+			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $author_last_seen ),
 			'trust_level'             => $trust_level,
 			'reputation'              => $reputation,
 			'time_ago'                => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',

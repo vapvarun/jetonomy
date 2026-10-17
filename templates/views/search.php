@@ -82,7 +82,9 @@ $jt_has_filters = ( $date_from || $date_to || $author_id || '' !== $author_name 
 $jt_has_query   = ( '' !== $q && strlen( $q ) >= 2 );
 $jt_searching   = ( $jt_has_query || $jt_has_filters );
 
-$jt_posts_total = 0;
+$jt_posts_total  = 0;
+$jt_spaces_total = 0;
+$jt_tags_total   = 0;
 if ( $jt_searching && ! $jt_author_unresolved ) {
 	// Same search, same rules as REST /search and the app: one adapter call per
 	// group instead of this view's own SQL. Post rows
@@ -112,29 +114,33 @@ if ( $jt_searching && ! $jt_author_unresolved ) {
 	// filter-only request searched them for '', which matched every tag on the
 	// site, so "this author's topics" came back decorated with arbitrary tags.
 	if ( $jt_has_query && in_array( $filter, array( 'all', 'spaces' ), true ) ) {
-		$spaces = $search_adapter->query(
+		$jt_found_spaces = $search_adapter->query(
 			array(
-				'type'       => 'space',
-				'q'          => $q,
-				'limit'      => 10,
-				'with_total' => false,
+				'type'  => 'space',
+				'q'     => $q,
+				'limit' => 10,
 			)
-		)['items'];
+		);
+		$spaces          = $jt_found_spaces['items'];
+		$jt_spaces_total = $jt_found_spaces['total'];
 	}
 
 	if ( $jt_has_query && in_array( $filter, array( 'all', 'tags' ), true ) ) {
-		$tags = $search_adapter->query(
+		$jt_found_tags = $search_adapter->query(
 			array(
-				'type'       => 'tag',
-				'q'          => $q,
-				'limit'      => 15,
-				'with_total' => false,
+				'type'  => 'tag',
+				'q'     => $q,
+				'limit' => 15,
 			)
-		)['items'];
+		);
+		$tags          = $jt_found_tags['items'];
+		$jt_tags_total = $jt_found_tags['total'];
 	}
 }
 
 $total = count( $posts ) + count( $spaces ) + count( $tags );
+// The header counts every match, not the rows on this page (posts are paged).
+$jt_result_total = $jt_posts_total + $jt_spaces_total + $jt_tags_total;
 
 // Words of the query, folded the way the table collation compares them
 // (case- and accent-insensitive), for marking matches in the results.
@@ -304,7 +310,7 @@ $crumbs = array(
 					<span class="jt-search-result-count">
 						<?php
 						/* translators: %d: number of results */
-						echo esc_html( sprintf( _n( '%d result', '%d results', $total, 'jetonomy' ), $total ) );
+						echo esc_html( sprintf( _n( '%d result', '%d results', $jt_result_total, 'jetonomy' ), $jt_result_total ) );
 						?>
 					</span>
 				</div>
@@ -331,7 +337,7 @@ $crumbs = array(
 							'icon'        => 'empty-search',
 							/* translators: %s: search query */
 							'message'     => sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ),
-							'description' => __( 'Try different or fewer keywords (search needs at least 2 characters), or browse the community.', 'jetonomy' ),
+							'description' => __( 'Try different or fewer keywords, or browse the community.', 'jetonomy' ),
 							/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 							'cta_label'   => sprintf( __( 'Browse all %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 							'cta_url'     => \Jetonomy\base_url() . '/',
@@ -429,13 +435,15 @@ $crumbs = array(
 				<?php endif; ?>
 			<?php else : ?>
 				<?php
-				// No query yet — invite the user to search.
+				// No query yet, or one too short to search: invite the user to
+				// search, and say why a 1-character term returned nothing.
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					array(
-						'icon'    => 'empty-search',
+						'icon'        => 'empty-search',
 						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
-						'message' => sprintf( __( 'Enter a search term above to find discussions, %s, and tags.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+						'message'     => sprintf( __( 'Enter a search term above to find discussions, %s, and tags.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+						'description' => '' !== $q ? __( 'Search query must be at least 2 characters.', 'jetonomy' ) : '',
 					)
 				);
 				?>

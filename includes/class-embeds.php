@@ -184,7 +184,7 @@ class Embeds {
 						},
 						DAY_IN_SECONDS
 					);
-					if ( '' !== $embed ) {
+					if ( '' !== $embed && ! self::is_wp_post_embed( $embed ) ) {
 						return '<div class="jt-embed">' . $embed . '</div>' . $trailing;
 					}
 
@@ -207,6 +207,21 @@ class Embeds {
 		);
 
 		return $output;
+	}
+
+	/**
+	 * Whether oEmbed HTML is a WordPress post embed (another WordPress site's
+	 * blockquote + hidden iframe). It cannot render here: the iframe stays
+	 * hidden until core's wp-embed script reveals it, and sites that refuse
+	 * framing (X-Frame-Options) never show it at all - the reader got a quote
+	 * box holding one word. Such a link stays a plain link, and the link
+	 * preview card (title, image, site name) shows instead.
+	 *
+	 * @param string $html oEmbed HTML.
+	 * @return bool
+	 */
+	public static function is_wp_post_embed( string $html ): bool {
+		return false !== strpos( $html, 'wp-embedded-content' );
 	}
 
 	/**

@@ -120,14 +120,20 @@ if ( $jt_scheme_ok ) {
 					data-wp-text="state.error"></p>
 
 				<div data-wp-bind--hidden="state.connected">
-					<button type="button" class="jt-btn jt-btn-fill"
-						data-wp-on--click="actions.approve"
-						data-wp-bind--disabled="state.busy">
-						<span data-wp-bind--hidden="state.busy"><?php esc_html_e( 'Yes, connect the app', 'jetonomy' ); ?></span>
-						<span data-wp-bind--hidden="!state.busy"><?php esc_html_e( 'Connecting…', 'jetonomy' ); ?></span>
-					</button>
+					<div class="jt-connect-app-actions">
+						<button type="button" class="jt-btn jt-btn-fill"
+							data-wp-on--click="actions.approve"
+							data-wp-bind--disabled="state.busy">
+							<span data-wp-bind--hidden="state.busy"><?php esc_html_e( 'Yes, connect the app', 'jetonomy' ); ?></span>
+							<span data-wp-bind--hidden="!state.busy"><?php esc_html_e( 'Connecting…', 'jetonomy' ); ?></span>
+						</button>
+						<?php // Declining connects nothing; the member goes back to the community. ?>
+						<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( \Jetonomy\base_url() . '/' ); ?>">
+							<?php esc_html_e( 'Cancel', 'jetonomy' ); ?>
+						</a>
+					</div>
 					<p>
-						<a href="<?php echo esc_url( wp_logout_url( \Jetonomy\current_url() ) ); ?>">
+						<a class="jt-connect-app-switch" href="<?php echo esc_url( wp_logout_url( \Jetonomy\current_url() ) ); ?>">
 							<?php esc_html_e( 'Not you? Sign in as someone else', 'jetonomy' ); ?>
 						</a>
 					</p>

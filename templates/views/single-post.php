@@ -388,6 +388,36 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					}
 					?>
 					<?php
+					// The author (or anyone who may edit it) can move or cancel a
+					// schedule until it publishes: PATCH /posts/{id} published_at.
+					$jt_viewer = get_current_user_id();
+					if ( 'draft' === $post->status && ! empty( $post->published_at ) && $jt_viewer
+						&& ( ( (int) $post->author_id === $jt_viewer && \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer, 'edit_own_posts', (int) $post->space_id ) )
+							|| \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer, 'edit_others_posts', (int) $post->space_id ) ) ) :
+						?>
+						<form class="jt-reschedule" data-wp-interactive="jetonomy" data-post-id="<?php echo absint( $post->id ); ?>" data-wp-on--submit="actions.reschedulePost">
+							<fieldset>
+								<legend class="jt-label"><?php esc_html_e( 'Change the publish time', 'jetonomy' ); ?></legend>
+								<?php
+								\Jetonomy\Template_Loader::partial(
+									'schedule-fields',
+									array(
+										'utc_value' => (string) $post->published_at,
+										'id_prefix' => 'jt-reschedule',
+									)
+								);
+								?>
+							</fieldset>
+							<div class="jt-notice-actions">
+								<button type="submit" class="jt-btn jt-btn-fill jt-btn-sm"><?php esc_html_e( 'Save time', 'jetonomy' ); ?></button>
+								<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm" data-wp-on--click="actions.cancelSchedule"
+									data-confirm="<?php echo esc_attr( sprintf( /* translators: %s: singular topic label. */ __( 'Cancel the schedule? The %s stays a draft until you publish it.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
+									<?php esc_html_e( 'Cancel schedule', 'jetonomy' ); ?>
+								</button>
+							</div>
+						</form>
+					<?php endif; ?>
+					<?php
 					// A trashed topic reaches this template only for its author
 					// and for moderators (can_read_post). Moderators get the way
 					// back - or out - right here, the one frontend surface a

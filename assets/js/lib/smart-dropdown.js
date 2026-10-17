@@ -31,6 +31,20 @@
 		}
 	}
 
+	// Bottom of the usable viewport: the top of the fixed phone tab bar when it
+	// is showing, else the window's bottom edge. A panel that opened under the
+	// bar could not be tapped (the composer's "Schedule..." item at 390px).
+	function viewportBottom() {
+		var bar = document.querySelector( '.jt-mobile-tabs' );
+		if ( bar ) {
+			var r = bar.getBoundingClientRect();
+			if ( r.height > 0 && r.top < window.innerHeight ) {
+				return r.top;
+			}
+		}
+		return window.innerHeight;
+	}
+
 	function clamp( v, lo, hi ) {
 		if ( hi < lo ) return lo;
 		return v < lo ? lo : v > hi ? hi : v;
@@ -78,7 +92,7 @@
 			var left = horizontal === 'end' ? tr.right - pw : tr.left;
 
 			// Flip vertical.
-			if ( vertical === 'bottom' && top + ph > window.innerHeight - flipPadding ) {
+			if ( vertical === 'bottom' && top + ph > viewportBottom() - flipPadding ) {
 				top = tr.top - ph - offset;
 			}
 			if ( top < flipPadding ) {

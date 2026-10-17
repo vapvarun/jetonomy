@@ -72,8 +72,8 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | DELETE | `/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Remove an access rule. Note the path is top-level, not nested under `/spaces/{id}` - the rule id is globally unique. Added 1.9.4. |
 | GET | `/spaces/{id}/join-requests` | Space admin | List pending requests to join this space. When a `PATCH /spaces/{id}` (or the admin screen, or `wp jetonomy space update`) changes `join_policy` / `visibility` so the space no longer takes requests, the pending ones are settled at once: approved and added as members if the space is now open, denied if it is now invite-only. Each requester gets the usual approved / not-approved notification. |
 | DELETE | `/spaces/{id}/join-requests/mine` | Logged in | Withdraw your own pending request to join this space; the staff notices about it are removed. 404 when you have none. |
-| POST | `/spaces/{id}/join-requests/{request_id}/approve` | Space admin | Approve a join request and add the member |
-| POST | `/spaces/{id}/join-requests/{request_id}/deny` | Space admin | Deny a join request |
+| POST | `/spaces/{id}/join-requests/{request_id}/approve` | Space admin | Approve a join request and add the member. The response carries a ready-to-show `message` ("Join request approved.") |
+| POST | `/spaces/{id}/join-requests/{request_id}/deny` | Space admin | Deny a join request. The response carries a ready-to-show `message` ("Join request denied.") |
 | GET | `/spaces/{id}/invites` | Space admin | List the space's invite links |
 | DELETE | `/spaces/{id}/invites/{invite_id}` | Space admin | Revoke an invite link. Links already used stay used. |
 
@@ -112,14 +112,14 @@ Posts are individual discussion threads (topics) inside a Space.
 
 > **One shape per resource (1.9.1).** A post or space is serialized by one shared routine, so the same resource comes back identical whether you read it from a list, a feed, a search result or a single-item route. Previously each controller assembled its own payload and they had drifted - a field present in a single read could be missing from the same object in a search result. If you were compensating for that in a client, you can stop.
 >
-> Post and reply payloads also carry **`author_last_seen_at`** (ISO 8601 string, or `null` when the author is anonymized or the value is unknown), so a client can show presence without a second request per row.
+> Post and reply payloads also carry **`author_last_seen_at`** (ISO 8601 string, or `null` when the author is anonymized or the value is unknown), so a client can show presence without a second request per row. The exact time goes only to the member themself and to site staff. Everyone else gets what the online dot shows: the current time while the member is online (active in the last 5 minutes), otherwise `null`. The same rule applies to `last_seen_at` on users, space members and the leaderboard.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/spaces/{space_id}/posts` | Public | List posts in a space |
 | POST | `/spaces/{space_id}/posts` | Logged in | Create a post |
 | GET | `/posts/{id}` | Public | Get a single post. Does not count a view |
-| PATCH | `/posts/{id}` | Author / Moderator | Update a post |
+| PATCH | `/posts/{id}` | Author / Moderator | Update a post. On a scheduled draft, `published_at` moves the publish time (site timezone unless it carries an offset; must be in the future) and `""` cancels the schedule. On a live post `published_at` backdates it and needs `manage_options`. |
 | DELETE | `/posts/{id}` | Author / Moderator | Move a post to trash. `?force=true` deletes it permanently with all its replies (space moderators and admins only). Restore with `POST /spaces/{space_id}/moderation/approve/post/{id}` |
 | POST | `/posts/{id}/close` | Moderator / Admin | Close (`closed: true`) or reopen (`false`); omitted, it toggles |
 | POST | `/posts/{id}/pin` | Moderator / Admin | Pin (`pinned: true`) or unpin (`false`); omitted, it toggles |

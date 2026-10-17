@@ -30,7 +30,7 @@ $viewer_vote  = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, '
 
 $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' );
 ?>
-<article class="jt-feed-card" data-wp-interactive="jetonomy">
+<article class="jt-feed-card" data-jt-key="post-<?php echo absint( $post->id ); ?>" data-wp-interactive="jetonomy">
 	<header class="jt-feed-card-head">
 		<?php
 		// Trusted, fully-escaped plugin markup (incl. Lucide SVG avatar). Echo direct.

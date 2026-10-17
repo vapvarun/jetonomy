@@ -719,7 +719,7 @@ class Spaces_Handler {
 			wp_send_json_error( $approved->get_error_message() );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Join request approved.', 'jetonomy' ) ) );
+		wp_send_json_success( array( 'message' => JoinRequest::decision_message( 'approved' ) ) );
 	}
 
 	/**
@@ -746,7 +746,7 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'This request has already been handled.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Join request denied.', 'jetonomy' ) ) );
+		wp_send_json_success( array( 'message' => JoinRequest::decision_message( 'denied' ) ) );
 	}
 
 	/**

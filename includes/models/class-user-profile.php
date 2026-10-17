@@ -20,6 +20,9 @@ class UserProfile extends Model {
 	 */
 	private const ONLINE_TTL = 60;
 
+	/** Seconds since last activity a member still counts as online (the dot). */
+	public const ONLINE_WINDOW = 300;
+
 	protected static function table_name(): string {
 		return 'user_profiles';
 	}
@@ -279,6 +282,27 @@ class UserProfile extends Model {
 	}
 
 	/**
+	 * A member's last_seen_at as the current viewer may see it.
+	 *
+	 * The member and site staff get the exact time. Everyone else learns only
+	 * what the online dot shows: "online now" (the current time, so clients
+	 * that draw the dot from this field keep working) or nothing.
+	 *
+	 * @param int         $user_id   Member the value belongs to (0 = masked or anonymous author).
+	 * @param string|null $last_seen Stored UTC last_seen_at.
+	 * @return string|null UTC 'Y-m-d H:i:s', or null.
+	 */
+	public static function last_seen_for_viewer( int $user_id, ?string $last_seen ): ?string {
+		if ( $user_id <= 0 || empty( $last_seen ) ) {
+			return null;
+		}
+		if ( get_current_user_id() === $user_id || current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' ) ) {
+			return $last_seen;
+		}
+		return strtotime( $last_seen ) > ( time() - self::ONLINE_WINDOW ) ? \Jetonomy\now() : null;
+	}
+
+	/**
 	 * Check if a user is currently online (active within last 5 minutes).
 	 *
 	 * Result is cached in the object cache for 60 seconds to avoid
@@ -303,7 +327,7 @@ class UserProfile extends Model {
 			return false;
 		}
 
-		$online = ( strtotime( $profile->last_seen_at ) > ( time() - 300 ) );
+		$online = ( strtotime( $profile->last_seen_at ) > ( time() - self::ONLINE_WINDOW ) );
 		Cache::set( $key, (int) $online, self::ONLINE_TTL );
 
 		return $online;
