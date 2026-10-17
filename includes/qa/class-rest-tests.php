@@ -495,42 +495,43 @@ class REST_Tests {
 			return;
 		}
 
+		// Votes come from the TL0 test user: the admin wrote the test post and
+		// reply, and your own vote never counts (C18 proves the refusal).
+		$voter = $this->test_user_id ? $this->test_user_id : null;
+
 		// 13. Upvote post.
-		$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ) );
+		$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ), $voter );
 		$data = $r->get_data();
 		$this->check( 'C13: POST /posts/{id}/vote (up) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'C13: response has score', array_key_exists( 'score', $data ), 'missing score key' );
 
 		// 14. Downvote post (should change or toggle score).
 		// We first DELETE the existing vote so we can test a fresh downvote.
-		// Self-downvotes are blocked (commit 826b9f8), so switch to the TL0
-		// test user for this step and restore admin after.
-		$this->rest( 'DELETE', "/posts/{$this->post_id}/vote" );
-		if ( $this->test_user_id ) {
-			wp_set_current_user( $this->test_user_id );
-		}
-		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => -1 ) );
+		$this->rest( 'DELETE', "/posts/{$this->post_id}/vote", array(), $voter );
+		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => -1 ), $voter );
 		$data = $r->get_data();
-		if ( $this->test_user_id ) {
-			wp_set_current_user( $this->admin_id );
-		}
 		$this->check( 'C14: POST /posts/{id}/vote (down) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'C14: response has score', array_key_exists( 'score', $data ), 'missing score key' );
 
 		// 15. Delete post vote (unvote).
-		$r = $this->rest( 'DELETE', "/posts/{$this->post_id}/vote" );
+		$r = $this->rest( 'DELETE', "/posts/{$this->post_id}/vote", array(), $voter );
 		$this->check( 'C15: DELETE /posts/{id}/vote → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// 18. The author's own vote is refused.
+		$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ), $this->admin_id );
+		$this->check( 'C18: POST own post vote → 400 jetonomy_self_vote', 400 === $r->get_status() && 'jetonomy_self_vote' === ( $r->get_data()['code'] ?? '' ), "HTTP {$r->get_status()}" );
 
 		// 16. Upvote reply.
 		if ( $this->reply_id ) {
-			$r = $this->rest( 'POST', "/replies/{$this->reply_id}/vote", array( 'value' => 1 ) );
+			$r = $this->rest( 'POST', "/replies/{$this->reply_id}/vote", array( 'value' => 1 ), $voter );
 			$data = $r->get_data();
 			$this->check( 'C16: POST /replies/{id}/vote (up) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'C16: response has score', array_key_exists( 'score', $data ), 'missing score key' );
 
 			// 17. Delete reply vote.
-			$r = $this->rest( 'DELETE', "/replies/{$this->reply_id}/vote" );
+			$r = $this->rest( 'DELETE', "/replies/{$this->reply_id}/vote", array(), $voter );
 			$this->check( 'C17: DELETE /replies/{id}/vote → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+			wp_set_current_user( $this->admin_id );
 		} else {
 			$this->skip( 'C16: reply vote', 'no reply_id' );
 			$this->skip( 'C17: reply unvote', 'precondition not met' );

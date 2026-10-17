@@ -478,13 +478,23 @@ function jetonomy_vote_attrs( string $direction, bool $active ): string {
  *
  * Shows the score and explains on hover, to screen readers and (via the
  * data-jt-denied handler in header.js) with a toast on click, instead of an
- * inert icon that looks broken.
+ * inert icon that looks broken. The reason is the server's own: your own
+ * post, or the account restriction (silenced, banned) the vote route names.
  *
- * @param int $score     Current vote score.
- * @param int $icon_size Icon size in px.
+ * @param int         $score     Current vote score.
+ * @param int         $icon_size Icon size in px.
+ * @param object|null $space     Space the item is in, so a space ban is named.
+ * @param bool        $own       The viewer wrote this post or reply.
  */
-function jetonomy_vote_denied_control( int $score, int $icon_size ): void {
-	$why = __( 'Voting is not available to you here.', 'jetonomy' );
+function jetonomy_vote_denied_control( int $score, int $icon_size, $space = null, bool $own = false ): void {
+	$restricted = $own ? null : \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'vote', ( $space && ! empty( $space->id ) ) ? (int) $space->id : null );
+	if ( $own ) {
+		$why = \Jetonomy\Models\Vote::self_vote_error()->get_error_message();
+	} elseif ( $restricted ) {
+		$why = $restricted->get_error_message();
+	} else {
+		$why = __( 'Voting is not available to you here.', 'jetonomy' );
+	}
 	/* translators: 1: vote score, 2: reason voting is unavailable. */
 	$label = sprintf( __( 'Score %1$d. %2$s', 'jetonomy' ), $score, $why );
 	?>

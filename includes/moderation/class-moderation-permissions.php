@@ -174,6 +174,22 @@ class Moderation_Permissions {
 	}
 
 	/**
+	 * The account restriction that bars this user from moderating, or null.
+	 *
+	 * Moderation is a write, so a silenced, banned or space-banned moderator
+	 * is refused with the same reason the member surfaces give
+	 * (Permission_Engine::restriction_error). Removing others' content is the
+	 * write silencing takes away, and every moderation action is asked as it.
+	 *
+	 * @param int      $user_id  User ID.
+	 * @param int|null $space_id Space the action is in.
+	 * @return \WP_Error|null
+	 */
+	public static function restriction_error( int $user_id, ?int $space_id = null ): ?\WP_Error {
+		return Permission_Engine::restriction_error( $user_id, 'delete_others_posts', $space_id );
+	}
+
+	/**
 	 * Can this user resolve / dismiss a specific flag?
 	 *
 	 * Admin + cap holders always. Space mods only when the flag's object

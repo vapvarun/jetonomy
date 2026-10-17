@@ -230,7 +230,8 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		<?php if ( jetonomy_space_allows_voting( $space ?? null ) ) : ?>
 		<div class="jt-vote-cluster" role="group" aria-label="<?php printf( /* translators: %s: the singular label of the item (the configured noun). */ esc_attr__( 'Vote on this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>">
 			<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
-			<?php if ( $jt_thread_live && jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
+			<?php $jt_own_reply = $reply_viewer_id && (int) $reply->author_id === $reply_viewer_id; // Your own reply takes no vote. ?>
+			<?php if ( $jt_thread_live && ! $jt_own_reply && jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
 			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyUp"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -238,17 +239,11 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				<?php echo jetonomy_vote_attrs( 'up', 1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</button>
-				<?php
-				// Hide downvote on own replies — self-downvote was landing at
-				// -1.
-				if ( (int) $reply->author_id !== get_current_user_id() ) :
-					?>
 			<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyDown"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				aria-pressed="<?php echo -1 === $reply_viewer_vote ? 'true' : 'false'; ?>"
-					<?php echo jetonomy_vote_attrs( 'down', -1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
-				<?php endif; ?>
+				<?php echo jetonomy_vote_attrs( 'down', -1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<?php
 				// Logged-out: reply votes were clickable buttons that silently
@@ -262,7 +257,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</a>
 			<?php else : ?>
-				<?php jetonomy_vote_denied_control( (int) $reply->vote_score, 14 ); ?>
+				<?php jetonomy_vote_denied_control( (int) $reply->vote_score, 14, $space ?? null, $jt_own_reply ); ?>
 			<?php endif; ?>
 		</div>
 		<?php endif; ?>

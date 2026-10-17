@@ -8,7 +8,6 @@
 namespace Jetonomy\CLI\Journeys;
 
 use Jetonomy\CLI\Journey_Result;
-use Jetonomy\Models\Flag;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Subscription;
@@ -471,23 +470,16 @@ final class Content_Journey {
 			return Journey_Result::fail( 'reason must be one of: spam, offensive, off_topic, harassment, other.' );
 		}
 
-		$gate = Moderation_Service::check_flag( (int) $input['reporter_id'], $object_type, (int) $input['object_id'] );
-		if ( is_wp_error( $gate ) ) {
-			return Journey_Result::from_wp_error( $gate );
-		}
-
-		$id = Flag::create(
-			array(
-				'object_type' => $object_type,
-				'object_id'   => (int) $input['object_id'],
-				'reporter_id' => (int) $input['reporter_id'],
-				'reason'      => $reason,
-				'description' => isset( $input['description'] ) ? (string) $input['description'] : '',
-			)
+		// The same create path as REST and the abilities API (gate, note length, reputation, hooks).
+		$id = Moderation_Service::create_flag(
+			(int) $input['reporter_id'],
+			$object_type,
+			(int) $input['object_id'],
+			$reason,
+			isset( $input['description'] ) ? (string) $input['description'] : ''
 		);
-
-		if ( ! $id ) {
-			return Journey_Result::fail( 'Flag::create() returned 0 — insert failed.' );
+		if ( is_wp_error( $id ) ) {
+			return Journey_Result::from_wp_error( $id );
 		}
 
 		return Journey_Result::ok(

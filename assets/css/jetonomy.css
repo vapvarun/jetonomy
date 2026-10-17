@@ -1883,6 +1883,11 @@
 
   /* Resolve error surfaced by assets/js/moderation.js when REST fails. */
   .jt-mod-flag-error { color: var(--jt-danger); font-size: var(--jt-text-sm); margin-top: var(--jt-space-2); }
+  /* Several reports on one item share a card; content already gone says so. */
+  .jt-mod-flag-count { font-size: var(--jt-text-xs); font-weight: 600; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); white-space: nowrap; }
+  .jt-mod-flag-removed { margin: 0 0 var(--jt-space-2); padding: var(--jt-space-2); border-radius: var(--jt-radius-sm); background: var(--jt-warn-light); color: var(--jt-warn-strong); font-size: var(--jt-text-sm); }
+  /* A member report renders the full card inside the overview row. */
+  .jt-mod-flag-row--card > .jt-mod-flag { padding: 0; border-bottom: 0; }
 
   /* Cross-space moderation dashboard at /community/mod/.
      1.4.3 redesign: the queue is rendered as a list of actual pending

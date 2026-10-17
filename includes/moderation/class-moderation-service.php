@@ -39,6 +39,10 @@ class Moderation_Service {
 	 * have already gated with Moderation_Permissions::can_view_* before
 	 * reaching here. The empty fallback is defence in depth.
 	 *
+	 * One row per reported item (its newest report): several members reporting
+	 * the same reply is one decision, so the queue shows it once, and
+	 * flag_context() carries the report count and reasons.
+	 *
 	 * @param int      $user_id
 	 * @param int|null $space_id
 	 * @param int      $limit    Max rows. 0 = unbounded (back-compat).
@@ -54,25 +58,26 @@ class Moderation_Service {
 			if ( ! Moderation_Permissions::can_view_space_queue( $user_id, $space_id ) ) {
 				return array();
 			}
-			return Flag::list_pending_in_space( $space_id, $limit, $offset );
+			return Flag::list_pending_in_space( $space_id, $limit, $offset, true );
 		}
 
 		if ( Moderation_Permissions::can_view_admin_dashboard( $user_id ) ) {
-			return Flag::list_pending( $limit, $offset, Moderation_Permissions::unreadable_space_ids( $user_id ) );
+			return Flag::list_pending( $limit, $offset, Moderation_Permissions::unreadable_space_ids( $user_id ), true );
 		}
 
 		$space_ids = SpaceMember::moderated_space_ids( $user_id );
 		if ( empty( $space_ids ) ) {
 			return array();
 		}
-		return Flag::list_pending_in_spaces( $space_ids, $limit, $offset );
+		return Flag::list_pending_in_spaces( $space_ids, $limit, $offset, true );
 	}
 
 	/**
 	 * Pending-flag count visible to this user — paired with
 	 * list_pending_flags() for pagination totals + badges. Same scoping
 	 * rules as the list method: admin dashboard cap → global; specific
-	 * space → that space; otherwise → moderated_space_ids.
+	 * space → that space; otherwise → moderated_space_ids. Counts reported
+	 * items, the cards the queue shows.
 	 *
 	 * @param int      $user_id
 	 * @param int|null $space_id Limit count to this space, or null for the
@@ -88,18 +93,18 @@ class Moderation_Service {
 			if ( ! Moderation_Permissions::can_view_space_queue( $user_id, $space_id ) ) {
 				return 0;
 			}
-			return Flag::count_pending_in_space( $space_id );
+			return Flag::count_pending_in_space( $space_id, true );
 		}
 
 		if ( Moderation_Permissions::can_view_admin_dashboard( $user_id ) ) {
-			return Flag::count_pending( Moderation_Permissions::unreadable_space_ids( $user_id ) );
+			return Flag::count_pending( Moderation_Permissions::unreadable_space_ids( $user_id ), true );
 		}
 
 		$space_ids = SpaceMember::moderated_space_ids( $user_id );
 		if ( empty( $space_ids ) ) {
 			return 0;
 		}
-		return Flag::count_pending_in_spaces( $space_ids );
+		return Flag::count_pending_in_spaces( $space_ids, true );
 	}
 
 	/**
@@ -244,9 +249,12 @@ class Moderation_Service {
 	 * @param object[] $flags Flag rows.
 	 * @param string   $base  Non-empty to include permalinks (built by
 	 *                        \Jetonomy\route_url(); callers pass base_url()).
-	 * @return array<string,object{object:object,space:?object,permalink:string}>
+	 * @return array<string,object{object:object,topic:?object,space:?object,permalink:string,reports:array,removed:bool}>
 	 *         Keyed "{object_type}:{object_id}". Flags whose object or space
-	 *         has been deleted are simply absent - callers skip them.
+	 *         has been deleted are simply absent - callers skip them. A report
+	 *         on a member carries the WP_User as object and no topic or space.
+	 *         `reports` is every pending report on the object (count and
+	 *         reasons); `removed` is true once the content is trashed or spam.
 	 */
 	public static function flag_context( array $flags, string $base = '' ): array {
 		if ( empty( $flags ) ) {
@@ -262,8 +270,11 @@ class Moderation_Service {
 				$reply_ids[] = (int) $flag->object_id;
 			} elseif ( 'post' === ( $flag->object_type ?? '' ) ) {
 				$post_ids[] = (int) $flag->object_id;
+			} elseif ( 'user' === ( $flag->object_type ?? '' ) ) {
+				$user_ids[] = (int) $flag->object_id;
 			}
 		}
+		$summary = Flag::pending_summary( $flags );
 
 		$replies = Reply::list_by_ids( $reply_ids );
 		foreach ( $replies as $reply ) {
@@ -297,8 +308,27 @@ class Moderation_Service {
 
 		$context = array();
 		foreach ( $flags as $flag ) {
-			$type = (string) ( $flag->object_type ?? '' );
-			$id   = (int) ( $flag->object_id ?? 0 );
+			$type    = (string) ( $flag->object_type ?? '' );
+			$id      = (int) ( $flag->object_id ?? 0 );
+			$reports = $summary[ $type . ':' . $id ] ?? array(
+				'count'   => 1,
+				'reasons' => array( (string) $flag->reason => 1 ),
+			);
+
+			if ( 'user' === $type ) {
+				$member = get_userdata( $id );
+				if ( $member ) {
+					$context[ $type . ':' . $id ] = (object) array(
+						'object'    => $member,
+						'topic'     => null,
+						'space'     => null,
+						'permalink' => '' !== $base ? \Jetonomy\get_profile_url( $id ) : '',
+						'reports'   => $reports,
+						'removed'   => false,
+					);
+				}
+				continue;
+			}
 
 			if ( 'reply' === $type ) {
 				$object = $replies[ $id ] ?? null;
@@ -326,6 +356,10 @@ class Moderation_Service {
 				'permalink' => '' !== $base
 					? \Jetonomy\route_url( 'post', $space->slug, $parent->slug )
 					: '',
+				'reports'   => $reports,
+				// Gone already (its author deleted it, or a moderator acted): only Dismiss is left to do.
+				'removed'   => in_array( (string) $object->status, array( 'trash', 'spam' ), true )
+					|| in_array( (string) $parent->status, array( 'trash', 'spam' ), true ),
 			);
 		}
 
@@ -388,6 +422,12 @@ class Moderation_Service {
 	/**
 	 * Resolve a flag (valid / dismissed) with permission check.
 	 *
+	 * Every pending report on the same item is resolved with it: the queue shows
+	 * one card per item, so one decision answers all of its reporters (each gets
+	 * the "your report was reviewed" notice and, when upheld, the reward). A
+	 * report that is no longer pending answers 409 and changes nothing, so a
+	 * second click or a stale card cannot notify the reporters again.
+	 *
 	 * @param int    $user_id
 	 * @param int    $flag_id
 	 * @param string $status 'valid' or 'dismissed'
@@ -403,34 +443,37 @@ class Moderation_Service {
 		}
 
 		$flag = Flag::find( $flag_id );
-		if ( ! $flag ) {
+		// A report the caller may not act on answers exactly like a missing one,
+		// so staff who cannot read its space do not learn it exists.
+		if ( ! $flag || ! Moderation_Permissions::can_act_on_flag( $user_id, $flag ) ) {
 			return new WP_Error(
 				'jetonomy_not_found',
-				__( 'Flag not found.', 'jetonomy' ),
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				sprintf( __( '%s not found.', 'jetonomy' ), __( 'Report', 'jetonomy' ) ),
 				array( 'status' => 404 )
 			);
 		}
 
-		if ( ! Moderation_Permissions::can_act_on_flag( $user_id, $flag ) ) {
-			return new WP_Error(
-				'jetonomy_forbidden',
-				__( 'You cannot resolve this flag.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
+		$restricted = Moderation_Permissions::restriction_error( $user_id, Flag_Scope::space_id( $flag ) );
+		if ( $restricted ) {
+			return $restricted;
+		}
+
+		if ( 'pending' !== $flag->status ) {
+			return self::flag_handled_error();
 		}
 
 		// End-user contract: the moderation queue's "Remove" button maps to
 		// data-resolution=valid and carries a trash icon. A moderator who
 		// clicks it expects the offending post or reply to come down at the
-		// same time the flag clears, and any other pending flags on the
-		// same object to clear with it. Resolving the flag without trashing
-		// the content (the prior behaviour) leaves bad content in front of
-		// readers and bait for a second moderator to re-action minutes
-		// later. Gate the trash permission upfront so we never leave the
-		// flag in 'valid' with content still live.
-		$type      = (string) $flag->object_type;
-		$object_id = (int) $flag->object_id;
-		if ( 'valid' === $status
+		// same time the flag clears. Gate the trash permission upfront so we
+		// never leave the flag in 'valid' with content still live. A report on
+		// a member removes nothing: upholding it records the decision, and any
+		// ban goes through the ban flow.
+		$type       = (string) $flag->object_type;
+		$object_id  = (int) $flag->object_id;
+		$is_content = in_array( $type, array( 'post', 'reply' ), true );
+		if ( 'valid' === $status && $is_content
 			&& ! Moderation_Permissions::can_act_on_object( $user_id, $type, $object_id )
 		) {
 			return new WP_Error(
@@ -440,83 +483,88 @@ class Moderation_Service {
 			);
 		}
 
-		$ok = Flag::resolve( $flag_id, $user_id, $status );
-		if ( ! $ok ) {
+		if ( ! Flag::resolve( $flag_id, $user_id, $status ) ) {
+			$fresh = Flag::find( $flag_id );
+			if ( $fresh && 'pending' !== $fresh->status ) {
+				return self::flag_handled_error(); // Another moderator got there first.
+			}
 			return new WP_Error(
 				'jetonomy_resolve_failed',
 				__( 'Failed to resolve flag.', 'jetonomy' ),
 				array( 'status' => 500 )
 			);
 		}
+		$resolved = array( $flag );
+		foreach ( Flag::pending_for_object( $type, $object_id ) as $sibling ) {
+			if ( Flag::resolve( (int) $sibling->id, $user_id, $status ) ) {
+				$resolved[] = $sibling;
+			}
+		}
 
-		if ( 'valid' === $status ) {
+		if ( 'valid' === $status && $is_content ) {
+			$object    = 'post' === $type ? Post::find( $object_id ) : Reply::find( $object_id );
+			$author_id = $object ? (int) $object->author_id : 0;
+
 			$trash = self::set_object_status( $user_id, $type, $object_id, 'trash' );
-			if ( is_wp_error( $trash ) ) {
-				// Already-deleted content makes the report moot, not failed.
-				if ( 'jetonomy_not_found' !== $trash->get_error_code() ) {
-					return $trash;
-				}
-				// set_object_status() bailed (content already gone) before its
-				// flag-sync ran, so clear the remaining pending siblings here for
-				// this edge case. On the normal path apply_object_status() has
-				// already resolved them — no double work.
-				Flag::resolve_siblings_for( $type, $object_id, $user_id, 'valid', $flag_id );
+			// Content already deleted or already removed makes the removal moot, not failed.
+			if ( is_wp_error( $trash ) && ! in_array( $trash->get_error_code(), array( 'jetonomy_not_found', 'jetonomy_already_handled' ), true ) ) {
+				return $trash;
 			}
 
-			// Reward the original reporter when their flag is confirmed valid.
-			// Skip self-flags (reporter == author) — that's a moderation
-			// no-op and shouldn't pad the actor's reputation.
-			$reporter_id = isset( $flag->reporter_id ) ? (int) $flag->reporter_id : 0;
-			if ( $reporter_id > 0 ) {
-				$author_id = 0;
-				if ( 'post' === $type ) {
-					$obj = Post::find( $object_id );
-					if ( $obj ) {
-						$author_id = (int) $obj->author_id;
-					}
-				} elseif ( 'reply' === $type ) {
-					$obj = Reply::find( $object_id );
-					if ( $obj ) {
-						$author_id = (int) $obj->author_id;
-					}
-				}
-				if ( $reporter_id !== $author_id ) {
+			// Reward each reporter whose report was upheld. A self-report
+			// (reporter == author) pads nobody's reputation.
+			foreach ( $resolved as $row ) {
+				$reporter_id = (int) ( $row->reporter_id ?? 0 );
+				if ( $reporter_id > 0 && $reporter_id !== $author_id ) {
 					Reputation::award( $reporter_id, 'flag_validated' );
 				}
 			}
 		}
 
-		/**
-		 * Fires after a flag is resolved.
-		 *
-		 * @since 1.3.8
-		 *
-		 * @param int    $flag_id Flag ID.
-		 * @param string $status  Resolution status.
-		 * @param int    $user_id Resolving user ID.
-		 */
-		do_action( 'jetonomy_flag_resolved', $flag_id, $status, $user_id );
+		foreach ( $resolved as $row ) {
+			/**
+			 * Fires after a flag is resolved.
+			 *
+			 * @since 1.3.8
+			 *
+			 * @param int    $flag_id Flag ID.
+			 * @param string $status  Resolution status.
+			 * @param int    $user_id Resolving user ID.
+			 */
+			do_action( 'jetonomy_flag_resolved', (int) $row->id, $status, $user_id );
 
-		/**
-		 * Fires after a flag is resolved with the full flag object plus context.
-		 *
-		 * @since 1.4.1
-		 * @param object         $flag    Flag object (post-resolution row).
-		 * @param array{status:string,user_id:int} $context Context.
-		 */
-		$flag = Flag::find( (int) $flag_id );
-		if ( $flag ) {
-			do_action(
-				'jetonomy_after_resolve_flag',
-				$flag,
-				array(
-					'status'  => $status,
-					'user_id' => $user_id,
-				)
-			);
+			/**
+			 * Fires after a flag is resolved with the full flag object plus context.
+			 *
+			 * @since 1.4.1
+			 * @param object         $flag    Flag object (post-resolution row).
+			 * @param array{status:string,user_id:int} $context Context.
+			 */
+			$fresh = Flag::find( (int) $row->id );
+			if ( $fresh ) {
+				do_action(
+					'jetonomy_after_resolve_flag',
+					$fresh,
+					array(
+						'status'  => $status,
+						'user_id' => $user_id,
+					)
+				);
+			}
 		}
 
 		return true;
+	}
+
+	/**
+	 * 409 for a report that is no longer pending.
+	 */
+	private static function flag_handled_error(): WP_Error {
+		return new WP_Error(
+			'jetonomy_already_handled',
+			__( 'This report was already handled by a moderator.', 'jetonomy' ),
+			array( 'status' => 409 )
+		);
 	}
 
 	/**
@@ -586,6 +634,100 @@ class Moderation_Service {
 		}
 
 		return true;
+	}
+
+	/**
+	 * File a report: the one create path for REST, the abilities API and WP-CLI.
+	 *
+	 * Runs check_flag(), validates the reason and the note length, stores the
+	 * row, docks the reported author's reputation and fires the create hooks,
+	 * so every entry point behaves the same.
+	 *
+	 * @param int    $reporter_id Reporting member.
+	 * @param string $object_type 'post', 'reply' or 'user'.
+	 * @param int    $object_id   Target ID.
+	 * @param string $reason      One of Flag::REASONS.
+	 * @param string $description Optional note, up to Flag::DESCRIPTION_MAX characters.
+	 * @param array  $context     Extra context for jetonomy_after_create_flag (e.g. the REST request).
+	 * @return int|WP_Error New flag ID.
+	 */
+	public static function create_flag( int $reporter_id, string $object_type, int $object_id, string $reason, string $description = '', array $context = array() ) {
+		if ( ! in_array( $reason, Flag::REASONS, true ) ) {
+			return new WP_Error(
+				'jetonomy_validation',
+				/* translators: %s: comma-separated list of report reasons. */
+				sprintf( __( 'Choose a reason: %s.', 'jetonomy' ), implode( ', ', Flag::REASONS ) ),
+				array( 'status' => 400 )
+			);
+		}
+		if ( mb_strlen( $description ) > Flag::DESCRIPTION_MAX ) {
+			return new WP_Error(
+				'jetonomy_validation',
+				/* translators: %s: maximum number of characters. */
+				sprintf( __( 'Report details can be up to %s characters.', 'jetonomy' ), number_format_i18n( Flag::DESCRIPTION_MAX ) ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$gate = self::check_flag( $reporter_id, $object_type, $object_id );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
+		}
+
+		$flag_id = Flag::create(
+			array(
+				'reporter_id' => $reporter_id,
+				'object_type' => $object_type,
+				'object_id'   => $object_id,
+				'reason'      => $reason,
+				'description' => $description,
+			)
+		);
+		if ( ! $flag_id ) {
+			return new WP_Error(
+				'jetonomy_flag_failed',
+				__( 'Failed to create flag.', 'jetonomy' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		/**
+		 * Fires after a content flag is created.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $flag_id     Flag ID.
+		 * @param string $object_type Flagged object type: 'post', 'reply' or 'user'.
+		 */
+		do_action( 'jetonomy_flag_created', $flag_id, $object_type );
+
+		// A report docks the reported author (post/reply only; a reported member
+		// goes through the ban flow). check_flag() already refused self-reports.
+		$target = 'post' === $object_type ? Post::find( $object_id ) : ( 'reply' === $object_type ? Reply::find( $object_id ) : null );
+		if ( $target && (int) $target->author_id > 0 ) {
+			Reputation::award(
+				(int) $target->author_id,
+				'post_reported',
+				array(
+					'object_type' => $object_type,
+					'object_id'   => $object_id,
+				)
+			);
+		}
+
+		/**
+		 * Fires after a flag is created with the full flag object plus context.
+		 *
+		 * @since 1.4.1
+		 * @param object $flag    Flag object (id, reporter_id, object_type, object_id, reason, description).
+		 * @param array  $context Context: user_id, and request on the REST path.
+		 */
+		$flag = Flag::find( $flag_id );
+		if ( $flag ) {
+			do_action( 'jetonomy_after_create_flag', $flag, array_merge( array( 'user_id' => $reporter_id ), $context ) );
+		}
+
+		return $flag_id;
 	}
 
 	/**
@@ -683,13 +825,15 @@ class Moderation_Service {
 	 * any future permission_callback mistake into anonymous moderation.
 	 * Automated actors (cron / AI review) use system_set_object_status().
 	 *
-	 * @param int    $user_id Acting user ID (must be > 0).
-	 * @param string $type   'post' or 'reply'
-	 * @param int    $id     Object row ID.
-	 * @param string $action 'approve' | 'spam' | 'hold' | 'trash'
+	 * @param int    $user_id  Acting user ID (must be > 0).
+	 * @param string $type     'post' or 'reply'
+	 * @param int    $id       Object row ID.
+	 * @param string $action   'approve' | 'spam' | 'hold' | 'trash'
+	 * @param string $expected Status the caller saw (a queue card sends it). When the
+	 *                         row has moved on since, the action is refused with 409.
 	 * @return true|WP_Error
 	 */
-	public static function set_object_status( int $user_id, string $type, int $id, string $action ) {
+	public static function set_object_status( int $user_id, string $type, int $id, string $action, string $expected = '' ) {
 		if ( $user_id <= 0 || ! Moderation_Permissions::can_act_on_object( $user_id, $type, $id ) ) {
 			return new WP_Error(
 				'jetonomy_forbidden',
@@ -698,7 +842,7 @@ class Moderation_Service {
 			);
 		}
 
-		return self::apply_object_status( $user_id, $type, $id, $action );
+		return self::apply_object_status( $user_id, $type, $id, $action, $expected );
 	}
 
 	/**
@@ -745,16 +889,56 @@ class Moderation_Service {
 	}
 
 	/**
+	 * Why this moderation action may not run on this row, or null.
+	 *
+	 * A silenced or banned moderator is refused with the reason the member
+	 * surfaces give. An item that already has the target status, or no longer
+	 * has the one the caller saw, was already handled.
+	 *
+	 * @param int    $user_id    Acting user (0 = system actor, never restricted).
+	 * @param string $type       'post' or 'reply'.
+	 * @param object $row        Row as stored now.
+	 * @param string $new_status Status the action writes.
+	 * @param string $expected   Status the caller saw, or ''.
+	 * @param int    $space_id   Space the item is in.
+	 */
+	private static function moderation_refusal( int $user_id, string $type, object $row, string $new_status, string $expected, int $space_id ): ?WP_Error {
+		$restricted = $user_id > 0 ? Moderation_Permissions::restriction_error( $user_id, $space_id ) : null;
+		if ( $restricted ) {
+			return $restricted;
+		}
+		$status = (string) ( $row->status ?? '' );
+		if ( $status === $new_status || ( '' !== $expected && $status !== $expected ) ) {
+			return new WP_Error(
+				'jetonomy_already_handled',
+				sprintf(
+					/* translators: %s: singular topic or reply label, lowercase. */
+					__( 'This %s was already handled by a moderator. Reload to see where it is now.', 'jetonomy' ),
+					\Jetonomy\jetonomy_label( 'reply' === $type ? 'reply' : 'topic', false, true )
+				),
+				array( 'status' => 409 )
+			);
+		}
+		return null;
+	}
+
+	/**
 	 * Shared status-change implementation. Permission decisions live in the
 	 * two public entry points above.
 	 *
-	 * @param int    $user_id Acting user ID (0 = system actor).
-	 * @param string $type   'post' or 'reply'
-	 * @param int    $id     Object row ID.
-	 * @param string $action 'approve' | 'spam' | 'hold' | 'trash'
+	 * Refuses with 409 jetonomy_already_handled, changing and sending nothing,
+	 * when the item already has the status the action would give it (a second
+	 * click, or two moderators on the same card) or no longer has the status
+	 * the caller expected (a stale Reject on an item another moderator approved).
+	 *
+	 * @param int    $user_id  Acting user ID (0 = system actor).
+	 * @param string $type     'post' or 'reply'
+	 * @param int    $id       Object row ID.
+	 * @param string $action   'approve' | 'spam' | 'hold' | 'trash'
+	 * @param string $expected Status the caller saw, or '' to skip that check.
 	 * @return true|WP_Error
 	 */
-	private static function apply_object_status( int $user_id, string $type, int $id, string $action ) {
+	private static function apply_object_status( int $user_id, string $type, int $id, string $action, string $expected = '' ) {
 		if ( ! in_array( $type, array( 'post', 'reply' ), true ) ) {
 			return new WP_Error(
 				'jetonomy_validation',
@@ -776,6 +960,10 @@ class Moderation_Service {
 			if ( ! $row ) {
 				return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), array( 'status' => 404 ) );
 			}
+			$refused = self::moderation_refusal( $user_id, $type, $row, $new_status, $expected, (int) $row->space_id );
+			if ( $refused ) {
+				return $refused;
+			}
 			// Approving a SCHEDULED draft is a publish-now, not a status poke.
 			// Writing status=publish directly left published_at in the future,
 			// so the post went live early, kept rendering a "Scheduled" badge,
@@ -795,6 +983,10 @@ class Moderation_Service {
 			$row = Reply::find( $id );
 			if ( ! $row ) {
 				return new WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
+			}
+			$refused = self::moderation_refusal( $user_id, $type, $row, $new_status, $expected, (int) ( Post::find( (int) $row->post_id )->space_id ?? 0 ) );
+			if ( $refused ) {
+				return $refused;
 			}
 			Reply::update( $id, array( 'status' => $new_status ) );
 		}

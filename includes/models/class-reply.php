@@ -225,6 +225,8 @@ class Reply extends Model {
 
 			/** This action is documented in includes/models/class-reply.php (Reply::create) */
 			do_action( 'jetonomy_reply_publish_transition', $id, $delta, (string) ( $reply->created_at ?? '' ) );
+
+			self::sync_accepted_answer( $reply, $delta > 0 );
 		}
 
 		// Both threads when a split moved the reply: the one it left and the
@@ -237,6 +239,33 @@ class Reply extends Model {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Keep the topic's accepted answer in step with the reply's visibility.
+	 *
+	 * A trashed, held or deleted accepted reply stops being the answer: the
+	 * topic loses accepted_reply_id and is_resolved, so it no longer shows
+	 * "Resolved" over a callout quoting removed text. The reply keeps its
+	 * is_accepted mark, so restoring it makes it the answer again, unless
+	 * another reply was accepted meanwhile (accepting clears the mark on the
+	 * others).
+	 *
+	 * @param object $reply   Reply row as it was before the change.
+	 * @param bool   $is_live True when the reply just became published.
+	 */
+	private static function sync_accepted_answer( object $reply, bool $is_live ): void {
+		$post_id = (int) ( $reply->post_id ?? 0 );
+		$post    = $post_id > 0 ? Post::find( $post_id ) : null;
+		if ( ! $post ) {
+			return;
+		}
+		$accepted = (int) ( $post->accepted_reply_id ?? 0 );
+		if ( ! $is_live && $accepted === (int) ( $reply->id ?? 0 ) ) {
+			Post::clear_accepted_reply( $post_id );
+		} elseif ( $is_live && 0 === $accepted && ! empty( $reply->is_accepted ) ) {
+			Post::accept_reply( $post_id, (int) ( $reply->id ?? 0 ) );
+		}
 	}
 
 	/**
@@ -308,6 +337,9 @@ class Reply extends Model {
 
 			/** This action is documented in includes/models/class-reply.php (Reply::create) */
 			do_action( 'jetonomy_reply_publish_transition', $id, -1, (string) ( $reply->created_at ?? '' ) );
+		}
+		if ( true === $result && $reply ) {
+			self::sync_accepted_answer( $reply, false );
 		}
 
 		// $reply was loaded above, before the row went away - the only place

@@ -398,15 +398,14 @@ class Replies_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		// Unreadable answers like missing, as GET /posts/{id} does: a 403 would
+		// Unreadable answers like missing, as GET /posts/{id} does: a 403, or the
+		// thread's private-reply placeholder with its author and date, would
 		// confirm the reply exists.
-		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+		$viewer = get_current_user_id();
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( $viewer, $post )
+			|| ! \Jetonomy\Permissions\Permission_Engine::can_read_reply( $viewer, $reply, $post ) ) {
 			return $this->not_found( 'Reply' );
 		}
-
-		// Same placeholder the thread shows; cloned so the cached row keeps its body.
-		$reply = clone $reply;
-		Reply::apply_private_tombstone( $reply, $post, get_current_user_id() );
 
 		$enriched = $this->enrich_with_author( array( $reply ) );
 

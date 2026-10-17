@@ -640,7 +640,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 						<div class="jt-vote-cluster" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Vote on this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
 							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
-							<?php if ( $jt_is_live && jetonomy_viewer_can_vote( $space ) ) : ?>
+							<?php $jt_own_post = is_user_logged_in() && (int) $post->author_id === get_current_user_id(); // Your own topic takes no vote. ?>
+							<?php if ( $jt_is_live && ! $jt_own_post && jetonomy_viewer_can_vote( $space ) ) : ?>
 							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 								aria-pressed="<?php echo 1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteUp"
@@ -649,19 +650,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 								<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</button>
-								<?php
-								// Hide downvote on own content — self-downvote was
-								// landing at -1.
-								if ( (int) $post->author_id !== get_current_user_id() ) :
-									?>
 							<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
 								aria-pressed="<?php echo -1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteDown"
 								data-post-id="<?php echo absint( $post->id ); ?>"
-									<?php echo jetonomy_vote_attrs( 'down', -1 === $user_post_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
-									<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+								<?php echo jetonomy_vote_attrs( 'down', -1 === $user_post_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
+								<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 							</button>
-								<?php endif; ?>
 							<?php elseif ( ! is_user_logged_in() ) : ?>
 								<?php
 								// Logged-out: the vote control was an inert read-only
@@ -676,7 +671,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</a>
 							<?php else : ?>
-								<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16 ); ?>
+								<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16, $space, $jt_own_post ); ?>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>

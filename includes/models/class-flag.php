@@ -13,8 +13,79 @@ use function Jetonomy\now;
 
 class Flag extends Model {
 
+	/** Reasons a report can carry: the jt_flags.reason enum. */
+	public const REASONS = array( 'spam', 'offensive', 'off_topic', 'harassment', 'other' );
+
+	/** Longest report note in characters. The column is TEXT, so a longer one failed with a 500. */
+	public const DESCRIPTION_MAX = 2000;
+
 	protected static function table_name(): string {
 		return 'flags';
+	}
+
+	/**
+	 * Keeps only the newest pending report on each object, so a queue shows one
+	 * card per reported item however many members reported it. Served by the
+	 * `object` index.
+	 */
+	private static function newest_per_object_sql(): string {
+		return ' AND f.id = ( SELECT MAX( f2.id ) FROM ' . static::table() . " f2 WHERE f2.object_type = f.object_type AND f2.object_id = f.object_id AND f2.status = 'pending' )";
+	}
+
+	/**
+	 * Pending reports on one post, reply or member, oldest first.
+	 *
+	 * @param string $object_type 'post', 'reply' or 'user'.
+	 * @param int    $object_id   Object ID.
+	 * @return object[]
+	 */
+	public static function pending_for_object( string $object_type, int $object_id ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . " WHERE object_type = %s AND object_id = %d AND status = 'pending' ORDER BY id ASC",
+				$object_type,
+				$object_id
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How many pending reports each object on a queue page has, by reason.
+	 * One grouped query for the page.
+	 *
+	 * @param object[] $flags Flag rows (one per object).
+	 * @return array<string, array{count:int, reasons:array<string,int>}> Keyed "{object_type}:{object_id}".
+	 */
+	public static function pending_summary( array $flags ): array {
+		$ids = array();
+		foreach ( $flags as $flag ) {
+			$ids[ (string) $flag->object_type ][] = (int) $flag->object_id;
+		}
+		$where  = array();
+		$params = array();
+		foreach ( $ids as $type => $object_ids ) {
+			$object_ids = array_values( array_unique( $object_ids ) );
+			$where[]    = '( object_type = %s AND object_id IN (' . implode( ',', array_fill( 0, count( $object_ids ), '%d' ) ) . ') )';
+			$params     = array_merge( $params, array( $type ), $object_ids );
+		}
+		if ( ! $where ) {
+			return array();
+		}
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where holds only placeholders.
+				'SELECT object_type, object_id, reason, COUNT(*) AS n FROM ' . static::table() . " WHERE status = 'pending' AND ( " . implode( ' OR ', $where ) . ' ) GROUP BY object_type, object_id, reason',
+				...$params
+			)
+		) ?: array();
+
+		$summary = array();
+		foreach ( $rows as $row ) {
+			$key                                        = $row->object_type . ':' . (int) $row->object_id;
+			$summary[ $key ]['count']                   = ( $summary[ $key ]['count'] ?? 0 ) + (int) $row->n;
+			$summary[ $key ]['reasons'][ $row->reason ] = (int) $row->n;
+		}
+		return $summary;
 	}
 
 	/**
@@ -170,11 +241,13 @@ class Flag extends Model {
 	 *                      preserves pre-1.4.3 behaviour).
 	 * @param int   $offset Row offset for pagination. Ignored when $limit = 0.
 	 * @param int[] $exclude_space_ids Spaces to leave out (Moderation_Permissions::unreadable_space_ids()).
+	 * @param bool  $per_object        One row per reported object (its newest report).
 	 * @return object[]
 	 */
-	public static function list_pending( int $limit = 0, int $offset = 0, array $exclude_space_ids = array() ): array {
+	public static function list_pending( int $limit = 0, int $offset = 0, array $exclude_space_ids = array(), bool $per_object = false ): array {
 		$x    = self::exclude_spaces_sql( $exclude_space_ids );
-		$base = 'SELECT f.* FROM ' . static::table() . " f{$x['join']} WHERE f.status = 'pending'{$x['sql']} ORDER BY f.created_at DESC";
+		$one  = $per_object ? self::newest_per_object_sql() : '';
+		$base = 'SELECT f.* FROM ' . static::table() . " f{$x['join']} WHERE f.status = 'pending'{$x['sql']}{$one} ORDER BY f.created_at DESC";
 		if ( $limit > 0 ) {
 			return static::db()->get_results(
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $base holds only %d placeholders built by exclude_spaces_sql().
@@ -191,11 +264,13 @@ class Flag extends Model {
 	 * number (pagination totals, badges).
 	 *
 	 * @param int[] $exclude_space_ids Spaces to leave out (Moderation_Permissions::unreadable_space_ids()).
+	 * @param bool  $per_object        Count reported objects, not reports.
 	 * @return int
 	 */
-	public static function count_pending( array $exclude_space_ids = array() ): int {
+	public static function count_pending( array $exclude_space_ids = array(), bool $per_object = false ): int {
 		$x   = self::exclude_spaces_sql( $exclude_space_ids );
-		$sql = 'SELECT COUNT(*) FROM ' . static::table() . " f{$x['join']} WHERE f.status = 'pending'{$x['sql']}";
+		$one = $per_object ? self::newest_per_object_sql() : '';
+		$sql = 'SELECT COUNT(*) FROM ' . static::table() . " f{$x['join']} WHERE f.status = 'pending'{$x['sql']}{$one}";
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- only %d placeholders from exclude_spaces_sql().
 		return (int) static::db()->get_var( $x['params'] ? static::db()->prepare( $sql, ...$x['params'] ) : $sql );
 	}
@@ -491,8 +566,8 @@ class Flag extends Model {
 	 * @param int $space_id
 	 * @return object[]
 	 */
-	public static function list_pending_in_space( int $space_id, int $limit = 0, int $offset = 0 ): array {
-		return self::list_by_status_in_space( 'pending', $space_id, $limit, $offset );
+	public static function list_pending_in_space( int $space_id, int $limit = 0, int $offset = 0, bool $per_object = false ): array {
+		return self::list_by_status_in_space( 'pending', $space_id, $limit, $offset, $per_object );
 	}
 
 	/**
@@ -509,9 +584,10 @@ class Flag extends Model {
 	 * @param int    $space_id Space to scope to.
 	 * @param int    $limit    0 = unbounded (kept for the legacy callers only).
 	 * @param int    $offset
+	 * @param bool   $per_object One row per reported object (pending only).
 	 * @return object[]
 	 */
-	public static function list_by_status_in_space( string $status, int $space_id, int $limit = 0, int $offset = 0 ): array {
+	public static function list_by_status_in_space( string $status, int $space_id, int $limit = 0, int $offset = 0, bool $per_object = false ): array {
 		if ( $space_id <= 0 ) {
 			return array();
 		}
@@ -534,7 +610,7 @@ class Flag extends Model {
 		$params[] = 'reply';
 		$params[] = $space_id;
 
-		$where_sql = 'WHERE ' . implode( ' AND ', $where );
+		$where_sql = 'WHERE ' . implode( ' AND ', $where ) . ( $per_object && 'pending' === $status ? self::newest_per_object_sql() : '' );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are trusted; $where_sql is built from literals with placeholders.
 		$base = "SELECT f.* FROM {$flags_t} f
@@ -612,10 +688,11 @@ class Flag extends Model {
 	 * @param int $space_id
 	 * @return int
 	 */
-	public static function count_pending_in_space( int $space_id ): int {
+	public static function count_pending_in_space( int $space_id, bool $per_object = false ): int {
 		if ( $space_id <= 0 ) {
 			return 0;
 		}
+		$one = $per_object ? self::newest_per_object_sql() : '';
 		global $wpdb;
 		$flags_t   = \Jetonomy\table( 'flags' );
 		$posts_t   = \Jetonomy\table( 'posts' );
@@ -630,7 +707,7 @@ class Flag extends Model {
 				   AND (
 				     ( f.object_type = 'post'  AND p.space_id  = %d )
 				     OR ( f.object_type = 'reply' AND rp.space_id = %d )
-				   )",
+				   ){$one}",
 				$space_id,
 				$space_id
 			)
@@ -646,7 +723,7 @@ class Flag extends Model {
 	 * @param int[] $space_ids
 	 * @return object[]
 	 */
-	public static function list_pending_in_spaces( array $space_ids, int $limit = 0, int $offset = 0 ): array {
+	public static function list_pending_in_spaces( array $space_ids, int $limit = 0, int $offset = 0, bool $per_object = false ): array {
 		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
 		if ( empty( $space_ids ) ) {
 			return array();
@@ -667,8 +744,8 @@ class Flag extends Model {
 			   AND (
 			     ( f.object_type = 'post'  AND p.space_id  IN ({$placeholders}) )
 			     OR ( f.object_type = 'reply' AND rp.space_id IN ({$placeholders}) )
-			   )
-			 ORDER BY f.created_at DESC";
+			   )" . ( $per_object ? self::newest_per_object_sql() : '' ) . '
+			 ORDER BY f.created_at DESC';
 
 		if ( $limit > 0 ) {
 			$sql     .= ' LIMIT %d OFFSET %d';
@@ -689,11 +766,12 @@ class Flag extends Model {
 	 * @param int[] $space_ids
 	 * @return int
 	 */
-	public static function count_pending_in_spaces( array $space_ids ): int {
+	public static function count_pending_in_spaces( array $space_ids, bool $per_object = false ): int {
 		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
 		if ( empty( $space_ids ) ) {
 			return 0;
 		}
+		$one = $per_object ? self::newest_per_object_sql() : '';
 		global $wpdb;
 		$flags_t      = \Jetonomy\table( 'flags' );
 		$posts_t      = \Jetonomy\table( 'posts' );
@@ -711,7 +789,7 @@ class Flag extends Model {
 				   AND (
 				     ( f.object_type = 'post'  AND p.space_id  IN ({$placeholders}) )
 				     OR ( f.object_type = 'reply' AND rp.space_id IN ({$placeholders}) )
-				   )",
+				   ){$one}",
 				...$params
 			)
 		);

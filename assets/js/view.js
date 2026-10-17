@@ -97,7 +97,9 @@ function jetonomyReport( message, labels ) {
 		const details = document.createElement( 'textarea' );
 		details.className = 'jt-modal-input jt-input';
 		details.rows = 3;
-		details.placeholder = i18n.reportDetails || 'Add details (optional)';
+		details.placeholder = i18n.reportDetails || 'Add details (optional, up to 2,000 characters)';
+		// The server refuses longer notes; the limit is in the placeholder too.
+		details.maxLength = parseInt( i18n.reportDetailsMax, 10 ) || 2000;
 		details.setAttribute( 'aria-label', details.placeholder );
 		box.appendChild( details );
 
@@ -3579,9 +3581,11 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
             // Remove the resolved card; if the queue is now empty, swap in the
-            // empty state (ported from moderation.js removeCard()).
-            const container = card.parentNode;
-            card.remove();
+            // empty state (ported from moderation.js removeCard()). On the
+            // overview a member-report card sits in its own list row.
+            const row       = card.parentNode && card.parentNode.matches( 'li.jt-mod-flag-row' ) ? card.parentNode : null;
+            const container = row ? row.parentNode : card.parentNode;
+            ( row || card ).remove();
             // Keep the header "N pending" badge in sync — it is server-rendered
             // and would otherwise show the pre-resolution count until reload.
             // Replace only the numeric run so the localized suffix survives;
@@ -3618,7 +3622,7 @@ const { state, actions } = store( 'jetonomy', {
                     flagBadge.textContent = flagBadge.textContent.replace( /\d+/, String( nextCount ) );
                 }
             }
-            if ( container && ! container.querySelector( '.jt-mod-flag' ) && container.parentNode ) {
+            if ( container && ! container.querySelector( '.jt-mod-flag, .jt-mod-flag-row' ) && container.parentNode ) {
                 const wrapper = document.createElement( 'div' );
                 wrapper.className = 'jt-empty';
                 const msg = document.createElement( 'div' );
@@ -3799,7 +3803,10 @@ const { state, actions } = store( 'jetonomy', {
             const buttons = card.querySelectorAll( '.jt-mod-approve' );
             buttons.forEach( ( b ) => { b.disabled = true; } );
 
-            const res = yield window.jetonomyRest.restFetch( path, { method } );
+            // Name the status the card showed, so a stale card (another moderator
+            // already acted) is refused with 409 instead of undoing their call.
+            const from = card.getAttribute( 'data-object-status' );
+            const res  = yield window.jetonomyRest.restFetch( path, 'POST' === method && from ? { method, body: { from } } : { method } );
             if ( ! res.ok ) {
                 // Re-enable rather than strand the row: the usual cause is another
                 // moderator having already handled it, and the message says so.

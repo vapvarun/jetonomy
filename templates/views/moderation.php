@@ -507,10 +507,35 @@ $crumbs = array(
 				if ( ! $jt_ctx ) {
 					continue;
 				}
+				// A reported member has no space queue to review in, so the card
+				// and its actions live here (only site moderators list them).
+				if ( 'user' === $flag->object_type ) :
+					?>
+					<li class="jt-mod-flag-row jt-mod-flag-row--card">
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'moderation/flag-card',
+							array(
+								'flag'             => $flag,
+								'resolve_endpoint' => esc_url_raw( rest_url( 'jetonomy/v1/moderation/flags/' ) ),
+								'base'             => $base,
+								'context'          => $jt_ctx,
+							)
+						);
+						?>
+					</li>
+					<?php
+					continue;
+				endif;
 				$obj           = $jt_ctx->object;
 				$space         = $jt_ctx->space;
 				$reporter      = get_userdata( (int) $flag->reporter_id );
 				$reporter_name = $reporter ? \Jetonomy\user_display_name( $reporter ) : __( 'Unknown', 'jetonomy' );
+				$jt_reports    = (int) ( $jt_ctx->reports['count'] ?? 1 );
+				if ( $jt_reports > 1 ) {
+					/* translators: 1: newest reporter's display name; 2: number of other members who reported the same item. */
+					$reporter_name = sprintf( _n( '%1$s and %2$s other', '%1$s and %2$s others', $jt_reports - 1, 'jetonomy' ), $reporter_name, number_format_i18n( $jt_reports - 1 ) );
+				}
 				$age           = human_time_diff( strtotime( $flag->created_at ), time() );
 				$content_plain = (string) ( $obj->content_plain ?? wp_strip_all_tags( (string) ( $obj->content ?? '' ) ) );
 				$excerpt       = trim( mb_substr( $content_plain, 0, 140 ) );
@@ -518,7 +543,14 @@ $crumbs = array(
 					$excerpt .= '…';
 				}
 				$reason_key   = (string) ( $flag->reason ?? 'other' );
-				$reason_label = $jt_reason_labels[ $reason_key ] ?? $jt_reason_labels['other'];
+				$reason_label = implode(
+					', ',
+					array_map(
+						static fn( $key, $n ) => ( $jt_reason_labels[ $key ] ?? $jt_reason_labels['other'] ) . ( $n > 1 ? ' (' . number_format_i18n( (int) $n ) . ')' : '' ),
+						array_keys( (array) ( $jt_ctx->reports['reasons'] ?? array( $reason_key => 1 ) ) ),
+						(array) ( $jt_ctx->reports['reasons'] ?? array( $reason_key => 1 ) )
+					)
+				);
 				$queue_url    = \Jetonomy\route_url( 'space-moderation', $space->slug );
 				?>
 				<li class="jt-mod-flag-row">
@@ -545,6 +577,14 @@ $crumbs = array(
 					<div class="jt-mod-flag-excerpt" dir="auto">
 						<?php echo esc_html( $excerpt ); ?>
 					</div>
+					<?php if ( ! empty( $jt_ctx->removed ) ) : ?>
+						<p class="jt-mod-flag-removed">
+							<?php
+							/* translators: %s: singular topic or reply label, lowercase. */
+							echo esc_html( sprintf( __( 'This %s was already removed. Dismiss the report to clear it.', 'jetonomy' ), \Jetonomy\jetonomy_label( $is_reply ? 'reply' : 'topic', false, true ) ) );
+							?>
+						</p>
+					<?php endif; ?>
 					<div class="jt-mod-flag-foot">
 						<span class="jt-mod-flag-reporter">
 							<?php
