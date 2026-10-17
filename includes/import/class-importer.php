@@ -354,12 +354,13 @@ abstract class Importer {
 	 *
 	 * Sources store these HTML-escaped (WordPress keeps a bbPress title as
 	 * "Plugins &amp; themes"); Jetonomy stores plain text and escapes on output,
-	 * so an entity left in place is shown literally.
+	 * so an entity left in place is shown literally. Decoded first, then
+	 * stripped, so an escaped tag in the source never becomes live markup.
 	 *
 	 * @param string|null $text Source value.
 	 */
 	protected static function plain_text( ?string $text ): string {
-		return html_entity_decode( wp_strip_all_tags( (string) $text ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		return wp_strip_all_tags( html_entity_decode( (string) $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
 	}
 
 	/**

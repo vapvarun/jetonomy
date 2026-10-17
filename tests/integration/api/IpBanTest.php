@@ -85,7 +85,9 @@ class IpBanTest extends WP_UnitTestCase {
 		$listed = $this->call( $this->mod, 'GET', '/moderation/ban', array( 'type' => 'ip_ban' ) );
 		$this->assertSame( 200, $listed->get_status() );
 
-		$this->assertSame( 200, $this->call( $this->mod, 'DELETE', "/moderation/ban/{$id}" )->get_status() );
+		// Lifting takes the authority issuing took: administrator only.
+		$this->assertSame( 403, $this->call( $this->mod, 'DELETE', "/moderation/ban/{$id}" )->get_status() );
+		$this->assertSame( 200, $this->call( $this->admin, 'DELETE', "/moderation/ban/{$id}" )->get_status() );
 		\Jetonomy\Cache::flush();
 		$this->assertFalse( Restriction::is_ip_banned( '203.0.113.7' ) );
 	}

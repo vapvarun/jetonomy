@@ -788,9 +788,9 @@ class Moderation_Controller extends Base_Controller {
 			return $this->not_found( 'Restriction' );
 		}
 
-		$restricted = \Jetonomy\Moderation\Moderation_Permissions::restriction_error( get_current_user_id(), $restriction->space_id ? (int) $restriction->space_id : null );
-		if ( $restricted ) {
-			return $restricted;
+		$refused = \Jetonomy\Moderation\Moderation_Permissions::lift_error( get_current_user_id(), $restriction );
+		if ( $refused ) {
+			return $refused;
 		}
 
 		$removed = Restriction::remove_ban( $id );

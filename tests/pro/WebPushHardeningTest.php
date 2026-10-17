@@ -129,12 +129,44 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 		$this->assertSame( 'Alice replied to your topic', $this->queued[0]['body'] );
 	}
 
-	public function test_push_send_uses_the_safe_http_transport(): void {
+	/** Push args with a real P-256 key, so the send gets as far as the POST. */
+	private function push_args( string $endpoint ): array {
 		$key = openssl_pkey_new( array( 'curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC ) );
 		$ec  = openssl_pkey_get_details( $key )['ec'];
 		$pub = "\x04" . str_pad( $ec['x'], 32, "\0", STR_PAD_LEFT ) . str_pad( $ec['y'], 32, "\0", STR_PAD_LEFT );
 		$b64 = static fn( string $raw ): string => rtrim( strtr( base64_encode( $raw ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		return array( 'endpoint' => $endpoint, 'p256dh' => $b64( $pub ), 'auth' => $b64( random_bytes( 16 ) ), 'body' => 'b' );
+	}
 
+	/**
+	 * A stored endpoint whose host now resolves to a private or metadata
+	 * address (DNS changed after subscribe) is never called.
+	 *
+	 * @dataProvider private_send_endpoints
+	 */
+	public function test_push_send_skips_an_endpoint_that_now_points_at_a_private_address( string $endpoint ): void {
+		$called = false;
+		add_filter(
+			'pre_http_request',
+			static function () use ( &$called ) {
+				$called = true;
+				return array( 'response' => array( 'code' => 201 ), 'body' => '', 'headers' => array(), 'cookies' => array() );
+			}
+		);
+
+		$this->ext->do_send_push( $this->push_args( $endpoint ) );
+
+		$this->assertFalse( $called, 'No request may leave for ' . $endpoint );
+	}
+
+	public function private_send_endpoints(): array {
+		return array(
+			'cloud metadata' => array( 'https://169.254.169.254/latest/meta-data' ),
+			'private lan'    => array( 'https://10.0.0.5/push' ),
+		);
+	}
+
+	public function test_push_send_uses_the_safe_http_transport(): void {
 		$seen = null;
 		add_filter(
 			'pre_http_request',
@@ -146,7 +178,8 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 			3
 		);
 
-		$this->ext->do_send_push( array( 'endpoint' => 'https://fcm.googleapis.com/fcm/send/x', 'p256dh' => $b64( $pub ), 'auth' => $b64( random_bytes( 16 ) ), 'body' => 'b' ) );
+		// A public address literal: the send-time guard passes it without a DNS lookup.
+		$this->ext->do_send_push( $this->push_args( 'https://8.8.8.8/fcm/send/x' ) );
 
 		$this->assertNotNull( $seen, 'The push was sent.' );
 		$this->assertTrue( $seen['reject_unsafe_urls'] ?? false, 'Member-supplied endpoints go through wp_safe_remote_post().' );

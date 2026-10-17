@@ -48,6 +48,12 @@ class Users_Handler {
 			wp_send_json_error( sprintf( __( 'This ban needs a specific %1$s. Ban the %2$s from that %1$s\'s %3$s screen.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'member', true ) ) );
 		}
 
+		// A silenced or banned moderator takes no moderation action (REST ban_user asks the same).
+		$restricted = \Jetonomy\Moderation\Moderation_Permissions::restriction_error( get_current_user_id(), $space_id ?: null );
+		if ( $restricted ) {
+			wp_send_json_error( $restricted->get_error_message() );
+		}
+
 		/*
 		 * WHO may be targeted, not just who may moderate.
 		 *
@@ -138,6 +144,11 @@ class Users_Handler {
 		$restriction = Restriction::find( $restriction_id );
 		if ( ! $restriction ) {
 			wp_send_json_error( __( 'This restriction was already lifted.', 'jetonomy' ) );
+		}
+
+		$refused = \Jetonomy\Moderation\Moderation_Permissions::lift_error( get_current_user_id(), $restriction );
+		if ( $refused ) {
+			wp_send_json_error( $refused->get_error_message() );
 		}
 
 		$result = Restriction::remove_ban( $restriction_id );
