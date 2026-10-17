@@ -292,6 +292,7 @@ Block a member from their profile, keep your community when you delete the plugi
 * Fix      - Unfollowing a space or topic removes that follow, not your most recent one.
 * Fix      - A second moderator's Close or Pin no longer undoes the first, because the buttons now set the state they showed.
 * Fix      - Editing a topic or reply from an out-of-date tab is refused instead of overwriting newer changes.
+* Fix      - A topic link inside a private space shows the same "not found" page as a missing topic, and the private space page names the space for visitors.
 * Fix      - A space on a boxed theme such as Reign no longer squeezes its description beside the stats and buttons.
 * Fix      - Clearing the Community Base URL field and saving keeps your community at its current address instead of breaking every community link.
 * Fix      - Deleting a space removes its topics, replies and related data, and a database failure keeps the space instead of half deleting it.
