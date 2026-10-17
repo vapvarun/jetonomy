@@ -1848,6 +1848,10 @@ class Admin {
 		$restrictions = Restriction::active_rows_for_users( array_map( static fn( $u ) => (int) $u->user_id, $users ) );
 		// A space ban names its space; one query for every space on the page.
 		$space_titles = array_column( \Jetonomy\Models\Space::list_by_ids( array_column( $restrictions, 'space_id' ) ), 'title', 'id' );
+		// Each row asks whether the viewer may lift it (their own ban in that space): one query for the page.
+		Restriction::prime_space_bans( get_current_user_id(), array_column( $restrictions, 'space_id' ) );
+		// Each row asks whether the viewer may restrict that member (user_can on them): load the page's users once.
+		cache_users( array_map( static fn( $u ) => (int) $u->user_id, $users ) );
 
 		include JETONOMY_DIR . 'includes/admin/views/users.php';
 	}
