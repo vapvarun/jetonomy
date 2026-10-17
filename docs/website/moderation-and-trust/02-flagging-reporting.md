@@ -44,9 +44,7 @@ A user report creates a flag the same way a content report does - it is recorded
 
 ## Blocking a Member (1.8.0+)
 
-Blocking hides a member's replies from your own view without removing them for anyone else - useful when you want to stop seeing someone's content without waiting on a moderator.
-
-You can report the member in the same action - blocking and filing a report travel together in one request, so members do not need to submit them separately.
+Blocking hides a member's topics and replies from your own view without removing them for anyone else - useful when you want to stop seeing someone's content without waiting on a moderator. The blocked member is not told.
 
 If the blocked member's reply has other replies nested underneath it, only their own content is hidden; the innocent replies in that nested thread stay visible.
 
@@ -54,23 +52,21 @@ If the blocked member's reply has other replies nested underneath it, only their
 
 ### Where you can block from
 
-This is the part members ask about most, so it is worth being exact:
-
 | Surface | Block a member | Unblock a member |
 |---|---|---|
+| Web (2.0.3+) | The **⋯** menu on their profile | The same menu, or **Blocked members** in Edit Profile |
 | Mobile app | Yes | Yes |
-| REST API | Yes (`POST /jetonomy/v1/blocks`) | Yes |
-| Web (browser) | **Not yet** | Yes |
+| REST API | `POST /jetonomy/v1/users/me/blocks` with `user_id` | `DELETE /jetonomy/v1/users/me/blocks/{user_id}` |
 
-On the web you will not find a "Block" button on a post or a profile. What you
-*will* see, once a block exists, is the blocked member's content replaced by a
-placeholder reading **"Content hidden - you blocked this user"** with an
-**Unblock this user** button. So the web can show and undo a block, but the
-block itself has to be created from the app or the API today.
+On the web, open the member's profile and click the **⋯** button beside their name. The menu offers **Report** and **Block**. Blocking asks you to confirm first, and afterwards the profile shows "You blocked this member. Their topics and replies are hidden from you." The same menu then offers **Unblock**.
 
-If you are on the web and want to stop seeing someone now, the options are to
-block them from the mobile app, or to [report them](#reporting-a-member) so a
-moderator can act.
+Administrators and moderators cannot be blocked, so their profile menu offers **Report** only. You never see the menu on your own profile, and visitors who are not logged in do not see it at all.
+
+Elsewhere in the community, a blocked member's content is replaced by a placeholder reading **"Content hidden because you blocked this user."** with an **Unblock this user** button.
+
+### Your blocked members list (2.0.3+)
+
+Everyone you have blocked is listed under **Blocked members** at the bottom of your Edit Profile page (`/community/u/your-username/edit/`), 20 per page, each with an **Unblock** button. If you have not blocked anyone, the section says so.
 
 ### Blocking someone vs blocking a conversation
 
@@ -95,7 +91,7 @@ not the person.
 
 ### "How do I stop seeing this person?"
 
-Short answer: block them from the mobile app. That hides their content
+Short answer: open their profile, click **⋯**, then **Block**. That hides their content
 everywhere you would see it and closes direct messages between you in both
 directions, without involving a moderator and without affecting anyone else's
 view.

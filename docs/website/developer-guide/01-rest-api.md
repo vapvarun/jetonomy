@@ -708,9 +708,9 @@ const data = await res.json();
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| GET | `/posts/{id}/reactions` | Public | List reactions on a post |
+| GET | `/posts/{id}/reactions` | Public | List reactions on a post. Pass `emoji` to also get `reactors` (`label`, `total`, up to 10 `names`) |
 | POST | `/posts/{id}/reactions` | Logged in (`jetonomy_vote`) | Toggle an emoji reaction on a post |
-| GET | `/replies/{id}/reactions` | Public | List reactions on a reply |
+| GET | `/replies/{id}/reactions` | Public | List reactions on a reply. Accepts `emoji` like the post route |
 | POST | `/replies/{id}/reactions` | Logged in (`jetonomy_vote`) | Toggle an emoji reaction on a reply |
 
 ### Custom Badges (`custom-badges` extension)
