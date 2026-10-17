@@ -2960,10 +2960,15 @@
 }
 @media (max-width: 640px) {
   .jt-mobile-tabs { display: flex; justify-content: space-around; align-items: center; }
-  /* Clear the fixed tab bar (about 60px) plus the iOS home-indicator inset, so the
-     last control on the page (a composer's Post button) stays above the bar when
-     no theme footer follows the app. 68px left the bar over Post on a notched phone. */
-  .jt-app { padding-bottom: calc(var(--jt-space-12) + var(--jt-space-8) + env(safe-area-inset-bottom, 0px)); }
+  /* The fixed tab bar (about 60px) plus the iOS home-indicator inset. Padding lets the
+     last control scroll clear of the bar; scroll-padding makes every browser-driven
+     scroll (Tab focus, scrollIntoView, find-in-page) stop above it, so Post Topic and
+     Post Reply mid-thread are never left under the tabs. */
+  :root:has(.jt-mobile-tabs) {
+    --jt-tab-bar-clearance: calc(var(--jt-space-12) + var(--jt-space-8) + env(safe-area-inset-bottom, 0px));
+    scroll-padding-bottom: var(--jt-tab-bar-clearance);
+  }
+  .jt-app { padding-bottom: var(--jt-tab-bar-clearance, 0px); }
 }
 .jt-mobile-tab {
   display: flex; flex-direction: column; align-items: center; gap: 2px;

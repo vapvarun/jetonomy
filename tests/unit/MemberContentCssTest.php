@@ -29,9 +29,14 @@ class MemberContentCssTest extends WP_UnitTestCase {
 	}
 
 	public function test_phone_layout_clears_the_tab_bar_and_safe_area(): void {
-		preg_match_all( '/\.jt-app \{ padding-bottom: ([^;]+); \}/', $this->css(), $m );
+		$css = $this->css();
+		preg_match_all( '/--jt-tab-bar-clearance: ([^;]+);/', $css, $m );
 		$this->assertCount( 1, $m[1], 'one owner for the tab-bar clearance' );
 		$this->assertStringContainsString( 'env(safe-area-inset-bottom', $m[1][0] );
 		$this->assertStringNotContainsString( 'px', str_replace( '0px', '', $m[1][0] ), 'tokens, not a fixed pixel height' );
+		// Padding alone only clears the bar at the end of the page: a Post button
+		// mid-thread, reached by Tab or scrollIntoView, stopped under the tabs.
+		$this->assertMatchesRegularExpression( '/:root:has\(\.jt-mobile-tabs\) \{[^}]*scroll-padding-bottom: var\(--jt-tab-bar-clearance\)/', $css );
+		$this->assertStringContainsString( '.jt-app { padding-bottom: var(--jt-tab-bar-clearance, 0px); }', $css );
 	}
 }

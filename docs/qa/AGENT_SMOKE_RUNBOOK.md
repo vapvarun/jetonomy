@@ -506,6 +506,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-post-create.26` @member #ui +offline: submit offline -> exactly one 'Failed to save.' message (today it shows twice).
 - `c-member-post-create.27` @member #ui +rtl: post an Arabic topic on an LTR site -> the title and body are right-aligned via dir=auto on user content.
 - `c-member-post-create.28` @member_b #ui: a space has no recent-topics feed on the community home page -> decide whether the check 'home feed' count means the directory counts.
+- `c-member-post-create.29` @member #ui +390: on New Topic, and on Post Reply in a long thread with replies below the composer, run `button.scrollIntoView({block:'end'})` on Post Topic / Post Reply and also Tab to it -> the button is fully above the bottom tab bar and `document.elementFromPoint` at its centre and bottom edge is the button, not a tab; at 1440 the page has no extra bottom gap.
 
 ### C.member.post-edit
 **Covers:** templates/views/single-post.php, templates/partials/edited-mark.php, includes/api/class-posts-controller.php, includes/models/class-post.php, includes/models/class-revision.php
