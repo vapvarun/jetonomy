@@ -1526,6 +1526,32 @@ class Post extends Model {
 	}
 
 	/**
+	 * Private topics a given member may read, as SQL: the set-based twin of
+	 * Permission_Engine::can_read_post()'s private branch, for lists built for
+	 * someone other than the current viewer (the email digest). A private topic
+	 * is kept for its author, the space's admins and moderators, and site admins.
+	 * Space access itself is Space::content_visibility_sql()'s job.
+	 *
+	 * @param int    $user_id Reader (0 for guest).
+	 * @param string $alias   Posts table alias.
+	 * @return array{0:string,1:array} SQL fragment and its params.
+	 */
+	public static function private_reader_sql( int $user_id, string $alias = 'p' ): array {
+		$col = '' !== $alias ? $alias . '.' : '';
+		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
+			return array( '1=1', array() );
+		}
+		if ( $user_id <= 0 ) {
+			return array( "{$col}is_private = 0", array() );
+		}
+		$members = \Jetonomy\table( 'space_members' );
+		return array(
+			"({$col}is_private = 0 OR {$col}author_id = %d OR {$col}space_id IN (SELECT space_id FROM {$members} WHERE user_id = %d AND role IN ('moderator','admin')))",
+			array( $user_id, $user_id ),
+		);
+	}
+
+	/**
 	 * Filter for a space's post lists: private topics only for their author
 	 * and space staff, and nothing from authors the viewer blocked.
 	 *

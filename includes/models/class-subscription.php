@@ -211,7 +211,8 @@ class Subscription extends Model {
 				continue;
 			}
 			if ( ! isset( $by_type[ $type ] ) ) {
-				$by_type[ $type ] = \Jetonomy\Notifications\Notifier::delivery_channel( $user_id, $type );
+				// A followed topic's replies reach a follower as the reply_in_followed email.
+				$by_type[ $type ] = \Jetonomy\Notifications\Notifier::delivery_channel( $user_id, $type, null, null, 'reply_to_post' === $type ? 'reply_in_followed' : '' );
 			}
 			$item['via'] = $by_type[ $type ];
 		}

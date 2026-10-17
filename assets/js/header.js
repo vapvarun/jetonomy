@@ -41,6 +41,7 @@
 
 	/* ── Notification Dropdown ── */
 	var notifLoaded = false;
+	var markFailed = __( 'Could not mark notifications as read. Check your connection and try again.', 'jetonomy' );
 	window.jtToggleNotifDropdown = function (btn) {
 		var wrap = btn.closest('.jt-notif-dropdown-wrap');
 		var panel = wrap.querySelector('.jt-notif-panel');
@@ -95,26 +96,78 @@
 		});
 	};
 
+	/**
+	 * Show the server's unread count on every badge, adding a badge to its host
+	 * ([data-jt-unread-host] names the badge class) when the count rose from zero.
+	 */
+	window.jtSetUnreadBadges = function (count) {
+		document.querySelectorAll('[data-jt-unread-host]').forEach(function (host) {
+			var cls = host.getAttribute('data-jt-unread-host');
+			var badge = host.querySelector('.' + cls);
+			if (count > 0) {
+				if (!badge) {
+					badge = document.createElement('span');
+					badge.className = cls;
+					host.appendChild(badge);
+				}
+				badge.textContent = String(count);
+			} else if (badge) {
+				badge.remove();
+			}
+		});
+	};
+
+	// The count refreshes when the member comes back to the tab and after they
+	// mark things read: never on a timer (no idle polling).
+	var countInFlight = false;
+	window.jtRefreshUnreadCount = function () {
+		if (!D.isLoggedIn || countInFlight || !document.querySelector('[data-jt-unread-host]')) { return; }
+		countInFlight = true;
+		// The route allows a 15s browser cache; a fresh read must skip it.
+		window.jetonomyRest.restFetch('/notifications/unread-count?fresh=' + Date.now()).then(function (res) {
+			countInFlight = false;
+			if (res.ok && res.data && 'number' === typeof res.data.count) {
+				window.jtSetUnreadBadges(res.data.count);
+				notifLoaded = false; // The dropdown reloads its list on next open.
+			}
+		});
+	};
+	document.addEventListener('visibilitychange', function () {
+		if ('visible' === document.visibilityState) { window.jtRefreshUnreadCount(); }
+	});
+	window.addEventListener('focus', window.jtRefreshUnreadCount);
+
 	window.jtMarkAllRead = function () {
 		window.jetonomyRest.restFetch('/notifications/mark-all-read', {
 			method: 'POST'
-		}).then(function () {
+		}).then(function (res) {
+			if (!res.ok) {
+				window.bnToast(markFailed, 'error');
+				return;
+			}
 			window.jtLowerUnreadBadges(null);
 			document.querySelectorAll('.jt-notif-panel-item.unread').forEach(function (i) {
 				i.classList.remove('unread');
 			});
+			window.jtRefreshUnreadCount();
 		});
 	};
 
+	// Opening an unread notice (bell dropdown or the notifications page) marks
+	// it read. keepalive lets the request finish while the link navigates away.
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
-		var item = e.target.closest('.jt-notif-panel-item.unread');
+		var item = e.target.closest('.jt-notif-panel-item.unread, .jt-notif-item.unread .jt-notif-item__link');
 		if (!item) { return; }
-		var id = item.getAttribute('data-jt-notif-id');
+		var row = item.closest('.jt-notif-item') || item;
+		var id = row.getAttribute('data-jt-notif-id');
 		if (!id) { return; }
-		item.classList.remove('unread');
+		row.classList.remove('unread');
+		var dot = row.querySelector('.jt-notif-dot');
+		if (dot) { dot.remove(); }
 		window.jetonomyRest.restFetch('/notifications/' + encodeURIComponent(id), {
-			method: 'PATCH'
+			method: 'PATCH',
+			keepalive: true
 		});
 		window.jtLowerUnreadBadges(1);
 	});

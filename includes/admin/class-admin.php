@@ -400,6 +400,8 @@ class Admin {
 			'user_welcome'           => array( sprintf( __( 'Welcome: new %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ), false ),
 			/* translators: 1: reply label (e.g. "Reply"). 2: the item replied to, lowercase (e.g. "topic" or "reply"). */
 			'reply_to_post'          => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $topic ), true ),
+			/* translators: 1: reply label (e.g. "Reply"). 2: singular topic label, lowercase. */
+			'reply_in_followed'      => array( sprintf( __( '%1$s in a %2$s you follow', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $topic ), false, sprintf( /* translators: 1: singular topic label, lowercase. 2: singular reply label, lowercase. */ __( 'Sent to followers who did not start the %1$s. On or off follows the %2$s notification above.', 'jetonomy' ), $topic, \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
 			/* translators: 1: reply label (e.g. "Reply"). 2: the item replied to, lowercase (e.g. "topic" or "reply"). */
 			'reply_to_reply'         => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), true ),
 			'mention'                => array( __( 'Mention (@username)', 'jetonomy' ), true ),
@@ -413,6 +415,7 @@ class Admin {
 			/* translators: %s: singular topic label, lowercase. */
 			'reaction'               => array( sprintf( __( 'Reaction on your %s', 'jetonomy' ), $topic ), true ),
 			'moderation'             => array( __( 'Moderator action on your content', 'jetonomy' ), true ),
+			'flag_created'           => array( __( 'New report for moderators', 'jetonomy' ), false, __( 'Sent to moderators when content is reported. On or off follows Moderator action on your content.', 'jetonomy' ) ),
 			'flag_resolved'          => array( __( 'Your report was reviewed', 'jetonomy' ), true ),
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'join_request'           => array( sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ), true ),

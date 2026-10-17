@@ -1762,9 +1762,15 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! btn ) return;
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/notifications/mark-all-read', { method: 'POST' } );
-            if ( ! res.ok ) { btn.disabled = false; return; }
+            if ( ! res.ok ) {
+                // Nothing changed on the server: keep the rows unread and say so.
+                btn.disabled = false;
+                if ( window.bnToast ) window.bnToast( state.i18n?.markReadFailed || 'Could not mark notifications as read.', 'error' );
+                return;
+            }
             document.querySelectorAll( '[data-jt-notif-list] .jt-notif-item.unread' ).forEach( notifMarkRowRead );
             notifLowerUnreadBadges( null );
+            window.jtRefreshUnreadCount?.();
             btn.remove();
         },
         toggleNotifMenu( event ) {
@@ -1793,7 +1799,10 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! id ) return;
             const wasUnread = row.classList.contains( 'unread' );
             const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'PATCH' } );
-            if ( ! res.ok ) return;
+            if ( ! res.ok ) {
+                if ( window.bnToast ) window.bnToast( state.i18n?.markReadFailed || 'Could not mark notifications as read.', 'error' );
+                return;
+            }
             notifMarkRowRead( row );
             if ( wasUnread ) notifLowerUnreadBadges( 1 );
         },
@@ -4547,6 +4556,18 @@ const { state, actions } = store( 'jetonomy', {
                                 'error'
                             );
                         }
+                    }
+                }
+
+                // Pro's digest choice (rendered in the notification settings).
+                // Saved only when changed: a member left on the site default
+                // must not be pinned to it by an unrelated profile save.
+                // 404 means the digest extension is off: nothing to save.
+                const digest = form.querySelector( '[name="digest_frequency"]:checked' );
+                if ( digest && ! digest.defaultChecked ) {
+                    const dResponse = yield window.jetonomyRest.restFetch( '/users/me/digest-preferences', { method: 'PATCH', body: { frequency: digest.value } } );
+                    if ( ! dResponse.ok && 404 !== dResponse.status && window.bnToast ) {
+                        window.bnToast( ( dResponse.data && dResponse.data.message ) || ( state.i18n?.failedSaveProfile || 'Failed to save profile.' ), 'error' );
                     }
                 }
 
