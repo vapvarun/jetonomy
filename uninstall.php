@@ -57,22 +57,20 @@ delete_option( 'jetonomy_clean_uninstall' );
 // Then every other jetonomy_ option (role map, email templates, migration and
 // seeding flags...) - a fixed list kept missing new ones. jetonomy_pro_ options
 // are left to Pro's own uninstall: Pro and its licence may still be installed.
-$wpdb->query(
+// Also the saved settings of the plugin's classic widgets (widget_jetonomy_*).
+// delete_option() rather than a bulk DELETE so a persistent object cache
+// does not keep serving the removed values.
+$jetonomy_options = $wpdb->get_col(
 	$wpdb->prepare(
-		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name NOT LIKE %s",
+		"SELECT option_name FROM {$wpdb->options} WHERE ( option_name LIKE %s AND option_name NOT LIKE %s ) OR option_name LIKE %s",
 		$wpdb->esc_like( 'jetonomy_' ) . '%',
-		$wpdb->esc_like( 'jetonomy_pro_' ) . '%'
+		$wpdb->esc_like( 'jetonomy_pro_' ) . '%',
+		$wpdb->esc_like( 'widget_jetonomy_' ) . '%'
 	)
 );
-
-// Delete any option whose name begins with "jetonomy_permalinks_flushed"
-// (the plugin stores per-blog variants of this key on multisite).
-$wpdb->query(
-	$wpdb->prepare(
-		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-		$wpdb->esc_like( 'jetonomy_permalinks_flushed' ) . '%'
-	)
-);
+foreach ( $jetonomy_options as $jetonomy_option ) {
+	delete_option( $jetonomy_option );
+}
 
 // -------------------------------------------------------------------------
 // 3. Remove Jetonomy capabilities from all WordPress roles.
@@ -101,15 +99,16 @@ foreach ( wp_roles()->roles as $jetonomy_role_name => $jetonomy_role_data ) {
 // 4. Clear scheduled cron jobs.
 // -------------------------------------------------------------------------
 
-$cron_hooks = array(
-	'jetonomy_evaluate_trust_levels',
-	'jetonomy_cleanup_restrictions',
-	'jetonomy_prune_activity_log',
-	'jetonomy_cleanup_notifications',
-);
-
-foreach ( $cron_hooks as $hook ) {
-	wp_clear_scheduled_hook( $hook );
+// Every WP-Cron hook named jetonomy_*, plus the licence SDK's weekly check, read
+// from the cron array itself: a hand-kept list had drifted to hook names the
+// plugin no longer uses. Action Scheduler jobs are already gone: deactivation
+// unschedules them, and WordPress deactivates before it uninstalls.
+foreach ( (array) _get_cron_array() as $jetonomy_events ) {
+	foreach ( array_keys( (array) $jetonomy_events ) as $jetonomy_hook ) {
+		if ( str_starts_with( (string) $jetonomy_hook, 'jetonomy_' ) || 'edd_sl_sdk_weekly_license_check_jetonomy' === $jetonomy_hook ) {
+			wp_clear_scheduled_hook( $jetonomy_hook );
+		}
+	}
 }
 
 // -------------------------------------------------------------------------
