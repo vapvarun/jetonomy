@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-17T18:56:01+00:00\n"
+"POT-Creation-Date: 2026-10-17T19:36:05+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -2090,7 +2090,7 @@ msgstr ""
 #: includes/admin/views/replies.php:313
 #: includes/admin/views/tags.php:157
 #: includes/helpers.php:554
-#: assets/js/admin-common.js:71
+#: assets/js/admin-common.js:69
 msgid "Show more details"
 msgstr ""
 
@@ -2640,7 +2640,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:360
 #: includes/admin/views/space-edit.php:563
 #: includes/admin/views/space-edit.php:807
-#: assets/js/admin-common.js:70
+#: assets/js/admin-common.js:68
 msgid "Actions"
 msgstr ""
 
@@ -2692,7 +2692,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:329
 #: includes/admin/views/space-edit.php:356
 #: templates/views/space-members.php:267
-#: assets/js/admin-common.js:69
+#: assets/js/admin-common.js:67
 msgid "Expires"
 msgstr ""
 
@@ -2953,7 +2953,7 @@ msgstr ""
 #: includes/trust/class-trust-levels.php:204
 #: jetonomy.php:686
 #: templates/views/space-members.php:149
-#: assets/js/admin-common.js:115
+#: assets/js/admin-common.js:113
 msgid "Member"
 msgstr ""
 
@@ -4656,7 +4656,7 @@ msgstr ""
 #: includes/class-template-loader.php:444
 #: jetonomy.php:682
 #: templates/views/space-members.php:150
-#: assets/js/admin-common.js:116
+#: assets/js/admin-common.js:114
 msgid "Moderator"
 msgstr ""
 
@@ -4671,14 +4671,14 @@ msgstr ""
 #: templates/views/my-spaces.php:102
 #: templates/views/single-post.php:862
 #: templates/views/space-members.php:151
-#: assets/js/admin-common.js:117
+#: assets/js/admin-common.js:115
 msgid "Admin"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:213
 #: includes/admin/views/space-edit.php:296
 #: templates/views/space-members.php:148
-#: assets/js/admin-common.js:114
+#: assets/js/admin-common.js:112
 msgid "Viewer"
 msgstr ""
 
@@ -4731,12 +4731,12 @@ msgid "Max uses 0 means unlimited. Leave Expires blank for no expiry."
 msgstr ""
 
 #: includes/admin/views/space-edit.php:348
-#: assets/js/admin-common.js:67
+#: assets/js/admin-common.js:65
 msgid "Invite Link"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:352
-#: assets/js/admin-common.js:68
+#: assets/js/admin-common.js:66
 msgid "Uses"
 msgstr ""
 
@@ -5010,7 +5010,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:704
 #: includes/class-template-loader.php:400
 #: templates/views/space-edit.php:238
-#: assets/js/admin-common.js:74
+#: assets/js/admin-common.js:72
 msgid "Label"
 msgstr ""
 
@@ -5185,7 +5185,7 @@ msgstr ""
 #: includes/class-template-loader.php:409
 #: templates/views/moderation.php:212
 #: templates/views/user-profile.php:66
-#: assets/js/admin-common.js:1788
+#: assets/js/admin-common.js:1795
 msgid "Banned"
 msgstr ""
 
@@ -5198,7 +5198,7 @@ msgstr ""
 #: includes/admin/views/users.php:33
 #: templates/views/moderation.php:215
 #: templates/views/user-profile.php:65
-#: assets/js/admin-common.js:1788
+#: assets/js/admin-common.js:1795
 msgid "Silenced"
 msgstr ""
 
@@ -5316,7 +5316,7 @@ msgid "Ban"
 msgstr ""
 
 #: includes/admin/views/users.php:178
-#: assets/js/admin-common.js:1712
+#: assets/js/admin-common.js:1719
 msgid "Ban IP address"
 msgstr ""
 
@@ -5327,7 +5327,7 @@ msgstr ""
 
 #: includes/admin/views/users.php:254
 #: includes/admin/views/users.php:295
-#: assets/js/admin-common.js:1710
+#: assets/js/admin-common.js:1717
 msgid "Ban User"
 msgstr ""
 
@@ -6831,7 +6831,7 @@ msgstr ""
 
 #: includes/class-template-loader.php:401
 #: templates/views/space-edit.php:240
-#: assets/js/admin-common.js:75
+#: assets/js/admin-common.js:73
 msgid "Remove prefix"
 msgstr ""
 
@@ -11752,7 +11752,7 @@ msgstr ""
 
 #: templates/views/space-members.php:234
 #: templates/views/space-members.php:328
-#: assets/js/admin-common.js:72
+#: assets/js/admin-common.js:70
 msgid "Copy"
 msgstr ""
 
@@ -11771,7 +11771,7 @@ msgstr ""
 
 #: templates/views/space-members.php:238
 #: templates/views/space-members.php:333
-#: assets/js/admin-common.js:73
+#: assets/js/admin-common.js:71
 msgid "Revoke"
 msgstr ""
 
@@ -12290,143 +12290,143 @@ msgstr ""
 msgid "Expired"
 msgstr ""
 
-#. translators: 1: invite links shown, 2: all invite links on the space.
-#: assets/js/admin-common.js:62
-#, js-format
-msgid "Showing %1$s of %2$s invite links."
-msgstr ""
-
-#: assets/js/admin-common.js:63
+#: assets/js/admin-common.js:61
 msgid "Load more"
 msgstr ""
 
-#: assets/js/admin-common.js:76
+#: assets/js/admin-common.js:74
 msgid "Sync"
 msgstr ""
 
-#: assets/js/admin-common.js:77
+#: assets/js/admin-common.js:75
 msgid "Syncing…"
 msgstr ""
 
 #. translators: %d: number of memberships synced.
-#: assets/js/admin-common.js:79
+#: assets/js/admin-common.js:77
 #, js-format
 msgid "Synced (%d)"
 msgstr ""
 
-#: assets/js/admin-common.js:80
+#: assets/js/admin-common.js:78
 msgid "This will discard the interrupted import progress. Continue?"
 msgstr ""
 
-#: assets/js/admin-common.js:81
+#: assets/js/admin-common.js:79
 msgid "Restart import"
 msgstr ""
 
-#: assets/js/admin-common.js:84
+#: assets/js/admin-common.js:82
 msgid "People who match this rule"
 msgstr ""
 
 #. translators: 1: who the rule matches, 2: what they may do, 3: the space role they are recorded as.
-#: assets/js/admin-common.js:86
+#: assets/js/admin-common.js:84
 #, js-format
 msgid "%1$s can %2$s. They are recorded as %3$s."
 msgstr ""
 
 #. translators: %s: reply label, plural lowercase (e.g. "replies").
-#: assets/js/admin-common.js:90
+#: assets/js/admin-common.js:88
 #, js-format
 msgid "read and report posts and %s"
 msgstr ""
 
-#: assets/js/admin-common.js:91
+#: assets/js/admin-common.js:89
 msgid "read, post, reply, vote and report"
 msgstr ""
 
 #. translators: %s: topic label, plural lowercase (e.g. "topics").
-#: assets/js/admin-common.js:92
+#: assets/js/admin-common.js:90
 #, js-format
 msgid "read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people's %s"
 msgstr ""
 
-#: assets/js/admin-common.js:96
+#: assets/js/admin-common.js:94
 msgid "Matches every visitor, signed in or not. Nobody is asked to log in first."
 msgstr ""
 
-#: assets/js/admin-common.js:97
+#: assets/js/admin-common.js:95
 msgid "Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created."
 msgstr ""
 
 #. translators: %s: member label, plural lowercase (e.g. "members").
-#: assets/js/admin-common.js:99
+#: assets/js/admin-common.js:97
 #, js-format
 msgid "Matches anyone holding this WordPress role. Most %s hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means \"everyone who signed up\"."
 msgstr ""
 
-#: assets/js/admin-common.js:100
+#: assets/js/admin-common.js:98
 msgid "Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly."
 msgstr ""
 
 #. translators: %s: member label, plural lowercase (e.g. "members").
-#: assets/js/admin-common.js:102
+#: assets/js/admin-common.js:100
 #, js-format
 msgid "Matches %s at or above this trust level, 1 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it."
 msgstr ""
 
 #. translators: 1: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. 2: member label, plural lowercase.
-#: assets/js/admin-common.js:105
+#: assets/js/admin-common.js:103
 #, js-format
 msgid "Matches %2$s who hold the %1$s level you pick below."
 msgstr ""
 
-#: assets/js/admin-common.js:108
+#: assets/js/admin-common.js:106
 msgid "subscriber"
 msgstr ""
 
-#: assets/js/admin-common.js:109
+#: assets/js/admin-common.js:107
 msgid "edit_posts"
 msgstr ""
 
-#: assets/js/admin-common.js:110
+#: assets/js/admin-common.js:108
 msgid "2"
 msgstr ""
 
-#: assets/js/admin-common.js:1006
+#: assets/js/admin-common.js:1008
 #: assets/js/composer.js:999
 msgid "No matches"
 msgstr ""
 
 #. translators: %d: number of matching levels not shown in the list.
-#: assets/js/admin-common.js:1065
+#: assets/js/admin-common.js:1067
 #, js-format
 msgid "%d more. Refine your search to see it."
 msgid_plural "%d more. Refine your search to see them."
 msgstr[0] ""
 msgstr[1] ""
 
-#: assets/js/admin-common.js:1711
+#. translators: 1: invite links shown, 2: all invite links on the space.
+#: assets/js/admin-common.js:1403
+#, js-format
+msgid "Showing %1$s of %2$s invite links."
+msgstr ""
+
+#: assets/js/admin-common.js:1718
 msgid "Silence User"
 msgstr ""
 
 #. translators: %s: username of the member being banned.
-#: assets/js/admin-common.js:1740
+#: assets/js/admin-common.js:1747
 #, js-format
 msgid "Banning: %s"
 msgstr ""
 
 #. translators: %s: username of the member being silenced.
-#: assets/js/admin-common.js:1747
+#: assets/js/admin-common.js:1754
 #, js-format
 msgid "Silencing: %s"
 msgstr ""
 
 #. translators: %s: username of the member whose IP address is being banned.
-#: assets/js/admin-common.js:1754
+#: assets/js/admin-common.js:1761
 #, js-format
 msgid "Banning an IP address used by: %s"
 msgstr ""
 
 #. translators: %d: number of records imported.
-#: assets/js/admin-common.js:1890
+#: assets/js/admin-common.js:1897
 #, js-format
 msgid "%d record imported successfully."
 msgid_plural "%d records imported successfully."
@@ -12434,7 +12434,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of attachment files that could not be recovered.
-#: assets/js/admin-common.js:1903
+#: assets/js/admin-common.js:1910
 #, js-format
 msgid "%d file could not be recovered and was left linked in the original post text."
 msgid_plural "%d files could not be recovered and were left linked in the original post text."
@@ -12442,7 +12442,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: the "Reload page" link.
-#: assets/js/admin-common.js:1915
+#: assets/js/admin-common.js:1922
 #, js-format
 msgid "%s to see updated status."
 msgstr ""
@@ -12820,14 +12820,16 @@ msgstr ""
 msgid "Submitting…"
 msgstr ""
 
-#: assets/js/composer.js:1201
+#. translators: %d: number of characters still allowed in the title.
+#: assets/js/composer.js:1202
 #, js-format
 msgid "%d character left"
 msgid_plural "%d characters left"
 msgstr[0] ""
 msgstr[1] ""
 
-#: assets/js/composer.js:1203
+#. translators: %d: maximum title length in characters.
+#: assets/js/composer.js:1208
 #, js-format
 msgid "Titles can be up to %d characters."
 msgstr ""

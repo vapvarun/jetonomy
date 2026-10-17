@@ -1196,10 +1196,18 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if ( ! hint || ! max ) { return; }
         var left = max - input.value.length;
         hint.hidden = left > WARN_AT;
-        hint.textContent = left > 0
-            /* translators: %d: number of characters still allowed in the title. */
-            ? wp.i18n.sprintf( wp.i18n._n( '%d character left', '%d characters left', left, 'jetonomy' ), left )
-            /* translators: %d: maximum title length in characters. */
-            : wp.i18n.sprintf( wp.i18n.__( 'Titles can be up to %d characters.', 'jetonomy' ), max );
+        if ( left > 0 ) {
+            hint.textContent = wp.i18n.sprintf(
+                /* translators: %d: number of characters still allowed in the title. */
+                wp.i18n._n( '%d character left', '%d characters left', left, 'jetonomy' ),
+                left
+            );
+        } else {
+            hint.textContent = wp.i18n.sprintf(
+                /* translators: %d: maximum title length in characters. */
+                wp.i18n.__( 'Titles can be up to %d characters.', 'jetonomy' ),
+                max
+            );
+        }
     } );
 }() );

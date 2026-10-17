@@ -105,8 +105,9 @@ class IpBanTest extends WP_UnitTestCase {
 		$this->assertSame( 403, $owner_lockout->get_status(), 'a moderator (Editor) cannot ban an IP at all' );
 		$this->assertSame( 'jetonomy_ip_ban_admin_only', $owner_lockout->get_data()['code'] ?? '' );
 
-		$this->assertSame( 201, $this->ip_ban( $this->admin, $this->member, '2001:db8::1' )->get_status(), 'IPv6 is accepted' );
-		$this->assertSame( 409, $this->ip_ban( $this->admin, $this->member, '2001:db8::1' )->get_status(), 'an IP is banned once' );
+		// A public address: PHP 8.1 and 8.2 treat the 2001:db8::/32 documentation range as reserved.
+		$this->assertSame( 201, $this->ip_ban( $this->admin, $this->member, '2a00:1450:4001:80b::200e' )->get_status(), 'IPv6 is accepted' );
+		$this->assertSame( 409, $this->ip_ban( $this->admin, $this->member, '2a00:1450:4001:80b::200e' )->get_status(), 'an IP is banned once' );
 
 		$this->assertSame( 0, Restriction::count_active( array( 'type' => 'ip_ban' ) ) - 1, 'only the one valid ban was written' );
 	}

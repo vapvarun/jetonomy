@@ -58,8 +58,6 @@
 			inviteUnlimited:      __( 'Unlimited', 'jetonomy' ),
 			inviteNever:          __( 'Never', 'jetonomy' ),
 			inviteExpired:        __( 'Expired', 'jetonomy' ),
-			/* translators: 1: invite links shown, 2: all invite links on the space. */
-			inviteShowing:        __( 'Showing %1$s of %2$s invite links.', 'jetonomy' ),
 			inviteLoadMore:       __( 'Load more', 'jetonomy' ),
 			// Column labels for JS-injected invite rows. They must match the
 			// headings jetonomy_admin_table() renders, because the responsive
@@ -191,7 +189,9 @@
 		reloadWithToast: function(message, url) {
 			try {
 				window.sessionStorage.setItem('jetonomyAdminToast', String(message || ''));
-			} catch (e) {}
+			} catch (e) {
+				// Storage blocked (private mode): the page still reloads, just without the toast.
+			}
 			if (url) {
 				window.location.href = url;
 			} else {
@@ -204,7 +204,9 @@
 			try {
 				message = window.sessionStorage.getItem('jetonomyAdminToast') || '';
 				window.sessionStorage.removeItem('jetonomyAdminToast');
-			} catch (e) {}
+			} catch (e) {
+				// Storage blocked: nothing was parked, so there is no toast to show.
+			}
 			if (message) {
 				this.toast(message);
 			}
@@ -1396,7 +1398,12 @@
 					});
 					if (res.data.has_more) {
 						$('<p>', { 'class': 'jetonomy-invites-more' })
-							.text(sprintf(self.i18n.inviteShowing, $tbody.find('tr[data-invite-id]').length, res.data.total) + ' ')
+							.text(sprintf(
+								/* translators: 1: invite links shown, 2: all invite links on the space. */
+								__( 'Showing %1$s of %2$s invite links.', 'jetonomy' ),
+								$tbody.find('tr[data-invite-id]').length,
+								res.data.total
+							) + ' ')
 							.append($('<button>', { type: 'button', 'class': 'button' }).text(self.i18n.inviteLoadMore).on('click', function() {
 								loadInvites(page + 1);
 							}))

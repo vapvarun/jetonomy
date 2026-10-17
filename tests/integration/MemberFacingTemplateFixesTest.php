@@ -83,6 +83,25 @@ class MemberFacingTemplateFixesTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'openMessenger', $this->render_view( 'user-profile', array( 'slug' => $slug ) ), 'not for guests' );
 	}
 
+	// Notifications-email: the digest choice (Pro) renders inside the profile's
+	// notification settings through this hook, for the member editing the page.
+	public function test_profile_edit_page_offers_a_notification_fields_hook(): void {
+		$seen = array();
+		add_action(
+			'jetonomy_profile_notification_fields',
+			static function ( int $user_id ) use ( &$seen ) {
+				$seen[] = $user_id;
+				echo '<p id="acme-extra-setting">Extra</p>';
+			}
+		);
+
+		wp_set_current_user( $this->member );
+		$html = $this->render_view( 'edit-profile', array( 'slug' => get_userdata( $this->member )->user_nicename ) );
+
+		$this->assertSame( array( $this->member ), $seen, 'fired once, for the member editing their profile' );
+		$this->assertMatchesRegularExpression( '#id="notification-preferences".*id="acme-extra-setting"#s', $html, 'inside the notification settings' );
+	}
+
 	public function test_search_marks_the_searched_words_ignoring_case_and_accents(): void {
 		$this->space( 'Café <b>corner</b> meetups', 'Where the CAFE regulars plan the week.' );
 		wp_set_current_user( $this->member );

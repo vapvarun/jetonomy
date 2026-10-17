@@ -2145,17 +2145,19 @@ class REST_Tests {
 		}
 		$this->cleanup[] = array( 'type' => 'reply_rest', 'id' => $reply_id );
 
-		$guest = $this->rest( 'GET', "/replies/{$reply_id}", array(), 0 )->get_data();
+		// A private reply the viewer may not read answers exactly like a missing one.
+		$guest = $this->rest( 'GET', "/replies/{$reply_id}", array(), 0 );
 		$this->check(
-			'PV1: GET /replies/{id} as guest hides a private body',
-			! empty( $guest['is_private_hidden'] ) && false === strpos( (string) wp_json_encode( $guest ), 'PV1 private body' ),
-			'body or flag wrong'
+			'PV1: GET /replies/{id} as guest answers like a missing reply',
+			404 === $guest->get_status() && 'jetonomy_not_found' === ( $guest->get_data()['code'] ?? '' ) && false === strpos( (string) wp_json_encode( $guest->get_data() ), 'PV1 private body' ),
+			"HTTP {$guest->get_status()} or body present"
 		);
 
 		$author = $this->rest( 'GET', "/replies/{$reply_id}", array(), $this->test_user_id )->get_data();
 		$this->check( 'PV1: GET /replies/{id} shows the author their own private reply', empty( $author['is_private_hidden'] ), 'author was refused' );
 
-		$found = static fn( $res ): bool => false !== strpos( (string) wp_json_encode( $res->get_data() ), $token );
+		// Results only: meta.terms echoes the searched words back, so the whole body always holds the token.
+		$found = static fn( $res ): bool => false !== strpos( (string) wp_json_encode( $res->get_data()['data'] ?? array() ), $token );
 		$guest = $this->rest( 'GET', '/search', array( 'q' => $token, 'type' => 'reply' ), 0 );
 		$this->check( 'PV1: reply search never returns a private reply to a guest', ! $found( $guest ) && 0 === (int) ( $guest->get_headers()['X-WP-Total'] ?? $guest->get_data()['meta']['total'] ?? 0 ), 'row or count leaked' );
 		$this->check( 'PV1: reply search still finds it for its author', $found( $this->rest( 'GET', '/search', array( 'q' => $token, 'type' => 'reply' ), $this->test_user_id ) ), 'author search empty' );
