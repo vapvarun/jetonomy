@@ -9,7 +9,7 @@
  * @var int        $total_pages
  * @var string     $search
  * @var int|string $filter_trust
- * @var array      $restrictions user_id => active restriction {id, type, space_id} (Restriction::active_rows_for_users()).
+ * @var array      $restrictions user_id => active restriction {id, user_id, type, space_id} (Restriction::active_rows_for_users()).
  * @var array      $space_titles space id => title, for the spaces named by a space ban.
  *
  * @package Jetonomy

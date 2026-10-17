@@ -171,7 +171,8 @@ class Notifications_Controller extends Base_Controller {
 	 * Ownership is enforced via Notification::delete_for_user(): the row must
 	 * match BOTH the id and the current user. A forged id from another user
 	 * silently affects zero rows — the response still 200s with deleted=0 so
-	 * the client can detect the no-op and refresh.
+	 * the client can detect the no-op and refresh. `counts` carries the fresh
+	 * filter-tab counts for the notifications page.
 	 */
 	public function delete_notification( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = $this->require_auth();
@@ -186,6 +187,7 @@ class Notifications_Controller extends Base_Controller {
 			array(
 				'success' => true,
 				'deleted' => $deleted,
+				'counts'  => Notification::counts_by_filter( $user_id ),
 			),
 			200
 		);
@@ -198,8 +200,9 @@ class Notifications_Controller extends Base_Controller {
 	 *
 	 * Both actions enforce ownership inside the model (WHERE user_id = %d) so
 	 * a forged id list can never affect another user's rows. The response
-	 * returns the number of rows actually changed so the client can update
-	 * counters without a follow-up GET.
+	 * returns the number of rows actually changed, plus the fresh filter-tab
+	 * counts (Notification::counts_by_filter), so the client can update the
+	 * tab and unread counters without a follow-up GET.
 	 */
 	public function bulk_action( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = $this->require_auth();
@@ -225,6 +228,7 @@ class Notifications_Controller extends Base_Controller {
 				'success'  => true,
 				'action'   => $action,
 				'affected' => $affected,
+				'counts'   => Notification::counts_by_filter( $user_id ),
 			),
 			200
 		);

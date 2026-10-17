@@ -386,7 +386,10 @@ abstract class Importer {
 	 * from ..." category is left behind).
 	 *
 	 * @param string $key         Map key for the category ('default', or a board key).
-	 * @param string $slug_prefix Slug prefix, e.g. 'imported-bbpress'. A timestamp is appended.
+	 * @param string $slug_prefix Category slug, e.g. 'imported-bbpress' (suffixed -1, -2
+	 *                            when taken). Pre-map imports appended a timestamp; the
+	 *                            prefix is what recognises their categories and spaces
+	 *                            (Import_Map::legacy_category(), match_legacy()).
 	 * @param array  $args        Category::create() args (name, description, ...).
 	 * @return int Category id.
 	 */
@@ -405,7 +408,7 @@ abstract class Importer {
 		if ( $cat_id ) {
 			++$this->adopted;
 		} else {
-			$cat_id = (int) Category::create( array_merge( $args, array( 'slug' => $slug_prefix . '-' . time() ) ) );
+			$cat_id = (int) Category::create( array_merge( $args, array( 'slug' => $slug_prefix ) ) );
 		}
 
 		$this->remember( 'category', $key, $cat_id );

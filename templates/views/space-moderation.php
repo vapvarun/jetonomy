@@ -94,6 +94,11 @@ $jt_held_total   = $jt_held_posts + $jt_held_replies;
 $jt_is_trash     = 'trash' === $jt_view;
 $jt_list_posts   = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'post', $space_id ) : $jt_held_posts;
 $jt_list_replies = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'reply', $space_id ) : $jt_held_replies;
+// With no tab chosen, open on the one that holds items: Topics empty while
+// Replies is not read as "nothing here".
+if ( ! isset( $_GET['kind'] ) && 0 === $jt_list_posts && $jt_list_replies > 0 ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$jt_kind = 'reply';
+}
 
 $jt_held_count = 'reply' === $jt_kind ? $jt_list_replies : $jt_list_posts;
 $jt_held_pages = max( 1, (int) ceil( $jt_held_count / $per_page ) );

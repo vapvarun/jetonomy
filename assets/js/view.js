@@ -52,14 +52,17 @@ function jetonomyConfirm( message, opts = {} ) {
 
 /**
  * Report dialog: a reason (the moderation queue's own list) plus optional
- * details. Resolves { reason, description }, or null when cancelled. A report
- * needs a reason; free text alone used to be filed as "Other", empty included.
+ * details. A report needs a reason; free text alone used to be filed as
+ * "Other", empty included. The dialog hands { reason, description } to
+ * `submit` and closes only when it resolves true, so a failed request keeps
+ * the chosen reason and typed details for another try.
  *
- * @param {string} message Dialog question.
- * @param {Object} labels  The store's i18n (state.i18n): reasons and button text.
- * @return {Promise<{reason:string,description:string}|null>}
+ * @param {string}   message Dialog question.
+ * @param {Object}   labels  The store's i18n (state.i18n): reasons and button text.
+ * @param {Function} submit  ( { reason, description } ) => Promise<boolean>.
+ * @return {Promise<true|null>} true once submitted, null when cancelled.
  */
-function jetonomyReport( message, labels ) {
+function jetonomyReport( message, labels, submit ) {
 	return new Promise( ( resolve ) => {
 		const t       = jtModalI18n();
 		const i18n    = labels || {};
@@ -128,7 +131,14 @@ function jetonomyReport( message, labels ) {
 				if ( first ) first.focus();
 				return;
 			}
-			close( { reason: picked.value, description: details.value.trim() } );
+			okBtn.disabled = true;
+			submit( { reason: picked.value, description: details.value.trim() } ).catch( () => false ).then( ( sent ) => {
+				if ( sent ) {
+					close( true );
+				} else {
+					okBtn.disabled = false;
+				}
+			} );
 		} );
 		list.addEventListener( 'change', () => { hint.textContent = ''; } );
 		actions.appendChild( cancelBtn );
@@ -141,6 +151,33 @@ function jetonomyReport( message, labels ) {
 		const first = list.querySelector( 'input' );
 		if ( first ) first.focus();
 	} );
+}
+
+/**
+ * File a report through POST /flags and toast the outcome.
+ *
+ * @param {string} objectType post | reply | user.
+ * @param {string} objectId   Reported object id.
+ * @param {Object} report     { reason, description } from jetonomyReport().
+ * @param {Object} i18n       The store's i18n (state.i18n).
+ * @return {Promise<boolean>} Whether the report was filed.
+ */
+async function jtSubmitFlag( objectType, objectId, report, i18n ) {
+	const t   = i18n || {};
+	const res = await window.jetonomyRest.restFetch( '/flags', {
+		method: 'POST',
+		body: { object_type: objectType, object_id: parseInt( objectId, 10 ), reason: report.reason, description: report.description },
+	} );
+	if ( window.bnToast ) {
+		if ( res.ok ) {
+			window.bnToast( t.reportedThankYou || 'Reported. Thank you.' );
+		} else if ( 0 === res.status ) {
+			window.bnToast( t.networkError || 'Network error. Please try again.', 'error' );
+		} else {
+			window.bnToast( ( res.data && res.data.message ) || t.failedReport || 'Failed to submit report.', 'error' );
+		}
+	}
+	return res.ok;
 }
 
 function jetonomyPrompt( message, options ) {
@@ -819,6 +856,24 @@ function notifMarkRowRead( row ) {
 function notifLowerUnreadBadges( by ) {
     // header.js owns the badge list; it is enqueued with the header that renders them.
     window.jtLowerUnreadBadges?.( by );
+}
+
+/**
+ * Show the server's filter-tab counts (counts_by_filter, returned by the
+ * delete and bulk routes) on the notifications page tabs after rows go away
+ * or are read. Unread goes through header.js so the bell and panel agree.
+ *
+ * @param {Object|undefined} counts { all, unread, mentions, replies, votes, badges }.
+ */
+function notifSetTabCounts( counts ) {
+    if ( ! counts || ! window.jtSetCountBadge ) return;
+    document.querySelectorAll( '[data-jt-notif-tab]' ).forEach( ( tab ) => {
+        const slug = tab.getAttribute( 'data-jt-notif-tab' );
+        if ( 'unread' !== slug && 'number' === typeof counts[ slug ] ) {
+            window.jtSetCountBadge( tab, 'jt-notif-tab__count', counts[ slug ] );
+        }
+    } );
+    window.jtSetUnreadBadges?.( counts.unread );
 }
 
 /** Refresh the notifications bulk toolbar count + visibility from current checks. */
@@ -1834,6 +1889,7 @@ const { state, actions } = store( 'jetonomy', {
             const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'DELETE' } );
             if ( res.ok ) {
                 row.remove();
+                notifSetTabCounts( res.data?.counts );
                 if ( ! document.querySelector( '[data-jt-notif-list] .jt-notif-item' ) ) {
                     window.location.reload(); // render the server empty state
                 }
@@ -1921,15 +1977,13 @@ const { state, actions } = store( 'jetonomy', {
             const res = yield window.jetonomyRest.restFetch( '/notifications/bulk', { method: 'POST', body: { action, ids } } );
             btn.disabled = false;
             if ( ! res.ok ) return;
-            let unreadTouched = 0;
             ids.forEach( ( id ) => {
                 const row = document.querySelector( '[data-jt-notif-list] .jt-notif-item[data-jt-notif-id="' + id + '"]' );
                 if ( ! row ) return;
-                if ( row.classList.contains( 'unread' ) ) unreadTouched++;
                 if ( 'delete' === action ) row.remove();
                 else notifMarkRowRead( row );
             } );
-            if ( unreadTouched ) notifLowerUnreadBadges( unreadTouched );
+            notifSetTabCounts( res.data?.counts );
             const selectAll = document.querySelector( '[data-jt-notif-selectall]' );
             if ( selectAll ) selectAll.checked = false;
             notifUpdateBulkbar();
@@ -2683,29 +2737,15 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
 
-            const report = yield jetonomyReport( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n );
-            if ( report === null ) return; // Cancelled
+            const sent = yield jetonomyReport( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n, ( report ) => jtSubmitFlag( 'post', postId, report, state.i18n ) );
+            if ( ! sent ) return; // Cancelled
 
-            try {
-                const res = yield window.jetonomyRest.restFetch( `/flags`, {
-                    method: 'POST',
-                    body: { object_type: 'post', object_id: parseInt( postId ), reason: report.reason, description: report.description },
-                } );
-                if ( res.ok ) {
-                    // Reflect "already reported" state inline so the next click
-                    // hits the short-circuit above without a page reload.
-                    el.ref.dataset.flagged = '1';
-                    el.ref.classList.add( 'is-flagged' );
-                    el.ref.title = state.i18n?.alreadyReported || 'You already reported this.';
-                    el.ref.setAttribute( 'aria-label', el.ref.title );
-                    if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
-                } else {
-                    const err = res.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
-                }
-            } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
-            }
+            // Reflect "already reported" state inline so the next click
+            // hits the short-circuit above without a page reload.
+            el.ref.dataset.flagged = '1';
+            el.ref.classList.add( 'is-flagged' );
+            el.ref.title = state.i18n?.alreadyReported || 'You already reported this.';
+            el.ref.setAttribute( 'aria-label', el.ref.title );
         },
 
         // ── Flag / report reply ──
@@ -2715,23 +2755,7 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = trigger.dataset.replyId;
             if ( ! replyId ) return;
 
-            const report = yield jetonomyReport( state.i18n?.reportReplyPrompt || 'Why are you reporting this reply?', state.i18n );
-            if ( report === null ) return; // Cancelled
-
-            try {
-                const res = yield window.jetonomyRest.restFetch( `/flags`, {
-                    method: 'POST',
-                    body: { object_type: 'reply', object_id: parseInt( replyId ), reason: report.reason, description: report.description },
-                } );
-                if ( res.ok ) {
-                    if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
-                } else {
-                    const err = res.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
-                }
-            } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
-            }
+            yield jetonomyReport( state.i18n?.reportReplyPrompt || 'Why are you reporting this reply?', state.i18n, ( report ) => jtSubmitFlag( 'reply', replyId, report, state.i18n ) );
         },
 
         // ── Message button for an in-page messenger (jetonomy_member_message_event) ──
@@ -2749,23 +2773,7 @@ const { state, actions } = store( 'jetonomy', {
             const userId = el.ref.dataset.userId;
             if ( ! userId ) return;
 
-            const report = yield jetonomyReport( state.i18n?.reportUserPrompt || 'Why are you reporting this user?', state.i18n );
-            if ( report === null ) return; // Cancelled
-
-            try {
-                const res = yield window.jetonomyRest.restFetch( `/flags`, {
-                    method: 'POST',
-                    body: { object_type: 'user', object_id: parseInt( userId ), reason: report.reason, description: report.description },
-                } );
-                if ( res.ok ) {
-                    if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
-                } else {
-                    const err = res.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
-                }
-            } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
-            }
+            yield jetonomyReport( state.i18n?.reportUserPrompt || 'Why are you reporting this user?', state.i18n, ( report ) => jtSubmitFlag( 'user', userId, report, state.i18n ) );
         },
 
         // ── Toggle "more" dropdown menu ──
@@ -3865,15 +3873,23 @@ const { state, actions } = store( 'jetonomy', {
             const from = card.getAttribute( 'data-object-status' );
             const res  = yield window.jetonomyRest.restFetch( path, 'POST' === method && from ? { method, body: { from } } : { method } );
             if ( ! res.ok ) {
-                // Re-enable rather than strand the row: the usual cause is another
-                // moderator having already handled it, and the message says so.
+                // Re-enable rather than strand the row. Only a 409/404 means another
+                // moderator already handled it; status 0 never reached the server.
                 buttons.forEach( ( b ) => { b.disabled = false; } );
                 const existing = card.querySelector( '.jt-mod-flag-error' );
                 if ( existing ) existing.remove();
                 const p = document.createElement( 'p' );
                 p.className = 'jt-mod-flag-error';
                 p.setAttribute( 'role', 'alert' );
-                p.textContent = ( res.data && res.data.message ) || i18n.approvalFailed || 'Could not update this submission. It may have been handled by another moderator.';
+                if ( 0 === res.status ) {
+                    p.textContent = i18n.networkErrorRetry || 'Network error. Please try again.';
+                } else if ( res.data && res.data.message ) {
+                    p.textContent = res.data.message;
+                } else if ( 409 === res.status || 404 === res.status ) {
+                    p.textContent = i18n.approvalFailed || 'Could not update this submission. It may have been handled by another moderator.';
+                } else {
+                    p.textContent = i18n.saveFailed || 'Could not save changes.';
+                }
                 card.appendChild( p );
                 return;
             }

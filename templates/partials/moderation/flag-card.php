@@ -94,8 +94,9 @@ $jt_fc_type = $jt_fc_is_user
 			</span>
 		<?php endif; ?>
 		<span class="jt-mod-flag-reporter">
-			<?php echo esc_html( $jt_fc_reporter ); ?>
 			<?php
+			/* translators: %s: reporter's display name */
+			echo esc_html( sprintf( __( 'Reported by %s', 'jetonomy' ), $jt_fc_reporter ) );
 			/* translators: %s: human-readable time difference. */
 			echo ' &middot; ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 			?>

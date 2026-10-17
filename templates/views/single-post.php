@@ -266,10 +266,12 @@ $user_post_vote = $user_id ? \Jetonomy\Models\Vote::get_user_vote( $user_id, 'po
 
 // Breadcrumb.
 $crumbs = array();
+// $category is find_visible(): a category hidden from this viewer is null, so
+// the crumb never links to a page they cannot open.
 if ( $category ) {
 	$crumbs[] = array(
 		'label' => $category->name,
-		'url'   => '',
+		'url'   => \Jetonomy\route_url( 'category', $category->slug ),
 	);
 }
 if ( $space ) {

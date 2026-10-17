@@ -93,4 +93,41 @@ class MemberUiAssetsTest extends WP_UnitTestCase {
 		$this->assertMatchesRegularExpression( '/\[ 401, 403, 404, 410 \]\.includes\( response\.status \) \) \{\s*return;/', $poll );
 		$this->assertMatchesRegularExpression( '/\} else \{\s*interval = Math\.min\( interval \* 2, MAX_INTERVAL \);\s*\}\s*\} catch/', $poll );
 	}
+
+	// 2.0.3 release walk.
+
+	/** The report dialog submits from inside and closes only on success, so a failed request keeps the reason and details. */
+	public function test_report_dialog_stays_open_with_inputs_when_the_request_fails(): void {
+		$js     = $this->src( 'assets/js/view.js' );
+		$dialog = substr( $js, strpos( $js, 'function jetonomyReport(' ), 6000 );
+		$this->assertStringContainsString( 'function jetonomyReport( message, labels, submit )', $dialog );
+		$this->assertMatchesRegularExpression( '/okBtn\.disabled = true;\s*submit\( \{ reason: picked\.value, description: details\.value\.trim\(\) \} \)/', $dialog );
+		$this->assertMatchesRegularExpression( '/if \( sent \) \{\s*close\( true \);\s*\} else \{\s*okBtn\.disabled = false;/', $dialog );
+		$this->assertStringNotContainsString( 'close( { reason:', $dialog, 'the dialog no longer closes before the request' );
+		foreach ( array( 'post', 'reply', 'user' ) as $type ) {
+			$this->assertStringContainsString( "jtSubmitFlag( '{$type}', ", $js );
+		}
+		$this->assertSame( 1, substr_count( $js, "restFetch( '/flags'" ), 'one report request path' );
+	}
+
+	/** Deleting or bulk-acting on notifications shows the server's fresh tab counts (All, Unread, type tabs). */
+	public function test_notification_tab_counts_follow_deletes(): void {
+		$js = $this->src( 'assets/js/view.js' );
+		$this->assertSame( 2, substr_count( $js, 'notifSetTabCounts( res.data?.counts );' ), 'single delete and bulk' );
+		$this->assertStringContainsString( "window.jtSetCountBadge( tab, 'jt-notif-tab__count', counts[ slug ] );", $js );
+		$this->assertStringContainsString( 'window.jtSetCountBadge = function (host, cls, count)', $this->src( 'assets/js/header.js' ) );
+	}
+
+	/** @covers-existing The bell's focus refresh reaches the page's Unread tab: it is one of the unread hosts. */
+	public function test_unread_refresh_updates_the_unread_tab(): void {
+		$this->assertStringContainsString( "'unread' === \$tab_slug ? 'data-jt-unread-host=\"jt-notif-tab__count\"'", $this->src( 'templates/views/notifications.php' ) );
+		$this->assertStringContainsString( "document.querySelectorAll('[data-jt-unread-host]')", $this->src( 'assets/js/header.js' ) );
+	}
+
+	/** Only a 409/404 blames another moderator; a request that never reached the server says so. */
+	public function test_approval_network_failure_is_not_blamed_on_another_moderator(): void {
+		$js = $this->src( 'assets/js/view.js' );
+		$this->assertMatchesRegularExpression( "/if \\( 0 === res\\.status \\) \\{\\s*p\\.textContent = i18n\\.networkErrorRetry/", $js );
+		$this->assertMatchesRegularExpression( "/\\} else if \\( 409 === res\\.status \\|\\| 404 === res\\.status \\) \\{\\s*p\\.textContent = i18n\\.approvalFailed/", $js );
+	}
 }

@@ -29,7 +29,8 @@ if ( empty( $token ) ) {
 	return;
 }
 
-$jt_confirmed = isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD']
+$jt_posted    = isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'];
+$jt_confirmed = $jt_posted
 	&& isset( $_POST['jt_invite_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['jt_invite_nonce'] ) ), 'jetonomy_accept_invite_' . $token );
 $result       = \Jetonomy\Models\InviteLink::accept( $token, get_current_user_id(), $jt_confirmed );
 
@@ -78,6 +79,9 @@ if ( is_wp_error( $result ) ) {
 if ( 'ready' === $result['status'] ) {
 	?>
 	<div class="jt-narrow jt-invite-landing">
+		<?php if ( $jt_posted ) : // A Join press whose nonce failed (stale tab, cached page): nothing was stored. ?>
+			<p class="jt-notice jt-notice-warning" role="alert"><?php esc_html_e( 'This page expired before you joined. Please try again.', 'jetonomy' ); ?></p>
+		<?php endif; ?>
 		<?php /* translators: %s: space title. */ ?>
 		<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong dir="auto">' . esc_html( (string) $result['space']->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
 		<?php if ( ! empty( $result['space']->description ) ) : ?>

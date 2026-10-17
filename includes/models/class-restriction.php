@@ -521,12 +521,12 @@ class Restriction extends Model {
 	}
 
 	/**
-	 * Map user IDs to their single most-severe active restriction row (id and
-	 * type), in one query: the same lookup as active_map_for_users(), with the
-	 * id a list needs to offer "Lift restriction".
+	 * Map user IDs to their single most-severe active restriction row, in one
+	 * query: the same lookup as active_map_for_users(), with the id a list needs
+	 * to offer "Lift restriction" and the user_id lift_error() judges.
 	 *
 	 * @param int[] $user_ids
-	 * @return array<int,object{id:int,type:string,space_id:int}>
+	 * @return array<int,object{id:int,user_id:int,type:string,space_id:int}>
 	 */
 	public static function active_rows_for_users( array $user_ids ): array {
 		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
@@ -554,6 +554,7 @@ class Restriction extends Model {
 			if ( ! isset( $map[ $uid ] ) ) {
 				$map[ $uid ] = (object) array(
 					'id'       => (int) $row->id,
+					'user_id'  => $uid,
 					'type'     => (string) $row->type,
 					'space_id' => (int) $row->space_id,
 				);

@@ -102,19 +102,26 @@
 	 */
 	window.jtSetUnreadBadges = function (count) {
 		document.querySelectorAll('[data-jt-unread-host]').forEach(function (host) {
-			var cls = host.getAttribute('data-jt-unread-host');
-			var badge = host.querySelector('.' + cls);
-			if (count > 0) {
-				if (!badge) {
-					badge = document.createElement('span');
-					badge.className = cls;
-					host.appendChild(badge);
-				}
-				badge.textContent = String(count);
-			} else if (badge) {
-				badge.remove();
-			}
+			window.jtSetCountBadge(host, host.getAttribute('data-jt-unread-host'), count);
 		});
+	};
+
+	/**
+	 * Show `count` in the `cls` badge inside `host`: added when it rose from
+	 * zero, removed at zero. view.js uses it for the notifications page tabs.
+	 */
+	window.jtSetCountBadge = function (host, cls, count) {
+		var badge = host.querySelector('.' + cls);
+		if (count > 0) {
+			if (!badge) {
+				badge = document.createElement('span');
+				badge.className = cls;
+				host.appendChild(badge);
+			}
+			badge.textContent = String(count);
+		} else if (badge) {
+			badge.remove();
+		}
 	};
 
 	// The count refreshes when the member comes back to the tab and after they

@@ -375,8 +375,10 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// Clamped here for every controller: a route that forgot to declare
 		// limit/offset args must still not take ?limit=0 (or -1, or 5000) as
 		// "the whole table" - the same 1..100 page as get_collection_params().
+		// `per_page` (the WordPress core name) is read when `limit` is not sent;
+		// /moderation/queue answered per_page=3 with 20 rows.
 		return array(
-			'limit'  => min( 100, max( 1, (int) ( $request->get_param( 'limit' ) ?? 20 ) ) ),
+			'limit'  => min( 100, max( 1, (int) ( $request->get_param( 'limit' ) ?? $request->get_param( 'per_page' ) ?? 20 ) ) ),
 			'offset' => max( 0, $after > 0 ? $after : $offset ),
 			'sort'   => $request->get_param( 'sort' ) ?? 'latest',
 			'after'  => $after,
