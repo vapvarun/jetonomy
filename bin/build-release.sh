@@ -254,6 +254,9 @@ Gruntfile.js
 .distignore
 .wp-env.json
 .playwright-mcp/
+# Playwright run output (test-results/.last-run.json shipped in a 2.0.3 test zip).
+test-results/
+playwright-report/
 /build/
 verify-*.png
 verify-*.jpg
