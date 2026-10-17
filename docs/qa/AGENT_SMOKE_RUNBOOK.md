@@ -37,7 +37,7 @@ Developer and QA use one command, `bin/self-qa.sh`: it prints the files with no 
 
 ## Global preconditions
 
-- Working directory: `/Users/varundubey/Local Sites/forums/app/public`
+- Working directory: `~/Local Sites/forums/app/public` (the Local site on the machine running the walk)
 - Site URL: `http://forums.local`
 - WP-CLI template: `wp --path="$WP_PATH" <cmd>`
 - Admin auto-login: `?autologin=1` on any front-end URL
@@ -90,7 +90,7 @@ Also emit a Basecamp draft for every failure using the template in the Failure p
 
 The 1.9.4 walk executed 70 rows and skipped 53. Most skips were not judgement
 calls, they were missing fixtures: *"no Q&A-typed space fixture set up this
-run"*, *"exact posts_per_page=1 scroll-to-load fixture"*, *"exact typeahead
+run"*, *"exact posts_per_page=1 Load More fixture"*, *"exact typeahead
 fixture"*. A walker cannot test accept-answer when no space on the site is a
 Q&A space.
 
@@ -317,7 +317,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 ### C.member.space-pagination
 **Covers:** templates/views/space.php, templates/partials/pagination.php, assets/js/pagination-frontend.js, assets/js/pagination-hydrator.js, templates/partials/feed-card.php
 **Verified:** pending - not walked since its Covers widened on 2026-10-16
-**What to verify:** on a space page, `posts_per_page` controls how many topics load initially; scroll-to-load reveals additional batches without doubling up on first load; the load-more behavior does not re-trigger until the user actually scrolls.
+**What to verify:** on a space page, `posts_per_page` controls how many topics load initially; each click on Load More adds exactly one more batch with no duplicates; nothing loads on scroll alone (loading is click-only by design, see the header of `assets/js/pagination-frontend.js`); the button disappears after the last page.
 
 ### C.member.profile-mobile-tabs
 **Covers:** templates/views/user-profile.php, templates/views/drafts.php
@@ -337,7 +337,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 ### C.mod.flag-resolution
 **Covers:** templates/partials/moderation/flag-card.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php
 **Verified:** pending - not walked since its Covers widened on 2026-10-16
-**What to verify:** a moderator sees flagged content with the flagging user's reason, can resolve the flag with an action (ignore / trash / spam / silence author), and the resolution is recorded and reflected on the reporter's side (the reporter gets a "A moderator reviewed your report" notification). Dismissing a report on a reply restores the author's reputation, as it does for topics. Anonymous authors stay anonymous on approval cards. The restriction-lifting button reads "Lift restriction". The per-space flag card shows the linked topic title and the start of the flagged text, so a moderator need not open each item.
+**What to verify:** a moderator sees flagged content with the flagging user's reason, can resolve the flag with an action (ignore / trash / spam / silence author), and the resolution is recorded and reflected on the reporter's side (the reporter's notification reads "Your report was reviewed. Thanks for helping keep the community healthy.", and the email subject is "[site] Your report was reviewed"). Dismissing a report on a reply restores the author's reputation, as it does for topics. Anonymous authors stay anonymous on approval cards. The restriction-lifting button reads "Lift restriction". The per-space flag card shows the linked topic title and the start of the flagged text, so a moderator need not open each item.
 
 ### C.admin.plugin-pages
 **Covers:** includes/admin/class-admin.php, includes/admin/views/*.php, assets/css/admin.css, assets/js/admin-common.js, assets/js/admin-confirm.js, assets/js/admin-content.js, assets/js/admin-dashboard.js, assets/js/admin-media-grid.js, assets/js/admin-nav-menus.js, assets/js/admin-replies.js, assets/js/admin-revisions.js, assets/js/admin-settings.js, assets/js/admin-tags.js, includes/admin/class-activity-list-table.php, includes/admin/class-revisions-list-table.php, includes/admin/ajax/class-content-handler.php, includes/admin/ajax/class-moderation-handler.php, includes/admin/ajax/class-tags-handler.php, includes/class-activity-tracker.php, includes/class-admin-bar.php, includes/class-nav-menus.php, includes/models/class-activity-log.php, includes/models/class-revision.php, pro:includes/extensions/white-label/*.php, pro:includes/extensions/analytics/views/*.php, pro:includes/extensions/custom-fields/views/*.php, pro:includes/extensions/private-messaging/views/*.php
@@ -424,7 +424,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 ### C.mod.space-moderation
 **Covers:** templates/views/space-moderation.php, includes/api/class-space-moderation-controller.php
 **Verified:** pending - new journey, not walked yet
-**What to verify:** A space moderator opens /community/s/{slug}/mod/, sees only that space's flags and pending items, can resolve flags, restrict a member and page through a long queue, and cannot see or act on another space. A plain member and a guest get no access, and a silenced member cannot moderate. Check 1440 and 390 widths.
+**What to verify:** A space moderator opens /community/s/{slug}/mod/, sees only that space's flags and pending items, can resolve flags and page through a long queue, and cannot see or act on another space. Space moderators handle content only: the page offers no way to restrict a member (space admins do that from the space's Members screen). A plain member and a guest get no access, and a silenced member cannot moderate. Check 1440 and 390 widths.
 
 ### C.member.block-user
 **Covers:** includes/api/class-blocks-controller.php, includes/models/class-blocked-user.php
@@ -551,7 +551,7 @@ Each row is a repro of a past bug that caused customer pain. These rows stay spe
 | ID | Bug | Fixture + assertion |
 |----|-----|---------------------|
 | D.rewrite-flush | 1.3.5 rewrite rules not flushed on activation | Clean reactivate; first `/community/s/<slug>/` request returns 200 |
-| D.ppg-stacking | IntersectionObserver loaded page 2 when trigger already visible | With `posts_per_page=1`, page loads 1 row; scroll triggers load of 1 more row, not 2 |
+| D.ppg-stacking | IntersectionObserver loaded page 2 when trigger already visible (scroll loading was removed; Load More is click-only) | With `posts_per_page=1`, page loads 1 row; scrolling to the bottom loads nothing; one Load More click adds 1 row, not 2 |
 | D.share-scroll-detach | Share dropdown stayed in place while page scrolled | After opening share dropdown, scrollBy(0, 200) removes the dropdown from DOM |
 | D.login-dark-follows-theme | **Inverted in 1.8.0 — read this before testing.** The original 1.x guard asserted the login block "stays light" in dark mode. That pinning WAS the bug: the block re-declared the token set instead of inheriting it, so a hand-written per-block rule in `jetonomy.css` held it light and it rendered a white card on a dark page (`assets/css/blocks.css:25-46`; free `CLAUDE.md` → CSS Token Rules → "Never declare tokens on `.jt-app`"). The parallel `--jtb-*` namespace was deleted and the block now inherits `--jt-*` from `:root`. | With `emulateMedia({ colorScheme: 'dark' })`, the login block background FOLLOWS dark mode — it must NOT stay light. Assert `.jt-login-block` computed `background-color` is the dark surface (tracks `--jt-bg`), and that `.jt-login-title` still contrasts it at ≥ 4.5:1 (measured ~11:1 on 1.9.4). Structurally, no rule anywhere in `assets/css/*.css` may pin `.jt-login-block` to a fixed background, and `blocks.css` must contain zero live `--jtb-*` declarations (the only two matches are historical comments). |
 | D.profile-tabs-clipped | Profile tabs fell off-screen at 390px | At 390px on /community/u/admin/drafts/, the active Drafts tab is scrolled into view |
@@ -619,7 +619,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 ### E.reactions
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, assets/js/view.js, pro:includes/extensions/reactions/*.php, pro:assets/js/pro-view.js
 **Verified:** pending - not walked since its Covers widened on 2026-10-16
-**What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; the reactor's avatar appears in the hover-card listing reactors. Removing must work on a reaction you just added, *without reloading the page* - that chip is built in JS and is exactly the one a person is most likely to click again to undo.
+**What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; hovering, focusing (Tab) or long-pressing a reaction shows who chose it ("Like: Maya, Bob and 3 others", up to 10 names), Escape closes it, a quick tap still toggles, and the list refreshes after you react. Removing must work on a reaction you just added, *without reloading the page* - that chip is built in JS and is exactly the one a person is most likely to click again to undo.
 
 ### E.analytics
 **Covers:** includes/admin/views/dashboard.php, pro:includes/extensions/analytics/*.php, pro:includes/extensions/analytics/views/*.php, pro:assets/js/admin-analytics.js
