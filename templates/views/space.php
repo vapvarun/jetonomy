@@ -81,15 +81,16 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		// space answers 404 to guests before this template runs
 		// (Space::concealed_from_viewer), so its existence is never confirmed
 		$gate_message = 'invite' === $_jt_join_policy
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			? sprintf( __( 'This %s is private and invite-only. Log in if you have an invitation.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			: sprintf( __( 'This %s is private. Log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+			/* translators: %s: space title. */
+			? sprintf( __( '%s is private and invite-only. Log in if you have an invitation.', 'jetonomy' ), $space->title )
+			/* translators: %s: space title. */
+			: sprintf( __( '%s is private. Log in to request access.', 'jetonomy' ), $space->title );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(
 				'icon'            => 'lock',
 				'message'         => $gate_message,
+				'description'     => $_jt_gate_about,
 				'cta_label'       => __( 'Log In', 'jetonomy' ),
 				'cta_url'         => wp_login_url( \Jetonomy\current_url() ),
 				'secondary_label' => get_option( 'users_can_register' ) ? __( 'Register', 'jetonomy' ) : '',

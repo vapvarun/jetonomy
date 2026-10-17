@@ -67,20 +67,11 @@ if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true 
 	// hit "private space" opening the very post they wrote (2026-08-06).
 	if ( ! $user_id || ! \Jetonomy\Models\Space::admitted( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			// A hidden space is not discoverable, so its topics answer exactly
-			// like a missing one: a different message confirmed a guessed URL.
-			if ( 'hidden' === $space->visibility ) {
-				$jt_not_found();
-				return;
-			}
-			\Jetonomy\Template_Loader::partial(
-				'empty-state',
-				array(
-					/* translators: %s: singular space label. */
-					'message' => sprintf( __( 'This content is in a private %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-					'tone'    => 'forbidden',
-				)
-			);
+			// A topic the viewer may not read answers exactly like a missing one,
+			// hidden or listed private space alike: its title is never listed, so
+			// a different message would confirm a guessed URL. The space page is
+			// where a listed private space explains itself.
+			$jt_not_found();
 			return;
 		}
 	}
