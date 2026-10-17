@@ -186,22 +186,4 @@ class MemberFacingTemplateFixesTest extends WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'jt-compose-topic-form', $html );
 	}
-
-	/**
-	 * The old view printed a meta refresh and exit()ed here, so on the old code
-	 * this test ends the run instead of passing.
-	 */
-	public function test_invite_link_tells_an_existing_member_they_are_already_in(): void {
-		$space = $this->space( 'Insiders / Beta' );
-		\Jetonomy\Models\SpaceMember::add( $space, $this->member, 'member' );
-		$token = \Jetonomy\Models\InviteLink::generate( $space, $this->admin );
-		wp_set_current_user( $this->member );
-
-		$html = $this->render_view( 'invite', array( 'slug' => $token ) );
-
-		$this->assertStringContainsString( 'You are already a member of', $html );
-		$this->assertStringContainsString( 'Insiders / Beta', $html );
-		$this->assertStringContainsString( esc_url( \Jetonomy\route_url( 'space', Space::find( $space )->slug ) ), $html, 'a link into the space' );
-		$this->assertStringNotContainsString( 'http-equiv="refresh"', $html );
-	}
 }

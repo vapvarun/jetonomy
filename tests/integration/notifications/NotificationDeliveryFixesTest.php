@@ -109,7 +109,7 @@ class NotificationDeliveryFixesTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'You were mentioned by Bob Martinez', $mail[0]['subject'] );
 	}
 
-	// Item 1: the new-topic email names the space.
+	/** @covers-existing 2.0.2 named the space; a 2.0.3 change blanked it before release, so this pins the released behaviour. */
 	public function test_new_topic_email_subject_names_the_space(): void {
 		Subscription::subscribe( $this->maya, 'space', $this->space );
 		$topic = $this->topic( $this->bob );
