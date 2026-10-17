@@ -206,10 +206,9 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$post_id = absint( $request->get_param( 'post_id' ) );
-		$post    = Post::find( $post_id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post    = $this->find_unconcealed_post( $post_id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$space_id = (int) $post->space_id;
@@ -240,7 +239,7 @@ class Replies_Controller extends Base_Controller {
 			// Rate_Limiter::message() names the allowance and the real wait.
 			// A bare "Rate limit exceeded. Please try again later." would not tell a member
 			// whether "later" means a minute or a day.
-			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_replies', $trust ) );
+			return \Jetonomy\Permissions\Rate_Limiter::error( $user_id, 'create_replies', $trust );
 		}
 
 		// CAPTCHA verification (skipped for trust level 2+ users and admins).
@@ -398,13 +397,14 @@ class Replies_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
-			return $this->permission_error();
+		// Unreadable answers like missing, as GET /posts/{id} does: a 403, or the
+		// thread's private-reply placeholder with its author and date, would
+		// confirm the reply exists.
+		$viewer = get_current_user_id();
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( $viewer, $post )
+			|| ! \Jetonomy\Permissions\Permission_Engine::can_read_reply( $viewer, $reply, $post ) ) {
+			return $this->not_found( 'Reply' );
 		}
-
-		// Same placeholder the thread shows; cloned so the cached row keeps its body.
-		$reply = clone $reply;
-		Reply::apply_private_tombstone( $reply, $post, get_current_user_id() );
 
 		$enriched = $this->enrich_with_author( array( $reply ) );
 
@@ -421,16 +421,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$id    = absint( $request->get_param( 'id' ) );
-		$reply = Reply::find( $id );
-
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found = $this->find_unconcealed_reply( $id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		$space_id  = (int) $post->space_id;
 		$is_author = (int) $reply->author_id === $user_id;
@@ -445,6 +440,11 @@ class Replies_Controller extends Base_Controller {
 		// Trashed content is restored or purged, not edited in place.
 		if ( 'trash' === ( $reply->status ?? '' ) ) {
 			return $this->already_trashed_error();
+		}
+
+		$conflict = $this->edit_conflict( $request, $reply, Reply::EDIT_FIELDS, 'reply' );
+		if ( $conflict ) {
+			return $conflict;
 		}
 
 		// Privacy toggle (1.9.0): same author-or-editor gate as content edits.
@@ -560,16 +560,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$id    = absint( $request->get_param( 'id' ) );
-		$reply = Reply::find( $id );
-
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found = $this->find_unconcealed_reply( $id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		$space_id  = (int) $post->space_id;
 		$is_author = (int) $reply->author_id === $user_id;
@@ -652,16 +647,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$id    = absint( $request->get_param( 'id' ) );
-		$reply = Reply::find( $id );
-
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found = $this->find_unconcealed_reply( $id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		$space_id       = (int) $post->space_id;
 		$post_author_id = (int) $post->author_id;
@@ -702,15 +692,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$id    = absint( $request->get_param( 'id' ) );
-		$reply = Reply::find( $id );
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found = $this->find_unconcealed_reply( $id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		$space_id       = (int) $post->space_id;
 		$post_author_id = (int) $post->author_id;
@@ -744,16 +730,11 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$reply_id = absint( $request->get_param( 'id' ) );
-		$reply    = \Jetonomy\Models\Reply::find( $reply_id );
-
-		if ( ! $reply ) {
-			return $this->not_found( 'Reply' );
+		$found    = $this->find_unconcealed_reply( $reply_id );
+		if ( is_wp_error( $found ) ) {
+			return $found;
 		}
-
-		$post = \Jetonomy\Models\Post::find( (int) $reply->post_id );
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
-		}
+		[ $reply, $post ] = $found;
 
 		// Require moderator permission.
 		if ( ! $this->check_permission( 'move_posts', (int) $post->space_id ) ) {
@@ -850,6 +831,8 @@ class Replies_Controller extends Base_Controller {
 			$profile_url   = $display['url'];
 		}
 
+		$author_last_seen = UserProfile::last_seen_for_viewer( $author_id, $reply->author_last_seen_at ?? null );
+
 		$data = array(
 			'id'                      => (int) $reply->id,
 			'post_id'                 => (int) $reply->post_id,
@@ -862,6 +845,8 @@ class Replies_Controller extends Base_Controller {
 			'vote_score'              => (int) ( $reply->vote_score ?? 0 ),
 			'edited_at'               => $reply->edited_at ?? null,
 			'edited_by'               => $reply->edited_by ? (int) $reply->edited_by : null,
+			// Send back as edit_token on PATCH.
+			'edit_token'              => isset( $reply->content ) ? Reply::edit_token( $reply, Reply::EDIT_FIELDS ) : null,
 			'created_at'              => $reply->created_at ?? null,
 			// Aliased from created_at since jt_replies has no separate published_at column.
 			'published_at'            => $reply->created_at ?? null,
@@ -873,8 +858,8 @@ class Replies_Controller extends Base_Controller {
 			'author_name'             => $author_name,
 			'author_avatar'           => $author_avatar,
 			'author_login'            => $author_login,
-			'author_last_seen_at'     => $reply->author_last_seen_at ?? null,
-			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $reply->author_last_seen_at ?? null ),
+			'author_last_seen_at'     => $author_last_seen,
+			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $author_last_seen ),
 			'trust_level'             => $trust_level,
 			'reputation'              => $reputation,
 			'time_ago'                => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
@@ -992,6 +977,11 @@ class Replies_Controller extends Base_Controller {
 			'content'      => array(
 				'type'     => 'string',
 				'required' => false,
+			),
+			'edit_token'   => array(
+				'type'        => 'string',
+				'required'    => false,
+				'description' => 'The edit_token this reply had when the edit form loaded. A save after someone else changed it is refused with 409 jetonomy_edit_conflict.',
 			),
 			'published_at' => array(
 				'type'              => 'string',

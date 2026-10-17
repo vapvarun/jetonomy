@@ -73,8 +73,9 @@ class Updates_Controller extends Base_Controller {
 			if ( ! $post ) {
 				return $this->not_found( 'Post' );
 			}
+			// Unreadable answers like missing, so polling cannot probe for topics.
 			if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
-				return $this->permission_error();
+				return $this->not_found( 'Post' );
 			}
 		} else {
 			$user_id = $this->require_auth();

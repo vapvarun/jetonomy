@@ -58,7 +58,7 @@ $jt_is_masked = (int) $display['id'] !== (int) $reply->author_id;
 $profile      = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
 $trust        = $profile ? (int) $profile->trust_level : 0;
 $time_ago     = human_time_diff( strtotime( $reply->created_at ), time() );
-$is_op        = (int) $reply->author_id === (int) $post->author_id;
+$is_op        = (int) $reply->author_id > 0 && (int) $reply->author_id === (int) $post->author_id; // Two deleted accounts (author 0) are not one person.
 $is_accepted  = (int) $reply->is_accepted;
 
 $jt_reply_viewer = get_current_user_id();
@@ -76,6 +76,16 @@ $jt_rp_can_split = $jt_reply_viewer && $jt_rp_pe::can( $jt_reply_viewer, 'move_p
 // unpublished topic takes no votes, replies, quotes, reports, accepts or
 // reactions - Content_Gate answers all of them with a 409.
 $jt_thread_live = 'publish' === ( $post->status ?? 'publish' ) && 'publish' === ( $reply->status ?? 'publish' );
+
+// Reply and Quote fill the composer under the thread, so they show only when
+// single-post.php renders it: the viewer may reply in this space, the space is
+// not archived or locked, and the topic is open or they moderate it. Otherwise
+// the buttons did nothing.
+$jt_card_viewer = get_current_user_id();
+$jt_can_reply   = $jt_thread_live && $jt_card_viewer
+	&& true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $post->space_id )
+	&& \Jetonomy\Permissions\Permission_Engine::can( $jt_card_viewer, 'create_replies', (int) $post->space_id )
+	&& ( empty( $post->is_closed ) || \Jetonomy\Permissions\Permission_Engine::can( $jt_card_viewer, 'moderate', (int) $post->space_id ) );
 
 // Shareable permalink for THIS reply — the affordance that makes a reply a
 // linkable thing rather than something only a notification can reach. The
@@ -177,7 +187,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			?>
 		</a>
 	<?php endif; ?>
-	<div class="jt-reply-body">
+	<div class="jt-reply-body" dir="auto">
 		<?php
 		// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
 		// Embeds first so standalone URLs (including `tiktok.com/@user/video/...`)
@@ -222,7 +232,8 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		<?php if ( jetonomy_space_allows_voting( $space ?? null ) ) : ?>
 		<div class="jt-vote-cluster" role="group" aria-label="<?php printf( /* translators: %s: the singular label of the item (the configured noun). */ esc_attr__( 'Vote on this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>">
 			<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
-			<?php if ( $jt_thread_live && jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
+			<?php $jt_own_reply = $reply_viewer_id && (int) $reply->author_id === $reply_viewer_id; // Your own reply takes no vote. ?>
+			<?php if ( $jt_thread_live && ! $jt_own_reply && jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
 			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyUp"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -230,17 +241,11 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				<?php echo jetonomy_vote_attrs( 'up', 1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</button>
-				<?php
-				// Hide downvote on own replies — self-downvote was landing at
-				// -1.
-				if ( (int) $reply->author_id !== get_current_user_id() ) :
-					?>
 			<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyDown"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				aria-pressed="<?php echo -1 === $reply_viewer_vote ? 'true' : 'false'; ?>"
-					<?php echo jetonomy_vote_attrs( 'down', -1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
-				<?php endif; ?>
+				<?php echo jetonomy_vote_attrs( 'down', -1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<?php
 				// Logged-out: reply votes were clickable buttons that silently
@@ -254,11 +259,11 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</a>
 			<?php else : ?>
-				<?php jetonomy_vote_denied_control( (int) $reply->vote_score, 14 ); ?>
+				<?php jetonomy_vote_denied_control( (int) $reply->vote_score, 14, $space ?? null, $jt_own_reply ); ?>
 			<?php endif; ?>
 		</div>
 		<?php endif; ?>
-		<?php if ( $jt_thread_live && is_user_logged_in() ) : ?>
+		<?php if ( $jt_can_reply ) : ?>
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -289,7 +294,8 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 					<?php if ( $jt_rp_can_edit ) : ?>
 					<button class="jt-more-item"
 						data-wp-on--click="actions.editReply"
-						data-reply-id="<?php echo (int) $reply->id; ?>">
+						data-reply-id="<?php echo (int) $reply->id; ?>"
+						data-edit-token="<?php echo esc_attr( \Jetonomy\Models\Reply::edit_token( $reply, \Jetonomy\Models\Reply::EDIT_FIELDS ) ); ?>">
 						<?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 					</button>
 					<button class="jt-more-item"

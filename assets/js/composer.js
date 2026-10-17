@@ -588,8 +588,12 @@ document.addEventListener( 'DOMContentLoaded', () => {
             // and concatenating it into innerHTML ran it in the quoter's session.
             var quote = document.createElement('blockquote');
             quote.className = 'jt-quote';
+            quote.dir = 'auto';
             if (authorName) {
                 var cite = document.createElement('cite');
+                // Own dir: the quote's dir="auto" then resolves from the quoted
+                // text, not the author's name.
+                cite.dir = 'auto';
                 cite.textContent = authorName;
                 quote.appendChild(cite);
             }
@@ -808,11 +812,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 window.location.reload();
             } else if (res.data && res.data.status === 'pending') {
                 // The server filed a request (a page cached before the space
-                // went private): show it rather than silently resetting.
-                btn.textContent = wp.i18n.__( 'Awaiting Approval', 'jetonomy' );
-                btn.classList.remove('jt-btn-fill');
-                btn.classList.add('jt-btn-outline');
-                (window.bnToast ? window.bnToast(res.data.message || wp.i18n.__( 'Request submitted. Awaiting approval.', 'jetonomy' ), 'success') : null);
+                // went private): reload into its pending state (message + Withdraw).
+                window.location.reload();
             } else {
                 btn.disabled = false;
                 btn.textContent = label;
@@ -852,11 +853,9 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             var data = res.data || {};
             if (data.status === 'pending') {
-                btn.disabled = true;
-                btn.textContent = wp.i18n.__( 'Awaiting Approval', 'jetonomy' );
-                btn.classList.remove('jt-btn-fill');
-                btn.classList.add('jt-btn-outline');
-                (window.bnToast ? window.bnToast(data.message || wp.i18n.__( 'Request submitted. Awaiting approval.', 'jetonomy' ), 'success') : null);
+                // Reload into the server's pending state (message + Withdraw),
+                // the same as the gate form below.
+                window.location.reload();
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
@@ -868,7 +867,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         });
     });
 
-    // Withdraw a pending join request (gate page).
+    // Withdraw a pending join request (private gate page and public space header).
     document.addEventListener('click', function(e) {
         var btn = e.target.closest('.jt-withdraw-request-btn');
         if (!btn) return;
@@ -1007,11 +1006,21 @@ document.addEventListener( 'DOMContentLoaded', () => {
             row.setAttribute( 'role', 'option' );
             row.dataset.index = String( i );
 
-            var img = document.createElement( 'img' );
-            img.className = 'jt-mention-avatar';
-            img.alt = '';
-            img.src = m.avatar_url;
-            row.appendChild( img );
+            // '' means the member has no real avatar: an <img src=""> would load
+            // the page URL and show a broken image, so draw initials as the
+            // rest of the app does (templates/partials/avatar.php).
+            var avatar;
+            if ( m.avatar_url ) {
+                avatar = document.createElement( 'img' );
+                avatar.alt = '';
+                avatar.src = m.avatar_url;
+            } else {
+                avatar = document.createElement( 'span' );
+                avatar.setAttribute( 'aria-hidden', 'true' );
+                avatar.textContent = Array.from( m.display_name || m.handle || m.login || '?' ).slice( 0, 2 ).join( '' ).toUpperCase();
+            }
+            avatar.className = 'jt-avatar jt-mention-avatar';
+            row.appendChild( avatar );
 
             var name = document.createElement( 'span' );
             name.className = 'jt-mention-name';
@@ -1081,10 +1090,14 @@ document.addEventListener( 'DOMContentLoaded', () => {
         var after  = node.textContent.slice( caret );
         var stripped = before.replace( /@[a-zA-Z0-9_\-\.]{0,30}$/, '' );
         // Insert the HANDLE (user_nicename), which is what the server
-            // resolves. Falls back to login only for an older API response.
-            var pickHandle = pick.handle || pick.login;
-            node.textContent = stripped + '@' + pickHandle + ' ' + after;
-        var newOffset = stripped.length + ( '@' + pickHandle + ' ' ).length;
+        // resolves. Falls back to login only for an older API response.
+        var pickHandle = pick.handle || pick.login;
+        // A no-break space: a plain trailing space at the end of an editable
+        // line is collapsed, the caret snaps back before it, and the next word
+        // typed glued onto the handle ("@gracecould"), which no longer resolves.
+        var inserted = '@' + pickHandle + '\u00a0';
+        node.textContent = stripped + inserted + after.replace( /^ /, '' );
+        var newOffset = stripped.length + inserted.length;
         var newRange = document.createRange();
         newRange.setStart( node, newOffset );
         newRange.setEnd( node, newOffset );
@@ -1166,4 +1179,35 @@ document.addEventListener( 'DOMContentLoaded', () => {
     document.addEventListener( 'DOMContentLoaded', attachUnsavedGuard );
     document.addEventListener( 'jetonomy:navigated', attachUnsavedGuard );
     if ( document.readyState !== 'loading' ) { attachUnsavedGuard(); }
+}() );
+
+/**
+ * Title length feedback. The title input stops at its maxlength (255), which
+ * read as a broken field; within the last 30 characters say how many are left.
+ * Delegated, so it also covers composers that arrive by client navigation.
+ */
+( function () {
+    var WARN_AT = 30;
+    document.addEventListener( 'input', function ( e ) {
+        var input = e.target;
+        if ( ! input || ! input.matches || ! input.matches( '.jt-compose-topic-title' ) ) { return; }
+        var hint = document.getElementById( input.getAttribute( 'aria-describedby' ) || '' );
+        var max  = parseInt( input.getAttribute( 'maxlength' ), 10 );
+        if ( ! hint || ! max ) { return; }
+        var left = max - input.value.length;
+        hint.hidden = left > WARN_AT;
+        if ( left > 0 ) {
+            hint.textContent = wp.i18n.sprintf(
+                /* translators: %d: number of characters still allowed in the title. */
+                wp.i18n._n( '%d character left', '%d characters left', left, 'jetonomy' ),
+                left
+            );
+        } else {
+            hint.textContent = wp.i18n.sprintf(
+                /* translators: %d: maximum title length in characters. */
+                wp.i18n.__( 'Titles can be up to %d characters.', 'jetonomy' ),
+                max
+            );
+        }
+    } );
 }() );

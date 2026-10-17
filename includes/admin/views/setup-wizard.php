@@ -103,12 +103,13 @@ wp_head();
 
 		<div class="jt-form-group">
 			<label for="jt-base-slug"><?php esc_html_e( 'Community URL Slug', 'jetonomy' ); ?></label>
-			<input type="text" id="jt-base-slug" value="<?php echo esc_attr( $base_slug ); ?>" placeholder="community">
+			<input type="text" id="jt-base-slug" dir="ltr" value="<?php echo esc_attr( $base_slug ); ?>" placeholder="community">
 			<div class="jt-url-preview" id="jt-url-preview">
 				<span class="jt-url-preview__icon">
 					<?php jetonomy_echo_icon( 'link', 14 ); ?>
 				</span>
-				<span class="jt-url-preview__url">
+				<?php // dir="ltr" isolates the URL so an RTL admin does not reorder its slashes. ?>
+				<span class="jt-url-preview__url" dir="ltr">
 					<span id="jt-url-base"><?php echo esc_html( $site_url ); ?></span><span class="jt-url-preview__slug" id="jt-url-slug"><?php echo esc_html( $base_slug ); ?></span><span>/</span>
 				</span>
 			</div>

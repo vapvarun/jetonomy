@@ -155,6 +155,10 @@
 		if (typeof body !== 'undefined' && method !== 'GET' && method !== 'HEAD') {
 			init.body = body;
 		}
+		// Lets a request outlive the page, e.g. marking a notice read as its link opens.
+		if (opts.keepalive) {
+			init.keepalive = true;
+		}
 
 		var url = buildUrl(path);
 

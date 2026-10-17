@@ -464,6 +464,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	line-height: 1.35;
 }
 .jt-login-message:empty { display: none; }
+/* Focused from script so the result is announced and keyboard users land on it; it is not a control. */
+.jt-login-message:focus { outline: none; }
 .jt-login-message.is-success {
 	color: color-mix(in srgb, #16a34a 80%, var(--jt-text));
 }
@@ -1190,6 +1192,18 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	color: var(--jt-text-tertiary, #6b7280);
 	font-size: 0.8125rem;
 	margin-top: 0.25rem;
+}
+
+/* Why a member cannot post here (silenced, banned), in place of the form. */
+.jt-compose-topic-restricted {
+	margin: 0;
+	padding: var(--jt-space-3) var(--jt-space-4);
+	border-inline-start: 3px solid var(--jt-warn);
+	border-radius: var(--jt-radius);
+	background: var(--jt-warn-light);
+	color: var(--jt-warn-strong);
+	font-size: 0.9375rem;
+	line-height: 1.5;
 }
 
 /* Secondary actions an extension adds inside the embed (Pro's "Add Poll")

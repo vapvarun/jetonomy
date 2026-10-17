@@ -41,6 +41,7 @@
 
 	/* ── Notification Dropdown ── */
 	var notifLoaded = false;
+	var markFailed = __( 'Could not mark notifications as read. Check your connection and try again.', 'jetonomy' );
 	window.jtToggleNotifDropdown = function (btn) {
 		var wrap = btn.closest('.jt-notif-dropdown-wrap');
 		var panel = wrap.querySelector('.jt-notif-panel');
@@ -70,6 +71,7 @@
 					if (n.id) { a.setAttribute('data-jt-notif-id', n.id); }
 					var txt = document.createElement('span');
 					txt.className = 'jt-notif-panel-text';
+					txt.dir = 'auto';
 					txt.textContent = n.message || '';
 					a.appendChild(txt);
 					var time = document.createElement('span');
@@ -82,33 +84,99 @@
 		}
 	};
 
-	window.jtMarkAllRead = function () {
-		window.jetonomyRest.restFetch('/notifications/mark-all-read', {
-			method: 'POST'
-		}).then(function () {
-			var badge = document.querySelector('.jt-community-nav-badge');
-			if (badge) { badge.remove(); }
-			document.querySelectorAll('.jt-notif-panel-item.unread').forEach(function (i) {
-				i.classList.remove('unread');
-			});
+	/**
+	 * Lower every unread-count badge by `by`, or clear them all when `by` is null:
+	 * the desktop bell, the mobile Alerts tab, the user panel and the Unread tab.
+	 * The one place that knows where the count is shown; view.js calls it too.
+	 */
+	window.jtLowerUnreadBadges = function (by) {
+		document.querySelectorAll('.jt-community-nav-badge, .jt-mobile-tab-badge, .jt-userpanel-badge, [data-jt-notif-tab="unread"] .jt-notif-tab__count').forEach(function (badge) {
+			var next = null === by ? 0 : (parseInt(badge.textContent.replace(/\D/g, ''), 10) || 0) - by;
+			if (next > 0) { badge.textContent = String(next); } else { badge.remove(); }
 		});
 	};
 
+	/**
+	 * Show the server's unread count on every badge, adding a badge to its host
+	 * ([data-jt-unread-host] names the badge class) when the count rose from zero.
+	 */
+	window.jtSetUnreadBadges = function (count) {
+		document.querySelectorAll('[data-jt-unread-host]').forEach(function (host) {
+			window.jtSetCountBadge(host, host.getAttribute('data-jt-unread-host'), count);
+		});
+	};
+
+	/**
+	 * Show `count` in the `cls` badge inside `host`: added when it rose from
+	 * zero, removed at zero. view.js uses it for the notifications page tabs.
+	 */
+	window.jtSetCountBadge = function (host, cls, count) {
+		var badge = host.querySelector('.' + cls);
+		if (count > 0) {
+			if (!badge) {
+				badge = document.createElement('span');
+				badge.className = cls;
+				host.appendChild(badge);
+			}
+			badge.textContent = String(count);
+		} else if (badge) {
+			badge.remove();
+		}
+	};
+
+	// The count refreshes when the member comes back to the tab and after they
+	// mark things read: never on a timer (no idle polling).
+	var countInFlight = false;
+	window.jtRefreshUnreadCount = function () {
+		if (!D.isLoggedIn || countInFlight || !document.querySelector('[data-jt-unread-host]')) { return; }
+		countInFlight = true;
+		// The route allows a 15s browser cache; a fresh read must skip it.
+		window.jetonomyRest.restFetch('/notifications/unread-count?fresh=' + Date.now()).then(function (res) {
+			countInFlight = false;
+			if (res.ok && res.data && 'number' === typeof res.data.count) {
+				window.jtSetUnreadBadges(res.data.count);
+				notifLoaded = false; // The dropdown reloads its list on next open.
+			}
+		});
+	};
+	document.addEventListener('visibilitychange', function () {
+		if ('visible' === document.visibilityState) { window.jtRefreshUnreadCount(); }
+	});
+	window.addEventListener('focus', window.jtRefreshUnreadCount);
+
+	window.jtMarkAllRead = function () {
+		window.jetonomyRest.restFetch('/notifications/mark-all-read', {
+			method: 'POST'
+		}).then(function (res) {
+			if (!res.ok) {
+				window.bnToast(markFailed, 'error');
+				return;
+			}
+			window.jtLowerUnreadBadges(null);
+			document.querySelectorAll('.jt-notif-panel-item.unread').forEach(function (i) {
+				i.classList.remove('unread');
+			});
+			window.jtRefreshUnreadCount();
+		});
+	};
+
+	// Opening an unread notice (bell dropdown or the notifications page) marks
+	// it read. keepalive lets the request finish while the link navigates away.
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
-		var item = e.target.closest('.jt-notif-panel-item.unread');
+		var item = e.target.closest('.jt-notif-panel-item.unread, .jt-notif-item.unread .jt-notif-item__link');
 		if (!item) { return; }
-		var id = item.getAttribute('data-jt-notif-id');
+		var row = item.closest('.jt-notif-item') || item;
+		var id = row.getAttribute('data-jt-notif-id');
 		if (!id) { return; }
-		item.classList.remove('unread');
+		row.classList.remove('unread');
+		var dot = row.querySelector('.jt-notif-dot');
+		if (dot) { dot.remove(); }
 		window.jetonomyRest.restFetch('/notifications/' + encodeURIComponent(id), {
-			method: 'PATCH'
+			method: 'PATCH',
+			keepalive: true
 		});
-		var badge = document.querySelector('.jt-community-nav-badge');
-		if (badge) {
-			var next = parseInt(badge.textContent, 10) - 1;
-			if (next > 0) { badge.textContent = String(next); } else { badge.remove(); }
-		}
+		window.jtLowerUnreadBadges(1);
 	});
 
 	document.addEventListener('click', function (e) {
@@ -163,6 +231,7 @@
 		var input = document.createElement('input');
 		input.type = 'text';
 		input.className = 'jt-search-overlay-input';
+		input.dir = 'auto';
 		input.placeholder = __( 'Search discussions…', 'jetonomy' );
 		input.autocomplete = 'off';
 		field.appendChild(input);
@@ -176,6 +245,10 @@
 		inner.appendChild(results);
 		searchEl.appendChild(inner);
 		document.body.appendChild(searchEl);
+
+		function searchPageUrl(query) {
+			return ((D && D.base) || '') + '/search/?q=' + encodeURIComponent(query || '');
+		}
 
 		input.addEventListener('input', function () {
 			clearTimeout(searchTimer);
@@ -200,7 +273,7 @@
 				if (r && r.slug && r.space_id === undefined) {
 					return base + '/tag/' + encodeURIComponent(r.slug) + '/';
 				}
-				return base + '/search/?q=' + encodeURIComponent(query || '');
+				return searchPageUrl(query);
 			}
 
 			searchTimer = setTimeout(function () {
@@ -228,6 +301,7 @@
 						a.href = searchResultUrl(r, q);
 						a.className = 'jt-search-overlay-item';
 						var strong = document.createElement('strong');
+						strong.dir = 'auto';
 						strong.textContent = r.title;
 						a.appendChild(strong);
 						if (r.space_title) {
@@ -237,12 +311,25 @@
 						}
 						results.appendChild(a);
 					});
+					// Six hits is a preview; the search page has the rest plus filters.
+					var all = document.createElement('a');
+					all.href = searchPageUrl(q);
+					all.className = 'jt-search-overlay-all';
+					all.textContent = __( 'See all results', 'jetonomy' );
+					results.appendChild(all);
 				});
 			}, 250);
 		});
 
 		searchEl.addEventListener('click', function (e) { if (e.target === searchEl) { window.jtCloseSearch(); } });
-		input.addEventListener('keydown', function (e) { if (e.key === 'Escape') { window.jtCloseSearch(); } });
+		input.addEventListener('keydown', function (e) {
+			if (e.key === 'Escape') { window.jtCloseSearch(); }
+			// Enter runs the full search, the same as the search page's own form.
+			if (e.key === 'Enter' && !e.isComposing && input.value.trim()) {
+				e.preventDefault();
+				window.location.href = searchPageUrl(input.value.trim());
+			}
+		});
 		return searchEl;
 	}
 

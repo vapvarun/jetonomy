@@ -46,6 +46,38 @@ abstract class Model {
 	}
 
 	/**
+	 * Fingerprint of the fields an edit form writes, as the form loaded them.
+	 *
+	 * The form sends it back and the save is refused when the row no longer
+	 * matches, so a stale tab cannot silently overwrite a newer save. Used by the
+	 * wp-admin space/category forms and the REST post/reply edits. Not
+	 * updated_at: spaces bump it on every new topic and member, which would
+	 * refuse saves on any active space, and categories have no such column.
+	 *
+	 * @param object   $row    Row as stored.
+	 * @param string[] $fields Columns the form writes.
+	 * @return string
+	 */
+	public static function edit_token( object $row, array $fields ): string {
+		$values = array();
+		foreach ( $fields as $field ) {
+			$values[ $field ] = $row->$field ?? null;
+		}
+		return md5( (string) wp_json_encode( $values ) );
+	}
+
+	/**
+	 * Message for a save refused by edit_token(), naming the owner's noun.
+	 *
+	 * @param string $noun Label key (space, category, topic, reply).
+	 * @return string
+	 */
+	public static function edit_conflict_message( string $noun ): string {
+		/* translators: %s: the owner-configured noun, lowercase (e.g. "space", "category"). */
+		return sprintf( __( 'This %s was changed by someone else. Reload to see their changes.', 'jetonomy' ), \Jetonomy\jetonomy_label( $noun, false, true ) );
+	}
+
+	/**
 	 * Enforce the editor-content pipeline on a write payload.
 	 *
 	 * Post/Reply create+update call this so EVERY writer - REST, wp-admin

@@ -43,11 +43,11 @@ class Leaderboards_Controller extends Base_Controller {
 						'minimum' => 0,
 					),
 					'period' => array(
-						'type'              => 'string',
-						'default'           => 'all',
-						'enum'              => array( 'all', 'month', 'week' ),
-						'description'       => 'Time period: all, month, or week.',
-						'sanitize_callback' => 'sanitize_key',
+						'type'        => 'string',
+						'default'     => 'all',
+						// No sanitize_callback: a custom one replaces rest_parse_request_arg(), so the enum would never be checked.
+						'enum'        => array( 'all', 'month', 'week' ),
+						'description' => 'Time period: all, month, or week.',
 					),
 				),
 			)
@@ -60,10 +60,8 @@ class Leaderboards_Controller extends Base_Controller {
 	public function list_items( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$limit  = (int) $request->get_param( 'limit' );
 		$offset = (int) $request->get_param( 'offset' );
-		$period = $request->get_param( 'period' ) ?? 'all';
-		if ( ! in_array( $period, array( 'all', 'month', 'week' ), true ) ) {
-			$period = 'all';
-		}
+		// The route's enum refuses anything else with a 400, and its default fills 'all'.
+		$period = (string) $request->get_param( 'period' );
 
 		/**
 		 * Filter user/leaderboard query parameters before execution.
@@ -102,7 +100,7 @@ class Leaderboards_Controller extends Base_Controller {
 		if ( $lb_cacheable ) {
 			$cached = \Jetonomy\Cache::get( $lb_cache_key );
 			if ( is_array( $cached ) && isset( $cached['items'], $cached['total'] ) ) {
-				$items = (array) apply_filters( 'jetonomy_leaderboard_items', $cached['items'], $request );
+				$items = (array) apply_filters( 'jetonomy_leaderboard_items', $this->viewer_presence( $cached['items'] ), $request );
 
 				return $this->paginated_response(
 					$items,
@@ -217,7 +215,7 @@ class Leaderboards_Controller extends Base_Controller {
 		 * @param array            $items   Leaderboard rows.
 		 * @param WP_REST_Request  $request Original REST request.
 		 */
-		$items = (array) apply_filters( 'jetonomy_leaderboard_items', $items, $request );
+		$items = (array) apply_filters( 'jetonomy_leaderboard_items', $this->viewer_presence( $items ), $request );
 
 		return $this->paginated_response(
 			$items,
@@ -227,5 +225,22 @@ class Leaderboards_Controller extends Base_Controller {
 				'period' => $period,
 			)
 		);
+	}
+
+	/**
+	 * Presence as this viewer may see it. Runs after the cache: the cached
+	 * rows are shared by every viewer, the shaping is per viewer.
+	 *
+	 * @param array<int, array<string, mixed>> $items Leaderboard rows.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function viewer_presence( array $items ): array {
+		foreach ( $items as &$row ) {
+			$seen                    = \Jetonomy\Models\UserProfile::last_seen_for_viewer( (int) ( $row['user_id'] ?? 0 ), $row['last_seen_at'] ?? null );
+			$row['last_seen_at']     = $seen;
+			$row['last_seen_at_gmt'] = \Jetonomy\to_iso8601_z( $seen );
+		}
+		unset( $row );
+		return $items;
 	}
 }

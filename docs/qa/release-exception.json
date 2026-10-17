@@ -1,0 +1,24 @@
+{
+  "version": "2.0.3",
+  "approved": "2026-10-18",
+  "by": "Varun Dubey (owner)",
+  "reason": "Short release walk approved by the owner instead of a full re-walk of every journey: each fix batch re-staled the journeys it touched, so the full re-walk could not converge. The journeys below were walked at free 21f93481 / pro fe21324; their real defects were fixed in 3438b362 and checked in the browser. The full walk is the first job of the next cycle.",
+  "walked": [
+    "C.admin.import",
+    "C.admin.invite-links",
+    "C.admin.user-management",
+    "C.anon.invite-landing",
+    "C.anon.single-post",
+    "C.gating.read-on-private",
+    "C.gating.surfaces-agree",
+    "C.member.accept-answer",
+    "C.member.flag",
+    "C.member.post-create",
+    "C.member.post-edit",
+    "C.member.reply-create",
+    "C.member.vote",
+    "C.mod.flag-resolution",
+    "C.mod.queue-and-actions",
+    "C.notifications"
+  ]
+}

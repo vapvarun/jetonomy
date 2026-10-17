@@ -52,14 +52,17 @@ function jetonomyConfirm( message, opts = {} ) {
 
 /**
  * Report dialog: a reason (the moderation queue's own list) plus optional
- * details. Resolves { reason, description }, or null when cancelled. A report
- * needs a reason; free text alone used to be filed as "Other", empty included.
+ * details. A report needs a reason; free text alone used to be filed as
+ * "Other", empty included. The dialog hands { reason, description } to
+ * `submit` and closes only when it resolves true, so a failed request keeps
+ * the chosen reason and typed details for another try.
  *
- * @param {string} message Dialog question.
- * @param {Object} labels  The store's i18n (state.i18n): reasons and button text.
- * @return {Promise<{reason:string,description:string}|null>}
+ * @param {string}   message Dialog question.
+ * @param {Object}   labels  The store's i18n (state.i18n): reasons and button text.
+ * @param {Function} submit  ( { reason, description } ) => Promise<boolean>.
+ * @return {Promise<true|null>} true once submitted, null when cancelled.
  */
-function jetonomyReport( message, labels ) {
+function jetonomyReport( message, labels, submit ) {
 	return new Promise( ( resolve ) => {
 		const t       = jtModalI18n();
 		const i18n    = labels || {};
@@ -97,7 +100,9 @@ function jetonomyReport( message, labels ) {
 		const details = document.createElement( 'textarea' );
 		details.className = 'jt-modal-input jt-input';
 		details.rows = 3;
-		details.placeholder = i18n.reportDetails || 'Add details (optional)';
+		details.placeholder = i18n.reportDetails || 'Add details (optional, up to 2,000 characters)';
+		// The server refuses longer notes; the limit is in the placeholder too.
+		details.maxLength = parseInt( i18n.reportDetailsMax, 10 ) || 2000;
 		details.setAttribute( 'aria-label', details.placeholder );
 		box.appendChild( details );
 
@@ -126,7 +131,14 @@ function jetonomyReport( message, labels ) {
 				if ( first ) first.focus();
 				return;
 			}
-			close( { reason: picked.value, description: details.value.trim() } );
+			okBtn.disabled = true;
+			submit( { reason: picked.value, description: details.value.trim() } ).catch( () => false ).then( ( sent ) => {
+				if ( sent ) {
+					close( true );
+				} else {
+					okBtn.disabled = false;
+				}
+			} );
 		} );
 		list.addEventListener( 'change', () => { hint.textContent = ''; } );
 		actions.appendChild( cancelBtn );
@@ -139,6 +151,33 @@ function jetonomyReport( message, labels ) {
 		const first = list.querySelector( 'input' );
 		if ( first ) first.focus();
 	} );
+}
+
+/**
+ * File a report through POST /flags and toast the outcome.
+ *
+ * @param {string} objectType post | reply | user.
+ * @param {string} objectId   Reported object id.
+ * @param {Object} report     { reason, description } from jetonomyReport().
+ * @param {Object} i18n       The store's i18n (state.i18n).
+ * @return {Promise<boolean>} Whether the report was filed.
+ */
+async function jtSubmitFlag( objectType, objectId, report, i18n ) {
+	const t   = i18n || {};
+	const res = await window.jetonomyRest.restFetch( '/flags', {
+		method: 'POST',
+		body: { object_type: objectType, object_id: parseInt( objectId, 10 ), reason: report.reason, description: report.description },
+	} );
+	if ( window.bnToast ) {
+		if ( res.ok ) {
+			window.bnToast( t.reportedThankYou || 'Reported. Thank you.' );
+		} else if ( 0 === res.status ) {
+			window.bnToast( t.networkError || 'Network error. Please try again.', 'error' );
+		} else {
+			window.bnToast( ( res.data && res.data.message ) || t.failedReport || 'Failed to submit report.', 'error' );
+		}
+	}
+	return res.ok;
 }
 
 function jetonomyPrompt( message, options ) {
@@ -678,6 +717,52 @@ function* avatarUpload( file, input ) {
     document.getElementById( 'jt-avatar-remove' )?.removeAttribute( 'hidden' );
 }
 
+// Elements a quote keeps. Anything else is unwrapped to its text, and the
+// QUOTE_SKIP set (earlier quotes, media, embeds, controls) is dropped whole.
+const QUOTE_KEEP = new Set( [ 'P', 'UL', 'OL', 'LI', 'PRE', 'CODE', 'STRONG', 'EM', 'B', 'I', 'A', 'BR' ] );
+const QUOTE_SKIP = new Set( [ 'BLOCKQUOTE', 'IMG', 'PICTURE', 'FIGURE', 'IFRAME', 'VIDEO', 'AUDIO', 'SVG', 'CANVAS', 'OBJECT', 'EMBED', 'SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'FORM' ] );
+
+/**
+ * Copy a rendered reply body into a quote, keeping its structure.
+ *
+ * Rebuilds each kept element fresh (no attributes except an http(s) link
+ * target) and copies text as text nodes, so no markup from the page is
+ * carried over as HTML. The saved reply is still kses-filtered server side.
+ *
+ * @param {Node}   from Source node (the .jt-reply-body).
+ * @param {Node}   to   Destination node.
+ * @param {Object} budget `{ left: n }` characters of text still allowed.
+ */
+function quoteCopy( from, to, budget ) {
+    for ( const node of from.childNodes ) {
+        if ( budget.left <= 0 ) {
+            return;
+        }
+        if ( Node.TEXT_NODE === node.nodeType ) {
+            const text = node.nodeValue;
+            to.appendChild( document.createTextNode( text.length > budget.left ? text.slice( 0, budget.left ).trimEnd() + '…' : text ) );
+            budget.left -= text.trim() ? text.length : 0;
+            continue;
+        }
+        if ( Node.ELEMENT_NODE !== node.nodeType ) {
+            continue;
+        }
+        const tag = node.tagName.toUpperCase();
+        if ( QUOTE_SKIP.has( tag ) ) {
+            continue;
+        }
+        let into = to;
+        if ( QUOTE_KEEP.has( tag ) ) {
+            into = document.createElement( tag.toLowerCase() );
+            if ( 'A' === tag && /^https?:/i.test( node.href ) ) {
+                into.href = node.href;
+            }
+            to.appendChild( into );
+        }
+        quoteCopy( node, into, budget );
+    }
+}
+
 /**
  * Append a freshly-posted TOP-LEVEL reply in place instead of full-reloading
  * the thread. Re-fetches the current thread (HTML, not JSON — same approach as
@@ -722,6 +807,34 @@ async function appendNewReply( newId ) {
     }
 }
 
+/**
+ * URL of the page a new top-level reply lands on, anchored to it.
+ *
+ * Under the default oldest-first order a new reply is the last one, so it sits
+ * on the last page; on a long thread that is not the page being read. Returns
+ * '' for other orders (newest-first puts it on page 1, best is unknown).
+ *
+ * @param {number|string} newId Reply id from the create response.
+ * @return {string}
+ */
+function lastReplyPageUrl( newId ) {
+    const list    = document.getElementById( 'jt-replies-container' );
+    const perPage = parseInt( list?.dataset.perPage, 10 );
+    const count   = parseInt( list?.dataset.topLevel, 10 );
+    if ( ! newId || ! perPage || isNaN( count ) || 'oldest' !== list.dataset.sort ) {
+        return '';
+    }
+    const url  = new URL( window.location.href );
+    const page = Math.ceil( ( count + 1 ) / perPage );
+    if ( page > 1 ) {
+        url.searchParams.set( 'rpg', String( page ) );
+    } else {
+        url.searchParams.delete( 'rpg' );
+    }
+    url.hash = 'reply-' + newId;
+    return url.toString();
+}
+
 /** Mark a notifications-page row read in place (ported from notifications-page.js). */
 function notifMarkRowRead( row ) {
     row.classList.remove( 'unread' );
@@ -733,6 +846,34 @@ function notifMarkRowRead( row ) {
         const li = markBtn.closest( 'li' );
         if ( li ) li.remove();
     }
+}
+
+/**
+ * Lower every unread-count badge on the page (header bell, user panel, Unread tab)
+ * by `by`, or clear them when `by` is null. The server renders them; reads made
+ * here must not leave them showing the old number until a reload.
+ */
+function notifLowerUnreadBadges( by ) {
+    // header.js owns the badge list; it is enqueued with the header that renders them.
+    window.jtLowerUnreadBadges?.( by );
+}
+
+/**
+ * Show the server's filter-tab counts (counts_by_filter, returned by the
+ * delete and bulk routes) on the notifications page tabs after rows go away
+ * or are read. Unread goes through header.js so the bell and panel agree.
+ *
+ * @param {Object|undefined} counts { all, unread, mentions, replies, votes, badges }.
+ */
+function notifSetTabCounts( counts ) {
+    if ( ! counts || ! window.jtSetCountBadge ) return;
+    document.querySelectorAll( '[data-jt-notif-tab]' ).forEach( ( tab ) => {
+        const slug = tab.getAttribute( 'data-jt-notif-tab' );
+        if ( 'unread' !== slug && 'number' === typeof counts[ slug ] ) {
+            window.jtSetCountBadge( tab, 'jt-notif-tab__count', counts[ slug ] );
+        }
+    } );
+    window.jtSetUnreadBadges?.( counts.unread );
 }
 
 /** Refresh the notifications bulk toolbar count + visibility from current checks. */
@@ -749,6 +890,17 @@ function notifUpdateBulkbar() {
 
 /** Set the cover-image preview within a form. Shared by the new-space +
  * edit-space cover uploaders (data-jt-cover-* markup is identical on both). */
+// The schedule picked in templates/partials/schedule-fields.php, as the
+// site-timezone wall-clock value the server expects ('' when date or time is
+// missing). Not stamped with the browser's zone: the time means "this time in
+// the site's timezone", wherever the author is - the core post scheduler's rule.
+function jtScheduleValue( form ) {
+    const dateVal   = form.querySelector( '[name="published_date"]' )?.value?.trim() || '';
+    const hourVal   = form.querySelector( '[name="published_hour"]' )?.value?.trim() || '';
+    const minuteVal = form.querySelector( '[name="published_minute"]' )?.value?.trim() || '';
+    return dateVal && hourVal && minuteVal ? `${ dateVal }T${ hourVal }:${ minuteVal }:00` : '';
+}
+
 // Approve/deny a pending join request from the space-members mod panel.
 // Returns a promise so the Interactivity action can `yield` it. On success
 // the row is removed; when the last row goes, the whole panel is removed.
@@ -762,6 +914,9 @@ function jtModerateJoinRequest( btn, action ) {
         '/spaces/' + parseInt( spaceId, 10 ) + '/join-requests/' + parseInt( requestId, 10 ) + '/' + action,
         { method: 'POST', body: {} }
     ).then( ( res ) => {
+        if ( res && res.ok && res.data && res.data.message && window.bnToast ) {
+            window.bnToast( res.data.message );
+        }
         if ( ! res || ! res.ok ) {
             const msg = ( res && res.data && res.data.message ) || 'Could not update the request. Please try again.';
             if ( window.bnToast ) window.bnToast( msg, 'error' );
@@ -1678,8 +1833,15 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! btn ) return;
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/notifications/mark-all-read', { method: 'POST' } );
-            if ( ! res.ok ) { btn.disabled = false; return; }
+            if ( ! res.ok ) {
+                // Nothing changed on the server: keep the rows unread and say so.
+                btn.disabled = false;
+                if ( window.bnToast ) window.bnToast( state.i18n?.markReadFailed || 'Could not mark notifications as read.', 'error' );
+                return;
+            }
             document.querySelectorAll( '[data-jt-notif-list] .jt-notif-item.unread' ).forEach( notifMarkRowRead );
+            notifLowerUnreadBadges( null );
+            window.jtRefreshUnreadCount?.();
             btn.remove();
         },
         toggleNotifMenu( event ) {
@@ -1706,8 +1868,14 @@ const { state, actions } = store( 'jetonomy', {
             const row = trigger && trigger.closest( '.jt-notif-item' );
             const id = row && parseInt( row.getAttribute( 'data-jt-notif-id' ), 10 );
             if ( ! id ) return;
+            const wasUnread = row.classList.contains( 'unread' );
             const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'PATCH' } );
-            if ( res.ok ) notifMarkRowRead( row );
+            if ( ! res.ok ) {
+                if ( window.bnToast ) window.bnToast( state.i18n?.markReadFailed || 'Could not mark notifications as read.', 'error' );
+                return;
+            }
+            notifMarkRowRead( row );
+            if ( wasUnread ) notifLowerUnreadBadges( 1 );
         },
         *deleteNotif( event ) {
             const trigger = triggerOf( event );
@@ -1721,6 +1889,7 @@ const { state, actions } = store( 'jetonomy', {
             const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'DELETE' } );
             if ( res.ok ) {
                 row.remove();
+                notifSetTabCounts( res.data?.counts );
                 if ( ! document.querySelector( '[data-jt-notif-list] .jt-notif-item' ) ) {
                     window.location.reload(); // render the server empty state
                 }
@@ -1754,6 +1923,40 @@ const { state, actions } = store( 'jetonomy', {
                 if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.genericError || 'Could not publish.' );
             }
         },
+        // ── Move / cancel a scheduled topic's publish time (topic page) ──
+        *reschedulePost( event ) {
+            if ( event ) event.preventDefault();
+            const form = triggerOf( event )?.closest( '.jt-reschedule' ) || getElement().ref;
+            const id = form && parseInt( form.getAttribute( 'data-post-id' ), 10 );
+            if ( ! id ) return;
+            const when = jtScheduleValue( form );
+            if ( ! when ) {
+                if ( window.bnToast ) window.bnToast( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
+                return;
+            }
+            const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { published_at: when } } );
+            if ( res.ok ) {
+                window.location.reload(); // the notice re-renders with the new time
+            } else if ( window.bnToast ) {
+                window.bnToast( ( res.data && res.data.message ) || state.i18n?.networkError || 'Network error. Please try again.' );
+            }
+        },
+        *cancelSchedule( event ) {
+            const btn = triggerOf( event ) || getElement().ref;
+            const form = btn && btn.closest( '.jt-reschedule' );
+            const id = form && parseInt( form.getAttribute( 'data-post-id' ), 10 );
+            if ( ! id ) return;
+            const confirmMsg = btn.getAttribute( 'data-confirm' );
+            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg ) ) ) return;
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { published_at: '' } } );
+            if ( res.ok ) {
+                window.location.reload();
+                return;
+            }
+            btn.disabled = false;
+            if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.networkError || 'Network error. Please try again.' );
+        },
         toggleNotifSelectAll( event ) {
             const selectAll = triggerOf( event );
             if ( ! selectAll ) return;
@@ -1780,6 +1983,7 @@ const { state, actions } = store( 'jetonomy', {
                 if ( 'delete' === action ) row.remove();
                 else notifMarkRowRead( row );
             } );
+            notifSetTabCounts( res.data?.counts );
             const selectAll = document.querySelector( '[data-jt-notif-selectall]' );
             if ( selectAll ) selectAll.checked = false;
             notifUpdateBulkbar();
@@ -2086,9 +2290,11 @@ const { state, actions } = store( 'jetonomy', {
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
 
                 try {
+                    // edit_token: the server refuses (409) if someone saved this reply
+                    // after this page loaded, instead of overwriting their save.
                     const res = await window.jetonomyRest.restFetch( `/replies/${ replyId }`, {
                         method: 'PATCH',
-                        body: { content },
+                        body: { content, ...( trigger.dataset.editToken && { edit_token: trigger.dataset.editToken } ) },
                     } );
 
                     if ( res.ok ) {
@@ -2531,29 +2737,15 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
 
-            const report = yield jetonomyReport( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n );
-            if ( report === null ) return; // Cancelled
+            const sent = yield jetonomyReport( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n, ( report ) => jtSubmitFlag( 'post', postId, report, state.i18n ) );
+            if ( ! sent ) return; // Cancelled
 
-            try {
-                const res = yield window.jetonomyRest.restFetch( `/flags`, {
-                    method: 'POST',
-                    body: { object_type: 'post', object_id: parseInt( postId ), reason: report.reason, description: report.description },
-                } );
-                if ( res.ok ) {
-                    // Reflect "already reported" state inline so the next click
-                    // hits the short-circuit above without a page reload.
-                    el.ref.dataset.flagged = '1';
-                    el.ref.classList.add( 'is-flagged' );
-                    el.ref.title = state.i18n?.alreadyReported || 'You already reported this.';
-                    el.ref.setAttribute( 'aria-label', el.ref.title );
-                    if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
-                } else {
-                    const err = res.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
-                }
-            } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
-            }
+            // Reflect "already reported" state inline so the next click
+            // hits the short-circuit above without a page reload.
+            el.ref.dataset.flagged = '1';
+            el.ref.classList.add( 'is-flagged' );
+            el.ref.title = state.i18n?.alreadyReported || 'You already reported this.';
+            el.ref.setAttribute( 'aria-label', el.ref.title );
         },
 
         // ── Flag / report reply ──
@@ -2563,23 +2755,16 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = trigger.dataset.replyId;
             if ( ! replyId ) return;
 
-            const report = yield jetonomyReport( state.i18n?.reportReplyPrompt || 'Why are you reporting this reply?', state.i18n );
-            if ( report === null ) return; // Cancelled
+            yield jetonomyReport( state.i18n?.reportReplyPrompt || 'Why are you reporting this reply?', state.i18n, ( report ) => jtSubmitFlag( 'reply', replyId, report, state.i18n ) );
+        },
 
-            try {
-                const res = yield window.jetonomyRest.restFetch( `/flags`, {
-                    method: 'POST',
-                    body: { object_type: 'reply', object_id: parseInt( replyId ), reason: report.reason, description: report.description },
-                } );
-                if ( res.ok ) {
-                    if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
-                } else {
-                    const err = res.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
-                }
-            } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
-            }
+        // ── Message button for an in-page messenger (jetonomy_member_message_event) ──
+        // Jetonomy only announces the request; the messenger opens the conversation.
+        openMessenger() {
+            const el = getElement();
+            const userId = parseInt( el.ref.dataset.userId, 10 );
+            if ( ! el.ref.dataset.messageEvent || ! userId ) return;
+            document.dispatchEvent( new CustomEvent( el.ref.dataset.messageEvent, { detail: { userId } } ) );
         },
 
         // ── Flag / report user ──
@@ -2588,23 +2773,7 @@ const { state, actions } = store( 'jetonomy', {
             const userId = el.ref.dataset.userId;
             if ( ! userId ) return;
 
-            const report = yield jetonomyReport( state.i18n?.reportUserPrompt || 'Why are you reporting this user?', state.i18n );
-            if ( report === null ) return; // Cancelled
-
-            try {
-                const res = yield window.jetonomyRest.restFetch( `/flags`, {
-                    method: 'POST',
-                    body: { object_type: 'user', object_id: parseInt( userId ), reason: report.reason, description: report.description },
-                } );
-                if ( res.ok ) {
-                    if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
-                } else {
-                    const err = res.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
-                }
-            } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
-            }
+            yield jetonomyReport( state.i18n?.reportUserPrompt || 'Why are you reporting this user?', state.i18n, ( report ) => jtSubmitFlag( 'user', userId, report, state.i18n ) );
         },
 
         // ── Toggle "more" dropdown menu ──
@@ -2645,6 +2814,7 @@ const { state, actions } = store( 'jetonomy', {
         editPost( event ) {
             const el = getElement();
             const postId = el.ref.dataset.postId;
+            const editToken = el.ref.dataset.editToken || '';
             if ( ! postId ) return;
 
             const article = el.ref.closest( 'article' ) || el.ref.closest( '.jt-post' );
@@ -2749,7 +2919,9 @@ const { state, actions } = store( 'jetonomy', {
                 // Collect Pro custom-field inputs from the revealed edit block via
                 // the shared collector (window.jetonomyCollectCustomFields). Omitted
                 // entirely when the extension is off (no block, no inputs).
-                const body = { content };
+                // edit_token: the server refuses (409) if someone saved this topic
+                // after this page loaded, instead of overwriting their save.
+                const body = { content, ...( editToken && { edit_token: editToken } ) };
                 if ( fieldsBlock && window.jetonomyCollectCustomFields ) {
                     const customFields = window.jetonomyCollectCustomFields( fieldsBlock );
                     if ( Object.keys( customFields ).length > 0 ) {
@@ -2792,8 +2964,11 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
+                // Send the state the button showed, so a stale tab cannot undo
+                // another moderator's pin.
                 fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/pin`, {
                     method: 'POST',
+                    body: { pinned: el.ref.dataset.pin === '1' },
                 } ),
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {
@@ -2811,7 +2986,8 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Close / reopen topic (moderators) ──
-        // POSTs to /posts/:id/close, which toggles is_closed server-side. We
+        // POSTs to /posts/:id/close with the state the button showed (a stale
+        // tab must not reopen a topic another moderator just closed). We
         // reload on success because closing/reopening flips the composer guard
         // and the closed banner — let the page re-render rather than mirror that
         // state across the whole post view.
@@ -2824,6 +3000,7 @@ const { state, actions } = store( 'jetonomy', {
                 apply: () => null,
                 fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/close`, {
                     method: 'POST',
+                    body: { closed: el.ref.dataset.close === '1' },
                 } ),
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {
@@ -3126,6 +3303,39 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Block a user (profile ⋯ menu) ──
+        //
+        // POST /users/me/blocks after a confirm whose wording the server
+        // rendered (translated), then reload so the profile shows the blocked
+        // state and every read surface applies it.
+        *blockMember( event ) {
+            const trigger = triggerOf( event );
+            if ( ! trigger?.dataset.userId ) return;
+
+            const ok = yield jetonomyConfirm( trigger.dataset.confirm, {
+                title: trigger.dataset.confirmTitle,
+                confirmLabel: trigger.dataset.confirmLabel,
+                danger: true,
+            } );
+            if ( ! ok ) return;
+
+            trigger.disabled = true;
+            try {
+                const res = yield window.jetonomyRest.restFetch( '/users/me/blocks', {
+                    method: 'POST',
+                    body: { user_id: parseInt( trigger.dataset.userId, 10 ) },
+                } );
+                if ( res.ok ) {
+                    window.location.reload();
+                    return;
+                }
+                if ( window.bnToast ) window.bnToast( res.data?.message || state.i18n?.failedSave || 'Failed to save.' );
+            } catch {
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+            }
+            trigger.disabled = false;
+        },
+
         // ── Accept reply as best answer (Q&A) ──
         //
         // Server-side mutation reloads the page on success because the
@@ -3310,6 +3520,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( excerpt ) {
                         const quote = document.createElement( 'a' );
                         quote.className = 'jt-replying-to-excerpt';
+                        quote.dir = 'auto';
                         quote.href = '#reply-' + replyId;
                         quote.textContent = '\u201C' + ( excerpt.length > 80 ? excerpt.slice( 0, 80 ).trim() + '\u2026' : excerpt ) + '\u201D';
                         indicator.appendChild( quote );
@@ -3340,21 +3551,19 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = replyEl.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
 
-            // Get plain text, trimmed to ~300 chars.
-            let text = ( bodyEl.textContent || '' ).trim();
-            if ( text.length > 300 ) {
-                text = text.substring( 0, 297 ) + '...';
-            }
-
-            // Build blockquote HTML.
+            // Build the blockquote: the reply's paragraphs, lists and code,
+            // trimmed to ~300 characters of text. dir="auto" lets a quote in
+            // another script take its own direction (and its bar's side). The
+            // cite carries its own dir so that resolution skips the (often
+            // Latin) author name and reads the quoted text.
             const cite = document.createElement( 'cite' );
+            cite.dir = 'auto';
             cite.textContent = authorName;
             const blockquote = document.createElement( 'blockquote' );
             blockquote.className = 'jt-quote';
+            blockquote.dir = 'auto';
             blockquote.appendChild( cite );
-            const p = document.createElement( 'p' );
-            p.textContent = text;
-            blockquote.appendChild( p );
+            quoteCopy( bodyEl, blockquote, { left: 300 } );
 
             // Insert into composer.
             const composer = document.getElementById( 'jt-composer' );
@@ -3390,8 +3599,11 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Editor input tracking ──
         onEditorInput() {
-            // Placeholder for editor input handling (e.g. auto-save, char count).
-            // The contenteditable body dispatches this on every keystroke.
+            // Typing clears the "write something first" error.
+            const ctx = getContext();
+            if ( ctx?.error ) {
+                ctx.error = '';
+            }
         },
 
         // ── Moderation: resolve a queued flag ──
@@ -3434,9 +3646,11 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
             // Remove the resolved card; if the queue is now empty, swap in the
-            // empty state (ported from moderation.js removeCard()).
-            const container = card.parentNode;
-            card.remove();
+            // empty state (ported from moderation.js removeCard()). On the
+            // overview a member-report card sits in its own list row.
+            const row       = card.parentNode && card.parentNode.matches( 'li.jt-mod-flag-row' ) ? card.parentNode : null;
+            const container = row ? row.parentNode : card.parentNode;
+            ( row || card ).remove();
             // Keep the header "N pending" badge in sync — it is server-rendered
             // and would otherwise show the pre-resolution count until reload.
             // Replace only the numeric run so the localized suffix survives;
@@ -3473,7 +3687,7 @@ const { state, actions } = store( 'jetonomy', {
                     flagBadge.textContent = flagBadge.textContent.replace( /\d+/, String( nextCount ) );
                 }
             }
-            if ( container && ! container.querySelector( '.jt-mod-flag' ) && container.parentNode ) {
+            if ( container && ! container.querySelector( '.jt-mod-flag, .jt-mod-flag-row' ) && container.parentNode ) {
                 const wrapper = document.createElement( 'div' );
                 wrapper.className = 'jt-empty';
                 const msg = document.createElement( 'div' );
@@ -3654,17 +3868,28 @@ const { state, actions } = store( 'jetonomy', {
             const buttons = card.querySelectorAll( '.jt-mod-approve' );
             buttons.forEach( ( b ) => { b.disabled = true; } );
 
-            const res = yield window.jetonomyRest.restFetch( path, { method } );
+            // Name the status the card showed, so a stale card (another moderator
+            // already acted) is refused with 409 instead of undoing their call.
+            const from = card.getAttribute( 'data-object-status' );
+            const res  = yield window.jetonomyRest.restFetch( path, 'POST' === method && from ? { method, body: { from } } : { method } );
             if ( ! res.ok ) {
-                // Re-enable rather than strand the row: the usual cause is another
-                // moderator having already handled it, and the message says so.
+                // Re-enable rather than strand the row. Only a 409/404 means another
+                // moderator already handled it; status 0 never reached the server.
                 buttons.forEach( ( b ) => { b.disabled = false; } );
                 const existing = card.querySelector( '.jt-mod-flag-error' );
                 if ( existing ) existing.remove();
                 const p = document.createElement( 'p' );
                 p.className = 'jt-mod-flag-error';
                 p.setAttribute( 'role', 'alert' );
-                p.textContent = ( res.data && res.data.message ) || i18n.approvalFailed || 'Could not update this submission. It may have been handled by another moderator.';
+                if ( 0 === res.status ) {
+                    p.textContent = i18n.networkErrorRetry || 'Network error. Please try again.';
+                } else if ( res.data && res.data.message ) {
+                    p.textContent = res.data.message;
+                } else if ( 409 === res.status || 404 === res.status ) {
+                    p.textContent = i18n.approvalFailed || 'Could not update this submission. It may have been handled by another moderator.';
+                } else {
+                    p.textContent = i18n.saveFailed || 'Could not save changes.';
+                }
                 card.appendChild( p );
                 return;
             }
@@ -3707,9 +3932,18 @@ const { state, actions } = store( 'jetonomy', {
             const editorWrap = el.ref.closest( '.jt-editor' );
             const body = editorWrap?.querySelector( '[contenteditable]' )
                 || document.getElementById( `jt-composer-${ postId }` );
-            if ( ! body || ! body.innerHTML.trim() ) return;
+            if ( ! body ) return;
 
             const ctx = getContext();
+            // An editor the member typed in and cleared still holds a <br>, so test
+            // for text or media (composer.js's own "empty" rule), and say what is
+            // missing instead of silently refusing.
+            if ( ! ( body.textContent || '' ).trim() && ! body.querySelector( 'img, video, iframe, audio, hr, table, blockquote, pre' ) ) {
+                ctx.error = ctx.emptyError || state.i18n?.failedSave || 'Failed to save.';
+                body.focus();
+                return;
+            }
+            ctx.error = '';
             ctx.submitting = true;
 
             // Only include parent_id when it resolves to a positive integer.
@@ -3771,10 +4005,14 @@ const { state, actions } = store( 'jetonomy', {
                         const appended = ! parentId && payload.id
                             ? yield appendNewReply( payload.id )
                             : false;
+                        const lastPage = ! appended && ! parentId ? lastReplyPageUrl( payload.id ) : '';
                         if ( appended ) {
                             body.innerHTML = '';
                             state.replyToId = null;
                             state.replyToAuthor = '';
+                        } else if ( lastPage && lastPage.split( '#' )[ 0 ] !== window.location.href.split( '#' )[ 0 ] ) {
+                            // A long thread: the new reply is on a later page, so go there.
+                            window.location.assign( lastPage );
                         } else {
                             window.location.reload();
                         }
@@ -4010,28 +4248,13 @@ const { state, actions } = store( 'jetonomy', {
             const postStatus = ctx.postStatus || 'publish';
             let publishedAt  = '';
             if ( o.collectSchedule && ctx.showScheduler ) {
-                const dateVal   = form.querySelector( '[name="published_date"]' )?.value?.trim() || '';
-                const hourVal   = form.querySelector( '[name="published_hour"]' )?.value?.trim() || '';
-                const minuteVal = form.querySelector( '[name="published_minute"]' )?.value?.trim() || '';
-                const timeVal   = hourVal && minuteVal ? `${ hourVal }:${ minuteVal }` : '';
-                // Send the plain wall-clock value the user picked. The server
-                // interprets it in the SITE timezone (the WordPress Settings ->
-                // General timezone) and converts to UTC for storage, matching
-                // the core post scheduler. We intentionally do NOT stamp the
-                // browser's timezone here — the scheduled time means "this time
-                // in the site's timezone", regardless of where the author is.
-                //
                 // Date AND time are both required. A missing time would fall back to midnight, so
                 // "today, no time picked" would already be in the past and go live at the next run.
                 // The server rejects a past or time-less schedule too; this only saves the trip.
-                if ( dateVal && timeVal ) {
-                    publishedAt = dateVal + 'T' + timeVal + ':00';
-                }
+                publishedAt = jtScheduleValue( form );
             }
             if ( o.collectSchedule && 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
-                const msg = state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.';
-                writeError( msg );
-                if ( window.bnToast ) window.bnToast( msg );
+                writeError( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
                 setIdle();
                 return;
             }
@@ -4103,8 +4326,9 @@ const { state, actions } = store( 'jetonomy', {
                 const errMsg = ( result.data && result.data.message )
                     ? result.data.message
                     : ( state.i18n?.failedSave || 'Failed to save.' );
+                // Inline only: the form's role="alert" line already announces
+                // it, and a toast on top showed the same words twice.
                 writeError( errMsg );
-                if ( window.bnToast ) window.bnToast( errMsg );
                 setIdle();
                 return;
             }
@@ -4393,6 +4617,18 @@ const { state, actions } = store( 'jetonomy', {
                     }
                 }
 
+                // Pro's digest choice (rendered in the notification settings).
+                // Saved only when changed: a member left on the site default
+                // must not be pinned to it by an unrelated profile save.
+                // 404 means the digest extension is off: nothing to save.
+                const digest = form.querySelector( '[name="digest_frequency"]:checked' );
+                if ( digest && ! digest.defaultChecked ) {
+                    const dResponse = yield window.jetonomyRest.restFetch( '/users/me/digest-preferences', { method: 'PATCH', body: { frequency: digest.value } } );
+                    if ( ! dResponse.ok && 404 !== dResponse.status && window.bnToast ) {
+                        window.bnToast( ( dResponse.data && dResponse.data.message ) || ( state.i18n?.failedSaveProfile || 'Failed to save profile.' ), 'error' );
+                    }
+                }
+
                 document.dispatchEvent( new CustomEvent( 'jetonomy:profileSaved', { detail: { form, payload, customFields } } ) );
                 window.location.href = ctx.profileUrl;
             } catch {
@@ -4533,6 +4769,10 @@ const { state, actions } = store( 'jetonomy', {
                             interval = Math.min( interval * 2, MAX_INTERVAL ); // idle -> back off
                         }
                         lastCheck = Date.now();
+                    } else if ( [ 401, 403, 404, 410 ].includes( response.status ) ) {
+                        return; // Topic deleted or access lost while open: stop asking.
+                    } else {
+                        interval = Math.min( interval * 2, MAX_INTERVAL );
                     }
                 } catch {
                     // silent — transient network blip; keep current cadence
@@ -4636,14 +4876,20 @@ if ( window.wp?.i18n?.setLocaleData && state.localeData ) {
         meta.appendChild( el( 'span', 'jt-link-preview-domain', data.site_name || data.domain ) );
         body.appendChild( meta );
 
+        // dir="auto": a page in Arabic or Hebrew lays out right to left even
+        // inside a left-to-right post, and the reverse.
         if ( data.title ) {
-            body.appendChild( el( 'strong', 'jt-link-preview-title', data.title ) );
+            const title = el( 'strong', 'jt-link-preview-title', data.title );
+            title.dir = 'auto';
+            body.appendChild( title );
         }
         if ( data.description ) {
             const desc = data.description.length > DESC_MAX
                 ? data.description.slice( 0, DESC_MAX ).trim() + '…'
                 : data.description;
-            body.appendChild( el( 'p', 'jt-link-preview-desc', desc ) );
+            const descEl = el( 'p', 'jt-link-preview-desc', desc );
+            descEl.dir = 'auto';
+            body.appendChild( descEl );
         }
         if ( data.author || data.published_at ) {
             const foot = el( 'div', 'jt-link-preview-foot' );

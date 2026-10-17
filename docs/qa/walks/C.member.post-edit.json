@@ -1,0 +1,95 @@
+{
+  "journey": "C.member.post-edit",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:00Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-member-post-edit.1": {
+      "result": "pass",
+      "evidence": "bob edited the body of his own topic via topic menu > Edit > Save; new text on the topic, REST space listing, and /community/search/?q=old address finds it; community home has no feed"
+    },
+    "c-member-post-edit.2": {
+      "result": "pass",
+      "evidence": "PATCH /posts/6324 title -> 200, GET shows the new title"
+    },
+    "c-member-post-edit.3": {
+      "result": "pass",
+      "evidence": "edit made >1 min after posting shows 'edited 1 second ago' with title='October 17, 2026 9:53 pm'"
+    },
+    "c-member-post-edit.4": {
+      "result": "pass",
+      "evidence": "reply created and edited in the same second shows no 'edited' mark; an unedited reply/topic shows none"
+    },
+    "c-member-post-edit.5": {
+      "result": "pass",
+      "evidence": "alice on bob's topic: no More options menu at all; /edit/ URL -> 404"
+    },
+    "c-member-post-edit.6": {
+      "result": "pass",
+      "evidence": "PATCH /posts/6324 as alice -> 403 jetonomy_forbidden"
+    },
+    "c-member-post-edit.7": {
+      "result": "pass",
+      "evidence": "test_moderator on a Bug Reports topic menu: Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete"
+    },
+    "c-member-post-edit.8": {
+      "result": "untested",
+      "needs": "lane A: remove Edit own posts from the Member role"
+    },
+    "c-member-post-edit.9": {
+      "result": "pass",
+      "evidence": "bob's own closed topic: menu offers Edit and PATCH returns 200; UI and REST agree"
+    },
+    "c-member-post-edit.10": {
+      "result": "pass",
+      "evidence": "finn on his -4 post: no menu or Edit control; PATCH /posts/5871 -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+    },
+    "c-member-post-edit.11": {
+      "result": "pass",
+      "evidence": "PATCH with list, blockquote and pre/code: guest view after reload shows 2 li, 1 blockquote, 1 pre code"
+    },
+    "c-member-post-edit.12": {
+      "result": "pass",
+      "evidence": "second PATCH with a stale edit_token -> 409 jetonomy_edit_conflict; revisions 249-252 stored (old versions kept)"
+    },
+    "c-member-post-edit.13": {
+      "result": "pass",
+      "evidence": "offline Save: editor stays open, text kept, 'Failed to save.' toast"
+    },
+    "c-member-post-edit.14": {
+      "result": "untested",
+      "needs": "lane A: admin revision-history screen (rows exist in wp_jt_revisions for the edited topics, not viewed in the admin UI)"
+    },
+    "c-member-post-edit.15": {
+      "result": "pass",
+      "evidence": "tab 1 in edit mode, tab 2 saved first, tab 1 Save -> 'This topic was changed by someone else. Reload to see their changes.' and the editor stays open"
+    },
+    "c-member-post-edit.16": {
+      "result": "untested",
+      "needs": "lane A: a moderator with a Member WP role who moderates only Bug Reports (test_moderator is a WP editor)"
+    },
+    "c-member-post-edit.17": {
+      "result": "fail",
+      "expected": "topic URL with /edit/ appended -> a refusal page (contract to decide)",
+      "actual": "plain 404 'Page not found' for any viewer: no /edit route exists, editing is inline from the menu; contract needs the owner's decision or this check should say 404",
+      "url": "http://forums.local/community/s/help-desk/t/how-do-i-reset-my-membership-password-after-changing-email/edit/",
+      "check_wrong": true
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-post-edit.18` @member #ui: from the topic menu, Edit shows the title field as well as the body -> today only the body is editable inline."
+  ],
+  "notes": "Edited only content bob created in this walk; all deleted afterwards. Menu stayed open over the editor after clicking Edit (minor visual overlap, screenshot edit-open.png). No site setting changed."
+}

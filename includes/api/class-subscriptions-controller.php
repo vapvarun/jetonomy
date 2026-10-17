@@ -13,6 +13,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use Jetonomy\API\REST_Auth;
+use Jetonomy\Models\Space;
 use Jetonomy\Models\Subscription;
 
 class Subscriptions_Controller extends Base_Controller {
@@ -70,8 +71,22 @@ class Subscriptions_Controller extends Base_Controller {
 		$limit      = (int) $pagination['limit'];
 		$offset     = (int) $pagination['offset'];
 
-		$rows  = Subscription::list_for_user( $user_id, $limit, $offset );
-		$total = Subscription::count_for_user( $user_id );
+		// ?object_type=&object_id= narrows to that one object. The follow buttons
+		// delete whatever this returns first, so ignoring the filter unfollowed the
+		// member's newest subscription instead of the topic they clicked.
+		$object_type = sanitize_key( (string) $request->get_param( 'object_type' ) );
+		$object_id   = absint( $request->get_param( 'object_id' ) );
+		if ( '' !== $object_type || $object_id ) {
+			$row    = in_array( $object_type, array( 'space', 'post' ), true ) && $object_id
+				? Subscription::find_for( $user_id, $object_type, $object_id )
+				: null;
+			$rows   = $row ? array( $row ) : array();
+			$total  = count( $rows );
+			$offset = 0;
+		} else {
+			$rows  = Subscription::list_for_user( $user_id, $limit, $offset );
+			$total = Subscription::count_for_user( $user_id );
+		}
 
 		$items = array_map( array( $this, 'prepare_subscription' ), $rows );
 		$items = $this->attach_subscription_targets( $items );
@@ -134,10 +149,13 @@ class Subscriptions_Controller extends Base_Controller {
 		}
 
 		if ( 'post' === $object_type ) {
-			$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $object_id );
+			$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $object_id, $user_id );
 			if ( is_wp_error( $live ) ) {
 				return $live;
 			}
+		} elseif ( ! Space::find( $object_id ) || ! \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'read', $object_id ) ) {
+			// Same answer for a missing space and one this member may not read.
+			return $this->not_found( 'Space' );
 		}
 
 		$id = Subscription::subscribe( $user_id, $object_type, $object_id, $via );

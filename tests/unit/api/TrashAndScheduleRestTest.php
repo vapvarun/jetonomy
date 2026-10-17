@@ -206,4 +206,53 @@ class TrashAndScheduleRestTest extends WP_UnitTestCase {
 		Post::delete( (int) $gone['id'] );
 		$this->assertSame( 0, $this->next_publish_run() );
 	}
+
+	/**
+	 * Wave-3 walk (C.member.scheduled-post): the author could not change or
+	 * cancel a schedule - PATCH published_at was 403 for anyone without
+	 * manage_options. The author (and staff) now move or cancel it, and the
+	 * publish job follows.
+	 */
+	public function test_author_moves_and_cancels_a_schedule_and_the_job_follows(): void {
+		[ , $draft ] = $this->schedule( 'Movable', wp_date( 'Y-m-d\TH:i:s', time() + DAY_IN_SECONDS ) );
+		$id          = (int) $draft['id'];
+
+		$new_local     = wp_date( 'Y-m-d\TH:i:00', time() + 3 * DAY_IN_SECONDS );
+		[ $status, $data ] = $this->call( $this->author_id, 'PATCH', "/posts/{$id}", [ 'published_at' => $new_local ] );
+		$this->assertSame( 200, $status, wp_json_encode( $data ) );
+		$moved = Post::find( $id );
+		$this->assertSame( 'draft', $moved->status, 'still scheduled, not published' );
+		$this->assertSame( strtotime( $new_local . ' ' . wp_timezone_string() ), strtotime( $moved->published_at . ' UTC' ), 'stored as UTC for the site-time value' );
+		$this->assertSame( strtotime( $moved->published_at . ' UTC' ), $this->next_publish_run(), 'publish job moved with it' );
+
+		// Staff may move it too; another member may not.
+		$this->assertSame( 200, $this->call( $this->mod_id, 'PATCH', "/posts/{$id}", [ 'published_at' => wp_date( 'Y-m-d\TH:i:00', time() + 4 * DAY_IN_SECONDS ) ] )[0] );
+		$stranger = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		SpaceMember::add( $this->space_id, $stranger, 'member' );
+		$this->assertSame( 403, $this->call( $stranger, 'PATCH', "/posts/{$id}", [ 'published_at' => '' ] )[0] );
+
+		// A past time is still refused.
+		$this->assertSame( 400, $this->call( $this->author_id, 'PATCH', "/posts/{$id}", [ 'published_at' => wp_date( 'Y-m-d\TH:i:00', time() - HOUR_IN_SECONDS ) ] )[0] );
+
+		// '' cancels: back to a plain draft, nothing left to publish.
+		$this->assertSame( 200, $this->call( $this->author_id, 'PATCH', "/posts/{$id}", [ 'published_at' => '' ] )[0] );
+		$cancelled = Post::find( $id );
+		$this->assertSame( 'draft', $cancelled->status );
+		$this->assertNull( $cancelled->published_at );
+		$this->assertSame( 0, $this->next_publish_run() );
+	}
+
+	/** @covers-existing Opening the schedule to authors does not open backdating of live topics. */
+	public function test_backdating_a_live_topic_still_needs_manage_options(): void {
+		$post_id = (int) Post::create(
+			[
+				'space_id'  => $this->space_id,
+				'author_id' => $this->author_id,
+				'title'     => 'Live',
+				'content'   => '<p>body</p>',
+				'status'    => 'publish',
+			]
+		);
+		$this->assertSame( 403, $this->call( $this->author_id, 'PATCH', "/posts/{$post_id}", [ 'published_at' => '2020-01-01 10:00:00' ] )[0] );
+	}
 }

@@ -116,7 +116,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 				?>
 				<?php // jt-nav-dup: the phone tab bar's Alerts tab is the same destination. ?>
 				<div class="jt-notif-dropdown-wrap jt-nav-dup">
-					<button type="button" class="jt-community-nav-notif" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>">
+					<button type="button" class="jt-community-nav-notif" data-jt-unread-host="jt-community-nav-badge" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>">
 						<?php jetonomy_echo_icon( 'bell', 16 ); ?>
 						<?php if ( $unread > 0 ) : ?>
 							<span class="jt-community-nav-badge"><?php echo (int) $unread; ?></span>
@@ -163,7 +163,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 		<span><?php esc_html_e( 'Ranks', 'jetonomy' ); ?></span>
 	</a>
 	<?php if ( $user_id ) : ?>
-		<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
+		<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" data-jt-unread-host="jt-mobile-tab-badge" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 			<?php jetonomy_echo_icon( 'bell', 20 ); ?>
 			<span><?php esc_html_e( 'Alerts', 'jetonomy' ); ?></span>
 			<?php if ( $unread > 0 ) : ?>

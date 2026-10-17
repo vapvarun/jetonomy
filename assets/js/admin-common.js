@@ -58,6 +58,7 @@
 			inviteUnlimited:      __( 'Unlimited', 'jetonomy' ),
 			inviteNever:          __( 'Never', 'jetonomy' ),
 			inviteExpired:        __( 'Expired', 'jetonomy' ),
+			inviteLoadMore:       __( 'Load more', 'jetonomy' ),
 			// Column labels for JS-injected invite rows. They must match the
 			// headings jetonomy_admin_table() renders, because the responsive
 			// layout shows them as each cell's label on mobile.
@@ -84,7 +85,7 @@
 				// A rule admits; it does not restrict, so no "but not take part".
 				grants: {
 					/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
-					read:        sprintf( __( 'read posts and %s', 'jetonomy' ), REPLIES ),
+					read:        sprintf( __( 'read and report posts and %s', 'jetonomy' ), REPLIES ),
 					participate: __( 'read, post, reply, vote and report', 'jetonomy' ), // jt-terms-ok: "reply" is the verb here, not the noun.
 					full:        sprintf( /* translators: %s: topic label, plural lowercase (e.g. "topics"). */ __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s %s', 'jetonomy' ), TOPICS ), // jt-terms-ok: "reply" is the verb; the noun is the placeholder.
 				},
@@ -96,7 +97,7 @@
 					role:        sprintf( __( 'Matches anyone holding this WordPress role. Most %s hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ), MEMBERS ),
 					capability:  __( 'Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.', 'jetonomy' ),
 					/* translators: %s: member label, plural lowercase (e.g. "members"). */
-					trust_level: sprintf( __( 'Matches %s at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ), MEMBERS ),
+					trust_level: sprintf( __( 'Matches %s at or above this trust level, 1 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ), MEMBERS ),
 				},
 				// %1$s stays a literal %s, filled with the adapter name at runtime.
 				membershipNote: sprintf( /* translators: 1: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. 2: member label, plural lowercase. */ __( 'Matches %2$s who hold the %1$s level you pick below.', 'jetonomy' ), '%s', MEMBERS ),
@@ -117,6 +118,7 @@
 		},
 
 		init: function() {
+			this.showPendingToast();
 			this.bindDashboard();
 			this.bindCategoryActions();
 			this.bindSpaceActions();
@@ -180,6 +182,34 @@
 			setTimeout(function() {
 				$toast.remove();
 			}, 3200);
+		},
+
+		// A toast fired right before a reload or navigation dies with the page,
+		// so the message is parked in sessionStorage and shown on the next load.
+		reloadWithToast: function(message, url) {
+			try {
+				window.sessionStorage.setItem('jetonomyAdminToast', String(message || ''));
+			} catch (e) {
+				// Storage blocked (private mode): the page still reloads, just without the toast.
+			}
+			if (url) {
+				window.location.href = url;
+			} else {
+				window.location.reload();
+			}
+		},
+
+		showPendingToast: function() {
+			var message = '';
+			try {
+				message = window.sessionStorage.getItem('jetonomyAdminToast') || '';
+				window.sessionStorage.removeItem('jetonomyAdminToast');
+			} catch (e) {
+				// Storage blocked: nothing was parked, so there is no toast to show.
+			}
+			if (message) {
+				this.toast(message);
+			}
 		},
 
 		// ── Spinner Helper ──
@@ -335,8 +365,7 @@
 					visibility: $('#cat-visibility').val()
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						location.reload();
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -367,6 +396,7 @@
 					});
 				})();
 				$('#edit-cat-visibility').val($link.data('visibility'));
+				$('#edit-cat-id').data('edit-token', $link.attr('data-edit-token') || '');
 
 				// Re-initialize color picker in modal
 				var $color = $('#edit-cat-color');
@@ -396,6 +426,7 @@
 
 				self.ajax('jetonomy_update_category', {
 					id: id,
+					edit_token: $('#edit-cat-id').data('edit-token') || '',
 					name: name,
 					slug: $('#edit-cat-slug').val(),
 					description: $('#edit-cat-description').val(),
@@ -405,8 +436,7 @@
 					visibility: $('#edit-cat-visibility').val()
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						location.reload();
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -612,8 +642,7 @@
 					cover_image: $('#space-cover-image').val()
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						window.location.href = 'admin.php?page=jetonomy-spaces&action=edit&space_id=' + res.data.id;
+						self.reloadWithToast(res.data.message, 'admin.php?page=jetonomy-spaces&action=edit&space_id=' + res.data.id);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -637,6 +666,7 @@
 
 				self.ajax('jetonomy_update_space', {
 					id: spaceId,
+					edit_token: $form.attr('data-edit-token') || '',
 					title: $('#space-title').val(),
 					slug: $('#space-slug').val(),
 					description: $('#space-description').val(),
@@ -650,6 +680,8 @@
 					cover_image: $('#space-cover-image').val()
 				}).done(function(res) {
 					if (res.success) {
+						// The form stays open, so its next save is checked against what was just saved.
+						$form.attr('data-edit-token', res.data.edit_token || '');
 						self.toast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
@@ -702,13 +734,13 @@
 					if (!ok) return;
 					self.ajax('jetonomy_delete_space', { id: id, mode: mode }).done(function(res) {
 						if (res.success) {
-							self.toast(res.data.message);
 							// An archived space still exists, so the row stays and
 							// is reloaded; only a purge removes it from the list.
 							if (res.data && res.data.removed) {
+								self.toast(res.data.message);
 								$row.fadeOut(300, function() { $(this).remove(); });
 							} else {
-								window.location.reload();
+								self.reloadWithToast(res.data.message);
 							}
 						} else {
 							self.toast(res.data || self.i18n.error, 'error');
@@ -793,9 +825,12 @@
 
 				self.ajax('jetonomy_update_space', {
 					id: spaceId,
+					edit_token: $form.attr('data-edit-token') || '',
 					settings: JSON.stringify(settings)
 				}).done(function(res) {
 					if (res.success) {
+						// The form stays open, so its next save is checked against what was just saved.
+						$form.attr('data-edit-token', res.data.edit_token || '');
 						self.toast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
@@ -880,8 +915,7 @@
 					role: role
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						location.reload();
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -1146,11 +1180,12 @@
 				}
 
 				// Roster role is derived, never chosen: read -> viewer,
-				// participate -> member, full -> moderator. Matches
-				// AccessRule::cap_space_role() on the server, which is the
-				// authority - this only keeps the hidden field honest.
+				// participate and full -> member (a rule never makes a
+				// moderator). Matches AccessRule::cap_space_role() on the
+				// server, which is the authority - this only keeps the hidden
+				// field and the preview honest.
 				function syncDerivedRole() {
-					var map = { read: 'viewer', participate: 'member', full: 'moderator' };
+					var map = { read: 'viewer', participate: 'member', full: 'member' };
 					$('#rule-space-role').val(map[$('#rule-grants').val()] || 'viewer');
 				}
 
@@ -1187,8 +1222,7 @@
 					priority: $('#rule-priority').val()
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						location.reload();
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -1208,9 +1242,8 @@
 					space_id: $btn.data('space-id'),
 					rule_value: $btn.data('value'),
 					// The server reads the rule by id and derives the roster role
-					// from its grants; space_role is sent only for older builds.
-					rule_id: $btn.data('id'),
-					space_role: $btn.data('role')
+					// from its grants.
+					rule_id: $btn.data('id')
 				}).done(function(res) {
 					if (res.success) {
 						self.toast(res.data.message);
@@ -1350,9 +1383,11 @@
 				return $tr;
 			}
 
-			// Load existing links for this space on tab render.
-			function loadInvites() {
-				self.ajax('jetonomy_list_invites', { space_id: spaceId }).done(function(res) {
+			// Load existing links for this space on tab render, one page at a
+			// time: a space with hundreds of links must not arrive in one dump.
+			function loadInvites(page) {
+				self.ajax('jetonomy_list_invites', { space_id: spaceId, page: page }).done(function(res) {
+					$('.jetonomy-invites-more').remove();
 					if (!res.success || !res.data || !res.data.invites || !res.data.invites.length) {
 						return;
 					}
@@ -1361,9 +1396,22 @@
 					res.data.invites.forEach(function(invite) {
 						$tbody.append(rowHtml(invite));
 					});
+					if (res.data.has_more) {
+						$('<p>', { 'class': 'jetonomy-invites-more' })
+							.text(sprintf(
+								/* translators: 1: invite links shown, 2: all invite links on the space. */
+								__( 'Showing %1$s of %2$s invite links.', 'jetonomy' ),
+								$tbody.find('tr[data-invite-id]').length,
+								res.data.total
+							) + ' ')
+							.append($('<button>', { type: 'button', 'class': 'button' }).text(self.i18n.inviteLoadMore).on('click', function() {
+								loadInvites(page + 1);
+							}))
+							.insertAfter($table.parent());
+					}
 				});
 			}
-			loadInvites();
+			loadInvites(1);
 
 			// Copy a link to the clipboard.
 			function copyToClipboard(text) {
@@ -1445,7 +1493,7 @@
 							$row.fadeOut(300, function() {
 								$(this).remove();
 								if (!$table.find('tbody tr').length) {
-									location.reload();
+									self.reloadWithToast(res.data.message);
 								}
 							});
 						} else {
@@ -1555,7 +1603,8 @@
 			});
 
 			// Unban User
-			$(document).on('click', '.jetonomy-unban-user', function() {
+			$(document).on('click', '.jetonomy-unban-user', function(e) {
+				e.preventDefault();
 				var $btn = $(this);
 				var $row = $btn.closest('tr');
 				var restrictionId = $btn.data('restriction-id');
@@ -1575,6 +1624,7 @@
 							self.toast(res.data.message);
 							// On Users page: restore Ban link. On Moderation page: remove row.
 							if ($row.find('.ban').length) {
+								$row.find('.jetonomy-restriction-label').remove();
 								// The name is member-chosen text: set it as an attribute, never splice it into HTML.
 								$row.find('.ban').empty().append(
 									$('<a href="#" class="jetonomy-ban-trigger"></a>')
@@ -1636,12 +1686,8 @@
 					trust_level: trustLevel
 				}).done(function(res) {
 					if (res.success) {
-						self.toast(res.data.message);
-						// Update badge in table
-						var $badge = $('.jetonomy-trust-badge[data-user-id="' + userId + '"]');
-						$badge.attr('class', 'jetonomy-trust-badge jetonomy-trust-badge--' + trustLevel);
-						// Reload for clean label update
-						location.reload();
+						// Reload for a clean label update; the toast follows the reload.
+						self.reloadWithToast(res.data.message);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
@@ -1740,8 +1786,14 @@
 						if ('ip_ban' === banType) {
 							return;
 						}
-						// Toggle row action: Ban → Unban
+						// Toggle row action: Ban → Unban, and name the restriction as the server render does.
 						var $row = $('tr[data-user-id="' + userId + '"]');
+						$row.find('.jetonomy-restriction-label').remove();
+						$row.find('.column-username strong').first().after(
+							' ',
+							$('<span class="jetonomy-badge jetonomy-badge--ban jetonomy-restriction-label"></span>')
+								.text('silence' === banType ? __('Silenced', 'jetonomy') : __('Banned', 'jetonomy'))
+						);
 						$row.find('.ban').html(
 							'<a href="#" class="jetonomy-unban-user" data-restriction-id="' + res.data.restriction_id + '">' +
 							self.i18n.unban +
@@ -1812,9 +1864,8 @@
 			statusPct.textContent    = '0%';
 
 			function updateStepIndicator(phase) {
-				// Granting members to private and group spaces belongs to the
-				// Forums step; it has no step of its own.
-				if (phase === 'members') { phase = 'forums'; }
+				// Sources without a Members step count it under Forums.
+				if (phase === 'members' && !progress.querySelector('.jetonomy-step[data-step="members"]')) { phase = 'forums'; }
 				var found = false;
 				// Iterate in reverse so steps before the active one get marked done
 				for (var i = steps.length - 1; i >= 0; i--) {

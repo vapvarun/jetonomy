@@ -73,9 +73,12 @@ class PostShapeTest extends WP_UnitTestCase {
 	}
 
 	public function test_exposes_viewer_bookmark_and_vote(): void {
-		wp_set_current_user( $this->member_id );
-		Vote::cast( $this->member_id, 'post', $this->post_id, 1 );
-		Bookmark::toggle( $this->member_id, $this->post_id );
+		// Another member: your own vote never counts, so the author cannot be the voter.
+		$viewer = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		SpaceMember::add( $this->space_id, $viewer, 'member' );
+		wp_set_current_user( $viewer );
+		Vote::cast( $viewer, 'post', $this->post_id, 1 );
+		Bookmark::toggle( $viewer, $this->post_id );
 
 		$data = $this->server->dispatch( new WP_REST_Request( 'GET', "/jetonomy/v1/posts/{$this->post_id}" ) )->get_data();
 

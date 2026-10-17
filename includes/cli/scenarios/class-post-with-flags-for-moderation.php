@@ -221,7 +221,7 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 		if ( $space_id > 0 ) {
 			$this->step(
 				'delete-space',
-				static fn (): Journey_Result => $space_srv->delete( $space_id )
+				static fn (): Journey_Result => $space_srv->delete( $space_id, 'purge' )
 			);
 			$this->failed = false;
 		}

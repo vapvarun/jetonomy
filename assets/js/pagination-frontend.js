@@ -25,6 +25,7 @@
 
 		var loadingLabel = wp.i18n.__( 'Loading…', 'jetonomy' );
 		var loadMoreLabel = wp.i18n.__( 'Load More', 'jetonomy' );
+		var failedLabel = wp.i18n.__( 'Could not load more. Check your connection and try again.', 'jetonomy' );
 
 		var loading = false;
 
@@ -33,21 +34,48 @@
 		// (posts, replies, drafts, etc.) can target its own list element.
 		var targetSel = container.dataset.jtTarget || '.jt-topics';
 
+		// A row's identity: topic rows carry data-jt-key, reply cards an id.
+		function keyOf(el) {
+			return el.getAttribute('data-jt-key') || el.id || '';
+		}
+
+		function reset() {
+			loading = false;
+			btn.textContent = loadMoreLabel;
+			btn.removeAttribute('aria-busy');
+			btn.style.pointerEvents = '';
+		}
+
 		function fetchAndAppend(event) {
 			if (event) { event.preventDefault(); }
 			if (loading) { return; }
 			loading = true;
+			var staleErr = container.querySelector('.jt-pagination-error');
+			if (staleErr) { staleErr.remove(); }
 			btn.textContent = loadingLabel;
 			btn.setAttribute('aria-busy', 'true');
 			btn.style.pointerEvents = 'none';
-			fetch(btn.href).then(function (r) { return r.text(); }).then(function (html) {
+			fetch(btn.href).then(function (r) {
+				if (!r.ok) { throw new Error(String(r.status)); }
+				return r.text();
+			}).then(function (html) {
 				var parser = new DOMParser();
 				var doc = parser.parseFromString(html, 'text/html');
 				var newList = doc.querySelector(targetSel);
 				var currentList = document.querySelector(targetSel);
 				var appended = [];
 				if (newList && currentList) {
+					// Pages are offsets, so a topic posted or bumped since this page
+					// loaded shifts a row already shown onto the next page. Skip
+					// rows that are already in the list.
+					var seen = {};
+					Array.from(currentList.children).forEach(function (child) {
+						var k = keyOf(child);
+						if (k) { seen[k] = true; }
+					});
 					Array.from(newList.children).forEach(function (child) {
+						var k = keyOf(child);
+						if (k && seen[k]) { return; }
 						currentList.appendChild(child);
 						appended.push(child);
 					});
@@ -68,11 +96,28 @@
 				} else {
 					container.remove();
 				}
+				// The button that had focus is gone; keyboard users continue
+				// from the first new row instead of the top of the page.
+				if (appended.length) {
+					var first = appended[0];
+					var focusTarget = first.querySelector('a[href], button:not([disabled])');
+					if (!focusTarget) {
+						first.setAttribute('tabindex', '-1');
+						focusTarget = first;
+					}
+					focusTarget.focus();
+				}
 			}).catch(function () {
-				loading = false;
-				btn.textContent = loadMoreLabel;
-				btn.removeAttribute('aria-busy');
-				btn.style.pointerEvents = '';
+				reset();
+				// Inline and announced, beside the button the member just used.
+				var err = container.querySelector('.jt-pagination-error');
+				if (!err) {
+					err = document.createElement('p');
+					err.className = 'jt-form-error jt-pagination-error';
+					err.setAttribute('role', 'alert');
+					container.appendChild(err);
+				}
+				err.textContent = failedLabel;
 			});
 		}
 

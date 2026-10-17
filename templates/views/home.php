@@ -41,10 +41,16 @@ if ( ! is_user_logged_in() ) :
 	);
 	// No setting writes a tagline; the subheading is changed through this
 	// filter.
-	$jt_welcome_sub = (string) apply_filters(
+	// Offer an account only where WordPress lets visitors register; otherwise
+	// the button lands on wp-login.php?registration=disabled.
+	$jt_can_register = (bool) get_option( 'users_can_register' );
+	$jt_welcome_sub  = (string) apply_filters(
 		'jetonomy_home_welcome_subheading',
-		/* translators: %s: plural space label. */
-		sprintf( __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the %s you care about.', 'jetonomy' ), \Jetonomy\space_label( true, true ) )
+		$jt_can_register
+			/* translators: %s: plural space label. */
+			? sprintf( __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the %s you care about.', 'jetonomy' ), \Jetonomy\space_label( true, true ) )
+			/* translators: %s: plural space label. */
+			: sprintf( __( 'Ask questions, share what you build, and join the discussion. Log in to post, vote, and follow the %s you care about.', 'jetonomy' ), \Jetonomy\space_label( true, true ) )
 	);
 	$jt_pulse = jetonomy_community_pulse();
 	?>
@@ -61,8 +67,10 @@ if ( ! is_user_logged_in() ) :
 			</div>
 		</div>
 		<div class="jt-home-welcome-actions">
-			<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( wp_registration_url() ); ?>"><?php esc_html_e( 'Create free account', 'jetonomy' ); ?></a>
-			<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( wp_login_url( \Jetonomy\base_url() . '/' ) ); ?>"><?php esc_html_e( 'Log in', 'jetonomy' ); ?></a>
+			<?php if ( $jt_can_register ) : ?>
+				<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( wp_registration_url() ); ?>"><?php esc_html_e( 'Create free account', 'jetonomy' ); ?></a>
+			<?php endif; ?>
+			<a class="jt-btn <?php echo $jt_can_register ? 'jt-btn-ghost' : 'jt-btn-fill'; ?>" href="<?php echo esc_url( wp_login_url( \Jetonomy\base_url() . '/' ) ); ?>"><?php esc_html_e( 'Log in', 'jetonomy' ); ?></a>
 		</div>
 	</section>
 <?php else : ?>

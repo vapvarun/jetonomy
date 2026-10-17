@@ -1,0 +1,68 @@
+{
+  "journey": "C.admin.uninstall",
+  "checks": {
+    "c-admin-uninstall.1": {
+      "result": "pass",
+      "evidence": "read-only proof: uninstall.php returns at the top unless jetonomy_settings.remove_data_on_uninstall is set (forums.local value false). PHPUnit in the wp-env tests-cli container (separate DB): UninstallKeepsDataTest -> 'Uninstall keeps tables and settings by default' and 'Opt in removes cron jobs and widget settings' OK (2 tests, 6 assertions). Reinstall-restores-forum follows from nothing being dropped; the Delete flow itself was not run live."
+    },
+    "c-admin-uninstall.2": {
+      "result": "untested",
+      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
+    },
+    "c-admin-uninstall.3": {
+      "result": "untested",
+      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
+    },
+    "c-admin-uninstall.4": {
+      "result": "untested",
+      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
+    },
+    "c-admin-uninstall.5": {
+      "result": "untested",
+      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
+    },
+    "c-admin-uninstall.6": {
+      "result": "untested",
+      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
+    },
+    "c-admin-uninstall.7": {
+      "result": "untested",
+      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
+    },
+    "c-admin-uninstall.8": {
+      "result": "untested",
+      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
+    },
+    "c-admin-uninstall.10": {
+      "result": "untested",
+      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
+    },
+    "c-admin-uninstall.9": {
+      "result": "pass",
+      "evidence": "bob GET /wp-admin/plugins.php -> 403 'Sorry, you are not allowed to access this page.'; the delete-selected URL for jetonomy/jetonomy.php is refused the same way (403), so no uninstall can start."
+    },
+    "c-admin-uninstall.11": {
+      "result": "untested",
+      "needs": "the Delete link only appears after the plugin is deactivated, which would take the shared community offline; run on the Docker site"
+    }
+  },
+  "proposed_checks": [
+    "- `c-admin-uninstall.12` @admin #cli: run the PHPUnit UninstallKeepsDataTest (and an opt-in test that also asserts every jt_ table is dropped and no jetonomy_ capability remains) in the wp-env tests-cli container -> all green, so checks 2 to 5 have an automatic proof."
+  ],
+  "notes": "lane A. Read-only. Nothing was changed on forums.local for this journey. PHPUnit ran in the wp-env tests-cli container only.",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:36:00Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  }
+}

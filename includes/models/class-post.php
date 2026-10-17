@@ -17,6 +17,9 @@ use function Jetonomy\now;
  */
 class Post extends Model {
 
+	/** Columns the topic edit form writes; fingerprinted by edit_token(). */
+	public const EDIT_FIELDS = array( 'title', 'content' );
+
 	/**
 	 * Get the table name suffix.
 	 *
@@ -305,6 +308,7 @@ class Post extends Model {
 			if ( ! empty( $post->author_id ) ) {
 				UserProfile::increment_post_count( (int) $post->author_id, $delta );
 			}
+			self::shift_replier_counts( $id, $delta );
 
 			/** This action is documented in includes/models/class-post.php (Post::create) */
 			do_action( 'jetonomy_post_publish_transition', $id, $delta, (string) ( $data['created_at'] ?? $post->created_at ?? '' ) );
@@ -370,7 +374,7 @@ class Post extends Model {
 		// that looks it up. Deleting the replies with the topic keeps them from pointing at
 		// a missing post_id - still counted on their authors, still in search and activity.
 		if ( $post ) {
-			self::delete_replies( $id );
+			self::delete_replies( $id, 'publish' === ( $post->status ?? '' ) );
 		}
 
 		$result = parent::delete( $id );
@@ -430,6 +434,30 @@ class Post extends Model {
 		return $result;
 	}
 
+	/**
+	 * Move the repliers' reply_count with their topic when it enters or leaves publish.
+	 *
+	 * A member's reply_count counts published replies in published topics (Recount
+	 * defines it so). Trashing a topic hides its replies with it, so they stop
+	 * counting and come back on restore. One grouped read, one UPDATE per replier.
+	 *
+	 * @param int $post_id Topic.
+	 * @param int $delta   +1 entering publish, -1 leaving it.
+	 */
+	private static function shift_replier_counts( int $post_id, int $delta ): void {
+		$replies = \Jetonomy\table( 'replies' );
+		$rows    = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT author_id, COUNT(*) AS n FROM {$replies} WHERE post_id = %d AND status = 'publish' AND author_id > 0 GROUP BY author_id",
+				$post_id
+			)
+		) ?: array();
+		foreach ( $rows as $row ) {
+			UserProfile::increment_reply_count( (int) $row->author_id, $delta * (int) $row->n );
+		}
+	}
+
 	/** Replies removed per pass when a topic is hard-deleted. */
 	private const REPLY_DELETE_BATCH = 500;
 
@@ -455,9 +483,10 @@ class Post extends Model {
 	 * cannot outlive the topic it belongs to. And the topic's reply_count is
 	 * not maintained - the row it lives on is deleted next.
 	 *
-	 * @param int $post_id Topic being deleted.
+	 * @param int  $post_id Topic being deleted.
+	 * @param bool $counted Whether the topic is published, so its replies still count on their authors.
 	 */
-	private static function delete_replies( int $post_id ): void {
+	private static function delete_replies( int $post_id, bool $counted ): void {
 		$db      = static::db();
 		$replies = \Jetonomy\table( 'replies' );
 
@@ -484,7 +513,7 @@ class Post extends Model {
 
 			$published = array();
 			foreach ( $rows as $r ) {
-				if ( 'publish' === $r->status && (int) $r->author_id > 0 ) {
+				if ( $counted && 'publish' === $r->status && (int) $r->author_id > 0 ) {
 					$published[ (int) $r->author_id ] = ( $published[ (int) $r->author_id ] ?? 0 ) + 1;
 				}
 			}
@@ -1497,6 +1526,32 @@ class Post extends Model {
 	}
 
 	/**
+	 * Private topics a given member may read, as SQL: the set-based twin of
+	 * Permission_Engine::can_read_post()'s private branch, for lists built for
+	 * someone other than the current viewer (the email digest). A private topic
+	 * is kept for its author, the space's admins and moderators, and site admins.
+	 * Space access itself is Space::content_visibility_sql()'s job.
+	 *
+	 * @param int    $user_id Reader (0 for guest).
+	 * @param string $alias   Posts table alias.
+	 * @return array{0:string,1:array} SQL fragment and its params.
+	 */
+	public static function private_reader_sql( int $user_id, string $alias = 'p' ): array {
+		$col = '' !== $alias ? $alias . '.' : '';
+		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
+			return array( '1=1', array() );
+		}
+		if ( $user_id <= 0 ) {
+			return array( "{$col}is_private = 0", array() );
+		}
+		$members = \Jetonomy\table( 'space_members' );
+		return array(
+			"({$col}is_private = 0 OR {$col}author_id = %d OR {$col}space_id IN (SELECT space_id FROM {$members} WHERE user_id = %d AND role IN ('moderator','admin')))",
+			array( $user_id, $user_id ),
+		);
+	}
+
+	/**
 	 * Filter for a space's post lists: private topics only for their author
 	 * and space staff, and nothing from authors the viewer blocked.
 	 *
@@ -2373,12 +2428,25 @@ class Post extends Model {
 	/**
 	 * Published topics created since a moment.
 	 *
-	 * @param string $since UTC MySQL datetime.
+	 * @param string   $since  UTC MySQL datetime.
+	 * @param int|null $viewer Null = every topic; a user id (0 = guest) counts
+	 *                         only topics in spaces that viewer can read.
 	 * @return int
 	 */
-	public static function count_published_since( string $since ): int {
+	public static function count_published_since( string $since, ?int $viewer = null ): int {
+		if ( null === $viewer ) {
+			return (int) static::db()->get_var(
+				static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'publish' AND created_at >= %s", $since )
+			);
+		}
+		[ $where, $values ] = Space::content_visibility_sql( $viewer, 's' );
 		return (int) static::db()->get_var(
-			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'publish' AND created_at >= %s", $since )
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is literal SQL plus %d placeholders from content_visibility_sql().
+				'SELECT COUNT(*) FROM ' . static::table() . ' p INNER JOIN ' . \Jetonomy\table( 'spaces' ) . " s ON s.id = p.space_id WHERE p.status = 'publish' AND p.created_at >= %s AND {$where}",
+				$since,
+				...$values
+			)
 		);
 	}
 
@@ -2429,23 +2497,27 @@ class Post extends Model {
 	}
 
 	/**
-	 * The wp-admin Content screen's topics, newest first, with space title and slug.
+	 * The wp-admin Content screen's topics with space title and slug: newest
+	 * first, or by a column sort (orderby: title, created_at, reply_count,
+	 * view_count; order: ASC|DESC).
 	 *
-	 * @param array{space_id?:int,status?:string,search?:string} $filters Filters.
-	 * @param int                                                $limit   Max rows.
-	 * @param int                                                $offset  Offset.
+	 * @param array{space_id?:int,status?:string,search?:string,orderby?:string,order?:string} $filters Filters.
+	 * @param int                                                                              $limit   Max rows.
+	 * @param int                                                                              $offset  Offset.
 	 * @return object[]
 	 */
 	public static function list_for_admin( array $filters, int $limit, int $offset ): array {
 		[ $where, $args ] = self::admin_where( $filters );
 		$spaces           = \Jetonomy\table( 'spaces' );
+		$column           = in_array( $filters['orderby'] ?? '', array( 'title', 'created_at', 'reply_count', 'view_count' ), true ) ? $filters['orderby'] : 'created_at';
+		$dir              = 'ASC' === strtoupper( (string) ( $filters['order'] ?? '' ) ) ? 'ASC' : 'DESC';
 		return static::db()->get_results(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $column is allow-listed, $dir is ASC/DESC.
 				'SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM ' . static::table() . " p
 				 LEFT JOIN {$spaces} s ON s.id = p.space_id
 				 WHERE {$where}
-				 ORDER BY p.created_at DESC
+				 ORDER BY p.{$column} {$dir}, p.id {$dir}
 				 LIMIT %d OFFSET %d",
 				...array_merge( $args, array( $limit, $offset ) )
 			)

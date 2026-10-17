@@ -36,7 +36,7 @@ The space itself appears in the space listings for signed-in members, with a **P
 
 A private space is always **Requires Approval** or **Invite Only**: someone decides who gets in. If you pick Private while the join policy is Open, Jetonomy switches it to Requires Approval and tells you (spaces saved as Private + Open before 2.0.2 are converted the same way).
 
-Logged-out visitors do not see private spaces in listings unless you turn on **Show private spaces to logged-out visitors** under **Settings → General → Access Control**; then they appear with a lock, and their topics stay hidden. If a visitor opens the space's address they see, depending on the policy, "This space is private. Log in to request access." or "This space is private and invite-only. Log in if you have an invitation.", with a **Log In** button (and **Register** when your site allows registration).
+Logged-out visitors do not see private spaces in listings unless you turn on **Show private spaces to logged-out visitors** under **Settings → General → Access Control**; then they appear with a lock, and their topics stay hidden. If a visitor opens the space's address they see, depending on the policy, "<Space name> is private. Log in to request access." or "<Space name> is private and invite-only. Log in if you have an invitation." under the space's description, with a **Log In** button (and **Register** when your site allows registration).
 
 A signed-in person who is not a member sees a message instead of the content:
 

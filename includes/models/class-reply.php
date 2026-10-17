@@ -35,6 +35,9 @@ class Reply extends Model {
 	 */
 	public const DEFAULT_SORT = 'oldest';
 
+	/** Columns the reply edit form writes; fingerprinted by edit_token(). */
+	public const EDIT_FIELDS = array( 'content' );
+
 	protected static function table_name(): string {
 		return 'replies';
 	}
@@ -129,7 +132,7 @@ class Reply extends Model {
 			if ( $is_published && ! empty( $data['post_id'] ) ) {
 				Post::increment_reply_count( (int) $data['post_id'], 1, (string) $data['created_at'] );
 			}
-			if ( $is_published && ! empty( $data['author_id'] ) ) {
+			if ( $is_published && ! empty( $data['author_id'] ) && self::topic_is_published( (int) ( $data['post_id'] ?? 0 ) ) ) {
 				UserProfile::increment_reply_count( (int) $data['author_id'] );
 			}
 
@@ -216,12 +219,14 @@ class Reply extends Model {
 			if ( ! empty( $reply->post_id ) ) {
 				Post::increment_reply_count( (int) $reply->post_id, $delta );
 			}
-			if ( ! empty( $reply->author_id ) ) {
+			if ( ! empty( $reply->author_id ) && self::topic_is_published( (int) ( $reply->post_id ?? 0 ) ) ) {
 				UserProfile::increment_reply_count( (int) $reply->author_id, $delta );
 			}
 
 			/** This action is documented in includes/models/class-reply.php (Reply::create) */
 			do_action( 'jetonomy_reply_publish_transition', $id, $delta, (string) ( $reply->created_at ?? '' ) );
+
+			self::sync_accepted_answer( $reply, $delta > 0 );
 		}
 
 		// Both threads when a split moved the reply: the one it left and the
@@ -234,6 +239,44 @@ class Reply extends Model {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Keep the topic's accepted answer in step with the reply's visibility.
+	 *
+	 * A trashed, held or deleted accepted reply stops being the answer: the
+	 * topic loses accepted_reply_id and is_resolved, so it no longer shows
+	 * "Resolved" over a callout quoting removed text. The reply keeps its
+	 * is_accepted mark, so restoring it makes it the answer again, unless
+	 * another reply was accepted meanwhile (accepting clears the mark on the
+	 * others).
+	 *
+	 * @param object $reply   Reply row as it was before the change.
+	 * @param bool   $is_live True when the reply just became published.
+	 */
+	private static function sync_accepted_answer( object $reply, bool $is_live ): void {
+		$post_id = (int) ( $reply->post_id ?? 0 );
+		$post    = $post_id > 0 ? Post::find( $post_id ) : null;
+		if ( ! $post ) {
+			return;
+		}
+		$accepted = (int) ( $post->accepted_reply_id ?? 0 );
+		if ( ! $is_live && $accepted === (int) ( $reply->id ?? 0 ) ) {
+			Post::clear_accepted_reply( $post_id );
+		} elseif ( $is_live && 0 === $accepted && ! empty( $reply->is_accepted ) ) {
+			Post::accept_reply( $post_id, (int) ( $reply->id ?? 0 ) );
+		}
+	}
+
+	/**
+	 * Whether a reply in this topic counts on its author: a trashed topic takes its
+	 * replies out of the count (Post::shift_replier_counts), so writes there do not move it.
+	 *
+	 * @param int $post_id Topic.
+	 */
+	private static function topic_is_published( int $post_id ): bool {
+		$post = $post_id > 0 ? Post::find( $post_id ) : null;
+		return $post && 'publish' === ( $post->status ?? '' );
 	}
 
 	/**
@@ -288,12 +331,15 @@ class Reply extends Model {
 			if ( ! empty( $reply->post_id ) ) {
 				Post::increment_reply_count( (int) $reply->post_id, -1 );
 			}
-			if ( ! empty( $reply->author_id ) ) {
+			if ( ! empty( $reply->author_id ) && self::topic_is_published( (int) ( $reply->post_id ?? 0 ) ) ) {
 				UserProfile::increment_reply_count( (int) $reply->author_id, -1 );
 			}
 
 			/** This action is documented in includes/models/class-reply.php (Reply::create) */
 			do_action( 'jetonomy_reply_publish_transition', $id, -1, (string) ( $reply->created_at ?? '' ) );
+		}
+		if ( true === $result && $reply ) {
+			self::sync_accepted_answer( $reply, false );
 		}
 
 		// $reply was loaded above, before the row went away - the only place

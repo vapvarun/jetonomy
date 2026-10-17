@@ -117,6 +117,47 @@ class BbpressStructureTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * WordPress keeps a bbPress title HTML-escaped ("Plugins &amp; themes");
+	 * Jetonomy escapes on output, so the import must store plain text.
+	 */
+	public function test_titles_and_descriptions_import_as_plain_text(): void {
+		global $wpdb;
+		$p     = $wpdb->prefix . 'jt_';
+		$user  = self::factory()->user->create();
+		$forum = self::factory()->post->create( [ 'post_type' => 'forum', 'post_status' => 'publish', 'post_title' => 'F' ] );
+		$topic = self::factory()->post->create( [ 'post_type' => 'topic', 'post_status' => 'publish', 'post_parent' => $forum, 'post_author' => $user, 'post_title' => 'T' ] );
+		$wpdb->update( $wpdb->posts, [ 'post_title' => 'Plugins &amp; themes', 'post_content' => 'Tips &#8217;n tricks' ], [ 'ID' => $forum ] );
+		$wpdb->update( $wpdb->posts, [ 'post_title' => 'Q&amp;A &quot;help&quot;' ], [ 'ID' => $topic ] );
+		clean_post_cache( $forum );
+		clean_post_cache( $topic );
+
+		$this->import();
+
+		$space = $wpdb->get_row( $wpdb->prepare( "SELECT title, description FROM {$p}spaces WHERE id = %d", $this->jt_id( 'space', $forum ) ) );
+		$this->assertSame( 'Plugins & themes', $space->title );
+		$this->assertSame( "Tips \u{2019}n tricks", $space->description );
+		$this->assertSame( 'Q&A "help"', $wpdb->get_var( $wpdb->prepare( "SELECT title FROM {$p}posts WHERE id = %d", $this->jt_id( 'post', $topic ) ) ) );
+	}
+
+	/** An entity-escaped tag in a source title is decoded, then stripped: never stored as live markup. */
+	public function test_escaped_markup_in_a_title_is_not_stored_as_a_tag(): void {
+		global $wpdb;
+		$p     = $wpdb->prefix . 'jt_';
+		$user  = self::factory()->user->create();
+		$forum = self::factory()->post->create( [ 'post_type' => 'forum', 'post_status' => 'publish', 'post_title' => 'F' ] );
+		$topic = self::factory()->post->create( [ 'post_type' => 'topic', 'post_status' => 'publish', 'post_parent' => $forum, 'post_author' => $user, 'post_title' => 'T' ] );
+		$wpdb->update( $wpdb->posts, [ 'post_title' => '&lt;script&gt;x&lt;/script&gt; Tips &amp; tricks' ], [ 'ID' => $topic ] );
+		$wpdb->update( $wpdb->posts, [ 'post_title' => '&lt;img src=x onerror=alert(1)&gt;Forum' ], [ 'ID' => $forum ] );
+		clean_post_cache( $forum );
+		clean_post_cache( $topic );
+
+		$this->import();
+
+		$this->assertSame( 'Tips & tricks', $wpdb->get_var( $wpdb->prepare( "SELECT title FROM {$p}posts WHERE id = %d", $this->jt_id( 'post', $topic ) ) ) );
+		$this->assertSame( 'Forum', $wpdb->get_var( $wpdb->prepare( "SELECT title FROM {$p}spaces WHERE id = %d", $this->jt_id( 'space', $forum ) ) ) );
+	}
+
+	/**
 	 * Replies under a topic that is not imported are counted, with a reason,
 	 * instead of the screen claiming nothing was skipped. And the progress
 	 * total includes the profiles phase, so it never runs past 100%.

@@ -174,6 +174,23 @@ class Rate_Limiter {
 	}
 
 	/**
+	 * The REST refusal for a member over their daily allowance: 429 (rate
+	 * limited), not 400, so clients treat it as "wait", not "fix your input".
+	 *
+	 * @param int    $user_id     Member.
+	 * @param string $action      create_posts | create_replies | vote.
+	 * @param int    $trust_level Their trust level.
+	 */
+	public static function error( int $user_id, string $action, int $trust_level ): \WP_Error {
+		$status = self::status( $user_id, $action, $trust_level );
+		$data   = array( 'status' => 429 );
+		if ( $status['retry_after'] > 0 ) {
+			$data['retry_after'] = (int) $status['retry_after'];
+		}
+		return new \WP_Error( 'jetonomy_rate_limited', self::message( $user_id, $action, $trust_level ), $data );
+	}
+
+	/**
 	 * Return the built-in default per-day rate limits for Level 0 users.
 	 *
 	 * Single source of truth consumed by the runtime reader, the admin

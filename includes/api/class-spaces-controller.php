@@ -282,8 +282,14 @@ class Spaces_Controller extends Base_Controller {
 		 * Access rules. jt_access_rules is the table that decides who may enter a
 		 * space, and until 1.9.4 it had ZERO REST coverage - configurable only
 		 * from wp-admin, so no API-driven or app-based space-admin flow could
-		 * touch it. Capability matches the AJAX handler (jetonomy_manage_spaces).
+		 * touch it. Capability matches the AJAX handler (jetonomy_manage_spaces):
+		 * rules are a site-admin decision, so a space admin is refused with a
+		 * sentence that says so rather than the generic one.
 		 */
+		$rules_refusal = array(
+			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+			'forbidden_message' => sprintf( __( 'Only site administrators can manage access rules for this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+		);
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/access-rules',
@@ -291,12 +297,12 @@ class Spaces_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'list_access_rules' ),
-					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
 				),
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_access_rule' ),
-					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
 					'args'                => array(
 						'rule_type'  => array(
 							'type'     => 'string',
@@ -329,7 +335,7 @@ class Spaces_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'delete_access_rule' ),
-				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
 			)
 		);
 	}
@@ -491,7 +497,9 @@ class Spaces_Controller extends Base_Controller {
 							if ( null !== $visibility && $space->visibility !== $visibility ) {
 								return false;
 							}
-							return \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $space->id );
+							// An archived or locked space refuses every new topic, so it is no target.
+							return \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $space->id )
+								&& true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $space->id );
 						}
 					)
 				);
@@ -548,13 +556,22 @@ class Spaces_Controller extends Base_Controller {
 		$items       = array_map( array( $this, 'prepare_space' ), $spaces );
 		$total_pages = (int) ceil( $total / max( 1, $pagination['limit'] ) );
 
-		$response = $this->paginated_response(
-			$items,
-			array(
-				'total'  => $total,
-				'offset' => $pagination['offset'],
-			)
+		$meta = array(
+			'total'  => $total,
+			'offset' => $pagination['offset'],
 		);
+		if ( $postable_by_me ) {
+			// Why the composer's picker is empty for a banned or silenced member.
+			$restricted          = \Jetonomy\Permissions\Permission_Engine::restriction_error( $user_id, 'create_posts' );
+			$meta['restriction'] = $restricted
+				? array(
+					'code'    => $restricted->get_error_code(),
+					'message' => $restricted->get_error_message(),
+				)
+				: null;
+		}
+
+		$response = $this->paginated_response( $items, $meta );
 
 		$response->header( 'X-WP-TotalPages', (string) $total_pages );
 
@@ -720,12 +737,13 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function update_item( $request ) {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
+		// Looked up first: a missing or hidden space answers 404 alike, and only
+		// a space this viewer can see refuses a non-admin with 403.
 		$user_id = get_current_user_id();
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
@@ -880,12 +898,13 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function delete_item( $request ) {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
+		// Looked up first: a missing or hidden space answers 404 alike, and only
+		// a space this viewer can see refuses a non-admin with 403.
 		$user_id = get_current_user_id();
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
@@ -1005,24 +1024,6 @@ class Spaces_Controller extends Base_Controller {
 	}
 
 	/**
-	 * A space, or a 404 when this viewer may not know it exists.
-	 *
-	 * 404 rather than 403 for a hidden space (or one in a hidden category):
-	 * a 403 would confirm to a stranger that the space exists, which the
-	 * page itself never does.
-	 *
-	 * @param int $id Space ID.
-	 * @return object|WP_Error
-	 */
-	private function find_unconcealed_space( int $id ) {
-		$space = Space::find( $id );
-		if ( ! $space || Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
-			return $this->not_found( 'Space' );
-		}
-		return $space;
-	}
-
-	/**
 	 * GET /spaces/{id}/members — List all members of a space.
 	 */
 	public function get_members( WP_REST_Request $request ): WP_REST_Response|WP_Error {
@@ -1127,10 +1128,10 @@ class Spaces_Controller extends Base_Controller {
 	public function leave_space( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id      = absint( $request->get_param( 'id' ) );
 		$user_id = absint( $request->get_param( 'user_id' ) );
-		$space   = Space::find( $id );
+		$space   = $this->find_unconcealed_space( $id );
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
 		$current_user_id = get_current_user_id();
@@ -1174,9 +1175,9 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function get_join_requests( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 		if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( get_current_user_id(), $id ) ) {
 			return $this->permission_error();
@@ -1246,6 +1247,7 @@ class Spaces_Controller extends Base_Controller {
 		return new WP_REST_Response(
 			array(
 				'status'     => 'approved',
+				'message'    => JoinRequest::decision_message( 'approved' ),
 				'request_id' => (int) $jr->id,
 				'space_id'   => (int) $space->id,
 				'user_id'    => (int) $jr->user_id,
@@ -1270,6 +1272,7 @@ class Spaces_Controller extends Base_Controller {
 		return new WP_REST_Response(
 			array(
 				'status'     => 'denied',
+				'message'    => JoinRequest::decision_message( 'denied' ),
 				'request_id' => (int) $jr->id,
 				'space_id'   => (int) $space->id,
 				'user_id'    => (int) $jr->user_id,
@@ -1287,9 +1290,9 @@ class Spaces_Controller extends Base_Controller {
 	private function resolve_join_request( WP_REST_Request $request ): array {
 		$id         = absint( $request->get_param( 'id' ) );
 		$request_id = absint( $request->get_param( 'request_id' ) );
-		$space      = Space::find( $id );
-		if ( ! $space ) {
-			return array( null, null, $this->not_found( 'Space' ) );
+		$space      = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return array( null, null, $space );
 		}
 		if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( get_current_user_id(), $id ) ) {
 			return array( null, null, $this->permission_error() );
@@ -1318,10 +1321,16 @@ class Spaces_Controller extends Base_Controller {
 		$id      = absint( $request->get_param( 'id' ) );
 		$user_id = absint( $request->get_param( 'user_id' ) );
 		$role    = sanitize_text_field( $request->get_param( 'role' ) );
-		$space   = Space::find( $id );
+		$space   = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
+		}
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$current_user_id = get_current_user_id();
+
+		// After the lookup: a hidden space answered 404 above, like a missing one.
+		if ( ! $this->is_space_admin( $id, $current_user_id ) ) {
+			return $this->permission_error();
 		}
 
 		if ( ! in_array( $role, self::VALID_ROLES, true ) ) {
@@ -1329,12 +1338,6 @@ class Spaces_Controller extends Base_Controller {
 				/* translators: %s: comma-separated list of valid space roles. */
 				sprintf( __( 'Invalid role. Allowed: %s.', 'jetonomy' ), implode( ', ', self::VALID_ROLES ) )
 			);
-		}
-
-		$current_user_id = get_current_user_id();
-
-		if ( ! $this->is_space_admin( $id, $current_user_id ) ) {
-			return $this->permission_error();
 		}
 
 		if ( ! SpaceMember::is_member( $id, $user_id ) ) {
@@ -1385,12 +1388,13 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function generate_invite( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
+		// Looked up first: a missing or hidden space answers 404 alike, and only
+		// a space this viewer can see refuses a non-admin with 403.
 		$user_id = get_current_user_id();
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
@@ -1449,17 +1453,17 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function get_invites( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
 		// Space ADMIN, not merely privileged — matching generate_invite(). An
 		// invite token is a bearer credential into a space that may be hidden;
 		// listing them is disclosing them, so a moderator is not enough. Note
 		// the route's permission_callback is only the community-visibility
-		// gate; this is the check that actually authorises the caller.
+		// gate; this is the check that actually authorises the caller. A hidden
+		// space already answered 404 above, like a missing one.
 		if ( ! $this->is_space_admin( $id, get_current_user_id() ) ) {
 			return $this->permission_error();
 		}
@@ -1482,12 +1486,13 @@ class Spaces_Controller extends Base_Controller {
 	public function revoke_invite( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id        = absint( $request->get_param( 'id' ) );
 		$invite_id = absint( $request->get_param( 'invite_id' ) );
-		$space     = Space::find( $id );
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space     = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
+		// Looked up first: a missing or hidden space answers 404 alike, and only
+		// a space this viewer can see refuses a non-admin with 403.
 		if ( ! $this->is_space_admin( $id, get_current_user_id() ) ) {
 			return $this->permission_error();
 		}
@@ -1544,9 +1549,10 @@ class Spaces_Controller extends Base_Controller {
 	 * Format a space member row for API output.
 	 */
 	private function prepare_member( object $member ): array {
-		$user_id = (int) $member->user_id;
-		$user    = get_userdata( $user_id );
-		$profile = UserProfile::find_by_user( $user_id );
+		$user_id   = (int) $member->user_id;
+		$user      = get_userdata( $user_id );
+		$profile   = UserProfile::find_by_user( $user_id );
+		$last_seen = UserProfile::last_seen_for_viewer( $user_id, $profile ? $profile->last_seen_at : null );
 
 		return array(
 			'space_id'         => (int) $member->space_id,
@@ -1560,8 +1566,8 @@ class Spaces_Controller extends Base_Controller {
 			// Presence: mirrors the feed/reply author fields so the app can render
 			// the same "online" dot on member avatars. GMT variant is the
 			// clock-safe one the app prefers (see utils/presence.ts).
-			'last_seen_at'     => $profile ? $profile->last_seen_at : null,
-			'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $profile ? $profile->last_seen_at : null ),
+			'last_seen_at'     => $last_seen,
+			'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $last_seen ),
 			'profile_url'      => \Jetonomy\get_profile_url( (int) $user_id ),
 		);
 	}

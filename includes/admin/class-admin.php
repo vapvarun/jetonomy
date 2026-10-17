@@ -28,6 +28,7 @@ class Admin {
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
+		add_action( 'admin_page_access_denied', array( $this, 'explain_access_rules_refusal' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_notices', array( $this, 'render_permalink_notice' ) );
 		add_action( 'admin_init', array( $this, 'maybe_render_setup_wizard' ) );
@@ -397,28 +398,33 @@ class Admin {
 		$topic = \Jetonomy\jetonomy_label( 'topic', false, true );
 		$types = array(
 			/* translators: %s: member label, lowercase (e.g. "member"). */
-			'user_welcome'          => array( sprintf( __( 'Welcome: new %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ), false ),
+			'user_welcome'           => array( sprintf( __( 'Welcome: new %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ), false ),
 			/* translators: 1: reply label (e.g. "Reply"). 2: the item replied to, lowercase (e.g. "topic" or "reply"). */
-			'reply_to_post'         => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $topic ), true ),
+			'reply_to_post'          => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $topic ), true ),
+			/* translators: 1: reply label (e.g. "Reply"). 2: singular topic label, lowercase. */
+			'reply_in_followed'      => array( sprintf( __( '%1$s in a %2$s you follow', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $topic ), false, sprintf( /* translators: 1: singular topic label, lowercase. 2: singular reply label, lowercase. */ __( 'Sent to followers who did not start the %1$s. On or off follows the %2$s notification above.', 'jetonomy' ), $topic, \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
 			/* translators: 1: reply label (e.g. "Reply"). 2: the item replied to, lowercase (e.g. "topic" or "reply"). */
-			'reply_to_reply'        => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), true ),
-			'mention'               => array( __( 'Mention (@username)', 'jetonomy' ), true ),
-			'accepted_answer'       => array( __( 'Your answer accepted', 'jetonomy' ), true ),
-			'idea_status_changed'   => array( __( 'Your idea roadmap status changed', 'jetonomy' ), true ),
+			'reply_to_reply'         => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), true ),
+			'mention'                => array( __( 'Mention (@username)', 'jetonomy' ), true ),
+			'accepted_answer'        => array( __( 'Your answer accepted', 'jetonomy' ), true ),
+			'idea_status_changed'    => array( __( 'Your idea roadmap status changed', 'jetonomy' ), true ),
 			/* translators: 1: singular topic label, lowercase. 2: singular space label, lowercase. */
-			'new_post_in_sub'       => array( sprintf( __( 'New %1$s in subscribed %2$s', 'jetonomy' ), $topic, \Jetonomy\space_label( false, true ) ), true ),
-			'badge_earned'          => array( __( 'Badge earned', 'jetonomy' ), true ),
+			'new_post_in_sub'        => array( sprintf( __( 'New %1$s in subscribed %2$s', 'jetonomy' ), $topic, \Jetonomy\space_label( false, true ) ), true ),
+			'badge_earned'           => array( __( 'Badge earned', 'jetonomy' ), true ),
 			/* translators: %s: singular topic label, lowercase. */
-			'vote_on_post'          => array( sprintf( __( 'Vote on your %s', 'jetonomy' ), $topic ), true ),
+			'vote_on_post'           => array( sprintf( __( 'Vote on your %s', 'jetonomy' ), $topic ), true ),
 			/* translators: %s: singular topic label, lowercase. */
-			'reaction'              => array( sprintf( __( 'Reaction on your %s', 'jetonomy' ), $topic ), true ),
-			'moderation'            => array( __( 'Moderator action on your content', 'jetonomy' ), true ),
-			'flag_resolved'         => array( __( 'Your report was reviewed', 'jetonomy' ), true ),
+			'reaction'               => array( sprintf( __( 'Reaction on your %s', 'jetonomy' ), $topic ), true ),
+			'moderation'             => array( __( 'Moderator action on your content', 'jetonomy' ), true ),
+			'flag_created'           => array( __( 'New report for moderators', 'jetonomy' ), false, __( 'Sent to moderators when content is reported. On or off follows Moderator action on your content.', 'jetonomy' ) ),
+			'flag_resolved'          => array( __( 'Your report was reviewed', 'jetonomy' ), true ),
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			'join_request'          => array( sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ), true ),
-			'join_request_result'   => array( __( 'Your join request was answered', 'jetonomy' ), true ),
-			'verification'          => array( __( 'Confirm your email (new accounts)', 'jetonomy' ), false, __( 'The confirmation link is always added below your text. Placeholders here: {site} and {user}.', 'jetonomy' ) ),
-			'verification_reminder' => array( __( 'Verification reminder', 'jetonomy' ), false ),
+			'join_request'           => array( sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ), true ),
+			'join_request_result'    => array( __( 'Your join request was answered', 'jetonomy' ), true ),
+			'verification'           => array( __( 'Confirm your email (new accounts)', 'jetonomy' ), false, __( 'The confirmation link is always added below your text. Placeholders here: {site} and {user}.', 'jetonomy' ) ),
+			'verification_reminder'  => array( __( 'Verification reminder', 'jetonomy' ), false ),
+			/* translators: %s: reply label, lowercase (e.g. "reply"). */
+			'reply_by_email_refused' => array( sprintf( __( 'Emailed %s not posted', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), false ),
 		);
 		// Pro private messages go through Notifier too, but only while that extension is live.
 		if ( \Jetonomy\messaging_active() ) {
@@ -782,10 +788,10 @@ class Admin {
 		// ── General tab ──
 		// Only process if base_slug is present (General tab was submitted).
 		if ( isset( $input['base_slug'] ) ) {
-			$new_slug = sanitize_title( $input['base_slug'] ?? 'community' );
-			// An unsaved key means the site has been running on the default, so
-			// that is the base its old links point at.
-			$old_base = sanitize_title( $existing['base_slug'] ?? 'community' );
+			// The base the site is running on now; old links point at it.
+			$old_base = \Jetonomy\base_slug();
+			// A cleared field keeps that base: an empty one would unmount the community.
+			$new_slug = sanitize_title( $input['base_slug'] ) ?: $old_base;
 			if ( $new_slug !== $old_base ) {
 				// Delete the versioned flush key so Router re-registers rules on next load.
 				delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
@@ -859,6 +865,11 @@ class Admin {
 			// An unchecked checkbox submits nothing, so absence inside a
 			// General-tab save means OFF - the same rule front_page above uses.
 			$clean['allow_space_admin_purge'] = ! empty( $input['allow_space_admin_purge'] );
+			// Arming data removal on delete is for whoever can delete plugins; a
+			// delegated settings manager keeps the stored value.
+			if ( current_user_can( 'manage_options' ) ) {
+				$clean['remove_data_on_uninstall'] = ! empty( $input['remove_data_on_uninstall'] );
+			}
 		}
 
 		// ── Permissions tab ──
@@ -1490,6 +1501,37 @@ class Admin {
 		include JETONOMY_DIR . 'includes/admin/views/tags.php';
 	}
 
+	/**
+	 * Tell a space admin why the Access Rules screen is closed to them.
+	 *
+	 * Rules are managed by site administrators only (jetonomy_manage_spaces).
+	 * WordPress refuses the page before Jetonomy runs, with a sentence that
+	 * reads like a broken link; this runs on WordPress's own refusal hook and
+	 * answers the space admin of that space in plain words instead.
+	 */
+	public function explain_access_rules_refusal(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only routing of a refusal page.
+		if ( 'jetonomy-spaces' !== ( $_GET['page'] ?? '' ) || 'access' !== ( $_GET['tab'] ?? '' ) ) {
+			return;
+		}
+		$space = Space::find( absint( $_GET['space_id'] ?? 0 ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		if ( ! $space || ! \Jetonomy\Permissions\Permission_Engine::is_space_admin( get_current_user_id(), (int) $space->id ) ) {
+			return;
+		}
+		wp_die(
+			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+			esc_html( sprintf( __( 'Only site administrators can manage access rules for this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
+			esc_html__( 'Access Rules', 'jetonomy' ),
+			array(
+				'response'  => 403,
+				'link_url'  => esc_url( \Jetonomy\route_url( 'space', $space->slug ) ),
+				/* translators: %s: where the link returns to - the configured space label, or a specific space title. */
+				'link_text' => esc_html( sprintf( __( 'Back to %s', 'jetonomy' ), $space->title ) ),
+			)
+		);
+	}
+
 	public function render_spaces(): void {
 		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'jetonomy' ), 403 );
@@ -1514,8 +1556,11 @@ class Admin {
 			$members_capped = ( (int) ( $space->member_count ?? 0 ) ) > count( $members ) && count( $members ) >= 1000;
 			$access_rules   = AccessRule::list_for_space( $space_id );
 			$space_settings = Space::get_settings( $space_id );
-			$join_requests  = JoinRequest::list_pending_for_space( $space_id );
 			$join_total     = JoinRequest::count_pending_for_space( $space_id );
+			$join_per_page  = 20;
+			$join_pages     = max( 1, (int) ceil( $join_total / $join_per_page ) );
+			$join_paged     = min( $join_pages, max( 1, absint( $_GET['jrpg'] ?? 1 ) ) );
+			$join_requests  = JoinRequest::list_pending_for_space( $space_id, $join_per_page, ( $join_paged - 1 ) * $join_per_page );
 			include JETONOMY_DIR . 'includes/admin/views/space-edit.php';
 			return;
 		}
@@ -1525,10 +1570,17 @@ class Admin {
 		$filter_type     = sanitize_text_field( $_GET['type'] ?? '' );
 		$filter_status   = sanitize_text_field( $_GET['status'] ?? '' );
 
+		$search_query = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
+		$orderby      = sanitize_key( wp_unslash( $_GET['orderby'] ?? '' ) );
+		$order        = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
+
 		$filters  = array(
 			'category_id' => $filter_category,
 			'type'        => $filter_type,
 			'status'      => $filter_status,
+			'search'      => $search_query,
+			'orderby'     => $orderby,
+			'order'       => $order,
 		);
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = absint( $_GET['per_page'] ?? 20 );
@@ -1539,7 +1591,7 @@ class Admin {
 
 		// Inside one category (and nothing else filtered) the list follows the
 		// manual order members see, so drag-reorder has a coherent target.
-		$can_reorder = $filter_category > 0 && ! $filter_type && ! $filter_status;
+		$can_reorder = $filter_category > 0 && ! $filter_type && ! $filter_status && '' === $search_query && '' === $orderby;
 
 		$total       = Space::count_for_admin( $filters );
 		$total_pages = (int) ceil( $total / $per_page );
@@ -1792,6 +1844,14 @@ class Admin {
 		$total       = UserProfile::count_for_admin( $filter_trust, $search );
 		$users       = UserProfile::list_for_admin( $filter_trust, $search, $per_page, $offset );
 		$total_pages = ceil( $total / $per_page );
+		// One query for the whole page, so each row can name its active restriction.
+		$restrictions = Restriction::active_rows_for_users( array_map( static fn( $u ) => (int) $u->user_id, $users ) );
+		// A space ban names its space; one query for every space on the page.
+		$space_titles = array_column( \Jetonomy\Models\Space::list_by_ids( array_column( $restrictions, 'space_id' ) ), 'title', 'id' );
+		// Each row asks whether the viewer may lift it (their own ban in that space): one query for the page.
+		Restriction::prime_space_bans( get_current_user_id(), array_column( $restrictions, 'space_id' ) );
+		// Each row asks whether the viewer may restrict that member (user_can on them): load the page's users once.
+		cache_users( array_map( static fn( $u ) => (int) $u->user_id, $users ) );
 
 		include JETONOMY_DIR . 'includes/admin/views/users.php';
 	}
@@ -1864,10 +1924,15 @@ class Admin {
 
 		// "Scheduled" is a pseudo-status (a draft with a published_at) and "All"
 		// leaves out the trash; Post::list_for_admin() owns both rules.
+		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'created_at' ) );
+		$order   = 'ASC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'DESC' ) ) ) ? 'ASC' : 'DESC';
+
 		$filters = array(
 			'space_id' => $current_space,
 			'status'   => $current_status,
 			'search'   => $search_query,
+			'orderby'  => $orderby,
+			'order'    => $order,
 		);
 
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );

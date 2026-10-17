@@ -118,6 +118,55 @@ class ReactionsTest extends WP_UnitTestCase {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * A topic in a hidden space answers exactly like a missing one, for reading
+	 * and for reacting; a 403 there used to confirm the topic exists.
+	 */
+	public function test_a_hidden_topic_answers_like_a_missing_one(): void {
+		$hidden = Space::create( [ 'title' => 'Hidden', 'slug' => 'hidden-' . uniqid(), 'category_id' => Category::create( [ 'name' => 'H', 'slug' => 'h-' . uniqid() ] ), 'visibility' => 'hidden' ] );
+		$post   = (int) Post::create( [ 'space_id' => $hidden, 'title' => 'Secret', 'slug' => 'secret-' . uniqid(), 'content' => 'x', 'status' => 'publish' ] );
+		wp_set_current_user( $this->user_id );
+
+		foreach ( [ 'GET', 'POST' ] as $method ) {
+			$answers = [];
+			foreach ( [ $post, 999999 ] as $id ) {
+				$request = new WP_REST_Request( $method, "/jetonomy/v1/posts/{$id}/reactions" );
+				$request->set_body_params( [ 'emoji' => 'thumbsup' ] );
+				$res       = $this->server->dispatch( $request );
+				$answers[] = [ $res->get_status(), $res->get_data()['code'] ?? '' ];
+			}
+			$this->assertSame( 404, $answers[0][0], "{$method}: hidden topic is not found" );
+			$this->assertSame( $answers[1], $answers[0], "{$method}: same answer as a missing id" );
+		}
+	}
+
+	/**
+	 * Asking for one reaction names who chose it, as one translated sentence;
+	 * past ten names the rest are counted.
+	 */
+	public function test_get_with_emoji_names_who_reacted(): void {
+		$users = [];
+		foreach ( range( 1, 12 ) as $i ) {
+			$id = $this->factory()->user->create( [ 'role' => 'subscriber', 'display_name' => "Reactor {$i}" ] );
+			get_user_by( 'id', $id )->add_cap( 'jetonomy_vote' );
+			$this->toggle( 'thumbsup', $id );
+			$users[] = $id;
+		}
+
+		$get = function ( string $emoji ): array {
+			$request = new WP_REST_Request( 'GET', "/jetonomy/v1/posts/{$this->post_id}/reactions" );
+			$request->set_param( 'emoji', $emoji );
+			return $this->server->dispatch( $request )->get_data();
+		};
+
+		$data = $get( 'thumbsup' );
+		$this->assertSame( 12, $data['reactors']['total'] );
+		$this->assertCount( 10, $data['reactors']['names'] );
+		$this->assertStringEndsWith( 'and 2 others', $data['reactors']['label'] );
+
+		$this->assertArrayNotHasKey( 'reactors', $get( 'heart' ), 'no one chose heart' );
+	}
+
+	/**
 	 * The first toggle for a user on a post must respond with action=added.
 	 */
 	public function test_toggle_reaction_on_returns_action_added(): void {

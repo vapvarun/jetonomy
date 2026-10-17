@@ -1,0 +1,51 @@
+{
+  "journey": "C.gating.read-on-public",
+  "checks": {
+    "c-gating-read-on-public.1": {
+      "result": "pass",
+      "evidence": "fresh public/open space 3081, Everyone + Read rule -> toast 'Access rule added.', row 'Everyone - Read - Viewer'."
+    },
+    "c-gating-read-on-public.2": {
+      "result": "pass",
+      "evidence": "gating_t3 (fresh subscriber) wrote 'What is the best phone for testing?' in the composer -> published at /community/s/phone-photography-corner/t/what-is-the-best-phone-for-testing/."
+    },
+    "c-gating-read-on-public.3": {
+      "result": "pass",
+      "evidence": "gating_t3 replied (13669, 201) and voted (200, score 1)."
+    },
+    "c-gating-read-on-public.4": {
+      "result": "pass",
+      "evidence": "gating_tester joined (roster, role member) then replied 13670, voted (score 2) and reported (201): everything works."
+    },
+    "c-gating-read-on-public.5": {
+      "result": "pass",
+      "evidence": "guest GET /spaces/3081/posts -> 200 and lists the topic; guest POST reply -> 401 rest_not_logged_in."
+    },
+    "c-gating-read-on-public.6": {
+      "result": "pass",
+      "evidence": "rule deleted from the Access Rules tab (confirm 'Are you sure? This cannot be undone.', row removed, toast 'Access rule deleted.' captured on the same button in another journey); gating_t3 then posted 'Which gimbal is worth carrying on a hike?' (201)."
+    },
+    "c-gating-read-on-public.7": {
+      "result": "pass",
+      "evidence": "gating_t3 POST /spaces/3081/access-rules -> 403 jetonomy_forbidden; no rule stored."
+    }
+  },
+  "proposed_checks": [],
+  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. Space 3081 hidden and archived at the end.",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:58:06Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  }
+}

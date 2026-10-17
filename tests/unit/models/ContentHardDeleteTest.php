@@ -164,6 +164,34 @@ class ContentHardDeleteTest extends WP_UnitTestCase {
 		$this->assertSame( 1, $this->rows( 'votes', "object_type = 'reply' AND object_id = {$this->bystander_reply}" ) );
 	}
 
+	/**
+	 * Trashing a topic hides its replies, so they stop counting on their authors and
+	 * come back on restore; a later hard delete of the trashed topic does not take
+	 * them off a second time, and Recount agrees at every step.
+	 */
+	public function test_trashing_a_topic_moves_its_repliers_counts(): void {
+		$post_id = $this->topic( 'Trashed' );
+		$this->reply( $post_id, $this->replier_id );
+		$this->reply( $post_id, $this->replier_id );
+		$trashed_reply = $this->reply( $post_id, $this->replier_id );
+		Reply::update( $trashed_reply, [ 'status' => 'trash' ] );
+		$base = $this->reply_count( $this->replier_id ); // Bystander reply + 2 published here.
+
+		Post::update( $post_id, [ 'status' => 'trash' ] );
+		$this->assertSame( $base - 2, $this->reply_count( $this->replier_id ), 'published replies leave with the topic' );
+		\Jetonomy\Recount::for_users( [ $this->replier_id ] );
+		$this->assertSame( $base - 2, $this->reply_count( $this->replier_id ), 'recount agrees while trashed' );
+
+		Post::update( $post_id, [ 'status' => 'publish' ] );
+		$this->assertSame( $base, $this->reply_count( $this->replier_id ), 'restore brings them back' );
+		\Jetonomy\Recount::for_users( [ $this->replier_id ] );
+		$this->assertSame( $base, $this->reply_count( $this->replier_id ), 'recount agrees after restore' );
+
+		Post::update( $post_id, [ 'status' => 'trash' ] );
+		Post::delete( $post_id );
+		$this->assertSame( $base - 2, $this->reply_count( $this->replier_id ), 'hard delete of a trashed topic does not take them off twice' );
+	}
+
 	public function test_post_delete_drains_more_replies_than_one_batch(): void {
 		global $wpdb;
 		$post_id = $this->topic( 'Big' );

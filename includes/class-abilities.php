@@ -980,7 +980,7 @@ class Abilities {
 			'jetonomy/flag-content',
 			array(
 				'label'               => __( 'Flag Content', 'jetonomy' ),
-				'description'         => __( 'Flag a post or reply for moderator review. Provide a reason (spam, inappropriate, off-topic, other).', 'jetonomy' ),
+				'description'         => __( 'Report a post, reply or member for moderator review. Provide a reason (spam, offensive, off_topic, harassment, other).', 'jetonomy' ),
 				'category'            => 'jetonomy-moderation',
 				'input_schema'        => array(
 					'type'       => 'object',
@@ -988,24 +988,25 @@ class Abilities {
 					'properties' => array(
 						'object_type' => array(
 							'type'        => 'string',
-							'description' => 'Content type.',
-							'enum'        => array( 'post', 'reply' ),
+							'description' => 'What is reported.',
+							'enum'        => array( 'post', 'reply', 'user' ),
 							'required'    => true,
 						),
 						'object_id'   => array(
 							'type'        => 'integer',
-							'description' => 'Content ID.',
+							'description' => 'Content or member ID.',
 							'required'    => true,
 						),
 						'reason'      => array(
 							'type'        => 'string',
-							'description' => 'Flag reason.',
-							'enum'        => array( 'spam', 'inappropriate', 'off-topic', 'other' ),
+							// The REST values, plus the two this ability advertised before (mapped in execute_flag_content).
+							'description' => 'Report reason.',
+							'enum'        => array( 'spam', 'offensive', 'off_topic', 'harassment', 'other', 'inappropriate', 'off-topic' ),
 							'required'    => true,
 						),
 						'details'     => array(
 							'type'        => 'string',
-							'description' => 'Additional details.',
+							'description' => 'Additional details, up to 2000 characters.',
 						),
 					),
 				),
@@ -1020,8 +1021,9 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'execute_flag_content' ),
+				// The capability POST /flags requires; the rest is Moderation_Service::create_flag().
 				'permission_callback' => function () {
-					return (bool) get_current_user_id();
+					return current_user_can( 'jetonomy_flag' );
 				},
 				'meta'                => array(
 					'annotations'  => array(
@@ -1438,9 +1440,13 @@ class Abilities {
 		$object_id   = (int) $input['object_id'];
 		$value       = (int) $input['value'];
 
-		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( $object_type, $object_id );
-		if ( is_wp_error( $live ) ) {
-			return $live;
+		// Same gate as REST and WP-CLI (live, readable, vote permission, no
+		// self-vote); taking back your active vote stays open.
+		if ( Vote::get_user_vote( $user_id, $object_type, $object_id ) !== $value ) {
+			$gate = \Jetonomy\Permissions\Content_Gate::check_vote( $user_id, $object_type, $object_id, $value );
+			if ( is_wp_error( $gate ) ) {
+				return $gate;
+			}
 		}
 
 		$result = Vote::cast( $user_id, $object_type, $object_id, $value );
@@ -1704,17 +1710,20 @@ class Abilities {
 	}
 
 	public function execute_flag_content( $input ) {
-		$flag_id = Flag::create(
-			array(
-				'object_type' => sanitize_text_field( $input['object_type'] ),
-				'object_id'   => (int) $input['object_id'],
-				'user_id'     => get_current_user_id(),
-				'reason'      => sanitize_text_field( $input['reason'] ),
-				'details'     => sanitize_textarea_field( $input['details'] ?? '' ),
-			)
+		$reason  = sanitize_text_field( $input['reason'] );
+		$aliases = array(
+			'inappropriate' => 'offensive',
+			'off-topic'     => 'off_topic',
 		);
-		if ( ! $flag_id ) {
-			return new WP_Error( 'jetonomy_flag_failed', __( 'Failed to create flag.', 'jetonomy' ) );
+		$flag_id = \Jetonomy\Moderation\Moderation_Service::create_flag(
+			get_current_user_id(),
+			sanitize_text_field( $input['object_type'] ),
+			(int) $input['object_id'],
+			$aliases[ $reason ] ?? $reason,
+			sanitize_textarea_field( $input['details'] ?? '' )
+		);
+		if ( is_wp_error( $flag_id ) ) {
+			return $flag_id;
 		}
 		return array( 'flag_id' => $flag_id );
 	}

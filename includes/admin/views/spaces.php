@@ -13,6 +13,9 @@
  * @var string   $filter_status
  * @var string   $filter_type
  * @var bool     $can_reorder Whether manual drag-ordering applies to this view.
+ * @var string   $search_query Title/slug search.
+ * @var string   $orderby      Column sort (title|post_count|member_count) or ''.
+ * @var string   $order        ASC|DESC.
  *
  * @package Jetonomy
  */
@@ -152,7 +155,13 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 		<!-- ── Toolbar ─────────────────────────────────────────────── -->
 		<form method="get" action="" id="jetonomy-spaces-filters">
 			<input type="hidden" name="page" value="jetonomy-spaces">
+			<?php if ( '' !== $orderby ) : ?>
+				<input type="hidden" name="orderby" value="<?php echo esc_attr( $orderby ); ?>">
+				<input type="hidden" name="order" value="<?php echo esc_attr( $order ); ?>">
+			<?php endif; ?>
 			<div class="jt-content-toolbar">
+				<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
+				<input type="search" name="s" value="<?php echo esc_attr( $search_query ); ?>" class="regular-text" placeholder="<?php echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>">
 				<select name="category_id">
 					<option value=""><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ) ) ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
@@ -223,8 +232,9 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 				'tbody_id'  => 'jetonomy-spaces-list',
 				'columns'   => array(
 					'title'      => array(
-						'label'   => __( 'Title', 'jetonomy' ),
-						'primary' => true,
+						'label'    => __( 'Title', 'jetonomy' ),
+						'primary'  => true,
+						'sortable' => 'title',
 					),
 					'type'       => array(
 						'label' => __( 'Type', 'jetonomy' ),
@@ -232,12 +242,14 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					),
 					'category'   => array( 'label' => \Jetonomy\jetonomy_label( 'category' ) ),
 					'members'    => array(
-						'label' => \Jetonomy\jetonomy_label( 'member', true ),
-						'width' => 's',
+						'label'    => \Jetonomy\jetonomy_label( 'member', true ),
+						'width'    => 's',
+						'sortable' => 'member_count',
 					),
 					'posts'      => array(
-						'label' => \Jetonomy\jetonomy_label( 'topic', true ),
-						'width' => 'xs',
+						'label'    => \Jetonomy\jetonomy_label( 'topic', true ),
+						'width'    => 'xs',
+						'sortable' => 'post_count',
 					),
 					'status'     => array(
 						'label' => __( 'Status', 'jetonomy' ),
@@ -253,6 +265,10 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					),
 				),
 				'rows'      => (array) ( $spaces ?? array() ),
+				'sort'      => array(
+					'orderby' => $orderby,
+					'order'   => $order,
+				),
 				'row_attrs' => static function ( $space ): array {
 					return array( 'data-id' => (int) $space->id );
 				},

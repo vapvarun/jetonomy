@@ -212,6 +212,19 @@ final class Moderation_Journey {
 			return Journey_Result::fail( 'space_id is required and must be positive for space_ban.' );
 		}
 
+		// Restriction::ban() answers a refusal with 0; ask the same checks first so the
+		// operator gets the reason rather than "insert failed".
+		$allowed = Restriction::actor_may_restrict( $user_id, $issued_by );
+		if ( is_wp_error( $allowed ) ) {
+			return Journey_Result::fail( $allowed->get_error_message() );
+		}
+		if ( 'ip_ban' === $type ) {
+			$ip = Restriction::validate_ip_ban( (string) $reason, $issued_by );
+			if ( is_wp_error( $ip ) ) {
+				return Journey_Result::fail( $ip->get_error_message() );
+			}
+		}
+
 		$id = Restriction::ban( $user_id, $type, $issued_by, $space_id, $reason, $expires_at );
 		if ( ! $id ) {
 			return Journey_Result::fail( 'Restriction::ban() returned 0 — insert failed.' );

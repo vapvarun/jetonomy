@@ -1,0 +1,106 @@
+{
+  "journey": "C.anon.user-profile",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-anon-user-profile.1": {
+      "result": "pass",
+      "evidence": "/community/u/bob/: avatar, bio 'Full-stack developer...', 11 topics, 62 replies, 9 badges, Topics/Replies/Votes tabs"
+    },
+    "c-anon-user-profile.2": {
+      "result": "pass",
+      "evidence": "bob profile HTML has no bob.demo@jetonomy.local email, no settings link or drafts tab; meta description is the bio"
+    },
+    "c-anon-user-profile.3": {
+      "result": "pass",
+      "evidence": "GET /users/3601 keys: avatar_display, avatar_url, bio, can_ban, created_at, display_name, id, is_blocked, last_seen_at, post_count, reply_count, reputation, restriction, trust_level(+name,label) - no email or notification fields. Note: restriction is exposed to guests (finn: 'silence')"
+    },
+    "c-anon-user-profile.4": {
+      "result": "pass",
+      "evidence": "maya (trust 5) shows 'Veteran' in header and 'Veteran Trust level 5'. Rename in Settings > Permissions not run (lane A)"
+    },
+    "c-anon-user-profile.5": {
+      "result": "pass",
+      "evidence": "bob has 1 topic in a private space (DB); not on his Posts tab, and REST /users/3601/posts lists 9 topics all from public spaces"
+    },
+    "c-anon-user-profile.6": {
+      "result": "pass",
+      "evidence": "guest on /u/qatester/replies/: row 'Private reply on Favourite lens for street photography?' with no text, next to the visible reply",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-profile-private-reply.png"
+    },
+    "c-anon-user-profile.7": {
+      "result": "pass",
+      "evidence": "lucia.romero@example.com opens at /community/u/lucia-romeroexample-com/ (200); title and meta description say '@lucia-romeroexample-com' and no email address appears in the page; the old login URL (also %40-encoded) opens with 200"
+    },
+    "c-anon-user-profile.8": {
+      "result": "pass",
+      "evidence": "/community/u/admin/ (old login, nicename qarftadm) -> 200 with the profile; /u/qarftadm/ -> 200"
+    },
+    "c-anon-user-profile.9": {
+      "result": "pass",
+      "evidence": "/community/u/no-such-person/ -> 404 'User not found.' (no link back in the body)"
+    },
+    "c-anon-user-profile.10": {
+      "result": "pass",
+      "evidence": "lane A: with WPMediaVerse deactivated (restored after) and Pro messaging on, bob sees 'Message' on alice's profile linking to /community/messages/?to=alice; guest sees none. With WPMediaVerse active there is no Message button at all (only Report and Block) - see proposed check"
+    },
+    "c-anon-user-profile.11": {
+      "result": "pass",
+      "evidence": "lane A: private-messaging removed from jetonomy_pro_extensions (restored): bob sees no Message button and no Messages links on alice's profile or header, and /community/messages/ is 404 'This page is not available.'"
+    },
+    "c-anon-user-profile.12": {
+      "result": "pass",
+      "evidence": "Grace at 390: full name wraps over 2 lines, 'GR' initials avatar, stats row 163 / 13 / 69 / Member, scrollWidth 390 (grace-profile-390b.png). Stats fade in; a screenshot in the first 300 ms shows labels without numbers"
+    },
+    "c-anon-user-profile.13": {
+      "result": "pass",
+      "evidence": "test_editor (0 topics, 0 replies, no bio): Topics 'No topics yet.', Replies 'No replies yet.', Votes 'No votes yet.'"
+    },
+    "c-anon-user-profile.14": {
+      "result": "pass",
+      "evidence": "finn profile opens 200; his -4 post 'Check out my SEO service...' shows -4; no restriction/silence wording on the page"
+    },
+    "c-anon-user-profile.15": {
+      "result": "pass",
+      "evidence": "lane A, site language ar: Omar's profile as guest: avatar/name/bio right-aligned, badges wrap from the right, tab bar Votes/Replies/Topics reads right to left with Topics selected on the right. qa-artifacts/203-walk2/laneA/ar-profile.png"
+    },
+    "c-anon-user-profile.16": {
+      "result": "pass",
+      "evidence": "Grace profile dark at 390: stats card, badges, name readable on dark tokens (grace-profile-dark.png)"
+    },
+    "c-anon-user-profile.17": {
+      "result": "pass",
+      "evidence": "guest GET /users/3770 (finn, silenced) -> restriction null; no silence or ban field"
+    },
+    "c-anon-user-profile.18": {
+      "result": "pass",
+      "evidence": "bob on /community/u/alice/ sees a Message button; click opens the WPMediaVerse chat panel with Alice Chen (Online), composer ready",
+      "screenshot": "qa-artifacts/203-walk3/laneB/rw3-profile-message-bob-alice.png"
+    },
+    "c-anon-user-profile.19": {
+      "result": "pass",
+      "evidence": "same: Message button opens a WPMediaVerse conversation with alice"
+    }
+  },
+  "proposed_checks": [
+    "- `c-anon-user-profile.17` @guest #rest !refuse: GET /users/<silenced id> -> no restriction field naming silence or ban for a guest (currently restriction:'silence' for finn).",
+    "- `c-anon-user-profile.18` @member #ui: on a site with WPMediaVerse messaging active (chat bubble shown) open a member's profile -> a Message button opens a conversation with them.",
+    "- `c-anon-user-profile.19` @member #ui: with WPMediaVerse active and Pro messaging dormant, open alice's profile as bob -> a Message button that opens a WPMediaVerse conversation shows, or the site owner is told messaging is unavailable (today neither: only Report and Block)."
+  ],
+  "notes": "No settings changed. Email-login member and private reply not in the data. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: WPMediaVerse is active on this site; ids 18 and 19 fail because no Message button shows.",
+  "walked_at": "2026-10-17T17:05:14Z"
+}

@@ -25,3 +25,5 @@ seed-*.php
 marketing
 .playwright-mcp
 includes/qa
+test-results
+playwright-report

@@ -18,8 +18,9 @@
 #   11 version mismatch across jetonomy.php / readme.txt
 #   20 composer install failed
 #   30 smoke test failed — plugin fatals on boot
-#   31 qa-coverage gate regressed
-#   33 manifest or smoke runbook out of date with the code being released
+#   31 runtime coverage gate failed (stale test, must-cover route unreached, baseline grew)
+#   33 manifest or smoke runbook out of date with the code being released,
+#      or a shipped file (Free or Pro) that no runbook journey walks
 #   32 phpunit gate failed (tests red, or WP test scaffold absent)
 #   40 zip missing expected files
 #
@@ -105,10 +106,15 @@ fi
 # Exit 25. Requires wp-cli; skipped (with a loud note) when wp is absent.
 if command -v wp > /dev/null 2>&1; then
 	echo "==> Step 0d: i18n make-pot warning gate"
-	I18N_WARNINGS="$(wp i18n make-pot "$ROOT" /tmp/jetonomy-release-check.pot \
+	# make-pot's own failure must stop the build; only grep's "no match" is allowed.
+	I18N_OUT="$(wp i18n make-pot "$ROOT" /tmp/jetonomy-release-check.pot \
 		--slug=jetonomy --domain=jetonomy \
-		--exclude=node_modules,vendor,tests,build,libs,docs,dist 2>&1 \
-		| grep -cE '^Warning: The string' || true)"
+		--exclude=node_modules,vendor,tests,build,libs,docs,dist 2>&1)" || {
+		echo "FAIL: wp i18n make-pot did not run:" >&2
+		printf '%s\n' "$I18N_OUT" | tail -5 >&2
+		exit 25
+	}
+	I18N_WARNINGS="$(printf '%s\n' "$I18N_OUT" | grep -cE '^Warning: The string' || true)"
 	rm -f /tmp/jetonomy-release-check.pot
 	if [ "$I18N_WARNINGS" -gt 0 ]; then
 		echo "FAIL: wp i18n make-pot reports $I18N_WARNINGS string warning(s). Fix translator comments before tagging." >&2
@@ -248,6 +254,9 @@ Gruntfile.js
 .distignore
 .wp-env.json
 .playwright-mcp/
+# Playwright run output (test-results/.last-run.json shipped in a 2.0.3 test zip).
+test-results/
+playwright-report/
 /build/
 verify-*.png
 verify-*.jpg
@@ -437,23 +446,6 @@ if [ "$LINT_FAILED" -ne 0 ]; then
 	exit 30
 fi
 
-# --- 6b. QA COVERAGE GATE — manifest entries must have test stubs ---------
-# Phase A/E gate: bin/qa-coverage-check.php reads audit/manifest.json and
-# asserts every REST endpoint / AJAX handler / cron / hook-with-consumer
-# has corresponding test coverage. Exit 1 if uncovered_total grew vs the
-# previous run (drift) — same baseline-shrink discipline phpstan-baseline
-# uses. Skip with COVERAGE_SKIP=1 only in genuine emergencies.
-if [ -f "$ROOT/bin/qa-coverage-check.php" ] && [ -z "${COVERAGE_SKIP:-}" ]; then
-	echo "==> qa-coverage gate"
-	if ! php "$ROOT/bin/qa-coverage-check.php" --quiet --plugin="$ROOT"; then
-		echo "FAIL: QA coverage regressed — see audit/qa-coverage.json" >&2
-		echo "      Each uncovered entry has a stub_command. Run them, fill in TODOs," >&2
-		echo "      verify pass, retry the build." >&2
-		echo "      Bypass (emergency only): COVERAGE_SKIP=1 bin/build-release.sh" >&2
-		exit 31
-	fi
-fi
-
 # --- 6b2. CHECKS MATCH THE CODE BEING RELEASED -----------------------------
 # The manifest (and CLAUDE.md's counts) must describe this code, and every
 # smoke-runbook journey must have been verified against it: the release smoke
@@ -465,8 +457,18 @@ if ! php "$ROOT/bin/check-manifest-fresh.php"; then
 	exit 33
 fi
 if ! php "$ROOT/bin/check-runbook-fresh.php"; then
-	echo "FAIL: smoke-runbook journeys above changed since they were last verified." >&2
-	echo "      Re-read each against its diff, fix the text, set **Verified:** to HEAD, commit, rebuild." >&2
+	echo "FAIL: smoke-runbook journeys above changed since they were last walked." >&2
+	echo "      Walk each in the browser, fix its text, set **Verified:** to the commits it passed at, commit, rebuild." >&2
+	exit 33
+fi
+if ! php "$ROOT/bin/check-journey-coverage.php"; then
+	echo "FAIL: shipped files above are not walked by any smoke-runbook journey (Free + Pro)." >&2
+	echo "      Add each to a journey's **Covers:** (pro: prefix for Pro), or exempt it with a reason in docs/qa/journey-exempt.txt." >&2
+	exit 33
+fi
+if ! php "$ROOT/bin/check-journey-depth.php"; then
+	echo "FAIL: a journey above has no checklist, or a stamp is not backed by a walk where every check passed." >&2
+	echo "      Walk every **Checks:** line, record it in docs/qa/walks/<id>.json, then bin/self-qa.sh --stamp <id>." >&2
 	exit 33
 fi
 
@@ -489,13 +491,22 @@ if [ -z "${PHPUNIT_SKIP:-}" ]; then
 		echo "      Bypass (emergency only): PHPUNIT_SKIP=1 bin/build-release.sh" >&2
 		exit 32
 	fi
-	if ! JETONOMY_TEST_SKIP_PRO=1 php "$ROOT/vendor/bin/phpunit" \
+	COV_DIR="$(mktemp -d)"
+	if ! JETONOMY_COVERAGE_OUT="$COV_DIR/phpunit.json" JETONOMY_TEST_SKIP_PRO=1 php "$ROOT/vendor/bin/phpunit" \
 			--testsuite=unit,integration,security,error-paths,concurrency; then
 		echo "FAIL: PHPUnit reported failures — this is the gate that was missing when" >&2
 		echo "      red CI shipped in 1.8.0. Fix the tests/code; do not tag." >&2
 		echo "      Bypass (emergency only): PHPUNIT_SKIP=1 bin/build-release.sh" >&2
 		exit 32
 	fi
+	# What the suite actually reached, from the same run: stale requests, must-cover
+	# write/access routes, and the shrink-only baseline (bin/qa-runtime-coverage.php).
+	echo "==> runtime coverage gate"
+	if ! php "$ROOT/bin/qa-runtime-coverage.php" --runtime="$COV_DIR/phpunit.json"; then
+		echo "FAIL: runtime coverage gate - see the lines above." >&2
+		exit 31
+	fi
+	rm -rf "${COV_DIR:?}"
 fi
 
 # --- 7. SMOKE TEST — boot the plugin in the minimal WP stub ---------------

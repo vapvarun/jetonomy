@@ -1,0 +1,105 @@
+{
+  "journey": "C.member.space-create-and-join",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-space-create-and-join.1": {
+      "result": "pass",
+      "evidence": "with creation allowed for the author/editor roles (frontend_space_creation_roles) test_moderator (Olivia Grant) opens /community/new-space/: Type lists Forum, Q&A, Ideas, Feed; Visibility, Join policy, Category and an icon picker (15 icons + Show more icons). Run as that member, not as an admin, because the check's admin needs no setting change here"
+    },
+    "c-member-space-create-and-join.2": {
+      "result": "pass",
+      "evidence": "test_moderator created 'Weekend Hikers' with the rocket icon: opens /community/s/weekend-hikers/ with the title and description, button 'Following'; /community/my-spaces/ lists it first with the ADMIN badge and Edit / Mod queue / Members actions. (bob cannot create: his role is not allowed, see .9)",
+      "screenshot": "qa-artifacts/203-walk3/laneB/my-spaces-1440.png"
+    },
+    "c-member-space-create-and-join.3": {
+      "result": "pass",
+      "evidence": "Visibility Hidden switches Join policy to invite and shows 'Hidden spaces are invite-only, so the join policy was switched to Invite only.'"
+    },
+    "c-member-space-create-and-join.4": {
+      "result": "pass",
+      "evidence": "Public + Open then Private: Join policy flips to approval and shows 'Private spaces need approval or an invite, so the join policy was switched to Approval required.'"
+    },
+    "c-member-space-create-and-join.5": {
+      "result": "pass",
+      "evidence": "alice on Mentorship Circle (public, approval): 'Request to join' opens a modal 'Tell the admins why you want to join (optional)'; after submitting with an answer the page shows 'Withdraw request' and 'Your request to join Mentorship Circle ...'. (Insiders / Beta cannot be used for alice: she is already a member; carlos's request not present)"
+    },
+    "c-member-space-create-and-join.6": {
+      "result": "fail",
+      "expected": "alice's request and answer show, Approve works with \"Join request approved.\", Decline with \"Join request denied.\".",
+      "actual": "maya (space admin) sees 'Pending join requests 1' with Alice Chen and her answer on /community/s/mentorship-circle/members/ with Approve and Deny (Deny asks 'Deny this join request? The member can request again later.'). Both work and the row disappears, but no confirmation is shown: no toast 'Join request approved.' / 'Join request denied.' (those strings exist only in the wp-admin AJAX handler class-spaces-handler.php:722,749)",
+      "url": "http://forums.local/community/s/mentorship-circle/members/"
+    },
+    "c-member-space-create-and-join.7": {
+      "result": "pass",
+      "evidence": "after approval alice's /community/my-spaces/ lists Mentorship Circle and her bell has 'Your request to join Mentorship Circle was approved'; after maya denied david he got 'Your request to join Mentorship Circle was not approved' and could submit a new request (202 pending)"
+    },
+    "c-member-space-create-and-join.8": {
+      "result": "pass",
+      "evidence": "approve and deny fired together for marco's request 254: deny won (200 denied), approve -> 409 jetonomy_join_request_processed 'This request has already been handled.'; marco is not a member"
+    },
+    "c-member-space-create-and-join.9": {
+      "result": "pass",
+      "evidence": "bob (role without space creation) on /community/new-space/: 'Creating spaces is reserved for community administrators.' with a Back to community link and no form"
+    },
+    "c-member-space-create-and-join.10": {
+      "result": "pass",
+      "evidence": "bob POST /spaces -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'"
+    },
+    "c-member-space-create-and-join.11": {
+      "result": "pass",
+      "evidence": "guest on /community/new-space/ -> wp-login.php?redirect_to=%2Fcommunity%2Fnew-space%2F (the login screen is shown with the return URL; the login itself was not performed)"
+    },
+    "c-member-space-create-and-join.12": {
+      "result": "pass",
+      "evidence": "omar (space-banned in Off-Topic Lounge) POST /spaces/3001/members -> 403 jetonomy_space_banned 'You cannot join this space.'"
+    },
+    "c-member-space-create-and-join.13": {
+      "result": "pass",
+      "evidence": "carlos (non-member) on the archived 2025 Hackathon: no Join button and the notice 'This space is archived. New topics and replies are no longer accepted.'; POST /spaces/36/members -> 403 jetonomy_space_restricted"
+    },
+    "c-member-space-create-and-join.14": {
+      "result": "pass",
+      "evidence": "a member with no spaces (gating_t2, read-only look): 'You are not in any spaces yet.' with a 'Browse spaces' link to /community/"
+    },
+    "c-member-space-create-and-join.15": {
+      "result": "fail",
+      "expected": "My Spaces card and space header wrap the title, and the 288-character description is shown in full on the space page.",
+      "actual": "120-char title and 288-char description: the space page wraps the title over 3 lines and shows all 288 chars, but the My Spaces card cuts the title with an ellipsis ('Greater Amsterdam Weekend Hi...') and the description ('...countryside around...') instead of wrapping the title",
+      "url": "http://forums.local/community/my-spaces/",
+      "screenshot": "qa-artifacts/203-walk3/laneB/my-spaces-long-1440.png"
+    },
+    "c-member-space-create-and-join.16": {
+      "result": "pass",
+      "evidence": "new-space form at 390: fields x48-342, icon options 42x42, Cancel/Create space buttons 41px tall, no horizontal scroll"
+    },
+    "c-member-space-create-and-join.17": {
+      "result": "pass",
+      "evidence": "david withdrew his pending request (DELETE /spaces/3010/join-requests/mine -> withdrawn): it left maya's pending list (total 0) and his two 'requested to join' notices disappeared from maya's bell"
+    },
+    "c-member-space-create-and-join.18": {
+      "result": "pass",
+      "evidence": "alice's approval produced one Mailpit email 'Your space join request was answered' (once)"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-space-create-and-join.6` (corrected) @space_admin #ui: the admin opens /community/s/<space>/members/ -> alice's request and answer show; Approve and Deny (with a confirm) work and the row leaves, and a confirmation toast appears.",
+    "- `c-member-space-create-and-join.19` @member #ui +long: the My Spaces card wraps a 120-character title instead of cutting it with an ellipsis."
+  ],
+  "notes": "Spaces Weekend Hikers, a 120-char title space and Trail Reports (45 topics) were created and removed with Space::delete; Mentorship Circle join requests created and deleted; members restored to maya only."
+}

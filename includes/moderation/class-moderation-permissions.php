@@ -174,6 +174,59 @@ class Moderation_Permissions {
 	}
 
 	/**
+	 * The account restriction that bars this user from moderating, or null.
+	 *
+	 * Moderation is a write, so a silenced, banned or space-banned moderator
+	 * is refused with the same reason the member surfaces give
+	 * (Permission_Engine::restriction_error). Removing others' content is the
+	 * write silencing takes away, and every moderation action is asked as it.
+	 *
+	 * @param int      $user_id  User ID.
+	 * @param int|null $space_id Space the action is in.
+	 * @return \WP_Error|null
+	 */
+	public static function restriction_error( int $user_id, ?int $space_id = null ): ?\WP_Error {
+		return Permission_Engine::restriction_error( $user_id, 'delete_others_posts', $space_id );
+	}
+
+	/**
+	 * Why this user may not lift this restriction, or null when they may.
+	 *
+	 * Lifting takes the same authority as issuing: a restricted moderator takes
+	 * no moderation action, an IP ban is administrator-only
+	 * (Restriction::validate_ip_ban), and the member-target rules of
+	 * Restriction::actor_may_restrict apply (not your own account, a moderator
+	 * or administrator only by an administrator). wp-admin and REST both ask here.
+	 *
+	 * @param int    $user_id     Acting user.
+	 * @param object $restriction Restriction row.
+	 * @return \WP_Error|null
+	 */
+	public static function lift_error( int $user_id, object $restriction ): ?\WP_Error {
+		$restricted = self::restriction_error( $user_id, ! empty( $restriction->space_id ) ? (int) $restriction->space_id : null );
+		if ( $restricted ) {
+			return $restricted;
+		}
+
+		if ( 'ip_ban' === $restriction->type ) {
+			return user_can( $user_id, 'manage_options' ) ? null : new \WP_Error( 'jetonomy_ip_ban_admin_only', __( 'Only a site administrator can lift an IP address ban.', 'jetonomy' ), array( 'status' => 403 ) );
+		}
+
+		$allowed = \Jetonomy\Models\Restriction::actor_may_restrict( (int) $restriction->user_id, $user_id );
+		if ( true === $allowed ) {
+			return null;
+		}
+		// Same decision, worded for lifting.
+		$lift = array(
+			'jetonomy_cannot_ban_self'           => __( 'You cannot lift a restriction on your own account.', 'jetonomy' ),
+			'jetonomy_cannot_ban_admin'          => __( 'Only an administrator can lift a restriction on an administrator.', 'jetonomy' ),
+			'jetonomy_cannot_ban_peer_moderator' => __( 'Only an administrator can lift a restriction on another moderator.', 'jetonomy' ),
+		);
+		$code = (string) $allowed->get_error_code();
+		return new \WP_Error( $code, $lift[ $code ] ?? $allowed->get_error_message(), $allowed->get_error_data() );
+	}
+
+	/**
 	 * Can this user resolve / dismiss a specific flag?
 	 *
 	 * Admin + cap holders always. Space mods only when the flag's object

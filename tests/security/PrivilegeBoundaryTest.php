@@ -130,8 +130,10 @@ class PrivilegeBoundaryTest extends WP_UnitTestCase {
 
 		$result = SpaceMember::join( $space, $user );
 
+		// Answered like a missing id (owner policy): "invite-only" would confirm it exists.
 		$this->assertWPError( $result );
-		$this->assertSame( 'jetonomy_invite_only', $result->get_error_code() );
+		$this->assertSame( 'jetonomy_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] ?? 0 );
 		$this->assertFalse(
 			SpaceMember::is_member( $space, $user ),
 			'a refused join must not leave a roster row behind'

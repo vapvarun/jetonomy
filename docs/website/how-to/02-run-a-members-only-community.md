@@ -77,7 +77,7 @@ Open a private browser window where you are not signed in.
 | Setup | What the guest sees |
 |---|---|
 | **Private community** | The WordPress login page |
-| Public community, **Private** space | The space is missing from the lists (unless "Show private spaces to logged-out visitors" is on, then it shows with a lock). A direct link shows "This space is private. Log in to request access." with a **Log In** button |
+| Public community, **Private** space | The space is missing from the lists (unless "Show private spaces to logged-out visitors" is on, then it shows with a lock). A direct link shows "<Space name> is private. Log in to request access." and the space's description, with a **Log In** button. A topic link in it shows the same "not found" page as a missing topic |
 | Public community, **Hidden** space | "Space not found." |
 
 Then sign in as a test member who is not in the space:

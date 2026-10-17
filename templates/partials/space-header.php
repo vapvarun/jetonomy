@@ -30,7 +30,7 @@ $is_restricted   = in_array( $space_status, array( 'archived', 'locked' ), true 
 <?php endif; ?>
 	<div class="jt-space-cover__identity">
 		<?php jetonomy_render_space_icon( $space->icon ?? '', 32, 'jt-space-emoji' ); ?>
-		<h1 class="jt-space-cover__title"><?php echo esc_html( $space->title ); ?></h1>
+		<h1 class="jt-space-cover__title" dir="auto"><?php echo esc_html( $space->title ); ?></h1>
 	</div>
 </div>
 <?php
@@ -40,7 +40,7 @@ $_jt_can_edit_space = is_user_logged_in()
 <div class="jt-space-head">
 		<div class="jt-space-head__meta">
 			<?php if ( ! empty( $space->description ) ) : ?>
-				<p class="jt-space-desc"><?php echo esc_html( $space->description ); ?></p>
+				<p class="jt-space-desc" dir="auto"><?php echo esc_html( $space->description ); ?></p>
 			<?php endif; ?>
 			<?php
 			/**
@@ -123,13 +123,13 @@ $_jt_can_edit_space = is_user_logged_in()
 				</span>
 				<?php
 			elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted ) :
-				// Approval required: check for existing pending request.
+				// Approval required: check for existing pending request. Pending
+				// gets the same Withdraw the private-space gate offers; the
+				// "awaiting approval" message renders under the header.
 				$_jt_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
 				if ( $_jt_pending ) :
 					?>
-					<span class="jt-btn jt-btn-sm jt-btn-ghost jt-btn--status">
-						<?php esc_html_e( 'Awaiting Approval', 'jetonomy' ); ?>
-					</span>
+					<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost jt-withdraw-request-btn" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Withdraw request', 'jetonomy' ); ?></button>
 					<?php
 				else :
 					$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
@@ -183,6 +183,15 @@ $_jt_can_edit_space = is_user_logged_in()
 			<?php endif; ?>
 		<?php endif; ?>
 	</div>
+
+<?php if ( ! empty( $_jt_pending ) ) : ?>
+	<div class="jt-status-banner jt-status-banner--pending" role="status" dir="auto">
+		<?php
+		/* translators: %s: space title. */
+		echo esc_html( sprintf( __( 'Your request to join %s is awaiting approval.', 'jetonomy' ), $space->title ) );
+		?>
+	</div>
+<?php endif; ?>
 
 <?php if ( $is_restricted ) : ?>
 	<div class="jt-status-banner jt-status-banner--<?php echo esc_attr( $space_status ); ?>">

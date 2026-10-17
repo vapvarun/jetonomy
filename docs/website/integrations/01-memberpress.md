@@ -42,21 +42,21 @@ An Access Rule has **one** setting that decides what a matching member can do:
 
 | Access level | What the member can do |
 |---|---|
-| Read | View topics and replies, but not post or reply |
+| Read | View and report topics and replies, but not post or reply |
 | Participate | Read, post topics, and reply (the usual choice for a course or paid space) |
 | Full | Participate, plus the moderator actions the member's own WordPress capabilities already permit |
 
 > **Full does not hand out moderation by itself.** Closing and pinning topics and editing other people's posts still require the matching WordPress capability, which an ordinary member does not have - so for most paid members Full and Participate come to the same thing in practice. A rule can open a space to someone; it cannot give them a power their role does not carry. Appoint moderators on the space's **Members** tab.
 
-The space role a matching member is recorded as is **derived from the access level**, not chosen separately. What a membership tier can record someone as is capped one step lower than what a role, capability or trust-level rule can, because a membership is something a visitor can buy:
+The space role a matching member is recorded as is **derived from the access level**, not chosen separately, and it is the same for every rule type (membership, role, capability, trust level):
 
-| Access level | Membership rule records | Role / capability / trust rule records |
-|---|---|---|
-| Read | Viewer | Viewer |
-| Participate | Member | Member |
-| Full | **Member** | Moderator |
+| Access level | Recorded as |
+|---|---|
+| Read | Viewer |
+| Participate | Member |
+| Full | Member |
 
-> **Membership rules never create moderators.** Whatever access level you pick, a rule based on a *membership* tier tops out at Member - which is why the Full row differs between the two columns above. Moderation is an appointment you make per person on the space's **Members** tab; nobody should be able to buy it. Role, capability and trust-level rules keep the full range, because those are deliberate decisions about a known group rather than anything a visitor can purchase.
+> **Rules never create moderators.** Full is full participation, not moderation. Moderation is an appointment you make per person on the space's **Members** tab; no rule, and nothing a visitor can buy, hands it out.
 
 > **Changed in 1.8.1.** This used to be two dropdowns - an access level *and* a space role - which could contradict each other. A rule labelled "Read" could be set to record people as space Admins, and that combination handed out post deletion and moderation. The role is now derived from the access level and capped by it, so a rule can never grant more than it advertises.
 
@@ -86,7 +86,7 @@ Access is automatic; the **roster** is not. Someone who gets in through a member
 - are not included in the member count,
 - are not matched by space settings that act on roles, such as "who can post: members".
 
-**Sync Members** writes those roster rows, and nothing removes them again when a plan lapses - so treat it as a snapshot, not a subscription. Access itself is always correct regardless; the roster is a convenience. Automatic roster upkeep is planned.
+**Sync Members** writes those roster rows. A synced row counts only while a rule still admits the person: when their plan lapses, or you delete or change the rule, their access ends on their next page load, and the row is removed from the Members list in the background. Someone you added to the space by hand keeps their place.
 
 ## What a Visitor Without the Membership Sees
 

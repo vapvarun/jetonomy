@@ -9,6 +9,8 @@
  * @var int        $total_pages
  * @var string     $search
  * @var int|string $filter_trust
+ * @var array      $restrictions user_id => active restriction {id, user_id, type, space_id} (Restriction::active_rows_for_users()).
+ * @var array      $space_titles space id => title, for the spaces named by a space ban.
  *
  * @package Jetonomy
  */
@@ -21,6 +23,15 @@ $trust_labels = array();
 for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 	$trust_labels[ $jt_tl ] = \Jetonomy\Trust\Trust_Levels::label( $jt_tl );
 }
+
+// Each row names the member's strongest active restriction; without it a banned
+// member's row looked the same as anyone else's.
+$restriction_labels = array(
+	'global_ban' => __( 'Banned', 'jetonomy' ),
+	/* translators: %s: space label, lowercase (e.g. "space"). */
+	'space_ban'  => sprintf( __( 'Banned from a %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ),
+	'silence'    => __( 'Silenced', 'jetonomy' ),
+);
 ?>
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Users', 'jetonomy' ); ?></h1>
@@ -138,17 +149,34 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 				/* translators: %s: member label, plural, lowercase (e.g. "members"). */
 				'body'  => sprintf( __( 'Try clearing a filter or broadening your search to see more %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 			),
-			'cell'      => function ( $u, $col ) use ( $trust_labels ) {
+			'cell'      => function ( $u, $col ) use ( $trust_labels, $restrictions, $restriction_labels, $space_titles ) {
 				switch ( $col ) {
 					case 'username':
 						echo get_avatar( $u->user_id, 24 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core markup.
 						echo '<strong>' . esc_html( $u->user_login ) . '</strong>';
+						$jt_restriction = $restrictions[ (int) $u->user_id ] ?? null;
+						if ( $jt_restriction && isset( $restriction_labels[ $jt_restriction->type ] ) ) {
+							$jt_label = $restriction_labels[ $jt_restriction->type ];
+							if ( 'space_ban' === $jt_restriction->type && isset( $space_titles[ $jt_restriction->space_id ] ) ) {
+								/* translators: %s: space name. */
+								$jt_label = sprintf( __( 'Banned from %s', 'jetonomy' ), $space_titles[ $jt_restriction->space_id ] );
+							}
+							echo ' <span class="jetonomy-badge jetonomy-badge--ban jetonomy-restriction-label">' . esc_html( $jt_label ) . '</span>';
+						}
+						// Restrict controls follow the issue rule: never yourself, an admin, or (unless admin) another moderator.
+						$jt_may_restrict = current_user_can( 'jetonomy_moderate' ) && true === \Jetonomy\Models\Restriction::actor_may_restrict( (int) $u->user_id, get_current_user_id() );
 						?>
 						<div class="row-actions">
 							<span class="edit"><a href="<?php echo esc_url( get_edit_user_link( $u->user_id ) ); ?>"><?php esc_html_e( 'View Profile', 'jetonomy' ); ?></a> | </span>
-							<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a><?php echo current_user_can( 'jetonomy_moderate' ) ? ' | ' : ''; ?></span>
-							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+							<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a><?php echo $jt_may_restrict ? ' | ' : ''; ?></span>
+							<?php if ( $jt_may_restrict ) : ?>
+								<?php if ( $jt_restriction ) : ?>
+									<?php if ( null === \Jetonomy\Moderation\Moderation_Permissions::lift_error( get_current_user_id(), $jt_restriction ) ) : // Lifting needs the authority that issued it. ?>
+							<span class="ban"><a href="#" class="jetonomy-unban-user" data-restriction-id="<?php echo absint( $jt_restriction->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></a> | </span>
+								<?php endif; ?>
+							<?php else : ?>
 							<span class="ban"><a href="#" class="jetonomy-ban-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-username="<?php echo esc_attr( $u->user_login ); ?>"><?php esc_html_e( 'Ban', 'jetonomy' ); ?></a> | </span>
+							<?php endif; ?>
 							<span class="silence"><a href="#" class="jetonomy-silence-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></a><?php echo current_user_can( 'manage_options' ) ? ' | ' : ''; ?></span>
 								<?php if ( current_user_can( 'manage_options' ) ) : // IP bans block everyone on the address: administrators only (Restriction::validate_ip_ban). ?>
 							<span class="ban-ip"><a href="#" class="jetonomy-ban-ip-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Ban IP address', 'jetonomy' ); ?></a></span>

@@ -20,6 +20,11 @@ defined( 'ABSPATH' ) || exit( 1 );
 
 $cleanup = isset( $args[0] ) && 'cleanup' === $args[0];
 
+// Point the space-scoped shortcode at a space that exists, by slug: ids change
+// on every reseed, so a hard-coded space_id="1" rendered "space not found".
+$qa_space      = \Jetonomy\Models\Space::find_by_slug( 'general-discussion' ) ?: ( \Jetonomy\Models\Space::list_public_titles( 1 )[0] ?? null );
+$qa_space_slug = $qa_space ? (string) $qa_space->slug : 'general-discussion';
+
 // Each entry: [ slug, title, content_block_or_shortcode, scope_label ].
 $pages = array(
 
@@ -29,7 +34,7 @@ $pages = array(
 	array( 'jt-qa-sc-spaces', 'QA · Shortcode · Spaces', '[jetonomy_spaces]', 'shortcode' ),
 	array( 'jt-qa-sc-leaderboard', 'QA · Shortcode · Leaderboard', '[jetonomy_leaderboard count="10"]', 'shortcode' ),
 	array( 'jt-qa-sc-user-profile', 'QA · Shortcode · User Profile', '[jetonomy_user_profile user_id="1"]', 'shortcode' ),
-	array( 'jt-qa-sc-space-members', 'QA · Shortcode · Space Members', '[jetonomy_space_members space_id="1"]', 'shortcode' ),
+	array( 'jt-qa-sc-space-members', 'QA · Shortcode · Space Members', '[jetonomy_space_members space_id="' . $qa_space_slug . '"]', 'shortcode' ),
 	array( 'jt-qa-sc-compose-topic', 'QA · Shortcode · Compose Topic', '[jetonomy_compose_topic]', 'shortcode' ),
 
 	// ── Blocks (8) — one page each, raw block markup ──────────────────────

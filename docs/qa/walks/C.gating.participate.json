@@ -1,0 +1,78 @@
+{
+  "journey": "C.gating.participate",
+  "checks": {
+    "c-gating-participate.1": {
+      "result": "pass",
+      "evidence": "Logged In + Participate rule on private 3078 -> toast 'Access rule added.'"
+    },
+    "c-gating-participate.2": {
+      "result": "pass",
+      "evidence": "gating_t4 opens the space: topics listed, New Topic link present, no Join step (not on the roster)."
+    },
+    "c-gating-participate.3": {
+      "result": "pass",
+      "evidence": "gating_t4 posted 'Anyone using the new roadmap view?' from the composer -> published at /community/s/print-lab-circle/t/anyone-using-the-new-roadmap-view/."
+    },
+    "c-gating-participate.4": {
+      "result": "pass",
+      "evidence": "reply 13672 (201), vote (200, score 1) and report on the closed topic 6159 (201) all work."
+    },
+    "c-gating-participate.5": {
+      "result": "pass",
+      "evidence": "PATCH own topic -> 200 (title changed), DELETE own topic -> 200; the own reply shows More options > Edit, Make Private, Delete."
+    },
+    "c-gating-participate.6": {
+      "result": "pass",
+      "evidence": "on admin's topic no Edit/Delete/Close/Pin controls render; PATCH, DELETE, POST /close and /pin -> 403 jetonomy_forbidden."
+    },
+    "c-gating-participate.7": {
+      "result": "pass",
+      "evidence": "gating_t5 (manual roster member, role member) with a Participate rule: reply 13680 (201), vote (200), topic 6223 (201), repeat report 409 jetonomy_already_flagged - unchanged abilities."
+    },
+    "c-gating-participate.8": {
+      "result": "pass",
+      "evidence": "finn (silenced) matched by the rule: POST topic -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+    },
+    "c-gating-participate.9": {
+      "result": "fail",
+      "expected": "omar (space-banned) matched by the rule is refused with 'Your account has been banned from this community.'",
+      "actual": "refused, but with the space ban text: 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.' (topic and reply); the space page shows the same sentence. The refusal itself is right.",
+      "check_wrong": true,
+      "url": "POST /wp-json/jetonomy/v1/spaces/3078/posts"
+    },
+    "c-gating-participate.10": {
+      "result": "pass",
+      "evidence": "reply to closed topic 6159 -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'"
+    },
+    "c-gating-participate.11": {
+      "result": "pass",
+      "evidence": "space set to archived (status archived in the database; the REST PATCH cannot archive): space page reads 'This space is archived. New topics and replies are no longer accepted.', New Topic link gone, POST topic and reply -> 403 jetonomy_space_restricted. Restored to active. Screenshot qa-artifacts/203-walk3/laneA/w3A-archived-space.png"
+    },
+    "c-gating-participate.12": {
+      "result": "pass",
+      "evidence": "guest on the private space: no composer, 'This space is private and invite-only. Log in if you have an invitation.' with a Log In button."
+    },
+    "c-gating-participate.13": {
+      "result": "pass",
+      "evidence": "gating_t4 typed a topic in /new/, the rule was deleted from another session, Post -> toast 'You cannot post in this space.' and the title and body stayed in the form. Screenshot qa-artifacts/203-walk3/laneA/w3A-rule-deleted-typing.png"
+    }
+  },
+  "proposed_checks": [],
+  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. ",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:58:06Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  }
+}

@@ -179,8 +179,14 @@ class Content_Handler {
 		 * @param int $user_id  Editing user ID.
 		 */
 		do_action( 'jetonomy_reply_updated', $id, (int) ( $jt_reply ? ( Post::find( (int) $jt_reply->post_id )->space_id ?? 0 ) : 0 ), get_current_user_id() );
-		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-		wp_send_json_success( array( 'message' => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) ) );
+		wp_send_json_success(
+			array(
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				'message' => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+				// The row preview, built the way views/replies.php builds it.
+				'preview' => wp_trim_words( wp_strip_all_tags( (string) Reply::find( $id )->content ), 40 ),
+			)
+		);
 	}
 
 	public function ajax_delete_reply(): void {

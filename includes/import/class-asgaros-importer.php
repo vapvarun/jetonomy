@@ -276,11 +276,11 @@ class Asgaros_Importer extends Importer {
 					'parent_id'   => $parent_space_id,
 					'author_id'   => 1,
 					'type'        => 'forum',
-					'title'       => $forum->name,
+					'title'       => self::plain_text( $forum->name ),
 					// Identity lives in jt_import_map, so a name that matches one
 					// of the owner's own spaces imports beside it as "<slug>-1".
 					'slug'        => Space::unique_slug( self::clean_slug( self::forum_slug( $forum ) ) ?: 'forum-' . $forum->id ),
-					'description' => wp_strip_all_tags( $forum->description ?? '' ),
+					'description' => self::plain_text( $forum->description ?? '' ),
 					'visibility'  => $access['visibility'],
 					'join_policy' => $access['join_policy'],
 					'sort_order'  => (int) ( $forum->sort ?? 0 ),
@@ -599,7 +599,7 @@ class Asgaros_Importer extends Importer {
 					'space_id'      => $space_id,
 					'author_id'     => (int) ( $topic->author_id ?? 1 ),
 					'type'          => \Jetonomy\compose_post_type( 'forum' ),
-					'title'         => $topic->name,
+					'title'         => self::plain_text( $topic->name ),
 					'slug'          => self::clean_slug( $topic->name ) ?: 'topic-' . $topic->id,
 					'content'       => wp_kses_post( $content ),
 					'content_plain' => \jetonomy_content_to_plain( $content ),

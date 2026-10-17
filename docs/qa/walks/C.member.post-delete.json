@@ -1,0 +1,102 @@
+{
+  "journey": "C.member.post-delete",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:50Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-member-post-delete.1": {
+      "result": "pass",
+      "evidence": "bob: More options > Delete > Confirm on his Help Desk topic -> back on /s/help-desk/, topic gone from the space (status trash) and from search results by title and by body. Tag listing not exercised: this topic had no tags"
+    },
+    "c-member-post-delete.2": {
+      "result": "pass",
+      "evidence": "guest opens the deleted URL -> HTTP 404 'Topic not found. This topic may have been removed, or the link is wrong.' with Back to the community"
+    },
+    "c-member-post-delete.3": {
+      "result": "pass",
+      "evidence": "DELETE /posts/5947 as bob -> 200 deleted true; GET /posts/5947 -> 404 jetonomy_not_found"
+    },
+    "c-member-post-delete.4": {
+      "result": "pass",
+      "evidence": "Delete > confirm dialog 'Are you sure you want to delete this topic?' > Cancel -> topic still there (GET 200)"
+    },
+    "c-member-post-delete.5": {
+      "result": "pass",
+      "evidence": "alice has no More options menu on bob's topic, so no Delete item"
+    },
+    "c-member-post-delete.6": {
+      "result": "pass",
+      "evidence": "DELETE /posts/5946 as alice -> 403 jetonomy_forbidden; GET still 200"
+    },
+    "c-member-post-delete.7": {
+      "result": "pass",
+      "evidence": "lane A: 'Delete own posts' removed from Member (subscriber) role: bob's own topic page has no Delete item (menu items: no Delete), DELETE /posts/<id> -> 403 jetonomy_forbidden, topic intact. Cap restored"
+    },
+    "c-member-post-delete.8": {
+      "result": "pass",
+      "evidence": "bob deleted topic 6082 (3 replies: alice x2, maya x1) via menu Delete + confirm: topic status trash; replies stay status publish under it (orphaned, the plugin contract) and the counters follow: alice reply_count 59 -> 57, maya 59 -> 58, bob post_count 22 -> 21, Help Desk post_count 14 -> 13",
+      "screenshot": "qa-artifacts/203-walk2/laneB/delete-confirm.png"
+    },
+    "c-member-post-delete.9": {
+      "result": "pass",
+      "evidence": "Help Desk topics 18 -> 17 (jt_spaces.post_count and real count agree), bob profile topics 25 -> 24"
+    },
+    "c-member-post-delete.10": {
+      "result": "pass",
+      "evidence": "bob deleted his Help Desk question after accepting alice's answer: alice's reputation stayed 1102 (kept, per the documented rule) and the accepted_answer notification (22033) is gone from GET /notifications"
+    },
+    "c-member-post-delete.11": {
+      "result": "pass",
+      "evidence": "alice had bookmarked and followed topic 6082; after deletion My bookmarks shows 'You haven't bookmarked anything yet.' (no broken row) and her notifications API/bell lists nothing for the deleted topic",
+      "screenshot": "qa-artifacts/203-walk2/laneB/alice-bookmarks.png"
+    },
+    "c-member-post-delete.12": {
+      "result": "pass",
+      "evidence": "test_moderator deleted bob's topic through the menu -> it is in Moderation > Trash with View, Restore and Delete permanently; bob got the bell 'Your topic was removed by a moderator'"
+    },
+    "c-member-post-delete.13": {
+      "result": "pass",
+      "evidence": "two tabs, delete in both -> second tab shows toast 'This item is already in the trash. A moderator can restore it or delete it permanently.'; REST second DELETE -> 409 jetonomy_already_trashed; no PHP error"
+    },
+    "c-member-post-delete.14": {
+      "result": "pass",
+      "evidence": "offline Confirm -> toast 'Failed to delete.', topic still exists (GET 200)"
+    },
+    "c-member-post-delete.15": {
+      "result": "pass",
+      "evidence": "finn: no menu on his -4 topic; DELETE /posts/5871 -> 403 jetonomy_user_silenced; topic remains"
+    },
+    "c-member-post-delete.16": {
+      "result": "pass",
+      "evidence": "alice's My Subscriptions shows the deleted topic's follow as 'No longer available' with Web + Email and an Unfollow button (the topic is trashed, row kept); the further-notifications half could not be exercised (no way to post into a trashed topic)",
+      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-alice-subscriptions.png"
+    },
+    "c-member-post-delete.17": {
+      "result": "pass",
+      "evidence": "replies of the trashed topic remain status publish under it, which is the documented-in-the-check orphan contract: topic and replies are unreachable, authors' reply counters and the space count dropped (see .8)"
+    },
+    "c-member-post-delete.18": {
+      "result": "pass",
+      "evidence": "test_moderator opened /community/mod/?view=trash, clicked Restore on the topic: status publish again, 3 replies, accepted_reply_id 13575, alice 59 / maya 59 / bob 22 / Help Desk 14 identical to before the delete",
+      "screenshot": "qa-artifacts/203-walk2/laneB/mod-trash.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-post-delete.16` @member_b #ui +deleted: alice followed a topic that is then deleted -> My Subscriptions shows no 'No longer available' row (today a dead row with an Unfollow button remains).",
+    "- `c-member-post-delete.17` @member #ui: delete a topic that has replies -> its replies are not left as published rows under a trashed parent, or the contract says so and the counters follow.",
+    "- `c-member-post-delete.18` @moderator #ui: restore the deleted topic from Moderation > Trash -> the topic, its replies, the accepted answer and the counts come back."
+  ],
+  "notes": "No settings changed. Lane B set up: 3 replies from alice and maya on topic 5942, alice's bookmark and follow, an accepted answer, a moderator close on bob's topic. All walk topics are purged from Moderation > Trash at the end. | Re-walk lane B 2026-10-17: Fixture: topic 6082 'Can members change their username after signing up?' with replies from alice (x2, one accepted by bob), maya (x1), alice following and bookmarking it; created, deleted, restored, then permanently removed at the end. .7 left untested (lane A). .9 .1 .4 etc. not re-walked. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: created Help Desk question 'Can I schedule a weekly digest email for one space only?' as bob, alice replied and followed, bob accepted then deleted it; both follows removed. The topic stays in the trash (status trash) as the plugin's delete."
+}

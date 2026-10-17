@@ -218,6 +218,79 @@ if ( ! $cancel_url ) {
 				<input type="checkbox" name="email_opt_out" value="1" <?php checked( $jt_email_opt_out ); ?>>
 				<span><?php esc_html_e( 'Pause all email notifications. You will still see web notifications in the community.', 'jetonomy' ); ?></span>
 			</label>
+			<?php
+			/**
+			 * Fires inside the member's notification settings, below the email
+			 * pause switch. Jetonomy Pro adds the email digest choice here.
+			 *
+			 * @since 2.0.3
+			 * @param int $user_id The member editing their profile.
+			 */
+			do_action( 'jetonomy_profile_notification_fields', $current_user->ID );
+			?>
+		</div>
+
+		<?php
+		// Everyone this member has blocked, newest first, 20 a page. The one
+		// place to review blocks; each profile's More menu adds them.
+		$jt_blocked_per  = 20;
+		$jt_blocked_page = max( 1, absint( $_GET['blocked_page'] ?? 1 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
+		$jt_blocked_rows = \Jetonomy\Models\BlockedUser::list_by_blocker( $current_user->ID, $jt_blocked_per, ( $jt_blocked_page - 1 ) * $jt_blocked_per );
+		$jt_blocked_all  = \Jetonomy\Models\BlockedUser::count_by_blocker( $current_user->ID );
+		$jt_blocked_ids  = array_map( static fn( $row ) => (int) $row->blocked_id, $jt_blocked_rows );
+		cache_users( $jt_blocked_ids );
+		\Jetonomy\Avatar::prime( $jt_blocked_ids );
+		?>
+		<div class="jt-form-group" id="blocked-members">
+			<label class="jt-label">
+				<?php /* translators: %s: plural member label. */ echo esc_html( sprintf( __( 'Blocked %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
+			</label>
+			<?php if ( ! $jt_blocked_rows ) : ?>
+				<p class="jt-form-help"><?php esc_html_e( "You haven't blocked anyone.", 'jetonomy' ); ?></p>
+			<?php else : ?>
+				<ul class="jt-blocked-list">
+					<?php
+					foreach ( $jt_blocked_ids as $jt_blocked_id ) :
+						$jt_blocked_user = get_userdata( $jt_blocked_id );
+						$jt_blocked_name = $jt_blocked_user ? \Jetonomy\user_display_name( $jt_blocked_user ) : __( 'Deleted user', 'jetonomy' );
+						?>
+						<li class="jt-blocked-row">
+							<?php
+							\Jetonomy\Template_Loader::partial(
+								'avatar',
+								array(
+									'user_id' => $jt_blocked_id,
+									'size'    => 32,
+								)
+							);
+							?>
+							<?php if ( $jt_blocked_user ) : ?>
+								<a class="jt-blocked-name" href="<?php echo esc_url( \Jetonomy\get_profile_url( $jt_blocked_id ) ); ?>"><?php echo esc_html( $jt_blocked_name ); ?></a>
+							<?php else : ?>
+								<span class="jt-blocked-name"><?php echo esc_html( $jt_blocked_name ); ?></span>
+							<?php endif; ?>
+							<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm"
+								data-wp-on--click="actions.unblockUser"
+								data-user-id="<?php echo absint( $jt_blocked_id ); ?>"
+								aria-label="<?php /* translators: %s: member display name. */ echo esc_attr( sprintf( __( 'Unblock %s', 'jetonomy' ), $jt_blocked_name ) ); ?>"><?php esc_html_e( 'Unblock', 'jetonomy' ); ?></button>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+				<?php
+				$jt_blocked_pages = (int) ceil( $jt_blocked_all / $jt_blocked_per );
+				if ( $jt_blocked_pages > 1 ) :
+					?>
+					<nav class="jt-blocked-pager" aria-label="<?php esc_attr_e( 'Blocked list pages', 'jetonomy' ); ?>">
+						<?php if ( $jt_blocked_page > 1 ) : ?>
+							<a class="jt-btn jt-btn-ghost jt-btn-sm" href="<?php echo esc_url( add_query_arg( 'blocked_page', $jt_blocked_page - 1 ) . '#blocked-members' ); ?>"><?php esc_html_e( 'Previous', 'jetonomy' ); ?></a>
+						<?php endif; ?>
+						<span><?php /* translators: 1: current page, 2: total pages */ echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $jt_blocked_page, $jt_blocked_pages ) ); ?></span>
+						<?php if ( $jt_blocked_page < $jt_blocked_pages ) : ?>
+							<a class="jt-btn jt-btn-ghost jt-btn-sm" href="<?php echo esc_url( add_query_arg( 'blocked_page', $jt_blocked_page + 1 ) . '#blocked-members' ); ?>"><?php esc_html_e( 'Next', 'jetonomy' ); ?></a>
+						<?php endif; ?>
+					</nav>
+				<?php endif; ?>
+			<?php endif; ?>
 		</div>
 
 		<?php

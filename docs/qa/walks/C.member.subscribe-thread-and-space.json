@@ -1,0 +1,106 @@
+{
+  "journey": "C.member.subscribe-thread-and-space",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-subscribe-thread-and-space.1": {
+      "result": "pass",
+      "evidence": "bob clicked Follow on 'Dark mode for the community on phones' (Feature Requests): button -> Following, new row (via both) in /community/subscriptions/"
+    },
+    "c-member-subscribe-thread-and-space.2": {
+      "result": "fail",
+      "expected": "bob gets one bell notification and one email.",
+      "actual": "alice replied in the topic bob follows: bob's bell +1 ('Alice Chen replied in \"Dark mode...\"') and exactly one email, as expected. But the email subject reads '[forums] Alice Chen replied to your topic' although bob is only a follower and the topic is Sofia's (body says 'replied in'); the same 'replied to your topic' subject went out for maya's reply in alice's topic 6102 to bob. Template shared by author and follower (class-notifier.php:119)",
+      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/"
+    },
+    "c-member-subscribe-thread-and-space.3": {
+      "result": "pass",
+      "evidence": "bob unfollowed (button -> Follow, row gone); alice's next reply created no notification (unread stayed 15) and no email"
+    },
+    "c-member-subscribe-thread-and-space.4": {
+      "result": "pass",
+      "evidence": "bob followed Help Desk (space row, via web); alice created a topic there: bob's bell 15 -> 16 with 'New topic in Help Desk: ...', one notification"
+    },
+    "c-member-subscribe-thread-and-space.5": {
+      "result": "pass",
+      "evidence": "POST /subscriptions -> 201 {id}; repeat POST -> 200 same id; DELETE /subscriptions/18703 -> 200 {deleted:true} and the newer sub 18707 stayed; DELETE of the others also 200"
+    },
+    "c-member-subscribe-thread-and-space.6": {
+      "result": "pass",
+      "evidence": "bob followed Help Desk and thread 6102; maya replied in the thread: bob got exactly one bell notification (16 -> 17)"
+    },
+    "c-member-subscribe-thread-and-space.7": {
+      "result": "pass",
+      "evidence": "test_moderator created Weekend Hikers from the front end: the space page shows 'Following' straight away"
+    },
+    "c-member-subscribe-thread-and-space.8": {
+      "result": "pass",
+      "evidence": "alice (topic author) posted a private reply in 6102 that bob follows: bob's unread stayed 17 and no email arrived. (GET /posts/6102/replies as bob lists the private reply as an empty shell: id, author, is_private, content '')"
+    },
+    "c-member-subscribe-thread-and-space.9": {
+      "result": "pass",
+      "evidence": "POST /subscriptions for Moderators' Room topic 5866 -> 404 jetonomy_not_found 'Topic not found.'; Customer Advisory Board topic 5865 and Moderators' Room space 39 also 404"
+    },
+    "c-member-subscribe-thread-and-space.10": {
+      "result": "untested",
+      "needs": "removing bob from the private Partner Program space and re-adding him (admin action)"
+    },
+    "c-member-subscribe-thread-and-space.11": {
+      "result": "fail",
+      "expected": "sends to login; REST returns 401.",
+      "actual": "guest sees no Follow control at all on a topic or space (only Share and 'Log in to vote'), so there is no redirect to login to observe; POST /subscriptions as guest -> 401 rest_not_logged_in, and /community/subscriptions/ redirects to wp-login.php?redirect_to=...",
+      "url": "http://forums.local/community/s/feature-requests/t/dark-mode-for-the-community-on-phones/",
+      "check_wrong": true
+    },
+    "c-member-subscribe-thread-and-space.12": {
+      "result": "pass",
+      "evidence": "Follow offline on 2025 Hackathon: toast 'Failed to save.', button back to Follow"
+    },
+    "c-member-subscribe-thread-and-space.13": {
+      "result": "pass",
+      "evidence": "POST /subscriptions twice for the same topic: 201 then 200 with the same id, one row"
+    },
+    "c-member-subscribe-thread-and-space.14": {
+      "result": "pass",
+      "evidence": "bob with no subscriptions: 'You are not following anything yet. Follow any topic or space and it will show up here.'"
+    },
+    "c-member-subscribe-thread-and-space.15": {
+      "result": "pass",
+      "evidence": "56 subscriptions: page 1 shows 50 with Next (?pg=2), page 2 shows 6 with Previous; REST total 56. The page size is 50 (REST 20), so the check's '> 30' threshold only paginates beyond 50"
+    },
+    "c-member-subscribe-thread-and-space.16": {
+      "result": "pass",
+      "evidence": "bob followed archived 2025 Hackathon: button Follow -> Following (row space 36); no Join involved (he is already a member)"
+    },
+    "c-member-subscribe-thread-and-space.17": {
+      "result": "pass",
+      "evidence": "followed topic 6100 deleted: the row stays as 'No longer available' with an Unfollow button (owner-decided behaviour), instead of vanishing as the check says"
+    },
+    "c-member-subscribe-thread-and-space.18": {
+      "result": "pass",
+      "evidence": "subscriptions page at 390 dark: rows x32-358 inside the viewport, Unfollow buttons 88x40, no horizontal scroll",
+      "screenshot": "qa-artifacts/203-walk3/laneB/subscriptions-390-dark.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-subscribe-thread-and-space.2` (corrected) @member_b #ui: alice replies in the thread bob follows -> bob gets one bell notification and one email whose subject says he follows the thread (\"[forums] Alice Chen replied in <topic>\"), not \"replied to your topic\" when bob is not the author.",
+    "- `c-member-subscribe-thread-and-space.11` (corrected) @guest #ui !refuse: a guest sees no Follow control; /community/subscriptions/ redirects to wp-login.php?redirect_to=...; POST /subscriptions returns 401.",
+    "- `c-member-subscribe-thread-and-space.17` (corrected) @member #ui +deleted: a followed topic is deleted -> its row stays as \"No longer available\" with Unfollow (owner decision)."
+  ],
+  "notes": "Subscriptions created for pagination (56) and removed."
+}

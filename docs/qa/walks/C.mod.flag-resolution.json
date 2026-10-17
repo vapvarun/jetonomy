@@ -1,0 +1,114 @@
+{
+  "journey": "C.mod.flag-resolution",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:07:14Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-mod-flag-resolution.1": {
+      "result": "pass",
+      "evidence": "alice reported Grace's topic 'A few thoughts on feature discussions' with reason Off-topic from the topic Report control: toast 'Reported. Thank you.', POST /flags 201 (flag 439). The first report (flag 438) was made on 'How do I make a space members-only?'"
+    },
+    "c-mod-flag-resolution.2": {
+      "result": "fail",
+      "expected": "moderator opens Flags: card shows 'Reported by Alice ...' with the reason and note, and the flagged text",
+      "actual": "The site-wide overview card shows 'Reported by <name>' and the reason chip, but the reporter's note only as a tooltip on a small 'Note' chip; the per-space card (where Remove/Dismiss live) shows the note and text but prints the bare reporter name 'Alice Chen · 7 minutes ago' with no 'Reported by' label, so it reads like the topic author",
+      "url": "http://forums.local/community/s/general-discussion/mod/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/A/walkA-spacemod-gd.png"
+    },
+    "c-mod-flag-resolution.3": {
+      "result": "pass",
+      "evidence": "test_moderator dismissed flag 442 (reporter alice) on the per-space card: card left, alice got ONE bell row 'Your report was reviewed. Thanks for helping keep the community healthy.' and Mailpit holds ONE '[forums] Your report was reviewed' mail to alice. Needed Settings notification default flag_resolved email = on (it is OFF by default, so a stock site sends no mail); I flipped it for this check and restored it to off"
+    },
+    "c-mod-flag-resolution.4": {
+      "result": "pass",
+      "evidence": "Remove on flag 440 (reply 12456 by david): no confirm, POST /spaces/2994/moderation/flags/440/resolve 200, reply status trash, card gone, author rep 725 -> 705 (-20 post_removed)"
+    },
+    "c-mod-flag-resolution.5": {
+      "result": "pass",
+      "evidence": "Dismiss on reply flag 441 (aisha): rep 280 -> 290 (+10 post_reported_revoked); Dismiss on topic flag 439 (grace): 174 -> 184 (+10 post_reported_revoked). Same revoke for reply and topic (the -10 post_reported was taken when each was reported)"
+    },
+    "c-mod-flag-resolution.6": {
+      "result": "pass",
+      "evidence": "POST /moderation/flags/435/resolve status=dismissed -> 200, repeat -> 409 jetonomy_already_handled 'This report was already handled by a moderator.'; one flag_resolved row for the reporter, no second"
+    },
+    "c-mod-flag-resolution.7": {
+      "result": "pass",
+      "evidence": "alice POST /flags on her own reply 12438 -> 400 jetonomy_flag_self 'You cannot report your own content.'; own replies show no Report control in the thread; no flag row created"
+    },
+    "c-mod-flag-resolution.8": {
+      "result": "pass",
+      "evidence": "second POST /flags by alice on topic 5692 -> 409 jetonomy_already_flagged 'You have already reported this content.'"
+    },
+    "c-mod-flag-resolution.9": {
+      "result": "pass",
+      "evidence": "alice POST /flags for reply 13380 (Customer Advisory Board, private) -> 404 jetonomy_flag_target_missing 'The reported content no longer exists.', identical to a missing id 99999999"
+    },
+    "c-mod-flag-resolution.10": {
+      "result": "pass",
+      "evidence": "finn (silenced) POST /flags -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+    },
+    "c-mod-flag-resolution.11": {
+      "result": "pass",
+      "evidence": "logged out POST /flags -> 401 rest_not_logged_in; topic page shows 0 Report controls to a guest"
+    },
+    "c-mod-flag-resolution.12": {
+      "result": "untested",
+      "needs": "lane B: member POST /moderation/flags/{id}/resolve (lane A does not probe admin endpoints as a member)"
+    },
+    "c-mod-flag-resolution.13": {
+      "result": "untested",
+      "needs": "permission blocked: write probe as test_moderator on a flag in a private space (a write probe on private-space content as test_moderator was denied by the permission classifier); not worked around"
+    },
+    "c-mod-flag-resolution.14": {
+      "result": "pass",
+      "evidence": "front-end Banned members list: space ban of omar from Off-Topic Lounge (made from the space Members screen, then lifted) is listed with a 'Lift restriction' button, never 'Unban'; after the lift omar posted in Off-Topic Lounge again (201). Silence lift in wp-admin Users reads 'Silence lifted.'"
+    },
+    "c-mod-flag-resolution.15": {
+      "result": "pass",
+      "evidence": "flag 443 on the 159-character-title topic with the unbroken example.com URL: at 390 the title wraps, the URL breaks inside the card (card right edge 358, scrollWidth 390 = clientWidth); no overflow at 1440"
+    },
+    "c-mod-flag-resolution.16": {
+      "result": "pass",
+      "evidence": "flag 436 on reply 13747 (author trashed it): card reads 'This reply was already removed. Dismiss the report to clear it.' with only a Dismiss button, no PHP notice, not blank"
+    },
+    "c-mod-flag-resolution.17": {
+      "result": "pass",
+      "evidence": "Arabic topic flag in General Discussion: heading and text right-aligned inside the card (dir=auto), View/Remove/Dismiss keep their left-aligned position"
+    },
+    "c-mod-flag-resolution.18": {
+      "result": "pass",
+      "evidence": "dark mode flag cards on the per-space page: reason, type, reporter, note, excerpt and buttons readable on the dark card (screenshot); no contrast failure seen. Automated ratio could not be computed for the translucent chips"
+    },
+    "c-mod-flag-resolution.19": {
+      "result": "pass",
+      "evidence": "second resolve of flag 435 -> 409 jetonomy_already_handled; reporter has exactly one bell row (and one mail on the 442 run); no second notification"
+    },
+    "c-mod-flag-resolution.20": {
+      "result": "fail",
+      "expected": "after removing a flag on a reply, Trash opens on the Replies sub-tab",
+      "actual": "Trash tab link is ?view=trash with no kind; in Feature Discussions it opens on the Topics sub-tab reading 'No topics in the trash.' while the Replies sub-tab shows 4 items (the removed reply is there)",
+      "url": "http://forums.local/community/s/feature-discussions/mod/?view=trash",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/A/walkA-flag20-trash-empty-topics.png"
+    }
+  },
+  "proposed_checks": [
+    "- c-mod-flag-resolution.21 @moderator #ui: open a per-space flag card -> the reporter is labelled 'Reported by <name>' and the note is shown in full, on the overview card as well as the per-space card.",
+    "- `c-mod-flag-resolution.22` @admin #ui: Settings > Emails / notification defaults -> 'Your report was reviewed' ships with email on, or the runbook says it is off by default (stock install sent no mail on a dismissed report).",
+    "- `c-mod-flag-resolution.23` @moderator #ui: Dismiss a flag whose reporter chose a daily or weekly digest -> the reporter gets no instant mail (digest replaces it), so use a reporter without a digest for the email half of .3."
+  ],
+  "notes": "Settings changed and restored: jetonomy_settings notification_defaults.flag_resolved.email set true for .3 and put back to false (verified). Space ban on omar in Off-Topic Lounge created and lifted for .14 (no restriction left). Flags I created: 438-443, all resolved. Reputation moves: david -30 net (report -10, removal -20), others net 0. Screenshots under qa-artifacts/203-walk5/A/."
+}

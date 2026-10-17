@@ -13,8 +13,8 @@
  *   - every jetonomy_* hook and wp_ajax_jetonomy_* handler that fired
  *
  * Off unless JETONOMY_COVERAGE_OUT names an output file. Used by the PHPUnit
- * bootstrap and by `wp jetonomy qa-actions`; read by bin/qa-coverage-check.php
- * --runtime. Lives in includes/qa/, which release builds exclude.
+ * bootstrap and by `wp jetonomy qa-actions`; read by bin/qa-runtime-coverage.php.
+ * Lives in includes/qa/, which release builds exclude.
  *
  * @package Jetonomy
  */

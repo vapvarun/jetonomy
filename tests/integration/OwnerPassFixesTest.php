@@ -228,6 +228,44 @@ class OwnerPassFixesTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'Your ' . \Jetonomy\jetonomy_label( 'topic', false, true ) . ' was removed', $body );
 	}
 
+	public function test_the_staff_flag_email_button_opens_the_mod_queue(): void {
+		$space = $this->space(
+			array(
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+			)
+		);
+		$post  = (int) Post::create(
+			array(
+				'space_id'  => $space,
+				'author_id' => $this->member,
+				'title'     => 'Flagged topic',
+				'content'   => 'Body',
+				'status'    => 'publish',
+			)
+		);
+		$flag  = (int) Flag::create(
+			array(
+				'reporter_id' => $this->member,
+				'object_type' => 'post',
+				'object_id'   => $post,
+				'reason'      => 'spam',
+			)
+		);
+		reset_phpmailer_instance();
+		( new Notifier() )->on_flag_created( $flag, 'post' );
+
+		$to   = get_userdata( $this->admin )->user_email;
+		$body = '';
+		foreach ( (array) tests_retrieve_phpmailer_instance()->mock_sent as $mail ) {
+			if ( $to === $mail['to'][0][0] ) {
+				$body = (string) $mail['body'];
+			}
+		}
+		$this->assertStringContainsString( 'Review in Mod Queue', $body );
+		$this->assertStringContainsString( 'href="' . esc_url( \Jetonomy\route_url( 'moderation' ) ) . '"', $body, 'the button opens the mod queue' );
+	}
+
 	public function test_the_owners_mention_subject_is_used(): void {
 		update_option(
 			'jetonomy_email_templates',

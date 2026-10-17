@@ -35,11 +35,11 @@ class Admin_Controller extends Base_Controller {
 				'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
 				'args'                => array(
 					'type' => array(
-						'type'              => 'string',
-						'required'          => false,
-						'default'           => 'all',
-						'enum'              => array( 'all', 'posts', 'spaces', 'votes', 'users' ),
-						'sanitize_callback' => 'sanitize_text_field',
+						'type'     => 'string',
+						'required' => false,
+						'default'  => 'all',
+						// No sanitize_callback: a custom one replaces rest_parse_request_arg(), so the enum would never be checked.
+						'enum'     => array( 'all', 'posts', 'spaces', 'votes', 'users' ),
 					),
 				),
 			)

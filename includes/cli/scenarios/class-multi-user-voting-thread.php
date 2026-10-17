@@ -19,10 +19,10 @@ defined( 'ABSPATH' ) || exit;
  * across the post and replies so QA can verify sort-by-popular and vote
  * score denormalization without hand-wiring fixtures.
  *
- * The vote plan is deterministic: every user votes once on the post, then
- * each user votes on every reply (3 x 5 = 15 possible slots), but we cap
- * total votes at 10 by cycling through a fixed mix of +1/-1 values so the
- * scoreboard ends non-zero in both directions.
+ * The vote plan is deterministic: every user but the author votes on the
+ * post, then the replies take the rest (nobody votes on their own content),
+ * capped at 10 votes with a fixed mix of +1/-1 values so the scoreboard
+ * ends non-zero in both directions.
  */
 final class Multi_User_Voting_Thread extends Abstract_Scenario {
 
@@ -135,13 +135,14 @@ final class Multi_User_Voting_Thread extends Abstract_Scenario {
 		}
 		$fixtures['reply_ids'] = $reply_ids;
 
-		// Ten votes: post gets one from each user (3), then seven more across
-		// the first four replies cycling users. Values alternate +1/-1.
+		// Ten votes: the post gets one from each user but its author (2), then
+		// eight more across the replies. Nobody votes on their own content
+		// (refused). Values alternate +1/-1.
 		$vote_plan = array(
 			array(
 				'user'  => $user_ids[0],
-				'type'  => 'post',
-				'id'    => (int) $post->data['id'],
+				'type'  => 'reply',
+				'id'    => $reply_ids[1],
 				'value' => 1,
 			),
 			array(
@@ -157,7 +158,7 @@ final class Multi_User_Voting_Thread extends Abstract_Scenario {
 				'value' => -1,
 			),
 			array(
-				'user'  => $user_ids[0],
+				'user'  => $user_ids[2],
 				'type'  => 'reply',
 				'id'    => $reply_ids[0],
 				'value' => 1,
@@ -275,7 +276,7 @@ final class Multi_User_Voting_Thread extends Abstract_Scenario {
 		if ( $space_id > 0 ) {
 			$this->step(
 				'delete-space',
-				static fn (): Journey_Result => $space_srv->delete( $space_id )
+				static fn (): Journey_Result => $space_srv->delete( $space_id, 'purge' )
 			);
 			$this->failed = false;
 		}

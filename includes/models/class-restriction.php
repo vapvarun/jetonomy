@@ -107,6 +107,12 @@ class Restriction extends Model {
 		if ( '' === $ip ) {
 			return new \WP_Error( 'jetonomy_invalid_ip', __( 'Enter a valid IPv4 or IPv6 address.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
+		// Loopback and reserved ranges (127.0.0.0/8, ::1, 0.0.0.0/8 ...) are never a real visitor; behind a
+		// local proxy every visitor can arrive from one, so a ban there locks the whole community out.
+		if ( false === filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE ) ) {
+			return new \WP_Error( 'jetonomy_reserved_ip', __( 'This is a loopback or reserved address, not a visitor. Banning it could lock everyone out.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
 		// shortcut: stored as typed, matched exactly against client_ip(); an IPv6 address written in a
 		// non-canonical spelling would not match. Normalise both sides if that is ever reported.
 
@@ -124,7 +130,7 @@ class Restriction extends Model {
 	/**
 	 * Issue a ban or silence restriction.
 	 *
-	 * @param int         $user_id    Target user.
+	 * @param int         $user_id    Target user (ignored and stored as 0 for 'ip_ban').
 	 * @param string      $type       Restriction type: 'global_ban', 'space_ban', 'silence' or 'ip_ban'.
 	 * @param int         $issued_by  ID of the moderator/admin issuing the restriction.
 	 * @param int|null    $space_id   Scoped space ID, or null for global restrictions.
@@ -141,6 +147,11 @@ class Restriction extends Model {
 		?string $reason = null,
 		?string $expires_at = null
 	): int {
+		// An IP ban blocks an address, not an account: it is stored with no member.
+		if ( 'ip_ban' === $type ) {
+			$user_id = 0;
+		}
+
 		$blocked = self::actor_may_restrict( $user_id, $issued_by );
 		if ( is_wp_error( $blocked ) ) {
 			return 0;
@@ -506,6 +517,18 @@ class Restriction extends Model {
 	 * @return array<int,string> [user_id => 'global_ban'|'space_ban'|'silence']
 	 */
 	public static function active_map_for_users( array $user_ids ): array {
+		return array_map( static fn( object $row ): string => $row->type, self::active_rows_for_users( $user_ids ) );
+	}
+
+	/**
+	 * Map user IDs to their single most-severe active restriction row, in one
+	 * query: the same lookup as active_map_for_users(), with the id a list needs
+	 * to offer "Lift restriction" and the user_id lift_error() judges.
+	 *
+	 * @param int[] $user_ids
+	 * @return array<int,object{id:int,user_id:int,type:string,space_id:int}>
+	 */
+	public static function active_rows_for_users( array $user_ids ): array {
 		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
 		if ( empty( $ids ) ) {
 			return array();
@@ -515,11 +538,11 @@ class Restriction extends Model {
 		$in   = implode( ',', $ids );
 		$rows = static::db()->get_results(
 			static::db()->prepare(
-				'SELECT user_id, type FROM ' . static::table() . "
+				'SELECT id, user_id, type, space_id FROM ' . static::table() . "
 				WHERE user_id IN ($in)
 				  AND type IN ('global_ban','space_ban','silence')
 				  AND (expires_at IS NULL OR expires_at > %s)
-				ORDER BY FIELD(type,'global_ban','space_ban','silence')",
+				ORDER BY FIELD(type,'global_ban','space_ban','silence'), id DESC",
 				now()
 			)
 		);
@@ -529,7 +552,12 @@ class Restriction extends Model {
 			$uid = (int) $row->user_id;
 			// First row per user is the most severe (FIELD ordering above).
 			if ( ! isset( $map[ $uid ] ) ) {
-				$map[ $uid ] = (string) $row->type;
+				$map[ $uid ] = (object) array(
+					'id'       => (int) $row->id,
+					'user_id'  => $uid,
+					'type'     => (string) $row->type,
+					'space_id' => (int) $row->space_id,
+				);
 			}
 		}
 

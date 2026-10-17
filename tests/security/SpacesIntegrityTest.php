@@ -217,8 +217,24 @@ class SpacesIntegrityTest extends WP_UnitTestCase {
 		Restriction::ban( $this->user, 'space_ban', $this->admin, $open );
 		\Jetonomy\Cache::flush();
 		$this->assertSame( 'jetonomy_space_banned', SpaceMember::join( $open, $this->user )->get_error_code() );
-		$this->assertSame( 'jetonomy_space_banned', InviteLink::accept( InviteLink::generate( $open, $this->admin ), $this->user )->get_error_code() );
+		$this->assertSame( 'jetonomy_user_space_banned', InviteLink::accept( InviteLink::generate( $open, $this->admin ), $this->user )->get_error_code() );
 		$this->assertSame( 0, $this->rows( 'space_members', "user_id = {$this->user}" ) );
+	}
+
+	/**
+	 * A space ban keeps the member row, so the "already a member" answer sent a
+	 * banned member through to a space they cannot read. They get the ban instead.
+	 */
+	public function test_a_banned_member_with_a_member_row_is_told_about_the_ban(): void {
+		$open = $this->space();
+		SpaceMember::add( $open, $this->user );
+		Restriction::ban( $this->user, 'space_ban', $this->admin, $open );
+		\Jetonomy\Cache::flush();
+
+		$result = InviteLink::accept( InviteLink::generate( $open, $this->admin ), $this->user );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'jetonomy_user_space_banned', $result->get_error_code() );
 	}
 
 	// -- Invites -------------------------------------------------------------

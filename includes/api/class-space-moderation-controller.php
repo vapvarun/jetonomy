@@ -89,6 +89,7 @@ class Space_Moderation_Controller extends Base_Controller {
 				// Same shape as resolve_flag — gate is per-space + per-object
 				// inside the handler.
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				'args'                => Moderation_Controller::expected_status_arg(),
 			)
 		);
 	}
@@ -97,8 +98,9 @@ class Space_Moderation_Controller extends Base_Controller {
 	 * Permission callback: caller must be allowed to view the target space's queue.
 	 *
 	 * Per-action permission (can_act_on_flag / can_act_on_object) runs again
-	 * inside Moderation_Service so per-object checks remain authoritative,
-	 * but the route-level gate keeps strangers from even seeing 404s.
+	 * inside Moderation_Service so per-object checks remain authoritative.
+	 * A hidden space the caller may not know about answers exactly like a
+	 * missing one (404); a private space is listed publicly, so it may 403.
 	 */
 	public function require_view_space_queue( WP_REST_Request $request ): bool|WP_Error {
 		$user_id = $this->require_auth();
@@ -106,7 +108,8 @@ class Space_Moderation_Controller extends Base_Controller {
 			return $user_id;
 		}
 		$space_id = absint( $request->get_param( 'id' ) );
-		if ( ! Space::find( $space_id ) ) {
+		$space    = Space::find( $space_id );
+		if ( ! $space || Space::concealed_from_viewer( $space, $user_id ) ) {
 			return $this->not_found( 'Space' );
 		}
 		if ( ! Moderation_Permissions::can_view_space_queue( $user_id, $space_id ) ) {
@@ -211,7 +214,7 @@ class Space_Moderation_Controller extends Base_Controller {
 		$type   = sanitize_key( (string) $request->get_param( 'type' ) );
 		$obj_id = absint( $request->get_param( 'obj_id' ) );
 
-		$result = Moderation_Service::set_object_status( get_current_user_id(), $type, $obj_id, $action );
+		$result = Moderation_Service::set_object_status( get_current_user_id(), $type, $obj_id, $action, (string) $request->get_param( 'from' ) );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}

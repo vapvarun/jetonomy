@@ -1,0 +1,124 @@
+{
+  "journey": "C.member.vote",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:00Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-vote.1": {
+      "result": "pass",
+      "evidence": "bob upvoted alice's reply 13393: 0 -> 1, one 'Vote added' toast, button 'Remove your upvote'"
+    },
+    "c-member-vote.2": {
+      "result": "pass",
+      "evidence": "after reload: still 'Remove your upvote', score 1"
+    },
+    "c-member-vote.3": {
+      "result": "pass",
+      "evidence": "click active upvote: 0, one 'Vote removed' toast, label back to 'Vote up'"
+    },
+    "c-member-vote.4": {
+      "result": "pass",
+      "evidence": "downvote: 'Remove your downvote', score -1; switching down -> up moved -1 to 1 (2)"
+    },
+    "c-member-vote.5": {
+      "result": "pass",
+      "evidence": "POST /replies/13412/vote 1 -> score 1, -1 -> -1, -1 again -> 0; value 0 -> 400 rest_invalid_param"
+    },
+    "c-member-vote.6": {
+      "result": "pass",
+      "evidence": "topic vote on the Dark mode topic: exactly one 'Vote added' toast (one .jt-toast), persisted after reload; feed-type space shows the same vote controls on cards; REST topic vote 1/0 consistent"
+    },
+    "c-member-vote.7": {
+      "result": "pass",
+      "evidence": "bob on his own topic: score control is disabled with aria-label 'Score 0. You cannot vote on your own content.'; score unchanged"
+    },
+    "c-member-vote.8": {
+      "result": "pass",
+      "evidence": "self vote +1 and -1 on own reply and own topic -> 400 jetonomy_self_vote 'You cannot vote on your own content.'; taking back an older own-content vote not exercised (no such fixture)"
+    },
+    "c-member-vote.9": {
+      "result": "untested",
+      "needs": "lane A: set the daily vote limit"
+    },
+    "c-member-vote.10": {
+      "result": "untested",
+      "needs": "lane A: set the daily vote limit"
+    },
+    "c-member-vote.11": {
+      "result": "untested",
+      "needs": "lane A: remove the vote permission from a member"
+    },
+    "c-member-vote.12": {
+      "result": "pass",
+      "evidence": "guest: vote is a link 'Log in to vote' with redirect_to; POST vote -> 401 rest_not_logged_in"
+    },
+    "c-member-vote.13": {
+      "result": "pass",
+      "evidence": "alice got one grouped notification '2 people voted on your reply' after bob and maya voted"
+    },
+    "c-member-vote.14": {
+      "result": "pass",
+      "evidence": "bob then maya took back: '1 person voted on your reply', then the notification was removed; never '0 people voted'"
+    },
+    "c-member-vote.15": {
+      "result": "pass",
+      "evidence": "finn: POST votes -> 403 jetonomy_user_silenced; UI score is a disabled control with the silenced text"
+    },
+    "c-member-vote.16": {
+      "result": "pass",
+      "evidence": "bob voted on a reply of a closed topic: REST 200 and the UI shows vote buttons on closed topics (matches owner decision)"
+    },
+    "c-member-vote.17": {
+      "result": "pass",
+      "evidence": "offline vote: score rolled back to 0, 'Vote failed.' toast"
+    },
+    "c-member-vote.18": {
+      "result": "pass",
+      "evidence": "10 rapid clicks: UI and server score both 2 (consistent), toasts one per change"
+    },
+    "c-member-vote.19": {
+      "result": "untested",
+      "needs": "not walked: two simultaneous tabs of bob (single-session rapid test passed)"
+    },
+    "c-member-vote.20": {
+      "result": "pass",
+      "evidence": "POST /replies/13380 (Customer Advisory Board) -> 404 jetonomy_not_found; Moderators' Room and a private reply id also 404"
+    },
+    "c-member-vote.21": {
+      "result": "pass",
+      "evidence": "finn's -4 topic shows '-4' with a minus sign and no active state for bob"
+    },
+    "c-member-vote.22": {
+      "result": "pass",
+      "evidence": "React 'Like' on the reply set the reaction (thumbs 1) and the vote stayed active at score 2: independent"
+    },
+    "c-member-vote.23": {
+      "result": "pass",
+      "evidence": "390 dark: vote buttons 43x40, 40x40, 41x40; active upvote is light blue rgb(151,192,238) on dark rgb(59,67,80) (theme repeat skipped (short walk))"
+    },
+    "c-member-vote.24": {
+      "result": "pass",
+      "evidence": "finn clicking the disabled score: toast 'Your account is currently silenced and cannot post.'"
+    },
+    "c-member-vote.25": {
+      "result": "pass",
+      "evidence": "grouped notice reads '2 people voted on your reply' with no quotation marks around 'your reply'"
+    }
+  },
+  "proposed_checks": [],
+  "notes": "All votes bob/maya cast were taken back at the end (13393, 13412, topic 5874). Score 2 on reply 13393 includes another voter I did not cast. No site setting changed."
+}

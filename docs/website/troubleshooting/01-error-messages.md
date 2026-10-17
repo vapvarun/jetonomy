@@ -44,10 +44,11 @@ The **Code** column is the identifier the REST API returns. You will see it in a
 | Your account has been banned from this community. | `jetonomy_user_banned` | The account was banned at **Jetonomy -> Users**. Bans block reading and posting everywhere. Unban from the same screen. |
 | Your account is currently silenced and cannot post. | `jetonomy_user_silenced` | The account is silenced: it can still read, but not post. Also managed at **Jetonomy -> Users**. |
 | This post is closed and cannot receive new replies. | `jetonomy_post_closed` | The topic is closed. Members cannot reply. **Moderators can** - they see the composer and their reply is accepted, and the topic stays closed afterwards. If a moderator sees this error, they lack the `moderate` permission in that space. |
-| This space is archived or locked and no longer accepts new posts. | `jetonomy_space_restricted` | The space status is Archived or Locked, so it accepts no new posts. Change the status on the space's edit screen. Archived also hides the space from listings; Locked leaves it visible and readable. |
+| This space is archived or locked and no longer accepts new content. | `jetonomy_space_restricted` | The space status is Archived or Locked, so it accepts no new topics or replies. Change the status on the space's edit screen. Archived also hides the space from listings; Locked leaves it visible and readable. |
 | User is not a member of this space. | `jetonomy_not_member` | The space requires membership and the member has not joined. Either they join, or an admin adds them on the space's Members tab. |
 | You do not have permission to perform this action. | `jetonomy_forbidden` | The member lacks the permission this action needs. Check their space role and trust level at **Settings -> Permissions**. |
-| You do not have permission to perform this action. | `rest_forbidden` | Same as above, raised by WordPress itself rather than Jetonomy. |
+| You have been banned from this space and cannot take part in it. | `jetonomy_user_space_banned` | A moderator banned the member from this one space. They can still use the rest of the community. Lift it at **Jetonomy -> Moderation -> Banned**. |
+| Sorry, you are not allowed to do that. | `rest_forbidden` | The request was not signed in, or its nonce was missing or expired. Signed-in members who lack a permission get `jetonomy_forbidden` instead. |
 | Accepted answers only apply to Q&A spaces. | `jetonomy_not_qa_space` | Accepting an answer only works in a Q&A space. |
 | Roadmap status only applies to Ideas spaces. | `jetonomy_not_ideas_space` | Roadmap status only applies in an Ideas space. |
 | This reply is not the accepted answer. | `jetonomy_not_accepted` |  |
@@ -90,7 +91,6 @@ The **Code** column is the identifier the REST API returns. You will see it in a
 |---|---|---|
 | No file provided. | `jetonomy_no_file` | The request carried no file. Usually the upload was silently dropped for exceeding the server limit - the cap is the smaller of WordPress's own limit and 10 MB. |
 | This file type is not allowed. | `jetonomy_upload_type` | The file extension is not on the allowed list. Developers can widen it with the `jetonomy_upload_allowed_types` filter. |
-| You are not allowed to upload media. | `jetonomy_upload_forbidden` | The member lacks upload permission in this space. |
 
 ## Tags and categories
 

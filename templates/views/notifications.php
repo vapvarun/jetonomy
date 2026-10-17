@@ -172,6 +172,8 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 			?>
 			<a href="<?php echo esc_url( $tab_url ); ?>"
 				class="<?php echo esc_attr( $tab_class ); ?>"
+				data-jt-notif-tab="<?php echo esc_attr( $tab_slug ); ?>"
+				<?php echo 'unread' === $tab_slug ? 'data-jt-unread-host="jt-notif-tab__count"' : ''; ?>
 				<?php echo $is_active ? 'aria-current="page"' : ''; ?>>
 				<span class="jt-notif-tab__label"><?php echo esc_html( $tab_label ); ?></span>
 				<?php if ( $tab_count > 0 ) : ?>
@@ -298,7 +300,7 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 							</span>
 						<?php endif; ?>
 						<div class="jt-notif-body">
-							<div class="jt-notif-text">
+							<div class="jt-notif-text" dir="auto">
 								<?php if ( ! empty( $notif->message ) ) : ?>
 									<?php echo esc_html( $notif->message ); ?>
 								<?php elseif ( in_array( (string) $notif->type, $self_contained_types, true ) ) : ?>

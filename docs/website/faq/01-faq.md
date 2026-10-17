@@ -59,7 +59,7 @@ The free plugin delivers the full community (spaces, discussions, moderation, tr
 Paste your key under Jetonomy -> Settings -> License and click Activate, then enable each extension you want on the Extensions tab. See [Getting Started with Pro](../pro-features/00-getting-started-pro.md) and [License](../admin-settings/14-license.md).
 
 **If I disable an extension, do I lose its data?**
-No. Disabling an extension stops the feature and unregisters its hooks but preserves its tables and stored options; re-enabling restores everything. Only uninstalling the plugin removes stored data. See [Extensions](../admin-settings/13-extensions.md).
+No. Disabling an extension stops the feature and unregisters its hooks but preserves its tables and stored options; re-enabling restores everything. Only deleting the plugin with **Settings → General → Data → Remove all community data** ticked removes stored data. See [Extensions](../admin-settings/13-extensions.md).
 
 **Does the AI extension lock me into one provider or a runaway bill?**
 No. The AI layer is multi-provider (OpenAI, Anthropic, self-hosted Ollama, or any OpenAI-compatible endpoint) with a fallback chain, and every cloud provider can be given a monthly spend cap in USD that stops requests once exceeded. See [AI Integration](../pro-features/13-ai.md).
@@ -92,7 +92,7 @@ Yes. When BuddyPress Groups is active, Jetonomy pairs groups with spaces for two
 Yes. Everything lives in your own database. Jetonomy registers WordPress core personal-data exporters and erasers (Tools -> Export/Erase Personal Data), and all content is reachable through the `jetonomy/v1` REST API. See the [REST API reference](../developer-guide/01-rest-api.md).
 
 **What does uninstalling remove?**
-Deleting the plugin runs the uninstall routine, which removes Jetonomy Pro's database tables, Pro options, Pro user meta (every `jetonomy_pro_` key), and Pro scheduled tasks. It is irreversible, so back up first. See [Getting Started with Pro](../pro-features/00-getting-started-pro.md).
+Nothing, by default: deleting and reinstalling keeps your community. If you tick **Jetonomy → Settings → General → Data → Remove all community data when Jetonomy is deleted**, deleting the plugins removes Jetonomy's and Jetonomy Pro's database tables, options, user meta and scheduled tasks. That is irreversible, so back up first. See [Getting Started with Pro](../pro-features/00-getting-started-pro.md).
 
 **Can I permanently purge a conversation for a compliance request?**
 Yes. Admins get a Jetonomy -> Conversations page in wp-admin where Purge permanently deletes a conversation and all its messages and read-state rows, firing an action for audit tooling. See [Private Messaging](../pro-features/02-private-messaging.md).

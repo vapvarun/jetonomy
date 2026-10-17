@@ -170,6 +170,40 @@ class Permission_Engine {
 		return self::$memo[ $key ];
 	}
 
+	/** Actions a silenced member loses; reading continues. */
+	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
+
+	/**
+	 * The account restriction that refuses this action, as the error to show the
+	 * member, or null when none applies. One source for the wording, so every
+	 * surface says "silenced" or "banned" instead of a generic permission error.
+	 *
+	 * @param int      $user_id  Member.
+	 * @param string   $action   Permission slug.
+	 * @param int|null $space_id Space the action is in, so a ban from that space is named too.
+	 * @return \WP_Error|null
+	 */
+	public static function restriction_error( int $user_id, string $action, ?int $space_id = null ): ?\WP_Error {
+		if ( ! $user_id ) {
+			return null;
+		}
+		if ( Restriction::is_banned( $user_id ) ) {
+			return new \WP_Error( 'jetonomy_user_banned', __( 'Your account has been banned from this community.', 'jetonomy' ), array( 'status' => 403 ) );
+		}
+		if ( in_array( $action, self::SILENCED_WRITE_ACTIONS, true ) && Restriction::is_silenced( $user_id ) ) {
+			return new \WP_Error( 'jetonomy_user_silenced', __( 'Your account is currently silenced and cannot post.', 'jetonomy' ), array( 'status' => 403 ) );
+		}
+		if ( $space_id && Restriction::is_space_banned( $user_id, $space_id ) ) {
+			return new \WP_Error(
+				'jetonomy_user_space_banned',
+				/* translators: %s: singular space label the site owner configured (e.g. space). */
+				sprintf( __( 'You have been banned from this %s and cannot take part in it.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				array( 'status' => 403 )
+			);
+		}
+		return null;
+	}
+
 	/**
 	 * Internal uncached resolution — called by can().
 	 */
@@ -187,8 +221,7 @@ class Permission_Engine {
 
 		// Layer 0b: Silence check — can read but not write.
 		if ( $user_id && class_exists( 'Jetonomy\Models\Restriction' ) && Restriction::is_silenced( $user_id ) ) {
-			$write_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
-			if ( in_array( $action, $write_actions, true ) ) {
+			if ( in_array( $action, self::SILENCED_WRITE_ACTIONS, true ) ) {
 				return false;
 			}
 			// Allow read actions to continue through the normal flow.
@@ -492,6 +525,40 @@ class Permission_Engine {
 			\Jetonomy\Models\BlockedUser::blocked_ids( $user_id ),
 			true
 		);
+	}
+
+	/**
+	 * Of these members, the ones who may read this topic: the set-based form of
+	 * can_read_post() for notification fan-outs, two queries at most however many
+	 * ids are passed. A private or hidden space keeps its members; a private topic
+	 * keeps its author and the space's admins and moderators.
+	 *
+	 * Shortcut: bans, role caps and membership-plugin access rules are not applied
+	 * here (no set-based form yet); the member meets them when opening the link.
+	 *
+	 * @param \stdClass $post     Post row (space_id, is_private, author_id).
+	 * @param int[]     $user_ids Candidate recipients.
+	 * @return int[]
+	 */
+	// phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint -- \stdClass for PHPStan, `object` hint as in can_read_post().
+	public static function readers_among( object $post, array $user_ids ): array {
+		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
+		$space_id = (int) $post->space_id;
+		if ( ! $user_ids || ! $space_id ) {
+			return $user_ids;
+		}
+		$space = Space::find( $space_id );
+		if ( ! $space ) {
+			return array();
+		}
+		if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
+			$user_ids = array_values( array_intersect( $user_ids, SpaceMember::members_among( $space_id, $user_ids ) ) );
+		}
+		if ( ! empty( $post->is_private ) && $user_ids ) {
+			$allowed  = array_merge( array_keys( SpaceMember::roles_for_users( $space_id, $user_ids ) ), array( (int) $post->author_id ) );
+			$user_ids = array_values( array_intersect( $user_ids, $allowed ) );
+		}
+		return $user_ids;
 	}
 
 	/**

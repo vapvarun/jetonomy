@@ -19,7 +19,9 @@ $has_unread = isset( $has_unread ) ? (bool) $has_unread : false;
 // 1.5.0: the My Bookmarks page passes show_bookmark_toggle so each card
 // offers a one-click "Remove bookmark" — the bookmarks list was otherwise a
 // dead end (no way to manage the very bookmarks it exists to show).
+// show_space: lists that mix spaces (bookmarks, tag, drafts) name each topic's space.
 $show_bookmark_toggle = isset( $show_bookmark_toggle ) ? (bool) $show_bookmark_toggle : false;
+$show_space           = isset( $show_space ) ? (bool) $show_space : false;
 $initials             = '' !== $display['name'] ? strtoupper( mb_substr( $display['name'], 0, 2 ) ) : '??';
 $trust                = $profile ? (int) $profile->trust_level : 0;
 $post_url             = \Jetonomy\route_url( 'post', ( $space->slug ?? '' ), $post->slug );
@@ -51,28 +53,27 @@ if ( $prefix_name && $space ) {
 }
 ?>
 <div class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
+	data-jt-key="post-<?php echo absint( $post->id ); ?>"
 	data-wp-interactive="jetonomy">
 	<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 		<div class="jt-votes" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Vote on this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
-			<?php // Not "is logged in" - "may actually vote here". A Read-grant rule admits without granting the vote. ?>
-			<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
+			<?php // Not "is logged in" - "may actually vote here". A Read-grant rule admits without granting the vote, and your own topic takes no vote. ?>
+			<?php $jt_own_post = $viewer_id && (int) $post->author_id === $viewer_id; ?>
+			<?php if ( ! $jt_own_post && jetonomy_viewer_can_vote( $space ) ) : ?>
 				<button type="button" class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
 					aria-pressed="<?php echo 1 === $viewer_vote ? 'true' : 'false'; ?>"
 					data-wp-on--click="actions.voteUp"
 					data-post-id="<?php echo absint( $post->id ); ?>"
 					<?php echo jetonomy_vote_attrs( 'up', 1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></button>
 				<span class="jt-v-num" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo (int) $post->vote_score; ?></span>
-				<?php // Hide downvote on own content (self-downvote landed at -1). ?>
-				<?php if ( (int) $post->author_id !== $viewer_id ) : ?>
-					<button type="button" class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
-						aria-pressed="<?php echo -1 === $viewer_vote ? 'true' : 'false'; ?>"
-						data-wp-on--click="actions.voteDown"
-						data-post-id="<?php echo absint( $post->id ); ?>"
-						<?php echo jetonomy_vote_attrs( 'down', -1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
-				<?php endif; ?>
+				<button type="button" class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
+					aria-pressed="<?php echo -1 === $viewer_vote ? 'true' : 'false'; ?>"
+					data-wp-on--click="actions.voteDown"
+					data-post-id="<?php echo absint( $post->id ); ?>"
+					<?php echo jetonomy_vote_attrs( 'down', -1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 			<?php elseif ( is_user_logged_in() ) : ?>
 				<?php // Logged in but not allowed to vote here: say why, same as the single topic page. ?>
-				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 14 ); ?>
+				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 14, $space, $jt_own_post ); ?>
 			<?php else : ?>
 				<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
 				<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
@@ -113,7 +114,7 @@ if ( $prefix_name && $space ) {
 					<span class="jt-qa-pill jt-qa-pill-needs-answer"><?php esc_html_e( 'Needs answer', 'jetonomy' ); ?></span>
 				<?php endif; ?>
 			<?php endif; ?>
-			<?php echo esc_html( jetonomy_post_title_or_excerpt( $post ) ); ?>
+			<span dir="auto"><?php echo esc_html( jetonomy_post_title_or_excerpt( $post ) ); ?></span>
 			<?php if ( $has_unread ) : ?>
 				<span class="jt-unread-pill" aria-label="<?php printf( /* translators: %s: plural reply label. */ esc_attr__( 'You have unread %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
 					<?php esc_html_e( 'New', 'jetonomy' ); ?>
@@ -122,6 +123,9 @@ if ( $prefix_name && $space ) {
 		</a>
 		<div class="jt-row-sub">
 			<?php echo esc_html( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>
+			<?php if ( $show_space && $space ) : ?>
+				<a class="jt-row-space" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>" dir="auto"><?php echo esc_html( $space->title ); ?></a>
+			<?php endif; ?>
 			<?php
 			// 1.4.0 G3: render role pill (Admin / Mod) when this user holds a
 			// privileged role IN THIS POST'S SPACE. Reads the warmed cache

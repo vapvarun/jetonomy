@@ -259,21 +259,25 @@ class Capabilities {
 	 * @return array<string, string> cap => label.
 	 */
 	public static function labels(): array {
+		// Owner terminology: the posts caps cover topics, and own/others edit and delete cover replies too.
+		$topics  = \Jetonomy\jetonomy_label( 'topic', true, true );
+		$content = sprintf( /* translators: 1: topic label, plural lowercase. 2: reply label, plural lowercase. */ __( '%1$s and %2$s', 'jetonomy' ), $topics, \Jetonomy\jetonomy_label( 'reply', true, true ) );
+
 		return array(
 			'jetonomy_read'                => __( 'Read the community', 'jetonomy' ),
-			'jetonomy_create_posts'        => __( 'Create posts', 'jetonomy' ),
+			'jetonomy_create_posts'        => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Create %s', 'jetonomy' ), $topics ),
 			'jetonomy_create_replies'      => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-			'jetonomy_edit_own_posts'      => __( 'Edit own posts', 'jetonomy' ),
-			'jetonomy_delete_own_posts'    => __( 'Delete own posts', 'jetonomy' ),
+			'jetonomy_edit_own_posts'      => sprintf( /* translators: %s: topic and reply labels, e.g. "topics and replies". */ __( 'Edit own %s', 'jetonomy' ), $content ),
+			'jetonomy_delete_own_posts'    => sprintf( /* translators: %s: topic and reply labels, e.g. "topics and replies". */ __( 'Delete own %s', 'jetonomy' ), $content ),
 			'jetonomy_vote'                => __( 'Vote', 'jetonomy' ),
 			'jetonomy_flag'                => __( 'Report content', 'jetonomy' ),
 			'jetonomy_join_spaces'         => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 			'jetonomy_upload_media'        => __( 'Upload media', 'jetonomy' ),
-			'jetonomy_edit_others_posts'   => __( "Edit others' posts", 'jetonomy' ),
-			'jetonomy_delete_others_posts' => __( "Delete others' posts", 'jetonomy' ),
+			'jetonomy_edit_others_posts'   => sprintf( /* translators: %s: topic and reply labels, e.g. "topics and replies". */ __( "Edit others' %s", 'jetonomy' ), $content ),
+			'jetonomy_delete_others_posts' => sprintf( /* translators: %s: topic and reply labels, e.g. "topics and replies". */ __( "Delete others' %s", 'jetonomy' ), $content ),
 			'jetonomy_moderate'            => __( 'Moderate (queue, flags, bans)', 'jetonomy' ),
 			'jetonomy_manage_users'        => __( 'Manage community users', 'jetonomy' ),
-			'jetonomy_move_posts'          => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Move posts between %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+			'jetonomy_move_posts'          => sprintf( /* translators: 1: topic label, plural lowercase. 2: space label, plural lowercase. */ __( 'Move %1$s between %2$s', 'jetonomy' ), $topics, \Jetonomy\space_label( true, true ) ),
 			'jetonomy_close_posts'         => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 			'jetonomy_pin_posts'           => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Pin %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 			'jetonomy_manage_settings'     => __( 'Manage settings', 'jetonomy' ),

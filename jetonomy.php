@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     2.0.2
+ * Version:     2.0.3
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '2.0.2' );
+define( 'JETONOMY_VERSION', '2.0.3' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -478,13 +478,23 @@ function jetonomy_vote_attrs( string $direction, bool $active ): string {
  *
  * Shows the score and explains on hover, to screen readers and (via the
  * data-jt-denied handler in header.js) with a toast on click, instead of an
- * inert icon that looks broken.
+ * inert icon that looks broken. The reason is the server's own: your own
+ * post, or the account restriction (silenced, banned) the vote route names.
  *
- * @param int $score     Current vote score.
- * @param int $icon_size Icon size in px.
+ * @param int         $score     Current vote score.
+ * @param int         $icon_size Icon size in px.
+ * @param object|null $space     Space the item is in, so a space ban is named.
+ * @param bool        $own       The viewer wrote this post or reply.
  */
-function jetonomy_vote_denied_control( int $score, int $icon_size ): void {
-	$why = __( 'Voting is not available to you here.', 'jetonomy' );
+function jetonomy_vote_denied_control( int $score, int $icon_size, $space = null, bool $own = false ): void {
+	$restricted = $own ? null : \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'vote', ( $space && ! empty( $space->id ) ) ? (int) $space->id : null );
+	if ( $own ) {
+		$why = \Jetonomy\Models\Vote::self_vote_error()->get_error_message();
+	} elseif ( $restricted ) {
+		$why = $restricted->get_error_message();
+	} else {
+		$why = __( 'Voting is not available to you here.', 'jetonomy' );
+	}
 	/* translators: 1: vote score, 2: reason voting is unavailable. */
 	$label = sprintf( __( 'Score %1$d. %2$s', 'jetonomy' ), $score, $why );
 	?>
@@ -629,7 +639,16 @@ function jetonomy_render_space_meta_badges( $space ): void {
 	$join_policy = \Jetonomy\Models\Space::effective_join_policy( $space );
 	$visibility  = (string) ( $space->visibility ?? 'public' );
 
-	// Private and hidden come first: they decide whether you can get in at all.
+	// Archived and locked come first: nobody can post there any more.
+	$status = (string) ( $space->status ?? '' );
+	if ( in_array( $status, array( 'archived', 'locked' ), true ) ) {
+		echo '<span class="jt-space-card-badge jt-space-card-badge-' . esc_attr( $status ) . '">';
+		jetonomy_echo_icon( 'lock', 12 );
+		echo esc_html( 'archived' === $status ? __( 'Archived', 'jetonomy' ) : __( 'Locked', 'jetonomy' ) );
+		echo '</span>';
+	}
+
+	// Private and hidden next: they decide whether you can get in at all.
 	if ( 'public' !== $visibility ) {
 		$vis_label = 'hidden' === $visibility ? __( 'Hidden', 'jetonomy' ) : __( 'Private', 'jetonomy' );
 		$vis_aria  = 'hidden' === $visibility
@@ -650,6 +669,23 @@ function jetonomy_render_space_meta_badges( $space ): void {
 		jetonomy_echo_icon( $icon, 12 );
 		echo esc_html( $label );
 		echo '</span>';
+	}
+
+	// The viewer's own membership replaces the join policy, the same rule the
+	// space header uses to drop its Join / Request CTA. Callers rendering a
+	// grid warm the roles first (SpaceMember::warm_viewer_roles()).
+	$viewer_id = get_current_user_id();
+	$role      = $viewer_id > 0 && ! empty( $space->id ) ? \Jetonomy\Models\SpaceMember::get_role( (int) $space->id, $viewer_id ) : null;
+	if ( null !== $role ) {
+		$role_labels = array(
+			'admin'     => __( 'Admin', 'jetonomy' ),
+			'moderator' => __( 'Moderator', 'jetonomy' ),
+		);
+		echo '<span class="jt-space-card-badge jt-space-card-badge-member jt-space-card-badge-member-' . esc_attr( $role ) . '">';
+		jetonomy_echo_icon( 'user-check', 12 );
+		echo esc_html( $role_labels[ $role ] ?? __( 'Member', 'jetonomy' ) ); // jt-terms-ok: space role name.
+		echo '</span>';
+		return;
 	}
 
 	$policy_label = jetonomy_space_join_policy_label( $join_policy );

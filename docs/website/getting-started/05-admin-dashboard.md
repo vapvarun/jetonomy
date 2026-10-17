@@ -53,15 +53,18 @@ If no activity has been logged yet, a placeholder message appears. The feed is r
 
 ## Quick Actions Panel
 
-The right sidebar has a Quick Actions card with three buttons:
+The right sidebar has a Quick Actions card with these buttons:
 
 | Button | What It Does |
 |---|---|
 | Create Space | Opens the new-space form at Jetonomy → Spaces → Add New |
 | View Community | Opens the community home in a new browser tab |
 | Flush Rules | Triggers `flush_rewrite_rules()` to rebuild WordPress permalink rules |
+| Recount counters (2.0.3+) | Rebuilds topic, reply, member and vote counts from your content. Shown to administrators only |
 
 Use **Flush Rules** any time your community URLs return 404s after changing the base slug, activating a new plugin, or running a migration.
+
+Use **Recount counters** when a count looks wrong, for example after an import, a database restore or editing rows directly. It asks you to confirm, can take a minute on a large community, and then shows "Counters rebuilt from your content." It runs the same job as `POST /jetonomy/v1/admin/recount`.
 
 ## Demo Data
 

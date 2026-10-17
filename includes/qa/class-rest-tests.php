@@ -495,42 +495,43 @@ class REST_Tests {
 			return;
 		}
 
+		// Votes come from the TL0 test user: the admin wrote the test post and
+		// reply, and your own vote never counts (C18 proves the refusal).
+		$voter = $this->test_user_id ? $this->test_user_id : null;
+
 		// 13. Upvote post.
-		$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ) );
+		$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ), $voter );
 		$data = $r->get_data();
 		$this->check( 'C13: POST /posts/{id}/vote (up) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'C13: response has score', array_key_exists( 'score', $data ), 'missing score key' );
 
 		// 14. Downvote post (should change or toggle score).
 		// We first DELETE the existing vote so we can test a fresh downvote.
-		// Self-downvotes are blocked (commit 826b9f8), so switch to the TL0
-		// test user for this step and restore admin after.
-		$this->rest( 'DELETE', "/posts/{$this->post_id}/vote" );
-		if ( $this->test_user_id ) {
-			wp_set_current_user( $this->test_user_id );
-		}
-		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => -1 ) );
+		$this->rest( 'DELETE', "/posts/{$this->post_id}/vote", array(), $voter );
+		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => -1 ), $voter );
 		$data = $r->get_data();
-		if ( $this->test_user_id ) {
-			wp_set_current_user( $this->admin_id );
-		}
 		$this->check( 'C14: POST /posts/{id}/vote (down) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'C14: response has score', array_key_exists( 'score', $data ), 'missing score key' );
 
 		// 15. Delete post vote (unvote).
-		$r = $this->rest( 'DELETE', "/posts/{$this->post_id}/vote" );
+		$r = $this->rest( 'DELETE', "/posts/{$this->post_id}/vote", array(), $voter );
 		$this->check( 'C15: DELETE /posts/{id}/vote → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// 18. The author's own vote is refused.
+		$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ), $this->admin_id );
+		$this->check( 'C18: POST own post vote → 400 jetonomy_self_vote', 400 === $r->get_status() && 'jetonomy_self_vote' === ( $r->get_data()['code'] ?? '' ), "HTTP {$r->get_status()}" );
 
 		// 16. Upvote reply.
 		if ( $this->reply_id ) {
-			$r = $this->rest( 'POST', "/replies/{$this->reply_id}/vote", array( 'value' => 1 ) );
+			$r = $this->rest( 'POST', "/replies/{$this->reply_id}/vote", array( 'value' => 1 ), $voter );
 			$data = $r->get_data();
 			$this->check( 'C16: POST /replies/{id}/vote (up) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'C16: response has score', array_key_exists( 'score', $data ), 'missing score key' );
 
 			// 17. Delete reply vote.
-			$r = $this->rest( 'DELETE', "/replies/{$this->reply_id}/vote" );
+			$r = $this->rest( 'DELETE', "/replies/{$this->reply_id}/vote", array(), $voter );
 			$this->check( 'C17: DELETE /replies/{id}/vote → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+			wp_set_current_user( $this->admin_id );
 		} else {
 			$this->skip( 'C16: reply vote', 'no reply_id' );
 			$this->skip( 'C17: reply unvote', 'precondition not met' );
@@ -2144,17 +2145,19 @@ class REST_Tests {
 		}
 		$this->cleanup[] = array( 'type' => 'reply_rest', 'id' => $reply_id );
 
-		$guest = $this->rest( 'GET', "/replies/{$reply_id}", array(), 0 )->get_data();
+		// A private reply the viewer may not read answers exactly like a missing one.
+		$guest = $this->rest( 'GET', "/replies/{$reply_id}", array(), 0 );
 		$this->check(
-			'PV1: GET /replies/{id} as guest hides a private body',
-			! empty( $guest['is_private_hidden'] ) && false === strpos( (string) wp_json_encode( $guest ), 'PV1 private body' ),
-			'body or flag wrong'
+			'PV1: GET /replies/{id} as guest answers like a missing reply',
+			404 === $guest->get_status() && 'jetonomy_not_found' === ( $guest->get_data()['code'] ?? '' ) && false === strpos( (string) wp_json_encode( $guest->get_data() ), 'PV1 private body' ),
+			"HTTP {$guest->get_status()} or body present"
 		);
 
 		$author = $this->rest( 'GET', "/replies/{$reply_id}", array(), $this->test_user_id )->get_data();
 		$this->check( 'PV1: GET /replies/{id} shows the author their own private reply', empty( $author['is_private_hidden'] ), 'author was refused' );
 
-		$found = static fn( $res ): bool => false !== strpos( (string) wp_json_encode( $res->get_data() ), $token );
+		// Results only: meta.terms echoes the searched words back, so the whole body always holds the token.
+		$found = static fn( $res ): bool => false !== strpos( (string) wp_json_encode( $res->get_data()['data'] ?? array() ), $token );
 		$guest = $this->rest( 'GET', '/search', array( 'q' => $token, 'type' => 'reply' ), 0 );
 		$this->check( 'PV1: reply search never returns a private reply to a guest', ! $found( $guest ) && 0 === (int) ( $guest->get_headers()['X-WP-Total'] ?? $guest->get_data()['meta']['total'] ?? 0 ), 'row or count leaked' );
 		$this->check( 'PV1: reply search still finds it for its author', $found( $this->rest( 'GET', '/search', array( 'q' => $token, 'type' => 'reply' ), $this->test_user_id ) ), 'author search empty' );

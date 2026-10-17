@@ -326,7 +326,9 @@ class Tag extends Model {
 
 		$posts = Post::list_by_tag_visible( (int) $tag->id, 'latest', $limit );
 		if ( $posts ) {
-			cache_users( array_map( static fn( $p ) => (int) $p->author_id, $posts ) );
+			$author_ids = array_map( static fn( $p ) => (int) $p->author_id, $posts );
+			cache_users( $author_ids );
+			UserProfile::prime( $author_ids );
 		}
 
 		return array_map(

@@ -108,6 +108,28 @@ class PostableByMeTest extends WP_UnitTestCase {
 		$this->assertNotContains( $not_joined, $ids, 'Non-member public space must NOT appear — filter is member-scoped.' );
 	}
 
+	/**
+	 * A silenced member's picker is empty; the response says why, so the composer
+	 * shows the restriction instead of "you have not joined any space".
+	 */
+	public function test_a_restricted_member_is_told_why_the_list_is_empty(): void {
+		$user_id = $this->factory()->user->create( array( 'role' => 'subscriber' ) );
+		UserProfile::find_or_create( $user_id );
+		SpaceMember::add( $this->make_space( 'silenced' ), $user_id, 'member' );
+		wp_set_current_user( $user_id );
+
+		$req = new WP_REST_Request( 'GET', '/jetonomy/v1/spaces' );
+		$req->set_param( 'postable_by_me', 1 );
+		$this->assertNull( $this->server->dispatch( $req )->get_data()['meta']['restriction'], 'no restriction, nothing to explain' );
+
+		\Jetonomy\Models\Restriction::ban( $user_id, 'silence', 1 );
+		\Jetonomy\Cache::flush();
+		$meta = $this->server->dispatch( $req )->get_data()['meta'];
+
+		$this->assertSame( 'jetonomy_user_silenced', $meta['restriction']['code'] );
+		$this->assertNotEmpty( $meta['restriction']['message'] );
+	}
+
 	public function test_filter_is_off_by_default(): void {
 		$user_id = $this->factory()->user->create( array( 'role' => 'subscriber' ) );
 		UserProfile::find_or_create( $user_id );

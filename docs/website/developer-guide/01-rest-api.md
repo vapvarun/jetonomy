@@ -72,8 +72,8 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | DELETE | `/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Remove an access rule. Note the path is top-level, not nested under `/spaces/{id}` - the rule id is globally unique. Added 1.9.4. |
 | GET | `/spaces/{id}/join-requests` | Space admin | List pending requests to join this space. When a `PATCH /spaces/{id}` (or the admin screen, or `wp jetonomy space update`) changes `join_policy` / `visibility` so the space no longer takes requests, the pending ones are settled at once: approved and added as members if the space is now open, denied if it is now invite-only. Each requester gets the usual approved / not-approved notification. |
 | DELETE | `/spaces/{id}/join-requests/mine` | Logged in | Withdraw your own pending request to join this space; the staff notices about it are removed. 404 when you have none. |
-| POST | `/spaces/{id}/join-requests/{request_id}/approve` | Space admin | Approve a join request and add the member |
-| POST | `/spaces/{id}/join-requests/{request_id}/deny` | Space admin | Deny a join request |
+| POST | `/spaces/{id}/join-requests/{request_id}/approve` | Space admin | Approve a join request and add the member. The response carries a ready-to-show `message` ("Join request approved.") |
+| POST | `/spaces/{id}/join-requests/{request_id}/deny` | Space admin | Deny a join request. The response carries a ready-to-show `message` ("Join request denied.") |
 | GET | `/spaces/{id}/invites` | Space admin | List the space's invite links |
 | DELETE | `/spaces/{id}/invites/{invite_id}` | Space admin | Revoke an invite link. Links already used stay used. |
 
@@ -112,17 +112,17 @@ Posts are individual discussion threads (topics) inside a Space.
 
 > **One shape per resource (1.9.1).** A post or space is serialized by one shared routine, so the same resource comes back identical whether you read it from a list, a feed, a search result or a single-item route. Previously each controller assembled its own payload and they had drifted - a field present in a single read could be missing from the same object in a search result. If you were compensating for that in a client, you can stop.
 >
-> Post and reply payloads also carry **`author_last_seen_at`** (ISO 8601 string, or `null` when the author is anonymized or the value is unknown), so a client can show presence without a second request per row.
+> Post and reply payloads also carry **`author_last_seen_at`** (ISO 8601 string, or `null` when the author is anonymized or the value is unknown), so a client can show presence without a second request per row. The exact time goes only to the member themself and to site staff. Everyone else gets what the online dot shows: the current time while the member is online (active in the last 5 minutes), otherwise `null`. The same rule applies to `last_seen_at` on users, space members and the leaderboard.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/spaces/{space_id}/posts` | Public | List posts in a space |
 | POST | `/spaces/{space_id}/posts` | Logged in | Create a post |
 | GET | `/posts/{id}` | Public | Get a single post. Does not count a view |
-| PATCH | `/posts/{id}` | Author / Moderator | Update a post |
+| PATCH | `/posts/{id}` | Author / Moderator | Update a post. On a scheduled draft, `published_at` moves the publish time (site timezone unless it carries an offset; must be in the future) and `""` cancels the schedule. On a live post `published_at` backdates it and needs `manage_options`. |
 | DELETE | `/posts/{id}` | Author / Moderator | Move a post to trash. `?force=true` deletes it permanently with all its replies (space moderators and admins only). Restore with `POST /spaces/{space_id}/moderation/approve/post/{id}` |
-| POST | `/posts/{id}/close` | Moderator / Admin | Toggle closed status |
-| POST | `/posts/{id}/pin` | Moderator / Admin | Toggle pinned status |
+| POST | `/posts/{id}/close` | Moderator / Admin | Close (`closed: true`) or reopen (`false`); omitted, it toggles |
+| POST | `/posts/{id}/pin` | Moderator / Admin | Pin (`pinned: true`) or unpin (`false`); omitted, it toggles |
 | POST | `/posts/{id}/view` | Public (no nonce) | Count one view of a published topic the requester can read. Counted at most once per IP per topic every 30 minutes; returns `{ "counted": bool }`. Missing, unpublished and unreadable topics all return the same 404. The topic page calls it once per browser session; custom clients call it once when they display a topic |
 | POST | `/posts/{id}/move` | Moderator / Admin | Move to another space |
 | POST | `/posts/{id}/merge` | Moderator / Admin | Merge into another post |
@@ -364,7 +364,8 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | GET | `/posts/{id}/flags` *(new in 1.4.1)* | Moderator | The flags raised against a specific post |
 | GET | `/moderation/flags` | Moderator | List all open flags |
 | POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag (`valid` or `dismissed`) |
-| POST | `/moderation/ban` | Moderator | Ban a user (global ban, space ban, or silence) |
+| GET | `/moderation/ban` | Moderator | List active restrictions. An IP address ban carries the address in `ip`, a null `user` and a null `reason` |
+| POST | `/moderation/ban` | Moderator | Ban a user (global ban, space ban, silence) or an IP address (`type: ip_ban` with `ip`; no `user_id`) |
 | DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
 | GET | `/spaces/{id}/moderation/flags` | Space Admin | List flags filed within a specific space |
 | POST | `/spaces/{id}/moderation/flags/{flag_id}/resolve` | Space Admin | Resolve a flag within a specific space |
@@ -708,9 +709,9 @@ const data = await res.json();
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| GET | `/posts/{id}/reactions` | Public | List reactions on a post |
+| GET | `/posts/{id}/reactions` | Public | List reactions on a post. Pass `emoji` to also get `reactors` (`label`, `total`, up to 10 `names`) |
 | POST | `/posts/{id}/reactions` | Logged in (`jetonomy_vote`) | Toggle an emoji reaction on a post |
-| GET | `/replies/{id}/reactions` | Public | List reactions on a reply |
+| GET | `/replies/{id}/reactions` | Public | List reactions on a reply. Accepts `emoji` like the post route |
 | POST | `/replies/{id}/reactions` | Logged in (`jetonomy_vote`) | Toggle an emoji reaction on a reply |
 
 ### Custom Badges (`custom-badges` extension)
@@ -926,7 +927,7 @@ Common error codes:
 | Code | HTTP | Meaning |
 |------|------|---------|
 | `rest_forbidden` | 401/403 | Not logged in, or a missing or expired nonce |
-| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this |
+| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this. Only given for something you can see: a topic, reply or hidden space you cannot read answers `jetonomy_not_found` instead, on write routes too |
 | `jetonomy_user_banned` | 403 | The authenticated user is banned from the community (mutation routes) |
 | `jetonomy_pending_verification` | 403 | The authenticated user has not confirmed their email yet (mutation routes) |
 | `jetonomy_not_found` | 404 | Resource does not exist (or is not visible to you) |

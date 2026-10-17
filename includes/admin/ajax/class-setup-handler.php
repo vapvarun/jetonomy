@@ -33,7 +33,7 @@ class Setup_Handler {
 		// on a missing POST would silently revert admin-customized base_slugs after any
 		// re-trip through the wizard (e.g. accidental re-run after an update).
 		if ( isset( $_POST['base_slug'] ) ) {
-			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) );
+			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) ) ?: \Jetonomy\base_slug();
 		} elseif ( empty( $settings['base_slug'] ) ) {
 			$settings['base_slug'] = 'community';
 		}
@@ -53,7 +53,10 @@ class Setup_Handler {
 		$space_name = sanitize_text_field( wp_unslash( $_POST['space_name'] ?? __( 'Community Discussion', 'jetonomy' ) ) );
 		$space_desc = sanitize_textarea_field( wp_unslash( $_POST['space_description'] ?? '' ) );
 
-		$cat_id = Category::create(
+		// Running the wizard again with names that already exist reuses those
+		// rows; it used to add a second "General" and a second space silently.
+		$existing_cat = Category::find_top_level_by_name( $cat_name );
+		$cat_id       = $existing_cat ? (int) $existing_cat->id : Category::create(
 			array(
 				'name'       => $cat_name,
 				'visibility' => 'public',
@@ -64,7 +67,8 @@ class Setup_Handler {
 			wp_send_json_error( sprintf( __( 'Could not create the %s. Please try again.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
-		$space_id = Space::create(
+		$existing_space = Space::find_by_title_in_category( $space_name, $cat_id );
+		$space_id       = $existing_space ? (int) $existing_space->id : Space::create(
 			array(
 				'category_id' => $cat_id,
 				'author_id'   => get_current_user_id(),
@@ -81,7 +85,7 @@ class Setup_Handler {
 			wp_send_json_error( $space_id->get_error_message() );
 		}
 
-		$add_result = SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
+		$add_result = SpaceMember::is_member( $space_id, get_current_user_id() ) ? true : SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
 		if ( is_wp_error( $add_result ) ) {
 			wp_send_json_error( $add_result->get_error_message() );
 		}
@@ -94,6 +98,10 @@ class Setup_Handler {
 			array(
 				'category_id' => $cat_id,
 				'space_id'    => $space_id,
+				'reused'      => array(
+					'category' => (bool) $existing_cat,
+					'space'    => (bool) $existing_space,
+				),
 			)
 		);
 	}
@@ -111,7 +119,7 @@ class Setup_Handler {
 		// Same preservation rule as ajax_setup_save — never default base_slug
 		// back to 'community' on missing POST.
 		if ( isset( $_POST['base_slug'] ) ) {
-			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) );
+			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) ) ?: \Jetonomy\base_slug();
 		} elseif ( empty( $settings['base_slug'] ) ) {
 			$settings['base_slug'] = 'community';
 		}

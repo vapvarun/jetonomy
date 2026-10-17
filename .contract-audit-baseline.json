@@ -319,7 +319,12 @@
    "id": "hook-consumed-never-fired:jetonomy_pro_evaluate_badges",
    "reason": "Pro cron hook: custom-badges CRON_EVALUATE is scheduled with Queue::recurring() every 6 hours (custom-badges/class-extension.php:174) and handled at :123; also cleared on deactivate (:282). Fired by Action Scheduler/WP-Cron, not do_action.",
    "severity": "error"
+  },
+  {
+   "id": "hook-consumed-never-fired:jetonomy_sweep_space_roster",
+   "reason": "Queued job, not a do_action: Membership_Roster_Sync::queue_space_sweep() schedules SWEEP_HOOK through Queue::async_once (Action Scheduler, WP-Cron fallback) when an access rule is deleted; Action Scheduler fires it. Proven by tests/integration/GatingFixesTest (sweep queued) and tests/pro/TagRuleRemovalSweepTest; unscheduled in Cron::unschedule.",
+   "severity": "error"
   }
  ],
- "triaged": "2026-06-11 - first run on the pair; full triage in commit message. Real findings carded: 9985243886 (email opt-out unsettable), 9985243976 (BP toggles no UI). 2026-08-18 - added the AS continuation hook (verified dispatching, see its reason)."
+ "triaged": "2026-06-11 - first run on the pair; full triage in commit message. Real findings carded: 9985243886 (email opt-out unsettable), 9985243976 (BP toggles no UI). 2026-08-18 - added the AS continuation hook (verified dispatching, see its reason). 2026-10-18 - added the roster sweep job (queued via Queue::async_once, see its reason)."
 }

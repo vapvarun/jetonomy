@@ -88,7 +88,7 @@ Everything joins on `user_id`, never on username. This matters when a user has d
 - **No writes to FluentCommunity tables** outside FC's public helpers. Remove the integration and FluentCommunity is untouched.
 - **Stale pair handling.** If either side's space ID does not resolve (deleted space, renamed slug), the tab and card silently disappear. No admin cleanup needed.
 - **Graceful degradation.** If a FluentCommunity hook is ever renamed or removed in a future FC release, only the corresponding surface stops rendering. The rest of the integration keeps working.
-- **One option row.** The pairing map is stored in a single WordPress option. Uninstall deletes one row.
+- **One option row.** The pairing map is stored in a single WordPress option. Deleting Jetonomy with data removal on deletes one row.
 
 ## What Is Not Integrated (Yet)
 
