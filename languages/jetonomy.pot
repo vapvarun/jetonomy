@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-17T08:23:06+00:00\n"
+"POT-Creation-Date: 2026-10-17T08:57:53+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -1642,7 +1642,7 @@ msgstr ""
 #: templates/partials/reply-card.php:323
 #: templates/views/notifications.php:210
 #: templates/views/notifications.php:340
-#: templates/views/single-post.php:808
+#: templates/views/single-post.php:810
 msgid "Delete"
 msgstr ""
 
@@ -3259,7 +3259,7 @@ msgstr ""
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #: includes/admin/views/settings.php:526
 #: includes/permissions/class-capabilities.php:277
-#: templates/views/single-post.php:791
+#: templates/views/single-post.php:793
 #, php-format
 msgid "Close %s"
 msgstr ""
@@ -4575,7 +4575,7 @@ msgstr ""
 #: templates/partials/post-card.php:132
 #: templates/partials/reply-card.php:139
 #: templates/views/my-spaces.php:102
-#: templates/views/single-post.php:812
+#: templates/views/single-post.php:814
 #: templates/views/space-members.php:143
 #: assets/js/admin-common.js:114
 msgid "Admin"
@@ -5425,7 +5425,7 @@ msgid "%s name is required."
 msgstr ""
 
 #: includes/api/class-categories-controller.php:210
-#: includes/api/class-posts-controller.php:789
+#: includes/api/class-posts-controller.php:803
 #: includes/api/class-replies-controller.php:521
 #: includes/api/class-spaces-controller.php:846
 msgid "No fields provided for update."
@@ -5551,95 +5551,103 @@ msgstr[1] ""
 msgid "Delete permanently instead of moving to trash. Space moderators and admins only."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:244
+#: includes/api/class-posts-controller.php:128
+msgid "Close (true) or reopen (false). Omit to toggle."
+msgstr ""
+
+#: includes/api/class-posts-controller.php:145
+msgid "Pin (true) or unpin (false). Omit to toggle."
+msgstr ""
+
+#: includes/api/class-posts-controller.php:258
 msgid "Invalid URL."
 msgstr ""
 
 #. translators: 1: the singular Space label, lowercase, 2: the plural Topic label, lowercase.
-#: includes/api/class-posts-controller.php:435
+#: includes/api/class-posts-controller.php:449
 #, php-format
 msgid "This %1$s is archived or locked and no longer accepts new %2$s."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:458
+#: includes/api/class-posts-controller.php:472
 #: includes/api/class-replies-controller.php:254
 msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:464
+#: includes/api/class-posts-controller.php:478
 msgid "Post content is required."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:479
+#: includes/api/class-posts-controller.php:493
 msgid "Status update"
 msgstr ""
 
-#: includes/api/class-posts-controller.php:481
+#: includes/api/class-posts-controller.php:495
 msgid "Post title is required."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:587
+#: includes/api/class-posts-controller.php:601
 msgid "You already scheduled this for the same time. Find it in your profile under Drafts."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:621
+#: includes/api/class-posts-controller.php:635
 #: includes/class-abilities.php:1250
 msgid "Failed to create post."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:708
+#: includes/api/class-posts-controller.php:722
 msgid "Could not publish this draft."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:796
+#: includes/api/class-posts-controller.php:810
 #: includes/moderation/class-moderation-service.php:557
 msgid "Your post was blocked by our content policy."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:882
+#: includes/api/class-posts-controller.php:896
 msgid "Choose a time as well as a date to schedule this."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:889
+#: includes/api/class-posts-controller.php:903
 msgid "The scheduled time has already passed. Choose a time in the future, or publish now."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:938
+#: includes/api/class-posts-controller.php:952
 msgid "The post could not be deleted."
 msgstr ""
 
 #. translators: %s: the plural Space label, lowercase.
-#: includes/api/class-posts-controller.php:1043
+#: includes/api/class-posts-controller.php:1058
 #, php-format
 msgid "Roadmap status only applies to Ideas %s."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:1059
+#: includes/api/class-posts-controller.php:1074
 msgid "Invalid roadmap status."
 msgstr ""
 
 #. translators: 1: maximum number of pinned topics allowed per space, 2: the topic label (singular or plural to match the number), lowercase, 3: the singular space label, lowercase.
-#: includes/api/class-posts-controller.php:1121
+#: includes/api/class-posts-controller.php:1136
 #, php-format
 msgid "You can pin up to %1$d %2$s per %3$s. Unpin one first."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:1158
+#: includes/api/class-posts-controller.php:1173
 msgid "A valid target_space_id is required."
 msgstr ""
 
 #. translators: 1: the singular Topic label, 2: the singular Space label, lowercase.
-#: includes/api/class-posts-controller.php:1162
+#: includes/api/class-posts-controller.php:1177
 #, php-format
 msgid "%1$s is already in the target %2$s."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:1211
+#: includes/api/class-posts-controller.php:1226
 msgid "Cannot merge a post with itself."
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/api/class-posts-controller.php:1231
+#: includes/api/class-posts-controller.php:1246
 #: includes/class-template-loader.php:1834
 #, php-format
 msgid "Failed to merge %s."
@@ -6605,7 +6613,7 @@ msgstr ""
 #: includes/class-shortcodes.php:419
 #: includes/class-shortcodes.php:549
 #: templates/views/leaderboard.php:138
-#: templates/views/single-post.php:971
+#: templates/views/single-post.php:973
 #: templates/views/space-members.php:342
 #: templates/views/space.php:423
 #: templates/views/user-profile.php:382
@@ -6770,12 +6778,12 @@ msgid "Submit"
 msgstr ""
 
 #: includes/class-template-loader.php:417
-#: templates/views/single-post.php:797
+#: templates/views/single-post.php:799
 msgid "Move"
 msgstr ""
 
 #: includes/class-template-loader.php:418
-#: templates/views/single-post.php:802
+#: templates/views/single-post.php:804
 msgid "Merge"
 msgstr ""
 
@@ -10414,8 +10422,8 @@ msgid "Vote on my %s"
 msgstr ""
 
 #: templates/views/edit-profile.php:173
-#: templates/views/single-post.php:931
-#: templates/views/single-post.php:934
+#: templates/views/single-post.php:933
+#: templates/views/single-post.php:936
 msgid "Accepted answer"
 msgstr ""
 
@@ -11084,7 +11092,7 @@ msgid "Relevance"
 msgstr ""
 
 #: templates/views/search.php:199
-#: templates/views/single-post.php:876
+#: templates/views/single-post.php:878
 msgid "Newest"
 msgstr ""
 
@@ -11223,39 +11231,39 @@ msgid "Pin to %s"
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: templates/views/single-post.php:791
+#: templates/views/single-post.php:793
 #, php-format
 msgid "Reopen %s"
 msgstr ""
 
-#: templates/views/single-post.php:875
+#: templates/views/single-post.php:877
 msgid "Oldest"
 msgstr ""
 
-#: templates/views/single-post.php:877
+#: templates/views/single-post.php:879
 msgid "Best"
 msgstr ""
 
 #. translators: %s: plural reply label.
-#: templates/views/single-post.php:970
+#: templates/views/single-post.php:972
 #, php-format
 msgid "No %s yet. Be the first to reply!"
 msgstr ""
 
 #. translators: 1: singular topic label; 2: plural reply label.
-#: templates/views/single-post.php:1022
+#: templates/views/single-post.php:1024
 #, php-format
 msgid "This %1$s is closed and no longer accepts %2$s."
 msgstr ""
 
 #. translators: %s: singular topic label.
-#: templates/views/single-post.php:1027
+#: templates/views/single-post.php:1029
 #, php-format
 msgid "This %s is closed. As a moderator, you can still take part."
 msgstr ""
 
 #. translators: %s: singular reply label.
-#: templates/views/single-post.php:1032
+#: templates/views/single-post.php:1034
 #, php-format
 msgid "Your %s"
 msgstr ""
@@ -12617,7 +12625,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: number of new replies.
-#: assets/js/view.js:4580
+#: assets/js/view.js:4585
 #, js-format
 msgid "%s new reply. Click to refresh."
 msgid_plural "%s new replies. Click to refresh."
