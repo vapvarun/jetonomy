@@ -350,7 +350,7 @@
   .jt-app button.jt-act:hover { background-color: var(--jt-bg-muted) !important; color: var(--jt-text-secondary) !important; }
   /* Dropdown menu items: hover surface + danger text. */
   .jt-app button.jt-more-item:hover { background-color: var(--jt-bg-hover) !important; }
-  .jt-app button.jt-more-item--danger { color: var(--jt-danger) !important; }
+  .jt-app button.jt-more-item--danger { color: var(--jt-danger-strong) !important; }
   .jt-app button.jt-more-item--danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger-strong) !important; }
 
   /* ── Topic list ── */
@@ -2877,7 +2877,7 @@
 .jt-profile-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--jt-border); margin-bottom: 1rem; }
 .jt-profile-tab { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--jt-text-secondary); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease); }
 .jt-profile-tab:hover { color: var(--jt-text); }
-.jt-profile-tab.active { color: var(--jt-accent); border-bottom-color: var(--jt-accent); }
+.jt-profile-tab.active { color: var(--jt-accent-strong); border-bottom-color: var(--jt-accent); }
 /* Mobile: the five-tab row (Posts, Replies, Votes, Bookmarks, Drafts)
    overflows the viewport at ≤390px, clipping the last tab (Drafts) off
    the right edge. Make the row horizontally scrollable instead of
@@ -2910,7 +2910,7 @@
 .jt-more-dropdown { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; }
 .jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: right; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
 .jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
-.jt-more-item--danger { color: var(--jt-danger); }
+.jt-more-item--danger { color: var(--jt-danger-strong); }
 .jt-more-item--danger:hover { background: var(--jt-danger-light); color: var(--jt-danger-strong); }
 
 /* ── Mobile Bottom Tab Bar ── */

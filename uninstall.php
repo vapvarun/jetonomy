@@ -105,7 +105,8 @@ foreach ( wp_roles()->roles as $jetonomy_role_name => $jetonomy_role_data ) {
 // unschedules them, and WordPress deactivates before it uninstalls.
 foreach ( (array) _get_cron_array() as $jetonomy_events ) {
 	foreach ( array_keys( (array) $jetonomy_events ) as $jetonomy_hook ) {
-		if ( str_starts_with( (string) $jetonomy_hook, 'jetonomy_' ) || 'edd_sl_sdk_weekly_license_check_jetonomy' === $jetonomy_hook ) {
+		// jetonomy_pro_* jobs are Pro's: its own uninstall clears them, as with its options.
+		if ( ( str_starts_with( (string) $jetonomy_hook, 'jetonomy_' ) && ! str_starts_with( (string) $jetonomy_hook, 'jetonomy_pro_' ) ) || 'edd_sl_sdk_weekly_license_check_jetonomy' === $jetonomy_hook ) {
 			wp_clear_scheduled_hook( $jetonomy_hook );
 		}
 	}

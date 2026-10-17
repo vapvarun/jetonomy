@@ -34,6 +34,7 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 		update_option( 'widget_jetonomy_leaderboard', array( '_multiwidget' => 1 ) );
 		wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'jetonomy_trust_evaluation' );
 		wp_schedule_event( time() + HOUR_IN_SECONDS, 'weekly', 'edd_sl_sdk_weekly_license_check_jetonomy' );
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'jetonomy_pro_digest_daily' );
 
 		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			define( 'WP_UNINSTALL_PLUGIN', 'jetonomy/jetonomy.php' );
@@ -44,7 +45,9 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 			$this->assertFalse( wp_next_scheduled( 'jetonomy_trust_evaluation' ), 'plugin cron job cleared' );
 			$this->assertFalse( wp_next_scheduled( 'edd_sl_sdk_weekly_license_check_jetonomy' ), 'licence check cleared' );
 			$this->assertFalse( get_option( 'widget_jetonomy_leaderboard' ), 'widget settings removed' );
+			$this->assertNotFalse( wp_next_scheduled( 'jetonomy_pro_digest_daily' ), "Pro's jobs are left to Pro's uninstall" );
 		} finally {
+			wp_clear_scheduled_hook( 'jetonomy_pro_digest_daily' );
 			// DROP TABLE is not rolled back with the test transaction.
 			\Jetonomy\DB\Schema::create_tables();
 		}
