@@ -171,7 +171,7 @@ function leaderboard_empty_state( string $period ): array {
 		);
 	}
 	return array(
-		/* translators: %s: plural member label, lowercase. */
+		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 		'message'     => sprintf( __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'member', true, true ) ),
 		/* translators: %s: plural reply label. */
 		'description' => sprintf( __( 'Reputation is earned by posting, getting %s, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ), jetonomy_label( 'reply', true, true ) ),

@@ -311,7 +311,7 @@ class Activity_List_Table extends \WP_List_Table {
 		if ( 'anonymous_author_revealed' === (string) ( $item->action ?? '' ) ) {
 			$real_id = (int) ( self::metadata( $item )['real_author'] ?? 0 );
 			$user    = $real_id > 0 ? get_userdata( $real_id ) : false;
-			/* translators: %s: the singular member label, lowercase (e.g. "member"). */
+			/* translators: %s: what was deleted, a lowercase label such as "member", "topic" or "reply". */
 			$deleted = sprintf( __( 'Deleted %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) );
 			$who     = $user
 				? sprintf( '<a href="%1$s">%2$s</a>', esc_url( \Jetonomy\community_profile_url( $real_id ) ), esc_html( $user->display_name ?: $user->user_login ) )
@@ -446,7 +446,7 @@ class Activity_List_Table extends \WP_List_Table {
 	 * @return string Unescaped.
 	 */
 	public static function deleted_label( string $noun ): string {
-		/* translators: %s: content label, lowercase (e.g. "topic" or "reply"). */
+		/* translators: %s: what was deleted, a lowercase label such as "member", "topic" or "reply". */
 		return sprintf( __( 'Deleted %s', 'jetonomy' ), \Jetonomy\jetonomy_label( $noun, false, true ) );
 	}
 

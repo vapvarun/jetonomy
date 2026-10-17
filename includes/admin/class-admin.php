@@ -1526,7 +1526,7 @@ class Admin {
 			array(
 				'response'  => 403,
 				'link_url'  => esc_url( \Jetonomy\route_url( 'space', $space->slug ) ),
-				/* translators: %s: space title. */
+				/* translators: %s: where the link returns to - the configured space label, or a specific space title. */
 				'link_text' => esc_html( sprintf( __( 'Back to %s', 'jetonomy' ), $space->title ) ),
 			)
 		);

@@ -284,7 +284,7 @@ if ( ! $cancel_url ) {
 						<?php if ( $jt_blocked_page > 1 ) : ?>
 							<a class="jt-btn jt-btn-ghost jt-btn-sm" href="<?php echo esc_url( add_query_arg( 'blocked_page', $jt_blocked_page - 1 ) . '#blocked-members' ); ?>"><?php esc_html_e( 'Previous', 'jetonomy' ); ?></a>
 						<?php endif; ?>
-						<span><?php /* translators: 1: current page, 2: total pages. */ echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $jt_blocked_page, $jt_blocked_pages ) ); ?></span>
+						<span><?php /* translators: 1: current page, 2: total pages */ echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $jt_blocked_page, $jt_blocked_pages ) ); ?></span>
 						<?php if ( $jt_blocked_page < $jt_blocked_pages ) : ?>
 							<a class="jt-btn jt-btn-ghost jt-btn-sm" href="<?php echo esc_url( add_query_arg( 'blocked_page', $jt_blocked_page + 1 ) . '#blocked-members' ); ?>"><?php esc_html_e( 'Next', 'jetonomy' ); ?></a>
 						<?php endif; ?>

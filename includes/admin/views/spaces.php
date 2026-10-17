@@ -160,7 +160,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 				<input type="hidden" name="order" value="<?php echo esc_attr( $order ); ?>">
 			<?php endif; ?>
 			<div class="jt-content-toolbar">
-				<?php /* translators: %s: space label, plural, lowercase (e.g. "spaces"). */ ?>
+				<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 				<input type="search" name="s" value="<?php echo esc_attr( $search_query ); ?>" class="regular-text" placeholder="<?php echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>">
 				<select name="category_id">
 					<option value=""><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ) ) ); ?></option>
