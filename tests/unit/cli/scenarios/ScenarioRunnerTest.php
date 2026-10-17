@@ -197,6 +197,20 @@ class ScenarioRunnerTest extends WP_UnitTestCase {
 		$this->assertNotEmpty( $cleanup->steps );
 	}
 
+	/**
+	 * Cleanup removes the space it made. The default space delete archives it
+	 * and hands it to an admin, which left one orphaned space per run.
+	 */
+	public function test_cleanup_leaves_no_space_behind(): void {
+		$runner = new Scenario_Runner();
+		foreach ( array( Space_With_Pending_Join_Request::name(), Post_With_Flags_For_Moderation::name(), Multi_User_Voting_Thread::name(), Full_Membership_Approval_Flow::name() ) as $slug ) {
+			$result = $runner->run( $slug );
+			$this->assertTrue( $result->is_success(), $slug );
+			$runner->cleanup( $slug, $result->fixtures );
+			$this->assertNull( \Jetonomy\Models\Space::find( (int) $result->fixtures['space_id'] ), "{$slug} left its space" );
+		}
+	}
+
 	public function test_cleanup_fails_on_unknown_scenario(): void {
 		$runner  = new Scenario_Runner();
 		$cleanup = $runner->cleanup( 'does-not-exist', [] );
