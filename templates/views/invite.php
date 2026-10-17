@@ -48,7 +48,7 @@ if ( is_wp_error( $result ) ) {
 		?>
 		<div class="jt-narrow jt-invite-landing">
 			<?php /* translators: %s: space title. */ ?>
-			<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong>' . esc_html( $space_title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
+			<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong dir="auto">' . esc_html( $space_title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
 			<?php if ( '' !== $space_desc ) : ?>
 				<p class="jt-text-secondary"><?php echo esc_html( wp_strip_all_tags( $space_desc ) ); ?></p>
 			<?php endif; ?>
@@ -79,7 +79,7 @@ if ( 'ready' === $result['status'] ) {
 	?>
 	<div class="jt-narrow jt-invite-landing">
 		<?php /* translators: %s: space title. */ ?>
-		<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong>' . esc_html( (string) $result['space']->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
+		<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong dir="auto">' . esc_html( (string) $result['space']->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
 		<?php if ( ! empty( $result['space']->description ) ) : ?>
 			<p class="jt-text-secondary"><?php echo esc_html( wp_strip_all_tags( (string) $result['space']->description ) ); ?></p>
 		<?php endif; ?>
@@ -95,7 +95,23 @@ if ( 'ready' === $result['status'] ) {
 	return;
 }
 
-// joined / already_member — straight into the space.
 $space_url = \Jetonomy\route_url( 'space', $result['space']->slug );
+
+// Already a member: say so rather than silently bouncing them into the space.
+if ( 'already_member' === $result['status'] ) {
+	?>
+	<div class="jt-narrow jt-invite-landing">
+		<?php /* translators: 1: the singular member label, lowercase; 2: space title. */ ?>
+		<p><?php printf( esc_html__( 'You are already a %1$s of %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', false, true ) ), '<strong dir="auto">' . esc_html( (string) $result['space']->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></p>
+		<div class="jt-invite-actions">
+			<?php /* translators: %s: the owner-configured singular space label. */ ?>
+			<a href="<?php echo esc_url( $space_url ); ?>" class="jt-btn jt-btn-fill"><?php echo esc_html( sprintf( __( 'Go to %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></a>
+		</div>
+	</div>
+	<?php
+	return;
+}
+
+// Just joined: straight into the space.
 echo '<meta http-equiv="refresh" content="0; url=' . esc_url( $space_url ) . '">';
 exit;

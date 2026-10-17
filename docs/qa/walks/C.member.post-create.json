@@ -1,0 +1,138 @@
+{
+  "journey": "C.member.post-create",
+  "free": "a0fcbb2e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T11:10:00Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-post-create.1": {
+      "result": "pass",
+      "evidence": "bob in Help Desk > Ask a Question, title 'How do I reset my membership password?' + 2 paragraphs -> landed on /s/help-desk/t/how-do-i-reset-my-membership-password/, listed first in Help Desk"
+    },
+    "c-member-post-create.2": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "POST /jetonomy/v1/posts then GET /posts?space_id=",
+      "actual": "POST /jetonomy/v1/spaces/3004/posts -> 201 (id 5946) and GET /spaces/3004/posts lists it first; /posts and /posts?space_id= return rest_no_route 404. Behaviour right, route in the check is wrong.",
+      "url": "/wp-json/jetonomy/v1/spaces/3004/posts"
+    },
+    "c-member-post-create.3": {
+      "result": "pass",
+      "evidence": "empty title -> browser tooltip 'Please fill in this field.' on Title, nothing created; empty body -> inline 'Please add some details before posting.' (does not say 'content'); REST 400 'Post title is required.' / 'Post content is required.'; no rows created"
+    },
+    "c-member-post-create.4": {
+      "result": "pass",
+      "evidence": "300 chars typed -> input has maxlength=255 and silently cuts to 255 with no counter; saved (id 5947) and the h1 wraps with no horizontal overflow. Silent truncation mid-word, see proposed check"
+    },
+    "c-member-post-create.5": {
+      "result": "pass",
+      "evidence": "tags 'backup, profile', Private checkbox and Schedule 2026-10-18 08:00 -> saved topic shows 'Scheduled to publish on October 18, 2026 8:00 am. It is hidden from the community until then.', Private badge, #backup #profile; status draft, published_at 2026-10-18 08:00:00"
+    },
+    "c-member-post-create.6": {
+      "result": "untested",
+      "needs": "lane A: Settings > Notifications, enable email for 'New topic in a followed space' (new_post_in_sub email is off by default and on this site). Seen with alice following Help Desk (notify_via both): exactly one bell notification (new_post_in_sub for topic 5942), no email, as configured."
+    },
+    "c-member-post-create.7": {
+      "result": "pass",
+      "evidence": "Help Desk topics 12 -> 13 (space page, home directory and jt_spaces.post_count); bob profile topics 19 -> 20. The home page has no recent-topics feed, only the space directory counts"
+    },
+    "c-member-post-create.8": {
+      "result": "pass",
+      "evidence": "Upload image button -> file chooser -> png uploaded and shown inline in the editor (390px image from /wp-content/uploads). Paste and drop not exercised. Attachment deleted afterwards"
+    },
+    "c-member-post-create.9": {
+      "result": "untested",
+      "needs": "lane A: remove Upload media from the Member role"
+    },
+    "c-member-post-create.10": {
+      "result": "untested",
+      "needs": "lane A: remove Upload media from the Member role"
+    },
+    "c-member-post-create.11": {
+      "result": "pass",
+      "evidence": "/s/2025-hackathon/new/ -> 'This space is archived or locked and no longer accepts new content.' with 'Back to 2025 Hackathon', no form. Locked space not tried (none seeded)"
+    },
+    "c-member-post-create.12": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "403 jetonomy_space_archived",
+      "actual": "403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new topics.' on POST /spaces/36/posts; nothing created. Refused correctly, code name differs.",
+      "url": "/wp-json/jetonomy/v1/spaces/36/posts"
+    },
+    "c-member-post-create.13": {
+      "result": "pass",
+      "evidence": "finn on /s/help-desk/new/ -> 'Your account is currently silenced and cannot post.' with Back to Space, no form"
+    },
+    "c-member-post-create.14": {
+      "result": "pass",
+      "evidence": "POST /spaces/3004/posts as finn -> 403 jetonomy_user_silenced"
+    },
+    "c-member-post-create.15": {
+      "result": "pass",
+      "evidence": "omar on /s/off-topic-lounge/new/ -> 'You have been banned from this space and cannot take part in it.', no form; REST 403 jetonomy_user_space_banned; /s/general-discussion/new/ shows the form"
+    },
+    "c-member-post-create.16": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "compose page shows the gate; POST /posts returns 404 jetonomy_not_found",
+      "actual": "UI ok: /s/customer-advisory-board/new/ redirects to the space gate 'Customer Advisory Board is invite-only. You need an invitation to join.' with no form. REST POST /spaces/38/posts returns 403 jetonomy_forbidden, not 404. The space is listed in the public directory as 'Private | Invite only', so 403 may be intended.",
+      "url": "/wp-json/jetonomy/v1/spaces/38/posts",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/new-cab.png"
+    },
+    "c-member-post-create.17": {
+      "result": "untested",
+      "needs": "lane A: a new-member (low trust) account and the new-member daily topic limit; bob is trust level 4 and has no limit"
+    },
+    "c-member-post-create.18": {
+      "result": "pass",
+      "evidence": "offline submit -> title and body kept, error 'Failed to save.' shown (twice, duplicated); back online, Post Question again -> one topic (5950), no duplicate"
+    },
+    "c-member-post-create.19": {
+      "result": "pass",
+      "evidence": "double-click Post Question on an Arabic topic -> exactly one row created (id 5949)"
+    },
+    "c-member-post-create.20": {
+      "result": "fail",
+      "expected": "Arabic title and body render right-to-left",
+      "actual": "glyphs are right-to-left but the title and paragraph are left-aligned in an LTR block (direction ltr, text-align start, no dir attribute). Arabic text reads as an LTR-aligned block. A site in Arabic locale was not tested (lane A).",
+      "url": "http://forums.local/community/s/help-desk/t/كيف-أغير-كلمة-المرور-الخاصة-بحسابي؟/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/arabic-topic.png"
+    },
+    "c-member-post-create.21": {
+      "result": "untested",
+      "needs": "lane A: set a space to require approval"
+    },
+    "c-member-post-create.22": {
+      "result": "pass",
+      "evidence": "curl POST /spaces/3004/posts logged out -> 401 rest_not_logged_in"
+    },
+    "c-member-post-create.23": {
+      "result": "pass",
+      "evidence": "390px: no horizontal overflow, toolbar wraps to two rows, Post Question full width and reachable by scrolling"
+    },
+    "c-member-post-create.24": {
+      "result": "pass",
+      "evidence": "dark via theme toggle at 390: page #23262f, editor and title text #e5e5e5, toolbar icons visible, Post Question light blue with dark text"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-post-create.25` @member #ui +long: type a 300-character title -> a visible character counter or limit message appears before the field stops accepting input (today it silently cuts at 255).",
+    "- `c-member-post-create.26` @member #ui +offline: submit offline -> exactly one 'Failed to save.' message (today it shows twice).",
+    "- `c-member-post-create.27` @member #ui +rtl: post an Arabic topic on an LTR site -> the title and body are right-aligned via dir=auto on user content.",
+    "- `c-member-post-create.28` @member_b #ui: a space has no recent-topics feed on the community home page -> decide whether the check 'home feed' count means the directory counts."
+  ],
+  "notes": "Site settings untouched. Lane B created: topics 5942, 5946, 5947, 5948 (scheduled draft), 5949, 5950; alice's follow of Help Desk (subscription 18668, own preference); one uploaded image (deleted). Topics are reused by post-edit, post-delete and search journeys and deleted at the end. Debug log unchanged (112327 bytes)."
+}

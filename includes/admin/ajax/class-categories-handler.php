@@ -96,8 +96,8 @@ class Categories_Handler {
 		// shortcut: check-then-write, not atomic; two saves in the same instant can still race.
 		if ( isset( $_POST['edit_token'] ) ) {
 			$current = Category::find( $id );
-			if ( $current && ! hash_equals( \Jetonomy\Admin\Admin::edit_token( $current, self::EDIT_FIELDS ), sanitize_text_field( wp_unslash( $_POST['edit_token'] ) ) ) ) {
-				wp_send_json_error( \Jetonomy\Admin\Admin::edit_conflict_message( 'category' ) );
+			if ( $current && ! hash_equals( \Jetonomy\Models\Model::edit_token( $current, self::EDIT_FIELDS ), sanitize_text_field( wp_unslash( $_POST['edit_token'] ) ) ) ) {
+				wp_send_json_error( \Jetonomy\Models\Model::edit_conflict_message( 'category' ) );
 			}
 		}
 

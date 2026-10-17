@@ -112,28 +112,12 @@ class Votes_Controller extends Base_Controller {
 			return $object;
 		}
 
-		// A trashed or unpublished post/reply takes no new votes (409).
+		// Live target, vote permission, value and self-vote rules: shared with WP-CLI.
 		// handle_unvote() stays open so an old vote can still be withdrawn.
-		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( $type, $id, $user_id );
-		if ( is_wp_error( $live ) ) {
-			return $live;
-		}
-
-		// Resolve space_id — replies don't have space_id directly.
-		if ( 'reply' === $type ) {
-			$parent_post = Post::find( (int) $object->post_id );
-			$space_id    = $parent_post ? (int) $parent_post->space_id : 0;
-		} else {
-			$space_id = (int) ( $object->space_id ?? 0 );
-		}
-
-		if ( ! $this->check_permission( 'vote', $space_id ) ) {
-			return $this->permission_error();
-		}
-
 		$value = (int) $request->get_param( 'value' );
-		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
-			return $this->validation_error( __( 'Vote value must be 1 or -1.', 'jetonomy' ) );
+		$gate  = \Jetonomy\Permissions\Content_Gate::check_vote( $user_id, $type, $id, $value );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
 		}
 
 		// Pressing your active vote again takes it back (Vote::cast toggles it off).
@@ -149,31 +133,6 @@ class Votes_Controller extends Base_Controller {
 			// A bare "Rate limit exceeded. Please try again later." would not tell a member
 			// whether "later" means a minute or a day.
 			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'vote', $trust ) );
-		}
-
-		$is_self = (int) ( $object->author_id ?? 0 ) === $user_id;
-
-		// Self-downvote block: an author downvoting their own post or reply
-		// drives the displayed score negative in a way that contradicts "I'm
-		// posting my view" (an admin voting down their own
-		// topic would leave it at −1).
-		if ( -1 === $value && $is_self ) {
-			return $this->validation_error( __( 'You cannot downvote your own content.', 'jetonomy' ) );
-		}
-
-		// Self-upvote is allowed by default — a valid "I stand behind this"
-		// gesture. Site owners who run a stricter rep economy can block it.
-		/**
-		 * Whether a member may upvote their own content.
-		 *
-		 * @param bool   $allowed Default true.
-		 * @param int    $user_id Voting user.
-		 * @param string $type    'post' or 'reply'.
-		 * @param int    $id      Object ID.
-		 */
-		if ( 1 === $value && $is_self
-			&& ! apply_filters( 'jetonomy_allow_self_upvote', true, $user_id, $type, $id ) ) {
-			return $this->validation_error( __( 'You cannot upvote your own content.', 'jetonomy' ) );
 		}
 
 		$result = Vote::cast( $user_id, $type, $id, $value );

@@ -141,7 +141,11 @@ class ScenarioRunnerTest extends WP_UnitTestCase {
 		}
 		$this->assertGreaterThanOrEqual( 9, (int) ( $fixtures['unread_delta'] ?? 0 ) );
 
-		$runner->cleanup( Notification_Delivery_Sweep::name(), $fixtures );
+		$cleanup = $runner->cleanup( Notification_Delivery_Sweep::name(), $fixtures );
+		$this->assertTrue( $cleanup->is_success(), implode( ' | ', $cleanup->errors ) );
+		foreach ( $ids as $id ) {
+			$this->assertNull( \Jetonomy\Models\Notification::find( (int) $id ), 'cleanup removes what the scenario created, it does not just mark it read' );
+		}
 	}
 
 	public function test_multi_user_voting_thread_scenario_succeeds(): void {

@@ -341,6 +341,19 @@ abstract class Importer {
 	}
 
 	/**
+	 * A source title, name or description as plain text.
+	 *
+	 * Sources store these HTML-escaped (WordPress keeps a bbPress title as
+	 * "Plugins &amp; themes"); Jetonomy stores plain text and escapes on output,
+	 * so an entity left in place is shown literally.
+	 *
+	 * @param string|null $text Source value.
+	 */
+	protected static function plain_text( ?string $text ): string {
+		return html_entity_decode( wp_strip_all_tags( (string) $text ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
 	 * Record that a source row produced a Jetonomy row.
 	 *
 	 * @param string     $type      'space', 'post', 'reply'.

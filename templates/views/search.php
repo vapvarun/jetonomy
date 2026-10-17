@@ -136,6 +136,73 @@ if ( $jt_searching && ! $jt_author_unresolved ) {
 
 $total = count( $posts ) + count( $spaces ) + count( $tags );
 
+// Words of the query, folded the way the table collation compares them
+// (case- and accent-insensitive), for marking matches in the results.
+$jt_hl_terms = array();
+if ( $jt_has_query ) {
+	foreach ( (array) preg_split( '/[^\p{L}\p{N}]+/u', $q, -1, PREG_SPLIT_NO_EMPTY ) as $jt_term ) {
+		$jt_hl_terms[] = mb_strtolower( remove_accents( (string) $jt_term ) );
+	}
+}
+
+/**
+ * Escape a result string and wrap each query word it contains in <mark>.
+ *
+ * Every segment is escaped, so <mark> is the only markup added. Matches start
+ * at a word start (the search is a prefix match) and ignore case and accents,
+ * so "cafe" marks "Café". The text is folded one character at a time with a
+ * map back to the original, so the mark lands on the characters as written.
+ *
+ * @param string $text Plain text as stored.
+ * @return string Safe HTML.
+ */
+$jt_highlight = static function ( string $text ) use ( $jt_hl_terms ): string {
+	$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	$esc  = static fn( string $s ): string => htmlspecialchars( $s, ENT_QUOTES, 'UTF-8' );
+	if ( ! $jt_hl_terms || '' === $text ) {
+		return $esc( $text );
+	}
+
+	$chars  = mb_str_split( $text );
+	$folded = array();
+	$owner  = array();
+	foreach ( $chars as $i => $char ) {
+		$fold = strlen( $char ) > 1 ? mb_strtolower( remove_accents( $char ) ) : strtolower( $char );
+		foreach ( mb_str_split( $fold ) as $fc ) {
+			$folded[] = $fc;
+			$owner[]  = $i;
+		}
+	}
+
+	$hay  = implode( '', $folded );
+	$mark = array();
+	foreach ( $jt_hl_terms as $term ) {
+		$len = mb_strlen( $term );
+		$at  = 0;
+		while ( false !== ( $pos = mb_strpos( $hay, $term, $at ) ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+			if ( 0 === $pos || ! preg_match( '/[\p{L}\p{N}]/u', $folded[ $pos - 1 ] ) ) {
+				for ( $k = $owner[ $pos ]; $k <= $owner[ $pos + $len - 1 ]; $k++ ) {
+					$mark[ $k ] = true;
+				}
+			}
+			$at = $pos + 1;
+		}
+	}
+
+	$out = '';
+	$run = '';
+	$in  = false;
+	foreach ( $chars as $i => $char ) {
+		if ( isset( $mark[ $i ] ) !== $in ) {
+			$out .= $in ? '<mark class="jt-hl">' . $esc( $run ) . '</mark>' : $esc( $run );
+			$run  = '';
+			$in   = ! $in;
+		}
+		$run .= $char;
+	}
+	return $out . ( $in ? '<mark class="jt-hl">' . $esc( $run ) . '</mark>' : $esc( $run ) );
+};
+
 $crumbs = array(
 	array(
 		'label' => __( 'Search', 'jetonomy' ),
@@ -152,7 +219,7 @@ $crumbs = array(
 			<form method="get" action="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-search-page-form" autocomplete="off">
 				<div class="jt-search-page-input">
 					<span class="jt-search-page-icon" aria-hidden="true"><?php jetonomy_echo_icon( 'search', 20 ); ?></span>
-					<input type="text" name="q"
+					<input type="text" name="q" dir="auto"
 						value="<?php echo esc_attr( $q ); ?>"
 						<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 						placeholder="<?php echo esc_attr( sprintf( __( 'Search discussions, %s, tags…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
@@ -296,7 +363,7 @@ $crumbs = array(
 										</div>
 									<?php endif; ?>
 									<div class="jt-row-main">
-										<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $post ) ); ?></div>
+										<div class="jt-row-title" dir="auto"><?php echo $jt_highlight( jetonomy_post_title_or_excerpt( $post ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>
 										<div class="jt-row-sub">
 											<?php echo esc_html( $author_display['name'] ); ?>
 											&middot;
@@ -306,7 +373,7 @@ $crumbs = array(
 											<?php echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ); ?>
 										</div>
 										<?php if ( $excerpt ) : ?>
-											<div class="jt-row-excerpt"><?php echo esc_html( $excerpt ); ?></div>
+											<div class="jt-row-excerpt" dir="auto"><?php echo $jt_highlight( $excerpt ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>
 										<?php endif; ?>
 									</div>
 									<div class="jt-row-stat">
@@ -331,9 +398,9 @@ $crumbs = array(
 									<div class="jt-space-card-inner">
 										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-icon', $space->type ?? '' ); ?>
 										<div>
-											<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
+											<div class="jt-space-card-title" dir="auto"><?php echo $jt_highlight( (string) $space->title ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>
 											<?php if ( ! empty( $space->description ) ) : ?>
-												<div class="jt-space-card-excerpt jt-mt-sm"><?php echo esc_html( wp_trim_words( $space->description, 12 ) ); ?></div>
+												<div class="jt-space-card-excerpt jt-mt-sm" dir="auto"><?php echo $jt_highlight( wp_trim_words( $space->description, 12 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>
 											<?php endif; ?>
 											<div class="jt-space-card-stat jt-mt-sm">
 												<?php echo esc_html( \Jetonomy\count_label( (int) $space->post_count, 'topic' ) ); ?>
@@ -352,7 +419,7 @@ $crumbs = array(
 						<div class="jt-tags">
 							<?php foreach ( $tags as $tag ) : ?>
 								<a href="<?php echo esc_url( \Jetonomy\route_url( 'tag', $tag->slug ) ); ?>" class="jt-tag">
-									<?php echo esc_html( $tag->name ); ?>
+									<bdi><?php echo $jt_highlight( (string) $tag->name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></bdi>
 									<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
 								</a>
 							<?php endforeach; ?>

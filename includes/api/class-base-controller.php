@@ -125,6 +125,25 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * 409 when the edit_token the client sent no longer matches the row: someone
+	 * saved it after this edit form loaded, and this save would overwrite them.
+	 * A request without a token (API clients) is not checked.
+	 *
+	 * @param WP_REST_Request $request Update request.
+	 * @param object          $row     Row as stored now.
+	 * @param string[]        $fields  Columns the edit form writes.
+	 * @param string          $noun    Label key for the message (topic, reply).
+	 */
+	protected function edit_conflict( WP_REST_Request $request, object $row, array $fields, string $noun ): ?WP_Error {
+		$token = (string) $request->get_param( 'edit_token' );
+		// shortcut: check-then-write, not atomic; two saves in the same instant can still race.
+		if ( '' === $token || hash_equals( \Jetonomy\Models\Model::edit_token( $row, $fields ), $token ) ) {
+			return null;
+		}
+		return new WP_Error( 'jetonomy_edit_conflict', \Jetonomy\Models\Model::edit_conflict_message( $noun ), array( 'status' => 409 ) );
+	}
+
+	/**
 	 * Is this user trusted enough that we should skip Akismet / content spam checks?
 	 *
 	 * Site admins (manage_options), site moderators (jetonomy_moderate) and space
@@ -853,6 +872,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'last_reply_at'           => $post->last_reply_at ?? null,
 			'edited_at'               => $post->edited_at ?? null,
 			'edited_by'               => $post->edited_by ? (int) $post->edited_by : null,
+			// Send back as edit_token on PATCH; null on list rows read without their content.
+			'edit_token'              => isset( $post->content ) ? \Jetonomy\Models\Post::edit_token( $post, \Jetonomy\Models\Post::EDIT_FIELDS ) : null,
 			'published_at'            => $post->published_at ?? null,
 			'created_at'              => $post->created_at ?? null,
 			'updated_at'              => $post->updated_at ?? null,

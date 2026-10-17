@@ -1,0 +1,97 @@
+{
+  "journey": "C.anon.invite-landing",
+  "free": "a0fcbb2e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T10:55:00Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-anon-invite-landing.1": {
+      "result": "untested",
+      "needs": "lane A: enable Settings > General > Anyone can register (users_can_register is 0). Observed with registration closed: page names 'Lisbon Chapter', shows only 'Log in to accept invite', nobody added (member rows 3 -> 3)."
+    },
+    "c-anon-invite-landing.2": {
+      "result": "pass",
+      "evidence": "Login link carries redirect_to=<invite url>; logged in as bob (via autologin on the invite URL, no password available) -> same invite page, button 'Join Space', bob has 0 rows in Lisbon Chapter"
+    },
+    "c-anon-invite-landing.3": {
+      "result": "pass",
+      "evidence": "bob clicked Join Space (POST + nonce) -> landed on /community/s/lisbon-chapter/; space member_count 3 -> 4, invite use_count 0 -> 1"
+    },
+    "c-anon-invite-landing.4": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "page shows he already belongs and a link to the space",
+      "actual": "no duplicate row (1 row for bob), but the page gives no message: invite.php emits an instant meta refresh into the space, so the member never sees 'already a member'",
+      "url": "http://forums.local/community/invite/HY6SVUI5Rd5S86y1y4iyUNZjVOC5yynh/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/invite-joined.png"
+    },
+    "c-anon-invite-landing.5": {
+      "result": "pass",
+      "evidence": "as bob, 2 GETs, a HEAD and a Purpose: prefetch GET all 200 and wp_jt_space_members for space 32 unchanged (3 rows, bob 0)"
+    },
+    "c-anon-invite-landing.6": {
+      "result": "pass",
+      "evidence": "POST /jetonomy/v1/invite/<token> with cookie and no nonce -> 401 rest_not_logged_in; POST to the landing page with a bad jt_invite_nonce re-shows the Join button; bob not added"
+    },
+    "c-anon-invite-landing.7": {
+      "result": "untested",
+      "needs": "lane A: turn registration off/on (@admin check). Note registration is already off site-wide and the page then shows only 'Log in to accept invite'."
+    },
+    "c-anon-invite-landing.8": {
+      "result": "pass",
+      "evidence": "/invite/does-not-exist/ -> theme 404 'Page not found' (hyphen does not match the token route); a well-formed bogus token /invite/doesnotexist123/ -> 'Invalid invite link.' No fatal. Wording differs from the check, see proposed checks"
+    },
+    "c-anon-invite-landing.9": {
+      "result": "pass",
+      "evidence": "invite with expires_at 2026-10-01 -> 'This invite link has expired or reached its usage limit.', no Join button"
+    },
+    "c-anon-invite-landing.10": {
+      "result": "pass",
+      "evidence": "one-use invite accepted by maya, then bob opens it -> 'This invite link has expired or reached its usage limit.', no Join button"
+    },
+    "c-anon-invite-landing.11": {
+      "result": "pass",
+      "evidence": "bob on invite to 2025 Hackathon -> 'This space is archived or locked and is not taking new members.', no Join button"
+    },
+    "c-anon-invite-landing.12": {
+      "result": "fail",
+      "expected": "omar (space-banned from Off-Topic Lounge) is refused with a ban message",
+      "actual": "instant meta refresh into /community/s/off-topic-lounge/ with no message. InviteLink::accept() runs is_member() before join_blocked(), so omar's existing member row skips the ban check. Whether a banned NON-member is refused was not exercised (no restriction changes in lane B).",
+      "url": "http://forums.local/community/invite/x9PPo6VwIdubCJM6BhSRehNxAkRXCArO/"
+    },
+    "c-anon-invite-landing.13": {
+      "result": "pass",
+      "evidence": "alice and maya clicked Join together on a one-use invite in separate sessions -> alice joined and landed in the space, maya got the usage-limit error; use_count 1, 1 new member row"
+    },
+    "c-anon-invite-landing.14": {
+      "result": "fail",
+      "expected": "buttons are full width and readable",
+      "actual": "readable in dark (text #e5e5e5 on #23262f, button light blue with dark text) but the 'Log in to accept invite' button is 181px wide inside a 328px container, centred, not full width",
+      "url": "http://forums.local/community/invite/<token>/ at 390px dark",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/invite-390-dark2.png"
+    },
+    "c-anon-invite-landing.15": {
+      "result": "pass",
+      "evidence": "logged-out invite to Moderators' Room -> only 'You've been invited to join Moderators' Room', its one-line description and the login button; no members, topics or counts"
+    }
+  },
+  "proposed_checks": [
+    "- `c-anon-invite-landing.16` @guest #ui !refuse: open /invite/<well-formed but unknown token>/ -> an 'Invalid invite link.' page with HTTP 404 (today it is HTTP 200, a soft 404).",
+    "- `c-anon-invite-landing.17` @space_banned #ui !refuse +banned: omar, who still has a member row in Off-Topic Lounge, opens its invite -> the page says he is banned instead of silently redirecting into the space.",
+    "- `c-anon-invite-landing.18` @member #ui: as an existing member open an invite to a space he is in -> decide the contract: either a visible 'You are already a member' page with a link (what check 4 says) or the silent redirect (what the code does); fix whichever is wrong."
+  ],
+  "notes": "Lane B created, via admin REST as varundubey, 7 invite links (spaces Lisbon, Berlin, Mexico City, Ai Assistant, 2025 Hackathon, Off-Topic Lounge, Moderators' Room); one expiry was backdated with a one-row update to make an expired invite. All invite rows deleted at the end; bob/maya/alice membership rows removed with SpaceMember::remove (member counts back to 3/3/1). No settings changed. users_can_register is 0 on the site, so the 'Create free account' path is untested. Debug log unchanged (112327 bytes). Screenshots: invite-*.png."
+}

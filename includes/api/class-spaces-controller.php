@@ -548,13 +548,22 @@ class Spaces_Controller extends Base_Controller {
 		$items       = array_map( array( $this, 'prepare_space' ), $spaces );
 		$total_pages = (int) ceil( $total / max( 1, $pagination['limit'] ) );
 
-		$response = $this->paginated_response(
-			$items,
-			array(
-				'total'  => $total,
-				'offset' => $pagination['offset'],
-			)
+		$meta = array(
+			'total'  => $total,
+			'offset' => $pagination['offset'],
 		);
+		if ( $postable_by_me ) {
+			// Why the composer's picker is empty for a banned or silenced member.
+			$restricted          = \Jetonomy\Permissions\Permission_Engine::restriction_error( $user_id, 'create_posts' );
+			$meta['restriction'] = $restricted
+				? array(
+					'code'    => $restricted->get_error_code(),
+					'message' => $restricted->get_error_message(),
+				)
+				: null;
+		}
+
+		$response = $this->paginated_response( $items, $meta );
 
 		$response->header( 'X-WP-TotalPages', (string) $total_pages );
 

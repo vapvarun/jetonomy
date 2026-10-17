@@ -1,0 +1,74 @@
+{
+  "journey": "C.member.reply-quote",
+  "free": "a0fcbb2e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T12:00:00Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-reply-quote.1": {
+      "result": "pass",
+      "evidence": "Quote on alice's reply -> composer prefilled with <blockquote class=jt-quote><cite>Alice Chen</cite><p>...</p></blockquote>; posted reply shows the blockquote with cite Alice Chen and a 3px bar. Note the quote reply is saved with parent_id = alice's reply, i.e. threaded under it"
+    },
+    "c-member-reply-quote.2": {
+      "result": "pass",
+      "evidence": "Reply on alice's reply -> chip 'Replying to Alice Chen \"The email field is locked in profile settings, but support can change it from th...\" x'; posted reply shows 'in reply to Alice Chen' linking to #reply-13558"
+    },
+    "c-member-reply-quote.3": {
+      "result": "pass",
+      "evidence": "x on the chip removes it; the next reply posted as plain (parent_id null)"
+    },
+    "c-member-reply-quote.4": {
+      "result": "fail",
+      "expected": "quote keeps list, code block and long URL structure without overflow",
+      "actual": "quoting a reply that has a list, a code block and a 100-character URL saved a blockquote with one flat <p>: list items and code are separated only by blank lines, the ul and pre are gone. No overflow. (My typed comment also landed in the middle of the quoted URL after Ctrl+End; probably caret handling in my driver, not claimed as a defect.)",
+      "url": "http://forums.local/community/s/help-desk/t/can-i-change-the-email-on-my-membership-account/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/quote-long.png"
+    },
+    "c-member-reply-quote.5": {
+      "result": "pass",
+      "evidence": "bob on the closed topic 'Scheduled maintenance on Saturday: what to expect' (1 reply): no Quote or Reply buttons"
+    },
+    "c-member-reply-quote.6": {
+      "result": "pass",
+      "evidence": "guest on a topic with 10 replies: no Quote or Reply buttons shown at all (hidden)"
+    },
+    "c-member-reply-quote.7": {
+      "result": "pass",
+      "evidence": "reply by an author that no longer exists (id 0, QA-RFT poll topic): card shows '[deleted]' and the quote prefill is <cite>[deleted]</cite>, not blank. Same card also carries an 'OP' badge for the deleted author"
+    },
+    "c-member-reply-quote.8": {
+      "result": "pass",
+      "evidence": "bob posted a private reply, then quoted it; maya sees both as 'Private reply, visible to the topic author and moderators.' tombstones and neither the page nor REST contains the text"
+    },
+    "c-member-reply-quote.9": {
+      "result": "fail",
+      "expected": "blockquote and attribution render right-to-left",
+      "actual": "quote of an Arabic reply: blockquote direction ltr, bar on the left (border-inline-start 3px), attribution '-Aisha Khan' and Arabic text left-aligned",
+      "url": "http://forums.local/community/s/general-discussion/t/تجربتي-مع-مجموعات-التصوير-المحلية/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/quote-arabic.png"
+    },
+    "c-member-reply-quote.10": {
+      "result": "pass",
+      "evidence": "dark via theme toggle: blockquote bg ~#34373f, text ~#cbcbcd, cite ~#b9babc on card; readable. The left bar is only 12% white so it is faint (quote-dark.png)",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/quote-dark.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-reply-quote.11` @member #ui: click Quote on a reply -> the saved reply is posted as a plain top-level reply with a quote, or as a threaded reply; decide which (today parent_id is set, same as Reply).",
+    "- `c-member-reply-quote.12` @member #ui +dark: the quote bar has enough contrast in dark mode (today 12% white).",
+    "- `c-member-reply-quote.13` @guest #ui +deleted: a reply from a deleted account does not carry the OP badge."
+  ],
+  "notes": "No settings changed. All replies and topics created for this journey were deleted and purged from Moderation > Trash. The 'Scheduled maintenance on Saturday' topic is now named 'Scheduled maintenance on Saturday: what to expect'. Debug log unchanged (112327 bytes)."
+}

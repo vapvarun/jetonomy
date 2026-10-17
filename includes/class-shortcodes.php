@@ -620,6 +620,11 @@ class Shortcodes {
 			$postable = self::postable_spaces_for_current_user();
 		}
 
+		// A banned or silenced member has no postable space; say why instead of
+		// "you have not joined any space". Fixed mode also names a space ban.
+		$restricted  = \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'create_posts', $space ? (int) $space->id : null );
+		$restriction = $restricted ? $restricted->get_error_message() : '';
+
 		self::enqueue_styles();
 		if ( function_exists( 'wp_enqueue_script_module' ) ) {
 			wp_enqueue_script_module( 'jetonomy-compose-topic' );
@@ -665,11 +670,12 @@ class Shortcodes {
 		Template_Loader::partial(
 			'compose-topic-embed',
 			array(
-				'mode'     => $mode,
-				'space_id' => $space_id,
-				'space'    => $space,
-				'postable' => $postable,
-				'types'    => $types,
+				'mode'        => $mode,
+				'space_id'    => $space_id,
+				'space'       => $space,
+				'postable'    => $postable,
+				'types'       => $types,
+				'restriction' => $restriction,
 			)
 		);
 		return (string) ob_get_clean();

@@ -1,0 +1,107 @@
+{
+  "journey": "C.admin.blocks-shortcodes-widgets",
+  "free": "a0fcbb2e",
+  "pro": "d8d053b",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T11:45:00Z",
+  "env": {
+    "themes": [
+      "reign",
+      "buddyx",
+      "twentytwentyfive"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-admin-blocks-shortcodes-widgets.1": {
+      "result": "fail",
+      "expected": "each Jetonomy block previews in the editor the same content the community shows",
+      "actual": "all 8 registered blocks (login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel, navigation) insert and show no error, but in the editor each is a static labelled placeholder ('Jetonomy · Leaderboard - Top members by reputation', 'Jetonomy · Forum Feed - Latest topics from all spaces'), not the live list. The block names in the check also do not match: there is no recent-topics, spaces, space-members or user-profile block (they are forum-feed, space-list, user-panel; space members exists only as a shortcode).",
+      "url": "http://forums.local/wp-admin/post.php?post=1332&action=edit (draft since deleted)",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk1-editor.png"
+    },
+    "c-admin-blocks-shortcodes-widgets.2": {
+      "result": "pass",
+      "evidence": "page with [jetonomy_spaces], recent_posts, trending_posts, leaderboard, user_profile user_id=bob, space_members space_id=Help Desk, jetonomy_widget id=jetonomy_recent_posts, and compose_topic: all eight render for bob with real data",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk2-sc-bob.png"
+    },
+    "c-admin-blocks-shortcodes-widgets.3": {
+      "result": "pass",
+      "evidence": "added Recent Posts, Leaderboard, Active Spaces and User Stats to sidebar-right (wp widget add, with title and count). Option rows keep the settings; front end shows 'Fresh From Members' with 4 items, 'Top Helpers' 3, 'Busy Spaces' 3, 'Your Activity' for bob (empty for guest). The block-based Widgets screen itself was not driven. All four removed afterwards; sidebars identical to before.",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk3-widgets-bob.png"
+    },
+    "c-admin-blocks-shortcodes-widgets.4": {
+      "result": "pass",
+      "evidence": "logged out: Space List, Forum Feed, Trending blocks and the Spaces/Recent shortcodes contain no 'Customer Advisory Board', no 'Moderators', no 'Insiders', no 'Partner Program' title or topic"
+    },
+    "c-admin-blocks-shortcodes-widgets.5": {
+      "result": "pass",
+      "evidence": "as bob the shortcode gallery shows Partner Program and Insiders / Beta topics (his private spaces) and no Customer Advisory Board"
+    },
+    "c-admin-blocks-shortcodes-widgets.6": {
+      "result": "pass",
+      "evidence": "bob used the compose-topic block, Feature Requests, 'Which phone browsers support dark mode best?' -> redirected to the topic, listed in /community/s/feature-requests/ (13 -> 14). Guest sees 'Join the conversation / Sign in to start a discussion' and a 'Sign in to post' button, no form. Topic deleted afterwards. Note: the space picker also lists the archived '2025 Hackathon' space.",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk6-compose-after.png, laneA-blk6-compose-guest.png"
+    },
+    "c-admin-blocks-shortcodes-widgets.7": {
+      "result": "fail",
+      "expected": "finn using the compose-topic block is refused with 'Your account is currently silenced and cannot post.'",
+      "actual": "the block gives finn an empty space picker and the text 'You have not joined any space yet. Join one to start posting.' although he is a member of 19 spaces; no silenced message. REST POST /spaces/2996/posts as finn is refused correctly (403 jetonomy_user_silenced, 'Your account is currently silenced and cannot post.') and no topic was stored.",
+      "url": "http://forums.local/jt-qa-block-compose-topic/",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk7-finn.png"
+    },
+    "c-admin-blocks-shortcodes-widgets.8": {
+      "result": "pass",
+      "evidence": "as admin, [jetonomy_space_members] and [jetonomy_widget] with no attributes show .jt-shortcode-notice: 'jetonomy_space_members needs a space_id attribute ...' and 'jetonomy_widget needs an id attribute ...'"
+    },
+    "c-admin-blocks-shortcodes-widgets.9": {
+      "result": "pass",
+      "evidence": "logged out the same two shortcodes render 0 bytes"
+    },
+    "c-admin-blocks-shortcodes-widgets.10": {
+      "result": "pass",
+      "evidence": "id=bogus_widget_id -> 'unknown id ... Valid ids are jetonomy_recent_posts, jetonomy_leaderboard, jetonomy_active_spaces, jetonomy_user_stats.'; user_id=999999 -> 'jetonomy_user_profile: no user with ID 999999.'; both 0 bytes for a guest"
+    },
+    "c-admin-blocks-shortcodes-widgets.11": {
+      "result": "pass",
+      "evidence": "space_id=help-desk and space_id=3004 render identical rosters (1548 bytes each)"
+    },
+    "c-admin-blocks-shortcodes-widgets.12": {
+      "result": "pass",
+      "evidence": "no seeded city space is empty (each has 3 members), so a temporary public space with 0 members was made: shortcode shows 'No members yet.' in a 811x55 box for bob. Space and page deleted afterwards. Space members is a shortcode only, not a block."
+    },
+    "c-admin-blocks-shortcodes-widgets.13": {
+      "result": "pass",
+      "evidence": "Reign dark (data-theme dark): body rgb(35,38,47), cards a lighter dark surface, titles rgb(229,229,229)/white, all readable (about 11:1 and above); sidebar widgets also follow the dark palette; BuddyX dark (toggle): text rgb(245,245,245) on rgb(22,22,22), 16.6:1, cards and widgets follow it; Twenty Twenty-Five has no dark scheme, stays light and readable",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk13-dark.png"
+    },
+    "c-admin-blocks-shortcodes-widgets.14": {
+      "result": "pass",
+      "evidence": "390px on Reign: scrollWidth 390 = clientWidth, no element past the right edge, spaces cards in one column; BuddyX and Twenty Twenty-Five at 390: no sideways scroll (390/390)",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk14-390.png"
+    },
+    "c-admin-blocks-shortcodes-widgets.15": {
+      "result": "pass",
+      "evidence": "Grace's 159-character topic in the recent topics shortcode wraps inside its card (108px tall at 390, 43px at 1440), same left/right edges as the card, no sideways scroll; BuddyX 390: long title 81px tall inside 38-352; Twenty Twenty-Five 390: 101px tall inside 53-337",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-blk14-390-long.png"
+    },
+    "c-admin-blocks-shortcodes-widgets.16": {
+      "result": "untested",
+      "needs": "docker site: a 2000-topic seed. (On this 266-topic site count=50 renders in 99 ms warm, 1047 ms on a cold first load.)"
+    }
+  },
+  "proposed_checks": [
+    "- `c-admin-blocks-shortcodes-widgets.17` @member #block !refuse: open the compose-topic block or [jetonomy_compose_topic] -> archived spaces (2025 Hackathon) are not in the space picker.",
+    "- `c-admin-blocks-shortcodes-widgets.18` @silenced #block: the compose-topic block shows the silenced notice instead of 'You have not joined any space yet'.",
+    "- `c-admin-blocks-shortcodes-widgets.19` @admin #block: seeded QA pages use stale ids ([jetonomy_space_members space_id=\"1\"], user_profile user_id=\"1\"); re-seed or rewrite them with slugs so the pages show the roster.",
+    "- `c-admin-blocks-shortcodes-widgets.20` @admin #block: the check names eight blocks that do not exist; replace with login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel and navigation."
+  ],
+  "notes": "Changes made and restored: four widgets added to sidebar-right then deleted (sidebars identical to the saved snapshot); temp pages (block draft, two shortcode pages, latest topics, roster) deleted; temporary space 'Cape Town Chapter' deleted; bob's compose topic deleted (his gamification points for it remain). Reign dark toggle was set in the lane A browser only (localStorage) and set back to light. Theme repeats on BuddyX and Twenty Twenty-Five for +390/+dark/+long: see below if a theme pass was done. Theme pass (lane A, 2026-10-17): BuddyX (with its own dark toggle) and Twenty Twenty-Five (no dark scheme) were activated then Reign restored. Screenshots: laneA-theme-buddyx-hl390.png, laneA-theme-buddyx-hl-dark.png, laneA-theme-tt25-hl390.png."
+}

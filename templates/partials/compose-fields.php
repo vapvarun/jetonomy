@@ -93,7 +93,7 @@ $_post_type               = $_space_type_to_post_type[ $_space_type ] ?? 'topic'
 		);
 		$_title_placeholder  = $_title_placeholders[ $_post_type ] ?? sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s title', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 		?>
-		<input type="text" id="jt-post-title" name="title" class="jt-input jt-compose-topic-title"
+		<input type="text" id="jt-post-title" name="title" dir="auto" class="jt-input jt-compose-topic-title"
 			placeholder="<?php echo esc_attr( $_title_placeholder ); ?>"
 			data-space-id="<?php echo (int) $space->id; ?>"
 			maxlength="255"<?php echo ( $_submit_label ) ? ' required autofocus' : ''; ?>>
@@ -147,6 +147,7 @@ endif;
 			class="jt-input jt-compose-topic-body"
 			name="content"
 			id="jt-post-body"
+			dir="auto"
 			rows="6"
 			data-wp-on--input="actions.composeTopicBodyInput"
 			data-wp-bind--disabled="context.submitting"
@@ -166,7 +167,7 @@ endif;
 				<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it. ?>
 				<button type="button" data-cmd="emoji" title="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-haspopup="menu" aria-expanded="false" aria-controls="jt-emoji-picker"><?php jetonomy_echo_icon( 'smile-plus', 16 ); ?></button>
 			</div>
-			<div class="jt-editor-body" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="jt-post-body-label" data-placeholder="<?php echo esc_attr( sprintf( /* translators: %s: singular topic label. */ __( 'Write your %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>"></div>
+			<div class="jt-editor-body" dir="auto" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="jt-post-body-label" data-placeholder="<?php echo esc_attr( sprintf( /* translators: %s: singular topic label. */ __( 'Write your %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>"></div>
 		</div>
 	<?php endif; ?>
 </div>

@@ -421,9 +421,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<h1 class="screen-reader-text"><?php echo esc_html( $jt_h1_label ); ?></h1>
 					<?php else : ?>
 						<div class="jt-post-title-row">
-							<h1>
+							<?php // dir="auto" on the prefix keeps its words out of the title's direction guess. ?>
+							<h1 dir="auto">
 								<?php if ( $prefix_name ) : ?>
-									<span class="jt-prefix"
+									<span class="jt-prefix" dir="auto"
 									<?php
 									if ( $prefix_color ) :
 										?>
@@ -550,7 +551,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					</div>
 				</div>
 
-				<div class="jt-post-body">
+				<div class="jt-post-body" dir="auto">
 					<?php
 					// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
 					// Embeds first so URL paths containing @username don't get mangled
@@ -757,7 +758,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							<?php if ( $jt_can_edit ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
-									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
+									data-post-id="<?php echo absint( $post->id ); ?>"
+									data-edit-token="<?php echo esc_attr( \Jetonomy\Models\Post::edit_token( $post, \Jetonomy\Models\Post::EDIT_FIELDS ) ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.togglePrivate"
 									data-post-id="<?php echo absint( $post->id ); ?>"
@@ -976,7 +978,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					?>
 				<?php else : ?>
 
-					<div class="jt-replies-list" id="jt-replies-container">
+					<div class="jt-replies-list" id="jt-replies-container" data-per-page="<?php echo (int) $replies_per_page; ?>" data-top-level="<?php echo (int) $top_level_count; ?>" data-sort="<?php echo esc_attr( $reply_sort ); ?>">
 						<?php foreach ( $reply_batch as $index => $reply ) : ?>
 							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space, $reply_page ); ?>
 							<?php

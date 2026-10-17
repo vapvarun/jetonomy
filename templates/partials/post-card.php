@@ -113,7 +113,7 @@ if ( $prefix_name && $space ) {
 					<span class="jt-qa-pill jt-qa-pill-needs-answer"><?php esc_html_e( 'Needs answer', 'jetonomy' ); ?></span>
 				<?php endif; ?>
 			<?php endif; ?>
-			<?php echo esc_html( jetonomy_post_title_or_excerpt( $post ) ); ?>
+			<span dir="auto"><?php echo esc_html( jetonomy_post_title_or_excerpt( $post ) ); ?></span>
 			<?php if ( $has_unread ) : ?>
 				<span class="jt-unread-pill" aria-label="<?php printf( /* translators: %s: plural reply label. */ esc_attr__( 'You have unread %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
 					<?php esc_html_e( 'New', 'jetonomy' ); ?>

@@ -442,6 +442,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-search.11` @guest #rest !refuse: GET /search?q=a (single character) and an empty q -> 400 with a clear validation message, not a 500.
 - `c-anon-search.12` @guest #ui +deleted: search the title of a deleted topic -> it is not in the results.
 - `c-anon-search.13` @guest #ui +390: search at 390px -> the form and result cards fit the viewport.
+- `c-anon-search.14` @guest #ui: type 2+ characters in the header search overlay and press Enter -> the full results page for that query opens (today nothing happens).
+- `c-anon-search.15` @guest #ui: the header overlay suggestions and the full results page rank 'Dark mode for the community on phones' the same way, exact title match first.
+- `c-anon-search.16` @member_b #ui: replace 'member_b who is not a member' with a user who really is not a member of Partner Program (maya, after the reseed alice is a member).
 
 ### C.anon.invite-landing
 **Covers:** templates/views/invite.php, includes/models/class-invite-link.php, includes/api/class-spaces-controller.php
@@ -464,6 +467,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-invite-landing.13` @member_b #ui +concurrent: two members open a one-use invite and both click Join -> exactly one is added; the other sees the limit error.
 - `c-anon-invite-landing.14` @guest #ui +390: open the invite on a phone in dark mode -> buttons are full width and readable.
 - `c-anon-invite-landing.15` @guest #ui !refuse: open an invite for Moderators' Room (hidden) while logged out -> it names the space only to the invite holder, never exposes members or topics.
+- `c-anon-invite-landing.16` @guest #ui !refuse: open /invite/<well-formed but unknown token>/ -> an 'Invalid invite link.' page with HTTP 404 (today it is HTTP 200, a soft 404).
+- `c-anon-invite-landing.17` @space_banned #ui !refuse +banned: omar, who still has a member row in Off-Topic Lounge, opens its invite -> the page says he is banned instead of silently redirecting into the space.
+- `c-anon-invite-landing.18` @member #ui: as an existing member open an invite to a space he is in -> decide the contract: either a visible 'You are already a member' page with a link (what check 4 says) or the silent redirect (what the code does); fix whichever is wrong.
 
 ### C.member.post-create
 **Covers:** templates/views/new-post.php, templates/partials/composer.php, templates/partials/compose-fields.php, assets/js/composer.js, includes/api/class-posts-controller.php, includes/api/class-media-controller.php, includes/api/class-rest-auth.php, assets/js/jetonomy-rest.js, includes/class-attachments.php, includes/class-media-library.php, includes/models/class-attachment.php, includes/models/class-model.php, includes/permissions/class-rate-limiter.php, templates/partials/compose-topic-embed.php, pro:includes/extensions/polls/*.php, pro:assets/js/polls-frontend.js, pro:includes/extensions/advanced-moderation/*.php, pro:includes/extensions/ai/*.php, pro:includes/extensions/webhooks/*.php
@@ -472,7 +478,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 **Checks:**
 - `c-member-post-create.1` @member #ui: as bob open Help Desk > New Topic, write the title "How do I reset my membership password?" with a two-paragraph body, and submit -> he lands on the new topic and it is listed first in Help Desk.
-- `c-member-post-create.2` @member #rest: POST /jetonomy/v1/posts with space_id, title and content -> 201 and the same topic appears in GET /posts?space_id=.
+- `c-member-post-create.2` @member #rest: POST /jetonomy/v1/spaces/{id}/posts with title and content -> 201 and the same topic appears in GET /spaces/{id}/posts.
 - `c-member-post-create.3` @member #ui +empty !refuse: submit with an empty title, then with an empty body -> an inline error names the missing field and nothing is created.
 - `c-member-post-create.4` @member #ui +long: enter a 300-character title -> either the counter blocks it with a visible limit or it saves and wraps without breaking the card.
 - `c-member-post-create.5` @member #ui: pick tags, a visibility option and a schedule -> they show on the saved topic.
@@ -482,11 +488,11 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-post-create.9` @member #ui !refuse +settings-off: remove Upload media from the Member role, reopen the composer -> the image button is hidden; pasting an image shows "You do not have permission to upload images".
 - `c-member-post-create.10` @member #rest !refuse +settings-off: POST /media without Upload media -> 403 and nothing stored.
 - `c-member-post-create.11` @member #ui !refuse +archived: open /s/2025-hackathon/new/ -> a notice with "Back to 2025 Hackathon" and no form; a locked space behaves the same.
-- `c-member-post-create.12` @member #rest !refuse +archived: POST /posts into 2025 Hackathon -> 403 jetonomy_space_archived (readonly spaces return jetonomy_space_readonly).
+- `c-member-post-create.12` @member #rest !refuse +archived: POST /spaces/{2025 Hackathon id}/posts -> 403 jetonomy_space_restricted with the archived/locked message, nothing stored; the same through `wp jetonomy post create`.
 - `c-member-post-create.13` @silenced #ui !refuse +silenced: as finn open the composer and submit -> a message "Your account is currently silenced and cannot post." and nothing created.
 - `c-member-post-create.14` @silenced #rest !refuse +silenced: POST /posts as finn -> 403 jetonomy_user_silenced.
 - `c-member-post-create.15` @space_banned #ui !refuse +banned: as omar post in Off-Topic Lounge -> refused with a ban message; in another space he can still post.
-- `c-member-post-create.16` @member #ui !refuse: as bob post in Customer Advisory Board -> the compose page shows the gate, never a form; POST /posts returns 404 jetonomy_not_found (not 403).
+- `c-member-post-create.16` @member #ui !refuse: as bob post in Customer Advisory Board -> the compose page shows the gate, never a form; POST /spaces/{id}/posts returns 403 jetonomy_forbidden (private spaces are listed publicly, so the refusal reveals nothing) and nothing is stored.
 - `c-member-post-create.17` @member #ui +limit !refuse: post until the new-member daily limit is reached -> the message reads "New members can post N topics a day. You can post again in about X. Please try again later." and REST returns 429.
 - `c-member-post-create.18` @member #ui +offline: take the network offline and submit -> the composer keeps the text, shows an error and a retry works; no duplicate topic after reconnect.
 - `c-member-post-create.19` @member #ui +concurrent: double-click Submit -> exactly one topic is created.
@@ -495,6 +501,10 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-post-create.22` @guest #rest !refuse: POST /posts logged out -> 401.
 - `c-member-post-create.23` @member #ui +390: compose at 390px -> toolbar wraps, Submit reachable without zoom.
 - `c-member-post-create.24` @member #ui +dark: compose in dark mode -> editor surface and toolbar icons readable.
+- `c-member-post-create.25` @member #ui +long: type a 300-character title -> a visible character counter or limit message appears before the field stops accepting input (today it silently cuts at 255).
+- `c-member-post-create.26` @member #ui +offline: submit offline -> exactly one 'Failed to save.' message (today it shows twice).
+- `c-member-post-create.27` @member #ui +rtl: post an Arabic topic on an LTR site -> the title and body are right-aligned via dir=auto on user content.
+- `c-member-post-create.28` @member_b #ui: a space has no recent-topics feed on the community home page -> decide whether the check 'home feed' count means the directory counts.
 
 ### C.member.post-edit
 **Covers:** templates/views/single-post.php, templates/partials/edited-mark.php, includes/api/class-posts-controller.php, includes/models/class-post.php, includes/models/class-revision.php
@@ -516,6 +526,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-post-edit.12` @member #ui +concurrent: edit the same topic in two tabs and save both -> the second save does not silently discard the first without notice, and a revision is kept.
 - `c-member-post-edit.13` @member #ui +offline: save while offline -> the editor stays open with an error and the text is kept.
 - `c-member-post-edit.14` @admin #admin: open the revision history for the edited topic -> the old version is listed.
+- `c-member-post-edit.15` @member #ui +concurrent: after tab two saves over tab one, the member is told the topic changed meanwhile (conflict notice) instead of a silent overwrite.
+- `c-member-post-edit.16` @moderator #ui: a moderator with a Member WP role who moderates only Bug Reports opens a Show & Tell topic menu -> only the actions his role grants show (the test_moderator account is a WP editor so it sees everything).
+- `c-member-post-edit.17` @member_b #ui !refuse: open the topic URL with /edit/ appended -> decide the contract: a refusal page or the plain 404 it returns today.
 
 ### C.member.post-delete
 **Covers:** templates/views/single-post.php, includes/api/class-posts-controller.php, includes/models/class-post.php, assets/js/jetonomy-modals.js
@@ -538,6 +551,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-post-delete.13` @member #ui +concurrent: delete the same topic from two tabs -> the second shows "already deleted" or not found, not a PHP error.
 - `c-member-post-delete.14` @member #ui +offline: delete while offline -> the topic stays in the list with an error toast.
 - `c-member-post-delete.15` @silenced #ui !refuse +silenced: finn deletes his -4 post -> refused with the silenced notice.
+- `c-member-post-delete.16` @member_b #ui +deleted: alice followed a topic that is then deleted -> My Subscriptions shows no 'No longer available' row (today a dead row with an Unfollow button remains).
+- `c-member-post-delete.17` @member #ui: delete a topic that has replies -> its replies are not left as published rows under a trashed parent, or the contract says so and the counters follow.
+- `c-member-post-delete.18` @moderator #ui: restore the deleted topic from Moderation > Trash -> the topic, its replies, the accepted answer and the counts come back.
 
 ### C.member.reply-create
 **Covers:** templates/views/single-post.php, includes/api/class-replies-controller.php, includes/models/class-reply.php, includes/notifications/class-notifier.php, includes/permissions/class-rate-limiter.php, pro:includes/extensions/reply-by-email/*.php, pro:includes/extensions/webhooks/*.php, pro:assets/js/pro-view.js
@@ -555,7 +571,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-reply-create.8` @moderator #ui card:10415335351 +closed: as test_moderator open the closed topic -> the composer is present and a reply posts.
 - `c-member-reply-create.9` @member_b #ui: subscribers other than the OP, who follow the thread -> get one notification each for a public reply.
 - `c-member-reply-create.10` @member_b #email: a private reply by bob in a public topic -> thread subscribers receive no notification or email, only the OP and a mentioned reader who may read it.
-- `c-member-reply-create.11` @member #ui !refuse: bob opens Customer Advisory Board topic id -> no composer; POST /replies returns 404 jetonomy_not_found.
+- `c-member-reply-create.11` @member #ui !refuse: bob opens a Customer Advisory Board topic -> no composer; POST /replies returns 403 jetonomy_forbidden (private space, listed publicly) and nothing is stored.
 - `c-member-reply-create.12` @silenced #ui !refuse +silenced: finn types a reply -> "Your account is currently silenced and cannot post." and nothing posts; REST returns 403 jetonomy_user_silenced.
 - `c-member-reply-create.13` @space_banned #ui !refuse +banned: omar replies in an Off-Topic Lounge topic -> refused with the ban message; elsewhere he can reply.
 - `c-member-reply-create.14` @member #ui +limit !refuse: reply repeatedly past the new-member daily reply limit -> "New members can post N replies a day. You can reply again in about X." and REST returns 429.
@@ -566,6 +582,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-reply-create.19` @member #ui +settings-off: in a space requiring approval, reply -> "awaiting moderation" is shown and the reply is invisible to others until approved, with announce-once on approval.
 - `c-member-reply-create.20` @member #ui: check topic reply count, space reply count, profile reply count after replying -> each rose by one.
 - `c-member-reply-create.21` @member #ui +390: reply at 390px with the keyboard open -> the Submit button stays reachable.
+- `c-member-reply-create.22` @member #ui +long: reply on a topic with more replies than one page -> the new reply is visible straight away (scrolled to or loaded) instead of only the count changing.
+- `c-member-reply-create.23` @space_banned #ui !refuse +banned: omar opens a topic in Off-Topic Lounge -> a banned message, not 'Topic not found'; POST /replies returns jetonomy_user_space_banned.
+- `c-member-reply-create.24` @member #ui +empty: empty reply shows the REST message 'Reply content is required.' inline.
 
 ### C.member.reply-quote
 **Covers:** templates/partials/reply-card.php, assets/js/view.js, assets/js/composer.js
@@ -583,6 +602,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-reply-quote.8` @member #ui: quote a private reply of bob's as bob; then view as member_b -> member_b sees the tombstone, never the quoted text.
 - `c-member-reply-quote.9` @member #ui +rtl: quote Omar's Arabic reply -> blockquote and attribution render right-to-left.
 - `c-member-reply-quote.10` @member #ui +dark: quote in dark mode -> the blockquote bar and text contrast stay readable.
+- `c-member-reply-quote.11` @member #ui: click Quote on a reply -> the saved reply is posted as a plain top-level reply with a quote, or as a threaded reply; decide which (today parent_id is set, same as Reply).
+- `c-member-reply-quote.12` @member #ui +dark: the quote bar has enough contrast in dark mode (today 12% white).
+- `c-member-reply-quote.13` @guest #ui +deleted: a reply from a deleted account does not carry the OP badge.
 
 ### C.member.mention
 **Covers:** includes/class-mentions.php, includes/notifications/class-notifier.php, includes/api/class-posts-controller.php, includes/api/class-replies-controller.php
@@ -1154,15 +1176,17 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 **Checks:**
 - `c-cron.1` @admin #cli: after activating Jetonomy run `wp action-scheduler list --group=jetonomy --status=pending` -> pending actions exist for jetonomy_trust_evaluation, jetonomy_cleanup_expired, jetonomy_prune_activity, jetonomy_cleanup_notifications, jetonomy_verification_reminder, jetonomy_reconcile_rosters and jetonomy_cleanup_media.
-- `c-cron.2` @admin #cli: with Pro active confirm Pro jobs (digest, push, AI batch review) are also scheduled -> each appears once, none duplicated after a second activation.
+- `c-cron.2` @admin #cli: with Pro active run `wp cron event list` and `wp action-scheduler list --status=pending` -> Pro's digest, badge and licence jobs are each scheduled once (the AI batch review only while an AI review feature is on), none duplicated after a second activation.
 - `c-cron.3` @admin #cli: deactivate Jetonomy and re-run the list -> no pending Jetonomy action remains and the Pro jobs go with Pro, with no "class not found" fatal.
 - `c-cron.4` @admin #cli: run each recurring hook once with `wp action-scheduler run` -> every action completes with status complete and debug.log gains no error.
 - `c-cron.5` @admin #cli: activate, deactivate and reactivate in one command -> the events are rescheduled and `/community/messages/` still resolves.
-- `c-cron.6` @admin #cli +old-data: run jetonomy_cleanup_expired with an expired temporary ban and an expired invite -> the ban is lifted and the invite is removed.
+- `c-cron.6` @admin #cli +old-data: run jetonomy_cleanup_expired with an expired temporary ban and an expired invite -> the ban is lifted; the invite row is kept so its link says "expired" rather than "invalid".
 - `c-cron.7` @admin #cli: run jetonomy_reconcile_rosters with a lapsed membership rule -> the person's roster row is removed.
 - `c-cron.8` @admin #cli +many: seed 5000 users and run the trust evaluation -> it runs in batches (cursor option updates) and each run stays under the time limit.
 - `c-cron.9` @member #ui: schedule a topic for 5 minutes ahead and run jetonomy_publish_scheduled -> the topic goes live at its publish time, not early, and followers are notified once.
 - `c-cron.10` @admin #cli +settings-off: with Action Scheduler missing the plugin shows a notice and the site still loads, no WSOD.
+- `c-cron.11` @admin #cli: run `wp action-scheduler action list --group=jetonomy --status=failed` after a deactivate/reactivate of Pro -> no failed 'no callbacks are registered' rows are added for jetonomy_pro_* hooks (older rows from 2026-10-10 show Pro jobs failing while Pro was off).
+- `c-cron.12` @admin #cli +old-data: run jetonomy_cleanup_expired with an expired invite link -> the expired jt_invite_links row is removed, or the check says expired invites are kept by design.
 **Depth note:** cron is not a role-gated surface; the person who runs it is the site admin through #cli, so there is no refusal case.
 
 ### C.cli.qa-actions
@@ -1176,13 +1200,16 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-cli-qa-actions.3` @admin #cli: run `wp jetonomy scenario run multi-user-voting-thread` -> the result lists each step and the data it made is removed afterwards.
 - `c-cli-qa-actions.4` @admin #cli: run the pending join request, flags for moderation, notification sweep and membership approval scenarios in turn -> each lists its steps, each passes, and each cleans up (the space is deleted, not archived).
 - `c-cli-qa-actions.5` @admin #cli: run `wp jetonomy space list`, then open /community/ -> the same spaces and counts appear in the CLI and the home page.
-- `c-cli-qa-actions.6` @admin #cli: `wp jetonomy post get`, `vote`, `flag`, `member`, `mod`, `tag`, `category`, `privacy scan`, `notification`, `config`, `user` each run one read command -> each returns the same data the member and moderator screens show.
+- `c-cli-qa-actions.6` @admin #cli: `wp jetonomy post get`, `member`, `mod`, `tag`, `category`, `privacy scan`, `notification`, `config`, `user` each run one read command -> each returns the same data the member and moderator screens show (`vote` and `flag` are write-only).
 - `c-cli-qa-actions.7` @admin #cli: `wp jetonomy notification unread-count --user=bob` after a reply -> equals the bell badge bob sees in the browser.
 - `c-cli-qa-actions.8` @admin #cli !refuse: `wp jetonomy mod ban --user=<admin>` and a ban of yourself -> refused with "Administrators cannot be restricted." or "You cannot restrict your own account.".
 - `c-cli-qa-actions.9` @admin #cli !refuse: `wp jetonomy post create` into the archived 2025 Hackathon space -> refused with jetonomy_space_restricted and no row is added.
 - `c-cli-qa-actions.10` @admin #cli: create a seeded post with the CLI, then open it at 1440 and 390 -> it renders on both widths with no overflow.
 - `c-cli-qa-actions.11` @admin #cli +many: run `wp jetonomy post get <id>` and `wp jetonomy recount` on a 2000-topic seed (bin/seed-scale.php) -> each returns in under 3 seconds and the recounted totals match the Overview.
 - `c-cli-qa-actions.12` @admin #cli: run `wp jetonomy recount` -> prints the rows updated per counter and the guest home counts match straight away.
+- `c-cli-qa-actions.13` @admin #cli !refuse: `wp jetonomy reply create` into an archived or closed topic, and `wp jetonomy post create` as a silenced or site-banned user -> refused with the same code the REST route gives and no row is added.
+- `c-cli-qa-actions.14` @admin #cli: `wp jetonomy reply create --author=alice` on bob's topic -> bob gets the reply notification, same as a reply made in the browser.
+- `c-cli-qa-actions.15` @guest #ui: compare the home page topic total with the sum of the topics listed under the visible spaces -> the totals agree, or private and hidden space topics are left out of the guest total (home says 261, the listed public spaces sum to 247).
 **Depth note:** the CLI is admin-only by design (WP-CLI runs as the server user), so there is no member-versus-owner pair.
 
 ### C.admin.setup-wizard
@@ -1200,7 +1227,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-setup-wizard.5` @admin #admin: choose "Import the demo community instead" -> toast "Demo data imported.", the guest home counts include the demo content straight away, and the demo members have avatars and bios.
 - `c-admin-setup-wizard.6` @admin #admin: click remove demo data -> "All demo data has been removed.", and no demo topic, reply, vote, bookmark, subscription or notification remains.
 - `c-admin-setup-wizard.7` @admin #admin +old-data: remove demo data on a site that also has real topics -> only demo rows go, real rows and counts are unchanged.
-- `c-admin-setup-wizard.8` @member #admin #rest !refuse: bob posts to admin-ajax jetonomy_setup_save and jetonomy_setup_create_sample -> both answer "Permission denied." (403) and /wp-admin wizard page refuses him.
+- `c-admin-setup-wizard.8` @member #admin #rest !refuse: bob posts to admin-ajax jetonomy_setup_save and jetonomy_setup_create_sample -> both refused (403, -1 from the nonce check) with nothing created, and the /wp-admin wizard page refuses him.
 - `c-admin-setup-wizard.9` @guest #admin !refuse: call jetonomy_setup_save logged out -> admin-ajax returns 0 or -1 and nothing changes.
 - `c-admin-setup-wizard.10` @admin #admin !refuse: post jetonomy_setup_save with a bad nonce -> request is refused and no option is saved.
 - `c-admin-setup-wizard.11` @admin #admin +390: walk the wizard at 390px -> steps stack, buttons are at least 40px tall, and no horizontal scroll.
@@ -1208,6 +1235,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-setup-wizard.13` @admin #admin +offline: lose the connection on the create step -> an error shows, the button re-enables, and retrying creates the category once (no duplicates).
 - `c-admin-setup-wizard.14` @admin #admin +rtl: set the site to Arabic and walk the wizard -> layout mirrors and progress steps run right to left.
 - `c-admin-setup-wizard.15` @admin #admin +dark: walk the wizard in a dark admin scheme -> inputs, cards and buttons keep contrast.
+- `c-admin-setup-wizard.16` @admin #admin +rtl: in the Arabic admin the URL preview under the slug field reads http://forums.local/community/ left to right with the slash at the end.
+- `c-admin-setup-wizard.17` @admin #admin !refuse: run the wizard twice with the same category and space names -> the second run says the names already exist or merges, and does not add a duplicate 'Getting Started' category (a second 'Getting Started' space was created beside the seeded one).
+- `c-admin-setup-wizard.18` @admin #admin +390: the floating Messages button does not cover the Create Space or Next buttons at 390px.
 
 ### C.admin.import
 **Covers:** includes/import/*.php, includes/admin/ajax/class-import-handler.php, includes/models/class-import-map.php
@@ -1221,7 +1251,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-import.4` @guest #ui: open three imported threads logged out -> topics, replies and original authors show, dates keep the source order, and a closed source topic shows the "Closed" badge.
 - `c-admin-import.5` @admin #admin: run the same import a second time -> no duplicate categories, spaces, topics or replies (import map), totals unchanged.
 - `c-admin-import.6` @admin #admin: import a source with private bbPress forums -> they arrive as private spaces and members are placed per "Adding members to private and group spaces...".
-- `c-admin-import.7` @member #admin !refuse: bob posts jetonomy_import_batch to admin-ajax -> the answer is "Permission denied." and nothing is imported.
+- `c-admin-import.7` @member #admin !refuse: bob posts jetonomy_import_batch to admin-ajax -> refused (403, -1 from the nonce check) and nothing is imported.
 - `c-admin-import.8` @admin #admin !refuse: post jetonomy_import_batch with source=bogus -> "Unknown import source." and no data is written.
 - `c-admin-import.9` @admin #admin +many: import 2000 topics -> the run proceeds in batches without a timeout and the progress bar never freezes, and reply counts per topic are right.
 - `c-admin-import.10` @admin #admin +old-data: import wpForo topics that were held for moderation -> they arrive in Awaiting approval, not published.
@@ -1229,6 +1259,11 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-import.12` @admin #admin +390: open the Import screen at 390px and 1440px -> steps stack and the buttons are reachable with no horizontal scroll.
 - `c-admin-import.13` @member #ui +rtl: open an imported topic with Arabic text -> it renders right to left.
 - `c-admin-import.14` @admin #admin: look for imported HTML with `&amp;` in titles -> no row in spaces, categories or topics has an entity-encoded title.
+- `c-admin-import.15` @admin #admin: look at the step list during a run with a private forum -> a Members step is shown before Topics, matching the 'Adding members to private and group spaces...' message.
+- `c-admin-import.16` @admin #admin: after a re-import, the 'imported before (N items)' note and the '(M) already imported' result agree (shows 177 and 178 on the same screen).
+- `c-admin-import.17` @member #ui +rtl: an imported or posted Arabic topic is right-aligned (dir=auto on the post body) on an LTR site.
+- `c-admin-import.18` @admin #admin: the imported category slug is readable (it is imported-bbpress-1792234737 here, a timestamp) and the category name is 'Imported from bbPress'.
+- `c-admin-import.19` @admin #cli: delete an imported space with `Space::delete` / the admin Delete button -> its topics and replies go with it (here the 127 topics and 47 replies stayed behind after the space row was deleted).
 
 ### C.admin.blocks-shortcodes-widgets
 **Covers:** includes/class-blocks.php, includes/class-shortcodes.php, includes/class-widgets.php, includes/widgets/*.php, assets/js/blocks-editor.js, assets/js/compose-topic-block.js, assets/css/blocks.css, assets/css/blocks-editor.css
@@ -1236,7 +1271,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** Site admin inserts each Jetonomy block in the editor, each shortcode on a page, and each widget in a sidebar, then views them as a guest and as a member: they render the same content the community shows, honour private/hidden spaces (a guest never sees private space titles), and the compose-topic block posts a topic. The editor preview must match the front end. Check 1440 and 390 widths and dark mode.
 
 **Checks:**
-- `c-admin-blocks-shortcodes-widgets.1` @admin #block: insert each Jetonomy block (login, compose topic, leaderboard, recent topics, spaces, space members, trending topics, user profile) in the editor -> each previews the same content the community shows.
+- `c-admin-blocks-shortcodes-widgets.1` @admin #block: insert each Jetonomy block (forum feed, trending, space list, leaderboard, navigation, user panel, login, compose topic) in the editor -> each shows its labelled placeholder in the editor and renders the community content on the published page.
 - `c-admin-blocks-shortcodes-widgets.2` @admin #block: put [jetonomy_spaces], [jetonomy_recent_posts], [jetonomy_trending_posts], [jetonomy_leaderboard], [jetonomy_user_profile], [jetonomy_space_members] and [jetonomy_widget] on a page -> each renders on the front end for a member.
 - `c-admin-blocks-shortcodes-widgets.3` @admin #admin: add each widget to a sidebar -> each saves, renders in the sidebar, and its settings persist.
 - `c-admin-blocks-shortcodes-widgets.4` @guest #block !refuse: view the Spaces and Recent topics blocks logged out -> no private or hidden space title (Customer Advisory Board, Moderators' Room) and no topic from them appears.
@@ -1252,6 +1287,10 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-blocks-shortcodes-widgets.14` @member #block +390: view the blocks at 390px on Reign -> cards stack and nothing scrolls sideways.
 - `c-admin-blocks-shortcodes-widgets.15` @member #block +long: the Recent topics block lists Grace's 159-character title -> it wraps or truncates inside the card and the URL does not widen the block.
 - `c-admin-blocks-shortcodes-widgets.16` @member #block +many: set the Recent topics block to 50 items on a 2000-topic site -> it renders in one query pass and under 1 second.
+- `c-admin-blocks-shortcodes-widgets.17` @member #block !refuse: open the compose-topic block or [jetonomy_compose_topic] -> archived spaces (2025 Hackathon) are not in the space picker.
+- `c-admin-blocks-shortcodes-widgets.18` @silenced #block: the compose-topic block shows the silenced notice instead of 'You have not joined any space yet'.
+- `c-admin-blocks-shortcodes-widgets.19` @admin #block: seeded QA pages use stale ids ([jetonomy_space_members space_id="1"], user_profile user_id="1"); re-seed or rewrite them with slugs so the pages show the roster.
+- `c-admin-blocks-shortcodes-widgets.20` @admin #block: the check names eight blocks that do not exist; replace with login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel and navigation.
 
 ### C.anon.quick-login-and-captcha
 **Covers:** includes/api/class-auth-controller.php, includes/captcha/*.php, assets/js/login-block.js
@@ -1275,6 +1314,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-quick-login-and-captcha.14` @guest #block +390: use the Login block at 390px -> fields and the submit button are at least 40px tall and nothing scrolls sideways.
 - `c-anon-quick-login-and-captcha.15` @guest #block +offline: submit login with the request failing -> the form shows an error, the password field keeps its focus, and the button is enabled again.
 - `c-anon-quick-login-and-captcha.16` @guest #block +long: register with a 60-character display name -> the form accepts or trims it with a message, and the profile shows it wrapped.
+- `c-anon-quick-login-and-captcha.17` @guest #block: the Login block 'Register' form offers a display name field, or the check says username only.
+- `c-anon-quick-login-and-captcha.18` @guest #rest !refuse: POST /auth/register 6 times in a minute -> 429 from the 6th (register bucket limit 5).
+- `c-anon-quick-login-and-captcha.19` @guest #block: Resend confirmation email after registering -> 'If an account is waiting on confirmation for that email, a new link is on its way.' and a new email arrives.
 
 ### C.member.space-create-and-join
 **Covers:** templates/views/new-space.php, templates/views/my-spaces.php, templates/partials/icon-picker.php, assets/js/jetonomy-icon-picker.js, includes/models/class-join-request.php

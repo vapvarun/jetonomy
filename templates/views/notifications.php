@@ -299,7 +299,7 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 							</span>
 						<?php endif; ?>
 						<div class="jt-notif-body">
-							<div class="jt-notif-text">
+							<div class="jt-notif-text" dir="auto">
 								<?php if ( ! empty( $notif->message ) ) : ?>
 									<?php echo esc_html( $notif->message ); ?>
 								<?php elseif ( in_array( (string) $notif->type, $self_contained_types, true ) ) : ?>

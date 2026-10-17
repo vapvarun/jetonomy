@@ -22,7 +22,7 @@ The Status dropdown offers three values.
 
 **Active** is the normal state.
 
-**Archived** and **Locked** both stop new topics and replies. Existing content stays readable - nothing is deleted or hidden, and links keep working. A member who tries to post gets *"This space is archived or locked and no longer accepts new posts."*
+**Archived** and **Locked** both stop new topics and replies. Existing content stays readable - nothing is deleted or hidden, and links keep working. A member who tries to post gets *"This space is archived or locked and no longer accepts new content."*
 
 Use Archived when a space has finished its life: a completed project, a closed beta, a season that has ended. Use Locked when you are pausing a space you intend to reopen - a temporary freeze during a moderation incident, or a category being reorganised.
 

@@ -265,7 +265,7 @@ class AdminQaWalkFixesTest extends WP_Ajax_UnitTestCase {
 				'category_id' => $cat_id,
 			)
 		);
-		$token = Admin::edit_token( Space::find( $space_id ), \Jetonomy\Admin\Ajax\Spaces_Handler::EDIT_FIELDS );
+		$token = \Jetonomy\Models\Model::edit_token( Space::find( $space_id ), \Jetonomy\Admin\Ajax\Spaces_Handler::EDIT_FIELDS );
 
 		// Tab A saves first; its answer carries the token for its next save.
 		$a = $this->ajax( 'jetonomy_update_space', array( 'id' => (string) $space_id, 'edit_token' => $token, 'title' => 'Tab A' ) );
@@ -310,7 +310,7 @@ class AdminQaWalkFixesTest extends WP_Ajax_UnitTestCase {
 
 	public function test_stale_category_modal_cannot_overwrite_a_newer_save(): void {
 		$cat_id = Category::create( array( 'name' => 'Original', 'slug' => 'qw-cat2-' . uniqid() ) );
-		$token  = Admin::edit_token( Category::find( $cat_id ), \Jetonomy\Admin\Ajax\Categories_Handler::EDIT_FIELDS );
+		$token  = \Jetonomy\Models\Model::edit_token( Category::find( $cat_id ), \Jetonomy\Admin\Ajax\Categories_Handler::EDIT_FIELDS );
 
 		$a = $this->ajax( 'jetonomy_update_category', array( 'id' => (string) $cat_id, 'edit_token' => $token, 'name' => 'Tab A' ) );
 		$this->assertTrue( $a['success'] ?? false, wp_json_encode( $a ) );

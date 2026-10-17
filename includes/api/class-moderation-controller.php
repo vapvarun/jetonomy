@@ -413,71 +413,21 @@ class Moderation_Controller extends Base_Controller {
 	/**
 	 * POST /flags — Create a flag report.
 	 *
-	 * REST_Auth covers login + nonce + the `jetonomy_flag` cap. The silenced-user
-	 * check stays in the handler because it queries a Restriction row — a
-	 * business-rule layer that doesn't belong in the auth helper.
+	 * REST_Auth covers login + nonce + the `jetonomy_flag` cap; the business
+	 * rules (restriction, readable target, self, duplicate) are
+	 * Moderation_Service::check_flag(), shared with WP-CLI.
 	 */
 	public function create_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = get_current_user_id();
-
-		$restricted = \Jetonomy\Permissions\Permission_Engine::restriction_error( $user_id, 'flag' );
-		if ( $restricted ) {
-			return $restricted;
-		}
 
 		$object_type = sanitize_text_field( (string) $request->get_param( 'object_type' ) );
 		$object_id   = absint( $request->get_param( 'object_id' ) );
 		$reason      = sanitize_text_field( (string) $request->get_param( 'reason' ) );
 		$description = sanitize_textarea_field( (string) ( $request->get_param( 'description' ) ?? '' ) );
 
-		// The target must exist, and members cannot report their own content /
-		// themselves. Both were client-side-only before, so a raw API call
-		// could 201 a flag against a nonexistent id or self-report to farm the
-		// reporter-reputation path.
-		$target_author = null;
-		// Content must also be live and readable by the reporter. A topic in a
-		// private space you cannot open, or a trashed reply, answers exactly like a
-		// missing one: otherwise any member could flag (and dock reputation from)
-		// content they cannot see, and 404-vs-201 would confirm private ids exist.
-		if ( 'post' === $object_type ) {
-			$target        = \Jetonomy\Models\Post::find( $object_id );
-			$readable      = $target && 'publish' === $target->status
-				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $user_id, $target );
-			$target_author = $readable ? (int) $target->author_id : null;
-		} elseif ( 'reply' === $object_type ) {
-			$target        = \Jetonomy\Models\Reply::find( $object_id );
-			$parent        = $target ? \Jetonomy\Models\Post::find( (int) $target->post_id ) : null;
-			$readable      = $target && $parent && 'publish' === $target->status && 'publish' === $parent->status
-				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $user_id, $parent )
-				&& \Jetonomy\Permissions\Permission_Engine::can_read_reply( $user_id, $target, $parent );
-			$target_author = $readable ? (int) $target->author_id : null;
-		} else { // 'user' - schema enum guarantees one of the three.
-			$target        = get_userdata( $object_id );
-			$target_author = $target ? (int) $target->ID : null;
-		}
-		if ( null === $target_author ) {
-			return new WP_Error(
-				'jetonomy_flag_target_missing',
-				__( 'The reported content no longer exists.', 'jetonomy' ),
-				array( 'status' => 404 )
-			);
-		}
-		if ( $target_author === $user_id ) {
-			return new WP_Error(
-				'jetonomy_flag_self',
-				__( 'You cannot report your own content.', 'jetonomy' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Prevent duplicate flags by the same user on the same object.
-		$existing = Flag::find_by_reporter_and_object( $user_id, $object_type, $object_id );
-		if ( $existing ) {
-			return new WP_Error(
-				'jetonomy_already_flagged',
-				__( 'You have already reported this content.', 'jetonomy' ),
-				array( 'status' => 409 )
-			);
+		$gate = Moderation_Service::check_flag( $user_id, $object_type, $object_id );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
 		}
 
 		$flag_id = Flag::create(

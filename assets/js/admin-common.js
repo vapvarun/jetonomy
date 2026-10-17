@@ -1844,9 +1844,8 @@
 			statusPct.textContent    = '0%';
 
 			function updateStepIndicator(phase) {
-				// Granting members to private and group spaces belongs to the
-				// Forums step; it has no step of its own.
-				if (phase === 'members') { phase = 'forums'; }
+				// Sources without a Members step count it under Forums.
+				if (phase === 'members' && !progress.querySelector('.jetonomy-step[data-step="members"]')) { phase = 'forums'; }
 				var found = false;
 				// Iterate in reverse so steps before the active one get marked done
 				for (var i = steps.length - 1; i >= 0; i--) {

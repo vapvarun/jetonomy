@@ -397,7 +397,7 @@ $crumbs = array(
 									<?php if ( ! empty( $ur->is_private_hidden ) ) : ?>
 										<div class="jt-row-title jt-row-title--private"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo esc_html( sprintf( /* translators: %s: singular reply label. */ __( 'Private %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?></div>
 									<?php else : ?>
-										<div class="jt-row-title"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
+										<div class="jt-row-title" dir="auto"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
 									<?php endif; ?>
 									<div class="jt-row-sub">
 										<?php
@@ -459,7 +459,7 @@ $crumbs = array(
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
-									<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $uv ) ); ?></div>
+									<div class="jt-row-title" dir="auto"><?php echo esc_html( jetonomy_post_title_or_excerpt( $uv ) ); ?></div>
 									<div class="jt-row-sub">
 										<?php echo esc_html( $uv->space_title ?? '' ); ?>
 									</div>
@@ -521,7 +521,7 @@ $crumbs = array(
 							<?php endif; ?>>
 							<div class="jt-row-main">
 								<div class="jt-row-title">
-									<?php echo esc_html( jetonomy_post_title_or_excerpt( $dr_post ) ); ?>
+									<bdi><?php echo esc_html( jetonomy_post_title_or_excerpt( $dr_post ) ); ?></bdi>
 									<?php if ( $is_scheduled ) : ?>
 										<span class="jt-badge jt-badge--scheduled">
 											<?php
@@ -610,7 +610,7 @@ $crumbs = array(
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
-									<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $bk_post ) ); ?></div>
+									<div class="jt-row-title" dir="auto"><?php echo esc_html( jetonomy_post_title_or_excerpt( $bk_post ) ); ?></div>
 									<div class="jt-row-sub">
 										<?php echo esc_html( $bk_space->title ?? '' ); ?>
 									</div>
@@ -658,7 +658,7 @@ $crumbs = array(
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
-									<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $r_post ) ); ?></div>
+									<div class="jt-row-title" dir="auto"><?php echo esc_html( jetonomy_post_title_or_excerpt( $r_post ) ); ?></div>
 									<div class="jt-row-sub">
 										<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $r_post->space_slug ) ); ?>"
 											>

@@ -17,6 +17,9 @@ use function Jetonomy\now;
  */
 class Post extends Model {
 
+	/** Columns the topic edit form writes; fingerprinted by edit_token(). */
+	public const EDIT_FIELDS = array( 'title', 'content' );
+
 	/**
 	 * Get the table name suffix.
 	 *
@@ -305,6 +308,7 @@ class Post extends Model {
 			if ( ! empty( $post->author_id ) ) {
 				UserProfile::increment_post_count( (int) $post->author_id, $delta );
 			}
+			self::shift_replier_counts( $id, $delta );
 
 			/** This action is documented in includes/models/class-post.php (Post::create) */
 			do_action( 'jetonomy_post_publish_transition', $id, $delta, (string) ( $data['created_at'] ?? $post->created_at ?? '' ) );
@@ -370,7 +374,7 @@ class Post extends Model {
 		// that looks it up. Deleting the replies with the topic keeps them from pointing at
 		// a missing post_id - still counted on their authors, still in search and activity.
 		if ( $post ) {
-			self::delete_replies( $id );
+			self::delete_replies( $id, 'publish' === ( $post->status ?? '' ) );
 		}
 
 		$result = parent::delete( $id );
@@ -430,6 +434,30 @@ class Post extends Model {
 		return $result;
 	}
 
+	/**
+	 * Move the repliers' reply_count with their topic when it enters or leaves publish.
+	 *
+	 * A member's reply_count counts published replies in published topics (Recount
+	 * defines it so). Trashing a topic hides its replies with it, so they stop
+	 * counting and come back on restore. One grouped read, one UPDATE per replier.
+	 *
+	 * @param int $post_id Topic.
+	 * @param int $delta   +1 entering publish, -1 leaving it.
+	 */
+	private static function shift_replier_counts( int $post_id, int $delta ): void {
+		$replies = \Jetonomy\table( 'replies' );
+		$rows    = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT author_id, COUNT(*) AS n FROM {$replies} WHERE post_id = %d AND status = 'publish' AND author_id > 0 GROUP BY author_id",
+				$post_id
+			)
+		) ?: array();
+		foreach ( $rows as $row ) {
+			UserProfile::increment_reply_count( (int) $row->author_id, $delta * (int) $row->n );
+		}
+	}
+
 	/** Replies removed per pass when a topic is hard-deleted. */
 	private const REPLY_DELETE_BATCH = 500;
 
@@ -455,9 +483,10 @@ class Post extends Model {
 	 * cannot outlive the topic it belongs to. And the topic's reply_count is
 	 * not maintained - the row it lives on is deleted next.
 	 *
-	 * @param int $post_id Topic being deleted.
+	 * @param int  $post_id Topic being deleted.
+	 * @param bool $counted Whether the topic is published, so its replies still count on their authors.
 	 */
-	private static function delete_replies( int $post_id ): void {
+	private static function delete_replies( int $post_id, bool $counted ): void {
 		$db      = static::db();
 		$replies = \Jetonomy\table( 'replies' );
 
@@ -484,7 +513,7 @@ class Post extends Model {
 
 			$published = array();
 			foreach ( $rows as $r ) {
-				if ( 'publish' === $r->status && (int) $r->author_id > 0 ) {
+				if ( $counted && 'publish' === $r->status && (int) $r->author_id > 0 ) {
 					$published[ (int) $r->author_id ] = ( $published[ (int) $r->author_id ] ?? 0 ) + 1;
 				}
 			}

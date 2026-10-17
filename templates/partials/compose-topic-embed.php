@@ -11,6 +11,9 @@
  *   - object|null  $space       Pre-resolved space row (fixed mode only).
  *   - object[]     $postable    Space rows user can post in (picker mode).
  *   - string[]     $types       Allowed post types.
+ *   - WP_Error|string|null $restriction Why this member cannot post (silenced,
+ *                                       banned), from restriction_error(). Shown
+ *                                       instead of the form.
  *
  * @package Jetonomy
  */
@@ -71,6 +74,18 @@ if ( ! is_user_logged_in() ) {
 				<?php endif; ?>
 			</div>
 		</div>
+	</div>
+	<?php
+	return;
+}
+
+// A member who may not post at all sees why, not an empty picker that reads
+// as "join a space first".
+$_restriction = isset( $restriction ) ? ( is_wp_error( $restriction ) ? $restriction->get_error_message() : (string) $restriction ) : '';
+if ( '' !== $_restriction ) {
+	?>
+	<div class="jt-compose-topic-embed" role="region" aria-label="<?php esc_attr_e( 'Start a new discussion', 'jetonomy' ); ?>">
+		<p class="jt-compose-topic-restricted"><?php echo esc_html( $_restriction ); ?></p>
 	</div>
 	<?php
 	return;

@@ -540,9 +540,9 @@ $crumbs = array(
 						</span>
 					</div>
 					<?php if ( ! $is_reply && ! empty( $obj->title ) ) : ?>
-						<div class="jt-mod-flag-title"><?php echo esc_html( (string) $obj->title ); ?></div>
+						<div class="jt-mod-flag-title" dir="auto"><?php echo esc_html( (string) $obj->title ); ?></div>
 					<?php endif; ?>
-					<div class="jt-mod-flag-excerpt">
+					<div class="jt-mod-flag-excerpt" dir="auto">
 						<?php echo esc_html( $excerpt ); ?>
 					</div>
 					<div class="jt-mod-flag-foot">

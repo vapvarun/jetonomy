@@ -1,0 +1,85 @@
+{
+  "journey": "C.member.post-edit",
+  "free": "a0fcbb2e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T11:20:00Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-member-post-edit.1": {
+      "result": "pass",
+      "evidence": "bob: More options > Edit (inline editor) on his Help Desk topic, added a third paragraph, Save -> shown on the topic, REST content has it, search for the new sentence finds the topic. The space listing and the community home show only title/counts, no body excerpt, so there is nothing to refresh there"
+    },
+    "c-member-post-edit.2": {
+      "result": "pass",
+      "evidence": "PATCH /jetonomy/v1/posts/5946 {title} as bob -> 200 and GET /posts/5946 returns the new title (slug stays the old one)"
+    },
+    "c-member-post-edit.3": {
+      "result": "pass",
+      "evidence": "edit 11 minutes after posting -> 'edited 1 second ago' with hover title 'October 17, 2026 10:57 am'"
+    },
+    "c-member-post-edit.4": {
+      "result": "pass",
+      "evidence": "PATCH 0 seconds after creating topic 5951 -> edited_at set but the page shows no edited mark; an untouched topic shows none either"
+    },
+    "c-member-post-edit.5": {
+      "result": "pass",
+      "evidence": "alice on bob's topic: no More options menu at all; /t/<slug>/edit/ -> 404 page (there is no edit URL, editing is inline)"
+    },
+    "c-member-post-edit.6": {
+      "result": "pass",
+      "evidence": "PATCH /posts/5942 as alice -> 403 jetonomy_forbidden, title unchanged"
+    },
+    "c-member-post-edit.7": {
+      "result": "pass",
+      "evidence": "test_moderator (WP role editor, moderator of Bug Reports): menu '[icon] Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete' on two Bug Reports topics. In Show & Tell (not a space he moderates) he gets the same full menu because the editor role carries site-wide moderation caps (Capabilities map), so the second half of the check needs a moderator with a member-level site role"
+    },
+    "c-member-post-edit.8": {
+      "result": "untested",
+      "needs": "lane A: remove 'Edit own posts' from the Member role"
+    },
+    "c-member-post-edit.9": {
+      "result": "pass",
+      "evidence": "topic closed by test_moderator, then bob: menu still offers Edit/Make Private/Delete and PATCH returns 200, so menu and REST agree (allowed per contract)"
+    },
+    "c-member-post-edit.10": {
+      "result": "pass",
+      "evidence": "finn on his -4 'Check out my SEO service' topic: no More options menu, page shows the silenced notice; PATCH -> 403 jetonomy_user_silenced"
+    },
+    "c-member-post-edit.11": {
+      "result": "pass",
+      "evidence": "edited with a bullet list, blockquote, code block and a 120-character URL -> after Save and reload all four survive, no horizontal overflow"
+    },
+    "c-member-post-edit.12": {
+      "result": "fail",
+      "expected": "the second save does not silently discard the first without notice, and a revision is kept",
+      "actual": "two tabs on the same topic: tab one saved, then tab two saved -> tab two's text replaced tab one's with no conflict warning or notice at all. A revision of tab one's version was kept (jt_revisions id 237), so nothing is lost, but the member is not told.",
+      "url": "http://forums.local/community/s/help-desk/t/can-i-change-the-email-on-my-membership-account/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/edit-conflict.png"
+    },
+    "c-member-post-edit.13": {
+      "result": "pass",
+      "evidence": "offline Save -> editor stays open, text kept, 'Failed to save.' shown"
+    },
+    "c-member-post-edit.14": {
+      "result": "pass",
+      "evidence": "admin (read only) wp-admin/admin.php?page=jetonomy-revisions&object_type=post&object_id=5946 -> '4 revisions recorded', rows with Bob Martinez and 'View diff', oldest 'Original'"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-post-edit.15` @member #ui +concurrent: after tab two saves over tab one, the member is told the topic changed meanwhile (conflict notice) instead of a silent overwrite.",
+    "- `c-member-post-edit.16` @moderator #ui: a moderator with a Member WP role who moderates only Bug Reports opens a Show & Tell topic menu -> only the actions his role grants show (the test_moderator account is a WP editor so it sees everything).",
+    "- `c-member-post-edit.17` @member_b #ui !refuse: open the topic URL with /edit/ appended -> decide the contract: a refusal page or the plain 404 it returns today."
+  ],
+  "notes": "No settings changed. test_moderator closed bob's topic 5950 (own content) for check 9; to be deleted with the other walk topics. Debug log unchanged."
+}

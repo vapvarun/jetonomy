@@ -449,6 +449,11 @@ class Replies_Controller extends Base_Controller {
 			return $this->already_trashed_error();
 		}
 
+		$conflict = $this->edit_conflict( $request, $reply, Reply::EDIT_FIELDS, 'reply' );
+		if ( $conflict ) {
+			return $conflict;
+		}
+
 		// Privacy toggle (1.9.0): same author-or-editor gate as content edits.
 		// Only applied when the client actually sent the param, so ordinary
 		// content edits don't silently reset the flag.
@@ -864,6 +869,8 @@ class Replies_Controller extends Base_Controller {
 			'vote_score'              => (int) ( $reply->vote_score ?? 0 ),
 			'edited_at'               => $reply->edited_at ?? null,
 			'edited_by'               => $reply->edited_by ? (int) $reply->edited_by : null,
+			// Send back as edit_token on PATCH.
+			'edit_token'              => isset( $reply->content ) ? Reply::edit_token( $reply, Reply::EDIT_FIELDS ) : null,
 			'created_at'              => $reply->created_at ?? null,
 			// Aliased from created_at since jt_replies has no separate published_at column.
 			'published_at'            => $reply->created_at ?? null,
@@ -994,6 +1001,11 @@ class Replies_Controller extends Base_Controller {
 			'content'      => array(
 				'type'     => 'string',
 				'required' => false,
+			),
+			'edit_token'   => array(
+				'type'        => 'string',
+				'required'    => false,
+				'description' => 'The edit_token this reply had when the edit form loaded. A save after someone else changed it is refused with 409 jetonomy_edit_conflict.',
 			),
 			'published_at' => array(
 				'type'              => 'string',

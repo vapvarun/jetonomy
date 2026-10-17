@@ -433,22 +433,17 @@ class Posts_Controller extends Base_Controller {
 
 		$space_id = absint( $request->get_param( 'space_id' ) );
 
-		if ( ! $this->check_permission( 'create_posts', $space_id ) ) {
-			return $this->permission_error();
+		// Restrictions, archived/locked space and the create_posts permission:
+		// the one gate every post writer (REST, abilities, WP-CLI) runs. Before
+		// the 404, so a hidden space's id answers like a missing one.
+		$gate = \Jetonomy\Permissions\Content_Gate::check_post( $user_id, $space_id );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
 		}
 
 		$space = Space::find( $space_id );
 		if ( ! $space ) {
 			return $this->not_found( 'Space' );
-		}
-
-		// Block posting to archived or locked spaces.
-		if ( in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
-			return new WP_Error(
-				'jetonomy_space_restricted',
-				sprintf( /* translators: 1: the singular Space label, lowercase, 2: the plural Topic label, lowercase. */ __( 'This %1$s is archived or locked and no longer accepts new %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-				array( 'status' => 403 )
-			);
 		}
 
 		// Rate limit check.
@@ -709,6 +704,11 @@ class Posts_Controller extends Base_Controller {
 		// Trashed content is restored or purged, not edited in place.
 		if ( 'trash' === ( $post->status ?? '' ) ) {
 			return $this->already_trashed_error();
+		}
+
+		$conflict = $this->edit_conflict( $request, $post, Post::EDIT_FIELDS, 'topic' );
+		if ( $conflict ) {
+			return $conflict;
 		}
 
 		// Publish-now: an author (or moderator) can publish their own draft
@@ -1348,6 +1348,11 @@ class Posts_Controller extends Base_Controller {
 			'content'      => array(
 				'type'     => 'string',
 				'required' => false,
+			),
+			'edit_token'   => array(
+				'type'        => 'string',
+				'required'    => false,
+				'description' => 'The edit_token this topic had when the edit form loaded. A save after someone else changed it is refused with 409 jetonomy_edit_conflict.',
 			),
 			'is_private'   => array(
 				'type'     => 'boolean',

@@ -288,37 +288,6 @@ class Admin {
 	}
 
 	/**
-	 * Fingerprint of the fields an admin edit form writes, as the form loaded them.
-	 *
-	 * The form posts it back and the save is refused when the row no longer
-	 * matches, so a stale tab cannot silently revert a newer save. Not
-	 * updated_at: spaces bump it on every new topic and member, which would
-	 * refuse saves on any active space, and categories have no such column.
-	 *
-	 * @param object   $row    Row as stored.
-	 * @param string[] $fields Columns the form writes.
-	 * @return string
-	 */
-	public static function edit_token( object $row, array $fields ): string {
-		$values = array();
-		foreach ( $fields as $field ) {
-			$values[ $field ] = $row->$field ?? null;
-		}
-		return md5( (string) wp_json_encode( $values ) );
-	}
-
-	/**
-	 * Message for a save refused by edit_token(), naming the owner's noun.
-	 *
-	 * @param string $noun Label key (space, category).
-	 * @return string
-	 */
-	public static function edit_conflict_message( string $noun ): string {
-		/* translators: %s: the owner-configured noun, lowercase (e.g. "space", "category"). */
-		return sprintf( __( 'This %s was changed by someone else. Reload to see their changes.', 'jetonomy' ), \Jetonomy\jetonomy_label( $noun, false, true ) );
-	}
-
-	/**
 	 * The product name wp-admin shows in headings, banners and help text.
 	 *
 	 * One source for every "Jetonomy ..." heading, so Pro's White Label (which

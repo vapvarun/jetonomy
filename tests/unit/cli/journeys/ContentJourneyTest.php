@@ -266,7 +266,7 @@ class ContentJourneyTest extends WP_UnitTestCase {
 			[
 				'object_type' => 'post',
 				'object_id'   => $post_id,
-				'reporter_id' => $this->author_id,
+				'reporter_id' => self::factory()->user->create( [ 'role' => 'subscriber' ] ),
 				'reason'      => 'spam',
 			]
 		);
@@ -316,6 +316,56 @@ class ContentJourneyTest extends WP_UnitTestCase {
 
 		$this->assertFalse( $result->is_success() );
 		$this->assertStringContainsString( 'reason', $result->first_error() );
+	}
+
+	/**
+	 * CLI writes run the gates REST runs (wave-2 walk: `wp jetonomy post create`
+	 * into an archived space succeeded while REST refused it).
+	 */
+	public function test_cli_writes_are_refused_where_rest_refuses(): void {
+		$post_id = $this->make_post();
+
+		Space::update( $this->space_id, [ 'status' => 'archived' ] );
+		$post = $this->journey->create_post(
+			[
+				'space_id'  => $this->space_id,
+				'author_id' => $this->author_id,
+				'title'     => 'Into an archive',
+				'content'   => 'Body.',
+			]
+		);
+		$this->assertFalse( $post->is_success() );
+		$this->assertStringContainsString( 'jetonomy_space_restricted', (string) $post->first_error() );
+		Space::update( $this->space_id, [ 'status' => 'active' ] );
+
+		Post::close( $post_id );
+		\Jetonomy\Cache::reset_memos();
+		$reply = $this->journey->create_reply(
+			[
+				'post_id'   => $post_id,
+				'author_id' => self::factory()->user->create( [ 'role' => 'subscriber' ] ),
+				'content'   => 'On a closed topic.',
+			]
+		);
+		$this->assertFalse( $reply->is_success() );
+		$this->assertStringContainsString( 'jetonomy_post_closed', (string) $reply->first_error() );
+
+		$silenced = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		\Jetonomy\Models\Restriction::ban( $silenced, 'silence', 1 );
+		$vote = $this->journey->vote( $silenced, 'post', $post_id, 1 );
+		$this->assertFalse( $vote->is_success() );
+		$this->assertStringContainsString( 'jetonomy_user_silenced', (string) $vote->first_error() );
+
+		$self_flag = $this->journey->flag(
+			[
+				'object_type' => 'post',
+				'object_id'   => $post_id,
+				'reporter_id' => $this->author_id,
+				'reason'      => 'spam',
+			]
+		);
+		$this->assertFalse( $self_flag->is_success() );
+		$this->assertStringContainsString( 'jetonomy_flag_self', (string) $self_flag->first_error() );
 	}
 
 	private function make_post(): int {

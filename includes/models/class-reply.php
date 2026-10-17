@@ -35,6 +35,9 @@ class Reply extends Model {
 	 */
 	public const DEFAULT_SORT = 'oldest';
 
+	/** Columns the reply edit form writes; fingerprinted by edit_token(). */
+	public const EDIT_FIELDS = array( 'content' );
+
 	protected static function table_name(): string {
 		return 'replies';
 	}
@@ -129,7 +132,7 @@ class Reply extends Model {
 			if ( $is_published && ! empty( $data['post_id'] ) ) {
 				Post::increment_reply_count( (int) $data['post_id'], 1, (string) $data['created_at'] );
 			}
-			if ( $is_published && ! empty( $data['author_id'] ) ) {
+			if ( $is_published && ! empty( $data['author_id'] ) && self::topic_is_published( (int) ( $data['post_id'] ?? 0 ) ) ) {
 				UserProfile::increment_reply_count( (int) $data['author_id'] );
 			}
 
@@ -216,7 +219,7 @@ class Reply extends Model {
 			if ( ! empty( $reply->post_id ) ) {
 				Post::increment_reply_count( (int) $reply->post_id, $delta );
 			}
-			if ( ! empty( $reply->author_id ) ) {
+			if ( ! empty( $reply->author_id ) && self::topic_is_published( (int) ( $reply->post_id ?? 0 ) ) ) {
 				UserProfile::increment_reply_count( (int) $reply->author_id, $delta );
 			}
 
@@ -234,6 +237,17 @@ class Reply extends Model {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Whether a reply in this topic counts on its author: a trashed topic takes its
+	 * replies out of the count (Post::shift_replier_counts), so writes there do not move it.
+	 *
+	 * @param int $post_id Topic.
+	 */
+	private static function topic_is_published( int $post_id ): bool {
+		$post = $post_id > 0 ? Post::find( $post_id ) : null;
+		return $post && 'publish' === ( $post->status ?? '' );
 	}
 
 	/**
@@ -288,7 +302,7 @@ class Reply extends Model {
 			if ( ! empty( $reply->post_id ) ) {
 				Post::increment_reply_count( (int) $reply->post_id, -1 );
 			}
-			if ( ! empty( $reply->author_id ) ) {
+			if ( ! empty( $reply->author_id ) && self::topic_is_published( (int) ( $reply->post_id ?? 0 ) ) ) {
 				UserProfile::increment_reply_count( (int) $reply->author_id, -1 );
 			}
 

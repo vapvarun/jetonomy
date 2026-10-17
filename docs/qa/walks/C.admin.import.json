@@ -1,0 +1,100 @@
+{
+  "journey": "C.admin.import",
+  "free": "a0fcbb2e",
+  "pro": "d8d053b",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T11:20:00Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-admin-import.1": {
+      "result": "pass",
+      "evidence": "with no source plugin active the Import screen lists bbPress, wpForo, Asgaros each 'Not detected' with a disabled Import button (all three disabled)",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp1.png"
+    },
+    "c-admin-import.2": {
+      "result": "fail",
+      "expected": "step list Forums, Members, Topics, Replies, Profiles, Finalize with a moving progress bar, ending on 'Import complete!'",
+      "actual": "bbPress import (2 forums, 127 topics, 47 replies, one forum private) ran and ended on 'Import complete! 176 records imported successfully.', but the step bar shows only Forums, Topics, Replies, Profiles, Finalize: there is no Members step even though the run adds members to the private space (the handler labels the phase 'Adding members to private and group spaces...'). The 127-topic run finished in one batch so the bar jumped 0% -> 1.1% -> 100% and was never seen moving.",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-import",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp3-done.png"
+    },
+    "c-admin-import.3": {
+      "result": "pass",
+      "evidence": "source 2 forums / 127 topics / 47 replies -> 2 spaces under one category 'Imported from bbPress', 127 topics (121 + 6), 47 replies (sum of reply_count 47); guest home 30 members / 391 topics equals user profiles 30 and published topics 391 straight after",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp3-home.png"
+    },
+    "c-admin-import.4": {
+      "result": "pass",
+      "evidence": "logged out: opened 3 imported topics (refunds topic with 2 replies, the closed 'Staging site habits (#7)' with the Closed badge and 'This topic is closed' note, the ampersand topic). Authors Tomas Berg / Nadia Haddad / Priya Nair and source dates (2 years ago, oldest first) kept; private forum title not on the guest home",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp4-closed.png"
+    },
+    "c-admin-import.5": {
+      "result": "pass",
+      "evidence": "Re-Import (after the custom Confirm dialog) -> '0 records imported - 176 already imported, skipped'; categories, spaces, topics and import map rows unchanged (177)",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp5-post.png"
+    },
+    "c-admin-import.6": {
+      "result": "pass",
+      "evidence": "private bbPress forum became a private space with join policy approval; its 3 participants were added as members; guest home does not list it"
+    },
+    "c-admin-import.7": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "bob's jetonomy_import_batch answered 'Permission denied.'",
+      "actual": "bob gets 403 body -1 (nonce check first, with no nonce and with his REST nonce); he cannot obtain a jetonomy_admin nonce because it is printed only on admin pages, and /wp-admin import page is 403 for him. Nothing imported (import map unchanged).",
+      "url": "http://forums.local/wp-admin/admin-ajax.php"
+    },
+    "c-admin-import.8": {
+      "result": "pass",
+      "evidence": "admin with a valid nonce, source=bogus -> {success:false, data:'Unknown import source.'}; import map and resume option unchanged. Bad nonce -> 403 -1."
+    },
+    "c-admin-import.9": {
+      "result": "untested",
+      "needs": "docker site: 2000 source topics would sit in the shared jt tables and change counts the other walker reads"
+    },
+    "c-admin-import.10": {
+      "result": "untested",
+      "needs": "wpForo plugin (not installed) with held-for-moderation topics"
+    },
+    "c-admin-import.11": {
+      "result": "pass",
+      "evidence": "aborted admin-ajax after the first batch: 'Connection lost. You can resume this import later.'; after reload 'Import was interrupted at phase: forums (offset: 0). Started ...' with Resume Import and Start Over; Resume -> '0 records imported, 178 already imported, skipped'; import map stayed 177",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp11-reload.png"
+    },
+    "c-admin-import.12": {
+      "result": "pass",
+      "evidence": "1440 and 390: scrollWidth == clientWidth, cards stack, Re-Import 40px tall, notes readable",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp12-390.png"
+    },
+    "c-admin-import.13": {
+      "result": "pass",
+      "evidence": "bob opened the imported Arabic topic: Arabic title and body shape and punctuate right to left correctly. The page stays LTR, so the Arabic block is left-aligned (dir not set per post).",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-imp13-rtl.png"
+    },
+    "c-admin-import.14": {
+      "result": "fail",
+      "expected": "no row in spaces, categories or topics has an entity-encoded title",
+      "actual": "bbPress topic whose title was stored as 'Plugins &amp; themes: what to update first on Monday' was imported as jt_posts.title with the literal '&amp;' (post 5956). The topic page decodes it for display, but the row is entity-encoded; spaces and categories were clean (0).",
+      "url": "jt_posts.title via includes/import/class-bbpress-importer.php"
+    }
+  },
+  "proposed_checks": [
+    "- `c-admin-import.15` @admin #admin: look at the step list during a run with a private forum -> a Members step is shown before Topics, matching the 'Adding members to private and group spaces...' message.",
+    "- `c-admin-import.16` @admin #admin: after a re-import, the 'imported before (N items)' note and the '(M) already imported' result agree (shows 177 and 178 on the same screen).",
+    "- `c-admin-import.17` @member #ui +rtl: an imported or posted Arabic topic is right-aligned (dir=auto on the post body) on an LTR site.",
+    "- `c-admin-import.18` @admin #admin: the imported category slug is readable (it is imported-bbpress-1792234737 here, a timestamp) and the category name is 'Imported from bbPress'.",
+    "- `c-admin-import.19` @admin #cli: delete an imported space with `Space::delete` / the admin Delete button -> its topics and replies go with it (here the 127 topics and 47 replies stayed behind after the space row was deleted)."
+  ],
+  "notes": "Activated bbPress for this journey only; deactivated at the end (active: jetonomy, jetonomy-pro, wpmediaverse, wb-gamification). The import cannot choose a destination category: it creates 'Imported from bbPress'. Source data was 2 bbPress forums ('Walk Import Board (delete after walk)', 'Walk Import Partners (private, delete after walk)'), 127 topics, 47 replies and 3 throwaway authors. Removed afterwards: the imported category, 2 spaces, 127 topics, 47 replies, import map rows, jetonomy_import_history option, profiles, memberships and activity rows of the 3 authors, the 3 WP users and all 176 bbPress posts. Space::delete does not remove the topics inside it (orphan topics stayed until deleted one by one with Post::delete); worth a check. One pre-existing orphan reply (id 10584, post_id 0, 'QA-RFT reply on closed topic') is not from this walk. No change to jetonomy_settings. Theme repeats: wp-admin screen, not styled by the front-end theme; imported topic pages were viewed in Reign only."
+}

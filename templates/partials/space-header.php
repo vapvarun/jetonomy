@@ -30,7 +30,7 @@ $is_restricted   = in_array( $space_status, array( 'archived', 'locked' ), true 
 <?php endif; ?>
 	<div class="jt-space-cover__identity">
 		<?php jetonomy_render_space_icon( $space->icon ?? '', 32, 'jt-space-emoji' ); ?>
-		<h1 class="jt-space-cover__title"><?php echo esc_html( $space->title ); ?></h1>
+		<h1 class="jt-space-cover__title" dir="auto"><?php echo esc_html( $space->title ); ?></h1>
 	</div>
 </div>
 <?php
@@ -40,7 +40,7 @@ $_jt_can_edit_space = is_user_logged_in()
 <div class="jt-space-head">
 		<div class="jt-space-head__meta">
 			<?php if ( ! empty( $space->description ) ) : ?>
-				<p class="jt-space-desc"><?php echo esc_html( $space->description ); ?></p>
+				<p class="jt-space-desc" dir="auto"><?php echo esc_html( $space->description ); ?></p>
 			<?php endif; ?>
 			<?php
 			/**

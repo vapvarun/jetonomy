@@ -678,6 +678,52 @@ function* avatarUpload( file, input ) {
     document.getElementById( 'jt-avatar-remove' )?.removeAttribute( 'hidden' );
 }
 
+// Elements a quote keeps. Anything else is unwrapped to its text, and the
+// QUOTE_SKIP set (earlier quotes, media, embeds, controls) is dropped whole.
+const QUOTE_KEEP = new Set( [ 'P', 'UL', 'OL', 'LI', 'PRE', 'CODE', 'STRONG', 'EM', 'B', 'I', 'A', 'BR' ] );
+const QUOTE_SKIP = new Set( [ 'BLOCKQUOTE', 'IMG', 'PICTURE', 'FIGURE', 'IFRAME', 'VIDEO', 'AUDIO', 'SVG', 'CANVAS', 'OBJECT', 'EMBED', 'SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'FORM' ] );
+
+/**
+ * Copy a rendered reply body into a quote, keeping its structure.
+ *
+ * Rebuilds each kept element fresh (no attributes except an http(s) link
+ * target) and copies text as text nodes, so no markup from the page is
+ * carried over as HTML. The saved reply is still kses-filtered server side.
+ *
+ * @param {Node}   from Source node (the .jt-reply-body).
+ * @param {Node}   to   Destination node.
+ * @param {Object} budget `{ left: n }` characters of text still allowed.
+ */
+function quoteCopy( from, to, budget ) {
+    for ( const node of from.childNodes ) {
+        if ( budget.left <= 0 ) {
+            return;
+        }
+        if ( Node.TEXT_NODE === node.nodeType ) {
+            const text = node.nodeValue;
+            to.appendChild( document.createTextNode( text.length > budget.left ? text.slice( 0, budget.left ).trimEnd() + '…' : text ) );
+            budget.left -= text.trim() ? text.length : 0;
+            continue;
+        }
+        if ( Node.ELEMENT_NODE !== node.nodeType ) {
+            continue;
+        }
+        const tag = node.tagName.toUpperCase();
+        if ( QUOTE_SKIP.has( tag ) ) {
+            continue;
+        }
+        let into = to;
+        if ( QUOTE_KEEP.has( tag ) ) {
+            into = document.createElement( tag.toLowerCase() );
+            if ( 'A' === tag && /^https?:/i.test( node.href ) ) {
+                into.href = node.href;
+            }
+            to.appendChild( into );
+        }
+        quoteCopy( node, into, budget );
+    }
+}
+
 /**
  * Append a freshly-posted TOP-LEVEL reply in place instead of full-reloading
  * the thread. Re-fetches the current thread (HTML, not JSON — same approach as
@@ -720,6 +766,34 @@ async function appendNewReply( newId ) {
     } catch ( e ) {
         return false;
     }
+}
+
+/**
+ * URL of the page a new top-level reply lands on, anchored to it.
+ *
+ * Under the default oldest-first order a new reply is the last one, so it sits
+ * on the last page; on a long thread that is not the page being read. Returns
+ * '' for other orders (newest-first puts it on page 1, best is unknown).
+ *
+ * @param {number|string} newId Reply id from the create response.
+ * @return {string}
+ */
+function lastReplyPageUrl( newId ) {
+    const list    = document.getElementById( 'jt-replies-container' );
+    const perPage = parseInt( list?.dataset.perPage, 10 );
+    const count   = parseInt( list?.dataset.topLevel, 10 );
+    if ( ! newId || ! perPage || isNaN( count ) || 'oldest' !== list.dataset.sort ) {
+        return '';
+    }
+    const url  = new URL( window.location.href );
+    const page = Math.ceil( ( count + 1 ) / perPage );
+    if ( page > 1 ) {
+        url.searchParams.set( 'rpg', String( page ) );
+    } else {
+        url.searchParams.delete( 'rpg' );
+    }
+    url.hash = 'reply-' + newId;
+    return url.toString();
 }
 
 /** Mark a notifications-page row read in place (ported from notifications-page.js). */
@@ -2103,9 +2177,11 @@ const { state, actions } = store( 'jetonomy', {
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
 
                 try {
+                    // edit_token: the server refuses (409) if someone saved this reply
+                    // after this page loaded, instead of overwriting their save.
                     const res = await window.jetonomyRest.restFetch( `/replies/${ replyId }`, {
                         method: 'PATCH',
-                        body: { content },
+                        body: { content, ...( trigger.dataset.editToken && { edit_token: trigger.dataset.editToken } ) },
                     } );
 
                     if ( res.ok ) {
@@ -2662,6 +2738,7 @@ const { state, actions } = store( 'jetonomy', {
         editPost( event ) {
             const el = getElement();
             const postId = el.ref.dataset.postId;
+            const editToken = el.ref.dataset.editToken || '';
             if ( ! postId ) return;
 
             const article = el.ref.closest( 'article' ) || el.ref.closest( '.jt-post' );
@@ -2766,7 +2843,9 @@ const { state, actions } = store( 'jetonomy', {
                 // Collect Pro custom-field inputs from the revealed edit block via
                 // the shared collector (window.jetonomyCollectCustomFields). Omitted
                 // entirely when the extension is off (no block, no inputs).
-                const body = { content };
+                // edit_token: the server refuses (409) if someone saved this topic
+                // after this page loaded, instead of overwriting their save.
+                const body = { content, ...( editToken && { edit_token: editToken } ) };
                 if ( fieldsBlock && window.jetonomyCollectCustomFields ) {
                     const customFields = window.jetonomyCollectCustomFields( fieldsBlock );
                     if ( Object.keys( customFields ).length > 0 ) {
@@ -3365,6 +3444,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( excerpt ) {
                         const quote = document.createElement( 'a' );
                         quote.className = 'jt-replying-to-excerpt';
+                        quote.dir = 'auto';
                         quote.href = '#reply-' + replyId;
                         quote.textContent = '\u201C' + ( excerpt.length > 80 ? excerpt.slice( 0, 80 ).trim() + '\u2026' : excerpt ) + '\u201D';
                         indicator.appendChild( quote );
@@ -3395,21 +3475,16 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = replyEl.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
 
-            // Get plain text, trimmed to ~300 chars.
-            let text = ( bodyEl.textContent || '' ).trim();
-            if ( text.length > 300 ) {
-                text = text.substring( 0, 297 ) + '...';
-            }
-
-            // Build blockquote HTML.
+            // Build the blockquote: the reply's paragraphs, lists and code,
+            // trimmed to ~300 characters of text. dir="auto" lets a quote in
+            // another script take its own direction (and its bar's side).
             const cite = document.createElement( 'cite' );
             cite.textContent = authorName;
             const blockquote = document.createElement( 'blockquote' );
             blockquote.className = 'jt-quote';
+            blockquote.dir = 'auto';
             blockquote.appendChild( cite );
-            const p = document.createElement( 'p' );
-            p.textContent = text;
-            blockquote.appendChild( p );
+            quoteCopy( bodyEl, blockquote, { left: 300 } );
 
             // Insert into composer.
             const composer = document.getElementById( 'jt-composer' );
@@ -3445,8 +3520,11 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Editor input tracking ──
         onEditorInput() {
-            // Placeholder for editor input handling (e.g. auto-save, char count).
-            // The contenteditable body dispatches this on every keystroke.
+            // Typing clears the "write something first" error.
+            const ctx = getContext();
+            if ( ctx?.error ) {
+                ctx.error = '';
+            }
         },
 
         // ── Moderation: resolve a queued flag ──
@@ -3762,9 +3840,18 @@ const { state, actions } = store( 'jetonomy', {
             const editorWrap = el.ref.closest( '.jt-editor' );
             const body = editorWrap?.querySelector( '[contenteditable]' )
                 || document.getElementById( `jt-composer-${ postId }` );
-            if ( ! body || ! body.innerHTML.trim() ) return;
+            if ( ! body ) return;
 
             const ctx = getContext();
+            // An editor the member typed in and cleared still holds a <br>, so test
+            // for text or media (composer.js's own "empty" rule), and say what is
+            // missing instead of silently refusing.
+            if ( ! ( body.textContent || '' ).trim() && ! body.querySelector( 'img, video, iframe, audio, hr, table, blockquote, pre' ) ) {
+                ctx.error = ctx.emptyError || state.i18n?.failedSave || 'Failed to save.';
+                body.focus();
+                return;
+            }
+            ctx.error = '';
             ctx.submitting = true;
 
             // Only include parent_id when it resolves to a positive integer.
@@ -3826,10 +3913,14 @@ const { state, actions } = store( 'jetonomy', {
                         const appended = ! parentId && payload.id
                             ? yield appendNewReply( payload.id )
                             : false;
+                        const lastPage = ! appended && ! parentId ? lastReplyPageUrl( payload.id ) : '';
                         if ( appended ) {
                             body.innerHTML = '';
                             state.replyToId = null;
                             state.replyToAuthor = '';
+                        } else if ( lastPage && lastPage.split( '#' )[ 0 ] !== window.location.href.split( '#' )[ 0 ] ) {
+                            // A long thread: the new reply is on a later page, so go there.
+                            window.location.assign( lastPage );
                         } else {
                             window.location.reload();
                         }

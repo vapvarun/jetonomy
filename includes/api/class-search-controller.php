@@ -171,6 +171,8 @@ class Search_Controller extends Base_Controller {
 		// adapter a plugin registered.
 		$adapter = \Jetonomy\Adapters\Adapter_Registry::get_search_query();
 		$scope   = compact( 'q', 'space_id', 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' );
+		// The words to highlight in results, matched as word prefixes.
+		$terms = \Jetonomy\Search\Fulltext_Search::query_terms( (string) $q );
 
 		// Combined "all" mode returns posts, spaces, and tags grouped. Limit/offset
 		// apply to the posts group only — spaces/tags are a header slice (a fixed
@@ -246,6 +248,7 @@ class Search_Controller extends Base_Controller {
 						),
 						'offset'   => $offset,
 						'has_more' => ( $offset + count( $posts ) ) < $posts_total,
+						'terms'    => $terms,
 					),
 				),
 				200
@@ -323,6 +326,7 @@ class Search_Controller extends Base_Controller {
 			array(
 				'total'  => $total,
 				'offset' => $offset,
+				'terms'  => $terms,
 			)
 		);
 

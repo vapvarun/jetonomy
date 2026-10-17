@@ -810,6 +810,7 @@
   .jt-editor-body:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; border-radius: var(--jt-radius-sm); }
   .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
   .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--jt-border); }
+  .jt-editor .jt-editor-error { margin: 0 var(--jt-space-3) var(--jt-space-3); }
   .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); }
 
   /* ── Card (sidebar) ── */
@@ -1423,10 +1424,14 @@
   .jt-similar-meta { display: block; font-size: 0.75rem; color: var(--jt-text-tertiary); margin-top: 2px; }
 
   /* ── Quote blockquote ── */
-  .jt-quote { border-right: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); padding: 10px 14px; border-radius: var(--jt-radius-sm) 0 0 var(--jt-radius-sm); margin: 0 0 12px; font-size: 0.9375rem; }
-  .jt-quote cite { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent); font-style: normal; margin-bottom: 4px; }
+  /* Logical sides: the quote carries dir="auto", so an Arabic quote in an English
+     thread puts its bar on the right, where the text starts. */
+  .jt-quote { border-inline-start: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); color: var(--jt-text-secondary); padding-block: var(--jt-space-2); padding-inline: var(--jt-space-3); border-radius: 0; border-start-end-radius: var(--jt-radius); border-end-end-radius: var(--jt-radius); margin-block: var(--jt-space-2); margin-inline: 0; font-size: 0.9375rem; }
+  .jt-quote cite { display: block; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-tertiary); font-style: normal; margin-block-end: var(--jt-space-1); }
+  .jt-quote :is(ul, ol) { margin-block: 0; padding-inline-start: var(--jt-space-5); }
   .jt-quote cite::before { content: '\2014 '; }
   .jt-quote p { margin: 0; color: var(--jt-text-secondary); line-height: 1.5; }
+  .jt-quote > :is(p, ul, ol, pre) + :is(p, ul, ol, pre) { margin-block-start: var(--jt-space-2); }
 
   /* ── Inline notices (pending, spam, etc.) ── */
   .jt-notice { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; margin-bottom: 16px; }
@@ -2037,7 +2042,12 @@
   .jt-row-stat .jt-row-time { white-space: normal; text-wrap: balance; }
   /* A state shown in a button's place (Invite Only, Awaiting Approval): not clickable. */
   .jt-app .jt-btn--status { cursor: default; opacity: 0.7; text-align: center; }
-  .jt-app .jt-invite-landing { text-align: center; padding: 48px 0; }
+  .jt-app .jt-invite-landing { text-align: center; padding-block: var(--jt-space-12); }
+  @media (max-width: 640px) {
+    /* Full-width primary actions on a phone, like every other primary CTA. */
+    .jt-invite-landing .jt-invite-actions { flex-direction: column; align-items: stretch; }
+    .jt-invite-landing .jt-invite-actions .jt-btn { width: 100%; justify-content: center; }
+  }
 
   /* ── Category page header ── */
   .jt-cat-page-row { display: flex; align-items: center; gap: var(--jt-space-3); margin-bottom: var(--jt-space-4); }
@@ -2224,7 +2234,7 @@
   /* border-radius is !important for the same reason as border/colour: host
      themes style input[type=text] at higher specificity (Reign 6px, BuddyX 4px),
      so the input radius changed per theme. One radius: --jt-radius. */
-  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius) !important; font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; caret-color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: right; }
+  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius) !important; font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; caret-color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: start; }
   /* Single focus ring (border recolor + box-shadow halo). Text inputs always
      match :focus-visible when focused, so a separate outline here doubled the
      ring — :focus and :focus-visible share one indicator. */
@@ -2794,8 +2804,6 @@
 /* ── G5: Quote Button ── */
 .jt-quote-btn { position: absolute; z-index: 200; padding: 6px 14px; background: var(--jt-text); color: var(--jt-bg); border: none; border-radius: var(--jt-radius-full); cursor: pointer; font-weight: 600; font-size: 0.9375rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.1s; }
 .jt-quote-btn:hover { transform: scale(1.05); }
-.jt-quote { border-right: 3px solid var(--jt-accent); padding: 8px 14px; margin: 8px 0; background: var(--jt-bg-subtle); border-radius: var(--jt-radius) 0 0 var(--jt-radius); color: var(--jt-text-secondary); }
-.jt-quote cite { display: block; font-weight: 600; font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-bottom: 4px; font-style: normal; }
 
 /* ── G6: User Hover Cards ── */
 .jt-hover-card { position: absolute; z-index: 300; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 16px; width: 280px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation: jt-fadeIn 0.2s ease; }
@@ -3245,6 +3253,14 @@
 .jt-search-overlay-item:hover { background: var(--jt-bg-hover); }
 .jt-search-overlay-item strong { font-size: 0.9375rem; }
 .jt-search-overlay-item span { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+/* Query words marked on the search results page. */
+.jt-hl { background: var(--jt-warn-light); color: inherit; font-weight: inherit; padding: 0; border-radius: var(--jt-radius-sm); }
+.jt-search-overlay-all {
+  display: block; padding: var(--jt-space-3) var(--jt-space-5);
+  color: var(--jt-accent); font-size: 0.875rem; font-weight: 600; text-decoration: none;
+}
+.jt-search-overlay-all:hover { background: var(--jt-bg-hover); }
+.jt-search-overlay-all:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; }
 
 /* ── Skeleton Loading Placeholders ── */
 @keyframes jt-shimmer {

@@ -70,6 +70,7 @@
 					if (n.id) { a.setAttribute('data-jt-notif-id', n.id); }
 					var txt = document.createElement('span');
 					txt.className = 'jt-notif-panel-text';
+					txt.dir = 'auto';
 					txt.textContent = n.message || '';
 					a.appendChild(txt);
 					var time = document.createElement('span');
@@ -170,6 +171,7 @@
 		var input = document.createElement('input');
 		input.type = 'text';
 		input.className = 'jt-search-overlay-input';
+		input.dir = 'auto';
 		input.placeholder = __( 'Search discussions…', 'jetonomy' );
 		input.autocomplete = 'off';
 		field.appendChild(input);
@@ -183,6 +185,10 @@
 		inner.appendChild(results);
 		searchEl.appendChild(inner);
 		document.body.appendChild(searchEl);
+
+		function searchPageUrl(query) {
+			return ((D && D.base) || '') + '/search/?q=' + encodeURIComponent(query || '');
+		}
 
 		input.addEventListener('input', function () {
 			clearTimeout(searchTimer);
@@ -207,7 +213,7 @@
 				if (r && r.slug && r.space_id === undefined) {
 					return base + '/tag/' + encodeURIComponent(r.slug) + '/';
 				}
-				return base + '/search/?q=' + encodeURIComponent(query || '');
+				return searchPageUrl(query);
 			}
 
 			searchTimer = setTimeout(function () {
@@ -235,6 +241,7 @@
 						a.href = searchResultUrl(r, q);
 						a.className = 'jt-search-overlay-item';
 						var strong = document.createElement('strong');
+						strong.dir = 'auto';
 						strong.textContent = r.title;
 						a.appendChild(strong);
 						if (r.space_title) {
@@ -244,12 +251,25 @@
 						}
 						results.appendChild(a);
 					});
+					// Six hits is a preview; the search page has the rest plus filters.
+					var all = document.createElement('a');
+					all.href = searchPageUrl(q);
+					all.className = 'jt-search-overlay-all';
+					all.textContent = __( 'See all results', 'jetonomy' );
+					results.appendChild(all);
 				});
 			}, 250);
 		});
 
 		searchEl.addEventListener('click', function (e) { if (e.target === searchEl) { window.jtCloseSearch(); } });
-		input.addEventListener('keydown', function (e) { if (e.key === 'Escape') { window.jtCloseSearch(); } });
+		input.addEventListener('keydown', function (e) {
+			if (e.key === 'Escape') { window.jtCloseSearch(); }
+			// Enter runs the full search, the same as the search page's own form.
+			if (e.key === 'Enter' && !e.isComposing && input.value.trim()) {
+				e.preventDefault();
+				window.location.href = searchPageUrl(input.value.trim());
+			}
+		});
 		return searchEl;
 	}
 

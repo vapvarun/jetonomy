@@ -102,7 +102,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 		</div>
 	<?php endif; ?>
 
-	<div class="jt-mod-flag-excerpt">
+	<div class="jt-mod-flag-excerpt" dir="auto">
 		<?php echo esc_html( $jt_excerpt ); ?>
 	</div>
 

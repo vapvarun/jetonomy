@@ -185,7 +185,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			?>
 		</a>
 	<?php endif; ?>
-	<div class="jt-reply-body">
+	<div class="jt-reply-body" dir="auto">
 		<?php
 		// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
 		// Embeds first so standalone URLs (including `tiktok.com/@user/video/...`)
@@ -297,7 +297,8 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 					<?php if ( $jt_rp_can_edit ) : ?>
 					<button class="jt-more-item"
 						data-wp-on--click="actions.editReply"
-						data-reply-id="<?php echo (int) $reply->id; ?>">
+						data-reply-id="<?php echo (int) $reply->id; ?>"
+						data-edit-token="<?php echo esc_attr( \Jetonomy\Models\Reply::edit_token( $reply, \Jetonomy\Models\Reply::EDIT_FIELDS ) ); ?>">
 						<?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 					</button>
 					<button class="jt-more-item"

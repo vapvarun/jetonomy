@@ -1,0 +1,101 @@
+{
+  "journey": "C.admin.setup-wizard",
+  "free": "a0fcbb2e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T11:30:00Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark-emulated"
+    ]
+  },
+  "checks": {
+    "c-admin-setup-wizard.1": {
+      "result": "pass",
+      "evidence": "wp-admin/admin.php?page=jetonomy-setup: 'Welcome to Jetonomy', Community URL Slug (community), Default Community Type Forum/Q&A/Ideas/Feed, button 'Next: First Space'",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz1.png"
+    },
+    "c-admin-setup-wizard.2": {
+      "result": "pass",
+      "evidence": "category name emptied, Create Space -> red 'Please fill in the category and space name.'; jt_categories stayed 7",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz2-empty.png"
+    },
+    "c-admin-setup-wizard.3": {
+      "result": "pass",
+      "evidence": "'Product Questions' + 'Getting Started' -> 'Your community is ready!' with Visit Community and Go to Dashboard, plus next steps list",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz3.png"
+    },
+    "c-admin-setup-wizard.4": {
+      "result": "pass",
+      "evidence": "Visit Community opens /community/ (in a new tab); guest /community/ lists Product Questions > Getting Started (Forum, 0 topics, 1 member) under the existing categories",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz4-admin.png"
+    },
+    "c-admin-setup-wizard.5": {
+      "result": "untested",
+      "needs": "docker site: 'Import the demo community instead' seeds demo users and content into the shared walk community"
+    },
+    "c-admin-setup-wizard.6": {
+      "result": "untested",
+      "needs": "docker site: remove demo data wipes the shared community"
+    },
+    "c-admin-setup-wizard.7": {
+      "result": "untested",
+      "needs": "docker site: remove demo data on a site with real topics would delete shared rows"
+    },
+    "c-admin-setup-wizard.8": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "bob posting jetonomy_setup_save and jetonomy_setup_create_sample is answered 'Permission denied.' (403)",
+      "actual": "both answered 403 with body -1: the nonce check runs before the capability check, and bob cannot obtain a valid nonce (it is only printed on the admin-only wizard page). /wp-admin wizard page for bob: 403 'Sorry, you are not allowed to access this page.' Nothing created (no category or space named Nope).",
+      "url": "http://forums.local/wp-admin/admin-ajax.php"
+    },
+    "c-admin-setup-wizard.9": {
+      "result": "pass",
+      "evidence": "logged out jetonomy_setup_save and jetonomy_setup_create_sample -> HTTP 400 body 0; nothing created"
+    },
+    "c-admin-setup-wizard.10": {
+      "result": "pass",
+      "evidence": "admin with nonce 'deadbeef00' and with no nonce -> 403 body -1; nothing created; jetonomy_settings identical to before the walk"
+    },
+    "c-admin-setup-wizard.11": {
+      "result": "pass",
+      "evidence": "390px steps 1 and 2: scrollWidth == clientWidth 390; Next 44px, Create Space 44px, demo button 60px, inputs 42px tall; step bar fits",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz11-s1-390.png, laneA-wiz11-s2-390.png"
+    },
+    "c-admin-setup-wizard.12": {
+      "result": "pass",
+      "evidence": "150-character category name and 288-character space description both stored in full (LENGTH 150 / 288); guest home wraps the category heading (overflow-wrap anywhere), 390px no sideways scroll; the final wizard screen itself does not show them",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz12-home390.png"
+    },
+    "c-admin-setup-wizard.13": {
+      "result": "pass",
+      "evidence": "admin-ajax aborted: 'Network error. Please try again.' shown, Create Space re-enabled; retry created exactly one 'Reseller Resources' category and one space"
+    },
+    "c-admin-setup-wizard.14": {
+      "result": "fail",
+      "expected": "layout mirrors, progress steps right to left, text reads correctly",
+      "actual": "layout mirrors and steps run 1,2,3 right to left, but the whole wizard stays in English (no Arabic strings) and the URL preview renders as '/http://forums.local/community' with the leading slash on the wrong side (bidi not isolated, should be dir=ltr).",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-setup (site language ar)",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz14-rtl.png"
+    },
+    "c-admin-setup-wizard.15": {
+      "result": "pass",
+      "evidence": "WordPress admin has no dark scheme and the wizard has no dark rules; with prefers-color-scheme dark it stays light: text rgb(15,23,42) on rgb(248,250,252) inputs, contrast far above 4.5:1",
+      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz15-dark.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-admin-setup-wizard.16` @admin #admin +rtl: in the Arabic admin the URL preview under the slug field reads http://forums.local/community/ left to right with the slash at the end.",
+    "- `c-admin-setup-wizard.17` @admin #admin !refuse: run the wizard twice with the same category and space names -> the second run says the names already exist or merges, and does not add a duplicate 'Getting Started' category (a second 'Getting Started' space was created beside the seeded one).",
+    "- `c-admin-setup-wizard.18` @admin #admin +390: the floating Messages button does not cover the Create Space or Next buttons at 390px."
+  ],
+  "notes": "Changed during the walk: jetonomy_setup_complete set true by the wizard (restored to unset/false), site language switched to ar for c-14 (restored to en_US, WPLANG empty). jetonomy_settings was byte-identical before and after. Categories and spaces made by the wizard (Product Questions/Getting Started, long-name category/Partner Setup Help, Reseller Resources/Reseller Q&A) were deleted; counts back to 7 categories and 45 spaces. Wizard can be re-run on a site that is already set up, creating another category and space each time. Theme repeats (+long/+390/+dark): the wizard and the import screen are wp-admin pages, which the front-end theme does not style, so they were walked once; the long-name results were also checked on the guest home in Reign only."
+}

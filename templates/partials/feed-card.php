@@ -70,7 +70,7 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 		</div>
 	</header>
 
-	<div class="jt-feed-card-body">
+	<div class="jt-feed-card-body" dir="auto">
 		<?php echo wp_kses_post( jetonomy_format_content( (string) $post->content ) ); ?>
 	</div>
 

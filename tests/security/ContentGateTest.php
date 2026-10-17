@@ -92,6 +92,19 @@ class ContentGateTest extends WP_UnitTestCase {
 		$this->assertSame( 'jetonomy_user_silenced', $result->get_error_code() );
 	}
 
+	/**
+	 * A space ban must answer with its own reason, not the generic forbidden the
+	 * later can() check returns: the gate passed no space to restriction_error().
+	 */
+	public function test_a_space_banned_member_is_told_why(): void {
+		Restriction::ban( $this->member_id, 'space_ban', 1, $this->space_id );
+
+		$result = Content_Gate::check( $this->member_id, $this->post() );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'jetonomy_user_space_banned', $result->get_error_code() );
+	}
+
 	public function test_a_closed_post_accepts_no_replies(): void {
 		Post::close( $this->post_id );
 		\Jetonomy\Cache::reset_memos();

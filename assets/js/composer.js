@@ -588,6 +588,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
             // and concatenating it into innerHTML ran it in the quoter's session.
             var quote = document.createElement('blockquote');
             quote.className = 'jt-quote';
+            quote.dir = 'auto';
             if (authorName) {
                 var cite = document.createElement('cite');
                 cite.textContent = authorName;

@@ -40,11 +40,11 @@ class Spaces_Handler {
 	 */
 	public static function edit_token( object $space, bool $settings = false ): string {
 		if ( ! $settings ) {
-			return \Jetonomy\Admin\Admin::edit_token( $space, self::EDIT_FIELDS );
+			return \Jetonomy\Models\Model::edit_token( $space, self::EDIT_FIELDS );
 		}
 		// Decoded from the row, not Space::get_settings(): that is memoized for the request.
 		$decoded = json_decode( (string) ( $space->settings ?? '' ), true );
-		return \Jetonomy\Admin\Admin::edit_token( (object) ( is_array( $decoded ) ? $decoded : array() ), self::SETTINGS_FIELDS );
+		return \Jetonomy\Models\Model::edit_token( (object) ( is_array( $decoded ) ? $decoded : array() ), self::SETTINGS_FIELDS );
 	}
 
 	public function __construct() {
@@ -170,7 +170,7 @@ class Spaces_Handler {
 		if ( isset( $_POST['edit_token'] ) ) {
 			$current = Space::find( $id );
 			if ( $current && ! hash_equals( self::edit_token( $current, $is_settings_form ), sanitize_text_field( wp_unslash( $_POST['edit_token'] ) ) ) ) {
-				wp_send_json_error( \Jetonomy\Admin\Admin::edit_conflict_message( 'space' ) );
+				wp_send_json_error( \Jetonomy\Models\Model::edit_conflict_message( 'space' ) );
 			}
 		}
 

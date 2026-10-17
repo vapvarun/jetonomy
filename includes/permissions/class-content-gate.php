@@ -70,12 +70,12 @@ class Content_Gate {
 			}
 		}
 
-		$restricted = Permission_Engine::restriction_error( $user_id, 'create_replies' );
+		$space_id = (int) ( $post->space_id ?? 0 );
+
+		$restricted = Permission_Engine::restriction_error( $user_id, 'create_replies', $space_id );
 		if ( $restricted ) {
 			return $restricted;
 		}
-
-		$space_id = (int) ( $post->space_id ?? 0 );
 
 		$open = self::space_accepts_content( $space_id );
 		if ( is_wp_error( $open ) ) {
@@ -103,14 +103,101 @@ class Content_Gate {
 		 * an old notification. The token proves identity, not entitlement.
 		 */
 		if ( $space_id && ! Permission_Engine::can( $user_id, 'create_replies', $space_id ) ) {
-			return new \WP_Error(
-				'jetonomy_forbidden',
-				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You cannot post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-				array( 'status' => 403 )
-			);
+			return self::cannot_post_error();
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether this user may start a topic in this space right now: check()'s twin
+	 * for posts, shared by REST, the WP Abilities path and WP-CLI.
+	 *
+	 * @param int $user_id  Author.
+	 * @param int $space_id Space.
+	 * @return true|\WP_Error True when the topic may proceed.
+	 */
+	public static function check_post( int $user_id, int $space_id ) {
+		if ( $user_id <= 0 ) {
+			return new \WP_Error( 'jetonomy_not_logged_in', __( 'You must be logged in to post.', 'jetonomy' ), array( 'status' => 401 ) );
+		}
+
+		$restricted = Permission_Engine::restriction_error( $user_id, 'create_posts', $space_id );
+		if ( $restricted ) {
+			return $restricted;
+		}
+
+		// Permission before the space state, so a space this member may not post in
+		// (a hidden one included) reveals nothing about its status.
+		if ( ! Permission_Engine::can( $user_id, 'create_posts', $space_id ) ) {
+			return self::cannot_post_error();
+		}
+
+		$open = self::space_accepts_content( $space_id );
+		return is_wp_error( $open ) ? $open : true;
+	}
+
+	/**
+	 * Whether this user may cast this vote on a post or reply: live and readable
+	 * target, the vote permission in its space, and the self-vote rules. Shared by
+	 * REST and WP-CLI. Withdrawing a vote does not come through here.
+	 *
+	 * @param int    $user_id Voter.
+	 * @param string $type    'post' or 'reply'.
+	 * @param int    $id      Object ID.
+	 * @param int    $value   1 or -1.
+	 * @return true|\WP_Error
+	 */
+	public static function check_vote( int $user_id, string $type, int $id, int $value ) {
+		$live = self::target_is_live( $type, $id, $user_id );
+		if ( is_wp_error( $live ) ) {
+			return $live;
+		}
+
+		$object   = 'reply' === $type ? Reply::find( $id ) : Post::find( $id );
+		$post     = 'reply' === $type && $object ? Post::find( (int) $object->post_id ) : $object;
+		$space_id = (int) ( $post->space_id ?? 0 );
+
+		if ( ! Permission_Engine::can( $user_id, 'vote', $space_id ) ) {
+			return Permission_Engine::restriction_error( $user_id, 'vote', $space_id ) ?? \Jetonomy\API\REST_Auth::forbidden();
+		}
+
+		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
+			return new \WP_Error( 'jetonomy_validation', __( 'Vote value must be 1 or -1.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
+		$is_self = $object && (int) ( $object->author_id ?? 0 ) === $user_id;
+
+		// A self-downvote drives the author's own score negative, against "I'm posting my view".
+		if ( -1 === $value && $is_self ) {
+			return new \WP_Error( 'jetonomy_validation', __( 'You cannot downvote your own content.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
+		/**
+		 * Whether a member may upvote their own content.
+		 *
+		 * @param bool   $allowed Default true.
+		 * @param int    $user_id Voting user.
+		 * @param string $type    'post' or 'reply'.
+		 * @param int    $id      Object ID.
+		 */
+		if ( 1 === $value && $is_self
+			&& ! apply_filters( 'jetonomy_allow_self_upvote', true, $user_id, $type, $id ) ) {
+			return new \WP_Error( 'jetonomy_validation', __( 'You cannot upvote your own content.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * The refusal for a member the space does not let post.
+	 */
+	private static function cannot_post_error(): \WP_Error {
+		return new \WP_Error(
+			'jetonomy_forbidden',
+			sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You cannot post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			array( 'status' => 403 )
+		);
 	}
 
 	/**

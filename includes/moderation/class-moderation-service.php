@@ -520,6 +520,75 @@ class Moderation_Service {
 	}
 
 	/**
+	 * Whether this member may report this post, reply or member: no account
+	 * restriction, a live target they can read, not their own, not already
+	 * reported by them. Shared by POST /flags and WP-CLI.
+	 *
+	 * @param int    $reporter_id Reporting member.
+	 * @param string $object_type 'post', 'reply' or 'user'.
+	 * @param int    $object_id   Target ID.
+	 * @return true|WP_Error
+	 */
+	public static function check_flag( int $reporter_id, string $object_type, int $object_id ) {
+		$restricted = \Jetonomy\Permissions\Permission_Engine::restriction_error( $reporter_id, 'flag' );
+		if ( $restricted ) {
+			return $restricted;
+		}
+
+		// The target must exist, and members cannot report their own content /
+		// themselves. Both were client-side-only before, so a raw API call
+		// could 201 a flag against a nonexistent id or self-report to farm the
+		// reporter-reputation path.
+		$target_author = null;
+		// Content must also be live and readable by the reporter. A topic in a
+		// private space you cannot open, or a trashed reply, answers exactly like a
+		// missing one: otherwise any member could flag (and dock reputation from)
+		// content they cannot see, and 404-vs-201 would confirm private ids exist.
+		if ( 'post' === $object_type ) {
+			$target        = Post::find( $object_id );
+			$readable      = $target && 'publish' === $target->status
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $reporter_id, $target );
+			$target_author = $readable ? (int) $target->author_id : null;
+		} elseif ( 'reply' === $object_type ) {
+			$target        = Reply::find( $object_id );
+			$parent        = $target ? Post::find( (int) $target->post_id ) : null;
+			$readable      = $target && $parent && 'publish' === $target->status && 'publish' === $parent->status
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $reporter_id, $parent )
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_reply( $reporter_id, $target, $parent );
+			$target_author = $readable ? (int) $target->author_id : null;
+		} elseif ( 'user' === $object_type ) {
+			$target        = get_userdata( $object_id );
+			$target_author = $target ? (int) $target->ID : null;
+		}
+		if ( null === $target_author ) {
+			return new WP_Error(
+				'jetonomy_flag_target_missing',
+				__( 'The reported content no longer exists.', 'jetonomy' ),
+				array( 'status' => 404 )
+			);
+		}
+		if ( $target_author === $reporter_id ) {
+			return new WP_Error(
+				'jetonomy_flag_self',
+				__( 'You cannot report your own content.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Prevent duplicate flags by the same user on the same object.
+		$existing = Flag::find_by_reporter_and_object( $reporter_id, $object_type, $object_id );
+		if ( $existing ) {
+			return new WP_Error(
+				'jetonomy_already_flagged',
+				__( 'You have already reported this content.', 'jetonomy' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
 	 * The status new member content is stored with: the one hold decision
 	 * every create/publish path runs (REST create, draft publish-now, the
 	 * scheduled publish, abilities, reply-by-email). Content rules

@@ -41,6 +41,13 @@
 		if ( ! el ) { return; }
 		el.textContent = text || '';
 		el.classList.toggle( 'is-success', !! isSuccess );
+		// The submit button was disabled mid-request, which drops focus to the
+		// page body; put it on the outcome so keyboard and screen-reader users
+		// land where the answer is.
+		if ( text ) {
+			el.setAttribute( 'tabindex', '-1' );
+			el.focus();
+		}
 	}
 
 	function lockSubmit( form ) {

@@ -134,7 +134,7 @@ class Journey_Tests {
 			array(
 				'object_type' => 'post',
 				'object_id'   => $post_id,
-				'reporter_id' => $author,
+				'reporter_id' => $this->discover_secondary_user(), // Nobody may report their own content.
 				'reason'      => 'spam',
 			)
 		);

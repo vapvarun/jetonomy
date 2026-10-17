@@ -115,7 +115,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 		</div>
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
 			<?php if ( ! empty( $space->description ) ) : ?>
-				<p class="jt-sidebar-about"><?php echo esc_html( $space->description ); ?></p>
+				<p class="jt-sidebar-about" dir="auto"><?php echo esc_html( $space->description ); ?></p>
 			<?php endif; ?>
 			<div class="jt-sidebar-stats">
 				<div class="jt-sidebar-stat">
@@ -276,7 +276,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 					<div>
 						<div class="jt-trend-title">
 							<a href="<?php echo esc_url( \Jetonomy\route_url( 'post', $t_post->space_slug, $t_post->slug ) ); ?>">
-								<?php echo esc_html( jetonomy_post_title_or_excerpt( $t_post ) ); ?>
+								<bdi><?php echo esc_html( jetonomy_post_title_or_excerpt( $t_post ) ); ?></bdi>
 							</a>
 						</div>
 						<div class="jt-trend-meta">

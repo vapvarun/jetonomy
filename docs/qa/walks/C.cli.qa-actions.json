@@ -1,0 +1,28 @@
+{
+  "journey": "C.cli.qa-actions",
+  "free": "a0fcbb2e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T11:00:00Z",
+  "walker": "lane A",
+  "env": { "themes": ["reign"], "viewports": [1440, 390], "schemes": ["light"] },
+  "checks": {
+    "c-cli-qa-actions.1": { "result": "pass", "evidence": "wp jetonomy qa-actions: REST 181/181, Model 212/212, Pro 62/62, Journey 56/56 (Phase 4), Refusal 13/13 (RF1-RF10), TOTAL 524/524, exit 0. One line prints SKIP (BB1 bbPress scope, no bbPress content) and Pro messaging reports dormant; both are labelled not counted as passes." },
+    "c-cli-qa-actions.2": { "result": "untested", "needs": "scratch copy of the plugin: the proven way (bin/check-guards-can-fail.php) edits plugin files in place, which this verification-only walk may not do. Guard exists at includes/class-cli.php:1034 (phase with 0 pass + 0 fail -> warning/failure)." },
+    "c-cli-qa-actions.3": { "result": "pass", "evidence": "scenario run multi-user-voting-thread listed 16 steps (post, 5 replies, 10 votes) and fixtures. Without --cleanup the data stays; with --cleanup it ran its cleanup and spaces/cats/posts/replies/votes/users returned to baseline (45/7/260/1246/1285/29)." },
+    "c-cli-qa-actions.4": { "result": "fail", "expected": "each scenario lists steps, passes and cleans up", "actual": "space-with-pending-join-request, post-with-flags-for-moderation and full-membership-approval-flow list steps, pass, and with --cleanup remove their space, category, users and posts (space count back to 45). notification-delivery-sweep with --cleanup only marks its 9 notifications read; the rows stay in jt_notifications (153 -> 162). Removed by hand. Also scenarios keep their data unless --cleanup is passed, which the check does not say.", "url": "wp jetonomy scenario run notification-delivery-sweep --cleanup" },
+    "c-cli-qa-actions.5": { "result": "pass", "evidence": "space list per category matches the guest /community/ page: General Discussion 17, Show & Tell 11, Help Desk 12, Feature Requests 13, Mentorship Circle 0, etc.", "screenshot": "qa-artifacts/203-walk2/laneA/cli5-home-guest.png" },
+    "c-cli-qa-actions.6": { "result": "fail", "check_wrong": true, "expected": "post get, vote, flag, member, mod, tag, category, privacy scan, notification, config, user each run one read command", "actual": "vote and flag have only write commands (vote cast, flag create), so no read exists. The rest read correctly: post get 5868 (4 replies), member list-members 2999 = 24 rows = home page 24 members, mod flags pending = 4 = Moderation Flags (4), mod is_banned, tag popular, category list, privacy scan, config get base_slug, user get-profile. Note category list shows top-level categories only (Local Chapters and Labs need category children)." },
+    "c-cli-qa-actions.7": { "result": "pass", "evidence": "alice replied to bob's topic through the REST composer: unread-count --to=bob 5 -> 6 and bob's nav bell badge in the browser shows 6. Note: wp jetonomy reply create does NOT notify the topic author (count stayed 5), so the check only holds for a reply made through the app." },
+    "c-cli-qa-actions.8": { "result": "pass", "evidence": "mod ban --target=1 --issuer=141 and user ban 142 --issuer=141 -> 'Administrators cannot be restricted.'; mod ban --target=141 --issuer=141 and user ban 1 --issuer=1 -> 'You cannot restrict your own account.'; restriction rows stayed 3" },
+    "c-cli-qa-actions.9": { "result": "fail", "expected": "post create into the archived 2025 Hackathon space refused with jetonomy_space_restricted, no row added", "actual": "wp jetonomy post create --space=36 --author=3755 succeeded (post 5943 created, status publish, space status archived, post_count 0 -> 1). The CLI path skips the archived-space guard that REST enforces. Post deleted afterwards; space last_activity_at stayed bumped to 2026-10-17 10:46.", "url": "includes/cli/commands/class-post-command.php" },
+    "c-cli-qa-actions.10": { "result": "pass", "evidence": "CLI-created topic 'Lessons from rebuilding our onboarding checklist' renders at 1440 and 390 as guest, h1 and body present, scrollWidth == clientWidth on both", "screenshot": "qa-artifacts/203-walk2/laneA/cli10-post-1440.png, cli10-post-390.png" },
+    "c-cli-qa-actions.11": { "result": "untested", "needs": "docker site: bin/seed-scale.php adds 2000 topics to the shared walk site" },
+    "c-cli-qa-actions.12": { "result": "pass", "evidence": "recount printed rows per counter (post_last_reply_at 7, category_space_counts 1, others 0); guest home then shows 27 members / 261 topics, equal to published topics in the DB (261)" }
+  },
+  "proposed_checks": [
+    "- `c-cli-qa-actions.13` @admin #cli !refuse: `wp jetonomy reply create` into an archived or closed topic, and `wp jetonomy post create` as a silenced or site-banned user -> refused with the same code the REST route gives and no row is added.",
+    "- `c-cli-qa-actions.14` @admin #cli: `wp jetonomy reply create --author=alice` on bob's topic -> bob gets the reply notification, same as a reply made in the browser.",
+    "- `c-cli-qa-actions.15` @guest #ui: compare the home page topic total with the sum of the topics listed under the visible spaces -> the totals agree, or private and hidden space topics are left out of the guest total (home says 261, the listed public spaces sum to 247)."
+  ],
+  "notes": "No setting changed, no plugin toggled in this journey. Cleanup done: scenario leftovers (notification rows, fixtures), topic 5943 in the archived space, CLI-made topic 5945, replies 13505 and 13506 all deleted. Pre-existing: jt_space_members holds ~250 orphan rows for user 142 (test_admin, spaces that no longer exist) from before the walk; left untouched."
+}

@@ -1,0 +1,92 @@
+{
+  "journey": "C.anon.search",
+  "free": "a0fcbb2e",
+  "pro": "d8d053b",
+  "walked_at": "2026-10-17T11:50:00Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-anon-search.1": {
+      "result": "fail",
+      "expected": "'Dark mode for the community on phones' appears first and every result shares a token",
+      "actual": "/community/search/?q=dark+mode returns 6 results, all containing 'dark mode', but that topic (an exact title match) is LAST: order is Dark mode toggle in user preferences, New: dark mode is now available, Dark mode toggle resets, A dark-mode screenshot, Jetonomy 1.4.2, then the expected topic. The header overlay lists it 4th.",
+      "url": "http://forums.local/community/search/?q=dark+mode",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/search-390.png"
+    },
+    "c-anon-search.2": {
+      "result": "pass",
+      "evidence": "'qzxvbnm' -> '0 results', 'No results for \"qzxvbnm\"', 'Try different or fewer keywords...' and a Browse all spaces button, no raw error"
+    },
+    "c-anon-search.3": {
+      "result": "pass",
+      "evidence": "guest searched 'Q1 roadmap draft' (Customer Advisory Board) and 'self-promotion wave' (Moderators' Room) on the page and in REST -> 0 results, meta.total 0"
+    },
+    "c-anon-search.4": {
+      "result": "pass",
+      "evidence": "GET /jetonomy/v1/search?q=Referral%20fees|Q1%20roadmap%20draft|self-promotion%20wave as guest -> 200, data [], meta.total 0"
+    },
+    "c-anon-search.5": {
+      "result": "pass",
+      "evidence": "guest searched 'price-match', text that exists only in a private reply of a public topic -> 0 results"
+    },
+    "c-anon-search.6": {
+      "result": "pass",
+      "evidence": "Partner Program phrase 'Referral fees': bob (space admin) -> 1 result; maya (not a member) -> 0 results. alice cannot be used for the non-member half: the reseed made her a Partner Program member, so she also sees it"
+    },
+    "c-anon-search.7": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "suggestions drop down after the minimum characters, Enter opens the full results page",
+      "actual": "the header search opens an overlay (not the page input); after 2 characters a dropdown of up to 6 suggestions appears, but pressing Enter does nothing (stays on the same page) and the overlay has no 'see all results' link, so the full results page cannot be reached from it",
+      "url": "http://forums.local/community/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/search-overlay.png"
+    },
+    "c-anon-search.8": {
+      "result": "fail",
+      "expected": "the result row wraps and highlights the term without breaking the layout",
+      "actual": "search 'photography forum phpBB' -> Grace's 159-character title wraps over 3 lines with no overflow, but the matched terms are not highlighted anywhere (no mark elements in title or excerpt)",
+      "url": "http://forums.local/community/search/?q=photography+forum+phpBB",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/search-long.png"
+    },
+    "c-anon-search.9": {
+      "result": "fail",
+      "expected": "the Arabic word is found and rendered right-to-left",
+      "actual": "'تجربتي' finds Omar's topic (1 result), but the result card is laid out LTR: Arabic title and excerpt are left-aligned (direction ltr, no dir attribute). The site language is English, so an Arabic-locale pass (lane A) may show more.",
+      "url": "http://forums.local/community/search/?q=تجربتي",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk2/laneB/search-ar.png"
+    },
+    "c-anon-search.10": {
+      "result": "pass",
+      "evidence": "bob created 'How do I reset my membership password?' (Help Desk); search 'membership password' found it straight away (1 result), and later a distinctive body word 'accountant' found another new topic; no stale full-text index seen"
+    },
+    "c-anon-search.11": {
+      "result": "pass",
+      "evidence": "GET /search?q=a and /search?q= -> 400 jetonomy_validation 'Search query must be at least 2 characters.'"
+    },
+    "c-anon-search.12": {
+      "result": "pass",
+      "evidence": "after bob deleted that topic, searching its exact title and a body phrase as guest -> REST data [] and page '0 results'"
+    },
+    "c-anon-search.13": {
+      "result": "pass",
+      "evidence": "390px: search form, Filters bar, All/Topics/Spaces/Tags tabs and result cards fit, no horizontal scroll (scrollWidth 390)"
+    }
+  },
+  "proposed_checks": [
+    "- `c-anon-search.14` @guest #ui: type 2+ characters in the header search overlay and press Enter -> the full results page for that query opens (today nothing happens).",
+    "- `c-anon-search.15` @guest #ui: the header overlay suggestions and the full results page rank 'Dark mode for the community on phones' the same way, exact title match first.",
+    "- `c-anon-search.16` @member_b #ui: replace 'member_b who is not a member' with a user who really is not a member of Partner Program (maya, after the reseed alice is a member)."
+  ],
+  "notes": "No settings changed. Lane B created and removed topics and replies for check 10 and 12 (see C.member.post-create). Not tested: Arabic-locale rendering (lane A)."
+}
