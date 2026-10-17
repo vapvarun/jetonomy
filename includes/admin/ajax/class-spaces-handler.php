@@ -626,7 +626,6 @@ class Spaces_Handler {
 		$space_id   = absint( $_POST['space_id'] ?? 0 );
 		$rule_value = sanitize_text_field( wp_unslash( $_POST['rule_value'] ?? '' ) );
 		$rule_id    = absint( $_POST['rule_id'] ?? 0 );
-		$space_role = sanitize_text_field( wp_unslash( $_POST['space_role'] ?? 'member' ) );
 
 		if ( ! $space_id || ! $rule_value ) {
 			wp_send_json_error( __( 'Missing parameters.', 'jetonomy' ) );
@@ -636,10 +635,13 @@ class Spaces_Handler {
 		// grants - never from the request, so a rule advertising "Read" cannot deposit
 		// space admins, who get the moderation bypass that reads the roster role and never
 		// looks at grants. See AccessRule::cap_space_role().
+		// No matching rule means no role to derive: refuse rather than fall back
+		// to the role the request names.
 		$rule = $rule_id ? AccessRule::find( $rule_id ) : null;
-		if ( $rule && (int) $rule->space_id === $space_id ) {
-			$space_role = AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type );
+		if ( ! $rule || (int) $rule->space_id !== $space_id ) {
+			wp_send_json_error( __( 'Access rule not found.', 'jetonomy' ) );
 		}
+		$space_role = AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type );
 
 		// Find the adapter that owns this level.
 		$adapters = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();

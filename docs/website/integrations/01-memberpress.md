@@ -48,15 +48,15 @@ An Access Rule has **one** setting that decides what a matching member can do:
 
 > **Full does not hand out moderation by itself.** Closing and pinning topics and editing other people's posts still require the matching WordPress capability, which an ordinary member does not have - so for most paid members Full and Participate come to the same thing in practice. A rule can open a space to someone; it cannot give them a power their role does not carry. Appoint moderators on the space's **Members** tab.
 
-The space role a matching member is recorded as is **derived from the access level**, not chosen separately. What a membership tier can record someone as is capped one step lower than what a role, capability or trust-level rule can, because a membership is something a visitor can buy:
+The space role a matching member is recorded as is **derived from the access level**, not chosen separately, and it is the same for every rule type (membership, role, capability, trust level):
 
-| Access level | Membership rule records | Role / capability / trust rule records |
-|---|---|---|
-| Read | Viewer | Viewer |
-| Participate | Member | Member |
-| Full | **Member** | Moderator |
+| Access level | Recorded as |
+|---|---|
+| Read | Viewer |
+| Participate | Member |
+| Full | Member |
 
-> **Membership rules never create moderators.** Whatever access level you pick, a rule based on a *membership* tier tops out at Member - which is why the Full row differs between the two columns above. Moderation is an appointment you make per person on the space's **Members** tab; nobody should be able to buy it. Role, capability and trust-level rules keep the full range, because those are deliberate decisions about a known group rather than anything a visitor can purchase.
+> **Rules never create moderators.** Full is full participation, not moderation. Moderation is an appointment you make per person on the space's **Members** tab; no rule, and nothing a visitor can buy, hands it out.
 
 > **Changed in 1.8.1.** This used to be two dropdowns - an access level *and* a space role - which could contradict each other. A rule labelled "Read" could be set to record people as space Admins, and that combination handed out post deletion and moderation. The role is now derived from the access level and capped by it, so a rule can never grant more than it advertises.
 

@@ -109,7 +109,9 @@ touch them.
 `rule_type` is one of `membership`, `role`, `capability`, `trust_level`,
 `logged_in`, `everyone`. `grants` is `read` (read and report), `participate` or
 `full`, and `space_role` (`viewer`, `member`, `moderator`, `admin`) is the roster
-role a matching member receives.
+role a matching member receives, capped by the grant: `read` stores `viewer`,
+`participate` and `full` store `member`. A rule never stores `moderator` or
+`admin`.
 
 Access rules are managed by site administrators only (`jetonomy_manage_spaces`).
 Anyone else, a space admin included, gets `403 jetonomy_forbidden` with the

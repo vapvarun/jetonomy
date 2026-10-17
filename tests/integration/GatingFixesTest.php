@@ -277,8 +277,8 @@ class GatingFixesTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( get_userdata( $this->member )->user_email, $to, 'no email about a space the person can no longer read' );
 	}
 
-	// 2: the builder and the rules table say what is stored for a Full membership rule.
-	public function test_full_membership_rule_is_listed_as_member(): void {
+	// 2: Full is Member for every rule type: stored, listed and explained.
+	public function test_full_rule_is_member_for_every_rule_type(): void {
 		$this->set_adapters( array( 'fake' => $this->fake_adapter() ) );
 		$space = $this->space();
 		AccessRule::create(
@@ -290,12 +290,29 @@ class GatingFixesTest extends WP_UnitTestCase {
 				'space_role' => 'moderator',
 			)
 		);
+		$created = $this->rest(
+			'POST',
+			"/spaces/{$space}/access-rules",
+			array(
+				'rule_type'  => 'role',
+				'rule_value' => 'subscriber',
+				'grants'     => 'full',
+				'space_role' => 'admin',
+			),
+			$this->admin
+		);
+		$this->assertSame( 201, $created->get_status() );
+		$this->assertSame( 'member', $created->get_data()['data']->space_role, 'a rule never stores more than Member' );
+
+		foreach ( array( 'membership', 'role', 'capability', 'trust_level', 'logged_in' ) as $type ) {
+			$this->assertSame( 'member', AccessRule::cap_space_role( 'full', 'admin', $type ), "{$type}: Full is Member" );
+		}
 
 		$html = $this->access_tab( $space );
 		$row  = substr( $html, (int) strpos( $html, 'id="jetonomy-rules-table"' ) );
-
-		$this->assertStringNotContainsString( 'Moderator', strip_tags( $row ), 'a membership rule never records a moderator, so the table must not say so' );
-		$this->assertStringContainsString( 'Full as Member for a membership rule', $html );
+		$this->assertStringNotContainsString( 'Moderator', strip_tags( $row ), 'no rule row says Moderator' );
+		$this->assertStringNotContainsString( 'Admin', strip_tags( $row ) );
+		$this->assertStringContainsString( 'Participate and Full as Member.', $html );
 	}
 
 	// 3: the Membership type is offered, disabled with a reason, when no membership plugin runs.
@@ -398,6 +415,61 @@ class GatingFixesTest extends WP_UnitTestCase {
 		// With the locked preview on, the guest already sees the name on the card.
 		update_option( 'jetonomy_settings', array( 'guest_private_teasers' => true ) );
 		$this->assertStringContainsString( 'Partner Program', $this->title_for( 'space', 'partner-program' ) );
+	}
+
+	/** The <head> the composer route prints, as a page load builds it. */
+	private function new_topic_head( string $slug ): string {
+		update_option( 'jetonomy_pro_extensions', array() ); // Free owns the composer's head.
+		remove_all_actions( 'wp_head' );
+		( new \ReflectionProperty( Template_Loader::class, 'not_found' ) )->setValue( null, false );
+		( new \ReflectionMethod( Template_Loader::class, 'set_seo_meta' ) )->invoke(
+			null,
+			array(
+				'route' => 'new-post',
+				'slug'  => $slug,
+			)
+		);
+		ob_start();
+		do_action( 'wp_head' );
+		$head = (string) ob_get_clean();
+		remove_all_actions( 'wp_head' );
+		return $head;
+	}
+
+	// 7: the composer's og/meta never names a hidden space, or a private one a guest is not shown.
+	public function test_new_topic_head_never_names_a_withheld_space(): void {
+		update_option( 'jetonomy_settings', array( 'guest_private_teasers' => false ) );
+		$this->space(
+			array(
+				'title'      => 'Moderators Room',
+				'slug'       => 'moderators-room',
+				'visibility' => 'hidden',
+				'type'       => 'qa',
+			)
+		);
+		$this->space(
+			array(
+				'title' => 'Partner Program',
+				'slug'  => 'partner-program',
+			)
+		);
+
+		wp_set_current_user( $this->member );
+		$head = $this->new_topic_head( 'moderators-room' );
+		$this->assertStringContainsString( 'og:title', $head, 'the head was printed' );
+		// og:url echoes the URL the viewer typed; the name must not appear anywhere else.
+		$this->assertStringNotContainsString( 'Moderators Room', $head );
+		$this->assertStringNotContainsString( 'Ask a Question', $head, 'nor its type' );
+
+		wp_set_current_user( 0 );
+		$head = $this->new_topic_head( 'partner-program' );
+		$this->assertStringContainsString( 'og:title', $head );
+		$this->assertStringNotContainsString( 'Partner Program', $head );
+
+		// A member of a private space sees its name.
+		SpaceMember::add( (int) Space::find_by_slug( 'partner-program' )->id, $this->member, 'member', 'manual' );
+		wp_set_current_user( $this->member );
+		$this->assertStringContainsString( 'Partner Program', $this->new_topic_head( 'partner-program' ) );
 	}
 
 	// 8: search refuses a space the way the other routes do.

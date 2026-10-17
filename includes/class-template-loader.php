@@ -980,8 +980,12 @@ class Template_Loader {
 	private static function seo_display_name( string $route, string $slug, string $fallback ): string {
 		if ( in_array( $route, array( 'space', 'space-members', 'space-roadmap', 'space-moderation', 'new-post' ), true ) ) {
 			$sp = \Jetonomy\Models\Space::find_by_slug( $slug );
-			// A space the viewer may not see by name never reaches here
-			// (title_withheld()); a missing one falls back to the slug.
+			// Asked here as well as in title_withheld(): the composer's og/meta
+			// reaches this without the title gate. Neutral name, not the slug,
+			// which is built from the withheld title.
+			if ( $sp && \Jetonomy\Models\Space::name_withheld_from_viewer( $sp, get_current_user_id() ) ) {
+				return community_title();
+			}
 			if ( $sp && ! empty( $sp->title ) ) {
 				return (string) $sp->title;
 			}
@@ -1007,7 +1011,9 @@ class Template_Loader {
 	 */
 	private static function compose_route_title( string $slug, string $slug_pretty ): string {
 		$space = '' !== $slug ? \Jetonomy\Models\Space::find_by_slug( $slug ) : null;
-		$label = \Jetonomy\compose_label( $space ? (string) $space->type : '' );
+		// A withheld space's type ("Ask a Question") says something about it too.
+		$shown = $space && ! \Jetonomy\Models\Space::name_withheld_from_viewer( $space, get_current_user_id() );
+		$label = \Jetonomy\compose_label( $shown ? (string) $space->type : '' );
 
 		if ( '' === $slug ) {
 			return $label;

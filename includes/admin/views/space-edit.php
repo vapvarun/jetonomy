@@ -427,7 +427,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					</tbody>
 				</table>
 				<p class="description">
-					<?php /* jt-terms-ok: Viewer / Member / Moderator are space role names. */ /* translators: 1: member label (e.g. "Member"). 2: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%1$s lists show a matching role - Read is listed as Viewer, Participate as Member, Full as Moderator (Full as Member for a membership rule). To give one person a different role, change it on the %2$s tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
+					<?php /* jt-terms-ok: Viewer / Member / Moderator are space role names. */ /* translators: 1: member label (e.g. "Member"). 2: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%1$s lists show a matching role - Read is listed as Viewer, Participate and Full as Member. To give one person a different role, change it on the %2$s tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
 				</p>
 				<p class="description">
 					<strong><?php esc_html_e( 'A rule can never hand out moderation.', 'jetonomy' ); ?></strong>
@@ -594,15 +594,15 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								echo '<span class="jetonomy-badge jetonomy-badge--' . esc_attr( $rule->grants ) . '">' . esc_html( ucfirst( $rule->grants ) ) . '</span>';
 								break;
 							case 'role':
-								// The role a sync would actually store, not the raw column:
-								// a membership rule never records a moderator.
+								// The role a sync would actually store, not the raw column
+								// of a rule saved before rules were capped at Member.
 								echo esc_html( ucfirst( \Jetonomy\Models\AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type ) ) );
 								break;
 							case 'actions':
 								echo '<div class="jetonomy-rule-actions">';
 								if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) :
 									?>
-									<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>" data-role="<?php echo esc_attr( $rule->space_role ); ?>"><span class="dashicons dashicons-update"></span> <?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'Sync %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
+									<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>"><span class="dashicons dashicons-update"></span> <?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'Sync %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
 									<?php
 								endif;
 								?>

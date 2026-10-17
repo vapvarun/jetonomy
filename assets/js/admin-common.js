@@ -1110,7 +1110,6 @@
 						activeLevels = adapterMap[adapterId] || [];
 						$input.attr('placeholder', adapters.filter(function(a) { return a.id === adapterId; })[0].label + '...');
 					}
-					syncDerivedRole();
 					renderRulePreview();
 				});
 
@@ -1176,13 +1175,12 @@
 				}
 
 				// Roster role is derived, never chosen: read -> viewer,
-				// participate -> member, full -> moderator, or member for a
-				// membership rule. Matches AccessRule::cap_space_role() on the
+				// participate and full -> member (a rule never makes a
+				// moderator). Matches AccessRule::cap_space_role() on the
 				// server, which is the authority - this only keeps the hidden
 				// field and the preview honest.
 				function syncDerivedRole() {
-					var paid = ($('#rule-type').val() || '').indexOf('membership') === 0;
-					var map  = { read: 'viewer', participate: 'member', full: paid ? 'member' : 'moderator' };
+					var map = { read: 'viewer', participate: 'member', full: 'member' };
 					$('#rule-space-role').val(map[$('#rule-grants').val()] || 'viewer');
 				}
 
@@ -1239,9 +1237,8 @@
 					space_id: $btn.data('space-id'),
 					rule_value: $btn.data('value'),
 					// The server reads the rule by id and derives the roster role
-					// from its grants; space_role is sent only for older builds.
-					rule_id: $btn.data('id'),
-					space_role: $btn.data('role')
+					// from its grants.
+					rule_id: $btn.data('id')
 				}).done(function(res) {
 					if (res.success) {
 						self.toast(res.data.message);
