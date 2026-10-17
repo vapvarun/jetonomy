@@ -1005,7 +1005,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				// a read-only member never sees a Post Reply box they cannot submit - the
 				// Vote / New-Topic seam, applied to the reply surface. The empty state
 				// below uses it too, so it never invites a reply the viewer cannot post.
+				// An archived or locked space keeps its topics readable but takes no
+				// replies (REST answers jetonomy_space_restricted), so it invites none.
+				$jt_space_open     = true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $post->space_id );
 				$jt_can_reply_here = $jt_is_live
+					&& $jt_space_open
 					&& $jt_viewer_id
 					&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
 				?>
@@ -1099,7 +1103,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<?php elseif ( $jt_restriction ) : ?>
 				<?php // A silenced or banned member is told why there is no reply box. ?>
 				<p class="jt-notice jt-notice-warning"><?php echo esc_html( $jt_restriction->get_error_message() ); ?></p>
-			<?php elseif ( ! is_user_logged_in() ) : ?>
+			<?php elseif ( ! is_user_logged_in() && $jt_space_open ) : ?>
 				<?php
 				// Guests get the composer partial's own logged-out state (the
 				// styled Log in to reply button), so there is one copy of it.

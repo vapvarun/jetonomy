@@ -133,13 +133,9 @@ $crumbs = array(
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				array(
-					'icon'        => 'award',
-					'icon_size'   => 48,
-					'message'     => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
-					'description' => sprintf( /* translators: %s: plural reply label. */ __( 'Reputation is earned by posting, getting %s, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-					'cta_label'   => __( 'Browse the community', 'jetonomy' ),
-					'cta_url'     => \Jetonomy\base_url() . '/',
-				)
+					'icon'      => 'award',
+					'icon_size' => 48,
+				) + \Jetonomy\leaderboard_empty_state( $period )
 			);
 			?>
 		<?php else : ?>

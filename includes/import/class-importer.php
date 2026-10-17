@@ -38,6 +38,14 @@ abstract class Importer {
 	protected int $already = 0;
 
 	/**
+	 * jt_import_map rows this run wrote for content an earlier run (or a release
+	 * before the map existed) had already imported: recognised, not created.
+	 *
+	 * @var int
+	 */
+	protected int $adopted = 0;
+
+	/**
 	 * Replies an earlier release imported flat that this run re-threaded.
 	 *
 	 * @var int
@@ -270,6 +278,7 @@ abstract class Importer {
 
 		if ( $legacy && ! $this->dry_run ) {
 			Import_Map::record_many( $source, $type, $legacy );
+			$this->adopted += count( $legacy );
 		}
 
 		return $found + $legacy;
@@ -392,7 +401,9 @@ abstract class Importer {
 		}
 
 		$cat_id = Import_Map::legacy_category( $slug_prefix );
-		if ( ! $cat_id ) {
+		if ( $cat_id ) {
+			++$this->adopted;
+		} else {
 			$cat_id = (int) Category::create( array_merge( $args, array( 'slug' => $slug_prefix . '-' . time() ) ) );
 		}
 
@@ -404,15 +415,52 @@ abstract class Importer {
 	/**
 	 * Created vs already-there counts for this request, for the batch driver.
 	 *
-	 * @return array{imported:int, already:int, rethreaded:int, orphans:array<string,int>}
+	 * @return array{imported:int, already:int, adopted:int, rethreaded:int, orphans:array<string,int>}
 	 */
 	public function get_tally(): array {
 		return array(
 			'imported'   => $this->imported,
 			'already'    => $this->already,
+			'adopted'    => $this->adopted,
 			'rethreaded' => $this->rethreaded,
 			'orphans'    => $this->orphans,
 		);
+	}
+
+	/**
+	 * Rows this source has in jt_import_map: THE number "already imported" means.
+	 *
+	 * The pre-run note, the completion result, the Last imported line and Past
+	 * imports all count this, so they cannot disagree (they had: 2,313 / 2,314
+	 * / 2,312 on one screen, because each counted source rows its own way).
+	 *
+	 * @return int 0 for an importer that keeps no map.
+	 */
+	public function mapped_count(): int {
+		return '' === $this->map_source() ? 0 : Import_Map::count_for_source( $this->map_source() );
+	}
+
+	/**
+	 * Restate a finished run's imported / already in jt_import_map rows.
+	 *
+	 * Already is the rows mapped before the run (what the pre-run note said)
+	 * plus rows this run only recognised; imported is the rows it added. So the
+	 * next pre-run note is exactly already + imported. Dry runs and importers
+	 * without a map keep their own counts.
+	 *
+	 * @param array $tally  get_tally()/results() shape, possibly accumulated across batches.
+	 * @param int   $before mapped_count() taken before the run's first batch.
+	 * @return array The tally with imported and already restated.
+	 */
+	public function settle_tally( array $tally, int $before ): array {
+		if ( '' === $this->map_source() || $this->dry_run ) {
+			return $tally;
+		}
+		$adopted           = (int) ( $tally['adopted'] ?? 0 );
+		$added             = max( 0, $this->mapped_count() - $before );
+		$tally['imported'] = max( 0, $added - $adopted );
+		$tally['already']  = $before + min( $adopted, $added );
+		return $tally;
 	}
 
 	/**
@@ -469,12 +517,23 @@ abstract class Importer {
 	 * a private forum's members get imported, or that this source has been imported
 	 * before - all of which matters BEFORE committing to a one-way migration.
 	 *
-	 * Importers override this; the default is silence.
+	 * Importers add their own notes to these; the base says only whether this
+	 * source has been imported before.
 	 *
 	 * @return string[] Short sentences, already translated.
 	 */
 	public function get_import_notes(): array {
-		return array();
+		$already = $this->mapped_count();
+		if ( $already <= 0 ) {
+			return array();
+		}
+		return array(
+			sprintf(
+				/* translators: %s: number of previously imported items. */
+				_n( 'This source has been imported before (%s item). Running it again adds only what is missing and does not duplicate anything.', 'This source has been imported before (%s items). Running it again adds only what is missing and does not duplicate anything.', $already, 'jetonomy' ),
+				number_format_i18n( $already )
+			),
+		);
 	}
 
 	protected function get_mapped_id( string $type, $old_id ): ?int {
@@ -569,6 +628,7 @@ abstract class Importer {
 			'imported'   => $this->imported,
 			'skipped'    => $this->skipped,
 			'already'    => $this->already,
+			'adopted'    => $this->adopted,
 			'rethreaded' => $this->rethreaded,
 			'orphans'    => $this->orphans,
 			'errors'     => $this->errors,

@@ -78,10 +78,12 @@ $jt_rp_can_split = $jt_reply_viewer && $jt_rp_pe::can( $jt_reply_viewer, 'move_p
 $jt_thread_live = 'publish' === ( $post->status ?? 'publish' ) && 'publish' === ( $reply->status ?? 'publish' );
 
 // Reply and Quote fill the composer under the thread, so they show only when
-// single-post.php renders it: the viewer may reply in this space and the topic
-// is open, or they moderate it. Otherwise the buttons did nothing.
+// single-post.php renders it: the viewer may reply in this space, the space is
+// not archived or locked, and the topic is open or they moderate it. Otherwise
+// the buttons did nothing.
 $jt_card_viewer = get_current_user_id();
 $jt_can_reply   = $jt_thread_live && $jt_card_viewer
+	&& true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $post->space_id )
 	&& \Jetonomy\Permissions\Permission_Engine::can( $jt_card_viewer, 'create_replies', (int) $post->space_id )
 	&& ( empty( $post->is_closed ) || \Jetonomy\Permissions\Permission_Engine::can( $jt_card_viewer, 'moderate', (int) $post->space_id ) );
 

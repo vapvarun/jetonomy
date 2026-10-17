@@ -115,9 +115,17 @@ if ( $viewer_is_priv ) {
 // forms, and a hidden space is forced onto the `invite` join policy
 // (Space::save). Without this panel an owner could create a hidden space from
 // the front-end and have no way to invite anyone into it without wp-admin.
-$jt_invites = array();
+// Paged on its own ?ipg= so a space with hundreds of links never dumps them all.
+$jt_invites          = array();
+$jt_invites_total    = 0;
+$jt_invites_per_page = 20;
+$jt_invites_pages    = 1;
+$jt_invites_paged    = 1;
 if ( $viewer_is_sadm ) {
-	$jt_invites = \Jetonomy\Models\InviteLink::list_by_space( (int) $space->id );
+	$jt_invites_total = \Jetonomy\Models\InviteLink::count_by_space( (int) $space->id );
+	$jt_invites_pages = max( 1, (int) ceil( $jt_invites_total / $jt_invites_per_page ) );
+	$jt_invites_paged = min( $jt_invites_pages, max( 1, absint( wp_unslash( $_GET['ipg'] ?? 1 ) ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
+	$jt_invites       = \Jetonomy\Models\InviteLink::list_by_space( (int) $space->id, $jt_invites_per_page, ( $jt_invites_paged - 1 ) * $jt_invites_per_page );
 }
 
 $crumbs = array();
@@ -212,7 +220,7 @@ $role_labels = array(
 			<?php endif; ?>
 
 			<?php if ( $viewer_is_sadm ) : ?>
-				<section class="jt-card jt-invite-panel"
+				<section id="jt-invite-panel" class="jt-card jt-invite-panel"
 					aria-label="<?php esc_attr_e( 'Invite links', 'jetonomy' ); ?>"
 					data-jt-invite-panel
 					data-space-id="<?php echo absint( $space->id ); ?>"
@@ -234,7 +242,12 @@ $role_labels = array(
 					data-jt-generate-failed="<?php esc_attr_e( 'Could not generate an invite link. Please try again.', 'jetonomy' ); ?>"
 					data-jt-revoke-failed="<?php esc_attr_e( 'Could not revoke that link. Please try again.', 'jetonomy' ); ?>">
 
-					<h2 class="jt-invite-panel-title"><?php esc_html_e( 'Invite links', 'jetonomy' ); ?></h2>
+					<h2 class="jt-invite-panel-title">
+						<?php esc_html_e( 'Invite links', 'jetonomy' ); ?>
+						<?php if ( $jt_invites_total > 0 ) : ?>
+							<span class="jt-badge-accent"><?php echo esc_html( number_format_i18n( $jt_invites_total ) ); ?></span>
+						<?php endif; ?>
+					</h2>
 
 					<?php
 					// The same honest note wp-admin carries. An invite link is not
@@ -330,6 +343,29 @@ $role_labels = array(
 						echo esc_html( sprintf( __( 'No invite links yet. Generate one to invite people straight into this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
 						?>
 					</p>
+
+					<?php if ( $jt_invites_pages > 1 ) : ?>
+						<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Invite links pagination', 'jetonomy' ); ?>">
+							<?php if ( $jt_invites_paged > 1 ) : ?>
+								<a class="jt-pagination-link" href="<?php echo esc_url( add_query_arg( 'ipg', $jt_invites_paged - 1 ) . '#jt-invite-panel' ); ?>" rel="prev">
+									<?php jetonomy_echo_icon( 'chevron-left', 14 ); ?>
+									<?php esc_html_e( 'Previous', 'jetonomy' ); ?>
+								</a>
+							<?php endif; ?>
+							<span class="jt-pagination-status">
+								<?php
+								/* translators: 1: current page, 2: total pages */
+								echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $jt_invites_paged, $jt_invites_pages ) );
+								?>
+							</span>
+							<?php if ( $jt_invites_paged < $jt_invites_pages ) : ?>
+								<a class="jt-pagination-link" href="<?php echo esc_url( add_query_arg( 'ipg', $jt_invites_paged + 1 ) . '#jt-invite-panel' ); ?>" rel="next">
+									<?php esc_html_e( 'Next', 'jetonomy' ); ?>
+									<?php jetonomy_echo_icon( 'chevron-right', 14 ); ?>
+								</a>
+							<?php endif; ?>
+						</nav>
+					<?php endif; ?>
 				</section>
 			<?php endif; ?>
 

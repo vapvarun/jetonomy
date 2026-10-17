@@ -151,6 +151,36 @@ function route_url( string $route, ...$args ): string {
 }
 
 /**
+ * Empty-state copy for a leaderboard period with nobody ranked.
+ *
+ * A quiet week is not an empty community: when All time still ranks members,
+ * the empty week or month says there was no activity and points at All time,
+ * instead of "No members yet."
+ *
+ * @param string $period 'week', 'month' or 'all'.
+ * @return array{message:string,description:string,cta_label:string,cta_url:string} Empty-state partial args.
+ */
+function leaderboard_empty_state( string $period ): array {
+	if ( 'all' !== $period && Models\UserProfile::count_for_leaderboard( 'all' ) > 0 ) {
+		return array(
+			'message'     => 'week' === $period ? __( 'No activity this week.', 'jetonomy' ) : __( 'No activity this month.', 'jetonomy' ),
+			/* translators: %s: plural member label, lowercase. */
+			'description' => sprintf( __( 'No ranked %s were active in this period.', 'jetonomy' ), jetonomy_label( 'member', true, true ) ),
+			'cta_label'   => __( 'See all time', 'jetonomy' ),
+			'cta_url'     => route_url( 'leaderboard' ),
+		);
+	}
+	return array(
+		/* translators: %s: plural member label, lowercase. */
+		'message'     => sprintf( __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'member', true, true ) ),
+		/* translators: %s: plural reply label. */
+		'description' => sprintf( __( 'Reputation is earned by posting, getting %s, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ), jetonomy_label( 'reply', true, true ) ),
+		'cta_label'   => __( 'Browse the community', 'jetonomy' ),
+		'cta_url'     => base_url() . '/',
+	);
+}
+
+/**
  * The page number a front-end list is on, from Jetonomy's own `pg` param.
  *
  * Not WordPress's `paged`: some sites (and plugins) redirect ?paged=N to

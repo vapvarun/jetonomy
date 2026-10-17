@@ -237,6 +237,11 @@ class Shortcodes {
 			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'topic', true, true ) ) ) . '</div>';
 		}
 
+		// Users and profiles for every byline in one query each, not one per row.
+		$author_ids = array_map( static fn( $p ) => (int) $p->author_id, $posts );
+		cache_users( $author_ids );
+		Models\UserProfile::prime( $author_ids );
+
 		$out = '<div class="jt-shortcode jt-shortcode-recent-posts">';
 		foreach ( $posts as $post ) {
 			$url    = route_url( 'post', $post->space_slug, $post->slug );
@@ -300,6 +305,11 @@ class Shortcodes {
 		if ( empty( $posts ) ) {
 			return '<div class="jt-shortcode-empty">' . esc_html__( 'No trending discussions yet. Check back soon.', 'jetonomy' ) . '</div>';
 		}
+
+		// Users and profiles for every byline in one query each, not one per row.
+		$author_ids = array_map( static fn( $p ) => (int) $p->author_id, $posts );
+		cache_users( $author_ids );
+		Models\UserProfile::prime( $author_ids );
 
 		$rank = 0;
 		$out  = '<div class="jt-shortcode jt-shortcode-trending-posts">';
@@ -415,8 +425,7 @@ class Shortcodes {
 		);
 
 		if ( empty( $leaders ) ) {
-			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ) . '</div>';
+			return '<div class="jt-shortcode-empty">' . esc_html( leaderboard_empty_state( $period )['message'] ) . '</div>';
 		}
 
 		cache_users( array_map( static fn( $l ) => (int) $l->user_id, $leaders ) ); // Users + meta for names and avatars in one go.

@@ -177,10 +177,8 @@ final class Space_Journey {
 	/**
 	 * Delete a space by ID - transferring it by default.
 	 *
-	 * Space::delete() removes the space ROW and nothing else (it loses the owner and
-	 * orphans every child row across the 21 declared relations), so this goes through
-	 * transfer/purge instead; the CLI is the path most likely to be pointed at a large
-	 * space.
+	 * Transfer is the default because a purge destroys other members' content; the
+	 * CLI is the path most likely to be pointed at a large space.
 	 *
 	 * `transfer` hands the space to its successor and archives it. `purge`
 	 * destroys it and everything in it, and runs SYNCHRONOUSLY here rather than
@@ -205,6 +203,9 @@ final class Space_Journey {
 
 		if ( 'purge' === $mode ) {
 			$removed = \Jetonomy\Space_Purge::purge( $id );
+			if ( '' !== \Jetonomy\Space_Purge::last_error() ) {
+				return Journey_Result::fail( sprintf( 'Space %d was not deleted: the database refused (%s). The space and its remaining content were kept; run the command again.', $id, \Jetonomy\Space_Purge::last_error() ) );
+			}
 			return Journey_Result::ok(
 				array(
 					'id'      => $id,

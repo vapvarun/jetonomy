@@ -357,8 +357,7 @@ class Spaces_Handler {
 		}
 
 		// Same contract as DELETE /spaces/{id}: transfer unless purge is asked
-		// for AND allowed. Space::delete() is deliberately not used here - it
-		// removes the row and orphans every child across the 21 relations.
+		// for AND allowed.
 		$mode = sanitize_key( (string) ( $_POST['mode'] ?? 'transfer' ) );
 
 		if ( 'purge' === $mode ) {
@@ -804,8 +803,12 @@ class Spaces_Handler {
 			wp_send_json_error( sprintf( __( 'Missing %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
-		$invites = array();
-		foreach ( InviteLink::list_by_space( $space_id ) as $invite ) {
+		// Paged: the "Load more" button asks for the next page.
+		$per_page = 50;
+		$page     = max( 1, absint( $_POST['page'] ?? 1 ) );
+		$total    = InviteLink::count_by_space( $space_id );
+		$invites  = array();
+		foreach ( InviteLink::list_by_space( $space_id, $per_page, ( $page - 1 ) * $per_page ) as $invite ) {
 			$invites[] = array(
 				'id'            => (int) $invite->id,
 				'invite_url'    => $this->invite_url( (string) $invite->token ),
@@ -817,7 +820,13 @@ class Spaces_Handler {
 			);
 		}
 
-		wp_send_json_success( array( 'invites' => $invites ) );
+		wp_send_json_success(
+			array(
+				'invites'  => $invites,
+				'total'    => $total,
+				'has_more' => $page * $per_page < $total,
+			)
+		);
 	}
 
 	/**

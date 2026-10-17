@@ -973,7 +973,7 @@ class WPForo_Importer extends Importer {
 			}
 		}
 
-		return $notes;
+		return array_merge( $notes, parent::get_import_notes() );
 	}
 
 	/**
