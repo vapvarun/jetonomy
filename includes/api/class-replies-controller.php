@@ -398,8 +398,10 @@ class Replies_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
+		// Unreadable answers like missing, as GET /posts/{id} does: a 403 would
+		// confirm the reply exists.
 		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
-			return $this->permission_error();
+			return $this->not_found( 'Reply' );
 		}
 
 		// Same placeholder the thread shows; cloned so the cached row keeps its body.

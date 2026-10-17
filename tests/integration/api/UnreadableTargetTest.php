@@ -82,6 +82,25 @@ class UnreadableTargetTest extends WP_UnitTestCase {
 		$this->assertSame( 404, $vote->get_status(), 'vote: a hidden topic is not found' );
 	}
 
+	/**
+	 * Reading a reply, and polling a topic for new replies, answer an
+	 * unreadable target exactly as a missing one, so neither confirms it exists.
+	 */
+	public function test_reading_a_hidden_reply_or_polling_a_hidden_topic_answers_like_missing(): void {
+		$topic = $this->topic( $this->space( 'hidden' ) );
+		$reply = (int) \Jetonomy\Models\Reply::create( array( 'post_id' => $topic, 'author_id' => self::factory()->user->create(), 'content' => 'Hidden reply', 'status' => 'publish' ) );
+
+		foreach ( array(
+			'reply GET' => array( "/replies/{$reply}", '/replies/999999', array() ),
+			'poll'      => array( '/updates', '/updates', array( 'scope' => 'post', 'since' => '2026-01-01 00:00:00' ) ),
+		) as $what => [ $route, $missing_route, $params ] ) {
+			$a = $this->call( 'GET', $route, 'poll' === $what ? $params + array( 'id' => $topic ) : $params );
+			$b = $this->call( 'GET', $missing_route, 'poll' === $what ? $params + array( 'id' => 999999 ) : $params );
+			$this->assertSame( 404, $a->get_status(), "{$what}: an unreadable target is not found" );
+			$this->assertSame( $b->get_data()['code'] ?? '', $a->get_data()['code'] ?? '', "{$what}: same answer as a missing id" );
+		}
+	}
+
 	public function test_a_hidden_space_cannot_be_followed_by_id(): void {
 		$res = $this->call( 'POST', '/subscriptions', array( 'object_type' => 'space', 'object_id' => $this->space( 'hidden' ) ) );
 		$this->assertSame( 404, $res->get_status() );
