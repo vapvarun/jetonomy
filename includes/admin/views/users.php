@@ -163,11 +163,13 @@ $restriction_labels = array(
 							}
 							echo ' <span class="jetonomy-badge jetonomy-badge--ban jetonomy-restriction-label">' . esc_html( $jt_label ) . '</span>';
 						}
+						// Restrict controls follow the issue rule: never yourself, an admin, or (unless admin) another moderator.
+						$jt_may_restrict = current_user_can( 'jetonomy_moderate' ) && true === \Jetonomy\Models\Restriction::actor_may_restrict( (int) $u->user_id, get_current_user_id() );
 						?>
 						<div class="row-actions">
 							<span class="edit"><a href="<?php echo esc_url( get_edit_user_link( $u->user_id ) ); ?>"><?php esc_html_e( 'View Profile', 'jetonomy' ); ?></a> | </span>
-							<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a><?php echo current_user_can( 'jetonomy_moderate' ) ? ' | ' : ''; ?></span>
-							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+							<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a><?php echo $jt_may_restrict ? ' | ' : ''; ?></span>
+							<?php if ( $jt_may_restrict ) : ?>
 								<?php if ( $jt_restriction ) : ?>
 									<?php if ( null === \Jetonomy\Moderation\Moderation_Permissions::lift_error( get_current_user_id(), $jt_restriction ) ) : // Lifting needs the authority that issued it. ?>
 							<span class="ban"><a href="#" class="jetonomy-unban-user" data-restriction-id="<?php echo absint( $jt_restriction->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></a> | </span>
