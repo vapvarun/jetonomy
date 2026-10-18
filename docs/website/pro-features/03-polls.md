@@ -51,6 +51,8 @@ After voting, members can change their vote by clicking a different option. Clic
 
 Members who have not voted see the options. Members who have voted see the live results. This design keeps undecided members from being anchored by early results.
 
+**Who can vote.** Anyone who can reply in the space can vote. In a space that needs approval to join, a visitor who is not a member can still read the poll and its results, and is told "Join this space to vote." A member who cannot reply there (a read-only access rule, for example) sees "You cannot vote in this space." Silenced and banned members cannot vote or change a vote. The word "space" follows your Terminology settings.
+
 ## Reading Results
 
 Results display as horizontal percentage bars with the option label, the percentage, and the raw vote count. Bars fill in proportion to the leading option.

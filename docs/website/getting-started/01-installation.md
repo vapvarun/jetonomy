@@ -56,6 +56,19 @@ the WordPress plugin directory, where Jetonomy is not published, so it fails.
 wp plugin install /path/to/jetonomy.zip --activate
 ```
 
+### Method 3: Composer
+
+For a site whose plugins are managed with Composer, the free plugin is published
+on Packagist as `wbcomdesigns/jetonomy` (package type `wordpress-plugin`, so the
+site needs `composer/installers` to place it in your plugins folder):
+
+```bash
+composer require wbcomdesigns/jetonomy
+wp plugin activate jetonomy
+```
+
+Jetonomy Pro is not on Packagist; install it from its ZIP.
+
 ## What Happens on Activation
 
 Jetonomy sets everything up automatically the first time you activate it. You do not need to run any SQL or configure anything manually.

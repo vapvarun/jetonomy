@@ -65,7 +65,7 @@ Actions differ between the pending tabs and the Flags tab.
 | Spam | Marks the content as spam and moves it to trash; updates Akismet's spam training if Akismet is active |
 | Trash | Moves the content to trash without marking it as spam |
 
-**On the Flags tab**, each flag row has two buttons:
+**On the Flags tab**, reports on the same topic, reply or member are merged into one row. It names the newest reporter and how many others reported it (for example "Maya and 2 others") and lists each reason with its count. Each row has two buttons, and your decision resolves every report on that item at once:
 
 | Action | What it does |
 |--------|-------------|
