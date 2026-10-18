@@ -26,7 +26,6 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
-use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
 
 class Content_Gate {
@@ -71,23 +70,12 @@ class Content_Gate {
 			}
 		}
 
-		if ( Restriction::is_banned( $user_id ) ) {
-			return new \WP_Error(
-				'jetonomy_user_banned',
-				__( 'Your account has been banned from this community.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		if ( Restriction::is_silenced( $user_id ) ) {
-			return new \WP_Error(
-				'jetonomy_user_silenced',
-				__( 'Your account is currently silenced and cannot post.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
-		}
-
 		$space_id = (int) ( $post->space_id ?? 0 );
+
+		$restricted = Permission_Engine::restriction_error( $user_id, 'create_replies', $space_id );
+		if ( $restricted ) {
+			return $restricted;
+		}
 
 		$open = self::space_accepts_content( $space_id );
 		if ( is_wp_error( $open ) ) {
@@ -106,12 +94,7 @@ class Content_Gate {
 		 * tests, or the display/enforce split just moves rather than closes.
 		 */
 		if ( ! empty( $post->is_closed ) && ! Permission_Engine::can( $user_id, 'moderate', $space_id ) ) {
-			return new \WP_Error(
-				'jetonomy_post_closed',
-				/* translators: 1: singular topic label; 2: plural reply label. */
-				sprintf( __( 'This %1$s is closed and cannot receive new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-				array( 'status' => 403 )
-			);
+			return self::closed_error();
 		}
 
 		/*
@@ -120,14 +103,87 @@ class Content_Gate {
 		 * an old notification. The token proves identity, not entitlement.
 		 */
 		if ( $space_id && ! Permission_Engine::can( $user_id, 'create_replies', $space_id ) ) {
-			return new \WP_Error(
-				'jetonomy_forbidden',
-				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You cannot post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-				array( 'status' => 403 )
-			);
+			return self::cannot_post_error();
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether this user may start a topic in this space right now: check()'s twin
+	 * for posts, shared by REST, the WP Abilities path and WP-CLI.
+	 *
+	 * @param int $user_id  Author.
+	 * @param int $space_id Space.
+	 * @return true|\WP_Error True when the topic may proceed.
+	 */
+	public static function check_post( int $user_id, int $space_id ) {
+		if ( $user_id <= 0 ) {
+			return new \WP_Error( 'jetonomy_not_logged_in', __( 'You must be logged in to post.', 'jetonomy' ), array( 'status' => 401 ) );
+		}
+
+		$restricted = Permission_Engine::restriction_error( $user_id, 'create_posts', $space_id );
+		if ( $restricted ) {
+			return $restricted;
+		}
+
+		// Permission before the space state, so a space this member may not post in
+		// (a hidden one included) reveals nothing about its status.
+		if ( ! Permission_Engine::can( $user_id, 'create_posts', $space_id ) ) {
+			return self::cannot_post_error();
+		}
+
+		$open = self::space_accepts_content( $space_id );
+		return is_wp_error( $open ) ? $open : true;
+	}
+
+	/**
+	 * Whether this user may cast this vote on a post or reply: live and readable
+	 * target, the vote permission in its space, and the self-vote rules. Shared by
+	 * REST and WP-CLI. Withdrawing a vote does not come through here.
+	 *
+	 * @param int    $user_id Voter.
+	 * @param string $type    'post' or 'reply'.
+	 * @param int    $id      Object ID.
+	 * @param int    $value   1 or -1.
+	 * @return true|\WP_Error
+	 */
+	public static function check_vote( int $user_id, string $type, int $id, int $value ) {
+		$live = self::target_is_live( $type, $id, $user_id );
+		if ( is_wp_error( $live ) ) {
+			return $live;
+		}
+
+		$object   = 'reply' === $type ? Reply::find( $id ) : Post::find( $id );
+		$post     = 'reply' === $type && $object ? Post::find( (int) $object->post_id ) : $object;
+		$space_id = (int) ( $post->space_id ?? 0 );
+
+		if ( ! Permission_Engine::can( $user_id, 'vote', $space_id ) ) {
+			return Permission_Engine::restriction_error( $user_id, 'vote', $space_id ) ?? \Jetonomy\API\REST_Auth::forbidden();
+		}
+
+		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
+			return new \WP_Error( 'jetonomy_validation', __( 'Vote value must be 1 or -1.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
+		// Your own vote never counts (owner policy), up or down. Vote::cast()
+		// holds the same rule for writers that skip this gate.
+		if ( $object && (int) ( $object->author_id ?? 0 ) === $user_id ) {
+			return \Jetonomy\Models\Vote::self_vote_error();
+		}
+
+		return true;
+	}
+
+	/**
+	 * The refusal for a member the space does not let post.
+	 */
+	private static function cannot_post_error(): \WP_Error {
+		return new \WP_Error(
+			'jetonomy_forbidden',
+			sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You cannot post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			array( 'status' => 403 )
+		);
 	}
 
 	/**
@@ -165,16 +221,33 @@ class Content_Gate {
 	 * trashed topic is a write to the trashed topic. A missing target returns
 	 * true: the caller already owns its 404.
 	 *
+	 * Pass $viewer from any route that has not already checked read access. A
+	 * target that viewer cannot read, or that does not exist, then answers the
+	 * same 404, so the trashed / not published answer never tells a member
+	 * anything about a topic they are not allowed to see.
+	 *
 	 * Removals (unvote, unbookmark, unfollow) deliberately do not call this,
 	 * so a member can still undo what they did before the item was trashed.
 	 *
-	 * @param string $type 'post' or 'reply'.
-	 * @param int    $id   Object ID.
-	 * @return true|\WP_Error 409 when the target is trashed or unpublished.
+	 * @param string   $type   'post' or 'reply'.
+	 * @param int      $id     Object ID.
+	 * @param int|null $viewer Member to check read access for, or null when the caller already did.
+	 * @return true|\WP_Error 404 when the viewer may not read it, 409 when it is trashed or unpublished.
 	 */
-	public static function target_is_live( string $type, int $id ) {
+	public static function target_is_live( string $type, int $id, ?int $viewer = null ) {
+		$reply = 'reply' === $type ? Reply::find( $id ) : null;
+		$post  = Post::find( $reply ? (int) $reply->post_id : $id );
+
+		if ( null !== $viewer && ! self::viewer_may_read( $viewer, $post, $reply, $type ) ) {
+			return new \WP_Error(
+				'jetonomy_not_found',
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' === $type ? 'reply' : 'topic' ) ),
+				array( 'status' => 404 )
+			);
+		}
+
 		if ( 'reply' === $type ) {
-			$reply = Reply::find( $id );
 			if ( ! $reply ) {
 				return true;
 			}
@@ -182,13 +255,33 @@ class Content_Gate {
 			if ( $error ) {
 				return $error;
 			}
-			$id = (int) $reply->post_id;
 		}
-
-		$post = Post::find( $id );
 
 		return ( $post ? self::status_error( $post ) : null ) ?? true;
 	}
+
+	/**
+	 * Whether the viewer could read the target were it published: the status is
+	 * left out on purpose, target_is_live() answers that part with its 409.
+	 * False means the viewer may not know it exists: the REST write routes
+	 * (Base_Controller::find_unconcealed_post/_reply) answer it with a 404.
+	 *
+	 * @param int         $viewer Member.
+	 * @param object|null $post   Topic row.
+	 * @param object|null $reply  Reply row, for a reply target.
+	 * @param string      $type   'post' or 'reply'.
+	 */
+	public static function viewer_may_read( int $viewer, ?object $post, ?object $reply, string $type ): bool {
+		if ( ! $post || ( 'reply' === $type && ! $reply ) ) {
+			return false;
+		}
+		$as_published = (object) array_merge( (array) $post, array( 'status' => 'publish' ) );
+		if ( ! Permission_Engine::can_read_post( $viewer, $as_published ) ) {
+			return false;
+		}
+		return ! $reply || Permission_Engine::can_read_reply( $viewer, $reply, $post );
+	}
+
 
 	/**
 	 * The one "this item is in the trash" error, shared with
@@ -220,6 +313,21 @@ class Content_Gate {
 			'jetonomy_not_published',
 			__( 'This content is not published, so it cannot be replied to, voted on or reacted to.', 'jetonomy' ),
 			array( 'status' => 409 )
+		);
+	}
+
+	/**
+	 * The refusal for a reply to a closed topic. The topic page shows the same
+	 * message, so the notice and the server never disagree.
+	 *
+	 * @return \WP_Error
+	 */
+	public static function closed_error(): \WP_Error {
+		return new \WP_Error(
+			'jetonomy_post_closed',
+			/* translators: 1: singular topic label; 2: plural reply label. */
+			sprintf( __( 'This %1$s is closed and cannot receive new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+			array( 'status' => 403 )
 		);
 	}
 }

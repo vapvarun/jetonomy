@@ -117,6 +117,8 @@ class Import_Manager {
 			$importer->set_dry_run( true );
 		}
 
-		return $importer->run( $options );
+		// Counted in jt_import_map rows, the same as the Import screen.
+		$before = $importer->mapped_count();
+		return $importer->settle_tally( $importer->run( $options ), $before );
 	}
 }

@@ -114,19 +114,19 @@ Each rule has three parts:
 
 | Grant | Effect |
 |-------|--------|
-| Read | Can view posts and replies, cannot participate |
+| Read | Can view and report posts and replies, cannot post, reply or vote |
 | Participate | Can read, post, and reply |
 | Full | Everything Participate allows, plus the moderator actions the person's own WordPress capabilities already permit |
 
 > **Full does not hand out moderation by itself.** A rule can open a space to someone; it cannot give them a power their WordPress role does not carry. For an ordinary member matched by a Full rule, Full and Participate come to the same thing in practice - closing and pinning topics and editing other people's posts still require the matching capability. Grant moderation deliberately, by setting the person's role on the space's **Members** tab.
 
-**Recorded space role** - not a separate choice. The role a matching member is recorded as follows from the access grant above, and a *membership* rule tops out at Member however you set it:
+**Recorded space role** - not a separate choice. The role a matching member is recorded as follows from the access grant above, the same for every rule type, and never goes above Member:
 
-| Access grant | Membership rule records | Role / capability / trust rule records |
-|---|---|---|
-| Read | Viewer | Viewer |
-| Participate | Member | Member |
-| Full | **Member** | Moderator |
+| Access grant | Recorded as |
+|---|---|
+| Read | Viewer |
+| Participate | Member |
+| Full | Member |
 
 > **Removed in 1.8.1: the Auto-Assign Role dropdown.** This page used to describe a separate role picker and suggested using it so that paid members "automatically become space moderators". That combination is what made a rule labelled Read hand out post deletion, so the picker is gone and the role now follows the grant. **1.9.1** extended the same cap to enrolment itself, which had still been writing a rule's stored role directly onto the space. Rules already saved on your site are covered and need no action.
 >

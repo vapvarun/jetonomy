@@ -329,16 +329,7 @@ class BBPress_Importer extends Importer {
 			);
 		}
 
-		$already = Import_Map::count_for_source( self::SOURCE );
-		if ( $already > 0 ) {
-			$notes[] = sprintf(
-				/* translators: %s: number of previously imported items. */
-				_n( 'This source has been imported before (%s item). Running it again adds only what is missing and does not duplicate anything.', 'This source has been imported before (%s items). Running it again adds only what is missing and does not duplicate anything.', $already, 'jetonomy' ),
-				number_format_i18n( $already )
-			);
-		}
-
-		return $notes;
+		return array_merge( $notes, parent::get_import_notes() );
 	}
 
 	/**
@@ -752,8 +743,8 @@ class BBPress_Importer extends Importer {
 			'forum-' . (int) $forum->ID,
 			'imported-bbpress-' . $slug . '-' . (int) $forum->ID,
 			array(
-				'name'        => $forum->post_title,
-				'description' => wp_strip_all_tags( $forum->post_content ),
+				'name'        => self::plain_text( $forum->post_title ),
+				'description' => self::plain_text( $forum->post_content ),
 				'parent_id'   => max( 0, (int) $this->get_mapped_id( 'forum_category', (int) $forum->post_parent ) ),
 				'visibility'  => $this->map_access( $forum )['visibility'],
 				'sort_order'  => (int) $forum->menu_order,
@@ -786,7 +777,7 @@ class BBPress_Importer extends Importer {
 				'parent_id'   => $parent_space_id,
 				'author_id'   => (int) $forum->post_author ?: 1,
 				'type'        => 'forum',
-				'title'       => $forum->post_title,
+				'title'       => self::plain_text( $forum->post_title ),
 
 				/*
 				 * A colliding slug must not fail the import, and must not be
@@ -797,7 +788,7 @@ class BBPress_Importer extends Importer {
 				 * merging into it or erroring out.
 				 */
 				'slug'        => Space::unique_slug( self::clean_slug( $forum->post_name ?: $forum->post_title ) ?: 'forum-' . (int) $forum->ID ),
-				'description' => wp_strip_all_tags( $forum->post_content ),
+				'description' => self::plain_text( $forum->post_content ),
 				// Carry the source forum's privacy across, with a join policy
 				// the model accepts. See map_access().
 				'visibility'  => $access['visibility'],
@@ -923,7 +914,7 @@ class BBPress_Importer extends Importer {
 					'space_id'      => $space_id,
 					'author_id'     => (int) $topic->post_author,
 					'type'          => \Jetonomy\compose_post_type( 'forum' ),
-					'title'         => $topic->post_title,
+					'title'         => self::plain_text( $topic->post_title ),
 					'slug'          => self::clean_slug( $topic->post_name ?: $topic->post_title ) ?: 'topic-' . (int) $topic->ID,
 					'content'       => wp_kses_post( $topic->post_content ),
 					'content_plain' => \jetonomy_content_to_plain( $topic->post_content ),

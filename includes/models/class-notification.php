@@ -475,7 +475,7 @@ class Notification extends Model {
 	 * review"), so hiding them once the target left `publish` would swallow
 	 * the only word the recipient gets.
 	 */
-	private const TARGET_STATUS_EXEMPT_TYPES = array( 'moderation', 'flag_resolved' );
+	public const TARGET_STATUS_EXEMPT_TYPES = array( 'moderation', 'flag_resolved' );
 
 	/**
 	 * The one WHERE fragment every notification read path applies, so the

@@ -30,6 +30,12 @@ class CategoriesApiTest extends WP_UnitTestCase {
 		$controller->register_routes();
 	}
 
+	/** A listed category holds at least one space the viewer can see (empty ones are not found). */
+	private function with_space( int $category_id ): int {
+		\Jetonomy\Models\Space::create( [ 'title' => 'S ' . uniqid(), 'slug' => 's-' . uniqid(), 'category_id' => $category_id, 'visibility' => 'public' ] );
+		return $category_id;
+	}
+
 	public function tear_down(): void {
 		global $wp_rest_server;
 		$wp_rest_server = null;
@@ -71,7 +77,7 @@ class CategoriesApiTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_categories_returns_only_top_level(): void {
-		$parent_id = Category::create( [ 'name' => 'Parent', 'slug' => 'parent-api-' . uniqid() ] );
+		$parent_id = $this->with_space( Category::create( [ 'name' => 'Parent', 'slug' => 'parent-api-' . uniqid() ] ) );
 		Category::create( [ 'name' => 'Child', 'slug' => 'child-api-' . uniqid(), 'parent_id' => $parent_id ] );
 
 		$response = $this->do_request( 'GET', '/categories' );
@@ -124,7 +130,7 @@ class CategoriesApiTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_single_category_returns_200(): void {
-		$id = Category::create( [ 'name' => 'Single', 'slug' => 'single-api-' . uniqid() ] );
+		$id = $this->with_space( Category::create( [ 'name' => 'Single', 'slug' => 'single-api-' . uniqid() ] ) );
 
 		$response = $this->do_request( 'GET', "/categories/{$id}" );
 		$this->assertEquals( 200, $response->get_status() );

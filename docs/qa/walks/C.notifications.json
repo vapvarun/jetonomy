@@ -1,0 +1,151 @@
+{
+  "journey": "C.notifications",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:20:00Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-notifications.1": {
+      "result": "pass",
+      "evidence": "alice replied to bob's topic: bob's list shows 'Alice Chen replied to your topic \"Which role can approve held posts in a space?\"' and the bell rose"
+    },
+    "c-notifications.2": {
+      "result": "pass",
+      "evidence": "maya @bob on the Dark mode topic: one 'mentioned you' notification, Mentions filter count 1"
+    },
+    "c-notifications.3": {
+      "result": "pass",
+      "evidence": "clicking the mention opened ?rpg=2#reply-13762 (page 2 of the 47-reply thread), the reply is in view, notification turned read"
+    },
+    "c-notifications.4": {
+      "result": "pass",
+      "evidence": "Mark all as read with 7 unread: header bell, nav badge and Unread tab badge cleared without reload; GET /notifications/unread-count -> 0"
+    },
+    "c-notifications.5": {
+      "result": "pass",
+      "evidence": "PATCH /notifications/<id> is_read:true: unread-count 92 -> 91; bulk {action:'mark_read',ids:[2]} -> affected 2, count 90 -> 88"
+    },
+    "c-notifications.6": {
+      "result": "pass",
+      "evidence": "kai_brennan (no notifications): 'No notifications yet. When members reply to your topics or mention you, those updates land here.'; Unread filter: 'You're all caught up! Nothing new since you last checked. Switch to All to see your history.'"
+    },
+    "c-notifications.7": {
+      "result": "fail",
+      "expected": "with ~90 notifications the page pages, select-all selects only the page, Delete removes the selected items and the counts stay right",
+      "actual": "pages of 20 with Load More, 'Select all on page' selected 20, Delete removed 2 selected rows; but the All tab count stayed 92 after the delete (90 after reload)",
+      "url": "http://forums.local/community/notifications/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/B/notif-selected.png"
+    },
+    "c-notifications.8": {
+      "result": "pass",
+      "evidence": "dismissing a flag: each reporter got 'Your report was reviewed. Thanks for helping keep the community healthy.' once (bell); email 'Your report was reviewed' seen in Mailpit"
+    },
+    "c-notifications.9": {
+      "result": "fail",
+      "expected": "carlos requests to join Insiders / Beta -> staff see 'asked to join one of your spaces'; withdraw removes it",
+      "actual": "admin and test_admin got a join_request notice reading 'Carlos Mendes requested to join Insiders / Beta' (check wording differs); withdrawing removed it from the admin's list",
+      "url": "http://forums.local/community/notifications/",
+      "check_wrong": true
+    },
+    "c-notifications.10": {
+      "result": "pass",
+      "evidence": "admin approved lucia: 'Your request to join Insiders / Beta was approved'; denied: 'Your request to join Insiders / Beta was not approved'"
+    },
+    "c-notifications.11": {
+      "result": "pass",
+      "evidence": "existing notices 'Congratulations! You have been promoted to Leader (Level 4)' and 'You earned the QA-RFT Badge badge' appear once each in the list (triggered during QA, not by me)"
+    },
+    "c-notifications.12": {
+      "result": "pass",
+      "evidence": "existing notices 'Your reply was removed by a moderator' (bob) and 'Your topic was removed by a moderator' (alice) appear once each; trigger came from the other lane's moderator actions"
+    },
+    "c-notifications.13": {
+      "result": "untested",
+      "needs": "lane A: remove bob's Partner Program membership"
+    },
+    "c-notifications.14": {
+      "result": "pass",
+      "evidence": "maya @bob in a Customer Advisory Board reply: bob got no notification and the title never appears for him"
+    },
+    "c-notifications.15": {
+      "result": "pass",
+      "evidence": "alice replied then deleted her reply: bob's reply_to_post notice for it disappeared from his list"
+    },
+    "c-notifications.16": {
+      "result": "untested",
+      "needs": "lane A: Name display setting (username vs full name)"
+    },
+    "c-notifications.17": {
+      "result": "pass",
+      "evidence": "maya's anonymous reply on bob's topic: notice reads 'Anonymous replied to your topic ...'"
+    },
+    "c-notifications.18": {
+      "result": "pass",
+      "evidence": "390: Grace Oluwaseun Adeyemi-Whitfield notice wraps over 4 lines, no horizontal scroll (docW 390) (theme repeat skipped (short walk))"
+    },
+    "c-notifications.19": {
+      "result": "fail",
+      "expected": "second tab's bell updates on its next poll",
+      "actual": "there is no poll by design (header.js: 'never on a timer'); after 70+ seconds the first tab still showed 2. A focus/visibility event refreshes the bell, but the Unread tab count on the page stayed at 8 after the bell cleared",
+      "url": "http://forums.local/community/notifications/",
+      "check_wrong": true
+    },
+    "c-notifications.20": {
+      "result": "untested",
+      "needs": "fixture: a thread with 200 followers and cron batch delivery"
+    },
+    "c-notifications.21": {
+      "result": "pass",
+      "evidence": "GET /notifications and /notifications/unread-count logged out -> 401 jetonomy_unauthorized"
+    },
+    "c-notifications.22": {
+      "result": "pass",
+      "evidence": "bob PATCHed alice's notification id -> 404 jetonomy_not_found 'Notification not found.'; alice's item stayed unread (roles swapped, same check)"
+    },
+    "c-notifications.23": {
+      "result": "untested",
+      "needs": "lane A: send an admin announcement"
+    },
+    "c-notifications.24": {
+      "result": "pass",
+      "evidence": "dark: unread row background rgb(59,67,80) (average ~68, under 100), text rgb(229,229,229) (theme repeat skipped (short walk))"
+    },
+    "c-notifications.25": {
+      "result": "pass",
+      "evidence": "offline Mark all read: bell kept 86 and toast 'Could not mark notifications as read. Check your connection and try again.'"
+    },
+    "c-notifications.26": {
+      "result": "pass",
+      "evidence": "long topic title is cut at a word boundary: 'Crash when opening the profile page on mobile…'"
+    },
+    "c-notifications.27": {
+      "result": "fail",
+      "expected": "header bell and Alerts tab pick up a mark-all-read done elsewhere within one minute",
+      "actual": "no timer: after 70+ seconds the other tab still showed the old count; updates only on focus/visibility (header.js design). Alerts/Unread tab count stayed stale even after the bell refreshed",
+      "url": "http://forums.local/community/notifications/",
+      "check_wrong": true
+    },
+    "c-notifications.28": {
+      "result": "pass",
+      "evidence": "PATCH a nonexistent id and another member's id -> identical 404 jetonomy_not_found 'Notification not found.'; bulk with another member's id -> affected 0"
+    }
+  },
+  "proposed_checks": [
+    "- `c-notifications.29` @member #ui: delete selected notifications -> the All / Unread / filter tab counts update immediately, not only after a reload.",
+    "- `c-notifications.30` @member #ui: mark all as read in tab A, refocus tab B -> the bell and the Unread tab count on the page both update."
+  ],
+  "notes": "Join request flow used Insiders / Beta: carlos withdrew and re-requested (request id now 287, message restored, pending as seeded); lucia's test requests/membership removed and member_count recomputed. Alice lost 2 notifications by the delete test and read-state changes on alice/bob. Dismissed flags notify reporters (bob, maya, carlos). No site setting changed."
+}

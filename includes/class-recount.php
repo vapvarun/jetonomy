@@ -51,7 +51,7 @@ class Recount {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$stats['user_post_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.author_id = u.user_id AND p.status = 'publish') WHERE u.user_id IN ({$in})" );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$stats['user_reply_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.author_id = u.user_id AND r.status = 'publish') WHERE u.user_id IN ({$in})" );
+		$stats['user_reply_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.reply_count = (SELECT COUNT(*) FROM {$replies_t} r INNER JOIN {$posts_t} rp ON rp.id = r.post_id WHERE r.author_id = u.user_id AND r.status = 'publish' AND rp.status = 'publish') WHERE u.user_id IN ({$in})" );
 
 		// Named rows, so the profile caches drop precisely rather than flushing
 		// the whole group the way run() has to. Same key UserProfile writes.
@@ -141,7 +141,7 @@ class Recount {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$stats['user_post_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.author_id = u.user_id AND p.status = 'publish')" . $range( 'u.user_id' ) );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$stats['user_reply_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.author_id = u.user_id AND r.status = 'publish')" . $range( 'u.user_id' ) );
+			$stats['user_reply_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.reply_count = (SELECT COUNT(*) FROM {$replies_t} r INNER JOIN {$posts_t} rp ON rp.id = r.post_id WHERE r.author_id = u.user_id AND r.status = 'publish' AND rp.status = 'publish')" . $range( 'u.user_id' ) );
 		}
 
 		// Every recompute above is a set-based UPDATE that cannot name the rows it

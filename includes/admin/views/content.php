@@ -13,6 +13,8 @@
  * @var int      $paged
  * @var int      $total
  * @var int      $total_pages
+ * @var string   $orderby        Column sort: title|created_at|reply_count|view_count.
+ * @var string   $order          ASC|DESC.
  *
  * @package Jetonomy
  */
@@ -59,6 +61,8 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 	<!-- ── Toolbar ───────────────────────────────────────────── -->
 	<form method="get" action="" id="jetonomy-content-filters">
 		<input type="hidden" name="page" value="jetonomy-content">
+		<input type="hidden" name="orderby" value="<?php echo esc_attr( $orderby ); ?>">
+		<input type="hidden" name="order" value="<?php echo esc_attr( $order ); ?>">
 		<div class="jt-content-toolbar">
 
 			<!-- Space filter -->
@@ -141,13 +145,13 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 					<td class="manage-column column-cb check-column">
 						<input type="checkbox" id="jt-select-all" aria-label="<?php esc_attr_e( 'Select all rows', 'jetonomy' ); ?>">
 					</td>
-					<th class="manage-column column-title column-primary"><?php esc_html_e( 'Title', 'jetonomy' ); ?></th>
+					<?php jetonomy_admin_sort_header( 'title', __( 'Title', 'jetonomy' ), $orderby, $order, 'manage-column column-title column-primary' ); ?>
 					<th class="manage-column jt-col-m"><?php echo esc_html( \Jetonomy\jetonomy_label( 'space' ) ); ?></th>
 					<th class="manage-column jt-col-m"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
 					<th class="manage-column jt-col-s"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
-					<th class="manage-column jt-col-xs"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></th>
-					<th class="manage-column jt-col-xs"><?php esc_html_e( 'Views', 'jetonomy' ); ?></th>
-					<th class="manage-column jt-col-m"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
+					<?php jetonomy_admin_sort_header( 'reply_count', \Jetonomy\jetonomy_label( 'reply', true ), $orderby, $order, 'manage-column jt-col-xs' ); ?>
+					<?php jetonomy_admin_sort_header( 'view_count', __( 'Views', 'jetonomy' ), $orderby, $order, 'manage-column jt-col-xs' ); ?>
+					<?php jetonomy_admin_sort_header( 'created_at', __( 'Date', 'jetonomy' ), $orderby, $order, 'manage-column jt-col-m' ); ?>
 				</tr>
 			</thead>
 			<tbody id="jt-posts-tbody">

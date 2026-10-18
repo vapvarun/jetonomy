@@ -237,6 +237,11 @@ class Shortcodes {
 			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'topic', true, true ) ) ) . '</div>';
 		}
 
+		// Users and profiles for every byline in one query each, not one per row.
+		$author_ids = array_map( static fn( $p ) => (int) $p->author_id, $posts );
+		cache_users( $author_ids );
+		Models\UserProfile::prime( $author_ids );
+
 		$out = '<div class="jt-shortcode jt-shortcode-recent-posts">';
 		foreach ( $posts as $post ) {
 			$url    = route_url( 'post', $post->space_slug, $post->slug );
@@ -300,6 +305,11 @@ class Shortcodes {
 		if ( empty( $posts ) ) {
 			return '<div class="jt-shortcode-empty">' . esc_html__( 'No trending discussions yet. Check back soon.', 'jetonomy' ) . '</div>';
 		}
+
+		// Users and profiles for every byline in one query each, not one per row.
+		$author_ids = array_map( static fn( $p ) => (int) $p->author_id, $posts );
+		cache_users( $author_ids );
+		Models\UserProfile::prime( $author_ids );
 
 		$rank = 0;
 		$out  = '<div class="jt-shortcode jt-shortcode-trending-posts">';
@@ -415,8 +425,7 @@ class Shortcodes {
 		);
 
 		if ( empty( $leaders ) ) {
-			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ) . '</div>';
+			return '<div class="jt-shortcode-empty">' . esc_html( leaderboard_empty_state( $period )['message'] ) . '</div>';
 		}
 
 		cache_users( array_map( static fn( $l ) => (int) $l->user_id, $leaders ) ); // Users + meta for names and avatars in one go.
@@ -620,6 +629,11 @@ class Shortcodes {
 			$postable = self::postable_spaces_for_current_user();
 		}
 
+		// A banned or silenced member has no postable space; say why instead of
+		// "you have not joined any space". Fixed mode also names a space ban.
+		$restricted  = \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'create_posts', $space ? (int) $space->id : null );
+		$restriction = $restricted ? $restricted->get_error_message() : '';
+
 		self::enqueue_styles();
 		if ( function_exists( 'wp_enqueue_script_module' ) ) {
 			wp_enqueue_script_module( 'jetonomy-compose-topic' );
@@ -637,14 +651,13 @@ class Shortcodes {
 		// i18n.*) so the embed works on any WP page. wp_interactivity_state
 		// merges keys across callers, so this is additive.
 		if ( function_exists( 'wp_interactivity_state' ) ) {
-			$settings = (array) get_option( 'jetonomy_settings', array() );
 			wp_interactivity_state(
 				'jetonomy',
 				array(
 					'apiBase'       => rest_url( 'jetonomy/v1' ),
 					'_nonce'        => wp_create_nonce( 'wp_rest' ),
 					'nonce'         => wp_create_nonce( 'wp_rest' ),
-					'communityBase' => home_url( '/' . ( isset( $settings['base_slug'] ) ? (string) $settings['base_slug'] : 'community' ) ),
+					'communityBase' => base_url(),
 					// The same strings as community pages, so the composer never shows English fallbacks here.
 					'i18n'          => array_merge(
 						Template_Loader::app_i18n(),
@@ -666,11 +679,12 @@ class Shortcodes {
 		Template_Loader::partial(
 			'compose-topic-embed',
 			array(
-				'mode'     => $mode,
-				'space_id' => $space_id,
-				'space'    => $space,
-				'postable' => $postable,
-				'types'    => $types,
+				'mode'        => $mode,
+				'space_id'    => $space_id,
+				'space'       => $space,
+				'postable'    => $postable,
+				'types'       => $types,
+				'restriction' => $restriction,
 			)
 		);
 		return (string) ob_get_clean();
@@ -695,7 +709,8 @@ class Shortcodes {
 		$spaces = array();
 		foreach ( $memberships as $m ) {
 			$sid = (int) $m->space_id;
-			if ( ! \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', $sid ) ) {
+			// Same rule as REST postable_by_me: archived and locked spaces take no topics.
+			if ( ! \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', $sid ) || true !== \Jetonomy\Permissions\Content_Gate::space_accepts_content( $sid ) ) {
 				continue;
 			}
 			$space = \Jetonomy\Models\Space::find( $sid );

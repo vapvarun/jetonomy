@@ -105,7 +105,9 @@ If you prefer per-site activation rather than network activation, install and ac
 
 ## Uninstalling
 
-If you deactivate Jetonomy, your data is preserved. Only a full uninstall (delete) removes the `wp_jt_*` tables, all plugin options, and all registered capabilities, giving you a clean removal with no database debris. Jetonomy Pro behaves the same way: uninstalling it removes every `wp_jt_pro_*` table, its options and user meta, and its scheduled tasks (fully covered as of 1.5.0).
+Deactivating Jetonomy never touches your data. Deleting it from the Plugins screen also keeps your data by default, so you can delete and reinstall the plugin without losing anything.
+
+To remove everything when you delete the plugin, go to **Jetonomy → Settings → General → Data** and tick **Remove all community data when Jetonomy is deleted** (only administrators can change it). With that on, deleting Jetonomy removes the `wp_jt_*` tables, all plugin options, and all registered capabilities, giving you a clean removal with no database debris. Jetonomy Pro follows the same setting: its `wp_jt_pro_*` tables, options, user meta and scheduled tasks are removed only when it is on. Removal is permanent, so back up your database first.
 
 ## What's Next?
 

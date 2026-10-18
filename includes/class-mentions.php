@@ -221,7 +221,9 @@ class Mentions {
 				if ( '' === $url ) {
 					return $matches[0]; // Not a real user — leave as typed.
 				}
-				return '<a href="' . esc_url( $url ) . '" class="jt-mention">@' . esc_html( $username ) . '</a>';
+				// dir="ltr" isolates the handle (always Latin, see MENTION_PATTERN), so
+				// inside right-to-left text it reads "@omar", not "omar@".
+				return '<a href="' . esc_url( $url ) . '" class="jt-mention" dir="ltr">@' . esc_html( $username ) . '</a>';
 			},
 			$text
 		);
@@ -271,35 +273,9 @@ class Mentions {
 		$post          = 'reply' === $object_type ? Models\Post::find( (int) $object->post_id ) : $object;
 		$actor_id      = (int) $object->author_id;
 		$context_title = 'reply' === $object_type ? ( $post->title ?? sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ) : (string) $object->title;
-		$space_id      = (int) ( $post->space_id ?? 0 );
-		$is_private    = (bool) ( $post->is_private ?? false );
 
 		$actor_name      = \Jetonomy\Author::for_display( $actor_id, $object )['name'] ?: __( 'Someone', 'jetonomy' );
 		$actor_anonymous = (bool) ( $object->is_anonymous ?? false );
-
-		// Visibility filter: never notify a user who can't read the mentioned
-		// content. Done ONCE, set-based, before the loop — no per-recipient
-		// permission check (that would be an N+1 at scale). A public space needs
-		// no filtering (everyone can read); a private/hidden space is gated to
-		// its members; an is_private post is gated to author + space staff.
-		if ( $space_id ) {
-			$space = Models\Space::find( $space_id );
-			if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
-				$members  = Models\SpaceMember::members_among( $space_id, $user_ids );
-				$user_ids = array_values( array_intersect( $user_ids, $members ) );
-			}
-			if ( $is_private && ! empty( $user_ids ) ) {
-				// is_private post: only the author + space admins/moderators.
-				$staff    = array_keys( Models\SpaceMember::roles_for_users( $space_id, $user_ids ) );
-				$allowed  = array_merge( $staff, array( $actor_id ) ); // actor filtered out below anyway.
-				$user_ids = array_values( array_intersect( $user_ids, $allowed ) );
-			}
-		}
-
-		// A private reply: only the people who may read it hear about it (a handful of names, so per-user checks are fine).
-		if ( 'reply' === $object_type && ! empty( $object->is_private ) && $post ) {
-			$user_ids = array_values( array_filter( $user_ids, static fn( $uid ) => \Jetonomy\Permissions\Permission_Engine::can_read_reply( (int) $uid, $object, $post ) ) );
-		}
 
 		foreach ( $user_ids as $uid ) {
 			if ( $uid === $actor_id ) {
@@ -310,46 +286,12 @@ class Mentions {
 				/* translators: 1: actor display name, 2: post/reply title */
 				__( '%1$s mentioned you in "%2$s"', 'jetonomy' ),
 				$actor_name,
-				mb_substr( $context_title, 0, 50 )
+				short_title( (string) $context_title )
 			);
 
-			// Resolve the deep link once — reused for the action payload and the email CTA.
-			$content_url = notification_deep_link( $object_type, $object_id );
-
-			$notification_id = Models\Notification::create(
-				array(
-					'user_id'         => $uid,
-					'actor_id'        => $actor_id,
-					'actor_anonymous' => $actor_anonymous ? 1 : 0,
-					'type'            => 'mention',
-					'object_type'     => $object_type,
-					'object_id'       => $object_id,
-					'message'         => $message,
-					'created_at'      => now(),
-				)
-			);
-
-			// Routed through the shared emitter so the push gate applies here too
-			// (1.8.0). This path fired the hook raw, so @mentioning someone who
-			// had blocked you put your words on their phone.
-			\Jetonomy\Notifications\Notifier::emit_notification_created( $notification_id, $uid, $actor_id, 'mention', $object_type, $object_id, $message, $content_url, $actor_anonymous );
-
-			// Check email preference via the shared gate (master kill-switch +
-			// per-user per-type + admin default). $user_prefs already loaded.
-			$profile    = Models\UserProfile::find_by_user( $uid );
-			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : array();
-			$user_prefs = $settings['notifications'] ?? array();
-
-			// Block gate — Notifier::create_and_maybe_email() has had one since
-			// 1.7.1, but this second, parallel email path never got it, so a
-			// mention email from a blocked user still landed in the blocker's
-			// inbox. Same predicate, one implementation (1.8.0).
-			if ( ! \Jetonomy\Notifications\Notifier::recipient_blocked_actor( $uid, $actor_id )
-				&& \Jetonomy\Notifications\Notifier::should_email( $uid, 'mention', $user_prefs ) ) {
-				// The shared sender: the owner's Mention template (subject and
-				// body), the email filters and headers, like every other email.
-				\Jetonomy\Notifications\Notifier::send_email_notification( $uid, 'mention', $message, $object_type, $object_id, $content_url );
-			}
+			// The shared send path: web and email preferences, the block gate,
+			// the push mirror and the owner's Mention template with its name filled.
+			\Jetonomy\Notifications\Notifier::create_and_maybe_email( $uid, $actor_id, 'mention', $object_type, $object_id, $message, notification_deep_link( $object_type, $object_id ), array(), $actor_anonymous );
 		}
 	}
 }

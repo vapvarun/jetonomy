@@ -1,0 +1,142 @@
+{
+  "journey": "C.admin.category-and-space-crud",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:34Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-admin-category-and-space-crud.1": {
+      "result": "pass",
+      "evidence": "Product Questions saved, toast 'Category created.' visible after the reload (top right, 316px wide), row listed; qa-artifacts/203-walk2/laneA/cat-create-toast.png"
+    },
+    "c-admin-category-and-space-crud.2": {
+      "result": "pass",
+      "evidence": "Renamed Seasonal Campaigns -> Holiday Campaigns via Edit; dragged it above Product Questions; order kept after reload; GET /categories lists Holiday Campaigns:3, Product Questions:4"
+    },
+    "c-admin-category-and-space-crud.3": {
+      "result": "pass",
+      "evidence": "Delete of Holiday Campaigns (had Gardening Tips) -> toast 'Cannot delete this category while it contains spaces. Move or delete the spaces first.', space intact; delete of Product Questions (had child Regional Meetups) -> 'Cannot delete this category while it has sub-categories. Delete them first.'"
+    },
+    "c-admin-category-and-space-crud.4": {
+      "result": "pass",
+      "evidence": "Gardening Tips (Forum, Community category, star icon) created, toast 'Space created.' visible on the edit page it redirects to, /community/s/gardening-tips/ 200"
+    },
+    "c-admin-category-and-space-crud.5": {
+      "result": "pass",
+      "evidence": "Hidden chosen: join policy -> Invite only, note 'Hidden spaces must use Invite Only. Join policy switched.'"
+    },
+    "c-admin-category-and-space-crud.6": {
+      "result": "pass",
+      "evidence": "Private chosen while Open: join policy -> Requires Approval, note 'Private spaces need approval or an invite. Join policy switched to Approval Required.'"
+    },
+    "c-admin-category-and-space-crud.7": {
+      "result": "pass",
+      "evidence": "The admin edit form has no settings keys, so done through REST PATCH /spaces/2986: who_can_post=member, then who_can_reply=member -> both kept; who_can_post='' removed only that key and who_can_reply stayed"
+    },
+    "c-admin-category-and-space-crud.8": {
+      "result": "pass",
+      "evidence": "wp-admin has no member roster screen; on my own test space 2986 (me the only admin) REST PATCH role=member -> 400 jetonomy_cannot_self_demote, DELETE member -> 400 jetonomy_last_admin_required, roster kept the admin. Help Desk itself has two admins (varundubey, test_editor), so 'only admin' was not the seeded state"
+    },
+    "c-admin-category-and-space-crud.9": {
+      "result": "pass",
+      "evidence": "North dock overflow (id 66, 510 topics): admin-ajax jetonomy_delete_space mode=purge returned message 'This space is locked and its content is being deleted in the background.', removed=false; Spaces list then showed status Locked. First batch left 10 topics; Space_Purge::run_batch drained the rest and the space row was gone.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/purge-510-ajax.png",
+      "site": "docker jt203-scale"
+    },
+    "c-admin-category-and-space-crud.10": {
+      "result": "pass",
+      "evidence": "Cedar bench notes id 72 (3 topics): $GLOBALS['jt_fail_space_delete'] rewrote DELETE FROM jt_spaces/posts/replies. Space_Purge::queue and Space::delete both stopped with last_error \"Table 'wordpress.wp_jt_spaces_does_not_exist' doesn't exist\"; space row still active and 3 topics intact.",
+      "site": "docker jt203-scale"
+    },
+    "c-admin-category-and-space-crud.11": {
+      "result": "pass",
+      "evidence": "archive_and_hand_over(36) after cache flush: 2025 Hackathon author_id=1 (admin heir), former owner user 2 stayed moderator, status archived. REST reply as bob 403 jetonomy_space_restricted.",
+      "site": "docker jt203-scale"
+    },
+    "c-admin-category-and-space-crud.12": {
+      "result": "fail",
+      "expected": "topics readable, composer absent, reply attempt 403 jetonomy_space_restricted",
+      "actual": "Topic 'Winning lantern sketches from 2025' readable; composer visible with 'Be the first to reply!' and Post Reply. REST via wp_set_current_user(bob) 403 jetonomy_space_restricted. Cookie REST got rest_cookie_invalid_nonce.",
+      "url": "http://localhost:8095/community/s/2025-hackathon/t/winning-lantern-sketches-from-2025/?autologin=bob",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/hackathon-topic.png",
+      "site": "docker jt203-scale"
+    },
+    "c-admin-category-and-space-crud.13": {
+      "result": "pass",
+      "evidence": "Help Desk description stored complete at 288 chars (edit form); Spaces list row shows no description at all so nothing to truncate and the table did not widen (1236/1236)"
+    },
+    "c-admin-category-and-space-crud.14": {
+      "result": "pass",
+      "evidence": "Second 'Product Questions' saved with slug product-questions-1 beside product-questions, original untouched (check's '-2' is an example only)"
+    },
+    "c-admin-category-and-space-crud.15": {
+      "result": "pass",
+      "evidence": "Amsterdam/Nairobi/Lisbon/Seoul/Mexico City: admin Spaces list Topics 0, front end 'No topics yet. Be the first to start a discussion!' (amsterdam, seoul checked), edit page opens (space 30); delete proven on the empty Gardening Tips space (modal asks to type the name, 'Space and all its content were deleted.') rather than on a shared city space"
+    },
+    "c-admin-category-and-space-crud.16": {
+      "result": "untested",
+      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
+    },
+    "c-admin-category-and-space-crud.17": {
+      "result": "untested",
+      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
+    },
+    "c-admin-category-and-space-crud.18": {
+      "result": "pass",
+      "evidence": "Created 'Q&A: Roadmap & Plans': DB title and REST title have a bare &, Spaces list, front page <title> and h1 all read 'Q&A: Roadmap & Plans', slug qa-roadmap-plans. Space page has no breadcrumb element to compare"
+    },
+    "c-admin-category-and-space-crud.19": {
+      "result": "pass",
+      "evidence": "Tab A saved description, tab B (stale) saved sort order: B refused with 'This space was changed by someone else. Reload to see their changes.'; description kept, nothing reverted"
+    },
+    "c-admin-category-and-space-crud.20": {
+      "result": "pass",
+      "evidence": "After typed-name 'Delete permanently' ('Space and all its content were deleted.') of space 2987: 0 space row, 0 topics, 0 members for it; `wp jetonomy space list --category=1547` listed only the other space. Home counts not compared. Existing orphans: 251 jt_space_members rows point at spaces 179 and 306-555 that no longer exist (not caused by this walk)"
+    },
+    "c-admin-category-and-space-crud.21": {
+      "result": "pass",
+      "evidence": "category save: 'Category created.' toast stays after reload; space save: 'Space created.' toast visible on the redirected edit page"
+    },
+    "c-admin-category-and-space-crud.22": {
+      "result": "pass",
+      "evidence": "stale second tab save refused with message 'This space was changed by someone else. Reload to see their changes.'; first tab's description kept"
+    },
+    "c-admin-category-and-space-crud.23": {
+      "result": "untested",
+      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
+    },
+    "c-admin-category-and-space-crud.24": {
+      "result": "pass",
+      "evidence": "Space with an invite, a subscription and the owner's member row deleted from the admin: 0 rows left in jt_space_members, jt_invite_links, jt_join_requests, jt_subscriptions for it. Legacy orphans are still there: 256 jt_space_members rows for spaces 179, 306-555, 3061-3064 (from earlier deletes), none new"
+    },
+    "c-admin-category-and-space-crud.25": {
+      "result": "pass",
+      "evidence": "Spaces list (46 spaces, 3 pages of 20) has a 'Search spaces...' box; s=Help returns 'Help Desk' 1-1 of 1; Title, Members and Topics headers are sort links with the active one marked (sorted desc)"
+    },
+    "c-admin-category-and-space-crud.26": {
+      "result": "pass",
+      "evidence": "Before: scan-orphans showed 256 jt_space_members rows for deleted spaces. `wp jetonomy space purge-orphans` removed 516 orphan rows (259 deleted spaces); count query now 0 and a second run says 'No orphaned space data'. Note: recount itself does not remove them, the CLI cleanup does"
+    }
+  },
+  "proposed_checks": [
+    "- `c-admin-category-and-space-crud.21` @admin #admin: save a category, then a space -> a success toast stays visible (not removed by the immediate reload or redirect), or the page shows the notice after reload.",
+    "- `c-admin-category-and-space-crud.22` @admin #admin +concurrent: save the space form from a stale second tab -> fields the second tab did not change keep the first tab's newer values, or the stale save is refused with a message.",
+    "- `c-admin-category-and-space-crud.23` @admin #rest !refuse: bob POSTs /categories and /spaces -> both return the same error code.",
+    "- `c-admin-category-and-space-crud.24` @admin #cli: after deleting a space, jt_space_members, jt_subscriptions and jt_read_status hold no rows for its id (251 orphan member rows exist for spaces 179, 306-555).",
+    "- `c-admin-category-and-space-crud.25` @admin #admin +many: Spaces list with 50+ spaces -> a search box exists.",
+    "- `c-admin-category-and-space-crud.26` @admin #cli: after deleting spaces 179, 306-555, 3061-3064 earlier, jt_space_members still holds 256 rows for spaces that no longer exist -> a one-off cleanup (or recount step) removes them and a count query returns 0.",
+    "- `c-admin-category-and-space-crud.27` @member #ui +archived: open a topic inside an archived space -> the topic is readable, no reply composer shows, and a reply POST returns 403 jetonomy_space_restricted (needs a topic in the archived 2025 Hackathon; the reseed left it empty)."
+  ],
+  "notes": "Re-walk lane A on free 5680944e / pro d8d053b. Created and removed: categories Product Questions and Product Questions Archive (deleted), spaces Gardening Tips (deleted via admin modal) and Pop-up Workshop (purged via REST). No settings changed. | Re-walk 2 (lane A): orphan purge ran on the shared site (removed only rows whose space no longer exists: 256 members, 2 notifications, 1 subscription, 257 activity rows). Posting attempt in the archived space was refused, nothing stored. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
+}

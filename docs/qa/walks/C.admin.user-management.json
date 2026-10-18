@@ -1,0 +1,129 @@
+{
+  "journey": "C.admin.user-management",
+  "free": "21f93481",
+  "pro": "fe21324",
+  "walked_at": "2026-10-17T22:07:17Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-admin-user-management.1": {
+      "result": "pass",
+      "evidence": "search 'Grace' on wp-admin Users: 1 user, 'Grace Oluwaseun Adeyemi-Whitfield' on one line at 1440, default grey avatar renders"
+    },
+    "c-admin-user-management.2": {
+      "result": "pass",
+      "evidence": "alice was Leader (4) here, not 1: changed 4 -> 3 from the row popover; listing 'Trusted (3)' (owner-set name), toast 'Trust level updated.' visible after the reload; restored to 4 the same way (toast again). REST call made by the screen succeeded"
+    },
+    "c-admin-user-management.3": {
+      "result": "pass",
+      "evidence": "carlos: Ban row action opens 'Ban User' (Banning: carlos), submit -> toast 'User banned.', row shows red 'Banned' label and the action turns into 'Lift restriction'"
+    },
+    "c-admin-user-management.4": {
+      "result": "fail",
+      "expected": "unban carlos -> toast 'Ban removed.'",
+      "actual": "confirm 'Lift this restriction? The member can post again right away.' then toast 'Ban lifted.' and the row is active again (wording differs from the check, the toast itself is fine)",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-users&s=carlos",
+      "check_wrong": true
+    },
+    "c-admin-user-management.5": {
+      "result": "pass",
+      "evidence": "finn: Silence row action opens 'Silence User' (type silence), submit -> toast 'User silenced.', row shows 'Silenced' (default duration is 7 Days, I chose Permanent to match the original fixture)"
+    },
+    "c-admin-user-management.6": {
+      "result": "pass",
+      "evidence": "Ban IP address row action opens 'Ban IP address' (IP address field, copy about where to find the address); 45.33.32.156 -> toast 'IP address banned.', listed under Banned members as 'IP address ban' and lifted from there"
+    },
+    "c-admin-user-management.7": {
+      "result": "pass",
+      "evidence": "dialog: 'not-an-ip' and '999.1.2.3x' -> 'Enter a valid IPv4 or IPv6 address.'; 127.0.0.1 -> 'This is a loopback or reserved address, not a visitor...'; already banned -> 'This IP address is already banned.'. REST POST /moderation/ban type=ip_ban: 400 jetonomy_invalid_ip, 400 jetonomy_reserved_ip, 409 jetonomy_ip_already_banned. My own address here is the loopback, so the separate 'your own address' refusal is not distinguishable on this site"
+    },
+    "c-admin-user-management.8": {
+      "result": "pass",
+      "evidence": "wp jetonomy mod ban --type=ip_ban --ip=127.0.0.1 --target=3755 --issuer=1 -> 'Error: This is a loopback or reserved address, not a visitor...'; restriction row count unchanged (2)"
+    },
+    "c-admin-user-management.9": {
+      "result": "pass",
+      "evidence": "Ban dialog Type offers Global Ban, Silence, IP address ban only; space bans are made from the space Members screen ('Ban from space')"
+    },
+    "c-admin-user-management.10": {
+      "result": "pass",
+      "evidence": "test_editor (space admin, no wp-admin Users access): POST /moderation/ban type=ip_ban -> 403 jetonomy_forbidden; the space Members screen offers only 'Ban from space', no IP option; no row created"
+    },
+    "c-admin-user-management.11": {
+      "result": "untested",
+      "needs": "a staff account holding only the delegated Manage community users capability (none exists in the seed; creating one is a capability change outside lane A's setting scope)"
+    },
+    "c-admin-user-management.12": {
+      "result": "pass",
+      "evidence": "omar space-banned from Off-Topic Lounge (banned from that space's Members screen for the check, lifted after): space page reads 'You have been banned from this space and cannot take part in it.', REST topic POST 403 jetonomy_user_space_banned; same user posted in General Discussion 201. After the lift he posted in Off-Topic Lounge again. Test topics deleted"
+    },
+    "c-admin-user-management.13": {
+      "result": "fail",
+      "expected": "finn: create and reply 403 jetonomy_user_silenced; vote shows 'Voting is not available to you here.'",
+      "actual": "create, reply and vote REST all 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; the vote button is disabled and its message reads 'Your account is currently silenced and cannot post.' (not the quoted text; the message is right for a silenced member)",
+      "url": "http://forums.local/community/s/feature-discussions/t/should-reactions-replace-simple-upvotes-on-replies-s2994t1/",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/A/walkA-finn-thread.png",
+      "check_wrong": true
+    },
+    "c-admin-user-management.14": {
+      "result": "untested",
+      "needs": "a ban whose issuer account is deleted (needs deleting a user). Live part passed: GET /moderation/ban?type=global_ban lists Kai Brennan with issuer_name 'Theo Lindqvist'; ip_ban list shows issuer 'varundubey'; code returns '[deleted]' for a missing issuer (class-moderation-controller.php:895) but was not seen live"
+    },
+    "c-admin-user-management.15": {
+      "result": "untested",
+      "needs": "500 members (site has 29; seeding is not allowed). With 29 users the screen pages at 24 per page (paged=2 link), the search box and trust level filter are present"
+    },
+    "c-admin-user-management.16": {
+      "result": "pass",
+      "evidence": "wp-admin has no dark scheme: with prefers-color-scheme dark emulated the Ban dialog stays a light card; label/button contrast 5.2:1 to 16:1 (screenshot)"
+    },
+    "c-admin-user-management.17": {
+      "result": "untested",
+      "needs": "lane B: member POST /admin/users/trust-level (lane A does not probe admin endpoints as a member)"
+    },
+    "c-admin-user-management.18": {
+      "result": "fail",
+      "expected": "Users listing shows a Banned / Silenced label on the row",
+      "actual": "Label shows (red 'Silenced' / 'Banned' next to the username) but on a full page load the row of any user with a silence or ban prints 'Warning: Undefined property: stdClass::$user_id in includes/moderation/class-moderation-permissions.php on line 215' inside the row actions (breaks the layout). Cause: Moderation_Permissions::lift_error() reads $restriction->user_id but includes/admin/views/users.php:174 passes the slim row from Restriction::active_rows_for_users() ({id,type,space_id}) which has no user_id. The AJAX-updated row does not show it. WP_DEBUG_LOG is off, so nothing reaches debug.log",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-users&s=finn",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/203-walk5/A/walkA-um-silence-warning.png"
+    },
+    "c-admin-user-management.19": {
+      "result": "pass",
+      "evidence": "IP ban 45.33.32.156: Banned members list shows 'IP address ban', the address, 'by varundubey' and no member name; POST /moderation/ban accepted ip_ban without user_id (user_id 0)"
+    },
+    "c-admin-user-management.20": {
+      "result": "fail",
+      "expected": "wp jetonomy mod ban --type=ip_ban --reason=127.0.0.1 --target=<id> --issuer=1 -> refused with a loopback/reserved message; an unknown flag such as --ip is rejected",
+      "actual": "--ip is now a real flag (the command help lists it), so the quoted line no longer applies: with --reason only it answers 'Error: --type=ip_ban needs the address to block: pass --ip=<address>.' (clear refusal, no 'insert failed'); an unknown flag (--bogus) answers 'unknown --bogus parameter'; --ip=127.0.0.1 is refused as loopback (see .8). No row created",
+      "url": "wp jetonomy mod ban",
+      "check_wrong": true
+    },
+    "c-admin-user-management.21": {
+      "result": "pass",
+      "evidence": "after Save the page reloads and the toast 'Trust level updated.' is still visible (seen for 3 s after reload, both directions)"
+    },
+    "c-admin-user-management.22": {
+      "result": "pass",
+      "evidence": "lifting finn's silence: confirm 'Lift this restriction? The member can post again right away.' then toast 'Silence lifted.' (matches a silence, not 'Ban removed.')"
+    }
+  },
+  "proposed_checks": [
+    "- c-admin-user-management.4 @admin #admin: lift carlos's ban -> confirm, toast 'Ban lifted.' and the listing shows him active again.",
+    "- c-admin-user-management.13 @silenced #ui #rest !refuse: finn tries to create a topic, reply and vote -> create, reply and vote return 403 jetonomy_user_silenced and the vote control shows 'Your account is currently silenced and cannot post.'.",
+    "- c-admin-user-management.20 @admin #cli: run `wp jetonomy mod ban --type=ip_ban --reason=x --target=<id> --issuer=1` -> 'needs the address to block: pass --ip'; an unknown flag such as --bogus is rejected, never ignored.",
+    "- `c-admin-user-management.23` @admin #admin: reload the Users screen with a silenced or banned member listed -> the row actions render with no PHP warning in the page.",
+    "- `c-admin-user-management.24` @admin #admin: silence dialog default Duration -> it offers Permanent first or says the default is 7 Days (silence defaulted to 7 Days while the ban dialog defaults to Permanent)."
+  ],
+  "notes": "Changed and restored in this journey: alice trust 4 -> 3 -> 4; carlos banned then lifted; finn silence lifted twice and re-issued as Permanent with the original reason (restriction row 414, expires_at null, same as before); IP ban 45.33.32.156 created and lifted; omar space ban created and lifted; flag_resolved email default restored (see C.mod.flag-resolution). My own test topics/replies deleted. Reputation of alice moved by the trust change (924 -> 954) and stayed. Debug log unchanged (WP_DEBUG_LOG off). Screenshots under qa-artifacts/203-walk5/A/."
+}

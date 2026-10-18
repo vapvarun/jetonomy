@@ -69,7 +69,7 @@ class RestAuthTest extends WP_UnitTestCase {
 		$result = $cb( $request );
 
 		$this->assertInstanceOf( WP_Error::class, $result );
-		$this->assertSame( 'rest_forbidden', $result->get_error_code() );
+		$this->assertSame( 'jetonomy_forbidden', $result->get_error_code() );
 		$this->assertSame( 403, $result->get_error_data()['status'] );
 	}
 

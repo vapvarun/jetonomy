@@ -41,6 +41,13 @@
 		if ( ! el ) { return; }
 		el.textContent = text || '';
 		el.classList.toggle( 'is-success', !! isSuccess );
+		// The submit button was disabled mid-request, which drops focus to the
+		// page body; put it on the outcome so keyboard and screen-reader users
+		// land where the answer is.
+		if ( text ) {
+			el.setAttribute( 'tabindex', '-1' );
+			el.focus();
+		}
 	}
 
 	function lockSubmit( form ) {
@@ -214,9 +221,23 @@
 				headers: authHeaders(),
 				body: JSON.stringify( { user_login: userLogin } ),
 			} ).then( function ( res ) {
-				return res.json().catch( function () { return {}; } );
-			} ).then( function ( json ) {
-				btn.textContent = ( json && json.message ) || __( 'If an account is waiting on confirmation, a new link is on its way.', 'jetonomy' );
+				return res.json().catch( function () { return {}; } ).then( function ( json ) {
+					return { ok: res.ok, json: json };
+				} );
+			} ).then( function ( payload ) {
+				// The answer replaces the sign-in error: green when a link was
+				// sent, plain error styling when the server asks the member to
+				// wait. The button comes back so a later retry is possible.
+				setMessage(
+					form,
+					( payload.json && payload.json.message ) || ( payload.ok
+						? __( 'If an account is waiting on confirmation, a new link is on its way.', 'jetonomy' )
+						: __( 'Something went wrong. Please try again.', 'jetonomy' ) ),
+					payload.ok
+				);
+				btn.disabled = false;
+				btn.textContent = resendLabel;
+				holder.appendChild( btn );
 			} ).catch( function () {
 				btn.disabled = false;
 				btn.textContent = resendLabel;

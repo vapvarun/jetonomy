@@ -87,11 +87,15 @@ function base_url(): string {
  * reads it here so a renamed base can never show up in one place and not
  * another.
  *
+ * An empty stored value also means 'community': a blank base would mount the
+ * community on the site root and every community URL would 404.
+ *
  * @return string Base slug without slashes.
  */
 function base_slug(): string {
 	$settings = get_option( 'jetonomy_settings', array() );
-	return (string) ( $settings['base_slug'] ?? 'community' );
+	$slug     = (string) ( $settings['base_slug'] ?? '' );
+	return '' !== $slug ? $slug : 'community';
 }
 
 /**
@@ -144,6 +148,36 @@ function route_url( string $route, ...$args ): string {
 	}
 
 	return base_url() . '/' . vsprintf( $routes[ $route ], $args ) . '/';
+}
+
+/**
+ * Empty-state copy for a leaderboard period with nobody ranked.
+ *
+ * A quiet week is not an empty community: when All time still ranks members,
+ * the empty week or month says there was no activity and points at All time,
+ * instead of "No members yet."
+ *
+ * @param string $period 'week', 'month' or 'all'.
+ * @return array{message:string,description:string,cta_label:string,cta_url:string} Empty-state partial args.
+ */
+function leaderboard_empty_state( string $period ): array {
+	if ( 'all' !== $period && Models\UserProfile::count_for_leaderboard( 'all' ) > 0 ) {
+		return array(
+			'message'     => 'week' === $period ? __( 'No activity this week.', 'jetonomy' ) : __( 'No activity this month.', 'jetonomy' ),
+			/* translators: %s: plural member label, lowercase. */
+			'description' => sprintf( __( 'No ranked %s were active in this period.', 'jetonomy' ), jetonomy_label( 'member', true, true ) ),
+			'cta_label'   => __( 'See all time', 'jetonomy' ),
+			'cta_url'     => route_url( 'leaderboard' ),
+		);
+	}
+	return array(
+		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+		'message'     => sprintf( __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'member', true, true ) ),
+		/* translators: %s: plural reply label. */
+		'description' => sprintf( __( 'Reputation is earned by posting, getting %s, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ), jetonomy_label( 'reply', true, true ) ),
+		'cta_label'   => __( 'Browse the community', 'jetonomy' ),
+		'cta_url'     => base_url() . '/',
+	);
 }
 
 /**
@@ -622,6 +656,28 @@ function member_message_url( \WP_User $member ): string {
 }
 
 /**
+ * The DOM event a profile's Message button fires, or '' for none.
+ *
+ * For a messenger that opens in the page rather than at a URL (WPMediaVerse's
+ * chat panel listens for `mvs-open-conversation`). The button dispatches the
+ * event on `document` with `detail.userId`; the messenger does the rest. Only
+ * consulted when member_message_url() is ''.
+ *
+ * @param \WP_User $member The member being viewed.
+ */
+function member_message_event( \WP_User $member ): string {
+	/**
+	 * Filter the DOM event a profile's Message button dispatches ('' hides it).
+	 *
+	 * @since 2.0.3
+	 *
+	 * @param string   $event  Event name, or '' for no button.
+	 * @param \WP_User $member The member being viewed.
+	 */
+	return (string) apply_filters( 'jetonomy_member_message_event', '', $member );
+}
+
+/**
  * Resolve the requesting client's IP, honouring a trusted reverse-proxy chain.
  *
  * Single source of truth for "who is this request from" — used by IP-bans and
@@ -815,13 +871,17 @@ function user_handle( $user ): string {
  * make saving the form fail or silently rename the member. New arbitrary values
  * still cannot be introduced.
  *
- * @param \WP_User $user User to build choices for.
+ * @param \WP_User $user    User to build choices for.
+ * @param array    $pending Name parts being saved in the same request
+ *                          (first_name, last_name, nickname), used instead of
+ *                          the stored ones so a save can be checked before it
+ *                          writes anything.
  * @return string[] Unique, non-empty candidate names.
  */
-function display_name_choices( \WP_User $user ): array {
-	$first = (string) get_user_meta( $user->ID, 'first_name', true );
-	$last  = (string) get_user_meta( $user->ID, 'last_name', true );
-	$nick  = (string) get_user_meta( $user->ID, 'nickname', true );
+function display_name_choices( \WP_User $user, array $pending = array() ): array {
+	$first = (string) ( $pending['first_name'] ?? get_user_meta( $user->ID, 'first_name', true ) );
+	$last  = (string) ( $pending['last_name'] ?? get_user_meta( $user->ID, 'last_name', true ) );
+	$nick  = (string) ( $pending['nickname'] ?? get_user_meta( $user->ID, 'nickname', true ) );
 
 	$choices = array(
 		(string) $user->display_name,
@@ -1142,7 +1202,7 @@ function get_profile_action_url( string $action, int $user_id ): string {
 		'edit'                  => $edit,
 		'notification-settings' => $edit . '#notification-preferences',
 		'badges'                => $base . '#jt-badges',
-		'digest'                => $base . '#digest-preferences',
+		'digest'                => $edit . '#digest-preferences',
 	);
 	$url  = $urls[ $action ] ?? $base;
 
@@ -1243,6 +1303,30 @@ function reply_permalink( string $space_slug, string $post_slug, int $reply_id, 
 	}
 
 	return $url . '#reply-' . $reply_id;
+}
+
+/**
+ * Shorten text to at most $len characters at a word boundary, with an ellipsis
+ * when anything was cut. The one way titles are shortened in notices and emails,
+ * so a title never ends mid-word ("...knowledge ba").
+ *
+ * @param string $text Plain text (a title or excerpt).
+ * @param int    $len  Maximum characters kept before the ellipsis.
+ * @return string
+ */
+function short_title( string $text, int $len = 50 ): string {
+	$text = trim( (string) preg_replace( '/\s+/u', ' ', $text ) );
+	if ( mb_strlen( $text ) <= $len ) {
+		return $text;
+	}
+	$cut = mb_substr( $text, 0, $len );
+	// Byte offset of an ASCII space, so substr() never splits a multibyte character.
+	// One long word (or a language without spaces) is cut at the length instead.
+	$space = strrpos( $cut, ' ' );
+	if ( $space ) {
+		$cut = substr( $cut, 0, $space );
+	}
+	return rtrim( $cut, " \t,.;:-" ) . '…';
 }
 
 /**

@@ -1,0 +1,57 @@
+{
+  "journey": "C.gating.no-rule-hands-out-moderation",
+  "checks": {
+    "c-gating-no-rule-hands-out-moderation.1": {
+      "result": "pass",
+      "evidence": "Read rule saved through POST /spaces/3078/access-rules with space_role admin (201 'Access rule added.'). The Access Rules form has no Space Role field (it is derived from the grant)."
+    },
+    "c-gating-no-rule-hands-out-moderation.2": {
+      "result": "pass",
+      "evidence": "matched gating_t6 under Read, Participate and Full rules (each with space_role admin): PATCH and DELETE others' topic, pin, close, space moderation trash, bulk trash -> all 403 jetonomy_forbidden."
+    },
+    "c-gating-no-rule-hands-out-moderation.3": {
+      "result": "pass",
+      "evidence": "same refusals for all three grants; the rules were stored with space_role admin but roster rows written by the enrolment hook were viewer (Read) and member (Participate, Full) - never admin or moderator."
+    },
+    "c-gating-no-rule-hands-out-moderation.4": {
+      "result": "pass",
+      "evidence": "do_action('jetonomy_membership_activated', t6, 'subscriber') with a membership rule grants=read space_role=admin -> roster role viewer, source tier."
+    },
+    "c-gating-no-rule-hands-out-moderation.5": {
+      "result": "pass",
+      "evidence": "same hook with grants=participate -> roster role member and gating_t6 posted topic 6212 and reply 13676 (201); moderation calls still 403."
+    },
+    "c-gating-no-rule-hands-out-moderation.6": {
+      "result": "pass",
+      "evidence": "Members tab after the sync: varundubey Admin, the three synced people all Member (none Moderator or Admin)."
+    },
+    "c-gating-no-rule-hands-out-moderation.7": {
+      "result": "pass",
+      "evidence": "gating_t6 /community/s/print-lab-circle/mod/ -> 'You do not have permission to moderate this space.'"
+    },
+    "c-gating-no-rule-hands-out-moderation.8": {
+      "result": "pass",
+      "evidence": "test_moderator close/reopen/trash/approve in the space -> 200 via the Moderate capability."
+    }
+  },
+  "proposed_checks": [
+    "- `c-gating-no-rule-hands-out-moderation.9` @admin #admin: on the Access Rules tab choose Full and read the live preview -> it does not say matched people are recorded as Moderator (today it does, while the roster stores Member)."
+  ],
+  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. The roster rows written by the hook were deleted again.",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:58:06Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  }
+}

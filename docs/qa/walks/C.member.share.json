@@ -1,0 +1,73 @@
+{
+  "journey": "C.member.share",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-share.1": {
+      "result": "pass",
+      "evidence": "Share on the topic opens a dropdown directly under the link icon with Copy link, Twitter / X, Facebook, LinkedIn",
+      "screenshot": "qa-artifacts/203-walk3/laneB/share-dropdown-1440.png"
+    },
+    "c-member-share.2": {
+      "result": "pass",
+      "evidence": "Copy link toast 'Link copied'; pasted value in an input is the exact topic URL. Site is plain http so navigator.clipboard is undefined and the execCommand fallback was what ran"
+    },
+    "c-member-share.3": {
+      "result": "pass",
+      "evidence": "popups: x.com/intent/tweet?url=<encoded topic URL>&text=<encoded title>, facebook.com/sharer?u=<encoded URL>, linkedin shareArticle?url=<double-encoded URL> (via LinkedIn login redirect)"
+    },
+    "c-member-share.4": {
+      "result": "pass",
+      "evidence": "scroll closes the dropdown; a click on body/main/sidebar closes it"
+    },
+    "c-member-share.5": {
+      "result": "pass",
+      "evidence": "Escape closes the dropdown and focus returns to the Share button (activeElement has class jt-share-btn)"
+    },
+    "c-member-share.6": {
+      "result": "pass",
+      "evidence": "guest on a public topic: Share opens the same dropdown (Copy link, Twitter / X, Facebook, LinkedIn)"
+    },
+    "c-member-share.7": {
+      "result": "pass",
+      "evidence": "Partner Program topic (bob is a member): Share offers the same four items on the private URL; body is not placed in any share link (only URL and title)"
+    },
+    "c-member-share.8": {
+      "result": "fail",
+      "expected": "200 with title and author; for a hidden topic 404 jetonomy_not_found.",
+      "actual": "GET /oembed?url=<public topic> as guest -> 200 with the card html (title, author Sofia Romano, '46 replies - 0 votes'); for Moderators' Room and Partner Program topic URLs -> 404 jetonomy_oembed_not_found 'Thread not found.' (check expects code jetonomy_not_found)",
+      "check_wrong": true
+    },
+    "c-member-share.9": {
+      "result": "pass",
+      "evidence": "159-char title: dropdown at x192-377 inside the 1440 viewport, X link has title percent-encoded, no horizontal scroll"
+    },
+    "c-member-share.10": {
+      "result": "untested",
+      "needs": "lane A: switch the site language to Arabic (RTL). At 390 in LTR the Share dropdown opens inside the viewport (x18-203, above the bottom tab bar at y784) with items 35px tall"
+    },
+    "c-member-share.11": {
+      "result": "pass",
+      "evidence": "with execCommand copy refused the toast reads 'Could not copy the link. Copy it from the address bar.'"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-share.8` (corrected) @guest #rest: GET /oembed?url=<public topic> -> 200 with title and author; for a hidden or private topic 404 jetonomy_oembed_not_found."
+  ],
+  "notes": "Site is plain http, so navigator.clipboard is undefined and the execCommand fallback ran. RTL part needs lane A."
+}

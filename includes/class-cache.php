@@ -119,6 +119,11 @@ class Cache {
 		// NEXT read being fresh in the same process.
 		self::reset_memos();
 
+		// The home welcome's member and topic counts are an hour-long transient,
+		// so a recount, import or demo seed would show the old numbers for up
+		// to an hour.
+		delete_transient( 'jetonomy_community_pulse' );
+
 		if ( function_exists( 'wp_cache_supports' ) && wp_cache_supports( 'flush_group' ) ) {
 			wp_cache_flush_group( self::GROUP );
 		} elseif ( wp_using_ext_object_cache() ) {

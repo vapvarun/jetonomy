@@ -25,9 +25,19 @@ $_post_id     = isset( $post_id ) ? (int) $post_id : 0;
 $_reply_to    = isset( $reply_to ) ? (int) $reply_to : 0;
 $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: %s: singular reply label. */ __( 'Write your %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) );
 ?>
+<?php
+$_context = array(
+	'postId'     => $_post_id,
+	'replyTo'    => $_reply_to,
+	'submitting' => false,
+	'error'      => '',
+	/* translators: %s: singular reply label. */
+	'emptyError' => sprintf( __( 'Write your %s before posting.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+);
+?>
 <div class="jt-editor"
 	data-wp-interactive="jetonomy"
-	data-wp-context='{"postId":<?php echo (int) $_post_id; ?>,"replyTo":<?php echo (int) $_reply_to; ?>,"submitting":false}'>
+	data-wp-context='<?php echo esc_attr( (string) wp_json_encode( $_context ) ); ?>'>
 	<div class="jt-editor-bar">
 		<button type="button" class="jt-editor-bar-btn" data-cmd="bold" title="<?php esc_attr_e( 'Bold', 'jetonomy' ); ?>"><strong>B</strong></button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="italic" title="<?php esc_attr_e( 'Italic', 'jetonomy' ); ?>"><em>I</em></button>
@@ -55,11 +65,15 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 		?>
 	</div>
 	<div class="jt-editor-body"
+		dir="auto"
 		contenteditable="true"
+		role="textbox"
+		aria-multiline="true"
 		data-placeholder="<?php echo esc_attr( $_placeholder ); ?>"
 		data-wp-on--input="actions.onEditorInput"
 		id="jt-composer-<?php echo (int) $_post_id; ?>"
 		aria-label="<?php printf( /* translators: %s: singular reply label. */ esc_attr__( '%s editor', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>"></div>
+	<p class="jt-form-error jt-editor-error" role="alert" data-wp-bind--hidden="!context.error" data-wp-text="context.error" hidden></p>
 	<?php
 	// The replies endpoint verifies CAPTCHA for low-trust users; Turnstile
 	// needs this container to render and produce its token. Empty string

@@ -280,23 +280,36 @@ class Space extends Model {
 	}
 
 	/**
-	 * Delete a space, then invalidate its cache (both keys).
+	 * Delete a space and everything it owns.
 	 *
-	 * Model::delete() does not touch the cache, so without this override a
-	 * deleted space kept serving from space:{id} / space:slug:{slug} until the
-	 * TTL. Deletion funnels through here (admin AJAX handler, journeys), so this
-	 * is the single chokepoint.
+	 * A bare row delete orphaned every topic and reply in the space (700 topics
+	 * after one imported space), so this is the same purge the admin screen,
+	 * REST and WP-CLI run: a small space is gone on return, a large one is
+	 * locked and drained in the background. Space_Purge removes the space row
+	 * and busts its cache itself.
 	 *
 	 * @param int $id Space ID.
-	 * @return bool|\WP_Error Mirrors Model::delete() — do not narrow to bool, or a
-	 *                        WP_Error return would TypeError and callers that
-	 *                        is_wp_error() the result become dead code.
+	 * @return bool|\WP_Error True when the space is gone or its background
+	 *                        purge is under way, false when there is no such
+	 *                        space, WP_Error when the database refused (the
+	 *                        space and whatever it still holds are kept, and
+	 *                        the purge retries).
 	 */
 	public static function delete( int $id ): bool|\WP_Error {
-		$slug   = parent::find( $id )->slug ?? null;
-		$result = parent::delete( $id );
-		self::bust_cache( $id, $slug );
-		return $result;
+		if ( ! parent::find( $id ) ) {
+			return false;
+		}
+
+		\Jetonomy\Space_Purge::queue( $id );
+		if ( '' !== \Jetonomy\Space_Purge::last_error() ) {
+			return new \WP_Error(
+				'jetonomy_space_delete_failed',
+				/* translators: %s: space label, lowercase (e.g. "space"). */
+				sprintf( __( 'The %s could not be deleted, so it was kept with its content. Deletion will be retried shortly.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ),
+				array( 'status' => 500 )
+			);
+		}
+		return true;
 	}
 
 	/**
@@ -799,7 +812,7 @@ class Space extends Model {
 		} elseif ( $user_id <= 0 ) {
 			// Settings -> Access Control can list private spaces to guests as
 			// locked teasers; their topics stay behind can( 'read' ).
-			$guest_vis = ! empty( get_option( 'jetonomy_settings', array() )['guest_private_teasers'] ) ? "IN ('public','private')" : "= 'public'";
+			$guest_vis = self::guest_teasers_on() ? "IN ('public','private')" : "= 'public'";
 			$result    = array( "{$col}visibility {$guest_vis}" . self::parent_category_and( $user_id, $col ), array() );
 		} else {
 			$members_table = \Jetonomy\table( 'space_members' );
@@ -943,6 +956,32 @@ class Space extends Model {
 		// stranger - concealing the space from them would 404 the very people
 		// the rule exists to let in.
 		return ! self::admitted( (int) $space->id, (int) $user_id );
+	}
+
+	/**
+	 * Must this viewer be kept from the space's NAME (tab title, <head>)?
+	 *
+	 * Wider than concealed_from_viewer(): a private space answers 200 with a
+	 * gate, but a guest is only shown its name where the owner lists private
+	 * spaces to guests (Settings - Access Control - locked preview). With the
+	 * preview off the body says only "This space is private", so the title
+	 * must not say more.
+	 *
+	 * @param object   $space   Space row.
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 */
+	public static function name_withheld_from_viewer( object $space, ?int $user_id ): bool {
+		if ( self::concealed_from_viewer( $space, $user_id ) ) {
+			return true;
+		}
+		return ! $user_id && 'private' === ( $space->visibility ?? '' ) && ! self::guest_teasers_on();
+	}
+
+	/**
+	 * Whether the owner lists private spaces to guests as locked cards.
+	 */
+	private static function guest_teasers_on(): bool {
+		return ! empty( get_option( 'jetonomy_settings', array() )['guest_private_teasers'] );
 	}
 
 	/**
@@ -1860,21 +1899,28 @@ class Space extends Model {
 	// ── wp-admin listings ──
 
 	/**
-	 * The wp-admin Spaces screen. Inside one category (no other filter) the
-	 * order is the manual one members see; otherwise alphabetical.
+	 * The wp-admin Spaces screen. A column sort (orderby: title, post_count,
+	 * member_count) wins; otherwise, inside one category with no
+	 * other filter, the order is the manual one members see; otherwise A to Z.
 	 *
-	 * @param array{category_id?:int,type?:string,status?:string} $filters Filters.
-	 * @param int                                                 $limit   Max rows.
-	 * @param int                                                 $offset  Offset.
+	 * @param array{category_id?:int,type?:string,status?:string,search?:string,orderby?:string,order?:string} $filters Filters.
+	 * @param int                                                                                              $limit   Max rows.
+	 * @param int                                                                                              $offset  Offset.
 	 * @return object[]
 	 */
 	public static function list_for_admin( array $filters, int $limit, int $offset ): array {
 		[ $where, $args ] = self::admin_where( $filters );
-		$manual           = ! empty( $filters['category_id'] ) && empty( $filters['type'] ) && empty( $filters['status'] );
-		$order            = $manual ? 'sort_order ASC, title ASC' : 'title ASC';
+		$sortable         = array( 'title', 'post_count', 'member_count' );
+		$manual           = ! empty( $filters['category_id'] ) && empty( $filters['type'] ) && empty( $filters['status'] ) && empty( $filters['search'] );
+		if ( in_array( $filters['orderby'] ?? '', $sortable, true ) ) {
+			$dir   = 'DESC' === strtoupper( (string) ( $filters['order'] ?? '' ) ) ? 'DESC' : 'ASC';
+			$order = "{$filters['orderby']} {$dir}, id {$dir}";
+		} else {
+			$order = $manual ? 'sort_order ASC, title ASC' : 'title ASC';
+		}
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY {$order} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order is one of two literals.
+				'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY {$order} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order is built from an allow-listed column and ASC/DESC.
 				...array_merge( $args, array( $limit, $offset ) )
 			)
 		) ?: array();
@@ -1893,6 +1939,25 @@ class Space extends Model {
 	}
 
 	/**
+	 * A space with exactly this title in a category, so an admin writer (the
+	 * setup wizard) reuses it instead of adding a twin.
+	 *
+	 * @param string $title       Space title.
+	 * @param int    $category_id Category id.
+	 * @return object|null
+	 */
+	public static function find_by_title_in_category( string $title, int $category_id ): ?object {
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE category_id = %d AND title = %s ORDER BY id ASC LIMIT 1',
+				$category_id,
+				$title
+			)
+		);
+		return $row ?: null;
+	}
+
+	/**
 	 * Every space's id and title, A to Z, for filter dropdowns.
 	 *
 	 * @return object[]
@@ -1904,7 +1969,7 @@ class Space extends Model {
 	/**
 	 * WHERE for the wp-admin Spaces screen. Unknown types or statuses are ignored.
 	 *
-	 * @param array{category_id?:int,type?:string,status?:string} $f Filters.
+	 * @param array{category_id?:int,type?:string,status?:string,search?:string} $f Filters.
 	 * @return array{0:string,1:array}
 	 */
 	private static function admin_where( array $f ): array {
@@ -1921,6 +1986,12 @@ class Space extends Model {
 		if ( ! empty( $f['status'] ) && in_array( $f['status'], array( 'active', 'archived', 'locked' ), true ) ) {
 			$where[] = 'status = %s';
 			$args[]  = (string) $f['status'];
+		}
+		if ( isset( $f['search'] ) && '' !== (string) $f['search'] ) {
+			$where[] = '(title LIKE %s OR slug LIKE %s)';
+			$like    = '%' . static::db()->esc_like( (string) $f['search'] ) . '%';
+			$args[]  = $like;
+			$args[]  = $like;
 		}
 		return array( implode( ' AND ', $where ), $args );
 	}
@@ -2070,11 +2141,19 @@ class Space extends Model {
 	}
 
 	/**
-	 * Sum of every space's denormalised topic counter (cheaper than counting topics).
+	 * Sum of the denormalised topic counters (cheaper than counting topics).
 	 *
+	 * @param int|null $viewer Null = every space; a user id (0 = guest) counts
+	 *                         only the spaces whose topics that viewer can read.
 	 * @return int
 	 */
-	public static function sum_post_counts(): int {
-		return (int) static::db()->get_var( 'SELECT COALESCE(SUM(post_count),0) FROM ' . static::table() );
+	public static function sum_post_counts( ?int $viewer = null ): int {
+		if ( null === $viewer ) {
+			return (int) static::db()->get_var( 'SELECT COALESCE(SUM(post_count),0) FROM ' . static::table() );
+		}
+		[ $where, $values ] = self::content_visibility_sql( $viewer );
+		$sql                = 'SELECT COALESCE(SUM(post_count),0) FROM ' . static::table() . " WHERE {$where}";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $where is literal SQL plus %d placeholders from content_visibility_sql().
+		return (int) static::db()->get_var( $values ? static::db()->prepare( $sql, ...$values ) : $sql );
 	}
 }

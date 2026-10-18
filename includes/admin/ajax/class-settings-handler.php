@@ -14,88 +14,118 @@ defined( 'ABSPATH' ) || exit;
 class Settings_Handler {
 
 	/**
+	 * Sample values for the enriched placeholders, so a preview or test email
+	 * reads like a real one instead of "[site]  replied to your topic".
+	 *
+	 * @return array{post_title: string, actor_display_name: string, reply_excerpt: string, space_title: string}
+	 */
+	private static function sample_extra(): array {
+		return array(
+			'post_title'         => 'Getting started with Jetonomy',
+			'actor_display_name' => 'Alice Chen',
+			'reply_excerpt'      => __( 'Thanks for the walkthrough, the setup steps worked for me.', 'jetonomy' ),
+			'space_title'        => 'General Discussion',
+		);
+	}
+
+	/**
 	 * Sample copy shown when admins preview or send-test for a specific
 	 * notification type. Keeps the preview concrete without pulling real
-	 * community data.
+	 * community data. `type` names the real type behind an email variant.
 	 *
-	 * @return array<string, array{message: string, url: string}>
+	 * @return array<string, array{message: string, url: string, type?: string}>
 	 */
 	private static function sample_fixtures(): array {
 		return array(
-			'user_welcome'          => array(
+			'user_welcome'           => array(
 				'message' => __( 'Welcome to the community. Your account is ready. Jump in and introduce yourself.', 'jetonomy' ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
-			'reply_to_post'         => array(
+			'reply_to_post'          => array(
 				/* translators: %s: singular topic label, lowercase. */
 				'message' => sprintf( __( 'Alice replied to your %s "Getting started with Jetonomy".', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 				'url'     => \Jetonomy\route_url( 'post', 'general', 'getting-started-with-jetonomy' ),
 			),
-			'reply_to_reply'        => array(
+			'reply_in_followed'      => array(
+				'message' => __( 'Alice Chen replied in "Getting started with Jetonomy"', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'post', 'general', 'getting-started-with-jetonomy' ),
+				'type'    => 'reply_to_post',
+			),
+			'reply_to_reply'         => array(
 				'message' => __( 'Bob replied to your comment on "Hosting recommendations".', 'jetonomy' ),
 				'url'     => \Jetonomy\route_url( 'post', 'general', 'hosting-recommendations' ),
 			),
-			'mention'               => array(
+			'mention'                => array(
 				'message' => __( '@alice mentioned you in "Release notes discussion".', 'jetonomy' ),
 				'url'     => \Jetonomy\route_url( 'post', 'announcements', 'release-notes-discussion' ),
 			),
-			'accepted_answer'       => array(
+			'accepted_answer'        => array(
 				/* translators: %s: reply label, lowercase (e.g. "reply"). */
 				'message' => sprintf( __( 'Your answer was accepted as the best %s on "How do I enable dark mode?".', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				'url'     => \Jetonomy\route_url( 'post', 'help', 'how-do-i-enable-dark-mode' ),
 			),
-			'idea_status_changed'   => array(
+			'idea_status_changed'    => array(
 				'message' => __( 'Your idea "Dark mode toggle" is now Planned.', 'jetonomy' ),
 				'url'     => \Jetonomy\route_url( 'space-roadmap', 'feature-requests' ),
 			),
-			'new_post_in_sub'       => array(
+			'new_post_in_sub'        => array(
 				/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
 				'message' => sprintf( __( 'A new discussion was posted in one of the %s you follow.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
-			'badge_earned'          => array(
+			'badge_earned'           => array(
 				'message' => __( 'You earned the "First Post" badge. Nice work.', 'jetonomy' ), // jt-terms-ok: the seeded badge's proper name.
 				'url'     => \Jetonomy\route_url( 'profile', 'me' ),
 			),
-			'vote_on_post'          => array(
+			'vote_on_post'           => array(
 				/* translators: %s: singular topic label, lowercase. */
 				'message' => sprintf( __( 'Your %s received a new vote.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
-			'reaction'              => array(
+			'reaction'               => array(
 				// translators: %s: content title.
 				'message' => sprintf( __( 'Someone reacted to %s', 'jetonomy' ), '"Hosting recommendations"' ),
 				'url'     => \Jetonomy\route_url( 'post', 'general', 'hosting-recommendations' ),
 			),
-			'flag_resolved'         => array(
+			'flag_resolved'          => array(
 				'message' => __( 'Your report was reviewed. Thanks for helping keep the community healthy.', 'jetonomy' ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
-			'join_request_result'   => array(
+			'join_request_result'    => array(
 				/* translators: %s: space name */
 				'message' => sprintf( __( 'Your request to join %s was approved', 'jetonomy' ), 'Feature Requests' ),
 				'url'     => \Jetonomy\route_url( 'space', 'feature-requests' ),
 			),
-			'message'               => array(
+			'message'                => array(
 				'message' => __( 'Someone sent you a private message.', 'jetonomy' ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
-			'verification'          => array(
+			'verification'           => array(
 				'message' => __( 'Please confirm your email address to finish creating your account.', 'jetonomy' ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
-			'moderation'            => array(
+			'moderation'             => array(
 				'message' => __( 'A moderator reviewed your recent content.', 'jetonomy' ),
 				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
-			'join_request'          => array(
+			'flag_created'           => array(
+				'message' => __( 'New content flag requires review', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'moderation' ),
+				'type'    => 'moderation',
+			),
+			'join_request'           => array(
 				/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
 				'message' => sprintf( __( 'Someone has asked to join one of your %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
 				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
-			'verification_reminder' => array(
+			'verification_reminder'  => array(
 				'message' => __( "We noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.", 'jetonomy' ),
 				'url'     => \Jetonomy\base_url() . '/',
+			),
+			'reply_by_email_refused' => array(
+				/* translators: 1: reply label, lowercase. 2: topic label, lowercase. 3: reply label, plural lowercase. */
+				'message' => sprintf( __( 'Your %1$s sent by email was not posted. This %2$s is closed and cannot receive new %3$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+				'url'     => \Jetonomy\route_url( 'post', 'general', 'hosting-recommendations' ),
 			),
 		);
 	}
@@ -166,11 +196,12 @@ class Settings_Handler {
 
 		Notifier::send_email_notification(
 			(int) $admin_user->ID,
-			$type,
+			$fixture['type'] ?? $type,
 			$fixture['message'],
 			'preview',
 			0,
-			$fixture['url']
+			$fixture['url'],
+			self::sample_extra() + array( 'email_template' => $type )
 		);
 
 		wp_send_json_success(
@@ -203,23 +234,20 @@ class Settings_Handler {
 
 		$user = wp_get_current_user();
 
-		$placeholders = array(
-			'{site}'    => get_bloginfo( 'name' ),
-			'{user}'    => $user->display_name,
-			'{message}' => $fixture['message'],
-			'{type}'    => $type,
-			'{url}'     => $fixture['url'],
-		);
+		$placeholders = Notifier::email_placeholders( $user, $fixture['type'] ?? $type, $fixture['message'], $fixture['url'], self::sample_extra() );
 
-		$subject = '' !== $subject_override ? strtr( $subject_override, $placeholders ) : strtr( '[{site}] {message}', $placeholders );
-		$body    = '' !== $body_override ? strtr( $body_override, $placeholders ) : $fixture['message'];
+		// A blank field previews the default the send path uses for it.
+		$default = Notifier::get_default_template( $type );
+		$subject = strtr( '' !== $subject_override ? $subject_override : ( '' !== $default['subject'] ? $default['subject'] : '[{site}] {message}' ), $placeholders );
+		$body    = '' !== $body_override ? strtr( $body_override, $placeholders ) : ( '' !== $default['body'] ? strtr( $default['body'], $placeholders ) : $fixture['message'] );
 
 		$html = Notifier::render_email_template(
-			$type,
+			$fixture['type'] ?? $type,
 			$body,
 			$user,
 			'',
-			$fixture['url']
+			$fixture['url'],
+			self::sample_extra()
 		);
 
 		wp_send_json_success(

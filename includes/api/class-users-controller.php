@@ -157,6 +157,10 @@ class Users_Controller extends Base_Controller {
 	 * jetonomy_moderate (admins hold it). Mirrors the moderation controller's gate.
 	 */
 	public function require_moderate(): bool|WP_Error {
+		$user_id = $this->require_auth(); // Guests are told to sign in (401), members refused (403).
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
 		return current_user_can( 'jetonomy_moderate' ) ? true : $this->permission_error();
 	}
 
@@ -403,9 +407,9 @@ class Users_Controller extends Base_Controller {
 			// avatar_url = the raw stored upload (null when none) for the edit flow;
 			// avatar_display = the resolved render value ('' => client shows initials).
 			'avatar_url'        => $profile->avatar_url ?? null,
-			'avatar_display'    => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
+			'avatar_display'    => ( $profile->avatar_url ?? '' ) ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'        => $wp_user->user_registered ?? null,
-			'last_seen_at'      => $profile->last_seen_at ?? null,
+			'last_seen_at'      => UserProfile::last_seen_for_viewer( $id, $profile->last_seen_at ?? null ),
 			// Has the CURRENT viewer blocked this profile? Backs the app's
 			// Block/Unblock button. blocked_ids() is memoized per-request, so
 			// this is never a fresh query. Always false for guests.
@@ -425,7 +429,7 @@ class Users_Controller extends Base_Controller {
 			 * null when unrestricted. Same server-owned-rule, server-published-flag
 			 * pattern as can_block_author and can_downvote.
 			 */
-			'restriction'       => \Jetonomy\Models\Restriction::active_map_for_users( array( $id ) )[ $id ] ?? null,
+			'restriction'       => $this->restriction_for_viewer( $id ),
 			// Server-authoritative ban eligibility (viewer must moderate; staff
 			// and self are never bannable) so the profile screen hides Ban on an
 			// admin (ban button shown for administrators).
@@ -474,9 +478,9 @@ class Users_Controller extends Base_Controller {
 			'reply_count'       => (int) ( $profile->reply_count ?? 0 ),
 			'bio'               => $profile->bio ?? null,
 			'avatar_url'        => $profile->avatar_url ?? null,
-			'avatar_display'    => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
+			'avatar_display'    => ( $profile->avatar_url ?? '' ) ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'        => $wp_user->user_registered ?? null,
-			'last_seen_at'      => $profile->last_seen_at ?? null,
+			'last_seen_at'      => UserProfile::last_seen_for_viewer( $id, $profile->last_seen_at ?? null ),
 			'is_blocked'        => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
 
 			/*
@@ -493,7 +497,7 @@ class Users_Controller extends Base_Controller {
 			 * null when unrestricted. Same server-owned-rule, server-published-flag
 			 * pattern as can_block_author and can_downvote.
 			 */
-			'restriction'       => \Jetonomy\Models\Restriction::active_map_for_users( array( $id ) )[ $id ] ?? null,
+			'restriction'       => $this->restriction_for_viewer( $id ),
 			// Server-authoritative ban eligibility (viewer must moderate; staff
 			// and self are never bannable) so the profile screen hides Ban on an
 			// admin (ban button shown for administrators).
@@ -517,6 +521,37 @@ class Users_Controller extends Base_Controller {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
+		}
+
+		// Name parts are checked together with display_name before anything is
+		// written, so a refused display name leaves the whole profile untouched
+		// instead of saving half the form.
+		$name_parts = array();
+		foreach ( array( 'first_name', 'last_name', 'nickname' ) as $meta_key ) {
+			if ( null !== $request->get_param( $meta_key ) ) {
+				$name_parts[ $meta_key ] = sanitize_text_field( (string) $request->get_param( $meta_key ) );
+			}
+		}
+
+		// display_name must be one the member already owns: any string would let a member
+		// publish as "Administrator", take another member's exact name, and override the
+		// value the owner picked in wp-admin - site-wide, not just in the forum. It is
+		// checked against the name parts in this request, so setting a first name and
+		// selecting "First Last" in one save works.
+		$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
+		if ( '' !== $display_name ) {
+			$wp_user_now = get_userdata( $user_id );
+			$allowed     = $wp_user_now ? \Jetonomy\display_name_choices( $wp_user_now, $name_parts ) : array();
+			if ( ! in_array( $display_name, $allowed, true ) ) {
+				return new WP_Error(
+					'jetonomy_invalid_display_name',
+					__( 'Choose a display name from your own name fields.', 'jetonomy' ),
+					array(
+						'status'  => 400,
+						'allowed' => $allowed,
+					)
+				);
+			}
 		}
 
 		$profile_data = array();
@@ -580,41 +615,16 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
-		// Name parts first, so display_name is validated against the values the
-		// member is submitting rather than the ones already stored - otherwise
-		// setting a first name and selecting "First Last" in one save would be
-		// rejected for a permutation that does not exist yet.
-		foreach ( array( 'first_name', 'last_name', 'nickname' ) as $meta_key ) {
-			if ( null !== $request->get_param( $meta_key ) ) {
-				update_user_meta( $user_id, $meta_key, sanitize_text_field( (string) $request->get_param( $meta_key ) ) );
-			}
+		foreach ( $name_parts as $meta_key => $value ) {
+			update_user_meta( $user_id, $meta_key, $value );
 		}
-
-		// display_name must be one the member already owns: any string would let a member
-		// publish as "Administrator", take another member's exact name, and override the
-		// value the owner picked in wp-admin - site-wide, not just in the forum.
-		if ( null !== $request->get_param( 'display_name' ) ) {
-			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
-			if ( ! empty( $display_name ) ) {
-				$wp_user_now = get_userdata( $user_id );
-				$allowed     = $wp_user_now ? \Jetonomy\display_name_choices( $wp_user_now ) : array();
-				if ( ! in_array( $display_name, $allowed, true ) ) {
-					return new WP_Error(
-						'jetonomy_invalid_display_name',
-						__( 'Choose a display name from your own name fields.', 'jetonomy' ),
-						array(
-							'status'  => 400,
-							'allowed' => $allowed,
-						)
-					);
-				}
-				wp_update_user(
-					array(
-						'ID'           => $user_id,
-						'display_name' => $display_name,
-					)
-				);
-			}
+		if ( '' !== $display_name ) {
+			wp_update_user(
+				array(
+					'ID'           => $user_id,
+					'display_name' => $display_name,
+				)
+			);
 		}
 
 		if ( ! empty( $profile_data ) ) {
@@ -971,8 +981,8 @@ class Users_Controller extends Base_Controller {
 			'trust_level'    => (int) ( $profile->trust_level ?? 0 ),
 			'bio'            => $profile->bio ?? null,
 			'avatar_url'     => $profile->avatar_url ?? null,
-			'avatar_display' => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( (int) ( $profile->user_id ?? 0 ), 96 ),
-			'last_seen_at'   => $profile->last_seen_at ?? null,
+			'avatar_display' => ( $profile->avatar_url ?? '' ) ?: \Jetonomy\Avatar::display_url( (int) ( $profile->user_id ?? 0 ), 96 ),
+			'last_seen_at'   => UserProfile::last_seen_for_viewer( (int) ( $profile->user_id ?? 0 ), $profile->last_seen_at ?? null ),
 			'created_at'     => $profile->created_at ?? null,
 			'updated_at'     => $profile->updated_at ?? null,
 		);
@@ -1037,5 +1047,22 @@ class Users_Controller extends Base_Controller {
 				'required' => false,
 			),
 		);
+	}
+
+	/**
+	 * A member's active restriction, for staff and for the member themself.
+	 *
+	 * Silences and bans are moderation records. Anyone else, guests included,
+	 * gets null, as if the member were unrestricted.
+	 *
+	 * @param int $id Member.
+	 * @return string|null Restriction type, or null.
+	 */
+	private function restriction_for_viewer( int $id ): ?string {
+		$viewer = get_current_user_id();
+		if ( ! $viewer || ( $viewer !== $id && ! current_user_can( 'jetonomy_moderate' ) ) ) {
+			return null;
+		}
+		return \Jetonomy\Models\Restriction::active_map_for_users( array( $id ) )[ $id ] ?? null;
 	}
 }

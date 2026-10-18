@@ -1,0 +1,73 @@
+{
+  "journey": "C.member.online-indicator",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-online-indicator.1": {
+      "result": "pass",
+      "evidence": "alice (last_seen_at 17:57, active): green dot on her avatar in the topic page replies (jt-avatar-wrap.is-online), the profile header (64px) and the community home feed; viewed as bob"
+    },
+    "c-member-online-indicator.2": {
+      "result": "pass",
+      "evidence": "priya, theo and sofia (REST last_seen_at null, not active): their profile avatars have no is-online class and no dot; alice, maya and grace (recently active) do. (carlos was not usable: the walk's own sessions made him active)"
+    },
+    "c-member-online-indicator.3": {
+      "result": "pass",
+      "evidence": "the dot is an absolutely positioned ::after at the avatar's top-right: 30px avatars top -2px / right -2px, 64px profile avatar top 1px / right -5px, dot 10px"
+    },
+    "c-member-online-indicator.4": {
+      "result": "untested",
+      "needs": "lane A: switch the site to an RTL locale (Arabic) and restore it; the dot uses physical right, not logical inline-end, so mirroring should be checked there"
+    },
+    "c-member-online-indicator.5": {
+      "result": "pass",
+      "evidence": "Grace (no avatar, initials) is online: her profile 'GR' avatar wrap has is-online and carries the same dot"
+    },
+    "c-member-online-indicator.6": {
+      "result": "pass",
+      "evidence": "GET /users/<id> as bob: alice last_seen_at 2026-10-17 17:57:19 (dot shown), grace 17:55:27 (dot shown), priya null (no dot): the REST last-seen value matches the UI"
+    },
+    "c-member-online-indicator.7": {
+      "result": "untested",
+      "needs": "lane A: turn off online status display in Settings (or a member privacy option) and restore it"
+    },
+    "c-member-online-indicator.8": {
+      "result": "fail",
+      "expected": "follow the contract: dot shown or hidden consistently in all contexts, no precise last-seen time revealed.",
+      "actual": "guest sees the dot exactly as a member does in all contexts (profile 2, topic page 12, home 1 elements, identical to bob), but GET /wp-json/jetonomy/v1/users/3754 as a guest returns last_seen_at '2026-10-17 18:05:51', the precise last-seen time, with no login",
+      "url": "http://forums.local/wp-json/jetonomy/v1/users/3754"
+    },
+    "c-member-online-indicator.9": {
+      "result": "pass",
+      "evidence": "omar (banned from Off-Topic Lounge) and finn (silenced), both recently active: their profile avatars carry is-online and show the dot like any member"
+    },
+    "c-member-online-indicator.10": {
+      "result": "pass",
+      "evidence": "390 dark: the dot is 10px green rgb(22,163,74) with a 2px border in the card colour (the ring), top -2 / right -2, wrapper overflow visible so it is not clipped",
+      "screenshot": "qa-artifacts/203-walk3/laneB/online-dot-390-dark.png"
+    },
+    "c-member-online-indicator.11": {
+      "result": "untested",
+      "needs": "lane A: a deleted account with replies (deleting a user is not allowed from lane B)"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-online-indicator.12` @guest #rest !refuse: GET /users/<id> logged out does not return the exact last_seen_at of a member."
+  ],
+  "notes": "Dots read as bob/guest; the member panel for RTL and setting-off needs lane A."
+}

@@ -1,0 +1,100 @@
+{
+  "journey": "C.member.block-user",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-block-user.1": {
+      "result": "fail",
+      "expected": "alice's replies collapse to a tombstone \"You blocked this member. Their topics and replies are hidden from you.\" for bob only.",
+      "actual": "there is no Block item in a reply's menu (other members' replies have only Vote, Reply, Quote, Report, React); Block is in the author's profile 'More actions' menu. From there: dialog 'Block Alice Chen? Their topics and replies will be hidden from you, and they will not be able to message you. They are not told.' -> Block; alice's replies collapse to 'Content hidden because you blocked this user. Unblock' (a blocked author's topic page collapses to 'Content hidden because you blocked this user. Unblock this user'). Wording differs from the check ('Block this user?' / 'You blocked this member. Their topics and replies are hidden from you.')",
+      "url": "http://forums.local/community/u/alice/",
+      "screenshot": "qa-artifacts/203-walk3/laneB/block-confirm-1440.png",
+      "check_wrong": true
+    },
+    "c-member-block-user.2": {
+      "result": "pass",
+      "evidence": "Unblock on the tombstone, then reload: alice's reply 13646 shows its text again; /users/me/blocks total 0"
+    },
+    "c-member-block-user.3": {
+      "result": "pass",
+      "evidence": "POST /users/me/blocks {user_id:3754} -> 200 {blocked:true,user_id}; GET list holds alice; DELETE /users/me/blocks/3754 -> 200 {deleted:true} and list empty"
+    },
+    "c-member-block-user.4": {
+      "result": "pass",
+      "evidence": "blocking alice twice: both 200 {blocked:true}, list total stays 1"
+    },
+    "c-member-block-user.5": {
+      "result": "pass",
+      "evidence": "while blocked, alice's GET /posts/6103/replies shows bob's replies with full content; nothing marks her as blocked"
+    },
+    "c-member-block-user.6": {
+      "result": "pass",
+      "evidence": "bob blocks himself -> 400 jetonomy_cannot_block_self 'You cannot block yourself.'"
+    },
+    "c-member-block-user.7": {
+      "result": "pass",
+      "evidence": "bob blocks test_moderator (id 141) -> 403 jetonomy_cannot_block_moderator 'You cannot block a moderator.'"
+    },
+    "c-member-block-user.8": {
+      "result": "pass",
+      "evidence": "block user 999999 -> 404 jetonomy_not_found 'User not found.'"
+    },
+    "c-member-block-user.9": {
+      "result": "pass",
+      "evidence": "POST /users/me/blocks as guest -> 401 rest_not_logged_in"
+    },
+    "c-member-block-user.10": {
+      "result": "untested",
+      "needs": "deleting a user account (the blocked member) from wp-admin, which lane B may not do on shared demo data"
+    },
+    "c-member-block-user.11": {
+      "result": "pass",
+      "evidence": "with alice blocked: her topic is absent from search (REST /search empty) and from the Help Desk space list, her notifications vanish from bob's list, and a deep link to her topic shows the tombstone with the title hidden"
+    },
+    "c-member-block-user.12": {
+      "result": "fail",
+      "expected": "the tombstone and Blocked list wrap her full name.",
+      "actual": "Grace Oluwaseun Adeyemi-Whitfield in the Blocked members list: fits on one line at 1440, but at 390 the name is cut with an ellipsis ('Grace Oluwaseun ...') instead of wrapping, so the full name is not readable",
+      "url": "http://forums.local/community/u/bob/edit/",
+      "screenshot": "qa-artifacts/203-walk3/laneB/block-list-390-dark.png"
+    },
+    "c-member-block-user.13": {
+      "result": "pass",
+      "evidence": "tombstone at 390: 'Unblock this user' button 151x41, text wraps, no horizontal scroll (scrollWidth 390)",
+      "screenshot": "qa-artifacts/203-walk3/laneB/block-tombstone-390-dark.png"
+    },
+    "c-member-block-user.14": {
+      "result": "pass",
+      "evidence": "tombstone in dark mode: text colour srgb 0.73 on the dark surface with a 12%-white border, button visible",
+      "screenshot": "qa-artifacts/203-walk3/laneB/block-tombstone-390-dark.png"
+    },
+    "c-member-block-user.15": {
+      "result": "pass",
+      "evidence": "block confirmed while offline: toast 'Failed to save.', no block row created (blocks 0), the dialog closes"
+    },
+    "c-member-block-user.16": {
+      "result": "pass",
+      "evidence": "alice blocked by bob replied to bob's topic: bob's unread count and Mailpit unchanged"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-block-user.1` (corrected) @member #ui: bob opens alice's profile, More actions > \"Block Alice Chen\", confirms \"Block Alice Chen?\" -> her replies collapse to \"Content hidden because you blocked this user.\" with an Unblock button for bob only.",
+    "- `c-member-block-user.17` @member #ui +long +390: the Blocked members list on the edit-profile page wraps a long name instead of cutting it with an ellipsis."
+  ],
+  "notes": "alice and Grace were blocked and unblocked; blocks table clean."
+}

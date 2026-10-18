@@ -76,6 +76,7 @@ $crumbs = array(
 		</div>
 		<?php if ( ! empty( $bookmarks ) ) : ?>
 			<div class="jt-topics">
+				<?php \Jetonomy\prime_post_cards( $bookmarks ); ?>
 				<?php foreach ( $bookmarks as $bookmarked_post ) : ?>
 					<?php
 					// Reuse post-card for visual consistency with the rest of
@@ -87,6 +88,7 @@ $crumbs = array(
 						array(
 							'post'                 => $bookmarked_post,
 							'show_bookmark_toggle' => true,
+							'show_space'           => true,
 						)
 					);
 					?>

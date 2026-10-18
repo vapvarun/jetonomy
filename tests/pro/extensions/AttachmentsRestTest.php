@@ -130,13 +130,17 @@ class AttachmentsRestTest extends WP_UnitTestCase {
 	public function test_owner_can_detach_own_attachment(): void {
 		$owner = self::factory()->user->create();
 		$aid   = self::factory()->attachment->create_object( array( 'post_author' => $owner ), 0, array( 'post_mime_type' => 'image/png' ) );
-		$link  = \Jetonomy_Pro\Extensions\Attachments\Model::link( 'post', 6666, $aid, 0 );
+		// A real, readable topic: detach answers 404 for content the caller cannot read.
+		\Jetonomy\DB\Schema::create_tables();
+		$space = \Jetonomy\Models\Space::create( array( 'title' => 'Detach', 'slug' => 'detach-' . uniqid(), 'category_id' => \Jetonomy\Models\Category::create( array( 'name' => 'D', 'slug' => 'd-' . uniqid() ) ), 'visibility' => 'public' ) );
+		$post  = (int) \Jetonomy\Models\Post::create( array( 'space_id' => $space, 'author_id' => $owner, 'title' => 'T', 'slug' => 't-' . uniqid(), 'content' => 'x', 'status' => 'publish' ) );
+		$link  = \Jetonomy_Pro\Extensions\Attachments\Model::link( 'post', $post, $aid, 0 );
 		wp_set_current_user( $owner );
 		$req = new \WP_REST_Request( 'DELETE' );
 		$req->set_url_params( array( 'id' => $link ) );
 		$res = ( new \Jetonomy_Pro\Extensions\Attachments\Rest( new \Jetonomy_Pro\Extensions\Attachments\Extension() ) )->detach( $req );
 		$this->assertTrue( $res->get_data()['deleted'] );
-		$this->assertSame( 0, \Jetonomy_Pro\Extensions\Attachments\Model::count_for( 'post', 6666 ) );
+		$this->assertSame( 0, \Jetonomy_Pro\Extensions\Attachments\Model::count_for( 'post', $post ) );
 	}
 
 	public function test_link_on_create_post_reads_attachment_ids_from_request(): void {

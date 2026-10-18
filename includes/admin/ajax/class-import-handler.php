@@ -52,6 +52,9 @@ class Import_Handler {
 		// reports a wrong progress %.
 		if ( $new_run ) {
 			$importer->reset_run_state();
+			// What "already imported" means for this run: the rows mapped before
+			// it started, the number the pre-run note showed.
+			update_option( 'jetonomy_import_tally', array( 'map_before' => $importer->mapped_count() ), false );
 		}
 
 		// Nothing to restore: each batch loads the parents it needs from
@@ -112,13 +115,22 @@ class Import_Handler {
 		foreach ( $batch_tally['orphans'] as $type => $count ) {
 			$orphans[ $type ] = (int) ( $orphans[ $type ] ?? 0 ) + (int) $count;
 		}
-		$tally = array(
+		$map_before = $tally['map_before'] ?? null;
+		$tally      = array(
 			'imported'   => (int) ( $tally['imported'] ?? 0 ) + $batch_tally['imported'],
 			'already'    => (int) ( $tally['already'] ?? 0 ) + $batch_tally['already'],
+			'adopted'    => (int) ( $tally['adopted'] ?? 0 ) + $batch_tally['adopted'],
 			'rethreaded' => (int) ( $tally['rethreaded'] ?? 0 ) + $batch_tally['rethreaded'],
 			'orphans'    => $orphans,
+			'map_before' => $map_before,
 		);
 		update_option( 'jetonomy_import_tally', $tally, false );
+		// The finished run reports jt_import_map rows, the same count as the
+		// pre-run note. A run started before this release has no snapshot and
+		// keeps its own counts.
+		if ( $result['done'] && null !== $map_before ) {
+			$tally = $importer->settle_tally( $tally, (int) $map_before );
+		}
 		$summary = implode( ' ', \Jetonomy\Import\Importer::describe_tally( $tally ) );
 
 		// Calculate overall progress.

@@ -64,9 +64,9 @@ Pro registers five capabilities that gate its features. Each maps to the WordPre
 Disabling an extension and deleting the plugin are two very different actions.
 
 - **Disabling an extension** (from **Jetonomy → Extensions**) only unregisters that extension's hooks and stops its background work. Everything it already stored - its tables, options, and member content - stays in place, so re-enabling it later picks up exactly where you left off. Deactivating the whole Jetonomy Pro plugin leaves all Pro data untouched the same way.
-- **Deleting the plugin** from the WordPress Plugins screen runs the uninstall routine. It removes Jetonomy Pro's database tables, Pro plugin options, Pro user meta (every `jetonomy_pro_` key), and Pro scheduled tasks. Jetonomy Pro does not register its own WordPress capabilities - those belong to the free plugin and are cleaned up by its uninstall.
+- **Deleting the plugin** from the WordPress Plugins screen keeps your data by default. It removes Jetonomy Pro's database tables, Pro plugin options, Pro user meta (every `jetonomy_pro_` key), and Pro scheduled tasks only when **Jetonomy → Settings → General → Data → Remove all community data when Jetonomy is deleted** is ticked. Jetonomy Pro does not register its own WordPress capabilities - those belong to the free plugin and are cleaned up by its uninstall.
 
-Only uninstalling removes stored data - and it is irreversible - so back up your database first if there is any chance you will want the data again.
+Only deleting with that setting on removes stored data - and it is irreversible - so back up your database first if there is any chance you will want the data again.
 
 ## What's Next?
 

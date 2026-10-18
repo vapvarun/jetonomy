@@ -225,6 +225,13 @@ class InviteLink extends Model {
 			);
 		}
 
+		// Before the membership check: a space ban leaves the member row in place, so
+		// "already a member" would send a banned member into a space they cannot read.
+		$restricted = \Jetonomy\Permissions\Permission_Engine::restriction_error( $user_id, 'join', (int) $space->id );
+		if ( $restricted ) {
+			return $restricted;
+		}
+
 		if ( SpaceMember::is_member( (int) $invite->space_id, $user_id ) ) {
 			return array(
 				'status' => 'already_member',

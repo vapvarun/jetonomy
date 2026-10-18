@@ -225,6 +225,11 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						<div class="jetonomy-import-steps">
 							<span class="jetonomy-step" data-step="forums"><?php esc_html_e( 'Forums', 'jetonomy' ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
+							<?php if ( 'bbpress' === $id ) : ?>
+								<?php // Only bbPress runs a members phase: it adds forum members to private and group spaces. ?>
+								<span class="jetonomy-step" data-step="members"><?php echo esc_html( \Jetonomy\jetonomy_label( 'member', true ) ); ?></span>
+								<span class="jetonomy-step-arrow">&rarr;</span>
+							<?php endif; ?>
 							<span class="jetonomy-step" data-step="topics"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
 							<span class="jetonomy-step" data-step="replies"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></span>

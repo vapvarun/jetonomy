@@ -37,7 +37,7 @@ Bookmarks are private - other members cannot see your bookmark list. The standal
 
 ### Removing a Bookmark from the Bookmarks Page
 
-Each card on the **My Bookmarks** page carries a bookmark icon button in the top-right corner. Clicking it removes the bookmark immediately - no confirmation dialog. The card fades out and disappears from the list so the page always reflects your current bookmark state.
+Each card on the **My Bookmarks** page carries a bookmark icon button at the end of the row. Clicking it removes the bookmark immediately - no confirmation dialog. The card fades out and disappears from the list so the page always reflects your current bookmark state.
 
 The same toggle works in reverse too: if you accidentally remove a bookmark, re-open the topic and bookmark it again from the topic action bar.
 

@@ -3,7 +3,7 @@
  * Names the running test for the coverage recorder.
  *
  * With JETONOMY_COVERAGE_OUT set, every REST request that matches no route is
- * logged against the test that sent it, so bin/qa-coverage-check.php --runtime
+ * logged against the test that sent it, so bin/qa-runtime-coverage.php
  * can name a test that is calling a route the plugin no longer has.
  *
  * @package Jetonomy

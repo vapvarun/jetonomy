@@ -20,7 +20,13 @@ A quick reaction lowers the bar for engagement. Members who would never write a 
 
 Every post and every reply in your community shows a reaction strip. Members click any emoji to react. Clicking a different emoji replaces the previous one - each member can hold exactly one reaction per piece of content at a time. Clicking the same emoji again removes the reaction entirely.
 
-The reaction counts are displayed as chips directly below the post body. Each chip shows the emoji and the total count. Hovering a chip reveals the names of recent reactors.
+The reaction counts are displayed as chips directly below the post body. Each chip shows the emoji and the total count.
+
+### See who reacted (2.0.3+)
+
+Hover over a chip, move to it with the keyboard, or press and hold it on a phone to see who chose that reaction, for example "Like: Maya, Bob and 3 others". Up to ten names are listed, then the rest are counted. Press Escape, or tap anywhere else, to close it. A quick tap on a phone still adds or removes your reaction. The list refreshes after you react.
+
+Names are shown to anyone who can read the post, including visitors who are not logged in.
 
 ![The reaction strip on a post, showing the eight default emoji options a member can pick from](../images/pro-reactions-strip.webp)
 ## Enabling Reactions
@@ -69,7 +75,7 @@ The Reactions extension registers these endpoints under `jetonomy/v1`:
 | `GET` | `/replies/{id}/reactions` | Get the reactions and counts for a reply |
 | `POST` | `/replies/{id}/reactions` | Toggle your reaction on a reply |
 
-`{id}` is the numeric ID of the post or reply. A single `POST` toggles your reaction: sending a new emoji replaces your previous one, and sending your current emoji again clears it.
+`{id}` is the numeric ID of the post or reply. Add `?emoji=rocket` to a `GET` (2.0.3+) to also receive `reactors`: `total`, up to ten `names`, and a ready-made translated `label`. A single `POST` toggles your reaction: sending a new emoji replaces your previous one, and sending your current emoji again clears it.
 
 **Example - toggle a reaction:**
 

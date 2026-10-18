@@ -58,6 +58,13 @@ class Posts_Controller extends Base_Controller {
 								'default' => 'latest',
 								'enum'    => array( 'latest', 'popular', 'oldest', 'newest', 'unanswered' ),
 							),
+							// WordPress clients send `orderby`; it was silently
+							// ignored. Same values as `sort`, so an unknown one is a 400.
+							'orderby'  => array(
+								'type'        => 'string',
+								'description' => 'Alias of sort; used when sort is not sent.',
+								'enum'        => array( 'latest', 'popular', 'oldest', 'newest', 'unanswered' ),
+							),
 						)
 					),
 				),
@@ -121,6 +128,13 @@ class Posts_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'close_post' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				'args'                => array(
+					'closed' => array(
+						'type'        => 'boolean',
+						// jt-terms-ok: REST schema description for API developers.
+						'description' => __( 'Close (true) or reopen (false). Omit to toggle.', 'jetonomy' ),
+					),
+				),
 			)
 		);
 
@@ -131,6 +145,13 @@ class Posts_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'pin_post' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				'args'                => array(
+					'pinned' => array(
+						'type'        => 'boolean',
+						// jt-terms-ok: REST schema description for API developers.
+						'description' => __( 'Pin (true) or unpin (false). Omit to toggle.', 'jetonomy' ),
+					),
+				),
 			)
 		);
 
@@ -240,20 +261,20 @@ class Posts_Controller extends Base_Controller {
 	 */
 	public function link_preview( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$url = (string) $request->get_param( 'url' );
-		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
-			return new \WP_Error( 'jetonomy_invalid_url', __( 'Invalid URL.', 'jetonomy' ), array( 'status' => 400 ) );
-		}
 		// SSRF guard: wp_http_validate_url() misses 169.254/16 (cloud metadata),
 		// 100.64/10 and IPv6 loopback/ULA/link-local. This endpoint is reachable
 		// unauthenticated in public mode, so resolve + reject internal addresses
 		// before fetching (the fetcher repeats the check on every redirect hop).
-		$guard = \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url );
-		if ( is_wp_error( $guard ) ) {
-			return $guard;
+		// A URL we will not fetch (no DNS, internal, malformed) answers the same
+		// empty preview a failed fetch does: "no preview" is not an error, and a
+		// 400 here logged a failed request in every reader's console for a post
+		// linking to a dead host. One answer for every refusal keeps it
+		// non-enumerating.
+		if ( '' === $url || ! wp_http_validate_url( $url ) || is_wp_error( \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url ) ) ) {
+			$preview = \Jetonomy\Services\Links\Preview_Data::empty_for( $url );
+		} else {
+			$preview = ( new \Jetonomy\Services\Links\Preview_Service() )->fetch( $url );
 		}
-
-		$service = new \Jetonomy\Services\Links\Preview_Service();
-		$preview = $service->fetch( $url );
 
 		$response = new \WP_REST_Response( $preview->to_array(), 200 );
 		// Clients (web + mobile) can layer their own cache; 10-minute
@@ -283,19 +304,23 @@ class Posts_Controller extends Base_Controller {
 	public function list_items( $request ) {
 		$space_id = absint( $request->get_param( 'space_id' ) );
 
+		// Missing and hidden answer alike (404), before the 403 a listed
+		// private space may give.
+		$space = $this->find_unconcealed_space( $space_id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
+		}
 		if ( ! $this->check_permission( 'read', $space_id ) ) {
 			return $this->permission_error();
-		}
-
-		$space = Space::find( $space_id );
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
 		}
 
 		$user_id       = get_current_user_id();
 		$is_privileged = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
 
 		$pagination = $this->get_pagination( $request );
+		if ( ! isset( $request->get_query_params()['sort'] ) && null !== $request->get_param( 'orderby' ) ) {
+			$pagination['sort'] = (string) $request->get_param( 'orderby' );
+		}
 
 		// Resolve limit: explicit query-param from client → Space::get_posts_per_page()
 		// (space → global → 20). Use raw query params, NOT get_param(), because route
@@ -419,22 +444,18 @@ class Posts_Controller extends Base_Controller {
 
 		$space_id = absint( $request->get_param( 'space_id' ) );
 
-		if ( ! $this->check_permission( 'create_posts', $space_id ) ) {
-			return $this->permission_error();
+		// A hidden space's id answers like a missing one; a listed space the
+		// member may not post in gets the gate's 403 below.
+		$space = $this->find_unconcealed_space( $space_id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
-		$space = Space::find( $space_id );
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
-		}
-
-		// Block posting to archived or locked spaces.
-		if ( in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
-			return new WP_Error(
-				'jetonomy_space_restricted',
-				sprintf( /* translators: 1: the singular Space label, lowercase, 2: the plural Topic label, lowercase. */ __( 'This %1$s is archived or locked and no longer accepts new %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-				array( 'status' => 403 )
-			);
+		// Restrictions, archived/locked space and the create_posts permission:
+		// the one gate every post writer (REST, abilities, WP-CLI) runs.
+		$gate = \Jetonomy\Permissions\Content_Gate::check_post( $user_id, $space_id );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
 		}
 
 		// Rate limit check.
@@ -444,7 +465,7 @@ class Posts_Controller extends Base_Controller {
 			// Rate_Limiter::message() names the allowance and the real wait.
 			// A bare "Rate limit exceeded. Please try again later." would not tell a member
 			// whether "later" means a minute or a day.
-			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_posts', $trust ) );
+			return \Jetonomy\Permissions\Rate_Limiter::error( $user_id, 'create_posts', $trust );
 		}
 
 		// CAPTCHA verification (skipped for trust level 2+ users and admins).
@@ -675,10 +696,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$space_id  = (int) $post->space_id;
@@ -695,6 +715,11 @@ class Posts_Controller extends Base_Controller {
 		// Trashed content is restored or purged, not edited in place.
 		if ( 'trash' === ( $post->status ?? '' ) ) {
 			return $this->already_trashed_error();
+		}
+
+		$conflict = $this->edit_conflict( $request, $post, Post::EDIT_FIELDS, 'topic' );
+		if ( $conflict ) {
+			return $conflict;
 		}
 
 		// Publish-now: an author (or moderator) can publish their own draft
@@ -740,22 +765,32 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
-		// Backdate: accept published_at to rewrite the date. Gated to manage_options.
 		$raw_published_at = $request->get_param( 'published_at' );
-		if ( null !== $raw_published_at && '' !== $raw_published_at ) {
+		if ( 'draft' === ( $post->status ?? '' ) ) {
+			// On a draft, published_at is its schedule, and whoever may edit the
+			// draft may move or cancel it ('' = cancel, back to a plain draft).
+			// Post::update() re-arms the publish job either way.
+			if ( '' === $raw_published_at ) {
+				$update_data['published_at'] = null;
+			} elseif ( null !== $raw_published_at ) {
+				$schedule = $this->sanitize_backdate( $raw_published_at );
+				if ( is_wp_error( $schedule ) ) {
+					return $schedule;
+				}
+				$schedule_error = $this->validate_schedule( (string) $raw_published_at, (string) $schedule );
+				if ( $schedule_error ) {
+					return $schedule_error;
+				}
+				$update_data['published_at'] = $schedule;
+			}
+		} elseif ( null !== $raw_published_at && '' !== $raw_published_at ) {
+			// Backdate a live post: rewrites its date. Gated to manage_options.
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return $this->permission_error();
 			}
 			$backdate = $this->sanitize_backdate( $raw_published_at );
 			if ( is_wp_error( $backdate ) ) {
 				return $backdate;
-			}
-			// On a draft, published_at is the schedule, not a backdate.
-			if ( null !== $backdate && 'draft' === ( $post->status ?? '' ) ) {
-				$schedule_error = $this->validate_schedule( (string) $raw_published_at, $backdate );
-				if ( $schedule_error ) {
-					return $schedule_error;
-				}
 			}
 			if ( null !== $backdate ) {
 				$update_data['published_at']  = $backdate;
@@ -910,10 +945,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$space_id  = (int) $post->space_id;
@@ -996,19 +1030,19 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		if ( ! $this->check_permission( 'close_posts', (int) $post->space_id ) ) {
 			return $this->permission_error();
 		}
 
-		// Toggle: reopen if already closed, close if open (mirrors pin_post). One
-		// route serves both so the frontend's single Close/Reopen control works.
-		$new_value = $post->is_closed ? 0 : 1;
+		// `closed` sets the state the moderator saw on the button, so a second
+		// moderator or a retried request cannot reopen a topic someone just
+		// closed. Without it the route toggles, as it always has for API clients.
+		$new_value = null !== $request->get_param( 'closed' ) ? (int) (bool) $request->get_param( 'closed' ) : ( $post->is_closed ? 0 : 1 );
 		Post::update( $id, array( 'is_closed' => $new_value ) );
 
 		$updated = Post::find( $id );
@@ -1030,10 +1064,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
@@ -1077,18 +1110,17 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		if ( ! $this->check_permission( 'pin_posts', (int) $post->space_id ) ) {
 			return $this->permission_error();
 		}
 
-		// Toggle: unpin if already pinned, pin if not.
-		$new_value = $post->is_sticky ? 0 : 1;
+		// `pinned` sets the state the button showed (see close_post); omitted, it toggles.
+		$new_value = null !== $request->get_param( 'pinned' ) ? (int) (bool) $request->get_param( 'pinned' ) : ( $post->is_sticky ? 0 : 1 );
 
 		// Pinning a trashed or unpublished topic is refused; unpinning stays open.
 		if ( 1 === $new_value ) {
@@ -1145,10 +1177,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$id   = absint( $request->get_param( 'id' ) );
-		$post = Post::find( $id );
-
-		if ( ! $post ) {
-			return $this->not_found( 'Post' );
+		$post = $this->find_unconcealed_post( $id );
+		if ( is_wp_error( $post ) ) {
+			return $post;
 		}
 
 		$source_space_id = (int) $post->space_id;
@@ -1162,9 +1193,9 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( sprintf( /* translators: 1: the singular Topic label, 2: the singular Space label, lowercase. */ __( '%1$s is already in the target %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ), \Jetonomy\space_label( false, true ) ) );
 		}
 
-		$target_space = Space::find( $target_space_id );
-		if ( ! $target_space ) {
-			return $this->not_found( 'Target space' );
+		$target_space = $this->find_unconcealed_space( $target_space_id, 'Target space' );
+		if ( is_wp_error( $target_space ) ) {
+			return $target_space;
 		}
 
 		// Require move_posts permission in both source and target spaces.
@@ -1194,17 +1225,15 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$source_id = absint( $request->get_param( 'id' ) );
-		$source    = Post::find( $source_id );
-
-		if ( ! $source ) {
-			return $this->not_found( 'Post' );
+		$source    = $this->find_unconcealed_post( $source_id );
+		if ( is_wp_error( $source ) ) {
+			return $source;
 		}
 
 		$target_id = absint( $request->get_param( 'target_post_id' ) );
-		$target    = Post::find( $target_id );
-
-		if ( ! $target ) {
-			return $this->not_found( 'Target post' );
+		$target    = $this->find_unconcealed_post( $target_id, 'Target post' );
+		if ( is_wp_error( $target ) ) {
+			return $target;
 		}
 
 		if ( $source_id === $target_id ) {
@@ -1333,6 +1362,11 @@ class Posts_Controller extends Base_Controller {
 			'content'      => array(
 				'type'     => 'string',
 				'required' => false,
+			),
+			'edit_token'   => array(
+				'type'        => 'string',
+				'required'    => false,
+				'description' => 'The edit_token this topic had when the edit form loaded. A save after someone else changed it is refused with 409 jetonomy_edit_conflict.',
 			),
 			'is_private'   => array(
 				'type'     => 'boolean',

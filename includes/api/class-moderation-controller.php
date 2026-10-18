@@ -20,7 +20,6 @@ use Jetonomy\Moderation\Moderation_Service;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\UserProfile;
-use Jetonomy\Trust\Reputation;
 use function Jetonomy\table;
 
 class Moderation_Controller extends Base_Controller {
@@ -44,17 +43,17 @@ class Moderation_Controller extends Base_Controller {
 				'permission_callback' => array( $this, 'require_moderate' ),
 				'args'                => array(
 					'status' => array(
-						'type'              => 'string',
-						'required'          => false,
-						'default'           => 'pending',
-						'enum'              => array( 'pending', 'spam', 'all' ),
-						'sanitize_callback' => 'sanitize_key',
+						'type'     => 'string',
+						'required' => false,
+						'default'  => 'pending',
+						// No sanitize_callback: a custom one replaces rest_parse_request_arg(), so the enum would never be checked.
+						'enum'     => array( 'pending', 'spam', 'all' ),
 					),
 					'type'   => array(
-						'type'              => 'string',
-						'required'          => false,
-						'enum'              => array( 'post', 'reply' ),
-						'sanitize_callback' => 'sanitize_key',
+						'type'     => 'string',
+						'required' => false,
+						// No sanitize_callback: a custom one replaces rest_parse_request_arg(), so the enum would never be checked.
+						'enum'     => array( 'post', 'reply' ),
 					),
 				),
 			)
@@ -68,6 +67,7 @@ class Moderation_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'approve' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
+				'args'                => self::expected_status_arg(),
 			)
 		);
 
@@ -79,6 +79,7 @@ class Moderation_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'mark_spam' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
+				'args'                => self::expected_status_arg(),
 			)
 		);
 
@@ -147,6 +148,7 @@ class Moderation_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'trash_content' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
+				'args'                => self::expected_status_arg(),
 			)
 		);
 
@@ -181,10 +183,10 @@ class Moderation_Controller extends Base_Controller {
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
 				'args'                => array(
 					'action' => array(
-						'type'              => 'string',
-						'required'          => true,
-						'enum'              => array( 'approve', 'spam', 'trash' ),
-						'sanitize_callback' => 'sanitize_key',
+						'type'     => 'string',
+						'required' => true,
+						// No sanitize_callback: a custom one replaces rest_parse_request_arg(), so the enum would never be checked.
+						'enum'     => array( 'approve', 'spam', 'trash' ),
 					),
 					'items'  => array(
 						'type'     => 'array',
@@ -230,17 +232,14 @@ class Moderation_Controller extends Base_Controller {
 				'callback'            => array( $this, 'ban_user' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => array(
-					'user_id'    => array(
-						'type'     => 'integer',
-						'required' => true,
-					),
+					// Required for every type except ip_ban, which blocks an address on its own.
+					'user_id'    => array( 'type' => 'integer' ),
 					'type'       => array(
 						'type'     => 'string',
 						'required' => true,
 						'enum'     => array( 'global_ban', 'space_ban', 'silence', 'ip_ban' ),
 					),
-					// Required when type is ip_ban: the address to block. user_id names the
-					// member it was seen on, so the same target rules apply.
+					// Required when type is ip_ban: the address to block.
 					'ip'         => array( 'type' => 'string' ),
 					'reason'     => array( 'type' => 'string' ),
 					'space_id'   => array( 'type' => 'integer' ),
@@ -286,13 +285,37 @@ class Moderation_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permission callback: requires jetonomy_moderate capability.
+	 * Permission callback: requires jetonomy_moderate capability. A guest is
+	 * told to sign in (401), a signed-in member is refused (403).
 	 */
 	public function require_moderate(): bool|WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
 		if ( ! current_user_can( 'jetonomy_moderate' ) ) {
 			return $this->permission_error();
 		}
 		return true;
+	}
+
+	/**
+	 * The optional `from` argument of a single-item moderation action: the
+	 * status the moderator's card showed. A queue card sends it, so a stale
+	 * Reject on an item another moderator already approved answers 409
+	 * instead of trashing published content.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function expected_status_arg(): array {
+		return array(
+			'from' => array(
+				'type'        => 'string',
+				'required'    => false,
+				'enum'        => array( 'pending', 'publish', 'spam', 'trash', 'draft' ),
+				'description' => 'Status the item had when the moderator saw it. When it has changed since, the action is refused with 409 jetonomy_already_handled.',
+			),
+		);
 	}
 
 	/**
@@ -371,7 +394,7 @@ class Moderation_Controller extends Base_Controller {
 		$type = $request->get_param( 'type' );
 		$id   = absint( $request->get_param( 'id' ) );
 
-		$result = $this->approve_item( $type, $id );
+		$result = $this->approve_item( $type, $id, (string) $request->get_param( 'from' ) );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -395,7 +418,7 @@ class Moderation_Controller extends Base_Controller {
 		$type = $request->get_param( 'type' );
 		$id   = absint( $request->get_param( 'id' ) );
 
-		$result = $this->spam_item( $type, $id );
+		$result = $this->spam_item( $type, $id, (string) $request->get_param( 'from' ) );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -413,144 +436,22 @@ class Moderation_Controller extends Base_Controller {
 	/**
 	 * POST /flags — Create a flag report.
 	 *
-	 * REST_Auth covers login + nonce + the `jetonomy_flag` cap. The silenced-user
-	 * check stays in the handler because it queries a Restriction row — a
-	 * business-rule layer that doesn't belong in the auth helper.
+	 * REST_Auth covers login + nonce + the `jetonomy_flag` cap; the business
+	 * rules (restriction, readable target, self, duplicate, note length) and
+	 * the side effects are Moderation_Service::create_flag(), shared with the
+	 * abilities API and WP-CLI.
 	 */
 	public function create_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = get_current_user_id();
-
-		if ( Restriction::is_silenced( $user_id ) ) {
-			return new WP_Error( 'jetonomy_user_silenced', __( 'You are currently silenced.', 'jetonomy' ), array( 'status' => 403 ) );
-		}
 
 		$object_type = sanitize_text_field( (string) $request->get_param( 'object_type' ) );
 		$object_id   = absint( $request->get_param( 'object_id' ) );
 		$reason      = sanitize_text_field( (string) $request->get_param( 'reason' ) );
 		$description = sanitize_textarea_field( (string) ( $request->get_param( 'description' ) ?? '' ) );
 
-		// The target must exist, and members cannot report their own content /
-		// themselves. Both were client-side-only before, so a raw API call
-		// could 201 a flag against a nonexistent id or self-report to farm the
-		// reporter-reputation path.
-		$target_author = null;
-		// Content must also be live and readable by the reporter. A topic in a
-		// private space you cannot open, or a trashed reply, answers exactly like a
-		// missing one: otherwise any member could flag (and dock reputation from)
-		// content they cannot see, and 404-vs-201 would confirm private ids exist.
-		if ( 'post' === $object_type ) {
-			$target        = \Jetonomy\Models\Post::find( $object_id );
-			$readable      = $target && 'publish' === $target->status
-				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $user_id, $target );
-			$target_author = $readable ? (int) $target->author_id : null;
-		} elseif ( 'reply' === $object_type ) {
-			$target        = \Jetonomy\Models\Reply::find( $object_id );
-			$parent        = $target ? \Jetonomy\Models\Post::find( (int) $target->post_id ) : null;
-			$readable      = $target && $parent && 'publish' === $target->status && 'publish' === $parent->status
-				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $user_id, $parent )
-				&& \Jetonomy\Permissions\Permission_Engine::can_read_reply( $user_id, $target, $parent );
-			$target_author = $readable ? (int) $target->author_id : null;
-		} else { // 'user' - schema enum guarantees one of the three.
-			$target        = get_userdata( $object_id );
-			$target_author = $target ? (int) $target->ID : null;
-		}
-		if ( null === $target_author ) {
-			return new WP_Error(
-				'jetonomy_flag_target_missing',
-				__( 'The reported content no longer exists.', 'jetonomy' ),
-				array( 'status' => 404 )
-			);
-		}
-		if ( $target_author === $user_id ) {
-			return new WP_Error(
-				'jetonomy_flag_self',
-				__( 'You cannot report your own content.', 'jetonomy' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Prevent duplicate flags by the same user on the same object.
-		$existing = Flag::find_by_reporter_and_object( $user_id, $object_type, $object_id );
-		if ( $existing ) {
-			return new WP_Error(
-				'jetonomy_already_flagged',
-				__( 'You have already reported this content.', 'jetonomy' ),
-				array( 'status' => 409 )
-			);
-		}
-
-		$flag_id = Flag::create(
-			array(
-				'reporter_id' => $user_id,
-				'object_type' => $object_type,
-				'object_id'   => $object_id,
-				'reason'      => $reason,
-				'description' => $description,
-			)
-		);
-
-		if ( ! $flag_id ) {
-			return new WP_Error(
-				'jetonomy_flag_failed',
-				__( 'Failed to create flag.', 'jetonomy' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		/**
-		 * Fires after a content flag is created.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param int    $flag_id     Flag ID.
-		 * @param string $object_type Flagged object type: 'post' or 'reply'.
-		 */
-		do_action( 'jetonomy_flag_created', $flag_id, $object_type );
-
-		// Award reputation impact to reported content author (skip self-reports).
-		// Fires for post/reply targets only; user-targeted flags don't deduct
-		// reputation from the reported user — those go through the ban flow.
-		$author_id = 0;
-		if ( 'post' === $object_type ) {
-			$reported_post = \Jetonomy\Models\Post::find( (int) $object_id );
-			if ( $reported_post ) {
-				$author_id = (int) $reported_post->author_id;
-			}
-		} elseif ( 'reply' === $object_type ) {
-			$reported_reply = \Jetonomy\Models\Reply::find( (int) $object_id );
-			if ( $reported_reply ) {
-				$author_id = (int) $reported_reply->author_id;
-			}
-		}
-
-		if ( $author_id > 0 && $author_id !== (int) $user_id ) {
-			Reputation::award(
-				$author_id,
-				'post_reported',
-				array(
-					'object_type' => $object_type,
-					'object_id'   => (int) $object_id,
-				)
-			);
-		}
-
-		/**
-		 * Fires after a flag is created with the full flag object plus context.
-		 *
-		 * @since 1.4.1
-		 * @param object          $flag    Flag object (id, reporter_id, object_type, object_id, reason, description).
-		 * @param array{user_id:int,request:WP_REST_Request} $context Context.
-		 */
-		$flag = Flag::find( (int) $flag_id );
-		if ( $flag ) {
-			do_action(
-				'jetonomy_after_create_flag',
-				$flag,
-				array(
-					'user_id' => $user_id,
-					'request' => $request,
-				)
-			);
+		$flag_id = Moderation_Service::create_flag( $user_id, $object_type, $object_id, $reason, $description, array( 'request' => $request ) );
+		if ( is_wp_error( $flag_id ) ) {
+			return $flag_id;
 		}
 
 		return new WP_REST_Response(
@@ -601,7 +502,7 @@ class Moderation_Controller extends Base_Controller {
 		$type = $request->get_param( 'type' );
 		$id   = absint( $request->get_param( 'id' ) );
 
-		$result = $this->trash_item( $type, $id );
+		$result = $this->trash_item( $type, $id, (string) $request->get_param( 'from' ) );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -732,11 +633,7 @@ class Moderation_Controller extends Base_Controller {
 		$id     = absint( $request->get_param( 'id' ) );
 		$status = sanitize_text_field( (string) $request->get_param( 'status' ) );
 
-		$flag = Flag::find( $id );
-		if ( ! $flag ) {
-			return $this->not_found( 'Flag' );
-		}
-
+		// The service answers a missing report and one the caller may not act on alike (404).
 		$resolved = Moderation_Service::resolve_flag( get_current_user_id(), $id, $status );
 
 		if ( is_wp_error( $resolved ) ) {
@@ -783,6 +680,23 @@ class Moderation_Controller extends Base_Controller {
 			}
 		}
 
+		// A silenced or banned moderator takes no moderation action.
+		$restricted = \Jetonomy\Moderation\Moderation_Permissions::restriction_error( $actor_id, $space_id );
+		if ( $restricted ) {
+			return $restricted;
+		}
+
+		// An IP ban stands alone: no member is named or stored, so the
+		// member-target rules below do not apply (validate_ip_ban() keeps it
+		// administrator-only and refuses the actor's own address).
+		if ( 'ip_ban' === $type ) {
+			$ip = Restriction::validate_ip_ban( (string) $request->get_param( 'ip' ), $actor_id );
+			if ( is_wp_error( $ip ) ) {
+				return $ip;
+			}
+			return $this->issue_restriction( 0, $type, null, $ip, $expires_at, $ip );
+		}
+
 		if ( ! get_userdata( $user_id ) ) {
 			return $this->not_found( 'User' );
 		}
@@ -820,17 +734,20 @@ class Moderation_Controller extends Base_Controller {
 			);
 		}
 
-		// An ip_ban stores the address in `reason` (the column is_ip_banned() matches).
-		$ip = null;
-		if ( 'ip_ban' === $type ) {
-			$ip = Restriction::validate_ip_ban( (string) $request->get_param( 'ip' ), $actor_id );
-			if ( is_wp_error( $ip ) ) {
-				return $ip;
-			}
-			$reason   = $ip;
-			$space_id = null;
-		}
+		return $this->issue_restriction( $user_id, $type, $space_id, $reason, $expires_at, null );
+	}
 
+	/**
+	 * Store a restriction ban_user() has cleared and answer 201.
+	 *
+	 * @param int         $user_id    Member (0 for an IP ban).
+	 * @param string      $type       Restriction type.
+	 * @param int|null    $space_id   Space for a space ban.
+	 * @param string|null $reason     Reason, or the address for an IP ban.
+	 * @param string|null $expires_at Expiry or null.
+	 * @param string|null $ip         The banned address (IP ban only).
+	 */
+	private function issue_restriction( int $user_id, string $type, ?int $space_id, ?string $reason, ?string $expires_at, ?string $ip ): WP_REST_Response|WP_Error {
 		$restriction_id = Restriction::ban(
 			$user_id,
 			$type,
@@ -869,6 +786,11 @@ class Moderation_Controller extends Base_Controller {
 		$restriction = Restriction::find( $id );
 		if ( ! $restriction ) {
 			return $this->not_found( 'Restriction' );
+		}
+
+		$refused = \Jetonomy\Moderation\Moderation_Permissions::lift_error( get_current_user_id(), $restriction );
+		if ( $refused ) {
+			return $refused;
 		}
 
 		$removed = Restriction::remove_ban( $id );
@@ -955,16 +877,20 @@ class Moderation_Controller extends Base_Controller {
 			$items[] = array(
 				'id'             => (int) $row->id,
 				'user_id'        => $uid,
-				'user'           => array(
+				// An IP ban belongs to no member (user_id 0), so it has no user rather than a "[deleted]" one.
+				'user'           => $uid ? array(
 					'id'           => $uid,
 					'display_name' => $banned ? $banned->display_name : __( '[deleted]', 'jetonomy' ),
 					'user_login'   => $banned ? $banned->user_login : '',
 					'avatar_url'   => $banned ? \Jetonomy\Avatar::display_url( $uid, 64 ) : '',
-				),
+				) : null,
 				'type'           => (string) $row->type,
 				'space_id'       => $row->space_id ? (int) $row->space_id : null,
 				'space_title'    => $space ? $space->title : null,
-				'reason'         => null !== $row->reason ? (string) $row->reason : null,
+				// An IP ban blocks an address, not this member: the address is in `reason`, so it is
+				// returned as `ip` and the ban carries no reason of its own.
+				'ip'             => 'ip_ban' === $row->type ? (string) $row->reason : null,
+				'reason'         => null !== $row->reason && 'ip_ban' !== $row->type ? (string) $row->reason : null,
 				'issued_by'      => (int) $row->issued_by,
 				'issuer_name'    => $issuer ? \Jetonomy\user_display_name( $issuer ) : ( (int) $row->issued_by ? __( '[deleted]', 'jetonomy' ) : __( 'System', 'jetonomy' ) ),
 				'expires_at'     => $row->expires_at ?: null,
@@ -993,10 +919,11 @@ class Moderation_Controller extends Base_Controller {
 	 *
 	 * @param string $type 'post' or 'reply'.
 	 * @param int    $id   Row ID.
+	 * @param string $from Status the moderator saw, or ''.
 	 * @return bool|WP_Error True on success, WP_Error if the row is missing.
 	 */
-	private function approve_item( string $type, int $id ): bool|WP_Error {
-		return Moderation_Service::set_object_status( get_current_user_id(), $type, $id, 'approve' );
+	private function approve_item( string $type, int $id, string $from = '' ): bool|WP_Error {
+		return Moderation_Service::set_object_status( get_current_user_id(), $type, $id, 'approve', $from );
 	}
 
 	/**
@@ -1008,10 +935,11 @@ class Moderation_Controller extends Base_Controller {
 	 *
 	 * @param string $type 'post' or 'reply'.
 	 * @param int    $id   Row ID.
+	 * @param string $from Status the moderator saw, or ''.
 	 * @return bool|WP_Error True on success, WP_Error if the row is missing.
 	 */
-	private function spam_item( string $type, int $id ): bool|WP_Error {
-		return Moderation_Service::set_object_status( get_current_user_id(), $type, $id, 'spam' );
+	private function spam_item( string $type, int $id, string $from = '' ): bool|WP_Error {
+		return Moderation_Service::set_object_status( get_current_user_id(), $type, $id, 'spam', $from );
 	}
 
 	/**
@@ -1022,9 +950,10 @@ class Moderation_Controller extends Base_Controller {
 	 *
 	 * @param string $type 'post' or 'reply'.
 	 * @param int    $id   Row ID.
+	 * @param string $from Status the moderator saw, or ''.
 	 * @return bool|WP_Error True on success, WP_Error if the row is missing.
 	 */
-	private function trash_item( string $type, int $id ): bool|WP_Error {
-		return Moderation_Service::set_object_status( get_current_user_id(), $type, $id, 'trash' );
+	private function trash_item( string $type, int $id, string $from = '' ): bool|WP_Error {
+		return Moderation_Service::set_object_status( get_current_user_id(), $type, $id, 'trash', $from );
 	}
 }

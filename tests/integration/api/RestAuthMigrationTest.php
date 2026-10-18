@@ -8,7 +8,7 @@
  * modes one expects from the helper:
  *   1. anonymous request → 401 rest_not_logged_in
  *   2. logged in, no nonce → 403 rest_cookie_invalid_nonce
- *   3. logged in, no cap → 403 rest_forbidden  (for cap-gated routes only)
+ *   3. logged in, no cap → 403 jetonomy_forbidden  (for cap-gated routes only)
  *
  * Bookmarks/users/me-PATCH routes use `auth_mutation('read')` which has no
  * effective cap check (every logged-in user can `read`), so they only verify
@@ -160,7 +160,7 @@ class RestAuthMigrationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Logged-in callers with a nonce but no cap should be 403 rest_forbidden
+	 * Logged-in callers with a nonce but no cap should be 403 jetonomy_forbidden
 	 * (only meaningful for cap-gated routes).
 	 *
 	 * @dataProvider routes_provider
@@ -205,9 +205,9 @@ class RestAuthMigrationTest extends WP_UnitTestCase {
 		$err = $response->as_error();
 		if ( $err ) {
 			$this->assertSame(
-				'rest_forbidden',
+				'jetonomy_forbidden',
 				$err->get_error_code(),
-				"Route {$method} {$route} returned {$err->get_error_code()}, expected rest_forbidden"
+				"Route {$method} {$route} returned {$err->get_error_code()}, expected jetonomy_forbidden"
 			);
 		}
 

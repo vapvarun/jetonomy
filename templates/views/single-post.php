@@ -67,23 +67,35 @@ if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true 
 	// hit "private space" opening the very post they wrote (2026-08-06).
 	if ( ! $user_id || ! \Jetonomy\Models\Space::admitted( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			// A hidden space is not discoverable, so its topics answer exactly
-			// like a missing one: a different message confirmed a guessed URL.
-			if ( 'hidden' === $space->visibility ) {
-				$jt_not_found();
-				return;
-			}
-			\Jetonomy\Template_Loader::partial(
-				'empty-state',
-				array(
-					/* translators: %s: singular space label. */
-					'message' => sprintf( __( 'This content is in a private %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-					'tone'    => 'forbidden',
-				)
-			);
+			// A topic the viewer may not read answers exactly like a missing one,
+			// hidden or listed private space alike: its title is never listed, so
+			// a different message would confirm a guessed URL. The space page is
+			// where a listed private space explains itself.
+			$jt_not_found();
 			return;
 		}
 	}
+}
+
+// A member banned from a public space cannot read its topics (can_read_post()
+// below says no), but a 404 on a public topic reads as a broken link. Say why,
+// as the space page does. Template_Loader::topic_ban_error() is the one rule
+// (the pre-flight already sent the 403); it stays null wherever the topic
+// would be unreadable anyway, so the message never confirms a hidden topic.
+$jt_ban_error = \Jetonomy\Template_Loader::topic_ban_error( $post, (int) $jt_viewer_id );
+if ( $jt_ban_error ) {
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		array(
+			'icon'      => 'lock',
+			'message'   => $jt_ban_error->get_error_message(),
+			/* translators: %s: plural space label the site owner configured (e.g. spaces). */
+			'cta_label' => sprintf( __( 'Browse other %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+			'cta_url'   => \Jetonomy\base_url() . '/',
+			'tone'      => 'forbidden',
+		)
+	);
+	return;
 }
 
 // Per-post privacy gate. Before 1.3.6 a subscriber with space access could
@@ -245,10 +257,12 @@ $user_post_vote = $user_id ? \Jetonomy\Models\Vote::get_user_vote( $user_id, 'po
 
 // Breadcrumb.
 $crumbs = array();
+// $category is find_visible(): a category hidden from this viewer is null, so
+// the crumb never links to a page they cannot open.
 if ( $category ) {
 	$crumbs[] = array(
 		'label' => $category->name,
-		'url'   => '',
+		'url'   => \Jetonomy\route_url( 'category', $category->slug ),
 	);
 }
 if ( $space ) {
@@ -367,6 +381,36 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					}
 					?>
 					<?php
+					// The author (or anyone who may edit it) can move or cancel a
+					// schedule until it publishes: PATCH /posts/{id} published_at.
+					$jt_viewer = get_current_user_id();
+					if ( 'draft' === $post->status && ! empty( $post->published_at ) && $jt_viewer
+						&& ( ( (int) $post->author_id === $jt_viewer && \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer, 'edit_own_posts', (int) $post->space_id ) )
+							|| \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer, 'edit_others_posts', (int) $post->space_id ) ) ) :
+						?>
+						<form class="jt-reschedule" data-wp-interactive="jetonomy" data-post-id="<?php echo absint( $post->id ); ?>" data-wp-on--submit="actions.reschedulePost">
+							<fieldset>
+								<legend class="jt-label"><?php esc_html_e( 'Change the publish time', 'jetonomy' ); ?></legend>
+								<?php
+								\Jetonomy\Template_Loader::partial(
+									'schedule-fields',
+									array(
+										'utc_value' => (string) $post->published_at,
+										'id_prefix' => 'jt-reschedule',
+									)
+								);
+								?>
+							</fieldset>
+							<div class="jt-notice-actions">
+								<button type="submit" class="jt-btn jt-btn-fill jt-btn-sm"><?php esc_html_e( 'Save time', 'jetonomy' ); ?></button>
+								<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm" data-wp-on--click="actions.cancelSchedule"
+									data-confirm="<?php echo esc_attr( sprintf( /* translators: %s: singular topic label. */ __( 'Cancel the schedule? The %s stays a draft until you publish it.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
+									<?php esc_html_e( 'Cancel schedule', 'jetonomy' ); ?>
+								</button>
+							</div>
+						</form>
+					<?php endif; ?>
+					<?php
 					// A trashed topic reaches this template only for its author
 					// and for moderators (can_read_post). Moderators get the way
 					// back - or out - right here, the one frontend surface a
@@ -421,9 +465,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<h1 class="screen-reader-text"><?php echo esc_html( $jt_h1_label ); ?></h1>
 					<?php else : ?>
 						<div class="jt-post-title-row">
-							<h1>
+							<?php // dir="auto" on the prefix keeps its words out of the title's direction guess. ?>
+							<h1 dir="auto">
 								<?php if ( $prefix_name ) : ?>
-									<span class="jt-prefix"
+									<span class="jt-prefix" dir="auto"
 									<?php
 									if ( $prefix_color ) :
 										?>
@@ -550,7 +595,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					</div>
 				</div>
 
-				<div class="jt-post-body">
+				<div class="jt-post-body" dir="auto">
 					<?php
 					// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
 					// Embeds first so URL paths containing @username don't get mangled
@@ -618,7 +663,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 						<div class="jt-vote-cluster" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Vote on this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
 							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
-							<?php if ( $jt_is_live && jetonomy_viewer_can_vote( $space ) ) : ?>
+							<?php $jt_own_post = is_user_logged_in() && (int) $post->author_id === get_current_user_id(); // Your own topic takes no vote. ?>
+							<?php if ( $jt_is_live && ! $jt_own_post && jetonomy_viewer_can_vote( $space ) ) : ?>
 							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 								aria-pressed="<?php echo 1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteUp"
@@ -627,19 +673,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 								<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</button>
-								<?php
-								// Hide downvote on own content — self-downvote was
-								// landing at -1.
-								if ( (int) $post->author_id !== get_current_user_id() ) :
-									?>
 							<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
 								aria-pressed="<?php echo -1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteDown"
 								data-post-id="<?php echo absint( $post->id ); ?>"
-									<?php echo jetonomy_vote_attrs( 'down', -1 === $user_post_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
-									<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+								<?php echo jetonomy_vote_attrs( 'down', -1 === $user_post_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
+								<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 							</button>
-								<?php endif; ?>
 							<?php elseif ( ! is_user_logged_in() ) : ?>
 								<?php
 								// Logged-out: the vote control was an inert read-only
@@ -654,7 +694,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</a>
 							<?php else : ?>
-								<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16 ); ?>
+								<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16, $space, $jt_own_post ); ?>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
@@ -757,7 +797,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							<?php if ( $jt_can_edit ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
-									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
+									data-post-id="<?php echo absint( $post->id ); ?>"
+									data-edit-token="<?php echo esc_attr( \Jetonomy\Models\Post::edit_token( $post, \Jetonomy\Models\Post::EDIT_FIELDS ) ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.togglePrivate"
 									data-post-id="<?php echo absint( $post->id ); ?>"
@@ -783,11 +824,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
+									data-pin="<?php echo $post->is_sticky ? '0' : '1'; ?>"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo esc_html( $jt_pin_label ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_close ) : ?>
 									<button class="jt-more-item"
 										data-wp-on--click="actions.toggleClose"
+										data-close="<?php echo empty( $post->is_closed ) ? '1' : '0'; ?>"
 										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Reopen %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) : esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_move ) : ?>
@@ -955,7 +998,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				// a read-only member never sees a Post Reply box they cannot submit - the
 				// Vote / New-Topic seam, applied to the reply surface. The empty state
 				// below uses it too, so it never invites a reply the viewer cannot post.
+				// An archived or locked space keeps its topics readable but takes no
+				// replies (REST answers jetonomy_space_restricted), so it invites none.
+				$jt_space_open     = true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $post->space_id );
 				$jt_can_reply_here = $jt_is_live
+					&& $jt_space_open
 					&& $jt_viewer_id
 					&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
 				?>
@@ -974,7 +1021,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					?>
 				<?php else : ?>
 
-					<div class="jt-replies-list" id="jt-replies-container">
+					<div class="jt-replies-list" id="jt-replies-container" data-per-page="<?php echo (int) $replies_per_page; ?>" data-top-level="<?php echo (int) $top_level_count; ?>" data-sort="<?php echo esc_attr( $reply_sort ); ?>">
 						<?php foreach ( $reply_batch as $index => $reply ) : ?>
 							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space, $reply_page ); ?>
 							<?php
@@ -1017,9 +1064,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			</div>
 
 			<!-- Composer -->
+			<?php
+			$jt_restriction = ( $jt_is_live && ! $jt_can_reply_here )
+				? \Jetonomy\Permissions\Permission_Engine::restriction_error( (int) $jt_viewer_id, 'create_replies', (int) $post->space_id )
+				: null;
+			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
-					<?php printf( /* translators: 1: singular topic label; 2: plural reply label. */ esc_html__( 'This %1$s is closed and no longer accepts %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+					<?php echo esc_html( \Jetonomy\Permissions\Content_Gate::closed_error()->get_error_message() ); ?>
 				</div>
 			<?php elseif ( $jt_can_reply_here ) : ?>
 				<?php if ( $post->is_closed ) : ?>
@@ -1041,7 +1093,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					);
 					?>
 				</div>
-			<?php elseif ( ! is_user_logged_in() ) : ?>
+			<?php elseif ( $jt_restriction ) : ?>
+				<?php // A silenced or banned member is told why there is no reply box. ?>
+				<p class="jt-notice jt-notice-warning"><?php echo esc_html( $jt_restriction->get_error_message() ); ?></p>
+			<?php elseif ( ! is_user_logged_in() && $jt_space_open ) : ?>
 				<?php
 				// Guests get the composer partial's own logged-out state (the
 				// styled Log in to reply button), so there is one copy of it.

@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -127,7 +127,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 **Developer Tools**
 - 84 REST routes (114 method-endpoints) at `/wp-json/jetonomy/v1/`
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
-- 253 action hooks and filters for customization (114 actions, 139 filters)
+- 255 action hooks and filters for customization (115 actions, 140 filters)
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
 - RTL stylesheet included
@@ -256,13 +256,79 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 84 REST routes / 114 method-endpoints (143 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 253 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 84 REST routes / 114 method-endpoints (143 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 255 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 2.0.3 - October 2026 =
+
+Block a member from their profile, keep your community when you delete the plugin, and a broad round of privacy, moderation and notification fixes.
+
+* New      - Members can report or block someone from the ⋯ menu on their profile, which hides that member's topics and replies and stops their messages without telling them.
+* New      - Edit Profile lists every member you have blocked, 20 a page, with an Unblock button for each.
+* New      - Deleting Jetonomy now keeps your community unless an administrator ticks "Remove all community data when Jetonomy is deleted" under Settings > General > Data.
+* New      - A Recount counters button under Dashboard > Quick Actions rebuilds topic, reply, member and vote counts from your content.
+* New      - Jetonomy can be installed with Composer as wbcomdesigns/jetonomy.
+* New      - The author of a scheduled topic, or staff, can move or cancel the schedule from a Change time form on the topic page.
+* New      - Reports on the same item merge into one moderation card with the reporter count and reasons, and one decision resolves them all.
+* Improve  - Reading a notification updates every unread badge on the page straight away, and the bell count refreshes when you return to the tab.
+* Improve  - A silenced or banned member who tries to post, vote, report or upload is told why, on the space, new-topic and topic pages as well.
+* Improve  - Notifications and emails now name the actor and the space, and the staff report email's Review in Mod Queue button opens the moderation queue.
+* Improve  - Settings > Email lists every placeholder, with Preview and Send test using realistic sample values, and a blank template field sends the default shown there.
+* Improve  - Search ranks an exact title phrase first, highlights matched words, and shows the true match count in the header.
+* Improve  - Space cards show your own role (Member, Moderator or Admin) instead of the join policy.
+* Improve  - Spaces and Content in wp-admin can be searched and sorted, and the Users list names the space of a space ban.
+* Improve  - Invite links, join requests and the admin invite list load in pages, so long lists no longer drop rows.
+* Improve  - Load More skips topics already shown, reports a failed fetch, and moves focus to the first new row.
+* Improve  - Join request approvals show the same confirmation on the website as in wp-admin.
+* Improve  - Reply polling on an open topic stops when the topic is deleted or access is lost, and backs off after errors.
+* Improve  - Post Topic and Post Reply stay above the fixed tab bar on phones, and dropdowns open above it.
+* Improve  - Links in posts use the accent colour with an underline, mentions read correctly in right-to-left text, and member-written text follows its own direction.
+* Fix      - A reply that @mentions someone who would also be notified as the topic author or a follower sends them one notice and one email.
+* Fix      - Unfollowing a space or topic removes that follow, not your most recent one.
+* Fix      - A second moderator's Close or Pin no longer undoes the first, because the buttons now set the state they showed.
+* Fix      - Editing a topic or reply from an out-of-date tab is refused instead of overwriting newer changes.
+* Fix      - A topic link inside a private space shows the same "not found" page as a missing topic, and the private space page names the space for visitors.
+* Fix      - A space on a boxed theme such as Reign no longer squeezes its description beside the stats and buttons.
+* Fix      - Clearing the Community Base URL field and saving keeps your community at its current address instead of breaking every community link.
+* Fix      - Deleting a space removes its topics, replies and related data, and a database failure keeps the space instead of half deleting it.
+* Fix      - Topics in an archived or locked space no longer offer reply, quote or log in to reply, and Reply and Quote no longer show where you cannot reply.
+* Fix      - Members banned site-wide no longer appear on the leaderboard, and an empty week or month says so when All time has members.
+* Fix      - Trashing or deleting the accepted reply clears the accepted answer, and restoring it sets it back.
+* Fix      - Moderators no longer see Ban, Silence or Lift on rows they are not allowed to act on, and reports already handled by someone else say so.
+* Fix      - Self-votes are refused everywhere and the vote control explains why.
+* Fix      - Trashing or restoring a topic now moves its repliers' reply counts, and the home welcome counts refresh after a recount or import.
+* Fix      - Import counts agree across the import note, the result, Past imports and the command line.
+* Fix      - The home welcome shows only Log in when registration is off, and the topic and reply composers have accessible names for screen readers.
+* Fix      - Saving a profile with a refused display name no longer saves half the profile.
+* Fix      - Resend confirmation on the Login block replaces the error and reports a cooldown instead of a false "on its way".
+* Fix      - The mention picker shows initials when a member has no avatar, and the next word no longer loses the mention link.
+* Fix      - Settings shows the white-label brand name, and the access rule Trust Level hint now says 1 to 5.
+* Fix      - Deleting the plugin with data removal ticked also clears its scheduled jobs, licence check and widget settings.
+* Fix      - The report dialog stays open with your reason and details when sending fails, and says the request did not reach the server.
+* Fix      - Deleting notifications updates the All, Unread and type counts on the page straight away.
+* Fix      - An invite page left open too long says it expired and offers Join again instead of silently doing nothing.
+* Fix      - The category in a topic's breadcrumb links to the category page.
+* Fix      - A failed Approve in the moderation queue says the request did not reach the server instead of blaming another moderator.
+* Fix      - Moderation report cards say who reported the item, and Trash and Approvals open on the tab that holds items.
+* Fix      - Editing a reply in wp-admin shows its plain-text preview right away instead of raw HTML.
+* Fix      - Categories created by an import get a readable address instead of a number.
+* Security - Topics, replies and spaces you cannot see now answer exactly like missing ones on every write route, reply read and live update, so their existence is not revealed.
+* Security - A topic in a hidden space no longer shows its title in the browser tab, and hidden spaces, private spaces and categories you cannot see hide their names in titles and headers.
+* Security - Bookmarking, following or voting on a topic you cannot read no longer reveals whether it is held for review or exists.
+* Security - Followers, mentions and notification emails reach only people who can still read the topic, so a hidden or left private space delivers no topic titles.
+* Security - Lifting a restriction now needs the authority that issued it, IP bans are lifted only by administrators, and IP bans refuse loopback and reserved addresses.
+* Security - A member's silence or ban is visible only to staff and that member, and last-seen times show exact values only to the member and staff.
+* Security - Space access now ends when its access rule is deleted or narrowed, and only site administrators can manage access rules.
+* Security - Imported titles are stored as plain text, so escaped markup in a source title never becomes live.
+* Dev      - Close and pin routes accept closed and pinned values to set an exact state, GET /subscriptions filters by object, and GET /link-preview returns an empty preview for URLs it will not fetch.
+* Dev      - New filters jetonomy_send_instant_email and jetonomy_profile_notification_fields, and the jetonomy_allow_self_upvote filter is removed.
+* Dev      - List routes accept per_page as well as limit, and deleting notifications returns the fresh tab counts.
+* Compat   - Aligned with Jetonomy Pro 2.0.3. Install both updates together.
 
 = 2.0.2 - October 2026 =
 

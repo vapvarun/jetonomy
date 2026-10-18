@@ -558,7 +558,7 @@ class WPForo_Importer extends Importer {
 			$cat_id = $cat_id ?: $this->import_category(
 				$board['board'] ? 'board-' . $board['board'] : 'default',
 				(string) $board['cat_slug'],
-				array( 'name' => (string) $board['cat_name'] )
+				array( 'name' => self::plain_text( (string) $board['cat_name'] ) )
 			);
 
 			// Preserve source access level — a members-only wpForo board must
@@ -570,11 +570,11 @@ class WPForo_Importer extends Importer {
 					'parent_id'   => $parent_space_id,
 					'author_id'   => 1,
 					'type'        => 'forum',
-					'title'       => $forum->title,
+					'title'       => self::plain_text( $forum->title ),
 					// Identity lives in jt_import_map, so a slug the owner already
 					// uses imports beside it as "<slug>-1" instead of failing.
 					'slug'        => Space::unique_slug( self::clean_slug( self::forum_slug( $forum ) ) ?: 'forum-' . $forum->forumid ),
-					'description' => wp_strip_all_tags( $forum->description ?? '' ),
+					'description' => self::plain_text( $forum->description ?? '' ),
 					'visibility'  => $access['visibility'],
 					'join_policy' => $access['join_policy'],
 					'sort_order'  => (int) $forum->order,
@@ -804,7 +804,7 @@ class WPForo_Importer extends Importer {
 					'space_id'      => $space_id,
 					'author_id'     => (int) $topic->userid,
 					'type'          => \Jetonomy\compose_post_type( 'forum' ),
-					'title'         => $topic->title,
+					'title'         => self::plain_text( $topic->title ),
 					'slug'          => self::clean_slug( $topic->slug ?: $topic->title ) ?: 'topic-' . $topic->topicid,
 					'content'       => wp_kses_post( $content ),
 					'content_plain' => \jetonomy_content_to_plain( $content ),
@@ -973,7 +973,7 @@ class WPForo_Importer extends Importer {
 			}
 		}
 
-		return $notes;
+		return array_merge( $notes, parent::get_import_notes() );
 	}
 
 	/**

@@ -832,6 +832,25 @@ class Auth_Controller extends Base_Controller {
 			return $generic;
 		}
 
+		// A second ask for the same identifier inside a minute sends nothing, so
+		// say so instead of repeating "on its way". Keyed on what was typed, not
+		// on the account, so the answer is the same whether or not it exists.
+		$cooldown_key = 'jt_resend_' . md5( strtolower( trim( $login ) ) );
+		$asked_at     = (int) get_transient( $cooldown_key );
+		$wait         = $asked_at ? MINUTE_IN_SECONDS - ( time() - $asked_at ) : 0;
+		if ( $wait > 0 ) {
+			return new WP_Error(
+				'jetonomy_resend_cooldown',
+				/* translators: %d: seconds to wait. */
+				sprintf( _n( 'A link was just sent. Please wait %d second before asking for another.', 'A link was just sent. Please wait %d seconds before asking for another.', $wait, 'jetonomy' ), $wait ),
+				array(
+					'status'      => 429,
+					'retry_after' => $wait,
+				)
+			);
+		}
+		set_transient( $cooldown_key, time(), MINUTE_IN_SECONDS );
+
 		$user = get_user_by( 'login', $login );
 		if ( ! $user && is_email( $login ) ) {
 			$user = get_user_by( 'email', $login );

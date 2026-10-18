@@ -29,6 +29,7 @@ The profile header shows:
 - **Bio** - a short text description the member writes themselves
 - **Join date** - when the member's account was created
 - **Online status** - a green dot appears if the member was active in the last 5 minutes (see [Online Status](03-online-status.md))
+- **⋯ menu** (2.0.3+) - on someone else's profile, offers **Report** and **Block** (or **Unblock**). Administrators and moderators can be reported but not blocked. See [Blocking a Member](../moderation-and-trust/02-flagging-reporting.md#blocking-a-member-180)
 
 ### Stats Bar
 
@@ -78,6 +79,7 @@ Editable fields:
 - Bio
 - Avatar - upload a JPG, PNG, GIF, or WebP. After choosing a non-GIF image, a crop dialog opens: drag to reposition, use the slider to zoom, then **Crop and upload** saves a square avatar (animated GIFs upload as-is to preserve animation). The "Remove photo" button reverts to the Gravatar.
 - Notification preferences (email and in-app toggles per type)
+- **Blocked members** (2.0.3+) - everyone you have blocked, 20 per page, each with an **Unblock** button
 
 ![Avatar crop dialog open with the image preview, zoom slider, and Crop and upload button](../images/edit-profile-avatar-crop.webp)
 

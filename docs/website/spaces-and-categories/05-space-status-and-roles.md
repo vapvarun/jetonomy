@@ -22,7 +22,7 @@ The Status dropdown offers three values.
 
 **Active** is the normal state.
 
-**Archived** and **Locked** both stop new topics and replies. Existing content stays readable - nothing is deleted or hidden, and links keep working. A member who tries to post gets *"This space is archived or locked and no longer accepts new posts."*
+**Archived** and **Locked** both stop new topics and replies. Existing content stays readable - nothing is deleted or hidden, and links keep working. A member who tries to post gets *"This space is archived or locked and no longer accepts new content."*
 
 Use Archived when a space has finished its life: a completed project, a closed beta, a season that has ended. Use Locked when you are pausing a space you intend to reopen - a temporary freeze during a moderation incident, or a category being reorganised.
 
@@ -50,7 +50,7 @@ Every member of a space holds one of four roles.
 | **Moderator** | Yes | Yes | Yes | No |
 | **Admin** | Yes | Yes | Yes | Yes |
 
-**Viewer** is read-only. A viewer is on the space's member list but cannot post, reply or vote there. Use it for people you want to follow a space without taking part. It is also the role that **Read** access rules give out.
+**Viewer** can read and report. A viewer is on the space's member list but cannot post, reply or vote there. Use it for people you want to follow a space without taking part. It is also the role that **Read** access rules give out.
 
 **Member** is the default for anyone who joins.
 

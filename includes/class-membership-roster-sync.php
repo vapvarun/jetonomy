@@ -53,9 +53,41 @@ class Membership_Roster_Sync {
 	 */
 	private const SOURCE = 'tier';
 
+	/**
+	 * One-off job that trims one space's 'tier' rows after a rule there is
+	 * deleted. Access already ends at once (SpaceMember reads a 'tier' row only
+	 * while a rule grants it); this keeps the Members list and count honest
+	 * without waiting for the hourly reconcile.
+	 */
+	public const SWEEP_HOOK = 'jetonomy_sweep_space_roster';
+
 	public static function init(): void {
 		add_action( 'jetonomy_membership_activated', array( __CLASS__, 'on_activated' ), 10, 3 );
 		add_action( 'jetonomy_membership_deactivated', array( __CLASS__, 'on_deactivated' ), 10, 3 );
+		add_action( self::SWEEP_HOOK, array( __CLASS__, 'sweep_space' ) );
+	}
+
+	/**
+	 * Queue the roster sweep for one space, once.
+	 *
+	 * @param int $space_id Space whose rules changed.
+	 */
+	public static function queue_space_sweep( int $space_id ): void {
+		if ( $space_id > 0 ) {
+			Queue::async_once( self::SWEEP_HOOK, array( $space_id ) );
+		}
+	}
+
+	/**
+	 * Drop the 'tier' rows of one space that no rule grants any more.
+	 *
+	 * @param int $space_id Space.
+	 */
+	public static function sweep_space( $space_id ): void {
+		$space_id = (int) $space_id;
+		if ( $space_id > 0 ) {
+			self::sweep( $space_id );
+		}
 	}
 
 	/**
@@ -170,6 +202,15 @@ class Membership_Roster_Sync {
 	 * tier rows, carry a cross-run cursor like the trust evaluator does.
 	 */
 	public static function reconcile(): void {
+		self::sweep( 0 );
+	}
+
+	/**
+	 * Keyset-paged pass over 'tier' rows, removing those nothing grants.
+	 *
+	 * @param int $only_space One space, or 0 for every space.
+	 */
+	private static function sweep( int $only_space ): void {
 		// Fresh request (cron), but be explicit: decisions must read current rules.
 		AccessRule::reset_memo();
 
@@ -178,7 +219,7 @@ class Membership_Roster_Sync {
 		$last_user  = 0;
 
 		do {
-			$rows    = SpaceMember::list_tier_rows_after( $last_space, $last_user, $per_page );
+			$rows    = SpaceMember::list_tier_rows_after( $last_space, $last_user, $per_page, $only_space );
 			$fetched = count( $rows );
 
 			foreach ( $rows as $row ) {

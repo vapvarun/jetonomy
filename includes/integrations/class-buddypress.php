@@ -871,6 +871,11 @@ class BuddyPress {
 		if ( empty( $posts ) ) {
 			echo '<p class="jt-bp-empty">' . esc_html( sprintf( /* translators: %s: plural topic label. */ __( 'No %s yet. Start a discussion!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . '</p>';
 		} else {
+			// Users and profiles for every byline in one query each, not one per row.
+			$jt_author_ids = array_map( static fn( $p ) => (int) $p->author_id, $posts );
+			cache_users( $jt_author_ids );
+			\Jetonomy\Models\UserProfile::prime( $jt_author_ids );
+
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
 				$post_url   = \Jetonomy\route_url( 'post', $space->slug, $post->slug );

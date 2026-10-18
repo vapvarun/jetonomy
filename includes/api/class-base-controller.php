@@ -27,18 +27,40 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Check if current user can perform action in space.
 	 */
 	protected function check_permission( string $action, ?int $space_id = null ): bool {
-		return Permission_Engine::can( get_current_user_id(), $action, $space_id );
+		$allowed = Permission_Engine::can( get_current_user_id(), $action, $space_id );
+		if ( ! $allowed ) {
+			$this->denied_action = $action;
+			$this->denied_space  = $space_id;
+		}
+		return $allowed;
 	}
+
+	/**
+	 * Action the last failed check_permission() was for; permission_error() names
+	 * the account restriction behind it (banned, silenced) when there is one.
+	 *
+	 * @var string
+	 */
+	private string $denied_action = '';
+
+	/**
+	 * Space of the last failed check_permission(), so a ban from it is named.
+	 *
+	 * @var int|null
+	 */
+	private ?int $denied_space = null;
 
 	/**
 	 * Standard permission denied error.
 	 */
 	protected function permission_error(): WP_Error {
-		return new WP_Error(
-			'jetonomy_forbidden',
-			__( 'You do not have permission to perform this action.', 'jetonomy' ),
-			array( 'status' => 403 )
-		);
+		$restricted = '' !== $this->denied_action
+			? Permission_Engine::restriction_error( get_current_user_id(), $this->denied_action, $this->denied_space )
+			: null;
+		if ( $restricted ) {
+			return $restricted;
+		}
+		return REST_Auth::forbidden();
 	}
 
 	/**
@@ -78,6 +100,84 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * A space, or a 404 when this viewer may not know it exists.
+	 *
+	 * 404 rather than 403 for a hidden space (or one in a hidden category):
+	 * a 403 would confirm to a stranger that the space exists, which the
+	 * page itself never does. Every space-scoped read route asks this first,
+	 * then refuses a listed private space with 403. Write routes ask it
+	 * before their role check, so only a space the viewer can see says 403.
+	 *
+	 * @param int    $id   Space ID.
+	 * @param string $what not_found() key: 'Space', or 'Target space' for a move.
+	 * @return object|WP_Error
+	 */
+	protected function find_unconcealed_space( int $id, string $what = 'Space' ) {
+		$space = \Jetonomy\Models\Space::find( $id );
+		if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+			return $this->not_found( $what );
+		}
+		return $space;
+	}
+
+	/**
+	 * A topic, or the 404 a missing one gets when this viewer may not know it exists.
+	 *
+	 * The topic twin of find_unconcealed_space(): every route that acts on a
+	 * topic asks it before its role, ownership or type check, so a topic in a
+	 * private space the viewer is not in answers exactly like a missing id,
+	 * as GET /posts/{id} does. A viewer who can read it still gets the route's
+	 * own 403 for lacking the role. Status is not judged here: a reader of a
+	 * trashed topic still gets the route's 409.
+	 *
+	 * @param int    $id   Post ID.
+	 * @param string $what not_found() key: 'Post', or 'Target post' for a merge.
+	 * @return object|WP_Error
+	 */
+	protected function find_unconcealed_post( int $id, string $what = 'Post' ) {
+		$post  = \Jetonomy\Models\Post::find( $id );
+		$error = $this->concealed_error( $post, null, $what );
+		return $error ?? $post;
+	}
+
+	/**
+	 * A reply and its topic, or the 404 a missing reply gets when this viewer
+	 * may not know it exists. See find_unconcealed_post().
+	 *
+	 * @param int $id Reply ID.
+	 * @return array{0: object, 1: object}|WP_Error The reply and its topic.
+	 */
+	protected function find_unconcealed_reply( int $id ) {
+		$reply = \Jetonomy\Models\Reply::find( $id );
+		$post  = $reply ? \Jetonomy\Models\Post::find( (int) $reply->post_id ) : null;
+		$error = $this->concealed_error( $post, $reply, 'Reply' );
+		return $error ?? array( $reply, $post );
+	}
+
+	/**
+	 * The refusal for a topic or reply this viewer may not know exists, or null.
+	 *
+	 * A ban is about the member, not the item, so it is named first: a global
+	 * ban the same way for every id, missing ones included, a space ban only
+	 * once the item is known to sit in that space.
+	 *
+	 * @param object|null $post  Topic row, null when missing.
+	 * @param object|null $reply Reply row for a reply route, else null.
+	 * @param string      $what  not_found() key.
+	 */
+	private function concealed_error( ?object $post, ?object $reply, string $what ): ?WP_Error {
+		$user_id    = get_current_user_id();
+		$restricted = Permission_Engine::restriction_error( $user_id, 'read', $post ? (int) $post->space_id : null );
+		if ( $restricted ) {
+			return $restricted;
+		}
+		if ( ! $post || ! \Jetonomy\Permissions\Content_Gate::viewer_may_read( $user_id, $post, $reply, 'Reply' === $what ? 'reply' : 'post' ) ) {
+			return $this->not_found( $what );
+		}
+		return null;
+	}
+
+	/**
 	 * Standard validation error.
 	 */
 	protected function validation_error( string $message ): WP_Error {
@@ -100,6 +200,25 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 */
 	protected function already_trashed_error(): WP_Error {
 		return \Jetonomy\Permissions\Content_Gate::trashed_error();
+	}
+
+	/**
+	 * 409 when the edit_token the client sent no longer matches the row: someone
+	 * saved it after this edit form loaded, and this save would overwrite them.
+	 * A request without a token (API clients) is not checked.
+	 *
+	 * @param WP_REST_Request $request Update request.
+	 * @param object          $row     Row as stored now.
+	 * @param string[]        $fields  Columns the edit form writes.
+	 * @param string          $noun    Label key for the message (topic, reply).
+	 */
+	protected function edit_conflict( WP_REST_Request $request, object $row, array $fields, string $noun ): ?WP_Error {
+		$token = (string) $request->get_param( 'edit_token' );
+		// shortcut: check-then-write, not atomic; two saves in the same instant can still race.
+		if ( '' === $token || hash_equals( \Jetonomy\Models\Model::edit_token( $row, $fields ), $token ) ) {
+			return null;
+		}
+		return new WP_Error( 'jetonomy_edit_conflict', \Jetonomy\Models\Model::edit_conflict_message( $noun ), array( 'status' => 409 ) );
 	}
 
 	/**
@@ -256,8 +375,10 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// Clamped here for every controller: a route that forgot to declare
 		// limit/offset args must still not take ?limit=0 (or -1, or 5000) as
 		// "the whole table" - the same 1..100 page as get_collection_params().
+		// `per_page` (the WordPress core name) is read when `limit` is not sent;
+		// /moderation/queue answered per_page=3 with 20 rows.
 		return array(
-			'limit'  => min( 100, max( 1, (int) ( $request->get_param( 'limit' ) ?? 20 ) ) ),
+			'limit'  => min( 100, max( 1, (int) ( $request->get_param( 'limit' ) ?? $request->get_param( 'per_page' ) ?? 20 ) ) ),
 			'offset' => max( 0, $after > 0 ? $after : $offset ),
 			'sort'   => $request->get_param( 'sort' ) ?? 'latest',
 			'after'  => $after,
@@ -604,7 +725,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 			// instead of drifting to "Anonymous". Passing the already-batch-loaded $user avoids
 			// a redundant get_userdata() per row (author_id > 0 case).
 			$item_obj    = is_object( $item ) ? $item : (object) $item;
-			$author_name = \Jetonomy\Author::for_display( $uid, $item_obj, $user )['name'];
+			$display     = \Jetonomy\Author::for_display( $uid, $item_obj, $user );
+			$author_name = $display['name'];
 
 			$enrichment = array(
 				'author_name'         => $author_name ?: __( 'Anonymous', 'jetonomy' ),
@@ -619,7 +741,9 @@ abstract class Base_Controller extends WP_REST_Controller {
 				'profile_url'         => $uid ? \Jetonomy\get_profile_url( $uid ) : '',
 				// Presence source for API clients: the app derives an "online" dot
 				// from this (last_seen_at within 5 min), matching the web's badge.
-				'author_last_seen_at' => $profile ? $profile->last_seen_at : null,
+				// Viewer-shaped here too: some lists ship enriched rows as-is.
+				// A masked (anonymous) author has no presence to show.
+				'author_last_seen_at' => UserProfile::last_seen_for_viewer( (int) $display['id'], $profile ? $profile->last_seen_at : null ),
 			);
 
 			if ( is_object( $item ) ) {
@@ -793,6 +917,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 			$profile_url   = $display['url'];
 		}
 
+		$author_last_seen = UserProfile::last_seen_for_viewer( $author_id, $post->author_last_seen_at ?? null );
+
 		// Resolve prefix color from space settings.
 		$prefix_name  = $post->prefix ?? null;
 		$prefix_color = null;
@@ -831,6 +957,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'last_reply_at'           => $post->last_reply_at ?? null,
 			'edited_at'               => $post->edited_at ?? null,
 			'edited_by'               => $post->edited_by ? (int) $post->edited_by : null,
+			// Send back as edit_token on PATCH; null on list rows read without their content.
+			'edit_token'              => isset( $post->content ) ? \Jetonomy\Models\Post::edit_token( $post, \Jetonomy\Models\Post::EDIT_FIELDS ) : null,
 			'published_at'            => $post->published_at ?? null,
 			'created_at'              => $post->created_at ?? null,
 			'updated_at'              => $post->updated_at ?? null,
@@ -844,8 +972,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'author_name'             => $author_name,
 			'author_avatar'           => $author_avatar,
 			'author_login'            => $author_login,
-			'author_last_seen_at'     => $post->author_last_seen_at ?? null,
-			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $post->author_last_seen_at ?? null ),
+			'author_last_seen_at'     => $author_last_seen,
+			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $author_last_seen ),
 			'trust_level'             => $trust_level,
 			'reputation'              => $reputation,
 			'time_ago'                => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',

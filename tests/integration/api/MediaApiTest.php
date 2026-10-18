@@ -60,7 +60,7 @@ class MediaApiTest extends WP_UnitTestCase {
 		$response = $this->server->dispatch( new WP_REST_Request( 'POST', $this->route ) );
 
 		$this->assertSame( 403, $response->get_status() );
-		$this->assertSame( 'rest_forbidden', $response->get_data()['code'] );
+		$this->assertSame( 'jetonomy_forbidden', $response->get_data()['code'] );
 
 		remove_role( 'jt_no_caps' );
 	}

@@ -261,7 +261,10 @@ class Fulltext_Search implements Search_Query_Adapter {
 		}
 
 		// Order:
-		// - relevance: the MATCH score against the same boolean query.
+		// - relevance: the query as a phrase in the TITLE first, then more query
+		// words in the title, then the MATCH score. The score alone weighs body
+		// repetitions, so "Dark mode for the community on phones" ranked below
+		// topics that only had "dark-mode" in the title and more of it below.
 		// - newest:    created_at DESC.
 		// - votes:     votes, then replies (Post::popular_order()).
 		switch ( $sort ) {
@@ -281,7 +284,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 					$order_by = 'p.created_at DESC, p.id DESC';
 					break;
 				}
-				$order_by    = 'match_score DESC, p.created_at DESC, p.id DESC';
+				$order_by    = 'title_phrase DESC, title_hits DESC, match_score DESC, p.created_at DESC, p.id DESC';
 				$order_match = true;
 				break;
 		}
@@ -296,8 +299,15 @@ class Fulltext_Search implements Search_Query_Adapter {
 		$select_extra  = '';
 		$select_params = array();
 		if ( ! empty( $order_match ) ) {
-			$select_extra  = ', MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score';
-			$select_params = array( $boolean_q );
+			// title_hits is computed only over rows the FULLTEXT predicate already
+			// matched, so it adds no scan; has_indexable_token() guarantees terms here.
+			$terms         = self::query_terms( $q );
+			$select_extra  = ', MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score, (p.title LIKE %s) AS title_phrase, ('
+				. implode( ' + ', array_fill( 0, count( $terms ), '(p.title LIKE %s)' ) ) . ') AS title_hits';
+			$select_params = array_merge(
+				array( $boolean_q, '%' . $wpdb->esc_like( implode( ' ', $terms ) ) . '%' ),
+				array_map( static fn( $t ) => '%' . $wpdb->esc_like( $t ) . '%', $terms )
+			);
 		}
 
 		if ( $tag_slug ) {
@@ -686,19 +696,24 @@ class Fulltext_Search implements Search_Query_Adapter {
 	 * adapters all apply the same AND-required ranking semantics.
 	 */
 	public static function build_boolean_query( string $query ): string {
+		$required = array_map( static fn( $t ) => '+' . $t . '*', self::query_terms( $query ) );
+
+		return $required ? implode( ' ', $required ) : $query;
+	}
+
+	/**
+	 * The words a query searches for: FULLTEXT operators stripped, tokens below
+	 * MIN_TOKEN_LEN dropped. Each is matched as a prefix ("dark" finds "darker"),
+	 * which is also how a results page should highlight them.
+	 *
+	 * @param string $query Raw user query.
+	 * @return string[]
+	 */
+	public static function query_terms( string $query ): array {
 		$cleaned = preg_replace( '/[+\-<>()~*"@]/', ' ', $query );
 		$tokens  = preg_split( '/\s+/', (string) $cleaned, -1, PREG_SPLIT_NO_EMPTY ) ?: array();
 
-		$required = array();
-		foreach ( $tokens as $t ) {
-			$len = function_exists( 'mb_strlen' ) ? mb_strlen( $t ) : strlen( $t );
-			if ( $len < self::MIN_TOKEN_LEN ) {
-				continue;
-			}
-			$required[] = '+' . $t . '*';
-		}
-
-		return $required ? implode( ' ', $required ) : $query;
+		return array_values( array_filter( $tokens, static fn( $t ) => mb_strlen( $t ) >= self::MIN_TOKEN_LEN ) );
 	}
 
 	/**
@@ -713,14 +728,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 	 * True when at least one token in $query is long enough to be indexed.
 	 */
 	public static function has_indexable_token( string $query ): bool {
-		$cleaned = preg_replace( '/[+\-<>()~*"@]/', ' ', $query );
-		foreach ( preg_split( '/\s+/', (string) $cleaned, -1, PREG_SPLIT_NO_EMPTY ) ?: array() as $t ) {
-			$len = function_exists( 'mb_strlen' ) ? mb_strlen( $t ) : strlen( $t );
-			if ( $len >= self::MIN_TOKEN_LEN ) {
-				return true;
-			}
-		}
-		return false;
+		return (bool) self::query_terms( $query );
 	}
 
 	/**

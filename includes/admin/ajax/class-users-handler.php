@@ -32,17 +32,26 @@ class Users_Handler {
 		$duration = sanitize_text_field( wp_unslash( $_POST['duration'] ?? 'permanent' ) );
 		$space_id = absint( $_POST['space_id'] ?? 0 );
 
-		if ( ! $user_id ) {
-			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
-		}
-
 		if ( ! in_array( $type, array( 'global_ban', 'space_ban', 'silence', 'ip_ban' ), true ) ) {
 			$type = 'global_ban';
+		}
+
+		// An IP ban blocks an address on its own; Restriction::ban() stores no member for it.
+		if ( 'ip_ban' === $type ) {
+			$user_id = 0;
+		} elseif ( ! $user_id ) {
+			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
 		}
 
 		if ( 'space_ban' === $type && ! $space_id ) {
 			/* translators: 1: space label, lowercase (e.g. "space"). 2: member label, lowercase (e.g. "member"). 3: member label, plural (e.g. "Members"). */
 			wp_send_json_error( sprintf( __( 'This ban needs a specific %1$s. Ban the %2$s from that %1$s\'s %3$s screen.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'member', true ) ) );
+		}
+
+		// A silenced or banned moderator takes no moderation action (REST ban_user asks the same).
+		$restricted = \Jetonomy\Moderation\Moderation_Permissions::restriction_error( get_current_user_id(), $space_id ?: null );
+		if ( $restricted ) {
+			wp_send_json_error( $restricted->get_error_message() );
 		}
 
 		/*
@@ -131,12 +140,30 @@ class Users_Handler {
 			wp_send_json_error( __( 'Invalid restriction ID.', 'jetonomy' ) );
 		}
 
+		// Read the type first: the answer names what was lifted, not always "ban".
+		$restriction = Restriction::find( $restriction_id );
+		if ( ! $restriction ) {
+			wp_send_json_error( __( 'This restriction was already lifted.', 'jetonomy' ) );
+		}
+
+		$refused = \Jetonomy\Moderation\Moderation_Permissions::lift_error( get_current_user_id(), $restriction );
+		if ( $refused ) {
+			wp_send_json_error( $refused->get_error_message() );
+		}
+
 		$result = Restriction::remove_ban( $restriction_id );
 		if ( ! $result ) {
 			wp_send_json_error( __( 'Failed to remove ban.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Ban removed.', 'jetonomy' ) ) );
+		$messages = array(
+			'silence'   => __( 'Silence lifted.', 'jetonomy' ),
+			/* translators: %s: space label (e.g. "Space"). */
+			'space_ban' => sprintf( __( '%s ban lifted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
+			'ip_ban'    => __( 'IP address ban lifted.', 'jetonomy' ),
+		);
+
+		wp_send_json_success( array( 'message' => $messages[ $restriction->type ] ?? __( 'Ban lifted.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_change_trust_level(): void {

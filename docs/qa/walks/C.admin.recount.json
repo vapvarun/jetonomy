@@ -1,0 +1,110 @@
+{
+  "journey": "C.admin.recount",
+  "free": "b6017483",
+  "pro": "44f7338",
+  "walked_at": "2026-10-17T13:28:34Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "c-admin-recount.1": {
+      "result": "pass",
+      "evidence": "Set Help Desk member_count 24->999 and topic 5279 reply_count 6->99 in the DB; Recount counters -> confirm dialog -> button 'Recounting\u2026' disabled -> notice 'Counters rebuilt from your content.'; values back to 24 and 6"
+    },
+    "c-admin-recount.2": {
+      "result": "pass",
+      "evidence": "vote_score of 'Dark mode for the community on phones' set 0->77; POST /admin/recount type=votes -> 200 status ok, post_vote_scores 1, score back to 0 (sum of votes)"
+    },
+    "c-admin-recount.3": {
+      "result": "pass",
+      "evidence": "POST /admin/recount type=spaces -> 200 {space_post_counts:0, space_member_counts:0, category_space_counts:1}; type=bogus -> 400 rest_invalid_param 'type is not one of all, posts, spaces, votes, and users.'"
+    },
+    "c-admin-recount.4": {
+      "result": "pass",
+      "evidence": "maya post_count set 19 -> 99; `wp jetonomy recount --type=users` printed 'user_post_counts: 1 rows', 'user_reply_counts: 0 rows', 'Recount complete.'; count back to 19"
+    },
+    "c-admin-recount.5": {
+      "result": "pass",
+      "evidence": "Dropped cache: corrupted space post_count (12->50) and primed the guest home -> strip showed '27 members 294 topics'; Recount counters, reloaded as guest in a fresh context -> '27 members 256 topics' straight away"
+    },
+    "c-admin-recount.6": {
+      "result": "pass",
+      "evidence": "Setup wizard 'Import the demo community instead' then guest /community/ immediately showed demo spaces (General Discussion 11 topics, Show & Tell 11) and pulse '5,000 members / 2,316 topics'. Demo members (alice/bob/maya) present in page text.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/guest-home-after-demo.png",
+      "site": "docker jt203-scale"
+    },
+    "c-admin-recount.7": {
+      "result": "fail",
+      "check_wrong": true,
+      "expected": "after bbPress import to the end, guest home member and topic counts match Overview with no wait",
+      "actual": "Overview 4,267 TOTAL TOPICS / 4,175 replies / 501 users. Guest home pulse 501 members / 2,851 topics. Guest pulse is guest-readable only (helpers.php jetonomy_community_pulse, WalkThreeFixesTest::test_home_pulse_counts_only_guest_readable_topics). Private/hidden imported forums explain the gap; not filed as a bug. Check should compare guest pulse to guest-readable COUNT, not Overview.",
+      "url": "http://localhost:8095/community/",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/guest-home-postimport.png",
+      "site": "docker jt203-scale"
+    },
+    "c-admin-recount.8": {
+      "result": "pass",
+      "evidence": "Drifted topic 18 reply_count 1\u219299, space 1 post_count 13\u2192999, profile user 5 post_count 25\u2192999; Recount::run('all') 33ms restored 1 / 13 / 25. Space 42 topic list already showed singular '1 reply' (not '1 replies') at 1021 topics, 0.10s 135Q.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/space-42.png",
+      "site": "docker jt203-scale"
+    },
+    "c-admin-recount.9": {
+      "result": "untested",
+      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
+    },
+    "c-admin-recount.10": {
+      "result": "pass",
+      "evidence": "test_moderator (Olivia Grant, site Editor) GET /wp-admin/admin.php?page=jetonomy -> 'Sorry, you are not allowed to access this page.' so the Overview and its button are not reachable at all; POST /admin/recount -> 403 rest_forbidden. The Overview itself is manage_options only, not just the button"
+    },
+    "c-admin-recount.11": {
+      "result": "pass",
+      "evidence": "Logged-out POST /admin/recount -> 401 rest_not_logged_in"
+    },
+    "c-admin-recount.12": {
+      "result": "pass",
+      "evidence": "On 4,267-topic Overview, Recount counters: confirm, button entered progress/disabled state ('saw-progress'), finished with notice 'Counters rebuilt from your content.', button re-enabled. No timeout.",
+      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/recount-progress.png",
+      "site": "docker jt203-scale"
+    },
+    "c-admin-recount.13": {
+      "result": "pass",
+      "evidence": "Double-clicked the confirm button within 5 ms: exactly 1 POST /admin/recount was sent, notice 'Counters rebuilt from your content.'; double-clicking the Recount button itself just closes the confirm dialog (second click lands on the overlay)"
+    },
+    "c-admin-recount.14": {
+      "result": "pass",
+      "evidence": "Aborted the recount request: button returned to 'Recount counters' enabled and a dialog said 'Could not get a valid response from the server.'; counters unchanged. Wording is generic"
+    },
+    "c-admin-recount.15": {
+      "result": "pass",
+      "evidence": "bob created 'Which text editor settings do you keep for long-form writing?' in General Discussion: guest home stayed '256 topics' (cached) while the sum of space post_count and real published topics were both 257 (Overview total right). Topic then permanently deleted"
+    },
+    "c-admin-recount.16": {
+      "result": "pass",
+      "evidence": "POST /admin/recount type=bogus as admin -> 400 rest_invalid_param (rest_not_in_enum), counters untouched"
+    },
+    "c-admin-recount.17": {
+      "result": "pass",
+      "evidence": "`wp jetonomy recount --type=users` prints rows updated; `wp jetonomy recount users` -> 'Error: Too many positional arguments: users' (a one-line error, not the usage block)"
+    },
+    "c-admin-recount.19": {
+      "result": "pass",
+      "evidence": "With the recount request aborted, after Confirm the dialog reads 'Network error. Please try again.' with OK and the button is usable again. With a 500 JSON reply it shows the server's own message instead of the generic text"
+    }
+  },
+  "proposed_checks": [
+    "- `c-admin-recount.16` @admin #rest !refuse: POST /admin/recount with type=bogus -> 400 rest_invalid_param, no counters touched.",
+    "- `c-admin-recount.17` @admin #cli: run `wp jetonomy recount --type=users` -> prints rows updated; the positional form `wp jetonomy recount users` is rejected with usage help (checks should use --type).",
+    "- `c-admin-recount.18` @moderator #admin !refuse: test_moderator opens the Overview -> WordPress refuses (Overview is manage_options only); decide whether staff with Moderate should see a read-only Overview.",
+    "- `c-admin-recount.19` @admin #admin +offline: recount request fails -> the error dialog names the cause (offline / server error) rather than 'Could not get a valid response from the server.'."
+  ],
+  "notes": "maya's post_count temporarily set to 99 then recounted back to 19; no settings changed. | Re-walk 2 (lane A): nothing stored; request was blocked/faked in the browser only. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
+}

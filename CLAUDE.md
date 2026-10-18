@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 84 REST routes (114 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 83 without it - do not cite the length of the manifest's endpoints array, which holds 88 entries for 82 unique paths), 44 AJAX handlers, 253 hooks fired (114 actions, 139 filters), 23 tables, 22 capabilities (2.0.2 retired jetonomy_create_spaces), 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` on 2026-10-16 for 2.0.2 and enforced by `bin/check-manifest-fresh.php`; if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 84 REST routes (114 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 83 without it - do not cite the length of the manifest's endpoints array, which holds 88 entries for 82 unique paths), 44 AJAX handlers, 255 hooks fired (115 actions, 140 filters), 23 tables, 22 capabilities (2.0.2 retired jetonomy_create_spaces), 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` on 2026-10-16 for 2.0.2 and enforced by `bin/check-manifest-fresh.php`; if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -8,14 +8,14 @@
 
 | Need | Where |
 |---|---|
-| Canonical inventory, coverage data, graph viewer | **free** `audit/manifest.json`, `audit/qa-coverage.json`, `audit/graph.html` |
+| Canonical inventory, coverage data, graph viewer | **free** `audit/manifest.json`, `audit/qa-runtime-baseline.json`, `audit/graph.html` |
 | Build + QA tooling | **free** `bin/` |
 | Customer + developer docs | **free** `docs/website/`, `docs/architecture/`, `docs/developer/`, `ARCHITECTURE.md`, `DESIGN-SYSTEM.md`, `CONTRIBUTING.md` |
 | Engineering standards | **free** `docs/standards/` |
 | Full audits, feature/gap analyses, wppqa baselines, UX punchlists, expectation records | **pro** `../jetonomy-pro/audit/free/` |
 | Implementation plans | **pro** `../jetonomy-pro/docs/plans/free/` |
 
-The manifest deliberately stays in free: four scripts read it (`build-release.sh`, `qa-coverage-check.php`, `qa-stub-gen.php`, `audit-wiring.php`), and a public repo's build must not depend on a private one. Pro's build excludes `audit/` and `docs/` from its zip, so nothing internal ships to customers either.
+The manifest deliberately stays in free: the release build and its gates read it (`build-release.sh`, `check-manifest-fresh.php`, `qa-runtime-coverage.php`, `audit-wiring.php`), and a public repo's build must not depend on a private one. Pro's build excludes `audit/` and `docs/` from its zip, so nothing internal ships to customers either.
 
 Interactive graph: `cd audit && python3 -m http.server 8765`, then <http://localhost:8765/graph.html>.
 End-to-end customer flows: runnable PHP scenarios in `includes/cli/scenarios/`, plus the pre-release smoke runbook (`/wp-plugin-smoke`, which superseded the per-plugin `/jetonomy-smoke` skill in 1.9.4).
@@ -51,7 +51,10 @@ extra careful; never fix blindly.
    - `bin/qa-runtime-coverage.php` (with `WP_TESTS_DIR`): what the suite actually reached. A request to a route that no longer exists fails (mark a deliberate one `@expects-no-route`), every write or membership/moderation route must be reached, and `audit/qa-runtime-baseline.json` only shrinks.
    - `php bin/check-new-tests-fail-on-base.php`: a test added with a fix must fail on the code before it; mark coverage of behaviour that already worked `@covers-existing`.
    - `wp jetonomy qa-actions` Phase 5 walks refusal paths (RF1-RF10); a phase that runs no checks fails the run.
-   - `php bin/check-runbook-fresh.php`: each smoke-runbook journey names the files it covers (`**Covers:**`) and the commit it was last checked at (`**Verified:**`); a release build fails while any is stale.
+   - `php bin/check-runbook-fresh.php`: each smoke-runbook journey names the files it covers (`**Covers:**`, Pro files as `pro:path`) and the commits it last passed a browser walk at (`**Verified:** <sha> pro:<sha>`); a release build fails while any is stale.
+   - `php bin/check-journey-coverage.php`: every shipped Free and Pro file is in some journey's Covers (or exempt with a reason in `docs/qa/journey-exempt.txt`); a release build fails while any is not.
+   - `php bin/check-journey-depth.php`: every journey has a **Checks:** list (one line per action: `@role #surface +state !refuse card:<id>`), every C/E journey refuses something and walks two roles, every `audit/escapes.json` card has a check, and every stamp is backed by `docs/qa/walks/<id>.json` with every check passed and no `proposed_checks` left. `bin/test-check-journey-depth.sh` proves each rule can fail.
+   - `bin/self-qa.sh` is the one command for both: it lists what to walk, and `--stamp <id>...` records a walk, refusing any journey whose walk record is not at the current commits with every check passed. Self-QA through it is mandatory before every release, on the realistic community from `bin/seed-demo-community.php`, never on throwaway fixtures.
 
 ## Build Rule (enforced)
 

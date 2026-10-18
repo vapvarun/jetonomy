@@ -115,8 +115,9 @@ $crumbs = array(
 									</div>
 								</div>
 								<?php if ( ! empty( $sp->description ) ) : ?>
-									<p class="jt-space-card-desc">
-										<?php echo esc_html( wp_html_excerpt( $sp->description, 120, '…' ) ); ?>
+									<?php // Full text in the DOM (CSS clamps it to three lines), so the hover title and screen readers get all of it. ?>
+									<p class="jt-space-card-desc" title="<?php echo esc_attr( $sp->description ); ?>">
+										<?php echo esc_html( $sp->description ); ?>
 									</p>
 								<?php endif; ?>
 								<p class="jt-space-card-meta">
@@ -164,8 +165,9 @@ $crumbs = array(
 									</div>
 								</div>
 								<?php if ( ! empty( $sp->description ) ) : ?>
-									<p class="jt-space-card-desc">
-										<?php echo esc_html( wp_html_excerpt( $sp->description, 120, '…' ) ); ?>
+									<?php // Full text in the DOM (CSS clamps it to three lines), so the hover title and screen readers get all of it. ?>
+									<p class="jt-space-card-desc" title="<?php echo esc_attr( $sp->description ); ?>">
+										<?php echo esc_html( $sp->description ); ?>
 									</p>
 								<?php endif; ?>
 								<p class="jt-space-card-meta">

@@ -5,8 +5,8 @@
  * The actual Pro extension tests live in the Pro plugin
  * (`jetonomy-pro/includes/qa/class-rest-tests.php`, class
  * `\Jetonomy_Pro\QA\REST_Tests`) so Pro's manifest-driven coverage gate
- * (`bin/qa-coverage-check.php`) can credit them and Pro's stub generator
- * (`bin/qa-stub-gen.php`) has a file to append to.
+ * (`jetonomy-pro/bin/qa-coverage-check.php`) can credit them and Pro's stub generator
+ * (`jetonomy-pro/bin/qa-stub-gen.php`) has a file to append to.
  * They live there because a free-repo test file can never satisfy the Pro repo's
  * coverage gate - the checker only greps the plugin's own tree.
  *

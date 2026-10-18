@@ -143,9 +143,9 @@ $space_url = \Jetonomy\route_url( 'space', $space->slug );
 					<?php foreach ( $col['posts'] as $idea ) : ?>
 						<?php $idea_url = \Jetonomy\route_url( 'post', $space->slug, $idea->slug ); ?>
 						<div class="jt-idea jt-row-clickable" data-jt-href="<?php echo esc_url( $idea_url ); ?>">
-							<div class="jt-idea-title"><?php echo esc_html( $idea->title ); ?></div>
+							<div class="jt-idea-title" dir="auto"><?php echo esc_html( $idea->title ); ?></div>
 							<?php if ( ! empty( $idea->content ) ) : ?>
-								<div class="jt-idea-excerpt">
+								<div class="jt-idea-excerpt" dir="auto">
 									<?php echo esc_html( wp_trim_words( wp_strip_all_tags( $idea->content ), 22, '…' ) ); ?>
 								</div>
 							<?php endif; ?>

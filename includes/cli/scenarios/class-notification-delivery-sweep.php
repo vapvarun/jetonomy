@@ -9,6 +9,7 @@ namespace Jetonomy\CLI\Scenarios;
 
 use Jetonomy\CLI\Journey_Result;
 use Jetonomy\CLI\Journeys\Notification_Journey;
+use Jetonomy\Models\Notification;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -142,19 +143,19 @@ final class Notification_Delivery_Sweep extends Abstract_Scenario {
 		$this->reset();
 		$start = microtime( true );
 
-		$journey = new Notification_Journey();
-		$ids     = (array) ( $fixtures['notification_ids'] ?? array() );
-
-		foreach ( $ids as $idx => $nid ) {
-			$nid = (int) $nid;
-			if ( $nid <= 0 ) {
-				continue;
-			}
+		// Remove the rows run() created, not just mark them read: cleanup must
+		// leave user 1's notification list as it found it.
+		$ids = array_values( array_filter( array_map( 'intval', (array) ( $fixtures['notification_ids'] ?? array() ) ) ) );
+		if ( $ids ) {
 			$this->step(
-				sprintf( 'mark-read-%d', $idx + 1 ),
-				static fn (): Journey_Result => $journey->mark_read( $nid )
+				'delete-notifications',
+				static function () use ( $ids ): Journey_Result {
+					$deleted = Notification::delete_for_user( 1, $ids );
+					return $deleted === count( $ids )
+						? Journey_Result::ok( array( 'deleted' => $deleted ) )
+						: Journey_Result::fail( sprintf( 'Deleted %1$d of %2$d scenario notifications.', $deleted, count( $ids ) ) );
+				}
 			);
-			$this->failed = false;
 		}
 
 		return $this->finalize( $fixtures, $start );

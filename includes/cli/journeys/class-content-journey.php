@@ -8,10 +8,12 @@
 namespace Jetonomy\CLI\Journeys;
 
 use Jetonomy\CLI\Journey_Result;
-use Jetonomy\Models\Flag;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
+use Jetonomy\Models\Subscription;
 use Jetonomy\Models\Vote;
+use Jetonomy\Moderation\Moderation_Service;
+use Jetonomy\Permissions\Content_Gate;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -24,10 +26,9 @@ defined( 'ABSPATH' ) || exit;
  * class, and returns a {@see Journey_Result}. Commands format the result for
  * the terminal; PHPUnit tests read the same fields and assert on them.
  *
- * All permission checks are delegated upstream to Permission_Engine via the
- * model filters (`jetonomy_before_create_post`, etc.), so this class can be
- * called in both authenticated and impersonated contexts without duplicating
- * capability logic.
+ * Member writes (create post/reply, vote, flag) run the same shared gates as
+ * REST - Content_Gate and Moderation_Service - for the acting member, so the
+ * CLI cannot write where the site would refuse that member.
  */
 final class Content_Journey {
 
@@ -55,14 +56,32 @@ final class Content_Journey {
 			return Journey_Result::fail( $unknown );
 		}
 
+		$space_id  = (int) $input['space_id'];
+		$author_id = (int) $input['author_id'];
+
+		// The same gate as REST: restrictions, archived/locked space, permission.
+		$gate = Content_Gate::check_post( $author_id, $space_id );
+		if ( is_wp_error( $gate ) ) {
+			return Journey_Result::from_wp_error( $gate );
+		}
+
 		$data = array(
-			'space_id'  => (int) $input['space_id'],
-			'author_id' => (int) $input['author_id'],
-			'title'     => (string) $input['title'],
+			'space_id'  => $space_id,
+			'author_id' => $author_id,
+			'title'     => sanitize_text_field( (string) $input['title'] ),
 			'content'   => jetonomy_sanitize_editor_content( (string) $input['content'] ),
 			'status'    => (string) ( $input['status'] ?? 'publish' ),
 			'slug'      => isset( $input['slug'] ) ? (string) $input['slug'] : '',
 		);
+		if ( '' === $data['title'] || '' === $data['content'] ) {
+			return Journey_Result::fail( 'title and content must not be empty after sanitizing.' );
+		}
+
+		$screened = Moderation_Service::screen_new_content( 'post', $data, $space_id, $author_id );
+		if ( is_wp_error( $screened ) ) {
+			return Journey_Result::from_wp_error( $screened );
+		}
+		$data['status'] = $screened['status'];
 
 		$backdate = Journey_Backdate::resolve( $input );
 		if ( null !== $backdate ) {
@@ -78,6 +97,18 @@ final class Content_Journey {
 
 		if ( ! $result ) {
 			return Journey_Result::fail( 'Post::create() returned 0 — insert failed.' );
+		}
+
+		if ( $screened['flag'] ) {
+			Moderation_Service::auto_flag( 'post', (int) $result );
+		}
+
+		// The side effects REST runs after a create: the author follows the
+		// topic, and the create hook drives activity, notifications, mentions
+		// and the Pro listeners (null request, as every non-REST writer passes).
+		if ( 'draft' !== $data['status'] ) {
+			Subscription::subscribe( $author_id, 'post', (int) $result );
+			do_action( 'jetonomy_after_create_post', (int) $result, $space_id, null );
 		}
 
 		$post = Post::find( (int) $result );
@@ -199,15 +230,35 @@ final class Content_Journey {
 			return Journey_Result::fail( $unknown );
 		}
 
+		$post = Post::find( (int) $input['post_id'] );
+		if ( ! $post ) {
+			return Journey_Result::fail( sprintf( 'Post %d not found.', (int) $input['post_id'] ) );
+		}
+
+		// The same gate as REST: restrictions, closed topic, archived space, permission.
+		$gate = Content_Gate::check( (int) $input['author_id'], $post, (int) ( $input['parent_id'] ?? 0 ) );
+		if ( is_wp_error( $gate ) ) {
+			return Journey_Result::from_wp_error( $gate );
+		}
+
 		$data = array(
 			'post_id'   => (int) $input['post_id'],
 			'author_id' => (int) $input['author_id'],
 			'content'   => jetonomy_sanitize_editor_content( (string) $input['content'] ),
 			'status'    => (string) ( $input['status'] ?? 'publish' ),
 		);
+		if ( '' === $data['content'] ) {
+			return Journey_Result::fail( 'content must not be empty after sanitizing.' );
+		}
 		if ( ! empty( $input['parent_id'] ) ) {
 			$data['parent_id'] = (int) $input['parent_id'];
 		}
+
+		$screened = Moderation_Service::screen_new_content( 'reply', $data, (int) $post->space_id, (int) $input['author_id'] );
+		if ( is_wp_error( $screened ) ) {
+			return Journey_Result::from_wp_error( $screened );
+		}
+		$data['status'] = $screened['status'];
 
 		// Importer seam: forward a validated backdate; the model default (now)
 		// applies otherwise. Reply::create() carries this into the parent
@@ -224,6 +275,14 @@ final class Content_Journey {
 		if ( ! $result ) {
 			return Journey_Result::fail( 'Reply::create() returned 0 — insert failed.' );
 		}
+
+		if ( $screened['flag'] ) {
+			Moderation_Service::auto_flag( 'reply', (int) $result );
+		}
+
+		// Same create hook REST fires: the topic author's and followers'
+		// notifications, activity and mentions hang off it.
+		do_action( 'jetonomy_after_create_reply', (int) $result, (int) $input['post_id'], null );
 
 		return Journey_Result::ok(
 			array(
@@ -352,6 +411,14 @@ final class Content_Journey {
 			return Journey_Result::fail( 'value must be 1 or -1.' );
 		}
 
+		// A repeat of the active vote withdraws it, which REST leaves ungated too.
+		if ( Vote::get_user_vote( $user_id, $object_type, $object_id ) !== $value ) {
+			$gate = Content_Gate::check_vote( $user_id, $object_type, $object_id, $value );
+			if ( is_wp_error( $gate ) ) {
+				return Journey_Result::from_wp_error( $gate );
+			}
+		}
+
 		$result = Vote::cast( $user_id, $object_type, $object_id, $value );
 		if ( is_wp_error( $result ) ) {
 			return Journey_Result::from_wp_error( $result );
@@ -403,18 +470,16 @@ final class Content_Journey {
 			return Journey_Result::fail( 'reason must be one of: spam, offensive, off_topic, harassment, other.' );
 		}
 
-		$id = Flag::create(
-			array(
-				'object_type' => $object_type,
-				'object_id'   => (int) $input['object_id'],
-				'reporter_id' => (int) $input['reporter_id'],
-				'reason'      => $reason,
-				'description' => isset( $input['description'] ) ? (string) $input['description'] : '',
-			)
+		// The same create path as REST and the abilities API (gate, note length, reputation, hooks).
+		$id = Moderation_Service::create_flag(
+			(int) $input['reporter_id'],
+			$object_type,
+			(int) $input['object_id'],
+			$reason,
+			isset( $input['description'] ) ? (string) $input['description'] : ''
 		);
-
-		if ( ! $id ) {
-			return Journey_Result::fail( 'Flag::create() returned 0 — insert failed.' );
+		if ( is_wp_error( $id ) ) {
+			return Journey_Result::from_wp_error( $id );
 		}
 
 		return Journey_Result::ok(

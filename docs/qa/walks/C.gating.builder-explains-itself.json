@@ -1,0 +1,80 @@
+{
+  "journey": "C.gating.builder-explains-itself",
+  "checks": {
+    "c-gating-builder-explains-itself.1": {
+      "result": "pass",
+      "evidence": "empty tab: 'No access rules - Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.' Intro: 'A rule lets more people in to this space ... Who else gets in is set by the space's visibility and join policy.'"
+    },
+    "c-gating-builder-explains-itself.2": {
+      "result": "fail",
+      "expected": "each Rule type shows who it catches and an example; the Full preview matches what is stored",
+      "actual": "Everyone, Logged In, Role, Capability and Trust Level each show a second sentence ('Matches anyone with an account on this site...' etc.) and a placeholder example (subscriber, edit_posts, 2). The Membership entry is not in the dropdown without a membership plugin. The Full preview says 'They are recorded as Moderator.' while the roster stores Member (checked with the enrolment hook, grants=full).",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=3078&tab=access"
+    },
+    "c-gating-builder-explains-itself.3": {
+      "result": "pass",
+      "evidence": "Everyone and Logged In hide the value box (display none); Role, Capability, Trust Level show it."
+    },
+    "c-gating-builder-explains-itself.4": {
+      "result": "pass",
+      "evidence": "Trust Level with no value, 0 and 9 -> toast 'Choose a trust level from 1 to 5.' each time; no rule created."
+    },
+    "c-gating-builder-explains-itself.5": {
+      "result": "pass",
+      "evidence": "Role 'ghost_role' -> toast 'Choose a role that exists on this site.'; no rule created."
+    },
+    "c-gating-builder-explains-itself.6": {
+      "result": "pass",
+      "evidence": "empty Capability -> 'Enter a value for this rule.' (UI); REST empty capability and empty membership -> the same 400 jetonomy_invalid_rule_value."
+    },
+    "c-gating-builder-explains-itself.7": {
+      "result": "pass",
+      "evidence": "POST /spaces/3078/access-rules with the bad values -> 400 jetonomy_invalid_rule_value with the same messages; GET lists no rule."
+    },
+    "c-gating-builder-explains-itself.8": {
+      "result": "fail",
+      "expected": "test_editor builds a rule on Help Desk and sees the same explanations",
+      "actual": "test_editor cannot open the builder at all: /wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=3004&tab=access -> 403 'Sorry, you are not allowed to access this page.'; POST access-rules -> 403.",
+      "check_wrong": true,
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=3004&tab=access"
+    },
+    "c-gating-builder-explains-itself.9": {
+      "result": "pass",
+      "evidence": "gating_tester POST access-rules -> 403 jetonomy_forbidden."
+    },
+    "c-gating-builder-explains-itself.10": {
+      "result": "pass",
+      "evidence": "390x844: dropdown, preview and sentence stack, Add Rule button 40px, scrollWidth 390."
+    },
+    "c-gating-builder-explains-itself.11": {
+      "result": "fail",
+      "expected": "builder text readable in a dark scheme (4.5:1)",
+      "actual": "wp-admin has no dark scheme (light #f0f0f0 even with prefers-color-scheme dark). The 'who the rule catches' sentence under the preview (.jt-rule-preview__note) is rgb(148,163,184) on white, about 2.6:1, and the tab labels measure 4.2:1; both are below 4.5:1.",
+      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=3078&tab=access"
+    },
+    "c-gating-builder-explains-itself.12": {
+      "result": "pass",
+      "evidence": "admin user locale ar: the screen is RTL (direction rtl, lang ar), fields and preview text-align start; Jetonomy's own strings stay English because there is no Arabic Jetonomy translation. Locale restored."
+    }
+  },
+  "proposed_checks": [
+    "- `c-gating-builder-explains-itself.13` @admin #admin: pick Full in the builder -> the preview says matched people are recorded as Member, with edit/close/pin only through their WordPress role."
+  ],
+  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. Admin user locale set to ar and deleted again.",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:58:06Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  }
+}

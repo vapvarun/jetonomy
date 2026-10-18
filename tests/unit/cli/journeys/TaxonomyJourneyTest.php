@@ -144,6 +144,8 @@ class TaxonomyJourneyTest extends WP_UnitTestCase {
 				'slug' => $slug,
 			]
 		);
+		// Listed categories hold a space the viewer can see; empty ones read as not found.
+		Space::create( [ 'category_id' => $id, 'title' => 'Lookup space', 'slug' => 'lookup-space-' . $this->suffix, 'visibility' => 'public' ] );
 
 		$result = $this->journey->get_category_by_slug( $slug );
 
@@ -175,6 +177,7 @@ class TaxonomyJourneyTest extends WP_UnitTestCase {
 				'parent_id' => $this->category_id,
 			]
 		);
+		Space::create( [ 'category_id' => $child_id, 'title' => 'Child space', 'slug' => 'child-space-' . $this->suffix, 'visibility' => 'public' ] );
 
 		$result = $this->journey->list_category_children( $this->category_id );
 

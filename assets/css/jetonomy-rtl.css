@@ -219,7 +219,10 @@
   }
 
   /* ── Space header (below the cover) — description + stats + follow ── */
-  .jt-space-head { display: flex; align-items: flex-start; gap: 16px; padding: var(--jt-space-4) 0 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
+  /* container-type: boxed themes (Reign) shrink the MAIN column far below the
+     viewport, so a 900px @media never fires while description + stats + Join
+     still collide. Query THIS header's width, not the window. */
+  .jt-space-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; padding: var(--jt-space-4) 0 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); container-type: inline-size; }
   /* Description on its own row, then every action beside every other action.
      This was `display: block`, and the owner's "Edit space" ships wrapped in a
      <p>, so a block element sat between the actions and forced each onto its
@@ -232,7 +235,16 @@
   .jt-space-head__meta > .jt-space-desc { flex: 1 1 100%; }
   .jt-space-head__meta > .jt-space-edit-cta { margin: 0; }
   .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
-  .jt-space-nums { display: flex; gap: 20px; margin-right: auto; }
+  .jt-space-nums { display: flex; gap: 20px; margin-inline-start: auto; }
+  /* When the header is narrower than a full description+stats+Join row
+     (Reign .container minus the plugin sidebar ≈ 700–850px), put the
+     description on its own row and keep stats + Join together underneath.
+     @container is not an @media — the file still has exactly the two
+     viewport blocks at the bottom. */
+  @container (max-width: 860px) {
+    .jt-space-head__meta { flex: 1 1 100%; }
+    .jt-space-nums { margin-inline-start: 0; }
+  }
   .jt-num { text-align: center; }
   .jt-num-val { font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 700; }
   .jt-num-lbl { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -350,7 +362,7 @@
   .jt-app button.jt-act:hover { background-color: var(--jt-bg-muted) !important; color: var(--jt-text-secondary) !important; }
   /* Dropdown menu items: hover surface + danger text. */
   .jt-app button.jt-more-item:hover { background-color: var(--jt-bg-hover) !important; }
-  .jt-app button.jt-more-item--danger { color: var(--jt-danger) !important; }
+  .jt-app button.jt-more-item--danger { color: var(--jt-danger-strong) !important; }
   .jt-app button.jt-more-item--danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger-strong) !important; }
 
   /* ── Topic list ── */
@@ -378,8 +390,9 @@
   .jt-mention-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-block-end: 1px solid var(--jt-border); }
   .jt-mention-row:last-child { border-block-end: none; }
   .jt-mention-row:hover, .jt-mention-row.is-selected { background: var(--jt-bg-hover); }
-  .jt-mention-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
-  .jt-mention-name { font-weight: 600; color: var(--jt-text); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jt-mention-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; font-size: 0.625rem; }
+  /* Full name, wrapped: two members can share a first name, so a cut name can pick the wrong person. */
+  .jt-mention-name { font-weight: 600; color: var(--jt-text); flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
   .jt-mention-login { color: var(--jt-text-tertiary); font-size: 0.8125rem; }
   .jt-mention-empty { padding: 10px 12px; color: var(--jt-text-tertiary); font-size: 0.875rem; }
 
@@ -478,7 +491,7 @@
   .jt-space-card-head { display: flex; align-items: flex-start; gap: 12px; }
   .jt-space-card-titlewrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
   .jt-space-card-title { font-size: 1rem; font-weight: 700; color: var(--jt-text); margin: 0; line-height: 1.3; }
-  .jt-space-card-desc { color: var(--jt-text-secondary); font-size: 0.875rem; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .jt-space-card-desc { color: var(--jt-text-secondary); font-size: 0.875rem; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
   .jt-space-card-meta { color: var(--jt-text-tertiary); font-size: 0.8125rem; margin: 0; }
 
   /* Footer action row — pill-shaped buttons divided from the card body
@@ -507,6 +520,8 @@
   /* Everything on the meta line (author, tags, role/state pills, prefixes)
      shares the line's one size; tag chips are compact and centred on the
      author text instead of a 15px pill beside 13px text. */
+  .jt-app .jt-row-sub .jt-row-space { color: var(--jt-text-secondary); font-weight: 500; text-decoration: none; overflow-wrap: anywhere; }
+  .jt-app .jt-row-sub .jt-row-space:hover { color: var(--jt-text); text-decoration: underline; }
   .jt-row-sub :is(.jt-tag, .jt-prefix, .jt-role-pill, .jt-qa-pill, .jt-idea-pill, [class*="jt-badge"], time) { font-size: inherit; line-height: inherit; }
   .jt-row-sub .jt-tag { padding: 0 var(--jt-space-2); }
   .jt-row-stat { text-align: center; white-space: nowrap; }
@@ -653,7 +668,11 @@
      embeds get the same ceiling in the post-body rules further down. */
   .jt-post-body pre, .jt-reply-body pre { max-width: 100%; }
   .jt-post-body pre, .jt-reply-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
-  .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-border); color: var(--jt-text-secondary); }
+  /* The bar uses the tertiary text tone, not --jt-border: a border-tone bar
+     measured ~1.35:1 on the dark surface; tertiary holds >= 3:1 in both modes.
+     inline-end: 0 drops a theme's physical border-left, which an RTL quote
+     showed as a second bar. */
+  .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-text-tertiary); border-inline-end: 0; color: var(--jt-text-secondary); }
   .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-3); border-top: 1px solid var(--jt-border); }
 
   /* ── Action buttons ── */
@@ -746,6 +765,12 @@
   .jt-app :is(.jt-post-body, .jt-reply-body) > :first-child { margin-block-start: 0; }
   .jt-app :is(.jt-post-body, .jt-reply-body) > :last-child,
   .jt-app :is(.jt-post-body, .jt-reply-body) :is(blockquote, li, td, th) > :last-child { margin-block-end: 0; }
+  /* Links a member wrote must read as links, not by colour alone (WCAG 1.4.1):
+     .jt-app a resets every app link to text colour with no underline, which
+     left body links indistinguishable from prose. Mentions and preview cards
+     keep their own styling. */
+  .jt-app :is(.jt-post-body, .jt-reply-body) a:not(.jt-mention, .jt-link-preview) { color: var(--jt-accent-strong); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.15em; }
+  .jt-app :is(.jt-post-body, .jt-reply-body) a:not(.jt-mention, .jt-link-preview):hover { color: var(--jt-accent-strong); text-decoration-thickness: 2px; }
   .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-1); }
   .jt-accepted-tag { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: 0.8125rem; font-weight: 600; color: var(--jt-success-strong); white-space: nowrap; }
   .jt-accepted-tag svg { flex-shrink: 0; }
@@ -798,6 +823,7 @@
   .jt-editor-body:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; border-radius: var(--jt-radius-sm); }
   .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
   .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--jt-border); }
+  .jt-editor .jt-editor-error { margin: 0 var(--jt-space-3) var(--jt-space-3); }
   .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); }
 
   /* ── Card (sidebar) ── */
@@ -962,7 +988,7 @@
        text-align does not touch it - so without this the buttons sat hard left
        under a centred title, description, stat block and Follow button. */
     .jt-space-head__meta { justify-content: center; }
-    .jt-space-nums { margin-right: 0; }
+    .jt-space-nums { margin-inline-start: 0; }
     .jt-header { padding: 10px 16px; }
     .jt-mobile-toggle { display: flex; }
     .jt-nav { display: none; position: fixed; top: 0; right: 0; left: 0; bottom: 0; background: var(--jt-bg); z-index: 200; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
@@ -996,8 +1022,6 @@
   @media (max-width: 640px) {
     /* Container + app wrapper */
     .jt-container { padding: var(--jt-space-4); }
-    /* Leave room for theme mobile bottom tab bar (Reign/BuddyNext/BuddyX). */
-    .jt-app { padding-bottom: calc(var(--jt-space-12) + var(--jt-space-8)); }
 
     /* Topic listing rows — `.jt-row, a.jt-row` specificity match is
        load-bearing (desktop `a.jt-row` is 0,1,1). */
@@ -1156,7 +1180,8 @@
 
     /* Compact space hero - the first screen showed header + hero + stats and
        no topics. Identity goes back to one row (icon beside title), the cover
-       shrinks to a band, the description clamps to two lines and the stats
+       shrinks to a band, the description wraps in full (it was clamped with
+       no way to read the rest) and the stats
        sit inline with their labels. */
     .jt-space-cover { min-height: 0; }
     .jt-space-cover--image { min-height: 96px; }
@@ -1167,7 +1192,7 @@
     .jt-space-head { flex-direction: row; flex-wrap: wrap; align-items: center; text-align: start; gap: var(--jt-space-2); padding-block: var(--jt-space-3); margin-bottom: var(--jt-space-4); }
     .jt-space-head__meta, .jt-space-nums { flex: 1 1 100%; }
     .jt-space-head__meta { justify-content: flex-start; }
-    .jt-space-desc { margin-top: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .jt-space-desc { margin-top: 0; }
     .jt-space-nums { gap: var(--jt-space-4); margin-inline-start: 0; }
     .jt-num { display: inline-flex; align-items: baseline; gap: var(--jt-space-1); }
     .jt-num-val { font-size: var(--jt-text-base); }
@@ -1253,15 +1278,16 @@
   .jt-space-card-inner { display: flex; align-items: flex-start; gap: var(--jt-space-3); }
   .jt-space-card-emoji { font-size: 1.75em; flex-shrink: 0; line-height: 1; }
   .jt-space-card-body { min-width: 0; flex: 1; }
-  .jt-space-card-title { font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Wrapped, not cut: two spaces can share a long common prefix. */
+  .jt-space-card-title { font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 4px; overflow-wrap: anywhere; }
   .jt-space-card-excerpt { font-size: 0.8125rem; color: var(--jt-text-tertiary); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .jt-space-card-stats { display: flex; gap: var(--jt-space-3); margin-top: 6px; min-width: 0; }
+  .jt-space-card-stats { display: flex; flex-wrap: wrap; column-gap: var(--jt-space-3); row-gap: var(--jt-space-1); margin-block-start: var(--jt-space-2); min-width: 0; }
   .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); white-space: nowrap; flex: 0 0 auto; }
   .jt-space-card-stat strong { color: var(--jt-text-secondary); font-weight: 600; }
   /* Recency signal on space cards (1.5.0) so a newcomer can tell at a glance
      which spaces are alive. Same gap as the other stats: pushed to the end
-     with an auto margin it floated a different distance on every card. */
-  .jt-space-card-activity { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+     with an auto margin it floated a different distance on every card.
+     Wraps to its own line when the card is narrow, never cut to "Active 5…". */
   /* .jt-app scope: the `.jt-app p` reset (0,1,1) otherwise zeroes this margin and the link touches the grid. */
   .jt-app .jt-space-grid-more { margin-block-start: var(--jt-space-4); text-align: center; }
   .jt-space-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-block-end: 6px; }
@@ -1282,10 +1308,12 @@
    */
   .jt-space-card-badge-policy-approval { background: var(--jt-warn-light, var(--jt-bg-muted)); color: var(--jt-warn-strong, var(--jt-text-secondary)); }
   .jt-space-card-badge-policy-invite { background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
+  /* The viewer's own membership (Member / Moderator / Admin): you are in, nothing owed. */
+  .jt-space-card-badge-member { background: var(--jt-success-light, var(--jt-bg-muted)); color: var(--jt-success-strong, var(--jt-text-secondary)); }
 
   /* ── Space status banner ── */
   .jt-status-banner { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; font-weight: 500; margin-bottom: 12px; }
-  .jt-status-banner--archived { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); }
+  .jt-status-banner--archived, .jt-status-banner--pending { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); }
   .jt-status-banner--locked { background: var(--jt-warn-light); color: var(--jt-warn-strong); border: 1px solid var(--jt-warn-border); }
 
   /* ── Status badges ── */
@@ -1410,16 +1438,30 @@
   .jt-similar-meta { display: block; font-size: 0.75rem; color: var(--jt-text-tertiary); margin-top: 2px; }
 
   /* ── Quote blockquote ── */
-  .jt-quote { border-right: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); padding: 10px 14px; border-radius: var(--jt-radius-sm) 0 0 var(--jt-radius-sm); margin: 0 0 12px; font-size: 0.9375rem; }
-  .jt-quote cite { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent); font-style: normal; margin-bottom: 4px; }
+  /* Logical sides: the quote carries dir="auto", so an Arabic quote in an English
+     thread puts its bar on the right, where the text starts. */
+  .jt-quote { border-inline-start: 3px solid var(--jt-accent); border-inline-end: 0; background: var(--jt-bg-subtle); color: var(--jt-text-secondary); padding-block: var(--jt-space-2); padding-inline: var(--jt-space-3); border-radius: 0; border-start-end-radius: var(--jt-radius); border-end-end-radius: var(--jt-radius); margin-block: var(--jt-space-2); margin-inline: 0; font-size: 0.9375rem; }
+  /* fit-content: the cite has its own dir (so the quote's dir="auto" reads the
+     quoted text); a shrink-wrapped block then sits on the quote's start side. */
+  .jt-quote cite { display: block; inline-size: fit-content; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-tertiary); font-style: normal; margin-block-end: var(--jt-space-1); }
+  .jt-quote :is(ul, ol) { margin-block: 0; padding-inline-start: var(--jt-space-5); }
   .jt-quote cite::before { content: '\2014 '; }
   .jt-quote p { margin: 0; color: var(--jt-text-secondary); line-height: 1.5; }
+  .jt-quote > :is(p, ul, ol, pre) + :is(p, ul, ol, pre) { margin-block-start: var(--jt-space-2); }
 
   /* ── Inline notices (pending, spam, etc.) ── */
   .jt-notice { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; margin-bottom: 16px; }
   .jt-notice-warning { background: var(--jt-warn-light); color: var(--jt-warn-dark); border-right: 4px solid var(--jt-warn); }
   /* Moderator Restore / Delete permanently on a trashed topic. Wraps under 390px. */
   .jt-notice-actions { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); margin-block-start: var(--jt-space-3); }
+  .jt-reschedule { margin-block-start: var(--jt-space-3); }
+  /* Connect-app screen: Connect and Cancel side by side (stacked on phones),
+     and the account switch is a full tap target, not a 20px text line. */
+  .jt-connect-app-actions { display: flex; flex-wrap: wrap; gap: var(--jt-space-3); margin-block: var(--jt-space-4); }
+  .jt-connect-app-switch { display: inline-flex; align-items: center; min-height: var(--jt-tap); }
+  @media (max-width: 640px) { .jt-connect-app-actions > .jt-btn { flex: 1 1 100%; justify-content: center; } }
+  .jt-reschedule fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .jt-reschedule legend { padding: 0; margin-block-end: var(--jt-space-2); }
 
   /* ── View count ── */
   .jt-view-count { display: inline-flex; align-items: center; gap: 4px; font-size: var(--jt-text-sm); color: var(--jt-text-tertiary); }
@@ -1853,6 +1895,11 @@
 
   /* Resolve error surfaced by assets/js/moderation.js when REST fails. */
   .jt-mod-flag-error { color: var(--jt-danger); font-size: var(--jt-text-sm); margin-top: var(--jt-space-2); }
+  /* Several reports on one item share a card; content already gone says so. */
+  .jt-mod-flag-count { font-size: var(--jt-text-xs); font-weight: 600; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); white-space: nowrap; }
+  .jt-mod-flag-removed { margin: 0 0 var(--jt-space-2); padding: var(--jt-space-2); border-radius: var(--jt-radius-sm); background: var(--jt-warn-light); color: var(--jt-warn-strong); font-size: var(--jt-text-sm); }
+  /* A member report renders the full card inside the overview row. */
+  .jt-mod-flag-row--card > .jt-mod-flag { padding: 0; border-bottom: 0; }
 
   /* Cross-space moderation dashboard at /community/mod/.
      1.4.3 redesign: the queue is rendered as a list of actual pending
@@ -1993,6 +2040,7 @@
   .jt-tag-count-label { color: var(--jt-text-tertiary); }
 
   /* ── Profile page extras ── */
+  .jt-profile-blocked-note { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.8125rem; color: var(--jt-text-secondary); }
   .jt-profile-bio { font-size: 0.9375rem; color: var(--jt-text-secondary); margin-top: 8px; line-height: 1.6; }
   .jt-profile-meta { font-size: 0.8125rem; display: flex; gap: 16px; margin-top: 10px; color: var(--jt-text-tertiary); }
   .jt-section-heading { font-family: var(--jt-font-heading); font-size: 1.125rem; font-weight: 700; margin-bottom: 12px; }
@@ -2023,7 +2071,14 @@
   .jt-row-stat .jt-row-time { white-space: normal; text-wrap: balance; }
   /* A state shown in a button's place (Invite Only, Awaiting Approval): not clickable. */
   .jt-app .jt-btn--status { cursor: default; opacity: 0.7; text-align: center; }
-  .jt-app .jt-invite-landing { text-align: center; padding: 48px 0; }
+  /* A standalone card, so it centres; .jt-narrow itself stays start-aligned
+     for the composer, which lines up with the breadcrumb. */
+  .jt-app .jt-invite-landing { text-align: center; padding-block: var(--jt-space-12); margin-inline: auto; }
+  @media (max-width: 640px) {
+    /* Full-width primary actions on a phone, like every other primary CTA. */
+    .jt-invite-landing .jt-invite-actions { flex-direction: column; align-items: stretch; }
+    .jt-invite-landing .jt-invite-actions .jt-btn { width: 100%; justify-content: center; }
+  }
 
   /* ── Category page header ── */
   .jt-cat-page-row { display: flex; align-items: center; gap: var(--jt-space-3); margin-bottom: var(--jt-space-4); }
@@ -2210,7 +2265,7 @@
   /* border-radius is !important for the same reason as border/colour: host
      themes style input[type=text] at higher specificity (Reign 6px, BuddyX 4px),
      so the input radius changed per theme. One radius: --jt-radius. */
-  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius) !important; font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; caret-color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: right; }
+  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius) !important; font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; caret-color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: start; }
   /* Single focus ring (border recolor + box-shadow halo). Text inputs always
      match :focus-visible when focused, so a separate outline here doubled the
      ring — :focus and :focus-visible share one indicator. */
@@ -2297,10 +2352,15 @@
 
   /* ── Pagination ── */
   .jt-pagination-btn { min-width: 200px; justify-content: center; }
+  .jt-pagination:has(.jt-pagination-error) { flex-wrap: wrap; }
+  .jt-pagination .jt-pagination-error { flex-basis: 100%; margin: 0; text-align: center; }
+  /* A thumb-sized target across the column on phones. */
+  @media (max-width: 640px) { .jt-pagination-btn { width: 100%; } }
 
   /* ── Prism.js override for theme consistency ── */
-  .jt-app pre[class*="language-"], .jt-app code[class*="language-"] { font-family: var(--jt-font-mono); }
-  .jt-dark .jt-app pre[class*="language-"] { filter: invert(1) hue-rotate(180deg); }
+  /* Highlighted and plain code blocks share one dark panel in both schemes. */
+  .jt-app pre[class*="language-"], .jt-app code[class*="language-"] { font-family: var(--jt-font-mono); text-shadow: none; }
+  .jt-app pre[class*="language-"] { background: var(--jt-code-bg); color: var(--jt-code-fg); }
 
   /* ── User profile links ── */
   .jt-user-link { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
@@ -2779,8 +2839,6 @@
 /* ── G5: Quote Button ── */
 .jt-quote-btn { position: absolute; z-index: 200; padding: 6px 14px; background: var(--jt-text); color: var(--jt-bg); border: none; border-radius: var(--jt-radius-full); cursor: pointer; font-weight: 600; font-size: 0.9375rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.1s; }
 .jt-quote-btn:hover { transform: scale(1.05); }
-.jt-quote { border-right: 3px solid var(--jt-accent); padding: 8px 14px; margin: 8px 0; background: var(--jt-bg-subtle); border-radius: var(--jt-radius) 0 0 var(--jt-radius); color: var(--jt-text-secondary); }
-.jt-quote cite { display: block; font-weight: 600; font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-bottom: 4px; font-style: normal; }
 
 /* ── G6: User Hover Cards ── */
 .jt-hover-card { position: absolute; z-index: 300; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 16px; width: 280px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation: jt-fadeIn 0.2s ease; }
@@ -2853,8 +2911,18 @@
    heading clears the sticky host-theme header instead of tucking under it. */
 #notification-preferences { scroll-margin-top: var(--jt-scroll-offset); }
 .jt-notif-prefs { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
+.jt-blocked-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
+.jt-blocked-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; }
+.jt-blocked-row + .jt-blocked-row { border-top: 1px solid var(--jt-border); }
+/* Wrapped, not cut: the full name is how a member knows whom they blocked. */
+.jt-blocked-name { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--jt-text); }
+.jt-blocked-pager { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); }
+@media (max-width: 480px) { .jt-blocked-pager { flex-wrap: wrap; } }
 .jt-notif-optout { display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
 .jt-notif-optout input { margin-top: 0.15rem; flex-shrink: 0; }
+/* Pro's digest choice, rendered inside the notification settings. */
+.jt-notif-digest { border: 0; margin: var(--jt-space-4) 0 0; padding: 0; min-inline-size: 0; }
+.jt-notif-digest .jt-notif-optout { margin-block-start: var(--jt-space-2); }
 .jt-notif-row { display: grid; grid-template-columns: 1fr 3.5rem 3.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--jt-border); font-size: 0.875rem; color: var(--jt-text); }
 .jt-notif-row:last-child { border-bottom: none; }
 .jt-notif-header { font-weight: 600; background: var(--jt-bg-subtle); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--jt-text-secondary); }
@@ -2870,7 +2938,7 @@
 .jt-profile-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--jt-border); margin-bottom: 1rem; }
 .jt-profile-tab { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--jt-text-secondary); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease); }
 .jt-profile-tab:hover { color: var(--jt-text); }
-.jt-profile-tab.active { color: var(--jt-accent); border-bottom-color: var(--jt-accent); }
+.jt-profile-tab.active { color: var(--jt-accent-strong); border-bottom-color: var(--jt-accent); }
 /* Mobile: the five-tab row (Posts, Replies, Votes, Bookmarks, Drafts)
    overflows the viewport at ≤390px, clipping the last tab (Drafts) off
    the right edge. Make the row horizontally scrollable instead of
@@ -2903,7 +2971,7 @@
 .jt-more-dropdown { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; }
 .jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: right; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
 .jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
-.jt-more-item--danger { color: var(--jt-danger); }
+.jt-more-item--danger { color: var(--jt-danger-strong); }
 .jt-more-item--danger:hover { background: var(--jt-danger-light); color: var(--jt-danger-strong); }
 
 /* ── Mobile Bottom Tab Bar ── */
@@ -2917,8 +2985,15 @@
 }
 @media (max-width: 640px) {
   .jt-mobile-tabs { display: flex; justify-content: space-around; align-items: center; }
-  /* Add bottom padding to body so content isn't hidden behind the tab bar */
-  .jt-app { padding-bottom: 68px; }
+  /* The fixed tab bar (about 60px) plus the iOS home-indicator inset. Padding lets the
+     last control scroll clear of the bar; scroll-padding makes every browser-driven
+     scroll (Tab focus, scrollIntoView, find-in-page) stop above it, so Post Topic and
+     Post Reply mid-thread are never left under the tabs. */
+  :root:has(.jt-mobile-tabs) {
+    --jt-tab-bar-clearance: calc(var(--jt-space-12) + var(--jt-space-8) + env(safe-area-inset-bottom, 0px));
+    scroll-padding-bottom: var(--jt-tab-bar-clearance);
+  }
+  .jt-app { padding-bottom: var(--jt-tab-bar-clearance, 0px); }
 }
 .jt-mobile-tab {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -3224,6 +3299,14 @@
 .jt-search-overlay-item:hover { background: var(--jt-bg-hover); }
 .jt-search-overlay-item strong { font-size: 0.9375rem; }
 .jt-search-overlay-item span { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+/* Query words marked on the search results page. */
+.jt-hl { background: var(--jt-warn-light); color: inherit; font-weight: inherit; padding: 0; border-radius: var(--jt-radius-sm); }
+.jt-search-overlay-all {
+  display: block; padding: var(--jt-space-3) var(--jt-space-5);
+  color: var(--jt-accent); font-size: 0.875rem; font-weight: 600; text-decoration: none;
+}
+.jt-search-overlay-all:hover { background: var(--jt-bg-hover); }
+.jt-search-overlay-all:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; }
 
 /* ── Skeleton Loading Placeholders ── */
 @keyframes jt-shimmer {
@@ -3330,15 +3413,22 @@
 /* ── Discussion row hover effects (non-anchor rows) ── */
 .jt-row { box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.1s; }
 .jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
-/* Bookmarks page: the per-card "Remove bookmark" toggle (1.5.0). The card is
-   a CSS grid, so a plain child lands in an implicit cell — pin it top-right
-   instead. Scoped with :has() so only cards that carry the toggle are
-   affected (the My Bookmarks list), never every post row. */
-.jt-row:has(.jt-bookmark-toggle) { position: relative; }
+/* Bookmarks page: the per-card "Remove bookmark" toggle (1.5.0). It gets its
+   own last grid column; pinned absolutely over the row it covered the
+   "1 week ago" cell at desktop and the reply count on phones. Scoped with
+   :has() so only cards that carry the toggle (My Bookmarks) change. */
+.jt-row:has(.jt-bookmark-toggle) { grid-template-columns: 48px minmax(0, 1fr) 96px 104px var(--jt-tap); }
+.jt-row:not(:has(.jt-votes)):has(.jt-bookmark-toggle) { grid-template-columns: minmax(0, 1fr) 96px 104px var(--jt-tap); }
+@media (max-width: 640px) {
+	/* The time cell is hidden on phones (it is no longer :last-child here). */
+	.jt-row:has(.jt-bookmark-toggle) { grid-template-columns: 36px minmax(0, 1fr) 48px var(--jt-tap); }
+	.jt-row:not(:has(.jt-votes)):has(.jt-bookmark-toggle) { grid-template-columns: minmax(0, 1fr) 48px var(--jt-tap); }
+	.jt-row:has(.jt-bookmark-toggle) .jt-row-stat:has(.jt-row-time) { display: none; }
+}
 .jt-bookmark-toggle {
-	position: absolute;
-	top: 0.5rem;
-	inset-inline-end: 0.5rem;
+	position: relative;
+	z-index: 1;
+	justify-self: end;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -3461,6 +3551,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 @media (max-width: 640px) {
 	/* Welcome hero stacks; actions go full-width so the CTA stays tappable. */
 	.jt-home-welcome { flex-direction: column; align-items: stretch; }
+	/* The 320px basis is a desktop width; stacked it would become a 320px height. */
+	.jt-home-welcome-body { flex-basis: auto; }
 	.jt-home-welcome-actions { width: 100%; }
 	.jt-home-welcome-actions .jt-btn { flex: 1 1 auto; justify-content: center; }
 }

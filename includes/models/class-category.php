@@ -304,6 +304,57 @@ class Category extends Model {
 	}
 
 	/**
+	 * A top-level category with exactly this name, whatever its visibility, so
+	 * an admin writer (the setup wizard) reuses it instead of adding a twin.
+	 *
+	 * @param string $name Category name.
+	 * @return object|null
+	 */
+	public static function find_top_level_by_name( string $name ): ?object {
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE name = %s AND (parent_id IS NULL OR parent_id = 0) ORDER BY id ASC LIMIT 1',
+				$name
+			)
+		);
+		return $row ?: null;
+	}
+
+	/**
+	 * Category visibility for a reader: listing_visibility_sql() plus "holds at
+	 * least one space this viewer can see", directly or in a sub-category.
+	 *
+	 * A category whose spaces are all hidden from the viewer has nothing to
+	 * open, and serving it (page 200, REST 200 with space_count 0, a card on
+	 * home) disclosed that the hidden content exists. The space rule is
+	 * Space::listing_visibility_sql(), the one the category's own space list
+	 * uses, so a listed category always shows at least one card. Managers
+	 * (listing predicate 1=1) see every category, empty ones included.
+	 *
+	 * Kept out of listing_visibility_sql() on purpose: Space's parent-category
+	 * clause composes that predicate, and composing this one would recurse.
+	 *
+	 * @param int|null $user_id Viewer ID (null resolves to the current user, 0 for guests).
+	 * @param string   $alias   Categories-table alias without trailing dot ('' = unaliased).
+	 * @return array{0:string,1:array} [ SQL fragment, bind values ].
+	 */
+	public static function viewer_visibility_sql( ?int $user_id = null, string $alias = '' ): array {
+		$user_id                    = $user_id ?? get_current_user_id();
+		[ $cat_where, $cat_values ] = self::listing_visibility_sql( $user_id, $alias );
+
+		if ( '1=1' === $cat_where ) {
+			return array( $cat_where, $cat_values );
+		}
+
+		$outer                          = ( '' !== $alias ? $alias : static::table() ) . '.id';
+		[ $space_where, $space_values ] = Space::listing_visibility_sql( $user_id, 'jt_vs' );
+
+		$exists = 'EXISTS ( SELECT 1 FROM ' . \Jetonomy\table( 'spaces' ) . " jt_vs WHERE ( jt_vs.category_id = {$outer} OR jt_vs.category_id IN ( SELECT jt_vc.id FROM " . static::table() . " jt_vc WHERE jt_vc.parent_id = {$outer} ) ) AND {$space_where} )";
+
+		return array( "{$cat_where} AND {$exists}", array_merge( $cat_values, $space_values ) );
+	}
+
+	/**
 	 * Find a category by its slug.
 	 *
 	 * Visibility-filtered: a `hidden` category is not resolvable by slug for a
@@ -328,9 +379,9 @@ class Category extends Model {
 			return $memo[ $key ] ? clone $memo[ $key ] : null;
 		}
 
-		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+		[ $vis_where, $vis_values ] = self::viewer_visibility_sql( $user_id );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where is literal SQL plus %d placeholders from viewer_visibility_sql().
 		$row = static::db()->get_row(
 			static::db()->prepare(
 				'SELECT * FROM ' . static::table() . " WHERE slug = %s AND {$vis_where}",
@@ -363,9 +414,9 @@ class Category extends Model {
 			return null;
 		}
 
-		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+		[ $vis_where, $vis_values ] = self::viewer_visibility_sql( $user_id );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where is literal SQL plus %d placeholders from viewer_visibility_sql().
 		$row = static::db()->get_row(
 			static::db()->prepare(
 				'SELECT * FROM ' . static::table() . " WHERE id = %d AND {$vis_where}",
@@ -379,12 +430,15 @@ class Category extends Model {
 	/**
 	 * List all top-level categories (parent_id IS NULL or 0).
 	 *
+	 * @param int|null $user_id     Viewer ID (null resolves to the current user).
+	 * @param bool     $with_spaces Only categories holding a space the viewer can see
+	 *                              (false for pickers filing a space into a category).
 	 * @return object[]
 	 */
-	public static function list_top_level( ?int $user_id = null ): array {
-		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+	public static function list_top_level( ?int $user_id = null, bool $with_spaces = true ): array {
+		[ $vis_where, $vis_values ] = $with_spaces ? self::viewer_visibility_sql( $user_id ) : self::listing_visibility_sql( $user_id );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where is literal SQL plus %d placeholders from viewer_visibility_sql().
 		$sql = 'SELECT * FROM ' . static::table() . " WHERE (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, name ASC";
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
@@ -400,9 +454,9 @@ class Category extends Model {
 	 * @return object[]
 	 */
 	public static function list_children( int $parent_id, ?int $user_id = null ): array {
-		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+		[ $vis_where, $vis_values ] = self::viewer_visibility_sql( $user_id );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where is literal SQL plus %d placeholders from viewer_visibility_sql().
 		return static::db()->get_results(
 			static::db()->prepare(
 				'SELECT * FROM ' . static::table() . " WHERE parent_id = %d AND {$vis_where} ORDER BY sort_order ASC, name ASC",
@@ -421,10 +475,11 @@ class Category extends Model {
 	 *
 	 * @param int|null $user_id    Viewer ID (null resolves to the current user).
 	 * @param int[]    $parent_ids Limit to these parents (empty = every parent).
+	 * @param bool     $with_spaces See list_top_level().
 	 * @return array<int, object[]> Parent id => children ordered like list_children().
 	 */
-	public static function children_by_parent( ?int $user_id = null, array $parent_ids = array() ): array {
-		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+	public static function children_by_parent( ?int $user_id = null, array $parent_ids = array(), bool $with_spaces = true ): array {
+		[ $vis_where, $vis_values ] = $with_spaces ? self::viewer_visibility_sql( $user_id ) : self::listing_visibility_sql( $user_id );
 
 		$parent_ids = array_values( array_filter( array_map( 'intval', $parent_ids ) ) );
 		$in         = '';
@@ -433,7 +488,7 @@ class Category extends Model {
 			$vis_values = array_merge( $parent_ids, $vis_values );
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is %d placeholders, $vis_where literal SQL from listing_visibility_sql().
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is %d placeholders, $vis_where literal SQL plus %d placeholders from viewer_visibility_sql().
 		$sql = 'SELECT * FROM ' . static::table() . " WHERE parent_id > 0{$in} AND {$vis_where} ORDER BY sort_order ASC, name ASC";
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
@@ -459,9 +514,9 @@ class Category extends Model {
 	 * @return object[]
 	 */
 	public static function list_tree( ?int $user_id = null, int $keep_id = 0 ): array {
-		$children = self::children_by_parent( $user_id );
+		$children = self::children_by_parent( $user_id, array(), false );
 		$tree     = array();
-		foreach ( self::list_top_level( $user_id ) as $top ) {
+		foreach ( self::list_top_level( $user_id, false ) as $top ) {
 			$top->depth = 0;
 			$tree[]     = $top;
 			foreach ( $children[ (int) $top->id ] ?? array() as $child ) {

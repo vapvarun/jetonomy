@@ -55,5 +55,318 @@
     ],
     "min_pass_per_required_section": 1,
     "why": "The build gate previously checked only that `failures` held no 'from' entries plus a version match, so a run that skipped 47 of 84 checks - including every Pro check - still satisfied it. Absence of failures is not coverage."
+  },
+  "personas": {
+    "admin": {
+      "autologin": "1"
+    },
+    "member": {
+      "autologin": "bob"
+    },
+    "member_b": {
+      "autologin": "alice"
+    },
+    "member_c": {
+      "autologin": "maya"
+    },
+    "moderator": {
+      "autologin": "test_moderator",
+      "note": "Olivia Grant: site Editor, moderator of Bug Reports and the hidden Moderators' Room"
+    },
+    "space_admin": {
+      "autologin": "test_editor",
+      "note": "Ethan Brooks: space admin of Help Desk and Troubleshooting, a plain member elsewhere"
+    },
+    "silenced": {
+      "autologin": "finn",
+      "note": "Finn O'Brien: silenced site-wide for 7 days"
+    },
+    "space_banned": {
+      "autologin": "omar",
+      "note": "Omar Haddad: banned from Off-Topic Lounge only; posts in Arabic"
+    },
+    "banned": {
+      "autologin": "kai_brennan",
+      "note": "Kai Brennan: banned site-wide for selling followers; has one topic in General Discussion"
+    }
+  },
+  "themes": [
+    {
+      "slug": "reign-theme",
+      "dark": {
+        "toggle": ".bx-color-mode-toggle__btn",
+        "until": "html[data-bx-mode=\"dark\"]"
+      }
+    },
+    {
+      "slug": "buddyx"
+    },
+    {
+      "slug": "twentytwentyfive"
+    }
+  ],
+  "matrix": {
+    "fast": {
+      "themes": [
+        "reign-theme"
+      ],
+      "widths": [
+        1440,
+        390
+      ]
+    },
+    "full": {
+      "themes": "all",
+      "widths": [
+        1440,
+        1024,
+        390
+      ]
+    }
+  },
+  "checks": {
+    "release": {
+      "pot": "languages/jetonomy.pot",
+      "domain": "jetonomy",
+      "build_scripts": [
+        "bin/build-release.sh"
+      ],
+      "excluded": [
+        "includes/qa/",
+        "bin/",
+        "tools/",
+        "tests/",
+        "docs/",
+        "audit/",
+        "plan/",
+        "marketing/",
+        "phpstan-stubs/",
+        "dist/",
+        "Gruntfile.js",
+        "playwright.config.js"
+      ],
+      "allow_refs": [
+        "=> 'includes/qa/'",
+        "includes/qa/class-coverage-recorder.php"
+      ]
+    },
+    "states": [
+      {
+        "id": "profile-menu-offers-block",
+        "persona": "member",
+        "url": "/community/u/alice/",
+        "expect": [
+          {
+            "selector": ".jt-more-menu",
+            "count": 1
+          },
+          {
+            "selector": "[data-wp-on--click=\"actions.blockMember\"]",
+            "count": 1
+          },
+          {
+            "selector": "[data-wp-on--click=\"actions.flagUser\"]",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "id": "staff-profile-cannot-be-blocked",
+        "persona": "member",
+        "url": "/community/u/varundubey/",
+        "expect": [
+          {
+            "selector": "[data-wp-on--click=\"actions.flagUser\"]",
+            "count": 1
+          },
+          {
+            "selector": "[data-wp-on--click=\"actions.blockMember\"]",
+            "absent": true
+          }
+        ]
+      },
+      {
+        "id": "own-profile-has-no-menu",
+        "persona": "member",
+        "url": "/community/u/bob/",
+        "expect": [
+          {
+            "selector": ".jt-more-menu",
+            "absent": true
+          }
+        ]
+      },
+      {
+        "id": "blocked-profile-says-so",
+        "persona": "member",
+        "url": "/community/u/alice/",
+        "setup": "$b=get_user_by('login','bob')->ID; $a=get_user_by('login','alice')->ID; \\Jetonomy\\Models\\BlockedUser::block($b,$a); return ['b'=>$b,'a'=>$a];",
+        "teardown": "\\Jetonomy\\Models\\BlockedUser::unblock((int)$vars['b'],(int)$vars['a']); return true;",
+        "expect": [
+          {
+            "selector": ".jt-profile-blocked-note",
+            "count": 1
+          },
+          {
+            "selector": ".jt-more-menu [data-wp-on--click=\"actions.unblockUser\"]",
+            "count": 1
+          },
+          {
+            "selector": "[data-wp-on--click=\"actions.blockMember\"]",
+            "absent": true
+          }
+        ]
+      },
+      {
+        "id": "blocked-members-list",
+        "persona": "member",
+        "url": "/community/u/bob/edit/",
+        "setup": "$b=get_user_by('login','bob')->ID; $a=get_user_by('login','alice')->ID; \\Jetonomy\\Models\\BlockedUser::block($b,$a); return ['b'=>$b,'a'=>$a];",
+        "teardown": "\\Jetonomy\\Models\\BlockedUser::unblock((int)$vars['b'],(int)$vars['a']); return true;",
+        "expect": [
+          {
+            "selector": "#blocked-members [data-wp-on--click=\"actions.unblockUser\"]",
+            "min": 1
+          }
+        ]
+      },
+      {
+        "id": "blocked-members-empty",
+        "persona": "member_c",
+        "url": "/community/u/maya/edit/",
+        "expect": [
+          {
+            "selector": "#blocked-members",
+            "text": "You haven't blocked anyone."
+          }
+        ]
+      },
+      {
+        "id": "recount-button",
+        "persona": "admin",
+        "url": "/wp-admin/admin.php?page=jetonomy",
+        "expect": [
+          {
+            "selector": "#jetonomy-recount",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "id": "keep-data-default",
+        "persona": "admin",
+        "url": "/wp-admin/admin.php?page=jetonomy-settings",
+        "expect": [
+          {
+            "selector": "input[name=\"jetonomy_settings[remove_data_on_uninstall]\"]:not(:checked)",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "id": "mention-one-notice",
+        "persona": "member_b",
+        "url": "/community/notifications/",
+        "setup": "$a=get_user_by('login','alice')->ID; $b=get_user_by('login','bob')->ID; $sid=\\Jetonomy\\Models\\Space::find_by_slug('london-chapter')->id; wp_set_current_user($a); $q=new WP_REST_Request('POST',\"/jetonomy/v1/spaces/$sid/posts\"); $q->set_body_params(['title'=>'QA-RFT mention guard','content'=>'Guard topic']); $pid=(int)rest_do_request($q)->get_data()['id']; wp_set_current_user($b); $q=new WP_REST_Request('POST',\"/jetonomy/v1/posts/$pid/replies\"); $q->set_body_params(['content'=>'@alice can you check this?']); rest_do_request($q); wp_set_current_user(0); return ['pid'=>$pid,'slug'=>\\Jetonomy\\Models\\Post::find($pid)->slug];",
+        "teardown": "global $wpdb; $p=$wpdb->prefix; $pid=(int)$vars['pid']; foreach($wpdb->get_col($wpdb->prepare(\"SELECT id FROM {$p}jt_replies WHERE post_id=%d\",$pid)) as $rid){ $wpdb->delete($p.'jt_notifications',['object_type'=>'reply','object_id'=>(int)$rid]); \\Jetonomy\\Models\\Reply::delete((int)$rid);} $wpdb->delete($p.'jt_notifications',['object_type'=>'post','object_id'=>$pid]); \\Jetonomy\\Models\\Post::delete($pid); return true;",
+        "expect": [
+          {
+            "selector": ".jt-notif-item:has(a[href*=\"{slug}\"])",
+            "count": 1
+          }
+        ]
+      }
+    ],
+    "crawl": [
+      {
+        "url": "/community/",
+        "persona": "anonymous"
+      },
+      {
+        "url": "/community/s/london-chapter/",
+        "persona": "anonymous"
+      },
+      {
+        "url": "/community/s/announcements/t/welcome-to-the-community-s220t1/",
+        "persona": "anonymous"
+      },
+      {
+        "url": "/community/leaderboard/",
+        "persona": "anonymous"
+      },
+      {
+        "url": "/community/search/?q=welcome",
+        "persona": "anonymous"
+      },
+      {
+        "url": "/community/u/alice/",
+        "persona": "member"
+      },
+      {
+        "url": "/community/u/bob/edit/",
+        "persona": "member"
+      },
+      {
+        "url": "/community/notifications/",
+        "persona": "member"
+      },
+      {
+        "url": "/wp-admin/admin.php?page=jetonomy",
+        "persona": "admin"
+      },
+      {
+        "url": "/wp-admin/admin.php?page=jetonomy-settings",
+        "persona": "admin"
+      }
+    ],
+    "presentation": [
+      {
+        "id": "home",
+        "persona": "anonymous",
+        "url": "/community/",
+        "kind": "front",
+        "root": ".jt-app"
+      },
+      {
+        "id": "topic",
+        "persona": "member",
+        "url": "/community/s/announcements/t/welcome-to-the-community-s220t1/",
+        "kind": "front",
+        "root": ".jt-app"
+      },
+      {
+        "id": "profile-menu",
+        "persona": "member",
+        "url": "/community/u/alice/",
+        "kind": "front",
+        "root": ".jt-app",
+        "open": ".jt-more-menu > button"
+      },
+      {
+        "id": "edit-profile",
+        "persona": "member",
+        "url": "/community/u/bob/edit/",
+        "kind": "front",
+        "root": ".jt-app"
+      },
+      {
+        "id": "admin-dashboard",
+        "persona": "admin",
+        "url": "/wp-admin/admin.php?page=jetonomy",
+        "kind": "admin",
+        "root": "#wpbody-content"
+      }
+    ]
+  },
+  "journey_depth": {
+    "_note": "Read by bin/check-journey-depth.php. Roles are guest plus the personas above; surfaces are where a check runs.",
+    "surfaces": [
+      "ui",
+      "admin",
+      "rest",
+      "cli",
+      "email",
+      "block"
+    ]
   }
 }

@@ -1,0 +1,65 @@
+{
+  "journey": "C.gating.roster-role-is-a-per-person-decision",
+  "checks": {
+    "c-gating-roster-role-is-a-per-person-decision.1": {
+      "result": "pass",
+      "evidence": "no LMS or membership plugin is installed, so the WordPress-role membership source was used: a membership rule for role print_lab_member (Participate) matched gating_t2, t3, t4; Sync Members -> toast 'Synced 3 existing members.', button 'Synced (3)', all three listed on the Members tab."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.2": {
+      "result": "pass",
+      "evidence": "Members tab roles after the sync: Dana Whitfield member, Marc Delaney member, Lena Hoffmann member, varundubey admin - nobody Moderator or Admin."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.3": {
+      "result": "pass",
+      "evidence": "Marc Delaney set to Moderator in the Members tab select -> toast 'Role updated.', still Moderator after reload and after pressing Sync Members again."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.4": {
+      "result": "pass",
+      "evidence": "GET /spaces/3078/members returns 1:admin, 3838:moderator, 3837:member, 3839:member, matching the tab."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.5": {
+      "result": "pass",
+      "evidence": "bob (space admin of Partner Program) PATCH /spaces/37/members/3754 role moderator -> 200, restored to member; the same call in Print Lab Circle -> 403 jetonomy_forbidden (the message is the generic 'You do not have permission to perform this action.')."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.6": {
+      "result": "pass",
+      "evidence": "gating_t2 PATCH own role to admin -> 403 jetonomy_forbidden; roster unchanged."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.7": {
+      "result": "pass",
+      "evidence": "PATCH the only admin to member -> 400 jetonomy_cannot_self_demote 'You cannot remove your own admin role. Ask another admin to do it.'"
+    },
+    "c-gating-roster-role-is-a-per-person-decision.8": {
+      "result": "untested",
+      "needs": "a space with 300 members; the Members tab of General Discussion lists 28 rows without paging or search"
+    },
+    "c-gating-roster-role-is-a-per-person-decision.9": {
+      "result": "pass",
+      "evidence": "General Discussion Members tab: 'Grace Oluwaseun Adeyemi-Whitfield (grace)' wraps inside its 680px cell (1440) and 366px cell (390), scrollWidth equals clientWidth."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.10": {
+      "result": "pass",
+      "evidence": "Members tab at 390x844: scrollWidth 390, rows stack, no horizontal scroll. Screenshot qa-artifacts/203-walk3/laneA/w3A-members-390.png"
+    }
+  },
+  "proposed_checks": [
+    "- `c-gating-roster-role-is-a-per-person-decision.11` @admin #rest: POST /spaces/{id}/members with another user's id -> the person is added to the roster (today the route only joins the caller and answers 409 'You are already in this space.' for anyone a rule already admits)."
+  ],
+  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. ",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T17:58:06Z",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  }
+}

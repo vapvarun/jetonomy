@@ -129,13 +129,13 @@ final class Mod_Command extends Base_Command {
 	 * ---
 	 *
 	 * [--space=<id>]
-	 * : Space ID (required when type=space_ban).
+	 * : Space ID (required when type=space_ban, refused with any other type).
 	 *
 	 * [--reason=<text>]
-	 * : Optional human-readable reason.
+	 * : Optional human-readable reason. Not stored for type=ip_ban.
 	 *
 	 * [--ip=<address>]
-	 * : The IPv4 or IPv6 address to block (type=ip_ban).
+	 * : The IPv4 or IPv6 address to block (required when type=ip_ban, refused with any other type).
 	 *
 	 * [--expires=<datetime>]
 	 * : Optional MySQL datetime when the restriction expires. Omit for permanent.
@@ -153,20 +153,54 @@ final class Mod_Command extends Base_Command {
 	 *     wp jetonomy mod ban --target=5 --issuer=1 --reason="spam"
 	 *     wp jetonomy mod ban --target=5 --issuer=1 --type=space_ban --space=3
 	 *     wp jetonomy mod ban --target=5 --issuer=1 --type=silence --expires="2026-05-01 00:00:00"
+	 *     wp jetonomy mod ban --target=5 --issuer=1 --type=ip_ban --ip=203.0.113.7
 	 */
 	public function ban( $args, $assoc ): void {
+		$flag_error = self::ban_flag_error( $assoc );
+		if ( null !== $flag_error ) {
+			\WP_CLI::error( $flag_error );
+		}
+
 		$target   = (int) ( $assoc['target'] ?? 0 );
 		$issuer   = (int) ( $assoc['issuer'] ?? 0 );
 		$type     = (string) ( $assoc['type'] ?? 'global_ban' );
 		$space_id = isset( $assoc['space'] ) ? (int) $assoc['space'] : null;
 		$reason   = isset( $assoc['reason'] ) ? (string) $assoc['reason'] : null;
 		// An IP ban stores its address where the reason goes (is_ip_banned() matches it).
-		if ( 'ip_ban' === ( $assoc['type'] ?? '' ) && isset( $assoc['ip'] ) ) {
+		if ( 'ip_ban' === $type ) {
+			if ( null !== $reason ) {
+				\WP_CLI::warning( 'An IP ban stores only the address; --reason is not saved.' );
+			}
 			$reason = (string) $assoc['ip'];
 		}
 		$expires = isset( $assoc['expires'] ) ? (string) $assoc['expires'] : null;
 		$result  = ( new Moderation_Journey() )->ban_user( $target, $issuer, $type, $space_id, $reason, $expires );
 		$this->render( $result, $assoc );
+	}
+
+	/**
+	 * Refuse flag combinations `ban` would otherwise silently ignore.
+	 *
+	 * --type defaults to global_ban, so an --ip passed without --type=ip_ban
+	 * used to ban --target site-wide and drop the address.
+	 *
+	 * @param array<string,mixed> $assoc Associative args.
+	 * @return string|null Why the combination is refused, or null when it is valid.
+	 */
+	public static function ban_flag_error( array $assoc ): ?string {
+		$type = (string) ( $assoc['type'] ?? 'global_ban' );
+
+		if ( isset( $assoc['ip'] ) && 'ip_ban' !== $type ) {
+			return sprintf( '--ip only applies to --type=ip_ban; with --type=%s it would be ignored and --target restricted instead. Add --type=ip_ban to ban the address.', $type );
+		}
+		if ( 'ip_ban' === $type && '' === trim( (string) ( $assoc['ip'] ?? '' ) ) ) {
+			return '--type=ip_ban needs the address to block: pass --ip=<address>.';
+		}
+		if ( isset( $assoc['space'] ) && 'space_ban' !== $type ) {
+			return sprintf( '--space only applies to --type=space_ban; --type=%s is not limited to one space. Add --type=space_ban to ban from that space only.', $type );
+		}
+
+		return null;
 	}
 
 	/**

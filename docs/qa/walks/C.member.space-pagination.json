@@ -1,0 +1,84 @@
+{
+  "journey": "C.member.space-pagination",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walked_at": "2026-10-17T18:09:44Z",
+  "walker": "lane B",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ]
+  },
+  "checks": {
+    "c-member-space-pagination.1": {
+      "result": "pass",
+      "evidence": "QA Paging space (per-space page size 1): exactly one topic row and a 'Load More' link (?pg=2)"
+    },
+    "c-member-space-pagination.2": {
+      "result": "pass",
+      "evidence": "one Load More click -> 2 rows, 2 unique (exactly one more)"
+    },
+    "c-member-space-pagination.3": {
+      "result": "pass",
+      "evidence": "scrolled to the bottom without clicking: still 1 row, nothing loaded (also on Trail Reports 20 rows stay 20)"
+    },
+    "c-member-space-pagination.4": {
+      "result": "pass",
+      "evidence": "clicking Load More until the end: 1 -> 2 -> 3 rows (3 unique) and the button disappears after the last page; Trail Reports (45 topics, 20 per page): 20 -> 40 -> 45 rows, no duplicates, button gone"
+    },
+    "c-member-space-pagination.5": {
+      "result": "pass",
+      "evidence": "no space has 30+ topics, so I seeded 45 topics into a new space (deleted afterwards): the first batch is the site size 20 (not 30), Load More adds 20 then 5, total 45 equals the REST X-WP-Total 45"
+    },
+    "c-member-space-pagination.6": {
+      "result": "fail",
+      "expected": "page 2 returns the next batch; beyond the last returns an empty list or 400, not 500.",
+      "actual": "GET /spaces/3082/posts?page=2 (and page=3, page=99, page=0, page=-1) all return the FIRST batch of 20 again (200, same ids 6204,6203,6202...): the endpoint ignores 'page' and paginates by offset (offset=20 -> next 20, offset=40 -> last 5, offset=999 -> empty, cursor_next in meta). Never a 500, but a client using page gets silent duplicates",
+      "check_wrong": true
+    },
+    "c-member-space-pagination.7": {
+      "result": "pass",
+      "evidence": "2025 Hackathon (0 topics) and Mentorship Circle (0 topics): no Load More, empty state 'No topics yet.'"
+    },
+    "c-member-space-pagination.8": {
+      "result": "fail",
+      "expected": "no duplicate row and no skipped row.",
+      "actual": "Trail Reports page 1 open (20 rows), another member posts a new topic, then Load More: rows 40 but only 39 unique (a topic already shown on page 1 is repeated at the top of batch 2 because offset paging shifts), final 46 rows / 45 unique. Expected no duplicate row",
+      "url": "http://forums.local/community/s/trail-reports/"
+    },
+    "c-member-space-pagination.9": {
+      "result": "fail",
+      "expected": "the button stays and an error shows; retry works.",
+      "actual": "Load More clicked while offline: the button stays and the list is unchanged, but no error message or toast of any kind appears (no text matches failed/error/try again, no alert); the member cannot tell the click failed. Retry online works (20 -> 40)",
+      "url": "http://forums.local/community/s/trail-reports/"
+    },
+    "c-member-space-pagination.10": {
+      "result": "untested",
+      "needs": "lane A: change Settings > posts_per_page and restore it (the per-space page size of QA Paging space was read, not changed)"
+    },
+    "c-member-space-pagination.11": {
+      "result": "pass",
+      "evidence": "guest on /community/s/partner-program/: no topics listed, no Load More, private-space notice with 'Log in to request access'"
+    },
+    "c-member-space-pagination.12": {
+      "result": "fail",
+      "expected": "the button is full width and focus moves sensibly for keyboard users.",
+      "actual": "at 390 the Load More button is 200px wide (x95-295) inside a 328px column, not full width; after pressing Enter on it with the keyboard focus drops to <body> (the old link is replaced) instead of staying in or moving into the new rows",
+      "url": "http://forums.local/community/s/trail-reports/"
+    }
+  },
+  "proposed_checks": [
+    "- `c-member-space-pagination.6` (corrected) @member #rest: GET /spaces/<id>/posts?offset=20 returns the next batch, offset beyond the total returns an empty list, and ?page=N is either honoured or rejected, not silently ignored.",
+    "- `c-member-space-pagination.13` @member #ui +concurrent: Load More after a new topic was posted shows no duplicate row.",
+    "- `c-member-space-pagination.14` @member #ui +offline: Load More offline shows an error message and keeps the button."
+  ],
+  "notes": "Seeded 45 topics in a temporary space (Trail Reports) for 20-per-page paging, then removed the space and its topics."
+}

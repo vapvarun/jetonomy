@@ -307,6 +307,33 @@ class MustCoverRoutesTest extends WP_UnitTestCase {
 		$this->assertSame( $known->get_data(), $unknown->get_data(), 'the same answer for an account that exists and one that does not' );
 	}
 
+	// Quick-login .21: a second Resend inside the cooldown says "wait", sends nothing,
+	// and answers the same for an account that does not exist.
+	public function test_resend_verification_inside_the_cooldown_asks_the_member_to_wait(): void {
+		$login = get_userdata( $this->member )->user_login;
+		update_user_meta( $this->member, '_jetonomy_pending_verification', 1 );
+
+		$first = $this->call( 0, 'POST', '/auth/resend-verification', array( 'user_login' => $login ) );
+		$this->assertSame( 200, $first->get_status() );
+		$token_hash = get_user_meta( $this->member, '_jetonomy_verification_token_hash', true );
+		$this->assertNotEmpty( $token_hash, 'the first ask sends a link' );
+
+		$again = $this->call( 0, 'POST', '/auth/resend-verification', array( 'user_login' => $login ) );
+		$this->assertSame( 429, $again->get_status() );
+		$this->assertSame( 'jetonomy_resend_cooldown', $again->get_data()['code'] );
+		$this->assertGreaterThan( 0, $again->get_data()['data']['retry_after'] );
+		$this->assertStringContainsString( 'wait', $again->get_data()['message'] );
+		$this->assertSame( $token_hash, get_user_meta( $this->member, '_jetonomy_verification_token_hash', true ), 'nothing new was sent' );
+
+		// Clear the per-IP throttle so the unknown-login pair is judged on the cooldown alone.
+		delete_transient( 'jt_auth_resend_verification_' . md5( \Jetonomy\client_ip() ?: 'unknown' ) );
+		$ghost = 'no-such-person-' . uniqid();
+		$this->call( 0, 'POST', '/auth/resend-verification', array( 'user_login' => $ghost ) );
+		$ghost_again = $this->call( 0, 'POST', '/auth/resend-verification', array( 'user_login' => $ghost ) );
+		$this->assertSame( 429, $ghost_again->get_status() );
+		$this->assertSame( 'jetonomy_resend_cooldown', $ghost_again->get_data()['code'], 'no account oracle: unknown logins wait too' );
+	}
+
 	public function test_join_requests_are_decided_by_space_staff_over_rest(): void {
 		$space = (int) Space::create(
 			array(

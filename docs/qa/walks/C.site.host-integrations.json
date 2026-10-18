@@ -1,0 +1,91 @@
+{
+  "journey": "C.site.host-integrations",
+  "checks": {
+    "c-site-host-integrations.1": {
+      "result": "pass",
+      "evidence": "Reign, 1440: community font is the theme's Inter (body and #jetonomy-app identical), one h1, container 1170px, Jetonomy sidebar only; layout choices in Settings > Appearance apply (see check 3)."
+    },
+    "c-site-host-integrations.2": {
+      "result": "pass",
+      "evidence": "BuddyX and Twenty Twenty-Five (previewed per session with ?customize_theme=, no site-wide switch): fonts follow the theme (Inter on BuddyX, Manrope on Twenty Twenty-Five), one h1 ('Community' / topic title), only the Jetonomy sidebar, container 1140px (BuddyX) and full width (TT25). The custom-width setting was exercised on Reign only."
+    },
+    "c-site-host-integrations.3": {
+      "result": "pass",
+      "evidence": "Settings > Appearance: container width Custom 900 + sidebar 'Hide on community pages', Save -> 'Settings saved.'; /community/ container 1170px -> 900px on the next load. The sidebar option hides the theme's sidebar only (Reign shows none here) so the Jetonomy sidebar stayed; there is no sidebar position choice (Theme Default / Hide). Settings restored to the original values. Screenshot qa-artifacts/203-walk3/laneA/w3A-layout-900.png"
+    },
+    "c-site-host-integrations.4": {
+      "result": "untested",
+      "needs": "BuddyPress and Fluent Community are not installed on forums.local (only listed plugins: Akismet, bbPress, LMS plugins, WooCommerce, PMPro, Yoast, Automator, MediaVerse, wb-gamification); needs the plugin installed and active"
+    },
+    "c-site-host-integrations.5": {
+      "result": "untested",
+      "needs": "BuddyPress and Fluent Community are not installed on forums.local (only listed plugins: Akismet, bbPress, LMS plugins, WooCommerce, PMPro, Yoast, Automator, MediaVerse, wb-gamification); needs the plugin installed and active"
+    },
+    "c-site-host-integrations.6": {
+      "result": "untested",
+      "needs": "BuddyPress and Fluent Community are not installed on forums.local (only listed plugins: Akismet, bbPress, LMS plugins, WooCommerce, PMPro, Yoast, Automator, MediaVerse, wb-gamification); needs the plugin installed and active"
+    },
+    "c-site-host-integrations.7": {
+      "result": "untested",
+      "needs": "BuddyPress and Fluent Community are not installed on forums.local (only listed plugins: Akismet, bbPress, LMS plugins, WooCommerce, PMPro, Yoast, Automator, MediaVerse, wb-gamification); needs the plugin installed and active"
+    },
+    "c-site-host-integrations.8": {
+      "result": "untested",
+      "needs": "BuddyPress and Fluent Community are not installed on forums.local (only listed plugins: Akismet, bbPress, LMS plugins, WooCommerce, PMPro, Yoast, Automator, MediaVerse, wb-gamification); needs the plugin installed and active"
+    },
+    "c-site-host-integrations.9": {
+      "result": "untested",
+      "needs": "BuddyPress and Fluent Community are not installed on forums.local (only listed plugins: Akismet, bbPress, LMS plugins, WooCommerce, PMPro, Yoast, Automator, MediaVerse, wb-gamification); needs the plugin installed and active"
+    },
+    "c-site-host-integrations.10": {
+      "result": "pass",
+      "evidence": "with neither BuddyPress nor Fluent Community installed /community/, a topic and the admin Settings screens load, no extra tab, and debug.log gained no jetonomy line during this journey."
+    },
+    "c-site-host-integrations.11": {
+      "result": "pass",
+      "evidence": "dark scheme (jt-dark) on Reign and BuddyX: lowest contrast among 36 space card titles and descriptions is 10.3:1 (Reign) and 16.6:1 (BuddyX); cards, borders and tints follow the host palette."
+    },
+    "c-site-host-integrations.12": {
+      "result": "pass",
+      "evidence": "390x844 on Reign, BuddyX and Twenty Twenty-Five, /community/ and a topic: scrollWidth 390, smallest button/link height 40px. (At 1440 the smallest button is 27-28px, a desktop size.)"
+    },
+    "c-site-host-integrations.13": {
+      "result": "pass",
+      "evidence": "Grace's 159-character topic on Reign: h1 wraps (651px wide x 128px high at 1440, 294 x 159 at 390), page scrollWidth equals the viewport at both widths; one inner element passes the right edge at 390 without a page scroll."
+    },
+    "c-site-host-integrations.14": {
+      "result": "untested",
+      "needs": "site language set to Arabic (site-wide setting; lane B is walking at the same time); an Arabic admin locale only changes wp-admin"
+    },
+    "c-site-host-integrations.15": {
+      "result": "untested",
+      "needs": "maintenance mode on (site-wide; would interrupt lane B)"
+    },
+    "c-site-host-integrations.16": {
+      "result": "pass",
+      "evidence": "Settings front_page on: GET / returns 200 with the community app (jt-app present, title 'forums'); turned off again. The maintenance-gate half was not run (see check 15)."
+    }
+  },
+  "proposed_checks": [
+    "- `c-site-host-integrations.17` @admin #admin: set Settings > Appearance > Sidebar to 'Hide on community pages' on a theme that shows a sidebar (BuddyX) -> the theme sidebar goes and the Jetonomy sidebar stays, or the option says which one it hides."
+  ],
+  "notes": "lane A. Changed and restored: jetonomy_settings container_width custom 900 / sidebar hide (back to theme/theme; the form save also added accent_color #0073aa, removed again so the option equals the original), front_page true then false. Themes were previewed with ?customize_theme= for my own session only, nothing was switched site-wide.",
+  "free": "8b2827d7",
+  "pro": "d5c4494",
+  "walker": "lane A",
+  "walked_at": "2026-10-17T18:00:03Z",
+  "env": {
+    "themes": [
+      "reign",
+      "buddyx",
+      "twentytwentyfive"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "dark"
+    ]
+  }
+}

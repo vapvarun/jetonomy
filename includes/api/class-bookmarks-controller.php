@@ -110,7 +110,7 @@ class Bookmarks_Controller extends Base_Controller {
 			return $this->validation_error( __( 'A valid post_id is required.', 'jetonomy' ) );
 		}
 
-		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $post_id );
+		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $post_id, $user_id );
 		if ( is_wp_error( $live ) ) {
 			return $live;
 		}

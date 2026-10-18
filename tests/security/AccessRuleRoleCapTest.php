@@ -54,7 +54,8 @@ class AccessRuleRoleCapTest extends WP_UnitTestCase {
 			'read cannot mint an admin'          => array( 'read', 'admin', 'viewer' ),
 			'read cannot mint a moderator'       => array( 'read', 'moderator', 'viewer' ),
 			'participate cannot mint an admin'   => array( 'participate', 'admin', 'member' ),
-			'full tops out at moderator'         => array( 'full', 'admin', 'moderator' ),
+			'full tops out at member'            => array( 'full', 'admin', 'member' ),
+			'full cannot mint a moderator'       => array( 'full', 'moderator', 'member' ),
 			'a lower role is left alone'         => array( 'full', 'viewer', 'viewer' ),
 			'an aligned role is left alone'      => array( 'participate', 'member', 'member' ),
 		);

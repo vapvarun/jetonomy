@@ -49,27 +49,7 @@ if ( ! function_exists( 'jetonomy_post_title_or_excerpt' ) ) {
 			return '';
 		}
 
-		$plain = preg_replace( '/\s+/u', ' ', $plain );
-
-		if ( function_exists( 'mb_strlen' ) && mb_strlen( $plain ) > $len ) {
-			$truncated = mb_substr( $plain, 0, $len );
-			$last_sp   = mb_strrpos( $truncated, ' ' );
-			$cut       = ( false !== $last_sp && $last_sp > 0 )
-				? mb_substr( $truncated, 0, $last_sp )
-				: $truncated;
-			return rtrim( $cut ) . '…';
-		}
-
-		if ( strlen( $plain ) > $len ) {
-			$truncated = substr( $plain, 0, $len );
-			$last_sp   = strrpos( $truncated, ' ' );
-			$cut       = ( false !== $last_sp && $last_sp > 0 )
-				? substr( $truncated, 0, $last_sp )
-				: $truncated;
-			return rtrim( $cut ) . '…';
-		}
-
-		return $plain;
+		return \Jetonomy\short_title( $plain, $len );
 	}
 }
 
@@ -214,12 +194,15 @@ if ( ! function_exists( 'jetonomy_community_pulse' ) ) {
 			return $cached;
 		}
 
+		// The home shows the pulse to logged-out visitors only, so the topic
+		// counts are a guest's: topics in private and hidden spaces are left
+		// out (they were counted, 258 shown where a guest can read 244).
 		$pulse = array(
 			// Total posts: sum the denormalised per-space counter (cheap) rather
 			// than COUNT the posts table.
-			'posts'      => \Jetonomy\Models\Space::sum_post_counts(),
+			'posts'      => \Jetonomy\Models\Space::sum_post_counts( 0 ),
 			'members'    => \Jetonomy\Models\UserProfile::count(),
-			'posts_week' => \Jetonomy\Models\Post::count_published_since( gmdate( 'Y-m-d H:i:s', time() - WEEK_IN_SECONDS ) ),
+			'posts_week' => \Jetonomy\Models\Post::count_published_since( gmdate( 'Y-m-d H:i:s', time() - WEEK_IN_SECONDS ), 0 ),
 		);
 
 		set_transient( 'jetonomy_community_pulse', $pulse, HOUR_IN_SECONDS );
@@ -397,6 +380,40 @@ if ( ! function_exists( 'jetonomy_apply_manual_order' ) ) {
 	}
 }
 
+if ( ! function_exists( 'jetonomy_admin_sort_header' ) ) {
+	/**
+	 * A sortable column header in WP core's list-table markup (core CSS draws
+	 * the arrows). The link keeps every other query arg (filters, search) and
+	 * goes back to page 1.
+	 *
+	 * @param string $orderby  Value this column sorts by.
+	 * @param string $label    Column label (unescaped).
+	 * @param string $current  The current orderby.
+	 * @param string $order    The current order, ASC or DESC.
+	 * @param string $th_class Classes for the <th>.
+	 */
+	function jetonomy_admin_sort_header( string $orderby, string $label, string $current, string $order, string $th_class ): void {
+		$is_current = $current === $orderby;
+		$order      = 'DESC' === strtoupper( $order ) ? 'desc' : 'asc';
+		$next       = $is_current && 'asc' === $order ? 'DESC' : 'ASC';
+		$url        = add_query_arg(
+			array(
+				'orderby' => $orderby,
+				'order'   => $next,
+				'paged'   => false,
+			)
+		);
+		$aria       = $is_current ? ' aria-sort="' . ( 'asc' === $order ? 'ascending' : 'descending' ) . '"' : '';
+		printf(
+			'<th scope="col" class="%1$s"%2$s><a href="%3$s"><span>%4$s</span><span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span class="sorting-indicator desc" aria-hidden="true"></span></span></a></th>',
+			esc_attr( $th_class . ( $is_current ? ' sorted ' . $order : ' sortable ' . ( 'asc' === strtolower( $next ) ? 'desc' : 'asc' ) ) ),
+			$aria, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed literal.
+			esc_url( $url ),
+			esc_html( $label )
+		);
+	}
+}
+
 if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	/**
 	 * Render an admin data table that satisfies the responsive contract.
@@ -432,6 +449,9 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	 *                               (JS hooks that read off the table node).
 	 *     @type string   $tbody_id  Optional id="" for the <tbody> (JS hooks).
 	 *     @type bool     $wrap      Wrap in .jt-content-table-wrap. Default true.
+	 *     @type array    $sort      Optional { orderby, order }: the current server-side
+	 *                               sort. A column with 'sortable' => '<orderby value>'
+	 *                               then renders as a core sortable header.
 	 * }
 	 */
 	function jetonomy_admin_table( array $args ): void {
@@ -502,6 +522,10 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 			}
 			if ( ! empty( $col['class'] ) ) {
 				$th_class .= ' ' . (string) $col['class'];
+			}
+			if ( ! empty( $col['sortable'] ) && isset( $args['sort'] ) ) {
+				jetonomy_admin_sort_header( (string) $col['sortable'], (string) ( $col['label'] ?? '' ), (string) ( $args['sort']['orderby'] ?? '' ), (string) ( $args['sort']['order'] ?? 'ASC' ), $th_class );
+				continue;
 			}
 			echo '<th scope="col" class="' . esc_attr( $th_class ) . '">' . esc_html( (string) ( $col['label'] ?? '' ) ) . '</th>';
 		}
@@ -623,6 +647,9 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 			echo '<p class="jt-cat-empty">' . esc_html( sprintf( __( 'No %1$s in this %2$s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'category', false, true ) ) ) . '</p>';
 			return;
 		}
+
+		// One query for the viewer's role in every card (member marker in the badges).
+		\Jetonomy\Models\SpaceMember::warm_viewer_roles( get_current_user_id(), array_map( static fn( $s ) => (int) $s->id, $spaces ) );
 
 		echo '<div class="jt-space-grid">';
 		foreach ( $spaces as $space ) {

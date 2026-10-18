@@ -126,6 +126,11 @@ if ( ! in_array( $jt_kind, array( 'post', 'reply' ), true ) ) {
 $jt_is_trash     = 'trash' === $jt_view;
 $jt_list_posts   = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'post' ) : $jt_held_posts;
 $jt_list_replies = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'reply' ) : $jt_held_replies;
+// With no tab chosen, open on the one that holds items: Topics empty while
+// Replies is not read as "nothing here".
+if ( ! isset( $_GET['kind'] ) && 0 === $jt_list_posts && $jt_list_replies > 0 ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$jt_kind = 'reply';
+}
 
 $jt_held_count = 'reply' === $jt_kind ? $jt_list_replies : $jt_list_posts;
 $jt_held_pages = max( 1, (int) ceil( $jt_held_count / $per_page ) );
@@ -340,13 +345,18 @@ $crumbs = array(
 					$jt_ban_label   = $jt_ban_types[ $jt_ban->type ] ?? $jt_ban_types['global_ban'];
 					$jt_ban_age     = human_time_diff( strtotime( $jt_ban->created_at ), time() );
 					$jt_ban_space   = $jt_ban->space_id ? ( $jt_ban_spaces[ (int) $jt_ban->space_id ] ?? null ) : null;
+					$jt_is_ip_ban   = 'ip_ban' === $jt_ban->type;
 					?>
 					<li class="jt-mod-flag-row">
 						<div class="jt-mod-flag-row-head">
 							<span class="jt-badge jt-badge-danger"><?php echo esc_html( $jt_ban_label ); ?></span>
+							<?php if ( $jt_is_ip_ban ) : // An IP ban blocks an address, not the member it was issued from. ?>
+								<code class="jt-mod-flag-space"><?php echo esc_html( (string) $jt_ban->reason ); ?></code>
+							<?php else : ?>
 							<a class="jt-mod-flag-space" href="<?php echo esc_url( $jt_banned_user ? \Jetonomy\get_profile_url( (int) $jt_banned_user->ID ) : '' ); ?>">
 								<?php echo esc_html( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : __( '[deleted]', 'jetonomy' ) ); ?>
 							</a>
+							<?php endif; ?>
 							<?php if ( $jt_ban_space ) : ?>
 								<span class="jt-mod-flag-type"><?php echo esc_html( $jt_ban_space->title ); ?></span>
 							<?php endif; ?>
@@ -357,18 +367,20 @@ $crumbs = array(
 								?>
 							</span>
 						</div>
-						<?php if ( ! empty( $jt_ban->reason ) ) : ?>
+						<?php if ( ! empty( $jt_ban->reason ) && ! $jt_is_ip_ban ) : ?>
 							<div class="jt-mod-flag-excerpt"><?php echo esc_html( (string) $jt_ban->reason ); ?></div>
 						<?php endif; ?>
 						<div class="jt-mod-flag-foot">
+							<?php if ( null === Moderation_Permissions::lift_error( $user_id, $jt_ban ) ) : // Lifting needs the authority that issued it. ?>
 							<button type="button"
 								class="jt-btn jt-btn-ghost jt-btn-sm jt-flex-shrink-0"
 								data-wp-on--click="actions.liftRestriction"
 								data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
-								data-user-name="<?php echo esc_attr( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : '' ); ?>">
+								data-user-name="<?php echo esc_attr( $jt_is_ip_ban ? (string) $jt_ban->reason : ( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : '' ) ); ?>">
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
 								<?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?>
 							</button>
+							<?php endif; ?>
 						</div>
 					</li>
 				<?php endforeach; ?>
@@ -502,10 +514,35 @@ $crumbs = array(
 				if ( ! $jt_ctx ) {
 					continue;
 				}
+				// A reported member has no space queue to review in, so the card
+				// and its actions live here (only site moderators list them).
+				if ( 'user' === $flag->object_type ) :
+					?>
+					<li class="jt-mod-flag-row jt-mod-flag-row--card">
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'moderation/flag-card',
+							array(
+								'flag'             => $flag,
+								'resolve_endpoint' => esc_url_raw( rest_url( 'jetonomy/v1/moderation/flags/' ) ),
+								'base'             => $base,
+								'context'          => $jt_ctx,
+							)
+						);
+						?>
+					</li>
+					<?php
+					continue;
+				endif;
 				$obj           = $jt_ctx->object;
 				$space         = $jt_ctx->space;
 				$reporter      = get_userdata( (int) $flag->reporter_id );
 				$reporter_name = $reporter ? \Jetonomy\user_display_name( $reporter ) : __( 'Unknown', 'jetonomy' );
+				$jt_reports    = (int) ( $jt_ctx->reports['count'] ?? 1 );
+				if ( $jt_reports > 1 ) {
+					/* translators: 1: newest reporter's display name; 2: number of other members who reported the same item. */
+					$reporter_name = sprintf( _n( '%1$s and %2$s other', '%1$s and %2$s others', $jt_reports - 1, 'jetonomy' ), $reporter_name, number_format_i18n( $jt_reports - 1 ) );
+				}
 				$age           = human_time_diff( strtotime( $flag->created_at ), time() );
 				$content_plain = (string) ( $obj->content_plain ?? wp_strip_all_tags( (string) ( $obj->content ?? '' ) ) );
 				$excerpt       = trim( mb_substr( $content_plain, 0, 140 ) );
@@ -513,7 +550,14 @@ $crumbs = array(
 					$excerpt .= '…';
 				}
 				$reason_key   = (string) ( $flag->reason ?? 'other' );
-				$reason_label = $jt_reason_labels[ $reason_key ] ?? $jt_reason_labels['other'];
+				$reason_label = implode(
+					', ',
+					array_map(
+						static fn( $key, $n ) => ( $jt_reason_labels[ $key ] ?? $jt_reason_labels['other'] ) . ( $n > 1 ? ' (' . number_format_i18n( (int) $n ) . ')' : '' ),
+						array_keys( (array) ( $jt_ctx->reports['reasons'] ?? array( $reason_key => 1 ) ) ),
+						(array) ( $jt_ctx->reports['reasons'] ?? array( $reason_key => 1 ) )
+					)
+				);
 				$queue_url    = \Jetonomy\route_url( 'space-moderation', $space->slug );
 				?>
 				<li class="jt-mod-flag-row">
@@ -535,11 +579,19 @@ $crumbs = array(
 						</span>
 					</div>
 					<?php if ( ! $is_reply && ! empty( $obj->title ) ) : ?>
-						<div class="jt-mod-flag-title"><?php echo esc_html( (string) $obj->title ); ?></div>
+						<div class="jt-mod-flag-title" dir="auto"><?php echo esc_html( (string) $obj->title ); ?></div>
 					<?php endif; ?>
-					<div class="jt-mod-flag-excerpt">
+					<div class="jt-mod-flag-excerpt" dir="auto">
 						<?php echo esc_html( $excerpt ); ?>
 					</div>
+					<?php if ( ! empty( $jt_ctx->removed ) ) : ?>
+						<p class="jt-mod-flag-removed">
+							<?php
+							/* translators: %s: singular topic or reply label, lowercase. */
+							echo esc_html( sprintf( __( 'This %s was already removed. Dismiss the report to clear it.', 'jetonomy' ), \Jetonomy\jetonomy_label( $is_reply ? 'reply' : 'topic', false, true ) ) );
+							?>
+						</p>
+					<?php endif; ?>
 					<div class="jt-mod-flag-foot">
 						<span class="jt-mod-flag-reporter">
 							<?php

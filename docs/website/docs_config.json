@@ -89,6 +89,11 @@
       "name": "FAQ",
       "folder": "faq",
       "description": "Quick answers to the most common questions about Jetonomy and Jetonomy Pro, grouped by topic."
+    },
+    {
+      "name": "What's New",
+      "folder": "whats-new",
+      "description": "What changed in each Jetonomy release, newest first."
     }
   ]
 }
