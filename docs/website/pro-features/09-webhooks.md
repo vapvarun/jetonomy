@@ -1,6 +1,6 @@
 # Webhooks
 
-Automatically send community events to any external URL - connect Jetonomy to Slack, Zapier, your CRM, or any custom pipeline.
+Automatically send community events to any external URL - connect Jetonomy to Zapier, n8n, your CRM, or any custom pipeline.
 
 ![Webhooks settings with one registered webhook and its events, above the Add Webhook form](../images/pro-webhooks.webp)
 
@@ -61,7 +61,7 @@ Subscribe to any combination of these events:
 | `flag.resolved` | A flag is resolved by a moderator |
 | `moderation.action` | A moderator approves, spams, or trashes content |
 
-You can create multiple webhooks pointing to different URLs with different event subsets - for example, one webhook for Slack (post events only) and one for your CRM (member events only).
+You can create multiple webhooks pointing to different URLs with different event subsets - for example, one webhook for a Zapier workflow (post events only) and one for your CRM (member events only).
 
 ## Payload Format
 
@@ -128,7 +128,7 @@ Failed deliveries are retried up to three times with exponential backoff (5 min,
 
 ## Use Case Examples
 
-- **Slack notifications** - Post a message to a Slack channel whenever a new topic is created in your community.
+- **Slack notifications** - Point the webhook at a Zapier or n8n workflow that posts to a Slack channel whenever a new topic is created. Slack's own incoming-webhook URL expects Slack's message format, so it will not accept the Jetonomy payload directly.
 - **CRM sync** - Push `member.joined` events to HubSpot or Salesforce to trigger a welcome sequence.
 - **Zapier** - Connect any event to thousands of apps via a Zapier webhook trigger - no custom code needed.
 - **Analytics pipeline** - Stream all events to a data warehouse like BigQuery or Amplitude for long-term retention and custom analysis.

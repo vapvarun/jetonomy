@@ -22,11 +22,11 @@
 <p align="center">
   <a href="https://app.instawp.io/launch?s=jetonomy&d=v2"><img src="https://img.shields.io/badge/Try%20Live%20Demo-Launch%20Sandbox-FF6B35?style=for-the-badge" alt="Try Live Demo"></a>
   &nbsp;
-  <a href="https://store.wbcomdesigns.com/jetonomy/"><img src="https://img.shields.io/badge/Download-Free-brightgreen?style=for-the-badge&logo=wordpress&logoColor=white" alt="Download Free"></a>
+  <a href="https://wbcomdesigns.com/downloads/jetonomy/"><img src="https://img.shields.io/badge/Download-Free-brightgreen?style=for-the-badge&logo=wordpress&logoColor=white" alt="Download Free"></a>
   &nbsp;
-  <a href="https://store.wbcomdesigns.com/jetonomy-pro/"><img src="https://img.shields.io/badge/Pro-17%20Extensions-7C3AED?style=for-the-badge" alt="Jetonomy Pro - 17 Extensions"></a>
+  <a href="https://wbcomdesigns.com/downloads/jetonomy-pro/"><img src="https://img.shields.io/badge/Pro-17%20Extensions-7C3AED?style=for-the-badge" alt="Jetonomy Pro - 17 Extensions"></a>
   &nbsp;
-  <a href="https://store.wbcomdesigns.com/jetonomy/docs/"><img src="https://img.shields.io/badge/Docs-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
+  <a href="https://jetonomy.org/docs/"><img src="https://img.shields.io/badge/Docs-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
 </p>
 
 ---
@@ -36,6 +36,10 @@
 Jetonomy adds a fast, self-moderating discussion platform to any WordPress site. It stores forum data in dedicated database tables (not `wp_posts`), uses trust levels to automate moderation, and adapts to your theme via CSS custom properties.
 
 **Free forever.** No feature locks, no nag screens, no premium wall on core features.
+
+## Who it is for
+
+Site owners who want forums, Q&A, idea boards or a social feed inside their own WordPress site: membership sites, course communities, product support forums and BuddyPress networks, including sites moving off bbPress or wpForo.
 
 ## Features
 
@@ -112,7 +116,7 @@ Jetonomy adds a fast, self-moderating discussion platform to any WordPress site.
 
 ## Installation
 
-1. Download the latest release from [Releases](https://github.com/vapvarun/jetonomy/releases)
+1. Download the plugin from [wbcomdesigns.com](https://wbcomdesigns.com/downloads/jetonomy/) or the latest [GitHub release](https://github.com/vapvarun/jetonomy/releases)
 2. Upload via **WordPress > Plugins > Add New > Upload Plugin**
 3. Activate the plugin
 4. Run the setup wizard to create your first spaces
@@ -140,7 +144,7 @@ Then run `composer require wbcomdesigns/jetonomy` and activate it with `wp plugi
 
 ## Jetonomy Pro
 
-For growing communities that need more, [Jetonomy Pro](https://store.wbcomdesigns.com/jetonomy-pro/) adds 17 modular extensions:
+For growing communities that need more, [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/) adds 17 modular extensions:
 
 | Extension | What it does |
 |-----------|-------------|
@@ -154,7 +158,7 @@ For growing communities that need more, [Jetonomy Pro](https://store.wbcomdesign
 | Analytics Dashboard | Engagement graphs, top spaces, CSV export |
 | Email Digests | Daily/weekly activity summaries |
 | Web Push | Browser notifications |
-| Webhooks | HTTP POST to Zapier, Slack, n8n |
+| Webhooks | Signed JSON POST to any URL, such as Zapier, n8n or your own endpoint |
 | Reply by Email | Reply to notifications without logging in |
 | Custom Badges | Auto-award badges based on activity |
 | Custom Fields | Profile and post custom fields |
@@ -164,16 +168,18 @@ For growing communities that need more, [Jetonomy Pro](https://store.wbcomdesign
 
 Each extension is independent -- enable only what you need. Disabled extensions load zero code.
 
-**Pricing:** Personal $69/yr | Developer $99/yr | Agency $199/yr | [Lifetime plans available](https://store.wbcomdesigns.com/jetonomy-pro/)
+Pricing, including lifetime plans: [jetonomy.org/pricing](https://jetonomy.org/pricing/)
 
 ## Documentation
 
-Full documentation is available at [store.wbcomdesigns.com/jetonomy/docs/](https://store.wbcomdesigns.com/jetonomy/docs/)
+- Docs: [jetonomy.org/docs](https://jetonomy.org/docs/) and [docs.wbcomdesigns.com/products/jetonomy](https://docs.wbcomdesigns.com/products/jetonomy/)
+- Release notes: [Free](https://wbcomdesigns.com/release-notes/jetonomy/) and [Pro](https://wbcomdesigns.com/release-notes/jetonomy-pro/)
+- Product site: [jetonomy.org](https://jetonomy.org/)
 
 ## Support
 
-- [Documentation](https://store.wbcomdesigns.com/jetonomy/docs/)
-- [Support](https://wbcomdesigns.com/support/)
+- [Documentation](https://jetonomy.org/docs/)
+- [Support ticket](https://wbcomdesigns.com/support/#submit-ticket-section)
 - [Feature Requests & Bug Reports](https://github.com/vapvarun/jetonomy/issues)
 
 ## Quality gates
@@ -199,11 +205,11 @@ caught bugs the host run reported green.
 
 Three further gates run outside CI, before a tag:
 
-- `php bin/audit-rest-routes.php includes/` — every mutation route must go through
+- `php bin/audit-rest-routes.php includes/` - every mutation route must go through
   `REST_Auth`. Run it for `../jetonomy-pro/includes/` too.
-- `wp jetonomy qa-actions` — live-stack smoke across REST, model, Pro and journey
+- `wp jetonomy qa-actions` - live-stack smoke across REST, model, Pro and journey
   layers.
-- `bin/build-release.sh` — the only supported way to build a release zip. It
+- `bin/build-release.sh` - the only supported way to build a release zip. It
   regenerates assets, triangulates the version across the header, the constant and
   `readme.txt`, boots the plugin in a WP stub to catch load-time fatals, and refuses
   to package if the browser-smoke report does not match the version being built.
