@@ -300,7 +300,7 @@ class Notifications_Controller extends Base_Controller {
 
 		$count    = Notification::unread_count( $user_id );
 		$response = new WP_REST_Response( array( 'count' => $count ), 200 );
-		$response->header( 'Cache-Control', 'max-age=15' );
+		$response->header( 'Cache-Control', 'private, max-age=15' );
 
 		return $response;
 	}
