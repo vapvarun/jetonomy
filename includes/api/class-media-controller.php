@@ -209,7 +209,12 @@ class Media_Controller extends Base_Controller {
 		// Mark this as a Jetonomy community upload so it can be kept out of the
 		// admin Media Library by default (member uploads should not drown the
 		// site owner's own media). Optional space context if the caller sends it.
-		\Jetonomy\Media_Library::tag_upload( (int) $attachment_id, (int) $request->get_param( 'space_id' ) );
+		// Only a space the uploader may post in counts as context; anything else is stored as none.
+		$space_id = (int) $request->get_param( 'space_id' );
+		if ( $space_id > 0 && ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', $space_id ) ) {
+			$space_id = 0;
+		}
+		\Jetonomy\Media_Library::tag_upload( (int) $attachment_id, $space_id );
 
 		$meta = wp_get_attachment_metadata( $attachment_id );
 
