@@ -177,20 +177,22 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 	<form id="jt-new-post-form" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="<?php echo esc_attr( apply_filters( 'jetonomy_new_post_submit_action', 'actions.submitNewPost' ) ); ?>"
-			data-wp-context='
+			data-wp-context="
 			<?php
-			echo wp_json_encode(
-				array(
-					'spaceId'       => (int) $space->id,
-					'spaceSlug'     => $space->slug,
-					'spaceType'     => (string) ( $space->type ?? '' ),
-					'postType'      => $post_type,
-					'postStatus'    => 'publish',
-					'showScheduler' => false,
+			echo esc_attr(
+				(string) wp_json_encode(
+					array(
+						'spaceId'       => (int) $space->id,
+						'spaceSlug'     => $space->slug,
+						'spaceType'     => (string) ( $space->type ?? '' ),
+						'postType'      => $post_type,
+						'postStatus'    => 'publish',
+						'showScheduler' => false,
+					)
 				)
 			);
 			?>
-			'>
+			">
 		<input type="hidden" name="space_id" value="<?php echo (int) $space->id; ?>">
 		<input type="hidden" name="type" value="<?php echo esc_attr( $post_type ); ?>">
 

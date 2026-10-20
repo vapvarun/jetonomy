@@ -27,11 +27,12 @@ defined( 'ABSPATH' ) || exit;
 /** @var mixed $space */
 /** @var mixed $postable */
 /** @var mixed $types */
-$_mode         = ( isset( $mode ) && in_array( $mode, array( 'fixed', 'picker' ), true ) ) ? $mode : 'picker';
-$_space        = isset( $space ) && is_object( $space ) ? $space : null;
-$_space_id     = $_space ? (int) $_space->id : 0;
-$_postable     = ( isset( $postable ) && is_array( $postable ) ) ? $postable : array();
-$_types_raw    = ( isset( $types ) && is_array( $types ) ) ? $types : array();
+$_mode     = ( isset( $mode ) && in_array( $mode, array( 'fixed', 'picker' ), true ) ) ? $mode : 'picker';
+$_space    = isset( $space ) && is_object( $space ) ? $space : null;
+$_space_id = $_space ? (int) $_space->id : 0;
+$_postable = ( isset( $postable ) && is_array( $postable ) ) ? $postable : array();
+// Shortcode input is author-controlled: keep only real post types.
+$_types_raw    = ( isset( $types ) && is_array( $types ) ) ? array_values( array_intersect( $types, array( 'topic', 'question', 'discussion', 'announcement', 'idea', 'status' ) ) ) : array();
 $_types        = ! empty( $_types_raw ) ? $_types_raw : array( 'topic', 'question', 'idea' );
 $_default_type = $_types[0];
 
@@ -142,7 +143,7 @@ $_partial_space = $_space ? $_space : (object) array(
 		?>
 		data-space-id="<?php echo (int) $_space_id; ?>"<?php endif; ?>
 	data-wp-interactive="jetonomy"
-	data-wp-context='<?php echo wp_json_encode( $_context ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode already returns a safe JSON string for attribute context. ?>'>
+	data-wp-context="<?php echo esc_attr( (string) wp_json_encode( $_context ) ); ?>">
 
 	<?php if ( 'picker' === $_mode ) : ?>
 		<label class="jt-compose-topic-field">

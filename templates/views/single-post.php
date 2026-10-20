@@ -501,7 +501,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						?>
 						<div class="jt-idea-status-setter"
 							data-wp-interactive="jetonomy"
-							data-wp-context='<?php echo wp_json_encode( array( 'postId' => (int) $post->id ) ); ?>'
+							data-wp-context="<?php echo esc_attr( (string) wp_json_encode( array( 'postId' => (int) $post->id ) ) ); ?>"
 							role="group"
 							aria-label="<?php esc_attr_e( 'Set roadmap status', 'jetonomy' ); ?>">
 							<span class="jt-idea-status-setter-label"><?php esc_html_e( 'Roadmap status', 'jetonomy' ); ?></span>
@@ -891,20 +891,22 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<div class="jt-replies-section" id="replies"
 				data-wp-interactive="jetonomy"
 				data-wp-init--polling="callbacks.initReplyPolling"
-				data-wp-context='
+				data-wp-context="
 				<?php
-				echo wp_json_encode(
-					array(
-						'postId'        => (int) $post->id,
-						'totalReplies'  => $total_replies,
-						'topLevelCount' => $top_level_count,
-						'sort'          => $reply_sort,
-						'hasMore'       => false,
-						'loadingMore'   => false,
+				echo esc_attr(
+					(string) wp_json_encode(
+						array(
+							'postId'        => (int) $post->id,
+							'totalReplies'  => $total_replies,
+							'topLevelCount' => $top_level_count,
+							'sort'          => $reply_sort,
+							'hasMore'       => false,
+							'loadingMore'   => false,
+						)
 					)
 				);
 				?>
-				'>
+				">
 
 				<div class="jt-replies-head">
 					<h2>

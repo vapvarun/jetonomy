@@ -33,7 +33,7 @@ $jt_spaces_by_cat = $spaces_by_cat ?? array();
 	<ul class="jt-cat-chips" aria-label="<?php echo esc_attr( sprintf( __( 'Sub-%s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?>">
 		<?php foreach ( $jt_children as $jt_child ) : ?>
 			<?php $jt_count = count( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? array() ); ?>
-			<li class="jt-cat-chip-group" data-wp-context='<?php echo wp_json_encode( array( 'subId' => (int) $jt_child->id ) ); ?>'>
+			<li class="jt-cat-chip-group" data-wp-context="<?php echo esc_attr( (string) wp_json_encode( array( 'subId' => (int) $jt_child->id ) ) ); ?>">
 				<a class="jt-cat-chip" href="<?php echo esc_url( \Jetonomy\route_url( 'category', $jt_child->slug ) ); ?>">
 					<?php if ( ! empty( $jt_child->icon ) ) : ?>
 						<?php jetonomy_render_space_icon( (string) $jt_child->icon, 16, 'jt-cat-chip-icon' ); ?>
@@ -55,7 +55,7 @@ $jt_spaces_by_cat = $spaces_by_cat ?? array();
 	</ul>
 	<?php foreach ( $jt_children as $jt_child ) : ?>
 		<div class="jt-cat-sub-panel" id="jt-cat-sub-<?php echo (int) $jt_child->id; ?>" hidden
-			data-wp-context='<?php echo wp_json_encode( array( 'subId' => (int) $jt_child->id ) ); ?>'
+			data-wp-context="<?php echo esc_attr( (string) wp_json_encode( array( 'subId' => (int) $jt_child->id ) ) ); ?>"
 			data-wp-bind--hidden="!state.isSubOpen">
 			<h3 class="jt-cat-sub-title"><?php echo esc_html( $jt_child->name ); ?></h3>
 			<?php jetonomy_render_space_grid( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? array(), \Jetonomy\base_url(), \Jetonomy\route_url( 'category', $jt_child->slug ) ); ?>
