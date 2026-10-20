@@ -121,7 +121,8 @@ function jetonomyReport( message, labels, submit ) {
 		okBtn.type = 'button';
 		okBtn.className = 'jt-btn jt-btn-fill';
 		okBtn.textContent = i18n.reportSubmit || 'Report';
-		const close = ( value ) => { overlay.remove(); resolve( value ); };
+		let release = () => {};
+		const close = ( value ) => { release(); overlay.remove(); resolve( value ); };
 		cancelBtn.addEventListener( 'click', () => close( null ) );
 		okBtn.addEventListener( 'click', () => {
 			const picked = list.querySelector( 'input:checked' );
@@ -146,8 +147,8 @@ function jetonomyReport( message, labels, submit ) {
 		box.appendChild( actions );
 		overlay.appendChild( box );
 		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) close( null ); } );
-		overlay.addEventListener( 'keydown', ( e ) => { if ( 'Escape' === e.key ) close( null ); } );
 		document.body.appendChild( overlay );
+		if ( 'function' === typeof window.jetonomyTrapDialog ) release = window.jetonomyTrapDialog( overlay, () => close( null ) );
 		const first = list.querySelector( 'input' );
 		if ( first ) first.focus();
 	} );
