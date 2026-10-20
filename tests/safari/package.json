@@ -1,0 +1,18 @@
+{
+  "name": "jetonomy-safari-checks",
+  "version": "1.0.0",
+  "description": "Real Mobile Safari checks (iOS Simulator + Appium) for Jetonomy",
+  "main": "checks.mjs",
+  "scripts": {
+    "driver": "APPIUM_HOME=$PWD/.appium appium driver install xcuitest",
+    "appium": "APPIUM_HOME=$PWD/.appium appium --port 4723",
+    "test": "node checks.mjs"
+  },
+  "license": "GPL-2.0-or-later",
+  "dependencies": {
+    "appium": "^3.8.0",
+    "webdriverio": "^10.1.0"
+  },
+  "private": true,
+  "type": "module"
+}
