@@ -327,7 +327,7 @@ class Blocks {
 				'render_callback' => array( __CLASS__, 'render_login' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Jetonomy Login', 'jetonomy' ),
-				'description'     => __( 'Quick login and register form for the Jetonomy sidebar. Renders empty for logged-in viewers.', 'jetonomy' ),
+				'description'     => __( 'Login and register form. Signed-in viewers see a greeting with links to the community, their profile and log out; in the sidebar it renders empty.', 'jetonomy' ),
 				'icon'            => 'admin-users',
 				'keywords'        => array( 'login', 'register', 'signin', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',

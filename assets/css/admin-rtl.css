@@ -4359,3 +4359,8 @@ tr.jetonomy-moderated td {
 	font-weight: 400;
 	margin: 4px 0 0;
 }
+
+/* Moderation > Banned Users: keep the action on one line in the narrow Actions column. */
+.jetonomy-unban-user {
+	white-space: nowrap;
+}

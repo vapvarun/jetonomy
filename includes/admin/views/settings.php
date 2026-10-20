@@ -489,7 +489,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Trust Level Thresholds', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Define what users must achieve to advance through trust levels. Higher levels unlock posting privileges and reduce moderation scrutiny.', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( "Level 3's moderation powers only apply to roles you gave those capabilities without Moderate community. Moderators (Editor by default) are not held to trust levels.", 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( "Level 3's moderation powers only apply to roles you gave those capabilities without Moderate (queue, flags, bans). Moderators (Editor by default) are not held to trust levels.", 'jetonomy' ); ?></p>
 				</div>
 				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
@@ -691,7 +691,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				'idea_planned'    => __( 'Idea moved to Planned/Shipped', 'jetonomy' ),
 				'flag_validated'  => __( 'Flag confirmed (reporter)', 'jetonomy' ),
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-				'post_reported'   => sprintf( __( '%s reported', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+				'post_reported'   => __( 'Content reported', 'jetonomy' ),
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				'post_removed'    => sprintf( __( '%s removed by moderator', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			);

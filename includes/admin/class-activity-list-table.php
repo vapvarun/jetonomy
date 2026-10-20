@@ -526,8 +526,7 @@ class Activity_List_Table extends \WP_List_Table {
 			'reply_accepted'  => sprintf( __( 'Their %s was accepted as the answer', 'jetonomy' ), $reply ),
 			'idea_planned'    => __( 'Their idea moved to Planned or Shipped', 'jetonomy' ),
 			'flag_validated'  => __( 'A report they filed was upheld', 'jetonomy' ),
-			/* translators: %s: topic label, lowercase (e.g. "topic"). */
-			'post_reported'   => sprintf( __( 'Their %s was reported', 'jetonomy' ), $topic ),
+			'post_reported'   => __( 'Their content was reported', 'jetonomy' ), // Logged for a topic or a reply alike.
 			/* translators: %s: topic label, lowercase (e.g. "topic"). */
 			'post_removed'    => sprintf( __( 'Their %s was removed by a moderator', 'jetonomy' ), $topic ),
 			'badge_earned'    => __( 'They earned a badge', 'jetonomy' ),

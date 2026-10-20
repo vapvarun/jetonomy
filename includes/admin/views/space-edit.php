@@ -658,7 +658,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<label>
 								<input type="checkbox" id="ss-require-approval" value="1" <?php checked( ! empty( $space_settings['require_approval'] ) ); ?>>
-								<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'New %s require moderator approval before publishing', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?>
+								<?php /* translators: 1: topic label, plural lowercase. 2: reply label, plural lowercase. */ echo esc_html( sprintf( __( 'New %1$s and %2$s require moderator approval before publishing', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 							</label>
 						</td>
 					</tr>
