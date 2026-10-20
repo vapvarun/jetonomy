@@ -28,7 +28,7 @@
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "1.6.0 mobile API, extended 1.7.1 for anonymous-posting + attachments app parity + terms/privacy EULA screen (app-config-controller delta 2026-07-13). Public read (matches /push/vapid-key). Returns app_name (Community Title, falls back to site name), accent_color, logo_url, login_bg_url, terms_url/privacy_url (Settings -> General -> Community Setup; privacy_url falls back to get_privacy_policy_url() when unset; always strings, '' if not configured), pro_active, app_enabled (bool, default false in free -- b46c84f Pro-only mobile-app gate; jetonomy-pro flips it true via jetonomy_app_config only with a valid license, app refuses sign-in otherwise, fail closed), features{messaging,reactions,polls,badges,custom_fields,web_push,native_push,anonymous,attachments,blocking} (anonymous/attachments are ordinary Pro extension IDs; blocking is a FREE capability hardcoded true, no admin toggle -- BlockedUser model + /users/me/blocks), attachments{enabled,max_files,max_size_bytes,allowed_types,allowed_mimes} object (always emitted, enabled:false + zeroed limits when off, sourced from the SAME Extensions\\Attachments\\Settings::get() the web composer reads -- Pro listener in class-jetonomy-pro.php::gate_app_on_license()/attachments_config()). When the Pro license is invalid, gate_app_on_license() forces every Pro-derived features.* flag to false (blocking excluded) as belt-and-braces consistency. Wrapped in the jetonomy_app_config filter."
+        "audit_notes": "1.6.0 mobile API, extended 1.7.1 for anonymous-posting + attachments app parity + terms/privacy EULA screen (app-config-controller delta 2026-07-13). Public read (matches /push/vapid-key). Returns app_name (Community Title, falls back to site name), accent_color, logo_url, login_bg_url, terms_url/privacy_url/support_url (Settings -> General -> Community Setup; 2.0.4 added support_url; privacy_url falls back to get_privacy_policy_url() when unset; always strings, '' if not configured), pro_active, app_enabled (bool, default false in free -- b46c84f Pro-only mobile-app gate; jetonomy-pro flips it true via jetonomy_app_config only with a valid license, app refuses sign-in otherwise, fail closed), features{messaging,reactions,polls,badges,custom_fields,web_push,native_push,anonymous,attachments,blocking} (anonymous/attachments are ordinary Pro extension IDs; blocking is a FREE capability hardcoded true, no admin toggle -- BlockedUser model + /users/me/blocks), attachments{enabled,max_files,max_size_bytes,allowed_types,allowed_mimes} object (always emitted, enabled:false + zeroed limits when off, sourced from the SAME Extensions\\Attachments\\Settings::get() the web composer reads -- Pro listener in class-jetonomy-pro.php::gate_app_on_license()/attachments_config()). When the Pro license is invalid, gate_app_on_license() forces every Pro-derived features.* flag to false (blocking excluded) as belt-and-braces consistency. Wrapped in the jetonomy_app_config filter."
       },
       {
         "route": "/feed",
@@ -433,7 +433,7 @@
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Get current user"
+        "audit_notes": "Get current user. 2.0.4 added display_name_choices (the names PATCH display_name accepts) so the mobile app offers a picker instead of free text."
       },
       {
         "route": "/users/me",
@@ -442,7 +442,7 @@
         ],
         "handler": "Users_Controller::update_current_user",
         "permission": "REST_Auth::auth_mutation",
-        "purpose": "Update own profile (display_name, bio, avatar_url, settings, notification_preferences)",
+        "purpose": "Update own profile (display_name, bio, avatar_url, email_opt_out, notification_preferences)",
         "auth": "logged_in",
         "capability": null,
         "ownership_check": "self-only (require_auth)",
