@@ -662,7 +662,7 @@ class CLI {
 			$record( 'pro_extensions', 'Jetonomy Pro is active', true, 'v' . JETONOMY_PRO_VERSION );
 
 			$ext_dir        = defined( 'JETONOMY_PRO_DIR' ) ? JETONOMY_PRO_DIR . 'includes/extensions/' : '';
-			$enabled_exts   = get_option( 'jetonomy_pro_extensions', array() );
+			$enabled_exts   = (array) get_option( 'jetonomy_pro_extensions', array() );
 			$discovered_ids = array();
 
 			if ( $ext_dir && is_dir( $ext_dir ) ) {
