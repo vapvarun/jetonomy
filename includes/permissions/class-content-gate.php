@@ -31,6 +31,27 @@ use Jetonomy\Models\Space;
 class Content_Gate {
 
 	/**
+	 * Refuse contact with someone who blocked this user: replying to or voting on
+	 * their content. Staff are exempt, since moderating means acting on any content.
+	 * The wording is neutral on purpose, so it does not announce the block.
+	 *
+	 * @param int $user_id   Actor.
+	 * @param int $author_id Author of the content being answered or voted on.
+	 * @param int $space_id  Space of that content.
+	 * @return \WP_Error|null
+	 */
+	private static function blocked_contact( int $user_id, int $author_id, int $space_id ): ?\WP_Error {
+		if ( $author_id <= 0 || $author_id === $user_id
+			|| ! \Jetonomy\Models\BlockedUser::is_blocked( $author_id, $user_id )
+			|| Permission_Engine::can( $user_id, 'moderate', $space_id ) ) {
+			return null;
+		}
+		/* translators: %s: the singular Member label, lowercase. */
+		$message = sprintf( __( 'You cannot interact with this %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) );
+		return new \WP_Error( 'jetonomy_cannot_interact', $message, array( 'status' => 403 ) );
+	}
+
+	/**
 	 * Whether this user may add a reply to this post right now.
 	 *
 	 * Error codes match the ones REST_Replies_Controller already returned, so
@@ -80,6 +101,14 @@ class Content_Gate {
 		$open = self::space_accepts_content( $space_id );
 		if ( is_wp_error( $open ) ) {
 			return $open;
+		}
+
+		// The topic's author, and the reply being answered in a thread.
+		$parent  = $parent_id > 0 ? Reply::find( $parent_id ) : null;
+		$blocked = self::blocked_contact( $user_id, (int) ( $post->author_id ?? 0 ), $space_id )
+			?? ( $parent ? self::blocked_contact( $user_id, (int) $parent->author_id, $space_id ) : null );
+		if ( $blocked ) {
+			return $blocked;
 		}
 
 		/*
@@ -164,6 +193,11 @@ class Content_Gate {
 
 		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
 			return new \WP_Error( 'jetonomy_validation', __( 'Vote value must be 1 or -1.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
+		$blocked = self::blocked_contact( $user_id, (int) ( $object->author_id ?? 0 ), $space_id );
+		if ( $blocked ) {
+			return $blocked;
 		}
 
 		// Your own vote never counts (owner policy), up or down. Vote::cast()

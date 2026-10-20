@@ -1163,6 +1163,7 @@ class REST_Tests {
 		}
 
 		// J1: Block the subscriber.
+		$blocker = get_current_user_id();
 		$r    = $this->rest( 'POST', '/users/me/blocks', array( 'user_id' => $this->test_user_id ) );
 		$data = $r->get_data();
 		$ok   = in_array( $r->get_status(), array( 200, 201 ), true );
@@ -1191,13 +1192,13 @@ class REST_Tests {
 		$this->check( 'J4: blocking a moderator -> 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 		// J5: Unblock (also restores state - no cleanup entry needed).
-		$r    = $this->rest( 'DELETE', "/users/me/blocks/{$this->test_user_id}" );
+		$r    = $this->rest( 'DELETE', "/users/me/blocks/{$this->test_user_id}", array(), $blocker );
 		$data = $r->get_data();
 		$this->check( 'J5: DELETE /users/me/blocks/{id} -> 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'J5: response confirms deletion', ! empty( $data['deleted'] ), 'deleted flag not set' );
 
 		// J6: Unblock is idempotent - a repeat DELETE is a 200 no-op, not a 404.
-		$r = $this->rest( 'DELETE', "/users/me/blocks/{$this->test_user_id}" );
+		$r = $this->rest( 'DELETE', "/users/me/blocks/{$this->test_user_id}", array(), $blocker );
 		$this->check( 'J6: repeat DELETE -> 200 (idempotent)', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 	}
 
@@ -1247,7 +1248,7 @@ class REST_Tests {
 			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/vote', array(
 				'value' => 1,
 			), $this->test_user_id );
-			$this->check( 'H37: Subscriber votes on post → 200', $r->get_status() === 200 );
+			$this->check( 'H37: Subscriber votes on post → 200', $r->get_status() === 200, "HTTP {$r->get_status()} " . wp_json_encode( $r->get_data() ) );
 			// Undo.
 			$this->rest( 'DELETE', '/posts/' . $this->post_id . '/vote', array(), $this->test_user_id );
 		}
