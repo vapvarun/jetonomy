@@ -3,7 +3,9 @@
 // and a Local site with WP-CLI. Fixtures are created and removed here (QA-RFT prefix).
 import { remote } from 'webdriverio';
 import { execSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
+
+mkdirSync('out', { recursive: true });
 
 const SITE = process.env.SITE_PATH || '/Users/vapvarun/Local Sites/forums/app/public';
 const BASE = process.env.SITE_URL || 'http://forums.local';
