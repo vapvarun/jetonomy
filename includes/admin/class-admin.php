@@ -1741,16 +1741,18 @@ class Admin {
 			}
 			$user       = $row['user_id'] ? get_userdata( (int) $row['user_id'] ) : null;
 			$user_login = $hidden ? __( 'Anonymous', 'jetonomy' ) : ( $user ? $user->user_login : '' );
+			// Spreadsheets run a cell that starts with = + - @ (or tab/CR) as a formula.
+			$safe = static fn( string $cell ): string => preg_match( '/^[=+\-@\t\r]/', $cell ) ? "'" . $cell : $cell;
 			fputcsv(
 				$out,
 				array(
 					(string) $row['id'],
 					(string) $row['user_id'],
-					$user_login,
-					(string) $row['action'],
-					(string) $row['object_type'],
+					$safe( (string) $user_login ),
+					$safe( (string) $row['action'] ),
+					$safe( (string) $row['object_type'] ),
 					(string) $row['object_id'],
-					(string) ( $row['metadata'] ?? '' ),
+					$safe( (string) ( $row['metadata'] ?? '' ) ),
 					(string) $row['created_at'],
 				)
 			);

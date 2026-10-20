@@ -1984,6 +1984,7 @@ const { state, actions } = store( 'jetonomy', {
                 else notifMarkRowRead( row );
             } );
             notifSetTabCounts( res.data?.counts );
+            document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ).forEach( ( cb ) => { cb.checked = false; } );
             const selectAll = document.querySelector( '[data-jt-notif-selectall]' );
             if ( selectAll ) selectAll.checked = false;
             notifUpdateBulkbar();

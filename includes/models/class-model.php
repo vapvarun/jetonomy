@@ -133,6 +133,7 @@ abstract class Model {
 			$clauses = array();
 			$values  = array();
 			foreach ( $where as $col => $val ) {
+				$col       = preg_replace( '/\W/', '', (string) $col ); // Identifier chars only: a column name is never a placeholder.
 				$clauses[] = "`{$col}` = %s";
 				$values[]  = $val;
 			}
