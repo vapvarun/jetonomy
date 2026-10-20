@@ -877,6 +877,18 @@ function notifSetTabCounts( counts ) {
     window.jtSetUnreadBadges?.( counts.unread );
 }
 
+/**
+ * Re-render the notifications page from the server (same URL, so the filter and
+ * page stay) when the unread count changed under it. header.js calls it from
+ * its refocus refresh; the router swaps the region and re-hydrates it.
+ */
+window.jtReloadNotifList = async function () {
+    if ( ! document.querySelector( '[data-jt-notif-list], .jt-notif-tabs' ) ) return;
+    const router = await import( '@wordpress/interactivity-router' );
+    await router.actions.navigate( window.location.href, { force: true, replace: true } );
+    document.dispatchEvent( new CustomEvent( 'jetonomy:navigated', { detail: { href: window.location.href } } ) );
+};
+
 /** Refresh the notifications bulk toolbar count + visibility from current checks. */
 function notifUpdateBulkbar() {
     const bulkbar = document.querySelector( '[data-jt-notif-bulkbar]' );

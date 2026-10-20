@@ -130,12 +130,17 @@
 	window.jtRefreshUnreadCount = function () {
 		if (!D.isLoggedIn || countInFlight || !document.querySelector('[data-jt-unread-host]')) { return; }
 		countInFlight = true;
+		// On the notifications page the Unread tab shows the count the list was rendered with.
+		var tabCount = document.querySelector('[data-jt-notif-tab="unread"] .jt-notif-tab__count');
+		var shown = tabCount ? (parseInt(tabCount.textContent.replace(/\D/g, ''), 10) || 0) : 0;
 		// The route allows a 15s browser cache; a fresh read must skip it.
 		window.jetonomyRest.restFetch('/notifications/unread-count?fresh=' + Date.now()).then(function (res) {
 			countInFlight = false;
 			if (res.ok && res.data && 'number' === typeof res.data.count) {
 				window.jtSetUnreadBadges(res.data.count);
 				notifLoaded = false; // The dropdown reloads its list on next open.
+				// A changed count means the rows on screen are stale too: re-render them.
+				if (res.data.count !== shown && window.jtReloadNotifList) { window.jtReloadNotifList(); }
 			}
 		});
 	};
