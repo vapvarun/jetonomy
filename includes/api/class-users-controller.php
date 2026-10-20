@@ -353,22 +353,24 @@ class Users_Controller extends Base_Controller {
 			array_merge(
 				$this->prepare_profile( $profile ),
 				array(
-					'user_login'          => $wp_user->user_login,
-					'email'               => $wp_user->user_email,
-					'display_name'        => \Jetonomy\user_display_name( $wp_user ),
-					'trust_level_name'    => Trust_Levels::name( $trust_level ),
-					'trust_level_label'   => Trust_Levels::label( $trust_level ),
-					'spaces_joined_count' => $spaces_count,
-					'settings'            => UserProfile::get_settings( $user_id ),
-					'email_opt_out'       => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
+					'user_login'           => $wp_user->user_login,
+					'email'                => $wp_user->user_email,
+					'display_name'         => \Jetonomy\user_display_name( $wp_user ),
+					// The names PATCH display_name accepts, so a client can offer a picker.
+					'display_name_choices' => array_values( \Jetonomy\display_name_choices( $wp_user ) ),
+					'trust_level_name'     => Trust_Levels::name( $trust_level ),
+					'trust_level_label'    => Trust_Levels::label( $trust_level ),
+					'spaces_joined_count'  => $spaces_count,
+					'settings'             => UserProfile::get_settings( $user_id ),
+					'email_opt_out'        => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
 					// What this member may actually do. A headless client cannot
 					// call user_can(), so without this the app has no way to know
 					// an administrator IS an administrator — every moderation and
 					// admin surface stays hidden even from the site owner. The
 					// server remains the real gate (each admin route still checks
 					// the cap); this only tells the client what to render.
-					'is_admin'            => user_can( $user_id, 'manage_options' ),
-					'capabilities'        => \Jetonomy\Permissions\Capabilities::map_for_user( $user_id ),
+					'is_admin'             => user_can( $user_id, 'manage_options' ),
+					'capabilities'         => \Jetonomy\Permissions\Capabilities::map_for_user( $user_id ),
 				)
 			),
 			200

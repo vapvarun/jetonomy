@@ -808,6 +808,7 @@ class Admin {
 			// Mobile app EULA screen (Apple Guideline 1.2) reads these via /app/config.
 			$clean['terms_url']   = esc_url_raw( $input['terms_url'] ?? '' );
 			$clean['privacy_url'] = esc_url_raw( $input['privacy_url'] ?? '' );
+			$clean['support_url'] = esc_url_raw( $input['support_url'] ?? '' );
 			// Product-noun label overrides (singular / plural). Empty = keep the
 			// default. One loop over every renamable noun so the save side cannot
 			// drift from the Terminology settings block that renders them.

@@ -75,6 +75,7 @@ class App_Config_Controller extends Base_Controller {
 			// ('' = not configured) so the app can do a simple truthiness check.
 			'terms_url'    => $this->terms_url( $settings ),
 			'privacy_url'  => $this->privacy_url( $settings ),
+			'support_url'  => esc_url_raw( (string) ( $settings['support_url'] ?? '' ) ),
 			// Dark mode follows the device/OS theme in the app — phantom dark_mode_default removed (no admin producer).
 			'pro_active'   => $pro_active,
 			// Pro-only gate. The Jetonomy mobile app is a Pro benefit, so this

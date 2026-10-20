@@ -178,6 +178,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="support_url"><?php esc_html_e( 'Support URL', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="url" id="support_url" name="jetonomy_settings[support_url]" value="<?php echo esc_attr( $settings['support_url'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/support/">
+							<p class="description"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Where %s can reach you for help. Shown in the mobile app settings. Leave empty to hide the link.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Terminology', 'jetonomy' ); ?></th>
 						<td>
 							<?php
