@@ -2865,7 +2865,7 @@
 .jt-shortcut-modal button:hover, .jt-shortcut-modal button:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); }
 
 /* ── G9: Emoji Picker ── */
-.jt-emoji-picker { position: fixed; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; width: 220px; }
+.jt-emoji-picker { position: fixed; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; width: max-content; max-width: calc(100vw - 16px); }
 .jt-emoji-option { border: none; background: none; cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 6px; border-radius: var(--jt-radius-sm); transition: background 0.1s; }
 .jt-emoji-option:hover { border: none; background: var(--jt-bg-muted); }
 
