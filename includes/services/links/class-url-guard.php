@@ -26,10 +26,11 @@ final class Url_Guard {
 	/**
 	 * Validate that a URL is safe to fetch server-side.
 	 *
-	 * @param string $url Absolute http(s) URL.
+	 * @param string      $url        Absolute http(s) URL.
+	 * @param string|null $vetted_ip  Out: the address that was vetted, for {@see connect_to()}.
 	 * @return true|\WP_Error True when safe, WP_Error (status 400) otherwise.
 	 */
-	public static function check_remote_url( string $url ) {
+	public static function check_remote_url( string $url, ?string &$vetted_ip = null ) {
 		$parts  = wp_parse_url( $url );
 		$scheme = strtolower( (string) ( $parts['scheme'] ?? '' ) );
 		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
@@ -53,7 +54,35 @@ final class Url_Guard {
 			}
 		}
 
+		// Handed back so the caller can connect to exactly the address that was vetted.
+		$vetted_ip = $ips[0];
+
 		return true;
+	}
+
+	/**
+	 * An `http_api_curl` callback that connects to the address check_remote_url()
+	 * vetted (IPv4 only), so DNS cannot answer differently between the check and
+	 * the fetch (rebinding). Host and TLS name are unchanged. Add it around one
+	 * request and remove it afterwards, so other outbound HTTP is untouched.
+	 *
+	 * @param string|null $ip  The vetted address from check_remote_url().
+	 * @param string      $url The URL about to be fetched.
+	 * @return \Closure
+	 */
+	public static function connect_to( ?string $ip, string $url ): \Closure {
+		$parts = wp_parse_url( $url );
+		return static function ( $handle ) use ( $ip, $parts ): void {
+			// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_setopt -- pinning the transport WP already chose.
+			if ( defined( 'CURLOPT_IPRESOLVE' ) && defined( 'CURL_IPRESOLVE_V4' ) ) {
+				curl_setopt( $handle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
+			}
+			if ( $ip && defined( 'CURLOPT_RESOLVE' ) && ! empty( $parts['host'] ) ) {
+				$port = (int) ( $parts['port'] ?? ( 'https' === ( $parts['scheme'] ?? '' ) ? 443 : 80 ) );
+				curl_setopt( $handle, CURLOPT_RESOLVE, array( $parts['host'] . ':' . $port . ':' . $ip ) );
+			}
+			// phpcs:enable WordPress.WP.AlternativeFunctions.curl_curl_setopt
+		};
 	}
 
 	/**

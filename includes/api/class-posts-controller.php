@@ -270,7 +270,9 @@ class Posts_Controller extends Base_Controller {
 		// 400 here logged a failed request in every reader's console for a post
 		// linking to a dead host. One answer for every refusal keeps it
 		// non-enumerating.
-		if ( '' === $url || ! wp_http_validate_url( $url ) || is_wp_error( \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url ) ) ) {
+		// Each distinct URL costs an outbound fetch, so a visitor cannot make the
+		// server crawl at will; over the limit answers like any other refusal.
+		if ( '' === $url || ! self::check_rate_limit( 'link_preview', 60 ) || ! wp_http_validate_url( $url ) || is_wp_error( \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url ) ) ) {
 			$preview = \Jetonomy\Services\Links\Preview_Data::empty_for( $url );
 		} else {
 			$preview = ( new \Jetonomy\Services\Links\Preview_Service() )->fetch( $url );
