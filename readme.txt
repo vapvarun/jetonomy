@@ -79,7 +79,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 - Clean permalink structure: `/community/s/slug/t/post-slug/`
 
 **Community & Reputation**
-- User profiles with bio, website, location, and activity history
+- User profiles with bio, avatar, reputation, badges, and activity history
 - User hover cards when you hover over any avatar or name
 - Reputation system with points for posts, replies, votes, and accepted answers
 - Trust Levels 0–5 with admin-configurable thresholds
@@ -89,7 +89,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 **Voting**
 - Upvote and downvote on posts and replies
 - Accepted answers on Q&A spaces
-- Idea status board (planned, in progress, complete) for Ideas spaces
+- Idea status board (planned, in progress, shipped, declined) for Ideas spaces
 
 **Notifications**
 - In-app notification bell with unread count
@@ -326,7 +326,7 @@ Block a member from their profile, keep your community when you delete the plugi
 * Security - Space access now ends when its access rule is deleted or narrowed, and only site administrators can manage access rules.
 * Security - Imported titles are stored as plain text, so escaped markup in a source title never becomes live.
 * Dev      - Close and pin routes accept closed and pinned values to set an exact state, GET /subscriptions filters by object, and GET /link-preview returns an empty preview for URLs it will not fetch.
-* Dev      - New filters jetonomy_send_instant_email and jetonomy_profile_notification_fields, and the jetonomy_allow_self_upvote filter is removed.
+* Dev      - New filter jetonomy_send_instant_email and new action jetonomy_profile_notification_fields, and the jetonomy_allow_self_upvote filter is removed.
 * Dev      - List routes accept per_page as well as limit, and deleting notifications returns the fresh tab counts.
 * Compat   - Aligned with Jetonomy Pro 2.0.3. Install both updates together.
 
