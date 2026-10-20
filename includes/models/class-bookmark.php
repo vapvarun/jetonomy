@@ -121,8 +121,8 @@ class Bookmark extends Model {
 			$sql   .= ' AND ' . $space_sql;
 			$params = array_merge( $params, $space_vals );
 		}
-		[ $priv_sql, $priv_vals ] = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-		if ( '' !== $priv_sql ) {
+		[ $priv_sql, $priv_vals ] = Post::private_reader_sql( $user_id, 'p' );
+		if ( '1=1' !== $priv_sql ) {
 			$sql   .= ' AND ' . $priv_sql;
 			$params = array_merge( $params, $priv_vals );
 		}

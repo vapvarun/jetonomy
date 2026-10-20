@@ -227,13 +227,7 @@ class Abilities {
 				// any guest on a public space and says nothing about the post's
 				// status or is_private. This route reads one post by id, so it
 				// gates on the post.
-				'permission_callback' => function ( $input ) {
-					$post = Post::find( (int) $input['post_id'] );
-					if ( ! $post ) {
-						return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
-					}
-					return Permission_Engine::can_read_post( get_current_user_id(), $post );
-				},
+				'permission_callback' => array( $this, 'check_read_post' ),
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,
@@ -429,13 +423,7 @@ class Abilities {
 				// themselves status-filtered and block-tombstoned by
 				// Reply::list_by_post(), but a space-level check let the whole
 				// conversation under a trashed or pending post stay readable.
-				'permission_callback' => function ( $input ) {
-					$post = Post::find( (int) $input['post_id'] );
-					if ( ! $post ) {
-						return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
-					}
-					return Permission_Engine::can_read_post( get_current_user_id(), $post );
-				},
+				'permission_callback' => array( $this, 'check_read_post' ),
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,
@@ -1821,7 +1809,28 @@ class Abilities {
 		return Permission_Engine::can( $user_id, $action, $space_id );
 	}
 
+	/**
+	 * Permission for the abilities that read one post or its replies.
+	 *
+	 * @param array $input Ability input with post_id.
+	 * @return bool|WP_Error
+	 */
+	public function check_read_post( $input ) {
+		if ( ! \Jetonomy\Visibility::can_view_community() ) {
+			return false;
+		}
+		$post = Post::find( (int) $input['post_id'] );
+		if ( ! $post ) {
+			return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
+		}
+		return Permission_Engine::can_read_post( get_current_user_id(), $post );
+	}
+
 	private function check_permission_or_public( string $action, int $space_id ): bool {
+		// Private mode closes every read to guests, the same gate REST uses.
+		if ( ! \Jetonomy\Visibility::can_view_community() ) {
+			return false;
+		}
 		// One authority, no local restatement: the read rule lives in
 		// Permission_Engine::can(), which admits a guest (user 0) to a public space and
 		// honours a public space inside a `hidden` category, so list-spaces matches the
