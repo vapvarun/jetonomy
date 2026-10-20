@@ -42,6 +42,12 @@ class Router {
 			'the_seo_framework_query_supports_seo',
 			static fn( $supported ) => '' !== (string) get_query_var( 'jetonomy_route' ) ? false : $supported
 		);
+		// Divi 5 builds its core CSS per queried post, and our routes have none,
+		// so the theme header renders unstyled. Full static CSS on our routes only.
+		add_filter(
+			'divi_frontend_assets_dynamic_assets_utils_use_dynamic_assets',
+			static fn( $use ) => '' !== (string) get_query_var( 'jetonomy_route' ) ? false : $use
+		);
 		// Keep core off its 404 path for a resolved route. Our routes are
 		// virtual, so the main query finds no posts and WP::handle_404() would
 		// queue nocache_headers() - which assert_route_state() cannot take
