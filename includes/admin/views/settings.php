@@ -1456,7 +1456,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<!-- Hero -->
 			<div class="jt-settings-card" style="background: linear-gradient(135deg, var(--jt-admin-pro-light, #EDE9FE), var(--jt-admin-warn-light, #FEF3C7)); border: none;">
 				<div style="text-align: center; padding: 12px 0;">
-					<h2 style="margin: 0 0 8px; font-size: 22px; color: var(--jt-admin-text, #1F2937);"><?php esc_html_e( 'Unlock 13 Pro Extensions', 'jetonomy' ); ?></h2>
+					<h2 style="margin: 0 0 8px; font-size: 22px; color: var(--jt-admin-text, #1F2937);"><?php esc_html_e( 'Unlock Pro Extensions', 'jetonomy' ); ?></h2>
 					<p style="margin: 0 0 16px; color: var(--jt-admin-text-2, #4B5563); font-size: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
 						<?php esc_html_e( 'Your community is growing. Give it reactions, messaging, polls, analytics, badges, webhooks, and more. Each feature is an independent module you enable only when you need it.', 'jetonomy' ); ?>
 					</p>

@@ -282,9 +282,9 @@ class Replies_Controller extends Base_Controller {
 		);
 
 		// Carry the client-requested flag into the create data. Free only
-		// plumbs it through — Pro validates/enforces it via the
+		// plumbs it through (see requested_anonymity()) — Pro validates/enforces it via the
 		// `jetonomy_before_create_reply` filter.
-		$reply_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
+		$reply_data['is_anonymous'] = $this->requested_anonymity( $request );
 
 		// Private reply (1.9.0): author's choice at compose time. Readable only
 		// by the author, the topic author, admins, and space staff — everyone

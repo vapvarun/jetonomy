@@ -351,6 +351,13 @@ class SpaceMember extends Model {
 			return $blocked;
 		}
 
+		// The owner's "Join spaces" capability. A role the owner never mapped
+		// (another plugin's) keeps the engine's open fallback, as everywhere else.
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- registered via Capabilities::ROLE_MAP.
+		if ( ! user_can( $user_id, 'jetonomy_join_spaces' ) && \Jetonomy\Permissions\Capabilities::has_explicit_role_mapping( $user_id ) ) {
+			return new \WP_Error( 'jetonomy_forbidden', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You are not allowed to join a %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 403 ) );
+		}
+
 		if ( self::is_member( $space_id, $user_id ) ) {
 			return new \WP_Error(
 				'jetonomy_already_member',

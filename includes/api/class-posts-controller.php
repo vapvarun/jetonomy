@@ -561,9 +561,9 @@ class Posts_Controller extends Base_Controller {
 		);
 
 		// Carry the client-requested flag into the create data. Free only
-		// plumbs it through — Pro validates/enforces it via the
+		// plumbs it through (see requested_anonymity()) — Pro validates/enforces it via the
 		// `jetonomy_before_create_post` filter.
-		$post_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
+		$post_data['is_anonymous'] = $this->requested_anonymity( $request );
 
 		if ( ! empty( $prefix ) ) {
 			$post_data['prefix'] = $prefix;

@@ -571,13 +571,6 @@ class Users_Controller extends Base_Controller {
 			$profile_data['avatar_url'] = $avatar_url;
 		}
 
-		if ( null !== $request->get_param( 'settings' ) ) {
-			$settings = $request->get_param( 'settings' );
-			if ( is_array( $settings ) ) {
-				$profile_data['settings'] = wp_json_encode( $settings );
-			}
-		}
-
 		// Handle notification_preferences — merge into existing settings JSON.
 		if ( null !== $request->get_param( 'notification_preferences' ) ) {
 			$notif_input = $request->get_param( 'notification_preferences' );
@@ -1039,10 +1032,6 @@ class Users_Controller extends Base_Controller {
 				'type'     => 'string',
 				'required' => false,
 				'format'   => 'uri',
-			),
-			'settings'      => array(
-				'type'     => 'object',
-				'required' => false,
 			),
 			'email_opt_out' => array(
 				'type'     => 'boolean',

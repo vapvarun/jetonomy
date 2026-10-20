@@ -361,6 +361,17 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * The is_anonymous flag to store for a create request. Free has no anonymity
+	 * feature of its own, so the client's flag counts only once an extension
+	 * (Pro Anonymous Posting) turns it on; that extension then decides per space.
+	 *
+	 * @param \WP_REST_Request $request Create request.
+	 */
+	protected function requested_anonymity( \WP_REST_Request $request ): int {
+		return (int) ( (bool) $request->get_param( 'is_anonymous' ) && apply_filters( 'jetonomy_anonymous_posting_enabled', false ) );
+	}
+
+	/**
 	 * Get pagination params from request (supports cursor + legacy offset).
 	 */
 	protected function get_pagination( WP_REST_Request $request ): array {

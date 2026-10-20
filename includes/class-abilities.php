@@ -547,7 +547,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'execute_list_spaces' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( '\\Jetonomy\\Visibility', 'can_view_community' ), // Private mode: no guest reads.
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,
@@ -800,7 +800,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'execute_get_user_profile' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( '\\Jetonomy\\Visibility', 'can_view_community' ), // Private mode: no guest reads.
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,
@@ -1188,7 +1188,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'execute_search' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( '\\Jetonomy\\Visibility', 'can_view_community' ), // Private mode: no guest reads.
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,

@@ -2984,6 +2984,13 @@
       "consumed_by": "jetonomy-pro anonymous-posting (Reveal) - true only for manage_options in explicit reveal context"
     },
     {
+      "name": "jetonomy_anonymous_posting_enabled",
+      "type": "filter",
+      "args": "$enabled (bool, default false)",
+      "where": "includes/api/class-base-controller.php (requested_anonymity)",
+      "consumed_by": "jetonomy-pro anonymous-posting - returns true while the extension is on, so Free keeps the client's is_anonymous flag"
+    },
+    {
       "name": "jetonomy_before_create_post",
       "type": "filter",
       "args": "data",
