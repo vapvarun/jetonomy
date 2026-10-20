@@ -171,7 +171,7 @@ class Permission_Engine {
 	}
 
 	/** Actions a silenced member loses; reading continues. */
-	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
+	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts', 'moderate' );
 
 	/**
 	 * The account restriction that refuses this action, as the error to show the
