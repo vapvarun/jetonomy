@@ -2922,7 +2922,10 @@
 .jt-notif-optout input { margin-top: 0.15rem; flex-shrink: 0; }
 /* Pro's digest choice, rendered inside the notification settings. */
 .jt-notif-digest { border: 0; margin: var(--jt-space-4) 0 0; padding: 0; min-inline-size: 0; }
-.jt-notif-digest .jt-notif-optout { margin-block-start: var(--jt-space-2); }
+.jt-notif-digest .jt-form-hint { margin-block-end: var(--jt-space-2); }
+/* A digest option is a row of the notification table: radio, then its label. */
+.jt-notif-row.jt-notif-choice { grid-template-columns: auto 1fr; gap: var(--jt-space-3); cursor: pointer; }
+.jt-notif-row.jt-notif-choice:hover, .jt-notif-row.jt-notif-choice:focus-within { background: var(--jt-bg-hover); }
 .jt-notif-row { display: grid; grid-template-columns: 1fr 3.5rem 3.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--jt-border); font-size: 0.875rem; color: var(--jt-text); }
 .jt-notif-row:last-child { border-bottom: none; }
 .jt-notif-header { font-weight: 600; background: var(--jt-bg-subtle); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--jt-text-secondary); }
