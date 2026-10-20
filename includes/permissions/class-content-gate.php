@@ -35,13 +35,17 @@ class Content_Gate {
 	 * their content. Staff are exempt, since moderating means acting on any content.
 	 * The wording is neutral on purpose, so it does not announce the block.
 	 *
-	 * @param int $user_id   Actor.
-	 * @param int $author_id Author of the content being answered or voted on.
-	 * @param int $space_id  Space of that content.
+	 * Anonymous content is never refused: the refusal would tell the actor that
+	 * its hidden author is someone who blocked them.
+	 *
+	 * @param int         $user_id Actor.
+	 * @param object|null $content The post or reply being answered or voted on.
+	 * @param int         $space_id Space of that content.
 	 * @return \WP_Error|null
 	 */
-	private static function blocked_contact( int $user_id, int $author_id, int $space_id ): ?\WP_Error {
-		if ( $author_id <= 0 || $author_id === $user_id
+	private static function blocked_contact( int $user_id, ?object $content, int $space_id ): ?\WP_Error {
+		$author_id = (int) ( $content->author_id ?? 0 );
+		if ( $author_id <= 0 || ! empty( $content->is_anonymous ) || $author_id === $user_id
 			|| ! \Jetonomy\Models\BlockedUser::is_blocked( $author_id, $user_id )
 			|| Permission_Engine::can( $user_id, 'moderate', $space_id ) ) {
 			return null;
@@ -49,6 +53,21 @@ class Content_Gate {
 		/* translators: %s: the singular Member label, lowercase. */
 		$message = sprintf( __( 'You cannot interact with this %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) );
 		return new \WP_Error( 'jetonomy_cannot_interact', $message, array( 'status' => 403 ) );
+	}
+
+	/**
+	 * Block check for any other contact with a post or reply (Pro reactions use it):
+	 * the same refusal replies and votes give, derived from the object itself.
+	 *
+	 * @param int    $user_id Actor.
+	 * @param string $type    'post' or 'reply'.
+	 * @param int    $id      Object ID.
+	 * @return \WP_Error|null
+	 */
+	public static function check_contact( int $user_id, string $type, int $id ): ?\WP_Error {
+		$object = 'reply' === $type ? Reply::find( $id ) : Post::find( $id );
+		$post   = 'reply' === $type && $object ? Post::find( (int) $object->post_id ) : $object;
+		return $object ? self::blocked_contact( $user_id, $object, (int) ( $post->space_id ?? 0 ) ) : null;
 	}
 
 	/**
@@ -105,8 +124,8 @@ class Content_Gate {
 
 		// The topic's author, and the reply being answered in a thread.
 		$parent  = $parent_id > 0 ? Reply::find( $parent_id ) : null;
-		$blocked = self::blocked_contact( $user_id, (int) ( $post->author_id ?? 0 ), $space_id )
-			?? ( $parent ? self::blocked_contact( $user_id, (int) $parent->author_id, $space_id ) : null );
+		$blocked = self::blocked_contact( $user_id, $post, $space_id )
+			?? ( $parent ? self::blocked_contact( $user_id, $parent, $space_id ) : null );
 		if ( $blocked ) {
 			return $blocked;
 		}
@@ -195,7 +214,7 @@ class Content_Gate {
 			return new \WP_Error( 'jetonomy_validation', __( 'Vote value must be 1 or -1.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
 
-		$blocked = self::blocked_contact( $user_id, (int) ( $object->author_id ?? 0 ), $space_id );
+		$blocked = self::blocked_contact( $user_id, $object, $space_id );
 		if ( $blocked ) {
 			return $blocked;
 		}

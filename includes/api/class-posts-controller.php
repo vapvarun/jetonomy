@@ -272,16 +272,20 @@ class Posts_Controller extends Base_Controller {
 		// non-enumerating.
 		// Each distinct URL costs an outbound fetch, so a visitor cannot make the
 		// server crawl at will; over the limit answers like any other refusal.
-		if ( '' === $url || ! self::check_rate_limit( 'link_preview', 60 ) || ! wp_http_validate_url( $url ) || is_wp_error( \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url ) ) ) {
+		// A cached preview costs no fetch, so it never spends the limit, and an
+		// over-limit answer is not cached by the client (the blank card must not stick).
+		$service = new \Jetonomy\Services\Links\Preview_Service();
+		$limited = '' !== $url && ! $service->is_cached( $url ) && ! self::check_rate_limit( 'link_preview', 60 );
+		if ( '' === $url || $limited || ! wp_http_validate_url( $url ) || is_wp_error( \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url ) ) ) {
 			$preview = \Jetonomy\Services\Links\Preview_Data::empty_for( $url );
 		} else {
-			$preview = ( new \Jetonomy\Services\Links\Preview_Service() )->fetch( $url );
+			$preview = $service->fetch( $url );
 		}
 
 		$response = new \WP_REST_Response( $preview->to_array(), 200 );
 		// Clients (web + mobile) can layer their own cache; 10-minute
 		// Cache-Control keeps repeat renders cheap without blocking refresh.
-		$response->header( 'Cache-Control', 'private, max-age=600' );
+		$response->header( 'Cache-Control', $limited ? 'no-store' : 'private, max-age=600' );
 		return $response;
 	}
 

@@ -75,6 +75,16 @@ final class Preview_Service {
 	}
 
 	/**
+	 * Whether a preview for this URL is already cached, so serving it costs no outbound fetch.
+	 *
+	 * @param string $url Page URL.
+	 */
+	public function is_cached( string $url ): bool {
+		$url = $this->normalize_url( $url );
+		return '' !== $url && is_array( get_transient( self::CACHE_PREFIX . md5( $url ) ) );
+	}
+
+	/**
 	 * Main entry. Returns a Preview_Data even on failure (with `domain` populated);
 	 * the caller decides whether to render based on whether `title` is set.
 	 */
