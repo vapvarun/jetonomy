@@ -163,6 +163,20 @@ class Media_Controller extends Base_Controller {
 		}
 		$_FILES['file']['name'] = $jt_file['name']; // Persist the sanitized name for core.
 
+		// A random folder keeps the file URL unguessable: the file is public, so
+		// a private space's attachment is only as private as its link.
+		$jt_dir = static function ( array $dir ): array {
+			$sub = '/jetonomy/' . bin2hex( random_bytes( 8 ) );
+			return array_merge(
+				$dir,
+				array(
+					'subdir' => $sub,
+					'path'   => $dir['basedir'] . $sub,
+					'url'    => $dir['baseurl'] . $sub,
+				)
+			);
+		};
+		add_filter( 'upload_dir', $jt_dir );
 		$attachment_id = media_handle_upload(
 			'file',
 			0,
@@ -180,6 +194,8 @@ class Media_Controller extends Base_Controller {
 				),
 			)
 		);
+
+		remove_filter( 'upload_dir', $jt_dir );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			return new WP_Error(

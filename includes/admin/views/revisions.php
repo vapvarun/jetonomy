@@ -67,7 +67,7 @@ if ( 'detail' === $mode ) :
 				(int) count( $revisions )
 			);
 			?>
-			<?php esc_html_e( 'Each row compares against the previous snapshot. The oldest entry has no diff.', 'jetonomy' ); ?>
+			<?php esc_html_e( 'Each row compares against the previous snapshot. The top row is the current version; the oldest entry has no diff.', 'jetonomy' ); ?>
 		</p>
 
 			<?php
@@ -76,6 +76,25 @@ if ( 'detail' === $mode ) :
 			// last entry has no predecessor and shows "Original" instead of a
 			// toggle. Precomputed here so the cell and after_row callbacks agree
 			// on which rows have a diff without recomputing the lookup twice.
+			// A snapshot holds the content BEFORE an edit, so the latest edit only
+			// shows as live content. Put the live version on top so it diffs
+			// against the newest snapshot (a single edit gets its diff too).
+			$jt_live = $revisions ? ( 'post' === $object_type ? \Jetonomy\Models\Post::find( (int) $object_id ) : \Jetonomy\Models\Reply::find( (int) $object_id ) ) : null;
+			if ( $jt_live ) {
+				array_unshift(
+					$revisions,
+					(object) array(
+						'id'           => 0,
+						'object_type'  => $object_type,
+						'object_id'    => (int) $object_id,
+						'author_id'    => (int) ( $jt_live->edited_by ?? 0 ),
+						'created_at'   => (string) ( $jt_live->edited_at ?? '' ),
+						'edit_summary' => __( 'Current version', 'jetonomy' ),
+						'title'        => (string) ( $jt_live->title ?? '' ),
+						'content'      => (string) ( $jt_live->content ?? '' ),
+					)
+				);
+			}
 			$jt_objects = \Jetonomy\Author::objects_of( $revisions );
 			$jt_total   = count( $revisions );
 			$jt_prev    = static function ( $rev ) use ( $revisions, $jt_total ) {

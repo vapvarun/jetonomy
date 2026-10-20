@@ -715,8 +715,9 @@ final class Space_Purge {
 				$n += self::delete_where_in( $r, $ids );
 			}
 		} catch ( \RuntimeException $e ) {
-			// Leftover dependents are swept with the orphan backfill; a failed
-			// lookup must not break the delete the caller is in the middle of.
+			// A failed lookup must not break the delete the caller is in the middle
+			// of. Leftovers here are NOT swept by the orphan backfill (it walks
+			// space ids only), so an object-level failure leaves them in place.
 			return $n;
 		}
 		return $n;

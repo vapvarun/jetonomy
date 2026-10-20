@@ -3589,7 +3589,19 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-post-body img,
 .jt-reply-body img {
 	max-width: 100%;
+	max-height: 420px;
 	height: auto;
+	width: auto;
+	cursor: zoom-in;
+}
+
+.jt-post-body a img,
+.jt-reply-body a img,
+.jt-post-body img.emoji,
+.jt-reply-body img.emoji,
+.jt-post-body img.wp-smiley,
+.jt-reply-body img.wp-smiley {
+	cursor: auto;
 }
 
 .jt-post-body table,

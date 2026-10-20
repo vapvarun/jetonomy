@@ -286,7 +286,7 @@ class Attachment {
 			'name'     => $file ? basename( $file ) : (string) get_the_title( $attachment_id ),
 			'size'     => ( $file && file_exists( $file ) ) ? (int) filesize( $file ) : 0,
 			'type'     => $type,
-			'ext'      => strtoupper( (string) pathinfo( $url, PATHINFO_EXTENSION ) ),
+			'ext'      => strtoupper( (string) pathinfo( $file ?: (string) wp_parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION ) ),
 			'is_image' => 'image' === $type,
 		);
 	}

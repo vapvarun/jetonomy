@@ -37,12 +37,12 @@
 defined( 'ABSPATH' ) || exit;
 
 $header_html = '' !== $ctx['logo_url']
-	? '<a href="' . $ctx['home_url'] . '" style="text-decoration:none;"><img src="' . $ctx['logo_url'] . '" alt="' . $ctx['site_name'] . '" style="max-height:40px;max-width:200px;height:auto;width:auto;" /></a>'
-	: '<a href="' . $ctx['home_url'] . '" style="text-decoration:none;color:#111827;font-size:18px;font-weight:700;letter-spacing:-0.02em;">' . $ctx['site_name'] . '</a>';
+	? '<a href="' . esc_url( $ctx['home_url'] ) . '" style="text-decoration:none;"><img src="' . esc_url( $ctx['logo_url'] ) . '" alt="' . esc_attr( $ctx['site_name'] ) . '" style="max-height:40px;max-width:200px;height:auto;width:auto;" /></a>'
+	: '<a href="' . esc_url( $ctx['home_url'] ) . '" style="text-decoration:none;color:#111827;font-size:18px;font-weight:700;letter-spacing:-0.02em;">' . esc_html( $ctx['site_name'] ) . '</a>';
 
 $footer_links = '<a href="' . esc_url( $ctx['notif_url'] ) . '" style="color:#6B7280;text-decoration:underline;">' . esc_html__( 'Notification preferences', 'jetonomy' ) . '</a>';
 if ( '' !== $ctx['unsub_url'] ) {
-	$footer_links .= ' &nbsp;&middot;&nbsp; <a href="' . $ctx['unsub_url'] . '" style="color:#6B7280;text-decoration:underline;">' . esc_html__( 'Unsubscribe', 'jetonomy' ) . '</a>';
+	$footer_links .= ' &nbsp;&middot;&nbsp; <a href="' . esc_url( $ctx['unsub_url'] ) . '" style="color:#6B7280;text-decoration:underline;">' . esc_html__( 'Unsubscribe', 'jetonomy' ) . '</a>';
 }
 
 $footer_custom = '' !== $ctx['footer_text']

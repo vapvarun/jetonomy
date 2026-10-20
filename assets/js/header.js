@@ -186,6 +186,12 @@
 
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
+		// An image pasted into a topic or reply opens full size, like an attachment card.
+		var bodyImg = e.target.closest('.jt-post-body img, .jt-reply-body img');
+		if (bodyImg && !bodyImg.closest('a') && !bodyImg.matches('.emoji, .wp-smiley')) {
+			window.open(bodyImg.currentSrc || bodyImg.src, '_blank', 'noopener');
+			return;
+		}
 		var notifBtn = e.target.closest('.jt-community-nav-notif');
 		if (notifBtn) {
 			e.preventDefault();
