@@ -46,7 +46,7 @@ class Router {
 		// so the theme header renders unstyled. Full static CSS on our routes only.
 		add_filter(
 			'divi_frontend_assets_dynamic_assets_utils_use_dynamic_assets',
-			static fn( $use ) => '' !== (string) get_query_var( 'jetonomy_route' ) ? false : $use
+			fn( $use ) => $this->is_route_request() ? false : $use
 		);
 		// Keep core off its 404 path for a resolved route. Our routes are
 		// virtual, so the main query finds no posts and WP::handle_404() would
@@ -252,6 +252,26 @@ class Router {
 		}
 
 		return $ours + $others;
+	}
+
+	/**
+	 * Whether this request is a Jetonomy route, usable before the query is parsed.
+	 *
+	 * Divi memoises its dynamic-assets answer on first call, and with SiteGround
+	 * Optimizer active that call happens on init, before jetonomy_route exists.
+	 * There the community base slug in the request path is the only signal.
+	 */
+	private function is_route_request(): bool {
+		if ( '' !== (string) get_query_var( 'jetonomy_route' ) ) {
+			return true;
+		}
+		if ( did_action( 'parse_request' ) || ! isset( $_SERVER['REQUEST_URI'] ) ) {
+			return false;
+		}
+		$path = (string) wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH );
+		$home = (string) wp_parse_url( home_url(), PHP_URL_PATH );
+		$slug = trim( substr( $path, strlen( rtrim( $home, '/' ) ) ), '/' );
+		return base_slug() === $slug || str_starts_with( $slug, base_slug() . '/' );
 	}
 
 	public function add_rewrite_rules(): void {
