@@ -95,8 +95,9 @@ class Cron {
 	 */
 	public static function unschedule(): void {
 		// The recurring jobs plus the one-off ones: trust-sweep batches, per-member
-		// Gravatar checks, the scheduled-topic publisher and the per-space roster sweep.
-		$hooks = array_merge( array_keys( self::RECURRING ), array( 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK, Membership_Roster_Sync::SWEEP_HOOK ) );
+		// Gravatar checks, the scheduled-topic publisher, the per-space roster sweep and the
+		// subscriber fan-out batches.
+		$hooks = array_merge( array_keys( self::RECURRING ), array( 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK, Membership_Roster_Sync::SWEEP_HOOK, 'jetonomy_fanout_post_subscribers', 'jetonomy_fanout_reply_subscribers' ) );
 		foreach ( $hooks as $hook ) {
 			Queue::cancel( $hook );
 		}
@@ -352,9 +353,11 @@ class Cron {
 		}
 		$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
 		// Delete in batches to avoid lock contention, loop until done.
+		// Within a 20 s budget like cleanup_old_notifications(); the rest waits for tomorrow.
+		$deadline = microtime( true ) + 20;
 		do {
 			$deleted = \Jetonomy\Models\ActivityLog::delete_before( $cutoff, 5000 );
-		} while ( $deleted >= 5000 );
+		} while ( $deleted >= 5000 && microtime( true ) < $deadline );
 	}
 
 	/**
