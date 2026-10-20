@@ -45,9 +45,9 @@ final class HTML_Fetcher {
 		$ua = apply_filters( 'jetonomy_link_preview_user_agent', self::USER_AGENT, $url );
 
 		// Follow redirects MANUALLY (redirection => 0) so the SSRF guard runs on
-		// every hop. wp_safe_remote_get only re-validates redirects with the same
-		// incomplete wp_http_validate_url(), so a public URL could otherwise 30x
-		// into 169.254.169.254 (cloud metadata) or another internal address.
+		// every hop. wp_safe_remote_get re-validates redirects with
+		// wp_http_validate_url() only, which has no IPv6 coverage, so a public URL could
+		// otherwise 30x into an internal IPv6 address.
 		$current = $url;
 		$seen    = array();
 

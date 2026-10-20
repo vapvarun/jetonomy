@@ -261,8 +261,8 @@ class Posts_Controller extends Base_Controller {
 	 */
 	public function link_preview( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$url = (string) $request->get_param( 'url' );
-		// SSRF guard: wp_http_validate_url() misses 169.254/16 (cloud metadata),
-		// 100.64/10 and IPv6 loopback/ULA/link-local. This endpoint is reachable
+		// SSRF guard: core's wp_http_validate_url() covers the IPv4 private ranges but not
+		// IPv6 loopback/ULA/link-local, DNS rebinding or redirects. This endpoint is reachable
 		// unauthenticated in public mode, so resolve + reject internal addresses
 		// before fetching (the fetcher repeats the check on every redirect hop).
 		// A URL we will not fetch (no DNS, internal, malformed) answers the same

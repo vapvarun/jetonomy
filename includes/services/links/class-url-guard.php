@@ -2,9 +2,10 @@
 /**
  * SSRF guard for outbound link-preview fetches.
  *
- * WordPress's wp_http_validate_url() / wp_safe_remote_get() block RFC1918 (10/8, 172.16/12,
- * 192.168/16) and loopback, but NOT 169.254.0.0/16 (cloud metadata endpoint),
- * 100.64.0.0/10 (CGNAT), or IPv6 loopback / ULA / link-local. The link-preview
+ * WordPress's wp_http_validate_url() / wp_safe_remote_get() block the IPv4 private and
+ * reserved ranges (RFC1918, loopback, 169.254/16 cloud metadata, 100.64/10 CGNAT on
+ * current core), but not IPv6 loopback / ULA / link-local, and they check a hostname
+ * once, so DNS can change before the fetch. The link-preview
  * endpoint is reachable unauthenticated in public mode, so a crafted or
  * redirected URL could reach internal services. This guard resolves the host to
  * every address the fetch can actually reach and rejects the request if any of

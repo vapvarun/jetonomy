@@ -170,8 +170,8 @@ class Permission_Engine {
 		return self::$memo[ $key ];
 	}
 
-	/** Actions a silenced member loses; reading continues. */
-	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts', 'moderate' );
+	/** Actions a silenced member loses; reading continues. Every space-mod action is included, so a new one cannot escape the silence. */
+	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', ...self::SPACE_MOD_ACTIONS );
 
 	/**
 	 * The account restriction that refuses this action, as the error to show the
