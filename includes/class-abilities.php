@@ -1719,7 +1719,7 @@ class Abilities {
 				'object_type' => $f->object_type ?? '',
 				'object_id'   => (int) ( $f->object_id ?? 0 ),
 				'reason'      => $f->reason ?? '',
-				'user_id'     => (int) ( $f->user_id ?? 0 ),
+				'user_id'     => (int) ( $f->reporter_id ?? 0 ),
 				'created_at'  => $f->created_at ?? '',
 			);
 		}

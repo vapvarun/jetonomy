@@ -14,6 +14,7 @@ namespace Jetonomy\QA;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Models\AccessRule;
 use Jetonomy\Models\Category;
 use Jetonomy\Models\Import_Map;
 use Jetonomy\Models\Reply;
@@ -334,6 +335,8 @@ class Model_Tests {
 		};
 		$private = $space( 'private' );
 		$public  = $space( 'public' );
+		$ruled   = $space( 'private' );
+		$rule_id = $ruled > 0 ? AccessRule::create( array( 'space_id' => $ruled, 'rule_type' => 'logged_in', 'rule_value' => '1', 'grants' => 'read' ) ) : 0;
 		$wpdb->insert( $posts_t, array( 'space_id' => $public, 'author_id' => $this->qa_admin, 'title' => 'QA followed topic', 'slug' => 'qa-followed-' . wp_generate_password( 8, false, false ), 'content' => 'probe', 'status' => 'trash', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$topic  = (int) $wpdb->insert_id;
 		$member = wp_insert_user( array( 'user_login' => 'jt_qa_fl_' . uniqid(), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
@@ -353,11 +356,18 @@ class Model_Tests {
 
 			$this->check( 'FL1: a follow the member can no longer read is not listed', ! in_array( 'space:' . $private, $keys, true ) && 2 === Subscription::count_for_user( $member ), implode( ',', $keys ) );
 			$this->check( 'FL2: a trashed topic stays listed as gone', in_array( 'post:' . $topic, $keys, true ) && 1 === count( $gone ) );
+
+			// A rule admits the member with no roster row; their follow must still list.
+			Subscription::subscribe( $member, 'space', $ruled );
+			$keys = array_map( static fn( $r ) => $r->object_type . ':' . (int) $r->object_id, Subscription::list_for_user( $member ) );
+			$this->check( 'FL3: a follow in a space a rule admits the member to (no roster row) is listed', $rule_id > 0 && in_array( 'space:' . $ruled, $keys, true ), implode( ',', $keys ) );
 		}
 
 		$wpdb->delete( table( 'subscriptions' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( $posts_t, array( 'id' => $topic ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		foreach ( array( $private, $public ) as $id ) {
+		$wpdb->delete( table( 'access_rules' ), array( 'space_id' => $ruled ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		AccessRule::reset_memo();
+		foreach ( array( $private, $public, $ruled ) as $id ) {
 			$wpdb->delete( $spaces_t, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 		if ( $member > 0 ) {

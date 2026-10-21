@@ -82,7 +82,7 @@ class Subscription extends Model {
 	 * @return array{0:string,1:array} SQL starting with ' AND', and its params.
 	 */
 	private static function target_readable_sql( int $user_id ): array {
-		[ $space_sql, $space_vals ] = Space::content_visibility_sql( $user_id, 's' );
+		[ $space_sql, $space_vals ] = Space::readable_with_rules_sql( $user_id, 's' );
 		[ $post_sql, $post_vals ]   = Post::readable_sql( $user_id, 'p', 's' );
 		$spaces                     = table( 'spaces' );
 		$posts                      = table( 'posts' );

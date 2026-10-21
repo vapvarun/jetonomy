@@ -1523,7 +1523,7 @@ class Post extends Model {
 	 * @return array{0:string,1:array} SQL fragment and its params.
 	 */
 	public static function readable_sql( int $user_id, string $post_alias = 'p', string $space_alias = 's' ): array {
-		[ $space_sql, $space_vals ] = Space::content_visibility_sql( $user_id, $space_alias );
+		[ $space_sql, $space_vals ] = Space::readable_with_rules_sql( $user_id, $space_alias );
 		[ $priv_sql, $priv_vals ]   = self::private_reader_sql( $user_id, $post_alias );
 		return array( "{$space_sql} AND {$priv_sql}", array_merge( $space_vals, $priv_vals ) );
 	}

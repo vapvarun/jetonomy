@@ -841,6 +841,29 @@ class Space extends Model {
 	}
 
 	/**
+	 * {@see self::content_visibility_sql()} plus the spaces a rule admits the
+	 * member to without a roster row. For lists of rows that outlive access
+	 * (follows, bookmarks), where dropping a rule-admitted member's rows is wrong.
+	 *
+	 * @param int|null $user_id Viewer ID. Null = current user.
+	 * @param string   $alias   Spaces-table alias without trailing dot.
+	 * @return array{0:string,1:array} [SQL fragment, bind values]
+	 */
+	public static function readable_with_rules_sql( ?int $user_id, string $alias = '' ): array {
+		$user_id                    = $user_id ?? get_current_user_id();
+		[ $space_sql, $space_vals ] = self::content_visibility_sql( $user_id, $alias );
+		$admitted                   = AccessRule::admitted_space_ids( (int) $user_id );
+		if ( ! $admitted ) {
+			return array( $space_sql, $space_vals );
+		}
+		$col = '' !== $alias ? $alias . '.' : '';
+		return array(
+			"({$space_sql} OR {$col}id IN (" . implode( ',', array_fill( 0, count( $admitted ), '%d' ) ) . '))',
+			array_merge( $space_vals, $admitted ),
+		);
+	}
+
+	/**
 	 * Canonical LISTING-visibility predicate — "should this space appear in a directory."
 	 *
 	 * Deliberately BROADER than {@see self::content_visibility_sql()}: a

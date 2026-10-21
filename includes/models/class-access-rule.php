@@ -439,6 +439,25 @@ class AccessRule extends Model {
 	}
 
 	/**
+	 * Spaces a member is admitted to by a rule alone (no roster row).
+	 *
+	 * Space::content_visibility_sql() models the roster only, so a list built
+	 * on it hides the follows and bookmarks of a member who got in through a
+	 * Role, Capability, Trust Level, Logged In or membership rule. Spaces with
+	 * rules are few, so testing each with grants_access() stays cheap.
+	 *
+	 * @param int $user_id WP user ID (0 = guest).
+	 * @return int[] Space IDs.
+	 */
+	public static function admitted_space_ids( int $user_id ): array {
+		if ( $user_id <= 0 ) {
+			return array();
+		}
+		$ids = static::db()->get_col( 'SELECT DISTINCT space_id FROM ' . static::table() ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table name, no input.
+		return array_values( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => static::grants_access( $user_id, $id ) ) );
+	}
+
+	/**
 	 * Evaluate access rules for a user in a space.
 	 *
 	 * Iterates rules in priority order (highest first) and returns the first
