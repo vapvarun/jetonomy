@@ -133,8 +133,7 @@
 		// On the notifications page the Unread tab shows the count the list was rendered with.
 		var tabCount = document.querySelector('[data-jt-notif-tab="unread"] .jt-notif-tab__count');
 		var shown = tabCount ? (parseInt(tabCount.textContent.replace(/\D/g, ''), 10) || 0) : 0;
-		// The route allows a 15s browser cache; a fresh read must skip it.
-		window.jetonomyRest.restFetch('/notifications/unread-count?fresh=' + Date.now()).then(function (res) {
+		window.jetonomyRest.restFetch('/notifications/unread-count').then(function (res) {
 			countInFlight = false;
 			if (res.ok && res.data && 'number' === typeof res.data.count) {
 				window.jtSetUnreadBadges(res.data.count);
@@ -184,12 +183,40 @@
 		window.jtLowerUnreadBadges(1);
 	});
 
+	// An image pasted into a topic or reply opens full size, like an attachment card.
+	// Linked images and emoji keep their own behaviour.
+	var BODY_IMG = '.jt-post-body img, .jt-reply-body img';
+	function zoomableImage(el) {
+		var img = el && el.closest ? el.closest(BODY_IMG) : null;
+		return img && !img.closest('a') && !img.matches('.emoji, .wp-smiley') ? img : null;
+	}
+	function openFullSize(img) {
+		window.open(img.currentSrc || img.src, '_blank', 'noopener');
+	}
+	// Focusable, so the keyboard can open it too; re-run after a client-side navigation.
+	function markZoomable() {
+		document.querySelectorAll(BODY_IMG).forEach(function (img) {
+			if (!zoomableImage(img) || img.hasAttribute('tabindex')) { return; }
+			img.tabIndex = 0;
+			img.setAttribute('role', 'button');
+			img.setAttribute('aria-label', (img.alt ? img.alt + ' - ' : '') + __('Open full size', 'jetonomy'));
+		});
+	}
+	markZoomable();
+	document.addEventListener('jetonomy:navigated', markZoomable);
+	document.addEventListener('keydown', function (e) {
+		var img = (e.key === 'Enter' || e.key === ' ') ? zoomableImage(e.target) : null;
+		if (img) {
+			e.preventDefault();
+			openFullSize(img);
+		}
+	});
+
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
-		// An image pasted into a topic or reply opens full size, like an attachment card.
-		var bodyImg = e.target.closest('.jt-post-body img, .jt-reply-body img');
-		if (bodyImg && !bodyImg.closest('a') && !bodyImg.matches('.emoji, .wp-smiley')) {
-			window.open(bodyImg.currentSrc || bodyImg.src, '_blank', 'noopener');
+		var bodyImg = zoomableImage(e.target);
+		if (bodyImg) {
+			openFullSize(bodyImg);
 			return;
 		}
 		var notifBtn = e.target.closest('.jt-community-nav-notif');

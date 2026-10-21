@@ -25,6 +25,23 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Where a role sits on the ladder, for "never lower an existing role".
+	 *
+	 * VALID_ROLES is already ordered viewer < member < moderator < admin, so
+	 * its index IS the rank - no second ladder to drift out of step with it.
+	 * An unknown role ranks lowest, so a bad value can never win a comparison
+	 * and silently promote someone.
+	 *
+	 * @param string $role Role slug.
+	 * @return int Rank; 0 when unrecognised.
+	 */
+	private static function role_rank( string $role ): int {
+		$pos = array_search( $role, self::VALID_ROLES, true );
+
+		return false === $pos ? 0 : (int) $pos + 1;
+	}
+
+	/**
 	 * Add a user to a space, or raise their role if they are already a member.
 	 *
 	 * This is the JOIN-OR-GRANT path. It never LOWERS an existing role: an
@@ -42,23 +59,6 @@ class SpaceMember extends Model {
 	 * @param string $role     Role to grant; ignored if they already hold a higher one.
 	 * @return \WP_Error|bool  WP_Error if a filter vetoed the join, true otherwise.
 	 */
-	/**
-	 * Where a role sits on the ladder, for "never lower an existing role".
-	 *
-	 * VALID_ROLES is already ordered viewer < member < moderator < admin, so
-	 * its index IS the rank - no second ladder to drift out of step with it.
-	 * An unknown role ranks lowest, so a bad value can never win a comparison
-	 * and silently promote someone.
-	 *
-	 * @param string $role Role slug.
-	 * @return int Rank; 0 when unrecognised.
-	 */
-	private static function role_rank( string $role ): int {
-		$pos = array_search( $role, self::VALID_ROLES, true );
-
-		return false === $pos ? 0 : (int) $pos + 1;
-	}
-
 	public static function add( int $space_id, int $user_id, string $role = 'member', string $source = 'manual' ): \WP_Error|bool {
 		// A membership plugin, automation or access rule can still name a space the
 		// owner deleted; joining it would store an orphan row on every enrolment.
@@ -254,6 +254,36 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * The owner's "Join spaces" capability. A role the owner never mapped
+	 * (another plugin's) keeps the engine's open fallback, as everywhere else.
+	 * The one check behind join(), auto-join and the Join button.
+	 *
+	 * @param int $user_id User ID.
+	 */
+	public static function may_join_spaces( int $user_id ): bool {
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- registered via Capabilities::ROLE_MAP.
+		return user_can( $user_id, 'jetonomy_join_spaces' ) || ! \Jetonomy\Permissions\Capabilities::has_explicit_role_mapping( $user_id );
+	}
+
+	/**
+	 * Add an author to an open space on their first topic or reply. Other join
+	 * policies run their own workflows, an existing member is never demoted, and
+	 * a role without the "Join spaces" capability is not joined.
+	 *
+	 * @param int $space_id Space ID.
+	 * @param int $user_id  Author ID.
+	 */
+	public static function auto_join( int $space_id, int $user_id ): void {
+		if ( $space_id <= 0 || $user_id <= 0 || self::is_member( $space_id, $user_id ) || ! self::may_join_spaces( $user_id ) ) {
+			return;
+		}
+		$space = Space::find( $space_id );
+		if ( $space && 'open' === ( $space->join_policy ?? 'open' ) ) {
+			self::add( $space_id, $user_id, 'member' );
+		}
+	}
+
+	/**
 	 * Why a member may not join this space on their own (join, request or
 	 * invite), or null. An archived or locked space takes no one new, and a
 	 * member banned from the space cannot walk back in. Staff grants through
@@ -351,10 +381,7 @@ class SpaceMember extends Model {
 			return $blocked;
 		}
 
-		// The owner's "Join spaces" capability. A role the owner never mapped
-		// (another plugin's) keeps the engine's open fallback, as everywhere else.
-		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- registered via Capabilities::ROLE_MAP.
-		if ( ! user_can( $user_id, 'jetonomy_join_spaces' ) && \Jetonomy\Permissions\Capabilities::has_explicit_role_mapping( $user_id ) ) {
+		if ( ! self::may_join_spaces( $user_id ) ) {
 			return new \WP_Error( 'jetonomy_forbidden', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You are not allowed to join a %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 403 ) );
 		}
 
@@ -932,16 +959,6 @@ class SpaceMember extends Model {
 	}
 
 	/**
-	 * Count how many users currently hold the 'admin' role for a space.
-	 *
-	 * Single COUNT(*) query against the existing `(space_id, role)` index.
-	 * Used by the role-update guards (1.4.0 G4) to refuse demotion of the
-	 * last admin so a space can never end up admin-less.
-	 *
-	 * @param int $space_id
-	 * @return int
-	 */
-	/**
 	 * The one last-admin rule every entry point shares (front end, wp-admin,
 	 * REST, integrations): a space never loses its final admin by demotion
 	 * or removal.
@@ -992,6 +1009,16 @@ class SpaceMember extends Model {
 		);
 	}
 
+	/**
+	 * Count how many users currently hold the 'admin' role for a space.
+	 *
+	 * Single COUNT(*) query against the existing `(space_id, role)` index.
+	 * Used by the role-update guards (1.4.0 G4) to refuse demotion of the
+	 * last admin so a space can never end up admin-less.
+	 *
+	 * @param int $space_id
+	 * @return int
+	 */
 	public static function count_admins( int $space_id ): int {
 		$db    = static::db();
 		$table = static::table();

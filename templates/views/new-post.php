@@ -68,7 +68,8 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 	$jt_restriction = \Jetonomy\Permissions\Permission_Engine::restriction_error( $jt_user_id, 'create_posts', (int) $space->id );
 	$jt_can_join    = ! $jt_restriction
 		&& ( 'open' === \Jetonomy\Models\Space::effective_join_policy( $space ) )
-		&& ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $jt_user_id );
+		&& ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $jt_user_id )
+		&& \Jetonomy\Models\SpaceMember::may_join_spaces( $jt_user_id );
 
 	\Jetonomy\Template_Loader::partial(
 		'breadcrumb',

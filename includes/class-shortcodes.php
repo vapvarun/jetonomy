@@ -35,26 +35,6 @@ class Shortcodes {
 	}
 
 	/**
-	 * [jetonomy_widget id="jetonomy_recent_posts" title="..." count="5"]
-	 *
-	 * Render a registered Jetonomy widget inline. Lets a site owner embed
-	 * "Active Spaces" / "User Stats" / etc. in a page or page-builder canvas
-	 * without dropping into the Customizer. Anything beyond `id` becomes
-	 * the widget instance settings, so per-widget options are accepted as
-	 * shortcode attributes.
-	 */
-	/**
-	 * Explain a misconfigured shortcode to whoever can fix it.
-	 *
-	 * A blank region would hide a mistyped attribute from the owner, so these paths
-	 * explain it (genuinely empty data renders `jt-shortcode-empty`). Only users who
-	 * can edit see this: visitors keep the silent output, so editor guidance never
-	 * surfaces on a public page.
-	 *
-	 * @param string $message What the author needs to change.
-	 * @return string
-	 */
-	/**
 	 * Resolve a space reference (numeric id or slug) to a row, or null.
 	 *
 	 * Shared so every shortcode answers the same question. A numeric ref is looked up
@@ -94,6 +74,17 @@ class Shortcodes {
 		);
 	}
 
+	/**
+	 * Explain a misconfigured shortcode to whoever can fix it.
+	 *
+	 * A blank region would hide a mistyped attribute from the owner, so these paths
+	 * explain it (genuinely empty data renders `jt-shortcode-empty`). Only users who
+	 * can edit see this: visitors keep the silent output, so editor guidance never
+	 * surfaces on a public page.
+	 *
+	 * @param string $message What the author needs to change.
+	 * @return string
+	 */
 	private static function config_notice( string $message ): string {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return '';
@@ -102,6 +93,15 @@ class Shortcodes {
 		return '<div class="jt-shortcode-empty jt-shortcode-notice">' . esc_html( $message ) . '</div>';
 	}
 
+	/**
+	 * [jetonomy_widget id="jetonomy_recent_posts" title="..." count="5"]
+	 *
+	 * Render a registered Jetonomy widget inline. Lets a site owner embed
+	 * "Active Spaces" / "User Stats" / etc. in a page or page-builder canvas
+	 * without dropping into the Customizer. Anything beyond `id` becomes
+	 * the widget instance settings, so per-widget options are accepted as
+	 * shortcode attributes.
+	 */
 	public static function widget_embed( $atts ): string {
 		// shortcode_atts would strip every key except those in defaults — but
 		// each widget has its own instance keys (count, title, etc.), so we
@@ -157,14 +157,6 @@ class Shortcodes {
 	}
 
 	/**
-	 * Register + enqueue the shared blocks/shortcode stylesheet.
-	 *
-	 * Shortcodes can render in any context (page, page-builder canvas, widget),
-	 * including pages that never run `wp_enqueue_scripts` for our handles. We
-	 * register defensively in case we beat Blocks::register_block_assets(),
-	 * then enqueue. WordPress dedupes by handle.
-	 */
-	/**
 	 * The member avatar partial (real avatar or initials), captured for the
 	 * string-built shortcodes so they match the profile page.
 	 *
@@ -185,6 +177,14 @@ class Shortcodes {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Register + enqueue the shared blocks/shortcode stylesheet.
+	 *
+	 * Shortcodes can render in any context (page, page-builder canvas, widget),
+	 * including pages that never run `wp_enqueue_scripts` for our handles. We
+	 * register defensively in case we beat Blocks::register_block_assets(),
+	 * then enqueue. WordPress dedupes by handle.
+	 */
 	private static function enqueue_styles(): void {
 		if ( ! wp_style_is( 'jetonomy-blocks', 'registered' ) ) {
 			// blocks.css declares no tokens of its own, so this fallback has to

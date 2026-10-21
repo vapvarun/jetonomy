@@ -51,14 +51,6 @@ class Subscription extends Model {
 	}
 
 	/**
-	 * Unsubscribe a user from an object.
-	 *
-	 * @param int    $user_id
-	 * @param string $object_type
-	 * @param int    $object_id
-	 * @return bool True if a row was deleted.
-	 */
-	/**
 	 * List a user's subscriptions, newest first, paginated.
 	 *
 	 * @param int $user_id User ID.
@@ -72,12 +64,22 @@ class Subscription extends Model {
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT * FROM ' . self::table() . ' WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
+				'SELECT * FROM ' . self::table() . ' WHERE user_id = %d' . self::target_exists_sql() . ' ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
 				$user_id,
 				$limit,
 				$offset
 			)
 		) ?: array();
+	}
+
+	/**
+	 * WHERE fragment keeping only subscriptions whose space or topic still exists.
+	 * Rows left behind by deletes from before dependents were cleaned up are
+	 * never listed or counted, so the list and its pages agree.
+	 */
+	private static function target_exists_sql(): string {
+		return " AND ( ( object_type = 'space' AND EXISTS ( SELECT 1 FROM " . \Jetonomy\table( 'spaces' ) . ' WHERE id = object_id ) )'
+			. " OR ( object_type = 'post' AND EXISTS ( SELECT 1 FROM " . \Jetonomy\table( 'posts' ) . ' WHERE id = object_id ) ) )';
 	}
 
 	/**
@@ -92,7 +94,7 @@ class Subscription extends Model {
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT COUNT(*) FROM ' . self::table() . ' WHERE user_id = %d',
+				'SELECT COUNT(*) FROM ' . self::table() . ' WHERE user_id = %d' . self::target_exists_sql(),
 				$user_id
 			)
 		);
@@ -221,6 +223,14 @@ class Subscription extends Model {
 		return $items;
 	}
 
+	/**
+	 * Unsubscribe a user from an object.
+	 *
+	 * @param int    $user_id
+	 * @param string $object_type
+	 * @param int    $object_id
+	 * @return bool True if a row was deleted.
+	 */
 	public static function unsubscribe( int $user_id, string $object_type, int $object_id ): bool {
 		$result = false !== static::db()->delete(
 			static::table(),

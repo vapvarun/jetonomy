@@ -58,7 +58,7 @@ Auto-awarded badges evaluate all members on a regular schedule and grant the bad
 
 Set the threshold for each criteria you want to use. You can combine multiple criteria with **all** (the member must satisfy every condition) or **any** (one is enough) to earn the badge.
 
-> **Note:** Auto-evaluation runs automatically - a recurring job every 6 hours (via Action Scheduler, with a WP-Cron fallback), plus event-driven re-evaluation that fires when a member's posts, replies, votes, reputation, or trust level change. There is no manual "evaluate now" button.
+> **Note:** Auto-evaluation runs automatically - a recurring job every 6 hours (via Action Scheduler; every 12 hours on the WP-Cron fallback), plus event-driven re-evaluation that fires when a member's posts, replies, votes, reputation, or trust level change. There is no manual "evaluate now" button.
 
 ### Manual Award
 

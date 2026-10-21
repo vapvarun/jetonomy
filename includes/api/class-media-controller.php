@@ -177,6 +177,11 @@ class Media_Controller extends Base_Controller {
 			);
 		};
 		add_filter( 'upload_dir', $jt_dir );
+		// The random folders stay unlisted only while their parent cannot be browsed.
+		$jt_index = wp_upload_dir()['basedir'] . '/jetonomy/index.php';
+		if ( ! file_exists( $jt_index ) && wp_mkdir_p( dirname( $jt_index ) ) ) {
+			file_put_contents( $jt_index, "<?php\n// Silence is golden.\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- a static stub, same as core's.
+		}
 		$attachment_id = media_handle_upload(
 			'file',
 			0,

@@ -435,16 +435,6 @@ final class Space_Purge {
 	}
 
 	/**
-	 * Delete a space and every row that references it.
-	 *
-	 * Idempotent: a second call finds nothing left to remove and reports zeros.
-	 * Safe on an already-orphaned space (the `spaces` row gone, its children
-	 * still present), which is exactly the backfill's case.
-	 *
-	 * @param int $space_id Space id.
-	 * @return array<string,int> Rows removed, keyed "table.column" (only non-zero entries).
-	 */
-	/**
 	 * Delete a bounded slice of a space, deepest level first.
 	 *
 	 * The unit of work is deliberately a slice of REPLIES, then a slice of
@@ -633,6 +623,16 @@ final class Space_Purge {
 		);
 	}
 
+	/**
+	 * Delete a space and every row that references it.
+	 *
+	 * Idempotent: a second call finds nothing left to remove and reports zeros.
+	 * Safe on an already-orphaned space (the `spaces` row gone, its children
+	 * still present), which is exactly the backfill's case.
+	 *
+	 * @param int $space_id Space id.
+	 * @return array<string,int> Rows removed, keyed "table.column" (only non-zero entries).
+	 */
 	public static function purge( int $space_id ): array {
 		$space_id = (int) $space_id;
 		if ( $space_id <= 0 ) {

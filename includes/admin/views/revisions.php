@@ -22,7 +22,10 @@
  *   $object_type   — 'post' | 'reply'   (only set when $mode === 'detail')
  *   $object_id     — int                 (only set when $mode === 'detail')
  *   $object_title  — string              (only set when $mode === 'detail')
- *   $revisions     — object[]            (only set when $mode === 'detail')
+ *   $revisions     — object[]            (one page of snapshots plus the next-older one; only set when $mode === 'detail')
+ *   $rev_total     — int                 (all snapshots of the object)
+ *   $rev_page      — int                 (current page)
+ *   $rev_per       — int                 (snapshots per page)
  *   $back_url      — string admin URL    (only set when $mode === 'detail')
  *
  * @package Jetonomy
@@ -31,6 +34,9 @@
 defined( 'ABSPATH' ) || exit;
 
 /** @var string $mode */
+/** @var int $rev_page */
+/** @var int $rev_per */
+/** @var int $rev_total */
 $mode = isset( $mode ) ? (string) $mode : 'list';
 
 if ( 'detail' === $mode ) :
@@ -63,11 +69,11 @@ if ( 'detail' === $mode ) :
 			<?php
 			printf(
 				/* translators: %d: number of revisions */
-				esc_html( _n( '%d revision recorded.', '%d revisions recorded.', count( $revisions ), 'jetonomy' ) ),
-				(int) count( $revisions )
+				esc_html( _n( '%d revision recorded.', '%d revisions recorded.', $rev_total, 'jetonomy' ) ),
+				(int) $rev_total
 			);
 			?>
-			<?php esc_html_e( 'Each row compares against the previous snapshot. The top row is the current version; the oldest entry has no diff.', 'jetonomy' ); ?>
+			<?php esc_html_e( 'Each row compares against the previous snapshot. The current version is the top row of the first page while the item exists; the oldest entry has no diff.', 'jetonomy' ); ?>
 		</p>
 
 			<?php
@@ -80,7 +86,7 @@ if ( 'detail' === $mode ) :
 			// shows as live content. Put the live version on top so it diffs
 			// against the newest snapshot (a single edit gets its diff too).
 			$jt_live = $revisions ? ( 'post' === $object_type ? \Jetonomy\Models\Post::find( (int) $object_id ) : \Jetonomy\Models\Reply::find( (int) $object_id ) ) : null;
-			if ( $jt_live ) {
+			if ( $jt_live && 1 === $rev_page ) {
 				array_unshift(
 					$revisions,
 					(object) array(
@@ -96,15 +102,18 @@ if ( 'detail' === $mode ) :
 				);
 			}
 			$jt_objects = \Jetonomy\Author::objects_of( $revisions );
-			$jt_total   = count( $revisions );
-			$jt_prev    = static function ( $rev ) use ( $revisions, $jt_total ) {
+			// The extra older snapshot is only a diff base, not a row.
+			$jt_rows  = array_slice( $revisions, 0, $rev_per + ( $jt_live && 1 === $rev_page ? 1 : 0 ) );
+			$jt_pages = (int) ceil( $rev_total / $rev_per );
+			$jt_total = count( $revisions );
+			$jt_prev  = static function ( $rev ) use ( $revisions, $jt_total ) {
 				$idx = array_search( $rev, $revisions, true );
 				return ( false !== $idx && $idx < ( $jt_total - 1 ) ) ? $revisions[ $idx + 1 ] : null;
 			};
 
 			jetonomy_admin_table(
 				array(
-					'rows'      => $revisions,
+					'rows'      => $jt_rows,
 					'class'     => 'jt-revisions-detail',
 					'columns'   => array(
 						'date'    => array(
@@ -239,8 +248,27 @@ if ( 'detail' === $mode ) :
 					},
 				)
 			);
-	?>
-
+	if ( $jt_pages > 1 ) :
+		?>
+				<div class="tablenav bottom">
+					<div class="tablenav-pages">
+				<?php
+				echo wp_kses_post(
+					paginate_links(
+						array(
+							'base'      => add_query_arg( 'paged', '%#%' ),
+							'format'    => '',
+							'current'   => $rev_page,
+							'total'     => $jt_pages,
+							'prev_text' => '&lsaquo;',
+							'next_text' => '&rsaquo;',
+						)
+					)
+				);
+				?>
+					</div>
+				</div>
+			<?php endif; ?>
 	</div>
 	<?php
 else :

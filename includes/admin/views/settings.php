@@ -692,8 +692,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				'flag_validated'  => __( 'Flag confirmed (reporter)', 'jetonomy' ),
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				'post_reported'   => __( 'Content reported', 'jetonomy' ),
-				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-				'post_removed'    => sprintf( __( '%s removed by moderator', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+				'post_removed'    => __( 'Content removed by moderator', 'jetonomy' ),
 			);
 			?>
 			<div class="jt-settings-card">

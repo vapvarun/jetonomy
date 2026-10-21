@@ -194,7 +194,18 @@
 
 	function getFocusable( root ) {
 		return Array.prototype.slice.call( root.querySelectorAll( FOCUSABLE_SELECTOR ) )
-			.filter( function ( el ) { return el.offsetParent !== null; } );
+			.filter( function ( el ) {
+				if ( el.offsetParent === null ) {
+					return false;
+				}
+				// A radio group is one tab stop: the checked radio, else the first.
+				if ( el.type === 'radio' && el.name ) {
+					var group = root.querySelectorAll( 'input[type="radio"][name="' + el.name.replace( /"/g, '\\"' ) + '"]' );
+					var checked = Array.prototype.find.call( group, function ( r ) { return r.checked; } );
+					return el === ( checked || group[ 0 ] );
+				}
+				return true;
+			} );
 	}
 
 	/**

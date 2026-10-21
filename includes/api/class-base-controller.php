@@ -507,12 +507,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Batch-fetch WP user rows for a set of IDs, using the object cache.
-	 *
-	 * @param int[] $ids
-	 * @return array<int, object> Keyed by user ID.
-	 */
-	/**
 	 * Attach reporter + resolver identity to a page of moderation flags.
 	 *
 	 * Lives here because there are TWO moderation queues — the global one
@@ -566,6 +560,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 		return $flags;
 	}
 
+	/**
+	 * Batch-fetch WP user rows for a set of IDs, using the object cache.
+	 *
+	 * @param int[] $ids
+	 * @return array<int, object> Keyed by user ID.
+	 */
 	protected function batch_load_users( array $ids ): array {
 		if ( empty( $ids ) ) {
 			return array();

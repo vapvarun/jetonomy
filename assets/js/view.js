@@ -884,8 +884,12 @@ function notifSetTabCounts( counts ) {
  */
 window.jtReloadNotifList = async function () {
     if ( ! document.querySelector( '[data-jt-notif-list], .jt-notif-tabs' ) ) return;
+    // Ticks are position-based in the DOM; re-apply them by id so a new row on top cannot shift them onto other notifications.
+    const ticked = new Set( [ ...document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ) ].map( ( cb ) => cb.value ) );
     const router = await import( '@wordpress/interactivity-router' );
     await router.actions.navigate( window.location.href, { force: true, replace: true } );
+    document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb' ).forEach( ( cb ) => { cb.checked = ticked.has( cb.value ); } );
+    notifUpdateBulkbar();
     document.dispatchEvent( new CustomEvent( 'jetonomy:navigated', { detail: { href: window.location.href } } ) );
 };
 

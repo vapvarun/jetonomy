@@ -472,18 +472,13 @@ class Fluent_Community {
 			$rendered = wp_kses_post( $rendered );
 		}
 
-		$plain = trim( wp_strip_all_tags( $rendered ) );
+		if ( '' === trim( wp_strip_all_tags( $rendered ) ) ) {
+			return;
+		}
 
+		// Same gate, content rules and approval as a reply posted on the topic itself.
 		self::$syncing = true;
-		Reply::create(
-			array(
-				'post_id'       => $jt_post_id,
-				'author_id'     => $author_id,
-				'content'       => $rendered,
-				'content_plain' => $plain,
-				'status'        => 'publish',
-			)
-		);
+		\Jetonomy\Permissions\Content_Gate::create_reply( $author_id, $parent_post, $rendered );
 		self::$syncing = false;
 	}
 

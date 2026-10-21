@@ -189,7 +189,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					<input type="checkbox" id="jt-se-require-approval" value="1" <?php checked( ! empty( $space_settings['require_approval'] ) ); ?>>
 					<?php /* translators: 1: topic label, plural lowercase. 2: reply label, plural lowercase. */ echo esc_html( sprintf( __( 'New %1$s and %2$s require moderator approval before publishing', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				</label>
-				<p class="jt-form-help"><?php esc_html_e( 'Hold new posts in the moderation queue until a moderator approves them.', 'jetonomy' ); ?></p>
+				<p class="jt-form-help"><?php /* translators: 1: topic label, plural lowercase. 2: reply label, plural lowercase. */ echo esc_html( sprintf( __( 'Hold new %1$s and %2$s in the moderation queue until a moderator approves them.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
 			</div>
 
 			<div class="jt-form-row">

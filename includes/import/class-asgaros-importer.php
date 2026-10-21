@@ -430,16 +430,6 @@ class Asgaros_Importer extends Importer {
 	}
 
 	/**
-	 * Create Jetonomy posts from a set of Asgaros topic rows.
-	 *
-	 * Shared by the batched and the single-shot paths so the two can never drift.
-	 *
-	 * @param object[] $topics Asgaros topic rows.
-	 * @return int Rows CONSUMED (including skipped ones). Stops early at a row
-	 *             boundary once the time budget is spent (batched path only —
-	 *             the single-shot run() never starts a budget, so it consumes all).
-	 */
-	/**
 	 * Carry an Asgaros post's uploads onto the imported object.
 	 *
 	 * Verified against a real Asgaros Forum install by reading its own upload code
@@ -516,6 +506,16 @@ class Asgaros_Importer extends Importer {
 		return trim( (string) $folder, '/' ) ?: 'asgarosforum';
 	}
 
+	/**
+	 * Create Jetonomy posts from a set of Asgaros topic rows.
+	 *
+	 * Shared by the batched and the single-shot paths so the two can never drift.
+	 *
+	 * @param object[] $topics Asgaros topic rows.
+	 * @return int Rows CONSUMED (including skipped ones). Stops early at a row
+	 *             boundary once the time budget is spent (batched path only —
+	 *             the single-shot run() never starts a budget, so it consumes all).
+	 */
 	private function import_topic_rows( array $topics ): int {
 		global $wpdb;
 		$p = $wpdb->prefix;

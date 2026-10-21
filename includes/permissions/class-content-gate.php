@@ -158,6 +158,49 @@ class Content_Gate {
 	}
 
 	/**
+	 * Post a reply for a writer that does not arrive through REST (an emailed
+	 * reply, a BuddyPress or FluentCommunity activity comment): the gate, the
+	 * content rules and require_approval, the row, then the canonical
+	 * after-create side effects. Reply::create() has no gate of its own.
+	 *
+	 * @param int    $user_id Author.
+	 * @param object $post    Post row being replied to.
+	 * @param string $content Sanitized reply HTML.
+	 * @return int|\WP_Error New reply ID, or why it was refused.
+	 */
+	public static function create_reply( int $user_id, object $post, string $content ) {
+		$allowed = self::check( $user_id, $post );
+		if ( is_wp_error( $allowed ) ) {
+			return $allowed;
+		}
+
+		$data     = array(
+			'post_id'       => (int) $post->id,
+			'author_id'     => $user_id,
+			'content'       => $content,
+			'content_plain' => \jetonomy_content_to_plain( $content ),
+		);
+		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) $post->space_id, $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return $screened;
+		}
+		$data['status'] = $screened['status'];
+
+		$reply_id = Reply::create( $data );
+		if ( is_wp_error( $reply_id ) || ! $reply_id ) {
+			return is_wp_error( $reply_id ) ? $reply_id : new \WP_Error( 'jetonomy_create_failed', /* translators: %s: reply label, lower case */ sprintf( __( 'The %s could not be saved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), array( 'status' => 500 ) );
+		}
+		if ( $screened['flag'] ) {
+			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'reply', (int) $reply_id );
+		}
+
+		// No WP_Request on a background path, as with the post-create hook.
+		do_action( 'jetonomy_after_create_reply', $reply_id, (int) $post->id, null );
+
+		return (int) $reply_id;
+	}
+
+	/**
 	 * Whether this user may start a topic in this space right now: check()'s twin
 	 * for posts, shared by REST, the WP Abilities path and WP-CLI.
 	 *

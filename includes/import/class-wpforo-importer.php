@@ -310,12 +310,6 @@ class WPForo_Importer extends Importer {
 	}
 
 	/**
-	 * Recount denormalized counters once, clean up run state, and report done.
-	 *
-	 * @param int $processed Rows consumed on the final call.
-	 * @return array{phase:string, offset:int, done:bool, processed:int}
-	 */
-	/**
 	 * Also drop the cached board list + board index on a fresh run.
 	 *
 	 * These persist across batches (a run is multi-board), so a previous run that
@@ -329,6 +323,12 @@ class WPForo_Importer extends Importer {
 		delete_option( self::BOARD_IDX_OPTION );
 	}
 
+	/**
+	 * Recount denormalized counters once, clean up run state, and report done.
+	 *
+	 * @param int $processed Rows consumed on the final call.
+	 * @return array{phase:string, offset:int, done:bool, processed:int}
+	 */
 	private function finish( int $processed = 0 ): array {
 		$this->recount();
 
@@ -914,14 +914,6 @@ class WPForo_Importer extends Importer {
 	}
 
 	/**
-	 * Create Jetonomy replies from a set of wpForo post rows.
-	 *
-	 * Shared by the batched and single-shot paths so the two cannot drift.
-	 *
-	 * @param object[] $posts wpForo post rows (excluding each topic's first post).
-	 * @return int Rows CONSUMED (including skipped ones).
-	 */
-	/**
 	 * Caveats the owner should read BEFORE running this import.
 	 *
 	 * Rendered on the import screen. The private-reply note exists because the
@@ -1009,6 +1001,14 @@ class WPForo_Importer extends Importer {
 		return 0 === (int) ( $row->status ?? 0 ) ? 'publish' : 'pending';
 	}
 
+	/**
+	 * Create Jetonomy replies from a set of wpForo post rows.
+	 *
+	 * Shared by the batched and single-shot paths so the two cannot drift.
+	 *
+	 * @param object[] $posts wpForo post rows (excluding each topic's first post).
+	 * @return int Rows CONSUMED (including skipped ones).
+	 */
 	private function import_reply_rows( array $posts ): int {
 		$consumed = 0;
 		$total    = count( $posts );

@@ -56,14 +56,16 @@ final class Queue {
 
 	/**
 	 * Queue a one-off job unless an identical one (same hook and arguments) is
-	 * already pending or running.
+	 * already waiting. A copy that is running does not count: an event that
+	 * arrives mid-run may have missed what that run already read, so it needs
+	 * a run of its own.
 	 *
 	 * @param string $hook Action hook.
 	 * @param array  $args Hook arguments.
 	 * @return bool Whether the job is queued.
 	 */
 	public static function async_once( string $hook, array $args = array() ): bool {
-		return self::is_queued( $hook, $args ) || self::async( $hook, $args );
+		return self::is_queued( $hook, $args, false ) || self::async( $hook, $args );
 	}
 
 	/**
@@ -82,14 +84,29 @@ final class Queue {
 	}
 
 	/**
-	 * Whether a copy with exactly these arguments is pending (or running).
+	 * Whether a copy with exactly these arguments is pending (or, by default, running).
 	 *
-	 * @param string $hook Action hook.
-	 * @param array  $args Hook arguments.
+	 * @param string $hook            Action hook.
+	 * @param array  $args            Hook arguments.
+	 * @param bool   $include_running Whether an in-progress copy counts.
 	 */
-	public static function is_queued( string $hook, array $args = array() ): bool {
-		if ( self::has_as() && as_has_scheduled_action( $hook, $args, self::GROUP ) ) {
-			return true;
+	public static function is_queued( string $hook, array $args = array(), bool $include_running = true ): bool {
+		if ( self::has_as() ) {
+			$found = $include_running
+				? as_has_scheduled_action( $hook, $args, self::GROUP )
+				: (bool) as_get_scheduled_actions(
+					array(
+						'hook'     => $hook,
+						'args'     => $args,
+						'group'    => self::GROUP,
+						'status'   => 'pending',
+						'per_page' => 1,
+					),
+					'ids'
+				);
+			if ( $found ) {
+				return true;
+			}
 		}
 		return false !== wp_next_scheduled( $hook, $args );
 	}

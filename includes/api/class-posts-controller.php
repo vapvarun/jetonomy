@@ -228,9 +228,9 @@ class Posts_Controller extends Base_Controller {
 		// anonymous visitors to a public post deserve the same rich link
 		// preview cards that logged-in members see. The URL being previewed
 		// is already visible in the post body, the Preview_Service only
-		// scrapes the URL's own OG metadata, and wp_safe_remote_get blocks
-		// internal-IP SSRF. Aggressive caching in the service keeps repeated
-		// hits cheap.
+		// scrapes the URL's own OG metadata, and Url_Guard vets the address
+		// (the fetch is pinned to it). A per-IP limit bounds abuse; a cached
+		// preview never spends it.
 		register_rest_route(
 			$ns,
 			'/link-preview',

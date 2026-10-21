@@ -626,14 +626,6 @@ class Admin {
 	}
 
 	/**
-	 * Sanitize the email template overrides option.
-	 * Each row: { subject: string, body: string }. Both fields are plain
-	 * text with supported placeholders — no HTML allowed here.
-	 *
-	 * @param mixed $input
-	 * @return array<string, array{subject: string, body: string}>
-	 */
-	/**
 	 * Did THIS request post the Email tab's template fields?
 	 *
 	 * See sanitize_email_templates() for why a per-call check is not enough.
@@ -642,6 +634,14 @@ class Admin {
 	 */
 	private static bool $email_templates_submitted = false;
 
+	/**
+	 * Sanitize the email template overrides option.
+	 * Each row: { subject: string, body: string }. Both fields are plain
+	 * text with supported placeholders — no HTML allowed here.
+	 *
+	 * @param mixed $input
+	 * @return array<string, array{subject: string, body: string}>
+	 */
 	public function sanitize_email_templates( $input ): array {
 		$stored = get_option( 'jetonomy_email_templates', array() );
 		$stored = is_array( $stored ) ? $stored : array();
@@ -1047,9 +1047,6 @@ class Admin {
 	// ── Assets ──
 
 	/**
-	 * Hide third-party admin notices on Jetonomy pages.
-	 */
-	/**
 	 * Apply the `jetonomy_admin_footer_text` filter on Jetonomy admin pages.
 	 * Lets extensions (e.g. Pro white-label) replace the WordPress default
 	 * "Thank you for creating with WordPress" line on plugin screens.
@@ -1077,6 +1074,9 @@ class Admin {
 		return (string) apply_filters( 'jetonomy_admin_footer_text', $text );
 	}
 
+	/**
+	 * Hide third-party admin notices on Jetonomy pages.
+	 */
 	public function hide_third_party_notices(): void {
 		$screen = get_current_screen();
 		if ( ! $screen || false === strpos( $screen->id, 'jetonomy' ) ) {
@@ -1731,7 +1731,7 @@ class Admin {
 		if ( false === $out ) {
 			exit;
 		}
-		fputcsv( $out, array( 'id', 'user_id', 'user_login', 'action', 'object_type', 'object_id', 'metadata', 'created_at' ) );
+		fputcsv( $out, array( 'id', 'user_id', 'user_login', 'action', 'object_type', 'object_id', 'metadata', 'created_at' ), escape: '' );
 		$objects = \Jetonomy\Author::objects_of( array_map( static fn( $r ) => (object) $r, $rows ) );
 		foreach ( $rows as $row ) {
 			// Anonymous authors stay anonymous in the export too; only a logged Reveal names them.
@@ -1754,7 +1754,8 @@ class Admin {
 					(string) $row['object_id'],
 					$safe( (string) ( $row['metadata'] ?? '' ) ),
 					(string) $row['created_at'],
-				)
+				),
+				escape: ''
 			);
 		}
 		fclose( $out );
@@ -1791,7 +1792,16 @@ class Admin {
 		if ( $is_detail ) {
 			$mode        = 'detail';
 			$object_type = $raw_type;
-			$revisions   = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id );
+			// One page of snapshots plus the next-older one, so the last row on the page still has something to diff against.
+			$rev_per   = 20;
+			$rev_page  = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation param.
+			$rev_total = \Jetonomy\Models\Revision::count(
+				array(
+					'object_type' => $object_type,
+					'object_id'   => $object_id,
+				)
+			);
+			$revisions = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id, $rev_per + 1, ( $rev_page - 1 ) * $rev_per );
 
 			// Resolve a human-readable title for the page heading. Posts
 			// have a title column; replies fall back to the parent post

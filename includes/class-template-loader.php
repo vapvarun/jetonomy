@@ -738,25 +738,6 @@ class Template_Loader {
 	}
 
 	/**
-	 * Resolve the admin-chosen palette as a `--jt-*` token => hex map.
-	 *
-	 * Shared by palette_css() (frontend emission) and by
-	 * Theme_Integration::output_color_bridge(), which subtracts these
-	 * tokens from its automatic theme bridge so an explicit owner choice
-	 * always outranks inherited theme colors.
-	 *
-	 * Empty when no palette field is set — which is the normal case, and is
-	 * what makes theme adoption the default: emit nothing, and the chains in
-	 * jetonomy.css resolve to the active theme's own tokens. The accent field
-	 * treats its #0073aa default as "not set" for the same reason, so an owner
-	 * who never touches it keeps matching their theme.
-	 *
-	 * @since 1.5.0
-	 *
-	 * @param array $settings The jetonomy_settings option array.
-	 * @return array<string,string> Token name => sanitized hex color.
-	 */
-	/**
 	 * Black or white, whichever reads better on the given accent hex.
 	 *
 	 * The runtime `oklch()` contrast guard in jetonomy-tokens.css derives
@@ -791,6 +772,25 @@ class Template_Loader {
 		return $white_ratio >= $black_ratio ? '#ffffff' : '#000000';
 	}
 
+	/**
+	 * Resolve the admin-chosen palette as a `--jt-*` token => hex map.
+	 *
+	 * Shared by palette_css() (frontend emission) and by
+	 * Theme_Integration::output_color_bridge(), which subtracts these
+	 * tokens from its automatic theme bridge so an explicit owner choice
+	 * always outranks inherited theme colors.
+	 *
+	 * Empty when no palette field is set — which is the normal case, and is
+	 * what makes theme adoption the default: emit nothing, and the chains in
+	 * jetonomy.css resolve to the active theme's own tokens. The accent field
+	 * treats its #0073aa default as "not set" for the same reason, so an owner
+	 * who never touches it keeps matching their theme.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param array $settings The jetonomy_settings option array.
+	 * @return array<string,string> Token name => sanitized hex color.
+	 */
 	public static function palette_tokens( array $settings ): array {
 		$map = array(
 			'accent_color'    => '--jt-accent',

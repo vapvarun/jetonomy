@@ -580,19 +580,20 @@ class Users_Controller extends Base_Controller {
 				if ( ! is_array( $cur_settings ) ) {
 					$cur_settings = array(); }
 
-				// Must cover every type shown in the Edit-Profile + admin
-				// Notification Defaults UIs, or that toggle is silently dropped on
-				// save (idea_status_changed / moderation / join_request were missing).
-				$valid_types = array( 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned', 'idea_status_changed', 'moderation', 'join_request', 'join_request_result', 'message' );
-				$prefs       = array();
+				// Every notifiable type, from the one list the admin screens use, or a
+				// toggle is silently dropped on save. Types sent are merged over the
+				// stored map: a partial PATCH, or an unsubscribe link's email-off, survives.
+				$valid_types = array_merge( array_keys( \Jetonomy\Admin\Admin::email_types() ), array( 'message' ) );
+				$prefs       = is_array( $cur_settings['notifications'] ?? null ) ? $cur_settings['notifications'] : array();
 				foreach ( $notif_input as $type => $channels ) {
-					if ( ! in_array( $type, $valid_types, true ) ) {
+					if ( ! in_array( $type, $valid_types, true ) || ! is_array( $channels ) ) {
 						continue;
 					}
-					$prefs[ $type ] = array(
-						'web'   => ! empty( $channels['web'] ),
-						'email' => ! empty( $channels['email'] ),
-					);
+					foreach ( array( 'web', 'email' ) as $channel ) {
+						if ( array_key_exists( $channel, $channels ) ) {
+							$prefs[ $type ][ $channel ] = ! empty( $channels[ $channel ] );
+						}
+					}
 				}
 				$cur_settings['notifications'] = $prefs;
 				$profile_data['settings']      = wp_json_encode( $cur_settings );

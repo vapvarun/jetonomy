@@ -1632,6 +1632,7 @@
 										.text(self.i18n.ban),
 									document.createTextNode(' | ')
 								);
+								$row.find('.silence, .ban-ip').prop('hidden', false);
 							} else {
 								$row.fadeOut(300, function() { $(this).remove(); });
 							}
@@ -1797,8 +1798,9 @@
 						$row.find('.ban').html(
 							'<a href="#" class="jetonomy-unban-user" data-restriction-id="' + res.data.restriction_id + '">' +
 							self.i18n.unban +
-							'</a> | '
+							'</a>'
 						);
+						$row.find('.silence, .ban-ip').prop('hidden', true);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}

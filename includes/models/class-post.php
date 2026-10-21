@@ -30,16 +30,6 @@ class Post extends Model {
 	}
 
 	/**
-	 * Create a new post.
-	 *
-	 * Sets created_at, updated_at, and status defaults if absent. Generates a
-	 * slug from the title when one is not provided. After a successful insert,
-	 * increments the parent space's post_count.
-	 *
-	 * @param array $data Column data.
-	 * @return int Inserted row ID.
-	 */
-	/**
 	 * Insert override: the LAST write barrier for the content pipeline.
 	 *
 	 * Sanitizing only inside create() left two bypasses (QA 2026-07-30):
@@ -56,6 +46,16 @@ class Post extends Model {
 		return parent::insert( self::sanitize_content_fields( $data ) );
 	}
 
+	/**
+	 * Create a new post.
+	 *
+	 * Sets created_at, updated_at, and status defaults if absent. Generates a
+	 * slug from the title when one is not provided. After a successful insert,
+	 * increments the parent space's post_count.
+	 *
+	 * @param array $data Column data.
+	 * @return int Inserted row ID.
+	 */
 	public static function create( array $data ): int|\WP_Error {
 		/**
 		 * Filter post data before creation. Return WP_Error to abort.
@@ -130,7 +130,7 @@ class Post extends Model {
 				// Only applies to open spaces — approval/invite-only spaces manage
 				// membership through their own workflows, and demoting an existing
 				// admin/moderator back to 'member' would be a footgun.
-				self::maybe_auto_join_space( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
+				SpaceMember::auto_join( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
 
 				/**
 				 * Fires when a post enters or leaves `publish`.
@@ -183,20 +183,6 @@ class Post extends Model {
 		return $id;
 	}
 
-	/**
-	 * Status-aware update.
-	 *
-	 * When a post transitions between `publish` and any other status the
-	 * denormalized counters on the parent space and the author profile must
-	 * track that transition. Centralizing it here means every caller — REST,
-	 * admin AJAX, abilities, WP-CLI, migrations — stays consistent without
-	 * repeating increment/decrement logic.
-	 *
-	 * Transitions that update counters:
-	 *   publish → non-publish     : -1 space.post_count, -1 user.post_count
-	 *   non-publish → publish     : +1 space.post_count, +1 user.post_count
-	 *   everything else           : no-op
-	 */
 	/**
 	 * Single-post read, served from the object cache.
 	 *
@@ -253,6 +239,20 @@ class Post extends Model {
 		Cache::delete( self::cache_key( $id ) );
 	}
 
+	/**
+	 * Status-aware update.
+	 *
+	 * When a post transitions between `publish` and any other status the
+	 * denormalized counters on the parent space and the author profile must
+	 * track that transition. Centralizing it here means every caller — REST,
+	 * admin AJAX, abilities, WP-CLI, migrations — stays consistent without
+	 * repeating increment/decrement logic.
+	 *
+	 * Transitions that update counters:
+	 *   publish → non-publish     : -1 space.post_count, -1 user.post_count
+	 *   non-publish → publish     : +1 space.post_count, +1 user.post_count
+	 *   everything else           : no-op
+	 */
 	public static function update( int $id, array $data ): bool {
 		$data = self::sanitize_content_fields( $data );
 
@@ -321,24 +321,6 @@ class Post extends Model {
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Add the author to a space as a plain member if they aren't already a member.
-	 * Skips non-open spaces so role/gating workflows aren't bypassed.
-	 */
-	private static function maybe_auto_join_space( int $space_id, int $user_id ): void {
-		if ( $space_id <= 0 || $user_id <= 0 ) {
-			return;
-		}
-		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
-			return;
-		}
-		$space = Space::find( $space_id );
-		if ( ! $space || 'open' !== ( $space->join_policy ?? 'open' ) ) {
-			return;
-		}
-		SpaceMember::add( $space_id, $user_id, 'member' );
 	}
 
 	/**
@@ -2003,12 +1985,6 @@ class Post extends Model {
 	}
 
 	/**
-	 * Publish a scheduled post when its published_at time has arrived.
-	 *
-	 * @param int $id Post ID.
-	 * @return bool True if published.
-	 */
-	/**
 	 * Publish a draft post now, with the full create-post side-effects.
 	 *
 	 * Shared core for both the scheduled-cron publish and a manual "publish now"
@@ -2092,6 +2068,12 @@ class Post extends Model {
 		return true;
 	}
 
+	/**
+	 * Publish a scheduled post when its published_at time has arrived.
+	 *
+	 * @param int $id Post ID.
+	 * @return bool True if published.
+	 */
 	public static function publish_scheduled( int $id ): bool {
 		$post = static::find( $id );
 		if ( ! $post || 'draft' !== ( $post->status ?? '' ) || empty( $post->published_at ) ) {

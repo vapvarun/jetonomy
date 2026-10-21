@@ -455,7 +455,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							),
 							'actions' => array(
 								'label' => __( 'Actions', 'jetonomy' ),
-								'width' => 's',
+								'width' => 'l',
 							),
 						),
 						'rows'      => $banned_users,

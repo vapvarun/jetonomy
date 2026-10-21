@@ -1131,13 +1131,6 @@ class Space extends Model {
 	}
 
 	/**
-	 * List top-level spaces in a category for a given viewer.
-	 *
-	 * @param int      $category_id Category row ID.
-	 * @param int|null $user_id     Viewer ID; null = current user.
-	 * @return object[]
-	 */
-	/**
 	 * ALL top-level spaces visible to the viewer, grouped by category_id in
 	 * ONE query. Key 0 collects uncategorized spaces. Replaces
 	 * the per-category list_by_category()/list_visible() loops on the home
