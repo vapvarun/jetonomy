@@ -1067,7 +1067,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<?php
 			$jt_container_width        = $settings['container_width'] ?? 'theme';
 			$jt_container_width_custom = absint( $settings['container_width_custom'] ?? 1280 );
-			$jt_sidebar_visibility     = $settings['sidebar_visibility'] ?? 'theme';
 			$jt_padding_preset         = $settings['padding_preset'] ?? 'theme';
 			?>
 			<div class="jt-settings-card">
@@ -1099,23 +1098,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							</fieldset>
 							<?php /* translators: %s: plural space label. */ ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'Applies to community pages only (%s, Discussions, Profile, etc.).', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Theme Sidebar', 'jetonomy' ); ?></th>
-						<td>
-							<fieldset>
-								<label>
-									<input type="radio" name="jetonomy_settings[sidebar_visibility]" value="theme" <?php checked( $jt_sidebar_visibility, 'theme' ); ?>>
-									<?php esc_html_e( 'Theme Default', 'jetonomy' ); ?>
-								</label>
-								<br>
-								<label>
-									<input type="radio" name="jetonomy_settings[sidebar_visibility]" value="hide" <?php checked( $jt_sidebar_visibility, 'hide' ); ?>>
-									<?php esc_html_e( 'Hide on community pages', 'jetonomy' ); ?>
-								</label>
-							</fieldset>
-							<p class="description"><?php esc_html_e( 'Hides your theme\'s sidebar (widgets) on community pages. Does not affect Jetonomy\'s own right-rail.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 					<tr>

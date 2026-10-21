@@ -223,28 +223,17 @@
      viewport, so a 900px @media never fires while description + stats + Join
      still collide. Query THIS header's width, not the window. */
   .jt-space-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; padding: var(--jt-space-4) 0 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); container-type: inline-size; }
-  /* Description on its own row, then every action beside every other action.
-     This was `display: block`, and the owner's "Edit space" ships wrapped in a
-     <p>, so a block element sat between the actions and forced each onto its
-     own line - two buttons of different widths stacked and left-ragged. It read
-     as a layout bug because it was one, and it would repeat for any integration
-     that adds an action here (an LMS "Open the course", a store "View product"),
-     since none of them can un-block a sibling they do not own.
-     The row wraps, so a narrow viewport stacks them deliberately instead. */
-  .jt-space-head__meta { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); }
-  .jt-space-head__meta > .jt-space-desc { flex: 1 1 100%; }
+  /* Description on its own row; every action, the stats and Join/Follow then
+     share the next row and wrap as single items only when the header runs out of
+     width. __meta is a wrapper, not a box: `contents` makes its children siblings
+     of the stats and the Join button, because as a separate flex box it took a
+     whole row whenever the header was narrower than the old 860px container
+     query (Reign's main column is ~790px), pushing stats + Join under the actions. */
+  .jt-space-head__meta { display: contents; }
+  .jt-space-head__meta > .jt-space-desc { flex: 1 1 100%; margin: 0; }
   .jt-space-head__meta > .jt-space-edit-cta { margin: 0; }
-  .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
+  .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; }
   .jt-space-nums { display: flex; gap: 20px; margin-inline-start: auto; }
-  /* When the header is narrower than a full description+stats+Join row
-     (Reign .container minus the plugin sidebar ≈ 700–850px), put the
-     description on its own row and keep stats + Join together underneath.
-     @container is not an @media — the file still has exactly the two
-     viewport blocks at the bottom. */
-  @container (max-width: 860px) {
-    .jt-space-head__meta { flex: 1 1 100%; }
-    .jt-space-nums { margin-inline-start: 0; }
-  }
   .jt-num { text-align: center; }
   .jt-num-val { font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 700; }
   .jt-num-lbl { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }

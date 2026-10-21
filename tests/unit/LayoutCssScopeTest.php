@@ -33,17 +33,17 @@ class LayoutCssScopeTest extends WP_UnitTestCase {
 	public function test_every_theme_selector_is_scoped_to_app_ancestors(): void {
 		$css = $this->rules(
 			array(
-				'container_width'    => 'full',
-				'sidebar_visibility' => 'hide',
+				'container_width' => 'full',
 			)
 		);
 
 		$this->assertNotSame( '', $css );
 		// No unscoped theme class may appear: each one would also hit the header/footer.
-		foreach ( array( '.container,', '.wrap,', '.widget-area,', '#secondary,', '.sidebar,' ) as $needle ) {
+		foreach ( array( '.container,', '.wrap,' ) as $needle ) {
 			$this->assertStringNotContainsString( 'body.jt-page ' . $needle, $css );
 		}
 		$this->assertStringContainsString( ':has(#jetonomy-app)', $css );
-		$this->assertStringContainsString( 'body.jt-page :has(#jetonomy-app)>:is(#secondary,.widget-area,.sidebar,.sidebar-primary)', $css );
+		// The theme sidebar setting is gone: nothing may target theme sidebars any more.
+		$this->assertStringNotContainsString( '#secondary', $css );
 	}
 }

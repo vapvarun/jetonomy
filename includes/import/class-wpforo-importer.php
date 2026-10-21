@@ -61,41 +61,114 @@ class WPForo_Importer extends Importer {
 	}
 
 	/**
-	 * NOTE on the table names below: they carry the `wpforo_` prefix. A bare
-	 * `"{$p}posts"` resolves to `wp_posts`, the WordPress core posts table, and would count
-	 * every WP post, page, revision and media attachment as a forum post - the progress bar
-	 * divides by this number, so the percentage would be nonsense.
+	 * The active wpForo boards, from the source tables alone (no run state), so the
+	 * pre-import stats, the progress total and the importer itself all walk the same
+	 * list. Each board has its own table prefix (wpforo_, wpforo1_, wpforo2_...).
+	 *
+	 * @return array<int,array{board:int,title:string,prefix:string}>
 	 */
-	public function get_source_stats(): array {
+	private function source_boards(): array {
 		global $wpdb;
-		$p = $wpdb->prefix;
-		return array(
-			'forums' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_forums" ),
-			'topics' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_topics" ),
-			'posts'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts" ),
-		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results( "SELECT boardid, title FROM {$wpdb->prefix}wpforo_boards WHERE status = 1 ORDER BY boardid ASC" );
+		if ( empty( $rows ) ) {
+			$rows = array(
+				(object) array(
+					'boardid' => 0,
+					'title'   => __( 'Forums', 'jetonomy' ),
+				),
+			);
+		}
+
+		$boards = array();
+		foreach ( $rows as $row ) {
+			$board_id = (int) $row->boardid;
+			$boards[] = array(
+				'board'  => $board_id,
+				'title'  => (string) $row->title,
+				'prefix' => $wpdb->prefix . 'wpforo' . ( $board_id ? $board_id . '_' : '_' ),
+			);
+		}
+
+		return $boards;
 	}
 
 	/**
-	 * The rows the batches report as processed, so progress ends at 100%:
-	 * forums, topics, the posts that become replies (each topic's first post
-	 * is its body, not a reply), the likes and the profiles phase's rows. Counts the
-	 * default board, like get_source_stats().
+	 * Does this board's table exist?
+	 *
+	 * @param string $table Full table name.
 	 */
-	public function get_total_count(): int {
+	private function table_exists( string $table ): bool {
 		global $wpdb;
-		$p = $wpdb->prefix;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		return (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+	}
+
+	/**
+	 * Row counts for one board. The table names carry the board's own `wpforo_`-style
+	 * prefix: a bare `"{$p}posts"` resolves to `wp_posts`, the WordPress core posts
+	 * table, and would count every WP post, page and revision as a forum post.
+	 *
+	 * @param string $p Board table prefix.
+	 * @return array{forums:int,topics:int,posts:int,first:int,profiles:int,likes:int}
+	 */
+	private function board_counts( string $p ): array {
+		global $wpdb;
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$first    = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT topicid) FROM {$p}wpforo_posts" );
-		$profiles = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $p . 'wpforo_profiles' ) )
-			? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_profiles" )
-			: 0;
-		$src      = $this->likes_source( $p . 'wpforo_' );
-		$likes    = $src ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$src['table']} WHERE 1=1 {$src['where']}" ) : 0;
-		// phpcs:enable
+		$src = $this->likes_source( $p );
 
-		return array_sum( $this->get_source_stats() ) - $first + $profiles + $likes;
+		return array(
+			'forums'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forums" ),
+			'topics'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}topics" ),
+			'posts'    => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}posts" ),
+			// Each topic's first post is its body, not a reply.
+			'first'    => (int) $wpdb->get_var( "SELECT COUNT(DISTINCT topicid) FROM {$p}posts" ),
+			'profiles' => $this->table_exists( $p . 'profiles' ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}profiles" ) : 0,
+			'likes'    => $src ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$src['table']} WHERE 1=1 {$src['where']}" ) : 0,
+		);
+		// phpcs:enable
+	}
+
+	/**
+	 * Forums, topics and posts across every active board, the same boards the batches walk.
+	 */
+	public function get_source_stats(): array {
+		$stats = array(
+			'forums' => 0,
+			'topics' => 0,
+			'posts'  => 0,
+		);
+		foreach ( $this->source_boards() as $board ) {
+			if ( ! $this->table_exists( $board['prefix'] . 'forums' ) ) {
+				continue;
+			}
+			$c = $this->board_counts( $board['prefix'] );
+			foreach ( $stats as $key => $total ) {
+				$stats[ $key ] = $total + $c[ $key ];
+			}
+		}
+
+		return $stats;
+	}
+
+	/**
+	 * The rows the batches report as processed, across every active board, so
+	 * progress ends at 100%: forums, topics, the posts that become replies, the likes
+	 * and the profiles phase's rows.
+	 */
+	public function get_total_count(): int {
+		$total = 0;
+		foreach ( $this->source_boards() as $board ) {
+			if ( ! $this->table_exists( $board['prefix'] . 'forums' ) ) {
+				continue;
+			}
+			$c      = $this->board_counts( $board['prefix'] );
+			$total += $c['forums'] + $c['topics'] + $c['posts'] - $c['first'] + $c['profiles'] + $c['likes'];
+		}
+
+		return $total;
 	}
 
 	/** Option holding the resolved board list for the run in progress. */
@@ -242,46 +315,29 @@ class WPForo_Importer extends Importer {
 			return $cached;
 		}
 
-		global $wpdb;
-		$boards_table = $wpdb->prefix . 'wpforo_boards';
+		$sources = $this->source_boards();
+		$multi   = count( $sources ) > 1;
+		$boards  = array();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results( "SELECT boardid, title FROM {$boards_table} WHERE status = 1 ORDER BY boardid ASC" );
-
-		if ( empty( $rows ) ) {
-			$rows = array(
-				(object) array(
-					'boardid' => 0,
-					'title'   => __( 'Forums', 'jetonomy' ),
-				),
-			);
-		}
-
-		$multi  = count( $rows ) > 1;
-		$boards = array();
-
-		foreach ( $rows as $row ) {
-			$board_id = (int) $row->boardid;
-			$prefix   = $wpdb->prefix . 'wpforo' . ( $board_id ? $board_id . '_' : '_' );
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $prefix . 'forums' ) ) ) {
+		foreach ( $sources as $src ) {
+			if ( ! $this->table_exists( $src['prefix'] . 'forums' ) ) {
 				continue;
 			}
 
+			$board_id = $src['board'];
 			$boards[] = array(
 				'board'    => $board_id,
-				'prefix'   => $prefix,
+				'prefix'   => $src['prefix'],
 				// Each board uploads to its OWN folder: wpforo, wpforo_2, wpforo_3...
 				// (wpforo.php:503). Hardcoding 'wpforo' silently skipped every file on
 				// every board but the first — no error, just missing media.
 				'media'    => 'wpforo' . ( $board_id ? '_' . $board_id : '' ),
 				'cat_name' => $multi
 					/* translators: %s: wpForo board name */
-					? sprintf( __( 'Imported from wpForo -- %s', 'jetonomy' ), $row->title )
+					? sprintf( __( 'Imported from wpForo -- %s', 'jetonomy' ), $src['title'] )
 					: __( 'Imported from wpForo', 'jetonomy' ),
 				'cat_slug' => $multi
-					? 'imported-wpforo-' . sanitize_title( $row->title )
+					? 'imported-wpforo-' . sanitize_title( $src['title'] )
 					: 'imported-wpforo',
 			);
 		}

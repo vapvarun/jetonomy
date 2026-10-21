@@ -443,6 +443,12 @@ $bn_active = did_action( 'buddynext_loaded' );
 	?>
 
 	<?php
+	if ( is_active_sidebar( 'jetonomy-sidebar' ) ) {
+		dynamic_sidebar( 'jetonomy-sidebar' );
+	}
+	?>
+
+	<?php
 	/**
 	 * Fires at the bottom of the Jetonomy sidebar, after all widgets render.
 	 * Used by integrations (ads, announcements, banners) to inject content.

@@ -541,15 +541,28 @@ class BBPress_Importer extends Importer {
 	 */
 	private function after_space_created( object $forum, int $space_id ): void {
 		$this->remember( 'space', (int) $forum->ID, $space_id );
+		$this->queue_grant( $forum, $space_id );
+		$this->link_buddypress_group( $space_id, (int) $forum->ID );
+	}
 
+	/**
+	 * Queue a private or hidden forum's participants for membership. Called for a
+	 * new space and for one an earlier run made, because people who posted since
+	 * must still be able to read it. grant_members() re-derives the participants
+	 * from the live bbPress tables and SpaceMember::add() never lowers a role, so
+	 * queuing a forum again is harmless.
+	 *
+	 * @param object $forum    Source forum row.
+	 * @param int    $space_id The space it maps to.
+	 * @return void
+	 */
+	private function queue_grant( object $forum, int $space_id ): void {
 		if ( 'public' !== $this->map_access( $forum )['visibility'] ) {
 			$this->grants[] = array(
 				'space' => $space_id,
 				'forum' => (int) $forum->ID,
 			);
 		}
-
-		$this->link_buddypress_group( $space_id, (int) $forum->ID );
 	}
 
 	/**
@@ -833,6 +846,7 @@ class BBPress_Importer extends Importer {
 				if ( ! $this->dry_run ) {
 					// A group forum an older release imported was never linked to its group.
 					$this->link_buddypress_group( $existing[ $id ], $id );
+					$this->queue_grant( $forum, $existing[ $id ] );
 				}
 				++$this->already;
 				continue;
@@ -885,16 +899,24 @@ class BBPress_Importer extends Importer {
 	 * Import topic rows. Shared by both paths (see import_forum_rows()).
 	 *
 	 * @param object[] $topics bbPress topic rows.
-	 * @return void
+	 * @return int Rows consumed: fewer than given when the batch's time budget ran out.
 	 */
-	private function import_topic_rows( array $topics ): void {
+	private function import_topic_rows( array $topics ): int {
 		$forums = array_unique( array_map( 'intval', array_column( $topics, 'post_parent' ) ) );
 		$this->load_mapped( 'forum', 'space', array_combine( $forums, $forums ) );
 
 		$existing = $this->find_imported_children( 'post', $topics, 'forum' );
 		$sticky   = $this->sticky_topic_ids( $topics );
+		$consumed = 0;
 
 		foreach ( $topics as $topic ) {
+			// Out of time, but not out of rows: stop at this boundary and let the
+			// caller resume at exactly $consumed, so nothing is lost or done twice.
+			if ( $consumed && $this->budget_spent() ) {
+				break;
+			}
+			++$consumed;
+
 			$space_id = $this->get_mapped_id( 'forum', (int) $topic->post_parent );
 			if ( ! $space_id ) {
 				$this->skip_orphan( 'topic' );
@@ -941,23 +963,31 @@ class BBPress_Importer extends Importer {
 			}
 			++$this->imported;
 		}
+
+		return $consumed;
 	}
 
 	/**
 	 * Import reply rows. Shared by both paths (see import_forum_rows()).
 	 *
 	 * @param object[] $replies bbPress reply rows, in id order.
-	 * @return void
+	 * @return int Rows consumed: fewer than given when the batch's time budget ran out.
 	 */
-	private function import_reply_rows( array $replies ): void {
+	private function import_reply_rows( array $replies ): int {
 		$topics = array_unique( array_map( 'intval', array_column( $replies, 'post_parent' ) ) );
 		$this->load_mapped( 'topic', 'post', array_combine( $topics, $topics ) );
 
 		$existing  = $this->find_imported_children( 'reply', $replies, 'topic' );
 		$parent_of = $this->reply_parent_resolver( $replies );
 		$rethread  = array();
+		$consumed  = 0;
 
 		foreach ( $replies as $reply ) {
+			if ( $consumed && $this->budget_spent() ) {
+				break;
+			}
+			++$consumed;
+
 			// bbPress reply's post_parent is the topic ID.
 			$post_id = $this->get_mapped_id( 'topic', (int) $reply->post_parent );
 			if ( ! $post_id ) {
@@ -1002,6 +1032,8 @@ class BBPress_Importer extends Importer {
 		}
 
 		$this->rethread_existing( $rethread );
+
+		return $consumed;
 	}
 
 	/**
@@ -1078,32 +1110,37 @@ class BBPress_Importer extends Importer {
 				return $more ? $this->step( 'members', $offset + $r['processed'], 0 ) : $this->step( 'topics', 0, 0 );
 
 			case 'topics':
-				$topics = $this->content_rows( 'topic', $batch_size, $offset );
-				$this->import_topic_rows( $topics );
+				$topics   = $this->content_rows( 'topic', $batch_size, $offset );
+				$consumed = $this->import_topic_rows( $topics );
 
-				return count( $topics ) >= $batch_size
-					? $this->step( 'topics', $offset + $batch_size, count( $topics ) )
-					: $this->step( 'replies', 0, count( $topics ) );
+				return $consumed < count( $topics ) || count( $topics ) >= $batch_size
+					? $this->step( 'topics', $offset + $consumed, $consumed )
+					: $this->step( 'replies', 0, $consumed );
 
 			case 'replies':
-				$replies = $this->content_rows( 'reply', $batch_size, $offset );
-				$this->import_reply_rows( $replies );
+				$replies  = $this->content_rows( 'reply', $batch_size, $offset );
+				$consumed = $this->import_reply_rows( $replies );
 
-				return count( $replies ) >= $batch_size
-					? $this->step( 'replies', $offset + $batch_size, count( $replies ) )
-					: $this->step( 'profiles', 0, count( $replies ) );
+				return $consumed < count( $replies ) || count( $replies ) >= $batch_size
+					? $this->step( 'replies', $offset + $consumed, $consumed )
+					: $this->step( 'profiles', 0, $consumed );
 
 			case 'profiles':
 				// Paged like every other phase: a forum with 50k authors must not
 				// create 50k profiles in one request.
-				$authors = $this->author_ids( $batch_size, $offset );
+				$authors  = $this->author_ids( $batch_size, $offset );
+				$consumed = 0;
 				foreach ( $authors as $uid ) {
+					if ( $consumed && $this->budget_spent() ) {
+						break;
+					}
+					++$consumed;
 					$this->ensure_profile( $uid );
 				}
 
-				return count( $authors ) >= $batch_size
-					? $this->step( 'profiles', $offset + $batch_size, count( $authors ) )
-					: $this->step( 'recount', 0, count( $authors ) );
+				return $consumed < count( $authors ) || count( $authors ) >= $batch_size
+					? $this->step( 'profiles', $offset + $consumed, $consumed )
+					: $this->step( 'recount', 0, $consumed );
 
 			case 'recount':
 				$this->recount();

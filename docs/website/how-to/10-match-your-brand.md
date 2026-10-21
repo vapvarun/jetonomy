@@ -70,16 +70,15 @@ Custom wording is shown exactly as you type it. It is not translated, so on a no
 
 ## Step 5: Fit the page to your theme
 
-Back on **Jetonomy → Settings → Appearance**, the **Layout** card has four controls. Each starts at its theme default.
+Back on **Jetonomy → Settings → Appearance**, the **Layout** card has three controls. Each starts at its theme default.
 
 | Control | Choices |
 |---|---|
 | **Container Width** | **Theme Default**, **Full Width**, **Custom width** (in px) |
-| **Theme Sidebar** | **Theme Default**, **Hide on community pages** |
 | **Page Padding** | **Theme Default**, **None (edge to edge)**, **Comfortable** |
 | **Layout Density** | **Compact**, **Comfortable**, **Spacious** |
 
-For an app-like feel, choose **Full Width**, **Hide on community pages** and **Comfortable**. Click **Save Settings**. The rest of your site keeps its normal layout.
+For an app-like feel, choose **Full Width** and **Comfortable**. Click **Save Settings**. The rest of your site keeps its normal layout.
 
 The **Custom CSS** card is there for small tweaks. Anything you type is used as written, so keep it short.
 

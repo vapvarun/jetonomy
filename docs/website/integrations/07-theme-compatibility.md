@@ -153,12 +153,12 @@ Each entry below was reproduced on the supported themes (Reign, BuddyX, BuddyX P
 
 **Likely causes**
 
-- **Container Width** is set to **Full Width** or **Custom**, or **Theme Sidebar** is set to **Hide on community pages**, on Jetonomy 2.0.0 or earlier. Those versions applied the override to every theme container on the page, including the header and footer ones.
+- **Container Width** is set to **Full Width** or **Custom** on Jetonomy 2.0.0 or earlier. Those versions applied the override to every theme container on the page, including the header and footer ones.
 
 **Check in order**
 
 1. Open **Jetonomy → Settings → Appearance → Layout**.
-2. Note whether Container Width or Theme Sidebar is set to anything other than **Theme Default**.
+2. Note whether Container Width is set to anything other than **Theme Default**.
 3. Check your Jetonomy version under **Plugins**.
 
 **Fix**

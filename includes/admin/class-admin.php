@@ -996,9 +996,6 @@ class Admin {
 			$clean['container_width']        = in_array( $raw_width, array( 'theme', 'full', 'custom' ), true ) ? $raw_width : 'theme';
 			$clean['container_width_custom'] = max( 600, min( 2400, absint( $input['container_width_custom'] ?? 1280 ) ) );
 
-			$raw_sidebar                 = sanitize_key( (string) ( $input['sidebar_visibility'] ?? 'theme' ) );
-			$clean['sidebar_visibility'] = in_array( $raw_sidebar, array( 'theme', 'hide' ), true ) ? $raw_sidebar : 'theme';
-
 			$raw_padding             = sanitize_key( (string) ( $input['padding_preset'] ?? 'theme' ) );
 			$clean['padding_preset'] = in_array( $raw_padding, array( 'theme', 'none', 'comfortable' ), true ) ? $raw_padding : 'theme';
 		}
