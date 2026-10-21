@@ -50,8 +50,8 @@ $_jt_can_edit_space = is_user_logged_in()
 			 *
 			 * @param object $space The space being viewed.
 			 */
-			do_action( 'jetonomy_space_display_fields', $space );
 			?>
+			<div class="jt-space-fields"><?php do_action( 'jetonomy_space_display_fields', $space ); ?></div>
 			<?php if ( $_jt_can_edit_space ) : ?>
 				<?php
 				/*
