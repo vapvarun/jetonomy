@@ -1448,6 +1448,9 @@ class Space extends Model {
 		// every publish transition and move lands here with the space id in
 		// hand, making this the single bust point for it.
 		Cache::delete( "schema:space:{$id}" );
+		// The home pulse sums these counters; without this its topic count
+		// stayed stale for the transient's full hour.
+		delete_transient( 'jetonomy_community_pulse' );
 	}
 
 	/**

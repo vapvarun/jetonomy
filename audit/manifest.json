@@ -84,7 +84,7 @@
         "auth": "public_with_handler",
         "capability": "space_member",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: membership for private/hidden; POST: join_policy enforced. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode."
+        "audit_notes": "GET: membership for private/hidden; POST: join_policy enforced. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 2.0.4: POST with user_id naming another user is a staff add (jetonomy_manage_spaces, same as the wp-admin Members tab) via SpaceMember::add_unless_blocked; 409 when already in."
       },
       {
         "route": "/spaces/(?P<id>\\d+)/privileged-members",

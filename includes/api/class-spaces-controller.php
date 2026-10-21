@@ -118,6 +118,13 @@ class Spaces_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'join_space' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					'args'                => array(
+						'user_id' => array(
+							'description' => __( 'Add this user instead of joining yourself. Needs the jetonomy_manage_spaces capability.', 'jetonomy' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+						),
+					),
 				),
 			)
 		);
@@ -1079,10 +1086,49 @@ class Spaces_Controller extends Base_Controller {
 	 * - open:     adds user as member immediately.
 	 * - approval: creates a pending join request (stored as a custom option; no JoinRequest model exists yet).
 	 * - invite:   not allowed — returns 403.
+	 *
+	 * With `user_id` naming someone else, a jetonomy_manage_spaces holder adds
+	 * that user as a member (409 when already in).
 	 */
 	public function join_space( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id      = absint( $request->get_param( 'id' ) );
 		$message = sanitize_textarea_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
+		$target  = absint( $request->get_param( 'user_id' ) );
+
+		// Adding someone else is a staff grant: the same capability as the
+		// wp-admin Members tab, and no join policy (the staff member decides),
+		// but a space ban or an archived/locked space still refuses it.
+		if ( $target && get_current_user_id() !== $target ) {
+			if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+				return $this->permission_error();
+			}
+			if ( ! Space::find( $id ) ) {
+				return $this->not_found( 'Space' );
+			}
+			if ( ! get_userdata( $target ) ) {
+				return new WP_Error( 'jetonomy_user_not_found', __( 'User not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			}
+			if ( SpaceMember::is_member( $id, $target ) ) {
+				return new WP_Error(
+					'jetonomy_already_member',
+					sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'That user is already in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					array( 'status' => 409 )
+				);
+			}
+			$added = SpaceMember::add_unless_blocked( $id, $target );
+			if ( is_wp_error( $added ) ) {
+				return $added;
+			}
+			return new WP_REST_Response(
+				array(
+					'status'   => 'joined',
+					'space_id' => $id,
+					'user_id'  => $target,
+					'role'     => 'member',
+				),
+				201
+			);
+		}
 
 		/*
 		 * The policy itself lives in SpaceMember::join(). This method only maps

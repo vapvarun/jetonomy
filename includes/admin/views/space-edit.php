@@ -129,6 +129,24 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							<option value="approval" <?php selected( $space->join_policy, 'approval' ); ?>><?php esc_html_e( 'Requires Approval', 'jetonomy' ); ?></option>
 							<option value="invite" <?php selected( $space->join_policy, 'invite' ); ?>><?php esc_html_e( 'Invite Only', 'jetonomy' ); ?></option>
 						</select>
+						<?php
+						// Adding a restrictive rule switches a public space to Private, which also
+						// changes how people join; the rule toast says so once, this says it here.
+						if ( 'private' === $space->visibility && array_intersect( \Jetonomy\Models\AccessRule::RESTRICTIVE_TYPES, wp_list_pluck( $access_rules, 'rule_type' ) ) ) :
+							?>
+							<div class="notice notice-info inline"><p>
+								<?php
+								echo esc_html(
+									sprintf(
+										/* translators: 1: space label, lowercase (e.g. "space"). 2: join policy label (e.g. "Requires Approval"). */
+										__( 'This %1$s has an access rule, so it is Private and its join policy is %2$s. A rule cannot gate a public %1$s.', 'jetonomy' ),
+										\Jetonomy\space_label( false, true ),
+										\Jetonomy\space_join_policy_label( \Jetonomy\Models\Space::effective_join_policy( $space ) )
+									)
+								);
+								?>
+							</p></div>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<tr>

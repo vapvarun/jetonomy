@@ -14,6 +14,11 @@ use function Jetonomy\table;
 
 class AccessRule extends Model {
 
+	/**
+	 * Rule types that gate who gets in, so they only bite on a non-public space.
+	 */
+	public const RESTRICTIVE_TYPES = array( 'membership', 'role', 'capability', 'trust_level' );
+
 	protected static function table_name(): string {
 		return 'access_rules';
 	}
@@ -72,8 +77,7 @@ class AccessRule extends Model {
 	 * @return bool True when the space was switched to Private.
 	 */
 	public static function enforce_gate_on_public_space( int $space_id, string $rule_type ): bool {
-		$restrictive = array( 'membership', 'role', 'capability', 'trust_level' );
-		if ( ! in_array( $rule_type, $restrictive, true ) ) {
+		if ( ! in_array( $rule_type, self::RESTRICTIVE_TYPES, true ) ) {
 			return false;
 		}
 

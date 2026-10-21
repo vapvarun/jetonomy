@@ -167,20 +167,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 						<h1 class="jt-page-title jt-page-title-sm">
 							<?php echo esc_html( $space->title ); ?>
 						</h1>
-						<?php
-						// On the flags panel the JS lowers this sentence as flags are
-						// resolved. It is plural-sensitive, so the translated sentence for
-						// every count it can reach is rendered here rather than built in JS.
-						$jt_flag_sentences = array();
-						if ( ! $jt_is_trash && 'approvals' !== $jt_view ) {
-							$jt_flag_max = min( $jt_flag_total, 100 );
-							for ( $jt_n = 0; $jt_n <= $jt_flag_max; $jt_n++ ) {
-								/* translators: %d: number of pending flags. */
-								$jt_flag_sentences[ $jt_n ] = sprintf( _n( '%d pending flag', '%d pending flags', $jt_n, 'jetonomy' ), $jt_n );
-							}
-						}
-						?>
-						<p class="jt-page-subtitle"<?php echo $jt_flag_sentences ? ' data-jt-flag-sentences="' . esc_attr( wp_json_encode( $jt_flag_sentences ) ) . '" data-count="' . (int) $jt_flag_total . '"' : ''; ?>>
+						<p class="jt-page-subtitle">
 							<?php
 							// The subtitle follows the open panel - reporting the flag
 							// total over a screen of held submissions reads as a bug.
@@ -201,7 +188,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				</div>
 
 				<?php if ( 'approvals' !== $jt_view && $jt_flag_total > 0 ) : ?>
-					<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( (string) $jt_flag_total ); ?>">
+					<span class="jt-badge-danger jt-flag-count">
 						<?php
 						/* translators: %d: number of pending flags. */
 						echo esc_html( sprintf( _n( '%d pending', '%d pending', $jt_flag_total, 'jetonomy' ), $jt_flag_total ) );
@@ -222,7 +209,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<a href="<?php echo esc_url( $jt_queue_url ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>" <?php echo 'flags' === $jt_view ? 'aria-current="page"' : ''; ?>>
 					<?php esc_html_e( 'Flags', 'jetonomy' ); ?>
 					<?php if ( $jt_flag_total > 0 ) : ?>
-						<span class="jt-tab-count" data-jt-flag-tab-count="<?php echo (int) $jt_flag_total; ?>"><?php echo esc_html( number_format_i18n( $jt_flag_total ) ); ?></span>
+						<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $jt_flag_total ) ); ?></span>
 					<?php endif; ?>
 				</a>
 				<a href="<?php echo esc_url( add_query_arg( 'view', 'approvals', $jt_queue_url ) ); ?>" class="jt-profile-tab <?php echo 'approvals' === $jt_view ? 'active' : ''; ?>" <?php echo 'approvals' === $jt_view ? 'aria-current="page"' : ''; ?>>

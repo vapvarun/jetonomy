@@ -288,7 +288,7 @@ $crumbs = array(
 			</p>
 		</div>
 		<?php if ( 'flags' === $jt_view && $total > 0 ) : ?>
-			<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( (string) $total ); ?>">
+			<span class="jt-badge-danger jt-flag-count">
 				<?php
 				/* translators: %d: number of pending flags. */
 				echo esc_html( sprintf( _n( '%d pending', '%d pending', $total, 'jetonomy' ), $total ) );

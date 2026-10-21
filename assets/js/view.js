@@ -886,11 +886,9 @@ window.jtReloadNotifList = async function () {
     if ( ! document.querySelector( '[data-jt-notif-list], .jt-notif-tabs' ) ) return;
     // Ticks are position-based in the DOM; re-apply them by id so a new row on top cannot shift them onto other notifications.
     const ticked = new Set( [ ...document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ) ].map( ( cb ) => cb.value ) );
-    const router = await import( '@wordpress/interactivity-router' );
-    await router.actions.navigate( window.location.href, { force: true, replace: true } );
+    await reloadRegion();
     document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb' ).forEach( ( cb ) => { cb.checked = ticked.has( cb.value ); } );
     notifUpdateBulkbar();
-    document.dispatchEvent( new CustomEvent( 'jetonomy:navigated', { detail: { href: window.location.href } } ) );
 };
 
 /** Refresh the notifications bulk toolbar count + visibility from current checks. */
@@ -1183,6 +1181,17 @@ const watchRegion = () => {
     regionObserver.observe( region, { childList: true, subtree: true } );
 };
 watchRegion();
+
+// Re-render the router region from the server at the current URL. The swap is
+// the router's own work, not a hand edit, so later tab clicks stay soft.
+const reloadRegion = async () => {
+    const router = await import( '@wordpress/interactivity-router' );
+    await router.actions.navigate( window.location.href, { force: true, replace: true } );
+    regionDirty = false;
+    watchRegion();
+    if ( regionObserver ) regionObserver.takeRecords();
+    document.dispatchEvent( new CustomEvent( 'jetonomy:navigated', { detail: { href: window.location.href } } ) );
+};
 
 // initProfileTabsActive() binds its resize listener once per page load.
 let profileTabsResizeBound = false;
@@ -3680,56 +3689,14 @@ const { state, actions } = store( 'jetonomy', {
                 card.appendChild( p );
                 return;
             }
-            // Remove the resolved card; if the queue is now empty, swap in the
-            // empty state (ported from moderation.js removeCard()). On the
-            // overview a member-report card sits in its own list row.
-            const row       = card.parentNode && card.parentNode.matches( 'li.jt-mod-flag-row' ) ? card.parentNode : null;
-            const container = row ? row.parentNode : card.parentNode;
-            ( row || card ).remove();
-            // Keep the header "N pending" badge in sync — it is server-rendered
-            // and would otherwise show the pre-resolution count until reload.
-            // Replace only the numeric run so the localized suffix survives;
-            // drop the badge entirely when the queue hits zero (SSR hides it).
-            const flagBadge = document.querySelector( '.jt-flag-count' );
-            // The sentence under the heading ("1 pending flag") went stale the
-            // same way; the server renders it for every reachable count.
-            const flagSentence = document.querySelector( '[data-jt-flag-sentences]' );
-            if ( flagSentence ) {
-                try {
-                    const sentences = JSON.parse( flagSentence.getAttribute( 'data-jt-flag-sentences' ) ) || {};
-                    const next      = Math.max( 0, ( parseInt( flagSentence.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
-                    flagSentence.setAttribute( 'data-count', String( next ) );
-                    if ( sentences[ next ] ) flagSentence.textContent = sentences[ next ];
-                } catch ( e ) { /* leave the server text as is */ }
-            }
-            // The "Flags N" section tab is the third copy of the count.
-            const flagTab = document.querySelector( '[data-jt-flag-tab-count]' );
-            if ( flagTab ) {
-                const tabCount = Math.max( 0, ( parseInt( flagTab.getAttribute( 'data-jt-flag-tab-count' ), 10 ) || 0 ) - 1 );
-                if ( tabCount <= 0 ) {
-                    flagTab.remove();
-                } else {
-                    flagTab.setAttribute( 'data-jt-flag-tab-count', String( tabCount ) );
-                    flagTab.textContent = tabCount.toLocaleString( document.documentElement.lang || undefined );
-                }
-            }
-            if ( flagBadge ) {
-                const nextCount = Math.max( 0, ( parseInt( flagBadge.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
-                if ( nextCount <= 0 ) {
-                    flagBadge.remove();
-                } else {
-                    flagBadge.setAttribute( 'data-count', String( nextCount ) );
-                    flagBadge.textContent = flagBadge.textContent.replace( /\d+/, String( nextCount ) );
-                }
-            }
-            if ( container && ! container.querySelector( '.jt-mod-flag, .jt-mod-flag-row' ) && container.parentNode ) {
-                const wrapper = document.createElement( 'div' );
-                wrapper.className = 'jt-empty';
-                const msg = document.createElement( 'div' );
-                msg.className = 'jt-empty-text';
-                msg.textContent = i18n.queueClean || 'Queue cleared.';
-                wrapper.appendChild( msg );
-                container.parentNode.replaceChild( wrapper, container );
+            // Re-render the queue from the server: the counts, tab badges and
+            // empty state come back right, and the router keeps its own view of
+            // the region, so the next tab click stays a soft navigation. A hand
+            // removal here made that click a full page load (regionDirty).
+            try {
+                yield reloadRegion();
+            } catch ( e ) {
+                window.location.reload(); // the flag is resolved; never leave a stale card
             }
         },
 

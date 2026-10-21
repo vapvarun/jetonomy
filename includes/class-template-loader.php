@@ -384,7 +384,6 @@ class Template_Loader {
 				// Plain __(): the scripts insert these with textContent, where an
 				// escaped apostrophe would show as &#039; in many languages.
 				'i18n'          => array(
-					'queueClean'             => __( 'Queue cleared.', 'jetonomy' ),
 					'resolveFailed'          => __( 'Could not resolve flag. Please try again.', 'jetonomy' ),
 					'approvalFailed'         => __( 'Could not update this submission. It may have been handled by another moderator.', 'jetonomy' ),
 					'approvalsClean'         => __( 'Nothing left awaiting approval.', 'jetonomy' ),
