@@ -1,0 +1,103 @@
+{
+ "journey": "E.anonymous-posting",
+ "free": "dcdb0750",
+ "pro": "404b0af",
+ "walked_at": "2026-10-21T10:22:07Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "e-anonymous-posting.1": {
+   "result": "fail",
+   "evidence": "PARTIAL: as test_editor (space admin) /wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=3004&tab=anonymous -> 403 \"Sorry, you are not allowed to access this page.\" and /community/s/help-desk/settings/ is 404, so the space admin persona has no screen for this. As admin: Anonymous tab \"Allow anonymous posts\" ticked and saved (\"Anonymous posting settings saved.\"), Space::get_settings(3004) shows allow_anonymous true with the seo key intact (merge); unticking saves false, re-ticking true",
+   "screenshot": "anon-admin-saved"
+  },
+  "e-anonymous-posting.2": {
+   "result": "pass",
+   "evidence": "bob in Help Desk (setting on): new-topic composer has \"Post anonymously\" checkbox (name is_anonymous) and the reply toolbar has .jt-anon-toggle-btn whose aria-pressed goes false -> true on click. In Feature Requests (setting off) /new/ has no toggle and no anonymous label. Note General Discussion currently has allow_anonymous true (not off as the runbook assumes), so Feature Requests was used",
+   "screenshot": "anon-composer-helpdesk"
+  },
+  "e-anonymous-posting.3": {
+   "result": "pass",
+   "evidence": "bob posted \"QA-WALK-C Is it normal for my first plugin review to take three weeks?\" (post 9251) with the checkbox via the UI: single page and list byline \"Anonymous\", no avatar, no /u/bob link inside the post; DB is_anonymous=1 author_id=3755. \"Bob Martinez\" appears in the page HTML only in the sidebar Top Members widget",
+   "screenshot": "anon-topic-bob"
+  },
+  "e-anonymous-posting.4": {
+   "result": "pass",
+   "evidence": "bob replied anonymously (UI, toolbar toggle, \"Post Reply\") to a Help Desk topic: reply 16654 shows \"Anonymous\", no img, no bob link, no bob name in the reply HTML; DB is_anonymous=1 author_id=3755",
+   "screenshot": "anon-reply-bob"
+  },
+  "e-anonymous-posting.5": {
+   "result": "fail",
+   "evidence": "PARTIAL: alice and guest: space listing byline \"Anonymous\" with no avatar or bob link, search results show \"Anonymous\", single topic masked, RSS /community/s/help-desk/feed/ item has <dc:creator>Anonymous</dc:creator>. The topic did not appear on the community home feed (/community/) for either, so home-feed masking was NOT checked (not shown in the first page of the feed)"
+  },
+  "e-anonymous-posting.6": {
+   "result": "fail",
+   "evidence": "PARTIAL: /community/u/bob/ and its tabs as alice do not list the anonymous topic or reply, and bob's own profile does not either (no own-only marker). But the profile counter says \"61 TOPICS\" and DB shows 61 published topics of which 2 are anonymous (59 visible), so the count includes anonymous topics and shows a number that does not match the visible stream"
+  },
+  "e-anonymous-posting.7": {
+   "result": "pass",
+   "evidence": "alice GET /posts/9251 and /posts/8986/replies: author_id 0, author_name \"Anonymous\", author_avatar \"\", author_login \"\", last_seen null; no 3755/Bob Martinez/bob anywhere in the JSON (flat author_* fields, not a nested author object as the runbook describes). Observation: can_block_author is true on the anonymous post. Profile REST /users/3755/posts does not list it"
+  },
+  "e-anonymous-posting.8": {
+   "result": "pass",
+   "evidence": "bob (anonymous) replied to alice's topic: alice GET /notifications -> actor_id null, actor_name \"Anonymous\", message \"Anonymous replied to your topic ...\"; DB notification actor_id 3755 actor_anonymous 1; Mailpit email \"[forums] Anonymous replied to your topic\" with no Bob/u/bob/3755 in the body. alice's reply to the anonymous topic notified bob as \"Alice Chen\""
+  },
+  "e-anonymous-posting.9": {
+   "result": "pass",
+   "evidence": "alice replied to the anonymous reply (parent_id 16654): the child reply header reads \"in reply to Anonymous\" with no bob name or link in either card; topic og:title/og:description/twitter tags have no author and JSON-LD author is {\"name\":\"Anonymous\"}"
+  },
+  "e-anonymous-posting.10": {
+   "result": "pass",
+   "evidence": "bob POST /spaces/2996/posts (Feature Requests, setting off) with is_anonymous:1 -> 201, author_name \"Bob Martinez\"; DB post 9255 is_anonymous 0 author_id 3755"
+  },
+  "e-anonymous-posting.11": {
+   "result": "pass",
+   "evidence": "guest POST /spaces/3004/posts with is_anonymous:1 -> 401 rest_not_logged_in; guests cannot open the composer"
+  },
+  "e-anonymous-posting.12": {
+   "result": "pass",
+   "evidence": "REST (the composer UI was not driven): finn POST with is_anonymous:1 -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\" (same as non-anonymous); omar in Off-Topic Lounge with is_anonymous:1 -> 403 jetonomy_user_space_banned"
+  },
+  "e-anonymous-posting.13": {
+   "result": "pass",
+   "evidence": "admin on topic 9251 sees \".jt-anon-reveal\" button; clicking it shows chip \"Revealed: Bob Martinez\" while the byline stays Anonymous; activity log row anonymous_author_revealed user_id 1 object post 9251 metadata {\"real_author\":3755}. A reveal button also renders on the anonymous reply (not clicked)",
+   "screenshot": "anon-revealed"
+  },
+  "e-anonymous-posting.14": {
+   "result": "pass",
+   "evidence": "POST /jetonomy/v1/anonymous/reveal for post 9251: bob, test_moderator, test_editor, alice -> 403 jetonomy_forbidden; guest -> 401; only one activity-log row exists (admin's). So moderators cannot reveal; the runbook says \"moderator or admin\", owner to confirm"
+  },
+  "e-anonymous-posting.15": {
+   "result": "pass",
+   "evidence": "alice reloading the topic after the admin reveal still sees \"Anonymous\" and no Bob Martinez in the post"
+  },
+  "e-anonymous-posting.16": {
+   "result": "pass",
+   "evidence": "bob PATCH /posts/9251 content -> 200, still author \"Anonymous\"/id 0 and DB is_anonymous 1; admin POST /posts/9251/move {target_space_id:2996} (Feature Requests, setting off) -> topic stays masked \"Anonymous\" for alice, DB author 3755 is_anonymous 1; moved back to Help Desk"
+  },
+  "e-anonymous-posting.17": {
+   "result": "fail",
+   "evidence": "PARTIAL: alice reported the anonymous topic (flag 680); test_moderator on /community/mod/ sees the card \"SPAM TOPIC Help Desk ... Reported by Alice Chen\" with no author name, link or id (no leak), and GET /moderation/flags has no author field, but it does not show the word \"Anonymous\", and whether admin can resolve to the real author from the queue was not checked",
+   "screenshot": "anon-modqueue"
+  },
+  "e-anonymous-posting.18": {
+   "result": "pass",
+   "evidence": "with the extension disabled: alice/bob REST and page still show \"Anonymous\" for post 9251, the composer has no .jt-anon-toggle, and bob POST with is_anonymous:1 in Help Desk creates a normal post by name (id 9258). Re-enabled afterwards"
+  },
+  "e-anonymous-posting.19": {
+   "result": "fail",
+   "evidence": "PARTIAL: at 390px the composer toggle row is 172x44 px and the reply toolbar toggle button 40x40 (meets 40px) with no horizontal overflow (scrollWidth 390); dark mode NOT verified: emulated prefers-color-scheme dark leaves body rgb(250,251,253)",
+   "screenshot": "anon-composer-390"
+  }
+ }
+}

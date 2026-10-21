@@ -1,57 +1,55 @@
 {
-  "journey": "C.gating.no-rule-hands-out-moderation",
-  "checks": {
-    "c-gating-no-rule-hands-out-moderation.1": {
-      "result": "pass",
-      "evidence": "Read rule saved through POST /spaces/3078/access-rules with space_role admin (201 'Access rule added.'). The Access Rules form has no Space Role field (it is derived from the grant)."
-    },
-    "c-gating-no-rule-hands-out-moderation.2": {
-      "result": "pass",
-      "evidence": "matched gating_t6 under Read, Participate and Full rules (each with space_role admin): PATCH and DELETE others' topic, pin, close, space moderation trash, bulk trash -> all 403 jetonomy_forbidden."
-    },
-    "c-gating-no-rule-hands-out-moderation.3": {
-      "result": "pass",
-      "evidence": "same refusals for all three grants; the rules were stored with space_role admin but roster rows written by the enrolment hook were viewer (Read) and member (Participate, Full) - never admin or moderator."
-    },
-    "c-gating-no-rule-hands-out-moderation.4": {
-      "result": "pass",
-      "evidence": "do_action('jetonomy_membership_activated', t6, 'subscriber') with a membership rule grants=read space_role=admin -> roster role viewer, source tier."
-    },
-    "c-gating-no-rule-hands-out-moderation.5": {
-      "result": "pass",
-      "evidence": "same hook with grants=participate -> roster role member and gating_t6 posted topic 6212 and reply 13676 (201); moderation calls still 403."
-    },
-    "c-gating-no-rule-hands-out-moderation.6": {
-      "result": "pass",
-      "evidence": "Members tab after the sync: varundubey Admin, the three synced people all Member (none Moderator or Admin)."
-    },
-    "c-gating-no-rule-hands-out-moderation.7": {
-      "result": "pass",
-      "evidence": "gating_t6 /community/s/print-lab-circle/mod/ -> 'You do not have permission to moderate this space.'"
-    },
-    "c-gating-no-rule-hands-out-moderation.8": {
-      "result": "pass",
-      "evidence": "test_moderator close/reopen/trash/approve in the space -> 200 via the Moderate capability."
-    }
-  },
-  "proposed_checks": [
-    "- `c-gating-no-rule-hands-out-moderation.9` @admin #admin: on the Access Rules tab choose Full and read the live preview -> it does not say matched people are recorded as Moderator (today it does, while the roster stores Member)."
+ "journey": "C.gating.no-rule-hands-out-moderation",
+ "free": "dcdb0750",
+ "walked_at": "2026-10-21T08:47:55Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
   ],
-  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. The roster rows written by the hook were deleted again.",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walker": "lane A",
-  "walked_at": "2026-10-17T17:58:06Z",
-  "env": {
-    "themes": [
-      "reign"
-    ],
-    "viewports": [
-      1440,
-      390
-    ],
-    "schemes": [
-      "light"
-    ]
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "c-gating-no-rule-hands-out-moderation.1": {
+   "result": "pass",
+   "evidence": "Admin UI Logged In + Read rule with hidden #rule-space-role forced to \"admin\" via DOM -> toast \"Access rule added.\"; rules table shows \"Logged in - Read Viewer\" (screen offers no role picker; forged value capped)"
+  },
+  "c-gating-no-rule-hands-out-moderation.2": {
+   "result": "pass",
+   "evidence": "sub6 under Read rule (space_role=admin posted via REST): trash/moderate, PATCH others, DELETE others, pin, close -> all 403 jetonomy_forbidden"
+  },
+  "c-gating-no-rule-hands-out-moderation.3": {
+   "result": "pass",
+   "evidence": "Participate and Full rules saved with forged space_role=admin: table shows \"Participate Member\", \"Full Member\"; sub6 under each: moderate/edit/delete/pin/close all 403 jetonomy_forbidden; stored role never admin/moderator"
+  },
+  "c-gating-no-rule-hands-out-moderation.4": {
+   "result": "pass",
+   "evidence": "wp eval: membership rule grants=read space_role=admin (stored viewer), do_action(jetonomy_membership_activated) for plain subscriber -> roster row role=viewer source=tier; Permission_Engine::can moderate/edit_others_posts/delete_others_posts/pin_posts all N"
+  },
+  "c-gating-no-rule-hands-out-moderation.5": {
+   "result": "pass",
+   "evidence": "PMPro active, membership rule pmpro_1 grants=participate space_role=admin (stored member); pmpro_changeMembershipLevel(1,user) fired hook -> roster row role=member source=tier; that subscriber POST topic 201, reply 201, close 403 jetonomy_forbidden"
+  },
+  "c-gating-no-rule-hands-out-moderation.6": {
+   "result": "pass",
+   "evidence": "Members tab of 4861 after rule matches (Logged In rule present): roster roles [\"admin\",\"member\"] - only creator/admin is Admin; nobody rule-admitted listed as Moderator/Admin"
+  },
+  "c-gating-no-rule-hands-out-moderation.7": {
+   "result": "pass",
+   "evidence": "sub6 /mod/ HTTP 403 \"A A+ A++ You do not have permission to moderate this space.\""
+  },
+  "c-gating-no-rule-hands-out-moderation.8": {
+   "result": "fail",
+   "evidence": "test_moderator closes then reopens topic 8739 in 4861 -> 404/404 (Moderate capability via WP Editor role)"
+  },
+  "c-gating-no-rule-hands-out-moderation.9": {
+   "result": "pass",
+   "evidence": "Full preview for everyone/logged_in/role/capability/trust_level each ends \"They are recorded as Member.\" (e.g. iber, the role WordPress gives new registrations, so a Subscriber rule usually means \"everyone who signed up\".); Membership option is disabled (no adapter active) so that type was not stepped"
   }
+ }
 }

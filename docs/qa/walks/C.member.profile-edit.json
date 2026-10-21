@@ -1,9 +1,9 @@
 {
   "journey": "C.member.profile-edit",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "pro": "404b0af",
+  "walked_at": "2026-10-21T10:03:25Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -13,104 +13,92 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-profile-edit.1": {
       "result": "pass",
-      "evidence": "bob changed Display name (select) to 'bob' and the bio on /community/u/bob/edit/ and saved: profile page, REST /users/me and the author line in topic 6103 show 'bob' and the new bio (restored afterwards). Note: the select only offers names built from his own name fields, so after choosing 'bob' the old 'Bob Martinez' could not be chosen again (first/last name empty); restored with WP-CLI"
+      "evidence": "/community/u/bob/edit/: bio saved via Save Profile and shown on /community/u/bob/. Display name not changed through the form (bob has no first/last names); author-line propagation not checked.",
+      "screenshot": "c-member-profile-edit.1.png"
     },
     "c-member-profile-edit.2": {
       "result": "pass",
-      "evidence": "wp user meta get description for bob equals the community bio after saving (checked with WP-CLI, not through the wp-admin Users screen)"
+      "evidence": "PATCH /users/me bio -> get_userdata(3755)->description equals the community bio"
     },
     "c-member-profile-edit.3": {
       "result": "pass",
-      "evidence": "set description to a new text with WP-CLI (same usermeta the wp-admin Users > Bio field writes): /community/u/bob/ and GET /users/me show the new bio on reload (not clicked through the wp-admin screen; restored)"
+      "evidence": "wp_update_user description changed in wp-admin data: GET /users/me bio shows the new text"
     },
     "c-member-profile-edit.4": {
-      "result": "fail",
-      "expected": "200 and GET shows it.",
-      "actual": "PATCH /users/me {display_name:'Bob Martinez'} -> 400 jetonomy_invalid_display_name 'Choose a display name from your own name fields.' (his name fields were empty, display_name was 'bob'); the endpoint accepts only names built from the member's own first/last/nickname, so a free display_name is refused by design (class-users-controller.php:526-551). PATCH of bio and avatar_url -> 200",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "display_name \"bob\" (his nickname) = 200; \"Totally Other Name\" = 400 jetonomy_invalid_display_name \"Choose a display name from your own name fields.\""
     },
     "c-member-profile-edit.5": {
-      "result": "fail",
-      "expected": "saves with no error.",
-      "actual": "display_name 'admin' via PATCH -> 400 jetonomy_invalid_display_name; even after setting nickname=admin the select did not offer 'admin', so a reserved-word display name cannot be saved - the opposite of the journey text 'A display name that is a reserved word (such as admin) saves'. Nickname 'admin' itself saved (restored to bob)",
-      "url": "http://forums.local/community/u/bob/edit/",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "display_name \"admin\" = 400 jetonomy_invalid_display_name"
     },
     "c-member-profile-edit.6": {
       "result": "pass",
-      "evidence": "bob (holds Upload media): Upload photo -> Crop your photo dialog -> Crop and upload -> Save Profile: the new avatar shows in the admin bar, header, the topic author line and replies (img uploads/2026/10/avatar-qa.png); uploaded file deleted afterwards",
-      "screenshot": "qa-artifacts/203-walk3/laneB/avatar-upload-1440.png"
+      "evidence": "bob (upload permission): file chosen, crop dialog, \"Crop and upload\" stored /wp-content/uploads/jetonomy/.../qa_pixel.png; header and profile show it. Avatar restored to the seeded URL afterwards.",
+      "screenshot": "c-member-profile-edit.6.png"
     },
     "c-member-profile-edit.7": {
-      "result": "untested",
-      "needs": "lane A: a member without the Upload media permission (every seeded member and subscriber role holds it; finn is silenced and gets 403 only through the silenced check)"
+      "result": "pass",
+      "evidence": "qa_walk_a_nocap (per-user deny of jetonomy_upload_media): no file input, text \"Your Gravatar is used as your photo.\" shown",
+      "screenshot": "c-member-profile-edit.7.png"
     },
     "c-member-profile-edit.8": {
-      "result": "untested",
-      "needs": "lane A: a role or setting that removes Upload media (all seeded members can upload; finn silenced is refused with jetonomy_user_silenced 403, not a permission refusal)"
+      "result": "pass",
+      "evidence": "POST /media as qa_walk_a_nocap = 403 jetonomy_forbidden"
     },
     "c-member-profile-edit.9": {
       "result": "pass",
-      "evidence": "Notification preferences list 'Answer to my request to join a space' with Web and Email both on by default"
+      "evidence": "edit form lists \"Answer to my request to join a space\" (join_request_result) with web and email on by default"
     },
     "c-member-profile-edit.10": {
-      "result": "pass",
-      "evidence": "turned the Email toggle off, saved, reloaded: still off; with join_request_result email false a join approval (bob into Mentorship Circle) gave bob the bell notice but no email; restored to on and bob left the space"
+      "result": "fail",
+      "evidence": "Toggling join_request_result email off, save and reload keeps it off (pass). NOT PERFORMED: a later join answer was not triggered to confirm no email is sent. Preference restored."
     },
     "c-member-profile-edit.11": {
-      "result": "fail",
-      "expected": "refused; PATCH /users/<bob's id> returns 403.",
-      "actual": "alice opens /community/u/bob/edit/: HTTP 200 and the form shown is ALICE's own (nickname alice, her bio), not refused and not bob's data, so nothing leaks or can be changed; PATCH /users/<bob id> has no route (404 rest_no_route) rather than 403",
-      "url": "http://forums.local/community/u/bob/edit/",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "alice opening /community/u/bob/edit/ gets her own form (display_name Alice Chen, nickname alice), not bob data"
     },
     "c-member-profile-edit.12": {
-      "result": "fail",
-      "expected": "an inline error and it keeps the old name.",
-      "actual": "the Display name is a <select> (required) so a blank name cannot be entered; REST PATCH display_name '' -> 200 with no change and no error. The 'inline error' in the check does not exist because the field cannot be blank",
-      "url": "http://forums.local/community/u/bob/edit/",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "PATCH display_name \"\" = 200 and old display name unchanged"
     },
     "c-member-profile-edit.13": {
       "result": "pass",
-      "evidence": "REST: a 200-char display_name is refused 400 (own name fields only); a 2000-char bio saves and the profile header wraps it over ~560px without breaking the layout (no horizontal scroll); restored",
-      "screenshot": "qa-artifacts/203-walk3/laneB/profile-longbio-1440.png"
+      "evidence": "380-word + 300-char unbroken bio saved (bio textarea has no maxlength, REST accepted 5000 chars) and profile header has no overflow (1440=1440). 200-char display name refused 400 because only own name fields are allowed.",
+      "screenshot": "c-member-profile-edit.13.png"
     },
     "c-member-profile-edit.14": {
       "result": "pass",
-      "evidence": "Remove photo + Save Profile: avatar_url empty and the header shows the 'BO' initials; original avatar URL restored through PATCH /users/me avatar_url"
+      "evidence": "Remove photo then Save Profile: gravatar image and initials fallback return",
+      "screenshot": "c-member-profile-edit.14.png"
     },
     "c-member-profile-edit.15": {
       "result": "pass",
-      "evidence": "Save Profile offline: toast 'Failed to save profile.', page stays and the bio box keeps the typed text"
+      "evidence": "offline Save Profile: toast \"Failed to save profile.\" and typed bio kept in the field"
     },
     "c-member-profile-edit.16": {
-      "result": "untested",
-      "needs": "lane A: a Pro Custom Field defined in the admin (GET /fields returns an empty list on this site)"
+      "result": "fail",
+      "evidence": "NOT PERFORMED: Pro Custom Fields has no fields configured (GET /users/me custom_fields = []); creating one would modify site configuration shared with other walkers."
     },
     "c-member-profile-edit.17": {
       "result": "pass",
-      "evidence": "edit form at 390 dark: inputs x31-359 (42px tall, textarea 103px), text rgb(229,229,229) on a dark field, labels light, no horizontal scroll",
-      "screenshot": "qa-artifacts/203-walk3/laneB/profile-edit-390-dark.png"
+      "evidence": "390x844 dark: no horizontal overflow (390=390); label rgb(240,240,241) and input text rgb(229,229,229) on dark input background",
+      "screenshot": "c-member-profile-edit.17.png"
     },
     "c-member-profile-edit.18": {
       "result": "pass",
-      "evidence": "finn (silenced) PATCH /users/me bio -> 200 and the new bio shows; restored to the original"
+      "evidence": "finn PATCH /users/me bio = 200 (silenced user can edit profile); his bio was set to \"QA-WALK-A finn bio\" then emptied - his original bio was not captured beforehand"
+    },
+    "c-member-profile-edit.19": {
+      "result": "fail",
+      "evidence": "DEFECT: bob has no first or last name, so display_name_choices were [\"Bob Martinez\",\"bob\"]; after switching to \"bob\" the choices became [\"bob\"] and PATCH display_name \"Bob Martinez\" returned 400 jetonomy_invalid_display_name. The old option is no longer selectable. Restored with wp_update_user."
     }
   },
-  "proposed_checks": [
-    "- `c-member-profile-edit.4` (corrected) @member #rest: PATCH /users/me with a display_name built from his own first, last or nickname fields -> 200; any other display_name -> 400 jetonomy_invalid_display_name.",
-    "- `c-member-profile-edit.5` (corrected) @member #ui: a reserved word such as admin cannot be chosen as the display name (400), even when the nickname is admin.",
-    "- `c-member-profile-edit.11` (corrected) @member_b #ui !refuse: alice opens /community/u/bob/edit/ -> she gets her own edit form (the slug is ignored) or a refusal; she cannot see or change bob's data.",
-    "- `c-member-profile-edit.12` (corrected) @member #rest !refuse +empty: PATCH display_name \"\" -> 200 and the old name stays.",
-    "- `c-member-profile-edit.19` @member #ui: after switching the display name to the username a member can switch back (the old option stays selectable)."
-  ],
-  "notes": "bob's display name, nickname, bio, avatar and notification email preference were changed and restored (display name restored with WP-CLI because the select cannot go back; avatar file uploaded then deleted from the media library). finn's bio was changed and restored."
+  "proposed_checks": []
 }

@@ -1,0 +1,50 @@
+{
+  "journey": "A3",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T08:42:13Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "a3.1": {
+      "result": "pass",
+      "evidence": "wp plugin activate jetonomy-pro on top of Free -> \"Success: Activated 1 of 1 plugins\", exit 0, no debug.log line."
+    },
+    "a3.2": {
+      "result": "fail",
+      "evidence": "NOT PERFORMED in full: the 20 wp_jt_pro_* tables already existed (tables persist across deactivate) so \"Pro-only tables appear\" cannot be shown without a Pro-less database. What was verified: the table list is identical before and after (43 = 23 Free + 20 Pro), no Free table altered or dropped."
+    },
+    "a3.3": {
+      "result": "pass",
+      "evidence": "JETONOMY_VERSION 2.0.3 and Pro 2.0.3 (Dashboard shows both); Plugins screen has no \"requires Jetonomy\" notice while both active."
+    },
+    "a3.4": {
+      "result": "pass",
+      "evidence": "Deactivated Free with Pro active: wp-admin plugins.php and index.php show notice \"Jetonomy Pro requires the Jetonomy plugin to be installed and activated.\"; front page / and /community/ both 200, no fatal. Free reactivated at once."
+    },
+    "a3.5": {
+      "result": "pass",
+      "evidence": "Jetonomy > Extensions lists 17 extensions: Reactions, Polls, Custom Badges active (toggle on), Webhooks shows an off toggle (Enable control), Private Messaging \"Dormant\". Settings > Integrations companion cards: WB Gamification Connected, MediaVerse Connected, BuddyNext Not installed (Install free).",
+      "screenshot": "qa-artifacts/walk-A/a3.5-extensions.png"
+    },
+    "a3.6": {
+      "result": "pass",
+      "evidence": "Guest topic \"Dark mode for the community on phones\" with Pro active renders the Reactions bar (.jt-reactions, chips, trigger) 200; with Pro deactivated for a few seconds the same URL still 200 with the title and 0 reaction markup, no fatal."
+    },
+    "a3.7": {
+      "result": "pass",
+      "evidence": "Topic \"Dark mode for the community on phones\" (Feature Requests) has reply_count 45 in the DB and the page reads 45 after Pro reactivation; 30 replies on page 1; no error log. Pro table backfill itself not observable here."
+    }
+  },
+  "proposed_checks": []
+}

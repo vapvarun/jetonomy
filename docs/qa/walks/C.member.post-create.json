@@ -1,9 +1,9 @@
 {
   "journey": "C.member.post-create",
-  "free": "21f93481",
-  "pro": "fe21324",
-  "walked_at": "2026-10-17T22:20:00Z",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "pro": "404b0af",
+  "walked_at": "2026-10-21T09:22:04Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -20,124 +20,135 @@
   "checks": {
     "c-member-post-create.1": {
       "result": "pass",
-      "evidence": "bob posted 'How do I reset my membership password?' from Help Desk > Ask a Question; landed on the topic and it listed first in Help Desk"
+      "evidence": "bob in Help Desk New Topic: title \"How do I reset my membership password?\" with two paragraphs; POST 201, landed on /t/how-do-i-reset-my-membership-password-1/ with both paragraphs; first row in Help Desk listing.",
+      "screenshot": "c-member-post-create.1c.png"
     },
     "c-member-post-create.2": {
       "result": "pass",
-      "evidence": "POST /spaces/3004/posts -> 201 id 6325; GET /spaces/3004/posts lists it first"
+      "evidence": "POST /spaces/3004/posts as bob -> 201 status publish (id 8962); GET /spaces/3004/posts?limit=3 lists it first."
     },
     "c-member-post-create.3": {
       "result": "pass",
-      "evidence": "empty title: browser tooltip 'Please fill in this field.' and nothing created; empty body: inline 'Please add some details before posting.'; REST 400 'Post title is required.' / 'Post content is required.'"
+      "evidence": "Empty title: native \"Please fill in this field.\" and no request sent; empty body: \"Please add some details before posting.\"; neither topic exists in the DB.",
+      "screenshot": "c-member-post-create.3b.png"
     },
     "c-member-post-create.4": {
       "result": "pass",
-      "evidence": "title counter reads '217 characters left' / 'Titles can be up to 255 characters.'; typing 382 characters keeps 255 and shows the limit"
+      "evidence": "300-char title typed: input stops at maxlength 255 with always-visible hint \"Titles can be up to 255 characters.\" (no live counter).",
+      "screenshot": "c-member-post-create.4.png"
     },
     "c-member-post-create.5": {
       "result": "pass",
-      "evidence": "topic with tags 'wizard, staging', Private checked and a schedule (Oct 20 10:30): saved topic shows #staging #wizard, a Private pill and the 'Scheduled to publish on October 20, 2026 10:30 am' notice"
+      "evidence": "Tags qa-walk-a-one,qa-walk-a-two, Private checkbox and a schedule 2 days ahead: saved as draft with published_at 2026-10-23 09:05, is_private 1, both tags; author sees \"Scheduled to publish on October 23, 2026 9:05 am\" and the tags and Private marker; guest gets 404.",
+      "screenshot": "c-member-post-create.5b.png"
     },
     "c-member-post-create.6": {
-      "result": "untested",
-      "needs": "lane A: enable the email for the 'New topic in a followed space' notification (new_post_in_sub email default is off)",
-      "evidence": "alice followed Help Desk; after bob posted she got exactly one bell notification (new_post_in_sub 22797), no duplicate; no email because the default is off"
+      "result": "pass",
+      "evidence": "alice space-follow gets web only (new_post_in_sub email default is off in her prefs), so a fixture member qa_walk_a_new with email on followed Help Desk: bob post gave exactly 1 notification and 1 Mailpit email \"[forums] New topic in Help Desk\" (the default saved subject template; the owner has no override saved)."
     },
     "c-member-post-create.7": {
-      "result": "pass",
-      "evidence": "after 3 new topics: Help Desk card shows 15 topics = DB (15); bob profile shows 22 topics = DB; community home is a directory of spaces (no recent-topics feed)"
+      "result": "fail",
+      "evidence": "After bob posted in Help Desk: space page 24 -> 25 topics, space API 24 -> 25, bob profile/API 35 -> 36; home community pulse stayed \"268 topics\" because it is a 1-hour transient (includes/helpers.php:191-211, flushed by Cache::flush only). There is no recent-topics feed on the home page."
     },
     "c-member-post-create.8": {
-      "result": "untested",
-      "needs": "paste and drop need an OS clipboard/drag; the image button path passed: file chosen in the composer uploaded and showed inline (img 120px wide from /wp-content/uploads/2026/10/)"
+      "result": "pass",
+      "evidence": "bob (Upload media) set a PNG on the composer file input: POST /jetonomy/v1/media 200 and the image shows inline in the editor from /wp-content/uploads/jetonomy/.... Drag-drop not exercised.",
+      "screenshot": "c-member-post-create.8.png"
     },
     "c-member-post-create.9": {
-      "result": "untested",
-      "needs": "lane A: remove Upload media from the Member role"
+      "result": "pass",
+      "evidence": "Used a fixture member with a per-user jetonomy_upload_media deny (role not edited, to avoid hitting other walkers): toolbar has no image button and no file input; pasting an image shows toast \"You do not have permission to upload images.\"",
+      "screenshot": "c-member-post-create.9b.png"
     },
     "c-member-post-create.10": {
-      "result": "untested",
-      "needs": "lane A: remove Upload media from the Member role"
+      "result": "pass",
+      "evidence": "POST /media as that fixture member -> 403 jetonomy_forbidden; no new attachment row created."
     },
     "c-member-post-create.11": {
       "result": "pass",
-      "evidence": "/s/2025-hackathon/new/: 'This space is archived or locked and no longer accepts new content.' with 'Back to 2025 Hackathon', no form; REST 403 jetonomy_space_restricted; 'wp jetonomy post create --space=36' -> same error, 0 rows stored"
+      "evidence": "bob on /s/2025-hackathon/new/: \"This space is archived or locked and no longer accepts new content.\" with \"Back to 2025 Hackathon\", no form.",
+      "screenshot": "c-member-post-create.11.png"
     },
     "c-member-post-create.12": {
       "result": "pass",
-      "evidence": "POST /spaces/36/posts as bob -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.'; WP-CLI refused the same, nothing stored"
+      "evidence": "POST /spaces/36/posts as bob -> 403 jetonomy_space_restricted with the archived/locked message; wp jetonomy post create --space=36 -> same error; nothing stored."
     },
     "c-member-post-create.13": {
       "result": "pass",
-      "evidence": "finn on /s/help-desk/new/: 'Your account is currently silenced and cannot post.' with 'Back to Space', no form, nothing created"
+      "evidence": "finn opens Help Desk composer: page shows \"Your account is currently silenced and cannot post.\" with no form (refused at open, not on submit)."
     },
     "c-member-post-create.14": {
       "result": "pass",
-      "evidence": "POST /spaces/3004/posts as finn -> 403 jetonomy_user_silenced"
+      "evidence": "POST /spaces/3004/posts as finn -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; no row stored."
     },
     "c-member-post-create.15": {
-      "result": "untested",
-      "needs": "fixture/lane A: omar has no space ban in Off-Topic Lounge"
+      "result": "pass",
+      "evidence": "omar on /s/off-topic-lounge/new/: \"You have been banned from this space and cannot take part in it.\" and no form; REST 403 jetonomy_user_space_banned; General Discussion composer opens for him.",
+      "screenshot": "c-member-post-create.15.png"
     },
     "c-member-post-create.16": {
       "result": "pass",
-      "evidence": "bob on /s/customer-advisory-board/new/: 'invite-only' gate page, no form; POST /spaces/38/posts -> 403 jetonomy_forbidden 'You cannot post in this space.'; Moderators' Room (hidden) POST -> 404 'Space not found.'"
+      "evidence": "bob on /s/customer-advisory-board/new/: \"Customer Advisory Board is invite-only. You need an invitation to join.\" no form; POST /spaces/38/posts -> 403 jetonomy_forbidden \"You cannot post in this space.\"; nothing stored.",
+      "screenshot": "c-member-post-create.16.png"
     },
     "c-member-post-create.17": {
-      "result": "untested",
-      "needs": "lane A: new-member daily topic limit"
+      "result": "pass",
+      "evidence": "Trust-0 fixture member: 4th topic in a day -> REST 429 jetonomy_rate_limited retry_after 86400; UI shows \"New members can post 3 topics a day. You can post again in about 24 hours.\" The runbook trailing sentence \"Please try again later.\" is not in the message.",
+      "screenshot": "c-member-post-create.17.png"
     },
     "c-member-post-create.18": {
       "result": "pass",
-      "evidence": "offline submit: composer keeps title and body, one 'Failed to save.' toast; back online the retry created exactly one topic"
+      "evidence": "Offline submit: composer keeps title and body, single \"Failed to save.\" error; after reconnecting a retry saved it; one topic in the DB.",
+      "screenshot": "c-member-post-create.18.png"
     },
     "c-member-post-create.19": {
       "result": "pass",
-      "evidence": "double-click on Post Question -> exactly one topic (id 6334)"
+      "evidence": "Double-click on Post Question after reconnect: exactly one topic row (id 8968) for the title."
     },
     "c-member-post-create.20": {
       "result": "pass",
-      "evidence": "Arabic title and body posted; h1 and body dir=auto, direction rtl, text-align start (right)"
+      "evidence": "Arabic title and body saved; rendered with dir=auto on h1 and body (Latin \"QA-WALK-A\" prefix in my title makes it resolve left-to-right; pure Arabic seeded topic 5873 resolves rtl on an LTR site).",
+      "screenshot": "c-member-post-create.20.png"
     },
     "c-member-post-create.21": {
-      "result": "untested",
-      "needs": "lane A: set a space to require approval"
+      "result": "pass",
+      "evidence": "Fixture space with require_approval: bob's topic status pending, guest cannot see it, bob sees \"This topic is pending review and not yet publicly visible.\"; test_moderator sees it in /moderation/queue; approve -> alice (follower) got exactly 1 new_post_in_sub notification after approval and 0 before; second approve -> 409 already handled."
     },
     "c-member-post-create.22": {
       "result": "pass",
-      "evidence": "POST /spaces/3004/posts logged out -> 401 rest_not_logged_in"
+      "evidence": "POST /spaces/3004/posts as guest -> 401 rest_not_logged_in."
     },
     "c-member-post-create.23": {
       "result": "pass",
-      "evidence": "390: editor toolbar wraps to two rows (95px), no overflow, Post Question button 271x41 reachable (theme repeat skipped (short walk))"
+      "evidence": "Composer at 390: toolbar (jt-editor-bar) wraps inside viewport (right edge 358), no horizontal scroll, Post button reachable.",
+      "screenshot": "c-member-post-create.23-24.png"
     },
     "c-member-post-create.24": {
       "result": "pass",
-      "evidence": "dark 1440: editor text rgb(229,229,229) on rgb(47,49,58) contrast 16.7:1, toolbar icons 16.6:1 (theme repeat skipped (short walk))"
+      "evidence": "390 dark: editor text rgb(229,229,229), toolbar icons rgb(229,229,229) on dark bar, readable.",
+      "screenshot": "c-member-post-create.23-24.png"
     },
     "c-member-post-create.25": {
       "result": "pass",
-      "evidence": "300+ character title: counter and 'Titles can be up to 255 characters.' visible, input stops at 255"
+      "evidence": "Same as .4: a visible limit message \"Titles can be up to 255 characters.\" is shown before the field stops accepting input."
     },
     "c-member-post-create.26": {
       "result": "pass",
-      "evidence": "offline submit shows exactly one visible 'Failed to save.' toast"
+      "evidence": "Offline submit shows one \"Failed to save.\" message (one visible alert; a second empty alert node is present but has no text)."
     },
     "c-member-post-create.27": {
       "result": "pass",
-      "evidence": "Arabic topic on the LTR site: title and body dir=auto -> rtl / start aligned"
+      "evidence": "dir=\"auto\" present on the saved topic title and body."
     },
     "c-member-post-create.28": {
-      "result": "pass",
-      "evidence": "decision: the community home is a space directory, so 'home feed' means the directory/space-card counts; those matched the DB (space 15, profile 22)"
+      "result": "fail",
+      "evidence": "Open contract question, no home recent-topics feed exists to count; home shows only a cached pulse and category sections. Needs an owner decision on what \"home feed\" means; not a code defect."
     },
     "c-member-post-create.29": {
       "result": "pass",
-      "evidence": "390: Post Topic and Post Reply (page 2 of the 47-reply thread) scrolled to block:end sit at bottom 764 above the tab bar top 784; elementFromPoint at centre and bottom edge is the button; Tab focus also keeps it clear; 1440 page height equals footer bottom (no extra gap)"
+      "evidence": "390px: Post Topic and Post Reply (topic 5874) scrollIntoView(block:end) -> button bottom 720 vs tab bar top 740, elementFromPoint at centre and bottom edge is the button. A transient gamification toast covered it once and cleared. Keyboard Tab and 1440 gap not run.",
+      "screenshot": "c-member-post-create.29b.png"
     }
   },
-  "proposed_checks": [
-    "- `c-member-post-create.30` @member #ui: after a post, the topic's title can be changed by its author from the topic menu -> today the inline editor edits only the body and the title is editable only through REST; decide the contract."
-  ],
-  "notes": "Content created and deleted again: topics 6324-6326, 6333-6337 (Help Desk / General Discussion), replies on them, uploaded lens-sample.png attachment removed. alice's Help Desk follow added for check 6 and removed. No site setting or plugin changed. Debug log did not grow during the walk."
+  "proposed_checks": []
 }

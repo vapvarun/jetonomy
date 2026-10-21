@@ -1,9 +1,8 @@
 {
   "journey": "C.cli.qa-actions",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walked_at": "2026-10-17T13:28:34Z",
-  "walker": "lane A",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T11:38:09Z",
+  "walker": "lane B",
   "env": {
     "themes": [
       "reign"
@@ -18,73 +17,65 @@
   },
   "checks": {
     "c-cli-qa-actions.1": {
-      "result": "pass",
-      "evidence": "wp jetonomy qa-actions: REST 181/181, Model 212/212, Pro 62/62, Journey 56/56 (Phase 4), Refusal 13/13 (RF1-RF10), TOTAL 524/524, exit 0. One line prints SKIP (BB1 bbPress scope, no bbPress content) and Pro messaging reports dormant; both are labelled not counted as passes."
+      "result": "fail",
+      "evidence": "wp jetonomy qa-actions: 524 PASS and 0 FAIL lines, but 2 SKIP (PV1 'hidden space - could not create fixture', BB1 no bbPress content) so not 'only PASS'. Run 1 exited 1 (TOTAL 524/525) on 'Fixtures left data behind: jt_bookmarks 6 -> 4' (other lanes were changing bookmarks); re-run 2 passed 524/524 exit 0"
     },
     "c-cli-qa-actions.2": {
-      "result": "untested",
-      "needs": "a scratch copy of the plugin: breaking a guard means editing plugin files, which this verification-only walk may not do (bin/check-guards-can-fail.php does it in place)"
+      "result": "fail",
+      "evidence": "NOT PERFORMED: cannot break a guard on a scratch copy without editing plugin code. Evidence only: class-cli.php:1030-1037 fails the run with 'X phase ran no checks.' and the footprint-drift guard failed loudly in run 1"
     },
     "c-cli-qa-actions.3": {
-      "result": "pass",
-      "evidence": "scenario run multi-user-voting-thread listed 16 steps (post, 5 replies, 10 votes) and fixtures. Without --cleanup the data stays; with --cleanup it ran its cleanup and spaces/cats/posts/replies/votes/users returned to baseline (45/7/260/1246/1285/29)."
+      "result": "fail",
+      "evidence": "wp jetonomy scenario run multi-user-voting-thread lists 21 steps all yes, but WITHOUT --cleanup it leaves its category, space, post, 5 replies, 3 users and 10 votes behind (space count 61->62, votes +10, users +3); with --cleanup the counts return exactly to baseline. Runbook line omits the flag; I removed the leftovers"
     },
     "c-cli-qa-actions.4": {
       "result": "pass",
-      "evidence": "space-with-pending-join-request, post-with-flags-for-moderation, full-membership-approval-flow and notification-delivery-sweep each ran with --cleanup: every step yes, cleanup steps yes; counts before/after identical (spaces 45, archived 1, categories 7, posts 259, replies 1246, users 29, notifications 155, flags 4, join requests 3), so the scenario spaces are deleted, not archived"
+      "evidence": "space-with-pending-join-request, post-with-flags-for-moderation, notification-delivery-sweep, full-membership-approval-flow each run with --cleanup: every step yes, spaces deleted (spaces/posts/replies/flags/users/notifications/join requests/members counts identical before and after)"
     },
     "c-cli-qa-actions.5": {
-      "result": "pass",
-      "evidence": "space list per category matches the guest /community/ page: General Discussion 17, Show & Tell 11, Help Desk 12, Feature Requests 13, Mentorship Circle 0, etc.",
-      "screenshot": "qa-artifacts/203-walk2/laneA/cli5-home-guest.png"
+      "result": "fail",
+      "evidence": "Bare 'wp jetonomy space list' errors 'missing --category parameter'. With --category per category (1551,1552,1550,1549) names and topic counts match the home page (General Discussion 64, Help Desk, Bug Reports 16, Announcements 13...)"
     },
     "c-cli-qa-actions.6": {
       "result": "pass",
-      "evidence": "post get 5868, member list-members --space=2999 (24 rows = home 24 members), mod flags (4 pending = Moderation Flags (4)), tag popular, category list (5 categories, spaces counts), privacy scan ('No orphaned user data'), notification unread-count --to=3755 (6), config get --key=base_slug (community), user get-profile 3755 (reputation 680, 19 topics, 60 replies = Users screen) all return data matching the screens. vote and flag only have write commands (vote cast, flag create). Runbook command names differ from the real ones (member list-members takes --space, notification takes --to, tag has no list, user has get-profile)"
+      "evidence": "post get 5709, member list-members, mod flags, tag popular (email 40 = tag page), category get/list, privacy scan, notification unread-count, config get and user all run one read command and return the data the screens show"
     },
     "c-cli-qa-actions.7": {
       "result": "pass",
-      "evidence": "alice replied to bob's topic through the REST composer: unread-count --to=bob 5 -> 6 and bob's nav bell badge in the browser shows 6. Note: wp jetonomy reply create does NOT notify the topic author (count stayed 5), so the check only holds for a reply made through the app."
+      "evidence": "After alice replied to bob: CLI 'notification unread-count --to=3755' = 97, REST unread-count = 97, bell/userpanel badge in browser = 97 (command takes --to; --user is a wp-cli global so the runbook flag is stale)"
     },
     "c-cli-qa-actions.8": {
       "result": "pass",
-      "evidence": "mod ban --target=1 --issuer=141 and user ban 142 --issuer=141 -> 'Administrators cannot be restricted.'; mod ban --target=141 --issuer=141 and user ban 1 --issuer=1 -> 'You cannot restrict your own account.'; restriction rows stayed 3"
+      "evidence": "mod ban --target=1 -> 'Administrators cannot be restricted.'; admin banning self and moderator banning self -> 'You cannot restrict your own account.'; restriction count unchanged (flags are --target/--issuer, not --user)"
     },
     "c-cli-qa-actions.9": {
       "result": "pass",
-      "evidence": "`wp jetonomy post create --space=36 --author=3755 ...` (archived 2025 Hackathon) -> 'Error: [jetonomy_space_restricted] This space is archived or locked and no longer accepts new content.'; topic count unchanged (259)"
+      "evidence": "post create --space=36 (archived 2025 Hackathon) -> [jetonomy_space_restricted] 'This space is archived or locked...'; space still 0 posts"
     },
     "c-cli-qa-actions.10": {
       "result": "pass",
-      "evidence": "CLI-created topic 'Lessons from rebuilding our onboarding checklist' renders at 1440 and 390 as guest, h1 and body present, scrollWidth == clientWidth on both",
-      "screenshot": "qa-artifacts/203-walk2/laneA/cli10-post-1440.png, cli10-post-390.png"
+      "evidence": "CLI-created post 9232 renders at 1440 and 390: scrollWidth equals clientWidth on both, long unbroken token wraps",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/cli10-390.png"
     },
     "c-cli-qa-actions.11": {
       "result": "pass",
-      "evidence": "On 2000-topic seed: `wp jetonomy post get 1` 3ms; `wp jetonomy recount` 0.39s printed 'Recount complete.' Both under 3s. Overview after recount 4,267 topics / 4,175 replies.",
-      "site": "docker jt203-scale"
+      "evidence": "On 1,612-topic seed: wp jetonomy post get 10125 in 0.6s wall, wp jetonomy recount in 0.64s; recounted totals match Overview (1513 topics, 3809 replies)"
     },
     "c-cli-qa-actions.12": {
       "result": "pass",
-      "evidence": "recount printed rows per counter (post_last_reply_at 7, category_space_counts 1, others 0); guest home then shows 27 members / 261 topics, equal to published topics in the DB (261)"
+      "evidence": "wp jetonomy recount prints rows per counter (post_reply_counts 1, post_last_reply_at 60, space_member_counts 3, ...); guest home General Discussion 64 and Bug Reports 16 equal the DB immediately"
     },
     "c-cli-qa-actions.13": {
       "result": "pass",
-      "evidence": "reply create into closed topic 5875 -> [jetonomy_post_closed] 'This topic is closed and cannot receive new replies.'; post create as finn (silenced) -> [jetonomy_user_silenced]; as kai_brennan (site ban) -> [jetonomy_user_banned]; no rows added (posts 259, replies 1246). No topic exists in the archived space 36 to try the archived-topic reply"
+      "evidence": "reply create into a closed topic -> [jetonomy_post_closed]; post create as silenced finn -> [jetonomy_user_silenced]; as banned kai -> [jetonomy_user_banned]; same codes as REST; no rows added"
     },
     "c-cli-qa-actions.14": {
       "result": "pass",
-      "evidence": "`wp jetonomy reply create --post=5864 --author=3754` (alice) on bob's topic created reply 13601 and a reply_to_post row (id 22022) for bob appeared at once; bob's unread count went 6 -> 7. Reply and the notification row deleted afterwards. Note: wp_mail from WP-CLI does not reach Mailpit on this site, so the email half is covered by the browser reply in plugin-pages.6"
+      "evidence": "reply create --post=9024 --author=3754: reply 16645 created and bob got a reply_to_post notification (90->91) like a browser reply"
     },
     "c-cli-qa-actions.15": {
-      "result": "pass",
-      "evidence": "Guest home reads '244 topics'; published topics in public spaces total 244 (all published topics 258), so private and hidden space topics are left out"
+      "result": "fail",
+      "evidence": "Guest home shows '361 topics' (= sum of all 51 public spaces) but the visible space cards add to about 349: 4 public spaces (qa-walk-c-public-studio 9, sydney/tokyo/austin chapter 1 each = 12 topics) are not listed on the home, so listed spaces do not sum to the total (same class as the runbook's 261 vs 247)"
     }
-  },
-  "proposed_checks": [
-    "- `c-cli-qa-actions.13` @admin #cli !refuse: `wp jetonomy reply create` into an archived or closed topic, and `wp jetonomy post create` as a silenced or site-banned user -> refused with the same code the REST route gives and no row is added.",
-    "- `c-cli-qa-actions.14` @admin #cli: `wp jetonomy reply create --author=alice` on bob's topic -> bob gets the reply notification, same as a reply made in the browser.",
-    "- `c-cli-qa-actions.15` @guest #ui: compare the home page topic total with the sum of the topics listed under the visible spaces -> the totals agree, or private and hidden space topics are left out of the guest total (home says 261, the listed public spaces sum to 247)."
-  ],
-  "notes": "Scenario runs created and removed their own fixtures (verified by before/after counts). Created reply 13588 as alice for .14 and deleted it. Refusal attempts created no rows. No settings changed. | Re-walk 2 (lane A): test replies deleted; notification row removed. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
+  }
 }

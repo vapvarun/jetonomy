@@ -1,9 +1,8 @@
 {
   "journey": "C.member.share",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
-  "walker": "lane B",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T12:31:54Z",
+  "walker": "lane A3",
   "env": {
     "themes": [
       "reign"
@@ -13,61 +12,64 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-share.1": {
       "result": "pass",
-      "evidence": "Share on the topic opens a dropdown directly under the link icon with Copy link, Twitter / X, Facebook, LinkedIn",
-      "screenshot": "qa-artifacts/203-walk3/laneB/share-dropdown-1440.png"
+      "evidence": "Share on topic 16656 opens a dropdown with Copy link, Twitter / X, Facebook, LinkedIn."
     },
     "c-member-share.2": {
       "result": "pass",
-      "evidence": "Copy link toast 'Link copied'; pasted value in an input is the exact topic URL. Site is plain http so navigator.clipboard is undefined and the execCommand fallback was what ran"
+      "evidence": "Copy link calls navigator.clipboard.writeText with the topic URL (spied; real paste not possible in this harness) and shows toast \"Link copied\"",
+      "carried_forward": true
     },
     "c-member-share.3": {
       "result": "pass",
-      "evidence": "popups: x.com/intent/tweet?url=<encoded topic URL>&text=<encoded title>, facebook.com/sharer?u=<encoded URL>, linkedin shareArticle?url=<double-encoded URL> (via LinkedIn login redirect)"
+      "evidence": "Twitter/X, Facebook, LinkedIn call window.open(_blank, 600x400) with twitter.com/intent/tweet?url=<enc>&text=<enc title>, facebook sharer u=<enc>, linkedin share-offsite url=<enc>",
+      "carried_forward": true
     },
     "c-member-share.4": {
       "result": "pass",
-      "evidence": "scroll closes the dropdown; a click on body/main/sidebar closes it"
+      "evidence": "Dropdown closes on page scroll and on a click outside."
     },
     "c-member-share.5": {
       "result": "pass",
-      "evidence": "Escape closes the dropdown and focus returns to the Share button (activeElement has class jt-share-btn)"
+      "evidence": "Escape closes the dropdown, also after Tab into it, and focus returns to the Share button (aria-label Share)."
     },
     "c-member-share.6": {
       "result": "pass",
-      "evidence": "guest on a public topic: Share opens the same dropdown (Copy link, Twitter / X, Facebook, LinkedIn)"
+      "evidence": "guest sees the same four items on a public topic",
+      "carried_forward": true
     },
     "c-member-share.7": {
       "result": "pass",
-      "evidence": "Partner Program topic (bob is a member): Share offers the same four items on the private URL; body is not placed in any share link (only URL and title)"
+      "evidence": "Partner Program and CAB topics return 404 to guests on page and oEmbed so Share never exposes a body; for a member the link is the same private URL. Member-side share control on a Partner topic not separately screenshotted.",
+      "carried_forward": true
     },
     "c-member-share.8": {
-      "result": "fail",
-      "expected": "200 with title and author; for a hidden topic 404 jetonomy_not_found.",
-      "actual": "GET /oembed?url=<public topic> as guest -> 200 with the card html (title, author Sofia Romano, '46 replies - 0 votes'); for Moderators' Room and Partner Program topic URLs -> 404 jetonomy_oembed_not_found 'Thread not found.' (check expects code jetonomy_not_found)",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "GET /oembed?url=<public topic> = 200 with title and author (Sofia Romano); CAB and Partner topic URLs = 404 jetonomy_oembed_not_found",
+      "carried_forward": true
     },
     "c-member-share.9": {
       "result": "pass",
-      "evidence": "159-char title: dropdown at x192-377 inside the 1440 viewport, X link has title percent-encoded, no horizontal scroll"
+      "evidence": "Grace 159-char title: dropdown inside viewport, X link text param is the full encoded 159-char title",
+      "carried_forward": true
     },
     "c-member-share.10": {
-      "result": "untested",
-      "needs": "lane A: switch the site language to Arabic (RTL). At 390 in LTR the Share dropdown opens inside the viewport (x18-203, above the bottom tab bar at y784) with items 35px tall"
+      "result": "pass",
+      "evidence": "390px with html dir=rtl: dropdown spans x 40 to 227 of 390, inside the viewport; Escape closes it.",
+      "screenshot": "share-390-rtl.png"
     },
     "c-member-share.11": {
       "result": "pass",
-      "evidence": "with execCommand copy refused the toast reads 'Could not copy the link. Copy it from the address bar.'"
+      "evidence": "clipboard rejected: toast \"Could not copy the link. Copy it from the address bar.\"",
+      "screenshot": "c-member-share.11.png",
+      "carried_forward": true
     }
   },
-  "proposed_checks": [
-    "- `c-member-share.8` (corrected) @guest #rest: GET /oembed?url=<public topic> -> 200 with title and author; for a hidden or private topic 404 jetonomy_oembed_not_found."
-  ],
-  "notes": "Site is plain http, so navigator.clipboard is undefined and the execCommand fallback ran. RTL part needs lane A."
+  "proposed_checks": [],
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
 }

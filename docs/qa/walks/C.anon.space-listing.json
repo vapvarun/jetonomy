@@ -1,8 +1,9 @@
 {
   "journey": "C.anon.space-listing",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "pro": "404b0af",
+  "walked_at": "2026-10-21T08:53:12Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -12,137 +13,131 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-anon-space-listing.1": {
       "result": "pass",
-      "evidence": "QA Paging space (posts_per_page 1, 3 topics): page 1 shows 'QA paging fixture post 3', Load More appends post 2, then 'Zarquon paging needle QA-1904', button disappears; no repeats",
-      "screenshot": "qa-artifacts/203-walk2/laneB/space-paging.png"
+      "evidence": "QA Paging space with posts_per_page set to 1 (restored to 20): guest sees newest topic only, each Load More adds the next (post 3, post 2, Zarquon needle) in newest-first order, button disappears after the last."
     },
     "c-anon-space-listing.2": {
       "result": "pass",
-      "evidence": "Feature Requests ?sort=popular: 0-vote ties ordered by replies 45,6,5,5,5,2,2,1,1 after 9/8/5/2 vote topics"
+      "evidence": "Feature Requests Popular (UI ?sort=popular and REST): 5709(8 votes), 5717, 5714, 5711, then the 0-vote ties ordered by replies 45,6,5,4,3,3,3,1,1."
     },
     "c-anon-space-listing.3": {
       "result": "pass",
-      "evidence": "guest on Feature Requests: header (cover, title, description, 13 topics / 23 members) and the tab row Ideas | Roadmap | Members are identical on the listing, /members/ and /roadmap/; General Discussion shows Discussions | Members. A public space shows guests no Join button, only 'Log in to post'",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-space-gdr.png"
+      "evidence": "Feature Requests Ideas, Roadmap and Members tabs all render the same space header (title, description, 13 topics 23 members, Follow/Leave) - header text identical on the three URLs.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-space-listing.3-roadmap.png"
     },
     "c-anon-space-listing.4": {
       "result": "pass",
-      "evidence": "guest: 'Log in to post' only (no New Topic); bob: '+ Share an Idea' on Feature Requests, '+ New Topic' on Amsterdam"
+      "evidence": "Guest on a public space sees \"Log in to post\" (a login prompt, no compose); bob sees the \"+ New Topic\" button (e.g. Amsterdam Chapter, Berlin Chapter)."
     },
     "c-anon-space-listing.5": {
       "result": "pass",
-      "evidence": "bob on Feature Requests: visible '+ Share an Idea' button (type-specific wording), plus Follow and Leave Space"
+      "evidence": "bob on Feature Requests sees \"+ Share an Idea\" (the ideas-space label for New Topic); on forum spaces the label is \"+ New Topic\"."
     },
     "c-anon-space-listing.6": {
       "result": "pass",
-      "evidence": "bob on Amsterdam Chapter: 'Join Space' -> click -> 'Leave Space', members 3 -> 4; then Leave (confirm dialog 'Leave this space? You can rejoin at any time.') restored 3 members and Join Space"
+      "evidence": "bob on Amsterdam Chapter: header \"Join Space\", 3 members; click Join -> \"Follow / Leave Space\", 4 members; then Leave (confirm dialog) restored it to 3 members/Join Space.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-space-listing.6-joined.png"
     },
     "c-anon-space-listing.7": {
       "result": "pass",
-      "evidence": "hana (not a member of Insiders / Beta) sees the gate 'Insiders / Beta is private. Request to join and an admin will review it.' with a Request to join button; Customer Advisory Board says 'is invite-only. You need an invitation to join.' with no request form",
-      "screenshot": "qa-artifacts/203-walk2/laneB/space-hana-insiders.png"
+      "evidence": "bob is already a member of Insiders / Beta, so as hana (non-member): \"Insiders / Beta is private. Request to join and an admin will review it. ... Approval required. Request to join\"; as bob on invite-only Customer Advisory Board: \"is invite-only. You need an invitation to join.\" with no request form."
     },
     "c-anon-space-listing.8": {
       "result": "pass",
-      "evidence": "bob on Mentorship Circle: header Request to join opens a dialog 'Tell the admins why you want to join (optional)'; after submit the page shows 'Your request to join Mentorship Circle is awaiting approval.' and a 'Withdraw request' button",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-mentor-bob-requested.png"
+      "evidence": "bob on public approval space Mentorship Circle: header \"Request to join\" opens a dialog \"Tell the admins why you want to join (optional).\" with Cancel / Request to join; submitting reloads into \"Your request to join Mentorship Circle is awaiting approval.\" with a \"Withdraw request\" button (message left empty).",
+      "screenshot": "qa-artifacts/walk-A/c-anon-space-listing.8-request-form.png"
     },
     "c-anon-space-listing.9": {
       "result": "pass",
-      "evidence": "clicking Withdraw request sent DELETE /spaces/3010/join-requests/mine -> 200 and the header returned to 'Request to join'; two further DELETE calls -> 404 jetonomy_no_pending_request",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-mentor-bob-withdrawn.png"
+      "evidence": "Withdraw request in the UI returned the \"Request to join\" button (DB join_requests empty). REST: POST /spaces/3010/members -> 202 pending, DELETE /spaces/3010/join-requests/mine -> 200 {status:withdrawn}, repeat -> 404 jetonomy_no_pending_request.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-space-listing.9-withdrawn.png"
     },
     "c-anon-space-listing.10": {
       "result": "pass",
-      "evidence": "maya (space admin, no WP moderator persona used) had notification 22026 'Bob Martinez requested to join Mentorship Circle' before the withdrawal; after it her notifications list and page hold no such notice"
+      "evidence": "After the request, jt_notifications held join_request rows for the space staff (user 1, 142, 4469, 4472, 4475...); after withdrawing (UI and REST) the count for that space was 0."
     },
     "c-anon-space-listing.11": {
       "result": "pass",
-      "evidence": "bob on 2025 Hackathon: header 'Follow' only, 'This space is archived. New topics and replies are no longer accepted.', empty text 'No topics were posted here.', no New Topic"
+      "evidence": "bob on 2025 Hackathon: header \"Follow / Leave Space\" (no Join), \"This space is archived. New topics and replies are no longer accepted.\", empty state \"No topics were posted here.\", no New Topic."
     },
     "c-anon-space-listing.12": {
       "result": "pass",
-      "evidence": "Amsterdam Chapter: 'No topics yet.' empty state with no button inside it (page header still offers 'Log in to post' to guests)"
+      "evidence": "Guest on empty Amsterdam Chapter: \"No topics yet.\" with no button in the empty state (the toolbar shows the \"Log in to post\" prompt)."
     },
     "c-anon-space-listing.13": {
       "result": "pass",
-      "evidence": "bob on Amsterdam Chapter (empty): 'No topics yet. Be the first t...' with '+ New Topic' button"
+      "evidence": "bob on empty Amsterdam Chapter: \"No topics yet. Be the first to start a discussion!\" plus a \"New Topic\" button."
     },
     "c-anon-space-listing.14": {
-      "result": "pass",
-      "evidence": "finn on AI Assistant Experiments (empty ideas space, Join Space shown): plain 'No ideas yet.' and no post button. Q&A and feed variants not run: no empty Q&A or feed space in the data"
+      "result": "fail",
+      "evidence": "Partly performed: guest and a signed-in non-member can see AI Assistant Experiments (ideas) - guest gets plain \"No ideas yet.\" with no button, but non-members (bob, carlos) see \"Suggest an idea\". Carlos's pending request is in Insiders/Beta (39 topics), so no empty space exists for the pending-requester shape; no empty Q&A or feed space exists to see \"No questions yet.\" / \"Nothing posted yet.\". Fixture gap."
     },
     "c-anon-space-listing.15": {
       "result": "pass",
-      "evidence": "Partner Program as guest: 'This space is private. Log in to request access.' plus Log In button, no topic titles; Register not offered because registration is closed"
+      "evidence": "Guest on Partner Program: \"Partner Program is private. Log in to request access.\" + Log In, no topic titles (registration is off so no Register)."
     },
     "c-anon-space-listing.16": {
       "result": "pass",
-      "evidence": "bob on Customer Advisory Board: gate names the space and shows its description 'Invite-only group of long-time customers who review roadmap drafts.', no topics"
+      "evidence": "bob on Customer Advisory Board: gate \"Customer Advisory Board is invite-only. You need an invitation to join.\" with the space description, no topics.",
+      "screenshot": "qa-artifacts/walk-A/b1.6-cab-bob.png"
     },
     "c-anon-space-listing.17": {
       "result": "pass",
-      "evidence": "bob on /community/s/moderators-room/: 404 'Space not found.' title 'Page not available', space never named"
+      "evidence": "bob on /community/s/moderators-room/ -> HTTP 404 \"Space not found.\", space never named."
     },
     "c-anon-space-listing.18": {
       "result": "pass",
-      "evidence": "Announcements: 'Scheduled maintenance on Saturday' topic shows Closed badge (feed layout, no Pinned on it)"
+      "evidence": "Announcements (feed space) shows a \"Closed\" badge on the closed announcements (\"Scheduled maintenance on Saturday: what to expect\" and the guidelines update). No topic there is currently Pinned, so the \"next to Pinned\" half is untested."
     },
     "c-anon-space-listing.19": {
       "result": "pass",
-      "evidence": "Help Desk at 1440: 288-char description in its own full-width row above the stats and Log in to post (helpdesk-1440.png)"
+      "evidence": "Help Desk at 1440 on Reign: the 288-char description sits in its own full-width row (642px = header width) above the TOPICS / MEMBERS stats.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-space-listing.19-helpdesk-1440.png"
     },
     "c-anon-space-listing.20": {
-      "result": "untested",
-      "needs": "lane A theme pass (BuddyX and Twenty Twenty-Five). Reign part passes: Help Desk description unclamped, full text in its own block above the stats, at 1440 (72px), 1024 (96px), 390 (191px), no horizontal scroll",
-      "screenshot": "qa-artifacts/203-walk2/laneB/space-helpdesk-390.png"
+      "result": "pass",
+      "evidence": "Help Desk at 1024 (desc 642px wide, t=456, stats t=603) and 390 (desc 328px wide, stats below at t=467): wraps in its own row, no overlap, no horizontal scroll. (Reign only; BuddyX/Twenty Twenty-Five not walked, shared site theme not switched)",
+      "screenshot": "qa-artifacts/walk-A/c-anon-space-listing.20-helpdesk-390.png"
     },
     "c-anon-space-listing.21": {
       "result": "pass",
-      "evidence": "General Discussion at 1440: Grace's 159-char title wraps to 3 lines inside the row, scrollWidth 1440 = clientWidth (gd-1440.png); the 100-char URL is in the topic body, covered by single-post.19"
+      "evidence": "General Discussion first page contains Grace's 159-character title; at 1440 and 390 scrollWidth == clientWidth and no row overflows. (The 100-char unbroken URL topic is in another space; it is on the topic page, see single-post.19.) (Reign only; BuddyX/Twenty Twenty-Five not walked, shared site theme not switched)"
     },
     "c-anon-space-listing.22": {
       "result": "pass",
-      "evidence": "lane A, site language ar: General Discussion list as guest mirrors (sidebar left, list right, vote column right); Omar's Arabic title right-aligned, row 719-1189. qa-artifacts/203-walk2/laneA/ar-space-listing.png"
+      "evidence": "RTL emulated on General Discussion: Arabic topic \"تجربتي مع مجموعات التصوير المحلية\" row right-aligned (direction rtl, 0px gap to the right edge), list rows mirrored, no overflow. Real Arabic site language not used.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-space-listing.22-rtl.png"
     },
     "c-anon-space-listing.23": {
       "result": "pass",
-      "evidence": "Help Desk dark at 390: header, tabs, Answered/Needs answer badges readable (helpdesk-390-dark.png)"
+      "evidence": "Help Desk in dark mode: title rgb(229,229,229), description ~rgb(204,204,205), tabs light-blue rgb(151,192,238) on the dark page, readable.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-space-listing.23-dark.png"
     },
     "c-anon-space-listing.24": {
       "result": "pass",
-      "evidence": "GET /spaces/2996/posts?sort=popular -> 200, X-WP-Total 13, order: Dark mode toggle in user preferences (9 votes), Better defaults (5), Idea: improve (4), Weekly digest (3); sort=bogus -> 400 rest_not_in_enum"
+      "evidence": "GET /spaces/2996/posts?sort=popular -> 200 X-WP-Total 13 = UI \"13 topics\", same order as the Popular pill."
     },
     "c-anon-space-listing.25": {
       "result": "pass",
-      "evidence": "finn on General Discussion: no New Topic button, notice 'Your account is currently silenced and cannot post.'",
-      "screenshot": "qa-artifacts/203-walk2/laneB/space-finn.png"
+      "evidence": "finn on Help Desk sees \"Your account is currently silenced and cannot post.\" where the New Topic button would be; no enabled button."
     },
     "c-anon-space-listing.26": {
       "result": "pass",
-      "evidence": "omar on Off-Topic Lounge: 'You have been banned from this space and cannot take part in it.' with 'Browse other spaces', no Join/Follow/New Topic",
-      "screenshot": "qa-artifacts/203-walk2/laneB/space-omar.png"
+      "evidence": "omar on Off-Topic Lounge (after the ban was re-created, see B1): \"You have been banned from this space and cannot take part in it. Browse other spaces\", no Join/New Topic; on Help Desk he sees the normal space."
     },
     "c-anon-space-listing.27": {
       "result": "pass",
-      "evidence": "guest GET /spaces/2996/posts?orderby=popular -> 200 sorted popular (preferences 9 votes, 5 votes, 4 votes); ?orderby=bogus and ?orderby=votes -> 400 rest_invalid_param 'orderby is not one of latest, popular'"
+      "evidence": "Guest GET /spaces/2996/posts?orderby=popular -> 200 sorted popular (same order as sort=popular), not latest."
     },
     "c-anon-space-listing.28": {
       "result": "pass",
-      "evidence": "bob (not a member) on Mentorship Circle (public, approval) sees header 'Request to join'",
-      "screenshot": "qa-artifacts/203-walk2/laneB/space-request-form.png"
+      "evidence": "bob (non-member) on public approval Mentorship Circle: header \"Request to join\"."
     }
   },
-  "proposed_checks": [
-    "- `c-anon-space-listing.27` @guest #rest !refuse: GET /spaces/<id>/posts?orderby=popular -> either sorted popular or 400, never a silent latest order.",
-    "- `c-anon-space-listing.28` @member #ui: open a public approval space as a non-member -> header 'Request to join' (needs a seeded public approval space)."
-  ],
-  "notes": "No settings changed. Member checks written in the member pass below. | Re-walk lane B 2026-10-17: Created and withdrew one join request as bob on Mentorship Circle (request row 241 now status withdrawn, notification rows removed). .22 stays untested lane A. No settings changed. | lane A (re-walk 2026-10-17): | Re-walk 2 lane B: bob requested to join Mentorship Circle and withdrew; maya checked for the staff notice; request withdrawn, nothing left.",
-  "walked_at": "2026-10-17T13:28:50Z"
+  "proposed_checks": []
 }

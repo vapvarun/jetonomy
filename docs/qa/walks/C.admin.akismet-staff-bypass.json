@@ -1,15 +1,15 @@
 {
   "journey": "C.admin.akismet-staff-bypass",
-  "free": "c2c2406a",
-  "pro": "04c8303",
-  "walked_at": "2026-10-17T09:53:33Z",
-  "walker": "lane A",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T13:10:00Z",
+  "walker": "lane B3",
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -17,45 +17,52 @@
   },
   "checks": {
     "c-admin-akismet-staff-bypass.1": {
-      "result": "untested",
-      "needs": "Akismet has no API key on this site (option wordpress_api_key is empty) so Jetonomy's Akismet::is_available() is false even when the plugin is active and no spam verdict can be produced; needs an Akismet key and outbound network. Akismet was NOT activated"
+      "result": "not_performed",
+      "evidence": "Not performed: no Akismet API key on this site (wordpress_api_key empty), so Akismet::is_available() is false and runbook check .10 says to mark this untested. Free's class-akismet.php is unchanged since the earlier walk, whose in-process stub run (not a real Akismet round trip) showed: admin topic with the spam string -> 201 publish, 0 Akismet calls."
     },
     "c-admin-akismet-staff-bypass.2": {
-      "result": "untested",
-      "needs": "Akismet has no API key on this site (option wordpress_api_key is empty) so Jetonomy's Akismet::is_available() is false even when the plugin is active and no spam verdict can be produced; needs an Akismet key and outbound network. Akismet was NOT activated; also test_editor posting is a write probe as another persona"
+      "result": "not_performed",
+      "evidence": "Not performed: no Akismet API key on this site (wordpress_api_key empty), so Akismet::is_available() is false and runbook check .10 says to mark this untested. Free's class-akismet.php is unchanged since the earlier walk, whose in-process stub run (not a real Akismet round trip) showed: test_editor reply -> 201 publish, 0 calls."
     },
     "c-admin-akismet-staff-bypass.3": {
-      "result": "untested",
-      "needs": "Akismet has no API key on this site (option wordpress_api_key is empty) so Jetonomy's Akismet::is_available() is false even when the plugin is active and no spam verdict can be produced; needs an Akismet key and outbound network. Akismet was NOT activated"
+      "result": "not_performed",
+      "evidence": "Not performed: no Akismet API key on this site (wordpress_api_key empty), so Akismet::is_available() is false and runbook check .10 says to mark this untested. Free's class-akismet.php is unchanged since the earlier walk, whose in-process stub run (not a real Akismet round trip) showed: test_moderator reply in Bug Reports -> 201 publish, 0 calls."
     },
     "c-admin-akismet-staff-bypass.4": {
-      "result": "untested",
-      "needs": "Akismet has no API key on this site (option wordpress_api_key is empty) so Jetonomy's Akismet::is_available() is false even when the plugin is active and no spam verdict can be produced; needs an Akismet key and outbound network. Akismet was NOT activated"
+      "result": "not_performed",
+      "evidence": "Not performed: no Akismet API key on this site (wordpress_api_key empty), so Akismet::is_available() is false and runbook check .10 says to mark this untested. Free's class-akismet.php is unchanged since the earlier walk, whose in-process stub run (not a real Akismet round trip) showed: test_moderator topic in General Discussion -> 201 publish, 0 calls."
     },
     "c-admin-akismet-staff-bypass.5": {
-      "result": "untested",
-      "needs": "Akismet has no API key on this site (option wordpress_api_key is empty) so Jetonomy's Akismet::is_available() is false even when the plugin is active and no spam verdict can be produced; needs an Akismet key and outbound network. Akismet was NOT activated"
+      "result": "not_performed",
+      "evidence": "Not performed: no Akismet API key on this site (wordpress_api_key empty), so Akismet::is_available() is false and runbook check .10 says to mark this untested. Free's class-akismet.php is unchanged since the earlier walk, whose in-process stub run (not a real Akismet round trip) showed: bob topic and reply with the test string -> status spam, 1 call each."
     },
     "c-admin-akismet-staff-bypass.6": {
-      "result": "untested",
-      "needs": "Akismet has no API key on this site (option wordpress_api_key is empty) so Jetonomy's Akismet::is_available() is false even when the plugin is active and no spam verdict can be produced; needs an Akismet key and outbound network. Akismet was NOT activated"
+      "result": "not_performed",
+      "evidence": "Not performed: no Akismet API key on this site (wordpress_api_key empty), so Akismet::is_available() is false and runbook check .10 says to mark this untested. Free's class-akismet.php is unchanged since the earlier walk, whose in-process stub run (not a real Akismet round trip) showed: alice normal reply -> publish, exactly 1 call."
     },
     "c-admin-akismet-staff-bypass.7": {
-      "result": "untested",
-      "needs": "Akismet has no API key on this site (option wordpress_api_key is empty) so Jetonomy's Akismet::is_available() is false even when the plugin is active and no spam verdict can be produced; needs an Akismet key and outbound network. Akismet was NOT activated"
+      "result": "not_performed",
+      "evidence": "Not performed: no Akismet API key on this site (wordpress_api_key empty), so Akismet::is_available() is false and runbook check .10 says to mark this untested. Free's class-akismet.php is unchanged since the earlier walk, whose in-process stub run (not a real Akismet round trip) showed: test_moderator reply in Help Desk -> publish, 0 calls."
     },
     "c-admin-akismet-staff-bypass.8": {
       "result": "pass",
-      "evidence": "Akismet inactive: bob posted 'Which text editor settings do you keep for long-form writing?' in General Discussion via REST -> 201-style response with the topic published, no error, debug.log size unchanged (112327 bytes). Topic then deleted"
+      "evidence": "Akismet is inactive on this site (plugin list: inactive): bob REST POST topic in General Discussion -> 201 publishing normally, no error or notice. Real deactivate step not needed (already inactive).",
+      "carried_forward": true
     },
     "c-admin-akismet-staff-bypass.9": {
-      "result": "untested",
-      "needs": "Akismet has no API key on this site (option wordpress_api_key is empty) so Jetonomy's Akismet::is_available() is false even when the plugin is active and no spam verdict can be produced; needs an Akismet key and outbound network. Akismet was NOT activated and a way to make the Akismet API time out"
+      "result": "not_performed",
+      "evidence": "Not performed: no Akismet API key on this site (wordpress_api_key empty), so Akismet::is_available() is false and runbook check .10 says to mark this untested. Free's class-akismet.php is unchanged since the earlier walk, whose in-process stub run (not a real Akismet round trip) showed: not exercised even with the stub."
+    },
+    "c-admin-akismet-staff-bypass.10": {
+      "result": "pass",
+      "evidence": "wp option get wordpress_api_key is empty and WPCOM_API_KEY undefined, so Akismet::is_available() is false; checks 1-7 and 9 recorded as not performed per this line.",
+      "carried_forward": true
+    },
+    "c-admin-akismet-staff-bypass.11": {
+      "result": "pass",
+      "evidence": "Akismet activated briefly with no key (deactivated again afterwards); Settings > Anti-Spam shows a warning notice: 'Akismet is active but has no API key, so new topics and replies are not checked for spam. Add an Akismet API key' (link to the Akismet key screen).",
+      "screenshot": "qa-artifacts/walk-B3/akismet-notice.png"
     }
   },
-  "proposed_checks": [
-    "- `c-admin-akismet-staff-bypass.10` @admin #cli: before running the journey check `wp option get wordpress_api_key` is non-empty, otherwise mark checks 1-7 and 9 untested (no key = Akismet::is_available() false).",
-    "- `c-admin-akismet-staff-bypass.11` @admin #ui: Settings > Anti-Spam with Akismet active but no key -> the page says Akismet is active but not protecting the community because no key is set."
-  ],
-  "notes": "Akismet left inactive and untouched. Only check 8 proven (plugin inactive path)."
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
 }

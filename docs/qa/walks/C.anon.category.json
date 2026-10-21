@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.category",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T08:46:38Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -12,77 +12,76 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-anon-category.1": {
       "result": "pass",
-      "evidence": "Local Chapters lists 14 cards each linking /community/s/<slug>/ (screenshot cat-local-1440.png)"
+      "evidence": "/community/category/local-chapters/ lists the 14 city space cards each linking to /community/s/<city>-chapter/ (all 200).",
+      "screenshot": "qa-artifacts/walk-A/c-anon-home.4-category.png"
     },
     "c-anon-category.2": {
       "result": "pass",
-      "evidence": "lane A, Show private spaces to logged-out visitors on: guest sees Partner Program card with 'Private' badge, 'Approval required' and 'Request to join and the partner team reviews it.'; qa-artifacts/203-walk2/laneA/cat-partner-guest-teaser.png"
+      "evidence": "Teasers on: Partner Program card in Product & Engineering reads \"Private Forum Approval required ... Request to join and the partner team reviews it\".",
+      "screenshot": "qa-artifacts/walk-A/c-anon-category.1-community.png"
     },
     "c-anon-category.3": {
       "result": "pass",
-      "evidence": "lane A, teasers on: Customer Advisory Board card reads 'Private | Forum | Invite only | Invite-only group of long-time customers...' with no Join button"
+      "evidence": "Customer Advisory Board card (Community category) reads \"Private Forum Invite only\"; the card has no Join button (no button/join element inside it).",
+      "screenshot": "qa-artifacts/walk-A/c-anon-category.1-community.png"
     },
     "c-anon-category.4": {
       "result": "pass",
-      "evidence": "/community/category/staff/ now answers HTTP 404 with the same 'Category not found.' page as /category/nope-missing/ (identical visible text, no breadcrumb, no space count)"
+      "evidence": "The runbook category does not exist as such: Moderators' Room sits in Help & Support with visible spaces. The only hidden-only category is Staff (Release Planning, hidden): guest /community/category/staff/ -> 404 \"Category not found.\" titled \"Page not available\", identical to /category/does-not-exist/, no breadcrumb or name."
     },
     "c-anon-category.5": {
       "result": "pass",
-      "evidence": "guest GET /categories/<Staff id 1553> -> 404 jetonomy_not_found; GET /categories?per_page=100 lists 4 categories (Community, Help & Support, Product & Engineering, Start Here), X-WP-Total 4, Staff omitted"
+      "evidence": "GET /categories/1553 (Staff) -> 404 jetonomy_not_found \"Category not found.\", identical to /categories/9999999; /categories?per_page=100 returns only 1549-1552 and omits Staff."
     },
     "c-anon-category.6": {
       "result": "pass",
-      "evidence": "guest REST space_count: Help & Support 4 (of 6, hides Moderators' Room + Insiders Beta), Product & Engineering 5 (of 6, hides Partner Program), Community 5 (of 6)"
+      "evidence": "REST space_count for Help & Support is 4 for guests (teasers off; Insiders Beta private and Moderators Room hidden excluded) vs 5/6 in the DB; Community 7, Product & Engineering 6, no hidden counts."
     },
     "c-anon-category.7": {
       "result": "pass",
-      "evidence": "Amsterdam, Nairobi, Lisbon, Seoul, Mexico City show 0 topics, 3 members, no error"
+      "evidence": "Local Chapters category: five empty city spaces show \"0 topics\", no error."
     },
     "c-anon-category.8": {
       "result": "pass",
-      "evidence": "HTTP 404, title 'Page not available', 'Category not found.'; no CTA in body, Community tab above links home"
+      "evidence": "/community/category/does-not-exist/ -> HTTP 404, \"Category not found.\" inside the community shell; the only way back is the community nav (Community/Search/Leaderboard) and header, there is no dedicated \"back to community\" link in the body."
     },
     "c-anon-category.9": {
       "result": "pass",
-      "evidence": "Labs category: '2025 Hackathon | Archived | Forum | Archive of last year's hackathon projects. Read-only.' card carries an Archived badge"
+      "evidence": "Home and Product & Engineering show 2025 Hackathon with an \"Archived\" marker; /community/s/2025-hackathon/ opens with \"This space is archived. New topics and replies are no longer accepted.\""
     },
     "c-anon-category.10": {
       "result": "pass",
-      "evidence": "390: cards one per row at x=31 width 328, scrollWidth 390"
+      "evidence": "Local Chapters and Help & Support at 390px: scrollWidth 390, cards in one column (left 31px). (Reign only; BuddyX and Twenty Twenty-Five not walked, switching the shared site theme would disturb the other walkers)",
+      "screenshot": "qa-artifacts/walk-A/c-anon-category.10-390.png"
     },
     "c-anon-category.11": {
       "result": "pass",
-      "evidence": "390: Help Desk excerpt clamped to 2 lines (overflow hidden, 174px content in 39px box), stays inside card"
+      "evidence": "Help Desk card at 390: 328px wide, scrollWidth 326, description wraps inside the card. (Reign only; BuddyX and Twenty Twenty-Five not walked, switching the shared site theme would disturb the other walkers)"
     },
     "c-anon-category.12": {
       "result": "pass",
-      "evidence": "lane A, dark mode, teasers on: Private and 'Approval required' badges on the Partner Program card are legible (light text on dark surface). There is no Archived badge to check (see .9); qa-artifacts/203-walk2/laneA/cat-dark-teaser.png"
+      "evidence": "Dark mode on Product & Engineering: Forum/Q&A badges render light-blue text (0.76,0.85,0.96) on a dark chip (0.23,0.26,0.31), legible.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-category.12-dark.png"
     },
     "c-anon-category.13": {
       "result": "pass",
-      "evidence": "bob (admin of Partner Program) card carries an 'Admin' marker and no 'Approval required' pill, links to /s/partner-program/; hana (not a member) card shows 'Approval required'. Card description is the space's own text 'Request to join and the partner team reviews it.' for everyone",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-cat-bob-partner.png"
+      "evidence": "Product & Engineering: bob (admin of Partner Program) sees the card marked \"Admin\"; hana (non-member) sees \"Approval required\" (the card itself carries no Request to join button; the request form is on the space page, see b1.5).",
+      "screenshot": "qa-artifacts/walk-A/c-anon-category.13-bob.png"
     },
     "c-anon-category.14": {
       "result": "pass",
-      "evidence": "maya (moderator of Moderators' Room) on Help & Support sees 'Moderators' Room | Hidden | Forum | Invite only'; bob's Help & Support list shows only Help Desk, Troubleshooting etc, no Moderators' Room"
+      "evidence": "maya sees Moderators' Room in Help & Support with a Hidden badge and Moderator role; bob/test_moderator get 404 \"Category not found.\" for /category/staff/ while maya (member of Release Planning) gets 200 listing it."
     },
     "c-anon-category.15": {
       "result": "pass",
-      "evidence": "alice (plain member of Partner Program) card carries a 'Member' marker instead of 'Approval required'",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-cat-alice-partner.png"
+      "evidence": "bob (a member of Partner Program as admin) sees a role marker \"Admin\" in place of \"Approval required\"; a plain-member marker was not separately walked."
     }
   },
-  "proposed_checks": [
-    "- `c-anon-category.15` @member #ui +private: as a member of Partner Program, open its category -> the card carries a visible member marker (for example 'Member'), not the 'Request to join' wording."
-  ],
-  "notes": "No settings changed. Earlier note that the card helper has no Private badge was wrong: badges come from jetonomy_render_space_meta_badges() in jetonomy.php; there is no archived branch. | Re-walk lane B 2026-10-17: walked .4 .5 .9 .13 .14 .15; .2 .3 .12 left untested (lane A private teasers). Non-member (hana) variant of .13 not walked. .10 .11 re-confirmed at 390/1440 (no overflow, description clamped to 2 lines). | lane A (re-walk 2026-10-17): lane A: guest_private_teasers set true in jetonomy_settings for the teaser checks, then jetonomy_settings restored byte-equal from backup.",
-  "walked_at": "2026-10-17T13:28:50Z"
+  "proposed_checks": []
 }

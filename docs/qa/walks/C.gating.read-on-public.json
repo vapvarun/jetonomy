@@ -1,51 +1,47 @@
 {
-  "journey": "C.gating.read-on-public",
-  "checks": {
-    "c-gating-read-on-public.1": {
-      "result": "pass",
-      "evidence": "fresh public/open space 3081, Everyone + Read rule -> toast 'Access rule added.', row 'Everyone - Read - Viewer'."
-    },
-    "c-gating-read-on-public.2": {
-      "result": "pass",
-      "evidence": "gating_t3 (fresh subscriber) wrote 'What is the best phone for testing?' in the composer -> published at /community/s/phone-photography-corner/t/what-is-the-best-phone-for-testing/."
-    },
-    "c-gating-read-on-public.3": {
-      "result": "pass",
-      "evidence": "gating_t3 replied (13669, 201) and voted (200, score 1)."
-    },
-    "c-gating-read-on-public.4": {
-      "result": "pass",
-      "evidence": "gating_tester joined (roster, role member) then replied 13670, voted (score 2) and reported (201): everything works."
-    },
-    "c-gating-read-on-public.5": {
-      "result": "pass",
-      "evidence": "guest GET /spaces/3081/posts -> 200 and lists the topic; guest POST reply -> 401 rest_not_logged_in."
-    },
-    "c-gating-read-on-public.6": {
-      "result": "pass",
-      "evidence": "rule deleted from the Access Rules tab (confirm 'Are you sure? This cannot be undone.', row removed, toast 'Access rule deleted.' captured on the same button in another journey); gating_t3 then posted 'Which gimbal is worth carrying on a hike?' (201)."
-    },
-    "c-gating-read-on-public.7": {
-      "result": "pass",
-      "evidence": "gating_t3 POST /spaces/3081/access-rules -> 403 jetonomy_forbidden; no rule stored."
-    }
+ "journey": "C.gating.read-on-public",
+ "free": "dcdb0750",
+ "walked_at": "2026-10-21T08:39:15Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "c-gating-read-on-public.1": {
+   "result": "pass",
+   "evidence": "Admin: Logged In + Read rule on public open space 4860 -> toast \"Access rule added.\""
   },
-  "proposed_checks": [],
-  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. Space 3081 hidden and archived at the end.",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walker": "lane A",
-  "walked_at": "2026-10-17T17:58:06Z",
-  "env": {
-    "themes": [
-      "reign"
-    ],
-    "viewports": [
-      1440,
-      390
-    ],
-    "schemes": [
-      "light"
-    ]
+  "c-gating-read-on-public.2": {
+   "result": "pass",
+   "evidence": "sub2 (Rohan Mehta) via composer UI /new/: \"What is the best phone for testing?\" published at /community/s/qa-walk-c-public-studio/t/what-is-the-best-phone-for-testing-1/"
+  },
+  "c-gating-read-on-public.3": {
+   "result": "pass",
+   "evidence": "with Read rule: reply 201,16277 vote 200,"
+  },
+  "c-gating-read-on-public.4": {
+   "result": "pass",
+   "evidence": "alice roster: post 201,8867 reply 201,16278"
+  },
+  "c-gating-read-on-public.5": {
+   "result": "pass",
+   "evidence": "guest GET /spaces/4860/posts 200; guest POST reply 401 rest_not_logged_in"
+  },
+  "c-gating-read-on-public.7": {
+   "result": "pass",
+   "evidence": "subscriber POST /spaces/4860/access-rules (everyone/full) -> 403 jetonomy_forbidden; after the admin deleted the Read rule, jt_access_rules has 0 rows for the space, so the refused POST stored nothing"
+  },
+  "c-gating-read-on-public.6": {
+   "result": "pass",
+   "evidence": "Admin deleted Read rule -> toast \"Access rule deleted.\"; subscriber then POST topic 201,8928 reply 201,16279"
   }
+ }
 }

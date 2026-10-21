@@ -1,8 +1,7 @@
 {
   "journey": "C.member.connect-app",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T11:38:09Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -13,83 +12,81 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-connect-app.1": {
       "result": "pass",
-      "evidence": "bob opens /community/connect-app?scheme=jetonomyapp&app_name=Jetonomy Mobile: 'Connect Jetonomy Mobile to your account? You are signed in as Bob Martinez (bob). The app gets its own access key...' with 'Yes, connect the app' and 'Not you? Sign in as someone else' (the app name comes from app_name; without it the heading says 'the app'; the account line shows the login, not the email)"
+      "evidence": "bob opened /community/connect-app/?scheme=jetonomyapp&app_name=QA-WALK-B+Jetonomy+app&...: heading 'Connect QA-WALK-B Jetonomy app to your account?' and 'You are signed in as Bob Martinez (bob).' The line shows display name and login, not an email as the runbook suggests; the scheme must be jetonomyapp (class-app-connect.php:36), the runbook's scheme=jetonomy shows the not-valid page",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/connect-1440.png"
     },
     "c-member-connect-app.2": {
       "result": "pass",
-      "evidence": "Yes, connect the app -> 'Connected. Opening the app...' with an 'Open the app' link jetonomyapp://auth?site_url=...&user_login=bob&password=<key>&state=; POST /auth/app-connect {scheme,bridge_token} -> 200 {site_url,user_login,uuid,deep_link}"
+      "evidence": "Clicking 'Yes, connect the app': POST /auth/app-connect 200 with site_url, user_login bob, uuid and deep_link jetonomyapp://auth?site_url=...&user_login=bob&password=...&state=...; page shows 'Connected. Opening the app...' and an Open the app link"
     },
     "c-member-connect-app.3": {
       "result": "pass",
-      "evidence": "GET /app/config as guest -> 200 with app_name, labels, features, accent_color, logo/login bg, terms_url, privacy_url, pro_active, attachments and auth.connect_url; no member data. There is no separate base URL field (auth.connect_url carries the site URL)"
+      "evidence": "Guest GET /app/config returns app_name, space_label, labels, accent_color, logo_url, terms_url, privacy_url, support_url, pro_active, features, attachments and auth{connect_url, connect_schemes}; nothing member-specific. There is no separate base-URL key, only auth.connect_url"
     },
     "c-member-connect-app.4": {
-      "result": "pass",
-      "evidence": "GET /app/config with the new app key (Basic auth bob:<key>) -> 200 features {messaging,reactions,polls,badges,custom_fields,blocking true; web_push,native_push,anonymous,attachments false}, pro_active true; attachments are disabled on this site (max_files 0), so the 'max 5 files, 10 MB' numbers could not be seen"
+      "result": "fail",
+      "evidence": "NOT PERFORMED in full: GET /app/config with bob's app credential works (Basic auth 200) and features match (messaging, reactions, polls, badges, custom_fields true; web_push, native_push, anonymous, attachments false; blocking true; pro_active true), but attachments is {enabled:false,max_files:0,max_size_bytes:0} because the Pro attachments extension is off, so the 5 files / 10 MB values were not shown; enabling the extension on the shared site was not done. pro_active false case not tested (Pro is active)"
     },
     "c-member-connect-app.5": {
       "result": "pass",
-      "evidence": "deleted bob's application password (WP-CLI, same list as the profile screen): the next call with that key -> 401 incorrect_password; app loses access"
+      "evidence": "Revoked the credential with DELETE /wp/v2/users/me/application-passwords/{uuid} as bob (200); the same Basic credential then returns 401 incorrect_password 'The provided password is an invalid application password.' Used the REST list, not the wp-admin profile screen"
     },
     "c-member-connect-app.6": {
       "result": "pass",
-      "evidence": "guest on /community/connect-app?scheme=jetonomyapp -> wp-login.php?redirect_to=/community/connect-app/?scheme=jetonomyapp (return URL kept; the login itself was not performed)"
+      "evidence": "Guest GET connect-app -> wp-login.php?redirect_to=<full connect URL with query>; logging in as qawalkb_new returns to /community/connect-app/?scheme=...&state=s3 and shows the connect heading"
     },
     "c-member-connect-app.7": {
       "result": "pass",
-      "evidence": "scheme=evilapp, http and javascript -> 'This connection link is not valid' with a back link; nothing minted"
+      "evidence": "bob with scheme=evilscheme: page 'This connection link is not valid', no bridge token or Connect button rendered; REST POST with that scheme -> 400 jetonomy_app_bad_scheme and no credential minted"
     },
     "c-member-connect-app.8": {
       "result": "pass",
-      "evidence": "POST /auth/app-connect with an unknown/expired bridge_token -> 410 jetonomy_app_bridge_expired 'This connection screen has expired. Go back to the app and try connecting again.'; unknown scheme -> 400 jetonomy_app_bad_scheme"
+      "evidence": "POST /auth/app-connect with a made-up bridge token -> 410 jetonomy_app_bridge_expired 'This connection screen has expired. Go back to the app and try connecting again.'; a real token reused a second time also 410"
     },
     "c-member-connect-app.9": {
       "result": "pass",
-      "evidence": "valid bridge tokens: 4 connects 200 then 429 jetonomy_rate_limited 'Too many connection attempts. Please wait a while and try again.' (limit reached before 15; invalid tokens alone never hit it, 19 x 410)"
+      "evidence": "Repeated valid mints by bob: 200,200,200,200 then 429 jetonomy_rate_limited 'Too many connection attempts. Please wait a while and try again.' The cap is 5 per hour per member (class-auth-controller.php, transient jt_app_connect_<id>), not 15 per minute as the runbook says; I cleared the transient afterwards"
     },
     "c-member-connect-app.10": {
-      "result": "untested",
-      "needs": "lane A: turn Application Passwords off (filter/setting) to see 403 'Application passwords are not available on this site.'"
+      "result": "fail",
+      "evidence": "NOT PERFORMED: disabling Application Passwords needs a wp_is_application_passwords_available filter or a code change, which I do not make on the shared site; code at class-auth-controller.php mint_app_password returns 403 jetonomy_app_passwords_unavailable with 'Application passwords are not available on this site.'"
     },
     "c-member-connect-app.11": {
       "result": "pass",
-      "evidence": "finn (silenced) connected (200, app key issued), read /users/me with it 200, and POST a topic with it -> 403 jetonomy_user_silenced; key deleted afterwards"
+      "evidence": "finn (silenced) connected the app (200), read GET /users/me/blocks 200 with the credential, POST /spaces/2996/posts with it -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "c-member-connect-app.12": {
       "result": "pass",
-      "evidence": "Grace Oluwaseun Adeyemi-Whitfield at 390: 'You are signed in as Grace Oluwaseun Adeyemi-Whitfield (grace)...' wraps over 5 lines inside the card x31-359",
-      "screenshot": "qa-artifacts/203-walk3/laneB/connect-app-390-dark.png"
+      "evidence": "Grace connect page: 'You are signed in as Grace Oluwaseun Adeyemi-Whitfield (grace)...' wraps inside the card, no horizontal scroll",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/connect-1440l_grace.png"
     },
     "c-member-connect-app.13": {
-      "result": "fail",
-      "expected": "Connect and Cancel are at least 40px tall and no sideways scroll.",
-      "actual": "at 390 'Yes, connect the app' is 41px tall but the page has no Cancel button, and the 'Not you? Sign in as someone else' link is 20px tall; no sideways scroll",
-      "url": "http://forums.local/community/connect-app/?scheme=jetonomyapp",
-      "screenshot": "qa-artifacts/203-walk3/laneB/connect-app-390-dark.png"
+      "result": "pass",
+      "evidence": "bob at 390: Connect and Cancel 41px tall, 'Not you?' link 40px, scrollWidth 390 = clientWidth",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/connect-390l_bob.png"
     },
     "c-member-connect-app.14": {
       "result": "pass",
-      "evidence": "dark: body rgb(35,38,47), text rgb(229,229,229), button visible",
-      "screenshot": "qa-artifacts/203-walk3/laneB/connect-app-390-dark.png"
+      "evidence": "Dark mode: text rgb(229,229,229) on card rgb(35,38,47), about 11:1",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/connect-390d_bob.png"
     },
     "c-member-connect-app.15": {
       "result": "pass",
-      "evidence": "Connect clicked offline: 'Something went wrong. Please try again.' appears and the button is enabled again"
+      "evidence": "Offline click on Connect: role=alert 'Something went wrong. Please try again.' and the button is enabled again"
     },
     "c-member-connect-app.16": {
-      "result": "untested",
-      "needs": "lane A: activate BuddyNext (the page forwards to BuddyNext only when its AppConnectService class exists; it is inactive here)"
+      "result": "fail",
+      "evidence": "NOT PERFORMED: BuddyNext is not active on forums.local, so the forward to BuddyNext's connect URL could not be exercised; code at templates/views/connect-app.php:37-47 does the redirect with the query intact"
+    },
+    "c-member-connect-app.17": {
+      "result": "pass",
+      "evidence": "At 390 the page has a Cancel button (41px) and 'Not you? Sign in as someone else' link 40px tall"
     }
-  },
-  "proposed_checks": [
-    "- `c-member-connect-app.17` @member #ui +390: the connect page has a Cancel button and the \"Not you? Sign in as someone else\" link is at least 40px tall."
-  ],
-  "notes": "Application passwords minted for bob and finn were deleted; BuddyNext and the App Passwords switch need lane A."
+  }
 }

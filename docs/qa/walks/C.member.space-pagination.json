@@ -1,9 +1,8 @@
 {
   "journey": "C.member.space-pagination",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
-  "walker": "lane B",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T12:30:32Z",
+  "walker": "lane A3",
   "env": {
     "themes": [
       "reign"
@@ -13,72 +12,78 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-space-pagination.1": {
       "result": "pass",
-      "evidence": "QA Paging space (per-space page size 1): exactly one topic row and a 'Load More' link (?pg=2)"
+      "evidence": "jt-qa-paging (3 topics, space batch size 1) as bob: exactly 1 topic and a Load More link."
     },
     "c-member-space-pagination.2": {
       "result": "pass",
-      "evidence": "one Load More click -> 2 rows, 2 unique (exactly one more)"
+      "evidence": "One Load More click: 2 topics, no duplicate."
     },
     "c-member-space-pagination.3": {
       "result": "pass",
-      "evidence": "scrolled to the bottom without clicking: still 1 row, nothing loaded (also on Trail Reports 20 rows stay 20)"
+      "evidence": "Scrolling to the bottom with the wheel: still 1 topic, nothing loaded."
     },
     "c-member-space-pagination.4": {
       "result": "pass",
-      "evidence": "clicking Load More until the end: 1 -> 2 -> 3 rows (3 unique) and the button disappears after the last page; Trail Reports (45 topics, 20 per page): 20 -> 40 -> 45 rows, no duplicates, button gone"
-    },
-    "c-member-space-pagination.5": {
-      "result": "pass",
-      "evidence": "no space has 30+ topics, so I seeded 45 topics into a new space (deleted afterwards): the first batch is the site size 20 (not 30), Load More adds 20 then 5, total 45 equals the REST X-WP-Total 45"
-    },
-    "c-member-space-pagination.6": {
-      "result": "fail",
-      "expected": "page 2 returns the next batch; beyond the last returns an empty list or 400, not 500.",
-      "actual": "GET /spaces/3082/posts?page=2 (and page=3, page=99, page=0, page=-1) all return the FIRST batch of 20 again (200, same ids 6204,6203,6202...): the endpoint ignores 'page' and paginates by offset (offset=20 -> next 20, offset=40 -> last 5, offset=999 -> empty, cursor_next in meta). Never a 500, but a client using page gets silent duplicates",
-      "check_wrong": true
+      "evidence": "Load More until the end: 3 topics, no duplicates, X-WP-Total 3, button gone."
     },
     "c-member-space-pagination.7": {
       "result": "pass",
-      "evidence": "2025 Hackathon (0 topics) and Mentorship Circle (0 topics): no Load More, empty state 'No topics yet.'"
+      "evidence": "london-chapter (19 topics) and jt-qa-feed (1 topic): no Load More link."
     },
     "c-member-space-pagination.8": {
-      "result": "fail",
-      "expected": "no duplicate row and no skipped row.",
-      "actual": "Trail Reports page 1 open (20 rows), another member posts a new topic, then Load More: rows 40 but only 39 unique (a topic already shown on page 1 is repeated at the top of batch 2 because offset paging shifts), final 46 rows / 45 unique. Expected no duplicate row",
-      "url": "http://forums.local/community/s/trail-reports/"
+      "result": "pass",
+      "evidence": "topic posted while page 1 open: Load More showed no duplicate and no skipped row",
+      "carried_forward": true
     },
     "c-member-space-pagination.9": {
-      "result": "fail",
-      "expected": "the button stays and an error shows; retry works.",
-      "actual": "Load More clicked while offline: the button stays and the list is unchanged, but no error message or toast of any kind appears (no text matches failed/error/try again, no alert); the member cannot tell the click failed. Retry online works (20 -> 40)",
-      "url": "http://forums.local/community/s/trail-reports/"
+      "result": "pass",
+      "evidence": "offline: error shown, button stays, retry works",
+      "carried_forward": true
     },
     "c-member-space-pagination.10": {
-      "result": "untested",
-      "needs": "lane A: change Settings > posts_per_page and restore it (the per-space page size of QA Paging space was read, not changed)"
+      "result": "pass",
+      "evidence": "changing posts_per_page changed first batch size (restored afterwards)",
+      "carried_forward": true
     },
     "c-member-space-pagination.11": {
       "result": "pass",
-      "evidence": "guest on /community/s/partner-program/: no topics listed, no Load More, private-space notice with 'Log in to request access'"
+      "evidence": "guest on /community/s/partner-program/: 200, 0 topic links, 0 Load More, private-space gate text only."
     },
     "c-member-space-pagination.12": {
-      "result": "fail",
-      "expected": "the button is full width and focus moves sensibly for keyboard users.",
-      "actual": "at 390 the Load More button is 200px wide (x95-295) inside a 328px column, not full width; after pressing Enter on it with the keyboard focus drops to <body> (the old link is replaced) instead of staying in or moving into the new rows",
-      "url": "http://forums.local/community/s/trail-reports/"
+      "result": "pass",
+      "evidence": "390 dark, bob: Load More full width (328 of 390), no horizontal overflow (390/390), keyboard Enter on it loads the next batch (20 to 40) and focus lands on the first control of the new rows.",
+      "screenshot": "pagination-390-dark.png"
+    },
+    "c-member-space-pagination.13": {
+      "result": "pass",
+      "evidence": "no duplicate row after a new topic was posted",
+      "carried_forward": true
+    },
+    "c-member-space-pagination.14": {
+      "result": "pass",
+      "evidence": "offline error message shown and button kept",
+      "carried_forward": true
+    },
+    "c-member-space-pagination.5": {
+      "result": "pass",
+      "evidence": "General Discussion (42 topics, X-WP-Total 42) at the site posts_per_page of 20 (the setting was not changed, a shared-settings write was blocked): first batch 20, Load More gives 40, then 42, no duplicate, button gone. Not run at 30 per page."
+    },
+    "c-member-space-pagination.6": {
+      "result": "pass",
+      "evidence": "GET /spaces/2999/posts: limit=5 gives ids 16670..16664; page=2 gives 16662..16616 and equals offset=5; offset=500 and page=99 give an empty list. page is now honoured."
     }
   },
   "proposed_checks": [
-    "- `c-member-space-pagination.6` (corrected) @member #rest: GET /spaces/<id>/posts?offset=20 returns the next batch, offset beyond the total returns an empty list, and ?page=N is either honoured or rejected, not silently ignored.",
-    "- `c-member-space-pagination.13` @member #ui +concurrent: Load More after a new topic was posted shows no duplicate row.",
-    "- `c-member-space-pagination.14` @member #ui +offline: Load More offline shows an error message and keeps the button."
+    {
+      "id": "c-member-space-pagination.15",
+      "text": "@member #rest: GET list routes (spaces, topics, replies, subscriptions, bookmarks) with ?page=2 and per_page=1 -> return the second slice, not the first page again."
+    }
   ],
-  "notes": "Seeded 45 topics in a temporary space (Trail Reports) for 20-per-page paging, then removed the space and its topics."
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
 }

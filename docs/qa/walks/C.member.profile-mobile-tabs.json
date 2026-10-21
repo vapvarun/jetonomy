@@ -1,9 +1,8 @@
 {
   "journey": "C.member.profile-mobile-tabs",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
-  "walker": "lane B",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T12:32:15Z",
+  "walker": "lane A3",
   "env": {
     "themes": [
       "reign"
@@ -13,50 +12,55 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-profile-mobile-tabs.1": {
       "result": "pass",
-      "evidence": "bob's own profile at 390: the strip Topics, Replies, Votes, Bookmarks, Drafts is a horizontally scrolling row (scrollWidth 432 vs 328), the active tab Topics is at x31-112 in view on load"
+      "evidence": "bob /community/u/bob/ at 390: tab strip scrolls (432 vs 328 wide), active Topics visible."
     },
     "c-member-profile-mobile-tabs.2": {
       "result": "pass",
-      "evidence": "scrolled to the end every tab is reachable (Drafts x282-359); tapping Bookmarks opened /community/u/bob/bookmarks/ with it active; tap targets 44px high. Subscriptions and Settings are not tabs here (they are separate pages), so the check's tab list is out of date"
+      "evidence": "Strip holds Topics, Replies, Votes, Bookmarks, Drafts (matches the runbook wording); each scrolled into view and fully inside the strip."
     },
     "c-member-profile-mobile-tabs.3": {
       "result": "pass",
-      "evidence": "/community/u/bob/drafts opens with the strip scrolled 104px so the active Drafts tab is fully visible"
+      "evidence": "/community/u/bob/drafts/ at 390: scrollLeft 104, active Drafts tab fully visible.",
+      "screenshot": "profile-drafts-390.png"
     },
     "c-member-profile-mobile-tabs.4": {
       "result": "pass",
-      "evidence": "guest at 390 on /community/u/bob/: strip shows Topics, Replies, Votes only (x31-272 of a 328px strip, nothing off-screen, no sideways scroll)"
+      "evidence": "guest at 390: Topics, Replies, Votes only, strip fits (scrollWidth = clientWidth 328), nothing off-screen",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-A/ptabs-guest-390.png",
+      "carried_forward": true
     },
     "c-member-profile-mobile-tabs.5": {
       "result": "pass",
-      "evidence": "alice on /community/u/bob/ (and /drafts, /bookmarks): tabs are Topics, Replies, Votes only; no Drafts, Bookmarks or Settings"
+      "evidence": "alice (390) on bob's profile: only Topics, Replies, Votes tabs."
     },
     "c-member-profile-mobile-tabs.6": {
-      "result": "untested",
-      "needs": "lane A: switch the site to the Arabic (RTL) locale and restore it"
+      "result": "pass",
+      "evidence": "RTL emulated by setting html dir=rtl plus rtl class (not a real Arabic locale): strip starts at the right (Topics at 278-359 of nav 31-359), active tab visible",
+      "carried_forward": true
     },
     "c-member-profile-mobile-tabs.7": {
       "result": "pass",
-      "evidence": "Grace Oluwaseun Adeyemi-Whitfield at 390: the name wraps to two lines (hyphen break), tab strip stays on one row, no horizontal scroll",
-      "screenshot": "qa-artifacts/203-walk3/laneB/profile-grace-390-dark.png"
+      "evidence": "grace (Grace Oluwaseun Adeyemi-Whitfield) at 390: name wraps to two lines (heading height 82), tab strip stays one row (height 44), no page horizontal scroll",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-A/ptabs-grace-390.png",
+      "carried_forward": true
     },
     "c-member-profile-mobile-tabs.8": {
       "result": "pass",
-      "evidence": "dark: active tab underline rgb(151,192,238) 2px and text oklab(0.87..) on the rgb(35,38,47) page, other tabs rgb(229,229,229)",
-      "screenshot": "qa-artifacts/203-walk3/laneB/profile-grace-390-dark.png"
+      "evidence": "dark at 390: active tab text rgb(192,217,245) with 2px rgb(151,192,238) underline on dark surface; visually clear (contrast ratio not measured numerically)",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-A/ptabs-dark-390.png",
+      "carried_forward": true
     },
     "c-member-profile-mobile-tabs.9": {
       "result": "pass",
-      "evidence": "drafts page: 390 (scroll 104, Drafts in view) -> 1024 (no overflow, Drafts active) -> back to 390 (scroll 104, Drafts in view again)"
+      "evidence": "On /u/bob/drafts: 390 to 1024 to 390 without reload: scrollLeft back to 104 and the active Drafts tab fully inside the strip (the resize re-reveal works)."
     }
   },
   "proposed_checks": [],
-  "notes": "RTL tab strip needs lane A."
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
 }

@@ -1,8 +1,9 @@
 {
   "journey": "C.anon.leaderboard",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "pro": "404b0af",
+  "walked_at": "2026-10-21T09:06:01Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -19,61 +20,57 @@
   "checks": {
     "c-anon-leaderboard.1": {
       "result": "pass",
-      "evidence": "/community/leaderboard/: ranked rows with rank/medal, avatar, name, REP and TOPICS (Maya 1920 #1) (lb-1440.png); Load More below 20 rows"
+      "evidence": "Guest /community/leaderboard/: 20 rows with rank number or medal, avatar, name, REP and TOPICS; Load More link to the rest (39 members total).",
+      "screenshot": "c-anon-leaderboard.1.png"
     },
     "c-anon-leaderboard.2": {
       "result": "pass",
-      "evidence": "This week -> ?period=week: list changes (Olivia Grant 361, Ethan Brooks 270...), 'This week' pill highlighted (class on)"
+      "evidence": "Pills All time / This month / This week link to ?period=month|week; the active pill carries class \"on\" and aria-current. Week and month show 28 members, all time 39.",
+      "screenshot": "c-anon-leaderboard.2.png"
     },
     "c-anon-leaderboard.3": {
       "result": "pass",
-      "evidence": "GET /leaderboards?period=week and month: 11 members (Maya 1901, Alice 1066, Bob 670 ...); period=all: 20 members with Theo Lindqvist 1615 at #2; period=bogus and year -> 400 rest_invalid_param 'period is not one of all, month, and week.'"
+      "evidence": "GET /leaderboards?period=week|month|all -> 200 each; week/month total 28, all total 39, so population differs; scores are lifetime reputation, so top ordering is identical. Invalid period -> 400 rest_invalid_param (see .11)."
     },
     "c-anon-leaderboard.4": {
       "result": "fail",
-      "expected": "plain 'No activity' empty state and no empty table",
-      "actual": "Empty week (last_seen shifted \u221221 days, week_eligible=0) shows 'No members yet.' plus reputation explainer and 'Be the first to start.' No table (hasTable=0). Copy is not 'No activity'.",
-      "url": "http://localhost:8095/community/leaderboard/?period=week",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/leaderboard-week-empty.png",
-      "site": "docker jt203-scale"
+      "evidence": "NOT PERFORMED: no period has zero activity (28 members seen in the last 7 days); producing one means rewriting last_seen_at for every member on the shared site. Supporting evidence only: \\Jetonomy\\leaderboard_empty_state(\"week\") returns \"No activity this week.\" with CTA \"See all time\" -> /community/leaderboard/."
     },
     "c-anon-leaderboard.5": {
       "result": "pass",
-      "evidence": "Grace (rank 18) at 390: name truncates with ellipsis 'Grace Olu...' and 'GR' initials avatar, row intact (lb-390-dark.png)"
+      "evidence": "Grace row (rank 16): GR initials avatar, name inside 746px row, no overflow. Reign 1440 only for the row; 390 overflow checked in .10.",
+      "screenshot": "c-anon-leaderboard.5.png"
     },
     "c-anon-leaderboard.6": {
       "result": "pass",
-      "evidence": "finn at rank 20 with real rep 63 (matches his profile); nothing about private spaces on the page"
+      "evidence": "finn (week list, rank 16): shows real reputation 26 with FI initials; no restriction or private-space wording on the board."
     },
     "c-anon-leaderboard.7": {
-      "result": "fail",
-      "expected": "a member banned site-wide does not appear",
-      "actual": "kai_brennan (user 21, global_ban, reputation 120) listed on all-time (tied rank 12, 120 REP) and on week before the empty-period shift (Rank 1/2).",
-      "url": "http://localhost:8095/community/leaderboard/",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/leaderboard-all-kai.png",
-      "site": "docker jt203-scale"
+      "result": "pass",
+      "evidence": "Created fixture user with reputation 5000 and a global_ban: listed in week/month/all before the ban, absent from all three and from the page after; fixture removed. Seed kai_brennan (global_ban) has reputation 0 so is excluded anyway."
     },
     "c-anon-leaderboard.8": {
       "result": "pass",
-      "evidence": "leaderboard page rows show rank, name, REP and TOPICS only; no badge column or icons (Pro active), matching the new check text",
-      "screenshot": "qa-artifacts/203-walk2/laneB/leaderboard-1440.png"
+      "evidence": "Pro active: rows show rank, avatar, name, REP and TOPICS only; no badge column."
     },
     "c-anon-leaderboard.9": {
       "result": "pass",
-      "evidence": "bob: 'Your rank #4 of 25 members' card above the list; his row is in the list at 4 (no row highlight, the card marks it)"
+      "evidence": "bob on /leaderboard/: banner \"#7 Your rank of 39 members\" highlighted at top; his row (rank 7, 664 REP) is in the list.",
+      "screenshot": "c-anon-leaderboard.9.png"
     },
     "c-anon-leaderboard.10": {
       "result": "pass",
-      "evidence": "390 dark: rows fit (0 elements past 391px, scrollWidth 390), names/numbers readable (lb-390-dark.png)"
+      "evidence": "390px dark: scrollWidth 390, 0 elements past the viewport, row bg rgb(~52,55,63) on body rgb(35,38,47), name text light grey, readable.",
+      "screenshot": "c-anon-leaderboard.10.png"
     },
     "c-anon-leaderboard.11": {
       "result": "pass",
-      "evidence": "GET /leaderboards?period=bogus -> 400 rest_invalid_param, message 'Invalid parameter(s): period', detail 'period is not one of all, month, and week.'"
+      "evidence": "GET /leaderboards?period=bogus, period=year and empty period -> 400 rest_invalid_param \"period is not one of all, month, and week.\""
+    },
+    "c-anon-leaderboard.12": {
+      "result": "fail",
+      "evidence": "Banned half passed (see .7: absent from week, month, all and REST). Quiet-week half NOT PERFORMED (see .4): \"No activity this week.\" and \"See all time\" link verified only through leaderboard_empty_state(\"week\"), not rendered on the page."
     }
   },
-  "proposed_checks": [
-    "- `c-anon-leaderboard.11` @guest #rest !refuse: GET /leaderboards?period=bogus -> 400 invalid period (currently 200 all-time)."
-  ],
-  "notes": "No settings changed. | Re-walk lane B 2026-10-17: walked .3 .4 .7 .8 .11. .7 not provable on current data (see needs). | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095.",
-  "walked_at": "2026-10-17T12:09:15Z"
+  "proposed_checks": []
 }

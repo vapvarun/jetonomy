@@ -1,9 +1,8 @@
 {
   "journey": "C.anon.search",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walked_at": "2026-10-17T13:28:50Z",
-  "walker": "lane B",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T12:35:43Z",
+  "walker": "lane A3",
   "env": {
     "themes": [
       "reign"
@@ -19,78 +18,75 @@
   "checks": {
     "c-anon-search.1": {
       "result": "pass",
-      "evidence": "search 'dark mode': the four titles with the exact phrase rank first (toggle in preferences 9 votes, 'New: dark mode is now available', 'Dark mode toggle resets...', 'Dark mode for the community on phones'), the two hyphenated 'dark-mode' titles come after; every result shares the token"
+      "evidence": "guest /community/search/?q=dark mode: exact-phrase titles first (Dark mode toggle in user preferences, New: dark mode is now available, Dark mode toggle resets..., Dark mode for the community on phones), hyphenated 'dark-mode' titles after them; 8 results.",
+      "screenshot": "search-results.png"
     },
     "c-anon-search.2": {
       "result": "pass",
-      "evidence": "'qzxvbnm' -> '0 results', 'No results for \"qzxvbnm\"', 'Try different or fewer keywords...' and a Browse all spaces button, no raw error"
+      "evidence": "qzxvbnm: 'No results for \"qzxvbnm\"' with browse links, no raw error."
     },
     "c-anon-search.3": {
       "result": "pass",
-      "evidence": "guest searched 'Q1 roadmap draft' (Customer Advisory Board) and 'self-promotion wave' (Moderators' Room) on the page and in REST -> 0 results, meta.total 0"
+      "evidence": "guest UI search 'Referral fees' (Partner Program) = 0 results."
     },
     "c-anon-search.4": {
       "result": "pass",
-      "evidence": "GET /jetonomy/v1/search?q=Referral%20fees|Q1%20roadmap%20draft|self-promotion%20wave as guest -> 200, data [], meta.total 0"
+      "evidence": "guest GET /search for 'Referral fees', 'Q1 roadmap draft', 'self-promotion wave': 200 with empty data and meta.total 0 each."
     },
     "c-anon-search.5": {
       "result": "pass",
-      "evidence": "guest searched 'price-match', text that exists only in a private reply of a public topic -> 0 results"
+      "evidence": "Private reply 16300 in a public topic: GET /search?type=reply&q=sentence -> guest 0, alice/bob/admin 1; topic-type search for the same text returns nothing (topics do not match through replies).",
+      "carried_forward": true
     },
     "c-anon-search.6": {
       "result": "pass",
-      "evidence": "Partner Program phrase 'Referral fees': bob (space admin) -> 1 result; maya (not a member) -> 0 results. alice cannot be used for the non-member half: the reseed made her a Partner Program member, so she also sees it"
+      "evidence": "'Referral fees': bob (member) 1 result in API and UI; guest 0; maya (not a member) 0. maya (CAB member / Mod Room moderator) sees 'Q1 roadmap draft' and 'self-promotion wave' (1 each), bob 0."
     },
     "c-anon-search.7": {
       "result": "pass",
-      "evidence": "header search overlay: typing 'dark mode' lists 5 suggestions (topic + space); Enter opens /community/search/?q=dark+mode&filter=all",
-      "screenshot": "qa-artifacts/203-walk2/laneB/search-overlay.png"
+      "evidence": "Guest pressed / on /community/: the Jetonomy search overlay opened; typing 'dark mode' dropped down 6 suggestions plus 'See all results'.",
+      "screenshot": "search-overlay.png"
     },
     "c-anon-search.8": {
       "result": "pass",
-      "evidence": "'photography forum phpBB' -> Grace's 159-char title wraps in its card with no overflow (scrollWidth 1440); matched terms photography, forum, phpBB are wrapped in mark elements (4 in the title)",
-      "screenshot": "qa-artifacts/203-walk2/laneB/search-grace.png"
+      "evidence": "Search \"phpBB\" finds Grace 159-char topic (2 results); title wraps, 3 <mark> highlights, no horizontal scroll at 1440.",
+      "screenshot": "c-anon-search.8.png",
+      "carried_forward": true
     },
     "c-anon-search.9": {
       "result": "pass",
-      "evidence": "'تجربتي' finds Omar's topic (1 result); title and excerpt are right-aligned RTL (excerpt div has dir=auto, direction rtl), term highlighted",
-      "screenshot": "qa-artifacts/203-walk2/laneB/search-arabic.png"
+      "evidence": "Arabic phrase 'إعادة تعيين كلمة المرور' finds 1 topic (guest)."
     },
     "c-anon-search.10": {
       "result": "pass",
-      "evidence": "bob created 'How do I reset my membership password?' (Help Desk); search 'membership password' found it straight away (1 result), and later a distinctive body word 'accountant' found another new topic; no stale full-text index seen"
+      "evidence": "bob created 'QA-WALK-A3 zebrafinch okapi' (ziggurat quokka): found immediately by guest search (1); no stale index."
     },
     "c-anon-search.11": {
       "result": "pass",
-      "evidence": "GET /search?q=a and /search?q= -> 400 jetonomy_validation 'Search query must be at least 2 characters.'"
+      "evidence": "GET /search?q=a and ?q= both 400 jetonomy_validation."
     },
     "c-anon-search.12": {
       "result": "pass",
-      "evidence": "after bob deleted that topic, searching its exact title and a body phrase as guest -> REST data [] and page '0 results'"
+      "evidence": "The same topic deleted by bob: guest search returns 0 afterwards."
     },
     "c-anon-search.13": {
       "result": "pass",
-      "evidence": "390px: search form, Filters bar, All/Topics/Spaces/Tags tabs and result cards fit, no horizontal scroll (scrollWidth 390)"
+      "evidence": "/community/search/?q=dark mode at 390: scrollWidth 390 = viewport.",
+      "screenshot": "search-390.png"
     },
     "c-anon-search.14": {
       "result": "pass",
-      "evidence": "Jetonomy overlay (press / on a community page), type 'dark mode', Enter -> /community/search/?q=dark%20mode opens with the results. Note: the Reign magnifier in the site header is the theme's own search and goes to /?s= (WordPress search), not the forum",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-overlay.png"
+      "evidence": "Typing 'dark mode' in the overlay and pressing Enter opened /community/search/?q=dark%20mode."
     },
     "c-anon-search.15": {
       "result": "pass",
-      "evidence": "overlay suggestions list the same order as the results page (preferences 9 votes, New: dark mode..., resets..., 'Dark mode for the community on phones', then the two hyphenated titles) plus a 'See all results' link"
+      "evidence": "Overlay suggestions and results page list the same first five in the same order (Dark mode toggle in user preferences, New: dark mode..., Dark mode toggle resets..., QA-WALK-B2 Which phone browsers..., Dark mode for the community on phones)."
     },
     "c-anon-search.16": {
       "result": "pass",
-      "evidence": "'Referral fees for 2026' (Partner Program): bob and alice (members) find it, maya (not a member) gets 0 via REST (X-WP-Total 0) and no row on the results page"
+      "evidence": "maya (not in Partner Program) gets 0 for 'Referral fees', bob (member) 1."
     }
   },
-  "proposed_checks": [
-    "- `c-anon-search.14` @guest #ui: type 2+ characters in the header search overlay and press Enter -> the full results page for that query opens (today nothing happens).",
-    "- `c-anon-search.15` @guest #ui: the header overlay suggestions and the full results page rank 'Dark mode for the community on phones' the same way, exact title match first.",
-    "- `c-anon-search.16` @member_b #ui: replace 'member_b who is not a member' with a user who really is not a member of Partner Program (maya, after the reseed alice is a member).",
-    "- `c-anon-search.17` @guest #ui: search the full title \"Dark mode for the community on phones\" -> that topic is first on both the results page and the header overlay (replaces the 'dark mode' wording of c-anon-search.1, which has no exact title match)."
-  ],
-  "notes": "No settings changed. Lane B created and removed topics and replies for check 10 and 12 (see C.member.post-create). Not tested: Arabic-locale rendering (lane A). | Re-walk lane B 2026-10-17: walked .1 .7 .8 .9 .14 .15 .16. Dark-mode toggle persists in browser localStorage, so screenshots after the invite 390 dark check are in dark mode."
+  "proposed_checks": [],
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
 }

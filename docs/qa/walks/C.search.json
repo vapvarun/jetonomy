@@ -1,8 +1,7 @@
 {
   "journey": "C.search",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T11:38:09Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -13,103 +12,95 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-search.1": {
-      "result": "fail",
-      "expected": "the \"Dark mode for the community on phones\" topic is first, with the result count and snippet.",
-      "actual": "guest searching 'dark mode' at /community/search/?q=dark+mode: '6 results' with highlighted snippets, but the first result is 'Dark mode toggle in user preferences' (9 votes, 36 replies); 'Dark mode for the community on phones' is 4th (REST relevance order 5709, 5633, 5700, 5874). The check's expectation of the phones topic first does not match the ranking (both words are in the first title)",
-      "url": "http://forums.local/community/search/?q=dark+mode",
-      "screenshot": "qa-artifacts/203-walk3/laneB/search-guest-1440.png",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "Guest /community/search/?q=dark+mode: '7 results', first 'Dark mode toggle in user preferences', yellow <mark> snippets; REST relevance order is not recency order",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search1.png"
     },
     "c-search.2": {
-      "result": "pass",
-      "evidence": "q=dark mode + tag=search + author=aisha + date 2026-09-01..2026-10-17 together -> 1 result (Dark mode toggle in user preferences); every filter stays filled in the Filters panel with Apply and a single Clear button (there are no per-filter chips to remove one at a time)",
-      "screenshot": "qa-artifacts/203-walk3/laneB/search-filters-1440.png"
+      "result": "fail",
+      "evidence": "alice applied tag=integrations, author=Grace, date 2026-09-01..30 with q=space: topic list correct (How do I add a moderator..., Nonprofit organizer...), but header says '13 results' because 11 unfiltered SPACES still list, and filters are only form fields with one Clear button; no per-filter active chip to remove individually",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search2.png"
     },
     "c-search.3": {
       "result": "pass",
-      "evidence": "q=dark mode: relevance order 5709,5633,5700,5874,5757,5732; newest order 5757 (Oct 16),5874,5709,...; votes order 5709 (9),5700 (2),5874 (0, 46 replies),5757 (3),5732 (1),5633 (0): relevance differs from newest, newest is by created date, equal votes break by reply count"
+      "evidence": "REST + UI (alice): relevance 5709,5633,5700,5874,... (not recency), newest strictly by created_at desc, votes 8,3,2 then 0-vote ties by reply_count 51,3,1,0"
     },
     "c-search.4": {
       "result": "pass",
-      "evidence": "GET /search?q=dark mode&sort=votes returns the same ids in the same order as the page ?sort=votes (5709, 5700, 5874, 5757, 5732, 5633)"
+      "evidence": "GET /search?q=dark mode&sort=votes ids [5709,8981,5700,5874,5757,5732,5633] equal the page's order for sort=votes"
     },
     "c-search.5": {
       "result": "pass",
-      "evidence": "guest searching 'block your team' / 'draft for review' (Customer Advisory Board), 'held for review until trust' (Moderators' Room), 'Referral fees' (Partner Program) and 'price-match' (private reply): 'No results for \"...\"' with 0 results and no space name, title or count. Side note: that no-results box tells the visitor 'search needs at least 2 characters' even for long queries"
+      "evidence": "Guest UI: 'Q1 roadmap draft for review' (CAB) and 'Handling the self-promotion wave' (Moderators' Room) -> 'No results for \"...\"', no space name or title; REST total 0 for guest and alice"
     },
     "c-search.6": {
-      "result": "pass",
-      "evidence": "guest GET /search?q=block your team and /search?q=roadmap&space_id=38 (private), space_id=39 (hidden), space_id=37 -> 200 with total 0 for each; never 403"
+      "result": "fail",
+      "evidence": "Guest GET /search?q=roadmap&space_id=38 (Customer Advisory Board, private) returns 403 jetonomy_forbidden; hidden space 39 returns 404. Runbook: empty or 404, never 403. search-controller.php ~111-118 check_permission('read') -> 403 leaks that space 38 exists. Plugin defect"
     },
     "c-search.7": {
       "result": "pass",
-      "evidence": "bob and guest searching 'price-match', a phrase that exists only in a private reply on topic 5868: no result"
+      "evidence": "bob searching a private reply's words (type=reply 'privately', 'pvonezqkppozz'): 0 results, and the topic is not listed in UI '0 results'; admin finds reply 13438 and 14993 (positive control)"
     },
     "c-search.8": {
       "result": "pass",
-      "evidence": "tag page 'email': guest 36 topics, member not in Insiders (carlos) 36, members of Insiders / Beta (bob, alice, maya, david) 40 - the four extra topics are all in the private Insiders space; sidebar tag counts agree with the tag page"
+      "evidence": "/community/tag/email/: guest sees '36 topics', bob sees '40 topics' = 36 public + 4 in Insiders/Beta (private, bob is member); counts match readable topics"
     },
     "c-search.9": {
-      "result": "fail",
-      "expected": "the page says \"Try different or fewer keywords (search needs at least 2 characters), or browse the community.\", and REST returns \"Search query must be at least 2 characters.\".",
-      "actual": "q=a: REST returns 400 'Search query must be at least 2 characters.', but the results page shows the same text as an empty search ('Enter a search term above to find discussions, spaces, and tags.') with no mention of the 2-character minimum; the sentence 'Try different or fewer keywords (search needs at least 2 characters), or browse the community.' appears instead on ordinary zero-result searches",
-      "url": "http://forums.local/community/search/?q=a"
+      "result": "pass",
+      "evidence": "bob q=a -> 'Search query must be at least 2 characters.'; q=zzqqxvv -> 'No results' with 'Try different or fewer keywords, or browse the community.' and no length hint"
     },
     "c-search.10": {
-      "result": "fail",
-      "expected": "\"Enter a search term above to find discussions, replies, and tags.\".",
-      "actual": "no query: 'Enter a search term above to find discussions, spaces, and tags.' - the check quotes '...discussions, replies, and tags.'",
-      "url": "http://forums.local/community/search/",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "bob /community/search/ no query -> 'Enter a search term above to find discussions, spaces, and tags.'"
     },
     "c-search.11": {
       "result": "pass",
-      "evidence": "tag-only search (?tag=search) lists that tag's topics: 20 results, no error"
+      "evidence": "bob ?tag=integrations (no text) -> '35 results' with that tag's topics, no error"
     },
     "c-search.12": {
       "result": "pass",
-      "evidence": "searching the Arabic word تجربتي finds Omar's topic; the snippet container has dir=auto and computes direction rtl, the match is highlighted"
+      "evidence": "bob q=\u0627\u0644\u062a\u0635\u0648\u064a\u0631 finds Omar's '\u062a\u062c\u0631\u0628\u062a\u064a \u0645\u0639 \u0645\u062c\u0645\u0648\u0639\u0627\u062a \u0627\u0644\u062a\u0635\u0648\u064a\u0631 \u0627\u0644\u0645\u062d\u0644\u064a\u0629', title and snippet render right-to-left with highlight",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search12.png"
     },
     "c-search.13": {
       "result": "pass",
-      "evidence": "searching 'phpBB' finds Grace's 159-character title: it wraps inside the 786px card and the page does not widen"
+      "evidence": "bob q=phpBB finds Grace's 159-char title topic; page scrollWidth 1440 = clientWidth (no sideways scroll). 390 covered in .17"
     },
     "c-search.14": {
       "result": "pass",
-      "evidence": "a topic created by bob with the unique word 'Wandelroute' was found by GET /search?q=Wandelroute the moment it was created (total 1); no OPTIMIZE TABLE needed"
+      "evidence": "bob created 'quillfeather' topic; alice's REST search found it immediately by title word and by body word 'zorblatt' (total 1)"
     },
     "c-search.15": {
-      "result": "fail",
-      "expected": "results page with Next, and a page-two link opens page 2.",
-      "actual": "q=the: pages show 'Load More' (?pg=2, ?pg=3) and page two opens, but the header count is wrong: '30 results' on pages 1 and 2, '14 results' on page 3, '10 results' on page 4, while REST /search?q=the reports total 44; the label is not the total",
-      "url": "http://forums.local/community/search/?q=the"
+      "result": "pass",
+      "evidence": "q=scale (1131 results): 20 per page with 'Load More' linking ?pg=N; pg=2, 5 and 50 render in under 120ms; q=the also pages. Control is 'Load More' not 'Next'"
     },
     "c-search.16": {
       "result": "pass",
-      "evidence": "deleted topic 6100 ('Sunday photo walk ... Wandelroute') is not returned: /search?q=Wandelroute total 0 after the delete"
+      "evidence": "bob deleted his topic: alice search 'quillfeather' and 'zorblatt' now total 0"
     },
     "c-search.17": {
       "result": "pass",
-      "evidence": "search at 390 with all filters: fields stacked x49-341 (42px), Apply 40px, cards x32-358, no horizontal scroll"
+      "evidence": "390px bob: scrollWidth 390 = clientWidth; input 252px, 5 filter fields stacked in one 292px column, card 328px",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search17.png"
     },
     "c-search.18": {
       "result": "pass",
-      "evidence": "dark: page rgb(35,38,47), result text light, highlighted match background srgb(.29,.26,.19) with rgb(229,229,229) text (about 9:1)",
-      "screenshot": "qa-artifacts/203-walk3/laneB/search-390-dark.png"
+      "evidence": "Dark mode (bx-color-mode=dark): mark bg ~rgb(75,65,48) with text rgb(229,229,229) ~8:1",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search18.png"
+    },
+    "c-search.19": {
+      "result": "pass",
+      "evidence": "Guest long query with no hits: 'No results for \"qzxwv nothingmatches long phrase ...\"' and no 2-character hint",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search19.png"
+    },
+    "c-search.20": {
+      "result": "pass",
+      "evidence": "UI header '1131 results' for q=scale = REST /search totals posts 1107 + spaces 24 + tags 0; q=the as bob: 94 = 76 + 18 + 0; same header on pg 1, 2, 5, 50. Earlier fail came from comparing against posts total only"
     }
-  },
-  "proposed_checks": [
-    "- `c-search.1` (corrected) @guest #ui: search \"dark mode\" at /community/search/ -> results with the count and highlighted snippets, ordered by relevance (\"Dark mode toggle in user preferences\" first).",
-    "- `c-search.9` (corrected) @member #ui !refuse: search with one character \"a\" -> the page says the search needs at least 2 characters, and REST returns \"Search query must be at least 2 characters.\".",
-    "- `c-search.10` (corrected) @member #ui +empty: open /community/search/ with no query -> \"Enter a search term above to find discussions, spaces, and tags.\".",
-    "- `c-search.19` @guest #ui +empty: a long query with no hits shows \"No results for ...\" without the 2-character hint.",
-    "- `c-search.20` @member #ui +many: the \"N results\" header equals the REST total on every page."
-  ],
-  "notes": "Seeded nothing; the created topics were deleted. Search pages walked as guest."
+  }
 }

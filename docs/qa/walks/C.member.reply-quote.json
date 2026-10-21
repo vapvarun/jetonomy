@@ -1,83 +1,95 @@
 {
   "journey": "C.member.reply-quote",
-  "free": "b6017483",
-  "pro": "44f7338",
-  "walked_at": "2026-10-17T13:28:50Z",
-  "walker": "lane B",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T12:31:54Z",
+  "walker": "lane A3",
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-reply-quote.1": {
       "result": "pass",
-      "evidence": "Quote on alice's reply -> composer prefilled with <blockquote class=jt-quote><cite>Alice Chen</cite><p>...</p></blockquote>; posted reply shows the blockquote with cite Alice Chen and a 3px bar. Note the quote reply is saved with parent_id = alice's reply, i.e. threaded under it"
+      "evidence": "bob clicked Quote on Omar's Arabic reply in knowledge-base: composer prefilled with <blockquote class=jt-quote dir=auto> naming Omar Haddad; the posted reply 20749 renders the quote as a blockquote.",
+      "screenshot": "quote-ar-rendered.png"
     },
     "c-member-reply-quote.2": {
       "result": "pass",
-      "evidence": "Reply on alice's reply -> chip 'Replying to Alice Chen \"The email field is locked in profile settings, but support can change it from th...\" x'; posted reply shows 'in reply to Alice Chen' linking to #reply-13558"
+      "evidence": "Reply on alice reply: chip \"Replying to Alice Chen\" + excerpt; posted reply 16414 parent_id 16410 shows \"in reply to Alice Chen\" linking #reply-16410",
+      "screenshot": "c-member-reply-quote.2.png",
+      "carried_forward": true
     },
     "c-member-reply-quote.3": {
       "result": "pass",
-      "evidence": "x on the chip removes it; the next reply posted as plain (parent_id null)"
+      "evidence": "jt-replying-to-cancel removed the chip; composer back to plain reply (no \"Replying to\" text)",
+      "carried_forward": true
     },
     "c-member-reply-quote.4": {
       "result": "pass",
-      "evidence": "bob quoted alice's reply (paragraph, 3-item list, code block, 137-character URL link): the composer and the saved blockquote keep the ul, the pre/code and the link; link text is shortened with an ellipsis; blockquote right edge 945 inside the 962 reply box, long code line scrolls inside its block",
-      "screenshot": "qa-artifacts/203-walk2/laneB/quote-posted.png"
+      "evidence": "quote of reply with list, pre/code and 100-char URL keeps all structure; blockquote scrollWidth 727 = clientWidth 727, no overflow",
+      "screenshot": "c-member-reply-quote.1.png",
+      "carried_forward": true
     },
     "c-member-reply-quote.5": {
       "result": "pass",
-      "evidence": "bob on the closed topic 'Scheduled maintenance on Saturday: what to expect' (1 reply): no Quote or Reply buttons"
+      "evidence": "bob on closed Announcements topic: no composer, no Reply/Quote buttons",
+      "carried_forward": true
     },
     "c-member-reply-quote.6": {
       "result": "pass",
-      "evidence": "guest on a topic with 10 replies: no Quote or Reply buttons shown at all (hidden)"
+      "evidence": "guest page of help-desk topic has no Reply/Quote buttons (hidden)",
+      "carried_forward": true
     },
     "c-member-reply-quote.7": {
       "result": "pass",
-      "evidence": "reply by an author that no longer exists (id 0, QA-RFT poll topic): card shows '[deleted]' and the quote prefill is <cite>[deleted]</cite>, not blank. Same card also carries an 'OP' badge for the deleted author"
+      "evidence": "reply 10190 (author_id 0, deleted account) renders as \"[deleted]\"",
+      "screenshot": "c-member-reply-quote.7.png",
+      "carried_forward": true
     },
     "c-member-reply-quote.8": {
       "result": "pass",
-      "evidence": "bob posted a private reply, then quoted it; maya sees both as 'Private reply, visible to the topic author and moderators.' tombstones and neither the page nor REST contains the text"
+      "evidence": "bob's own private reply 20748 on topic 16656: the reply row has no Quote button (non-private replies 20740-20742 do), so private text cannot be republished through Quote."
     },
     "c-member-reply-quote.9": {
       "result": "pass",
-      "evidence": "bob quoted Aisha's Arabic reply: posted blockquote dir=auto computes rtl, bar on the right (border-inline-start 3px, right 3px, left 0), Arabic paragraph rtl, text-align start",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-quote-arabic.png"
+      "evidence": "Arabic quote posted (reply 20749): blockquote dir=auto computes direction rtl, 3px bar on the right (border-right 3px, left 0); the Latin cite 'Omar Haddad' stays ltr by dir=auto.",
+      "screenshot": "quote-ar-rendered.png"
     },
     "c-member-reply-quote.10": {
       "result": "pass",
-      "evidence": "dark mode: quote text is light grey (0.80) on dark grey (0.20) and readable; the bar is faint but visible (see .12)",
-      "screenshot": "qa-artifacts/203-walk2/laneB/quote-dark.png"
+      "evidence": "dark mode: quote text rgb approx .80 on bg approx .20 (contrast about 7.5:1), bar and cite about 6:1",
+      "screenshot": "c-member-reply-quote.10.png",
+      "carried_forward": true
     },
     "c-member-reply-quote.11": {
-      "result": "pass",
-      "evidence": "Quote on alice's reply posts a threaded reply: the saved reply shows 'in reply to Alice Chen' above the blockquote (parent_id set, same as Reply). That is the contract the code has today; owner to confirm"
+      "result": "not_performed",
+      "evidence": "Open owner decision, not a testable pass: Quote still saves the reply with parent_id set ('in reply to Bob Martinez' shows on the posted quote 20749), same as Reply; no owner choice recorded between plain top-level and threaded."
     },
     "c-member-reply-quote.12": {
       "result": "pass",
-      "evidence": "dark mode: quote bar rgb ~(185,186,188) on surface rgb ~(52,55,63), about 6:1 contrast",
-      "screenshot": "qa-artifacts/203-walk2/laneB/rw2-quote-dark.png"
+      "evidence": "dark quote bar contrast about 6:1 (computed from color(srgb) values 0.726 on 0.204)",
+      "screenshot": "c-member-reply-quote.10.png",
+      "carried_forward": true
     },
     "c-member-reply-quote.13": {
       "result": "pass",
-      "evidence": "guest on /s/london-chapter/t/qa-rft-poll-topic/: '[deleted]' reply 10190 carries no OP badge"
+      "evidence": "deleted-account reply 10190 shows no OP badge",
+      "carried_forward": true
     }
   },
   "proposed_checks": [
-    "- `c-member-reply-quote.11` @member #ui: click Quote on a reply -> the saved reply is posted as a plain top-level reply with a quote, or as a threaded reply; decide which (today parent_id is set, same as Reply).",
-    "- `c-member-reply-quote.12` @member #ui +dark: the quote bar has enough contrast in dark mode (today 12% white).",
-    "- `c-member-reply-quote.13` @guest #ui +deleted: a reply from a deleted account does not carry the OP badge."
+    {
+      "id": "c-member-reply-quote.14",
+      "text": "@member #ui !refuse: a private reply the viewer may read shows no Quote button."
+    }
   ],
-  "notes": "No settings changed. All replies and topics created for this journey were deleted and purged from Moderation > Trash. The 'Scheduled maintenance on Saturday' topic is now named 'Scheduled maintenance on Saturday: what to expect'. Debug log unchanged (112327 bytes). | Re-walk lane B 2026-10-17: Created alice reply 13580 (list/code/URL), bob quote replies 13581 and 13582; removed at the end. Typing right after clicking Quote lands below the blockquote (checked); .7 re-seen: quote of the deleted account shows '[deleted]'."
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
 }

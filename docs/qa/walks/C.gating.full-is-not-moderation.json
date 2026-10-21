@@ -1,55 +1,51 @@
 {
-  "journey": "C.gating.full-is-not-moderation",
-  "checks": {
-    "c-gating-full-is-not-moderation.1": {
-      "result": "pass",
-      "evidence": "Logged In + Full rule -> toast 'Access rule added.'"
-    },
-    "c-gating-full-is-not-moderation.2": {
-      "result": "pass",
-      "evidence": "gating_t5: topic 6211 (201), reply 13675, vote, report (201), edit own title (200), delete own (200) - same as Participate."
-    },
-    "c-gating-full-is-not-moderation.3": {
-      "result": "pass",
-      "evidence": "on another member's topic the only controls are on his own reply (More options > Edit/Make Private/Delete); no Edit, Delete, Close or Pin on the topic."
-    },
-    "c-gating-full-is-not-moderation.4": {
-      "result": "pass",
-      "evidence": "PATCH /posts/6158 403, DELETE 403, POST /close 403, POST /pin 403, all jetonomy_forbidden; topic unchanged."
-    },
-    "c-gating-full-is-not-moderation.5": {
-      "result": "pass",
-      "evidence": "/community/s/print-lab-circle/mod/ -> 'You do not have permission to moderate this space.', no queue."
-    },
-    "c-gating-full-is-not-moderation.6": {
-      "result": "pass",
-      "evidence": "POST /spaces/3078/moderation/trash/post/6158 and POST /moderation/trash/post/6158 -> 403 jetonomy_forbidden."
-    },
-    "c-gating-full-is-not-moderation.7": {
-      "result": "pass",
-      "evidence": "Access Rules help: 'Full - Participate, plus edit other people's content, close and pin topics - but only for people whose WordPress role already allows moderation. For an ordinary member this behaves exactly like Participate.'"
-    },
-    "c-gating-full-is-not-moderation.8": {
-      "result": "pass",
-      "evidence": "test_moderator (WordPress Editor, Moderate capability): close 200, reopen 200, trash 200 and approve 200 on topics in the space, Moderation page opens - from his WordPress role, not the rule."
-    }
+ "journey": "C.gating.full-is-not-moderation",
+ "free": "dcdb0750",
+ "walked_at": "2026-10-21T08:43:16Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "c-gating-full-is-not-moderation.1": {
+   "result": "pass",
+   "evidence": "Logged In + Full rule on 4861 -> toast \"Access rule added.\"; preview \"People who match this rule can read, post, reply, vote, report, and - if their WordPress role already allows m\""
   },
-  "proposed_checks": [],
-  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. ",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walker": "lane A",
-  "walked_at": "2026-10-17T17:58:06Z",
-  "env": {
-    "themes": [
-      "reign"
-    ],
-    "viewports": [
-      1440,
-      390
-    ],
-    "schemes": [
-      "light"
-    ]
+  "c-gating-full-is-not-moderation.7": {
+   "result": "pass",
+   "evidence": "Access Rules tab help text: \"Full Participate, plus edit other people's content, close and pin topics - but only for people whose WordPress role already allows moderation. For an ordinary member this behaves exactly like Participate.\"; rule row: [\"Logged in \u2014 Full Member Delete\"]"
+  },
+  "c-gating-full-is-not-moderation.2": {
+   "result": "pass",
+   "evidence": "sub5 under Full rule: post 201, reply 201, vote 200, report 201, edit own 200, delete own 200"
+  },
+  "c-gating-full-is-not-moderation.3": {
+   "result": "pass",
+   "evidence": "sub5 on alice topic 8739: topic-level Edit/Delete/Close/Pin controls = []"
+  },
+  "c-gating-full-is-not-moderation.4": {
+   "result": "pass",
+   "evidence": "PATCH 403 jetonomy_forbidden, DELETE 403 jetonomy_forbidden, close 403 jetonomy_forbidden, pin 403 jetonomy_forbidden"
+  },
+  "c-gating-full-is-not-moderation.5": {
+   "result": "pass",
+   "evidence": "sub5 GET /mod/ HTTP 403 text \"A A+ A++ You do not have permission to moderate this space.\""
+  },
+  "c-gating-full-is-not-moderation.6": {
+   "result": "pass",
+   "evidence": "POST /moderation/trash/post/8739 as sub5 -> 403 jetonomy_forbidden"
+  },
+  "c-gating-full-is-not-moderation.8": {
+   "result": "pass",
+   "evidence": "test_moderator (site Editor): close topic 8739 200 then reopen 200; /mod/ page HTTP 200 text \"Moderation 82 A A+ A++ Home / Community / QA-WALK-C Private Lab / Moderation QA-WALK-C Private Lab 1 pending flag 1 pend\" - moderation comes from WP role (rule only Full/Member)"
   }
+ }
 }

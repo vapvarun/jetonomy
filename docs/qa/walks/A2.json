@@ -1,0 +1,46 @@
+{
+  "journey": "A2",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T08:42:13Z",
+  "walker": "lane A",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "a2.1": {
+      "result": "pass",
+      "evidence": "43 wp_jt_ tables = 23 defined in Schema::get_table_names() + 20 wp_jt_pro_*; array_diff(prefixed schema names, existing tables) = []."
+    },
+    "a2.2": {
+      "result": "pass",
+      "evidence": "wp option get jetonomy_db_version = 2.0.2 and JETONOMY_DB_VERSION = 2.0.2 (plugin version 2.0.3)."
+    },
+    "a2.3": {
+      "result": "pass",
+      "evidence": "SHOW INDEX: posts has space_sticky_reply, space_private_reply, space_votes, status_created, sitemap_status_id, status_votes, author_created, slug, ft_title_content; replies post_created, post_parent, post_private, post_votes, status_created, ft_content; votes user_object(user_id,object_type,object_id) + object_created; subscriptions user_object + object_user; flags status_created, object, reporter. Matches the KEY lines in class-schema.php."
+    },
+    "a2.4": {
+      "result": "pass",
+      "evidence": "Set jetonomy_db_version to 2.0.1.1, requested /wp-admin/ as admin (200): option returned to 2.0.2, row counts and space hash identical, debug.log gained no plugin line."
+    },
+    "a2.5": {
+      "result": "pass",
+      "evidence": "Schema::create_tables() run a second time: 43 tables, spaces 53/posts 346/replies 1338 unchanged (snapshot before == after)."
+    },
+    "a2.6": {
+      "result": "pass",
+      "evidence": "Jetonomy > Dashboard System Info shows Plugin Version 2.0.3, DB Version 2.0.2, Pro 2.0.3 Lifetime Active; no \"update required\" notice and no .notice elements.",
+      "screenshot": "qa-artifacts/walk-A/a2.6-dashboard.png"
+    }
+  },
+  "proposed_checks": []
+}

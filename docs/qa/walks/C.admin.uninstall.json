@@ -1,68 +1,76 @@
 {
   "journey": "C.admin.uninstall",
-  "checks": {
-    "c-admin-uninstall.1": {
-      "result": "pass",
-      "evidence": "read-only proof: uninstall.php returns at the top unless jetonomy_settings.remove_data_on_uninstall is set (forums.local value false). PHPUnit in the wp-env tests-cli container (separate DB): UninstallKeepsDataTest -> 'Uninstall keeps tables and settings by default' and 'Opt in removes cron jobs and widget settings' OK (2 tests, 6 assertions). Reinstall-restores-forum follows from nothing being dropped; the Delete flow itself was not run live."
-    },
-    "c-admin-uninstall.2": {
-      "result": "untested",
-      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
-    },
-    "c-admin-uninstall.3": {
-      "result": "untested",
-      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
-    },
-    "c-admin-uninstall.4": {
-      "result": "untested",
-      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
-    },
-    "c-admin-uninstall.5": {
-      "result": "untested",
-      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
-    },
-    "c-admin-uninstall.6": {
-      "result": "untested",
-      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
-    },
-    "c-admin-uninstall.7": {
-      "result": "untested",
-      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
-    },
-    "c-admin-uninstall.8": {
-      "result": "untested",
-      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
-    },
-    "c-admin-uninstall.10": {
-      "result": "untested",
-      "needs": "disposable Docker site with the remove-data setting on; uninstall is never run on forums.local"
-    },
-    "c-admin-uninstall.9": {
-      "result": "pass",
-      "evidence": "bob GET /wp-admin/plugins.php -> 403 'Sorry, you are not allowed to access this page.'; the delete-selected URL for jetonomy/jetonomy.php is refused the same way (403), so no uninstall can start."
-    },
-    "c-admin-uninstall.11": {
-      "result": "untested",
-      "needs": "the Delete link only appears after the plugin is deactivated, which would take the shared community offline; run on the Docker site"
-    }
-  },
-  "proposed_checks": [
-    "- `c-admin-uninstall.12` @admin #cli: run the PHPUnit UninstallKeepsDataTest (and an opt-in test that also asserts every jt_ table is dropped and no jetonomy_ capability remains) in the wp-env tests-cli container -> all green, so checks 2 to 5 have an automatic proof."
-  ],
-  "notes": "lane A. Read-only. Nothing was changed on forums.local for this journey. PHPUnit ran in the wp-env tests-cli container only.",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walker": "lane A",
-  "walked_at": "2026-10-17T17:36:00Z",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T12:08:33Z",
+  "walker": "lane B2",
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
     ]
-  }
+  },
+  "checks": {
+    "c-admin-uninstall.1": {
+      "result": "pass",
+      "evidence": "Ran uninstall.php (WP_UNINSTALL_PLUGIN) on a full clone of the site DB (b2uninst, 2,389 topics) with remove_data_on_uninstall=0 -> returned early: 43 jt_ tables, 1,579 jetonomy options, 65 jetonomy_ caps and 2,389 topics unchanged, so a reinstall finds everything. Plugin-screen Delete was not clicked (Free is locked by Pro and the real plugin must stay)"
+    },
+    "c-admin-uninstall.2": {
+      "result": "pass",
+      "evidence": "Clone DB, setting on: Pro uninstall then Free uninstall.php -> SHOW TABLES LIKE '%jt_%' returns 0 tables (43 before, 20 of them jt_pro_). Real forums.local DB untouched (2,389 topics)"
+    },
+    "c-admin-uninstall.3": {
+      "result": "pass",
+      "evidence": "Clone DB after uninstall: no option matching jetonomy% remains (1,579 before incl jetonomy_settings, db_version, demo_data, widgets, licence); only two core _site_transient plugin-dependency rows named after the slug remain, which are WordPress's"
+    },
+    "c-admin-uninstall.4": {
+      "result": "pass",
+      "evidence": "Clone DB: capabilities starting jetonomy_ on all roles 65 -> 0"
+    },
+    "c-admin-uninstall.5": {
+      "result": "pass",
+      "evidence": "Clone DB with scheduled jetonomy_digest_test, jetonomy_pro_test_job, edd_sl_sdk_weekly_license_check_jetonomy and an unrelated job: after Free uninstall only the first and third are gone; jetonomy_pro_ and unrelated jobs are kept. Action Scheduler: 12 jetonomy pending actions stay in the AS tables because deactivation (not uninstall) unschedules them, and the clone was not deactivated"
+    },
+    "c-admin-uninstall.6": {
+      "result": "pass",
+      "evidence": "Booted WordPress on the uninstalled clone with jetonomy and jetonomy-pro skipped: no fatal, /community/ resolves to 404 and the home page is not a 404. wp-admin and the real Plugins-screen delete flow were not clicked through"
+    },
+    "c-admin-uninstall.7": {
+      "result": "pass",
+      "evidence": "Clone DB, Free uninstall with Pro still installed: 20 jt_pro_ tables and 29 jetonomy_pro_ options kept and the jetonomy_pro_ cron job kept; booting WP with only Free skipped (Pro active) raised no fatal"
+    },
+    "c-admin-uninstall.8": {
+      "result": "pass",
+      "evidence": "Clone DB: Pro uninstall with the Free setting on drops all 20 jt_pro_ tables and 29 Pro options while Free keeps 23 tables, 1,550 options and 2,389 topics. Note: Pro has no remove-data setting of its own; it follows Free's remove_data_on_uninstall (runbook wording is stale)"
+    },
+    "c-admin-uninstall.9": {
+      "result": "pass",
+      "evidence": "bob GET /wp-admin/plugins.php -> 'Sorry, you are not allowed to access this page.'"
+    },
+    "c-admin-uninstall.10": {
+      "result": "pass",
+      "evidence": "Clone DB with 2,389 topics and 2,353 users: Pro uninstall 0.05s, Free uninstall 0.15s, no timeout"
+    },
+    "c-admin-uninstall.11": {
+      "result": "fail",
+      "evidence": "Plugins screen at 1440 and 390: no horizontal scroll, and the Pro row has Deactivate plus Manage License, but the Jetonomy (Free) row shows 'You cannot deactivate this plugin as Jetonomy Pro depends on it' with no Delete link, so Delete confirmation for Free is not reachable while Pro is active (WordPress dependency enforcement). Deactivating Pro first would expose it; runbook should say so",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/plugins-390.png"
+    },
+    "c-admin-uninstall.12": {
+      "result": "fail",
+      "evidence": "wp-env tests-cli (started from the repo): UninstallKeepsDataTest 2 tests, 6 assertions, all green. But the file has no opt-in test asserting every jt_ table is dropped and no jetonomy_ capability remains; those two facts were only proven by hand on a cloned DB (checks 2 and 4)"
+    }
+  },
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
+  "proposed_checks": [
+    {
+      "id": "c-admin-uninstall.13",
+      "text": "Delete Pro first, then Free, on a clone: the Plugins screen offers Delete for Free only after Pro is deactivated; reword .8 because Pro follows Free remove_data_on_uninstall and has no setting of its own."
+    }
+  ]
 }

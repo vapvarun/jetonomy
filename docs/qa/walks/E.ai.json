@@ -1,0 +1,123 @@
+{
+  "journey": "E.ai",
+  "free": "9b977fcb",
+  "pro": "a830e82",
+  "walked_at": "2026-10-21T12:51:08Z",
+  "walker": "lane C3",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "e-ai.1": {
+      "result": "pass",
+      "evidence": "Custom provider key entered and saved with Activate ticked -> field shows \"***encrypted***\" not the key; ticking \"Remove the stored key on save\" and saving -> api_key empty in option. Fake key used (no real provider key available)",
+      "carried_forward": true
+    },
+    "e-ai.2": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: no real AI provider key; with an unreachable stub provider the spam-looking topic published (fails open), so no AI hold/spam or \"Flagged by AI review\" reason could be observed",
+      "carried_forward": true
+    },
+    "e-ai.3": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: needs a working AI provider to prove no false positive (with no provider the topic simply publishes)",
+      "carried_forward": true
+    },
+    "e-ai.4": {
+      "result": "pass",
+      "evidence": "Settings > AI Integration: Auto-spam Threshold 0.2 (below Hold 0.5) submitted -> notice 'Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept.' and the stored values stay 0.8/0.5 (a second 'AI settings saved.' notice also shows)"
+    },
+    "e-ai.5": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: no successful AI calls, so request/token/cost sums could not be checked; GET /ai/usage and /ai/usage/summary return 200 with empty rows and zero totals for admin",
+      "carried_forward": true
+    },
+    "e-ai.6": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: daily budget enforcement needs billable provider calls",
+      "carried_forward": true
+    },
+    "e-ai.7": {
+      "result": "pass",
+      "evidence": "no provider (settings restored to original): bob spam-looking topic -> 201 in 64ms, status publish; usage requests 0; debug.log has no new AI entries (only phar deprecations). Composer AI buttons not visually inspected",
+      "carried_forward": true
+    },
+    "e-ai.8": {
+      "result": "not_performed",
+      "evidence": "PARTIAL: with unreachable provider topic 9018 still published (fails open) and the non-dismissible notice \"Jetonomy AI is not reaching any provider. Last failure 27 seconds ago (suggestion)...\" showed on the Jetonomy dashboard and AI settings tab; disappearance after a provider answers NOT PERFORMED (no working provider)",
+      "screenshot": "ai-outage-notice",
+      "carried_forward": true
+    },
+    "e-ai.9": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: needs a working provider to produce suggested answers",
+      "carried_forward": true
+    },
+    "e-ai.10": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: needs a working provider to produce TL;DR summaries",
+      "carried_forward": true
+    },
+    "e-ai.11": {
+      "result": "pass",
+      "evidence": "earlier live run this lane (stub provider): nonexistent post and a CAB post both -> identical 404 'Topic not found.' which matches the current runbook wording; not re-run now because with no provider configured the route answers 503 'No AI provider is configured.' before the lookup"
+    },
+    "e-ai.12": {
+      "result": "not_performed",
+      "evidence": "runbook requires a working provider (only successful calls count); without one suggest-reply answers 503 'No AI provider is configured.' (6 consecutive calls, no 429)"
+    },
+    "e-ai.13": {
+      "result": "not_performed",
+      "evidence": "min trust gate sits behind the provider check: with min trust 5 and no provider priya gets 503 'No AI provider is configured.'; earlier stub-provider run gave 403 'You need trust level 3 or higher to use AI features.'; UI button hiding not observable without a provider"
+    },
+    "e-ai.14": {
+      "result": "pass",
+      "evidence": "guest POST /ai/suggest-reply -> 401 rest_not_logged_in; guest GET /ai/usage -> 401; bob GET /ai/usage -> 403 jetonomy_forbidden",
+      "carried_forward": true
+    },
+    "e-ai.15": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: needs two working providers",
+      "carried_forward": true
+    },
+    "e-ai.16": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: needs a working provider; guest POST /ai/suggest-reply gives 401 before any lookup",
+      "carried_forward": true
+    },
+    "e-ai.17": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: needs a working provider to produce AI output",
+      "carried_forward": true
+    },
+    "e-ai.18": {
+      "result": "pass",
+      "evidence": "wp jetonomy-pro ai status/list-providers/spam-check/summarize/batch-review-status/provider-status run with no provider: plain output (provider_count: 0), no PHP notices"
+    },
+    "e-ai.19": {
+      "result": "not_performed",
+      "evidence": "NOT PERFORMED: batch scheduler needs a working provider",
+      "carried_forward": true
+    }
+  },
+  "proposed_checks": [
+    "With no provider, suggest-reply answers 503 \"No AI provider is configured.\" before the post lookup or trust gate, so e-ai.11 and .13 are only reachable with a provider (or a stub) - state it.",
+    "Settings save shows both the threshold-kept notice and \"AI settings saved.\" - add a check that only one outcome notice shows.",
+    {
+      "id": "e-ai.20",
+      "text": "@admin #admin: AI usage and daily-budget day buckets follow the site timezone, not UTC."
+    },
+    {
+      "id": "e-ai.21",
+      "text": "@admin #admin: saving AI settings with a threshold that gets kept shows one outcome notice, not both the threshold-kept notice and \"AI settings saved.\""
+    }
+  ]
+}

@@ -1,8 +1,7 @@
 {
   "journey": "C.member.privacy-export-erase",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T11:38:09Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -13,72 +12,70 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-privacy-export-erase.1": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "Ran the registered Jetonomy exporters (the same callbacks the Tools screen runs, via wp eval) for bob after giving him a bookmark and a block: groups Jetonomy Profile 1, Posts 50, Replies 82, Bookmarks 1, Votes 68, Subscriptions 31, Notifications 97, Activity Log 458, Blocked Users 1, plus Pro Private Messages, Reactions, Custom Fields, Badges and Poll Votes; fields hold real values. Bookmark and block removed again afterwards. Posts 50 and Replies 82 exceed the profile counters 38 and 69 because the export includes non-published rows"
     },
     "c-member-privacy-export-erase.2": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "Fixture user with 800 replies: exporter callbacks page through and return 'Jetonomy Replies' 800 + 'Jetonomy Profile' 1 in 0.6s; matches DB count 800 and profile reply_count"
     },
     "c-member-privacy-export-erase.3": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "Erased a fixture member (qawalkb_erase, Lucas Moreau QA) instead of seeded Hana: eraser removed profile, bookmark, vote, 2 subscriptions, notifications, block and membership (all 0 rows after); her topic and replies stay with author_id 0 and content kept anonymised ('Topics and replies anonymized. Personal data deleted.')"
     },
     "c-member-privacy-export-erase.4": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "Guest on the erased member's topic: author shows '[deleted]', alice's and bob's replies remain in order with no broken threading"
     },
     "c-member-privacy-export-erase.5": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "bob's reply to the erased topic still visible and its vote score unchanged at 1 (alice's vote kept)"
     },
     "c-member-privacy-export-erase.6": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "wp jetonomy recount ran clean (posts, spaces, votes, users); space and topic counters equal the live published rows (2999 42/42, 2995 64/64, topic 9436 2/2); a query for any space whose post_count differs from its published topics returned none"
     },
     "c-member-privacy-export-erase.7": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "Settings > Privacy > Policy Guide holds the Jetonomy section: 'Jetonomy sets no cookies...' and the suggested text 'When you open a discussion topic in our community, your browser notes the topic ID in session storage...' (in the page source; collapsed text is hidden from innerText)"
     },
     "c-member-privacy-export-erase.8": {
-      "result": "untested",
-      "needs": "lane A: a throwaway account (Lucas Moreau) registered through a registration-open setting; no persona may be deleted from lane B"
+      "result": "pass",
+      "evidence": "Fixture member qawalkb_self DELETE /users/me: no confirm 400, wrong password 403, then confirm=DELETE + password -> 200 content_policy anonymized; the WP user is gone (so signed out) and the topic is anonymised (author 0, still published). A 6th attempt is rate limited: a second member's 2nd attempt got 429 jetonomy_rate_limited after 4 earlier attempts from this machine (limit 5 per hour, shared per IP not per user)"
     },
     "c-member-privacy-export-erase.10": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "wp user delete of a fixture member who had been blocked: his jt_blocked_users row cleaned, replies show '[deleted]', scan shows no orphans. A user row deleted by SQL left 4 rows that wp jetonomy privacy purge-orphans removed (see check 14)"
     },
     "c-member-privacy-export-erase.11": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "qawalkb_erase had a reply in Customer Advisory Board (private); after the eraser that reply (16781) has author_id 0 and her space membership is removed"
     },
     "c-member-privacy-export-erase.12": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "Export for Grace Oluwaseun Adeyemi-Whitfield: Display Name is the full name, no PHP notices; the export has no avatar field at all (she has none) rather than an empty field"
     },
     "c-member-privacy-export-erase.13": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "Export Personal Data and Erase Personal Data screens (with test requests present) at 390: scrollWidth 390, the request table 368px wide fits the page, buttons 40px",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/privacy-export-390.png"
     },
     "c-member-privacy-export-erase.14": {
-      "result": "untested",
-      "needs": "lane A: Tools > Export/Erase Personal Data, the Policy Guide, wp-cli or a throwaway user are admin/destructive steps and lane B may not run them (erase of Hana would touch shared demo data)"
+      "result": "pass",
+      "evidence": "wp jetonomy privacy scan reported none for the erased member; after deleting a user row outside WordPress, scan listed 4 orphan rows (profiles, votes, activity_log, bookmarks), purge-orphans --dry-run listed the same, purge-orphans removed 4 rows for 1 account and scan then said 'No orphaned user data'"
     },
     "c-member-privacy-export-erase.15": {
       "result": "pass",
-      "evidence": "bob opens /wp-admin/export-personal-data.php: HTTP 403 'WordPress > Error: Sorry, you are not allowed to access this page.'"
+      "evidence": "bob GET wp-admin/export-personal-data.php -> 403 'Sorry, you are not allowed to access this page.' (the runbook URL tools.php?page=export-personal-data does not exist; the real screens are export-personal-data.php and erase-personal-data.php)"
     },
     "c-member-privacy-export-erase.16": {
       "result": "pass",
-      "evidence": "alice DELETE /users/3755, GET /users/3755/export, /users/3755/privacy and POST /users/3755/erase -> 404 rest_no_route (only /users/me exists and it acts on the caller)"
+      "evidence": "alice DELETE /users/3755 and GET /users/3755/export (also /data, /privacy-export) -> 404 rest_no_route; only /users/me exists and acts on the caller"
     }
-  },
-  "proposed_checks": [],
-  "notes": "Admin and destructive steps are left for lane A; only the two member refusals were walked."
+  }
 }

@@ -1,0 +1,71 @@
+{
+ "journey": "E.pro-privacy-and-abilities",
+ "free": "dcdb0750",
+ "pro": "404b0af",
+ "walked_at": "2026-10-21T10:06:44Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "e-pro-privacy-and-abilities.1": {
+   "result": "pass",
+   "evidence": "Admin Tools > Export Personal Data (UI button, 24 admin-ajax calls, no errors). qawalkc_priv (fixture user with DM, 130 reactions, badge x2, poll vote, field value, push subscription) export contains groups Private Messages, Reactions (130), Custom Fields (\"QA-WALK-C nslug\" = \"Porto, Portugal\"), Badges (2: Community Pillar gold, Contributor bronze), Poll Votes (poll 152 \"Enamel pins\"), Push Devices (\"Browser subscription\" + endpoint). maya (shared persona) export shows Private Messages(2), React",
+   "screenshot": "priv-export-done"
+  },
+  "e-pro-privacy-and-abilities.2": {
+   "result": "pass",
+   "evidence": "qawalkc_empty export has no Jetonomy Pro group headings and no notice in debug.log; qawalkc_priv with 130 reactions exported all 130 (one export request returned done:false, then continued) and heart count in file = 130"
+  },
+  "e-pro-privacy-and-abilities.3": {
+   "result": "pass",
+   "evidence": "priv export contains only her own message (\"QA-WALK-C Hi Bob...\") for conversation 27; bob's reply \"Sure, send the zip.\" and his email are not in the file"
+  },
+  "e-pro-privacy-and-abilities.4": {
+   "result": "pass",
+   "evidence": "Erase UI (8 admin-ajax calls) showed \"Jetonomy Pro: Messages anonymized. Reactions, custom fields, badges, poll votes, and push subscriptions/devices deleted.\" DB afterwards: reactions/poll_votes/user_badges/push_subscriptions/field values/participant rows = 0 for the user. Used fixture user qawalkc_priv, not Jamal. Observation: the anonymised message keeps its body text \"Hi Bob, can you review my plugin?\" with sender_id 0 (owner policy question)",
+   "screenshot": "priv-erase-done"
+  },
+  "e-pro-privacy-and-abilities.5": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED in the UI: Pro messaging is dormant while WPMediaVerse is active, /conversations/27 returns rest_no_route and there is no Pro thread screen to open as bob. DB evidence instead: message 135 sender_id 0 (content retained), bob message 136 intact with sender 3755, poll option 470 vote_count 1 -> 0 exactly (bob's votes untouched)"
+  },
+  "e-pro-privacy-and-abilities.6": {
+   "result": "pass",
+   "evidence": "`wp user delete 7180 --reassign=1` on a user with a reaction, poll vote (option 471 vote_count 1->0), badge and push subscription: afterwards reactions=0, poll_votes=0, user_badges=0, push_subscriptions=0 for that id"
+  },
+  "e-pro-privacy-and-abilities.7": {
+   "result": "pass",
+   "evidence": "qawalkc_many with 7660 reactions erased through the Erase screen: 15 admin-ajax requests (8 returned done:false) and finished with \"Erasure completed.\" and 0 rows left, no timeout"
+  },
+  "e-pro-privacy-and-abilities.8": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no anonymous post or attachment existed for an erasable fixture user; anonymous-posting author handling on erase not exercised"
+  },
+  "e-pro-privacy-and-abilities.9": {
+   "result": "pass",
+   "evidence": "As admin GET /wp-abilities/v1/abilities lists jetonomy-pro/ analytics, polls, badges, webhooks, reactions, custom-fields and moderation abilities; messaging abilities are absent (WPMediaVerse active). With Polls disabled the list loses the polls abilities (create-poll, vote-poll, get-poll-results) and they return after re-enabling (restored). Licensing gate not testable (local bypass)"
+  },
+  "e-pro-privacy-and-abilities.10": {
+   "result": "fail",
+   "evidence": "PARTIAL: bob get-analytics and export-analytics -> 403 rest_ability_cannot_execute; guest -> 401; bob create-moderation-rule/award-badge/create-webhook -> 403, guest rule -> 401; admin get-analytics 200 and export 200 with download_url. \"Get Conversation Messages\" ability is not registered (messaging dormant) so the non-participant case could not be run"
+  },
+  "e-pro-privacy-and-abilities.11": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: jetonomy-pro/send-message is not registered while WPMediaVerse is active (finn gets 404 rest_ability_not_found), so the silenced rule cannot be checked"
+  },
+  "e-pro-privacy-and-abilities.12": {
+   "result": "pass",
+   "evidence": "Core Export and Erase screens at 390px have no horizontal overflow (scrollWidth 390); request rows remain usable",
+   "screenshot": "priv-export-390"
+  }
+ }
+}
