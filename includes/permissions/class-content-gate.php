@@ -166,11 +166,12 @@ class Content_Gate {
 	 *
 	 * @param int    $user_id Author.
 	 * @param object $post    Post row being replied to.
-	 * @param string $content Sanitized reply HTML.
+	 * @param string $content   Sanitized reply HTML.
+	 * @param int    $parent_id Reply being answered in a thread, 0 for top level.
 	 * @return int|\WP_Error New reply ID, or why it was refused.
 	 */
-	public static function create_reply( int $user_id, object $post, string $content ) {
-		$allowed = self::check( $user_id, $post );
+	public static function create_reply( int $user_id, object $post, string $content, int $parent_id = 0 ) {
+		$allowed = self::check( $user_id, $post, $parent_id );
 		if ( is_wp_error( $allowed ) ) {
 			return $allowed;
 		}
@@ -180,12 +181,15 @@ class Content_Gate {
 			return Rate_Limiter::error( $user_id, 'create_replies', $trust );
 		}
 
-		$data     = array(
+		$data = array(
 			'post_id'       => (int) $post->id,
 			'author_id'     => $user_id,
 			'content'       => $content,
 			'content_plain' => \jetonomy_content_to_plain( $content ),
 		);
+		if ( $parent_id > 0 ) {
+			$data['parent_id'] = $parent_id;
+		}
 		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) $post->space_id, $user_id );
 		if ( is_wp_error( $screened ) ) {
 			return $screened;

@@ -215,7 +215,7 @@ class OEmbed_Controller extends Base_Controller {
 
 		$response = new WP_REST_Response( $data, 200 );
 		// Shared caches may keep it only when a guest could read the same thread.
-		$response->header( 'Cache-Control', \Jetonomy\Permissions\Permission_Engine::can_render_post_text( 0, $post ) ? 'public, max-age=3600' : 'private, no-store' );
+		$response->header( 'Cache-Control', 'public' === \Jetonomy\Visibility::get_mode() && \Jetonomy\Permissions\Permission_Engine::can_render_post_text( 0, $post ) ? 'public, max-age=3600' : 'private, no-store' );
 		return $response;
 	}
 
