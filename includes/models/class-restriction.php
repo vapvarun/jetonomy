@@ -128,6 +128,39 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * Refuse a second active restriction of the same type and scope.
+	 *
+	 * A duplicate row is stored happily, but lifting removes one row by id, so
+	 * the member stays restricted while the list shows a single badge. IP bans
+	 * dedupe on the address in validate_ip_ban().
+	 *
+	 * @param int      $user_id  Target user.
+	 * @param string   $type     Restriction type.
+	 * @param int|null $space_id Space for a space ban, null for global.
+	 * @return true|\WP_Error True when no active restriction matches.
+	 */
+	public static function validate_not_duplicate( int $user_id, string $type, ?int $space_id = null ) {
+		if ( 'ip_ban' === $type ) {
+			return true;
+		}
+
+		$row = static::db()->get_var(
+			static::db()->prepare(
+				'SELECT id FROM ' . static::table() . '
+				WHERE user_id = %d AND type = %s AND COALESCE(space_id, 0) = %d
+				  AND (expires_at IS NULL OR expires_at > %s)
+				LIMIT 1',
+				$user_id,
+				$type,
+				(int) $space_id,
+				now()
+			)
+		);
+
+		return $row ? new \WP_Error( 'jetonomy_restriction_exists', sprintf( /* translators: %s: member label, lowercase (e.g. "member"). */ __( 'This %s already has that restriction. Lift it first to issue a new one.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ), array( 'status' => 409 ) ) : true;
+	}
+
+	/**
 	 * Issue a ban or silence restriction.
 	 *
 	 * @param int         $user_id    Target user (ignored and stored as 0 for 'ip_ban').
@@ -168,6 +201,10 @@ class Restriction extends Model {
 			if ( is_wp_error( $reason ) ) {
 				return 0;
 			}
+		}
+
+		if ( is_wp_error( self::validate_not_duplicate( $user_id, $type, $space_id ) ) ) {
+			return 0;
 		}
 
 		$data = array(
@@ -571,7 +608,24 @@ class Restriction extends Model {
 	 * @return bool True if a row was deleted.
 	 */
 	public static function remove_ban( int $id ): bool {
+		$row    = static::find( $id );
 		$result = static::delete( $id );
+
+		// A double stored before duplicates were refused would otherwise outlive one lift.
+		if ( $result && $row && 'ip_ban' !== $row->type ) {
+			static::db()->query(
+				static::db()->prepare(
+					'DELETE FROM ' . static::table() . '
+					WHERE user_id = %d AND type = %s AND COALESCE(space_id, 0) = %d
+					  AND (expires_at IS NULL OR expires_at > %s)',
+					(int) $row->user_id,
+					$row->type,
+					(int) $row->space_id,
+					now()
+				)
+			);
+		}
+
 		self::reset_memo();
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 		return $result;

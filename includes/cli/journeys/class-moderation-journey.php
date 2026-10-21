@@ -225,6 +225,11 @@ final class Moderation_Journey {
 			}
 		}
 
+		$duplicate = Restriction::validate_not_duplicate( $user_id, $type, $space_id );
+		if ( is_wp_error( $duplicate ) ) {
+			return Journey_Result::fail( $duplicate->get_error_message() );
+		}
+
 		$id = Restriction::ban( $user_id, $type, $issued_by, $space_id, $reason, $expires_at );
 		if ( ! $id ) {
 			return Journey_Result::fail( 'Restriction::ban() returned 0 — insert failed.' );
