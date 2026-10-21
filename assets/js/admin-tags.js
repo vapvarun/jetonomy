@@ -105,13 +105,10 @@
 			var id = this.dataset.id;
 			var count = parseInt(this.dataset.count || '0', 10);
 			var msg = i18n.tagDeleteConfirm;
-			if (count > 0) {
-				msg = wp.i18n.sprintf(
-					/* translators: %d: number of posts the tag is attached to. */
-					wp.i18n._n( 'This tag is attached to %d post. Delete it and detach from all posts?', 'This tag is attached to %d posts. Delete it and detach from all posts?', count, 'jetonomy' ),
-					count
-				);
+			if (count > 0 && this.dataset.confirm) {
+				msg = this.dataset.confirm; // Built in PHP so it follows the Topic label.
 			}
+
 			_confirm(msg, { danger: true }).then(function (ok) {
 				if (!ok) { return; }
 				post('jetonomy_delete_tag', { id: id, force: 1 }).then(function (res) {

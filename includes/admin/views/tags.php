@@ -152,7 +152,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 									<strong><?php echo esc_html( $tag->name ); ?></strong>
 									<div class="row-actions">
 										<span class="edit"><a href="#" class="jetonomy-edit-tag" data-id="<?php echo absint( $tag->id ); ?>" data-name="<?php echo esc_attr( $tag->name ); ?>" data-slug="<?php echo esc_attr( $tag->slug ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
-										<span class="delete"><a href="#" class="jetonomy-delete-tag" data-id="<?php echo absint( $tag->id ); ?>" data-name="<?php echo esc_attr( $tag->name ); ?>" data-count="<?php echo absint( $tag->post_count ?? 0 ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
+										<span class="delete"><a href="#" class="jetonomy-delete-tag" data-id="<?php echo absint( $tag->id ); ?>" data-name="<?php echo esc_attr( $tag->name ); ?>" data-count="<?php echo absint( $tag->post_count ?? 0 ); ?>" data-confirm="<?php echo esc_attr( sprintf( /* translators: 1: number of topics; 2: topic label with the right number, lowercase; 3: topic label, plural lowercase. */ __( 'This tag is attached to %1$d %2$s. Delete it and detach it from all %3$s?', 'jetonomy' ), (int) ( $tag->post_count ?? 0 ), \Jetonomy\jetonomy_label( 'topic', 1 !== (int) ( $tag->post_count ?? 0 ), true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
 									</div>
 									<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 								</td>

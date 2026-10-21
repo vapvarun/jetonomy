@@ -394,7 +394,7 @@ GET               /users/{id}/badges        A user's earned badges
 POST/DELETE       /badges/{id}/award        Manual award / revoke ({user_id})
 ```
 
-Auto-award runs on an event-driven queue (post/reply/vote/reputation/trust-level changes) plus a 6-hour cron sweep. Criteria: 8 metrics (`post_count`, `reply_count`, `reputation`, `trust_level`, `vote_received`, `days_active`, `accepted_answers`, `spaces_joined`) × 5 operators × `all`/`any` match mode.
+Auto-award runs on an event-driven queue (post/reply/vote/reputation/trust-level changes) plus a recurring sweep (6 hours on Action Scheduler, 12 hours on the WP-Cron fallback). Criteria: 8 metrics (`post_count`, `reply_count`, `reputation`, `trust_level`, `vote_received`, `days_active`, `accepted_answers`, `spaces_joined`) × 5 operators × `all`/`any` match mode.
 
 ### Webhooks
 

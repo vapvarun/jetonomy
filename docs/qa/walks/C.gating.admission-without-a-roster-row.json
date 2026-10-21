@@ -1,63 +1,59 @@
 {
-  "journey": "C.gating.admission-without-a-roster-row",
-  "checks": {
-    "c-gating-admission-without-a-roster-row.1": {
-      "result": "pass",
-      "evidence": "membership rule (role print_lab_member, Participate) on private 3078, no sync: Members tab lists only varundubey; the three matching subscribers are absent."
-    },
-    "c-gating-admission-without-a-roster-row.2": {
-      "result": "pass",
-      "evidence": "gating_t2 (matches, not listed) sees the New Topic link, posted topic 6213 (201) and replied 13677 (201) without a roster row."
-    },
-    "c-gating-admission-without-a-roster-row.3": {
-      "result": "pass",
-      "evidence": "Sync Members -> 'Synced 3 existing members.'; Members tab lists Dana Whitfield, Marc Delaney, Lena Hoffmann as Member; the count rose by 3 (the header showed 6 because my direct SQL had left the cached count at 3)."
-    },
-    "c-gating-admission-without-a-roster-row.4": {
-      "result": "pass",
-      "evidence": "Access Rules intro with a membership rule present: 'The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well.'"
-    },
-    "c-gating-admission-without-a-roster-row.5": {
-      "result": "pass",
-      "evidence": "guest on the private space: 'This space is private and invite-only. Log in if you have an invitation.', no composer, POST 401."
-    },
-    "c-gating-admission-without-a-roster-row.6": {
-      "result": "pass",
-      "evidence": "gating_t5 (does not match the rule) POST topic -> 403 jetonomy_forbidden 'You cannot post in this space.'"
-    },
-    "c-gating-admission-without-a-roster-row.7": {
-      "result": "untested",
-      "needs": "a rule matching 2000 people (scale site)"
-    },
-    "c-gating-admission-without-a-roster-row.8": {
-      "result": "pass",
-      "evidence": "Sync Members pressed twice -> 'Synced 3 existing members.' then 'Synced 0 existing members.'; no duplicate roster rows."
-    },
-    "c-gating-admission-without-a-roster-row.9": {
-      "result": "untested",
-      "needs": "a space created before 2.0 with a membership rule (old data not on this site)"
-    },
-    "c-gating-admission-without-a-roster-row.10": {
-      "result": "pass",
-      "evidence": "omar (also given the print_lab_member role) is space-banned from 3078: POST topic -> 403 jetonomy_user_space_banned; the ban wins over the rule."
-    }
+ "journey": "C.gating.admission-without-a-roster-row",
+ "free": "dcdb0750",
+ "walked_at": "2026-10-21T08:50:37Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "c-gating-admission-without-a-roster-row.1": {
+   "result": "pass",
+   "evidence": "PMPro Gold membership rule (Participate) added, Sync not pressed: Members tab has 307 rows and does not list Neha Rao (level holder)"
   },
-  "proposed_checks": [],
-  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. omar space ban 400 and 401 lifted; print_lab_member role removed from all users at the end.",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walker": "lane A",
-  "walked_at": "2026-10-17T17:58:06Z",
-  "env": {
-    "themes": [
-      "reign"
-    ],
-    "viewports": [
-      1440,
-      390
-    ],
-    "schemes": [
-      "light"
-    ]
+  "c-gating-admission-without-a-roster-row.2": {
+   "result": "pass",
+   "evidence": "level holder not on roster: space page 200 lists topics=true; POST topic 201, reply 201"
+  },
+  "c-gating-admission-without-a-roster-row.4": {
+   "result": "pass",
+   "evidence": "Access Rules help: \"The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well.\""
+  },
+  "c-gating-admission-without-a-roster-row.3": {
+   "result": "pass",
+   "evidence": "Sync Members -> toast \"Synced 1 existing member.\"; Neha Rao now listed as member; roster rows 307 -> 308"
+  },
+  "c-gating-admission-without-a-roster-row.5": {
+   "result": "pass",
+   "evidence": "guest: space page text \"-WALK-C Private Lab is private and invite-only. Log in if you have an invitation. Walk fixture for access gati\", POST topic 401 rest_not_logged_in"
+  },
+  "c-gating-admission-without-a-roster-row.6": {
+   "result": "fail",
+   "evidence": "non-matching subscriber (no PMPro level): POST topic 403 jetonomy_forbidden, reply 404 jetonomy_not_found (note: alice/member_b is a roster member so a non-roster non-holder was used)"
+  },
+  "c-gating-admission-without-a-roster-row.7": {
+   "result": "pass",
+   "evidence": "PMPro rule pmpro_1 matched 2005 holders (2000 seeded qawalkc_bulk users + 5): admin Sync Members -> toast \"Synced 2000 existing members.\" in 2.5s (server pages users in bounded batches, ajax_sync_access_rule); roster rows 8 -> 2008, 0 duplicates, tier rows 2005. jt_spaces.member_count column read 2015 (drift of 7 caused by my direct-SQL fixture inserts/deletes, not by Sync)"
+  },
+  "c-gating-admission-without-a-roster-row.8": {
+   "result": "pass",
+   "evidence": "Two simultaneous jetonomy_sync_access_rule AJAX posts (roster cleared first): replies \"Synced 2000\" and \"Synced 0\"; roster 2008 rows, 0 duplicate user_ids"
+  },
+  "c-gating-admission-without-a-roster-row.9": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs a space created before 2.0 with a membership rule; every space on this site was created on 2.0.x so there is no pre-2.0 data to walk (the equivalent no-roster-row admission was proven in .2 on current data)"
+  },
+  "c-gating-admission-without-a-roster-row.10": {
+   "result": "pass",
+   "evidence": "omar holds PMPro level 1 (rule matches; hook even wrote a tier roster row) while space-banned from 4861 (restriction 702): space page says \"You have been banned from this space and cannot take part in it.\", REST posts GET 403 jetonomy_user_space_banned, POST topic 403 jetonomy_user_space_banned. Ban wins. (Fixture: test space instead of Off-Topic Lounge, which is public and where a rule would flip it to private.)"
   }
+ }
 }

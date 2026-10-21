@@ -4,6 +4,8 @@ namespace Jetonomy\Tests\Unit\Models;
 use WP_UnitTestCase;
 use WP_REST_Request;
 use Jetonomy\DB\Schema;
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Space;
 use Jetonomy\Models\Subscription;
 use Jetonomy\Models\UserProfile;
 
@@ -14,6 +16,8 @@ use Jetonomy\Models\UserProfile;
 class SubscriptionDeliveryTest extends WP_UnitTestCase {
 
 	private int $user_id;
+	private int $space_id;
+	private int $post_id;
 
 	public function set_up(): void {
 		parent::set_up();
@@ -30,8 +34,27 @@ class SubscriptionDeliveryTest extends WP_UnitTestCase {
 				),
 			)
 		);
-		Subscription::subscribe( $this->user_id, 'space', 11 );
-		Subscription::subscribe( $this->user_id, 'post', 22 );
+		// Follows to a missing or unreadable target are not listed, so follow real, public ones.
+		$this->space_id = (int) Space::create(
+			array(
+				'title'      => 'Delivery space',
+				'slug'       => 'delivery-' . uniqid(),
+				'visibility' => 'public',
+			),
+			$this->factory()->user->create( array( 'role' => 'administrator' ) )
+		);
+		$this->post_id  = (int) Post::create(
+			array(
+				'space_id'  => $this->space_id,
+				'author_id' => $this->user_id,
+				'title'     => 'Delivery topic',
+				'slug'      => 'delivery-topic-' . uniqid(),
+				'content'   => '<p>Body.</p>',
+				'status'    => 'publish',
+			)
+		);
+		Subscription::subscribe( $this->user_id, 'space', $this->space_id );
+		Subscription::subscribe( $this->user_id, 'post', $this->post_id );
 	}
 
 	private function vias(): array {
@@ -61,8 +84,8 @@ class SubscriptionDeliveryTest extends WP_UnitTestCase {
 	public function test_template_and_rest_share_the_resolver(): void {
 		$items = Subscription::attach_delivery(
 			array(
-				array( 'object_type' => 'space', 'object_id' => 11 ),
-				array( 'object_type' => 'post', 'object_id' => 22 ),
+				array( 'object_type' => 'space', 'object_id' => $this->space_id ),
+				array( 'object_type' => 'post', 'object_id' => $this->post_id ),
 			),
 			$this->user_id
 		);

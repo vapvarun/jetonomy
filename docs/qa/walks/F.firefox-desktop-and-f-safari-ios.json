@@ -1,0 +1,47 @@
+{
+ "journey": "F.firefox-desktop-and-f-safari-ios",
+ "free": "dcdb0750",
+ "walked_at": "2026-10-21T10:33:50Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "f-firefox-desktop-and-f-safari-ios.1": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
+  },
+  "f-firefox-desktop-and-f-safari-ios.2": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
+  },
+  "f-firefox-desktop-and-f-safari-ios.3": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
+  },
+  "f-firefox-desktop-and-f-safari-ios.4": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
+  },
+  "f-firefox-desktop-and-f-safari-ios.5": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
+  },
+  "f-firefox-desktop-and-f-safari-ios.6": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
+  },
+  "f-firefox-desktop-and-f-safari-ios.7": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
+  }
+ }
+}

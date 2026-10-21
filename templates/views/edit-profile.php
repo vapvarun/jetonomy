@@ -51,7 +51,7 @@ if ( ! $cancel_url ) {
 	<form id="jt-edit-profile" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="actions.saveProfile"
-			data-wp-context='<?php echo wp_json_encode( array( 'profileUrl' => $profile_url ) ); ?>'>
+			data-wp-context="<?php echo esc_attr( (string) wp_json_encode( array( 'profileUrl' => $profile_url ) ) ); ?>">
 		<div class="jt-form-group">
 			<label class="jt-label" for="jt-first-name"><?php esc_html_e( 'First Name', 'jetonomy' ); ?></label>
 			<input type="text" id="jt-first-name" name="first_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'first_name', true ) ); ?>">

@@ -1,0 +1,68 @@
+{
+ "journey": "E.lms-course-spaces-and-automator",
+ "free": "dcdb0750",
+ "pro": "404b0af",
+ "walked_at": "2026-10-21T10:11:01Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "e-lms-course-spaces-and-automator.1": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (course space creation, republish, enrolment, trash, bulk create)"
+  },
+  "e-lms-course-spaces-and-automator.2": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (course space creation, republish, enrolment, trash, bulk create)"
+  },
+  "e-lms-course-spaces-and-automator.3": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (course space creation, republish, enrolment, trash, bulk create)"
+  },
+  "e-lms-course-spaces-and-automator.4": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (course space creation, republish, enrolment, trash, bulk create)"
+  },
+  "e-lms-course-spaces-and-automator.5": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (course space creation, republish, enrolment, trash, bulk create)"
+  },
+  "e-lms-course-spaces-and-automator.6": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (course space creation, republish, enrolment, trash, bulk create)"
+  },
+  "e-lms-course-spaces-and-automator.7": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (course space creation, republish, enrolment, trash, bulk create)"
+  },
+  "e-lms-course-spaces-and-automator.8": {
+   "result": "fail",
+   "evidence": "PARTIAL: POST /jetonomy/v1/learnomy/course-discussion {course_id:999999,enabled:true} as admin -> 400 jetonomy_pro_learnomy_missing \"Learnomy is not active.\"; as bob -> 403 \"You can only change courses you own.\"; guest -> 401 rest_not_logged_in. The unknown-course message \"That course could not be found.\" needs Learnomy active and was NOT PERFORMED"
+  },
+  "e-lms-course-spaces-and-automator.9": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (Automator recipes)"
+  },
+  "e-lms-course-spaces-and-automator.10": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (Automator recipes)"
+  },
+  "e-lms-course-spaces-and-automator.11": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (Automator recipes)"
+  },
+  "e-lms-course-spaces-and-automator.12": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: no LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy active; Learnomy is not installed on this site) and Uncanny Automator is installed but inactive with no recipe fixture; the Pro course-space provisioner has nothing to hook (course space page header)"
+  }
+ }
+}

@@ -1,9 +1,8 @@
 {
   "journey": "C.anon.invite-landing",
-  "free": "21f93481",
-  "pro": "fe21324",
-  "walked_at": "2026-10-17T22:20:00Z",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T09:11:41Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -19,83 +18,82 @@
   },
   "checks": {
     "c-anon-invite-landing.1": {
-      "result": "untested",
-      "needs": "lane A: turn registration on (users_can_register is 0)",
-      "evidence": "guest sees 'You've been invited to join General Discussion' + description and 'Log in to accept invite'; use_count stayed 0, nobody added. 'Create free account' could not be seen because registration is off"
+      "result": "pass",
+      "evidence": "Fixture invite to Amsterdam Chapter: guest page \"You've been invited to join Amsterdam Chapter\", description, \"Log in to accept invite\"; with users_can_register briefly set to 1 the page also had \"Create free account\" (register link with redirect_to); option restored to 0. Member count stayed 3.",
+      "screenshot": "c-anon-invite-landing.1.png"
     },
     "c-anon-invite-landing.2": {
       "result": "pass",
-      "evidence": "'Log in to accept invite' links to wp-login.php?redirect_to=<invite url>; after autologin as bob the invite page shows he is already a member, nothing joined by the visit"
+      "evidence": "Guest login link is wp-login.php?redirect_to=<invite URL>; after logging in as bob the browser returns to the invite page showing \"Join Space\"; member count still 3. (Login done through the autologin helper, not typed credentials.)",
+      "screenshot": "c-anon-invite-landing.2.png"
     },
     "c-anon-invite-landing.3": {
       "result": "pass",
-      "evidence": "lucia (non-member) clicked 'Join Space' on the Off-Topic Lounge invite: POST with jt_invite_nonce, landed on /community/s/off-topic-lounge/, members 20 -> 21, invite use_count 0 -> 1"
+      "evidence": "bob clicked Join Space: POST to the invite URL with jt_invite_nonce, landed on /community/s/amsterdam-chapter/; space members 3 -> 4, bob row present, invite use_count 1. bob later removed to restore 3.",
+      "screenshot": "c-anon-invite-landing.3.png"
     },
     "c-anon-invite-landing.4": {
       "result": "pass",
-      "evidence": "bob on General Discussion invite: 'You are already a member of General Discussion. Go to Space', one member row only"
+      "evidence": "bob reopened the same invite: \"You are already a member of Amsterdam Chapter.\" plus \"Go to Space\"; two more GETs left members at 4 with one bob row.",
+      "screenshot": "c-anon-invite-landing.4.png"
     },
     "c-anon-invite-landing.5": {
       "result": "pass",
-      "evidence": "lucia: two GETs and a HEAD of the invite URL -> membership rows for lucia in space 3001 stayed 0"
+      "evidence": "bob GET x2 and HEAD on a valid invite: wp_jt_space_members count 3 before and after."
     },
     "c-anon-invite-landing.6": {
-      "result": "fail",
-      "expected": "POST without nonce is rejected (403 or a nonce error) and the member is not added",
-      "actual": "member is not added, but the response is a silent 200 that re-renders the invite page with no error message (also for a wrong nonce); a member whose nonce expired gets no feedback",
-      "url": "http://forums.local/community/invite/BHTFtGCb9xqDEYeu8n4qYEm4zWBE5nEo/"
+      "result": "pass",
+      "evidence": "Form POST without jt_invite_nonce as bob: not joined (count 3|3); REST POST /invite/<token> without X-WP-Nonce -> 401 rest_not_logged_in, count unchanged."
     },
     "c-anon-invite-landing.7": {
       "result": "pass",
-      "evidence": "registration is already off: guest sees only 'Log in to accept invite', no Create free account (no setting changed by lane B)"
+      "evidence": "With registration off (site default) guest sees only \"Log in to accept invite\", no Create free account."
     },
     "c-anon-invite-landing.8": {
       "result": "pass",
-      "evidence": "/community/invite/doesnotexist/ -> HTTP 404, page text 'Invalid invite link.', no fatal"
+      "evidence": "/community/invite/doesnotexist123/ -> 404, \"Invalid invite link.\", no PHP error."
     },
     "c-anon-invite-landing.9": {
       "result": "pass",
-      "evidence": "expired fixture invite (temporary, removed): HTTP 410 'This invite link has expired or reached its usage limit.', no Join button"
+      "evidence": "Expired fixture (expires_at 2 days ago): guest and bob get 410 \"This invite link has expired or reached its usage limit.\", no Join button."
     },
     "c-anon-invite-landing.10": {
       "result": "pass",
-      "evidence": "usage-limit fixture invite (max 1, used 1, temporary): HTTP 410 same message, no Join button"
+      "evidence": "Fixture with max_uses 1 / use_count 1: bob gets 410 with the same limit message and no Join button."
     },
     "c-anon-invite-landing.11": {
       "result": "pass",
-      "evidence": "lucia on archived 2025 Hackathon invite: 'This space is archived or locked and is not taking new members.', no Join; no member row"
+      "evidence": "Invite to archived 2025 Hackathon as non-members theo, maya, hana, alice: \"This space is archived or locked and is not taking new members.\", no Join (bob already a member of it so shows already-member)."
     },
     "c-anon-invite-landing.12": {
-      "result": "untested",
-      "needs": "fixture/lane A: omar has no space ban in Off-Topic Lounge (jt_restrictions has no row for him; he is a plain member)"
+      "result": "pass",
+      "evidence": "omar on Off-Topic Lounge invite: \"You have been banned from this space and cannot take part in it.\"; forced form POST with valid nonce shows the same, REST POST -> 403 jetonomy_user_space_banned; space count stayed 20. Space ban (id 699) is a re-created seed fixture."
     },
     "c-anon-invite-landing.13": {
       "result": "pass",
-      "evidence": "one-use invite fixture (temporary): lucia and test_subscriber POSTed at the same moment with valid nonces -> exactly one member added (test_subscriber), the other saw 'expired or reached its usage limit'"
+      "evidence": "One-use invite, alice and maya POST at the same time (threads): space members 4 -> 5, only maya added; invite use_count 1; alice sees the 410 limit page afterwards."
     },
     "c-anon-invite-landing.14": {
       "result": "pass",
-      "evidence": "guest at 390 dark: 'Log in to accept invite' is full width (328 of 328), 41px high, dark text on light blue, no horizontal scroll"
+      "evidence": "390px dark: invite page action button 328px wide (full width), heading rgb(229,229,229) on rgb(35,38,47), no horizontal scroll.",
+      "screenshot": "c-anon-invite-landing.14.png"
     },
     "c-anon-invite-landing.15": {
       "result": "pass",
-      "evidence": "guest on a hidden-space (Moderators' Room) invite token: shows only the space name and description with the login button, no members or topics"
+      "evidence": "Guest on Moderators Room invite: names the space and its one-line description plus \"Log in to accept invite\" (invite holder), shows no members or topics, no sidebar data."
     },
     "c-anon-invite-landing.16": {
       "result": "pass",
-      "evidence": "/community/invite/AbCdEf1234567890unknownTokenZZ/ -> HTTP 404 'Invalid invite link.'"
+      "evidence": "Well-formed unknown 32-char token -> HTTP 404 \"Invalid invite link.\" (no longer a soft 200)."
     },
     "c-anon-invite-landing.17": {
-      "result": "untested",
-      "needs": "fixture/lane A: omar is not banned from Off-Topic Lounge in this data"
+      "result": "pass",
+      "evidence": "omar has a member row in Off-Topic Lounge; his invite page says he is banned instead of redirecting into the space."
     },
     "c-anon-invite-landing.18": {
       "result": "pass",
-      "evidence": "existing member opening an invite sees 'You are already a member of <space>. Go to Space' (matches check 4, no silent redirect)"
+      "evidence": "Existing member opening an invite to his space gets \"You are already a member of ...\" with a Go to Space link, no redirect; runbook text that the code silently redirects is out of date."
     }
   },
-  "proposed_checks": [
-    "- `c-anon-invite-landing.19` @member #ui !refuse: submit the Join form with an expired or missing nonce -> a visible message tells the member to reload and try again, and nobody is added."
-  ],
-  "notes": "Fixtures: inserted five temporary rows into wp_jt_invite_links (expired, limit-reached, archived 2025 Hackathon, hidden Moderators' Room, one-use) and deleted them afterwards; lucia and test_subscriber memberships created by the joins were removed and member_count recomputed (3001 -> 20, 2990 -> 20); invite 283 use_count reset to 0. No site setting changed."
+  "proposed_checks": []
 }

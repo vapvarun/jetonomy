@@ -1,9 +1,8 @@
 {
   "journey": "C.admin.setup-wizard",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T17:09:42Z",
-  "walker": "lane A",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T13:10:00Z",
+  "walker": "lane B3",
   "env": {
     "themes": [
       "reign"
@@ -13,107 +12,102 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark-emulated"
+      "light"
     ]
   },
   "checks": {
     "c-admin-setup-wizard.1": {
       "result": "pass",
-      "evidence": "wp-admin/admin.php?page=jetonomy-setup: 'Welcome to Jetonomy', Community URL Slug (community), Default Community Type Forum/Q&A/Ideas/Feed, button 'Next: First Space'",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz1.png"
+      "evidence": "Wizard shows Welcome to Jetonomy, slug field with URL preview, Forum/Q&A/Ideas/Feed types and Next (re-walk at 7bbd544b)",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.2": {
       "result": "pass",
-      "evidence": "category name emptied, Create Space -> red 'Please fill in the category and space name.'; jt_categories stayed 7",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz2-empty.png"
+      "evidence": "Cleared the prefilled names and submitted -> 'Please fill in the category and space name.'; category/space counts unchanged",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.3": {
       "result": "pass",
-      "evidence": "'Product Questions' + 'Getting Started' -> 'Your community is ready!' with Visit Community and Go to Dashboard, plus next steps list",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz3.png"
+      "evidence": "'QA-WALK-B2 Wizard Product Questions' + 'Getting Started' -> 'Your community is ready!' with Visit Community and Go to Dashboard",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.4": {
       "result": "pass",
-      "evidence": "Visit Community opens /community/ (in a new tab); guest /community/ lists Product Questions > Getting Started (Forum, 0 topics, 1 member) under the existing categories",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz4-admin.png"
+      "evidence": "Visit Community /community/ and guest home list the new category and space",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.5": {
-      "result": "fail",
-      "expected": "toast 'Demo data imported.', guest home counts include demo immediately, demo members have avatars and bios",
-      "actual": "Button advanced to 'Your community is ready!' with no 'Demo data imported.' toast. Guest home did include demo spaces immediately (General Discussion 11 topics) and pulse 5,000 members / 2,316 topics.",
-      "url": "http://localhost:8095/wp-admin/admin.php?page=jetonomy-setup",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/wizard-demo-import.png",
-      "site": "docker jt203-scale"
+      "result": "not_performed",
+      "evidence": "Demo import adds shared-site demo content; runbook depth note limits demo import/remove to the disposable Docker site, not available here"
     },
     "c-admin-setup-wizard.6": {
-      "result": "pass",
-      "evidence": "Overview 'Remove All Demo Data' \u2192 notice 'All demo data has been removed.' Demo_Seeder::summary active=false, counts all 0. jetonomy_demo_data option gone.",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/demo-removed.png",
-      "site": "docker jt203-scale"
+      "result": "not_performed",
+      "evidence": "Remove demo data wipes the shared community; needs the disposable Docker site (runbook depth note)"
     },
     "c-admin-setup-wizard.7": {
-      "result": "pass",
-      "evidence": "After remove on a site that also had scale+import rows: Overview still 3,525 topics / 2,983 replies / 29 spaces (Scale space 0 1,021 topics, Trails & Pines 350). Only demo rows left.",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/guest-home-after-remove-demo.png",
-      "site": "docker jt203-scale"
+      "result": "not_performed",
+      "evidence": "Same as .6; needs the disposable Docker site"
     },
     "c-admin-setup-wizard.8": {
-      "result": "untested",
-      "needs": "PHPUnit proof pending (owner decision 2026-10-17: no live write probes as members against admin endpoints); test name added when written"
+      "result": "pass",
+      "evidence": "bob POST jetonomy_setup_save / jetonomy_setup_create_sample -> 403 -1; wizard page 403; nothing created",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.9": {
       "result": "pass",
-      "evidence": "logged out jetonomy_setup_save and jetonomy_setup_create_sample -> HTTP 400 body 0; nothing created"
+      "evidence": "guest POST jetonomy_setup_save -> 0/400; nothing written",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.10": {
       "result": "pass",
-      "evidence": "admin with nonce 'deadbeef00' and with no nonce -> 403 body -1; nothing created; jetonomy_settings identical to before the walk"
+      "evidence": "admin POST with bad nonce -> 403 -1; nothing saved",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.11": {
       "result": "pass",
-      "evidence": "390px steps 1 and 2: scrollWidth == clientWidth 390; Next 44px, Create Space 44px, demo button 60px, inputs 42px tall; step bar fits",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz11-s1-390.png, laneA-wiz11-s2-390.png"
+      "evidence": "390px: scrollWidth 390 = clientWidth on steps 1,2 and final; buttons 44px (demo 61px); steps stack",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-390-s2-end.png",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.12": {
       "result": "pass",
-      "evidence": "150-character category name and 288-character space description both stored in full (LENGTH 150 / 288); guest home wraps the category heading (overflow-wrap anywhere), 390px no sideways scroll; the final wizard screen itself does not show them",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz12-home390.png"
+      "evidence": "150-char category name and 288-char space description saved in full (DB char_length 150 and 288) at 390px; final screen no overflow",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.13": {
       "result": "pass",
-      "evidence": "admin-ajax aborted: 'Network error. Please try again.' shown, Create Space re-enabled; retry created exactly one 'Reseller Resources' category and one space"
+      "evidence": "Offline on create: 'Network error. Please try again.', Create re-enabled, still step 2; back online one retry reached 'Your community is ready!' and created one category/space",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.14": {
       "result": "pass",
-      "evidence": "WPLANG=ar: html dir=rtl, wizard mirrors (card text right-aligned) and the progress steps run 1,2,3 from right to left (x 829, 688, 576). The plugin has no Arabic translation so wizard text stays English, with its full stops/! landing at the line start (.Let's... / !Done); qa-artifacts/203-walk2/laneA/wizard-arabic.png"
+      "evidence": "Arabic admin (user locale ar): html dir=rtl, progress steps run 1,2,3 right to left, card text right-aligned",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-rtl.png",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.15": {
       "result": "pass",
-      "evidence": "WordPress admin has no dark scheme and the wizard has no dark rules; with prefers-color-scheme dark it stays light: text rgb(15,23,42) on rgb(248,250,252) inputs, contrast far above 4.5:1",
-      "screenshot": "qa-artifacts/203-walk2/laneA/laneA-wiz15-dark.png"
+      "evidence": "Dark colour scheme: wizard stays light (body rgb(240,244,255), white card, text rgb(30,41,59)); primary button now white on rgb(37,99,235) = 5.2:1; all text readable. No dark treatment exists, but contrast holds",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-dark.png",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.16": {
       "result": "pass",
-      "evidence": "Arabic admin: URL preview reads 'http://forums.local/community/' left to right with the slash at the end, link icon on the right"
+      "evidence": "Arabic admin: URL preview span dir=ltr reads http://forums.local/community/ with slash at the end",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-rtl.png",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.17": {
       "result": "pass",
-      "evidence": "Ran the wizard with category 'Community' and space 'General Discussion' (both exist): ended on 'Your community is ready!' and counts stayed 7 categories / 45 spaces, still one of each name (existing ones reused, no duplicate)"
+      "evidence": "Second run with same names reuses the existing category/space; no duplicate",
+      "carried_forward": true
     },
     "c-admin-setup-wizard.18": {
-      "result": "fail",
-      "third_party": "wpmediaverse",
-      "expected": "floating Messages button does not cover Create Space or Next at 390px",
-      "actual": "Still the only overlap: WPMediaVerse bubble .mvs-chat-trigger (322-370 x 776-824) overlaps 'Next: First Space' (172-334 x 760-804) by 12px at 390x844, scrolled to bottom. No Jetonomy element is fixed-positioned. Belongs to WPMediaVerse, not Jetonomy.",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-setup",
-      "screenshot": "qa-artifacts/203-walk3/laneA/w3A-wizard-390.png"
+      "result": "pass",
+      "evidence": "390px at viewport heights 844 and 667, scrolled to the end of steps 1 and 2: only fixed element is the theme scroll-up arrow; overlap area with Next/Back/Create = 0 px2 (the Messages floating button does not render in wp-admin)",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-390-s2-end.png",
+      "carried_forward": true
     }
   },
-  "proposed_checks": [
-    "- `c-admin-setup-wizard.16` @admin #admin +rtl: in the Arabic admin the URL preview under the slug field reads http://forums.local/community/ left to right with the slash at the end.",
-    "- `c-admin-setup-wizard.17` @admin #admin !refuse: run the wizard twice with the same category and space names -> the second run says the names already exist or merges, and does not add a duplicate 'Getting Started' category (a second 'Getting Started' space was created beside the seeded one).",
-    "- `c-admin-setup-wizard.18` @admin #admin +390: the floating Messages button does not cover the Create Space or Next buttons at 390px."
-  ],
-  "notes": "Wizard run once as admin on duplicate names, which wrote jetonomy_settings and set jetonomy_setup_complete: duplicates purged (space + category), jetonomy_setup_complete deleted (it did not exist before), jetonomy_settings restored from backup (byte-equal). Site language set to Arabic for .14/.16 and restored to the empty WPLANG. | Re-walk 2 (lane A): jetonomy_settings unchanged by the wizard run (compared with backup). | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
 }

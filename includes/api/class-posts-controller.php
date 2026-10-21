@@ -228,9 +228,9 @@ class Posts_Controller extends Base_Controller {
 		// anonymous visitors to a public post deserve the same rich link
 		// preview cards that logged-in members see. The URL being previewed
 		// is already visible in the post body, the Preview_Service only
-		// scrapes the URL's own OG metadata, and wp_safe_remote_get blocks
-		// internal-IP SSRF. Aggressive caching in the service keeps repeated
-		// hits cheap.
+		// scrapes the URL's own OG metadata, and Url_Guard vets the address
+		// (the fetch is pinned to it). A per-IP limit bounds abuse; a cached
+		// preview never spends it.
 		register_rest_route(
 			$ns,
 			'/link-preview',
@@ -261,8 +261,8 @@ class Posts_Controller extends Base_Controller {
 	 */
 	public function link_preview( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$url = (string) $request->get_param( 'url' );
-		// SSRF guard: wp_http_validate_url() misses 169.254/16 (cloud metadata),
-		// 100.64/10 and IPv6 loopback/ULA/link-local. This endpoint is reachable
+		// SSRF guard: core's wp_http_validate_url() covers the IPv4 private ranges but not
+		// IPv6 loopback/ULA/link-local, DNS rebinding or redirects. This endpoint is reachable
 		// unauthenticated in public mode, so resolve + reject internal addresses
 		// before fetching (the fetcher repeats the check on every redirect hop).
 		// A URL we will not fetch (no DNS, internal, malformed) answers the same
@@ -270,16 +270,22 @@ class Posts_Controller extends Base_Controller {
 		// 400 here logged a failed request in every reader's console for a post
 		// linking to a dead host. One answer for every refusal keeps it
 		// non-enumerating.
-		if ( '' === $url || ! wp_http_validate_url( $url ) || is_wp_error( \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url ) ) ) {
+		// Each distinct URL costs an outbound fetch, so a visitor cannot make the
+		// server crawl at will; over the limit answers like any other refusal.
+		// A cached preview costs no fetch, so it never spends the limit, and an
+		// over-limit answer is not cached by the client (the blank card must not stick).
+		$service = new \Jetonomy\Services\Links\Preview_Service();
+		$limited = '' !== $url && ! $service->is_cached( $url ) && ! self::check_rate_limit( 'link_preview', 60 );
+		if ( '' === $url || $limited || ! wp_http_validate_url( $url ) || is_wp_error( \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url ) ) ) {
 			$preview = \Jetonomy\Services\Links\Preview_Data::empty_for( $url );
 		} else {
-			$preview = ( new \Jetonomy\Services\Links\Preview_Service() )->fetch( $url );
+			$preview = $service->fetch( $url );
 		}
 
 		$response = new \WP_REST_Response( $preview->to_array(), 200 );
 		// Clients (web + mobile) can layer their own cache; 10-minute
 		// Cache-Control keeps repeat renders cheap without blocking refresh.
-		$response->header( 'Cache-Control', 'private, max-age=600' );
+		$response->header( 'Cache-Control', $limited ? 'no-store' : 'private, max-age=600' );
 		return $response;
 	}
 
@@ -561,9 +567,9 @@ class Posts_Controller extends Base_Controller {
 		);
 
 		// Carry the client-requested flag into the create data. Free only
-		// plumbs it through — Pro validates/enforces it via the
+		// plumbs it through (see requested_anonymity()) — Pro validates/enforces it via the
 		// `jetonomy_before_create_post` filter.
-		$post_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
+		$post_data['is_anonymous'] = $this->requested_anonymity( $request );
 
 		if ( ! empty( $prefix ) ) {
 			$post_data['prefix'] = $prefix;
@@ -828,7 +834,7 @@ class Posts_Controller extends Base_Controller {
 		$check_data        = array_intersect_key( $update_data, array_flip( array( 'title', 'content' ) ) );
 		$moderation_action = apply_filters( 'jetonomy_check_content', null, $check_data, $space_id, $user_id );
 		if ( 'block' === $moderation_action ) {
-			return $this->validation_error( __( 'Your post was blocked by our content policy.', 'jetonomy' ) );
+			return $this->validation_error( sprintf( /* translators: %s: the singular Topic or Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 		}
 		// Enforce hold/spam on EDIT too (mirrors the create path). Without this a
 		// user could publish clean then edit spam/held content in — only 'block'

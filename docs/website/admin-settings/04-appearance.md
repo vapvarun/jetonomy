@@ -90,17 +90,11 @@ Controls how wide the community canvas can grow before it stops expanding.
 - **Full Width** - Lets the community stretch edge-to-edge of the viewport. Best for kanban-style spaces, leaderboards, and dense feeds that benefit from horizontal room.
 - **Custom (px)** - Pins the canvas to a specific pixel width (e.g. `1280`). Useful when you want a wider reading column than the theme provides without going fully edge-to-edge.
 
-### Theme Sidebar
+> **Changed in 2.0.4:** the Theme Sidebar setting is removed. Community pages never show a theme sidebar.
 
-**Setting:** `sidebar_visibility`
-**Default:** Theme Default
-**Options:** Theme Default, Hide on community pages
-**Location:** Appearance tab → Layout section
+### Community sidebar widgets
 
-Decides whether the host theme's sidebar shows on community routes.
-
-- **Theme Default** - Leaves the theme's sidebar exactly where the theme renders it.
-- **Hide on community pages** - Suppresses the host theme's sidebar across `/community/*` so the forum renders at full width even when the rest of the site has a sidebar everywhere. Pair this with **Full Width** above when you want a true full-bleed community experience.
+Community pages never show your theme's sidebar; they show Jetonomy's own sidebar. To add your own widgets or blocks to it, go to **Appearance → Widgets** and add them to **Community Sidebar**. They appear at the bottom of the sidebar on every community page, on any theme, and nothing shows when the area is empty.
 
 ### Page Padding
 
@@ -115,7 +109,7 @@ Adjusts the inline padding around the community canvas.
 - **None** - Removes the inline padding so the community sits flush against the viewport edges. Good for themes that already hug the edges.
 - **Comfortable** - Adds a generous inline padding. Useful for themes that hug the edges too tightly and leave content butting against the screen on mobile.
 
-> **Tip:** If your theme has a sidebar everywhere but you want the community to feel like a standalone app, set **Container Width** to Full Width, **Theme Sidebar** to Hide on community pages, and **Page Padding** to Comfortable. The rest of your site keeps the original theme layout.
+> **Tip:** To make the community feel like a standalone app, set **Container Width** to Full Width and **Page Padding** to Comfortable. Community pages never show your theme's sidebar; they show Jetonomy's own sidebar. The rest of your site keeps the original theme layout.
 
 ## Layout Density
 

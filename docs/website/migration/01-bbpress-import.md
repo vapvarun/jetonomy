@@ -23,7 +23,7 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies and
 | User accounts | Linked to existing WP users | Matched by user ID |
 | Sticky and super sticky topics | Sticky posts | Both land sticky in their own space. Jetonomy has no site-wide sticky, so a super sticky is not pinned across the whole community |
 | Closed topics | Closed posts | Preserved - the thread stays readable and takes no new replies |
-| Private and hidden forums | Private and hidden spaces | A private forum becomes a private space (new members need approval) and a hidden forum a hidden space (invite only). Everyone who posted in them is added as a member so they keep access |
+| Private and hidden forums | Private and hidden spaces | A private forum becomes a private space (new members need approval) and a hidden forum a hidden space (invite only). Everyone who posted in them is added as a member so they keep access, except members banned from the space. A re-import also grants access to people who posted in an already imported private or hidden forum since the last run |
 | BuddyPress group forums | Spaces linked to their group | The space is linked to its group, so the group's Forum tab shows it and joins and leaves stay in sync. The group's confirmed, non-banned members are added: group admins as space admins, group moderators as space moderators. Members are added in steps, so a group with thousands of members does not time out. A group already linked to a space is left alone; a group you unlinked from its space on purpose is linked again if you re-import its forum. Needs BuddyPress with Groups active during the import |
 | Inline images and attached files (1.8.0+) | WordPress media library + Jetonomy attachments | Downloaded from bbPress and re-registered as attachments; images stay inline, other files show as a download link |
 
@@ -65,7 +65,7 @@ Complete these steps before starting the import:
 
 The importer processes records in batches of 500. A progress bar shows the completion percentage and the current step (Forums, Topics, Replies, Profiles, Finalize).
 
-Keep the browser tab open while the import is running. Your browser drives each batch, so closing the tab, refreshing or navigating away stops the import. It can be resumed (see below).
+Each batch stops at its time limit and reports the rows it handled, so the next batch resumes at the right place (2.0.4). Keep the browser tab open while the import is running. Your browser drives each batch, so closing the tab, refreshing or navigating away stops the import. It can be resumed (see below).
 
 ## Dry-Run Mode
 

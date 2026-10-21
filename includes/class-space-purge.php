@@ -435,16 +435,6 @@ final class Space_Purge {
 	}
 
 	/**
-	 * Delete a space and every row that references it.
-	 *
-	 * Idempotent: a second call finds nothing left to remove and reports zeros.
-	 * Safe on an already-orphaned space (the `spaces` row gone, its children
-	 * still present), which is exactly the backfill's case.
-	 *
-	 * @param int $space_id Space id.
-	 * @return array<string,int> Rows removed, keyed "table.column" (only non-zero entries).
-	 */
-	/**
 	 * Delete a bounded slice of a space, deepest level first.
 	 *
 	 * The unit of work is deliberately a slice of REPLIES, then a slice of
@@ -602,6 +592,10 @@ final class Space_Purge {
 			}
 		}
 
+		// Sub-spaces move up to this space's own parent (top level when the row
+		// is already gone), never left pointing at a space that no longer exists.
+		Models\Space::reparent_children( $space_id, (int) ( $space->parent_id ?? 0 ) );
+
 		// The space row last, so an interrupted purge leaves the space
 		// discoverable and the next pass finishes the job.
 		foreach ( self::relations() as $r ) {
@@ -633,6 +627,16 @@ final class Space_Purge {
 		);
 	}
 
+	/**
+	 * Delete a space and every row that references it.
+	 *
+	 * Idempotent: a second call finds nothing left to remove and reports zeros.
+	 * Safe on an already-orphaned space (the `spaces` row gone, its children
+	 * still present), which is exactly the backfill's case.
+	 *
+	 * @param int $space_id Space id.
+	 * @return array<string,int> Rows removed, keyed "table.column" (only non-zero entries).
+	 */
 	public static function purge( int $space_id ): array {
 		$space_id = (int) $space_id;
 		if ( $space_id <= 0 ) {
@@ -715,8 +719,9 @@ final class Space_Purge {
 				$n += self::delete_where_in( $r, $ids );
 			}
 		} catch ( \RuntimeException $e ) {
-			// Leftover dependents are swept with the orphan backfill; a failed
-			// lookup must not break the delete the caller is in the middle of.
+			// A failed lookup must not break the delete the caller is in the middle
+			// of. Leftovers here are NOT swept by the orphan backfill (it walks
+			// space ids only), so an object-level failure leaves them in place.
 			return $n;
 		}
 		return $n;

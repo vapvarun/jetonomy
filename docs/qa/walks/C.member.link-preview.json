@@ -1,8 +1,7 @@
 {
   "journey": "C.member.link-preview",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T11:38:09Z",
   "walker": "lane B",
   "env": {
     "themes": [
@@ -13,85 +12,81 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-link-preview.1": {
-      "result": "fail",
-      "expected": "the published topic shows a card with title, image and site name.",
-      "actual": "bob published a topic whose body is only https://wordpress.org/news/ (a standalone link): the topic shows just a quote box with the link 'News' - no title, image or site name - because the URL goes through the WordPress oEmbed (blockquote + hidden iframe) and the browser logs 'Refused to display https://wordpress.org/ in a frame because X-Frame-Options is sameorigin'. A standalone github.com link in the same composer did give a proper card (GitHub badge, image, title, description). An inline link inside a sentence gets no card (only a standalone link does)",
-      "url": "http://forums.local/community/s/general-discussion/t/release-notes-worth-reading-before-the-next-upgrade/",
-      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-wp-1440.png"
+      "result": "pass",
+      "evidence": "bob topic 'QA-WALK-B Release notes worth reading' with https://wordpress.org/news/ (created through REST POST /spaces/2999/posts, not typed into the composer): published page shows a card with site name WORDPRESS NEWS, title 'WordPress News', description and a 558px image",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/lp-bob1440.png"
     },
     "c-member-link-preview.2": {
       "result": "pass",
-      "evidence": "GET /link-preview?url=https://wordpress.org/news/ -> 200 {url,title 'WordPress News',description,image,site_name,domain,favicon,type,provider generic,locale,...}"
+      "evidence": "bob GET /link-preview?url=https://wordpress.org/news/ -> 200 with title, description, image, site_name, favicon and provider 'generic'"
     },
     "c-member-link-preview.3": {
-      "result": "pass",
-      "evidence": "standalone YouTube URL -> iframe player (Me at the zoo); standalone x.com/jack/status/20 -> twitter provider embed (tweet iframe); both render under their link",
-      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-embeds-1440.png"
+      "result": "fail",
+      "evidence": "YouTube URL shows the oEmbed player (iframe youtube.com/embed/dQw4w9WgXcQ?feature=oembed, .jt-embed). An X post URL (x.com and twitter.com .../WordPress/status/1795513131453583543) comes back provider 'twitter' with empty title, image and embed_html, so no X card renders; I could not confirm a real live post ID, so this may be the fixture URL"
     },
     "c-member-link-preview.4": {
       "result": "pass",
-      "evidence": "guest on the github.com topic: the same card (GitHub, image, title, description) renders",
-      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-card-1440.png"
+      "evidence": "Guest view of the same topics: identical card (same class, 558x314 image, same text) and the same YouTube iframe"
     },
     "c-member-link-preview.5": {
       "result": "pass",
-      "evidence": "localhost, 127.0.0.1, 169.254.169.254, 10.0.0.5 and file:///etc/passwd -> each 200 with identical empty previews (no title/description/image/embed), per the owner's decision (no 400)"
+      "evidence": "bob GET /link-preview for http://localhost/, http://127.0.0.1/, http://169.254.169.254/latest/meta-data/, http://10.0.0.5/ and file:///etc/passwd: all 200 with identical empty preview (no title, description, image or embed)"
     },
     "c-member-link-preview.6": {
       "result": "pass",
-      "evidence": "127.0.0.1.nip.io, localtest.me and a public URL redirecting to 127.0.0.1 -> 200 empty preview, nothing fetched (owner decision: no 400 message)"
+      "evidence": "http://localtest.me/ and http://127.0.0.1.nip.io/ (public names resolving to 127.0.0.1) and an httpbin redirect-to http://127.0.0.1/ all return the same empty 200 preview; no content leaked"
     },
     "c-member-link-preview.7": {
       "result": "pass",
-      "evidence": "a URL whose server hangs 30s: /link-preview gave up at 6.08s with an empty preview; a topic containing it published in 55 ms as a plain link"
+      "evidence": "https://httpbin.org/delay/20: /link-preview gave up at 6.06 s with an empty preview; creating a topic containing that URL returned 201 in 5.07 s and the page shows a plain link with no card"
     },
     "c-member-link-preview.8": {
       "result": "pass",
-      "evidence": "https://httpbin.org/status/503 -> 200 empty (no PHP error); the retry came back in 31 ms (first 1017 ms), i.e. the short negative cache"
+      "evidence": "https://httpbin.org/status/500: 200 empty preview in 3.1 s, no PHP error, an immediate retry came back in 0.06 s (negative cache, 10 minutes per class-preview-service.php)"
     },
     "c-member-link-preview.9": {
       "result": "pass",
-      "evidence": "the same good URL three times: 61 ms, 31 ms, 26 ms with identical data (cached)"
+      "evidence": "Second GET for the same URL took 0.04 s and returned identical JSON (12-hour cache)"
     },
     "c-member-link-preview.10": {
-      "result": "pass",
-      "evidence": "redirect chain of 6 hops and a 1000-hop redirect -> 200 empty (owner decision: no 400); chain of 6 took 6.7 s, so the follow is capped"
+      "result": "fail",
+      "evidence": "Redirect loop (httpbin redirect-to chain) and a 6-hop chain (httpbin /redirect/6) both returned 200 with an empty preview after 6.8 s and 14.1 s, not 400 'Redirect loop or invalid redirect.' / 'Too many redirects.'; the WP_Errors from class-html-fetcher.php:101/125 are swallowed by the preview service"
     },
     "c-member-link-preview.11": {
       "result": "pass",
-      "evidence": "guest GET /link-preview for http://127.0.0.1/ -> 200 empty preview, no fetch. Security note: a guest also gets full previews for public URLs (wordpress.org returned title and image without login), so the endpoint is an anonymous server-side fetch"
+      "evidence": "Guest GET /link-preview for http://127.0.0.1/ -> 200 identical empty preview, nothing fetched"
     },
     "c-member-link-preview.12": {
       "result": "pass",
-      "evidence": "146-character unbroken URL in a topic: the link wraps over 4 lines inside the column (x199-928) and the card stays x199-759; no horizontal scroll"
+      "evidence": "145-character unbroken URL topic at 390: page scrollWidth 390; the link text wraps (overflow-wrap anywhere, 134px tall, 292px wide) inside the post",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/lp-long-390.png"
     },
     "c-member-link-preview.13": {
       "result": "pass",
-      "evidence": "card at 390: x48-342, 346px tall, image scaled to 292x146, no horizontal scroll",
-      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-390-dark.png"
+      "evidence": "Card at 390: image 292x164 scales to the column, title wraps, the whole card is an anchor 313px tall (tap target well above 40px), no sideways scroll"
     },
     "c-member-link-preview.14": {
       "result": "pass",
-      "evidence": "dark mode on Reign: card background srgb(.18,.19,.23) on page rgb(35,38,47), title rgb(229,229,229), description light grey, border white 12%",
-      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-390-dark.png"
+      "evidence": "Dark mode card background rgb(47,49,58)-ish on the dark surface rgb(35,38,47), title text stays light; checked via computed colours at 390",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/lp-bob390d.png"
     },
     "c-member-link-preview.15": {
+      "result": "pass",
+      "evidence": "Link to ar.wordpress.org: card title is Arabic, dir=auto resolves to rtl, text-align start (right on RTL text)",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/lp-arabic.png"
+    },
+    "c-member-link-preview.16": {
       "result": "fail",
-      "expected": "the card title renders right to left.",
-      "actual": "link to an Arabic page (aljazeera.net): the card title 'الجزيرة نت' and its Arabic description are laid out left-to-right and left-aligned (title has direction ltr, no dir=auto), with the Arabic comma at the start of lines; it does not render right to left",
-      "url": "http://forums.local/community/s/general-discussion/t/long-link-and-an-arabic-news-site-for-the-community-reading-list/",
-      "screenshot": "qa-artifacts/203-walk3/laneB/linkpreview-arabic-1440.png"
+      "evidence": "Guest GET /link-preview for 40 different public URLs (example.com?qawalkb=N) in 66 s: every one 200, no 401 and no 429, so the endpoint is an open server-side fetch for logged-out visitors"
+    },
+    "c-member-link-preview.17": {
+      "result": "pass",
+      "evidence": "Standalone link https://wordpress.org/news/2024/04/regina/ renders a card with title 'WordPress 6.5 Regina', image and site 'WordPress News'"
     }
-  },
-  "proposed_checks": [
-    "- `c-member-link-preview.16` @guest #rest: GET /link-preview for a public URL logged out -> either 401 or a rate-limited answer (today it is an open server-side fetch).",
-    "- `c-member-link-preview.17` @member #ui: a standalone wordpress.org post link shows a card with title, image and site name (today only a quote box with the link because the oEmbed iframe is blocked)."
-  ],
-  "notes": "Used github.com, youtube.com, x.com, aljazeera.net and httpbin.org as outside URLs; topics deleted afterwards."
+  }
 }

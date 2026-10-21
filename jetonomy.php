@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     2.0.3
+ * Version:     2.0.4
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '2.0.3' );
+define( 'JETONOMY_VERSION', '2.0.4' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -35,7 +35,7 @@ define( 'JETONOMY_VERSION', '2.0.3' );
 // upgrade block and Migration_1_9_3 never ran there. Keep this in step with
 // the newest key in Migrator::get_migrations() or the newest migration is
 // silently dead on exactly the sites that need it.
-define( 'JETONOMY_DB_VERSION', '2.0.2' );
+define( 'JETONOMY_DB_VERSION', '2.0.4' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -55,15 +55,14 @@ if ( ! defined( 'JETONOMY_SMOKE_TEST' ) ) {
 		// An unguarded require here means a bundled-library dir dropped by a bad
 		// copy, an incomplete upload, or a hosting file-count limit takes the
 		// ENTIRE site down (WSOD), not just background jobs. Every job that
-		// depends on AS already checks function_exists( 'as_enqueue_async_action' )
-		// and falls back to WP-Cron (background-jobs standard), so the plugin
-		// itself tolerates AS being absent - only this require_once did not.
+		// depends on AS checks function_exists(), so the plugin keeps running; the
+		// recurring jobs simply do not arm until the library is back.
 		add_action(
 			'admin_notices',
 			function () {
 				echo '<div class="notice notice-error"><p>';
 				// jt-terms-ok: 'reply-by-email' is the feature name.
-				esc_html_e( 'Jetonomy: the bundled Action Scheduler library is missing from libs/action-scheduler/. Background jobs (email digest, badges, AI, reply-by-email, webhooks) will fall back to WP-Cron until the plugin files are restored. Reinstalling Jetonomy from the original zip fixes this.', 'jetonomy' );
+				esc_html_e( 'Jetonomy: the bundled Action Scheduler library is missing from libs/action-scheduler/. Background jobs (email digest, badges, AI, reply-by-email, webhooks) are paused until the plugin files are restored. Reinstalling Jetonomy from the original zip fixes this.', 'jetonomy' );
 				echo '</p></div>';
 			}
 		);

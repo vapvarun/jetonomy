@@ -455,7 +455,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							),
 							'actions' => array(
 								'label' => __( 'Actions', 'jetonomy' ),
-								'width' => 's',
+								'width' => 'l',
 							),
 						),
 						'rows'      => $banned_users,
@@ -504,7 +504,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 										break; // Lifting needs the authority that issued it.
 									}
 									?>
-									<button type="button" class="jt-btn jt-btn-sm jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></button>
+									<span class="jetonomy-mod-actions"><button type="button" class="button button-primary button-small jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></button></span>
 									<?php
 									break;
 							}

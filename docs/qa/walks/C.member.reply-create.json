@@ -1,9 +1,9 @@
 {
   "journey": "C.member.reply-create",
-  "free": "21f93481",
-  "pro": "fe21324",
-  "walked_at": "2026-10-17T22:20:00Z",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "pro": "404b0af",
+  "walked_at": "2026-10-21T09:41:57Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -19,104 +19,113 @@
   "checks": {
     "c-member-reply-create.1": {
       "result": "pass",
-      "evidence": "bob's reply on the Dark mode topic: appears inline (page 2, scrolled to it), count 45 -> 46"
+      "evidence": "bob posted on Feature Requests topic 5874 via composer: reply appears inline, header Replies 45 -> 46",
+      "screenshot": "c-member-reply-create.1.png"
     },
     "c-member-reply-create.2": {
       "result": "pass",
-      "evidence": "POST /posts/6326/replies -> 201; GET /posts/6326/replies lists the new reply"
+      "evidence": "POST /posts/8962/replies = 201; GET /posts/8962/replies lists 16375"
     },
     "c-member-reply-create.3": {
       "result": "pass",
-      "evidence": "bob replied to alice's topic: alice got one bell notification (reply_to_post 22844) and one Mailpit email 'Bob Martinez replied to your topic'"
+      "evidence": "alice (OP of 5719): one reply_to_post notification row for bob public reply and one Mailpit \"Bob Martinez replied to your topic\" email"
     },
     "c-member-reply-create.4": {
       "result": "pass",
-      "evidence": "empty reply: inline 'Write your reply before posting.', nothing posted"
+      "evidence": "empty composer submit shows inline \"Write your reply before posting.\" (role=alert) and nothing posted",
+      "screenshot": "c-member-reply-create.24.png"
     },
     "c-member-reply-create.5": {
       "result": "pass",
-      "evidence": "missing parent and a parent from another topic -> 400 jetonomy_invalid_parent 'The reply you are answering is no longer available.'; trashed parent -> 409 jetonomy_already_trashed; spam parent: no spam reply fixture"
+      "evidence": "parent_id missing=400 jetonomy_invalid_parent, trashed=409 jetonomy_already_trashed, spam=409 jetonomy_not_published, other topic=400 jetonomy_invalid_parent; nothing created"
     },
     "c-member-reply-create.6": {
       "result": "pass",
-      "evidence": "bob on closed 'Scheduled maintenance on Saturday': no Reply/Quote buttons, no composer; zero-reply closed topic reads 'No replies yet.'"
+      "evidence": "bob on closed Announcements topic: no composer, no Reply/Quote buttons, Closed badge. Topic then had a moderator reply from check .8 so the \"No replies yet.\" line could not be seen.",
+      "screenshot": "c-member-reply-create.6.png"
     },
     "c-member-reply-create.7": {
       "result": "pass",
-      "evidence": "POST reply to closed topic as bob -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'"
+      "evidence": "bob POST reply to 5877 = 403 jetonomy_post_closed \"This topic is closed and cannot receive new replies.\""
     },
     "c-member-reply-create.8": {
       "result": "pass",
-      "evidence": "test_moderator on a closed topic: composer present, a reply posted (201 id 13755)"
+      "evidence": "test_moderator: composer present on closed topic and POST /posts/5877/replies = 201"
     },
     "c-member-reply-create.9": {
       "result": "pass",
-      "evidence": "maya followed bob's thread; alice's public reply gave maya exactly one notification and one email ('Alice Chen replied in ...')"
+      "evidence": "theo followed 5719; bob public reply produced one \"replied in\" notification and one email for theo"
     },
     "c-member-reply-create.10": {
       "result": "pass",
-      "evidence": "alice's private reply: OP bob got the notification, maya (thread follower) got no notification and no email"
+      "evidence": "bob private reply 16381: alice (OP) got 1 reply_to_post row, theo (thread subscriber) got no notification and no email"
     },
     "c-member-reply-create.11": {
       "result": "fail",
-      "expected": "bob (not a member) on a CAB topic: POST /replies returns 403 jetonomy_forbidden",
-      "actual": "POST /posts/5865/replies -> 404 jetonomy_not_found 'Topic not found.' (new rule: write routes on unreadable content answer 404); the topic page says 'This content is in a private space.' with HTTP 404 and no composer. Needs the owner's call on 403 vs 404 for listed private spaces",
-      "url": "http://forums.local/wp-json/jetonomy/v1/posts/5865/replies",
-      "check_wrong": true
+      "evidence": "bob POST /posts/8955 (topic in invite-only CAB) = 404 jetonomy_not_found, runbook expects 403 jetonomy_forbidden; space page shows \"invite-only. You need an invitation to join.\" and no composer; nothing stored. Likely deliberate existence-hiding; runbook wording differs."
     },
     "c-member-reply-create.12": {
       "result": "pass",
-      "evidence": "finn on a topic: no composer, 'Your account is currently silenced and cannot post.'; POST /replies -> 403 jetonomy_user_silenced"
+      "evidence": "finn: composer replaced by \"Your account is currently silenced and cannot post\"; POST = 403 jetonomy_user_silenced",
+      "screenshot": "c-member-reply-create.12.png"
     },
     "c-member-reply-create.13": {
-      "result": "untested",
-      "needs": "fixture/lane A: omar has no space ban in Off-Topic Lounge"
+      "result": "pass",
+      "evidence": "omar POST in Off-Topic Lounge topic 5768 = 403 jetonomy_user_space_banned; space page shows ban message"
     },
     "c-member-reply-create.14": {
-      "result": "untested",
-      "needs": "lane A: new-member daily reply limit"
+      "result": "pass",
+      "evidence": "qa_walk_a_new (new member): 10 replies 201 then 429 \"New members can post 10 replies a day. You can reply again in about 1 day.\" retry_after 86400"
     },
     "c-member-reply-create.15": {
       "result": "pass",
-      "evidence": "double-click Post Reply -> exactly one reply created (13768)"
+      "evidence": "double-click on Post Reply created exactly one reply (Replies 46->47). Note: two parallel REST POSTs with identical body created two replies (no server dedupe)."
     },
     "c-member-reply-create.16": {
       "result": "pass",
-      "evidence": "offline: text kept in composer and a 'Failed to save.' toast; retry created one reply, no duplicate"
+      "evidence": "offline submit shows \"Failed to save.\", draft text kept; after going online retry created exactly one reply",
+      "screenshot": "c-member-reply-create.16.png"
     },
     "c-member-reply-create.17": {
       "result": "pass",
-      "evidence": "Arabic reply on Omar's topic: reply body dir=auto rtl, start aligned"
+      "evidence": "pure Arabic reply on omar topic 5873: computed direction rtl (container dir=auto)",
+      "screenshot": "c-member-reply-create.17.png"
     },
     "c-member-reply-create.18": {
       "result": "pass",
-      "evidence": "1740-character reply with a 120-character unbroken URL: body does not overflow its card, page width 1440"
+      "evidence": "1900-char body plus 120-char unbroken URL: no horizontal overflow (scrollWidth 1440 = clientWidth), paragraph 754px inside 786px",
+      "screenshot": "c-member-reply-create.18.png"
     },
     "c-member-reply-create.19": {
-      "result": "untested",
-      "needs": "lane A: set a space to require approval"
+      "result": "fail",
+      "evidence": "REST in approval space 4952: alice reply 201 status=pending, maya list does not show it, shown after admin approve. NOT PERFORMED in UI: \"awaiting moderation\" notice and announce-once notification on approval not checked."
     },
     "c-member-reply-create.20": {
       "result": "pass",
-      "evidence": "after the replies: topic reply_count = actual rows (47/47), profile reply_count 69 = DB rows, Help Desk topic count 17 = DB"
+      "evidence": "bob profile reply_count 83->84, topic 8962 reply_count 14->15, topic header 45->46. Space has no stored reply_count column (null), so space figure is derived by join."
     },
     "c-member-reply-create.21": {
-      "result": "untested",
-      "needs": "needs a real on-screen keyboard (device/emulator); at 390 without keyboard Post Reply is reachable (bottom 764, tab bar 784)"
+      "result": "pass",
+      "evidence": "390px viewport: Post Reply button at y 385-426 of 844, x 45-346, no horizontal scroll. Soft keyboard cannot be emulated in this harness.",
+      "screenshot": "c-member-reply-create.21.png"
     },
     "c-member-reply-create.22": {
       "result": "pass",
-      "evidence": "reply on page 2 of the 47-reply thread: URL went to ?rpg=2#reply-13756 and the new reply was visible"
+      "evidence": "topic 5874 has 45+ replies: new reply is shown on the page straight away (Replies count and text present)"
     },
     "c-member-reply-create.23": {
-      "result": "untested",
-      "needs": "fixture/lane A: omar has no space ban in Off-Topic Lounge"
+      "result": "pass",
+      "evidence": "omar topic URL in Off-Topic Lounge = 403 page with ban message; POST /replies = jetonomy_user_space_banned. GET /posts/5768 REST returns 404 not found."
     },
     "c-member-reply-create.24": {
       "result": "pass",
-      "evidence": "empty reply: 'Write your reply before posting.'; POST /posts/5874/replies content '' -> 400 jetonomy_validation 'Reply content is required.'"
+      "evidence": "UI shows \"Write your reply before posting.\" as role=alert; REST empty content \"\" = 400 \"Reply content is required.\" (note: content \"<p></p>\" is accepted with 201 and stores an empty reply)"
     }
   },
-  "proposed_checks": [],
-  "notes": "Replies created by bob/alice/maya/grace/test_moderator on bob's own temporary topics and a few seeded threads; all deleted afterwards (replies 13756, 13758, 13761, 13762, 13764, 13769 deleted individually, the rest went with their topics). maya's thread subscription removed. No site setting changed."
+  "proposed_checks": [
+    {
+      "id": "proposed.reply-create.empty-html",
+      "text": "POST /posts/<id>/replies with content \"<p></p>\" must return 400 like empty content; currently 201 with empty stored reply"
+    }
+  ]
 }

@@ -79,12 +79,19 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 	if ( ! $_jt_user_id ) {
 		// Guest - prompt to log in. Only private spaces get here: a hidden
 		// space answers 404 to guests before this template runs
-		// (Space::concealed_from_viewer), so its existence is never confirmed
-		$gate_message = 'invite' === $_jt_join_policy
-			/* translators: %s: space title. */
-			? sprintf( __( '%s is private and invite-only. Log in if you have an invitation.', 'jetonomy' ), $space->title )
-			/* translators: %s: space title. */
-			: sprintf( __( '%s is private. Log in to request access.', 'jetonomy' ), $space->title );
+		// (Space::concealed_from_viewer), so its existence is never confirmed.
+		// With guest teasers off the name and description are withheld too.
+		if ( \Jetonomy\Models\Space::name_withheld_from_viewer( $space, 0 ) ) {
+			$_jt_gate_about = '';
+			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+			$gate_message = sprintf( __( 'This %s is private. Log in to see it.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		} else {
+			$gate_message = 'invite' === $_jt_join_policy
+				/* translators: %s: space title. */
+				? sprintf( __( '%s is private and invite-only. Log in if you have an invitation.', 'jetonomy' ), $space->title )
+				/* translators: %s: space title. */
+				: sprintf( __( '%s is private. Log in to request access.', 'jetonomy' ), $space->title );
+		}
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(

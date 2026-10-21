@@ -84,18 +84,18 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 };
 ?>
 
-<div class="jt-app" data-wp-interactive="jetonomy">
-	<div class="jt-container">
-		<?php
-		\Jetonomy\Template_Loader::breadcrumb(
-			array(
-				array(
-					'label' => __( 'My Subscriptions', 'jetonomy' ),
-					'url'   => '',
-				),
-			)
-		);
-		?>
+<?php
+\Jetonomy\Template_Loader::breadcrumb(
+	array(
+		array(
+			'label' => __( 'My Subscriptions', 'jetonomy' ),
+			'url'   => '',
+		),
+	)
+);
+?>
+
+<div class="jt-two-col">
 		<main>
 			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
@@ -138,5 +138,6 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 				<?php endif; ?>
 			<?php endif; ?>
 		</main>
-	</div>
+
+	<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => null ) ); ?>
 </div>

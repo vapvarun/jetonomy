@@ -1,0 +1,78 @@
+{
+ "journey": "E.pro-license-and-lockstep",
+ "free": "dcdb0750",
+ "pro": "404b0af",
+ "walked_at": "2026-10-21T10:32:04Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "e-pro-license-and-lockstep.1": {
+   "result": "pass",
+   "evidence": "wp eval printed \"free:2.0.3 pro:2.0.3\" (identical)"
+  },
+  "e-pro-license-and-lockstep.2": {
+   "result": "fail",
+   "evidence": "PARTIAL: free deactivated with Pro active -> admin notice \"Jetonomy Pro requires the Jetonomy plugin to be installed and activated.\" on the dashboard (wording differs from \"Jetonomy Pro requires Jetonomy\"), plugins screen and frontend returned 200 with no fatal; after wp plugin activate jetonomy Pro was still active and working (restored)"
+  },
+  "e-pro-license-and-lockstep.3": {
+   "result": "fail",
+   "evidence": "PARTIAL: with free deactivated /wp-json/ 200 and /wp-json/jetonomy/v1/ and /jetonomy-pro/v1/ both 404 (never 500). With both active the route index check at /wp-json/jetonomy/v1/ not re-run after reactivation in this walk (REST used throughout); /jetonomy-pro/v1/ is not a namespace Pro registers"
+  },
+  "e-pro-license-and-lockstep.4": {
+   "result": "pass",
+   "evidence": "php ../jetonomy/bin/audit-rest-routes.php jetonomy-pro/includes/ -> \"audit-rest-routes: OK (no mutation routes missing REST_Auth)\""
+  },
+  "e-pro-license-and-lockstep.5": {
+   "result": "fail",
+   "evidence": "License screen exists (Settings > License, admin 1440): shows Status Active, blank License Key, Plan Lifetime, Expires dash, [Deactivate License] because local JETONOMY_PRO_LICENSE_BYPASS is defined. NOT PERFORMED: entering a valid key / masked key display / Deactivate-Reactivate cycle, because activate/deactivate call the live EDD store (wbcomdesigns.com) and the bypass leaves no real key to mask.",
+   "screenshot": "license-tab"
+  },
+  "e-pro-license-and-lockstep.6": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: invalid-key and expired-key messages need the activate action, which calls the live EDD store; no stub path exists. Runbook line also says Jetonomy > License while the screen is under Settings > License tab."
+  },
+  "e-pro-license-and-lockstep.7": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: grace-period behaviour needs the bypass constant removed (set in a shared mu-plugin used by other walkers) and a lapsed real key from the live store; not safe on the shared site."
+  },
+  "e-pro-license-and-lockstep.8": {
+   "result": "fail",
+   "evidence": "Extensions page walked as admin under bypass (Lifetime plan): no locked/upgrade cards exist for any tier; tier-gated locking cannot be shown without a lower-tier licence. NOT PERFORMED for lower tiers."
+  },
+  "e-pro-license-and-lockstep.9": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs the live EDD store"
+  },
+  "e-pro-license-and-lockstep.10": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: updating one zip was not attempted on the shared site"
+  },
+  "e-pro-license-and-lockstep.11": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: single-site install, no multisite"
+  },
+  "e-pro-license-and-lockstep.12": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: deleting Pro with remove-data would destroy the shared test data"
+  },
+  "e-pro-license-and-lockstep.13": {
+   "result": "pass",
+   "evidence": "License tab at 390px as admin: scrollWidth 390 = clientWidth 390 (no horizontal overflow), Deactivate button 155x44 inside viewport; 1440 renders status/plan/buttons. Dark mode not verified (theme does not honour emulated scheme).",
+   "screenshot": "license-390"
+  },
+  "e-pro-license-and-lockstep.14": {
+   "result": "pass",
+   "evidence": "bob (member): POST jetonomy_pro_license_action=deactivate to admin.php?page=jetonomy-settings&tab=license -> 403; GET same page -> 403; no license route in /wp-json/jetonomy/v1 index; license key blank/not present in admin page source (bypass active, so key-never-leaks is only shown for an empty key)."
+  }
+ }
+}

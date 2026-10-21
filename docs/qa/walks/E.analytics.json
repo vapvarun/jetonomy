@@ -1,0 +1,107 @@
+{
+  "journey": "E.analytics",
+  "free": "9b977fcb",
+  "pro": "a830e82",
+  "walked_at": "2026-10-21T12:51:08Z",
+  "walker": "lane C3",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "e-analytics.1": {
+      "result": "pass",
+      "evidence": "admin.php?page=jetonomy-pro-analytics: TOPICS 196 (+102.1%), REPLIES 930 (+183.5%), ACTIVE USERS 2,049 (+100%), VOTES 1,287 (+100%) each with change vs previous period. Overview card is \"Active Users\" not \"New members\"",
+      "screenshot": "analytics-1881",
+      "carried_forward": true
+    },
+    "e-analytics.2": {
+      "result": "pass",
+      "evidence": "with owner labels set to Threads/Answers/Neighbours the dashboard cards, legend and Top Spaces headers read THREADS, ANSWERS, NEIGHBOURS; 30d topics 2210 <= total, labels restored afterwards"
+    },
+    "e-analytics.3": {
+      "result": "pass",
+      "evidence": "clicked 7 Days, 30 Days, 90 Days in quick succession: after the last click the active button is 90 Days and TOPICS reads 361 (the 90d value from REST), not a previous range value",
+      "carried_forward": true
+    },
+    "e-analytics.4": {
+      "result": "pass",
+      "evidence": "GET /analytics/overview?range=7d posts 131 replies 358, 30d posts 196 replies 930, 90d posts 361 replies 1341: ranges differ, 7d <= 30d <= 90d; total published topics 369 >= 90d 361",
+      "carried_forward": true
+    },
+    "e-analytics.5": {
+      "result": "pass",
+      "evidence": "custom range with end before start now answers 400 rest_invalid_param 'A custom range needs a valid start and end date (YYYY-MM-DD), with the end on or after the start and no more than 366 days later.' (page tells the person); valid custom range carried forward"
+    },
+    "e-analytics.6": {
+      "result": "pass",
+      "evidence": "30d CSV: header Date,Topics,Replies,New Users,Votes, 31 rows; topics sum 2210 == dashboard/REST posts 2210 == sum of daily_posts; replies 981 == 981; new users 37 == 37 (fixed since previous walk)"
+    },
+    "e-analytics.7": {
+      "result": "pass",
+      "evidence": "wp jetonomy-pro analytics export --format=csv prints the same CSV (header + 31 rows, ends 2026-10-21,51,40,12,2) to stdout; stderr not inspected beyond Xdebug/opcache environment noise",
+      "carried_forward": true
+    },
+    "e-analytics.8": {
+      "result": "pass",
+      "evidence": "Top Spaces/Contributors ranked and capped at 10 rows, long name wraps (carried measurements); Local Chapters part untested (needs several active chapters) per runbook; headers use owner nouns"
+    },
+    "e-analytics.9": {
+      "result": "pass",
+      "evidence": "REST custom range 2020-01-01..2020-01-07 returns 200 with all-zero metrics and empty daily arrays (matches current runbook: custom range is REST-only and returns zeroes); UI offers only 7/30/90 so the no-data text cannot be shown with a custom range"
+    },
+    "e-analytics.10": {
+      "result": "pass",
+      "evidence": "with network blocked (setOffline) clicking 7 Days shows \"Could not reach the server.\" in the panel (500-path wording not exercised)",
+      "screenshot": "analytics-offline",
+      "carried_forward": true
+    },
+    "e-analytics.11": {
+      "result": "pass",
+      "evidence": "at 1881px .jtp-analytics max-width none, container right edge 1861 == wrap right edge 1861; no #jtp-diff-panel and no \"Verify dual-path\" toggle",
+      "screenshot": "analytics-1881",
+      "carried_forward": true
+    },
+    "e-analytics.12": {
+      "result": "pass",
+      "evidence": "test_moderator GET /analytics/overview and /analytics/export -> 403 jetonomy_forbidden \"You do not have permission to perform this action.\"; (grant-test with jetonomy_view_analytics and menu-entry absence NOT PERFORMED)",
+      "carried_forward": true
+    },
+    "e-analytics.13": {
+      "result": "pass",
+      "evidence": "bob: top-contributors/engagement/moderation/export 403,403,403,403; guest overview/top-spaces/export/diff-report 401,401,401,401; bob typing the admin URL shows: Sorry, you are not allowed to access this page.",
+      "carried_forward": true
+    },
+    "e-analytics.14": {
+      "result": "pass",
+      "evidence": "bob GET /analytics/diff-report -> 403; admin -> 200 with metrics (route is admin-only; matches current runbook), panel hidden in UI"
+    },
+    "e-analytics.15": {
+      "result": "pass",
+      "evidence": "390px: documentElement scrollWidth 390; tables scroll inside their wrapper (overflow-x auto); range buttons 7/30/90 reachable inside viewport",
+      "screenshot": "analytics-390",
+      "carried_forward": true
+    },
+    "e-analytics.16": {
+      "result": "not_performed",
+      "evidence": "wp-admin has only the light colour scheme on this site; no dark admin scheme to assess"
+    },
+    "e-analytics.17": {
+      "result": "not_performed",
+      "evidence": "no data from before the aggregator table existed is available to compare"
+    }
+  },
+  "proposed_checks": [
+    {
+      "id": "e-analytics.18",
+      "text": "@admin #admin: set the site timezone away from UTC and open the dashboard -> an item created just before local midnight counts in that local day's bucket, not the next UTC day."
+    }
+  ]
+}

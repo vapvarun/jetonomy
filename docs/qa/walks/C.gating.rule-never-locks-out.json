@@ -1,62 +1,8 @@
 {
   "journey": "C.gating.rule-never-locks-out",
-  "checks": {
-    "c-gating-rule-never-locks-out.1": {
-      "result": "pass",
-      "evidence": "fresh subscriber gating_tester in Photo Gear Swap (public, open): read the space, replied (13665), voted (score 1) and posted topic 6151 - all four work."
-    },
-    "c-gating-rule-never-locks-out.2": {
-      "result": "pass",
-      "evidence": "admin Access Rules tab, Logged In + Read -> toast 'Access rule added.'; the tab lists 'Logged in - Read - Viewer' and the heading reads 'Access Rules (1)'. Space stayed public/open."
-    },
-    "c-gating-rule-never-locks-out.3": {
-      "result": "pass",
-      "evidence": "same subscriber after the Logged In rule: reply 13666 (201), vote -1 then +1 (200), topic 6152 (201), space readable."
-    },
-    "c-gating-rule-never-locks-out.4": {
-      "result": "pass",
-      "evidence": "guest opened /community/s/photo-gear-swap/ after the Logged In rule: topics listed (tripod topic visible), GET /spaces/3081-style list readable, guest reply POST 401."
-    },
-    "c-gating-rule-never-locks-out.5": {
-      "result": "pass",
-      "evidence": "Role (subscriber) + Read rule -> toast 'Access rule added. This space was switched to Private so the rule can restrict access. A rule cannot gate a public space.' The space went to visibility private and the join policy also changed open -> approval (not mentioned in the toast)."
-    },
-    "c-gating-rule-never-locks-out.6": {
-      "result": "pass",
-      "evidence": "gating_t2 (outside the roster) after the switch: space and topic readable, no New Topic link and no composer; POST topic and reply -> 403 jetonomy_forbidden 'You cannot post in this space.'"
-    },
-    "c-gating-rule-never-locks-out.7": {
-      "result": "pass",
-      "evidence": "gating_tester (roster member) after the rules: reply 13668 (201) and vote (200) unchanged; his topic POST answered 429 only because new members are limited to 3 topics a day."
-    },
-    "c-gating-rule-never-locks-out.8": {
-      "result": "pass",
-      "evidence": "Access Rules tab intro: 'A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy.' Empty state: 'No access rules - Only this space's visibility and join policy decide who gets in.'"
-    },
-    "c-gating-rule-never-locks-out.9": {
-      "result": "pass",
-      "evidence": "gating_tester POST /spaces/3077/access-rules -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'; no rule stored."
-    },
-    "c-gating-rule-never-locks-out.10": {
-      "result": "fail",
-      "expected": "test_editor (space admin of Help Desk) adds a rule to Help Desk, refused for another space",
-      "actual": "test_editor is refused everywhere: POST /spaces/3004/access-rules -> 403 jetonomy_forbidden, GET access-rules -> 403, and /wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=3004&tab=access -> 403 'Sorry, you are not allowed to access this page.' Rules need the site-level jetonomy_manage_spaces capability, so a space admin cannot build them.",
-      "check_wrong": true,
-      "url": "POST /wp-json/jetonomy/v1/spaces/3004/access-rules"
-    },
-    "c-gating-rule-never-locks-out.11": {
-      "result": "pass",
-      "evidence": "390x844 Access Rules tab: scrollWidth 390, Add Rule button 40px, selects 42px, help card stacks. Screenshot qa-artifacts/203-walk3/laneA/w3A-access-390.png"
-    }
-  },
-  "proposed_checks": [
-    "- `c-gating-rule-never-locks-out.12` @admin #admin: add a Role rule to a public open-join space -> the toast and the General tab say the join policy changed too (it silently moves from Open to Approval today)."
-  ],
-  "notes": "Fresh fixtures made for this section and removed afterwards: public/open space Photo Gear Swap (3077), private/invite space Print Lab Circle (3078), public/open space Phone Photography Corner (3081), subscribers gating_tester and gating_t2..gating_t6 (new members, limited to 3 topics a day), WordPress role print_lab_member. Rules on 3077 were added and removed through the Access Rules tab; the Role rule left the space private/approval and the space was archived and hidden at the end.",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walker": "lane A",
-  "walked_at": "2026-10-17T17:58:06Z",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T13:10:00Z",
+  "walker": "lane B3",
   "env": {
     "themes": [
       "reign"
@@ -68,5 +14,57 @@
     "schemes": [
       "light"
     ]
-  }
+  },
+  "checks": {
+    "c-gating-rule-never-locks-out.1": {
+      "result": "pass",
+      "evidence": "Fresh subscriber on a public open space (QA-WALK-B3 Open): read 200, POST topic 201, reply 201, vote 200 before any rule."
+    },
+    "c-gating-rule-never-locks-out.2": {
+      "result": "pass",
+      "evidence": "Admin Access Rules tab: Logged In + Participate, Add Rule -> toast 'Access rule added.'; table lists 'Logged in - Participate'."
+    },
+    "c-gating-rule-never-locks-out.3": {
+      "result": "pass",
+      "evidence": "Same subscriber after the Logged In rule: read 200, POST topic 201, reply 201; vote on another user's topic 200 (the vote on his own topic gave 400 jetonomy_self_vote, as designed)."
+    },
+    "c-gating-rule-never-locks-out.4": {
+      "result": "pass",
+      "evidence": "Guest GET the public space after the rule -> 200 and the member's topic is visible."
+    },
+    "c-gating-rule-never-locks-out.5": {
+      "result": "pass",
+      "evidence": "Role rule (subscriber, Read) added in the admin UI -> toast 'Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.' (adds the join-policy clause; runbook text is a prefix of it)."
+    },
+    "c-gating-rule-never-locks-out.6": {
+      "result": "pass",
+      "evidence": "Fresh subscriber who never posted (u2) after the switch: space page 200 and lists the topic, no new-topic link, POST topic and reply 403 jetonomy_forbidden 'You cannot post in this space.', vote 403."
+    },
+    "c-gating-rule-never-locks-out.7": {
+      "result": "pass",
+      "evidence": "Existing roster member (u1) after the Role rule: POST topic 201, vote 200."
+    },
+    "c-gating-rule-never-locks-out.8": {
+      "result": "pass",
+      "evidence": "Access Rules tab intro: 'A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy.'"
+    },
+    "c-gating-rule-never-locks-out.9": {
+      "result": "pass",
+      "evidence": "Subscriber POST /spaces/{id}/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'"
+    },
+    "c-gating-rule-never-locks-out.10": {
+      "result": "pass",
+      "evidence": "test_editor on Help Desk: GET and POST /spaces/3004/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; the wp-admin tab shows that sentence and a 'Back to Help Desk' link."
+    },
+    "c-gating-rule-never-locks-out.11": {
+      "result": "pass",
+      "evidence": "390px Access Rules tab: scrollWidth 390, rule type/grants selects 42px, Add Rule 40px, controls stacked at x=35-36.",
+      "screenshot": "qa-artifacts/walk-B3/access-rules-390.png"
+    },
+    "c-gating-rule-never-locks-out.12": {
+      "result": "fail",
+      "evidence": "Role rule on an open-join public space: join policy changed to Requires Approval; the toast now says so ('...its join policy is now Requires Approval.') but the General tab shows no notice (0 .notice elements), only the new Join Policy value; runbook asks for both."
+    }
+  },
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
 }

@@ -227,13 +227,7 @@ class Abilities {
 				// any guest on a public space and says nothing about the post's
 				// status or is_private. This route reads one post by id, so it
 				// gates on the post.
-				'permission_callback' => function ( $input ) {
-					$post = Post::find( (int) $input['post_id'] );
-					if ( ! $post ) {
-						return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
-					}
-					return Permission_Engine::can_read_post( get_current_user_id(), $post );
-				},
+				'permission_callback' => array( $this, 'check_read_post' ),
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,
@@ -429,13 +423,7 @@ class Abilities {
 				// themselves status-filtered and block-tombstoned by
 				// Reply::list_by_post(), but a space-level check let the whole
 				// conversation under a trashed or pending post stay readable.
-				'permission_callback' => function ( $input ) {
-					$post = Post::find( (int) $input['post_id'] );
-					if ( ! $post ) {
-						return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
-					}
-					return Permission_Engine::can_read_post( get_current_user_id(), $post );
-				},
+				'permission_callback' => array( $this, 'check_read_post' ),
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,
@@ -547,7 +535,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'execute_list_spaces' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( '\\Jetonomy\\Visibility', 'can_view_community' ), // Private mode: no guest reads.
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,
@@ -800,7 +788,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'execute_get_user_profile' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( '\\Jetonomy\\Visibility', 'can_view_community' ), // Private mode: no guest reads.
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,
@@ -1188,7 +1176,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'execute_search' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( '\\Jetonomy\\Visibility', 'can_view_community' ), // Private mode: no guest reads.
 				'meta'                => array(
 					'annotations'  => array(
 						'readonly'    => true,
@@ -1235,6 +1223,12 @@ class Abilities {
 			'is_private'    => $is_private,
 		);
 
+		// Same rate limit as the REST create path.
+		$trust = (int) ( UserProfile::find_or_create( $user_id )->trust_level ?? 0 );
+		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'create_posts', $trust ) ) {
+			return \Jetonomy\Permissions\Rate_Limiter::error( $user_id, 'create_posts', $trust );
+		}
+
 		// Same content rules + require_approval as the REST create path.
 		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'post', $data, $space_id, $user_id );
 		if ( is_wp_error( $screened ) ) {
@@ -1251,6 +1245,7 @@ class Abilities {
 		if ( ! $post_id ) {
 			return new WP_Error( 'jetonomy_create_failed', __( 'Failed to create post.', 'jetonomy' ) );
 		}
+		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_posts' );
 
 		// Tags.
 		if ( ! empty( $input['tags'] ) && is_array( $input['tags'] ) ) {
@@ -1348,57 +1343,17 @@ class Abilities {
 	}
 
 	public function execute_create_reply( $input ) {
-		$user_id = get_current_user_id();
 		$post_id = (int) $input['post_id'];
-		$content = wp_kses_post( $input['content'] );
-
-		$data = array(
-			'post_id'       => $post_id,
-			'author_id'     => $user_id,
-			'content'       => $content,
-			'content_plain' => \jetonomy_content_to_plain( $content ),
-		);
-
-		if ( ! empty( $input['parent_id'] ) ) {
-			$data['parent_id'] = (int) $input['parent_id'];
+		$post    = Post::find( $post_id );
+		if ( ! $post ) {
+			return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 
-		// Same content rules + require_approval as the REST reply path.
-		$parent   = Post::find( $post_id );
-		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) ( $parent->space_id ?? 0 ), $user_id );
-		if ( is_wp_error( $screened ) ) {
-			return $screened;
-		}
-		$data['status'] = $screened['status'];
-
-		$reply_id = Reply::create( $data );
+		// One reply writer for every non-REST path: gate, rate limit, content rules, after-create hooks.
+		// Reply::create() already counts the reply on the author's profile; do not add a second count here.
+		$reply_id = \Jetonomy\Permissions\Content_Gate::create_reply( get_current_user_id(), $post, wp_kses_post( $input['content'] ), (int) ( $input['parent_id'] ?? 0 ) );
 		if ( is_wp_error( $reply_id ) ) {
 			return $reply_id;
-		}
-		if ( ! $reply_id ) {
-			return new WP_Error( 'jetonomy_create_failed', __( 'Failed to create reply.', 'jetonomy' ) );
-		}
-
-		// NO UserProfile::increment_reply_count() here. Reply::create() already
-		// applies it (class-reply.php:117), so every reply made through the
-		// Abilities API counted twice on its author's profile - inflating their
-		// reply total and, through it, their reputation and leaderboard rank.
-		// The model owns the counter; a caller that adds its own is the bug.
-		// 3rd arg is null — Abilities API execute callbacks have no WP_REST_Request,
-		// mirroring the post-create hook's null request arg a few lines up in
-		// execute_create_post().
-		/**
-		 * Fires after a reply is created through the Abilities API.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param int  $reply_id New reply ID.
-		 * @param int  $post_id  Parent post ID.
-		 * @param null $extra    Always null for Abilities API requests.
-		 */
-		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, null );
-		if ( $screened['flag'] ) {
-			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'reply', (int) $reply_id );
 		}
 
 		return array(
@@ -1764,7 +1719,7 @@ class Abilities {
 				'object_type' => $f->object_type ?? '',
 				'object_id'   => (int) ( $f->object_id ?? 0 ),
 				'reason'      => $f->reason ?? '',
-				'user_id'     => (int) ( $f->user_id ?? 0 ),
+				'user_id'     => (int) ( $f->reporter_id ?? 0 ),
 				'created_at'  => $f->created_at ?? '',
 			);
 		}
@@ -1821,7 +1776,28 @@ class Abilities {
 		return Permission_Engine::can( $user_id, $action, $space_id );
 	}
 
+	/**
+	 * Permission for the abilities that read one post or its replies.
+	 *
+	 * @param array $input Ability input with post_id.
+	 * @return bool|WP_Error
+	 */
+	public function check_read_post( $input ) {
+		if ( ! \Jetonomy\Visibility::can_view_community() ) {
+			return false;
+		}
+		$post = Post::find( (int) $input['post_id'] );
+		if ( ! $post ) {
+			return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
+		}
+		return Permission_Engine::can_read_post( get_current_user_id(), $post );
+	}
+
 	private function check_permission_or_public( string $action, int $space_id ): bool {
+		// Private mode closes every read to guests, the same gate REST uses.
+		if ( ! \Jetonomy\Visibility::can_view_community() ) {
+			return false;
+		}
 		// One authority, no local restatement: the read rule lives in
 		// Permission_Engine::can(), which admits a guest (user 0) to a public space and
 		// honours a public space inside a `hidden` category, so list-spaces matches the

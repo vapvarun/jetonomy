@@ -270,12 +270,14 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				data-reply-author="<?php echo esc_attr( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>"
 				title="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"
 				aria-label="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <span class="jt-btn-label"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></span></button>
+			<?php if ( empty( $reply->is_private ) ) : // A quote would republish a private reply to every reader. ?>
 			<button class="jt-act"
 				data-wp-on--click="actions.quoteReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				data-reply-author="<?php echo esc_attr( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>"
 				title="<?php esc_attr_e( 'Quote', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Quote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 14 ); ?></button>
+			<?php endif; ?>
 		<?php endif; ?>
 		<?php if ( $jt_thread_live && is_user_logged_in() && get_current_user_id() !== (int) $reply->author_id ) : ?>
 			<button class="jt-act"

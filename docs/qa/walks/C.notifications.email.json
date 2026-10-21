@@ -1,112 +1,110 @@
 {
   "journey": "C.notifications.email",
-  "checks": {
-    "c-notifications-email.1": {
-      "result": "fail",
-      "expected": "[site] Alice replied to your topic to bob once with a View in Community button",
-      "actual": "One email to bob (once). Subject '[forums] Alice Chen replied to your topic'. Button reads 'View Topic' (type label, 'View in Community' is only the fallback). The intro line quotes the topic title cut at 50 characters mid-word: Alice Chen replied to your topic \"What is the recommended way to handle knowledge ba\" - no ellipsis (notifier mb_substr(title,0,50)).",
-      "url": "mailpit HmNRV3XQ3ym4WSPhjicnVC",
-      "check_wrong": true
-    },
-    "c-notifications-email.2": {
-      "result": "pass",
-      "evidence": "bob ticked Pause all email notifications on /community/u/bob/edit/ (saved, persisted); alice replied -> no new Mailpit mail to bob, wp_jt_notifications reply_to_post row 22078 created, bell showed 8. Unticked afterwards."
-    },
-    "c-notifications-email.3": {
-      "result": "fail",
-      "expected": "digest only: no instant email for a reply, digest arrives with unsubscribe link",
-      "actual": "bob set to daily via PATCH /users/me/digest-preferences (no member UI exists for it; profile edit page has no digest control). A reply from alice still sent the instant email 'Alice Chen replied to your topic' (22:41:32); picking a digest frequency does not suppress instant mail (Notifier::should_email ignores it). Daily digest did arrive ('forums: Your Daily Community Digest', lists replies to bob's topics, has the unsubscribe link).",
-      "check_wrong": true
-    },
-    "c-notifications-email.4": {
-      "result": "pass",
-      "evidence": "clicked digest unsubscribe link logged out -> page 'Unsubscribed ... You have been unsubscribed from community digest emails'; meta jetonomy_pro_digest_frequency=none and a re-run of the daily digest sent bob nothing. Note the page says re-enable from profile settings but the profile has no digest control (see proposed check)."
-    },
-    "c-notifications-email.5": {
-      "result": "pass",
-      "evidence": "carlos request 232 approved by admin -> email to carlos: heading 'Your join request was answered', text 'Your request to join Insiders / Beta was approved.', button Open the Community. Subject line reads '[forums] Your space join request was answered' (adds the word space)."
-    },
-    "c-notifications-email.6": {
-      "result": "pass",
-      "evidence": "lucia requested Insiders / Beta, admin denied -> same heading 'Your join request was answered', text 'was not approved.'; subject '[forums] Your space join request was answered'."
-    },
-    "c-notifications-email.7": {
-      "result": "fail",
-      "expected": "mention email uses saved subject/body with {actor_display_name} filled with her name",
-      "actual": "maya @bob in Quick question on help desk -> subject '[forums] You were mentioned by' (name missing, trailing 'by'); same for alice's mention (Mailpit dUAYKuTJxuP7ESteWjxzh8, TpyxNWzzPAxmJmWbM342vt). Body does name her. The mention path never fills {actor_display_name}.",
-      "url": "mailpit TpyxNWzzPAxmJmWbM342vt"
-    },
-    "c-notifications-email.8": {
-      "result": "pass",
-      "evidence": "test_moderator removed bob's topic 5784 -> bob email body 'Your topic was removed by a moderator', button 'Open the Community' (links /community/), no Mod Queue wording. Topic restored through moderation approve (email 'A moderator reviewed your content' again)."
-    },
-    "c-notifications-email.9": {
-      "result": "fail",
-      "expected": "staff email keeps Review in Mod Queue button, goes to moderators only",
-      "actual": "alice reported Grace's 159-char topic: varundubey, test_moderator and test_admin got an email with button 'Review in Mod Queue' (ok) but subject '[forums] A moderator reviewed your content' and footer 'If you think this was a mistake, reply to a moderator in the community.' - member-facing wording on a staff alert. The same flag in an earlier build used subject 'New content flag requires review' (Mailpit FTzm7AST7Jxx3cwbe6CUNU), so it regressed.",
-      "url": "mailpit SnQiJWaqFEBMqXGiD8iBmh"
-    },
-    "c-notifications-email.10": {
-      "result": "pass",
-      "evidence": "registered priya.raman via Login block with verification on -> '[forums] Confirm your email to finish signing up' with Confirm email link; opening the link verified and logged her in (/community/?verified=1). Intro follows default Settings > Email text. Account deleted afterwards. First UI attempt answered 'Could not create the account' once while an identical REST call right after succeeded (not reproduced)."
-    },
-    "c-notifications-email.11": {
-      "result": "pass",
-      "evidence": "alice replied '@bob ...' to bob's own topic 5835 -> exactly one email to bob for reply 13621 (a mention notice, no extra reply notice)."
-    },
-    "c-notifications-email.12": {
-      "result": "pass",
-      "evidence": "admin replied in Customer Advisory Board (private) mentioning @bob (not a member) -> no Mailpit mail to bob and no jt_notifications row for bob."
-    },
-    "c-notifications-email.13": {
-      "result": "pass",
-      "evidence": "omar's Arabic reply to bob's topic -> email body renders the Arabic text intact (UTF-8), footer readable. The quote block has no dir attribute so the text sits left aligned (front end uses dir=auto)."
-    },
-    "c-notifications-email.14": {
-      "result": "untested",
-      "needs": "Learnomy plugin active (not installed on this site)"
-    },
-    "c-notifications-email.15": {
-      "result": "fail",
-      "expected": "Grace's 159-character title shown whole in subject and body",
-      "actual": "Email to grace: intro line cuts the title at 50 characters mid-word ('...photography forum fro'); the full title appears once, lower, in the 'On topic' line. Layout did not break and nothing overflowed.",
-      "url": "mailpit WWR4uuYkaDY34WqwnygJfF"
-    },
-    "c-notifications-email.16": {
-      "result": "pass",
-      "evidence": "finn (silenced) replied '@bob ...' -> HTTP 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; no email to bob, no reply stored."
-    },
-    "c-notifications-email.17": {
-      "result": "fail",
-      "expected": "every email type previews and Send test delivers",
-      "actual": "All 17 types preview and all 17 Send test calls delivered to Mailpit. But several tests arrive with blank placeholders in the subject: '[forums]  replied to your topic', '[forums]  replied to your reply', '[forums] You were mentioned by', '[forums] New topic in'. The placeholder list under the table omits {actor_display_name}, {space_title}, which the default subjects use.",
-      "url": "http://forums.local/wp-admin/admin.php?page=jetonomy-settings&tab=email",
-      "screenshot": "qa-artifacts/203-walk3/laneA/w3A-send-test-modal.png"
-    },
-    "c-notifications-email.18": {
-      "result": "untested",
-      "needs": "a dark-mode mail client; Mailpit cannot render dark mode"
-    }
-  },
-  "proposed_checks": [
-    "- `c-notifications-email.19` @member #ui #email: after unsubscribing from the digest, the profile settings page offers a way to pick a digest frequency again (the unsubscribe page says to re-enable it there).",
-    "- `c-notifications-email.20` @moderator #email: a member flags a topic -> the staff alert subject says a report needs review and does not read 'A moderator reviewed your content' or tell the staff to reply to a moderator.",
-    "- `c-notifications-email.21` @member #email +long: a reply to a topic with a title over 50 characters -> the intro sentence names the title with an ellipsis or whole, never cut mid-word."
-  ],
-  "notes": "lane A. Changed and restored: bob email_opt_out (set then cleared), bob digest frequency (set daily, unsubscribed to none, then meta deleted), jetonomy_settings.require_email_verification (set then unset) and users_can_register (1 then 0) for check 10, join request 232 approved then put back to pending and carlos removed from Insiders / Beta, request 248 (lucia) deleted with its notifications. Created: priya.raman (deleted), replies 13617-13624 and 13621-13623 on bob/grace/CAB topics (left in place), alice flag on topic 5872 (left pending for C.mod.flag-resolution), bob topic 5784 trashed then restored. wp-cli mail does not reach Mailpit unless sendmail_path is set; I used a wrapper with Local's mailpit sendmail for the digest run.",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walker": "lane A",
-  "walked_at": "2026-10-17T17:19:17Z",
+  "free": "dcdb0750",
+  "pro": "404b0af",
+  "walked_at": "2026-10-21T11:38:09Z",
+  "walker": "lane B",
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
     ]
+  },
+  "checks": {
+    "c-notifications-email.1": {
+      "result": "fail",
+      "evidence": "Delivered exactly once to bob ('[forums] Alice Chen replied to your topic', instant mode) but the button reads 'View Topic', not 'View in Community' (notifier.php:1820 reply CTA label). Wording drift vs runbook; email otherwise correct"
+    },
+    "c-notifications-email.2": {
+      "result": "pass",
+      "evidence": "email_opt_out=true: alice replied, 0 new emails to bob (Mailpit), bell notice 37255 still appeared"
+    },
+    "c-notifications-email.3": {
+      "result": "fail",
+      "evidence": "bob on daily: reply to his topic and carlos' new topic in followed space sent NO instant email (correct); followed-topic reply (Carlos) emailed at once (correct); default-frequency carlos got instant email (correct). BUT compile_digest(bob,daily) has the reply under replies_to_user while the new topic in the space appears nowhere (top_posts is top-10 by popularity), so 'new topic in a followed space arrives in the digest' is not met"
+    },
+    "c-notifications-email.4": {
+      "result": "pass",
+      "evidence": "Logged-out GET of unsubscribe link: 'Unsubscribed' page 200, frequency=none, bob not in get_eligible_users(daily/weekly), reused token returns 403"
+    },
+    "c-notifications-email.5": {
+      "result": "pass",
+      "evidence": "grace approved to Insiders / Beta: email heading 'Your join request was answered' with 'Your request to join Insiders / Beta was approved.' (subject '[forums] Your space join request was answered'); no 'Join Request Result' (used grace, carlos' request left untouched)"
+    },
+    "c-notifications-email.6": {
+      "result": "pass",
+      "evidence": "Declined: same heading, 'Your request to join Insiders / Beta was not approved.'; grace not a member afterwards"
+    },
+    "c-notifications-email.7": {
+      "result": "pass",
+      "evidence": "With saved mention template (temporarily set, restored): subject '[forums] QA-WALK-B Maya Okafor mentioned you', body filled {actor_display_name}=Maya Okafor"
+    },
+    "c-notifications-email.8": {
+      "result": "pass",
+      "evidence": "test_moderator trashed bob's topic 9029: email body 'Your topic was removed by a moderator', button 'Open the Community', no 'Review in Mod Queue'"
+    },
+    "c-notifications-email.9": {
+      "result": "pass",
+      "evidence": "alice flagged a topic: 'New report needs review' sent to 9 staff recipients only (admins, test_moderator, qawalkb_staff), button 'Review in Mod Queue'; no ordinary members"
+    },
+    "c-notifications-email.10": {
+      "result": "pass",
+      "evidence": "Registered qawalkb_reg1 with verification on: 'Confirm your email to finish signing up' with Confirm link; link activated (_jetonomy_verified_at, 302 ?verified=1). Owner template (verification) subject/intro honored for reg2. All toggles restored, users deleted"
+    },
+    "c-notifications-email.11": {
+      "result": "pass",
+      "evidence": "alice replied '@bob' in bob's followed topic: exactly one email to bob ('You were mentioned by Alice Chen'), no second reply email"
+    },
+    "c-notifications-email.12": {
+      "result": "pass",
+      "evidence": "admin posted '@bob' in Customer Advisory Board topic 9019 (bob non-member): 0 emails to bob"
+    },
+    "c-notifications-email.13": {
+      "result": "pass",
+      "evidence": "omar's Arabic reply: email body shows Arabic text intact (UTF-8), footer readable"
+    },
+    "c-notifications-email.14": {
+      "result": "fail",
+      "evidence": "NOT PERFORMED as written: Learnomy is not installed. Partial: with email_from_email configured, notification From = 'QA-WALK-B Sender <community-qa@forums.local>'; a plain wp_mail() (separate request) kept wordpress@forums.local. Settings restored"
+    },
+    "c-notifications-email.15": {
+      "result": "pass",
+      "evidence": "Grace's 159-char topic: intro 'After moving our 12-year-old photography forum\u2026' and the 'On topic' block shows the whole title; subject unaffected; no layout break"
+    },
+    "c-notifications-email.16": {
+      "result": "pass",
+      "evidence": "finn (silenced) POST reply and topic with @bob -> 403 jetonomy_user_silenced, no content, no email"
+    },
+    "c-notifications-email.17": {
+      "result": "pass",
+      "evidence": "Settings > Email: all 19 types preview with subject and HTML (2.4-3.1KB); Send test email delivered for mention, join_request_result, flag_created to Mailpit"
+    },
+    "c-notifications-email.18": {
+      "result": "fail",
+      "evidence": "NOT PERFORMED: no dark-mode mail client available. Static check only: email HTML has hard-coded light colors (#F3F4F6 page, #FFFFFF card, #0073aa button with #FFFFFF text ~5:1) and no color-scheme / prefers-color-scheme support"
+    },
+    "c-notifications-email.19": {
+      "result": "pass",
+      "evidence": "bob unsubscribed: /u/bob/edit/ shows 'Email digest' fieldset with None/Daily/Weekly radios (none checked). Screenshot walk-B/email19.png",
+      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/email19.png"
+    },
+    "c-notifications-email.20": {
+      "result": "pass",
+      "evidence": "Staff alert subject '[forums] New report needs review' (not 'A moderator reviewed your content'), body 'Open the moderation queue to review it.'"
+    },
+    "c-notifications-email.21": {
+      "result": "pass",
+      "evidence": "Reply to a topic with a long title: intro cuts at a word boundary with an ellipsis ('...how do you version your\u2026') and the whole title appears below"
+    },
+    "c-notifications-email.22": {
+      "result": "pass",
+      "evidence": "n1 (removed from private space 4955, still subscribed to 9017): admin reply -> 0 emails; compile_digest for n1 and bob (daily, weekly) contain no private topics 9017/9019"
+    }
   }
 }

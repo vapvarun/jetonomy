@@ -626,14 +626,6 @@ class Admin {
 	}
 
 	/**
-	 * Sanitize the email template overrides option.
-	 * Each row: { subject: string, body: string }. Both fields are plain
-	 * text with supported placeholders — no HTML allowed here.
-	 *
-	 * @param mixed $input
-	 * @return array<string, array{subject: string, body: string}>
-	 */
-	/**
 	 * Did THIS request post the Email tab's template fields?
 	 *
 	 * See sanitize_email_templates() for why a per-call check is not enough.
@@ -642,6 +634,14 @@ class Admin {
 	 */
 	private static bool $email_templates_submitted = false;
 
+	/**
+	 * Sanitize the email template overrides option.
+	 * Each row: { subject: string, body: string }. Both fields are plain
+	 * text with supported placeholders — no HTML allowed here.
+	 *
+	 * @param mixed $input
+	 * @return array<string, array{subject: string, body: string}>
+	 */
 	public function sanitize_email_templates( $input ): array {
 		$stored = get_option( 'jetonomy_email_templates', array() );
 		$stored = is_array( $stored ) ? $stored : array();
@@ -808,6 +808,7 @@ class Admin {
 			// Mobile app EULA screen (Apple Guideline 1.2) reads these via /app/config.
 			$clean['terms_url']   = esc_url_raw( $input['terms_url'] ?? '' );
 			$clean['privacy_url'] = esc_url_raw( $input['privacy_url'] ?? '' );
+			$clean['support_url'] = esc_url_raw( $input['support_url'] ?? '' );
 			// Product-noun label overrides (singular / plural). Empty = keep the
 			// default. One loop over every renamable noun so the save side cannot
 			// drift from the Terminology settings block that renders them.
@@ -995,9 +996,6 @@ class Admin {
 			$clean['container_width']        = in_array( $raw_width, array( 'theme', 'full', 'custom' ), true ) ? $raw_width : 'theme';
 			$clean['container_width_custom'] = max( 600, min( 2400, absint( $input['container_width_custom'] ?? 1280 ) ) );
 
-			$raw_sidebar                 = sanitize_key( (string) ( $input['sidebar_visibility'] ?? 'theme' ) );
-			$clean['sidebar_visibility'] = in_array( $raw_sidebar, array( 'theme', 'hide' ), true ) ? $raw_sidebar : 'theme';
-
 			$raw_padding             = sanitize_key( (string) ( $input['padding_preset'] ?? 'theme' ) );
 			$clean['padding_preset'] = in_array( $raw_padding, array( 'theme', 'none', 'comfortable' ), true ) ? $raw_padding : 'theme';
 		}
@@ -1046,9 +1044,6 @@ class Admin {
 	// ── Assets ──
 
 	/**
-	 * Hide third-party admin notices on Jetonomy pages.
-	 */
-	/**
 	 * Apply the `jetonomy_admin_footer_text` filter on Jetonomy admin pages.
 	 * Lets extensions (e.g. Pro white-label) replace the WordPress default
 	 * "Thank you for creating with WordPress" line on plugin screens.
@@ -1076,6 +1071,9 @@ class Admin {
 		return (string) apply_filters( 'jetonomy_admin_footer_text', $text );
 	}
 
+	/**
+	 * Hide third-party admin notices on Jetonomy pages.
+	 */
 	public function hide_third_party_notices(): void {
 		$screen = get_current_screen();
 		if ( ! $screen || false === strpos( $screen->id, 'jetonomy' ) ) {
@@ -1545,22 +1543,20 @@ class Admin {
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
-			$categories = Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );
-			// Explicit cap: the unbounded default rendered every
-			// member row on one screen. 1000 keeps this management surface
-			// functional; when the space is larger the view shows a notice so
-			// members past the cap are never SILENTLY hidden from the only
-			// admin surface that can remove them (the frontend members page
-			// is paginated and covers the tail).
-			$members        = SpaceMember::list_by_space( $space_id, 1000 );
-			$members_capped = ( (int) ( $space->member_count ?? 0 ) ) > count( $members ) && count( $members ) >= 1000;
-			$access_rules   = AccessRule::list_for_space( $space_id );
-			$space_settings = Space::get_settings( $space_id );
-			$join_total     = JoinRequest::count_pending_for_space( $space_id );
-			$join_per_page  = 20;
-			$join_pages     = max( 1, (int) ceil( $join_total / $join_per_page ) );
-			$join_paged     = min( $join_pages, max( 1, absint( $_GET['jrpg'] ?? 1 ) ) );
-			$join_requests  = JoinRequest::list_pending_for_space( $space_id, $join_per_page, ( $join_paged - 1 ) * $join_per_page );
+			$categories      = Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );
+			$member_search   = sanitize_text_field( wp_unslash( $_GET['ms'] ?? '' ) );
+			$member_total    = SpaceMember::count_by_space( $space_id, $member_search );
+			$member_per_page = 50;
+			$member_pages    = max( 1, (int) ceil( $member_total / $member_per_page ) );
+			$member_paged    = min( $member_pages, max( 1, absint( $_GET['mpg'] ?? 1 ) ) );
+			$members         = SpaceMember::list_by_space( $space_id, $member_per_page, ( $member_paged - 1 ) * $member_per_page, $member_search );
+			$access_rules    = AccessRule::list_for_space( $space_id );
+			$space_settings  = Space::get_settings( $space_id );
+			$join_total      = JoinRequest::count_pending_for_space( $space_id );
+			$join_per_page   = 20;
+			$join_pages      = max( 1, (int) ceil( $join_total / $join_per_page ) );
+			$join_paged      = min( $join_pages, max( 1, absint( $_GET['jrpg'] ?? 1 ) ) );
+			$join_requests   = JoinRequest::list_pending_for_space( $space_id, $join_per_page, ( $join_paged - 1 ) * $join_per_page );
 			include JETONOMY_DIR . 'includes/admin/views/space-edit.php';
 			return;
 		}
@@ -1730,7 +1726,7 @@ class Admin {
 		if ( false === $out ) {
 			exit;
 		}
-		fputcsv( $out, array( 'id', 'user_id', 'user_login', 'action', 'object_type', 'object_id', 'metadata', 'created_at' ) );
+		fputcsv( $out, array( 'id', 'user_id', 'user_login', 'action', 'object_type', 'object_id', 'metadata', 'created_at' ), escape: '' );
 		$objects = \Jetonomy\Author::objects_of( array_map( static fn( $r ) => (object) $r, $rows ) );
 		foreach ( $rows as $row ) {
 			// Anonymous authors stay anonymous in the export too; only a logged Reveal names them.
@@ -1740,18 +1736,21 @@ class Admin {
 			}
 			$user       = $row['user_id'] ? get_userdata( (int) $row['user_id'] ) : null;
 			$user_login = $hidden ? __( 'Anonymous', 'jetonomy' ) : ( $user ? $user->user_login : '' );
+			// Spreadsheets run a cell that starts with = + - @ (or tab/CR) as a formula.
+			$safe = static fn( string $cell ): string => preg_match( '/^[=+\-@\t\r]/', $cell ) ? "'" . $cell : $cell;
 			fputcsv(
 				$out,
 				array(
 					(string) $row['id'],
 					(string) $row['user_id'],
-					$user_login,
-					(string) $row['action'],
-					(string) $row['object_type'],
+					$safe( (string) $user_login ),
+					$safe( (string) $row['action'] ),
+					$safe( (string) $row['object_type'] ),
 					(string) $row['object_id'],
-					(string) ( $row['metadata'] ?? '' ),
+					$safe( (string) ( $row['metadata'] ?? '' ) ),
 					(string) $row['created_at'],
-				)
+				),
+				escape: ''
 			);
 		}
 		fclose( $out );
@@ -1788,7 +1787,16 @@ class Admin {
 		if ( $is_detail ) {
 			$mode        = 'detail';
 			$object_type = $raw_type;
-			$revisions   = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id );
+			// One page of snapshots plus the next-older one, so the last row on the page still has something to diff against.
+			$rev_per   = 20;
+			$rev_page  = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation param.
+			$rev_total = \Jetonomy\Models\Revision::count(
+				array(
+					'object_type' => $object_type,
+					'object_id'   => $object_id,
+				)
+			);
+			$revisions = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id, $rev_per + 1, ( $rev_page - 1 ) * $rev_per );
 
 			// Resolve a human-readable title for the page heading. Posts
 			// have a title column; replies fall back to the parent post

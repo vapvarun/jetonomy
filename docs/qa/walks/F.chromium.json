@@ -1,0 +1,32 @@
+{
+ "journey": "F.chromium",
+ "free": "dcdb0750",
+ "walked_at": "2026-10-21T10:33:50Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "f-chromium.1": {
+   "result": "pass",
+   "evidence": "Guest, Chromium: /community/, Help Desk space, a topic and /community/u/alice/ at 1440, 1024 and 390: all 200, 0 console errors, 0 page errors, 0 failed or 4xx/5xx requests, no horizontal overflow (12 loads)."
+  },
+  "f-chromium.2": {
+   "result": "pass",
+   "evidence": "bob on Feature Requests topic: reply vote POST 200, reaction Like added and removed, reply posted (\"Chromium reply check\" appeared); zero pageerror/console error events captured."
+  },
+  "f-chromium.3": {
+   "result": "pass",
+   "evidence": "Theme toggle .bx-color-mode-toggle__btn: body bg rgb(250,251,253) -> rgb(35,38,47), jt controls recolour; same dark bg after reload. Toggle reset to light afterwards. Note: it is the Reign theme toggle, not a Jetonomy control.",
+   "screenshot": "f-chromium-dark"
+  }
+ }
+}

@@ -1,0 +1,4 @@
+node_modules/
+.appium/
+out/
+appium.log

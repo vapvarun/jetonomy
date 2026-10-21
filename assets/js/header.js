@@ -22,9 +22,11 @@
 		window.bnToast = function (msg) {
 			var t = document.createElement('div');
 			t.className = 'jt-toast';
-			t.textContent = msg;
+			// A live region, filled after it is in the page so screen readers announce it.
+			t.setAttribute('role', 'status');
+			t.setAttribute('aria-live', 'polite');
 			document.body.appendChild(t);
-			setTimeout(function () { t.classList.add('show'); }, 10);
+			setTimeout(function () { t.textContent = msg; t.classList.add('show'); }, 10);
 			setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 3000);
 		};
 	}
@@ -130,12 +132,16 @@
 	window.jtRefreshUnreadCount = function () {
 		if (!D.isLoggedIn || countInFlight || !document.querySelector('[data-jt-unread-host]')) { return; }
 		countInFlight = true;
-		// The route allows a 15s browser cache; a fresh read must skip it.
-		window.jetonomyRest.restFetch('/notifications/unread-count?fresh=' + Date.now()).then(function (res) {
+		// On the notifications page the Unread tab shows the count the list was rendered with.
+		var tabCount = document.querySelector('[data-jt-notif-tab="unread"] .jt-notif-tab__count');
+		var shown = tabCount ? (parseInt(tabCount.textContent.replace(/\D/g, ''), 10) || 0) : 0;
+		window.jetonomyRest.restFetch('/notifications/unread-count').then(function (res) {
 			countInFlight = false;
 			if (res.ok && res.data && 'number' === typeof res.data.count) {
 				window.jtSetUnreadBadges(res.data.count);
 				notifLoaded = false; // The dropdown reloads its list on next open.
+				// A changed count means the rows on screen are stale too: re-render them.
+				if (res.data.count !== shown && window.jtReloadNotifList) { window.jtReloadNotifList(); }
 			}
 		});
 	};
@@ -179,8 +185,42 @@
 		window.jtLowerUnreadBadges(1);
 	});
 
+	// An image pasted into a topic or reply opens full size, like an attachment card.
+	// Linked images and emoji keep their own behaviour.
+	var BODY_IMG = '.jt-post-body img, .jt-reply-body img';
+	function zoomableImage(el) {
+		var img = el && el.closest ? el.closest(BODY_IMG) : null;
+		return img && !img.closest('a') && !img.matches('.emoji, .wp-smiley') ? img : null;
+	}
+	function openFullSize(img) {
+		window.open(img.currentSrc || img.src, '_blank', 'noopener');
+	}
+	// Focusable, so the keyboard can open it too; re-run after a client-side navigation.
+	function markZoomable() {
+		document.querySelectorAll(BODY_IMG).forEach(function (img) {
+			if (!zoomableImage(img) || img.hasAttribute('tabindex')) { return; }
+			img.tabIndex = 0;
+			img.setAttribute('role', 'button');
+			img.setAttribute('aria-label', (img.alt ? img.alt + ' - ' : '') + __('Open full size', 'jetonomy'));
+		});
+	}
+	markZoomable();
+	document.addEventListener('jetonomy:navigated', markZoomable);
+	document.addEventListener('keydown', function (e) {
+		var img = (e.key === 'Enter' || e.key === ' ') ? zoomableImage(e.target) : null;
+		if (img) {
+			e.preventDefault();
+			openFullSize(img);
+		}
+	});
+
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
+		var bodyImg = zoomableImage(e.target);
+		if (bodyImg) {
+			openFullSize(bodyImg);
+			return;
+		}
 		var notifBtn = e.target.closest('.jt-community-nav-notif');
 		if (notifBtn) {
 			e.preventDefault();

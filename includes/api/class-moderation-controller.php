@@ -748,6 +748,11 @@ class Moderation_Controller extends Base_Controller {
 	 * @param string|null $ip         The banned address (IP ban only).
 	 */
 	private function issue_restriction( int $user_id, string $type, ?int $space_id, ?string $reason, ?string $expires_at, ?string $ip ): WP_REST_Response|WP_Error {
+		$duplicate = Restriction::validate_not_duplicate( $user_id, $type, $space_id );
+		if ( is_wp_error( $duplicate ) ) {
+			return $duplicate;
+		}
+
 		$restriction_id = Restriction::ban(
 			$user_id,
 			$type,

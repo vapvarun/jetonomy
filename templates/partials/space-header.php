@@ -50,8 +50,8 @@ $_jt_can_edit_space = is_user_logged_in()
 			 *
 			 * @param object $space The space being viewed.
 			 */
-			do_action( 'jetonomy_space_display_fields', $space );
 			?>
+			<div class="jt-space-fields"><?php do_action( 'jetonomy_space_display_fields', $space ); ?></div>
 			<?php if ( $_jt_can_edit_space ) : ?>
 				<?php
 				/*
@@ -122,7 +122,7 @@ $_jt_can_edit_space = is_user_logged_in()
 					<?php esc_html_e( 'Invite Only', 'jetonomy' ); ?>
 				</span>
 				<?php
-			elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted ) :
+			elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted && \Jetonomy\Models\SpaceMember::may_join_spaces( $_jt_user_id ) ) :
 				// Approval required: check for existing pending request. Pending
 				// gets the same Withdraw the private-space gate offers; the
 				// "awaiting approval" message renders under the header.
@@ -141,7 +141,7 @@ $_jt_can_edit_space = is_user_logged_in()
 					</button>
 				<?php endif; ?>
 				<?php
-			elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted ) :
+			elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted && \Jetonomy\Models\SpaceMember::may_join_spaces( $_jt_user_id ) ) :
 				// Open space, non-member: show Join Space button (instant membership).
 				$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
 				?>

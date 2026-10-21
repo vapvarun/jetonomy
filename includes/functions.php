@@ -1238,6 +1238,21 @@ function replies_per_page(): int {
 }
 
 /**
+ * A space's front URL.
+ *
+ * Kept as a public entry point for integrations in other plugins; it is a
+ * thin wrapper over route_url( 'space', ... ) with an empty-slug guard.
+ *
+ * @param string $space_slug Space slug.
+ * @return string Front URL, or '' when the slug is unusable.
+ */
+function space_permalink( string $space_slug ): string {
+	$space_slug = trim( $space_slug, '/' );
+
+	return '' === $space_slug ? '' : route_url( 'space', $space_slug );
+}
+
+/**
  * Permalink to a single reply, paged to where the reply actually renders.
  *
  * THE single producer of reply deep links. Every surface that points at a
@@ -1275,21 +1290,6 @@ function replies_per_page(): int {
  * @param int|null $page       Known 1-based page, or null to compute it.
  * @return string Deep-link URL, or '' when the slugs are unusable.
  */
-/**
- * A space's front URL.
- *
- * Kept as a public entry point for integrations in other plugins; it is a
- * thin wrapper over route_url( 'space', ... ) with an empty-slug guard.
- *
- * @param string $space_slug Space slug.
- * @return string Front URL, or '' when the slug is unusable.
- */
-function space_permalink( string $space_slug ): string {
-	$space_slug = trim( $space_slug, '/' );
-
-	return '' === $space_slug ? '' : route_url( 'space', $space_slug );
-}
-
 function reply_permalink( string $space_slug, string $post_slug, int $reply_id, ?int $page = null ): string {
 	if ( '' === $space_slug || '' === $post_slug || $reply_id < 1 ) {
 		return '';

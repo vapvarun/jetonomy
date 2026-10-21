@@ -353,22 +353,24 @@ class Users_Controller extends Base_Controller {
 			array_merge(
 				$this->prepare_profile( $profile ),
 				array(
-					'user_login'          => $wp_user->user_login,
-					'email'               => $wp_user->user_email,
-					'display_name'        => \Jetonomy\user_display_name( $wp_user ),
-					'trust_level_name'    => Trust_Levels::name( $trust_level ),
-					'trust_level_label'   => Trust_Levels::label( $trust_level ),
-					'spaces_joined_count' => $spaces_count,
-					'settings'            => UserProfile::get_settings( $user_id ),
-					'email_opt_out'       => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
+					'user_login'           => $wp_user->user_login,
+					'email'                => $wp_user->user_email,
+					'display_name'         => \Jetonomy\user_display_name( $wp_user ),
+					// The names PATCH display_name accepts, so a client can offer a picker.
+					'display_name_choices' => array_values( \Jetonomy\display_name_choices( $wp_user ) ),
+					'trust_level_name'     => Trust_Levels::name( $trust_level ),
+					'trust_level_label'    => Trust_Levels::label( $trust_level ),
+					'spaces_joined_count'  => $spaces_count,
+					'settings'             => UserProfile::get_settings( $user_id ),
+					'email_opt_out'        => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
 					// What this member may actually do. A headless client cannot
 					// call user_can(), so without this the app has no way to know
 					// an administrator IS an administrator — every moderation and
 					// admin surface stays hidden even from the site owner. The
 					// server remains the real gate (each admin route still checks
 					// the cap); this only tells the client what to render.
-					'is_admin'            => user_can( $user_id, 'manage_options' ),
-					'capabilities'        => \Jetonomy\Permissions\Capabilities::map_for_user( $user_id ),
+					'is_admin'             => user_can( $user_id, 'manage_options' ),
+					'capabilities'         => \Jetonomy\Permissions\Capabilities::map_for_user( $user_id ),
 				)
 			),
 			200
@@ -569,13 +571,6 @@ class Users_Controller extends Base_Controller {
 			$profile_data['avatar_url'] = $avatar_url;
 		}
 
-		if ( null !== $request->get_param( 'settings' ) ) {
-			$settings = $request->get_param( 'settings' );
-			if ( is_array( $settings ) ) {
-				$profile_data['settings'] = wp_json_encode( $settings );
-			}
-		}
-
 		// Handle notification_preferences — merge into existing settings JSON.
 		if ( null !== $request->get_param( 'notification_preferences' ) ) {
 			$notif_input = $request->get_param( 'notification_preferences' );
@@ -585,19 +580,20 @@ class Users_Controller extends Base_Controller {
 				if ( ! is_array( $cur_settings ) ) {
 					$cur_settings = array(); }
 
-				// Must cover every type shown in the Edit-Profile + admin
-				// Notification Defaults UIs, or that toggle is silently dropped on
-				// save (idea_status_changed / moderation / join_request were missing).
-				$valid_types = array( 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned', 'idea_status_changed', 'moderation', 'join_request', 'join_request_result', 'message' );
-				$prefs       = array();
+				// Every notifiable type, from the one list the admin screens use, or a
+				// toggle is silently dropped on save. Types sent are merged over the
+				// stored map: a partial PATCH, or an unsubscribe link's email-off, survives.
+				$valid_types = array_merge( array_keys( \Jetonomy\Admin\Admin::email_types() ), array( 'message' ) );
+				$prefs       = is_array( $cur_settings['notifications'] ?? null ) ? $cur_settings['notifications'] : array();
 				foreach ( $notif_input as $type => $channels ) {
-					if ( ! in_array( $type, $valid_types, true ) ) {
+					if ( ! in_array( $type, $valid_types, true ) || ! is_array( $channels ) ) {
 						continue;
 					}
-					$prefs[ $type ] = array(
-						'web'   => ! empty( $channels['web'] ),
-						'email' => ! empty( $channels['email'] ),
-					);
+					foreach ( array( 'web', 'email' ) as $channel ) {
+						if ( array_key_exists( $channel, $channels ) ) {
+							$prefs[ $type ][ $channel ] = ! empty( $channels[ $channel ] );
+						}
+					}
 				}
 				$cur_settings['notifications'] = $prefs;
 				$profile_data['settings']      = wp_json_encode( $cur_settings );
@@ -1037,10 +1033,6 @@ class Users_Controller extends Base_Controller {
 				'type'     => 'string',
 				'required' => false,
 				'format'   => 'uri',
-			),
-			'settings'      => array(
-				'type'     => 'object',
-				'required' => false,
 			),
 			'email_opt_out' => array(
 				'type'     => 'boolean',

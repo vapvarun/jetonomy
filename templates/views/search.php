@@ -112,8 +112,10 @@ if ( $jt_searching && ! $jt_author_unresolved ) {
 	// Spaces and tags are keyword searches - the advanced filters (author, date,
 	// tag) describe topics, not either of these. Without this guard a
 	// filter-only request searched them for '', which matched every tag on the
-	// site, so "this author's topics" came back decorated with arbitrary tags.
-	if ( $jt_has_query && in_array( $filter, array( 'all', 'spaces' ), true ) ) {
+	// site, so "this author's topics" came back decorated with arbitrary tags,
+	// and a keyword plus a filter listed spaces and tags the filter never applied to.
+	$jt_side_search = $jt_has_query && ! ( $date_from || $date_to || $author_id || $tag_slug );
+	if ( $jt_side_search && in_array( $filter, array( 'all', 'spaces' ), true ) ) {
 		$jt_found_spaces = $search_adapter->query(
 			array(
 				'type'  => 'space',
@@ -125,7 +127,7 @@ if ( $jt_searching && ! $jt_author_unresolved ) {
 		$jt_spaces_total = $jt_found_spaces['total'];
 	}
 
-	if ( $jt_has_query && in_array( $filter, array( 'all', 'tags' ), true ) ) {
+	if ( $jt_side_search && in_array( $filter, array( 'all', 'tags' ), true ) ) {
 		$jt_found_tags = $search_adapter->query(
 			array(
 				'type'  => 'tag',

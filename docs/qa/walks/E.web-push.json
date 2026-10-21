@@ -1,0 +1,84 @@
+{
+ "journey": "E.web-push",
+ "free": "dcdb0750",
+ "pro": "404b0af",
+ "walked_at": "2026-10-21T09:52:43Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "e-web-push.1": {
+   "result": "pass",
+   "evidence": "Settings > Web Push: Enable, title \"QA-WALK-C Community\", icon URL saved -> notice \"Web Push settings saved.\"; VAPID public key generated and identical after a second save (GET /push/vapid-key returned the same key twice)"
+  },
+  "e-web-push.2": {
+   "result": "pass",
+   "evidence": "guest GET /jetonomy/v1/push/vapid-key -> 200 {\"public_key\": ...} only (no private key); /push/service-worker.js -> 200 content-type application/javascript; charset=UTF-8, Service-Worker-Allowed \"/\" (route is under jetonomy/v1, not jetonomy-pro/v1)"
+  },
+  "e-web-push.3": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs HTTPS and a real browser push service permission prompt; site is http://forums.local"
+  },
+  "e-web-push.4": {
+   "result": "fail",
+   "evidence": "PARTIAL: POST /push/subscribe (fake FCM-style endpoint with p256dh/auth) -> 201 {\"subscribed\":true,\"created\":true}; same endpoint again -> 201 created:false; DELETE /push/subscribe -> 200 {\"unsubscribed\":true} (runbook says 201 for the second call: matches). \"No more pushes after unsubscribe\" NOT PERFORMED (no real push service)"
+  },
+  "e-web-push.5": {
+   "result": "pass",
+   "evidence": "endpoint \"not a url\" -> 400 jetonomy_push_endpoint_invalid \"Invalid push endpoint URL.\"; guest POST /push/subscribe -> 401 rest_not_logged_in"
+  },
+  "e-web-push.6": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs a real browser subscription to receive a push; no push service reachable from this environment"
+  },
+  "e-web-push.7": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs a real subscribed browser going offline"
+  },
+  "e-web-push.8": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs a push service answering 410 Gone for a stored subscription"
+  },
+  "e-web-push.9": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs a real browser subscription to observe push content"
+  },
+  "e-web-push.10": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs a real browser subscription to observe push content"
+  },
+  "e-web-push.11": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs a real browser subscription to observe lock-screen text"
+  },
+  "e-web-push.12": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: needs a real browser subscription to observe pushes"
+  },
+  "e-web-push.13": {
+   "result": "fail",
+   "evidence": "PARTIAL: POST /push/register-device with ExponentPushToken[...] -> 201 {\"registered\":true,\"created\":true}; malformed token -> 400 jetonomy_invalid_expo_token \"Invalid Expo push token.\"; DELETE -> 200 {\"unregistered\":true}. Native push delivery to the Expo API with deep link NOT PERFORMED"
+  },
+  "e-web-push.14": {
+   "result": "pass",
+   "evidence": "bob subscribes endpoint X, then alice subscribes the same endpoint -> response created:false and the single row now has user_id 3754 (alice); bob no longer owns it"
+  },
+  "e-web-push.15": {
+   "result": "fail",
+   "evidence": "PARTIAL: `wp jetonomy-pro web-push` has subcommands count, send, subscribe, subscriptions, unsubscribe, vapid-key (no status/test). vapid-key printed public_key and is_configured: 1, count printed 0, no PHP notices; send to a real browser NOT PERFORMED"
+  },
+  "e-web-push.16": {
+   "result": "pass",
+   "evidence": "web-push removed from the extensions list: /push/service-worker.js and /push/vapid-key both 404 rest_no_route; extension re-enabled afterwards (subscription rows are kept in the table by design, not deleted by disabling)"
+  }
+ }
+}

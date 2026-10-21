@@ -99,7 +99,8 @@ class Bookmark extends Model {
 	 * @return array{0:string,1:array} [SQL fragment, bind values]
 	 */
 	private static function visible_sql( int $user_id ): array {
-		$sql = " AND p.status = 'publish'";
+		$sql    = " AND p.status = 'publish'";
+		$params = array();
 
 		// Blocked-author exclusion. A bookmark can PREDATE a block — you saved
 		// the topic, then blocked its author — so this list reaches rows the
@@ -109,10 +110,15 @@ class Bookmark extends Model {
 		// filters the read and never touches the saved row.
 		[ $block_sql, $block_vals ] = BlockedUser::exclusion_sql( $user_id, 'p', 'author_id' );
 		if ( '' !== $block_sql ) {
-			return array( $sql . ' AND ' . $block_sql, $block_vals );
+			$sql   .= ' AND ' . $block_sql;
+			$params = $block_vals;
 		}
 
-		return array( $sql, array() );
+		// A bookmark can also outlive the viewer's access: the space went private
+		// or the post became a private one. Same predicates every other list uses.
+		[ $read_sql, $read_vals ] = Post::readable_sql( $user_id, 'p', 's' );
+
+		return array( $sql . ' AND ' . $read_sql, array_merge( $params, $read_vals ) );
 	}
 
 	/**
@@ -121,30 +127,32 @@ class Bookmark extends Model {
 	 * @return object[]
 	 */
 	public static function list_by_user( int $user_id, int $limit = 20, int $offset = 0 ): array {
-		$b = static::table();
-		$p = table( 'posts' );
+		$b  = static::table();
+		$p  = table( 'posts' );
+		$sp = table( 'spaces' );
 
 		[ $vis_sql, $vis_vals ] = self::visible_sql( $user_id );
 
 		return static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $vis_sql inlines absint'd ids; it only adds a %d (spread via $vis_vals) past the 500-block cap.
-				"SELECT p.*, b.created_at AS bookmarked_at FROM {$b} b JOIN {$p} p ON p.id = b.post_id WHERE b.user_id = %d{$vis_sql} ORDER BY b.created_at DESC LIMIT %d OFFSET %d",
+				"SELECT p.*, b.created_at AS bookmarked_at FROM {$b} b JOIN {$p} p ON p.id = b.post_id LEFT JOIN {$sp} s ON s.id = p.space_id WHERE b.user_id = %d{$vis_sql} ORDER BY b.created_at DESC LIMIT %d OFFSET %d",
 				...array_merge( array( $user_id ), $vis_vals, array( $limit, $offset ) )
 			)
 		) ?: array();
 	}
 
 	public static function count_by_user( int $user_id ): int {
-		$b = static::table();
-		$p = table( 'posts' );
+		$b  = static::table();
+		$p  = table( 'posts' );
+		$sp = table( 'spaces' );
 
 		[ $vis_sql, $vis_vals ] = self::visible_sql( $user_id );
 
 		return (int) static::db()->get_var(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- see list_by_user().
-				"SELECT COUNT(*) FROM {$b} b JOIN {$p} p ON p.id = b.post_id WHERE b.user_id = %d{$vis_sql}",
+				"SELECT COUNT(*) FROM {$b} b JOIN {$p} p ON p.id = b.post_id LEFT JOIN {$sp} s ON s.id = p.space_id WHERE b.user_id = %d{$vis_sql}",
 				...array_merge( array( $user_id ), $vis_vals )
 			)
 		);

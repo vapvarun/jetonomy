@@ -82,12 +82,6 @@ abstract class Importer {
 	protected bool $dry_run = false;
 
 	/**
-	 * Enable or disable dry-run mode.
-	 *
-	 * In dry-run mode, no records are written to the database.
-	 * Import counts are still incremented to simulate the result.
-	 */
-	/**
 	 * Whether this importer actually honours a dry run.
 	 *
 	 * Import_Manager sets dry_run on whatever importer it is handed, but only
@@ -102,6 +96,12 @@ abstract class Importer {
 		return false;
 	}
 
+	/**
+	 * Enable or disable dry-run mode.
+	 *
+	 * In dry-run mode, no records are written to the database.
+	 * Import counts are still incremented to simulate the result.
+	 */
 	public function set_dry_run( bool $dry_run ): void {
 		$this->dry_run = $dry_run;
 	}

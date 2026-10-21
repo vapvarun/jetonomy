@@ -140,7 +140,7 @@ class Reply extends Model {
 			// as Post::create (open spaces only, no demotion of existing members).
 			$parent_post = ! empty( $data['post_id'] ) ? Post::find( (int) $data['post_id'] ) : null;
 			if ( $auto_join && $parent_post && ! empty( $data['author_id'] ) ) {
-				self::maybe_auto_join_space( (int) $parent_post->space_id, (int) $data['author_id'] );
+				SpaceMember::auto_join( (int) $parent_post->space_id, (int) $data['author_id'] );
 			}
 
 			if ( 'publish' === ( $data['status'] ?? 'publish' ) ) {
@@ -277,24 +277,6 @@ class Reply extends Model {
 	private static function topic_is_published( int $post_id ): bool {
 		$post = $post_id > 0 ? Post::find( $post_id ) : null;
 		return $post && 'publish' === ( $post->status ?? '' );
-	}
-
-	/**
-	 * Add the replier to the parent post's space as a plain member if they aren't
-	 * already a member. Only applies to open spaces.
-	 */
-	private static function maybe_auto_join_space( int $space_id, int $user_id ): void {
-		if ( $space_id <= 0 || $user_id <= 0 ) {
-			return;
-		}
-		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
-			return;
-		}
-		$space = Space::find( $space_id );
-		if ( ! $space || 'open' !== ( $space->join_policy ?? 'open' ) ) {
-			return;
-		}
-		SpaceMember::add( $space_id, $user_id, 'member' );
 	}
 
 	/**
@@ -579,6 +561,12 @@ class Reply extends Model {
 			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
 		}
 
+		// Accepting is a write: a silenced or banned member cannot, topic author or not.
+		$restricted = \Jetonomy\Permissions\Permission_Engine::restriction_error( $actor_id, 'close_posts', (int) $post->space_id );
+		if ( $restricted ) {
+			return $restricted;
+		}
+
 		// A trashed or unpublished reply, or one inside such a topic, cannot
 		// become the accepted answer (409). Shared by REST and WP-CLI.
 		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'reply', $id );
@@ -650,6 +638,12 @@ class Reply extends Model {
 		$post = Post::find( (int) $reply->post_id );
 		if ( ! $post ) {
 			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
+		}
+
+		// Accepting is a write: a silenced or banned member cannot, topic author or not.
+		$restricted = \Jetonomy\Permissions\Permission_Engine::restriction_error( $actor_id, 'close_posts', (int) $post->space_id );
+		if ( $restricted ) {
+			return $restricted;
 		}
 
 		$author_id = (int) $reply->author_id;

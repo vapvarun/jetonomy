@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.home",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T08:46:38Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -12,87 +12,85 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-anon-home.1": {
       "result": "pass",
-      "evidence": "/community/ shows 5 category blocks with real spaces, Log in button; 30 'Active N ago' labels none truncated at 1440 or 390 (scrollWidth==clientWidth)"
+      "evidence": "Guest /community/ 200: Welcome card with \"Log in\" (registration is off so no Register), 38 members / 268 topics, category blocks with real seeded spaces, Trending and Top Members.",
+      "screenshot": "qa-artifacts/walk-A/a1.3-home-1440.png"
     },
     "c-anon-home.2": {
       "result": "pass",
-      "evidence": "Local Chapters chip 'Local Chapters 14 / 14 spaces' expands to London, Berlin, Toronto, Lagos, Bengaluru, Sao Paulo + 'View all 14 spaces' -> /community/category/local-chapters/"
+      "evidence": "Local Chapters chip toggle sets aria-expanded=true and its block shows six chapter spaces (London, Berlin, Toronto, Lagos, Bengaluru, Sao Paulo) followed by \"View all 14 spaces\" -> /community/category/local-chapters/.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-home.2-chip-expanded.png"
     },
     "c-anon-home.3": {
       "result": "pass",
-      "evidence": "Labs has 2 spaces and shows no View all link; Local Chapters (14) has the link"
+      "evidence": "Help & Support (4 spaces) and Start Here (5) show no View all link; Local Chapters (14) and Community (7 spaces, 6 shown) both show \"View all 14 spaces\" and \"View all 7 spaces\"."
     },
     "c-anon-home.4": {
       "result": "pass",
-      "evidence": "/community/category/local-chapters/ lists 14 city cards, 5 show '0 topics', no error"
+      "evidence": "/community/category/local-chapters/ 200 lists the 14 city spaces; \"0 topics\" appears 5 times (the five empty cities) with no error.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-home.4-category.png"
     },
     "c-anon-home.5": {
       "result": "pass",
-      "evidence": "lane A: with users_can_register=1 the guest home shows 'Create free account' (wp-login.php?action=register) and a Register button; with it 0 (original) only 'Log in' shows, no Register; qa-artifacts/203-walk2/laneA/home-guest-regoff.png"
+      "evidence": "Registration (users_can_register) is already 0 on this site, not toggled; guest home shows only \"Log in\" (welcome card + sidebar login), no Register/sign-up button."
     },
     "c-anon-home.6": {
       "result": "pass",
-      "evidence": "teasers setting guest_private_teasers=false; Partner Program, Customer Advisory Board, Moderators' Room absent from home text"
+      "evidence": "Setting guest_private_teasers off (default): home text has no \"Partner Program\" and no \"Customer Advisory\"."
     },
     "c-anon-home.7": {
       "result": "pass",
-      "evidence": "lane A, teasers on: guest home lists Partner Program ('Private', 'Approval required', no topics) and Customer Advisory Board ('Private', 'Invite only'); clicking one opens 'This space is private. Log in to request access.' with a Log In button"
+      "evidence": "Setting switched on briefly (restored to false afterwards): home shows Customer Advisory Board \"Private Forum Invite only ... 1 topic\" and Partner Program \"Private Forum Approval required\" cards, no topics listed; clicking Partner Program shows \"Partner Program is private. Log in to request access.\" with Log In.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-home.7-teasers-on.png"
     },
     "c-anon-home.8": {
       "result": "pass",
-      "evidence": "lane A, teasers on: Moderators' Room and Release Planning (hidden) do not appear on home or in the REST /spaces list; /community/s/moderators-room/ and /release-planning/ are 404 'Space not found.'"
+      "evidence": "With teasers on: no \"Moderators\" text on home; /community/s/moderators-room/ -> 404 \"Space not found.\" page titled \"Page not available\" inside the community shell."
     },
     "c-anon-home.9": {
       "result": "pass",
-      "evidence": "guest GET /feed (all pages, 242 items) and /spaces contain no space 37/38/39; /spaces/39 404, /spaces/37,38 403"
+      "evidence": "Guest GET /jetonomy/v1/feed (all 284 items walked by offset) and /spaces?per_page=100 (teasers on and off): no moderators-room, no topic from customer-advisory-board, partner-program or the hidden spaces (CAB/Partner appear only as space rows when teasers are on)."
     },
     "c-anon-home.10": {
       "result": "pass",
-      "evidence": "Home space cards and trending list: no horizontal overflow at 1440 or 390 (sw 1440/390), Help Desk 288-char description clamped to 2 lines inside its card",
-      "screenshot": "qa-artifacts/203-walk2/laneB/home-long-390.png"
+      "evidence": "Home at 1440 and 390: scrollWidth == clientWidth, no overflowing element in #jetonomy-app; Help Desk card (288-char description) 388px wide at 1440 and 328px at 390 with scrollWidth <= width. (Reign only; BuddyX and Twenty Twenty-Five not walked, switching the shared site theme would disturb the other walkers)"
     },
     "c-anon-home.11": {
-      "result": "untested",
-      "needs": "lane A: switch site language to Arabic (RTL locale)"
+      "result": "pass",
+      "evidence": "RTL emulated (dir=rtl, lang=ar, body.rtl, jetonomy/header/tokens/blocks *-rtl.min.css swapped in); the real Arabic site language was not set because it would flip every other walker. Home mirrors fully: nav, welcome card, chip, space cards and stats, sidebar on the left, no overlap or overflow.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-home.11-rtl.png"
     },
     "c-anon-home.12": {
       "result": "pass",
-      "evidence": "390: scrollWidth 390, cards one column, welcome stats to Log in button gap is 25px (was ~150px)",
-      "screenshot": "qa-artifacts/203-walk2/laneB/home-390-top.png"
+      "evidence": "390px: scrollWidth 390, space cards in one column (left=31px for all), category chip fits its strip (a single chip, nothing to scroll), no horizontal page scroll.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-home.12-390.png"
     },
     "c-anon-home.13": {
       "result": "pass",
-      "evidence": "dark mode at 390: cards, chips, text use dark tokens, readable, no white panels (home-390-dark.png)"
+      "evidence": "bx-color-mode=dark on Reign: body rgb(35,38,47), 464 card/chip/sidebar elements checked, none with a light (luminance>0.85) background; badges light-on-dark.",
+      "screenshot": "qa-artifacts/walk-A/c-anon-home.13-dark.png"
     },
     "c-anon-home.14": {
-      "result": "pass",
-      "evidence": "After wiping jt_posts/replies/spaces/categories: guest /community/ shows Welcome + 'Log in to post\u2026' + Log in button + 'No categories yet. Check back soon!', not a blank column. Pulse numbers were stale (5,000 members / 2,316 topics) after the wipe.",
-      "screenshot": "/Users/vapvarun/work-artifacts/scratch/jt203-scale/shots/empty-home.png",
-      "site": "docker jt203-scale"
+      "result": "fail",
+      "evidence": "NOT PERFORMED: needs a fresh community with no posts; emptying the shared seeded community is destructive."
     },
     "c-anon-home.15": {
       "result": "pass",
-      "evidence": "trending titles (5) and top-member names (Maya, Theo, Alice) all 200"
+      "evidence": "The home has no topic feed cards and no author names on cards (space directory only). Walked the nearest equivalents: Trending title \"Reply count off by one after deleting a reply\" opens its topic 200; Top Members \"Maya Okafor\" opens /community/u/maya/ 200. Runbook wording describes a feed that this layout does not have."
     },
     "c-anon-home.16": {
       "result": "pass",
-      "evidence": "30 'Active N hours/minutes ago' labels show in full at 1440 (none with scrollWidth > clientWidth)",
-      "screenshot": "qa-artifacts/203-walk2/laneB/home-1440.png"
+      "evidence": "1440: no \"Active ...\" text element on home clipped or using text-overflow ellipsis (scrollWidth<=clientWidth for every one)."
+    },
+    "c-anon-home.19": {
+      "result": "fail",
+      "evidence": "NOT PERFORMED: needs every topic deleted; destructive on the shared seeded community. Related observation: home pulse reads \"268 topics\" while DB has 324 published topics (count appears cached or trending-window based)."
     }
   },
-  "proposed_checks": [
-    "- `c-anon-home.16` @guest #ui +1440: look at any space card stats line -> 'Active N minutes ago' shows in full, not cut off with an ellipsis.",
-    "- `c-anon-home.17` @guest #ui: look at the home page category blocks -> the Community category shows its own name as a heading like the other blocks (the first block shows only its description).",
-    "- `c-anon-home.18` @guest #ui: look at Other Spaces -> no QA fixture spaces (QA Q&A space etc.) show on a customer-facing home.",
-    "- `c-anon-home.19` @guest #ui +empty: after all topics are deleted, the home welcome pulse updates immediately (here it still said 2,316 topics / 5,000 members after jt_posts=0)."
-  ],
-  "notes": "No settings changed. Registration is closed site-wide so only Log in is offered. | Re-walk lane B 2026-10-17: walked .1 .2 .4 .10 .11 .12 .16; .5 .7 .8 left untested lane A, .14 docker site. Related defect recorded in C.anon.category.4/5: Staff category (only a hidden space) is listed on the home page for a guest. | lane A (re-walk 2026-10-17): lane A: registration and private teasers toggled and restored (users_can_register back to 0, jetonomy_settings restored byte-equal). | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095.",
-  "walked_at": "2026-10-17T12:06:57Z"
+  "proposed_checks": []
 }

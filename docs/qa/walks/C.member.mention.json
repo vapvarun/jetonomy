@@ -1,9 +1,8 @@
 {
   "journey": "C.member.mention",
-  "free": "8b2827d7",
-  "pro": "d5c4494",
-  "walked_at": "2026-10-17T18:09:44Z",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T09:48:25Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -13,95 +12,87 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-member-mention.1": {
       "result": "pass",
-      "evidence": "bob typed '@alice thanks, that fixed it for me...' in the reply composer on alice's topic 6102: saved reply 13631 shows <a class=jt-mention href=/community/u/alice/>@alice</a>"
+      "evidence": "reply 16418-range check: bob reply \"@alice thanks, that fixed it for me\" renders <a class=\"jt-mention\" href=/community/u/alice/>@alice</a> on the topic page (guest HTML)"
     },
     "c-member-mention.2": {
       "result": "pass",
-      "evidence": "alice's bell +1: one 'Bob Martinez mentioned you in \"Where can I see which replies...\"' (id 22130) linking to #reply-13631"
+      "evidence": "alice has exactly one notifications row type=mention for the reply (DB). Bell link target not clicked."
     },
     "c-member-mention.3": {
-      "result": "fail",
-      "expected": "its subject and body come from the owner's saved Mention template (Settings > Emails), not the default text.",
-      "actual": "alice's Mailpit email subject is '[forums] You were mentioned by' - the actor name after 'by' is missing (default subject '[{site}] You were mentioned by {actor_display_name}', class-notifier.php:127), while the body names Bob. No owner-saved Mention template exists on this site (jetonomy_email_templates only holds verification_reminder), so the owner-template part could not be exercised",
-      "url": "http://forums.local/community/s/help-desk/t/where-can-i-see-which-replies-were-marked-as-the-accepted-answer-in-my-profile/"
+      "result": "pass",
+      "evidence": "Mailpit: \"[forums] You were mentioned by Bob Martinez\" to alice, one email; body uses Settings > Emails default (template not customised on this site)"
     },
     "c-member-mention.4": {
       "result": "pass",
-      "evidence": "bob mentions @alice (topic author) in a reply: alice gets one mention notification and one email 'You were mentioned by', no extra 'replied to your topic' notice"
+      "evidence": "bob replies to 5719 mentioning @alice (OP): alice gets one mention notification row and one email (\"replied to your topic\"); no second notice"
     },
     "c-member-mention.5": {
       "result": "pass",
-      "evidence": "maya follows thread 6102; bob replies '@maya ...': maya +1 notification (mention) and one email (mention), no second reply notice for that reply"
+      "evidence": "maya follows 5719; bob mentions @maya: maya gets one mention notification row and one mention email, no extra reply_to_post row"
     },
     "c-member-mention.6": {
       "result": "pass",
-      "evidence": "'@alice thanks again. And @alice, ...': two jt-mention links, alice notifications +1 only"
+      "evidence": "two @alice in one reply: two links in markup, still one notification row"
     },
     "c-member-mention.7": {
       "result": "pass",
-      "evidence": "new topic 6103 with '@alice' in the body: alice +1 mention notification and one email; the page renders the link"
+      "evidence": "new topic body \"Hello @alice in a post body\": content saved with raw @alice, alice got one mention notification"
     },
     "c-member-mention.8": {
-      "result": "fail",
-      "expected": "201, content_html holds the profile link, GET /notifications as alice shows it.",
-      "actual": "POST /posts/6102/replies with '@alice' -> 201 but the response (and GET /replies/<id>) carry only content/content_plain with the raw '@alice'; there is no content_html field, the profile link is added when the page is rendered. Notification for alice listed by GET /notifications",
-      "check_wrong": true
+      "result": "pass",
+      "evidence": "POST reply with @alice = 201, content keeps raw @alice, no *_html field, page render adds the link, alice notification exists"
     },
     "c-member-mention.9": {
       "result": "pass",
-      "evidence": "'@nobodyhere are you following this one?' stays plain text, no link, no error (reply 13634)"
+      "evidence": "@nobodyhere stays plain text in markup (<p>QA-WALK-A @nobodyhere stays plain</p>), 201, no error"
     },
     "c-member-mention.10": {
       "result": "pass",
-      "evidence": "bob's private reply mentioning @alice on topic 5709 (alice cannot read it): no notification, no email; on alice's own topic 6102 (she can read) she gets exactly one"
+      "evidence": "bob private reply mentioning @theo (cannot read it): zero notification rows"
     },
     "c-member-mention.11": {
       "result": "pass",
-      "evidence": "bob POST a topic in Customer Advisory Board or Moderators' Room -> 403 'You cannot post in this space.'; a moderator (test_moderator) in Moderators' Room mentioning @alice (not a member) -> alice's unread count and Mailpit unchanged (35 -> 35); maya in Customer Advisory Board mentioning @bob (non-member) -> no notification for bob"
+      "evidence": "maya (CAB member) mention of @alice (not a CAB member) in CAB topic 8955 and of @bob (not a member) in Moderators Room topic 8956: no mention notification rows for them"
     },
     "c-member-mention.12": {
       "result": "pass",
-      "evidence": "finn (silenced) POST reply with @bob -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; bob's count unchanged"
+      "evidence": "finn mention reply = 403 jetonomy_user_silenced, no notification created"
     },
     "c-member-mention.13": {
       "result": "pass",
-      "evidence": "alice PATCH /users/me settings.notifications.mention web+email false: bob's @alice reply created no bell and no email for her; her settings restored to the original empty value"
+      "evidence": "alice PATCH notification_preferences mention web/email off: bob mention created no notification row and no Mailpit email. Settings restored to original []."
     },
     "c-member-mention.14": {
-      "result": "fail",
-      "expected": "the list shows her full name and the link resolves to her profile.",
-      "actual": "typing '@Gra' lists 'Grace Oluwaseun Ade...' (name truncated with an ellipsis in a 318px list) and her row shows a broken image icon: /users/suggest returns avatar_url '' and the list renders <img src=''> which resolves to the page URL. Also after choosing her with Enter and typing on, the inserted space is lost and the reply saves as '@gracecould you add...' with no link",
-      "url": "http://forums.local/community/s/general-discussion/t/local-meetup-photo-walk-who-can-host-the-route-briefing/",
-      "screenshot": "qa-artifacts/203-walk3/laneB/mention-autocomplete-1440.png"
+      "result": "pass",
+      "evidence": "autocomplete row shows full \"Grace Oluwaseun Adeyemi-Whitfield\" and @grace; saved link href /community/u/grace/",
+      "screenshot": "c-member-mention.14.png"
     },
     "c-member-mention.15": {
       "result": "pass",
-      "evidence": "bob mentions @bob in a reply: link rendered, bob's unread count unchanged (16 -> 16)"
+      "evidence": "bob mentioning @bob: no notification row"
     },
     "c-member-mention.16": {
-      "result": "fail",
-      "expected": "the link renders correctly inside the right-to-left sentence.",
-      "actual": "Arabic reply with @omar renders the mention as 'omar@' (the @ lands on the right of the name) inside the RTL sentence; link text and href are right but the a.jt-mention has unicode-bidi normal and no dir/isolate",
-      "url": "http://forums.local/community/s/general-discussion/t/%d8%aa%d8%ac%d8%b1%d8%a8%d8%aa%d9%8a-%d9%85%d8%b9-%d9%85%d8%ac%d9%85%d9%88%d8%b9%d8%a7%d8%aa-%d8%a7%d9%84%d8%aa%d8%b5%d9%88%d9%8a%d8%b1-%d8%a7%d9%84%d9%85%d8%ad%d9%84%d9%8a%d8%a9/",
-      "screenshot": "qa-artifacts/203-walk3/laneB/mention-rtl-1440.png"
+      "result": "pass",
+      "evidence": "Arabic sentence with @omar: omar got mention notification and email; link rendered as <a dir=\"ltr\"> inside the sentence. Not visually screenshotted."
     },
     "c-member-mention.17": {
       "result": "pass",
-      "evidence": "edited bob's reply 13632 twice via PATCH (other text changed, then the @maya mention removed): maya's original mention notification 22137 stays and no new notification was created by either edit"
+      "evidence": "removing the mention in an edit leaves the old notification (stays per contract); editing other text and re-adding the mention created no second notification"
+    },
+    "c-member-mention.18": {
+      "result": "pass",
+      "evidence": "Enter on autocomplete inserts \"@grace \" and typing continues \"@grace could you look\"; saved reply links to /community/u/grace/"
+    },
+    "c-member-mention.19": {
+      "result": "pass",
+      "evidence": "member without avatar shows initials \"GR\" (no img); name not clipped (scrollWidth 199 = clientWidth 199, wraps)"
     }
   },
-  "proposed_checks": [
-    "- `c-member-mention.3` (corrected) @member_b #email: read alice's Mailpit email -> subject is \"[forums] You were mentioned by Bob Martinez\" (actor name present) and the body comes from the owner's saved Mention template or the Settings > Emails default.",
-    "- `c-member-mention.8` (corrected) @member #rest: POST a reply with \"@alice\" -> 201, content keeps the raw @alice (no content_html field), the page render links it, and GET /notifications as alice shows it.",
-    "- `c-member-mention.18` @member #ui: choose a member from the @ autocomplete with Enter, then keep typing -> a space follows the handle (\"@grace could ...\") and the saved reply links to her profile.",
-    "- `c-member-mention.19` @member #ui +long: the autocomplete row for a member without an avatar shows initials, not a broken image, and the long name is not cut with an ellipsis."
-  ],
-  "notes": "alice's mention notification preference was switched off and restored to the original empty value. Test topics and replies removed at the end."
+  "proposed_checks": []
 }

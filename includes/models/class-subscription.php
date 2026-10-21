@@ -51,14 +51,6 @@ class Subscription extends Model {
 	}
 
 	/**
-	 * Unsubscribe a user from an object.
-	 *
-	 * @param int    $user_id
-	 * @param string $object_type
-	 * @param int    $object_id
-	 * @return bool True if a row was deleted.
-	 */
-	/**
 	 * List a user's subscriptions, newest first, paginated.
 	 *
 	 * @param int $user_id User ID.
@@ -67,17 +59,38 @@ class Subscription extends Model {
 	 * @return array<int,object>
 	 */
 	public static function list_for_user( int $user_id, int $limit = 50, int $offset = 0 ): array {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT * FROM ' . self::table() . ' WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
-				$user_id,
-				$limit,
-				$offset
+		[ $read_sql, $read_vals ] = self::target_readable_sql( $user_id );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $read_sql's %d values are spread via $read_vals.
+				'SELECT sub.* FROM ' . self::table() . " sub WHERE sub.user_id = %d{$read_sql} ORDER BY sub.created_at DESC, sub.id DESC LIMIT %d OFFSET %d",
+				...array_merge( array( $user_id ), $read_vals, array( $limit, $offset ) )
 			)
 		) ?: array();
+	}
+
+	/**
+	 * WHERE fragment keeping only follows the member may still read: the space
+	 * row exists and its content is open to them, or the topic row exists and
+	 * Post::readable_sql() passes. A trashed or spam topic in a readable space
+	 * is KEPT, so attach_targets() marks it gone and the member can unfollow it;
+	 * a target they lost access to is dropped, so its title never leaks.
+	 * Rows whose target was hard-deleted are never listed or counted, so the
+	 * list and its pages agree.
+	 *
+	 * @param int $user_id Follower.
+	 * @return array{0:string,1:array} SQL starting with ' AND', and its params.
+	 */
+	private static function target_readable_sql( int $user_id ): array {
+		[ $space_sql, $space_vals ] = Space::readable_with_rules_sql( $user_id, 's' );
+		[ $post_sql, $post_vals ]   = Post::readable_sql( $user_id, 'p', 's' );
+		$spaces                     = table( 'spaces' );
+		$posts                      = table( 'posts' );
+		return array(
+			" AND ( ( sub.object_type = 'space' AND EXISTS ( SELECT 1 FROM {$spaces} s WHERE s.id = sub.object_id AND {$space_sql} ) )"
+				. " OR ( sub.object_type = 'post' AND EXISTS ( SELECT 1 FROM {$posts} p JOIN {$spaces} s ON s.id = p.space_id WHERE p.id = sub.object_id AND {$post_sql} ) ) )",
+			array_merge( $space_vals, $post_vals ),
+		);
 	}
 
 	/**
@@ -87,13 +100,12 @@ class Subscription extends Model {
 	 * @return int
 	 */
 	public static function count_for_user( int $user_id ): int {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT COUNT(*) FROM ' . self::table() . ' WHERE user_id = %d',
-				$user_id
+		[ $read_sql, $read_vals ] = self::target_readable_sql( $user_id );
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- see list_for_user().
+				'SELECT COUNT(*) FROM ' . self::table() . " sub WHERE sub.user_id = %d{$read_sql}",
+				...array_merge( array( $user_id ), $read_vals )
 			)
 		);
 	}
@@ -221,6 +233,14 @@ class Subscription extends Model {
 		return $items;
 	}
 
+	/**
+	 * Unsubscribe a user from an object.
+	 *
+	 * @param int    $user_id
+	 * @param string $object_type
+	 * @param int    $object_id
+	 * @return bool True if a row was deleted.
+	 */
 	public static function unsubscribe( int $user_id, string $object_type, int $object_id ): bool {
 		$result = false !== static::db()->delete(
 			static::table(),

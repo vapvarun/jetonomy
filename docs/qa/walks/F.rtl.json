@@ -1,0 +1,57 @@
+{
+ "journey": "F.rtl",
+ "free": "dcdb0750",
+ "pro": "404b0af",
+ "walked_at": "2026-10-21T10:36:14Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "f-rtl.1": {
+   "result": "pass",
+   "evidence": "Real ar locale (WPLANG=ar briefly set site-wide, restored): /community/, Help Desk space, a topic, /community/u/bob/ as bob at 1440 and 390: html dir=rtl lang=ar, body direction rtl, scrollWidth-clientWidth = 0 on all 8 loads, 0 page errors.",
+   "screenshot": "rtl-1440-uploadtest"
+  },
+  "f-rtl.2": {
+   "result": "fail",
+   "evidence": "Omar Arabic topic at 1440 (bob): title, author row, avatar and vote/reaction column sit on the right, reply cards mirrored, body dir=auto. Not confirmed: the topic has no list/quote/code block, so bullets, quote border and LTR code block were NOT PERFORMED; pre/code elements on the page compute direction rtl, runbook expects LTR for code.",
+   "screenshot": "rtl-omar-topic"
+  },
+  "f-rtl.3": {
+   "result": "fail",
+   "evidence": "No back/next/prev/reply-arrow icons with a mirroring transform exist on the walked pages (0 transformed SVGs); breadcrumb uses plain \"/\" separators so nothing mirrors. Pagination and back arrows NOT PERFORMED (no multi-page listing walked in RTL)."
+  },
+  "f-rtl.4": {
+   "result": "fail",
+   "evidence": "Composer: .jt-editor-body dir=auto, direction rtl, mixed Arabic + URL + @alice sentence typed and kept in order in the editor (text intact). NOT PERFORMED: toolbar mirroring measurement (no toolbar element found by selector), @mention popup (did not appear), attachment chips in RTL; untranslated English UI strings render with misplaced punctuation, e.g. empty state shows \"!No replies yet. Be the first to reply\".",
+   "screenshot": "rtl-composer"
+  },
+  "f-rtl.5": {
+   "result": "fail",
+   "evidence": "Share menu opened at 1440 in RTL but its panel could not be isolated by selector, so side and viewport containment were not measured; user menu / notification dropdowns and dark mirror in RTL NOT PERFORMED.",
+   "screenshot": "rtl-share"
+  },
+  "f-rtl.6": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: Grace long name and the 159-char topic title (topic 5872) were not opened in RTL at 390px."
+  },
+  "f-rtl.7": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: pagination, poll bars (polls not seeded in an RTL view) and Messages pane (dormant) not walked in RTL; vote buttons and reaction chips were seen on the right-side of the post in the Arabic topic screenshot but not measured per runbook."
+  },
+  "f-rtl.8": {
+   "result": "pass",
+   "evidence": "Admin with ar user locale: Jetonomy Settings, Spaces, Pro Analytics and Pro Badges pages all dir=rtl, no horizontal overflow, 0 tables clipped outside the viewport at 1440.",
+   "screenshot": "rtl-admin-adminphppagejetonomyp"
+  }
+ }
+}

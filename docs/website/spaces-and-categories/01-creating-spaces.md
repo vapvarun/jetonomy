@@ -111,6 +111,8 @@ A space holds other members' topics and replies, not just the owner's, so removi
 
 > **Who sees "Delete permanently".** Site administrators always do. Space admins only see it if you have turned on **Settings → Members → Let space admins permanently delete a space and everything in it**, which is off by default. If it is off, a space admin can archive a space but not destroy it.
 
+If the space has child spaces, they move up to the deleted space's parent instead of being left orphaned (2.0.4).
+
 On a large space, permanent deletion runs in the background and can take a few minutes to finish. The space stays visible until the last of its content is removed, so an interrupted deletion resumes rather than leaving the community in a half-deleted state.
 
 > **Changed in 1.9.3.** Deleting a space previously removed the space itself but left its topics, replies and member records behind as unreachable rows in the database. Both actions above now handle a space's contents properly. If you deleted spaces on an earlier version, Jetonomy cleans up what those deletions left behind automatically in the background.

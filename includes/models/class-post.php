@@ -30,16 +30,6 @@ class Post extends Model {
 	}
 
 	/**
-	 * Create a new post.
-	 *
-	 * Sets created_at, updated_at, and status defaults if absent. Generates a
-	 * slug from the title when one is not provided. After a successful insert,
-	 * increments the parent space's post_count.
-	 *
-	 * @param array $data Column data.
-	 * @return int Inserted row ID.
-	 */
-	/**
 	 * Insert override: the LAST write barrier for the content pipeline.
 	 *
 	 * Sanitizing only inside create() left two bypasses (QA 2026-07-30):
@@ -56,6 +46,16 @@ class Post extends Model {
 		return parent::insert( self::sanitize_content_fields( $data ) );
 	}
 
+	/**
+	 * Create a new post.
+	 *
+	 * Sets created_at, updated_at, and status defaults if absent. Generates a
+	 * slug from the title when one is not provided. After a successful insert,
+	 * increments the parent space's post_count.
+	 *
+	 * @param array $data Column data.
+	 * @return int Inserted row ID.
+	 */
 	public static function create( array $data ): int|\WP_Error {
 		/**
 		 * Filter post data before creation. Return WP_Error to abort.
@@ -130,7 +130,7 @@ class Post extends Model {
 				// Only applies to open spaces — approval/invite-only spaces manage
 				// membership through their own workflows, and demoting an existing
 				// admin/moderator back to 'member' would be a footgun.
-				self::maybe_auto_join_space( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
+				SpaceMember::auto_join( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
 
 				/**
 				 * Fires when a post enters or leaves `publish`.
@@ -183,20 +183,6 @@ class Post extends Model {
 		return $id;
 	}
 
-	/**
-	 * Status-aware update.
-	 *
-	 * When a post transitions between `publish` and any other status the
-	 * denormalized counters on the parent space and the author profile must
-	 * track that transition. Centralizing it here means every caller — REST,
-	 * admin AJAX, abilities, WP-CLI, migrations — stays consistent without
-	 * repeating increment/decrement logic.
-	 *
-	 * Transitions that update counters:
-	 *   publish → non-publish     : -1 space.post_count, -1 user.post_count
-	 *   non-publish → publish     : +1 space.post_count, +1 user.post_count
-	 *   everything else           : no-op
-	 */
 	/**
 	 * Single-post read, served from the object cache.
 	 *
@@ -253,6 +239,20 @@ class Post extends Model {
 		Cache::delete( self::cache_key( $id ) );
 	}
 
+	/**
+	 * Status-aware update.
+	 *
+	 * When a post transitions between `publish` and any other status the
+	 * denormalized counters on the parent space and the author profile must
+	 * track that transition. Centralizing it here means every caller — REST,
+	 * admin AJAX, abilities, WP-CLI, migrations — stays consistent without
+	 * repeating increment/decrement logic.
+	 *
+	 * Transitions that update counters:
+	 *   publish → non-publish     : -1 space.post_count, -1 user.post_count
+	 *   non-publish → publish     : +1 space.post_count, +1 user.post_count
+	 *   everything else           : no-op
+	 */
 	public static function update( int $id, array $data ): bool {
 		$data = self::sanitize_content_fields( $data );
 
@@ -314,6 +314,11 @@ class Post extends Model {
 			do_action( 'jetonomy_post_publish_transition', $id, $delta, (string) ( $data['created_at'] ?? $post->created_at ?? '' ) );
 		}
 
+		// A topic that left publish or went private leaves the sitemap now.
+		if ( $delta < 0 || ! empty( $data['is_private'] ) ) {
+			\Jetonomy\SEO\Sitemap_Emitter::flush();
+		}
+
 		// published_at on a draft is its schedule: every write that sets or
 		// clears it moves the next publish time.
 		if ( array_key_exists( 'published_at', $data ) ) {
@@ -321,24 +326,6 @@ class Post extends Model {
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Add the author to a space as a plain member if they aren't already a member.
-	 * Skips non-open spaces so role/gating workflows aren't bypassed.
-	 */
-	private static function maybe_auto_join_space( int $space_id, int $user_id ): void {
-		if ( $space_id <= 0 || $user_id <= 0 ) {
-			return;
-		}
-		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
-			return;
-		}
-		$space = Space::find( $space_id );
-		if ( ! $space || 'open' !== ( $space->join_policy ?? 'open' ) ) {
-			return;
-		}
-		SpaceMember::add( $space_id, $user_id, 'member' );
 	}
 
 	/**
@@ -1526,6 +1513,22 @@ class Post extends Model {
 	}
 
 	/**
+	 * Whether a member may read a post row joined to its space, as SQL: the
+	 * space's content is open to them and a private topic is one they may read.
+	 * Shared by the lists whose rows can outlive access (bookmarks, follows).
+	 *
+	 * @param int    $user_id     Reader (0 for guest).
+	 * @param string $post_alias  Posts table alias.
+	 * @param string $space_alias Spaces table alias (joined on the post's space).
+	 * @return array{0:string,1:array} SQL fragment and its params.
+	 */
+	public static function readable_sql( int $user_id, string $post_alias = 'p', string $space_alias = 's' ): array {
+		[ $space_sql, $space_vals ] = Space::readable_with_rules_sql( $user_id, $space_alias );
+		[ $priv_sql, $priv_vals ]   = self::private_reader_sql( $user_id, $post_alias );
+		return array( "{$space_sql} AND {$priv_sql}", array_merge( $space_vals, $priv_vals ) );
+	}
+
+	/**
 	 * Private topics a given member may read, as SQL: the set-based twin of
 	 * Permission_Engine::can_read_post()'s private branch, for lists built for
 	 * someone other than the current viewer (the email digest). A private topic
@@ -2003,12 +2006,6 @@ class Post extends Model {
 	}
 
 	/**
-	 * Publish a scheduled post when its published_at time has arrived.
-	 *
-	 * @param int $id Post ID.
-	 * @return bool True if published.
-	 */
-	/**
 	 * Publish a draft post now, with the full create-post side-effects.
 	 *
 	 * Shared core for both the scheduled-cron publish and a manual "publish now"
@@ -2092,6 +2089,12 @@ class Post extends Model {
 		return true;
 	}
 
+	/**
+	 * Publish a scheduled post when its published_at time has arrived.
+	 *
+	 * @param int $id Post ID.
+	 * @return bool True if published.
+	 */
 	public static function publish_scheduled( int $id ): bool {
 		$post = static::find( $id );
 		if ( ! $post || 'draft' !== ( $post->status ?? '' ) || empty( $post->published_at ) ) {

@@ -107,7 +107,7 @@ class Space extends Model {
 	 * @return bool|\WP_Error WP_Error (400) when `type` is not a valid space type.
 	 */
 	public static function update( int $id, array $data ): bool|\WP_Error {
-		$invalid = self::check_type( $data );
+		$invalid = self::check_type( $data ) ?? ( array_key_exists( 'parent_id', $data ) ? self::parent_error( $id, (int) $data['parent_id'] ) : null );
 		if ( $invalid ) {
 			return $invalid;
 		}
@@ -216,6 +216,9 @@ class Space extends Model {
 		}
 
 		self::bust_cache( $id );
+		if ( $result && ( array_key_exists( 'visibility', $data ) || array_key_exists( 'status', $data ) ) ) {
+			\Jetonomy\SEO\Sitemap_Emitter::flush();
+		}
 		if ( $slug_changing && $data['slug'] !== $old_slug ) {
 			$keys = array( "space:slug:{$data['slug']}" );
 			if ( $old_slug ) {
@@ -224,6 +227,57 @@ class Space extends Model {
 			Cache::delete_many( $keys );
 		}
 		return $result;
+	}
+
+	/**
+	 * Why a space cannot move under $parent_id, or null when it can (0 = top
+	 * level): the parent must exist and must not be the space itself or one of
+	 * its own sub-spaces.
+	 *
+	 * @param int $id        Space being moved.
+	 * @param int $parent_id Proposed parent.
+	 */
+	private static function parent_error( int $id, int $parent_id ): ?\WP_Error {
+		// Walk up from the proposed parent; reaching the space itself is a cycle.
+		for ( $at = $parent_id, $hops = 0; $at > 0 && $hops < 100; $hops++ ) {
+			if ( $at === $id ) {
+				return new \WP_Error(
+					'jetonomy_space_parent_cycle',
+					/* translators: 1: singular space label, lowercase. 2: plural space label, lowercase. */
+					sprintf( __( 'A %1$s cannot be placed inside itself or one of its own sub-%2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( true, true ) ),
+					array( 'status' => 400 )
+				);
+			}
+			$row = parent::find( $at );
+			if ( ! $row ) {
+				return 0 === $hops
+					/* translators: %s: the singular Category or Space label, lowercase. */
+					? new \WP_Error( 'jetonomy_space_parent_missing', sprintf( __( 'The parent %s does not exist.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 400 ) )
+					: null;
+			}
+			$at = (int) ( $row->parent_id ?? 0 );
+		}
+		return null;
+	}
+
+	/**
+	 * Move a space's sub-spaces up to $new_parent (its own parent, or 0 for the
+	 * top level), so deleting it never leaves children pointing at a space that
+	 * is gone. Space_Purge calls this before it removes the space row.
+	 *
+	 * @param int $space_id   Space whose children move.
+	 * @param int $new_parent Their new parent.
+	 */
+	public static function reparent_children( int $space_id, int $new_parent ): void {
+		$table    = static::table();
+		$children = static::db()->get_col( static::db()->prepare( "SELECT id FROM {$table} WHERE parent_id = %d", $space_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( ! $children ) {
+			return;
+		}
+		static::db()->query( static::db()->prepare( "UPDATE {$table} SET parent_id = %d WHERE parent_id = %d", $new_parent, $space_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		foreach ( $children as $child ) {
+			self::bust_cache( (int) $child );
+		}
 	}
 
 	/**
@@ -636,6 +690,13 @@ class Space extends Model {
 			$data['sort_order'] = static::next_sort_order( (int) ( $data['category_id'] ?? 0 ) );
 		}
 
+		// A parent that does not exist (an importer's stale map entry) files the
+		// space at the top level instead of pointing it at nothing; a new space
+		// cannot be its own ancestor, so the cycle checks of update() do not apply.
+		if ( ! empty( $data['parent_id'] ) && ! parent::find( (int) $data['parent_id'] ) ) {
+			$data['parent_id'] = 0;
+		}
+
 		// Private always means request or invite; see update().
 		if ( 'private' === ( $data['visibility'] ?? 'public' ) && 'open' === ( $data['join_policy'] ?? 'open' ) ) {
 			$data['join_policy'] = 'approval';
@@ -745,8 +806,8 @@ class Space extends Model {
 	 * search, tag pages, the sidebar, profile activity and the Pro digest,
 	 * because only the LISTING predicate consulted the parent.
 	 *
-	 * Fails CLOSED relative to can(): AccessRule grants and per-user bans are
-	 * intentionally not modelled in SQL — the predicate is the membership-based
+	 * Fails CLOSED relative to can(): AccessRule grants and site-wide bans are
+	 * intentionally not modelled in SQL (a space ban is: it is subtracted) — the predicate is the membership-based
 	 * common case and may only ever UNDER-include (never leak). Single-item
 	 * reads still pass through Permission_Engine::can_read_post() for the
 	 * authoritative decision. The per-post `is_private` flag is a separate axis
@@ -774,9 +835,34 @@ class Space extends Model {
 		if ( '' !== $parent ) {
 			$readable = "({$readable} AND {$parent})";
 		}
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
-		$fragment = "({$readable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
-		return array( $fragment, array( $user_id ) );
+		$restrictions = \Jetonomy\table( 'restrictions' );
+		// A space ban never removes the roster row, so the ban is subtracted here.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are trusted prefixed names.
+		$fragment = "(({$readable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d)) AND {$col}id NOT IN (SELECT space_id FROM {$restrictions} WHERE user_id = %d AND type = 'space_ban' AND space_id IS NOT NULL AND (expires_at IS NULL OR expires_at > %s)))";
+		return array( $fragment, array( $user_id, $user_id, now() ) );
+	}
+
+	/**
+	 * {@see self::content_visibility_sql()} plus the spaces a rule admits the
+	 * member to without a roster row. For lists of rows that outlive access
+	 * (follows, bookmarks), where dropping a rule-admitted member's rows is wrong.
+	 *
+	 * @param int|null $user_id Viewer ID. Null = current user.
+	 * @param string   $alias   Spaces-table alias without trailing dot.
+	 * @return array{0:string,1:array} [SQL fragment, bind values]
+	 */
+	public static function readable_with_rules_sql( ?int $user_id, string $alias = '' ): array {
+		$user_id                    = $user_id ?? get_current_user_id();
+		[ $space_sql, $space_vals ] = self::content_visibility_sql( $user_id, $alias );
+		$admitted                   = AccessRule::admitted_space_ids( (int) $user_id );
+		if ( ! $admitted ) {
+			return array( $space_sql, $space_vals );
+		}
+		$col = '' !== $alias ? $alias . '.' : '';
+		return array(
+			"({$space_sql} OR {$col}id IN (" . implode( ',', array_fill( 0, count( $admitted ), '%d' ) ) . '))',
+			array_merge( $space_vals, $admitted ),
+		);
 	}
 
 	/**
@@ -1131,13 +1217,6 @@ class Space extends Model {
 	}
 
 	/**
-	 * List top-level spaces in a category for a given viewer.
-	 *
-	 * @param int      $category_id Category row ID.
-	 * @param int|null $user_id     Viewer ID; null = current user.
-	 * @return object[]
-	 */
-	/**
 	 * ALL top-level spaces visible to the viewer, grouped by category_id in
 	 * ONE query. Key 0 collects uncategorized spaces. Replaces
 	 * the per-category list_by_category()/list_visible() loops on the home
@@ -1371,6 +1450,9 @@ class Space extends Model {
 		// every publish transition and move lands here with the space id in
 		// hand, making this the single bust point for it.
 		Cache::delete( "schema:space:{$id}" );
+		// The home pulse sums these counters; without this its topic count
+		// stayed stale for the transient's full hour.
+		delete_transient( 'jetonomy_community_pulse' );
 	}
 
 	/**
@@ -2098,31 +2180,6 @@ class Space extends Model {
 				$limit
 			)
 		);
-	}
-
-	/**
-	 * Active public spaces with the most topics first, optionally in one category.
-	 *
-	 * @param int $limit       Max rows.
-	 * @param int $category_id Category, or 0 for all.
-	 * @return object[]
-	 */
-	public static function list_public_by_post_count( int $limit, int $category_id = 0 ): array {
-		$where = "status = 'active' AND visibility = 'public'";
-		$args  = array();
-		if ( $category_id > 0 ) {
-			$where .= ' AND category_id = %d';
-			$args[] = $category_id;
-		}
-		$args[] = $limit;
-
-		return static::db()->get_results(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY post_count DESC, id ASC LIMIT %d",
-				...$args
-			)
-		) ?: array();
 	}
 
 	/**

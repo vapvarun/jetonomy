@@ -13,6 +13,11 @@
  * @var int      $join_per_page Join requests per page.
  * @var int      $join_paged    Current join requests page (?jrpg=).
  * @var int      $join_pages    Join request page count.
+ * @var string   $member_search   Members tab name filter (?ms=).
+ * @var int      $member_total    Members matching the filter.
+ * @var int      $member_per_page Members per page.
+ * @var int      $member_paged    Current members page (?mpg=).
+ * @var int      $member_pages    Members page count.
  *
  * @package Jetonomy
  */
@@ -124,6 +129,24 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							<option value="approval" <?php selected( $space->join_policy, 'approval' ); ?>><?php esc_html_e( 'Requires Approval', 'jetonomy' ); ?></option>
 							<option value="invite" <?php selected( $space->join_policy, 'invite' ); ?>><?php esc_html_e( 'Invite Only', 'jetonomy' ); ?></option>
 						</select>
+						<?php
+						// Adding a restrictive rule switches a public space to Private, which also
+						// changes how people join; the rule toast says so once, this says it here.
+						if ( 'private' === $space->visibility && array_intersect( \Jetonomy\Models\AccessRule::RESTRICTIVE_TYPES, wp_list_pluck( $access_rules, 'rule_type' ) ) ) :
+							?>
+							<div class="notice notice-info inline"><p>
+								<?php
+								echo esc_html(
+									sprintf(
+										/* translators: 1: space label, lowercase (e.g. "space"). 2: join policy label (e.g. "Requires Approval"). */
+										__( 'This %1$s has an access rule, so it is Private and its join policy is %2$s. A rule cannot gate a public %1$s.', 'jetonomy' ),
+										\Jetonomy\space_label( false, true ),
+										\Jetonomy\space_join_policy_label( \Jetonomy\Models\Space::effective_join_policy( $space ) )
+									)
+								);
+								?>
+							</p></div>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<tr>
@@ -217,23 +240,18 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			</div>
 
 			<?php /* translators: 1: member label, plural (e.g. "Members"). 2: number of members. */ ?>
-		<h2><?php printf( esc_html__( '%1$s (%2$d)', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ), (int) ( $space->member_count ?? count( $members ) ) ); ?></h2>
-		<?php if ( ! empty( $members_capped ) ) : ?>
-			<div class="notice notice-warning inline">
-				<p>
-					<?php
-					printf(
-						/* translators: 1: number of member rows shown, 2: total member count, 3: member label, singular or plural to match the total, 4: member label, plural, lowercase (e.g. "members"). */
-						esc_html( _n( 'Showing the first %1$d of %2$d %3$s. Manage the rest from the front-end %4$s page, which is paginated.', 'Showing the first %1$d of %2$d %3$s. Manage the rest from the front-end %4$s page, which is paginated.', (int) ( $space->member_count ?? 0 ), 'jetonomy' ) ),
-						(int) count( $members ),
-						(int) ( $space->member_count ?? 0 ),
-						esc_html( \Jetonomy\count_noun( (int) ( $space->member_count ?? 0 ), 'member' ) ),
-						esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) )
-					);
-					?>
-				</p>
-			</div>
-		<?php endif; ?>
+		<h2><?php printf( esc_html__( '%1$s (%2$d)', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ), (int) ( $space->member_count ?? $member_total ) ); ?></h2>
+		<form method="get" class="search-box jt-spacedit-member-search">
+			<input type="hidden" name="page" value="jetonomy-spaces">
+			<input type="hidden" name="action" value="edit">
+			<input type="hidden" name="space_id" value="<?php echo absint( $space->id ); ?>">
+			<input type="hidden" name="tab" value="members">
+			<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
+			<label class="screen-reader-text" for="jetonomy-member-filter"><?php echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></label>
+			<input type="search" id="jetonomy-member-filter" name="ms" value="<?php echo esc_attr( $member_search ); ?>" placeholder="<?php esc_attr_e( 'Name, username or email', 'jetonomy' ); ?>">
+			<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
+			<button type="submit" class="button"><?php echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
+		</form>
 			<?php
 			// Drop members whose WP account has since gone rather than
 			// rendering a blank row. The cell renderer re-reads the user from
@@ -278,9 +296,13 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						'variant' => 'compact',
 						'icon'    => 'groups',
 						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-						'title'   => sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+						'title'   => '' !== $member_search
+							/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+							? sprintf( __( 'No %s match your search', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) )
+							/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+							: sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 						/* translators: 1: member label, plural, lowercase (e.g. "members"). 2: the singular space label the site owner configured (e.g. space, group). */
-						'body'    => sprintf( __( 'Invite %1$s or open this %2$s to the wider community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\space_label( false, true ) ),
+						'body'    => '' !== $member_search ? '' : sprintf( __( 'Invite %1$s or open this %2$s to the wider community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\space_label( false, true ) ),
 					),
 					'cell'      => static function ( $member, string $key ) use ( $space ): void {
 						switch ( $key ) {
@@ -313,6 +335,39 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				)
 			);
 		?>
+			<?php if ( $member_pages > 1 ) : ?>
+			<div class="tablenav bottom">
+				<div class="tablenav-pages">
+					<span class="displaying-num">
+						<?php
+						/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
+						printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( ( $member_paged - 1 ) * $member_per_page + 1 ) ), esc_html( number_format_i18n( min( $member_paged * $member_per_page, $member_total ) ) ), esc_html( number_format_i18n( $member_total ) ) );
+						?>
+					</span>
+					<?php
+					$_jt_member_links = paginate_links(
+						array(
+							'base'    => add_query_arg(
+								array(
+									'tab' => 'members',
+									'ms'  => rawurlencode( $member_search ),
+									'mpg' => '%#%',
+								),
+								$edit_url
+							),
+							'format'  => '',
+							'current' => $member_paged,
+							'total'   => $member_pages,
+							'type'    => 'array',
+						)
+					);
+					if ( $_jt_member_links ) {
+						echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $_jt_member_links ) ) . '</span>';
+					}
+					?>
+				</div>
+			</div>
+			<?php endif; ?>
 
 			<hr>
 
@@ -417,7 +472,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<tbody>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Lets matching people in to read and report. It takes nothing away from people who already get in another way, such as %s on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Lets matching people in to read and report. It takes nothing away from people who already get in another way, such as %s on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></td>
 						</tr>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
@@ -448,7 +503,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>
 					<?php esc_html_e( 'Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand.', 'jetonomy' ); ?>
 					<?php if ( $jt_has_membership ) : ?>
-						<?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'The "Sync %s" button on a membership rule below is only for listing those people on the roster as well.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
+						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'The "Sync %s" button on a membership rule below is only for listing those people on the roster as well.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
 					<?php endif; ?>
 				</p>
 			</div>
@@ -605,7 +660,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								echo '<div class="jetonomy-rule-actions">';
 								if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) :
 									?>
-									<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>"><span class="dashicons dashicons-update"></span> <?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'Sync %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
+									<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>"><span class="dashicons dashicons-update"></span> <?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Sync %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
 									<?php
 								endif;
 								?>
@@ -637,7 +692,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<select id="ss-who-can-post">
 								<option value="" <?php selected( $space_settings['who_can_post'] ?? '', '' ); ?>><?php esc_html_e( 'Anyone who can see it (no restriction)', 'jetonomy' ); ?></option>
-								<option value="members" <?php selected( $space_settings['who_can_post'] ?? '', 'members' ); ?>><?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%s Only', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></option>
+								<option value="members" <?php selected( $space_settings['who_can_post'] ?? '', 'members' ); ?>><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s Only', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></option>
 								<option value="moderators" <?php selected( $space_settings['who_can_post'] ?? '', 'moderators' ); ?>><?php esc_html_e( 'Moderators & Admins', 'jetonomy' ); ?></option>
 								<option value="admins" <?php selected( $space_settings['who_can_post'] ?? '', 'admins' ); ?>><?php esc_html_e( 'Admins Only', 'jetonomy' ); ?></option>
 							</select>
@@ -648,7 +703,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<select id="ss-who-can-reply">
 								<option value="" <?php selected( $space_settings['who_can_reply'] ?? '', '' ); ?>><?php esc_html_e( 'Anyone who can see it (no restriction)', 'jetonomy' ); ?></option>
-								<option value="members" <?php selected( $space_settings['who_can_reply'] ?? '', 'members' ); ?>><?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%s Only', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></option>
+								<option value="members" <?php selected( $space_settings['who_can_reply'] ?? '', 'members' ); ?>><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s Only', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></option>
 								<option value="moderators" <?php selected( $space_settings['who_can_reply'] ?? '', 'moderators' ); ?>><?php esc_html_e( 'Moderators & Admins', 'jetonomy' ); ?></option>
 							</select>
 						</td>
@@ -658,7 +713,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<label>
 								<input type="checkbox" id="ss-require-approval" value="1" <?php checked( ! empty( $space_settings['require_approval'] ) ); ?>>
-								<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'New %s require moderator approval before publishing', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?>
+								<?php /* translators: 1: topic label, plural lowercase. 2: reply label, plural lowercase. */ echo esc_html( sprintf( __( 'New %1$s and %2$s require moderator approval before publishing', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 							</label>
 						</td>
 					</tr>

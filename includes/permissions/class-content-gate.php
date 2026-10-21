@@ -27,8 +27,49 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Space;
+use Jetonomy\Models\UserProfile;
 
 class Content_Gate {
+
+	/**
+	 * Refuse contact with someone who blocked this user: replying to or voting on
+	 * their content. Staff are exempt, since moderating means acting on any content.
+	 * The wording is neutral on purpose, so it does not announce the block.
+	 *
+	 * Anonymous content is never refused: the refusal would tell the actor that
+	 * its hidden author is someone who blocked them.
+	 *
+	 * @param int         $user_id Actor.
+	 * @param object|null $content The post or reply being answered or voted on.
+	 * @param int         $space_id Space of that content.
+	 * @return \WP_Error|null
+	 */
+	private static function blocked_contact( int $user_id, ?object $content, int $space_id ): ?\WP_Error {
+		$author_id = (int) ( $content->author_id ?? 0 );
+		if ( $author_id <= 0 || ! empty( $content->is_anonymous ) || $author_id === $user_id
+			|| ! \Jetonomy\Models\BlockedUser::is_blocked( $author_id, $user_id )
+			|| Permission_Engine::can( $user_id, 'moderate', $space_id ) ) {
+			return null;
+		}
+		/* translators: %s: the singular Member label, lowercase. */
+		$message = sprintf( __( 'You cannot interact with this %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) );
+		return new \WP_Error( 'jetonomy_cannot_interact', $message, array( 'status' => 403 ) );
+	}
+
+	/**
+	 * Block check for any other contact with a post or reply (Pro reactions use it):
+	 * the same refusal replies and votes give, derived from the object itself.
+	 *
+	 * @param int    $user_id Actor.
+	 * @param string $type    'post' or 'reply'.
+	 * @param int    $id      Object ID.
+	 * @return \WP_Error|null
+	 */
+	public static function check_contact( int $user_id, string $type, int $id ): ?\WP_Error {
+		$object = 'reply' === $type ? Reply::find( $id ) : Post::find( $id );
+		$post   = 'reply' === $type && $object ? Post::find( (int) $object->post_id ) : $object;
+		return $object ? self::blocked_contact( $user_id, $object, (int) ( $post->space_id ?? 0 ) ) : null;
+	}
 
 	/**
 	 * Whether this user may add a reply to this post right now.
@@ -82,6 +123,14 @@ class Content_Gate {
 			return $open;
 		}
 
+		// The topic's author, and the reply being answered in a thread.
+		$parent  = $parent_id > 0 ? Reply::find( $parent_id ) : null;
+		$blocked = self::blocked_contact( $user_id, $post, $space_id )
+			?? ( $parent ? self::blocked_contact( $user_id, $parent, $space_id ) : null );
+		if ( $blocked ) {
+			return $blocked;
+		}
+
 		/*
 		 * Closing a topic is a member-facing control, not a staff one: a
 		 * moderator still needs to post the ruling that explains the close.
@@ -107,6 +156,60 @@ class Content_Gate {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Post a reply for a writer that does not arrive through REST (an emailed
+	 * reply, a BuddyPress or FluentCommunity activity comment): the gate, the
+	 * content rules and require_approval, the row, then the canonical
+	 * after-create side effects. Reply::create() has no gate of its own.
+	 *
+	 * @param int    $user_id Author.
+	 * @param object $post    Post row being replied to.
+	 * @param string $content   Sanitized reply HTML.
+	 * @param int    $parent_id Reply being answered in a thread, 0 for top level.
+	 * @return int|\WP_Error New reply ID, or why it was refused.
+	 */
+	public static function create_reply( int $user_id, object $post, string $content, int $parent_id = 0 ) {
+		$allowed = self::check( $user_id, $post, $parent_id );
+		if ( is_wp_error( $allowed ) ) {
+			return $allowed;
+		}
+
+		$trust = (int) ( UserProfile::find_or_create( $user_id )->trust_level ?? 0 );
+		if ( ! Rate_Limiter::check( $user_id, 'create_replies', $trust ) ) {
+			return Rate_Limiter::error( $user_id, 'create_replies', $trust );
+		}
+
+		$data = array(
+			'post_id'       => (int) $post->id,
+			'author_id'     => $user_id,
+			'content'       => $content,
+			'content_plain' => \jetonomy_content_to_plain( $content ),
+		);
+		if ( $parent_id > 0 ) {
+			$data['parent_id'] = $parent_id;
+		}
+		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) $post->space_id, $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return $screened;
+		}
+		$data['status'] = $screened['status'];
+
+		$reply_id = Reply::create( $data );
+		if ( is_wp_error( $reply_id ) || ! $reply_id ) {
+			return is_wp_error( $reply_id ) ? $reply_id : new \WP_Error( 'jetonomy_create_failed', /* translators: %s: reply label, lower case */ sprintf( __( 'The %s could not be saved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), array( 'status' => 500 ) );
+		}
+		Rate_Limiter::increment( $user_id, 'create_replies' );
+
+		if ( $screened['flag'] ) {
+			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'reply', (int) $reply_id );
+		}
+
+		// No WP_Request on a background path, as with the post-create hook.
+		do_action( 'jetonomy_after_create_reply', $reply_id, (int) $post->id, null );
+
+		return (int) $reply_id;
 	}
 
 	/**
@@ -164,6 +267,11 @@ class Content_Gate {
 
 		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
 			return new \WP_Error( 'jetonomy_validation', __( 'Vote value must be 1 or -1.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
+		$blocked = self::blocked_contact( $user_id, $object, $space_id );
+		if ( $blocked ) {
+			return $blocked;
 		}
 
 		// Your own vote never counts (owner policy), up or down. Vote::cast()

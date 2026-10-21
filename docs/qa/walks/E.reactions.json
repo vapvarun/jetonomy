@@ -1,0 +1,113 @@
+{
+  "journey": "E.reactions",
+  "free": "9b977fcb",
+  "pro": "a830e82",
+  "walked_at": "2026-10-21T12:51:08Z",
+  "walker": "lane C3",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "e-reactions.1": {
+      "result": "pass",
+      "evidence": "bob on alice reply 13393 (Feature Requests topic): picker Like -> chip \"👍 1\" is-mine/aria-pressed true. Note seed already had a Like from bob, first click removed it, second added it back; persistence after reload confirmed via GET /replies/13393/reactions",
+      "screenshot": "react-liked",
+      "carried_forward": true
+    },
+    "e-reactions.2": {
+      "result": "pass",
+      "evidence": "clicking the just-added chip without reload removed it (chips list empty), re-picking Like added it back - the JS-built chip undoes",
+      "carried_forward": true
+    },
+    "e-reactions.3": {
+      "result": "pass",
+      "evidence": "bob had Like, picked Celebrate: chips show only \"🎉 1\" (Like gone), GET /replies/13393/reactions counts {hooray:1}",
+      "carried_forward": true
+    },
+    "e-reactions.4": {
+      "result": "pass",
+      "evidence": "alice POST 200, maya POST 200; REST counts {\"counts\":{\"thumbsup\":2},\"user_reactions\":[\"thumbsup\"]}; UI chip [\"👍\\n2|Like\"]. REST GET returns counts + user_reactions only (no reactors names list)",
+      "carried_forward": true
+    },
+    "e-reactions.5": {
+      "result": "pass",
+      "evidence": "real mouse hover on bob's Like chip on reply 13393: tooltip 'Like: Bob Martinez' visible (display block, 141px wide, inside viewport); Escape hides it; keyboard focus on the chip shows it again. The 13-reactor 'and 3 others' and touch long-press cases were not run (no such reply seeded)",
+      "screenshot": "react-tip"
+    },
+    "e-reactions.6": {
+      "result": "pass",
+      "evidence": "removed the chip, re-added Like via the picker without reload, hovered the new chip: tooltip names 'Like: Bob Martinez' (list refreshed to include me)"
+    },
+    "e-reactions.7": {
+      "result": "pass",
+      "evidence": "bob POST /replies/13394/reactions {emoji:\"like\"} and \"not-real\" -> 400 jetonomy_invalid_emoji \"Invalid or disabled emoji.\" (valid slug is thumbsup)",
+      "carried_forward": true
+    },
+    "e-reactions.8": {
+      "result": "pass",
+      "evidence": "bob on CAB topic 5865: POST 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Content not found.\",\"data\":{\"status\":404}} | GET 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Content not found.\",\"data\":{\"status\":404}} | nonexistent POST 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Content not found.\",\"data\":{\"status\":404}} | GET 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Content not found.\",\"data\":{\"status\":404}}",
+      "carried_forward": true
+    },
+    "e-reactions.9": {
+      "result": "pass",
+      "evidence": "GET /replies/13393/reactions has no reactors key; adding ?emoji=thumbsup returns reactors {label:'Like: Bob Martinez', total:1, names:[...]} (matches current runbook); guest POST 401 / public GET 200 / hidden-space GET 404 carried from earlier live run"
+    },
+    "e-reactions.10": {
+      "result": "pass",
+      "evidence": "reply 16305 created then DELETEd (as author): alice react -> 409 {\"code\":\"jetonomy_already_trashed\",\"message\":\"This item is already in the trash. A moderator can restore it or delete it permanently.\",\"data\":{\"status\":409}} (runbook expects 409 target not live; 404 also hides it)",
+      "carried_forward": true
+    },
+    "e-reactions.11": {
+      "result": "pass",
+      "evidence": "finn POST reaction: 403 {\"code\":\"jetonomy_user_silenced\",\"message\":\"Your account is currently silenced and cannot post.\",\"data\":{\"status\":403}}",
+      "carried_forward": true
+    },
+    "e-reactions.12": {
+      "result": "pass",
+      "evidence": "alice then maya reacted to bob reply 13394: bob has exactly one reaction bell item (\"Someone reacted to your reply\") and no second item or email in Mailpit. Emoji swap / self-reaction cases not exercised",
+      "carried_forward": true
+    },
+    "e-reactions.13": {
+      "result": "pass",
+      "evidence": "Settings > Reactions with all 8 emoji unticked + Save -> notice \"No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.\" plus \"Reaction settings saved.\"; normal save shows \"Reaction settings saved.\"",
+      "carried_forward": true
+    },
+    "e-reactions.14": {
+      "result": "pass",
+      "evidence": "Celebrate disabled after bob had used it: his existing Celebrate chip on reply 13393 still renders as a normal chip (🎉 1, aria-label Celebrate, no breakage); bob POST hooray -> 400 jetonomy_invalid_emoji",
+      "screenshot": "react-celebrate-off",
+      "carried_forward": true
+    },
+    "e-reactions.15": {
+      "result": "not_performed",
+      "evidence": "no reply with 40 reactions across 6 emoji exists and seeding 40 accounts was not done"
+    },
+    "e-reactions.16": {
+      "result": "not_performed",
+      "evidence": "dark scheme emulation does not switch the Reign theme here; tooltip/chip dark contrast not assessable"
+    },
+    "e-reactions.17": {
+      "result": "pass",
+      "evidence": "setOffline then click Like chip: chip stays (count 1, is-mine kept, no stuck optimistic state) and the alert 'Could not save reaction.' is shown"
+    },
+    "e-reactions.18": {
+      "result": "not_performed",
+      "evidence": "two accounts reacting at the same instant needs two browser sessions; single context harness"
+    },
+    "e-reactions.19": {
+      "result": "pass",
+      "evidence": "Feature Requests topic ?page=2: 31 reaction triggers bound; picked Love on the last reply -> chip 'Love 1' appears, click removes it again"
+    }
+  },
+  "proposed_checks": [
+    "Reaction chip tooltip uses role=tooltip with display toggled by hover/focus; add Escape and touch long-press as separate checks."
+  ]
+}

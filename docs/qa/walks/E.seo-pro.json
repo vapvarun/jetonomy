@@ -1,0 +1,95 @@
+{
+  "journey": "E.seo-pro",
+  "free": "9b977fcb",
+  "pro": "a830e82",
+  "walked_at": "2026-10-21T12:51:08Z",
+  "walker": "lane C3",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "e-seo-pro.1": {
+      "result": "pass",
+      "evidence": "Space 3004 admin edit > SEO tab: meta title \"Help Desk - Get answers from the community | {site_name}\", description, og_image saved -> notice \"SEO settings saved.\"; GET /spaces/3004/seo returns the three values",
+      "screenshot": "seo-tab",
+      "carried_forward": true
+    },
+    "e-seo-pro.2": {
+      "result": "pass",
+      "evidence": "guest source of /community/s/help-desk/: title \"Help Desk - Get answers from the community | forums\" (wptexturize turns the hyphen into an en dash in <title> only), meta description, og:title/og:description/og:image, twitter:card summary_large_image and one canonical, each exactly once",
+      "carried_forward": true
+    },
+    "e-seo-pro.3": {
+      "result": "pass",
+      "evidence": "Help Desk space with meta title template 'Help Desk - Get answers | {site_name}': guest topic /community/s/help-desk/t/qa-walk-c3-cf-topic/ shows <title> 'Help Desk – Get answers | forums' (space template; topic title absent because the template lacks {post_title}, as the current runbook states), og:type article, article:author 'Bob Martinez', article:section 'Help Desk', published/modified ISO 8601 (+00:00). {post_title} token not exercised"
+    },
+    "e-seo-pro.4": {
+      "result": "pass",
+      "evidence": "General Discussion (no overrides): title \"General Discussion - forums\", description from the space text, og tags present, no content=\"\" empty meta tags",
+      "carried_forward": true
+    },
+    "e-seo-pro.5": {
+      "result": "pass",
+      "evidence": "Help Desk with no description override: guest meta description is the space description trimmed to 30 words ending '...' ('Stuck on something? ... what happened...'); a 288-char override is emitted in full (override is not trimmed, 49 words); 159-char topic title carried forward from earlier pass"
+    },
+    "e-seo-pro.6": {
+      "result": "pass",
+      "evidence": "PATCH noindex+nofollow+canonical_base on space 3004 -> guest Help Desk head has <meta name=\"robots\" content=\"noindex, nofollow\"> and canonical http://forums.local/community/s/help-desk-canonical/; General Discussion unchanged (max-image-preview only); unticking removes both",
+      "carried_forward": true
+    },
+    "e-seo-pro.7": {
+      "result": "pass",
+      "evidence": "PATCH exclude_sitemap=true -> community-sitemap-spaces-1.xml no longer lists /help-desk/ and the posts sitemap has no help-desk topics (fixed since previous walk); un-excluded with changefreq weekly then monthly + priority 0.5 -> entry shows changefreq monthly, priority 0.5 immediately; a space at defaults keeps 0.7 daily. Note: sitemap_priority '0.9' is silently reset to default (allowed 0.1,0.3,0.5,0.7,1.0), which the SEO tab select matches. Help Desk SEO restored to all-empty"
+    },
+    "e-seo-pro.8": {
+      "result": "pass",
+      "evidence": "guest GET of CAB topic and Moderators' Room topic URLs -> 404 \"Page not available - forums\" with no topic title in head; CAB space URL returns a generic \"Community - forums\" page with no override or topic names",
+      "carried_forward": true
+    },
+    "e-seo-pro.9": {
+      "result": "fail",
+      "evidence": "anonymous topic /community/s/lagos-chapter/t/qa-rft-anon-topic/: no article:author meta (pass) but the DiscussionForumPosting JSON-LD still carries author {\"@type\":\"Person\",\"name\":\"Anonymous\"}; runbook says no author in schema. Suspected cause: Free schema builder (includes/seo/class-schema-markup.php) substitutes a placeholder author instead of omitting it"
+    },
+    "e-seo-pro.10": {
+      "result": "pass",
+      "evidence": "PATCH /spaces/3004/seo: bob 403, test_moderator 403, guest GET 401; invalid sitemap_priority \"high\" reset to default (empty)",
+      "carried_forward": true
+    },
+    "e-seo-pro.11": {
+      "result": "pass",
+      "evidence": "meta description with quotes, <script> and & -> script tag stripped on save, quotes echoed as &quot; and & as &amp; in <head>; og:title quotes escaped",
+      "carried_forward": true
+    },
+    "e-seo-pro.12": {
+      "result": "pass",
+      "evidence": "Arabic meta title and description on General Discussion appear unescaped UTF-8 in <title>, meta description and og:title of the Arabic topic page",
+      "carried_forward": true
+    },
+    "e-seo-pro.13": {
+      "result": "fail",
+      "evidence": "robots.txt has the '# Jetonomy Forum SEO Pro' block (Allow /community/ and /community/s/*/, Disallow notifications, mod, search) and disallows no public space, but with Help Desk excluded from the sitemap no per-space rule for it appears; the code only emits the generic base-slug rules, so the runbook's 'Pro rules for excluded spaces' does not match behaviour (runbook wording or missing feature)"
+    },
+    "e-seo-pro.14": {
+      "result": "pass",
+      "evidence": "seo-pro removed from jetonomy_pro_extensions (restored after): Help Desk head showed no override title, no noindex and no Pro tags; default free BreadcrumbList schema and og tags still printed",
+      "carried_forward": true
+    },
+    "e-seo-pro.15": {
+      "result": "pass",
+      "evidence": "after PATCH noindex/canonical the very next guest request showed the new robots meta and canonical with no manual cache clear (REST path, not the admin button path)",
+      "carried_forward": true
+    }
+  },
+  "proposed_checks": [
+    "Runbook e-seo-pro.13 expects Pro robots rules for excluded spaces; code emits only generic base-slug rules. Reword or add the feature.",
+    "sitemap_priority accepts only 0.1, 0.3, 0.5, 0.7, 1.0 (0.9 is reset); name the allowed values in e-seo-pro.7."
+  ]
+}

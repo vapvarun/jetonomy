@@ -374,7 +374,10 @@ class Spaces_Handler {
 			// The setting still governs the front-end/REST path, where a space
 			// admin is a member with a space-level role rather than a WordPress
 			// one. See Spaces_Controller::delete_item().
-			\Jetonomy\Space_Purge::queue( $id );
+			$result = Space::delete( $id );
+			if ( is_wp_error( $result ) ) {
+				wp_send_json_error( $result->get_error_message() );
+			}
 			$deleted = null === Space::find( $id );
 
 			wp_send_json_success(
@@ -576,10 +579,7 @@ class Spaces_Handler {
 		// so the rule actually restricts access, and tell the admin what happened.
 		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
 
-		$message = $made_private
-			/* translators: %s: space label, lowercase (e.g. "space"). */
-			? sprintf( __( 'Access rule added. This %1$s was switched to Private so the rule can restrict access. A rule cannot gate a public %1$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) )
-			: __( 'Access rule added.', 'jetonomy' );
+		$message = AccessRule::added_message( $space_id, $made_private );
 
 		wp_send_json_success(
 			array(

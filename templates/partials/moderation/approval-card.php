@@ -36,6 +36,7 @@ if ( empty( $item ) || empty( $space ) || empty( $kind ) ) {
 
 $jt_is_reply = 'reply' === $kind;
 $jt_is_trash = 'trash' === ( $mode ?? '' );
+$jt_is_spam  = 'spam' === (string) ( $item->status ?? '' );
 // Same identity rule as everywhere else: an anonymous item reads "Anonymous"
 // to moderators too, and only an explicit (logged) reveal shows the name
 $jt_author_name = \Jetonomy\Author::for_display( (int) ( $item->author_id ?? 0 ), $item )['name'];
@@ -77,7 +78,15 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 			<?php echo $jt_is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html( \Jetonomy\jetonomy_label( 'topic' ) ); ?>
 		</span>
 		<span class="jt-mod-flag-reason jt-mod-flag-reason--held">
-			<?php $jt_is_trash ? esc_html_e( 'In trash', 'jetonomy' ) : esc_html_e( 'Awaiting approval', 'jetonomy' ); ?>
+			<?php
+			if ( $jt_is_trash ) {
+				esc_html_e( 'In trash', 'jetonomy' );
+			} elseif ( $jt_is_spam ) {
+				esc_html_e( 'Marked as spam', 'jetonomy' );
+			} else {
+				esc_html_e( 'Awaiting approval', 'jetonomy' );
+			}
+			?>
 		</span>
 		<a class="jt-mod-flag-space" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
 			<?php echo esc_html( (string) $space->title ); ?>
@@ -142,14 +151,16 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 			<?php esc_html_e( 'Approve', 'jetonomy' ); ?>
 		</button>
 			<?php // Costs the author the same as Reject, but files the item under spam instead of trash. ?>
+			<?php if ( ! $jt_is_spam ) : ?>
 		<button type="button"
 			class="jt-btn jt-btn-ghost jt-mod-approve"
 			data-wp-on--click="actions.moderateApproval"
 			data-action-name="spam"
 			data-confirm="<?php esc_attr_e( 'Mark this submission as spam? It leaves the queue and its author loses reputation.', 'jetonomy' ); ?>">
-			<?php jetonomy_echo_icon( 'shield', 14 ); ?>
-			<?php esc_html_e( 'Spam', 'jetonomy' ); ?>
+				<?php jetonomy_echo_icon( 'shield', 14 ); ?>
+				<?php esc_html_e( 'Spam', 'jetonomy' ); ?>
 		</button>
+			<?php endif; ?>
 		<button type="button"
 			class="jt-btn jt-btn-ghost jt-btn-danger jt-mod-approve"
 			data-wp-on--click="actions.moderateApproval"

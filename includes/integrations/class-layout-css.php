@@ -87,20 +87,6 @@ class Layout_CSS {
 				. '{max-width:' . $value . ';width:100%;margin-inline:auto;}';
 		}
 
-		// ── Sidebar visibility ──
-		// Only a sidebar that sits BESIDE the app (a direct child of one of its
-		// ancestors) is the theme's content sidebar; widget areas inside the
-		// header or footer are left alone. `display:none` so the column reflows.
-		$sidebar = isset( $settings['sidebar_visibility'] ) ? (string) $settings['sidebar_visibility'] : 'theme';
-		if ( 'hide' === $sidebar ) {
-			$css .= 'body.jt-page :has(#jetonomy-app)>:is(#secondary,.widget-area,.sidebar,.sidebar-primary)'
-				. '{display:none!important;}';
-
-			// Let the main column reclaim the space the sidebar left behind.
-			$css .= 'body.jt-page :is(#primary,.content-area,main#main):has(#jetonomy-app)'
-				. '{width:100%!important;float:none!important;margin-inline:auto;}';
-		}
-
 		// ── Page padding ──
 		// "None" pulls Jetonomy's outer wrapper to the viewport edge; "comfortable"
 		// adds a generous responsive inline padding. Theme Default → no rule.

@@ -163,6 +163,25 @@ class Media_Controller extends Base_Controller {
 		}
 		$_FILES['file']['name'] = $jt_file['name']; // Persist the sanitized name for core.
 
+		// A random folder keeps the file URL unguessable: the file is public, so
+		// a private space's attachment is only as private as its link.
+		$jt_dir = static function ( array $dir ): array {
+			$sub = '/jetonomy/' . bin2hex( random_bytes( 8 ) );
+			return array_merge(
+				$dir,
+				array(
+					'subdir' => $sub,
+					'path'   => $dir['basedir'] . $sub,
+					'url'    => $dir['baseurl'] . $sub,
+				)
+			);
+		};
+		add_filter( 'upload_dir', $jt_dir );
+		// The random folders stay unlisted only while their parent cannot be browsed.
+		$jt_index = wp_upload_dir()['basedir'] . '/jetonomy/index.php';
+		if ( ! file_exists( $jt_index ) && wp_mkdir_p( dirname( $jt_index ) ) ) {
+			file_put_contents( $jt_index, "<?php\n// Silence is golden.\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- a static stub, same as core's.
+		}
 		$attachment_id = media_handle_upload(
 			'file',
 			0,
@@ -180,6 +199,8 @@ class Media_Controller extends Base_Controller {
 				),
 			)
 		);
+
+		remove_filter( 'upload_dir', $jt_dir );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			return new WP_Error(
@@ -209,7 +230,12 @@ class Media_Controller extends Base_Controller {
 		// Mark this as a Jetonomy community upload so it can be kept out of the
 		// admin Media Library by default (member uploads should not drown the
 		// site owner's own media). Optional space context if the caller sends it.
-		\Jetonomy\Media_Library::tag_upload( (int) $attachment_id, (int) $request->get_param( 'space_id' ) );
+		// Only a space the uploader may post in counts as context; anything else is stored as none.
+		$space_id = (int) $request->get_param( 'space_id' );
+		if ( $space_id > 0 && ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', $space_id ) && ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_replies', $space_id ) ) {
+			$space_id = 0;
+		}
+		\Jetonomy\Media_Library::tag_upload( (int) $attachment_id, $space_id );
 
 		$meta = wp_get_attachment_metadata( $attachment_id );
 

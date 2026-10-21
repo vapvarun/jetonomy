@@ -194,8 +194,72 @@
 
 	function getFocusable( root ) {
 		return Array.prototype.slice.call( root.querySelectorAll( FOCUSABLE_SELECTOR ) )
-			.filter( function ( el ) { return el.offsetParent !== null; } );
+			.filter( function ( el ) {
+				if ( el.offsetParent === null ) {
+					return false;
+				}
+				// A radio group is one tab stop: the checked radio, else the first.
+				if ( el.type === 'radio' && el.name ) {
+					var group = root.querySelectorAll( 'input[type="radio"][name="' + el.name.replace( /"/g, '\\"' ) + '"]' );
+					var checked = Array.prototype.find.call( group, function ( r ) { return r.checked; } );
+					return el === ( checked || group[ 0 ] );
+				}
+				return true;
+			} );
 	}
+
+	/**
+	 * Keep Tab inside a dialog (WCAG 2.1.1, 2.4.3). Called from a keydown handler.
+	 *
+	 * @param {KeyboardEvent} e    Tab keydown.
+	 * @param {Element}       root The dialog or its overlay.
+	 */
+	function trapTab( e, root ) {
+		var focusable = getFocusable( root );
+		if ( focusable.length === 0 ) {
+			e.preventDefault();
+			return;
+		}
+		var first = focusable[ 0 ];
+		var last  = focusable[ focusable.length - 1 ];
+		if ( e.shiftKey && document.activeElement === first ) {
+			e.preventDefault();
+			last.focus();
+		} else if ( ! e.shiftKey && document.activeElement === last ) {
+			e.preventDefault();
+			first.focus();
+		} else if ( ! root.contains( document.activeElement ) ) {
+			e.preventDefault();
+			first.focus();
+		}
+	}
+
+	/**
+	 * Modal behaviour for a dialog built outside open() (the Report dialog):
+	 * Tab stays inside, Escape closes, focus returns to what opened it.
+	 *
+	 * @param {Element}  root    Overlay element, already in the DOM.
+	 * @param {Function} onClose Called on Escape.
+	 * @return {Function} Release: removes the listener and restores focus.
+	 */
+	window.jetonomyTrapDialog = function ( root, onClose ) {
+		var opener = document.activeElement;
+		function onKey( e ) {
+			if ( e.key === 'Escape' ) {
+				e.preventDefault();
+				onClose();
+			} else if ( e.key === 'Tab' ) {
+				trapTab( e, root );
+			}
+		}
+		document.addEventListener( 'keydown', onKey );
+		return function () {
+			document.removeEventListener( 'keydown', onKey );
+			if ( opener && opener.focus ) {
+				opener.focus();
+			}
+		};
+	};
 
 	function open( opts ) {
 		return new Promise( function ( resolve ) {
@@ -246,20 +310,7 @@
 				}
 				// Tab — keep focus inside the dialog (WCAG 2.1.1, 2.4.3).
 				if ( e.key === 'Tab' ) {
-					var focusable = getFocusable( dom.overlay );
-					if ( focusable.length === 0 ) {
-						e.preventDefault();
-						return;
-					}
-					var first = focusable[ 0 ];
-					var last  = focusable[ focusable.length - 1 ];
-					if ( e.shiftKey && document.activeElement === first ) {
-						e.preventDefault();
-						last.focus();
-					} else if ( ! e.shiftKey && document.activeElement === last ) {
-						e.preventDefault();
-						first.focus();
-					}
+					trapTab( e, dom.overlay );
 				}
 			}
 

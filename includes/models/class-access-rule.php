@@ -14,6 +14,11 @@ use function Jetonomy\table;
 
 class AccessRule extends Model {
 
+	/**
+	 * Rule types that gate who gets in, so they only bite on a non-public space.
+	 */
+	public const RESTRICTIVE_TYPES = array( 'membership', 'role', 'capability', 'trust_level' );
+
 	protected static function table_name(): string {
 		return 'access_rules';
 	}
@@ -51,12 +56,6 @@ class AccessRule extends Model {
 	}
 
 	/**
-	 * Delete a rule and clear the per-request rule-list memo.
-	 *
-	 * @param int $id Rule row ID.
-	 * @return bool|\WP_Error
-	 */
-	/**
 	 * Make a restrictive rule actually bite, by privatising a public space.
 	 *
 	 * A public space is always readable, and Permission_Engine stops non-members
@@ -78,8 +77,7 @@ class AccessRule extends Model {
 	 * @return bool True when the space was switched to Private.
 	 */
 	public static function enforce_gate_on_public_space( int $space_id, string $rule_type ): bool {
-		$restrictive = array( 'membership', 'role', 'capability', 'trust_level' );
-		if ( ! in_array( $rule_type, $restrictive, true ) ) {
+		if ( ! in_array( $rule_type, self::RESTRICTIVE_TYPES, true ) ) {
 			return false;
 		}
 
@@ -91,6 +89,34 @@ class AccessRule extends Model {
 		return (bool) \Jetonomy\Models\Space::update( $space_id, array( 'visibility' => 'private' ) );
 	}
 
+	/**
+	 * The notice both rule-create paths (wp-admin AJAX, REST) show. When the
+	 * space was switched to Private it also names the join policy that now
+	 * applies, since Private is never open to join.
+	 *
+	 * @param int  $space_id     Space the rule was attached to.
+	 * @param bool $made_private What enforce_gate_on_public_space() returned.
+	 * @return string
+	 */
+	public static function added_message( int $space_id, bool $made_private ): string {
+		$space = $made_private ? Space::find( $space_id ) : null;
+		if ( ! $space ) {
+			return __( 'Access rule added.', 'jetonomy' );
+		}
+		return sprintf(
+			/* translators: 1: space label, lowercase (e.g. "space"). 2: join policy label (e.g. "Requires Approval"). */
+			__( 'Access rule added. This %1$s was switched to Private so the rule can restrict access, and its join policy is now %2$s. A rule cannot gate a public %1$s.', 'jetonomy' ),
+			\Jetonomy\space_label( false, true ),
+			\Jetonomy\space_join_policy_label( Space::effective_join_policy( $space ) )
+		);
+	}
+
+	/**
+	 * Delete a rule and clear the per-request rule-list memo.
+	 *
+	 * @param int $id Rule row ID.
+	 * @return bool|\WP_Error
+	 */
 	public static function delete( int $id ): bool|\WP_Error {
 		$rule   = static::find( $id );
 		$result = parent::delete( $id );
@@ -161,27 +187,6 @@ class AccessRule extends Model {
 	}
 
 	/**
-	 * Space IDs gated by one membership level.
-	 *
-	 * The inverse of list_for_space(): given "lrn_course_42", which spaces does
-	 * holding it open? Every consumer that wants to link FROM the product TO the
-	 * community needs this - a course page asking "is there a discussion for
-	 * me?", a space page asking "which course is this attached to?", the
-	 * auto-create path asking "does one already exist?".
-	 *
-	 * It also replaces thirteen hand-written copies of this query living inside
-	 * the adapters, which is a plain violation of the models-only rule and drifts
-	 * the moment one of them learns something the others do not.
-	 *
-	 * Reads `(rule_type, rule_value)`, which is indexed - the lookup runs on
-	 * course and account pageviews, so an unindexed scan here is a scan on every
-	 * request a logged-in student makes.
-	 *
-	 * @param string $rule_value Level identifier, e.g. 'lrn_course_42'.
-	 * @param string $rule_type  Rule type. Defaults to the membership adapters' type.
-	 * @return int[] Space IDs, ascending, unique.
-	 */
-	/**
 	 * Why a rule's value cannot work for its type, or null. A rule with a
 	 * missing value must not save: a trust_level rule with no level read as
 	 * "trust >= 0" and admitted every logged-in member to a private space.
@@ -237,6 +242,27 @@ class AccessRule extends Model {
 		) ?: array();
 	}
 
+	/**
+	 * Space IDs gated by one membership level.
+	 *
+	 * The inverse of list_for_space(): given "lrn_course_42", which spaces does
+	 * holding it open? Every consumer that wants to link FROM the product TO the
+	 * community needs this - a course page asking "is there a discussion for
+	 * me?", a space page asking "which course is this attached to?", the
+	 * auto-create path asking "does one already exist?".
+	 *
+	 * It also replaces thirteen hand-written copies of this query living inside
+	 * the adapters, which is a plain violation of the models-only rule and drifts
+	 * the moment one of them learns something the others do not.
+	 *
+	 * Reads `(rule_type, rule_value)`, which is indexed - the lookup runs on
+	 * course and account pageviews, so an unindexed scan here is a scan on every
+	 * request a logged-in student makes.
+	 *
+	 * @param string $rule_value Level identifier, e.g. 'lrn_course_42'.
+	 * @param string $rule_type  Rule type. Defaults to the membership adapters' type.
+	 * @return int[] Space IDs, ascending, unique.
+	 */
 	public static function spaces_for_level( string $rule_value, string $rule_type = 'membership' ): array {
 		if ( '' === $rule_value ) {
 			return array();
@@ -345,25 +371,6 @@ class AccessRule extends Model {
 	}
 
 	/**
-	 * Evaluate access rules for a user in a space.
-	 *
-	 * Iterates rules in priority order (highest first) and returns the first
-	 * rule whose conditions match the user, as an array containing the rule's
-	 * decoded grants and the space_role (if set).
-	 *
-	 * Rule types evaluated:
-	 *   - 'everyone'    - always matches
-	 *   - 'logged_in'   - matches if $user_id > 0
-	 *   - 'role'        - matches if the WP user has the given WP role
-	 *   - 'capability'  - matches if user_can( $user_id, $rule_value )
-	 *   - 'trust_level' - matches if the user's trust_level >= (int) $rule_value
-	 *   - 'membership'  - matches if any active membership adapter confirms the user has the level
-	 *
-	 * @param int $user_id WP user ID (0 = guest).
-	 * @param int $space_id
-	 * @return array|null Matched rule's resolved data, or null if no rule matched.
-	 */
-	/**
 	 * The roster role a rule's grants can justify.
 	 *
 	 * A rule stores BOTH what someone may do (`grants`) and what role they are
@@ -435,6 +442,45 @@ class AccessRule extends Model {
 		return null !== static::resolve_access( $user_id, $space_id );
 	}
 
+	/**
+	 * Spaces a member is admitted to by a rule alone (no roster row).
+	 *
+	 * Space::content_visibility_sql() models the roster only, so a list built
+	 * on it hides the follows and bookmarks of a member who got in through a
+	 * Role, Capability, Trust Level, Logged In or membership rule. Spaces with
+	 * rules are few, so asking the engine about each stays cheap, and it keeps
+	 * bans and category concealment in force.
+	 *
+	 * @param int $user_id WP user ID (0 = guest).
+	 * @return int[] Space IDs.
+	 */
+	public static function admitted_space_ids( int $user_id ): array {
+		if ( $user_id <= 0 ) {
+			return array();
+		}
+		$ids = static::db()->get_col( 'SELECT DISTINCT space_id FROM ' . static::table() ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table name, no input.
+		return array_values( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'read', $id ) ) );
+	}
+
+	/**
+	 * Evaluate access rules for a user in a space.
+	 *
+	 * Iterates rules in priority order (highest first) and returns the first
+	 * rule whose conditions match the user, as an array containing the rule's
+	 * decoded grants and the space_role (if set).
+	 *
+	 * Rule types evaluated:
+	 *   - 'everyone'    - always matches
+	 *   - 'logged_in'   - matches if $user_id > 0
+	 *   - 'role'        - matches if the WP user has the given WP role
+	 *   - 'capability'  - matches if user_can( $user_id, $rule_value )
+	 *   - 'trust_level' - matches if the user's trust_level >= (int) $rule_value
+	 *   - 'membership'  - matches if any active membership adapter confirms the user has the level
+	 *
+	 * @param int $user_id WP user ID (0 = guest).
+	 * @param int $space_id
+	 * @return array|null Matched rule's resolved data, or null if no rule matched.
+	 */
 	public static function resolve_access( int $user_id, int $space_id ): ?array {
 		$rules = static::list_for_space( $space_id );
 

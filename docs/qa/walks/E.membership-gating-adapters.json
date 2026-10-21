@@ -1,0 +1,75 @@
+{
+ "journey": "E.membership-gating-adapters",
+ "free": "dcdb0750",
+ "pro": "404b0af",
+ "walked_at": "2026-10-21T10:10:26Z",
+ "walker": "lane C",
+ "env": {
+  "themes": [
+   "reign"
+  ],
+  "viewports": [
+   1440
+  ],
+  "schemes": [
+   "light"
+  ]
+ },
+ "checks": {
+  "e-membership-gating-adapters.1": {
+   "result": "pass",
+   "evidence": "Space edit > Access Rules tab (there is no tab named \"Integrations\"): rule type dropdown lists Everyone, Logged In, WP Role, Capability, Trust Level, PMPro only; WooCommerce/LearnDash/Tutor etc. are not listed and the page loaded with no fatal. Only PMPro 3.8.9 (free adapter, active) could be walked; WooCommerce, LifterLMS, Sensei, Tutor, MasterStudy are installed but inactive, and RCP, LearnDash, Learnomy adapters, BuddyNext Pro, WP Fusion, SureMembers have no usable plan fixture or are not ins",
+   "screenshot": "adapters-access-tab"
+  },
+  "e-membership-gating-adapters.2": {
+   "result": "fail",
+   "evidence": "PARTIAL (PMPro): choosing PMPro, searching \"QA-WALK\", picking \"QA-WALK Gold\", Participate, Add Rule -> rule row \"PMPro QA-WALK Gold, Participate, Member\" appears; no toast/status element was captured within 1.5s after save. Only PMPro 3.8.9 (free adapter, active) could be walked; WooCommerce, LifterLMS, Sensei, Tutor, MasterStudy are installed but inactive, and RCP, LearnDash, Learnomy adapters, BuddyNext Pro, WP Fusion, SureMembers have no usable plan fixture or are not installed (woocommerce-s",
+   "screenshot": "adapters-rule-added"
+  },
+  "e-membership-gating-adapters.3": {
+   "result": "pass",
+   "evidence": "(PMPro stand-in) bob given QA-WALK Gold via pmpro_changeMembershipLevel: /community/s/qa-walk-c-private-lab/ opens with topics and \"+ New Topic\"; POST /spaces/4861/posts as bob -> 201 (post 9231); GET members lists 3755 as member. Only PMPro 3.8.9 (free adapter, active) could be walked; WooCommerce, LifterLMS, Sensei, Tutor, MasterStudy are installed but inactive, and RCP, LearnDash, Learnomy adapters, BuddyNext Pro, WP Fusion, SureMembers have no usable plan fixture or are not installed (woocom",
+   "screenshot": "adapters-bob-access"
+  },
+  "e-membership-gating-adapters.4": {
+   "result": "fail",
+   "evidence": "PARTIAL (PMPro): alice without the level sees \"This space is included with QA-WALK Gold. Ask a site administrator how to get access to this plan.\" with no buy/enrol link (PMPro has no checkout page configured, so no URL is offered); expected a working buy or enrol link also for guests. Guest sees \"QA-WALK-C Private Lab is private and invite-only. Log in if you have an invitation.\" instead of the plan teaser",
+   "screenshot": "adapters-alice-noaccess"
+  },
+  "e-membership-gating-adapters.5": {
+   "result": "fail",
+   "evidence": "Guest GET /spaces/4861 and /spaces/4861/posts -> 403 jetonomy_forbidden \"You do not have permission to perform this action.\", while a nonexistent space 99999 -> 404 \"Space not found.\"; expected the same 404 so a private space does not reveal it exists"
+  },
+  "e-membership-gating-adapters.6": {
+   "result": "pass",
+   "evidence": "(PMPro stand-in) after pmpro_cancelMembershipLevel(1,3755): next request shows \"This space is included with QA-WALK Gold...\", bob GET members -> 403, POST new topic -> 403 \"You cannot post in this space.\", admin roster no longer lists 3755; his earlier topic 9231 returns 404 \"Topic not found.\" to bob and still exists in the database. Only PMPro 3.8.9 (free adapter, active) could be walked; WooCommerce, LifterLMS, Sensei, Tutor, MasterStudy are installed but inactive, and RCP, LearnDash, Learnomy"
+  },
+  "e-membership-gating-adapters.7": {
+   "result": "fail",
+   "evidence": "PARTIAL: no payment was made (PMPro checkout not configured). Level granted programmatically while bob's teaser was the last page loaded; next page load showed the open space without cache clear or re-login. Real checkout NOT PERFORMED"
+  },
+  "e-membership-gating-adapters.8": {
+   "result": "pass",
+   "evidence": "bob (Participate rule, level held): POST /posts/9231/pin -> 403 jetonomy_forbidden, POST /posts/9231/close -> 403, GET /moderation/queue -> 403; his space role is \"member\""
+  },
+  "e-membership-gating-adapters.9": {
+   "result": "fail",
+   "evidence": "NOT PERFORMED: WP Fusion and SureMembers are not active, so their per-space tabs do not exist; tab strip shows General, Members, Access Rules, Settings, Anonymous, SEO only"
+  },
+  "e-membership-gating-adapters.10": {
+   "result": "fail",
+   "evidence": "PARTIAL (PMPro): after deleting the level a rule pointed at (level 2 via PMPro_Membership_Level::delete) the Access Rules row shows the raw id \"Membership pmpro_2\" and the locked teaser reads \"This space is included with pmpro_2, QA-WALK Gold\"; no fatal and alice was not let in. Expected a clear \"missing level\" label rather than a raw id in the public teaser",
+   "screenshot": "adapters-missing-level"
+  },
+  "e-membership-gating-adapters.11": {
+   "result": "fail",
+   "evidence": "PARTIAL: PMPro level field is a type-ahead search (typing \"QA-WALK\" returned only the two matching levels), not an all-options dropdown; a site with 500 courses/plans was NOT PERFORMED",
+   "screenshot": "adapters-pmpro-search"
+  },
+  "e-membership-gating-adapters.12": {
+   "result": "fail",
+   "evidence": "PARTIAL: locked teaser at 390px has no horizontal overflow (scrollWidth 390). Dark mode: emulated prefers-color-scheme dark left the page background at rgb(250,251,253) (no dark scheme applied by this theme), so token colours in dark were NOT verified; Access Rules screen at 390 not captured",
+   "screenshot": "adapters-teaser-390-dark"
+  }
+ }
+}

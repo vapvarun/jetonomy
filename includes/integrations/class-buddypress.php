@@ -15,7 +15,6 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\Post;
-use Jetonomy\Models\Reply;
 use Jetonomy\Models\UserProfile;
 
 /**
@@ -450,16 +449,9 @@ class BuddyPress {
 			return;
 		}
 
+		// Same gate, content rules and approval as a reply posted on the topic itself.
 		self::$syncing = true;
-		Reply::create(
-			array(
-				'post_id'       => $jt_post_id,
-				'author_id'     => $user_id,
-				'content'       => $html,
-				'content_plain' => $plain,
-				'status'        => 'publish',
-			)
-		);
+		\Jetonomy\Permissions\Content_Gate::create_reply( $user_id, $jt_post, $html );
 		self::$syncing = false;
 	}
 

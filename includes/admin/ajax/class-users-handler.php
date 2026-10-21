@@ -103,6 +103,11 @@ class Users_Handler {
 			}
 		}
 
+		$duplicate = Restriction::validate_not_duplicate( $user_id, $type, $space_id ?: null );
+		if ( is_wp_error( $duplicate ) ) {
+			wp_send_json_error( $duplicate->get_error_message() );
+		}
+
 		$restriction_id = Restriction::ban(
 			$user_id,
 			$type,

@@ -32,7 +32,7 @@ Go to **Jetonomy → Analytics**. The dashboard opens on the last 30 days by def
 
 Use the period buttons at the top left to switch between **7 Days**, **30 Days** and **90 Days**.
 
-All charts and tables update when you change the period. The REST API also accepts a custom range in days.
+All charts and tables update when you change the period. The REST API also accepts a custom range in days, capped at a maximum. Days, range ends, daily totals and exports follow your site timezone (2.0.4).
 
 ![The period buttons on Community Analytics (7 Days, 30 Days, 90 Days) with Export CSV, above the totals for the selected period](../images/pro-analytics-date-filter.webp)
 ## Overview Metrics

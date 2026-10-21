@@ -1,9 +1,8 @@
 {
   "journey": "C.member.post-edit",
-  "free": "21f93481",
-  "pro": "fe21324",
-  "walked_at": "2026-10-17T22:20:00Z",
-  "walker": "lane B",
+  "free": "dcdb0750",
+  "walked_at": "2026-10-21T09:27:22Z",
+  "walker": "lane A",
   "env": {
     "themes": [
       "reign"
@@ -18,78 +17,83 @@
   "checks": {
     "c-member-post-edit.1": {
       "result": "pass",
-      "evidence": "bob edited the body of his own topic via topic menu > Edit > Save; new text on the topic, REST space listing, and /community/search/?q=old address finds it; community home has no feed"
+      "evidence": "bob edited his topic through the inline editor: new text shows on the topic after save and reload, GET /spaces/3004/posts and /feed (offset 200) carry the new excerpt, search \"zebrafinch edited\" finds it. Listing rows show titles only.",
+      "screenshot": "c-member-post-edit.1b.png"
     },
     "c-member-post-edit.2": {
       "result": "pass",
-      "evidence": "PATCH /posts/6324 title -> 200, GET shows the new title"
+      "evidence": "PATCH /posts/8979 {title} as bob -> 200 and GET returns the new title."
     },
     "c-member-post-edit.3": {
       "result": "pass",
-      "evidence": "edit made >1 min after posting shows 'edited 1 second ago' with title='October 17, 2026 9:53 pm'"
+      "evidence": "Topic created 3h earlier (backdated) and edited now: shows \"edited 12 seconds ago\" with title \"October 21, 2026 9:22 am\". Relative wording is time since the edit, not since posting."
     },
     "c-member-post-edit.4": {
       "result": "pass",
-      "evidence": "reply created and edited in the same second shows no 'edited' mark; an unedited reply/topic shows none"
+      "evidence": "Topic edited within a minute of posting (8980): page text has no \"edited\" mark; the edited_at is stored but hidden."
     },
     "c-member-post-edit.5": {
       "result": "pass",
-      "evidence": "alice on bob's topic: no More options menu at all; /edit/ URL -> 404"
+      "evidence": "alice on bob's topic: action buttons are Follow, Vote, Share, Bookmark, Report (no Edit/Delete); /t/<slug>/edit/ is not a route and returns the theme 404 for everyone, including bob (see .17).",
+      "screenshot": "c-member-post-edit.alice.png"
     },
     "c-member-post-edit.6": {
       "result": "pass",
-      "evidence": "PATCH /posts/6324 as alice -> 403 jetonomy_forbidden"
+      "evidence": "PATCH /posts/8979 as alice -> 403 jetonomy_forbidden."
     },
     "c-member-post-edit.7": {
       "result": "pass",
-      "evidence": "test_moderator on a Bug Reports topic menu: Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete"
+      "evidence": "test_moderator menu on Bug Reports topic: Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete (WP editor role gets the same in Show & Tell).",
+      "screenshot": "c-member-post-edit.mod_bug.png"
     },
     "c-member-post-edit.8": {
-      "result": "untested",
-      "needs": "lane A: remove Edit own posts from the Member role"
+      "result": "pass",
+      "evidence": "Per-user deny of jetonomy_edit_own_posts on a fixture member (Member role untouched): menu shows only Delete, PATCH -> 403 jetonomy_forbidden.",
+      "screenshot": "c-member-post-edit.8.png"
     },
     "c-member-post-edit.9": {
       "result": "pass",
-      "evidence": "bob's own closed topic: menu offers Edit and PATCH returns 200; UI and REST agree"
+      "evidence": "Closed topic 8980: bob menu still offers Edit, Make Private, Delete and PATCH -> 200, so menu and REST agree (authors may edit closed topics).",
+      "screenshot": "c-member-post-edit.9.png"
     },
     "c-member-post-edit.10": {
       "result": "pass",
-      "evidence": "finn on his -4 post: no menu or Edit control; PATCH /posts/5871 -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+      "evidence": "PATCH /posts/5871 as finn -> 403 jetonomy_silenced \"Your account is currently silenced and cannot post.\"; in the UI finn gets no More-options menu on that post, so there is no Edit to click (the notice is only reachable via REST).",
+      "screenshot": "c-member-post-edit.10.png"
     },
     "c-member-post-edit.11": {
       "result": "pass",
-      "evidence": "PATCH with list, blockquote and pre/code: guest view after reload shows 2 li, 1 blockquote, 1 pre code"
+      "evidence": "List, blockquote and code block saved through the editor survive save and reload (ul, blockquote, pre present on topic and in REST content). Nesting looked odd because of my execCommand typing."
     },
     "c-member-post-edit.12": {
       "result": "pass",
-      "evidence": "second PATCH with a stale edit_token -> 409 jetonomy_edit_conflict; revisions 249-252 stored (old versions kept)"
+      "evidence": "Two pages open on the same edit token: tab two saved (PATCH 200), tab one then got 409 jetonomy_edit_conflict; nothing silently overwritten and a revision row was kept for each save (5 revisions for 8979).",
+      "screenshot": "c-member-post-edit.15.png"
     },
     "c-member-post-edit.13": {
       "result": "pass",
-      "evidence": "offline Save: editor stays open, text kept, 'Failed to save.' toast"
+      "evidence": "Offline save: editor stays open with the text, toast \"Failed to save.\"; after reconnecting Save works and the text is stored.",
+      "screenshot": "c-member-post-edit.13.png"
     },
     "c-member-post-edit.14": {
-      "result": "untested",
-      "needs": "lane A: admin revision-history screen (rows exist in wp_jt_revisions for the edited topics, not viewed in the admin UI)"
+      "result": "pass",
+      "evidence": "wp-admin Jetonomy > Revisions for post 8979: \"5 revisions recorded\" with editors, current version and View diff links.",
+      "screenshot": "c-member-post-edit.14.png"
     },
     "c-member-post-edit.15": {
       "result": "pass",
-      "evidence": "tab 1 in edit mode, tab 2 saved first, tab 1 Save -> 'This topic was changed by someone else. Reload to see their changes.' and the editor stays open"
+      "evidence": "Tab one save after tab two saved: toast \"This topic was changed by someone else. Reload to see their changes.\" (409), editor kept open with its text.",
+      "screenshot": "c-member-post-edit.15.png"
     },
     "c-member-post-edit.16": {
-      "result": "untested",
-      "needs": "lane A: a moderator with a Member WP role who moderates only Bug Reports (test_moderator is a WP editor)"
+      "result": "pass",
+      "evidence": "Fixture member (WP Subscriber) who moderates only Bug Reports: Bug Reports topic menu shows the full set; Show & Tell topic shows no actions.",
+      "screenshot": "c-member-post-edit.modm_st.png"
     },
     "c-member-post-edit.17": {
       "result": "fail",
-      "expected": "topic URL with /edit/ appended -> a refusal page (contract to decide)",
-      "actual": "plain 404 'Page not found' for any viewer: no /edit route exists, editing is inline from the menu; contract needs the owner's decision or this check should say 404",
-      "url": "http://forums.local/community/s/help-desk/t/how-do-i-reset-my-membership-password-after-changing-email/edit/",
-      "check_wrong": true
+      "evidence": "Open contract question. /community/s/help-desk/t/<slug>/edit/ returns the theme 404 for non-author, author and guest alike; there is no refusal page. Needs an owner decision (refusal page vs plain 404)."
     }
   },
-  "proposed_checks": [
-    "- `c-member-post-edit.18` @member #ui: from the topic menu, Edit shows the title field as well as the body -> today only the body is editable inline."
-  ],
-  "notes": "Edited only content bob created in this walk; all deleted afterwards. Menu stayed open over the editor after clicking Edit (minor visual overlap, screenshot edit-open.png). No site setting changed."
+  "proposed_checks": []
 }

@@ -223,28 +223,20 @@
      viewport, so a 900px @media never fires while description + stats + Join
      still collide. Query THIS header's width, not the window. */
   .jt-space-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; padding: var(--jt-space-4) 0 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); container-type: inline-size; }
-  /* Description on its own row, then every action beside every other action.
-     This was `display: block`, and the owner's "Edit space" ships wrapped in a
-     <p>, so a block element sat between the actions and forced each onto its
-     own line - two buttons of different widths stacked and left-ragged. It read
-     as a layout bug because it was one, and it would repeat for any integration
-     that adds an action here (an LMS "Open the course", a store "View product"),
-     since none of them can un-block a sibling they do not own.
-     The row wraps, so a narrow viewport stacks them deliberately instead. */
-  .jt-space-head__meta { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); }
-  .jt-space-head__meta > .jt-space-desc { flex: 1 1 100%; }
+  /* Description on its own row; every action, the stats and Join/Follow then
+     share the next row and wrap as single items only when the header runs out of
+     width. __meta is a wrapper, not a box: `contents` makes its children siblings
+     of the stats and the Join button, because as a separate flex box it took a
+     whole row whenever the header was narrower than the old 860px container
+     query (Reign's main column is ~790px), pushing stats + Join under the actions. */
+  .jt-space-head__meta { display: contents; }
+  .jt-space-head__meta > .jt-space-desc { flex: 1 1 100%; margin: 0; }
   .jt-space-head__meta > .jt-space-edit-cta { margin: 0; }
-  .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
+  /* Integration output (custom fields, course link) keeps its own row. */
+  .jt-space-head__meta > .jt-space-fields { flex: 1 1 100%; }
+  .jt-space-head__meta > .jt-space-fields:empty { display: none; }
+  .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; }
   .jt-space-nums { display: flex; gap: 20px; margin-inline-start: auto; }
-  /* When the header is narrower than a full description+stats+Join row
-     (Reign .container minus the plugin sidebar ≈ 700–850px), put the
-     description on its own row and keep stats + Join together underneath.
-     @container is not an @media — the file still has exactly the two
-     viewport blocks at the bottom. */
-  @container (max-width: 860px) {
-    .jt-space-head__meta { flex: 1 1 100%; }
-    .jt-space-nums { margin-inline-start: 0; }
-  }
   .jt-num { text-align: center; }
   .jt-num-val { font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 700; }
   .jt-num-lbl { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -1944,6 +1936,8 @@
   .jt-subtab { display: inline-flex; align-items: center; padding: var(--jt-space-1) var(--jt-space-3); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-full); background: var(--jt-bg); color: var(--jt-text-secondary); font-size: var(--jt-text-sm); font-weight: 500; text-decoration: none; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease); }
   .jt-subtab:hover { color: var(--jt-text); border-color: var(--jt-border-strong); }
   .jt-subtab.active { background: var(--jt-accent-light); border-color: var(--jt-accent); color: var(--jt-accent-strong); }
+  .jt-held-filter { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); margin-block-end: var(--jt-space-4); font-size: var(--jt-text-sm); color: var(--jt-text-secondary); }
+  .jt-held-filter .jt-select { padding-block: var(--jt-space-1); padding-inline: var(--jt-space-3); font-size: var(--jt-text-sm); }
   .jt-subtab:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-subtab.active .jt-tab-count { background: transparent; color: inherit; padding-inline: 0; }
   .jt-mod-flag-reason--held { background: var(--jt-warn-light); color: var(--jt-warn-strong); }
@@ -2866,7 +2860,7 @@
 .jt-shortcut-modal button:hover, .jt-shortcut-modal button:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); }
 
 /* ── G9: Emoji Picker ── */
-.jt-emoji-picker { position: fixed; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; width: 220px; }
+.jt-emoji-picker { position: fixed; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; width: max-content; max-width: calc(100vw - 16px); }
 .jt-emoji-option { border: none; background: none; cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 6px; border-radius: var(--jt-radius-sm); transition: background 0.1s; }
 .jt-emoji-option:hover { border: none; background: var(--jt-bg-muted); }
 
@@ -2923,7 +2917,10 @@
 .jt-notif-optout input { margin-top: 0.15rem; flex-shrink: 0; }
 /* Pro's digest choice, rendered inside the notification settings. */
 .jt-notif-digest { border: 0; margin: var(--jt-space-4) 0 0; padding: 0; min-inline-size: 0; }
-.jt-notif-digest .jt-notif-optout { margin-block-start: var(--jt-space-2); }
+.jt-notif-digest .jt-form-hint { margin-block-end: var(--jt-space-2); }
+/* A digest option is a row of the notification table: radio, then its label. */
+.jt-notif-row.jt-notif-choice { grid-template-columns: auto 1fr; gap: var(--jt-space-3); cursor: pointer; }
+.jt-notif-row.jt-notif-choice:hover, .jt-notif-row.jt-notif-choice:focus-within { background: var(--jt-bg-hover); }
 .jt-notif-row { display: grid; grid-template-columns: 1fr 3.5rem 3.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--jt-border); font-size: 0.875rem; color: var(--jt-text); }
 .jt-notif-row:last-child { border-bottom: none; }
 .jt-notif-header { font-weight: 600; background: var(--jt-bg-subtle); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--jt-text-secondary); }
@@ -3586,7 +3583,19 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-post-body img,
 .jt-reply-body img {
 	max-width: 100%;
+	max-height: 420px;
 	height: auto;
+	width: auto;
+	cursor: zoom-in;
+}
+
+.jt-post-body a img,
+.jt-reply-body a img,
+.jt-post-body img.emoji,
+.jt-reply-body img.emoji,
+.jt-post-body img.wp-smiley,
+.jt-reply-body img.wp-smiley {
+	cursor: auto;
 }
 
 .jt-post-body table,

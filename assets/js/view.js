@@ -121,7 +121,8 @@ function jetonomyReport( message, labels, submit ) {
 		okBtn.type = 'button';
 		okBtn.className = 'jt-btn jt-btn-fill';
 		okBtn.textContent = i18n.reportSubmit || 'Report';
-		const close = ( value ) => { overlay.remove(); resolve( value ); };
+		let release = () => {};
+		const close = ( value ) => { release(); overlay.remove(); resolve( value ); };
 		cancelBtn.addEventListener( 'click', () => close( null ) );
 		okBtn.addEventListener( 'click', () => {
 			const picked = list.querySelector( 'input:checked' );
@@ -146,8 +147,8 @@ function jetonomyReport( message, labels, submit ) {
 		box.appendChild( actions );
 		overlay.appendChild( box );
 		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) close( null ); } );
-		overlay.addEventListener( 'keydown', ( e ) => { if ( 'Escape' === e.key ) close( null ); } );
 		document.body.appendChild( overlay );
+		if ( 'function' === typeof window.jetonomyTrapDialog ) release = window.jetonomyTrapDialog( overlay, () => close( null ) );
 		const first = list.querySelector( 'input' );
 		if ( first ) first.focus();
 	} );
@@ -876,6 +877,20 @@ function notifSetTabCounts( counts ) {
     window.jtSetUnreadBadges?.( counts.unread );
 }
 
+/**
+ * Re-render the notifications page from the server (same URL, so the filter and
+ * page stay) when the unread count changed under it. header.js calls it from
+ * its refocus refresh; the router swaps the region and re-hydrates it.
+ */
+window.jtReloadNotifList = async function () {
+    if ( ! document.querySelector( '[data-jt-notif-list], .jt-notif-tabs' ) ) return;
+    // Ticks are position-based in the DOM; re-apply them by id so a new row on top cannot shift them onto other notifications.
+    const ticked = new Set( [ ...document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ) ].map( ( cb ) => cb.value ) );
+    await reloadRegion();
+    document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb' ).forEach( ( cb ) => { cb.checked = ticked.has( cb.value ); } );
+    notifUpdateBulkbar();
+};
+
 /** Refresh the notifications bulk toolbar count + visibility from current checks. */
 function notifUpdateBulkbar() {
     const bulkbar = document.querySelector( '[data-jt-notif-bulkbar]' );
@@ -1166,6 +1181,20 @@ const watchRegion = () => {
     regionObserver.observe( region, { childList: true, subtree: true } );
 };
 watchRegion();
+
+// Re-render the router region from the server at the current URL. The swap is
+// the router's own work, not a hand edit, so later tab clicks stay soft.
+const reloadRegion = async () => {
+    const router = await import( '@wordpress/interactivity-router' );
+    await router.actions.navigate( window.location.href, { force: true, replace: true } );
+    regionDirty = false;
+    watchRegion();
+    if ( regionObserver ) regionObserver.takeRecords();
+    document.dispatchEvent( new CustomEvent( 'jetonomy:navigated', { detail: { href: window.location.href } } ) );
+};
+
+// initProfileTabsActive() binds its resize listener once per page load.
+let profileTabsResizeBound = false;
 
 const { state, actions } = store( 'jetonomy', {
     state: {
@@ -1984,6 +2013,7 @@ const { state, actions } = store( 'jetonomy', {
                 else notifMarkRowRead( row );
             } );
             notifSetTabCounts( res.data?.counts );
+            document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ).forEach( ( cb ) => { cb.checked = false; } );
             const selectAll = document.querySelector( '[data-jt-notif-selectall]' );
             if ( selectAll ) selectAll.checked = false;
             notifUpdateBulkbar();
@@ -2506,11 +2536,13 @@ const { state, actions } = store( 'jetonomy', {
 
             // Toggle: if a dropdown opened by this button is already on the
             // page, close it instead of opening a second one.
+            // Each dropdown carries its own close (jtClose) so its listeners go with it.
+            const close = ( n ) => ( n.jtClose ? n.jtClose() : n.remove() );
             const existing = document.querySelector( '.jt-share-dropdown[data-jt-owner="' + el.ref.id + '"]' );
-            if ( existing ) { existing.remove(); return; }
+            if ( existing ) { close( existing ); return; }
             // Also clear any stale dropdown from a previous button (e.g. the
             // user clicked a different post's share before closing the last).
-            document.querySelectorAll( '.jt-share-dropdown' ).forEach( ( n ) => n.remove() );
+            document.querySelectorAll( '.jt-share-dropdown' ).forEach( close );
 
             const dropdown = document.createElement( 'div' );
             dropdown.className = 'jt-share-dropdown';
@@ -2549,7 +2581,7 @@ const { state, actions } = store( 'jetonomy', {
             };
 
             const items = [
-                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { copyLink(); dropdown.remove(); } },
+                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { copyLink(); cleanup(); } },
                 { label: 'Twitter / X',                        icon: LUCIDE.x,        href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
                 { label: 'Facebook',                           icon: LUCIDE.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
                 { label: 'LinkedIn',                           icon: LUCIDE.linkedin, href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
@@ -2579,7 +2611,7 @@ const { state, actions } = store( 'jetonomy', {
                 btn.appendChild( labelNode );
 
                 if ( item.href ) {
-                    btn.addEventListener( 'click', () => { window.open( item.href, '_blank', 'width=600,height=400' ); dropdown.remove(); } );
+                    btn.addEventListener( 'click', () => { window.open( item.href, '_blank', 'width=600,height=400' ); cleanup(); } );
                 } else if ( item.action ) {
                     btn.addEventListener( 'click', item.action );
                 }
@@ -2622,8 +2654,17 @@ const { state, actions } = store( 'jetonomy', {
             const cleanup = () => {
                 dropdown.remove();
                 document.removeEventListener( 'click', closeHandler );
+                document.removeEventListener( 'keydown', keyHandler );
                 window.removeEventListener( 'scroll', scrollHandler, true );
                 window.removeEventListener( 'resize', scrollHandler );
+            };
+            dropdown.jtClose = cleanup;
+            // Escape closes and hands focus back to the Share button.
+            const keyHandler = ( e ) => {
+                if ( 'Escape' === e.key ) {
+                    cleanup();
+                    el.ref.focus();
+                }
             };
             const closeHandler = ( e ) => {
                 if ( ! dropdown.contains( e.target ) && e.target !== el.ref && ! el.ref.contains( e.target ) ) {
@@ -2639,6 +2680,7 @@ const { state, actions } = store( 'jetonomy', {
             // Detected by 1.4.0 Pro COMBO smoke (D.share-scroll-detach).
             window.addEventListener( 'scroll', scrollHandler, { passive: true, capture: true } );
             window.addEventListener( 'resize', scrollHandler, { passive: true } );
+            document.addEventListener( 'keydown', keyHandler );
             // Click-outside is the only listener that needs the next-tick
             // defer — the click that opened the dropdown is still bubbling
             // when we register, and we don't want it to instantly trigger
@@ -3548,6 +3590,8 @@ const { state, actions } = store( 'jetonomy', {
             // Find the reply body text.
             const replyEl = trigger.closest( '.jt-reply' );
             if ( ! replyEl ) return;
+            // A private reply is never quoted: the quote would be public.
+            if ( replyEl.querySelector( ':scope > .jt-reply-head .jt-private-tag' ) ) return;
             const bodyEl = replyEl.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
 
@@ -3645,56 +3689,14 @@ const { state, actions } = store( 'jetonomy', {
                 card.appendChild( p );
                 return;
             }
-            // Remove the resolved card; if the queue is now empty, swap in the
-            // empty state (ported from moderation.js removeCard()). On the
-            // overview a member-report card sits in its own list row.
-            const row       = card.parentNode && card.parentNode.matches( 'li.jt-mod-flag-row' ) ? card.parentNode : null;
-            const container = row ? row.parentNode : card.parentNode;
-            ( row || card ).remove();
-            // Keep the header "N pending" badge in sync — it is server-rendered
-            // and would otherwise show the pre-resolution count until reload.
-            // Replace only the numeric run so the localized suffix survives;
-            // drop the badge entirely when the queue hits zero (SSR hides it).
-            const flagBadge = document.querySelector( '.jt-flag-count' );
-            // The sentence under the heading ("1 pending flag") went stale the
-            // same way; the server renders it for every reachable count.
-            const flagSentence = document.querySelector( '[data-jt-flag-sentences]' );
-            if ( flagSentence ) {
-                try {
-                    const sentences = JSON.parse( flagSentence.getAttribute( 'data-jt-flag-sentences' ) ) || {};
-                    const next      = Math.max( 0, ( parseInt( flagSentence.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
-                    flagSentence.setAttribute( 'data-count', String( next ) );
-                    if ( sentences[ next ] ) flagSentence.textContent = sentences[ next ];
-                } catch ( e ) { /* leave the server text as is */ }
-            }
-            // The "Flags N" section tab is the third copy of the count.
-            const flagTab = document.querySelector( '[data-jt-flag-tab-count]' );
-            if ( flagTab ) {
-                const tabCount = Math.max( 0, ( parseInt( flagTab.getAttribute( 'data-jt-flag-tab-count' ), 10 ) || 0 ) - 1 );
-                if ( tabCount <= 0 ) {
-                    flagTab.remove();
-                } else {
-                    flagTab.setAttribute( 'data-jt-flag-tab-count', String( tabCount ) );
-                    flagTab.textContent = tabCount.toLocaleString( document.documentElement.lang || undefined );
-                }
-            }
-            if ( flagBadge ) {
-                const nextCount = Math.max( 0, ( parseInt( flagBadge.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
-                if ( nextCount <= 0 ) {
-                    flagBadge.remove();
-                } else {
-                    flagBadge.setAttribute( 'data-count', String( nextCount ) );
-                    flagBadge.textContent = flagBadge.textContent.replace( /\d+/, String( nextCount ) );
-                }
-            }
-            if ( container && ! container.querySelector( '.jt-mod-flag, .jt-mod-flag-row' ) && container.parentNode ) {
-                const wrapper = document.createElement( 'div' );
-                wrapper.className = 'jt-empty';
-                const msg = document.createElement( 'div' );
-                msg.className = 'jt-empty-text';
-                msg.textContent = i18n.queueClean || 'Queue cleared.';
-                wrapper.appendChild( msg );
-                container.parentNode.replaceChild( wrapper, container );
+            // Re-render the queue from the server: the counts, tab badges and
+            // empty state come back right, and the router keeps its own view of
+            // the region, so the next tab click stays a soft navigation. A hand
+            // removal here made that click a full page load (regionDirty).
+            try {
+                yield reloadRegion();
+            } catch ( e ) {
+                window.location.reload(); // the flag is resolved; never leave a stale card
             }
         },
 
@@ -4710,13 +4712,26 @@ const { state, actions } = store( 'jetonomy', {
         // off-screen (e.g. /drafts/ at 390px), they can't see the active
         // underline without scrolling the tab row manually. Scroll the
         // active tab into view once on load so the indicator is visible.
+        // Re-run on a debounced resize (rotation, a desktop window narrowed
+        // past the tab row), bound once per page so client navigation does not
+        // stack listeners; it re-queries the row, so a page without one is a no-op.
         initProfileTabsActive() {
-            const container = document.querySelector( '.jt-profile-tabs' );
-            if ( ! container ) return;
-            if ( container.scrollWidth <= container.clientWidth ) return;
-            const active = container.querySelector( '.jt-profile-tab.active' );
-            if ( ! active ) return;
-            active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
+            const reveal = () => {
+                const container = document.querySelector( '.jt-profile-tabs' );
+                if ( ! container ) return;
+                if ( container.scrollWidth <= container.clientWidth ) return;
+                const active = container.querySelector( '.jt-profile-tab.active' );
+                if ( ! active ) return;
+                active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
+            };
+            reveal();
+            if ( profileTabsResizeBound ) return;
+            profileTabsResizeBound = true;
+            let timer = null;
+            window.addEventListener( 'resize', () => {
+                clearTimeout( timer );
+                timer = setTimeout( reveal, 150 );
+            }, { passive: true } );
         },
 
         // Poll for new replies and show a sticky banner. Adaptive + visibility-

@@ -4359,3 +4359,13 @@ tr.jetonomy-moderated td {
 	font-weight: 400;
 	margin: 4px 0 0;
 }
+
+/* Users row actions hidden in place after a restriction (core's inline row-actions span would otherwise win). */
+.jetonomy-admin .row-actions span[hidden] {
+	display: none;
+}
+
+/* Moderation > Banned Users: keep the action on one line in the narrow Actions column. */
+.jetonomy-unban-user {
+	white-space: nowrap;
+}

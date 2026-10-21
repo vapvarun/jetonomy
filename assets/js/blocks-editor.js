@@ -239,7 +239,7 @@
 						)
 					)
 				),
-				previewCard( __( 'Jetonomy · Login', 'jetonomy' ), __( 'Quick login + register. Empty for signed-in viewers.', 'jetonomy' ) )
+				previewCard( __( 'Jetonomy · Login', 'jetonomy' ), __( 'Quick login + register. Signed-in viewers see a greeting with links.', 'jetonomy' ) )
 			);
 		},
 		save: function () { return null; },

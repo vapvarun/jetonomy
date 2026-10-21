@@ -172,14 +172,15 @@ $restriction_labels = array(
 							<?php if ( $jt_may_restrict ) : ?>
 								<?php if ( $jt_restriction ) : ?>
 									<?php if ( null === \Jetonomy\Moderation\Moderation_Permissions::lift_error( get_current_user_id(), $jt_restriction ) ) : // Lifting needs the authority that issued it. ?>
-							<span class="ban"><a href="#" class="jetonomy-unban-user" data-restriction-id="<?php echo absint( $jt_restriction->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></a> | </span>
-								<?php endif; ?>
-							<?php else : ?>
+							<span class="ban"><a href="#" class="jetonomy-unban-user" data-restriction-id="<?php echo absint( $jt_restriction->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></a></span>
+									<?php endif; ?>
+								<?php else : ?>
 							<span class="ban"><a href="#" class="jetonomy-ban-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-username="<?php echo esc_attr( $u->user_login ); ?>"><?php esc_html_e( 'Ban', 'jetonomy' ); ?></a> | </span>
-							<?php endif; ?>
-							<span class="silence"><a href="#" class="jetonomy-silence-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></a><?php echo current_user_can( 'manage_options' ) ? ' | ' : ''; ?></span>
+								<?php endif; ?>
+								<?php // Silence and Ban IP stay in the row, hidden while restricted, so the row updates in place after Ban or Lift. ?>
+							<span class="silence"<?php echo $jt_restriction ? ' hidden' : ''; ?>><a href="#" class="jetonomy-silence-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></a><?php echo current_user_can( 'manage_options' ) ? ' | ' : ''; ?></span>
 								<?php if ( current_user_can( 'manage_options' ) ) : // IP bans block everyone on the address: administrators only (Restriction::validate_ip_ban). ?>
-							<span class="ban-ip"><a href="#" class="jetonomy-ban-ip-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Ban IP address', 'jetonomy' ); ?></a></span>
+							<span class="ban-ip"<?php echo $jt_restriction ? ' hidden' : ''; ?>><a href="#" class="jetonomy-ban-ip-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Ban IP address', 'jetonomy' ); ?></a></span>
 								<?php endif; ?>
 							<?php endif; ?>
 						</div>

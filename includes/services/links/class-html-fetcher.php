@@ -45,14 +45,15 @@ final class HTML_Fetcher {
 		$ua = apply_filters( 'jetonomy_link_preview_user_agent', self::USER_AGENT, $url );
 
 		// Follow redirects MANUALLY (redirection => 0) so the SSRF guard runs on
-		// every hop. wp_safe_remote_get only re-validates redirects with the same
-		// incomplete wp_http_validate_url(), so a public URL could otherwise 30x
-		// into 169.254.169.254 (cloud metadata) or another internal address.
+		// every hop. wp_safe_remote_get re-validates redirects with
+		// wp_http_validate_url() only, which has no IPv6 coverage, so a public URL could
+		// otherwise 30x into an internal IPv6 address.
 		$current = $url;
 		$seen    = array();
 
 		for ( $hop = 0; $hop <= self::MAX_REDIRECTS; $hop++ ) {
-			$guard = Url_Guard::check_remote_url( $current );
+			$vetted = null;
+			$guard  = Url_Guard::check_remote_url( $current, $vetted );
 			if ( is_wp_error( $guard ) ) {
 				return $guard;
 			}
@@ -63,11 +64,7 @@ final class HTML_Fetcher {
 			// is exactly the internal-address hole the guard exists to close.
 			// Scoped add/remove rather than a global filter so a site's other
 			// outbound HTTP is untouched.
-			$pin_ipv4 = static function ( $handle ): void {
-				if ( defined( 'CURLOPT_IPRESOLVE' ) && defined( 'CURL_IPRESOLVE_V4' ) ) {
-					curl_setopt( $handle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt -- pinning the transport WP already chose.
-				}
-			};
+			$pin_ipv4 = Url_Guard::connect_to( $vetted, $current );
 			add_action( 'http_api_curl', $pin_ipv4 );
 
 			$response = wp_safe_remote_get(

@@ -214,7 +214,7 @@ class Category extends Model {
 		if ( $parent_id === $id ) {
 			$message = sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'This %s cannot be its own parent.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( ! $parent ) {
-			$message = sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'The parent %s does not exist.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
+			$message = sprintf( /* translators: %s: the singular Category or Space label, lowercase. */ __( 'The parent %s does not exist.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( (int) $parent->parent_id > 0 ) {
 			$message = sprintf( /* translators: 1: the plural Category label, 2: the singular Category label, lowercase. */ __( '%1$s nest two levels deep. Choose a top-level %2$s as the parent.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( $id > 0 && static::count( array( 'parent_id' => $id ) ) > 0 ) {

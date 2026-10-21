@@ -178,6 +178,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="support_url"><?php esc_html_e( 'Support URL', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="url" id="support_url" name="jetonomy_settings[support_url]" value="<?php echo esc_attr( $settings['support_url'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/support/">
+							<p class="description"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Where %s can reach you for help. Shown in the mobile app settings. Leave empty to hide the link.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Terminology', 'jetonomy' ); ?></th>
 						<td>
 							<?php
@@ -482,7 +489,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Trust Level Thresholds', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Define what users must achieve to advance through trust levels. Higher levels unlock posting privileges and reduce moderation scrutiny.', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( "Level 3's moderation powers only apply to roles you gave those capabilities without Moderate community. Moderators (Editor by default) are not held to trust levels.", 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( "Level 3's moderation powers only apply to roles you gave those capabilities without Moderate (queue, flags, bans). Moderators (Editor by default) are not held to trust levels.", 'jetonomy' ); ?></p>
 				</div>
 				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
@@ -684,9 +691,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				'idea_planned'    => __( 'Idea moved to Planned/Shipped', 'jetonomy' ),
 				'flag_validated'  => __( 'Flag confirmed (reporter)', 'jetonomy' ),
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-				'post_reported'   => sprintf( __( '%s reported', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-				'post_removed'    => sprintf( __( '%s removed by moderator', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+				'post_reported'   => __( 'Content reported', 'jetonomy' ),
+				'post_removed'    => __( 'Content removed by moderator', 'jetonomy' ),
 			);
 			?>
 			<div class="jt-settings-card">
@@ -1061,7 +1067,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<?php
 			$jt_container_width        = $settings['container_width'] ?? 'theme';
 			$jt_container_width_custom = absint( $settings['container_width_custom'] ?? 1280 );
-			$jt_sidebar_visibility     = $settings['sidebar_visibility'] ?? 'theme';
 			$jt_padding_preset         = $settings['padding_preset'] ?? 'theme';
 			?>
 			<div class="jt-settings-card">
@@ -1093,23 +1098,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							</fieldset>
 							<?php /* translators: %s: plural space label. */ ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'Applies to community pages only (%s, Discussions, Profile, etc.).', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Theme Sidebar', 'jetonomy' ); ?></th>
-						<td>
-							<fieldset>
-								<label>
-									<input type="radio" name="jetonomy_settings[sidebar_visibility]" value="theme" <?php checked( $jt_sidebar_visibility, 'theme' ); ?>>
-									<?php esc_html_e( 'Theme Default', 'jetonomy' ); ?>
-								</label>
-								<br>
-								<label>
-									<input type="radio" name="jetonomy_settings[sidebar_visibility]" value="hide" <?php checked( $jt_sidebar_visibility, 'hide' ); ?>>
-									<?php esc_html_e( 'Hide on community pages', 'jetonomy' ); ?>
-								</label>
-							</fieldset>
-							<p class="description"><?php esc_html_e( 'Hides your theme\'s sidebar (widgets) on community pages. Does not affect Jetonomy\'s own right-rail.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -1369,6 +1357,22 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 
 		<?php elseif ( 'antispam' === $active_tab ) : ?>
 
+			<?php if ( class_exists( 'Akismet' ) && ! \Jetonomy\Moderation\Akismet::is_available() ) : ?>
+				<div class="notice notice-warning inline">
+					<p>
+						<?php
+						printf(
+							/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). 3: link to the Akismet settings screen. */
+							esc_html__( 'Akismet is active but has no API key, so new %1$s and %2$s are not checked for spam. %3$s', 'jetonomy' ),
+							esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+							esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+							'<a href="' . esc_url( admin_url( 'options-general.php?page=akismet-key-config' ) ) . '">' . esc_html__( 'Add an Akismet API key', 'jetonomy' ) . '</a>'
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<!-- CAPTCHA Provider -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
@@ -1449,7 +1453,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<!-- Hero -->
 			<div class="jt-settings-card" style="background: linear-gradient(135deg, var(--jt-admin-pro-light, #EDE9FE), var(--jt-admin-warn-light, #FEF3C7)); border: none;">
 				<div style="text-align: center; padding: 12px 0;">
-					<h2 style="margin: 0 0 8px; font-size: 22px; color: var(--jt-admin-text, #1F2937);"><?php esc_html_e( 'Unlock 13 Pro Extensions', 'jetonomy' ); ?></h2>
+					<h2 style="margin: 0 0 8px; font-size: 22px; color: var(--jt-admin-text, #1F2937);"><?php esc_html_e( 'Unlock Pro Extensions', 'jetonomy' ); ?></h2>
 					<p style="margin: 0 0 16px; color: var(--jt-admin-text-2, #4B5563); font-size: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
 						<?php esc_html_e( 'Your community is growing. Give it reactions, messaging, polls, analytics, badges, webhooks, and more. Each feature is an independent module you enable only when you need it.', 'jetonomy' ); ?>
 					</p>

@@ -197,6 +197,27 @@ class Sitemap_Emitter {
 	}
 
 	/**
+	 * Drop every cached sitemap page and cursor set, so a space or topic that
+	 * went private, hidden, archived or out of publish leaves the sitemap now
+	 * rather than within CACHE_TTL. Called by the space and topic models, the
+	 * space purge, and Pro's SEO settings save.
+	 *
+	 * Pages are found through the cached cursors, so this works with or without
+	 * an object cache. One page past the count is cleared too, for a sitemap
+	 * that shrank by a page since it was cached.
+	 */
+	public static function flush(): void {
+		foreach ( self::TYPES as $type ) {
+			$meta  = get_transient( 'jt_sitemap_cursors_' . $type );
+			$pages = is_array( $meta ) && isset( $meta['cursors'] ) ? count( $meta['cursors'] ) : 0;
+			for ( $page = 1; $page <= $pages + 1; $page++ ) {
+				delete_transient( 'jt_sitemap_' . $type . '_' . $page );
+			}
+			delete_transient( 'jt_sitemap_cursors_' . $type );
+		}
+	}
+
+	/**
 	 * Compute (and cache) the page cursors for a type: the last id of each page,
 	 * the total URL count, and the newest lastmod. One covering-index scan of ids.
 	 *

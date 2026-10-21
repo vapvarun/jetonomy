@@ -25,6 +25,23 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Where a role sits on the ladder, for "never lower an existing role".
+	 *
+	 * VALID_ROLES is already ordered viewer < member < moderator < admin, so
+	 * its index IS the rank - no second ladder to drift out of step with it.
+	 * An unknown role ranks lowest, so a bad value can never win a comparison
+	 * and silently promote someone.
+	 *
+	 * @param string $role Role slug.
+	 * @return int Rank; 0 when unrecognised.
+	 */
+	private static function role_rank( string $role ): int {
+		$pos = array_search( $role, self::VALID_ROLES, true );
+
+		return false === $pos ? 0 : (int) $pos + 1;
+	}
+
+	/**
 	 * Add a user to a space, or raise their role if they are already a member.
 	 *
 	 * This is the JOIN-OR-GRANT path. It never LOWERS an existing role: an
@@ -42,23 +59,6 @@ class SpaceMember extends Model {
 	 * @param string $role     Role to grant; ignored if they already hold a higher one.
 	 * @return \WP_Error|bool  WP_Error if a filter vetoed the join, true otherwise.
 	 */
-	/**
-	 * Where a role sits on the ladder, for "never lower an existing role".
-	 *
-	 * VALID_ROLES is already ordered viewer < member < moderator < admin, so
-	 * its index IS the rank - no second ladder to drift out of step with it.
-	 * An unknown role ranks lowest, so a bad value can never win a comparison
-	 * and silently promote someone.
-	 *
-	 * @param string $role Role slug.
-	 * @return int Rank; 0 when unrecognised.
-	 */
-	private static function role_rank( string $role ): int {
-		$pos = array_search( $role, self::VALID_ROLES, true );
-
-		return false === $pos ? 0 : (int) $pos + 1;
-	}
-
 	public static function add( int $space_id, int $user_id, string $role = 'member', string $source = 'manual' ): \WP_Error|bool {
 		// A membership plugin, automation or access rule can still name a space the
 		// owner deleted; joining it would store an orphan row on every enrolment.
@@ -254,6 +254,36 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * The owner's "Join spaces" capability. A role the owner never mapped
+	 * (another plugin's) keeps the engine's open fallback, as everywhere else.
+	 * The one check behind join(), auto-join and the Join button.
+	 *
+	 * @param int $user_id User ID.
+	 */
+	public static function may_join_spaces( int $user_id ): bool {
+		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- registered via Capabilities::ROLE_MAP.
+		return user_can( $user_id, 'jetonomy_join_spaces' ) || ! \Jetonomy\Permissions\Capabilities::has_explicit_role_mapping( $user_id );
+	}
+
+	/**
+	 * Add an author to an open space on their first topic or reply. Other join
+	 * policies run their own workflows, an existing member is never demoted, and
+	 * a role without the "Join spaces" capability is not joined.
+	 *
+	 * @param int $space_id Space ID.
+	 * @param int $user_id  Author ID.
+	 */
+	public static function auto_join( int $space_id, int $user_id ): void {
+		if ( $space_id <= 0 || $user_id <= 0 || self::is_member( $space_id, $user_id ) || ! self::may_join_spaces( $user_id ) ) {
+			return;
+		}
+		$space = Space::find( $space_id );
+		if ( $space && 'open' === ( $space->join_policy ?? 'open' ) ) {
+			self::add( $space_id, $user_id, 'member' );
+		}
+	}
+
+	/**
 	 * Why a member may not join this space on their own (join, request or
 	 * invite), or null. An archived or locked space takes no one new, and a
 	 * member banned from the space cannot walk back in. Staff grants through
@@ -349,6 +379,10 @@ class SpaceMember extends Model {
 		$blocked = self::join_blocked( $space, $user_id );
 		if ( $blocked ) {
 			return $blocked;
+		}
+
+		if ( ! self::may_join_spaces( $user_id ) ) {
+			return new \WP_Error( 'jetonomy_forbidden', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You are not allowed to join a %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 403 ) );
 		}
 
 		if ( self::is_member( $space_id, $user_id ) ) {
@@ -632,23 +666,24 @@ class SpaceMember extends Model {
 	/**
 	 * List all members of a space ordered by role (DESC) then joined_at (ASC).
 	 *
-	 * @param int $space_id
-	 * @param int $limit    Max rows to return. 0 = unbounded (default,
-	 *                      preserves pre-1.4.3 behaviour for every caller
-	 *                      that did not opt in to pagination).
-	 * @param int $offset   Row offset. Ignored when $limit = 0.
+	 * @param int    $space_id
+	 * @param int    $limit    Max rows to return. 0 = unbounded (default,
+	 *                         preserves pre-1.4.3 behaviour for every caller
+	 *                         that did not opt in to pagination).
+	 * @param int    $offset   Row offset. Ignored when $limit = 0.
+	 * @param string $search   Optional name, login or email fragment.
 	 * @return object[]
 	 */
-	public static function list_by_space( int $space_id, int $limit = 0, int $offset = 0 ): array {
-		$base = 'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY role DESC, joined_at ASC';
+	public static function list_by_space( int $space_id, int $limit = 0, int $offset = 0, string $search = '' ): array {
+		[ $where, $args ] = self::space_where( $space_id, $search );
+		$base             = 'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY role DESC, joined_at ASC";
 		if ( $limit > 0 ) {
-			return static::db()->get_results(
-				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $space_id, $limit, max( 0, $offset ) )
-			) ?: array();
+			$base  .= ' LIMIT %d OFFSET %d';
+			$args[] = $limit;
+			$args[] = max( 0, $offset );
 		}
-		return static::db()->get_results(
-			static::db()->prepare( $base, $space_id )
-		) ?: array();
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $where holds only placeholders.
+		return static::db()->get_results( static::db()->prepare( $base, ...$args ) ) ?: array();
 	}
 
 	/**
@@ -656,15 +691,31 @@ class SpaceMember extends Model {
 	 * paginated callers (the space members admin / template) without
 	 * materialising every row.
 	 *
-	 * @param int $space_id
+	 * @param int    $space_id
+	 * @param string $search   Same filter as list_by_space().
 	 * @return int
 	 */
-	public static function count_by_space( int $space_id ): int {
-		return (int) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE space_id = %d',
-				$space_id
-			)
+	public static function count_by_space( int $space_id, string $search = '' ): int {
+		[ $where, $args ] = self::space_where( $space_id, $search );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $where holds only placeholders.
+		return (int) static::db()->get_var( static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE {$where}", ...$args ) );
+	}
+
+	/**
+	 * WHERE clause and values for one space's roster, optionally narrowed to
+	 * members whose display name, login or email contains $search.
+	 *
+	 * @return array{0:string,1:array}
+	 */
+	private static function space_where( int $space_id, string $search ): array {
+		if ( '' === $search ) {
+			return array( 'space_id = %d', array( $space_id ) );
+		}
+		$users = static::db()->users;
+		$like  = '%' . static::db()->esc_like( $search ) . '%';
+		return array(
+			"space_id = %d AND user_id IN ( SELECT ID FROM {$users} WHERE display_name LIKE %s OR user_login LIKE %s OR user_email LIKE %s )",
+			array( $space_id, $like, $like, $like ),
 		);
 	}
 
@@ -925,16 +976,6 @@ class SpaceMember extends Model {
 	}
 
 	/**
-	 * Count how many users currently hold the 'admin' role for a space.
-	 *
-	 * Single COUNT(*) query against the existing `(space_id, role)` index.
-	 * Used by the role-update guards (1.4.0 G4) to refuse demotion of the
-	 * last admin so a space can never end up admin-less.
-	 *
-	 * @param int $space_id
-	 * @return int
-	 */
-	/**
 	 * The one last-admin rule every entry point shares (front end, wp-admin,
 	 * REST, integrations): a space never loses its final admin by demotion
 	 * or removal.
@@ -985,6 +1026,16 @@ class SpaceMember extends Model {
 		);
 	}
 
+	/**
+	 * Count how many users currently hold the 'admin' role for a space.
+	 *
+	 * Single COUNT(*) query against the existing `(space_id, role)` index.
+	 * Used by the role-update guards (1.4.0 G4) to refuse demotion of the
+	 * last admin so a space can never end up admin-less.
+	 *
+	 * @param int $space_id
+	 * @return int
+	 */
 	public static function count_admins( int $space_id ): int {
 		$db    = static::db();
 		$table = static::table();

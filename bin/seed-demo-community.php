@@ -222,7 +222,8 @@ foreach ( $neg ? array( 'maya', 'alice', 'bob', 'priya' ) : array() as $l ) {
 
 // 5. Restrictions and a pending join request.
 Restriction::is_silenced( $u( 'finn' ) ) || Restriction::ban( $u( 'finn' ), 'silence', $u( 'theo' ), null, 'Repeated self-promotion after a warning.', gmdate( 'Y-m-d H:i:s', time() + 7 * DAY_IN_SECONDS ) );
-Restriction::is_space_banned( $u( 'omar' ), $space_id( 'Off-Topic Lounge' ) ) || Restriction::ban( $u( 'omar' ), 'space_ban', $u( 'theo' ), $space_id( 'Off-Topic Lounge' ), 'Heated thread, taking a break.', gmdate( 'Y-m-d H:i:s', time() + 3 * DAY_IN_SECONDS ) );
+// Permanent, so the space-ban surfaces still have a banned member to show on a walk weeks after seeding.
+Restriction::is_space_banned( $u( 'omar' ), $space_id( 'Off-Topic Lounge' ) ) || Restriction::ban( $u( 'omar' ), 'space_ban', $u( 'theo' ), $space_id( 'Off-Topic Lounge' ), 'Heated thread, taking a break.' );
 if ( ! JoinRequest::find_pending( $space_id( 'Insiders / Beta' ), $u( 'carlos' ) ) ) {
 	JoinRequest::create_request( $space_id( 'Insiders / Beta' ), $u( 'carlos' ), 'I run a 4,000-member hobby forum and would love to test the import tools early.' );
 }

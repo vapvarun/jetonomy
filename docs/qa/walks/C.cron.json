@@ -1,15 +1,15 @@
 {
   "journey": "C.cron",
-  "free": "5680944e",
-  "pro": "d8d053b",
-  "walked_at": "2026-10-17T12:40:17Z",
-  "walker": "lane A",
+  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
+  "walked_at": "2026-10-21T12:11:51Z",
+  "walker": "lane B2",
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,58 +18,68 @@
   "checks": {
     "c-cron.1": {
       "result": "pass",
-      "evidence": "pending AS rows in group jetonomy: trust_evaluation, cleanup_expired, prune_activity, cleanup_notifications, verification_reminder, reconcile_rosters, cleanup_media, one each"
+      "evidence": "wp action-scheduler action list --group=jetonomy --status=pending --per_page=200 shows pending trust_evaluation, cleanup_expired, prune_activity, cleanup_notifications, verification_reminder, reconcile_rosters, cleanup_media (the CLI default page of 5 rows hides most; needs --per_page)",
+      "carried_forward": true
     },
     "c-cron.2": {
       "result": "pass",
-      "evidence": "Pending Action Scheduler (queried per hook): jetonomy_pro_send_daily_digest 1, send_weekly_digest 1, evaluate_badges 1, license_check 1 (+ WP cron edd_sl_sdk_weekly_license_check_jetonomy-pro); no AI batch review job (AI review off). After `plugin deactivate jetonomy-pro && plugin activate jetonomy-pro` each is still scheduled exactly once. Note `wp action-scheduler action list` shows only 5 rows whatever --per-page is, so use --hook per job"
+      "evidence": "Pro active: pro_send_daily_digest, pro_send_weekly_digest, pro_evaluate_badges, pro_license_check (+edd_sl weekly cron for both) each pending exactly once; pro_ai_batch_review not pending (AI off); after a second activation still one each",
+      "carried_forward": true
     },
     "c-cron.3": {
       "result": "pass",
-      "evidence": "wp plugin deactivate jetonomy-pro jetonomy -> zero pending hooks LIKE jetonomy%, no fatal, debug.log size unchanged (112327 bytes). Reactivated straight after."
+      "evidence": "Deactivated jetonomy-pro then jetonomy: 0 pending jetonomy_* actions remain, only edd_sl cron events, no fatal in debug.log",
+      "carried_forward": true
     },
     "c-cron.4": {
       "result": "pass",
-      "evidence": "ran the pending action of all 11 recurring hooks with wp action-scheduler action run; every one status complete; debug.log unchanged"
+      "evidence": "Ran the 7 free recurring hooks plus pro_prune_webhook_deliveries and pro_evaluate_badges via action-scheduler action run: each 'Executed 1 action' and status complete; no new debug.log error. Pro daily/weekly digest and license check not run (would mass-mail / call licence server)",
+      "carried_forward": true
     },
     "c-cron.5": {
       "result": "pass",
-      "evidence": "deactivate then activate both plugins: all 11 recurring events back, one each; guest GET /community/messages/ answers 302 to wp-login (route resolves, not 404); /community/zzz-nonexist/ is 404 for contrast"
+      "evidence": "deactivate then activate jetonomy+pro in sequence: all 7 free and 4 pro recurring events rescheduled once each, /community/messages/ answers 302 (login redirect), /community/ 200. Side effect: a pending jetonomy_pro_rbe_imap_poll and badges_eval_user were dropped by the deactivate and not re-armed",
+      "carried_forward": true
     },
     "c-cron.6": {
       "result": "pass",
-      "evidence": "Inserted an expired silence for test_editor and an expired invite link (Lisbon Chapter), ran do_action('jetonomy_cleanup_expired'): the restriction row is gone, the invite row is kept and its link page says 'This invite link has expired or reached its usage limit.' Test rows removed afterwards"
+      "evidence": "Fixture expired global_ban (user n1) and expired invite: after jetonomy_cleanup_expired the ban row is gone; invite row 574 kept and /community/invite/<token>/ says 'expired or reached its usage limit' (unknown token says 'Invalid invite link.'). Fixtures removed",
+      "carried_forward": true
     },
     "c-cron.7": {
       "result": "pass",
-      "evidence": "temp private space with a membership rule nobody holds and a source=tier row for maya; jetonomy_reconcile_rosters run -> tier row count 1 -> 0. Space, rule and row deleted afterwards."
+      "evidence": "tier roster row in private space 4955 with no rule: jetonomy_reconcile_rosters removed it; manual row for admin kept",
+      "carried_forward": true
     },
     "c-cron.8": {
       "result": "pass",
-      "evidence": "5000 users / 5000 profiles. evaluate_trust_levels() set cursor 0 (2ms). evaluate_trust_batch() \u00d710: cursor 504,1004,1504,2004,2504,3004,3504,4004,4504,null; times 11,3,3,3,3,3,3,3,3,3 ms (max 11ms), each under the time limit.",
-      "site": "docker jt203-scale"
+      "evidence": "On a full clone of the site DB (not forums.local) seeded with 5,000 extra profiles (5,047 with trust_level<4): Cron::evaluate_trust_batch ran 11 times, cursor jetonomy_trust_eval_cursor advanced 900452, 900952 ... 904952 in 500-row slices and was deleted after the last partial slice; slowest run 0.03s. No promotions occurred with the seeded stats, so the promotion write path was not exercised on this run"
     },
     "c-cron.9": {
       "result": "pass",
-      "evidence": "bob scheduled a Feature Requests topic for 10:47:00 UTC (draft). Running the publish action at 10:41 left it a draft and re-armed it. It went live at 10:47:46 UTC (not early); alice, who follows the space, got exactly one new_post_in_sub notification. Topic, notification and follow row removed afterwards; space counters back to baseline."
+      "evidence": "bob scheduled a topic for 10:04:20 UTC (draft): hook run at 10:02:40 left it draft and re-armed; run at 10:04:24 published it at 10:04:25; subscribed follower alice got one new_post_in_sub notice",
+      "carried_forward": true
     },
     "c-cron.10": {
-      "result": "untested",
-      "needs": "RO plugin mount: docker exec mount --bind empty dir over libs/action-scheduler returned permission denied even with --privileged; host nsenter blocked. Notice code is in jetonomy.php:54\u201368 (admin_notices, no WSOD). Could not hide the directory without recreating the container.",
-      "site": "docker jt203-scale"
+      "result": "not_performed",
+      "evidence": "Action Scheduler cannot be made missing on this site: Jetonomy bundles its own copy (libs/action-scheduler) and woocommerce, lifterlms, sensei, pmpro and wpmediaverse ship others, so as_enqueue_async_action stays defined with every other copy skipped. Code read: Queue::has_as() falls back to WP-Cron silently, and a grep of includes/ finds no admin notice for a missing Action Scheduler, so the 'shows a notice' half of the check has no implementation"
     },
     "c-cron.11": {
       "result": "pass",
-      "evidence": "Before and after a Pro deactivate/activate there are no failed rows newer than 2026-09-29 (jetonomy_pro_* failed: attachments_gc 5, evaluate_badges 4, prune_webhook_deliveries 3, send_daily_digest 5, send_weekly_digest 3, all from August to September); the log has no new failure after the toggle"
+      "evidence": "Pro deactivate/reactivate: failed rows unchanged (attachments_gc 5, daily 5, weekly 3, evaluate_badges 4, prune_webhook 3); no new 'no callbacks are registered' failures",
+      "carried_forward": true
     },
     "c-cron.12": {
       "result": "pass",
-      "evidence": "jetonomy_cleanup_expired removes expired bans/silences but keeps an expired invite row by design (c-cron.6 now says so); the expired link reads 'expired or reached its usage limit' instead of 'invalid'. Expired invite rows are never pruned, which is a slow table growth"
+      "evidence": "Expired invite rows are kept by design (see .6): after cleanup_expired the row stayed and the link says expired",
+      "carried_forward": true
     }
   },
+  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
   "proposed_checks": [
-    "- `c-cron.11` @admin #cli: run `wp action-scheduler action list --group=jetonomy --status=failed` after a deactivate/reactivate of Pro -> no failed 'no callbacks are registered' rows are added for jetonomy_pro_* hooks (older rows from 2026-10-10 show Pro jobs failing while Pro was off).",
-    "- `c-cron.12` @admin #cli +old-data: run jetonomy_cleanup_expired with an expired invite link -> the expired jt_invite_links row is removed, or the check says expired invites are kept by design."
-  ],
-  "notes": "Pro was deactivated and reactivated once in a single command (about 3 seconds) for .2 and .11; Pro active again. Test restriction and invite rows inserted for .6 and deleted. | Docker lane jt203-scale @ 8b2827d7 / d5c4494. Site http://localhost:8095."
+    {
+      "id": "c-cron.13",
+      "text": "Reword .10: Jetonomy bundles Action Scheduler, so the missing-AS case needs a build without libs/action-scheduler; decide whether a notice should exist at all."
+    }
+  ]
 }

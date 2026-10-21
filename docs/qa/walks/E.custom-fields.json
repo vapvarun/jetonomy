@@ -1,0 +1,119 @@
+{
+  "journey": "E.custom-fields",
+  "free": "9b977fcb",
+  "pro": "a830e82",
+  "walked_at": "2026-10-21T12:51:08Z",
+  "walker": "lane C3",
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
+  },
+  "checks": {
+    "e-custom-fields.1": {
+      "result": "pass",
+      "evidence": "Admin UI Add New Field: name \"QA-WALK-C Operating system\", type Select, options Windows/macOS/Linux, context Topic, required, space All Spaces -> notice \"Field created.\" and row lists slug qa-walk-c-operating-system (field then re-scoped to Help Desk via PATCH to avoid blocking other lanes)",
+      "carried_forward": true
+    },
+    "e-custom-fields.2": {
+      "result": "pass",
+      "evidence": "POST /fields missing name -> 400 rest_missing_callback_param 'Missing parameter(s): name'; field_type 'bogus' -> 400 rest_invalid_param 'Invalid parameter(s): field_type' (matches current runbook wording); creating with no slug generated qa-walk-c3-os etc."
+    },
+    "e-custom-fields.3": {
+      "result": "pass",
+      "evidence": "Composer in Help Desk renders select, text, textarea, number, email (type=email), url (type=url), checkbox, radio (2 options) and date controls named jt_cf[slug]; topic 9023 panel shows the submitted select/text/textarea/number/email values; checkbox/radio/date display not visually confirmed",
+      "screenshot": "cf-composer",
+      "carried_forward": true
+    },
+    "e-custom-fields.4": {
+      "result": "pass",
+      "evidence": "bob topic 9023 in Help Desk with Operating system = Linux: field panel shows Linux (and other values); after reload Linux, Postfix relay, 587, qa@example.com still present; \"Additional Fields\" heading present in markup",
+      "screenshot": "cf-topic2",
+      "carried_forward": true
+    },
+    "e-custom-fields.5": {
+      "result": "pass",
+      "evidence": "UI: submit with required select empty is blocked by the browser (\"Please select an item in the list.\") and no topic created; REST POST without custom_fields -> 400 jetonomy_field_required \"QA-WALK-C Operating system is required.\"",
+      "carried_forward": true
+    },
+    "e-custom-fields.6": {
+      "result": "pass",
+      "evidence": "Inline Edit on topic 9023 pre-populates all fields (Linux, text, textarea, number, email, url, checkbox, radio, date); changed select to macOS and cleared the optional text field, Save -> after reload topic shows macOS (not Linux) and the cleared text row is gone",
+      "carried_forward": true
+    },
+    "e-custom-fields.7": {
+      "result": "pass",
+      "evidence": "alice PATCH /posts/9023/fields -> 403 \"You do not have permission to update fields on this topic.\" (wording topic not post); missing id -> 404 \"Topic not found.\"; CAB post 5865 -> identical 404 (no leak)",
+      "carried_forward": true
+    },
+    "e-custom-fields.8": {
+      "result": "pass",
+      "evidence": "bob PATCH with number \"abc\", email \"not-an-email\", url \"javascript:alert(1)\", select \"BeOS\" -> 400 \"Some fields failed validation.\" with per-field errors (invalid_number, invalid_email, invalid_url, ...); GET afterwards still shows Linux (nothing saved)",
+      "carried_forward": true
+    },
+    "e-custom-fields.9": {
+      "result": "pass",
+      "evidence": "test_moderator and test_editor PATCH /posts/16679/fields (Help Desk topic by bob) -> 200; a plain member (priya) -> 403. test_moderator is a global moderator (can also PATCH the topic itself, 200), so the runbook's 'test_moderator outside Moderators Room/Bug Reports may not' negative case does not apply to this account"
+    },
+    "e-custom-fields.10": {
+      "result": "pass",
+      "evidence": "topic with a 100-char URL value at 390px: field value elements scrollWidth - clientWidth = 0, documentElement scrollWidth 390 == 390",
+      "screenshot": "cf-topic-390"
+    },
+    "e-custom-fields.11": {
+      "result": "pass",
+      "evidence": "Edit Profile (/community/u/bob/edit/) shows the profile-context field under \"More about you\"; bob saved an Arabic+Latin location value; alice sees it on bob profile under \"PROFILE DETAILS\"; maya (blank) shows no Profile Details block",
+      "screenshot": "cf-profile-view",
+      "carried_forward": true
+    },
+    "e-custom-fields.12": {
+      "result": "fail",
+      "evidence": "alice sees bob field values on his profile (pass). No private/hidden-to-others option exists in the Add/Edit field form (only Required, Searchable, space scope), so the private-field negative case could not be performed",
+      "carried_forward": true
+    },
+    "e-custom-fields.13": {
+      "result": "pass",
+      "evidence": "PATCH /users/me/fields: unknown slug only -> 400 jetonomy_no_known_fields 'No known profile field matched the request. Send a flat { field_slug: value } object.'; array body ['a'] -> 400 jetonomy_validation 'Request body must be a JSON object of field_slug: value pairs.' (fixed since previous walk)"
+    },
+    "e-custom-fields.14": {
+      "result": "not_performed",
+      "evidence": "half verified: a field scoped to Help Desk shows in the Help Desk composer and not in the General Discussion composer; Space-context field on space create/edit/display not exercised"
+    },
+    "e-custom-fields.15": {
+      "result": "fail",
+      "evidence": "REST DELETE returns message 'Field deactivated.' (code line), but the wp-admin Disable button reloads the list with no notice at all (sampled after navigation: no .notice/alert); row flips to 'Enable'. Values hidden/required dropped verified in earlier walk"
+    },
+    "e-custom-fields.16": {
+      "result": "not_performed",
+      "evidence": "re-index notice and search-after-job not re-run; code message says 'not only in new <topic label plural>' (owner noun) where the runbook text says 'posts'"
+    },
+    "e-custom-fields.17": {
+      "result": "pass",
+      "evidence": "guest GET /fields -> 200 (active fields); guest GET /posts/5865/fields (CAB) -> 404 Topic not found; guest POST /fields -> 401; bob POST /fields -> 403 jetonomy_forbidden",
+      "carried_forward": true
+    },
+    "e-custom-fields.18": {
+      "result": "not_performed",
+      "evidence": "half verified: Help Desk composer with no active fields shows no 'Additional Fields' heading; admin 'No custom fields yet' cannot show because 6+ inactive field rows from earlier QA exist"
+    },
+    "e-custom-fields.19": {
+      "result": "pass",
+      "evidence": "Arabic/Latin mixed text value on the topic panel: .jt-cf-value dir=auto, computed direction rtl; profile values also dir=auto (fixed since previous walk)"
+    },
+    "e-custom-fields.20": {
+      "result": "not_performed",
+      "evidence": "30 fields not created; admin list showed no pagination at 12 rows"
+    }
+  },
+  "proposed_checks": [
+    "custom-fields.7 and .8 messages now say \"topic\" / \"Topic not found.\" - runbook still says \"post\".",
+    "custom-fields.9 negative case needs a space-scoped moderator account; test_moderator is a global moderator.",
+    "custom-fields.16 re-index notice uses the owner topic noun, not \"posts\"."
+  ]
+}

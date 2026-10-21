@@ -86,13 +86,13 @@ Raise it if you need a longer audit trail for compliance. Lower it if the log ta
 
 Deleted entries cannot be recovered, so if you are lowering this substantially, export what you need first from **Jetonomy → Activity Log**.
 
-## Terms of Service and Privacy Policy URLs
+## Terms of Service, Privacy Policy and Support URLs
 
-**Settings:** `terms_url`, `privacy_url`
+**Settings:** `terms_url`, `privacy_url`, `support_url`
 **Default:** empty
 **Location:** General tab → Community Setup card
 
-Links to your terms and privacy policy. They are shown to members **in the mobile app** before they sign up.
+Links to your terms, privacy policy and a support page. They are shown to members **in the mobile app**: terms and privacy before they sign up, and all three under Settings > About. The support link appears only when you fill it in.
 
 Leave them empty if you have none - the app simply omits them. If you publish an app, though, app store review generally expects both to be reachable from the sign-up screen, so filling these in is usually part of getting an app approved rather than an optional nicety.
 

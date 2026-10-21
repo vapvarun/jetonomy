@@ -48,7 +48,7 @@ class Revision extends Model {
 	 * @return object[]
 	 */
 	public static function list_for_object( string $type, int $id, int $limit = 0, int $offset = 0 ): array {
-		$base = 'SELECT * FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d ORDER BY created_at DESC';
+		$base = 'SELECT * FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d ORDER BY created_at DESC, id DESC';
 		if ( $limit > 0 ) {
 			return static::db()->get_results(
 				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $type, $id, $limit, max( 0, $offset ) )

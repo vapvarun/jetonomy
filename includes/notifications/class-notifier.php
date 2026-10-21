@@ -437,40 +437,10 @@ class Notifier {
 			return;
 		}
 
-		$allowed = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post );
-		if ( is_wp_error( $allowed ) ) {
-			$this->tell_sender_reply_refused( $user_id, $post, $allowed );
-			return;
+		$created = \Jetonomy\Permissions\Content_Gate::create_reply( $user_id, $post, $content );
+		if ( is_wp_error( $created ) && 'jetonomy_create_failed' !== $created->get_error_code() ) {
+			$this->tell_sender_reply_refused( $user_id, $post, $created );
 		}
-
-		// Same content rules + require_approval as the REST reply path.
-		$data     = array(
-			'post_id'       => $post_id,
-			'author_id'     => $user_id,
-			'content'       => $content,
-			'content_plain' => \jetonomy_content_to_plain( $content ),
-		);
-		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) $post->space_id, $user_id );
-		if ( is_wp_error( $screened ) ) {
-			$this->tell_sender_reply_refused( $user_id, $post, $screened );
-			return;
-		}
-		$data['status'] = $screened['status'];
-
-		$reply_id = \Jetonomy\Models\Reply::create( $data );
-
-		if ( is_wp_error( $reply_id ) || ! $reply_id ) {
-			return;
-		}
-		if ( $screened['flag'] ) {
-			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'reply', (int) $reply_id );
-		}
-
-		// Canonical post-create side-effects (same as the REST controller).
-		// 3rd arg is null — this fire is a background/programmatic path with no
-		// WP_REST_Request, mirroring the post-create hook's null request arg
-		// (class-abilities.php, models/class-post.php).
-		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, null );
 	}
 
 	/**
@@ -847,8 +817,10 @@ class Notifier {
 			return;
 		}
 
-		// Check for existing vote notification on same object within last hour.
-		$existing = Notification::find_recent_for_object( $author_id, 'vote_on_post', $object_type, $object_id, gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) );
+		// An upvote groups into a notice from the last hour. A removal corrects
+		// the latest notice however old it is, or "3 people voted" outlives the votes.
+		$since    = $is_upvote ? gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) : '1970-01-01 00:00:00';
+		$existing = Notification::find_recent_for_object( $author_id, 'vote_on_post', $object_type, $object_id, $since );
 
 		if ( ! $is_upvote && ! $existing ) {
 			return;
@@ -872,12 +844,13 @@ class Notifier {
 				$title
 			);
 
+			// Only a new vote brings the notice back to the top; a removal just corrects it.
 			Notification::update(
 				(int) $existing->id,
-				array(
+				$is_upvote ? array(
 					'message'    => $message,
 					'created_at' => now(),
-				)
+				) : array( 'message' => $message )
 			);
 		} else {
 			// Create new notification via email-aware path.
@@ -1566,7 +1539,7 @@ class Notifier {
 		if ( null === $global_defaults ) {
 			$global_defaults = get_option( 'jetonomy_settings', array() )['notification_defaults'] ?? array();
 		}
-		$web   = self::should_web( $user_id, $type, $user_prefs, $global_defaults );
+		$web = self::should_web( $user_id, $type, $user_prefs, $global_defaults );
 		// Same filter as the send path, so a digest that replaces the email shows here too.
 		$email = self::should_email( $user_id, $type, $user_prefs, $global_defaults )
 			&& apply_filters( 'jetonomy_send_instant_email', true, $user_id, '' !== $email_key ? $email_key : $type, $type );

@@ -290,7 +290,8 @@ class Notifications_Controller extends Base_Controller {
 	/**
 	 * GET /notifications/unread-count — Return the unread notification count.
 	 *
-	 * Sets Cache-Control: max-age=15 to allow short-lived client-side caching.
+	 * Per-user data: never shared-cacheable. Core already sends no-cache, private
+	 * on every logged-in REST call, so the route adds no header of its own.
 	 */
 	public function unread_count( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = $this->require_auth();
@@ -298,16 +299,11 @@ class Notifications_Controller extends Base_Controller {
 			return $user_id;
 		}
 
-		$count    = Notification::unread_count( $user_id );
-		$response = new WP_REST_Response( array( 'count' => $count ), 200 );
-		$response->header( 'Cache-Control', 'max-age=15' );
+		$count = Notification::unread_count( $user_id );
 
-		return $response;
+		return new WP_REST_Response( array( 'count' => $count ), 200 );
 	}
 
-	/**
-	 * Format a notification row for API output.
-	 */
 	/**
 	 * Batch-resolve the reply pages this response is about to link to.
 	 *
@@ -325,6 +321,9 @@ class Notifications_Controller extends Base_Controller {
 		}
 	}
 
+	/**
+	 * Format a notification row for API output.
+	 */
 	private function prepare_notification( ?object $notification ): array {
 		if ( ! $notification ) {
 			return array();

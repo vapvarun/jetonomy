@@ -35,7 +35,7 @@ Set when the digests go out:
 | **Daily** | 8:00 AM (site timezone) |
 | **Weekly** | Monday, 8:00 AM (site timezone) |
 
-You can change both send times in the Email Digest settings. Times use the timezone set in **Settings → General → Timezone** in WordPress.
+The unsubscribe link in a digest works for the right member, and a plain-text digest is not replaced by a membership plugin's template (2.0.4). You can change both send times in the Email Digest settings. Times use the timezone set in **Settings → General → Timezone** in WordPress.
 
 ### Digest Content
 
