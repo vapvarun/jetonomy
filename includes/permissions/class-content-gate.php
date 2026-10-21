@@ -27,6 +27,7 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Space;
+use Jetonomy\Models\UserProfile;
 
 class Content_Gate {
 
@@ -174,6 +175,11 @@ class Content_Gate {
 			return $allowed;
 		}
 
+		$trust = (int) ( UserProfile::find_or_create( $user_id )->trust_level ?? 0 );
+		if ( ! Rate_Limiter::check( $user_id, 'create_replies', $trust ) ) {
+			return Rate_Limiter::error( $user_id, 'create_replies', $trust );
+		}
+
 		$data     = array(
 			'post_id'       => (int) $post->id,
 			'author_id'     => $user_id,
@@ -190,6 +196,8 @@ class Content_Gate {
 		if ( is_wp_error( $reply_id ) || ! $reply_id ) {
 			return is_wp_error( $reply_id ) ? $reply_id : new \WP_Error( 'jetonomy_create_failed', /* translators: %s: reply label, lower case */ sprintf( __( 'The %s could not be saved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), array( 'status' => 500 ) );
 		}
+		Rate_Limiter::increment( $user_id, 'create_replies' );
+
 		if ( $screened['flag'] ) {
 			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'reply', (int) $reply_id );
 		}
