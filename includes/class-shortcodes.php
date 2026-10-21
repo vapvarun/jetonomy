@@ -371,7 +371,10 @@ class Shortcodes {
 			$category_id = absint( $category->id );
 		}
 
-		$spaces = Models\Space::list_public_by_post_count( $limit, $category_id );
+		// Same viewer-aware listing as the Navigation block and GET /spaces, so a
+		// member sees the private spaces they belong to and a guest never sees
+		// one the owner keeps from guests.
+		$spaces = Models\Space::list_visible( get_current_user_id(), $category_id ?: null, null, null, $limit, 0, 'post_count DESC, id ASC' )['spaces'];
 
 		if ( empty( $spaces ) ) {
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */

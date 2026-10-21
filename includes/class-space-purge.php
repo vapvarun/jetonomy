@@ -592,6 +592,10 @@ final class Space_Purge {
 			}
 		}
 
+		// Sub-spaces move up to this space's own parent (top level when the row
+		// is already gone), never left pointing at a space that no longer exists.
+		Models\Space::reparent_children( $space_id, (int) ( $space->parent_id ?? 0 ) );
+
 		// The space row last, so an interrupted purge leaves the space
 		// discoverable and the next pass finishes the job.
 		foreach ( self::relations() as $r ) {

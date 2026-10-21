@@ -116,18 +116,9 @@ class Bookmark extends Model {
 
 		// A bookmark can also outlive the viewer's access: the space went private
 		// or the post became a private one. Same predicates every other list uses.
-		[ $space_sql, $space_vals ] = Space::content_visibility_sql( $user_id, 's' );
-		if ( '1=1' !== $space_sql ) {
-			$sql   .= ' AND ' . $space_sql;
-			$params = array_merge( $params, $space_vals );
-		}
-		[ $priv_sql, $priv_vals ] = Post::private_reader_sql( $user_id, 'p' );
-		if ( '1=1' !== $priv_sql ) {
-			$sql   .= ' AND ' . $priv_sql;
-			$params = array_merge( $params, $priv_vals );
-		}
+		[ $read_sql, $read_vals ] = Post::readable_sql( $user_id, 'p', 's' );
 
-		return array( $sql, $params );
+		return array( $sql . ' AND ' . $read_sql, array_merge( $params, $read_vals ) );
 	}
 
 	/**

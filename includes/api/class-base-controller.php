@@ -387,9 +387,15 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// limit/offset args must still not take ?limit=0 (or -1, or 5000) as
 		// "the whole table" - the same 1..100 page as get_collection_params().
 		// `per_page` (the WordPress core name) is read when `limit` is not sent;
-		// /moderation/queue answered per_page=3 with 20 rows.
+		// /moderation/queue answered per_page=3 with 20 rows. Likewise `page`
+		// (core's page number) when neither cursor nor offset is set - offset
+		// defaults to 0, so 0 means unset; ?page=2 used to answer page 1 again.
+		$limit = min( 100, max( 1, (int) ( $request->get_param( 'limit' ) ?? $request->get_param( 'per_page' ) ?? 20 ) ) );
+		if ( $after <= 0 && $offset <= 0 ) {
+			$offset = ( max( 1, (int) ( $request->get_param( 'page' ) ?? 1 ) ) - 1 ) * $limit;
+		}
 		return array(
-			'limit'  => min( 100, max( 1, (int) ( $request->get_param( 'limit' ) ?? $request->get_param( 'per_page' ) ?? 20 ) ) ),
+			'limit'  => $limit,
 			'offset' => max( 0, $after > 0 ? $after : $offset ),
 			'sort'   => $request->get_param( 'sort' ) ?? 'latest',
 			'after'  => $after,

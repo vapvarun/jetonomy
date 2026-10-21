@@ -22,9 +22,11 @@
 		window.bnToast = function (msg) {
 			var t = document.createElement('div');
 			t.className = 'jt-toast';
-			t.textContent = msg;
+			// A live region, filled after it is in the page so screen readers announce it.
+			t.setAttribute('role', 'status');
+			t.setAttribute('aria-live', 'polite');
 			document.body.appendChild(t);
-			setTimeout(function () { t.classList.add('show'); }, 10);
+			setTimeout(function () { t.textContent = msg; t.classList.add('show'); }, 10);
 			setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 3000);
 		};
 	}

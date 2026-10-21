@@ -20,6 +20,7 @@ use Jetonomy\Models\Reply;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
+use Jetonomy\Models\Subscription;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Models\Tag;
 use Jetonomy\Models\Notification;
@@ -281,6 +282,8 @@ class Model_Tests {
 		$this->check_robots_single_emitter();
 		$this->check_subspace_listing();
 		$this->check_split_leaves_a_trace();
+		$this->check_follow_visibility();
+		$this->check_reparent_on_delete();
 
 		wp_set_current_user( 0 );
 		wp_delete_user( $this->qa_admin );
@@ -314,6 +317,81 @@ class Model_Tests {
 	 *
 	 * @return void
 	 */
+	/**
+	 * My Subscriptions lists what the member may still read, and keeps a
+	 * trashed topic so they can unfollow it. Before: a private space they had
+	 * no access to was listed by title, and a trashed topic vanished with no
+	 * way to stop following it.
+	 */
+	private function check_follow_visibility(): void {
+		global $wpdb;
+
+		$spaces_t = table( 'spaces' );
+		$posts_t  = table( 'posts' );
+		$space    = static function ( string $visibility ) use ( $wpdb, $spaces_t ): int {
+			$wpdb->insert( $spaces_t, array( 'title' => 'QA follow ' . $visibility, 'slug' => 'qa-follow-' . wp_generate_password( 8, false, false ), 'visibility' => $visibility, 'status' => 'active', 'type' => 'forum', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			return (int) $wpdb->insert_id;
+		};
+		$private = $space( 'private' );
+		$public  = $space( 'public' );
+		$wpdb->insert( $posts_t, array( 'space_id' => $public, 'author_id' => $this->qa_admin, 'title' => 'QA followed topic', 'slug' => 'qa-followed-' . wp_generate_password( 8, false, false ), 'content' => 'probe', 'status' => 'trash', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$topic  = (int) $wpdb->insert_id;
+		$member = wp_insert_user( array( 'user_login' => 'jt_qa_fl_' . uniqid(), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
+		$member = is_wp_error( $member ) ? 0 : (int) $member;
+
+		if ( $private <= 0 || $public <= 0 || $topic <= 0 || $member <= 0 ) {
+			$this->skip( 'FL1: a follow the member can no longer read is not listed', 'fixture insert failed' );
+			$this->skip( 'FL2: a trashed topic stays listed as gone', 'precondition not met' );
+		} else {
+			Subscription::subscribe( $member, 'space', $private );
+			Subscription::subscribe( $member, 'space', $public );
+			Subscription::subscribe( $member, 'post', $topic );
+			$rows  = Subscription::list_for_user( $member );
+			$keys  = array_map( static fn( $r ) => $r->object_type . ':' . (int) $r->object_id, $rows );
+			$items = Subscription::attach_targets( array_map( static fn( $r ) => array( 'object_type' => $r->object_type, 'object_id' => (int) $r->object_id ), $rows ) );
+			$gone  = array_values( array_filter( $items, static fn( $i ) => 'post' === $i['object_type'] && ! $i['exists'] ) );
+
+			$this->check( 'FL1: a follow the member can no longer read is not listed', ! in_array( 'space:' . $private, $keys, true ) && 2 === Subscription::count_for_user( $member ), implode( ',', $keys ) );
+			$this->check( 'FL2: a trashed topic stays listed as gone', in_array( 'post:' . $topic, $keys, true ) && 1 === count( $gone ) );
+		}
+
+		$wpdb->delete( table( 'subscriptions' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $posts_t, array( 'id' => $topic ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		foreach ( array( $private, $public ) as $id ) {
+			$wpdb->delete( $spaces_t, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		}
+		if ( $member > 0 ) {
+			wp_delete_user( $member );
+		}
+	}
+
+	/**
+	 * Deleting a space moves its sub-spaces up to its own parent, and a move
+	 * that would put a space inside itself is refused. Before: the children kept
+	 * a parent_id pointing at the deleted row.
+	 */
+	private function check_reparent_on_delete(): void {
+		$make   = static fn( string $t, int $parent ): int => (int) Space::create( array( 'title' => 'QA reparent ' . $t, 'slug' => 'qa-reparent-' . $t . '-' . wp_generate_password( 6, false, false ), 'type' => 'forum', 'parent_id' => $parent ) );
+		$top    = $make( 'top', 0 );
+		$middle = $top > 0 ? $make( 'middle', $top ) : 0;
+		$child  = $middle > 0 ? $make( 'child', $middle ) : 0;
+		if ( $child <= 0 ) {
+			$this->skip( 'RP1: a deleted space hands its sub-spaces to its own parent', 'fixture insert failed' );
+			$this->skip( 'RP2: a space cannot move inside its own sub-space', 'precondition not met' );
+		} else {
+			$cycle = Space::update( $top, array( 'parent_id' => $child ) );
+			Space::delete( $middle );
+			$row = Space::find( $child );
+			$this->check( 'RP1: a deleted space hands its sub-spaces to its own parent', $row && (int) $row->parent_id === $top, 'parent_id=' . ( $row->parent_id ?? 'gone' ) );
+			$this->check( 'RP2: a space cannot move inside its own sub-space', is_wp_error( $cycle ) && 'jetonomy_space_parent_cycle' === $cycle->get_error_code() );
+		}
+		foreach ( array( $child, $middle, $top ) as $id ) {
+			if ( $id > 0 && Space::find( $id ) ) {
+				Space::delete( $id );
+			}
+		}
+	}
+
 	private function check_split_leaves_a_trace(): void {
 		global $wpdb;
 

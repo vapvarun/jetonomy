@@ -300,15 +300,16 @@ body.jt-setup-body {
 	text-decoration: none;
 }
 
+/* #2563eb, not #3B82F6: white on the lighter blue is 3.7:1, under AA. */
 .jt-btn--primary {
-	background: #3B82F6;
+	background: #2563eb;
 	color: #fff;
-	box-shadow: 0 2px 8px rgba(59,130,246,.3);
+	box-shadow: 0 2px 8px rgba(37,99,235,.3);
 }
 
 .jt-btn--primary:hover {
-	background: #2563eb;
-	box-shadow: 0 4px 12px rgba(59,130,246,.4);
+	background: #1d4ed8;
+	box-shadow: 0 4px 12px rgba(37,99,235,.4);
 	color: #fff;
 	text-decoration: none;
 }
@@ -491,6 +492,14 @@ body.jt-setup-body {
 .jt-radio-group,
 .jt-success-cta {
 	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Room below the step buttons so a theme's floating chat or back-to-top
+   widget, pinned to the bottom corner, never sits over Next on a phone. */
+@media screen and (max-width: 640px) {
+	.jt-btn-row {
+		padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+	}
 }
 
 @media screen and (max-width: 480px) {

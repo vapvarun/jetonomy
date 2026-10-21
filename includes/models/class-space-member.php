@@ -666,23 +666,24 @@ class SpaceMember extends Model {
 	/**
 	 * List all members of a space ordered by role (DESC) then joined_at (ASC).
 	 *
-	 * @param int $space_id
-	 * @param int $limit    Max rows to return. 0 = unbounded (default,
-	 *                      preserves pre-1.4.3 behaviour for every caller
-	 *                      that did not opt in to pagination).
-	 * @param int $offset   Row offset. Ignored when $limit = 0.
+	 * @param int    $space_id
+	 * @param int    $limit    Max rows to return. 0 = unbounded (default,
+	 *                         preserves pre-1.4.3 behaviour for every caller
+	 *                         that did not opt in to pagination).
+	 * @param int    $offset   Row offset. Ignored when $limit = 0.
+	 * @param string $search   Optional name, login or email fragment.
 	 * @return object[]
 	 */
-	public static function list_by_space( int $space_id, int $limit = 0, int $offset = 0 ): array {
-		$base = 'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY role DESC, joined_at ASC';
+	public static function list_by_space( int $space_id, int $limit = 0, int $offset = 0, string $search = '' ): array {
+		[ $where, $args ] = self::space_where( $space_id, $search );
+		$base             = 'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY role DESC, joined_at ASC";
 		if ( $limit > 0 ) {
-			return static::db()->get_results(
-				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $space_id, $limit, max( 0, $offset ) )
-			) ?: array();
+			$base  .= ' LIMIT %d OFFSET %d';
+			$args[] = $limit;
+			$args[] = max( 0, $offset );
 		}
-		return static::db()->get_results(
-			static::db()->prepare( $base, $space_id )
-		) ?: array();
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $where holds only placeholders.
+		return static::db()->get_results( static::db()->prepare( $base, ...$args ) ) ?: array();
 	}
 
 	/**
@@ -690,15 +691,31 @@ class SpaceMember extends Model {
 	 * paginated callers (the space members admin / template) without
 	 * materialising every row.
 	 *
-	 * @param int $space_id
+	 * @param int    $space_id
+	 * @param string $search   Same filter as list_by_space().
 	 * @return int
 	 */
-	public static function count_by_space( int $space_id ): int {
-		return (int) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE space_id = %d',
-				$space_id
-			)
+	public static function count_by_space( int $space_id, string $search = '' ): int {
+		[ $where, $args ] = self::space_where( $space_id, $search );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $where holds only placeholders.
+		return (int) static::db()->get_var( static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE {$where}", ...$args ) );
+	}
+
+	/**
+	 * WHERE clause and values for one space's roster, optionally narrowed to
+	 * members whose display name, login or email contains $search.
+	 *
+	 * @return array{0:string,1:array}
+	 */
+	private static function space_where( int $space_id, string $search ): array {
+		if ( '' === $search ) {
+			return array( 'space_id = %d', array( $space_id ) );
+		}
+		$users = static::db()->users;
+		$like  = '%' . static::db()->esc_like( $search ) . '%';
+		return array(
+			"space_id = %d AND user_id IN ( SELECT ID FROM {$users} WHERE display_name LIKE %s OR user_login LIKE %s OR user_email LIKE %s )",
+			array( $space_id, $like, $like, $like ),
 		);
 	}
 

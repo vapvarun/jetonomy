@@ -536,7 +536,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						// even though get_user_link()'s show_name path requires a
 						// resolvable WP user. Trusted, fully-escaped plugin markup
 						// (incl. Lucide SVG avatar). Echo direct.
+						// Online dot: same wrap and rule as reply-card.php, never for a masked author.
+						echo '<span class="jt-avatar-wrap' . ( ! $jt_author_masked && \Jetonomy\Models\UserProfile::is_online( (int) $post->author_id ) ? ' is-online' : '' ) . '">';
 						echo \Jetonomy\get_user_link( (int) $jt_author_display['id'], 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						echo '</span>';
 						if ( '' !== $jt_author_display['url'] ) :
 							?>
 							<a class="jt-user-link" href="<?php echo esc_url( $jt_author_display['url'] ); ?>">

@@ -166,14 +166,17 @@ class Moderation_Service {
 	 * @param int|null $space_id Limit to one space, or null for the caller's scope.
 	 * @param int      $limit
 	 * @param int      $offset
+	 * @param string   $status   'pending' (held for approval, the default) or
+	 *                           'spam' (caught by the spam check or a moderator).
 	 * @return object[]
 	 */
-	public static function list_pending_approvals( int $user_id, string $kind, ?int $space_id = null, int $limit = 20, int $offset = 0 ): array {
-		$scope = self::approval_scope( $user_id, $space_id );
+	public static function list_pending_approvals( int $user_id, string $kind, ?int $space_id = null, int $limit = 20, int $offset = 0, string $status = 'pending' ): array {
+		$scope    = self::approval_scope( $user_id, $space_id );
+		$statuses = array( 'spam' === $status ? 'spam' : 'pending' );
 
 		return 'reply' === $kind
-			? Reply::list_by_status( array( 'pending' ), $limit, $offset, $scope )
-			: Post::list_by_status( array( 'pending' ), $limit, $offset, $scope );
+			? Reply::list_by_status( $statuses, $limit, $offset, $scope )
+			: Post::list_by_status( $statuses, $limit, $offset, $scope );
 	}
 
 	/**
@@ -183,14 +186,16 @@ class Moderation_Service {
 	 * @param int      $user_id
 	 * @param string   $kind     'post' or 'reply'.
 	 * @param int|null $space_id Limit to one space, or null for the caller's scope.
+	 * @param string   $status   'pending' or 'spam', as list_pending_approvals().
 	 * @return int
 	 */
-	public static function count_pending_approvals( int $user_id, string $kind, ?int $space_id = null ): int {
-		$scope = self::approval_scope( $user_id, $space_id );
+	public static function count_pending_approvals( int $user_id, string $kind, ?int $space_id = null, string $status = 'pending' ): int {
+		$scope    = self::approval_scope( $user_id, $space_id );
+		$statuses = array( 'spam' === $status ? 'spam' : 'pending' );
 
 		return 'reply' === $kind
-			? Reply::count_by_status( array( 'pending' ), $scope )
-			: Post::count_by_status( array( 'pending' ), $scope );
+			? Reply::count_by_status( $statuses, $scope )
+			: Post::count_by_status( $statuses, $scope );
 	}
 
 	/**

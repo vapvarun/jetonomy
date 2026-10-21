@@ -1184,6 +1184,9 @@ const watchRegion = () => {
 };
 watchRegion();
 
+// initProfileTabsActive() binds its resize listener once per page load.
+let profileTabsResizeBound = false;
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -2524,11 +2527,13 @@ const { state, actions } = store( 'jetonomy', {
 
             // Toggle: if a dropdown opened by this button is already on the
             // page, close it instead of opening a second one.
+            // Each dropdown carries its own close (jtClose) so its listeners go with it.
+            const close = ( n ) => ( n.jtClose ? n.jtClose() : n.remove() );
             const existing = document.querySelector( '.jt-share-dropdown[data-jt-owner="' + el.ref.id + '"]' );
-            if ( existing ) { existing.remove(); return; }
+            if ( existing ) { close( existing ); return; }
             // Also clear any stale dropdown from a previous button (e.g. the
             // user clicked a different post's share before closing the last).
-            document.querySelectorAll( '.jt-share-dropdown' ).forEach( ( n ) => n.remove() );
+            document.querySelectorAll( '.jt-share-dropdown' ).forEach( close );
 
             const dropdown = document.createElement( 'div' );
             dropdown.className = 'jt-share-dropdown';
@@ -2567,7 +2572,7 @@ const { state, actions } = store( 'jetonomy', {
             };
 
             const items = [
-                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { copyLink(); dropdown.remove(); } },
+                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { copyLink(); cleanup(); } },
                 { label: 'Twitter / X',                        icon: LUCIDE.x,        href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
                 { label: 'Facebook',                           icon: LUCIDE.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
                 { label: 'LinkedIn',                           icon: LUCIDE.linkedin, href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
@@ -2597,7 +2602,7 @@ const { state, actions } = store( 'jetonomy', {
                 btn.appendChild( labelNode );
 
                 if ( item.href ) {
-                    btn.addEventListener( 'click', () => { window.open( item.href, '_blank', 'width=600,height=400' ); dropdown.remove(); } );
+                    btn.addEventListener( 'click', () => { window.open( item.href, '_blank', 'width=600,height=400' ); cleanup(); } );
                 } else if ( item.action ) {
                     btn.addEventListener( 'click', item.action );
                 }
@@ -2640,8 +2645,17 @@ const { state, actions } = store( 'jetonomy', {
             const cleanup = () => {
                 dropdown.remove();
                 document.removeEventListener( 'click', closeHandler );
+                document.removeEventListener( 'keydown', keyHandler );
                 window.removeEventListener( 'scroll', scrollHandler, true );
                 window.removeEventListener( 'resize', scrollHandler );
+            };
+            dropdown.jtClose = cleanup;
+            // Escape closes and hands focus back to the Share button.
+            const keyHandler = ( e ) => {
+                if ( 'Escape' === e.key ) {
+                    cleanup();
+                    el.ref.focus();
+                }
             };
             const closeHandler = ( e ) => {
                 if ( ! dropdown.contains( e.target ) && e.target !== el.ref && ! el.ref.contains( e.target ) ) {
@@ -2657,6 +2671,7 @@ const { state, actions } = store( 'jetonomy', {
             // Detected by 1.4.0 Pro COMBO smoke (D.share-scroll-detach).
             window.addEventListener( 'scroll', scrollHandler, { passive: true, capture: true } );
             window.addEventListener( 'resize', scrollHandler, { passive: true } );
+            document.addEventListener( 'keydown', keyHandler );
             // Click-outside is the only listener that needs the next-tick
             // defer — the click that opened the dropdown is still bubbling
             // when we register, and we don't want it to instantly trigger
@@ -3566,6 +3581,8 @@ const { state, actions } = store( 'jetonomy', {
             // Find the reply body text.
             const replyEl = trigger.closest( '.jt-reply' );
             if ( ! replyEl ) return;
+            // A private reply is never quoted: the quote would be public.
+            if ( replyEl.querySelector( ':scope > .jt-reply-head .jt-private-tag' ) ) return;
             const bodyEl = replyEl.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
 
@@ -4728,13 +4745,26 @@ const { state, actions } = store( 'jetonomy', {
         // off-screen (e.g. /drafts/ at 390px), they can't see the active
         // underline without scrolling the tab row manually. Scroll the
         // active tab into view once on load so the indicator is visible.
+        // Re-run on a debounced resize (rotation, a desktop window narrowed
+        // past the tab row), bound once per page so client navigation does not
+        // stack listeners; it re-queries the row, so a page without one is a no-op.
         initProfileTabsActive() {
-            const container = document.querySelector( '.jt-profile-tabs' );
-            if ( ! container ) return;
-            if ( container.scrollWidth <= container.clientWidth ) return;
-            const active = container.querySelector( '.jt-profile-tab.active' );
-            if ( ! active ) return;
-            active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
+            const reveal = () => {
+                const container = document.querySelector( '.jt-profile-tabs' );
+                if ( ! container ) return;
+                if ( container.scrollWidth <= container.clientWidth ) return;
+                const active = container.querySelector( '.jt-profile-tab.active' );
+                if ( ! active ) return;
+                active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
+            };
+            reveal();
+            if ( profileTabsResizeBound ) return;
+            profileTabsResizeBound = true;
+            let timer = null;
+            window.addEventListener( 'resize', () => {
+                clearTimeout( timer );
+                timer = setTimeout( reveal, 150 );
+            }, { passive: true } );
         },
 
         // Poll for new replies and show a sticky banner. Adaptive + visibility-

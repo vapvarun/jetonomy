@@ -189,7 +189,7 @@ class Search_Controller extends Base_Controller {
 		// apply to the posts group only — spaces/tags are a header slice (a fixed
 		// preview list), not a paginated collection in this mode.
 		if ( 'all' === $type || empty( $type ) ) {
-			$found_posts  = $adapter->query(
+			$found_posts = $adapter->query(
 				array_merge(
 					$scope,
 					array(
@@ -199,20 +199,28 @@ class Search_Controller extends Base_Controller {
 					)
 				)
 			);
-			$found_spaces = $adapter->query(
+			// Spaces and tags answer the keyword alone, as on the search page: a
+			// topic filter (author, date, tag, space) narrows topics, and an empty
+			// keyword would match every tag on the site.
+			$side         = '' !== $q && ! ( $date_from || $date_to || $author_id || $tag_slug || $space_id );
+			$none         = array(
+				'items' => array(),
+				'total' => 0,
+			);
+			$found_spaces = $side ? $adapter->query(
 				array(
 					'type'  => 'space',
 					'q'     => $q,
 					'limit' => 20,
 				)
-			);
-			$found_tags   = $adapter->query(
+			) : $none;
+			$found_tags   = $side ? $adapter->query(
 				array(
 					'type'  => 'tag',
 					'q'     => $q,
 					'limit' => 10,
 				)
-			);
+			) : $none;
 			$posts        = $found_posts['items'];
 			$posts_total  = $found_posts['total'];
 			$spaces       = $found_spaces['items'];

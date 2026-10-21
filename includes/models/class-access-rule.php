@@ -86,6 +86,28 @@ class AccessRule extends Model {
 	}
 
 	/**
+	 * The notice both rule-create paths (wp-admin AJAX, REST) show. When the
+	 * space was switched to Private it also names the join policy that now
+	 * applies, since Private is never open to join.
+	 *
+	 * @param int  $space_id     Space the rule was attached to.
+	 * @param bool $made_private What enforce_gate_on_public_space() returned.
+	 * @return string
+	 */
+	public static function added_message( int $space_id, bool $made_private ): string {
+		$space = $made_private ? Space::find( $space_id ) : null;
+		if ( ! $space ) {
+			return __( 'Access rule added.', 'jetonomy' );
+		}
+		return sprintf(
+			/* translators: 1: space label, lowercase (e.g. "space"). 2: join policy label (e.g. "Requires Approval"). */
+			__( 'Access rule added. This %1$s was switched to Private so the rule can restrict access, and its join policy is now %2$s. A rule cannot gate a public %1$s.', 'jetonomy' ),
+			\Jetonomy\space_label( false, true ),
+			\Jetonomy\space_join_policy_label( Space::effective_join_policy( $space ) )
+		);
+	}
+
+	/**
 	 * Delete a rule and clear the per-request rule-list memo.
 	 *
 	 * @param int $id Rule row ID.

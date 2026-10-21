@@ -91,9 +91,13 @@ $jt_held_total   = $jt_held_posts + $jt_held_replies;
 // "content in a non-published state waiting on a moderator's decision".
 // Trash counts only run when the panel is open - trash is not a queue that
 // needs a badge nagging from every other tab.
-$jt_is_trash     = 'trash' === $jt_view;
-$jt_list_posts   = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'post', $space_id ) : $jt_held_posts;
-$jt_list_replies = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'reply', $space_id ) : $jt_held_replies;
+$jt_is_trash = 'trash' === $jt_view;
+// Awaiting approval lists pending items by default; ?status=spam shows what the
+// spam check or a moderator marked as spam, which no other frontend list reaches.
+$jt_held_status  = 'approvals' === $jt_view && 'spam' === sanitize_key( wp_unslash( $_GET['status'] ?? '' ) ) ? 'spam' : 'pending'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$jt_spam_view    = 'spam' === $jt_held_status;
+$jt_list_posts   = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'post', $space_id ) : ( $jt_spam_view ? Moderation_Service::count_pending_approvals( $user_id, 'post', $space_id, 'spam' ) : $jt_held_posts );
+$jt_list_replies = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'reply', $space_id ) : ( $jt_spam_view ? Moderation_Service::count_pending_approvals( $user_id, 'reply', $space_id, 'spam' ) : $jt_held_replies );
 // With no tab chosen, open on the one that holds items: Topics empty while
 // Replies is not read as "nothing here".
 if ( ! isset( $_GET['kind'] ) && 0 === $jt_list_posts && $jt_list_replies > 0 ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -107,7 +111,7 @@ $jt_held       = array();
 if ( 'flags' !== $jt_view && $jt_held_count > 0 ) {
 	$jt_held = $jt_is_trash
 		? Moderation_Service::list_trashed( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page )
-		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page );
+		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page, $jt_held_status );
 }
 
 // Batch-resolve what the cards need. Every held item is in THIS space, so only
@@ -242,8 +246,9 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 					foreach ( $jt_kind_tabs as $jt_kind_key => $jt_kind_meta ) :
 						$jt_kind_url = add_query_arg(
 							array(
-								'view' => $jt_view,
-								'kind' => $jt_kind_key,
+								'view'   => $jt_view,
+								'kind'   => $jt_kind_key,
+								'status' => $jt_spam_view ? 'spam' : false,
 							),
 							$jt_queue_url
 						);
@@ -256,6 +261,18 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 						</a>
 					<?php endforeach; ?>
 				</nav>
+				<?php if ( 'approvals' === $jt_view ) : ?>
+				<form method="get" action="<?php echo esc_url( $jt_queue_url ); ?>" class="jt-held-filter">
+					<input type="hidden" name="view" value="approvals">
+					<input type="hidden" name="kind" value="<?php echo esc_attr( $jt_kind ); ?>">
+					<label for="jt-held-status"><?php esc_html_e( 'Show', 'jetonomy' ); ?></label>
+					<select id="jt-held-status" name="status" class="jt-select">
+						<option value="pending" <?php selected( $jt_held_status, 'pending' ); ?>><?php esc_html_e( 'Pending', 'jetonomy' ); ?></option>
+						<option value="spam" <?php selected( $jt_held_status, 'spam' ); ?>><?php esc_html_e( 'Spam', 'jetonomy' ); ?></option>
+					</select>
+					<button type="submit" class="jt-btn jt-btn-ghost jt-btn-sm"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
+				</form>
+				<?php endif; ?>
 
 				<?php if ( empty( $jt_held ) ) : ?>
 					<?php
@@ -263,6 +280,10 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 						$jt_held_empty = 'reply' === $jt_kind
 							? sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s in the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 							: sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s in the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
+					} elseif ( $jt_spam_view ) {
+						$jt_held_empty = 'reply' === $jt_kind
+							? sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s are marked as spam.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+							: sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s are marked as spam.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 					} else {
 						$jt_held_empty = 'reply' === $jt_kind
 							? sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
@@ -301,8 +322,9 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 					if ( $jt_held_pages > 1 ) :
 						$jt_held_base = add_query_arg(
 							array(
-								'view' => $jt_view,
-								'kind' => $jt_kind,
+								'view'   => $jt_view,
+								'kind'   => $jt_kind,
+								'status' => $jt_spam_view ? 'spam' : false,
 							),
 							$jt_queue_url
 						);

@@ -817,8 +817,10 @@ class Notifier {
 			return;
 		}
 
-		// Check for existing vote notification on same object within last hour.
-		$existing = Notification::find_recent_for_object( $author_id, 'vote_on_post', $object_type, $object_id, gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) );
+		// An upvote groups into a notice from the last hour. A removal corrects
+		// the latest notice however old it is, or "3 people voted" outlives the votes.
+		$since    = $is_upvote ? gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) : '1970-01-01 00:00:00';
+		$existing = Notification::find_recent_for_object( $author_id, 'vote_on_post', $object_type, $object_id, $since );
 
 		if ( ! $is_upvote && ! $existing ) {
 			return;
@@ -842,12 +844,13 @@ class Notifier {
 				$title
 			);
 
+			// Only a new vote brings the notice back to the top; a removal just corrects it.
 			Notification::update(
 				(int) $existing->id,
-				array(
+				$is_upvote ? array(
 					'message'    => $message,
 					'created_at' => now(),
-				)
+				) : array( 'message' => $message )
 			);
 		} else {
 			// Create new notification via email-aware path.

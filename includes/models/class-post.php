@@ -314,6 +314,11 @@ class Post extends Model {
 			do_action( 'jetonomy_post_publish_transition', $id, $delta, (string) ( $data['created_at'] ?? $post->created_at ?? '' ) );
 		}
 
+		// A topic that left publish or went private leaves the sitemap now.
+		if ( $delta < 0 || ! empty( $data['is_private'] ) ) {
+			\Jetonomy\SEO\Sitemap_Emitter::flush();
+		}
+
 		// published_at on a draft is its schedule: every write that sets or
 		// clears it moves the next publish time.
 		if ( array_key_exists( 'published_at', $data ) ) {
@@ -1505,6 +1510,22 @@ class Post extends Model {
 	public static function popular_order( string $alias = '' ): string {
 		$col = '' !== $alias ? $alias . '.' : '';
 		return "{$col}vote_score DESC, {$col}reply_count DESC, {$col}id DESC";
+	}
+
+	/**
+	 * Whether a member may read a post row joined to its space, as SQL: the
+	 * space's content is open to them and a private topic is one they may read.
+	 * Shared by the lists whose rows can outlive access (bookmarks, follows).
+	 *
+	 * @param int    $user_id     Reader (0 for guest).
+	 * @param string $post_alias  Posts table alias.
+	 * @param string $space_alias Spaces table alias (joined on the post's space).
+	 * @return array{0:string,1:array} SQL fragment and its params.
+	 */
+	public static function readable_sql( int $user_id, string $post_alias = 'p', string $space_alias = 's' ): array {
+		[ $space_sql, $space_vals ] = Space::content_visibility_sql( $user_id, $space_alias );
+		[ $priv_sql, $priv_vals ]   = self::private_reader_sql( $user_id, $post_alias );
+		return array( "{$space_sql} AND {$priv_sql}", array_merge( $space_vals, $priv_vals ) );
 	}
 
 	/**

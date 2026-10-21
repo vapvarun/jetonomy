@@ -1357,6 +1357,22 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 
 		<?php elseif ( 'antispam' === $active_tab ) : ?>
 
+			<?php if ( class_exists( 'Akismet' ) && ! \Jetonomy\Moderation\Akismet::is_available() ) : ?>
+				<div class="notice notice-warning inline">
+					<p>
+						<?php
+						printf(
+							/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). 3: link to the Akismet settings screen. */
+							esc_html__( 'Akismet is active but has no API key, so new %1$s and %2$s are not checked for spam. %3$s', 'jetonomy' ),
+							esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+							esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+							'<a href="' . esc_url( admin_url( 'options-general.php?page=akismet-key-config' ) ) . '">' . esc_html__( 'Add an Akismet API key', 'jetonomy' ) . '</a>'
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<!-- CAPTCHA Provider -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">

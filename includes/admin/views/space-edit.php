@@ -13,6 +13,11 @@
  * @var int      $join_per_page Join requests per page.
  * @var int      $join_paged    Current join requests page (?jrpg=).
  * @var int      $join_pages    Join request page count.
+ * @var string   $member_search   Members tab name filter (?ms=).
+ * @var int      $member_total    Members matching the filter.
+ * @var int      $member_per_page Members per page.
+ * @var int      $member_paged    Current members page (?mpg=).
+ * @var int      $member_pages    Members page count.
  *
  * @package Jetonomy
  */
@@ -217,23 +222,18 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			</div>
 
 			<?php /* translators: 1: member label, plural (e.g. "Members"). 2: number of members. */ ?>
-		<h2><?php printf( esc_html__( '%1$s (%2$d)', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ), (int) ( $space->member_count ?? count( $members ) ) ); ?></h2>
-		<?php if ( ! empty( $members_capped ) ) : ?>
-			<div class="notice notice-warning inline">
-				<p>
-					<?php
-					printf(
-						/* translators: 1: number of member rows shown, 2: total member count, 3: member label, singular or plural to match the total, 4: member label, plural, lowercase (e.g. "members"). */
-						esc_html( _n( 'Showing the first %1$d of %2$d %3$s. Manage the rest from the front-end %4$s page, which is paginated.', 'Showing the first %1$d of %2$d %3$s. Manage the rest from the front-end %4$s page, which is paginated.', (int) ( $space->member_count ?? 0 ), 'jetonomy' ) ),
-						(int) count( $members ),
-						(int) ( $space->member_count ?? 0 ),
-						esc_html( \Jetonomy\count_noun( (int) ( $space->member_count ?? 0 ), 'member' ) ),
-						esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) )
-					);
-					?>
-				</p>
-			</div>
-		<?php endif; ?>
+		<h2><?php printf( esc_html__( '%1$s (%2$d)', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ), (int) ( $space->member_count ?? $member_total ) ); ?></h2>
+		<form method="get" class="search-box jt-spacedit-member-search">
+			<input type="hidden" name="page" value="jetonomy-spaces">
+			<input type="hidden" name="action" value="edit">
+			<input type="hidden" name="space_id" value="<?php echo absint( $space->id ); ?>">
+			<input type="hidden" name="tab" value="members">
+			<?php /* translators: %s: member label, plural (e.g. "Members"). */ ?>
+			<label class="screen-reader-text" for="jetonomy-member-filter"><?php echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></label>
+			<input type="search" id="jetonomy-member-filter" name="ms" value="<?php echo esc_attr( $member_search ); ?>" placeholder="<?php esc_attr_e( 'Name, username or email', 'jetonomy' ); ?>">
+			<?php /* translators: %s: member label, plural (e.g. "Members"). */ ?>
+			<button type="submit" class="button"><?php echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
+		</form>
 			<?php
 			// Drop members whose WP account has since gone rather than
 			// rendering a blank row. The cell renderer re-reads the user from
@@ -278,9 +278,13 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						'variant' => 'compact',
 						'icon'    => 'groups',
 						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-						'title'   => sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+						'title'   => '' !== $member_search
+							/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+							? sprintf( __( 'No %s match your search', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) )
+							/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+							: sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 						/* translators: 1: member label, plural, lowercase (e.g. "members"). 2: the singular space label the site owner configured (e.g. space, group). */
-						'body'    => sprintf( __( 'Invite %1$s or open this %2$s to the wider community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\space_label( false, true ) ),
+						'body'    => '' !== $member_search ? '' : sprintf( __( 'Invite %1$s or open this %2$s to the wider community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\space_label( false, true ) ),
 					),
 					'cell'      => static function ( $member, string $key ) use ( $space ): void {
 						switch ( $key ) {
@@ -313,6 +317,39 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				)
 			);
 		?>
+			<?php if ( $member_pages > 1 ) : ?>
+			<div class="tablenav bottom">
+				<div class="tablenav-pages">
+					<span class="displaying-num">
+						<?php
+						/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
+						printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( ( $member_paged - 1 ) * $member_per_page + 1 ) ), esc_html( number_format_i18n( min( $member_paged * $member_per_page, $member_total ) ) ), esc_html( number_format_i18n( $member_total ) ) );
+						?>
+					</span>
+					<?php
+					$_jt_member_links = paginate_links(
+						array(
+							'base'    => add_query_arg(
+								array(
+									'tab' => 'members',
+									'ms'  => rawurlencode( $member_search ),
+									'mpg' => '%#%',
+								),
+								$edit_url
+							),
+							'format'  => '',
+							'current' => $member_paged,
+							'total'   => $member_pages,
+							'type'    => 'array',
+						)
+					);
+					if ( $_jt_member_links ) {
+						echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $_jt_member_links ) ) . '</span>';
+					}
+					?>
+				</div>
+			</div>
+			<?php endif; ?>
 
 			<hr>
 

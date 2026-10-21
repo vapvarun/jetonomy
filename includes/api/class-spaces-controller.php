@@ -396,9 +396,7 @@ class Spaces_Controller extends Base_Controller {
 			array(
 				'data'         => AccessRule::find( (int) $id ),
 				'made_private' => $made_private,
-				'message'      => $made_private
-					? sprintf( /* translators: %s: space label, lowercase (e.g. "space"). */ __( 'Access rule added. This %1$s was switched to Private so the rule can restrict access. A rule cannot gate a public %1$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
-					: __( 'Access rule added.', 'jetonomy' ),
+				'message'      => AccessRule::added_message( $space_id, $made_private ),
 			),
 			201
 		);
@@ -943,7 +941,10 @@ class Spaces_Controller extends Base_Controller {
 			// Space_Purge removes children before the space row, so the space
 			// stays discoverable until the last batch and an interrupted purge
 			// resumes rather than stranding rows.
-			$queued = \Jetonomy\Space_Purge::queue( $id );
+			$purge = Space::delete( $id );
+			if ( is_wp_error( $purge ) ) {
+				return $purge;
+			}
 
 			// category.space_count is decremented by the purge itself when it
 			// reaches the space row, so it is NOT adjusted here - doing both
@@ -956,7 +957,7 @@ class Spaces_Controller extends Base_Controller {
 					'deleted' => $deleted,
 					'mode'    => 'purge',
 					'id'      => $id,
-					'queued'  => $queued && ! $deleted,
+					'queued'  => ! $deleted,
 				),
 				$deleted ? 200 : 202
 			);

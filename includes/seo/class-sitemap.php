@@ -18,6 +18,8 @@ class Sitemap {
 
 	public function __construct() {
 		add_filter( 'robots_txt', array( $this, 'add_sitemap_line' ), 10, 2 );
+		// A purged space's URLs leave the sitemap at once (Sitemap_Emitter::flush()).
+		add_action( 'jetonomy_space_purged', array( Sitemap_Emitter::class, 'flush' ), 10, 0 );
 	}
 
 	/**
