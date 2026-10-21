@@ -2,7 +2,7 @@
 Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
-Tested up to: 7.0
+Tested up to: 7.1
 Stable tag: 2.0.4
 Requires PHP: 8.1
 License: GPLv2 or later
