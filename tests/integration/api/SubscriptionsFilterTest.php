@@ -12,6 +12,8 @@
 
 namespace Jetonomy\Tests\Integration\API;
 
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Space;
 use Jetonomy\Models\Subscription;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -47,15 +49,35 @@ class SubscriptionsFilterTest extends WP_UnitTestCase {
 		$user = self::factory()->user->create();
 		wp_set_current_user( $user );
 
-		$post_sub = Subscription::subscribe( $user, 'post', 9001 );
-		Subscription::subscribe( $user, 'space', 9002 ); // Newer row, listed first unfiltered.
+		// Follows to a missing or unreadable target are not listed, so follow real, public ones.
+		$space_id = (int) Space::create(
+			array(
+				'title'      => 'Filter space',
+				'slug'       => 'filter-' . uniqid(),
+				'visibility' => 'public',
+			),
+			self::factory()->user->create( array( 'role' => 'administrator' ) )
+		);
+		$post_id  = (int) Post::create(
+			array(
+				'space_id'  => $space_id,
+				'author_id' => $user,
+				'title'     => 'Filter topic',
+				'slug'      => 'filter-topic-' . uniqid(),
+				'content'   => '<p>Body.</p>',
+				'status'    => 'publish',
+			)
+		);
 
-		$items = $this->items( array( 'object_type' => 'post', 'object_id' => 9001 ) );
+		$post_sub = Subscription::subscribe( $user, 'post', $post_id );
+		Subscription::subscribe( $user, 'space', $space_id ); // Newer row, listed first unfiltered.
+
+		$items = $this->items( array( 'object_type' => 'post', 'object_id' => $post_id ) );
 		$this->assertCount( 1, $items );
 		$this->assertSame( $post_sub, (int) $items[0]['id'] );
 
-		$this->assertSame( array(), $this->items( array( 'object_type' => 'post', 'object_id' => 9003 ) ) );
-		$this->assertSame( array(), $this->items( array( 'object_type' => 'bogus', 'object_id' => 9001 ) ) );
+		$this->assertSame( array(), $this->items( array( 'object_type' => 'post', 'object_id' => $post_id + 1000 ) ) );
+		$this->assertSame( array(), $this->items( array( 'object_type' => 'bogus', 'object_id' => $post_id ) ) );
 		$this->assertCount( 2, $this->items( array() ) );
 	}
 }
