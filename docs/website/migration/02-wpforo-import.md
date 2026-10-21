@@ -40,7 +40,7 @@ Move your existing wpForo community into Jetonomy - forums, topics, replies, and
 
 wpForo and Jetonomy structure their data differently in a few key areas:
 
-**Multi-board support** - wpForo lets you run multiple boards, each with its own set of forums and topics. The importer automatically detects all of your active boards and imports each one into its own Jetonomy category. Single-board installs work without any extra configuration.
+**Multi-board support** - wpForo lets you run multiple boards, each with its own set of forums and topics. The importer automatically detects all of your active boards and imports each one into its own Jetonomy category. Single-board installs work without any extra configuration. The import stats and total progress count every board, not only the default one (2.0.4).
 
 **Forums and categories** - Within each board, wpForo nests forums inside forums. Jetonomy separates categories (top-level groups) from spaces (discussion areas), so the importer creates one Jetonomy category per board and one space per wpForo forum. Parent forums are created before their children, so sub-forums come across as sub-spaces under their parent.
 

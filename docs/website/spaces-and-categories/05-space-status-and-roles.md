@@ -68,7 +68,7 @@ These roles are scoped to one space. Someone can be an admin of one space and an
 
 The change saves immediately - there is no separate Save button for the members list - and takes effect on their next page load.
 
-To add someone who is not yet a member, use the **Add member** control above the list: choose the user, pick the role, and click **Add**. This bypasses any join request or approval the space would normally require.
+To add someone who is not yet a member, use the **Add member** control above the list: choose the user, pick the role, and click **Add**. This bypasses any join request or approval the space would normally require. Staff can do the same through the REST API (2.0.4).
 
 ### Two guards
 

@@ -85,6 +85,8 @@ Open the topic and click the **...** menu at the top of the page, then select **
 
 You can re-subscribe at any time using the same menu.
 
+*Changed in 2.0.4.* My Subscriptions hides trashed and spam topics, and bookmarks and follows hide spaces and topics you can no longer read.
+
 ## Managing All Your Subscriptions
 
 Open **My Subscriptions** at `/community/subscriptions/`. It lists every space and topic you follow, 50 per page, each with a one-click **Unfollow** button.

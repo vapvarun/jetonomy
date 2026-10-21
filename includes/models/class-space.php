@@ -806,8 +806,8 @@ class Space extends Model {
 	 * search, tag pages, the sidebar, profile activity and the Pro digest,
 	 * because only the LISTING predicate consulted the parent.
 	 *
-	 * Fails CLOSED relative to can(): AccessRule grants and per-user bans are
-	 * intentionally not modelled in SQL — the predicate is the membership-based
+	 * Fails CLOSED relative to can(): AccessRule grants and site-wide bans are
+	 * intentionally not modelled in SQL (a space ban is: it is subtracted) — the predicate is the membership-based
 	 * common case and may only ever UNDER-include (never leak). Single-item
 	 * reads still pass through Permission_Engine::can_read_post() for the
 	 * authoritative decision. The per-post `is_private` flag is a separate axis
@@ -835,9 +835,11 @@ class Space extends Model {
 		if ( '' !== $parent ) {
 			$readable = "({$readable} AND {$parent})";
 		}
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
-		$fragment = "({$readable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
-		return array( $fragment, array( $user_id ) );
+		$restrictions = \Jetonomy\table( 'restrictions' );
+		// A space ban never removes the roster row, so the ban is subtracted here.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are trusted prefixed names.
+		$fragment = "(({$readable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d)) AND {$col}id NOT IN (SELECT space_id FROM {$restrictions} WHERE user_id = %d AND type = 'space_ban' AND space_id IS NOT NULL AND (expires_at IS NULL OR expires_at > %s)))";
+		return array( $fragment, array( $user_id, $user_id, now() ) );
 	}
 
 	/**

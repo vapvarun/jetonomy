@@ -85,7 +85,7 @@ The default threshold is 10. Lower it if spam slips through, and raise it if leg
 | **Block (reject)** | The post is rejected and the member sees "Your post was blocked by our content policy." |
 | **Mark as Spam** | Content is marked as spam and hidden immediately |
 
-If several rules match the same post, the most severe action wins: Block, then Mark as Spam, then Hold for Approval, then Flag for Review.
+Staff are exempt from hold rules (2.0.4), so their posts publish straight away. If several rules match the same post, the most severe action wins: Block, then Mark as Spam, then Hold for Approval, then Flag for Review.
 
 Choose the least restrictive action that solves the problem. Use **Flag for Review** for borderline content, **Hold for Approval** for likely-bad content, and **Block (reject)** or **Mark as Spam** for clearly harmful content.
 

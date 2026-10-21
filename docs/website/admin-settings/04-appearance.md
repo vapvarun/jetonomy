@@ -90,6 +90,8 @@ Controls how wide the community canvas can grow before it stops expanding.
 - **Full Width** - Lets the community stretch edge-to-edge of the viewport. Best for kanban-style spaces, leaderboards, and dense feeds that benefit from horizontal room.
 - **Custom (px)** - Pins the canvas to a specific pixel width (e.g. `1280`). Useful when you want a wider reading column than the theme provides without going fully edge-to-edge.
 
+> **Changed in 2.0.4:** the Theme Sidebar setting is removed. Community pages never show a theme sidebar.
+
 ### Community sidebar widgets
 
 Community pages never show your theme's sidebar; they show Jetonomy's own sidebar. To add your own widgets or blocks to it, go to **Appearance → Widgets** and add them to **Community Sidebar**. They appear at the bottom of the sidebar on every community page, on any theme, and nothing shows when the area is empty.

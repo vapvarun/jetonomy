@@ -40,6 +40,8 @@ The poll is attached to the topic and saved together when you click **Post**. Yo
 
 > **Tip:** You can add or remove a poll from an existing topic by editing the post. Removing a poll permanently deletes all votes cast on it.
 
+> **Changed in 2.0.4:** votes are counted correctly after a vote is changed or removed, and a member blocked by the topic author cannot vote.
+
 ## How Members Vote
 
 The poll appears below the post body, before any replies. Each option is displayed as a labeled button.

@@ -361,8 +361,18 @@ class Model_Tests {
 			Subscription::subscribe( $member, 'space', $ruled );
 			$keys = array_map( static fn( $r ) => $r->object_type . ':' . (int) $r->object_id, Subscription::list_for_user( $member ) );
 			$this->check( 'FL3: a follow in a space a rule admits the member to (no roster row) is listed', $rule_id > 0 && in_array( 'space:' . $ruled, $keys, true ), implode( ',', $keys ) );
+
+			// A space ban never removes the roster row; it must still close the lists.
+			\Jetonomy\Models\SpaceMember::add( $private, $member );
+			$keys = array_map( static fn( $r ) => $r->object_type . ':' . (int) $r->object_id, Subscription::list_for_user( $member ) );
+			$was  = in_array( 'space:' . $private, $keys, true );
+			\Jetonomy\Models\Restriction::ban( $member, 'space_ban', $this->qa_admin, $private );
+			$keys = array_map( static fn( $r ) => $r->object_type . ':' . (int) $r->object_id, Subscription::list_for_user( $member ) );
+			$this->check( 'FL4: a roster member banned from a private space no longer lists its follows', $was && ! in_array( 'space:' . $private, $keys, true ), implode( ',', $keys ) );
 		}
 
+		$wpdb->delete( table( 'restrictions' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( table( 'space_members' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( table( 'subscriptions' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( $posts_t, array( 'id' => $topic ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( table( 'access_rules' ), array( 'space_id' => $ruled ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery

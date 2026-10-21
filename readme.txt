@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,49 @@ Absolutely. Jetonomy has 84 REST routes / 114 method-endpoints (143 routes acros
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 2.0.4 - October 2026 =
+
+Blocking now stops direct contact, importers resume cleanly, and a round of access, moderation and accessibility fixes.
+
+* New      - A Community Sidebar widget area under Appearance > Widgets adds your own widgets or blocks to the sidebar on every community page.
+* New      - Staff can add a member to a space through the REST API, with the same rules as the Add member control.
+* New      - A Support URL setting next to the Terms and Privacy URLs shows a support link in the mobile app and is hidden when empty.
+* Improve  - Blocking a member now stops them replying to you or voting on your posts, and moderators are exempt.
+* Improve  - Moderation tabs stay in place after you resolve a flag, and the Pending queue can be filtered by Pending or Spam.
+* Improve  - The community pulse numbers refresh when topics and replies are added, trashed or restored.
+* Improve  - The Members tab of a space pages through long lists and has a search box.
+* Improve  - The space header keeps actions, stats and Join or Follow on one row that wraps cleanly, and the description keeps its own row.
+* Improve  - A guest opening a private space sees a generic private-space prompt with no name or description unless guest teasers are on.
+* Improve  - The Report dialog keeps keyboard focus inside, closes with Escape from anywhere, and returns focus to the Report button.
+* Improve  - Email digest choices appear as rows of the notification settings table.
+* Improve  - Wording follows your Topic label and names the Moderate capability as it appears in the role editor.
+* Fix      - wpForo import stats and total progress now count every board, not only the default one.
+* Fix      - bbPress import batches stop at the time limit and report the rows they handled, so the next batch resumes at the right place.
+* Fix      - Re-importing bbPress gives members of already imported private and hidden forums their access, and skips members banned from the space.
+* Fix      - Deleting a space moves its child spaces up instead of leaving them orphaned.
+* Fix      - My Subscriptions no longer lists trashed or spam topics, and bookmarks and follows hide spaces and topics you can no longer read.
+* Fix      - Members admitted to a space by an access rule now see it in their follows and bookmarks.
+* Fix      - The REST page parameter and the revisions list now return the page you ask for, and the latest edit shows in the revision comparison.
+* Fix      - The notification bell and unread ticks update after you read or bulk mark notifications, and the bulk bar closes afterwards.
+* Fix      - A second active ban or silence of the same type and scope is refused, and lifting one clears older duplicates.
+* Fix      - A silenced member can no longer moderate, and silence now covers merging topics, splitting replies and editing or deleting replies.
+* Fix      - Quote is hidden on private replies, and removing a vote also removes its grouped notification.
+* Fix      - The toast notice is announced by screen readers, and Escape closes the share menu.
+* Fix      - The sitemap refreshes when spaces change, and the Banned users row actions, attachment badge and pasted images work again.
+* Fix      - Divi 5 pages show the community header with full styling.
+* Fix      - The emoji picker fits its container on touch screens.
+* Fix      - Join respects the Join spaces capability, and the Silence and Ban IP actions show only on members without a restriction.
+* Security - Private communities refuse guests on every read ability, matching the website and REST API.
+* Security - Link previews and web push connect only to the address that was checked, and link previews are rate limited.
+* Security - Replies posted through the Abilities API follow the same rate limits and rules as the website.
+* Security - A member banned from a private space no longer sees its topics in search, followed topics or bookmarks.
+* Security - The Fluent Community profile shows followed topics only to their owner.
+* Security - A crafted compose-topic shortcode can no longer inject script into the page.
+* Security - Formula-leading cells in the activity log CSV export are neutralised.
+* Dev      - GET /users/me returns display_name_choices, and PATCH /users/me no longer writes raw settings.
+* Dev      - Model::count keeps only identifier characters in column names, and the extensions option is cast to an array so a corrupt value cannot fatal.
+* Dev      - Real Mobile Safari checks cover upload, image tap and unfollow.
 
 = 2.0.3 - October 2026 =
 

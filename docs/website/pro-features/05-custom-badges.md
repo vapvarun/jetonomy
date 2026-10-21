@@ -62,7 +62,7 @@ Set the threshold for each criteria you want to use. You can combine multiple cr
 
 ### Manual Award
 
-Some badges should not be automated - "Staff Pick", "Most Helpful in July", or "Community Founder" are judgment calls. For these, leave all auto-award criteria blank and award manually:
+A badge with no auto-award criteria is manual-only and is never awarded automatically (2.0.4). Some badges should not be automated - "Staff Pick", "Most Helpful in July", or "Community Founder" are judgment calls. For these, leave all auto-award criteria blank and award manually:
 
 1. Go to **Jetonomy → Users** and open the member's profile.
 2. Click **Award Badge**.

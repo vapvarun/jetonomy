@@ -63,6 +63,8 @@ Jetonomy also sends a notification to the recipient's bell icon when a new messa
 
 > **Tip:** Members control their messaging email notifications in **Profile → Notification Settings**. Admins cannot override individual user preferences.
 
+> **Changed in 2.0.4:** messages are stored and shown as plain text, deleted members appear as Deleted User in conversation titles, and long words stay inside the bubble. Blocks also apply to group messages, ignoring members who have left.
+
 ## Blocking Users
 
 Any member can block another from sending them messages:

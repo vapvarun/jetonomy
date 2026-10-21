@@ -858,10 +858,11 @@ class Fluent_Community {
 			return $html;
 		}
 
-		$started   = Post::list_by_author( $user_id, 5, 0 );
-		$followed  = \Jetonomy\Models\Subscription::list_followed_posts( $user_id, 5 );
-		$replies   = Reply::list_by_user( $user_id, 5, 0 );
-		$is_own    = (int) get_current_user_id() === $user_id;
+		$started = Post::list_by_author( $user_id, 5, 0 );
+		$replies = Reply::list_by_user( $user_id, 5, 0 );
+		$is_own  = (int) get_current_user_id() === $user_id;
+		// Follows are the member's own list: other viewers could see private topic titles.
+		$followed  = $is_own ? \Jetonomy\Models\Subscription::list_followed_posts( $user_id, 5 ) : array();
 		$bookmarks = $is_own ? Bookmark::list_by_user( $user_id, 5, 0 ) : array();
 
 		if ( empty( $started ) && empty( $followed ) && empty( $replies ) && empty( $bookmarks ) ) {

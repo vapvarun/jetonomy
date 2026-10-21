@@ -76,6 +76,8 @@ Actions differ between the pending tabs and the Flags tab.
 
 **Spam and Trash ask for confirmation.** Both actions remove content, so clicking either one opens a confirmation dialog before anything is deleted - individually per row and for the bulk action across selected rows. Approve does not prompt, since it only publishes. This guards against a misclick trashing a legitimate post.
 
+**Tabs stay in place (2.0.4).** Resolving a flag no longer jumps you to another tab, and the Pending list can be filtered by Pending or Spam.
+
 **The flag counter updates live.** When you resolve a flag (Valid or Dismiss), the resolved row is removed and the "N pending" flag badge decrements immediately, without a page reload. When the last flag is cleared, the badge disappears. You always see the true outstanding count without refreshing.
 
 ## The Front-End Queue

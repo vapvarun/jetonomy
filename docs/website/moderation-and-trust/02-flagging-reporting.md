@@ -48,7 +48,9 @@ Blocking hides a member's topics and replies from your own view without removing
 
 If the blocked member's reply has other replies nested underneath it, only their own content is hidden; the innocent replies in that nested thread stay visible.
 
-> **Note:** Blocking is a personal, per-viewer preference. It does not stop the blocked member from posting, and moderators and other members still see everything as normal. To remove someone's ability to post at all, a moderator needs to [ban them](05-banning-members.md).
+> **Changed in 2.0.4:** a blocked member can no longer reply to you or vote on your posts, and Private Messaging refuses them too. Moderators are exempt.
+
+> **Note:** Blocking hides their content from your view. Moderators and other members still see everything as normal. To remove someone's ability to post at all, a moderator needs to [ban them](05-banning-members.md).
 
 ### Where you can block from
 

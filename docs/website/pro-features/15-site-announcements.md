@@ -113,3 +113,5 @@ Each item carries the announcement post `id`, its `title`, the `space_id` it liv
 Let members post topics and replies without showing their name, with an audited admin-only reveal.
 
 [Anonymous Posting →](16-anonymous-posting.md)
+
+> **Changed in 2.0.4:** a pinned topic that is in the trash no longer shows as an announcement.
