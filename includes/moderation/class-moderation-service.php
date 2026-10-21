@@ -770,7 +770,7 @@ class Moderation_Service {
 		if ( 'block' === $action ) {
 			return new WP_Error(
 				'jetonomy_validation',
-				'post' === $type ? sprintf( /* translators: %s: the singular Topic label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) : sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+				'post' === $type ? sprintf( /* translators: %s: the singular Topic or Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) : sprintf( /* translators: %s: the singular Topic or Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				array( 'status' => 400 )
 			);
 		}

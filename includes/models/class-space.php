@@ -251,7 +251,7 @@ class Space extends Model {
 			$row = parent::find( $at );
 			if ( ! $row ) {
 				return 0 === $hops
-					/* translators: %s: singular space label, lowercase. */
+					/* translators: %s: the singular Category or Space label, lowercase. */
 					? new \WP_Error( 'jetonomy_space_parent_missing', sprintf( __( 'The parent %s does not exist.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 400 ) )
 					: null;
 			}

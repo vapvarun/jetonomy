@@ -246,10 +246,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			<input type="hidden" name="action" value="edit">
 			<input type="hidden" name="space_id" value="<?php echo absint( $space->id ); ?>">
 			<input type="hidden" name="tab" value="members">
-			<?php /* translators: %s: member label, plural (e.g. "Members"). */ ?>
+			<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 			<label class="screen-reader-text" for="jetonomy-member-filter"><?php echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></label>
 			<input type="search" id="jetonomy-member-filter" name="ms" value="<?php echo esc_attr( $member_search ); ?>" placeholder="<?php esc_attr_e( 'Name, username or email', 'jetonomy' ); ?>">
-			<?php /* translators: %s: member label, plural (e.g. "Members"). */ ?>
+			<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 			<button type="submit" class="button"><?php echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
 		</form>
 			<?php
@@ -297,9 +297,9 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						'icon'    => 'groups',
 						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 						'title'   => '' !== $member_search
-							/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+							/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 							? sprintf( __( 'No %s match your search', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) )
-							/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+							/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 							: sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 						/* translators: 1: member label, plural, lowercase (e.g. "members"). 2: the singular space label the site owner configured (e.g. space, group). */
 						'body'    => '' !== $member_search ? '' : sprintf( __( 'Invite %1$s or open this %2$s to the wider community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\space_label( false, true ) ),
@@ -472,7 +472,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<tbody>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Lets matching people in to read and report. It takes nothing away from people who already get in another way, such as %s on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Lets matching people in to read and report. It takes nothing away from people who already get in another way, such as %s on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></td>
 						</tr>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
@@ -503,7 +503,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>
 					<?php esc_html_e( 'Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand.', 'jetonomy' ); ?>
 					<?php if ( $jt_has_membership ) : ?>
-						<?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'The "Sync %s" button on a membership rule below is only for listing those people on the roster as well.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
+						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'The "Sync %s" button on a membership rule below is only for listing those people on the roster as well.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
 					<?php endif; ?>
 				</p>
 			</div>
@@ -660,7 +660,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								echo '<div class="jetonomy-rule-actions">';
 								if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) :
 									?>
-									<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>"><span class="dashicons dashicons-update"></span> <?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'Sync %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
+									<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>"><span class="dashicons dashicons-update"></span> <?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Sync %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
 									<?php
 								endif;
 								?>
@@ -692,7 +692,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<select id="ss-who-can-post">
 								<option value="" <?php selected( $space_settings['who_can_post'] ?? '', '' ); ?>><?php esc_html_e( 'Anyone who can see it (no restriction)', 'jetonomy' ); ?></option>
-								<option value="members" <?php selected( $space_settings['who_can_post'] ?? '', 'members' ); ?>><?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%s Only', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></option>
+								<option value="members" <?php selected( $space_settings['who_can_post'] ?? '', 'members' ); ?>><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s Only', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></option>
 								<option value="moderators" <?php selected( $space_settings['who_can_post'] ?? '', 'moderators' ); ?>><?php esc_html_e( 'Moderators & Admins', 'jetonomy' ); ?></option>
 								<option value="admins" <?php selected( $space_settings['who_can_post'] ?? '', 'admins' ); ?>><?php esc_html_e( 'Admins Only', 'jetonomy' ); ?></option>
 							</select>
@@ -703,7 +703,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<select id="ss-who-can-reply">
 								<option value="" <?php selected( $space_settings['who_can_reply'] ?? '', '' ); ?>><?php esc_html_e( 'Anyone who can see it (no restriction)', 'jetonomy' ); ?></option>
-								<option value="members" <?php selected( $space_settings['who_can_reply'] ?? '', 'members' ); ?>><?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%s Only', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></option>
+								<option value="members" <?php selected( $space_settings['who_can_reply'] ?? '', 'members' ); ?>><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s Only', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></option>
 								<option value="moderators" <?php selected( $space_settings['who_can_reply'] ?? '', 'moderators' ); ?>><?php esc_html_e( 'Moderators & Admins', 'jetonomy' ); ?></option>
 							</select>
 						</td>

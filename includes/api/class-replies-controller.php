@@ -466,7 +466,7 @@ class Replies_Controller extends Base_Controller {
 
 			$moderation_action = apply_filters( 'jetonomy_check_content', null, array( 'content' => $content ), $space_id, $user_id );
 			if ( 'block' === $moderation_action ) {
-				return $this->validation_error( sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
+				return $this->validation_error( sprintf( /* translators: %s: the singular Topic or Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 			}
 			// Enforce hold/spam/flag on EDIT too (only 'block' was handled before,
 			// so editing spam into a published reply bypassed moderation).

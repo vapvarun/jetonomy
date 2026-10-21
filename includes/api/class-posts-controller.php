@@ -834,7 +834,7 @@ class Posts_Controller extends Base_Controller {
 		$check_data        = array_intersect_key( $update_data, array_flip( array( 'title', 'content' ) ) );
 		$moderation_action = apply_filters( 'jetonomy_check_content', null, $check_data, $space_id, $user_id );
 		if ( 'block' === $moderation_action ) {
-			return $this->validation_error( sprintf( /* translators: %s: the singular Topic label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
+			return $this->validation_error( sprintf( /* translators: %s: the singular Topic or Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 		}
 		// Enforce hold/spam on EDIT too (mirrors the create path). Without this a
 		// user could publish clean then edit spam/held content in — only 'block'
