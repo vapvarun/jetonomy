@@ -444,7 +444,8 @@ class AccessRule extends Model {
 	 * Space::content_visibility_sql() models the roster only, so a list built
 	 * on it hides the follows and bookmarks of a member who got in through a
 	 * Role, Capability, Trust Level, Logged In or membership rule. Spaces with
-	 * rules are few, so testing each with grants_access() stays cheap.
+	 * rules are few, so asking the engine about each stays cheap, and it keeps
+	 * bans and category concealment in force.
 	 *
 	 * @param int $user_id WP user ID (0 = guest).
 	 * @return int[] Space IDs.
@@ -454,7 +455,7 @@ class AccessRule extends Model {
 			return array();
 		}
 		$ids = static::db()->get_col( 'SELECT DISTINCT space_id FROM ' . static::table() ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table name, no input.
-		return array_values( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => static::grants_access( $user_id, $id ) ) );
+		return array_values( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'read', $id ) ) );
 	}
 
 	/**
