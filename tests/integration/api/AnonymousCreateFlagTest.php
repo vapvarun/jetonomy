@@ -79,6 +79,7 @@ class AnonymousCreateFlagTest extends WP_UnitTestCase {
 		$this->assertSame( 0, (int) $post->is_anonymous );
 	}
 
+	/** @covers-existing The enabled path already stored the flag; this reaches the filter so the coverage gate can see it. */
 	public function test_the_flag_counts_once_an_extension_enables_anonymity(): void {
 		add_filter( 'jetonomy_anonymous_posting_enabled', '__return_true' );
 		$post = Post::find( $this->create_with_flag() );

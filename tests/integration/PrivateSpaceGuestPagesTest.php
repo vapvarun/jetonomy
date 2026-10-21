@@ -79,6 +79,7 @@ class PrivateSpaceGuestPagesTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'Where agency partners plan launches.', $html );
 	}
 
+	/** @covers-existing Teasers on already named the space; this pins that the 2.0.4 default does not remove it. */
 	public function test_the_guest_gate_names_the_private_space_when_teasers_are_on(): void {
 		update_option( 'jetonomy_settings', array( 'guest_private_teasers' => 1 ) );
 		\Jetonomy\Cache::flush();
