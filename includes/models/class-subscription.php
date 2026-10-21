@@ -73,13 +73,14 @@ class Subscription extends Model {
 	}
 
 	/**
-	 * WHERE fragment keeping only subscriptions whose space or topic still exists.
+	 * WHERE fragment keeping only subscriptions whose space or topic still exists
+	 * and is not trashed or spam (the same test as attach_targets()).
 	 * Rows left behind by deletes from before dependents were cleaned up are
 	 * never listed or counted, so the list and its pages agree.
 	 */
 	private static function target_exists_sql(): string {
 		return " AND ( ( object_type = 'space' AND EXISTS ( SELECT 1 FROM " . \Jetonomy\table( 'spaces' ) . ' WHERE id = object_id ) )'
-			. " OR ( object_type = 'post' AND EXISTS ( SELECT 1 FROM " . \Jetonomy\table( 'posts' ) . ' WHERE id = object_id ) ) )';
+			. " OR ( object_type = 'post' AND EXISTS ( SELECT 1 FROM " . \Jetonomy\table( 'posts' ) . " WHERE id = object_id AND status NOT IN ('trash','spam') ) ) )";
 	}
 
 	/**
