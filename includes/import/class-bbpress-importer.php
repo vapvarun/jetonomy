@@ -245,7 +245,8 @@ class BBPress_Importer extends Importer {
 
 		$processed = 0;
 		foreach ( $rows as $row ) {
-			SpaceMember::add( (int) $row->space_id, (int) $row->user_id, (string) $row->role );
+			// A re-run must not walk a member banned from the space back in.
+			SpaceMember::add_unless_blocked( (int) $row->space_id, (int) $row->user_id, (string) $row->role );
 			++$processed;
 			if ( $processed < count( $rows ) && $this->budget_spent() ) {
 				break;
