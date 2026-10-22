@@ -55,7 +55,7 @@ Paste `[jetonomy_trending_posts]` into any page, post, or text widget. The block
 | Time window | `window` | How many recent days to score, in days | 7 |
 | Show header | `showHeader` *(block only)* | Show or hide the "Trending" heading | On |
 
-If there are no qualifying topics in the window yet, the block shows a friendly "No trending discussions yet" message rather than an empty box.
+If there are no qualifying topics in the window yet, the block shows a friendly "No trending topics yet" message (it uses your own topic label) rather than an empty box.
 
 ## What's Next?
 

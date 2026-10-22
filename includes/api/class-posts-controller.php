@@ -166,7 +166,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'record_view' ),
-				'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'post_view' ) ),
+				'permission_callback' => REST_Auth::auth_public_write(),
 			)
 		);
 

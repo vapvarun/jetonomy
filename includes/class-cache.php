@@ -130,8 +130,4 @@ class Cache {
 			wp_cache_flush();
 		}
 	}
-
-	public static function is_persistent(): bool {
-		return wp_using_ext_object_cache();
-	}
 }

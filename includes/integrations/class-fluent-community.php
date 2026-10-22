@@ -1337,15 +1337,6 @@ class Fluent_Community {
 	}
 
 	/**
-	 * Detect whether FluentCommunity is loaded.
-	 *
-	 * @return bool
-	 */
-	public static function is_fc_active(): bool {
-		return class_exists( '\\FluentCommunity\\App\\App' );
-	}
-
-	/**
 	 * Load the pair map from options, cached per request.
 	 *
 	 * @return array<int,int> Map of FC space ID => Jetonomy space ID.

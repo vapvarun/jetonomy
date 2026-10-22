@@ -501,7 +501,7 @@ $crumbs = array(
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						array(
-							'message' => __( 'No drafts yet. Save a draft and it will appear here.', 'jetonomy' ),
+							'message' => __( 'No drafts yet.', 'jetonomy' ),
 							'variant' => 'compact',
 						)
 					);

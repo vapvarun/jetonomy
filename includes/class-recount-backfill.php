@@ -293,17 +293,6 @@ final class Recount_Backfill {
 	}
 
 	/**
-	 * Has the backfill finished on this site?
-	 *
-	 * @return bool
-	 */
-	public static function is_complete(): bool {
-		$state = self::state();
-
-		return null !== $state && ! empty( $state['done'] );
-	}
-
-	/**
 	 * Drop any queued continuation. Called on deactivation.
 	 *
 	 * @return void
