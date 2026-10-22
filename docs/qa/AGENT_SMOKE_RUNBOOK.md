@@ -362,6 +362,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-single-post.25` @guest #ui: use the breadcrumb on a topic -> category > space > topic links work.
 - `c-anon-single-post.26` @guest #ui +dark: view a topic with a code block in dark mode -> the code block uses dark tokens, not a bright white panel.
 - `c-anon-single-post.27` @guest #ui: open a topic whose body links to an unreachable site -> no console error and the link shows as a plain link.
+- `c-anon-single-post.28` @guest #rest !refuse card:10430601579: a member replies to the topic and the reply is held for approval, then GET /updates?scope=post&id=<topic id>&since=<before the reply> -> the held reply id is not listed, the approved one is.
 
 ### C.anon.user-profile
 **Covers:** templates/views/user-profile.php, includes/models/class-user-profile.php, includes/class-author.php, includes/class-avatar.php, templates/partials/avatar.php, pro:includes/extensions/custom-badges/*.php, pro:includes/extensions/custom-fields/*.php
@@ -1587,6 +1588,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-integration-abilities-api.17` @member_b #rest: run jetonomy/flag-content with reason off-topic and with reason inappropriate -> a flag is created with the REST enum value (off_topic, offensive) and shows in the moderator queue with the reporter's name.
 - `c-integration-abilities-api.18` @member_b #rest !refuse: run jetonomy/flag-content on your own reply, on a reply you cannot read (Customer Advisory Board) and on content you already reported -> the same refusals as POST /flags.
 - `c-integration-abilities-api.20` @admin #rest: run jetonomy/list-flags -> every flag carries the reporter's user id (reporter_id), not 0.
+- `c-integration-abilities-api.21` @guest #rest !refuse +private card:10430601579: run jetonomy/search with filter=tags and a query matching a tag used only in a private space -> that tag is not in the result, and a tag used in a public space still is, with its public count.
 **Depth note:** no viewport applies; the surface is REST only.
 
 ### C.admin.uninstall

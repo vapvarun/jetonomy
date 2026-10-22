@@ -5,6 +5,12 @@
       "title": "Duplicate notifications when a reply @mentions the topic author, parent-reply author, or a subscriber",
       "guard": "states:mention-one-notice",
       "added": "2026-10-17"
+    },
+    {
+      "card": "10430601579",
+      "title": "Post poll listed held replies and the search ability listed private-space tags",
+      "guard": "phpunit:PollAndTagSearchVisibilityTest",
+      "added": "2026-10-22"
     }
   ]
 }

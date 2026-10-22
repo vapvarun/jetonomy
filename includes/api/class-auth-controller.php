@@ -30,7 +30,7 @@ class Auth_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'login' ),
-					'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'login' ) ),
+					'permission_callback' => REST_Auth::auth_public_write(),
 					'args'                => array(
 						'user_login'         => array(
 							'required'          => true,
@@ -82,7 +82,7 @@ class Auth_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'register_user' ),
-					'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'register' ) ),
+					'permission_callback' => REST_Auth::auth_public_write(),
 					'args'                => array(
 						'username'      => array(
 							'required' => true,
@@ -132,7 +132,7 @@ class Auth_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'lost_password' ),
-					'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'lost_password' ) ),
+					'permission_callback' => REST_Auth::auth_public_write(),
 					'args'                => array(
 						'user_login'    => array(
 							'required'          => true,
@@ -187,7 +187,7 @@ class Auth_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'resend_verification' ),
-					'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'resend_verification' ) ),
+					'permission_callback' => REST_Auth::auth_public_write(),
 					'args'                => array(
 						'user_login' => array(
 							'required'          => true,

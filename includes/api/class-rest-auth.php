@@ -209,26 +209,16 @@ class REST_Auth {
 	 * writes (e.g. quick-register, password reset, webhook receivers that
 	 * authenticate via signature instead of WP auth).
 	 *
-	 * Rate limiting is part of the API contract but not enforced here yet —
-	 * `$opts['rate_limit']` is captured so callers can declare intent today
-	 * and have it transparently enforced once the limiter lands.
+	 * No limiter runs here: each handler enforces its own (login, register,
+	 * lost password and resend verification call the rate limiter themselves).
 	 *
 	 * @since 1.4.3
 	 *
-	 * @param array $opts Optional. {
-	 *     @type int|string|null $rate_limit Tag the limiter should bucket
-	 *                                       this route under. Currently
-	 *                                       stored only; no enforcement.
-	 * }
 	 * @return Closure(WP_REST_Request): (true|WP_Error)
 	 */
-	public static function auth_public_write( array $opts = array() ): Closure {
-		// TODO rate-limit: enforce `$opts['rate_limit']` once Rate_Limiter
-		// gains a per-route bucket API.
-		$_rate_limit = $opts['rate_limit'] ?? null; // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
-
+	public static function auth_public_write(): Closure {
 		return static function ( WP_REST_Request $request ) {
-			unset( $request ); // Reserved for future limiter hooks.
+			unset( $request );
 			return true;
 		};
 	}

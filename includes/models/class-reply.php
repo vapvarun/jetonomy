@@ -2069,8 +2069,10 @@ class Reply extends Model {
 	}
 
 	/**
-	 * Ids of a topic's replies created after a moment, oldest first, for
-	 * live-update polling.
+	 * Ids of a topic's published replies created after a moment, oldest
+	 * first, for live-update polling. Pending, spam and trashed replies are
+	 * excluded so a reader cannot watch moderation traffic; private replies
+	 * stay listed because the reply list shows them as tombstones too.
 	 *
 	 * @param int    $post_id Topic.
 	 * @param string $since   UTC MySQL datetime (exclusive).
@@ -2079,7 +2081,7 @@ class Reply extends Model {
 	public static function ids_since( int $post_id, string $since ): array {
 		$ids = static::db()->get_col(
 			static::db()->prepare(
-				'SELECT id FROM ' . static::table() . ' WHERE post_id = %d AND created_at > %s ORDER BY created_at ASC',
+				'SELECT id FROM ' . static::table() . " WHERE post_id = %d AND status = 'publish' AND created_at > %s ORDER BY created_at ASC LIMIT 200",
 				$post_id,
 				$since
 			)

@@ -5,7 +5,7 @@
  * These are the gates that depend only on WHO is replying and WHAT they are
  * replying to - not on how the request arrived - so every writer shares them: REST,
  * the WP Abilities create-post and create-reply paths, and the inbound-email writer
- * (which reaches Reply::create() through `jetonomy_reply_from_email` and
+ * (which reaches Reply::create() through `jetonomy_create_reply_from_email` and
  * Notifier::on_reply_from_email()). Without them a banned member, a reply to a CLOSED
  * post or a reply into an ARCHIVED space would succeed on the surfaces that skip them.
  *

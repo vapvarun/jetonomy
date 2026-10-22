@@ -1755,7 +1755,17 @@ class Abilities {
 			$results['spaces'] = $adapter->search( $query, 'space', null, $limit, 0 );
 		}
 		if ( in_array( $filter, array( 'all', 'tags' ), true ) ) {
-			$results['tags'] = Tag::search( $query, $limit );
+			// Stored post_count includes topics in spaces this viewer cannot open,
+			// so show only tags with a readable topic, counted as they see them.
+			$found           = Tag::search( $query, $limit );
+			$visible         = Post::count_by_tags_visible( array_map( 'intval', array_column( $found, 'id' ) ) );
+			$results['tags'] = array();
+			foreach ( $found as $tag ) {
+				if ( ! empty( $visible[ (int) $tag->id ] ) ) {
+					$tag->post_count   = $visible[ (int) $tag->id ];
+					$results['tags'][] = $tag;
+				}
+			}
 		}
 
 		$results['total'] = count( $results['posts'] ) + count( $results['spaces'] ) + count( $results['tags'] );

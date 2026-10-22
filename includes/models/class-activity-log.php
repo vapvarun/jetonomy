@@ -182,18 +182,21 @@ class ActivityLog extends Model {
 		$replies_table            = table( 'replies' );
 		$spaces_table             = table( 'spaces' );
 		[ $vis_sql, $vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( $user_id, 'vs' );
-		$readable_posts           = "SELECT p.id FROM {$posts_table} p INNER JOIN {$spaces_table} vs ON vs.id = p.space_id WHERE p.status = 'publish' AND {$vis_sql}";
+		// Correlated EXISTS, so the created_at bound picks the few new rows first
+		// and each is checked by primary key, instead of scanning every post and
+		// reply to build an id list (which grew with the forum, once per poll).
+		$al = self::table();
 		return self::db()->get_results(
 			self::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names trusted; $vis_sql carries only %d placeholders bound below.
-				'SELECT action, object_type, object_id, created_at
-				 FROM ' . self::table() . "
-				 WHERE created_at > %s
+				"SELECT al.action, al.object_type, al.object_id, al.created_at
+				 FROM {$al} al
+				 WHERE al.created_at > %s
 				   AND (
-				     ( object_type = 'post' AND object_id IN ( {$readable_posts} ) )
-				     OR ( object_type = 'reply' AND object_id IN ( SELECT r.id FROM {$replies_table} r WHERE r.status = 'publish' AND r.post_id IN ( {$readable_posts} ) ) )
+				     ( al.object_type = 'post' AND EXISTS ( SELECT 1 FROM {$posts_table} p INNER JOIN {$spaces_table} vs ON vs.id = p.space_id WHERE p.id = al.object_id AND p.status = 'publish' AND {$vis_sql} ) )
+				     OR ( al.object_type = 'reply' AND EXISTS ( SELECT 1 FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id INNER JOIN {$spaces_table} vs ON vs.id = p.space_id WHERE r.id = al.object_id AND r.status = 'publish' AND p.status = 'publish' AND {$vis_sql} ) )
 				   )
-				 ORDER BY created_at DESC
+				 ORDER BY al.created_at DESC
 				 LIMIT 50",
 				...array_merge( array( $since ), $vis_params, $vis_params )
 			)

@@ -303,7 +303,7 @@ class Shortcodes {
 		$posts = Models\Post::list_trending( $limit, $space_id ?: null, $window );
 
 		if ( empty( $posts ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No trending discussions yet. Check back soon.', 'jetonomy' ) . '</div>';
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: plural topic label, lowercase. */ __( 'No trending %s yet. Check back soon.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . '</div>';
 		}
 
 		// Users and profiles for every byline in one query each, not one per row.
