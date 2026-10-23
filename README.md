@@ -7,7 +7,7 @@
   <a href="https://github.com/vapvarun/jetonomy/actions/workflows/ci.yml"><img src="https://github.com/vapvarun/jetonomy/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.1%2B-777BB4.svg?logo=php&logoColor=white" alt="PHP 8.1+"></a>
   <a href="https://wordpress.org/"><img src="https://img.shields.io/badge/WordPress-6.7%2B-21759B.svg?logo=wordpress&logoColor=white" alt="WordPress 6.7+"></a>
-  <a href="https://wordpress.org/download/"><img src="https://img.shields.io/badge/Tested%20up%20to-WP%207.0-success" alt="Tested up to WP 7.0"></a>
+  <a href="https://wordpress.org/download/"><img src="https://img.shields.io/badge/Tested%20up%20to-WP%207.1-success" alt="Tested up to WP 7.1"></a>
   <a href="https://packagist.org/packages/wbcomdesigns/jetonomy"><img src="https://img.shields.io/badge/Composer-wbcomdesigns%2Fjetonomy-885630?logo=composer&logoColor=white" alt="Composer: wbcomdesigns/jetonomy"></a>
   <a href="https://www.gnu.org/licenses/gpl-2.0.html"><img src="https://img.shields.io/badge/License-GPLv2%2B-green.svg" alt="License: GPL v2+"></a>
 </p>
@@ -108,6 +108,18 @@ Site owners who want forums, Q&A, idea boards or a social feed inside their own 
 - wpForo importer with dry-run and resume (multi-board support)
 - Live progress tracking, no record limit
 
+## Where to get it
+
+- **Jetonomy (free):** [wbcomdesigns.com/downloads/jetonomy](https://wbcomdesigns.com/downloads/jetonomy/), the [GitHub releases](https://github.com/vapvarun/jetonomy/releases), or Composer (`wbcomdesigns/jetonomy`, below).
+- **Jetonomy Pro:** plans, including lifetime, at [jetonomy.org/pricing](https://jetonomy.org/pricing/).
+- **Try it first:** a [live sandbox](https://app.instawp.io/launch?s=jetonomy&d=v2) with Jetonomy already set up.
+
+## Documentation
+
+- Docs: [jetonomy.org/docs](https://jetonomy.org/docs/) and [docs.wbcomdesigns.com/products/jetonomy](https://docs.wbcomdesigns.com/products/jetonomy/)
+- Release notes: [Free](https://wbcomdesigns.com/release-notes/jetonomy/) and [Pro](https://wbcomdesigns.com/release-notes/jetonomy-pro/)
+- Product site: [jetonomy.org](https://jetonomy.org/)
+
 ## Requirements
 
 - WordPress 6.7+
@@ -170,19 +182,16 @@ Each extension is independent -- enable only what you need. Disabled extensions 
 
 Pricing, including lifetime plans: [jetonomy.org/pricing](https://jetonomy.org/pricing/)
 
-## Documentation
+## For developers
 
-- Docs: [jetonomy.org/docs](https://jetonomy.org/docs/) and [docs.wbcomdesigns.com/products/jetonomy](https://docs.wbcomdesigns.com/products/jetonomy/)
-- Release notes: [Free](https://wbcomdesigns.com/release-notes/jetonomy/) and [Pro](https://wbcomdesigns.com/release-notes/jetonomy-pro/)
-- Product site: [jetonomy.org](https://jetonomy.org/)
+- **REST API:** namespace `jetonomy/v1`, 89 routes. Reference: [REST API](https://jetonomy.org/docs/developer-guide/01-rest-api/).
+- **Hooks:** every action and filter is listed in the [hooks reference](https://jetonomy.org/docs/developer-guide/02-hooks-reference/).
+- **Templates:** copy any file from `templates/` into `your-theme/jetonomy/` to override it. See [template overrides](https://jetonomy.org/docs/developer-guide/03-template-overrides/).
+- **Blocks, shortcodes and widgets:** [reference](https://jetonomy.org/docs/developer-guide/04-shortcodes-widgets-blocks/).
+- **WP-CLI:** `wp jetonomy` with commands for spaces, posts, replies, members, moderation, config and imports. See [WP-CLI](https://jetonomy.org/docs/developer-guide/10-wp-cli/).
+- **Text domain and prefix:** `jetonomy`.
 
-## Support
-
-- [Documentation](https://jetonomy.org/docs/)
-- [Support ticket](https://wbcomdesigns.com/support/#submit-ticket-section)
-- [Feature Requests & Bug Reports](https://github.com/vapvarun/jetonomy/issues)
-
-## Quality gates
+### Quality gates
 
 Every push and pull request runs these jobs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
@@ -214,13 +223,19 @@ Three further gates run outside CI, before a tag:
   `readme.txt`, boots the plugin in a WP stub to catch load-time fatals, and refuses
   to package if the browser-smoke report does not match the version being built.
 
-## Contributing
+### Contributing
 
 Contributions are welcome. Please open an issue first to discuss what you'd like to change.
 
 ## Changelog
 
-[`readme.txt`](readme.txt) is the changelog, and the [GitHub releases](https://github.com/vapvarun/jetonomy/releases) mirror it.
+[`readme.txt`](readme.txt) is the changelog, and the [GitHub releases](https://github.com/vapvarun/jetonomy/releases) mirror it. Customer-facing release notes: [Free](https://wbcomdesigns.com/release-notes/jetonomy/) and [Pro](https://wbcomdesigns.com/release-notes/jetonomy-pro/).
+
+## Support
+
+- [Documentation](https://jetonomy.org/docs/)
+- [Support ticket](https://wbcomdesigns.com/support/#submit-ticket-section)
+- [Feature Requests & Bug Reports](https://github.com/vapvarun/jetonomy/issues)
 
 ## License
 
