@@ -4,7 +4,7 @@
  * them. Bundle this folder in each plugin or theme and call package_signatures_register(); when several products
  * bundle it, the newest copy runs and only that copy loads its classes.
  *
- * Version: 1.0.0
+ * Version: 1.0.1
  * License: GPL-2.0-or-later
  *
  * @package PackageSignatures
@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Every copy adds itself; the newest is chosen once all plugins and the theme have loaded.
-$GLOBALS['package_signatures_copies']['1.0.0'] = __DIR__;
+$GLOBALS['package_signatures_copies']['1.0.1'] = __DIR__;
 
 if ( ! function_exists( 'package_signatures_register' ) ) {
 	/**
@@ -43,10 +43,15 @@ if ( ! function_exists( 'package_signatures_boot' ) ) {
 		}
 		$copies = (array) ( $GLOBALS['package_signatures_copies'] ?? array() );
 		uksort( $copies, 'version_compare' );
-		$dir = end( $copies );
-		require_once $dir . '/src/class-verifier.php';
-		require_once $dir . '/src/class-guard.php';
-		Package_Signatures_Guard::boot();
+		// Newest complete copy wins; an incomplete one (half-extracted update) is skipped, never a fatal error.
+		foreach ( array_reverse( $copies ) as $dir ) {
+			if ( is_readable( $dir . '/src/class-verifier.php' ) && is_readable( $dir . '/src/class-guard.php' ) ) {
+				require_once $dir . '/src/class-verifier.php';
+				require_once $dir . '/src/class-guard.php';
+				Package_Signatures_Guard::boot();
+				return;
+			}
+		}
 	}
 	add_action( 'after_setup_theme', 'package_signatures_boot', 1 );
 }
