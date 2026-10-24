@@ -138,6 +138,31 @@ if ( file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' )
 	);
 }
 
+// Package Signatures (libs/package-signatures, vapvarun/package-signatures): checks that each Jetonomy and
+// Jetonomy Pro update package carries the release signature before WordPress installs it. Warn mode: the result
+// is logged (option package_signatures_log) and the update installs either way. Free registers Pro as well,
+// because WordPress loads jetonomy-pro/ before jetonomy/ and Pro could not call this itself.
+if ( file_exists( JETONOMY_DIR . 'libs/package-signatures/package-signatures.php' ) ) {
+	require_once JETONOMY_DIR . 'libs/package-signatures/package-signatures.php';
+	$jetonomy_signed_products = array(
+		'jetonomy'     => plugin_basename( JETONOMY_FILE ),
+		'jetonomy-pro' => 'jetonomy-pro/jetonomy-pro.php',
+	);
+	foreach ( $jetonomy_signed_products as $jetonomy_signed_product => $jetonomy_signed_plugin ) {
+		package_signatures_register(
+			array(
+				'product'  => $jetonomy_signed_product,
+				'plugin'   => $jetonomy_signed_plugin,
+				'hosts'    => array( 'wbcomdesigns.com', 'updates.wbcomdesigns.com' ),
+				'keys'     => array( 'wbcom-2026-1' => 'kr+2P1WqRbENpZw0BXZmwFnA2tMLi6MlHbBa6jB13U4=' ),
+				'mode'     => 'warn',
+				'fallback' => 'https://wbcomdesigns.com/package-signatures/{product}/{version}/',
+			)
+		);
+	}
+	unset( $jetonomy_signed_products, $jetonomy_signed_product, $jetonomy_signed_plugin );
+}
+
 // Update-screen icon. WordPress only auto-resolves icons for wp.org-hosted
 // plugins; a self-hosted update renders a broken placeholder unless the update
 // object carries icon URLs. The store response MAY provide them — this bundled

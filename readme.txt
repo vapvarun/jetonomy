@@ -264,6 +264,14 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 2.0.5 - October 2026 =
+
+Safer updates: each update package is now checked against its release signature before it installs.
+
+* Fix      - "View details" for a Jetonomy update no longer fails when the update server cannot be reached.
+* Security - Jetonomy and Jetonomy Pro now check the release signature of each update package before WordPress installs it (reporting only in this release; updates install as before).
+* Dev      - Updated the bundled licensing library. When several plugins bundle it, the newest copy now runs, and its assets load on sites where the plugins folder is a symlink.
+
 = 2.0.4 - October 2026 =
 
 Blocking now stops direct contact, importers resume cleanly, and a round of access, moderation and accessibility fixes.
