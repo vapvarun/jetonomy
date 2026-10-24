@@ -49,16 +49,42 @@ class Path {
 		self::$sdk_dir     = dirname( $file );
 		self::$sdk_version = $version;
 
-		// Calculate the URL based on the file path.
-		$is_https = ( ! empty( $_SERVER['HTTPS'] ) && 'off' !== $_SERVER['HTTPS'] ) ||
-			( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && 'https' === $_SERVER['HTTP_X_FORWARDED_PROTO'] );
+		self::$sdk_url = trailingslashit( self::url_for( self::$sdk_dir, $file ) );
+	}
 
-		$protocol      = $is_https ? 'https' : 'http';
-		$relative_path = str_replace( realpath( $_SERVER['DOCUMENT_ROOT'] ), '', self::$sdk_dir );
-		$relative_path = ltrim( str_replace( '\\', '/', $relative_path ), '/' );
+	/**
+	 * Works out the public URL of the SDK folder wherever it is bundled.
+	 *
+	 * Wbcom: upstream only strips WP_CONTENT_DIR, which breaks when the plugin or theme folder is a symlink
+	 * (__FILE__ is then the real path outside wp-content, and the asset URL 404s).
+	 *
+	 * @param string $dir  The SDK folder.
+	 * @param string $file The SDK main file.
+	 * @return string
+	 */
+	private static function url_for( $dir, $file ) {
+		$dir     = wp_normalize_path( $dir );
+		$content = wp_normalize_path( WP_CONTENT_DIR );
 
-		$host          = $_SERVER['HTTP_HOST'] ?? 'localhost';
-		self::$sdk_url = trailingslashit( "$protocol://$host/$relative_path" );
+		// Plugin or theme inside wp-content: the common case.
+		if ( 0 === strpos( $dir, trailingslashit( $content ) ) ) {
+			return content_url( substr( $dir, strlen( $content ) ) );
+		}
+
+		// Theme folder that is a symlink: match the real path of the active theme and its parent.
+		$themes = array(
+			array( get_stylesheet_directory(), get_stylesheet_directory_uri() ),
+			array( get_template_directory(), get_template_directory_uri() ),
+		);
+		foreach ( $themes as $theme ) {
+			$real = realpath( $theme[0] );
+			if ( $real && 0 === strpos( $dir, trailingslashit( wp_normalize_path( $real ) ) ) ) {
+				return $theme[1] . substr( $dir, strlen( wp_normalize_path( $real ) ) );
+			}
+		}
+
+		// Plugin folder that is a symlink: WordPress maps the real path back to the plugin URL.
+		return plugins_url( '', $file );
 	}
 
 	/**
