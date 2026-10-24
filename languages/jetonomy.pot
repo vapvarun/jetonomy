@@ -2,14 +2,14 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Jetonomy 2.0.4\n"
+"Project-Id-Version: Jetonomy 2.0.5\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-21T13:37:39+00:00\n"
+"POT-Creation-Date: 2026-10-24T18:27:43+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -1570,7 +1570,7 @@ msgstr ""
 #: includes/admin/views/categories.php:50
 #: includes/admin/views/categories.php:293
 #: includes/models/class-space.php:1861
-#: jetonomy.php:652
+#: jetonomy.php:677
 #: templates/partials/icon-picker.php:164
 #: templates/partials/post-badges.php:20
 #: templates/partials/reply-card.php:178
@@ -1581,7 +1581,7 @@ msgstr ""
 #: includes/admin/views/categories.php:51
 #: includes/admin/views/categories.php:294
 #: includes/models/class-space.php:1865
-#: jetonomy.php:652
+#: jetonomy.php:677
 msgid "Hidden"
 msgstr ""
 
@@ -2955,7 +2955,7 @@ msgstr ""
 #: includes/class-template-loader.php:442
 #: includes/functions.php:310
 #: includes/trust/class-trust-levels.php:204
-#: jetonomy.php:685
+#: jetonomy.php:710
 #: templates/views/space-members.php:149
 #: assets/js/admin-common.js:113
 msgid "Member"
@@ -4603,7 +4603,7 @@ msgstr ""
 #: includes/admin/views/spaces.php:97
 #: includes/admin/views/spaces.php:181
 #: includes/functions.php:1713
-#: jetonomy.php:646
+#: jetonomy.php:671
 msgid "Archived"
 msgstr ""
 
@@ -4611,7 +4611,7 @@ msgstr ""
 #: includes/admin/views/spaces.php:98
 #: includes/admin/views/spaces.php:182
 #: includes/functions.php:1715
-#: jetonomy.php:646
+#: jetonomy.php:671
 msgid "Locked"
 msgstr ""
 
@@ -4658,7 +4658,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:234
 #: includes/admin/views/space-edit.php:320
 #: includes/class-template-loader.php:443
-#: jetonomy.php:681
+#: jetonomy.php:706
 #: templates/views/space-members.php:150
 #: assets/js/admin-common.js:114
 msgid "Moderator"
@@ -4667,7 +4667,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:235
 #: includes/admin/views/space-edit.php:321
 #: includes/class-template-loader.php:444
-#: jetonomy.php:680
+#: jetonomy.php:705
 #: templates/partials/feed-card.php:50
 #: templates/partials/managed-by-card.php:23
 #: templates/partials/post-card.php:136
@@ -6051,7 +6051,7 @@ msgstr ""
 #: includes/class-abilities.php:347
 #: includes/class-abilities.php:1290
 #: includes/class-abilities.php:1349
-#: includes/class-abilities.php:1791
+#: includes/class-abilities.php:1801
 #: includes/moderation/class-moderation-service.php:966
 msgid "Post not found."
 msgstr ""
@@ -6740,8 +6740,10 @@ msgid_plural "%s votes"
 msgstr[0] ""
 msgstr[1] ""
 
+#. translators: %s: plural topic label, lowercase.
 #: includes/class-shortcodes.php:306
-msgid "No trending discussions yet. Check back soon."
+#, php-format
+msgid "No trending %s yet. Check back soon."
 msgstr ""
 
 #. translators: %s: reputation points.
@@ -9797,92 +9799,92 @@ msgstr ""
 msgid "Jetonomy: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally."
 msgstr ""
 
-#: jetonomy.php:469
+#: jetonomy.php:494
 msgid "Vote down"
 msgstr ""
 
-#: jetonomy.php:469
+#: jetonomy.php:494
 msgid "Vote up"
 msgstr ""
 
-#: jetonomy.php:470
+#: jetonomy.php:495
 msgid "Remove your downvote"
 msgstr ""
 
-#: jetonomy.php:470
+#: jetonomy.php:495
 msgid "Remove your upvote"
 msgstr ""
 
-#: jetonomy.php:495
+#: jetonomy.php:520
 msgid "Voting is not available to you here."
 msgstr ""
 
 #. translators: 1: vote score, 2: reason voting is unavailable.
-#: jetonomy.php:498
+#: jetonomy.php:523
 #, php-format
 msgid "Score %1$d. %2$s"
 msgstr ""
 
-#: jetonomy.php:523
+#: jetonomy.php:548
 #: templates/views/space-roadmap.php:72
 msgid "Planned"
 msgstr ""
 
-#: jetonomy.php:524
+#: jetonomy.php:549
 #: templates/views/space-roadmap.php:76
 msgid "In Progress"
 msgstr ""
 
-#: jetonomy.php:525
+#: jetonomy.php:550
 #: templates/views/space-roadmap.php:80
 msgid "Shipped"
 msgstr ""
 
-#: jetonomy.php:526
+#: jetonomy.php:551
 #: templates/views/space-roadmap.php:84
 msgid "Declined"
 msgstr ""
 
-#: jetonomy.php:562
+#: jetonomy.php:587
 msgctxt "space type label"
 msgid "Q&A"
 msgstr ""
 
-#: jetonomy.php:564
+#: jetonomy.php:589
 msgctxt "space type label"
 msgid "Ideas"
 msgstr ""
 
-#: jetonomy.php:566
+#: jetonomy.php:591
 msgctxt "space type label"
 msgid "Feed"
 msgstr ""
 
-#: jetonomy.php:569
+#: jetonomy.php:594
 msgctxt "space type label"
 msgid "Forum"
 msgstr ""
 
-#: jetonomy.php:604
+#: jetonomy.php:629
 #: templates/views/new-space.php:99
 #: templates/views/space-edit.php:177
 msgid "Approval required"
 msgstr ""
 
-#: jetonomy.php:606
+#: jetonomy.php:631
 #: templates/views/new-space.php:100
 #: templates/views/space-edit.php:178
 msgid "Invite only"
 msgstr ""
 
 #. translators: 1: singular space label; 2: plural member label.
-#: jetonomy.php:655
+#: jetonomy.php:680
 #, php-format
 msgid "Hidden %1$s. Only admins and %2$s can see this listing."
 msgstr ""
 
 #. translators: 1: singular space label; 2: plural member label; 3: plural topic label.
-#: jetonomy.php:657
+#: jetonomy.php:682
 #, php-format
 msgid "Private %1$s. Only %2$s can read its %3$s."
 msgstr ""
@@ -10723,6 +10725,7 @@ msgid "%s you have saved as drafts. Pick one up where you left off."
 msgstr ""
 
 #: templates/views/drafts.php:65
+#: templates/views/user-profile.php:504
 msgid "No drafts yet."
 msgstr ""
 
@@ -12247,10 +12250,6 @@ msgstr ""
 #: templates/views/user-profile.php:488
 #, php-format
 msgid "voted %s ago"
-msgstr ""
-
-#: templates/views/user-profile.php:504
-msgid "No drafts yet. Save a draft and it will appear here."
 msgstr ""
 
 #. translators: %s: scheduled date/time

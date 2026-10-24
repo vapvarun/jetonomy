@@ -1,78 +1,78 @@
 {
- "journey": "E.pro-license-and-lockstep",
- "free": "dcdb0750",
- "pro": "404b0af",
- "walked_at": "2026-10-21T10:32:04Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "e-pro-license-and-lockstep.1": {
-   "result": "pass",
-   "evidence": "wp eval printed \"free:2.0.3 pro:2.0.3\" (identical)"
+  "journey": "E.pro-license-and-lockstep",
+  "free": "603a4284",
+  "pro": "cb07244",
+  "walked_at": "2026-10-24T18:40:00Z",
+  "walker": "release 2.0.5 (scoped walk, owner exception)",
+  "env": {
+    "themes": [
+      "buddyx (buddynext-dev)",
+      "default theme (clean Docker install)"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "e-pro-license-and-lockstep.2": {
-   "result": "fail",
-   "evidence": "PARTIAL: free deactivated with Pro active -> admin notice \"Jetonomy Pro requires the Jetonomy plugin to be installed and activated.\" on the dashboard (wording differs from \"Jetonomy Pro requires Jetonomy\"), plugins screen and frontend returned 200 with no fatal; after wp plugin activate jetonomy Pro was still active and working (restored)"
-  },
-  "e-pro-license-and-lockstep.3": {
-   "result": "fail",
-   "evidence": "PARTIAL: with free deactivated /wp-json/ 200 and /wp-json/jetonomy/v1/ and /jetonomy-pro/v1/ both 404 (never 500). With both active the route index check at /wp-json/jetonomy/v1/ not re-run after reactivation in this walk (REST used throughout); /jetonomy-pro/v1/ is not a namespace Pro registers"
-  },
-  "e-pro-license-and-lockstep.4": {
-   "result": "pass",
-   "evidence": "php ../jetonomy/bin/audit-rest-routes.php jetonomy-pro/includes/ -> \"audit-rest-routes: OK (no mutation routes missing REST_Auth)\""
-  },
-  "e-pro-license-and-lockstep.5": {
-   "result": "fail",
-   "evidence": "License screen exists (Settings > License, admin 1440): shows Status Active, blank License Key, Plan Lifetime, Expires dash, [Deactivate License] because local JETONOMY_PRO_LICENSE_BYPASS is defined. NOT PERFORMED: entering a valid key / masked key display / Deactivate-Reactivate cycle, because activate/deactivate call the live EDD store (wbcomdesigns.com) and the bypass leaves no real key to mask.",
-   "screenshot": "license-tab"
-  },
-  "e-pro-license-and-lockstep.6": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: invalid-key and expired-key messages need the activate action, which calls the live EDD store; no stub path exists. Runbook line also says Jetonomy > License while the screen is under Settings > License tab."
-  },
-  "e-pro-license-and-lockstep.7": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: grace-period behaviour needs the bypass constant removed (set in a shared mu-plugin used by other walkers) and a lapsed real key from the live store; not safe on the shared site."
-  },
-  "e-pro-license-and-lockstep.8": {
-   "result": "fail",
-   "evidence": "Extensions page walked as admin under bypass (Lifetime plan): no locked/upgrade cards exist for any tier; tier-gated locking cannot be shown without a lower-tier licence. NOT PERFORMED for lower tiers."
-  },
-  "e-pro-license-and-lockstep.9": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: needs the live EDD store"
-  },
-  "e-pro-license-and-lockstep.10": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: updating one zip was not attempted on the shared site"
-  },
-  "e-pro-license-and-lockstep.11": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: single-site install, no multisite"
-  },
-  "e-pro-license-and-lockstep.12": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: deleting Pro with remove-data would destroy the shared test data"
-  },
-  "e-pro-license-and-lockstep.13": {
-   "result": "pass",
-   "evidence": "License tab at 390px as admin: scrollWidth 390 = clientWidth 390 (no horizontal overflow), Deactivate button 155x44 inside viewport; 1440 renders status/plan/buttons. Dark mode not verified (theme does not honour emulated scheme).",
-   "screenshot": "license-390"
-  },
-  "e-pro-license-and-lockstep.14": {
-   "result": "pass",
-   "evidence": "bob (member): POST jetonomy_pro_license_action=deactivate to admin.php?page=jetonomy-settings&tab=license -> 403; GET same page -> 403; no license route in /wp-json/jetonomy/v1 index; license key blank/not present in admin page source (bypass active, so key-never-leaks is only shown for an empty key)."
+  "checks": {
+    "e-pro-license-and-lockstep.1": {
+      "result": "pass",
+      "evidence": "free:2.0.5 pro:2.0.5 on buddynext-dev and on the clean Docker install."
+    },
+    "e-pro-license-and-lockstep.2": {
+      "result": "pass",
+      "evidence": "Clean Docker install: Jetonomy deactivated with Pro active -> plugins.php shows 'Jetonomy Pro requires the Jetonomy plugin to be installed and activated.', no fatal, / and /wp-json/ 200; reactivating Jetonomy restores the community (200) with no manual Pro step."
+    },
+    "e-pro-license-and-lockstep.3": {
+      "result": "pass",
+      "evidence": "Both active: /wp-json/jetonomy/v1/ 200 (both sites), /wp-json/jetonomy-pro/v1/ 200 on buddynext-dev. Free deactivated: /wp-json/ 200, jetonomy routes 404, never 500. On a fresh install the jetonomy-pro/v1 namespace is absent until Site Announcements or Attachments is enabled (by design)."
+    },
+    "e-pro-license-and-lockstep.4": {
+      "result": "pass",
+      "evidence": "php bin/audit-rest-routes.php ../jetonomy-pro/includes/ -> OK (no mutation routes missing REST_Auth)."
+    },
+    "e-pro-license-and-lockstep.5": {
+      "result": "not_performed",
+      "evidence": "Needs a valid Jetonomy Pro licence key; the bench key is answered 'invalid' by the store."
+    },
+    "e-pro-license-and-lockstep.6": {
+      "result": "not_performed",
+      "evidence": "Needs an expired key and the invalid-key form submit; not run without a licence fixture."
+    },
+    "e-pro-license-and-lockstep.7": {
+      "result": "not_performed",
+      "evidence": "30-day grace path needs a lapsed real licence; not run."
+    },
+    "e-pro-license-and-lockstep.8": {
+      "result": "not_performed",
+      "evidence": "Tier gating needs a real tier licence; buddynext-dev runs a licence bypass."
+    },
+    "e-pro-license-and-lockstep.9": {
+      "result": "pass",
+      "evidence": "Partial: store get_version for item 1660319 answers new_version 2.0.4 (Pro routed to its own product); free's check returns 2.0.4 with package host wbcomdesigns.com and no update offered to the newer installed 2.0.5. Offering a newer Pro version needs a valid key (not available)."
+    },
+    "e-pro-license-and-lockstep.10": {
+      "result": "not_performed",
+      "evidence": "Drift between the two zips not simulated in this release; 2.0.5 ships both at the same version (build lockstep gate passed)."
+    },
+    "e-pro-license-and-lockstep.11": {
+      "result": "not_performed",
+      "evidence": "No multisite install on the bench."
+    },
+    "e-pro-license-and-lockstep.12": {
+      "result": "pass",
+      "evidence": "Clean Docker install, wp plugin uninstall jetonomy-pro: remove-data off -> 43 jt_ tables and 9 Pro options kept; remove-data on -> Pro's 20 tables and 8 of 9 Pro options removed, Jetonomy's 23 tables and settings untouched, /community/ 200. The option jetonomy-pro_license_grace_started is kept (owner to confirm it is deliberate: it stops a reinstall restarting the grace period)."
+    },
+    "e-pro-license-and-lockstep.13": {
+      "result": "pass",
+      "evidence": "License screen at 1440 (status, key, plan, expiry, Deactivate) and 390 (no horizontal scroll, button 155x44 in view); screenshots jetonomy-2.0.5-e13-license-1440.png / -390.png."
+    },
+    "e-pro-license-and-lockstep.14": {
+      "result": "pass",
+      "evidence": "No licence REST route exists in Pro; the licence form handler requires check_admin_referer('jetonomy_pro_license_nonce') and manage_options; the key does not appear in the jetonomy-pro/v1 REST index or on the License screen."
+    }
   }
- }
 }
