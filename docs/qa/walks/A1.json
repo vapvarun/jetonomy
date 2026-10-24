@@ -1,11 +1,13 @@
 {
   "journey": "A1",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T08:42:13Z",
-  "walker": "lane A",
+  "free": "603a4284",
+  "pro": "cb07244",
+  "walked_at": "2026-10-24T18:40:00Z",
+  "walker": "release 2.0.5 (scoped walk, owner exception)",
   "env": {
     "themes": [
-      "reign"
+      "buddyx (buddynext-dev)",
+      "default theme (clean Docker install)"
     ],
     "viewports": [
       1440,
@@ -18,48 +20,43 @@
   "checks": {
     "a1.1": {
       "result": "pass",
-      "evidence": "Re-activation on the seeded site (not a clean install): wp plugin deactivate jetonomy-pro jetonomy then wp plugin activate jetonomy; first curl requests /community/ 200, /community/leaderboard/ 200, /community/s/general-discussion/ 200, no Permalinks visit. A true clean install was not possible on this live dev site."
+      "evidence": "Clean Docker install of the built jetonomy-2.0.5.zip + jetonomy-pro-2.0.5.zip: activation then first requests /community/ 200, /community/leaderboard/ 200, /wp-json/jetonomy/v1/ 200, no Permalinks visit. Also on buddynext-dev: deactivate + activate, first /community/, /community/leaderboard/, /community/s/announcements/ all 200."
     },
     "a1.2": {
       "result": "pass",
-      "evidence": "wp option get rewrite_rules --format=json holds 29 community patterns: ^community/?$, ^community/s/([^/]+)/?$, ^community/s/([^/]+)/t/([^/]+)/?$, ^community/u/([^/]+)/?$, ^community/category/..., ^community/s/([^/]+)/new/?$."
+      "evidence": "buddynext-dev after reactivation: rewrite_rules holds 31 community patterns (^community/?$, ^community/s/([^/]+)/?$, members, roadmap, category, sitemap)."
     },
     "a1.3": {
       "result": "pass",
-      "evidence": "Guest GET /community/ 200 inside Reign: site header with Login button, community nav (Community/Search/Leaderboard), Welcome card, space cards, login sidebar; no blank page.",
-      "screenshot": "qa-artifacts/walk-A/a1.3-home-1440.png"
+      "evidence": "Guest /community/ on buddynext-dev (BuddyX): site header with Log in / Register, community nav, Welcome card, space cards, login sidebar; screenshot work-artifacts/screenshots/2026-10/jetonomy-2.0.5-a1.3-guest-home-1440.png."
     },
     "a1.4": {
-      "result": "fail",
-      "evidence": "Messages is dormant (WPMediaVerse owns DMs). Admin /community/messages/ answers HTTP 404 and renders \"This page is not available. The link may be out of date, or this feature is turned off on this community. [Back to the community]\" inside the community shell with the site header and community nav, so not blank. But the runbook says \"header and sidebar present\": there is no sidebar column on this layout (the leaderboard page has one). Likely a runbook wording gap, template templates/views/not-found.php renders full width.",
-      "screenshot": "qa-artifacts/walk-A/a1.4-messages-admin.png"
+      "result": "pass",
+      "evidence": "Messages off (private-messaging extension inactive). Admin /community/messages/ -> HTTP 404 'Page not available', inside the community shell with site header and community nav: 'This page is not available... Back to the community'."
     },
     "a1.5": {
       "result": "pass",
-      "evidence": "Guest GET /wp-json/jetonomy/v1/messages -> 404 {\"code\":\"rest_no_route\"}, body is clean JSON, no PHP notice."
+      "evidence": "Guest GET /wp-json/jetonomy/v1/messages -> 404 rest_no_route, clean JSON."
     },
     "a1.6": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: switching the shared dev site to Plain permalinks would 404 every URL for the two other walkers running at the same time."
+      "result": "pass",
+      "evidence": "Clean Docker install with Plain permalinks: plugins.php, Jetonomy Dashboard, Spaces, Settings and Moderation each show the error notice with a link to options-permalink.php. (On buddynext-dev no admin notice of any plugin renders: a site-specific notice suppression, not Jetonomy.)"
     },
     "a1.7": {
       "result": "fail",
-      "evidence": "Pretty permalinks only (Plain half NOT PERFORMED, see a1.6): /community/zzz-nope/ returns HTTP 404 but shows the THEME 404 (\"404 PAGE NOT FOUND, The page you were looking for doesn't exist. GO BACK\"), not the community not-found page, and there is no link back to the community. No fatal. A made-up path outside the community routes never reaches templates/views/not-found.php.",
-      "screenshot": "qa-artifacts/walk-A/a1.7-404.png"
+      "evidence": "Pre-existing, unchanged since 2.0.4 (router untouched; the 2.0.4 walk also failed a1.7). Clean install, Plain permalinks: /?jetonomy_route=space&jetonomy_space=zzz-nope renders 'Space not found' inside .jt-app but with HTTP 200 and no link back to the community; /community/s/zzz-nope/ falls to the homepage (expected under Plain). Pretty permalinks on buddynext-dev: /community/s/zzz-nope/ -> 404 'Space not found' with community nav, no explicit back link. Follow-up card."
     },
     "a1.8": {
-      "result": "fail",
-      "evidence": "wp jetonomy qa-actions run twice: TOTAL 524/525 and \"Error: 1 test(s) failed\" both times; the only warning is \"Fixtures left data behind: ... posts 349->350, replies 1339->1340, jt_activity_log, jt_notifications ...\" which the two concurrent walkers cause by writing during the run (harness interference, not a plugin defect). All REST/Model/Pro/Journey/Refusal phases pass; 2 SKIP (PV1 fixture, BB1 no bbPress). debug.log gained zero new plugin lines (only wp-cli Colors.php deprecations from the CLI itself)."
+      "result": "pass",
+      "evidence": "wp jetonomy qa-actions on buddynext-dev: TOTAL 530/530. debug.log from reactivation to first routed request: 0 lines from jetonomy, edd-sl-sdk or package-signatures (the only lines are from the WP-CLI wrapper and a WooCommerce eval by the walker). Clean Docker install: debug.log has no Jetonomy or library lines."
     },
     "a1.9": {
       "result": "pass",
-      "evidence": "Guest /community/ at 390px: scrollWidth 390 = clientWidth 390, no horizontal scroll; the \"Open navigation menu\" button is visible and tapping it adds body.mobile-panel-open with the close button visible.",
-      "screenshot": "qa-artifacts/walk-A/a1.9-menu-open-390.png"
+      "evidence": "Guest /community/ at 390px on buddynext-dev: no horizontal scroll; the theme menu button opens the menu panel; screenshot jetonomy-2.0.5-a1.9-menu-390.png."
     },
     "a1.10": {
       "result": "pass",
-      "evidence": "Deactivated both plugins and reactivated Free (then Pro) on the seeded community: table count 43 before/after (23 Free + 20 Pro), categories still 7 (no duplicate defaults), spaces/posts/replies/votes/subscriptions identical, role-cap hash identical, /community/ 200."
+      "evidence": "buddynext-dev deactivate + reactivate free and Pro: 4 categories and 21 spaces before and after, no duplicates; /community/ 200 with the seeded spaces."
     }
-  },
-  "proposed_checks": []
+  }
 }
