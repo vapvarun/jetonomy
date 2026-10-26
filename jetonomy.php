@@ -109,6 +109,10 @@ function jetonomy_licence_request( array $params ) {
 	if ( ! class_exists( '\\EasyDigitalDownloads\\Updater\\Requests\\API' ) ) {
 		return false;
 	}
+	// Name the fallback here as well: on an early request (plugin activation) the SDK registry has not run yet.
+	if ( method_exists( '\EasyDigitalDownloads\Updater\Requests\API', 'set_fallback' ) ) {
+		\EasyDigitalDownloads\Updater\Requests\API::set_fallback( JETONOMY_LICENCE_HOST, 'https://wbcomdesigns.com' );
+	}
 	return ( new \EasyDigitalDownloads\Updater\Requests\API( JETONOMY_LICENCE_HOST ) )->make_request( $params );
 }
 
