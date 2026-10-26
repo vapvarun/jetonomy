@@ -39,6 +39,8 @@ define( 'JETONOMY_DB_VERSION', '2.0.4' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
+// Licence and update host for Jetonomy and Jetonomy Pro; the SDK falls back to https://wbcomdesigns.com.
+define( 'JETONOMY_LICENCE_HOST', 'https://updates.wbcomdesigns.com' );
 
 // Action Scheduler — bundled in free so Pro extensions (email digest, badges,
 // AI, reply-by-email, web-push, webhooks) and any future cron-heavy work get
@@ -95,18 +97,34 @@ jetonomy();
 // Multisite-aware activation helpers -- declared in the Jetonomy namespace.
 require_once JETONOMY_DIR . 'includes/functions-multisite.php';
 
+/**
+ * One licence-server request (activate, deactivate or check) for Jetonomy and Jetonomy Pro. Goes through the
+ * bundled SDK, so it uses the same host as update checks and falls back to the old host when the new one cannot
+ * be reached. Returns the decoded reply, or false when no host answered.
+ *
+ * @param array $params EDD Software Licensing parameters (edd_action, license, item_id).
+ * @return object|false
+ */
+function jetonomy_licence_request( array $params ) {
+	if ( ! class_exists( '\\EasyDigitalDownloads\\Updater\\Requests\\API' ) ) {
+		return false;
+	}
+	return ( new \EasyDigitalDownloads\Updater\Requests\API( JETONOMY_LICENCE_HOST ) )->make_request( $params );
+}
+
 // EDD Software Licensing SDK — free plugin auto-updates with preset key.
 add_action(
 	'edd_sl_sdk_registry',
 	function ( $registry ) {
 		$registry->register(
 			array(
-				'id'      => 'jetonomy',
-				'url'     => 'https://wbcomdesigns.com',
-				'item_id' => 1660320,
-				'version' => JETONOMY_VERSION,
-				'file'    => JETONOMY_FILE,
-				'license' => 'wbcomfreec7e2a9b45d8f1c3e6a0b9d2f7c4e8a11',
+				'id'           => 'jetonomy',
+				'url'          => JETONOMY_LICENCE_HOST,
+				'fallback_url' => 'https://wbcomdesigns.com',
+				'item_id'      => 1660320,
+				'version'      => JETONOMY_VERSION,
+				'file'         => JETONOMY_FILE,
+				'license'      => 'wbcomfreec7e2a9b45d8f1c3e6a0b9d2f7c4e8a11',
 			)
 		);
 	}
@@ -224,22 +242,16 @@ add_action(
 
 		// Activate with the EDD store. Short timeout so a slow/unreachable store
 		// can't stall the admin for 15 seconds.
-		$response = wp_remote_post(
-			'https://wbcomdesigns.com',
+		$body = jetonomy_licence_request(
 			array(
-				'timeout' => 5,
-				'body'    => array(
-					'edd_action' => 'activate_license',
-					'license'    => $preset_key,
-					'item_id'    => 1660320,
-					'url'        => home_url(),
-				),
+				'edd_action' => 'activate_license',
+				'license'    => $preset_key,
+				'item_id'    => 1660320,
 			)
 		);
 
-		if ( ! is_wp_error( $response ) ) {
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( 'valid' === ( $body['license'] ?? '' ) ) {
+		if ( $body ) {
+			if ( 'valid' === ( $body->license ?? '' ) ) {
 				update_option( $activated, 1, false );
 				// NOTE: usage tracking is NOT auto-enabled here. Enrolling a site
 				// in tracking without explicit consent is a privacy overreach;
