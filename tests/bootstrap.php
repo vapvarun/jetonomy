@@ -32,6 +32,21 @@ define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', dirname( __DIR__ ) . '/vendor/yoast/p
 
 require_once $_tests_dir . '/includes/functions.php';
 
+// Tests never reach the live store. Without this, every CI job ran the free-key activation on admin_init as
+// http://example.org, and each push sent dozens of activations to wbcomdesigns.com (2026-10-26).
+define( 'JETONOMY_NO_LICENSE_PHONE_HOME', true );
+tests_add_filter(
+	'pre_http_request',
+	static function ( $pre, $args, $url ) {
+		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+		return in_array( $host, array( 'wbcomdesigns.com', 'updates.wbcomdesigns.com' ), true )
+			? new WP_Error( 'jetonomy_tests_no_store', 'Tests do not call the live store.' )
+			: $pre;
+	},
+	1,
+	3
+);
+
 tests_add_filter(
 	'muplugins_loaded',
 	function () {
