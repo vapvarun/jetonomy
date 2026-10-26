@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.1
-Stable tag: 2.0.5
+Stable tag: 2.0.6
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,16 @@ Absolutely. Jetonomy has 84 REST routes / 114 method-endpoints (143 routes acros
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 2.0.6 - October 2026 =
+
+Updates and licence checks now use a dedicated update server, with the main site as an automatic fallback.
+
+* Improve  - Plugin updates and licence checks go to updates.wbcomdesigns.com, and fall back to wbcomdesigns.com on their own if it cannot be reached.
+* Improve  - The free licence activation and integration installs use the same update server and fallback.
+* Dev      - Updated the bundled licensing library; when several plugins bundle it, the newest copy runs.
+* Dev      - The test suite never contacts the live store.
+* Compat   - Aligned with Jetonomy Pro 2.0.6. Install both updates together.
 
 = 2.0.5 - October 2026 =
 

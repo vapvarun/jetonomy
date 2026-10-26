@@ -1,8 +1,8 @@
 {
-  "version": "2.0.5",
-  "approved": "2026-10-24",
+  "version": "2.0.6",
+  "approved": "2026-10-27",
   "by": "Varun Dubey (owner)",
-  "reason": "2.0.5 changes no product code: since v2.0.4 the only shipped changes are the bundled licensing library (libs/edd-sl-sdk, now 1.0.4-wbcom.2), the new update-signature module (libs/package-signatures, warn mode) and its registration in jetonomy.php; Pro changes only its version. Owner chose a scoped walk: the journeys that cover the changed files (A1 activation and routing, E.pro-license-and-lockstep) were walked on buddynext-dev at free eaa31886 / pro bd410ed, with the plugin-switching, Plain permalink and delete-with-data checks done on the pristine Docker install of the built zips (Step 8). Results, including checks not performed for lack of a valid Pro licence key and a multisite install, are in docs/qa/walks/A1.json and docs/qa/walks/E.pro-license-and-lockstep.json. The update path itself was benched separately (signed updates plan, Phase 1 and Phase 2 gates). The full walk of all 95 journeys promised for this cycle moves to 2.0.6, the next release with product changes.",
+  "reason": "2.0.6 changes no product feature: since v2.0.5 the shipped changes are licence plumbing only (bundled libs/edd-sl-sdk 1.0.4-wbcom.3 with fallback, JETONOMY_LICENCE_HOST and jetonomy_licence_request() in jetonomy.php used by the preset activation and the companion installer, the SDK registration on updates.wbcomdesigns.com with fallback to wbcomdesigns.com) and in Pro the licence form, the weekly check and the registration through that helper. Owner, 2026-10-27: the team runs the full release checks; only the changed code is re-checked. Checked: licence bench (scripts/licence-bench.php in wbcom-services, 10/10) on buddynext-dev, mixed old/new Free and Pro boots, the live production probe (scripts/licence-edge-probe.sh, 14/14), and the pristine Docker install of the built zips (Step 8). The full walk of all journeys moves to the next release with product changes.",
   "walked": [
     "A1",
     "E.pro-license-and-lockstep"
