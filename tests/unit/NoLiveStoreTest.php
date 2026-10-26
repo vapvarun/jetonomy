@@ -9,19 +9,18 @@ use WP_UnitTestCase;
  */
 class NoLiveStoreTest extends WP_UnitTestCase {
 
-	public function test_store_hosts_are_refused(): void {
+	public function test_no_licence_call_reaches_the_live_store(): void {
+		// The preset activation is switched off for the whole suite.
+		$this->assertTrue( defined( 'JETONOMY_NO_LICENSE_PHONE_HOME' ) && JETONOMY_NO_LICENSE_PHONE_HOME );
+
+		// Both store hosts are refused before any request leaves the machine.
 		foreach ( array( 'https://wbcomdesigns.com/', 'https://updates.wbcomdesigns.com/' ) as $url ) {
 			$response = wp_remote_get( $url );
 			$this->assertWPError( $response, $url );
 			$this->assertSame( 'jetonomy_tests_no_store', $response->get_error_code(), $url );
 		}
-	}
 
-	public function test_preset_activation_is_switched_off(): void {
-		$this->assertTrue( defined( 'JETONOMY_NO_LICENSE_PHONE_HOME' ) && JETONOMY_NO_LICENSE_PHONE_HOME );
-	}
-
-	public function test_licence_request_gets_no_reply(): void {
+		// The licence helper (the one path every licence call takes) therefore gets no reply.
 		$this->assertFalse(
 			jetonomy_licence_request(
 				array(
