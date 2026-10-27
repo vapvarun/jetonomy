@@ -26,7 +26,7 @@
 	--jt-admin-text-2: #475569;
 	--jt-admin-text-3: #64748b;
 	--jt-admin-text-4: #374151;
-	--jt-admin-text-muted: #94a3b8;
+	--jt-admin-text-muted: #5f6b7d; /* 4.75:1 on the lightest admin grey (WCAG AA). */
 	--jt-admin-text-wp: #1d2327;
 	--jt-admin-text-wp-2: #646970;
 	--jt-admin-text-wp-3: #8c8f94;

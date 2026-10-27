@@ -717,8 +717,9 @@ class Space extends Model {
 			Cache::delete( 'space:slug:' . (string) $data['slug'] );
 		}
 
-		// A new space must appear in the cached category tree.
+		// A new space must appear in the cached category tree, and in the sitemap now.
 		self::bump_tree_generation();
+		\Jetonomy\SEO\Sitemap_Emitter::flush();
 
 		// Counted as update() counts: only active spaces (a space created
 		// archived or locked is not in its category's count).

@@ -92,6 +92,17 @@ class MemberPress_Adapter implements Membership_Adapter {
 		return $product ? $product->post_title : $level_id;
 	}
 
+	/**
+	 * Level id prefixes this adapter owns, with the kind each one is.
+	 *
+	 * @return array<string, string>
+	 */
+	public function level_prefixes(): array {
+		return array(
+			'mepr_' => __( 'Membership', 'jetonomy' ),
+		);
+	}
+
 	public function register_hooks(): void {
 		if ( ! $this->is_active() ) {
 			return;

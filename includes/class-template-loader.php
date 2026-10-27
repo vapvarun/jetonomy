@@ -405,7 +405,8 @@ class Template_Loader {
 					// Join-Space failure toast (composer.js); carries the owner's space noun.
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'joinSpaceFailed'        => esc_html( sprintf( __( 'Could not join %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
-					'memberBanned'           => __( 'Banned', 'jetonomy' ),
+					/* translators: %s: the singular member label, lowercase (e.g. member). */
+					'banFailed'              => esc_html( sprintf( __( 'Could not ban this %s. Please try again.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					// Modal helpers in view.js (jetonomyConfirm / jetonomyPrompt /
 					// jetonomySpacePicker / jetonomyPostPicker). These live OUTSIDE the
 					// Interactivity store so they read window.jetonomyData.i18n, not

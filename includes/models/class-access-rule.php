@@ -177,7 +177,7 @@ class AccessRule extends Model {
 		if ( ! array_key_exists( $space_id, self::$memo ) ) {
 			self::$memo[ $space_id ] = static::db()->get_results(
 				static::db()->prepare(
-					'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY priority DESC',
+					'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY priority DESC, id ASC',
 					$space_id
 				)
 			) ?: array();
@@ -490,7 +490,20 @@ class AccessRule extends Model {
 
 		$wp_user = $user_id > 0 ? get_userdata( $user_id ) : null;
 
+		// Among the matching rules with the highest priority, the most
+		// permissive grant wins; equal grants fall to the oldest rule.
+		$rank = array(
+			'read'        => 1,
+			'participate' => 2,
+			'full'        => 3,
+		);
+		$best = null;
+
 		foreach ( $rules as $rule ) {
+			if ( $best && (int) $rule->priority < (int) $best->priority ) {
+				break;
+			}
+
 			$matched = false;
 
 			switch ( $rule->rule_type ) {
@@ -538,12 +551,41 @@ class AccessRule extends Model {
 					break;
 			}
 
-			if ( $matched ) {
-				return array(
-					'grants'     => $rule->grants,     // 'read', 'participate', or 'full'
-					'space_role' => $rule->space_role,
-					'rule_id'    => (int) $rule->id,
-					'rule_type'  => $rule->rule_type,
+			if ( $matched && ( ! $best || ( $rank[ $rule->grants ] ?? 0 ) > ( $rank[ $best->grants ] ?? 0 ) ) ) {
+				$best = $rule;
+			}
+		}
+
+		if ( ! $best ) {
+			return null;
+		}
+
+		return array(
+			'grants'     => $best->grants,     // 'read', 'participate', or 'full'
+			'space_role' => $best->space_role,
+			'rule_id'    => (int) $best->id,
+			'rule_type'  => $best->rule_type,
+		);
+	}
+
+	/**
+	 * Why this rule would duplicate one the space already has, or null.
+	 *
+	 * Two rules on the same type and value cannot both mean something: one
+	 * always outranks the other. Change the existing rule's access instead.
+	 *
+	 * @param int    $space_id   Space.
+	 * @param string $rule_type  Rule type.
+	 * @param string $rule_value Rule value (sanitized).
+	 */
+	public static function duplicate_error( int $space_id, string $rule_type, string $rule_value ): ?\WP_Error {
+		foreach ( static::list_for_space( $space_id ) as $rule ) {
+			if ( $rule->rule_type === $rule_type && (string) $rule->rule_value === $rule_value ) {
+				return new \WP_Error(
+					'jetonomy_duplicate_rule',
+					/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+					sprintf( __( 'This %s already has a rule for that. Delete it first to change the access it gives.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					array( 'status' => 409 )
 				);
 			}
 		}
@@ -566,7 +608,7 @@ class AccessRule extends Model {
 	 *
 	 * @param int $user_id  Viewer ID (0 = guest).
 	 * @param int $space_id Space ID.
-	 * @return array<int, array{level_id:string, type:string, label:string, url:string}>
+	 * @return array<int, array{level_id:string, name:string, type:string, label:string, url:string}>
 	 */
 	public static function unmet_membership_requirements( int $user_id, int $space_id ): array {
 		if ( $space_id <= 0 ) {
@@ -595,8 +637,12 @@ class AccessRule extends Model {
 
 			$unmet[ (string) $rule->rule_value ] = array(
 				'level_id' => (string) $rule->rule_value,
+				'name'     => $described['value'],
 				'type'     => $described['type'],
-				'label'    => $described['value'],
+				'label'    => '' !== $described['kind']
+					/* translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group). */
+					? sprintf( __( '%1$s (%2$s)', 'jetonomy' ), $described['value'], $described['kind'] )
+					: $described['value'],
 				'url'      => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( (string) $rule->rule_value ),
 			);
 		}

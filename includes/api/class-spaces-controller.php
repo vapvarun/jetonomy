@@ -377,7 +377,7 @@ class Spaces_Controller extends Base_Controller {
 
 		$rule_type  = (string) $request->get_param( 'rule_type' );
 		$rule_value = sanitize_text_field( (string) $request->get_param( 'rule_value' ) );
-		$invalid    = AccessRule::value_error( $rule_type, $rule_value );
+		$invalid    = AccessRule::value_error( $rule_type, $rule_value ) ?? AccessRule::duplicate_error( $space_id, $rule_type, $rule_value );
 		if ( $invalid ) {
 			return $invalid;
 		}
@@ -450,6 +450,10 @@ class Spaces_Controller extends Base_Controller {
 				__( 'You must be logged in.', 'jetonomy' ),
 				array( 'status' => 401 )
 			);
+		}
+		$restricted = \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'create_space' );
+		if ( $restricted ) {
+			return $restricted;
 		}
 		if ( ! \Jetonomy\Permissions\Capabilities::can_create_space_frontend() ) {
 			return $this->permission_error();

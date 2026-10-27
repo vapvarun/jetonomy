@@ -114,9 +114,11 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		// a human for something they could have bought in one click.
 		$_jt_tier_names = wp_list_pluck( $_jt_unmet_membership, 'label' );
 		$_jt_first_url  = '';
+		$_jt_first_name = '';
 		foreach ( $_jt_unmet_membership as $_jt_req ) {
 			if ( '' !== $_jt_req['url'] ) {
-				$_jt_first_url = $_jt_req['url'];
+				$_jt_first_url  = $_jt_req['url'];
+				$_jt_first_name = $_jt_req['name'];
 				break;
 			}
 		}
@@ -136,7 +138,7 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 					: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' ),
 				'cta_label'   => '' !== $_jt_first_url
 					/* translators: %s: plan name. */
-					? sprintf( __( 'Get %s', 'jetonomy' ), (string) reset( $_jt_tier_names ) )
+					? sprintf( __( 'Get %s', 'jetonomy' ), $_jt_first_name )
 					: '',
 				'cta_url'     => $_jt_first_url,
 				'tone'        => 'forbidden',

@@ -32,6 +32,16 @@ defined( 'ABSPATH' ) || exit;
  * granted rather than sold: WP Roles, WP Fusion tags, SureMembers access
  * groups, and the tag-membership bridge. Site owners direct people to those
  * however their funnel works, via `jetonomy_membership_upgrade_url`.
+
+ *
+ * Also OPTIONAL, for the same reason:
+ *
+ *     public function level_prefixes(): array; // prefix => kind label
+ *
+ * Every level id this adapter owns starts with one of these prefixes, e.g.
+ * array( 'ld_course_' => 'Course', 'ld_group_' => 'Group' ). It lets
+ * `Adapter_Registry::level_owner()` name a rule without listing the whole
+ * catalog, keeps a trashed course readable, and says which kind it is.
  */
 interface Membership_Adapter {
 	public function is_active(): bool;

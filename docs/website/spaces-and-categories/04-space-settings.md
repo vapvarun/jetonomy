@@ -120,6 +120,8 @@ Each rule has three parts:
 
 > **Full does not hand out moderation by itself.** A rule can open a space to someone; it cannot give them a power their WordPress role does not carry. For an ordinary member matched by a Full rule, Full and Participate come to the same thing in practice - closing and pinning topics and editing other people's posts still require the matching capability. Grant moderation deliberately, by setting the person's role on the space's **Members** tab.
 
+> **When rules overlap, the most generous one wins.** If someone matches two rules, for example a Logged In rule set to Read and a membership rule set to Participate, they get Participate. Jetonomy refuses a second rule with the same type and value as an existing one, because only one of them could ever apply; delete the old rule first to change what it grants.
+
 **Recorded space role** - not a separate choice. The role a matching member is recorded as follows from the access grant above, the same for every rule type, and never goes above Member:
 
 | Access grant | Recorded as |

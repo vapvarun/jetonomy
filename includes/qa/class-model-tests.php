@@ -285,11 +285,160 @@ class Model_Tests {
 		$this->check_split_leaves_a_trace();
 		$this->check_follow_visibility();
 		$this->check_reparent_on_delete();
+		$this->check_2_0_7_fixes();
 
 		wp_set_current_user( 0 );
 		wp_delete_user( $this->qa_admin );
 
 		return array( 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped );
+	}
+
+	/**
+	 * 2.0.7 QA fixes. Each check failed on 2.0.6.
+	 *
+	 * VD1-VD2 removing a vote through DELETE takes back reputation and the notification (10430806939)
+	 * SN1     a silenced member cannot start a space (10431281298)
+	 * GP1     a private community admits no signed-out visitor at the engine (10430808705)
+	 * OR1-OR2 overlapping rules: most generous wins; an exact duplicate is refused (10435942224)
+	 * LP1     a level is named and typed by its adapter's prefix, even when the catalog omits it (10436110349)
+	 * BR1     a space ban is visible to the roster in one lookup (10430978086)
+	 * MN1     the public members search never matches an email address (10430894693)
+	 * SX1     a new space drops the cached sitemap (10430894693)
+	 * IS1-IS2 import slugs: NFD accents fold without intl; wpForo boards never share a category (10441705185, 10441707350)
+	 */
+	private function check_2_0_7_fixes(): void {
+		global $wpdb;
+		$suffix = uniqid( '', false );
+		$users  = array();
+		$mk     = static function ( string $login, string $role = 'subscriber', string $name = '' ) use ( &$users ): int {
+			$id = (int) wp_insert_user( array( 'user_login' => $login, 'user_pass' => wp_generate_password(), 'user_email' => $login . '@example.test', 'role' => $role, 'display_name' => $name ?: $login ) );
+			if ( $id > 0 ) {
+				$users[] = $id;
+			}
+			return $id;
+		};
+		$author = $mk( 'jt_qa_207a_' . $suffix );
+		$voter  = $mk( 'jt_qa_207v_' . $suffix );
+		$space  = (int) Space::create( array( 'title' => 'QA 207 ' . $suffix, 'slug' => 'qa-207-' . $suffix, 'type' => 'forum', 'visibility' => 'public', 'join_policy' => 'open' ) );
+
+		if ( $space > 0 && $author > 0 && $voter > 0 ) {
+			// VD1-VD2.
+			$topic = \Jetonomy\Models\Post::create( array( 'space_id' => $space, 'author_id' => $author, 'title' => 'QA 207 vote ' . $suffix, 'slug' => 'qa-207-vote-' . $suffix, 'content' => 'x', 'status' => 'publish' ) );
+			$topic = is_int( $topic ) ? $topic : 0;
+			$rep   = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT reputation FROM ' . table( 'user_profiles' ) . ' WHERE user_id = %d', $author ) );
+			$notes = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . table( 'notifications' ) . ' WHERE user_id = %d', $author ) );
+			UserProfile::find_or_create( $author );
+			$rep0  = $rep();
+			$note0 = $notes();
+			wp_set_current_user( $voter );
+			$up = new \WP_REST_Request( 'POST', "/jetonomy/v1/posts/{$topic}/vote" );
+			$up->set_body_params( array( 'value' => 1 ) );
+			rest_do_request( $up );
+			$rep1 = $rep();
+			rest_do_request( new \WP_REST_Request( 'DELETE', "/jetonomy/v1/posts/{$topic}/vote" ) );
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'VD1: removing a vote through DELETE takes back the reputation it gave', $topic > 0 && $rep1 > $rep0 && $rep() === $rep0, "before={$rep0} voted={$rep1} after=" . $rep() );
+			$this->check( 'VD2: removing a vote through DELETE takes back its notification', $notes() === $note0, "before={$note0} after=" . $notes() );
+			wp_set_current_user( 0 );
+
+			// SN1.
+			$grant = static fn(): bool => true;
+			add_filter( 'jetonomy_can_create_space_frontend', $grant );
+			$sil = Restriction::ban( $voter, 'silence', $this->qa_admin, null, 'QA 207' );
+			Restriction::reset_memo();
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'SN1: a silenced member cannot start a space, even with the right role', ! \Jetonomy\Permissions\Capabilities::can_create_space_frontend( $voter ) );
+			remove_filter( 'jetonomy_can_create_space_frontend', $grant );
+			if ( $sil > 0 ) {
+				Restriction::remove_ban( $sil );
+			}
+
+			// GP1.
+			$private = static function ( $o ) {
+				$o               = (array) $o;
+				$o['guest_read'] = false;
+				return $o;
+			};
+			add_filter( 'option_jetonomy_settings', $private );
+			\Jetonomy\Cache::reset_memos();
+			$guest_reads = Permission_Engine::can( 0, 'read', $space );
+			remove_filter( 'option_jetonomy_settings', $private );
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'GP1: on a private community a signed-out visitor cannot read even a public space', ! $guest_reads && Permission_Engine::can( 0, 'read', $space ) );
+
+			// OR1-OR2. Older rule is the more generous one, so "newest wins" fails.
+			Space::update( $space, array( 'visibility' => 'private', 'join_policy' => 'approval' ) );
+			AccessRule::create( array( 'space_id' => $space, 'rule_type' => 'logged_in', 'rule_value' => '1', 'grants' => 'participate', 'priority' => 0 ) );
+			AccessRule::create( array( 'space_id' => $space, 'rule_type' => 'role', 'rule_value' => 'subscriber', 'grants' => 'read', 'priority' => 0 ) );
+			AccessRule::reset_memo();
+			$won = AccessRule::resolve_access( $voter, $space );
+			$this->check( 'OR1: when two rules match, the most generous grant wins', 'participate' === ( $won['grants'] ?? '' ), 'got ' . ( $won['grants'] ?? 'none' ) );
+			$dup = method_exists( AccessRule::class, 'duplicate_error' ) ? AccessRule::duplicate_error( $space, 'role', 'subscriber' ) : null;
+			$this->check( 'OR2: a second rule with the same type and value is refused', is_wp_error( $dup ) && null === AccessRule::duplicate_error( $space, 'role', 'editor' ) );
+			$wpdb->delete( table( 'access_rules' ), array( 'space_id' => $space ) );
+			AccessRule::reset_memo();
+
+			// BR1.
+			$ban  = Restriction::ban( $voter, 'space_ban', $this->qa_admin, $space, 'QA 207' );
+			$bans = method_exists( Restriction::class, 'space_bans_for_users' ) ? Restriction::space_bans_for_users( $space, array( $voter, $author ) ) : array();
+			$this->check( 'BR1: the roster sees who is banned from this space, and only them', $ban > 0 && isset( $bans[ $voter ] ) && (int) $bans[ $voter ]->id === $ban && ! isset( $bans[ $author ] ) );
+			if ( $ban > 0 ) {
+				Restriction::remove_ban( $ban );
+			}
+
+			// MN1.
+			$named = $mk( 'jt_qa_207n_' . $suffix, 'subscriber', 'QA Zephyr ' . $suffix );
+			SpaceMember::add( $space, $named, 'member' );
+			$this->check( 'MN1: the public members search matches names, never email addresses', 1 === SpaceMember::count_by_space( $space, 'Zephyr ' . $suffix, true ) && 0 === SpaceMember::count_by_space( $space, 'jt_qa_207n_' . $suffix . '@', true ) );
+		} else {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1' ) as $id ) {
+				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
+			}
+		}
+
+		// LP1: the adapter returns nothing from its catalog, as for a trashed course.
+		$probe = new class() implements \Jetonomy\Adapters\Membership_Adapter {
+			public function is_active(): bool { return true; } // phpcs:ignore
+			public function get_user_levels( int $user_id ): array { return array(); } // phpcs:ignore
+			public function user_has_level( int $user_id, string $level_id ): bool { return false; } // phpcs:ignore
+			public function get_all_levels(): array { return array(); } // phpcs:ignore
+			public function get_level_label( string $level_id ): string { return 'Probe course'; } // phpcs:ignore
+			public function register_hooks(): void {} // phpcs:ignore
+			public function level_prefixes(): array { return array( 'qa207_course_' => 'Course' ); } // phpcs:ignore
+		};
+		\Jetonomy\Adapters\Adapter_Registry::register_membership( 'qa207', $probe );
+		$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( 'qa207_course_9' );
+		$this->check( 'LP1: a level is named and typed by its adapter prefix, even when the catalog omits it', 'Probe course' === $described['value'] && 'Course' === $described['kind'], wp_json_encode( $described ) );
+
+		// SX1.
+		set_transient( 'jt_sitemap_cursors_spaces', array( 'cursors' => array( 1 ) ), HOUR_IN_SECONDS );
+		$sm = (int) Space::create( array( 'title' => 'QA 207 sitemap ' . $suffix, 'slug' => 'qa-207-sm-' . $suffix, 'type' => 'forum' ) );
+		$this->check( 'SX1: a new space drops the cached sitemap so it is listed now', $sm > 0 && false === get_transient( 'jt_sitemap_cursors_spaces' ) );
+
+		// IS1-IS2.
+		$clean = new \ReflectionMethod( \Jetonomy\Import\Importer::class, 'clean_slug' );
+		$clean->setAccessible( true );
+		$this->check( 'IS1: decomposed (NFD) accents fold to plain letters in an imported slug', 'naive-uber' === $clean->invoke( null, "nai\u{0308}ve u\u{0308}ber" ) );
+		if ( method_exists( \Jetonomy\Import\WPForo_Importer::class, 'board_category_slug' ) ) {
+			$board = new \ReflectionMethod( \Jetonomy\Import\WPForo_Importer::class, 'board_category_slug' );
+			$board->setAccessible( true );
+			$taken = array();
+			$a     = $board->invokeArgs( null, array( 'Café', 2, &$taken ) );
+			$b     = $board->invokeArgs( null, array( 'Cafe!', 3, &$taken ) );
+			$c     = $board->invokeArgs( null, array( '???', 4, &$taken ) );
+			$this->check( 'IS2: wpForo boards whose titles clean alike still get their own category', $a !== $b && 'imported-wpforo-board-4' === $c, "{$a} | {$b} | {$c}" );
+		} else {
+			$this->check( 'IS2: wpForo boards whose titles clean alike still get their own category', false, 'no per-board slug helper' );
+		}
+
+		foreach ( array( $sm, $space ) as $id ) {
+			if ( $id > 0 && Space::find( $id ) ) {
+				Space::delete( $id );
+			}
+		}
+		foreach ( $users as $uid ) {
+			wp_delete_user( $uid );
+		}
 	}
 
 	/**

@@ -540,7 +540,7 @@ class Spaces_Handler {
 		if ( ! in_array( $rule_type, $valid_types, true ) ) {
 			wp_send_json_error( __( 'Invalid rule type.', 'jetonomy' ) );
 		}
-		$invalid = AccessRule::value_error( $rule_type, $rule_value );
+		$invalid = AccessRule::value_error( $rule_type, $rule_value ) ?? AccessRule::duplicate_error( $space_id, $rule_type, $rule_value );
 		if ( $invalid ) {
 			wp_send_json_error( $invalid->get_error_message() );
 		}

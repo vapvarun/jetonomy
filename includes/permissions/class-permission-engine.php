@@ -171,7 +171,7 @@ class Permission_Engine {
 	}
 
 	/** Actions a silenced member loses; reading continues. Every space-mod action is included, so a new one cannot escape the silence. */
-	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', ...self::SPACE_MOD_ACTIONS );
+	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'create_space', ...self::SPACE_MOD_ACTIONS );
 
 	/**
 	 * The account restriction that refuses this action, as the error to show the
@@ -208,6 +208,13 @@ class Permission_Engine {
 	 * Internal uncached resolution — called by can().
 	 */
 	private static function resolve( int $user_id, string $action, ?int $space_id ): bool {
+		// Layer 0: a private community admits no signed-out visitor to anything.
+		// Routes that check this themselves were safe; poll, reaction and
+		// attachment reads that only asked can_read_post() were not.
+		if ( ! $user_id && 'private' === \Jetonomy\Visibility::get_mode() ) {
+			return false;
+		}
+
 		// Layer 0: IP ban check.
 		$ip = \Jetonomy\client_ip();
 		if ( $ip && Restriction::is_ip_banned( $ip ) ) {
@@ -359,10 +366,12 @@ class Permission_Engine {
 		}
 		if ( $access ) {
 			// Access rule grants access — check if sufficient for the action.
+			// Member-grade only: 'full' gives an ordinary member what
+			// 'participate' does. Moderation comes from a real space mod role.
 			$grants_map      = array(
 				'read'        => array( 'read' ),
-				'participate' => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' ),
-				'full'        => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'close_posts', 'pin_posts' ),
+				'participate' => self::MEMBER_GRADE_ACTIONS,
+				'full'        => self::MEMBER_GRADE_ACTIONS,
 			);
 			$allowed_actions = $grants_map[ $access['grants'] ] ?? array( 'read' );
 			if ( in_array( $action, $allowed_actions, true ) ) {

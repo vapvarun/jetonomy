@@ -1460,16 +1460,22 @@ const { state, actions } = store( 'jetonomy', {
                 method: 'POST',
                 body: { user_id: parseInt( userId, 10 ), space_id: parseInt( spaceId, 10 ), type: 'space_ban' },
             } );
-            if ( ! res.ok ) { btn.disabled = false; return; }
-            const row = btn.closest( '.jt-member-item' );
-            if ( row ) {
-                row.style.opacity = '0.5';
-                const note = document.createElement( 'span' );
-                note.className = 'jt-member-banned-note';
-                note.textContent = i18n.memberBanned || 'Banned';
-                row.appendChild( note );
+            if ( ! res.ok ) {
+                btn.disabled = false;
+                const row = btn.closest( '.jt-member-item' );
+                const old = row && row.querySelector( '.jt-member-role-error' );
+                if ( old ) old.remove();
+                if ( row ) {
+                    const p = document.createElement( 'p' );
+                    p.className = 'jt-member-role-error';
+                    p.setAttribute( 'role', 'alert' );
+                    p.textContent = ( res.data && res.data.message ) || i18n.banFailed || 'Could not ban this member. Please try again.';
+                    row.appendChild( p );
+                }
+                return;
             }
-            btn.remove();
+            // Reload so the row re-renders server-side: Banned badge + Lift ban.
+            window.location.reload();
         },
 
         // ── Member moderation from a profile (frontend; site moderators) ──

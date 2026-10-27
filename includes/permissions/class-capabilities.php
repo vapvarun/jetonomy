@@ -250,7 +250,10 @@ class Capabilities {
 		 * @param bool $can     Whether the user qualifies.
 		 * @param int  $user_id WP user ID (0 when logged out).
 		 */
-		return (bool) apply_filters( 'jetonomy_can_create_space_frontend', $can, $user_id );
+		$can = (bool) apply_filters( 'jetonomy_can_create_space_frontend', $can, $user_id );
+
+		// A banned or silenced account may not start a space, whatever its role.
+		return $can && null === Permission_Engine::restriction_error( $user_id, 'create_space' );
 	}
 
 	/**

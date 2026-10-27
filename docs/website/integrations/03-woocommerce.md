@@ -20,7 +20,7 @@ The WooCommerce adapter activates only when WooCommerce is active **and** either
 | Gate Type | Supported | Notes |
 |---|---|---|
 | WooCommerce Memberships plan | Yes | Access tracks the membership status (active/paused/cancelled) |
-| WooCommerce Subscription product | Yes | Access active while the subscription is active; revoked on hold, cancel, or expiry |
+| WooCommerce Subscription product | Yes | Access active while the subscription is active, and until the paid term ends after a customer cancels; revoked on hold, at the end of a cancelled term, or on expiry. The gate's buy button links to the product |
 | Variable-subscription product | Yes | Selectable like any other subscription product |
 | Plain Simple product | No | Use a WooCommerce Memberships plan tied to that product instead |
 | Plain Variable product | No | Use a WooCommerce Memberships plan instead |
@@ -53,6 +53,7 @@ For WooCommerce Subscriptions, access tracks the subscription status:
 | Subscription Status | Access |
 |---|---|
 | Active | Granted |
+| Pending cancellation (customer cancelled, term not yet over) | Granted until the term ends |
 | On-hold | Revoked |
 | Cancelled | Revoked |
 | Expired | Revoked |

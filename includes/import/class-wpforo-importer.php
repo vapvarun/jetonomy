@@ -295,6 +295,27 @@ class WPForo_Importer extends Importer {
 	}
 
 	/**
+	 * Category slug for one board of a multi-board import. Built with
+	 * clean_slug() so a title of symbols or emoji never yields a bare
+	 * "imported-wpforo-" or a percent-encoded slug, and made unique per run:
+	 * import_category() adopts an existing category by slug, so two boards
+	 * whose titles clean to the same slug ("Café", "Cafe!") would merge.
+	 *
+	 * @param string   $title    Board title.
+	 * @param int      $board_id wpForo board id.
+	 * @param string[] $taken    Slugs already given to earlier boards this run.
+	 */
+	private static function board_category_slug( string $title, int $board_id, array &$taken ): string {
+		$slug = 'imported-wpforo-' . ( self::clean_slug( $title ) ?: 'board-' . $board_id );
+		if ( in_array( $slug, $taken, true ) ) {
+			$slug .= '-' . $board_id;
+		}
+		$taken[] = $slug;
+
+		return $slug;
+	}
+
+	/**
 	 * Resolve (and cache for the run) the list of wpForo boards to import.
 	 *
 	 * Computed once, on the first batch, then reused — the board list must not be
@@ -318,6 +339,7 @@ class WPForo_Importer extends Importer {
 		$sources = $this->source_boards();
 		$multi   = count( $sources ) > 1;
 		$boards  = array();
+		$taken   = array();
 
 		foreach ( $sources as $src ) {
 			if ( ! $this->table_exists( $src['prefix'] . 'forums' ) ) {
@@ -337,7 +359,7 @@ class WPForo_Importer extends Importer {
 					? sprintf( __( 'Imported from wpForo -- %s', 'jetonomy' ), $src['title'] )
 					: __( 'Imported from wpForo', 'jetonomy' ),
 				'cat_slug' => $multi
-					? 'imported-wpforo-' . sanitize_title( $src['title'] )
+					? self::board_category_slug( (string) $src['title'], (int) $board_id, $taken )
 					: 'imported-wpforo',
 			);
 		}
@@ -414,6 +436,7 @@ class WPForo_Importer extends Importer {
 			);
 		}
 
+		$taken = array();
 		foreach ( $boards as $board ) {
 			$board_id = (int) $board->boardid;
 			$prefix   = $wpdb->prefix . 'wpforo' . ( $board_id ? $board_id . '_' : '_' );
@@ -428,7 +451,7 @@ class WPForo_Importer extends Importer {
 				: __( 'Imported from wpForo', 'jetonomy' );
 
 			$cat_slug = count( $boards ) > 1
-				? 'imported-wpforo-' . sanitize_title( $board->title )
+				? self::board_category_slug( (string) $board->title, $board_id, $taken )
 				: 'imported-wpforo';
 
 			// Every board numbers its rows from 1, so board 1's forum 3 must not

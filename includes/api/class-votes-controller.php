@@ -17,7 +17,6 @@ use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Vote;
 use Jetonomy\Models\UserProfile;
-use Jetonomy\Trust\Reputation;
 
 class Votes_Controller extends Base_Controller {
 
@@ -135,7 +134,7 @@ class Votes_Controller extends Base_Controller {
 			return \Jetonomy\Permissions\Rate_Limiter::error( $user_id, 'vote', $trust );
 		}
 
-		$result = Vote::cast( $user_id, $type, $id, $value );
+		$result = Vote::record( $user_id, $type, $id, $value );
 		if ( is_wp_error( $result ) ) {
 			return new WP_REST_Response(
 				array(
@@ -151,16 +150,6 @@ class Votes_Controller extends Base_Controller {
 		if ( 'removed' !== $result['action'] ) {
 			\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
 		}
-
-		// Fire action for Notifier. Pass the vote value so listeners can tell an
-		// upvote from a downvote — the author should not get an encouraging
-		// "voted on your post" notification when someone downvotes. A toggle-off
-		// passes 0, what actually happened: passing the requested 1 made a
-		// removal look like a new upvote ("0 people voted on ...").
-		do_action( 'jetonomy_after_vote', $type, $id, $user_id, 'removed' === $result['action'] ? 0 : $value );
-
-		// Award or adjust reputation on the object author.
-		$this->maybe_adjust_reputation( $type, $value, $result, (int) $object->author_id, $id );
 
 		// Re-fetch current score.
 		$updated = $this->load_object( $type, $id );
@@ -212,8 +201,9 @@ class Votes_Controller extends Base_Controller {
 			);
 		}
 
-		// Re-casting the same value toggles the vote off (handled in Vote::cast).
-		$result = Vote::cast( $user_id, $type, $id, $existing );
+		// Re-casting the same value toggles the vote off; record() also takes back
+		// the author's reputation and the vote notification, as the POST toggle does.
+		$result = Vote::record( $user_id, $type, $id, $existing );
 		if ( is_wp_error( $result ) ) {
 			return new WP_REST_Response(
 				array(
@@ -256,67 +246,6 @@ class Votes_Controller extends Base_Controller {
 		return $object;
 	}
 
-	/**
-	 * Apply reputation changes to the object author based on the vote result.
-	 *
-	 * Uses Reputation::award() to ensure the `jetonomy_reputation_changed` action
-	 * fires consistently and point values stay centralised.
-	 *
-	 * @param string $type      'post' or 'reply'.
-	 * @param int    $value     The vote value (1 or -1).
-	 * @param array  $result    The result from Vote::cast().
-	 * @param int    $author_id The object author's user ID.
-	 * @param int    $object_id The voted post or reply, logged as the source of the change.
-	 */
-	private function maybe_adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id = 0 ): void {
-		if ( ! $author_id ) {
-			return;
-		}
-
-		$source    = array(
-			'object_type' => $type,
-			'object_id'   => $object_id,
-		);
-		$action    = $result['action'];
-		$old_value = $result['old_value'] ?? null;
-
-		// No reputation change if nothing happened.
-		if ( 'none' === $action ) {
-			return;
-		}
-
-		if ( 'created' === $action ) {
-			// New vote: award via Reputation class.
-			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
-			return;
-		}
-
-		if ( 'removed' === $action ) {
-			// Undo vote: revoke the original award.
-			Reputation::revoke( $author_id, self::reputation_action_for( $type, $value ), $source );
-			return;
-		}
-
-		if ( 'updated' === $action && null !== $old_value ) {
-			// Changed vote direction: revoke old award and apply new one.
-			Reputation::revoke( $author_id, self::reputation_action_for( $type, $old_value ), $source );
-			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
-		}
-	}
-
-	/**
-	 * Map a vote type and direction to a Reputation action key.
-	 *
-	 * @param string $type  'post' or 'reply'.
-	 * @param int    $value 1 (upvote) or -1 (downvote).
-	 * @return string
-	 */
-	private static function reputation_action_for( string $type, int $value ): string {
-		if ( $value > 0 ) {
-			return 'post' === $type ? 'post_upvoted' : 'reply_upvoted';
-		}
-		return 'post' === $type ? 'post_downvoted' : 'reply_downvoted';
-	}
 
 	/**
 	 * Shared args for vote endpoints.

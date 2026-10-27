@@ -637,7 +637,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						$display_value = ! empty( $rule->rule_value ) ? $rule->rule_value : '—';
 						if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
 							$described     = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
-							$display_type  = $described['type'];
+							$display_type  = '' !== $described['kind']
+								/* translators: 1: membership plugin (e.g. LearnDash), 2: what kind of level it is (e.g. Course, Group). */
+								? sprintf( __( '%1$s %2$s', 'jetonomy' ), $described['type'], $described['kind'] )
+								: $described['type'];
 							$display_value = $described['value'];
 						}
 

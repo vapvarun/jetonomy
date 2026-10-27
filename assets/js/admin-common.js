@@ -1000,9 +1000,10 @@
 
 				function renderResults(query) {
 					$results.empty();
-					if (!query || query.length < 1) { $results.hide(); return; }
-					var q = query.toLowerCase();
-					var matches = activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; });
+					// An empty query lists the first levels, so an owner can
+					// see what is on offer before knowing what to type.
+					var q = (query || '').toLowerCase();
+					var matches = q ? activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; }) : activeLevels;
 
 					if (!matches.length) {
 						$results.append($('<div class="jetonomy-ac-empty"/>').text(__('No matches', 'jetonomy')));
@@ -1072,6 +1073,9 @@
 
 				$input.on('input', function() {
 					$hidden.val('');
+					renderResults($(this).val());
+				});
+				$input.on('focus click', function() {
 					renderResults($(this).val());
 				});
 

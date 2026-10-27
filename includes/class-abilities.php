@@ -1404,7 +1404,7 @@ class Abilities {
 			}
 		}
 
-		$result = Vote::cast( $user_id, $object_type, $object_id, $value );
+		$result = Vote::record( $user_id, $object_type, $object_id, $value );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -1420,19 +1420,6 @@ class Abilities {
 		}
 
 		$user_vote = Vote::get_user_vote( $user_id, $object_type, $object_id );
-
-		// 4th arg = the resulting vote value so the Notifier can skip downvotes.
-		/**
-		 * Fires after a vote is cast or changed.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param string $object_type Voted object type: 'post' or 'reply'.
-		 * @param int    $object_id   Voted object ID.
-		 * @param int    $user_id     Voting user ID.
-		 * @param int    $value       Vote value: 1, -1 or 0 when cleared.
-		 */
-		do_action( 'jetonomy_after_vote', $object_type, $object_id, $user_id, (int) $user_vote );
 
 		return array(
 			'vote_score' => $score,

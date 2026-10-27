@@ -346,7 +346,12 @@ abstract class Importer {
 	 * @return string Clean slug; '' when nothing sluggable is left.
 	 */
 	protected static function clean_slug( string $slug ): string {
-		return sanitize_title( (string) preg_replace( '/[^\p{L}\p{M}\p{N}\-]+/u', '-', urldecode( $slug ) ) );
+		// Decomposed (NFD) Latin accents: remove_accents() folds them only when
+		// PHP has intl, and without it they survived as percent-encoded marks
+		// ("nai%cc%88ve"). Dropping a mark after a Latin letter gives the same
+		// ASCII remove_accents() would; marks on other scripts are kept.
+		$slug = (string) preg_replace( '/(\p{Latin})\p{Mn}+/u', '$1', urldecode( $slug ) );
+		return sanitize_title( (string) preg_replace( '/[^\p{L}\p{M}\p{N}\-]+/u', '-', $slug ) );
 	}
 
 	/**

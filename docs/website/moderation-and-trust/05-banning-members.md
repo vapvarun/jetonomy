@@ -61,6 +61,8 @@ The same gate also stops members who have not confirmed their email (pending ver
 
 To remove a ban before it expires, click **Unban** on the member's row (on the Users page or the Banned Users tab). The restriction is cleared and the member can participate again immediately.
 
+Space admins can also ban and unban from the front end. On a space's **Members** page each member row has **Ban from space**; once a member is banned the row shows a **Banned** badge and a **Lift ban** button instead. A banned or silenced account also cannot start a new space, even if its role is allowed to create spaces.
+
 ## When to Ban vs. Act on Content
 
 Reach for a ban only when content-level actions are not enough:

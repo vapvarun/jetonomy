@@ -100,6 +100,17 @@ class PMPro_Adapter implements Membership_Adapter {
 		return $level_id;
 	}
 
+	/**
+	 * Level id prefixes this adapter owns, with the kind each one is.
+	 *
+	 * @return array<string, string>
+	 */
+	public function level_prefixes(): array {
+		return array(
+			'pmpro_' => __( 'Level', 'jetonomy' ),
+		);
+	}
+
 	public function register_hooks(): void {
 		if ( ! $this->is_active() ) {
 			return;

@@ -602,6 +602,47 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * Active bans from one space for a page of users, in one query: the space
+	 * Members list shows who is banned and offers Lift instead of Ban.
+	 *
+	 * @param int   $space_id Space.
+	 * @param int[] $user_ids Users on the page.
+	 * @return array<int,object{id:int,user_id:int,type:string,space_id:int}> Keyed by user id.
+	 */
+	public static function space_bans_for_users( int $space_id, array $user_ids ): array {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
+		if ( ! $space_id || empty( $ids ) ) {
+			return array();
+		}
+
+		// IDs are ints (intval above), safe to inline.
+		$in   = implode( ',', $ids );
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				'SELECT id, user_id, type, space_id FROM ' . static::table() . "
+				WHERE user_id IN ($in)
+				  AND type = 'space_ban'
+				  AND space_id = %d
+				  AND (expires_at IS NULL OR expires_at > %s)",
+				$space_id,
+				now()
+			)
+		);
+
+		$map = array();
+		foreach ( $rows as $row ) {
+			$map[ (int) $row->user_id ] = (object) array(
+				'id'       => (int) $row->id,
+				'user_id'  => (int) $row->user_id,
+				'type'     => 'space_ban',
+				'space_id' => (int) $row->space_id,
+			);
+		}
+
+		return $map;
+	}
+
+	/**
 	 * Lift a restriction by its ID.
 	 *
 	 * @param int $id Restriction row ID.

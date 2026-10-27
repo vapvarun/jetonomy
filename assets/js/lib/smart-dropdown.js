@@ -67,7 +67,11 @@
 
 		function reposition() {
 			if ( ! open || ! triggerEl || ! panelEl ) return;
-			// Show invisibly so we can measure.
+			// Show invisibly so we can measure. A panel still carrying `hidden`
+			// (an Interactivity bind that has not re-rendered yet) measures 0px
+			// wide under the stylesheet's [hidden]{display:none!important}, which
+			// placed it off-screen on first open. It is open, so drop it.
+			panelEl.removeAttribute( 'hidden' );
 			panelEl.style.position = 'fixed';
 			panelEl.style.display = 'block';
 			panelEl.style.visibility = 'hidden';

@@ -55,14 +55,16 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
  */
 $jt_members_per_page = (int) apply_filters( 'jetonomy_space_members_per_page', 25 );
 $jt_members_paged    = \Jetonomy\list_page(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$jt_members_total    = \Jetonomy\Models\SpaceMember::count_by_space( (int) $space->id );
-$jt_members_pages    = max( 1, (int) ceil( $jt_members_total / $jt_members_per_page ) );
+// Name search (?ms=). Display names only: a login can be an email address.
+$jt_members_search = sanitize_text_field( wp_unslash( $_GET['ms'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$jt_members_total  = \Jetonomy\Models\SpaceMember::count_by_space( (int) $space->id, $jt_members_search, true );
+$jt_members_pages  = max( 1, (int) ceil( $jt_members_total / $jt_members_per_page ) );
 if ( $jt_members_paged > $jt_members_pages ) {
 	$jt_members_paged = $jt_members_pages;
 }
 $jt_members_offset = ( $jt_members_paged - 1 ) * $jt_members_per_page;
 $members           = $jt_members_total > 0
-	? \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id, $jt_members_per_page, $jt_members_offset )
+	? \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id, $jt_members_per_page, $jt_members_offset, $jt_members_search, true )
 	: array();
 
 // Batch-fetch WP_User + UserProfile for the page's members up front
@@ -369,13 +371,32 @@ $role_labels = array(
 				</section>
 			<?php endif; ?>
 
+			<?php if ( $jt_members_total > $jt_members_per_page || '' !== $jt_members_search ) : ?>
+				<form method="get" action="<?php echo esc_url( \Jetonomy\route_url( 'space-members', $space->slug ) ); ?>" class="jt-held-filter" role="search">
+					<label for="jt-members-search" class="screen-reader-text">
+						<?php
+						/* translators: %s: plural member label, lowercase. */
+						echo esc_html( sprintf( __( 'Search %s by name', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) );
+						?>
+					</label>
+					<input type="search" id="jt-members-search" name="ms" class="jt-input" value="<?php echo esc_attr( $jt_members_search ); ?>" placeholder="<?php esc_attr_e( 'Search by name', 'jetonomy' ); ?>">
+					<button type="submit" class="jt-btn jt-btn-ghost jt-btn-sm"><?php esc_html_e( 'Search', 'jetonomy' ); ?></button>
+					<?php if ( '' !== $jt_members_search ) : ?>
+						<a class="jt-btn jt-btn-ghost jt-btn-sm" href="<?php echo esc_url( \Jetonomy\route_url( 'space-members', $space->slug ) ); ?>"><?php esc_html_e( 'Clear', 'jetonomy' ); ?></a>
+					<?php endif; ?>
+				</form>
+			<?php endif; ?>
+
 			<?php if ( empty( $members ) ) : ?>
 				<?php
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					array(
 						'icon'    => 'empty-members',
-						'message' => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+						'message' => '' !== $jt_members_search
+							/* translators: %s: plural member label, lowercase. */
+							? sprintf( __( 'No %s match your search.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) )
+							: sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 					)
 				);
 				?>
@@ -384,9 +405,13 @@ $role_labels = array(
 				// Fill the profile:{id} keys once for the page — the
 				// loop below reads UserProfile::find_by_user per row, which
 				// would cost ~50 cold queries per roster page.
-				\Jetonomy\Models\UserProfile::prime(
-					array_map( static fn( $m ) => (int) $m->user_id, $members )
-				);
+				$jt_page_user_ids = array_map( static fn( $m ) => (int) $m->user_id, $members );
+				\Jetonomy\Models\UserProfile::prime( $jt_page_user_ids );
+				// One query each for the page: who is banned from this space
+				// (space admins see Lift instead of Ban), and whom the viewer
+				// has blocked (shown to the viewer only).
+				$jt_space_bans = $viewer_is_sadm ? \Jetonomy\Models\Restriction::space_bans_for_users( (int) $space->id, $jt_page_user_ids ) : array();
+				$jt_blocked    = $viewer_id ? array_flip( \Jetonomy\Models\BlockedUser::blocked_ids( $viewer_id ) ) : array();
 				?>
 				<div class="jt-card jt-card-flush">
 					<?php foreach ( $members as $member ) : ?>
@@ -428,6 +453,11 @@ $role_labels = array(
 									<?php echo esc_html( $role_label ); ?>
 								</span>
 							<?php endif; ?>
+							<?php if ( isset( $jt_blocked[ (int) $member->user_id ] ) ) : ?>
+								<span class="jt-badge jt-member-badge" title="<?php /* translators: %s: the singular member label, lowercase (e.g. member). */ echo esc_attr( sprintf( __( 'You blocked this %s. Unblock from their profile.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?>">
+									<?php esc_html_e( 'Blocked', 'jetonomy' ); ?>
+								</span>
+							<?php endif; ?>
 							<?php if ( $viewer_is_sadm && (int) $member->user_id !== $viewer_id ) : ?>
 								<label class="screen-reader-text" for="jt-member-role-<?php echo absint( $member->user_id ); ?>">
 									<?php
@@ -448,27 +478,41 @@ $role_labels = array(
 										</option>
 									<?php endforeach; ?>
 								</select>
-								<?php
-								// 1.4.0 C.3 — front-end "Ban" affordance for space admins.
-								// Issues a SPACE-scope ban via POST /moderation/ban (with
-								// space_id), so the cap-vs-role gap that blocked space mods
-								// is closed. Site-wide bans / silences stay cap-only.
-								?>
-								<?php
-								// Danger-ghost + x-circle: the identical treatment the
-								// site-wide Ban button carries on the user profile. This
-								// was the only .jt-btn in the plugin with no variant
-								// class, so a destructive action rendered as bare text.
-								?>
-								<button type="button"
-									class="jt-btn jt-btn-ghost jt-btn-danger jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
-									data-space-id="<?php echo absint( $space->id ); ?>"
-									data-user-id="<?php echo absint( $member->user_id ); ?>"
-									data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>">
-									<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
-									<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-									<?php echo esc_html( sprintf( __( 'Ban from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
-								</button>
+								<?php $jt_ban = $jt_space_bans[ (int) $member->user_id ] ?? null; ?>
+								<?php if ( $jt_ban ) : ?>
+									<span class="jt-badge jt-badge-danger jt-member-badge"><?php esc_html_e( 'Banned', 'jetonomy' ); ?></span>
+									<?php if ( null === \Jetonomy\Moderation\Moderation_Permissions::lift_error( $viewer_id, $jt_ban ) ) : ?>
+										<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm"
+											data-wp-on--click="actions.liftRestriction"
+											data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
+											data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>">
+											<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
+											<?php esc_html_e( 'Lift ban', 'jetonomy' ); ?>
+										</button>
+									<?php endif; ?>
+								<?php else : ?>
+									<?php
+									// 1.4.0 C.3 — front-end "Ban" affordance for space admins.
+									// Issues a SPACE-scope ban via POST /moderation/ban (with
+									// space_id), so the cap-vs-role gap that blocked space mods
+									// is closed. Site-wide bans / silences stay cap-only.
+									?>
+									<?php
+									// Danger-ghost + x-circle: the identical treatment the
+									// site-wide Ban button carries on the user profile. This
+									// was the only .jt-btn in the plugin with no variant
+									// class, so a destructive action rendered as bare text.
+									?>
+									<button type="button"
+										class="jt-btn jt-btn-ghost jt-btn-danger jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
+										data-space-id="<?php echo absint( $space->id ); ?>"
+										data-user-id="<?php echo absint( $member->user_id ); ?>"
+										data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>">
+										<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
+										<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+										<?php echo esc_html( sprintf( __( 'Ban from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
+									</button>
+								<?php endif; ?>
 							<?php endif; ?>
 							<?php
 							// Always show reputation, defaulting to 0 when the member
@@ -499,6 +543,9 @@ $role_labels = array(
 				<?php
 				if ( $jt_members_pages > 1 ) :
 					$jt_members_base_url = \Jetonomy\route_url( 'space-members', $space->slug );
+					if ( '' !== $jt_members_search ) {
+						$jt_members_base_url = add_query_arg( 'ms', rawurlencode( $jt_members_search ), $jt_members_base_url );
+					}
 					$jt_members_prev_url = add_query_arg( 'pg', max( 1, $jt_members_paged - 1 ), $jt_members_base_url );
 					$jt_members_next_url = add_query_arg( 'pg', min( $jt_members_pages, $jt_members_paged + 1 ), $jt_members_base_url );
 					?>

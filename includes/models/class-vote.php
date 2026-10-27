@@ -9,6 +9,7 @@ namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Trust\Reputation;
 use function Jetonomy\now;
 use function Jetonomy\table;
 
@@ -24,6 +25,43 @@ class Vote extends Model {
 	 */
 	public static function self_vote_error(): \WP_Error {
 		return new \WP_Error( 'jetonomy_self_vote', __( 'You cannot vote on your own content.', 'jetonomy' ), array( 'status' => 400 ) );
+	}
+
+	/**
+	 * Cast a member's vote and settle what follows from it: the
+	 * `jetonomy_after_vote` action (notifications, activity, webhooks) and the
+	 * author's reputation. REST, the vote toggle-off and the Abilities API all
+	 * go through here, so a removed vote takes back what an added one gave.
+	 * Imports and seeders call cast() directly on purpose.
+	 *
+	 * @param int    $user_id     Voting user.
+	 * @param string $object_type 'post' or 'reply'.
+	 * @param int    $object_id   Target object ID.
+	 * @param int    $value       Vote value (1 or -1).
+	 * @return array{action: string, old_value: int|null}|\WP_Error
+	 */
+	public static function record( int $user_id, string $object_type, int $object_id, int $value ): array|\WP_Error {
+		$result = static::cast( $user_id, $object_type, $object_id, $value );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		/**
+		 * Fires after a vote is cast, changed or removed.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $object_type Voted object type: 'post' or 'reply'.
+		 * @param int    $object_id   Voted object ID.
+		 * @param int    $user_id     Voting user ID.
+		 * @param int    $value       Resulting vote: 1, -1, or 0 when it was removed.
+		 */
+		do_action( 'jetonomy_after_vote', $object_type, $object_id, $user_id, 'removed' === $result['action'] ? 0 : $value );
+
+		$object = 'post' === $object_type ? Post::find( $object_id ) : Reply::find( $object_id );
+		self::adjust_reputation( $object_type, $value, $result, (int) ( $object->author_id ?? 0 ), $object_id );
+
+		return $result;
 	}
 
 	/**
@@ -473,5 +511,67 @@ class Vote extends Model {
 				$object_id
 			)
 		);
+	}
+
+	/**
+	 * Apply reputation changes to the object author based on the vote result.
+	 *
+	 * Uses Reputation::award() to ensure the `jetonomy_reputation_changed` action
+	 * fires consistently and point values stay centralised.
+	 *
+	 * @param string $type      'post' or 'reply'.
+	 * @param int    $value     The vote value (1 or -1).
+	 * @param array  $result    The result from Vote::cast().
+	 * @param int    $author_id The object author's user ID.
+	 * @param int    $object_id The voted post or reply, logged as the source of the change.
+	 */
+	private static function adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id = 0 ): void {
+		if ( ! $author_id ) {
+			return;
+		}
+
+		$source    = array(
+			'object_type' => $type,
+			'object_id'   => $object_id,
+		);
+		$action    = $result['action'];
+		$old_value = $result['old_value'] ?? null;
+
+		// No reputation change if nothing happened.
+		if ( 'none' === $action ) {
+			return;
+		}
+
+		if ( 'created' === $action ) {
+			// New vote: award via Reputation class.
+			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
+			return;
+		}
+
+		if ( 'removed' === $action ) {
+			// Undo vote: revoke the original award.
+			Reputation::revoke( $author_id, self::reputation_action_for( $type, $value ), $source );
+			return;
+		}
+
+		if ( 'updated' === $action && null !== $old_value ) {
+			// Changed vote direction: revoke old award and apply new one.
+			Reputation::revoke( $author_id, self::reputation_action_for( $type, $old_value ), $source );
+			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
+		}
+	}
+
+	/**
+	 * Map a vote type and direction to a Reputation action key.
+	 *
+	 * @param string $type  'post' or 'reply'.
+	 * @param int    $value 1 (upvote) or -1 (downvote).
+	 * @return string
+	 */
+	private static function reputation_action_for( string $type, int $value ): string {
+		if ( $value > 0 ) {
+			return 'post' === $type ? 'post_upvoted' : 'reply_upvoted';
+		}
+		return 'post' === $type ? 'post_downvoted' : 'reply_downvoted';
 	}
 }

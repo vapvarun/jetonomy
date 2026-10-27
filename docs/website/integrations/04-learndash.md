@@ -74,6 +74,9 @@ Anyone who can manage Jetonomy settings can change and save this tab: administra
 | Student un-enrolls or is removed | Removed from linked spaces |
 | User added to group | Added to linked spaces as Member |
 | User removed from group | Removed from linked spaces |
+| Course moved to trash or unpublished | Space access granted by that course ends, as LearnDash itself no longer lets the student in |
+
+Access flows one way, from LearnDash into Jetonomy: adding someone to a space never enrols them in a LearnDash course or group.
 
 Content (posts and replies) remains in the space - only access is revoked.
 
