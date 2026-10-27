@@ -831,8 +831,51 @@ class REST_Tests {
 			$type = (string) wp_remote_retrieve_header( $feed, 'content-type' );
 			$this->check( 'E32: public space feed → 200 RSS', 200 === $code && false !== strpos( $body, '<rss' ), "HTTP {$code}" );
 			$this->check( 'E32: feed content-type is application/rss+xml', false !== strpos( $type, 'application/rss+xml' ), $type );
+
+			// E32b: the feed must parse as XML. A trimmed excerpt ends in
+			// &hellip; and bodies can carry &nbsp;, neither of which XML
+			// defines, so a strict reader (Mailchimp, xmllint) drops the feed.
+			$public_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_spaces WHERE slug = %s", $public_slug ) );
+			$probe     = $this->rest( 'POST', "/spaces/{$public_id}/posts", array(
+				'title'   => 'QA feed probe &amp; more',
+				'content' => '<p>' . str_repeat( 'Teachers write about the past&nbsp;and present. ', 12 ) . '</p>',
+			), $this->admin_id );
+			$probe_id  = (int) ( $probe->get_data()['id'] ?? 0 );
+			$feed      = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $public_slug ) . '/feed/', array( 'timeout' => 10 ) );
+			$prev      = libxml_use_internal_errors( true );
+			$xml_ok    = false !== simplexml_load_string( (string) wp_remote_retrieve_body( $feed ) );
+			$xml_error = $xml_ok ? '' : trim( (string) ( libxml_get_last_error()->message ?? '' ) );
+			libxml_clear_errors();
+			libxml_use_internal_errors( $prev );
+			$this->check( 'E32b: feed with a trimmed excerpt is valid XML', $probe_id > 0 && $xml_ok, $probe_id ? $xml_error : 'probe topic not created' );
+			if ( $probe_id ) {
+				$this->rest( 'DELETE', "/posts/{$probe_id}", array( 'force' => true ), $this->admin_id );
+			}
 		} else {
 			$this->skip( 'E32: space feed', 'no public space' );
+			$this->skip( 'E32b: feed is valid XML', 'no public space' );
+		}
+
+		// UN1: WordPress usernames may hold @ and spaces; by-login must
+		// resolve them (the DM composer and header lookup both call it).
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		foreach ( array( 'qa.ul1@example.com', 'qa ul1 space' ) as $ul1_login ) {
+			$ul1_id = wp_insert_user( array(
+				'user_login' => $ul1_login,
+				'user_pass'  => wp_generate_password(),
+				'user_email' => 'ul1-' . md5( $ul1_login ) . '@example.com',
+			) );
+			if ( is_wp_error( $ul1_id ) ) {
+				$this->skip( "UN1: by-login '{$ul1_login}'", $ul1_id->get_error_message() );
+				continue;
+			}
+			$r = $this->rest( 'GET', '/users/by-login/' . rawurlencode( $ul1_login ), array(), $this->admin_id );
+			$this->check( "UN1: by-login resolves '{$ul1_login}'", 200 === $r->get_status() && (int) ( $r->get_data()['id'] ?? 0 ) === $ul1_id, "HTTP {$r->get_status()}" );
+			// UN2: the header hover card passes the /u/{nicename} slug instead.
+			$nicename = (string) get_userdata( $ul1_id )->user_nicename;
+			$r        = $this->rest( 'GET', '/users/by-login/' . rawurlencode( $nicename ), array(), $this->admin_id );
+			$this->check( "UN2: by-login resolves the profile slug '{$nicename}'", 200 === $r->get_status() && (int) ( $r->get_data()['id'] ?? 0 ) === $ul1_id, "HTTP {$r->get_status()}" );
+			wp_delete_user( $ul1_id );
 		}
 
 		// SF1. Filter-only search (1.9.7). The advanced filters describe topics,

@@ -266,10 +266,13 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 2.0.6 - October 2026 =
 
-Updates and licence checks now use a dedicated update server, with the main site as an automatic fallback.
+Updates and licence checks now use a dedicated update server, plus fixes for space feeds, member lookups and dates.
 
 * Improve  - Plugin updates and licence checks go to updates.wbcomdesigns.com, and fall back to wbcomdesigns.com on their own if it cannot be reached.
 * Improve  - The free licence activation and integration installs use the same update server and fallback.
+* Fix      - Space RSS feeds are valid XML again when a topic excerpt is shortened, so Mailchimp and other feed readers import them.
+* Fix      - Members whose username is an email address or contains a space can be found for messages and profile cards.
+* Fix      - Join dates on profiles and space member lists show in the site timezone.
 * Dev      - Updated the bundled licensing library; when several plugins bundle it, the newest copy runs.
 * Dev      - The test suite never contacts the live store.
 * Compat   - Aligned with Jetonomy Pro 2.0.6. Install both updates together.

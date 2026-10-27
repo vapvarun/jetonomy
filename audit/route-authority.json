@@ -426,7 +426,7 @@
       "observed_anon": 200,
       "probe": "user"
     },
-    "GET /jetonomy/v1/users/by-login/(?P<login>[a-zA-Z0-9_\\-\\.]+)": {
+    "GET /jetonomy/v1/users/by-login/(?P<login>[^/]+)": {
       "audience": "public",
       "permission_callback": "Visibility::rest_check",
       "reason": "Guest reading on. Observed signed out: 200 with the same public profile as /users/{id}, looked up by login.",

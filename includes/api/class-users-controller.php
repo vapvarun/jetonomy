@@ -79,10 +79,11 @@ class Users_Controller extends Base_Controller {
 			)
 		);
 
-		// Public profile by login (username).
+		// Public profile by login (username). WordPress usernames may hold
+		// @ and spaces, so match any segment; get_by_login() sanitizes it.
 		register_rest_route(
 			$ns,
-			'/users/by-login/(?P<login>[a-zA-Z0-9_\-\.]+)',
+			'/users/by-login/(?P<login>[^/]+)',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_by_login' ),
@@ -458,9 +459,12 @@ class Users_Controller extends Base_Controller {
 	 * GET /users/by-login/{login} — Return a public profile by username.
 	 */
 	public function get_by_login( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$login = sanitize_user( $request->get_param( 'login' ) );
-
-		$wp_user = get_user_by( 'login', $login );
+		// REST path segments arrive still URL-encoded (@ as %40, space as %20),
+		// and sanitize_user() strips octets, so decode before sanitizing. The
+		// header hover card passes the /u/{nicename} slug, which differs from
+		// the login for usernames like name@example.com, so fall back to it.
+		$raw     = (string) $request->get_param( 'login' );
+		$wp_user = get_user_by( 'login', sanitize_user( rawurldecode( $raw ) ) ) ?: \Jetonomy\profile_user( $raw );
 		if ( ! $wp_user ) {
 			return $this->not_found( 'User' );
 		}

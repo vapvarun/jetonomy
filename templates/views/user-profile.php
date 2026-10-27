@@ -85,9 +85,8 @@ $jt_space_by_slug       = function ( $slug ) use ( &$jt_profile_space_cache ) {
 $wp_date_format = get_option( 'date_format' );
 $wp_time_format = get_option( 'time_format' );
 
-$joined = $profile && $profile->created_at
-	? date_i18n( $wp_date_format, strtotime( $profile->created_at ) )
-	: date_i18n( $wp_date_format, strtotime( $user->user_registered ) );
+// Both columns are UTC; show the date in the site timezone.
+$joined = get_date_from_gmt( (string) ( $profile && $profile->created_at ? $profile->created_at : $user->user_registered ), $wp_date_format );
 
 // Recent posts by this user (paginated).
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
