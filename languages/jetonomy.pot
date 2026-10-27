@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-26T21:29:45+00:00\n"
+"POT-Creation-Date: 2026-10-27T05:52:30+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -866,9 +866,9 @@ msgstr ""
 #: templates/views/notifications.php:317
 #: templates/views/search.php:381
 #: templates/views/single-post.php:558
-#: templates/views/user-profile.php:437
-#: templates/views/user-profile.php:566
-#: templates/views/user-profile.php:690
+#: templates/views/user-profile.php:436
+#: templates/views/user-profile.php:565
+#: templates/views/user-profile.php:689
 #, php-format
 msgid "%s ago"
 msgstr ""
@@ -2699,7 +2699,7 @@ msgstr ""
 #: includes/admin/views/users.php:181
 #: includes/admin/views/users.php:268
 #: includes/class-template-loader.php:462
-#: templates/views/user-profile.php:238
+#: templates/views/user-profile.php:237
 msgid "Silence"
 msgstr ""
 
@@ -2726,7 +2726,7 @@ msgstr ""
 #: includes/class-template-loader.php:465
 #: includes/class-template-loader.php:466
 #: templates/views/moderation.php:385
-#: templates/views/user-profile.php:227
+#: templates/views/user-profile.php:226
 #: assets/js/admin-common.js:45
 msgid "Lift restriction"
 msgstr ""
@@ -3301,7 +3301,7 @@ msgstr ""
 #: includes/admin/views/users.php:126
 #: includes/class-privacy.php:467
 #: includes/integrations/class-buddypress.php:1100
-#: templates/views/user-profile.php:279
+#: templates/views/user-profile.php:278
 msgid "Reputation"
 msgstr ""
 
@@ -5055,8 +5055,8 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:856
 #: includes/class-privacy.php:379
-#: templates/views/user-profile.php:174
-#: templates/views/user-profile.php:182
+#: templates/views/user-profile.php:173
+#: templates/views/user-profile.php:181
 msgid "Message"
 msgstr ""
 
@@ -5331,7 +5331,7 @@ msgstr ""
 
 #: includes/admin/views/users.php:178
 #: includes/class-template-loader.php:452
-#: templates/views/user-profile.php:247
+#: templates/views/user-profile.php:246
 #: assets/js/admin-common.js:46
 msgid "Ban"
 msgstr ""
@@ -5525,7 +5525,7 @@ msgstr ""
 #: templates/partials/reply-card.php:287
 #: templates/views/single-post.php:747
 #: templates/views/single-post.php:748
-#: templates/views/user-profile.php:200
+#: templates/views/user-profile.php:199
 msgid "Report"
 msgstr ""
 
@@ -5948,31 +5948,31 @@ msgstr ""
 msgid "The `id` parameter is required for space or post scope."
 msgstr ""
 
-#: includes/api/class-users-controller.php:550
+#: includes/api/class-users-controller.php:554
 msgid "Choose a display name from your own name fields."
 msgstr ""
 
-#: includes/api/class-users-controller.php:569
+#: includes/api/class-users-controller.php:573
 msgid "You do not have permission to upload a profile picture."
 msgstr ""
 
-#: includes/api/class-users-controller.php:689
+#: includes/api/class-users-controller.php:693
 msgid "Site administrators can't delete their account from the app. Use the WordPress admin Users screen instead."
 msgstr ""
 
-#: includes/api/class-users-controller.php:697
+#: includes/api/class-users-controller.php:701
 msgid "Too many attempts. Please wait a while and try again."
 msgstr ""
 
-#: includes/api/class-users-controller.php:713
+#: includes/api/class-users-controller.php:717
 msgid "Type DELETE to confirm you want to permanently delete your account."
 msgstr ""
 
-#: includes/api/class-users-controller.php:728
+#: includes/api/class-users-controller.php:732
 msgid "That password is incorrect."
 msgstr ""
 
-#: includes/api/class-users-controller.php:772
+#: includes/api/class-users-controller.php:776
 msgid "We couldn't delete your account. Please try again or contact support."
 msgstr ""
 
@@ -6402,7 +6402,7 @@ msgstr ""
 #: includes/class-blocks.php:734
 #: templates/views/edit-profile.php:38
 #: templates/views/edit-profile.php:49
-#: templates/views/user-profile.php:169
+#: templates/views/user-profile.php:168
 msgid "Edit Profile"
 msgstr ""
 
@@ -6725,8 +6725,8 @@ msgstr ""
 #: templates/views/single-post.php:1023
 #: templates/views/space-members.php:378
 #: templates/views/space.php:458
-#: templates/views/user-profile.php:390
-#: templates/views/user-profile.php:654
+#: templates/views/user-profile.php:389
+#: templates/views/user-profile.php:653
 #, php-format
 msgid "No %s yet."
 msgstr ""
@@ -6767,8 +6767,8 @@ msgstr ""
 
 #. translators: %d: trust level number (0-5).
 #: includes/class-shortcodes.php:487
-#: templates/views/user-profile.php:160
-#: templates/views/user-profile.php:292
+#: templates/views/user-profile.php:159
+#: templates/views/user-profile.php:291
 #, php-format
 msgid "Trust level %d"
 msgstr ""
@@ -7980,7 +7980,7 @@ msgstr ""
 
 #: includes/integrations/class-buddypress.php:958
 #: includes/integrations/class-fluent-community.php:944
-#: templates/views/user-profile.php:341
+#: templates/views/user-profile.php:340
 msgid "Bookmarks"
 msgstr ""
 
@@ -7994,7 +7994,7 @@ msgstr ""
 #. translators: %s: singular reply label.
 #: includes/integrations/class-buddypress.php:1040
 #: templates/partials/composer.php:98
-#: templates/views/user-profile.php:411
+#: templates/views/user-profile.php:410
 #, php-format
 msgid "Private %s"
 msgstr ""
@@ -10029,7 +10029,7 @@ msgid "More publishing options"
 msgstr ""
 
 #: templates/partials/compose-fields.php:262
-#: templates/views/user-profile.php:572
+#: templates/views/user-profile.php:571
 msgid "Publish now"
 msgstr ""
 
@@ -10717,7 +10717,7 @@ msgid "%s you have saved as drafts. Pick one up where you left off."
 msgstr ""
 
 #: templates/views/drafts.php:65
-#: templates/views/user-profile.php:504
+#: templates/views/user-profile.php:503
 msgid "No drafts yet."
 msgstr ""
 
@@ -10850,7 +10850,7 @@ msgstr ""
 
 #. translators: %s: member display name.
 #: templates/views/edit-profile.php:275
-#: templates/views/user-profile.php:204
+#: templates/views/user-profile.php:203
 #, php-format
 msgid "Unblock %s"
 msgstr ""
@@ -11348,7 +11348,7 @@ msgid "Unread"
 msgstr ""
 
 #: templates/views/notifications.php:117
-#: templates/views/user-profile.php:335
+#: templates/views/user-profile.php:334
 msgid "Votes"
 msgstr ""
 
@@ -11903,7 +11903,7 @@ msgstr ""
 
 #. translators: %s: join date.
 #: templates/views/space-members.php:422
-#: templates/views/user-profile.php:266
+#: templates/views/user-profile.php:265
 #, php-format
 msgid "Joined %s"
 msgstr ""
@@ -12161,107 +12161,107 @@ msgid "Tag pagination"
 msgstr ""
 
 #. translators: %s: member display name.
-#: templates/views/user-profile.php:195
+#: templates/views/user-profile.php:194
 #, php-format
 msgid "More actions for %s"
 msgstr ""
 
 #. translators: %s: member display name.
-#: templates/views/user-profile.php:209
+#: templates/views/user-profile.php:208
 #, php-format
 msgid "Block %s?"
 msgstr ""
 
 #. translators: 1: plural topic label, lowercase, 2: plural reply label, lowercase.
-#: templates/views/user-profile.php:210
+#: templates/views/user-profile.php:209
 #, php-format
 msgid "Their %1$s and %2$s will be hidden from you, and they will not be able to message you. They are not told. You can unblock them at any time from your profile settings."
 msgstr ""
 
 #. translators: 1: plural topic label, lowercase, 2: plural reply label, lowercase.
-#: templates/views/user-profile.php:211
+#: templates/views/user-profile.php:210
 msgid "Block"
 msgstr ""
 
 #. translators: %s: member display name.
-#: templates/views/user-profile.php:211
+#: templates/views/user-profile.php:210
 #, php-format
 msgid "Block %s"
 msgstr ""
 
-#: templates/views/user-profile.php:225
+#: templates/views/user-profile.php:224
 msgid "Lift this restriction"
 msgstr ""
 
 #. translators: %s: singular member label.
-#: templates/views/user-profile.php:236
+#: templates/views/user-profile.php:235
 #, php-format
 msgid "Silence this %s"
 msgstr ""
 
 #. translators: %s: singular member label.
-#: templates/views/user-profile.php:245
+#: templates/views/user-profile.php:244
 #, php-format
 msgid "Ban this %s from the community"
 msgstr ""
 
 #. translators: 1: singular member label, lowercase, 2: plural topic label, lowercase, 3: plural reply label, lowercase.
-#: templates/views/user-profile.php:254
+#: templates/views/user-profile.php:253
 #, php-format
 msgid "You blocked this %1$s. Their %2$s and %3$s are hidden from you."
 msgstr ""
 
-#: templates/views/user-profile.php:345
+#: templates/views/user-profile.php:344
 msgid "Drafts"
 msgstr ""
 
 #. translators: %s: plural reply label.
-#: templates/views/user-profile.php:389
+#: templates/views/user-profile.php:388
 #, php-format
 msgid "You have not replied to anything yet. Jump into a discussion and your %s will show here."
 msgstr ""
 
 #. translators: %s: post title
-#: templates/views/user-profile.php:427
+#: templates/views/user-profile.php:426
 #, php-format
 msgid "on %s"
 msgstr ""
 
 #. translators: 1: plural topic label; 2: plural reply label.
-#: templates/views/user-profile.php:454
+#: templates/views/user-profile.php:453
 #, php-format
 msgid "You have not voted yet. Upvote %1$s and %2$s you find helpful and they will show here."
 msgstr ""
 
 #. translators: 1: plural topic label; 2: plural reply label.
-#: templates/views/user-profile.php:455
+#: templates/views/user-profile.php:454
 msgid "No votes yet."
 msgstr ""
 
 #. translators: %s: human-readable time difference.
-#: templates/views/user-profile.php:488
+#: templates/views/user-profile.php:487
 #, php-format
 msgid "voted %s ago"
 msgstr ""
 
 #. translators: %s: scheduled date/time
-#: templates/views/user-profile.php:548
+#: templates/views/user-profile.php:547
 #, php-format
 msgid "Scheduled: %s"
 msgstr ""
 
-#: templates/views/user-profile.php:552
+#: templates/views/user-profile.php:551
 msgid "Draft"
 msgstr ""
 
 #. translators: %s: plural topic label.
-#: templates/views/user-profile.php:587
+#: templates/views/user-profile.php:586
 #, php-format
 msgid "No bookmarks yet. Bookmark %s to find them here later."
 msgstr ""
 
 #. translators: %s: human-readable time difference.
-#: templates/views/user-profile.php:639
+#: templates/views/user-profile.php:638
 #, php-format
 msgid "saved %s ago"
 msgstr ""
