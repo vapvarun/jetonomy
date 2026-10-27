@@ -75,13 +75,13 @@ class Feed {
 		?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-	<title><?php echo esc_html( wp_specialchars_decode( (string) $space->title, ENT_QUOTES ) . ' – ' . get_bloginfo( 'name' ) ); ?></title>
+	<title><?php echo esc_xml( wp_specialchars_decode( (string) $space->title, ENT_QUOTES ) . ' – ' . get_bloginfo( 'name' ) ); ?></title>
 	<link><?php echo esc_url( $space_url ); ?></link>
 	<atom:link href="<?php echo esc_url( $self_url ); ?>" rel="self" type="application/rss+xml" />
-	<description><?php echo esc_html( wp_strip_all_tags( (string) ( $space->description ?? '' ) ) ); ?></description>
-	<language><?php echo esc_html( get_bloginfo( 'language' ) ); ?></language>
-	<lastBuildDate><?php echo esc_html( mysql2date( 'r', $newest, false ) ); ?></lastBuildDate>
-	<generator>Jetonomy <?php echo esc_html( JETONOMY_VERSION ); ?></generator>
+	<description><?php echo esc_xml( wp_strip_all_tags( (string) ( $space->description ?? '' ) ) ); ?></description>
+	<language><?php echo esc_xml( get_bloginfo( 'language' ) ); ?></language>
+	<lastBuildDate><?php echo esc_xml( mysql2date( 'r', $newest, false ) ); ?></lastBuildDate>
+	<generator>Jetonomy <?php echo esc_xml( JETONOMY_VERSION ); ?></generator>
 		<?php foreach ( $posts as $post ) : ?>
 			<?php
 			$post_url = route_url( 'post', rawurlencode( (string) $space->slug ), rawurlencode( (string) $post->slug ) );
@@ -89,12 +89,12 @@ class Feed {
 			$excerpt  = wp_trim_words( (string) ( $post->content_plain ?? \jetonomy_content_to_plain( (string) $post->content ) ), 55 );
 			?>
 	<item>
-		<title><?php echo esc_html( wp_specialchars_decode( (string) $post->title, ENT_QUOTES ) ); ?></title>
+		<title><?php echo esc_xml( wp_specialchars_decode( (string) $post->title, ENT_QUOTES ) ); ?></title>
 		<link><?php echo esc_url( $post_url ); ?></link>
 		<guid isPermaLink="true"><?php echo esc_url( $post_url ); ?></guid>
-		<pubDate><?php echo esc_html( mysql2date( 'r', (string) $post->created_at, false ) ); ?></pubDate>
-		<dc:creator><?php echo esc_html( '' !== $display['name'] ? $display['name'] : \Jetonomy\jetonomy_label( 'member' ) ); ?></dc:creator>
-		<description><?php echo esc_html( $excerpt ); ?></description>
+		<pubDate><?php echo esc_xml( mysql2date( 'r', (string) $post->created_at, false ) ); ?></pubDate>
+		<dc:creator><?php echo esc_xml( '' !== $display['name'] ? $display['name'] : \Jetonomy\jetonomy_label( 'member' ) ); ?></dc:creator>
+		<description><?php echo esc_xml( $excerpt ); ?></description>
 	</item>
 <?php endforeach; ?>
 </channel>

@@ -475,7 +475,7 @@
         "audit_notes": "Get user profile (public). 1.4.1 A11: wrapped with Visibility::rest_check - responds 401 in private mode. Note: PATCH for users is on /users/me only, not the numeric-ID route."
       },
       {
-        "route": "/users/by-login/(?P<login>[a-zA-Z0-9_\\-\\.]+)",
+        "route": "/users/by-login/(?P<login>[^/]+)",
         "methods": [
           "GET"
         ],
