@@ -465,6 +465,13 @@ class Template_Loader {
 					'liftConfirmFormat'      => __( 'Lift the restriction on %s? They regain full access right away.', 'jetonomy' ),
 					'liftTitle'              => __( 'Lift restriction', 'jetonomy' ),
 					'liftLabel'              => __( 'Lift restriction', 'jetonomy' ),
+					/* translators: %s: member display name. */
+					'bannedFormat'           => __( '%s has been banned.', 'jetonomy' ),
+					/* translators: %s: member display name. */
+					'silencedFormat'         => __( '%s has been silenced.', 'jetonomy' ),
+					/* translators: %s: member display name. */
+					'liftedFormat'           => __( 'The restriction on %s has been lifted.', 'jetonomy' ),
+					'liftFailed'             => __( 'Could not lift the restriction. Please try again.', 'jetonomy' ),
 					// 1.6.1 i18n sweep - role-change + deny-join confirm dialogs (view.js reads
 					// window.jetonomyData.i18n outside the IA store; these were never injected).
 					/* translators: %name%, %from%, %to% are replaced client-side. */

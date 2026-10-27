@@ -61,6 +61,7 @@ class Spaces_Handler {
 		add_action( 'wp_ajax_jetonomy_add_access_rule', array( $this, 'ajax_add_access_rule' ) );
 		add_action( 'wp_ajax_jetonomy_delete_access_rule', array( $this, 'ajax_delete_access_rule' ) );
 		add_action( 'wp_ajax_jetonomy_sync_access_rule', array( $this, 'ajax_sync_access_rule' ) );
+		add_action( 'wp_ajax_jetonomy_search_membership_levels', array( $this, 'ajax_search_membership_levels' ) );
 		// Join Requests AJAX
 		add_action( 'wp_ajax_jetonomy_approve_join_request', array( $this, 'ajax_approve_join_request' ) );
 		add_action( 'wp_ajax_jetonomy_deny_join_request', array( $this, 'ajax_deny_join_request' ) );
@@ -608,6 +609,19 @@ class Spaces_Handler {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Access rule deleted.', 'jetonomy' ) ) );
+	}
+
+	/**
+	 * Search one membership adapter's levels for the Access Rules picker.
+	 */
+	public function ajax_search_membership_levels(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+		$adapter = sanitize_key( wp_unslash( $_POST['adapter'] ?? '' ) );
+		$query   = sanitize_text_field( wp_unslash( $_POST['q'] ?? '' ) );
+		wp_send_json_success( \Jetonomy\Adapters\Adapter_Registry::search_levels( $adapter, $query ) );
 	}
 
 	/**

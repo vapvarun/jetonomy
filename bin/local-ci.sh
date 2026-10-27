@@ -7,7 +7,7 @@
 #
 # Usage:
 #   bin/local-ci.sh                    # default: stan + cs + unit tests (fast, ~30s after wp-env warm)
-#   bin/local-ci.sh --combo            # add free+pro integration suite (slower, ~5 min)
+#   bin/local-ci.sh --no-combo         # skip the free+pro integration suite (on by default when ../jetonomy-pro exists)
 #   bin/local-ci.sh --no-stan          # skip phpstan (it's the slowest)
 #   bin/local-ci.sh --bootstrap        # one-time: composer install + npm install + wp-env start
 #   bin/local-ci.sh --browser          # add Playwright smoke (requires MCP playwright)
@@ -17,7 +17,7 @@
 #   2. PHPStan free + pro (level 5/6, baselines honoured)
 #   3. WPCS free + pro (staged or full)
 #   4. PHPUnit unit suite (must be 100% green)
-#   5. PHPUnit combo (free+pro) — flagged but not blocking until rot is cleared
+#   5. PHPUnit combo (free+pro) — on by default; it went unrun and red from 2.0.5 to 2.0.7 while opt-in
 #   6. (optional) Playwright browser smoke
 #
 # Why not just run composer test? composer test runs PHPUnit only. This wraps
@@ -35,12 +35,13 @@ cd "$ROOT"
 DO_STAN=1
 DO_CS=1
 DO_UNIT=1
-DO_COMBO=0
+DO_COMBO=$([ -n "$PRO" ] && echo 1 || echo 0)
 DO_BOOTSTRAP=0
 DO_BROWSER=0
 for arg in "$@"; do
     case "$arg" in
         --combo)     DO_COMBO=1 ;;
+        --no-combo)  DO_COMBO=0 ;;
         --no-stan)   DO_STAN=0 ;;
         --no-cs)     DO_CS=0 ;;
         --no-unit)   DO_UNIT=0 ;;

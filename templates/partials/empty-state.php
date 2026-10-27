@@ -46,6 +46,12 @@ $jt_es_variant     = isset( $variant ) && 'compact' === $variant ? 'compact' : '
 $jt_es_sec_label   = isset( $secondary_label ) ? (string) $secondary_label : '';
 $jt_es_sec_url     = isset( $secondary_url ) ? (string) $secondary_url : '';
 
+// A 404 page is never a dead end: every "not found" view gets a way back.
+if ( '' === $jt_es_cta_url && 404 === http_response_code() ) {
+	$jt_es_cta_label = __( 'Back to the community', 'jetonomy' );
+	$jt_es_cta_url   = \Jetonomy\base_url();
+}
+
 if ( 'forbidden' === $jt_es_tone && 'help-circle' === $jt_es_icon ) {
 	$jt_es_icon      = 'lock';
 	$jt_es_icon_size = 48;

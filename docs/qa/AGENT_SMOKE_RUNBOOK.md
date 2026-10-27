@@ -2315,7 +2315,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 - `e-pro-license-and-lockstep.9` @admin #admin: the updater queries the Pro product endpoint, -> reports the installed version, and offers a newer version when the store has one; the free updater is not confused by it.
 - `e-pro-license-and-lockstep.10` @admin #admin +old-data: updating only one plugin's zip -> either prevented or a drift warning appears in the admin; the site does not fatal.
 - `e-pro-license-and-lockstep.11` @admin #admin: multisite: a newly created sub-site -> gets the Pro tables (`wp_N_jt_polls`, `jt_conversations`...), and the network-activated licence applies per the multisite rule.
-- `e-pro-license-and-lockstep.12` @admin #admin: delete Pro with "remove data" off -> everything kept; on -> Pro tables, options, cron/Action Scheduler jobs and the licence check are removed and nothing of free's data is touched.
+- `e-pro-license-and-lockstep.12` @admin #admin: delete Pro with "remove data" off -> everything kept; on -> Pro tables, options, cron/Action Scheduler jobs and the licence check are removed and nothing of free's data is touched. `jetonomy-pro_license_grace_started` stays by design, so a reinstall cannot restart the 30-day grace window.
 - `e-pro-license-and-lockstep.13` @admin #admin +390: the License screen at 1440 and 390 -> shows key, status and buttons without overflow and with token colours in dark mode.
 - `e-pro-license-and-lockstep.14` @member #rest !refuse: bob `GET/POST` any license endpoint or the admin-post action -> 403; the key never appears in any REST response or page source.
 **Depth note:** needs a valid Jetonomy Pro licence key against the live EDD store and a multisite install for check 11.

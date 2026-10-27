@@ -1291,6 +1291,13 @@
       "purpose": "Delete space access rule"
     },
     {
+      "action": "jetonomy_search_membership_levels",
+      "handler": "Admin\\Ajax\\Spaces_Handler::search_membership_levels",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Search one membership adapter's levels for the Access Rules picker"
+    },
+    {
       "action": "jetonomy_delete_category",
       "handler": "Admin\\Ajax\\Categories_Handler::delete",
       "nonce": "jetonomy_admin",

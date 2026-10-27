@@ -31,6 +31,17 @@
 		};
 	}
 
+	// A toast parked before a reload (window.jtReloadWithToast) shows on this load.
+	try {
+		var parked = window.sessionStorage.getItem('jetonomyToast');
+		if (parked) {
+			window.sessionStorage.removeItem('jetonomyToast');
+			window.bnToast(parked);
+		}
+	} catch (e) {
+		// Storage blocked (private mode): nothing was parked.
+	}
+
 	// Controls the viewer may not use (e.g. voting without the permission)
 	// explain themselves on click instead of doing nothing.
 	document.addEventListener('click', function (e) {

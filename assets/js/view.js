@@ -818,6 +818,25 @@ async function appendNewReply( newId ) {
  * @param {number|string} newId Reply id from the create response.
  * @return {string}
  */
+// Ban, silence and lift all end here: a failure says why and keeps the page;
+// a success reloads (the server re-renders badge + controls) and confirms it.
+function moderationDone( btn, res, okMsg, failMsg ) {
+    if ( ! res.ok ) {
+        btn.disabled = false;
+        const msg = ( res.data && res.data.message ) || failMsg || 'Something went wrong. Please try again.';
+        if ( window.bnToast ) {
+            window.bnToast( msg, 'error' );
+        }
+        return;
+    }
+    try {
+        window.sessionStorage.setItem( 'jetonomyToast', okMsg );
+    } catch ( e ) {
+        // Storage blocked: the reload still shows the new state, just without the toast.
+    }
+    window.location.reload();
+}
+
 function lastReplyPageUrl( newId ) {
     const list    = document.getElementById( 'jt-replies-container' );
     const perPage = parseInt( list?.dataset.perPage, 10 );
@@ -1460,22 +1479,8 @@ const { state, actions } = store( 'jetonomy', {
                 method: 'POST',
                 body: { user_id: parseInt( userId, 10 ), space_id: parseInt( spaceId, 10 ), type: 'space_ban' },
             } );
-            if ( ! res.ok ) {
-                btn.disabled = false;
-                const row = btn.closest( '.jt-member-item' );
-                const old = row && row.querySelector( '.jt-member-role-error' );
-                if ( old ) old.remove();
-                if ( row ) {
-                    const p = document.createElement( 'p' );
-                    p.className = 'jt-member-role-error';
-                    p.setAttribute( 'role', 'alert' );
-                    p.textContent = ( res.data && res.data.message ) || i18n.banFailed || 'Could not ban this member. Please try again.';
-                    row.appendChild( p );
-                }
-                return;
-            }
             // Reload so the row re-renders server-side: Banned badge + Lift ban.
-            window.location.reload();
+            moderationDone( btn, res, ( i18n.bannedFormat || '%s has been banned.' ).replace( '%s', name || '' ), i18n.banFailed );
         },
 
         // ── Member moderation from a profile (frontend; site moderators) ──
@@ -1507,9 +1512,8 @@ const { state, actions } = store( 'jetonomy', {
                 method: 'POST',
                 body: { user_id: parseInt( userId, 10 ), type },
             } );
-            if ( ! res.ok ) { btn.disabled = false; return; }
             // Reload so the profile re-renders the badge + Lift control server-side.
-            window.location.reload();
+            moderationDone( btn, res, ( isSilence ? ( i18n.silencedFormat || '%s has been silenced.' ) : ( i18n.bannedFormat || '%s has been banned.' ) ).replace( '%s', name || '' ), i18n.banFailed );
         },
         *liftRestriction() {
             const btn = getElement().ref;
@@ -1526,8 +1530,7 @@ const { state, actions } = store( 'jetonomy', {
 
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/moderation/ban/' + parseInt( rid, 10 ), { method: 'DELETE' } );
-            if ( ! res.ok ) { btn.disabled = false; return; }
-            window.location.reload();
+            moderationDone( btn, res, ( i18n.liftedFormat || 'The restriction on %s has been lifted.' ).replace( '%s', name || '' ), i18n.liftFailed );
         },
 
         // ── My Subscriptions page ──

@@ -608,7 +608,7 @@ class AccessRule extends Model {
 	 *
 	 * @param int $user_id  Viewer ID (0 = guest).
 	 * @param int $space_id Space ID.
-	 * @return array<int, array{level_id:string, name:string, type:string, label:string, url:string}>
+	 * @return array<int, array{level_id:string, name:string, type:string, kind:string, label:string, url:string}>
 	 */
 	public static function unmet_membership_requirements( int $user_id, int $space_id ): array {
 		if ( $space_id <= 0 ) {
@@ -639,6 +639,7 @@ class AccessRule extends Model {
 				'level_id' => (string) $rule->rule_value,
 				'name'     => $described['value'],
 				'type'     => $described['type'],
+				'kind'     => $described['kind'],
 				'label'    => '' !== $described['kind']
 					/* translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group). */
 					? sprintf( __( '%1$s (%2$s)', 'jetonomy' ), $described['value'], $described['kind'] )

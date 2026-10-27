@@ -42,10 +42,11 @@ class RouteAuthorityProTest extends WP_UnitTestCase {
 		if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) {
 			$this->markTestSkipped( 'Jetonomy Pro is not active.' );
 		}
+		// Boot every extension: which ones booted at load depends on the
+		// toggle and license state then, not now. WP_UnitTestCase restores
+		// hooks after each test, so the extra boot does not leak.
 		foreach ( \Jetonomy_Pro::instance()->get_extensions() as $extension ) {
-			if ( ! $extension->is_enabled() ) {
-				$extension->boot();
-			}
+			$extension->boot();
 		}
 	}
 

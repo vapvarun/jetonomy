@@ -74,7 +74,7 @@ Example: gate a "Premium VIP" space to either MemberPress VIP level OR a specifi
 
 **Rule Type dropdown does not show WooCommerce** - Confirm Jetonomy Pro is active, WooCommerce is active, and WooCommerce Memberships or WooCommerce Subscriptions is active. The adapter stays inactive (and the rule type is hidden) until one of those two extensions is present.
 
-**No plans or products to select** - The dropdown lists WooCommerce Memberships plans and Subscription (including variable-subscription) products only. If it is empty, create a Membership plan or a Subscription product first. Plain Simple and Variable products are not selectable.
+**No plans or products to select** - The dropdown lists WooCommerce Memberships plans and Subscription (including variable-subscription) products only. If it is empty, create a Membership plan or a Subscription product first. Plain Simple and Variable products are not selectable. Type part of the name to search: the search covers every Subscription product, however large the store.
 
 **Member not removed after a refund** - Access is tied to the gating membership or subscription status, not the order. Verify the WooCommerce Membership moved out of active status, or the subscription moved to on-hold, cancelled, or expired. A refunded order alone does not revoke access.
 

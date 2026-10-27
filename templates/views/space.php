@@ -115,6 +115,8 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		$_jt_tier_names = wp_list_pluck( $_jt_unmet_membership, 'label' );
 		$_jt_first_url  = '';
 		$_jt_first_name = '';
+		// Course / Group / Tier etc. of the first requirement; '' for plain plans.
+		$_jt_kind = (string) ( $_jt_unmet_membership[0]['kind'] ?? '' );
 		foreach ( $_jt_unmet_membership as $_jt_req ) {
 			if ( '' !== $_jt_req['url'] ) {
 				$_jt_first_url  = $_jt_req['url'];
@@ -133,9 +135,18 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 					\Jetonomy\space_label( false, true ),
 					implode( ', ', $_jt_tier_names )
 				),
-				'description' => '' !== $_jt_first_url
-					? __( 'Your access starts as soon as the plan is active, and ends if it lapses.', 'jetonomy' )
-					: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' ),
+				'description' => '' !== $_jt_kind
+					? sprintf(
+						'' !== $_jt_first_url
+							/* translators: %s: what the visitor must join, lowercase (e.g. course, group). */
+							? __( 'You get access as soon as you join this %s, and lose it if you leave it.', 'jetonomy' )
+							/* translators: %s: what the visitor must join, lowercase (e.g. course, group). */
+							: __( 'Ask a site administrator to add you to this %s.', 'jetonomy' ),
+						mb_strtolower( $_jt_kind )
+					)
+					: ( '' !== $_jt_first_url
+						? __( 'Your access starts as soon as the plan is active, and ends if it lapses.', 'jetonomy' )
+						: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' ) ),
 				'cta_label'   => '' !== $_jt_first_url
 					/* translators: %s: plan name. */
 					? sprintf( __( 'Get %s', 'jetonomy' ), $_jt_first_name )

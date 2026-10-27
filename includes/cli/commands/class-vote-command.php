@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Cast or remove votes on posts and replies.
  *
- * Wraps {@see Content_Journey::vote()} which delegates to Vote::cast(). The
+ * Wraps {@see Content_Journey::vote()} which delegates to Vote::record(). The
  * three-state behavior (insert, undo, switch) is handled entirely in the
  * model — calling `cast` twice with the same value undoes the vote.
  */

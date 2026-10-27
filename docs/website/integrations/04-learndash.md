@@ -25,7 +25,7 @@ Jetonomy Pro detects LearnDash automatically when both plugins are active. A **L
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LearnDash Course** from the rule type dropdown.
-3. Start typing the course name - a searchable dropdown shows all published LearnDash courses.
+3. Start typing the course name - the dropdown searches every published LearnDash course, however many the site has.
 4. Select the course, set the **Access level** to **Participate**.
 5. Click **Add Rule**.
 

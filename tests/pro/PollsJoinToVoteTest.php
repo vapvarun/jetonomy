@@ -72,7 +72,8 @@ class PollsJoinToVoteTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $read->get_status(), 'reading the poll stays open' );
 		$data = $read->get_data()['data'];
 		$this->assertFalse( $data['can_vote'] );
-		$this->assertStringContainsString( 'Join this', (string) $data['vote_refusal'] );
+		// An approval space asks members to request to join.
+		$this->assertStringContainsString( 'Request to join this', (string) $data['vote_refusal'] );
 
 		$vote = $this->dispatch( 'POST', "/jetonomy/v1/polls/{$poll_id}/vote", array( 'option_id' => $option ), $this->outsider_id );
 		$this->assertSame( 403, $vote->get_status() );

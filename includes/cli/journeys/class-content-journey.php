@@ -389,7 +389,8 @@ final class Content_Journey {
 	/**
 	 * Cast a vote on a post or reply.
 	 *
-	 * Wraps Vote::cast() which handles the three-state logic (insert, undo,
+	 * Wraps Vote::record() (cast + jetonomy_after_vote + reputation), so the
+	 * CLI has the same side effects as REST. Three-state logic (insert, undo,
 	 * switch). Returns the action the model performed so callers can assert
 	 * on whether the vote was created, updated, or removed.
 	 *
@@ -419,7 +420,7 @@ final class Content_Journey {
 			}
 		}
 
-		$result = Vote::cast( $user_id, $object_type, $object_id, $value );
+		$result = Vote::record( $user_id, $object_type, $object_id, $value );
 		if ( is_wp_error( $result ) ) {
 			return Journey_Result::from_wp_error( $result );
 		}

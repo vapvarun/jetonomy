@@ -1299,8 +1299,11 @@ class Admin {
 		// can never disagree about what an adapter is called.
 		$adapter_labels = \Jetonomy\Adapters\Adapter_Registry::membership_labels();
 
+		// Only a space's Access Rules tab has the picker: no catalog queries elsewhere.
 		$membership_adapters = array();
-		$all_adapters        = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
+		$all_adapters        = 'jetonomy-spaces' === $page && 'access' === sanitize_text_field( wp_unslash( $_GET['tab'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
+			? \Jetonomy\Adapters\Adapter_Registry::get_all_membership()
+			: array();
 		foreach ( $all_adapters as $adapter_id => $adapter ) {
 			if ( $adapter->is_active() && 'wp-roles' !== $adapter_id ) {
 				$levels = array();
@@ -1322,9 +1325,11 @@ class Admin {
 					$levels[] = $row;
 				}
 				$membership_adapters[] = array(
-					'id'     => $adapter_id,
-					'label'  => $adapter_labels[ $adapter_id ] ?? ucfirst( $adapter_id ),
-					'levels' => $levels,
+					'id'         => $adapter_id,
+					'label'      => $adapter_labels[ $adapter_id ] ?? ucfirst( $adapter_id ),
+					'levels'     => $levels,
+					// Typed searches go to the server (the preload is capped).
+					'searchable' => method_exists( $adapter, 'search_levels' ),
 				);
 			}
 		}

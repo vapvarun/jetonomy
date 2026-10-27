@@ -988,7 +988,7 @@
 				// Inject adapter-specific options into the rule type dropdown.
 				for (var i = 0; i < adapters.length; i++) {
 					var a = adapters[i];
-					adapterMap[a.id] = a.levels;
+					adapterMap[a.id] = a;
 					$ruleType.append('<option value="membership:' + a.id + '">' + a.label + '</option>');
 				}
 
@@ -997,13 +997,18 @@
 				var $hidden = $('#rule-value-membership');
 				var $results = $('#rule-value-membership-results');
 				var activeLevels = [];
+				var activeAdapter = null;
+				var searchTimer = null;
+				var searchSeq = 0;
 
-				function renderResults(query) {
+				// remote: rows the server returned for a typed search (adapters whose
+				// preload is capped), so levels past the cap stay selectable.
+				function renderResults(query, remote) {
 					$results.empty();
 					// An empty query lists the first levels, so an owner can
 					// see what is on offer before knowing what to type.
 					var q = (query || '').toLowerCase();
-					var matches = q ? activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; }) : activeLevels;
+					var matches = (q && !remote) ? activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; }) : (remote || activeLevels);
 
 					if (!matches.length) {
 						$results.append($('<div class="jetonomy-ac-empty"/>').text(__('No matches', 'jetonomy')));
@@ -1073,7 +1078,27 @@
 
 				$input.on('input', function() {
 					$hidden.val('');
-					renderResults($(this).val());
+					var q = $(this).val();
+					clearTimeout(searchTimer);
+					// Filter the preload at once; a searchable adapter then swaps in
+					// the server's answer, which also covers levels past the cap.
+					renderResults(q);
+					var seq = ++searchSeq;
+					if (!q || !activeAdapter || !activeAdapter.searchable) {
+						return;
+					}
+					searchTimer = setTimeout(function() {
+						self.ajax('jetonomy_search_membership_levels', { adapter: activeAdapter.id, q: q }).done(function(res) {
+							// Drop answers to an older keystroke.
+							if (seq === searchSeq && res && res.success) {
+								renderResults(q, res.data || []);
+							}
+						}).fail(function() {
+							if (seq === searchSeq) {
+								renderResults(q);
+							}
+						});
+					}, 250);
 				});
 				$input.on('focus click', function() {
 					renderResults($(this).val());
@@ -1116,7 +1141,8 @@
 
 					if (isAdapter) {
 						var adapterId = val.replace('membership:', '');
-						activeLevels = adapterMap[adapterId] || [];
+						activeAdapter = adapterMap[adapterId] || null;
+						activeLevels = activeAdapter ? activeAdapter.levels : [];
 						$input.attr('placeholder', adapters.filter(function(a) { return a.id === adapterId; })[0].label + '...');
 					}
 					renderRulePreview();

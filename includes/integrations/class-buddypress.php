@@ -602,6 +602,13 @@ class BuddyPress {
 			return;
 		}
 
+		// A silenced or banned member gets the group, not a forum space: the
+		// same refusal as every other create_space path.
+		$creator_id = (int) ( (int) $group->creator_id ?: get_current_user_id() );
+		if ( null !== \Jetonomy\Permissions\Permission_Engine::restriction_error( $creator_id, 'create_space' ) ) {
+			return;
+		}
+
 		// Explicitly requested: create a linked space for the new group.
 		$visibility_map = array(
 			'public'  => 'public',
@@ -618,7 +625,7 @@ class BuddyPress {
 				'slug'        => sanitize_title( $group->name ?? 'bp-group-' . $group_id ),
 				'description' => $group->description,
 				'visibility'  => $visibility,
-				'author_id'   => (int) $group->creator_id ?: get_current_user_id(),
+				'author_id'   => $creator_id,
 			)
 		);
 
@@ -626,7 +633,6 @@ class BuddyPress {
 			groups_update_groupmeta( $group_id, self::META_KEY, $space_id );
 
 			// Add group creator as space admin.
-			$creator_id = (int) ( (int) $group->creator_id ?: get_current_user_id() );
 			if ( $creator_id ) {
 				$result = SpaceMember::add( $space_id, $creator_id, 'admin' );
 				if ( is_wp_error( $result ) ) {
@@ -1227,6 +1233,10 @@ class BuddyPress {
 		}
 
 		if ( 'create' === $action ) {
+			// Same refusal as on_group_created(): no new space for a restricted member.
+			if ( null !== \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'create_space' ) ) {
+				return;
+			}
 			// Unlink old space first.
 			if ( $current_space ) {
 				self::unlink_group( $group_id );
