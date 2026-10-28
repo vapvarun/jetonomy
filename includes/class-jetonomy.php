@@ -674,6 +674,8 @@ final class Jetonomy {
 		// and dark-scheme toggle into Jetonomy's CSS tokens.
 		new Integrations\Theme_Integration();
 		new Integrations\Layout_CSS();
+		// Divi Theme Builder: global header/footer on community pages.
+		new Integrations\Divi_Theme_Builder();
 
 		// App-connect wiring (Wbcom App Auth standard): joins BuddyNext's
 		// bridge-scheme allowlist and resolves which connect bridge this
