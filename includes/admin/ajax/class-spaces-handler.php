@@ -59,6 +59,7 @@ class Spaces_Handler {
 		add_action( 'wp_ajax_jetonomy_change_member_role', array( $this, 'ajax_change_member_role' ) );
 		// Access Rules AJAX
 		add_action( 'wp_ajax_jetonomy_add_access_rule', array( $this, 'ajax_add_access_rule' ) );
+		add_action( 'wp_ajax_jetonomy_update_access_rule', array( $this, 'ajax_update_access_rule' ) );
 		add_action( 'wp_ajax_jetonomy_delete_access_rule', array( $this, 'ajax_delete_access_rule' ) );
 		add_action( 'wp_ajax_jetonomy_sync_access_rule', array( $this, 'ajax_sync_access_rule' ) );
 		add_action( 'wp_ajax_jetonomy_search_membership_levels', array( $this, 'ajax_search_membership_levels' ) );
@@ -529,7 +530,6 @@ class Spaces_Handler {
 		$rule_type  = sanitize_text_field( wp_unslash( $_POST['rule_type'] ?? '' ) );
 		$rule_value = sanitize_text_field( wp_unslash( $_POST['rule_value'] ?? '' ) );
 		$grants     = sanitize_text_field( wp_unslash( $_POST['grants'] ?? 'read' ) );
-		$space_role = sanitize_text_field( wp_unslash( $_POST['space_role'] ?? 'viewer' ) );
 		$priority   = absint( $_POST['priority'] ?? 0 );
 
 		if ( ! $space_id ) {
@@ -550,17 +550,12 @@ class Spaces_Handler {
 			$grants = 'read';
 		}
 
-		if ( ! in_array( $space_role, array( 'viewer', 'member', 'moderator', 'admin' ), true ) ) {
-			$space_role = 'viewer';
-		}
-
 		$id = AccessRule::create(
 			array(
 				'space_id'   => $space_id,
 				'rule_type'  => $rule_type,
 				'rule_value' => $rule_value ?: null,
 				'grants'     => $grants,
-				'space_role' => $space_role,
 				'priority'   => $priority,
 			)
 		);
@@ -609,6 +604,29 @@ class Spaces_Handler {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Access rule deleted.', 'jetonomy' ) ) );
+	}
+
+	/**
+	 * Change what an access rule grants, from the Grants select on its row.
+	 */
+	public function ajax_update_access_rule(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$result = AccessRule::update_grants( absint( $_POST['id'] ?? 0 ), sanitize_key( wp_unslash( $_POST['grants'] ?? '' ) ) );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
+
+		$grants = sanitize_key( wp_unslash( $_POST['grants'] ) );
+		wp_send_json_success(
+			array(
+				'message' => __( 'Access rule updated.', 'jetonomy' ),
+				'role'    => ucfirst( AccessRule::role_for_grants( $grants ) ),
+			)
+		);
 	}
 
 	/**

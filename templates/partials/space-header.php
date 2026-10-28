@@ -52,6 +52,29 @@ $_jt_can_edit_space = is_user_logged_in()
 			 */
 			?>
 			<div class="jt-space-fields"><?php do_action( 'jetonomy_space_display_fields', $space ); ?></div>
+			<?php
+			// Mirror of the gate: someone a membership let in sees which one, so
+			// they know why they are here and what keeps them in. Not shown to
+			// people who joined or were invited, whose access does not depend on it.
+			$_jt_admitted_by = $_jt_rule_admits && ! $_jt_is_admin
+				&& in_array( \Jetonomy\Models\SpaceMember::find_source( (int) $space->id, (int) $_jt_user_id ), array( null, 'tier' ), true )
+				? \Jetonomy\Models\AccessRule::admitting_membership( (int) $_jt_user_id, (int) $space->id )
+				: null;
+			?>
+			<?php if ( $_jt_admitted_by ) : ?>
+				<p class="jt-space-access-note">
+					<?php jetonomy_echo_icon( 'user-check', 16 ); ?>
+					<span>
+						<?php
+						$_jt_level_html = '' !== $_jt_admitted_by['url']
+							? '<a href="' . esc_url( $_jt_admitted_by['url'] ) . '">' . esc_html( $_jt_admitted_by['label'] ) . '</a>'
+							: '<strong>' . esc_html( $_jt_admitted_by['label'] ) . '</strong>';
+						/* translators: %s: the membership level that admits the viewer, e.g. "Writing Basics (Course)", linked to it. */
+						printf( esc_html__( 'You have access through %s.', 'jetonomy' ), $_jt_level_html ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
+						?>
+					</span>
+				</p>
+			<?php endif; ?>
 			<?php if ( $_jt_can_edit_space ) : ?>
 				<?php
 				/*

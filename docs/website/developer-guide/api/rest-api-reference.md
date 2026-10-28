@@ -97,6 +97,7 @@ POST   /spaces/{id}/invite                                  Generate invite link
 POST   /invite/{token}                                     Accept invite and join (logged in; GET before 2.0.3)
 GET    /spaces/{id}/access-rules                           List access rules (jetonomy_manage_spaces)
 POST   /spaces/{id}/access-rules                           Create an access rule (jetonomy_manage_spaces)
+PATCH  /access-rules/{id}                                   Change what a rule grants (jetonomy_manage_spaces)
 DELETE /access-rules/{id}                                   Delete an access rule (jetonomy_manage_spaces)
 ```
 
@@ -108,10 +109,11 @@ touch them.
 
 `rule_type` is one of `membership`, `role`, `capability`, `trust_level`,
 `logged_in`, `everyone`. `grants` is `read` (read and report), `participate` or
-`full`, and `space_role` (`viewer`, `member`, `moderator`, `admin`) is the roster
-role a matching member receives, capped by the grant: `read` stores `viewer`,
-`participate` and `full` store `member`. A rule never stores `moderator` or
-`admin`.
+`full`. The rule's `space_role` is derived from the grant, not sent: `read`
+stores `viewer`, `participate` and `full` store `member`. A rule never stores
+`moderator` or `admin`. Since 2.0.7 a `space_role` sent in the request is
+ignored, and `PATCH /access-rules/{id}` with `{"grants": "..."}` changes an
+existing rule's grant and its role together.
 
 Access rules are managed by site administrators only (`jetonomy_manage_spaces`).
 Anyone else, a space admin included, gets `403 jetonomy_forbidden` with the
@@ -129,7 +131,7 @@ behaved this way; both surfaces now share one implementation
 ```bash
 curl -X POST https://your-site.com/wp-json/jetonomy/v1/spaces/42/access-rules \
   -H "Content-Type: application/json" -H "X-WP-Nonce: $NONCE" --cookie "$COOKIES" \
-  -d '{"rule_type":"trust_level","rule_value":"2","grants":"participate","space_role":"member"}'
+  -d '{"rule_type":"trust_level","rule_value":"2","grants":"participate"}'
 ```
 
 ```json

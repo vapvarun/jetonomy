@@ -120,7 +120,7 @@ Each rule has three parts:
 
 > **Full does not hand out moderation by itself.** A rule can open a space to someone; it cannot give them a power their WordPress role does not carry. For an ordinary member matched by a Full rule, Full and Participate come to the same thing in practice - closing and pinning topics and editing other people's posts still require the matching capability. Grant moderation deliberately, by setting the person's role on the space's **Members** tab.
 
-> **When rules overlap, the most generous one wins.** If someone matches two rules, for example a Logged In rule set to Read and a membership rule set to Participate, they get Participate. Jetonomy refuses a second rule with the same type and value as an existing one, because only one of them could ever apply; delete the old rule first to change what it grants.
+> **When rules overlap, the most generous one wins.** If someone matches two rules, for example a Logged In rule set to Read and a membership rule set to Participate, they get Participate. Jetonomy refuses a second rule with the same type and value as an existing one, because only one of them could ever apply.
 
 **Recorded space role** - not a separate choice. The role a matching member is recorded as follows from the access grant above, the same for every rule type, and never goes above Member:
 
@@ -135,6 +135,10 @@ Each rule has three parts:
 > To appoint a moderator, set that person's role on the space's **Members** tab. It is a per-person decision, not something a plan should confer.
 
 Multiple rules can be stacked. Jetonomy grants the highest matching permission level.
+
+**What a member sees.** Someone a membership rule lets in sees "You have access through Community Writing Basics (Course)." under the space description, linked to the course or plan, so they know what keeps them in. People who joined, were invited, or are site staff do not see it.
+
+**Changing a rule.** Pick a new grant in the rule's **Grants** dropdown in the rules list. It saves at once, and the Space Role column updates to match. Members the rule already admitted keep their place. To gate by a different course, plan or role instead, add a rule for it and delete the old one.
 
 > **Note:** MemberPress and Paid Memberships Pro adapters are available in Jetonomy free. WooCommerce Memberships, Restrict Content Pro, LearnDash, and [Learnomy](../integrations/14-learnomy.md) adapters require Jetonomy Pro. The Learnomy adapter gates a space by either a Learnomy course or a Learnomy membership plan.
 

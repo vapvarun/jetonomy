@@ -322,11 +322,6 @@ class Spaces_Controller extends Base_Controller {
 							'default' => 'read',
 							'enum'    => array( 'read', 'participate', 'full' ),
 						),
-						'space_role' => array(
-							'type'    => 'string',
-							'default' => 'viewer',
-							'enum'    => array( 'viewer', 'member', 'moderator', 'admin' ),
-						),
 						'priority'   => array(
 							'type'    => 'integer',
 							'default' => 0,
@@ -340,9 +335,23 @@ class Spaces_Controller extends Base_Controller {
 			$ns,
 			'/access-rules/(?P<rule_id>\d+)',
 			array(
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'delete_access_rule' ),
-				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
+				array(
+					'methods'             => 'PATCH',
+					'callback'            => array( $this, 'update_access_rule' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
+					'args'                => array(
+						'grants' => array(
+							'type'     => 'string',
+							'required' => true,
+							'enum'     => array( 'read', 'participate', 'full' ),
+						),
+					),
+				),
+				array(
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_access_rule' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
+				),
 			)
 		);
 	}
@@ -388,7 +397,6 @@ class Spaces_Controller extends Base_Controller {
 				'rule_type'  => $rule_type,
 				'rule_value' => '' !== $rule_value ? $rule_value : null,
 				'grants'     => (string) $request->get_param( 'grants' ),
-				'space_role' => (string) $request->get_param( 'space_role' ),
 				'priority'   => (int) $request->get_param( 'priority' ),
 			)
 		);
@@ -406,6 +414,25 @@ class Spaces_Controller extends Base_Controller {
 				'message'      => AccessRule::added_message( $space_id, $made_private ),
 			),
 			201
+		);
+	}
+
+	/**
+	 * PATCH /access-rules/{rule_id} - change what the rule grants.
+	 */
+	public function update_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$rule_id = (int) $request->get_param( 'rule_id' );
+		$result  = AccessRule::update_grants( $rule_id, (string) $request->get_param( 'grants' ) );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'data'    => AccessRule::find( $rule_id ),
+				'message' => __( 'Access rule updated.', 'jetonomy' ),
+			),
+			200
 		);
 	}
 

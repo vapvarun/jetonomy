@@ -1166,9 +1166,8 @@
 					var i18n     = (self.i18n && self.i18n.rulePreview) || {};
 					var typeSel  = $('#rule-type option:selected').text();
 					var grants   = $('#rule-grants').val();
-					var role     = $('#rule-space-role').val();
-					// Roster role is derived now, so its label comes from the
-					// dictionary rather than a select the owner can see.
+					// Roster role is derived from the grant (AccessRule::role_for_grants()).
+					var role     = 'read' === grants ? 'viewer' : 'member';
 					var roleTxt  = (i18n.roles && i18n.roles[role]) || role;
 					var grantTxt = (i18n.grants && i18n.grants[grants]) || grants;
 
@@ -1209,20 +1208,7 @@
 					}
 				}
 
-				// Roster role is derived, never chosen: read -> viewer,
-				// participate and full -> member (a rule never makes a
-				// moderator). Matches AccessRule::cap_space_role() on the
-				// server, which is the authority - this only keeps the hidden
-				// field and the preview honest.
-				function syncDerivedRole() {
-					var map = { read: 'viewer', participate: 'member', full: 'member' };
-					$('#rule-space-role').val(map[$('#rule-grants').val()] || 'viewer');
-				}
-
-				$(document).on('change', '#rule-grants', syncDerivedRole);
-				syncDerivedRole();
-
-				$(document).on('change', '#rule-grants, #rule-space-role', renderRulePreview);
+				$(document).on('change', '#rule-grants', renderRulePreview);
 				$(document).on('input', '#rule-value, #rule-value-membership-search', renderRulePreview);
 				// Apply the type rules to whatever is selected on load, not just
 				// on the first change. The form opens on 'Everyone', which takes
@@ -1248,7 +1234,6 @@
 					rule_type: ruleType,
 					rule_value: ruleValue,
 					grants: $('#rule-grants').val(),
-					space_role: $('#rule-space-role').val(),
 					priority: $('#rule-priority').val()
 				}).done(function(res) {
 					if (res.success) {
@@ -1287,6 +1272,30 @@
 					$btn.text(self.i18n.sync);
 				}).always(function() {
 					$btn.prop('disabled', false);
+				});
+			});
+
+			// Change what a rule grants. A refused change snaps the select back.
+			$(document).on('focus', '.jetonomy-rule-grants', function() {
+				$(this).data('saved', $(this).val());
+			});
+			$(document).on('change', '.jetonomy-rule-grants', function() {
+				var $select = $(this);
+				self.ajax('jetonomy_update_access_rule', {
+					id: $select.data('id'),
+					grants: $select.val()
+				}).done(function(res) {
+					if (res.success) {
+						$select.data('saved', $select.val());
+						$select.closest('tr').find('.jetonomy-rule-role').text(res.data.role);
+						self.toast(res.data.message);
+					} else {
+						$select.val($select.data('saved'));
+						self.toast(res.data || self.i18n.error, 'error');
+					}
+				}).fail(function() {
+					$select.val($select.data('saved'));
+					self.toast(self.i18n.error, 'error');
 				});
 			});
 

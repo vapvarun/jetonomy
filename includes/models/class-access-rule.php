@@ -38,12 +38,10 @@ class AccessRule extends Model {
 			),
 			$data
 		);
-		// The stored role is what the rules table shows and what a sync would
-		// write, so it is capped on the way in for every writer (REST, wp-admin,
-		// Pro provisioners), not only on the way out.
-		if ( isset( $data['space_role'] ) ) {
-			$data['space_role'] = self::cap_space_role( (string) ( $data['grants'] ?? 'read' ), (string) $data['space_role'] );
-		}
+		// The roster role is derived from the grant, never chosen, for every
+		// writer (REST, wp-admin, Pro provisioners): read is Viewer, participate
+		// and full are Member.
+		$data['space_role'] = self::role_for_grants( (string) ( $data['grants'] ?? 'read' ) );
 
 		$id = static::insert( $data );
 
@@ -109,6 +107,44 @@ class AccessRule extends Model {
 			\Jetonomy\space_label( false, true ),
 			\Jetonomy\space_join_policy_label( Space::effective_join_policy( $space ) )
 		);
+	}
+
+	/**
+	 * The roster role a grant records: Viewer for read, Member for participate and full.
+	 *
+	 * @param string $grants read | participate | full.
+	 */
+	public static function role_for_grants( string $grants ): string {
+		return self::cap_space_role( $grants, 'admin' );
+	}
+
+	/**
+	 * Change what an existing rule grants, keeping its type and value.
+	 *
+	 * Editing in place keeps the rule's members on the roster; delete and
+	 * re-add would sweep them off and make the owner press Sync again. A tier
+	 * member's role needs no rewrite: SpaceMember caps it by the live grant.
+	 *
+	 * @param int    $id     Rule row ID.
+	 * @param string $grants read | participate | full.
+	 * @return bool|\WP_Error True on success.
+	 */
+	public static function update_grants( int $id, string $grants ): bool|\WP_Error {
+		if ( ! static::find( $id ) ) {
+			return new \WP_Error( 'jetonomy_rule_not_found', __( 'Access rule not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+		if ( ! in_array( $grants, array( 'read', 'participate', 'full' ), true ) ) {
+			return new \WP_Error( 'jetonomy_invalid_grants', __( 'Invalid grants value.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+		$saved = parent::update(
+			$id,
+			array(
+				'grants'     => $grants,
+				'space_role' => self::role_for_grants( $grants ),
+			)
+		);
+		self::reset_memo();
+		return $saved ? true : new \WP_Error( 'jetonomy_rule_update_failed', __( 'Failed to update access rule.', 'jetonomy' ), array( 'status' => 500 ) );
 	}
 
 	/**
@@ -584,7 +620,7 @@ class AccessRule extends Model {
 				return new \WP_Error(
 					'jetonomy_duplicate_rule',
 					/* translators: %s: the singular space label, lowercase (e.g. space, group). */
-					sprintf( __( 'This %s already has a rule for that. Delete it first to change the access it gives.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					sprintf( __( 'This %s already has a rule for that. Change what the existing rule grants instead.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					array( 'status' => 409 )
 				);
 			}
@@ -633,21 +669,47 @@ class AccessRule extends Model {
 				continue;
 			}
 
-			$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
-
-			$unmet[ (string) $rule->rule_value ] = array(
-				'level_id' => (string) $rule->rule_value,
-				'name'     => $described['value'],
-				'type'     => $described['type'],
-				'kind'     => $described['kind'],
-				'label'    => '' !== $described['kind']
-					/* translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group). */
-					? sprintf( __( '%1$s (%2$s)', 'jetonomy' ), $described['value'], $described['kind'] )
-					: $described['value'],
-				'url'      => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( (string) $rule->rule_value ),
-			);
+			$unmet[ (string) $rule->rule_value ] = self::describe_requirement( (string) $rule->rule_value );
 		}
 
 		return array_values( $unmet );
+	}
+
+	/**
+	 * The membership level that lets this viewer in, when a membership rule is
+	 * what admits them, so the space can say "You have access through Course X".
+	 *
+	 * @param int $user_id  Viewer ID.
+	 * @param int $space_id Space ID.
+	 * @return array{level_id:string, name:string, type:string, kind:string, label:string, url:string}|null
+	 */
+	public static function admitting_membership( int $user_id, int $space_id ): ?array {
+		$access = $user_id > 0 ? self::resolve_access( $user_id, $space_id ) : null;
+		if ( ! $access || 'membership' !== $access['rule_type'] ) {
+			return null;
+		}
+		$rule = static::find( $access['rule_id'] );
+		return $rule && '' !== (string) $rule->rule_value ? self::describe_requirement( (string) $rule->rule_value ) : null;
+	}
+
+	/**
+	 * One membership level as the gate and the space header show it.
+	 *
+	 * @param string $level_id Stored rule_value.
+	 * @return array{level_id:string, name:string, type:string, kind:string, label:string, url:string}
+	 */
+	private static function describe_requirement( string $level_id ): array {
+		$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( $level_id );
+		return array(
+			'level_id' => $level_id,
+			'name'     => $described['value'],
+			'type'     => $described['type'],
+			'kind'     => $described['kind'],
+			'label'    => '' !== $described['kind']
+				/* translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group). */
+				? sprintf( __( '%1$s (%2$s)', 'jetonomy' ), $described['value'], $described['kind'] )
+				: $described['value'],
+			'url'      => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( $level_id ),
+		);
 	}
 }

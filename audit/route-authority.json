@@ -449,6 +449,11 @@
       "permission_callback": "Users_Controller::register_routes function () { return is_user_logged_in(); }",
       "reason": "Signed-in only; mention autocomplete. Returns members the caller may mention in the given space (display name, avatar)."
     },
+    "PATCH /jetonomy/v1/access-rules/(?P<rule_id>\\d+)": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_spaces; opts=)",
+      "reason": "auth_mutation(jetonomy_manage_spaces), same as DELETE on this path: access rules are a site-admin decision. A space admin is refused with that sentence."
+    },
     "PATCH /jetonomy/v1/categories/(?P<id>\\d+)": {
       "audience": "admin",
       "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_manage_categories; opts=)",

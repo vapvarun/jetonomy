@@ -1151,13 +1151,14 @@
       {
         "route": "/access-rules/(?P<rule_id>\\d+)",
         "methods": [
+          "PATCH",
           "DELETE"
         ],
-        "handler": "Spaces_Controller::delete_access_rule",
+        "handler": "Spaces_Controller::update_access_rule,delete_access_rule",
         "permission": "REST_Auth::auth_mutation('jetonomy_manage_spaces')",
         "capability": "jetonomy_manage_spaces",
         "ownership_check": null,
-        "purpose": "Delete an access rule. Added 1.9.4."
+        "purpose": "PATCH changes what a rule grants (AccessRule::update_grants; role follows the grant), added 2.0.7. DELETE removes the rule, added 1.9.4."
       },
       {
         "route": "/admin/demo-data",
@@ -1289,6 +1290,13 @@
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Delete space access rule"
+    },
+    {
+      "action": "jetonomy_update_access_rule",
+      "handler": "Admin\\Ajax\\Spaces_Handler::ajax_update_access_rule",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Change what a space access rule grants (Grants select on the rule row)"
     },
     {
       "action": "jetonomy_search_membership_levels",

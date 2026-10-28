@@ -48,11 +48,18 @@ if ( ! $cancel_url ) {
 <div class="jt-narrower">
 	<h1 class="jt-post-create-title"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></h1>
 
+	<?php // One long form; these jump to its sections (same look as the space tabs). ?>
+	<nav class="jt-space-tabs" aria-label="<?php esc_attr_e( 'Profile sections', 'jetonomy' ); ?>">
+		<a class="jt-space-tab" href="#profile-details"><?php esc_html_e( 'Profile', 'jetonomy' ); ?></a>
+		<a class="jt-space-tab" href="#notification-preferences"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></a>
+		<a class="jt-space-tab" href="#blocked-members"><?php /* translators: %s: plural member label. */ echo esc_html( sprintf( __( 'Blocked %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></a>
+	</nav>
+
 	<form id="jt-edit-profile" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="actions.saveProfile"
 			data-wp-context="<?php echo esc_attr( (string) wp_json_encode( array( 'profileUrl' => $profile_url ) ) ); ?>">
-		<div class="jt-form-group">
+		<div class="jt-form-group" id="profile-details">
 			<label class="jt-label" for="jt-first-name"><?php esc_html_e( 'First Name', 'jetonomy' ); ?></label>
 			<input type="text" id="jt-first-name" name="first_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'first_name', true ) ); ?>">
 		</div>

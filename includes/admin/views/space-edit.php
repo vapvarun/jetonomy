@@ -580,7 +580,6 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					// would let "Sync Members" deposit space admins from a rule labelled "Read". To
 					// give one person a different role, use the Members tab, where roster roles belong.
 					?>
-					<input type="hidden" id="rule-space-role" value="viewer">
 					<input type="hidden" id="rule-priority" value="0">
 					<button type="button" class="button button-primary" id="jetonomy-add-rule" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Add Rule', 'jetonomy' ); ?></button>
 				</div>
@@ -652,12 +651,18 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								echo esc_html( $display_value );
 								break;
 							case 'grants':
-								echo '<span class="jetonomy-badge jetonomy-badge--' . esc_attr( $rule->grants ) . '">' . esc_html( ucfirst( $rule->grants ) ) . '</span>';
+								?>
+								<select class="jetonomy-rule-grants" data-id="<?php echo absint( $rule->id ); ?>" aria-label="<?php esc_attr_e( 'What this rule grants', 'jetonomy' ); ?>">
+									<option value="read" <?php selected( $rule->grants, 'read' ); ?>><?php esc_html_e( 'Read', 'jetonomy' ); ?></option>
+									<option value="participate" <?php selected( $rule->grants, 'participate' ); ?>><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
+									<option value="full" <?php selected( $rule->grants, 'full' ); ?>><?php esc_html_e( 'Full', 'jetonomy' ); ?></option>
+								</select>
+								<?php
 								break;
 							case 'role':
 								// The role a sync would actually store, not the raw column
 								// of a rule saved before rules were capped at Member.
-								echo esc_html( ucfirst( \Jetonomy\Models\AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type ) ) );
+								echo '<span class="jetonomy-rule-role">' . esc_html( ucfirst( \Jetonomy\Models\AccessRule::role_for_grants( (string) $rule->grants ) ) ) . '</span>';
 								break;
 							case 'actions':
 								echo '<div class="jetonomy-rule-actions">';
