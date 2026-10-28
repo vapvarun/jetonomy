@@ -268,4 +268,6 @@ Plugin version: 2.0.6 - 115 actions, 141 filters.
 | `jetonomy_use_frontend_space_edit` | use_frontend | includes/admin/ |
 | `jetonomy_user_display_name` | string $name, WP_User $user | includes/functions.php:294 |
 | `jetonomy_user_handle` | string $handle, WP_User $user | includes/functions.php:359 |
+| `jetonomy_user_is_banned` | bool $banned, int $user_id | includes/models/class-restriction.php (Restriction::is_banned) |
+| `jetonomy_user_is_silenced` | bool $silenced, int $user_id | includes/models/class-restriction.php (Restriction::is_silenced) |
 | `jetonomy_users_query_args` |  | includes/api/class-leaderboards-controller.php |

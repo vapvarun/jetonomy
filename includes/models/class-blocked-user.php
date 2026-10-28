@@ -150,13 +150,8 @@ class BlockedUser extends Model {
 	 * One-way check: has $blocker_id blocked $blocked_id?
 	 */
 	public static function is_blocked( int $blocker_id, int $blocked_id ): bool {
-		return null !== static::db()->get_var(
-			static::db()->prepare(
-				'SELECT 1 FROM ' . static::table() . ' WHERE blocker_id = %d AND blocked_id = %d LIMIT 1',
-				$blocker_id,
-				$blocked_id
-			)
-		);
+		// Through blocked_ids() so jetonomy_blocked_user_ids (e.g. BuddyNext blocks) counts here too.
+		return in_array( $blocked_id, self::blocked_ids( $blocker_id ), true );
 	}
 
 	/**
@@ -207,15 +202,7 @@ class BlockedUser extends Model {
 	 * if either side has blocked the other, new messages must not go through.
 	 */
 	public static function is_blocked_between( int $a, int $b ): bool {
-		return null !== static::db()->get_var(
-			static::db()->prepare(
-				'SELECT 1 FROM ' . static::table() . ' WHERE (blocker_id = %d AND blocked_id = %d) OR (blocker_id = %d AND blocked_id = %d) LIMIT 1',
-				$a,
-				$b,
-				$b,
-				$a
-			)
-		);
+		return self::is_blocked( $a, $b ) || self::is_blocked( $b, $a );
 	}
 
 	/**

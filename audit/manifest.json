@@ -3060,7 +3060,7 @@
       "args": "$ids (int[]), $viewer_id (int)",
       "where": "includes/models/class-blocked-user.php (BlockedUser::blocked_ids)",
       "consumed_by": null,
-      "notes": "1.7.1 foundation. Lets Pro/3rd-party code widen the exclusion set (e.g. a future mute feature) without touching the model. Applied once per request (self::$memo), after the 5-minute Cache::remember layer."
+      "notes": "1.7.1 foundation. Lets Pro/3rd-party code widen the exclusion set (e.g. BuddyNext blocks) without touching the model. Applied once per request (self::$memo), after the 5-minute Cache::remember layer. Since 2.0.7 is_blocked() and is_blocked_between() read through it too."
     },
     {
       "name": "jetonomy_breadcrumb_html",
@@ -3879,6 +3879,28 @@
       ],
       "where": "includes/functions.php:359",
       "notes": "Emit half of the mention contract; must be paired with jetonomy_resolve_mention_handles."
+    },
+    {
+      "name": "jetonomy_user_is_banned",
+      "type": "filter",
+      "args_count": 2,
+      "args_signature": [
+        "bool $banned",
+        "int $user_id"
+      ],
+      "where": "includes/models/class-restriction.php (Restriction::is_banned)",
+      "notes": "2.0.7. Lets a host plugin count its own site-wide ban (BuddyNext suspension). Every permission check reads it; SQL-only paths (not_banned_sql, notification actor exclusion) read the table directly."
+    },
+    {
+      "name": "jetonomy_user_is_silenced",
+      "type": "filter",
+      "args_count": 2,
+      "args_signature": [
+        "bool $silenced",
+        "int $user_id"
+      ],
+      "where": "includes/models/class-restriction.php (Restriction::is_silenced)",
+      "notes": "2.0.7. Lets a host plugin count its own site-wide read-only state. Every permission check reads it; SQL-only paths (not_banned_sql, notification actor exclusion) read the table directly."
     },
     {
       "name": "jetonomy_users_query_args",
