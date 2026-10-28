@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-28T08:09:09+00:00\n"
+"POT-Creation-Date: 2026-10-28T19:01:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -1779,7 +1779,7 @@ msgstr ""
 #: includes/admin/views/spaces.php:143
 #: includes/admin/views/tags.php:249
 #: includes/admin/views/users.php:250
-#: includes/admin/views/users.php:301
+#: includes/admin/views/users.php:303
 #: includes/class-template-loader.php:414
 #: includes/class-template-loader.php:481
 #: includes/class-template-loader.php:1833
@@ -2138,7 +2138,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:58
 #: includes/admin/views/space-edit.php:59
 #: includes/admin/views/spaces.php:370
-#: includes/admin/views/users.php:309
+#: includes/admin/views/users.php:311
 msgid "PRO"
 msgstr ""
 
@@ -2158,14 +2158,14 @@ msgstr ""
 #: includes/admin/views/settings.php:1157
 #: includes/admin/views/settings.php:1354
 #: includes/admin/views/spaces.php:374
-#: includes/admin/views/users.php:312
+#: includes/admin/views/users.php:314
 msgid "Upgrade to Pro"
 msgstr ""
 
 #: includes/admin/views/content.php:482
 #: includes/admin/views/import.php:362
 #: includes/admin/views/spaces.php:376
-#: includes/admin/views/users.php:314
+#: includes/admin/views/users.php:316
 msgid "View Docs"
 msgstr ""
 
@@ -2661,7 +2661,7 @@ msgstr ""
 
 #: includes/admin/views/moderation.php:315
 #: includes/admin/views/moderation.php:447
-#: includes/admin/views/users.php:284
+#: includes/admin/views/users.php:286
 msgid "Reason"
 msgstr ""
 
@@ -2734,7 +2734,7 @@ msgid "%s ban"
 msgstr ""
 
 #: includes/admin/views/moderation.php:495
-#: includes/admin/views/users.php:291
+#: includes/admin/views/users.php:293
 msgid "Permanent"
 msgstr ""
 
@@ -5372,42 +5372,48 @@ msgid "Never"
 msgstr ""
 
 #: includes/admin/views/users.php:259
-#: includes/admin/views/users.php:300
+#: includes/admin/views/users.php:302
 #: assets/js/admin-common.js:1757
 msgid "Ban User"
 msgstr ""
 
-#: includes/admin/views/users.php:276
+#. translators: 1: topic label, singular, lowercase (e.g. "topic"). 2: reply label, singular, lowercase (e.g. "reply").
+#: includes/admin/views/users.php:274
+#, php-format
+msgid "Global Ban: they can no longer read or take part in the community. Silence: they can still read, but cannot start a %1$s, write a %2$s or vote. Both apply to the community only, not the rest of your site."
+msgstr ""
+
+#: includes/admin/views/users.php:278
 msgid "IP address"
 msgstr ""
 
 #. translators: 1: product name shown in wp-admin (default "Jetonomy"). 2: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/users.php:280
+#: includes/admin/views/users.php:282
 #, php-format
 msgid "%1$s does not record the IP addresses of %2$s. Copy the address from your server logs or security plugin. Everyone using it, signed in or not, loses access to the community."
 msgstr ""
 
-#: includes/admin/views/users.php:288
+#: includes/admin/views/users.php:290
 msgid "Duration"
 msgstr ""
 
-#: includes/admin/views/users.php:292
+#: includes/admin/views/users.php:294
 msgid "1 Day"
 msgstr ""
 
-#: includes/admin/views/users.php:293
+#: includes/admin/views/users.php:295
 msgid "7 Days"
 msgstr ""
 
-#: includes/admin/views/users.php:294
+#: includes/admin/views/users.php:296
 msgid "30 Days"
 msgstr ""
 
-#: includes/admin/views/users.php:310
+#: includes/admin/views/users.php:312
 msgid "Custom Badges & Advanced Moderation"
 msgstr ""
 
-#: includes/admin/views/users.php:311
+#: includes/admin/views/users.php:313
 msgid "Auto-award badges based on activity, create custom fields for profiles, and set up keyword-based auto-moderation rules."
 msgstr ""
 
@@ -6509,15 +6515,15 @@ msgstr ""
 msgid "Confirm your email to finish signing up. Check your inbox for the link, or use \"Resend confirmation\" on the sign-in form."
 msgstr ""
 
-#: includes/class-jetonomy.php:798
+#: includes/class-jetonomy.php:800
 msgid "This unsubscribe link is invalid or has expired."
 msgstr ""
 
-#: includes/class-jetonomy.php:814
+#: includes/class-jetonomy.php:816
 msgid "You have been unsubscribed from these email notifications. You can re-enable them in your notification preferences."
 msgstr ""
 
-#: includes/class-jetonomy.php:815
+#: includes/class-jetonomy.php:817
 msgid "Unsubscribed"
 msgstr ""
 

@@ -263,13 +263,15 @@ $restriction_labels = array(
 				<tr>
 					<th scope="row"><label for="ban-type"><?php esc_html_e( 'Type', 'jetonomy' ); ?></label></th>
 					<td>
-						<select id="ban-type">
+						<select id="ban-type" aria-describedby="ban-type-help">
 							<option value="global_ban"><?php esc_html_e( 'Global Ban', 'jetonomy' ); ?></option>
 							<option value="silence"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></option>
 							<?php if ( current_user_can( 'manage_options' ) ) : ?>
 								<option value="ip_ban"><?php esc_html_e( 'IP address ban', 'jetonomy' ); ?></option>
 							<?php endif; ?>
 						</select>
+						<?php /* translators: 1: topic label, singular, lowercase (e.g. "topic"). 2: reply label, singular, lowercase (e.g. "reply"). */ ?>
+						<p class="description" id="ban-type-help"><?php echo esc_html( sprintf( __( 'Global Ban: they can no longer read or take part in the community. Silence: they can still read, but cannot start a %1$s, write a %2$s or vote. Both apply to the community only, not the rest of your site.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?></p>
 					</td>
 				</tr>
 				<tr id="ban-ip-row" hidden>
