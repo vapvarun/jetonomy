@@ -75,13 +75,13 @@ class Feed {
 		?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-	<title><?php echo esc_xml( wp_specialchars_decode( (string) $space->title, ENT_QUOTES ) . ' – ' . get_bloginfo( 'name' ) ); ?></title>
+	<title><?php echo self::xml( wp_specialchars_decode( (string) $space->title, ENT_QUOTES ) . ' – ' . get_bloginfo( 'name' ) ); ?></title>
 	<link><?php echo esc_url( $space_url ); ?></link>
 	<atom:link href="<?php echo esc_url( $self_url ); ?>" rel="self" type="application/rss+xml" />
-	<description><?php echo esc_xml( wp_strip_all_tags( (string) ( $space->description ?? '' ) ) ); ?></description>
-	<language><?php echo esc_xml( get_bloginfo( 'language' ) ); ?></language>
-	<lastBuildDate><?php echo esc_xml( mysql2date( 'r', $newest, false ) ); ?></lastBuildDate>
-	<generator>Jetonomy <?php echo esc_xml( JETONOMY_VERSION ); ?></generator>
+	<description><?php echo self::xml( wp_strip_all_tags( (string) ( $space->description ?? '' ) ) ); ?></description>
+	<language><?php echo self::xml( get_bloginfo( 'language' ) ); ?></language>
+	<lastBuildDate><?php echo self::xml( mysql2date( 'r', $newest, false ) ); ?></lastBuildDate>
+	<generator>Jetonomy <?php echo self::xml( JETONOMY_VERSION ); ?></generator>
 		<?php foreach ( $posts as $post ) : ?>
 			<?php
 			$post_url = route_url( 'post', rawurlencode( (string) $space->slug ), rawurlencode( (string) $post->slug ) );
@@ -89,18 +89,34 @@ class Feed {
 			$excerpt  = wp_trim_words( (string) ( $post->content_plain ?? \jetonomy_content_to_plain( (string) $post->content ) ), 55 );
 			?>
 	<item>
-		<title><?php echo esc_xml( wp_specialchars_decode( (string) $post->title, ENT_QUOTES ) ); ?></title>
+		<title><?php echo self::xml( wp_specialchars_decode( (string) $post->title, ENT_QUOTES ) ); ?></title>
 		<link><?php echo esc_url( $post_url ); ?></link>
 		<guid isPermaLink="true"><?php echo esc_url( $post_url ); ?></guid>
-		<pubDate><?php echo esc_xml( mysql2date( 'r', (string) $post->created_at, false ) ); ?></pubDate>
-		<dc:creator><?php echo esc_xml( '' !== $display['name'] ? $display['name'] : \Jetonomy\jetonomy_label( 'member' ) ); ?></dc:creator>
-		<description><?php echo esc_xml( $excerpt ); ?></description>
+		<pubDate><?php echo self::xml( mysql2date( 'r', (string) $post->created_at, false ) ); ?></pubDate>
+		<dc:creator><?php echo self::xml( '' !== $display['name'] ? $display['name'] : \Jetonomy\jetonomy_label( 'member' ) ); ?></dc:creator>
+		<description><?php echo self::xml( $excerpt ); ?></description>
 	</item>
 <?php endforeach; ?>
 </channel>
 </rss>
 		<?php
 		exit;
+	}
+
+	/**
+	 * Text for an XML node. esc_xml() escapes markup but keeps control
+	 * characters (a backspace or vertical tab pasted from Word or a PDF), and
+	 * XML 1.0 forbids those: one such title made the whole feed unreadable.
+	 * Vertical tab and form feed become spaces; invalid UTF-8 and every other
+	 * character XML cannot hold are dropped; then escape.
+	 *
+	 * @param string $text Raw text.
+	 * @return string
+	 */
+	public static function xml( string $text ): string {
+		$text = str_replace( array( "\v", "\f" ), ' ', wp_check_invalid_utf8( $text, true ) );
+		$text = (string) preg_replace( '/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $text );
+		return esc_xml( $text );
 	}
 
 	/**

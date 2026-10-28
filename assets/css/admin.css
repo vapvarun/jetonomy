@@ -24,12 +24,12 @@
 	/* Neutral text scale */
 	--jt-admin-text: #1e293b;
 	--jt-admin-text-2: #475569;
-	--jt-admin-text-3: #64748b;
+	--jt-admin-text-3: #55606e; /* 5.84:1 on #f1f5f9, 5.61 on #f0f0f1 (WCAG AA); #64748b fell to 4.18 on grey. */
 	--jt-admin-text-4: #374151;
 	--jt-admin-text-muted: #5f6b7d; /* 4.75:1 on the lightest admin grey (WCAG AA). */
 	--jt-admin-text-wp: #1d2327;
 	--jt-admin-text-wp-2: #646970;
-	--jt-admin-text-wp-3: #8c8f94;
+	--jt-admin-text-wp-3: #5f6b7d; /* Text only; #8c8f94 measured 2.85:1 on #f0f0f1. */
 	--jt-admin-text-step: #666666;
 	--jt-admin-text-arrow: #cccccc;
 
@@ -48,8 +48,8 @@
 	--jt-admin-danger: #dc2626;
 	--jt-admin-danger-dark: #b91c1c;
 	--jt-admin-danger-deep: #8b0000;
-	--jt-admin-danger-google: #d93025;
-	--jt-admin-danger-wp: #d63638;
+	--jt-admin-danger-google: #b91c1c; /* Text on --jt-admin-danger-light: 5.30:1 (AA); #d93025 gave 3.91. */
+	--jt-admin-danger-wp: #b32d2e; /* 5.87:1 on #f6f7f7; #d63638 gave 4.40. */
 	--jt-admin-danger-light: #fee2e2;
 	--jt-admin-danger-border: #fca5a5;
 
@@ -60,7 +60,7 @@
 	--jt-admin-warn-light: #fef9c3;
 
 	/* Success */
-	--jt-admin-success: #16a34a;
+	--jt-admin-success: #15803d; /* 5.02:1 on white; #16a34a gave 3.30. */
 	--jt-admin-success-wp: #00a32a;
 	--jt-admin-success-wp-2: #46b450;
 	--jt-admin-success-dark: #166534;
@@ -69,7 +69,7 @@
 	--jt-admin-success-border: #d6e9c6;
 
 	/* Info */
-	--jt-admin-info: #1a73e8;
+	--jt-admin-info: #1557b0; /* 6.06:1 on --jt-admin-info-light; #1a73e8 gave 3.93. */
 	--jt-admin-info-dark: #1e40af;
 	--jt-admin-info-light: #e8f0fe;
 	--jt-admin-info-wp: #00a0d2;
@@ -3269,7 +3269,7 @@ tr.jetonomy-moderated td {
 	gap: 5px;
 	margin: 0;
 	font-size: 13px;
-	color: var(--jt-admin-success, #16a34a);
+	color: var(--jt-admin-success, #15803d);
 }
 .jt-companion-card__unlocks .dashicons {
 	width: 16px;
@@ -3309,25 +3309,10 @@ tr.jetonomy-moderated td {
 }
 .jt-companion-badge--muted {
 	background: var(--jt-admin-surface-wp, #f0f0f1);
-	color: var(--jt-admin-text-wp-3, #8c8f94);
+	color: var(--jt-admin-text-wp-3, #5f6b7d);
 }
 
 /* ── Action buttons ── */
-.jt-companion-btn--connected {
-	display: inline-flex;
-	align-items: center;
-	gap: 5px;
-	opacity: 0.75;
-	cursor: default;
-	pointer-events: none;
-}
-.jt-companion-btn--connected .dashicons {
-	width: 16px;
-	height: 16px;
-	font-size: 16px;
-	line-height: 1;
-}
-
 .jt-companion-btn--learn-more { font-weight: 500; }
 
 /* ── Footer note ── */

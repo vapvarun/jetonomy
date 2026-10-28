@@ -725,6 +725,30 @@ class Admin {
 		return false;
 	}
 
+	/**
+	 * One address setting from the posted form: cleaned, or refused by name with
+	 * the stored value kept, so the save never shows "saved" over a broken value.
+	 *
+	 * @param array  $input Posted settings.
+	 * @param array  $clean Settings being built (holds the stored values).
+	 * @param string $key   Setting key.
+	 * @param string $label What the owner sees the field called.
+	 * @return string
+	 */
+	private function url_setting( array $input, array $clean, string $key, string $label ): string {
+		$url = \Jetonomy\http_url( (string) ( $input[ $key ] ?? '' ) );
+		if ( null !== $url ) {
+			return $url;
+		}
+		add_settings_error(
+			'jetonomy_settings',
+			'jetonomy_invalid_' . $key,
+			/* translators: %s: settings field label. */
+			sprintf( __( '%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept.', 'jetonomy' ), $label )
+		);
+		return (string) ( $clean[ $key ] ?? '' );
+	}
+
 	public function sanitize_settings( $input ): array {
 		// Merge with existing settings so saving one tab doesn't wipe another.
 		$existing = get_option( 'jetonomy_settings', array() );
@@ -806,9 +830,9 @@ class Admin {
 			$clean['base_slug']       = $new_slug;
 			$clean['community_title'] = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
 			// Mobile app EULA screen (Apple Guideline 1.2) reads these via /app/config.
-			$clean['terms_url']   = esc_url_raw( $input['terms_url'] ?? '' );
-			$clean['privacy_url'] = esc_url_raw( $input['privacy_url'] ?? '' );
-			$clean['support_url'] = esc_url_raw( $input['support_url'] ?? '' );
+			$clean['terms_url']   = $this->url_setting( $input, $clean, 'terms_url', __( 'Terms of Service URL', 'jetonomy' ) );
+			$clean['privacy_url'] = $this->url_setting( $input, $clean, 'privacy_url', __( 'Privacy Policy URL', 'jetonomy' ) );
+			$clean['support_url'] = $this->url_setting( $input, $clean, 'support_url', __( 'Support URL', 'jetonomy' ) );
 			// Product-noun label overrides (singular / plural). Empty = keep the
 			// default. One loop over every renamable noun so the save side cannot
 			// drift from the Terminology settings block that renders them.
@@ -958,7 +982,7 @@ class Admin {
 		if ( isset( $input['email_from_name'] ) ) {
 			$clean['email_from_name']   = sanitize_text_field( $input['email_from_name'] ?? '' );
 			$clean['email_from_email']  = sanitize_email( $input['email_from_email'] ?? '' );
-			$clean['email_logo_url']    = esc_url_raw( $input['email_logo_url'] ?? '' );
+			$clean['email_logo_url']    = $this->url_setting( $input, $clean, 'email_logo_url', __( 'Email Logo', 'jetonomy' ) );
 			$clean['email_footer_text'] = sanitize_text_field( $input['email_footer_text'] ?? '' );
 
 			// Verification-reminder cadence (hours). 0 = disabled; clamp to a
@@ -984,7 +1008,7 @@ class Admin {
 		// Only process if accent_color is present (Appearance tab was submitted).
 		if ( isset( $input['accent_color'] ) ) {
 			$clean['accent_color'] = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
-			$clean['logo_url']     = esc_url_raw( $input['logo_url'] ?? '' );
+			$clean['logo_url']     = $this->url_setting( $input, $clean, 'logo_url', __( 'Logo URL', 'jetonomy' ) );
 			// Color palette — empty string means "no override, keep the default".
 			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {
 				$clean[ $palette_key ] = sanitize_hex_color( (string) ( $input[ $palette_key ] ?? '' ) ) ?: '';
@@ -1030,7 +1054,7 @@ class Admin {
 
 			// Default share image URL (D.6) — falls back into the og:image
 			// chain (route image → admin default → custom logo → site icon).
-			$clean['seo_default_og_image'] = esc_url_raw( $input['seo_default_og_image'] ?? '' );
+			$clean['seo_default_og_image'] = $this->url_setting( $input, $clean, 'seo_default_og_image', __( 'Default share image', 'jetonomy' ) );
 
 			// Social embeds — Meta developer app credentials for Instagram/Facebook oEmbed.
 			// App IDs are numeric; secrets are 32-char hex strings. Strip whitespace only.

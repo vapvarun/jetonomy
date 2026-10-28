@@ -1415,6 +1415,9 @@
   .jt-space-tab:hover, .jt-space-tab:focus-visible { color: var(--jt-text); }
   .jt-space-tab.on { color: var(--jt-accent); border-block-end-color: var(--jt-accent); }
   @media (max-width: 640px) { .jt-space-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; } .jt-space-tab { white-space: nowrap; } }
+  /* Edit Profile has three links an owner must see at once: wrap them instead
+     of scrolling, so none is clipped on a narrow theme (Reign at 390px). */
+  @media (max-width: 640px) { .jt-space-tabs--wrap { flex-wrap: wrap; overflow-x: visible; } }
 
   /* ── Private toggle on new post form ── */
   /* Token-aligned gap above the Private toggle so it doesn't sit flush against

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-28T19:01:02+00:00\n"
+"POT-Creation-Date: 2026-10-28T20:03:47+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -511,8 +511,8 @@ msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #: includes/admin/ajax/class-spaces-handler.php:358
-#: includes/admin/class-admin.php:1549
-#: includes/admin/class-admin.php:1978
+#: includes/admin/class-admin.php:1573
+#: includes/admin/class-admin.php:2002
 #: includes/api/class-base-controller.php:97
 #: includes/api/class-spaces-controller.php:365
 #: includes/api/class-spaces-controller.php:384
@@ -898,7 +898,7 @@ msgid "System"
 msgstr ""
 
 #: includes/admin/class-activity-list-table.php:267
-#: includes/admin/class-admin.php:1743
+#: includes/admin/class-admin.php:1767
 #: includes/admin/class-revisions-list-table.php:366
 #: includes/admin/views/dashboard.php:176
 #: includes/admin/views/revisions.php:168
@@ -1361,12 +1361,18 @@ msgstr ""
 msgid "%1$s on \"%2$s\""
 msgstr ""
 
-#: includes/admin/class-admin.php:750
+#. translators: %s: settings field label.
+#: includes/admin/class-admin.php:747
+#, php-format
+msgid "%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept."
+msgstr ""
+
+#: includes/admin/class-admin.php:774
 #: includes/admin/views/settings.php:599
 msgid "Only administrators can change the role capability mapping."
 msgstr ""
 
-#: includes/admin/class-admin.php:807
+#: includes/admin/class-admin.php:831
 #: includes/admin/views/settings.php:162
 #: includes/class-blocks.php:612
 #: includes/class-nav-menus.php:96
@@ -1376,42 +1382,72 @@ msgstr ""
 msgid "Community"
 msgstr ""
 
+#: includes/admin/class-admin.php:833
+#: includes/admin/views/settings.php:167
+msgid "Terms of Service URL"
+msgstr ""
+
+#: includes/admin/class-admin.php:834
+#: includes/admin/views/settings.php:174
+msgid "Privacy Policy URL"
+msgstr ""
+
+#: includes/admin/class-admin.php:835
+#: includes/admin/views/settings.php:181
+msgid "Support URL"
+msgstr ""
+
+#: includes/admin/class-admin.php:985
+#: includes/admin/views/settings.php:761
+msgid "Email Logo"
+msgstr ""
+
+#: includes/admin/class-admin.php:1011
+#: includes/admin/views/settings.php:1012
+msgid "Logo URL"
+msgstr ""
+
+#: includes/admin/class-admin.php:1057
+#: includes/admin/views/settings.php:1238
+msgid "Default share image"
+msgstr ""
+
 #. translators: %s: plugin name.
-#: includes/admin/class-admin.php:1064
+#: includes/admin/class-admin.php:1088
 #, php-format
 msgid "Thank you for building your community with %s."
 msgstr ""
 
-#: includes/admin/class-admin.php:1171
+#: includes/admin/class-admin.php:1195
 msgid "Community emails"
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/class-admin.php:1175
+#: includes/admin/class-admin.php:1199
 #, php-format
 msgid "Pause all %s email notifications for this user."
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/class-admin.php:1177
+#: includes/admin/class-admin.php:1201
 #, php-format
 msgid "When enabled, the email verification reminder and other %s emails are suppressed. Web notifications are unaffected."
 msgstr ""
 
 #. translators: %s: the singular space label, lowercase (e.g. space, group).
-#: includes/admin/class-admin.php:1527
+#: includes/admin/class-admin.php:1551
 #: includes/api/class-spaces-controller.php:298
 #, php-format
 msgid "Only site administrators can manage access rules for this %s."
 msgstr ""
 
-#: includes/admin/class-admin.php:1528
+#: includes/admin/class-admin.php:1552
 #: includes/admin/views/space-edit.php:44
 msgid "Access Rules"
 msgstr ""
 
 #. translators: %s: where the link returns to - the configured space label, or a specific space title.
-#: includes/admin/class-admin.php:1533
+#: includes/admin/class-admin.php:1557
 #: includes/admin/views/space-edit.php:37
 #: includes/integrations/class-fluent-community.php:835
 #: templates/views/new-post.php:59
@@ -1420,25 +1456,25 @@ msgstr ""
 msgid "Back to %s"
 msgstr ""
 
-#: includes/admin/class-admin.php:1540
+#: includes/admin/class-admin.php:1564
 msgid "Sorry, you are not allowed to access this page."
 msgstr ""
 
-#: includes/admin/class-admin.php:1659
+#: includes/admin/class-admin.php:1683
 msgid "Entries per page"
 msgstr ""
 
-#: includes/admin/class-admin.php:1691
-#: includes/admin/class-admin.php:1782
+#: includes/admin/class-admin.php:1715
+#: includes/admin/class-admin.php:1806
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: includes/admin/class-admin.php:1716
+#: includes/admin/class-admin.php:1740
 msgid "You do not have sufficient permissions to export activity."
 msgstr ""
 
 #. translators: 1: reply label (e.g. "Reply"). 2: parent post title.
-#: includes/admin/class-admin.php:1840
+#: includes/admin/class-admin.php:1864
 #: includes/admin/class-revisions-list-table.php:310
 #, php-format
 msgid "%1$s to: %2$s"
@@ -2917,28 +2953,16 @@ msgstr ""
 msgid "Displayed as the main heading on the community home page."
 msgstr ""
 
-#: includes/admin/views/settings.php:167
-msgid "Terms of Service URL"
-msgstr ""
-
 #. translators: %s: member label, plural, lowercase (e.g. "members").
 #: includes/admin/views/settings.php:170
 #, php-format
 msgid "Shown to %s before they sign up in the mobile app. Leave empty if you have none."
 msgstr ""
 
-#: includes/admin/views/settings.php:174
-msgid "Privacy Policy URL"
-msgstr ""
-
 #. translators: %s: member label, plural, lowercase (e.g. "members").
 #: includes/admin/views/settings.php:177
 #, php-format
 msgid "Shown to %s before they sign up in the mobile app. Leave empty to use your WordPress Privacy Policy page."
-msgstr ""
-
-#: includes/admin/views/settings.php:181
-msgid "Support URL"
 msgstr ""
 
 #. translators: %s: member label, plural, lowercase (e.g. "members").
@@ -3551,10 +3575,6 @@ msgstr ""
 msgid "From Email"
 msgstr ""
 
-#: includes/admin/views/settings.php:761
-msgid "Email Logo"
-msgstr ""
-
 #: includes/admin/views/settings.php:764
 msgid "URL to your logo image for notification emails. Recommended: 200x40px, PNG or SVG. Leave empty to use site name as text."
 msgstr ""
@@ -3747,10 +3767,6 @@ msgstr ""
 
 #: includes/admin/views/settings.php:1008
 msgid "Your community logo. Shown in the mobile app (login + header) and anywhere a brand mark is needed. Square or wide PNG/SVG; leave empty to show the Community Title as text."
-msgstr ""
-
-#: includes/admin/views/settings.php:1012
-msgid "Logo URL"
 msgstr ""
 
 #: includes/admin/views/settings.php:1015
@@ -3960,10 +3976,6 @@ msgstr ""
 
 #: includes/admin/views/settings.php:1234
 msgid "Site handle emitted as twitter:site on every public route. Leave blank to omit."
-msgstr ""
-
-#: includes/admin/views/settings.php:1238
-msgid "Default share image"
 msgstr ""
 
 #: includes/admin/views/settings.php:1241
@@ -8424,7 +8436,6 @@ msgid "Explore the full Wbcom family"
 msgstr ""
 
 #: includes/integrations/views/companion-cards.php:72
-#: includes/integrations/views/companion-cards.php:107
 msgid "Connected"
 msgstr ""
 
@@ -8436,19 +8447,19 @@ msgstr ""
 msgid "Not installed"
 msgstr ""
 
-#: includes/integrations/views/companion-cards.php:118
+#: includes/integrations/views/companion-cards.php:114
 msgid "Activate"
 msgstr ""
 
-#: includes/integrations/views/companion-cards.php:119
+#: includes/integrations/views/companion-cards.php:115
 msgid "Install free"
 msgstr ""
 
-#: includes/integrations/views/companion-cards.php:130
+#: includes/integrations/views/companion-cards.php:126
 msgid "Learn more"
 msgstr ""
 
-#: includes/integrations/views/companion-cards.php:139
+#: includes/integrations/views/companion-cards.php:135
 msgid "Every product above is a standalone Wbcom plugin. Jetonomy detects each one and lights up the matching features automatically when it is active."
 msgstr ""
 

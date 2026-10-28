@@ -834,11 +834,13 @@ class REST_Tests {
 
 			// E32b: the feed must parse as XML. A trimmed excerpt ends in
 			// &hellip; and bodies can carry &nbsp;, neither of which XML
-			// defines, so a strict reader (Mailchimp, xmllint) drops the feed.
+			// defines, and a pasted title can carry control characters XML
+			// forbids, so a strict reader (Mailchimp, xmllint) drops the feed.
 			$public_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_spaces WHERE slug = %s", $public_slug ) );
 			$probe     = $this->rest( 'POST', "/spaces/{$public_id}/posts", array(
-				'title'   => 'QA feed probe &amp; more',
-				'content' => '<p>' . str_repeat( 'Teachers write about the past&nbsp;and present. ', 12 ) . '</p>',
+				// A backspace and a vertical tab, as pasted from Word or a PDF: XML forbids both.
+				'title'   => "QA feed probe &amp; more\x08pasted\x0Bfrom Word",
+				'content' => '<p>' . str_repeat( "Teachers write about the past&nbsp;and present.\x08 ", 12 ) . '</p>',
 			), $this->admin_id );
 			$probe_id  = (int) ( $probe->get_data()['id'] ?? 0 );
 			$feed      = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $public_slug ) . '/feed/', array( 'timeout' => 10 ) );
@@ -847,7 +849,7 @@ class REST_Tests {
 			$xml_error = $xml_ok ? '' : trim( (string) ( libxml_get_last_error()->message ?? '' ) );
 			libxml_clear_errors();
 			libxml_use_internal_errors( $prev );
-			$this->check( 'E32b: feed with a trimmed excerpt is valid XML', $probe_id > 0 && $xml_ok, $probe_id ? $xml_error : 'probe topic not created' );
+			$this->check( 'E32b: feed with a trimmed excerpt and pasted control characters is valid XML', $probe_id > 0 && $xml_ok, $probe_id ? $xml_error : 'probe topic not created' );
 			if ( $probe_id ) {
 				$this->rest( 'DELETE', "/posts/{$probe_id}", array( 'force' => true ), $this->admin_id );
 			}

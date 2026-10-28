@@ -49,7 +49,7 @@ if ( ! $cancel_url ) {
 	<h1 class="jt-post-create-title"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></h1>
 
 	<?php // One long form; these jump to its sections (same look as the space tabs). ?>
-	<nav class="jt-space-tabs" aria-label="<?php esc_attr_e( 'Profile sections', 'jetonomy' ); ?>">
+	<nav class="jt-space-tabs jt-space-tabs--wrap" aria-label="<?php esc_attr_e( 'Profile sections', 'jetonomy' ); ?>">
 		<a class="jt-space-tab" href="#profile-details"><?php esc_html_e( 'Profile', 'jetonomy' ); ?></a>
 		<a class="jt-space-tab" href="#notification-preferences"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></a>
 		<a class="jt-space-tab" href="#blocked-members"><?php /* translators: %s: plural member label. */ echo esc_html( sprintf( __( 'Blocked %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></a>

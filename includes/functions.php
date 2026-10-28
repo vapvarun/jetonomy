@@ -1740,3 +1740,30 @@ function space_join_policy_label( string $policy ): string {
 			return ucfirst( $policy );
 	}
 }
+
+/**
+ * A web address typed into a setting, checked as typed.
+ *
+ * On its own, esc_url_raw() turns "not a url" into a plausible http://not%20a%20url,
+ * so a save that relied on it said "saved" over a broken value. Accepts an
+ * http(s) address with a real host name (localhost included) or a
+ * site-relative path.
+ *
+ * @param string $raw Value as typed.
+ * @return string|null The cleaned address, '' for empty, or null when it is not an address.
+ */
+function http_url( string $raw ): ?string {
+	$raw = trim( $raw );
+	if ( '' === $raw ) {
+		return '';
+	}
+	if ( '/' === $raw[0] && ! str_starts_with( $raw, '//' ) ) {
+		return esc_url_raw( $raw );
+	}
+	$parts = wp_parse_url( $raw );
+	$host  = (string) ( $parts['host'] ?? '' );
+	if ( in_array( $parts['scheme'] ?? '', array( 'http', 'https' ), true ) && '' !== $host && false !== filter_var( $host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME ) ) {
+		return esc_url_raw( $raw, array( 'http', 'https' ) );
+	}
+	return null;
+}
