@@ -80,6 +80,12 @@
 			// Access-rule composer preview: the sentence and its "who matches" notes.
 			rulePreview: {
 				whoFallback: __( 'People who match this rule', 'jetonomy' ),
+				chooseType:  __( 'Choose who this rule lets in. Nothing changes until you add the rule.', 'jetonomy' ),
+				/* translators: 1: who the rule matches (e.g. "Everyone"), 2: space label, lowercase. */
+				confirmOpen: __( '%1$s will be let in to this private %2$s and can take part right away. Continue?', 'jetonomy' ),
+				confirmOpenLabel: __( 'Add rule', 'jetonomy' ),
+				/* translators: %s: the rule in plain words, e.g. "Everyone can read, post, reply, vote and report." */
+				added:       __( 'Rule added: %s', 'jetonomy' ),
 				/* translators: 1: who the rule matches, 2: what they may do, 3: the space role they are recorded as. */
 				sentence: __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
 				// A rule admits; it does not restrict, so no "but not take part".
@@ -91,7 +97,8 @@
 				},
 				// The consequence of each rule type, not its definition.
 				typeNotes: {
-					everyone:    __( 'Matches every visitor, signed in or not. Nobody is asked to log in first.', 'jetonomy' ),
+					/* translators: %s: space label, singular lowercase (e.g. "space"). */
+					everyone:    sprintf( __( 'Matches everyone. A visitor who is not signed in is still asked to log in first, so on a Private %s this works like Logged In.', 'jetonomy' ), SPACE ),
 					logged_in:   __( 'Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.', 'jetonomy' ),
 					/* translators: %s: member label, plural lowercase (e.g. "members"). */
 					role:        sprintf( __( 'Matches anyone holding this WordPress role. Most %s hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ), MEMBERS ),
@@ -1127,7 +1134,7 @@
 					// AccessRule ignores rule_value for both, and the handler
 					// stores null. Showing a value box for them invited an
 					// owner to type something that was silently discarded.
-					var takesValue = !isAdapter && val !== 'everyone' && val !== 'logged_in';
+					var takesValue = '' !== val && !isAdapter && val !== 'everyone' && val !== 'logged_in';
 
 					$('#rule-value').toggle(takesValue).val('');
 					if (takesValue) {
@@ -1135,6 +1142,13 @@
 						$('#rule-value').attr('placeholder', placeholders[val] || '');
 					}
 					$wrap.toggle(isAdapter);
+					// Full can only differ from Participate on a role or capability rule.
+					var offersFull = 'role' === val || 'capability' === val;
+					var $full = $('#rule-grants option[value="full"]');
+					$full.prop('hidden', !offersFull).prop('disabled', !offersFull);
+					if (!offersFull && 'full' === $('#rule-grants').val()) {
+						$('#rule-grants').val('participate');
+					}
 					$input.val('');
 					$hidden.val('');
 					$results.hide();
@@ -1164,6 +1178,12 @@
 					if (!$out.length) { return; }
 
 					var i18n     = (self.i18n && self.i18n.rulePreview) || {};
+					var ruleTypeId = $('#rule-type').val();
+					syncAddButton();
+					if (!ruleTypeId) {
+						$out.text(i18n.chooseType || '');
+						return;
+					}
 					var typeSel  = $('#rule-type option:selected').text();
 					var grants   = $('#rule-grants').val();
 					// Roster role is derived from the grant (AccessRule::role_for_grants()).
@@ -1173,7 +1193,8 @@
 
 					var who = i18n.whoFallback;
 					var val = $('#rule-value').is(':visible') ? $('#rule-value').val() : $('#rule-value-membership-search').val();
-					if (val) { who = typeSel + ': ' + val; }
+					if ('everyone' === ruleTypeId || 'logged_in' === ruleTypeId) { who = typeSel; }
+					else if (val) { who = typeSel + ': ' + val; }
 
 					var sentence = (i18n.sentence)
 						.replace('%1$s', who)
@@ -1189,7 +1210,6 @@
 					// the generic membership note below rather than showing a
 					// built-in type's sentence.
 					var typeNotes  = i18n.typeNotes || {};
-					var ruleTypeId = $('#rule-type').val();
 					var note       = typeNotes[ruleTypeId] || '';
 					if (!note && ruleTypeId && ruleTypeId.indexOf('membership:') === 0 && i18n.membershipNote) {
 						var adapterId2 = ruleTypeId.replace('membership:', '');
@@ -1208,12 +1228,19 @@
 					}
 				}
 
+				// Add Rule stays off until the rule says who it is for.
+				function syncAddButton() {
+					var type  = $('#rule-type').val() || '';
+					var ready = 'everyone' === type || 'logged_in' === type ||
+						(0 === type.indexOf('membership:') ? '' !== $('#rule-value-membership').val() : '' !== type && '' !== $.trim($('#rule-value').val()));
+					$('#jetonomy-add-rule').prop('disabled', !ready);
+				}
+
 				$(document).on('change', '#rule-grants', renderRulePreview);
 				$(document).on('input', '#rule-value, #rule-value-membership-search', renderRulePreview);
 				// Apply the type rules to whatever is selected on load, not just
-				// on the first change. The form opens on 'Everyone', which takes
-				// no value, so without this the owner is shown an empty value box
-				// for a rule that ignores it.
+				// on the first change: the form opens on the "Choose" prompt,
+				// which takes no value box and keeps Add Rule off.
 				$ruleType.trigger('change');
 				renderRulePreview();
 			})();
@@ -1226,25 +1253,39 @@
 				var isAdapter = ruleTypeVal.indexOf('membership:') === 0;
 				var ruleType = isAdapter ? 'membership' : ruleTypeVal;
 				var ruleValue = isAdapter ? $('#rule-value-membership').val() : $('#rule-value').val();
+				var i18n      = (self.i18n && self.i18n.rulePreview) || {};
+				// The rule in plain words: the first sentence of the preview.
+				var summary   = $.trim($('[data-jt-rule-preview] > span').first().text().split('. ')[0]) + '.';
+				var opensAll  = ('everyone' === ruleType || 'logged_in' === ruleType) && '1' === String($btn.data('private'));
+				var asked     = opensAll
+					? self.confirmAsync(
+						(i18n.confirmOpen || '').replace('%1$s', $('#rule-type option:selected').text()).replace('%2$s', SPACE),
+						{ confirmLabel: i18n.confirmOpenLabel }
+					)
+					: Promise.resolve(true);
 
-				$btn.prop('disabled', true);
-
-				self.ajax('jetonomy_add_access_rule', {
-					space_id: spaceId,
-					rule_type: ruleType,
-					rule_value: ruleValue,
-					grants: $('#rule-grants').val(),
-					priority: $('#rule-priority').val()
-				}).done(function(res) {
-					if (res.success) {
-						self.reloadWithToast(res.data.message);
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
-					}
-				}).fail(function() {
-					self.toast(self.i18n.error, 'error');
-				}).always(function() {
-					$btn.prop('disabled', false);
+				asked.then(function(ok) {
+					if (!ok) { return; }
+					$btn.prop('disabled', true);
+					self.ajax('jetonomy_add_access_rule', {
+						space_id: spaceId,
+						rule_type: ruleType,
+						rule_value: ruleValue,
+						grants: $('#rule-grants').val(),
+						priority: $('#rule-priority').val()
+					}).done(function(res) {
+						if (res.success) {
+							// Keep any note after the server's first sentence (e.g. "switched to Private").
+							var extra = String(res.data.message || '').replace(/^[^.]*\.\s*/, '');
+							self.reloadWithToast((i18n.added || '%s').replace('%s', summary) + (extra ? ' ' + extra : ''));
+						} else {
+							self.toast(res.data || self.i18n.error, 'error');
+							$btn.prop('disabled', false);
+						}
+					}).fail(function() {
+						self.toast(self.i18n.error, 'error');
+						$btn.prop('disabled', false);
+					});
 				});
 			});
 

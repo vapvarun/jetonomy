@@ -61,7 +61,7 @@ A sentence under the form reads your rule back in plain English. The rule then a
 |---|---|
 | **Read** | Read and report |
 | **Participate** | Read, post, reply, vote and report |
-| **Full** | Same as Participate for ordinary members |
+| **Full** | Only on WordPress Role and Capability rules; not offered for a plan, where it would equal Participate |
 
 A rule can never make someone a moderator. To appoint one, use the **Members** tab. For the details, see [Access level](../integrations/01-memberpress.md#access-level).
 

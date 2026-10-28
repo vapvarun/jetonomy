@@ -4354,3 +4354,55 @@ tr.jetonomy-moderated td {
 .jetonomy-unban-user {
 	white-space: nowrap;
 }
+
+/* Progressive disclosure for long explainers and expert settings (the
+   Pro AI tab measured 8,290px tall at 320 with 60 exposed controls). Cards
+   converted to native <details> keep keyboard semantics for free; the
+   summary renders as the card head with a caret. */
+.jt-settings-card--disclosure > summary {
+	cursor: pointer;
+	list-style: none;
+	position: relative;
+	padding-inline-end: 28px;
+}
+.jt-settings-card--disclosure > summary::-webkit-details-marker { display: none; }
+.jt-settings-card--disclosure > summary::after {
+	content: "\203A";
+	position: absolute;
+	inset-inline-end: 4px;
+	top: 0;
+	font-size: 20px;
+	line-height: 1;
+	color: #55606e;
+	transform: rotate(-90deg);
+	transition: transform 0.15s;
+}
+.jt-settings-card--disclosure[open] > summary::after {
+	transform: rotate(90deg);
+}
+.jt-settings-card--disclosure > summary:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+
+/* An access rule whose course, product or plan is gone: it lets nobody in. */
+.jt-rule-unavailable {
+	display: inline-block;
+	margin-inline-start: var(--jt-space-1, 4px);
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: var(--jt-admin-danger-light, #fee2e2);
+	color: var(--jt-admin-danger-google, #b91c1c);
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+.jt-rule-unavailable__why {
+	display: block;
+	margin-block-start: 4px;
+}
+.jetonomy-admin .jt-access-help__body {
+	padding: var(--jt-space-3, 12px) var(--jt-space-5, 20px) 0;
+}

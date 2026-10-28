@@ -196,6 +196,42 @@ class Adapter_Registry {
 	}
 
 	/**
+	 * Whether a level is bought (a subscription or plan that can lapse) rather
+	 * than joined (a course or group). Adapters opt in with an optional
+	 * `level_is_purchase( string $level_id ): bool`; a level with no kind
+	 * (a plain plan) counts as bought, any other as joined.
+	 *
+	 * @param string $level_id Stored rule value.
+	 * @return bool
+	 */
+	public static function membership_level_is_purchase( string $level_id ): bool {
+		if ( '' === $level_id ) {
+			return true;
+		}
+		$owner   = self::level_owner( $level_id );
+		$adapter = '' !== $owner['adapter'] ? self::get_membership( $owner['adapter'] ) : null;
+		if ( $adapter && method_exists( $adapter, 'level_is_purchase' ) ) {
+			return (bool) $adapter->level_is_purchase( $level_id );
+		}
+		return '' === $owner['kind'];
+	}
+
+	/**
+	 * Whether a membership level can still be bought or joined: false for a
+	 * trashed, unpublished or deleted course, product or plan. Adapters opt in
+	 * with an optional `level_available( string $level_id ): bool`; without it
+	 * (or with the adapter inactive) the level counts as available.
+	 *
+	 * @param string $level_id Stored rule value.
+	 * @return bool
+	 */
+	public static function membership_level_available( string $level_id ): bool {
+		$adapter_id = '' !== $level_id ? self::level_owner( $level_id )['adapter'] : '';
+		$adapter    = '' !== $adapter_id ? self::get_membership( $adapter_id ) : null;
+		return ! $adapter || ! method_exists( $adapter, 'level_available' ) || (bool) $adapter->level_available( $level_id );
+	}
+
+	/**
 	 * Where a visitor goes to BUY the membership level a space requires.
 	 *
 	 * Telling somebody "this needs the VIP tier" without a way to get it is

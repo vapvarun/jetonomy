@@ -27,18 +27,19 @@ Each Reply-To address is unique to the member and the topic. It encodes a signed
 
 ## Configuration
 
-Reply by Email needs two things switched on: the extension itself and the feature setting.
+The Extensions toggle is the only switch. Reply by Email starts working as soon as it can read replies.
 
 1. Go to **Jetonomy → Extensions**, find **Reply by Email**, and switch its toggle on.
-2. Go to **Jetonomy → Settings → Reply by Email**.
-3. Tick **Enable Reply by Email** and fill in the fields below.
-4. Click **Save Reply by Email Settings**.
+2. Go to **Jetonomy → Settings → Reply by Email**. The box at the top says **Not set up yet** and names what is missing.
+3. Fill in the fields below: for IMAP, the host, username and password; or choose the webhook method.
+4. Click **Save Reply by Email Settings**. The box now says **Set up**.
+
+Until it is set up, no reply address is added to notification emails, so members never reply into a mailbox nobody reads.
 
 ![The Jetonomy, Settings, Reply by Email screen](../images/pro-reply-by-email-settings.webp)
 
 | Field | Description |
 |-------|-------------|
-| **Enable Reply by Email** | Turns the feature on. Off by default. |
 | **Email Domain** | The domain used in Reply-To addresses, for example `reply.yoursite.com`. Defaults to your site's domain. Mail sent to this domain must be delivered to the mailbox or provider you set up below. |
 | **Inbound Method** | **IMAP Polling (WP-Cron, every 5 minutes)** or **Inbound Webhook (SendGrid / Mailgun)**. |
 

@@ -113,7 +113,9 @@ touch them.
 stores `viewer`, `participate` and `full` store `member`. A rule never stores
 `moderator` or `admin`. Since 2.0.7 a `space_role` sent in the request is
 ignored, and `PATCH /access-rules/{id}` with `{"grants": "..."}` changes an
-existing rule's grant and its role together.
+existing rule's grant and its role together. `full` is kept only on `role`
+and `capability` rules; on any other type it is stored as `participate`
+(what it does there) and the response shows the stored value.
 
 Access rules are managed by site administrators only (`jetonomy_manage_spaces`).
 Anyone else, a space admin included, gets `403 jetonomy_forbidden` with the

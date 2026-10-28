@@ -6,7 +6,7 @@ Reach members with browser push notifications - even when they have closed your 
 
 ## What You Will Learn
 
-- How to generate VAPID keys and enable Web Push
+- How to turn on Web Push
 - How members subscribe to push notifications
 - Which events trigger a push notification
 - Which browsers are supported
@@ -17,14 +17,10 @@ Email notifications have open rates around 20-30%. Browser push notifications ha
 
 ## Enabling Web Push
 
-Web Push requires a VAPID key pair to authenticate your server with browsers.
+1. Go to **Jetonomy → Extensions** and switch **Web Push Notifications** on. That toggle is the only switch: members see the opt-in straight away.
+2. Optional: open **Jetonomy → Settings → Web Push** to set the notification title and icon, then click **Save Web Push Settings**.
 
-1. Go to **Jetonomy → Settings → Web Push**.
-2. Click **Generate VAPID Keys**. Jetonomy creates a public/private key pair and stores them in your WordPress options table.
-3. Toggle **Enable Web Push** to on.
-4. Click **Save**.
-
-> **Important:** VAPID keys are generated once. If you regenerate them, all existing push subscriptions are invalidated and members must subscribe again. Only regenerate if you believe your private key has been compromised.
+Web Push authenticates your server with browsers using a VAPID key pair. Jetonomy creates it automatically the first time the extension runs and shows the public key on the Web Push tab. There is nothing to generate. If it reports that the key could not be generated, your server needs OpenSSL with EC support.
 
 ![Web Push settings page with VAPID key fields and enable toggle](../images/pro-web-push.webp)
 ## Service Worker Registration

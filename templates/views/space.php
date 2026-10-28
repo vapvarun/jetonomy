@@ -112,47 +112,54 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		// purpose: telling a would-be subscriber "you need an invitation"
 		// when the space is actually sold as part of a plan sends them to ask
 		// a human for something they could have bought in one click.
+		// A trashed or unpublished course is no way in: name only what a visitor
+		// can still get, unless nothing is left (then the admin hint below applies).
+		$_jt_live = array_values( array_filter( $_jt_unmet_membership, static fn( $r ) => ! empty( $r['available'] ) ) );
+		if ( $_jt_live ) {
+			$_jt_unmet_membership = $_jt_live;
+		}
 		$_jt_tier_names = wp_list_pluck( $_jt_unmet_membership, 'label' );
-		$_jt_first_url  = '';
-		$_jt_first_name = '';
-		// Course / Group / Tier etc. of the first requirement; '' for plain plans.
-		$_jt_kind = (string) ( $_jt_unmet_membership[0]['kind'] ?? '' );
-		foreach ( $_jt_unmet_membership as $_jt_req ) {
-			if ( '' !== $_jt_req['url'] ) {
-				$_jt_first_url  = $_jt_req['url'];
-				$_jt_first_name = $_jt_req['name'];
-				break;
-			}
+		// Every way in that can still be bought or joined gets its own button
+		// (the partial has room for two), not only the first course.
+		$_jt_ways = array_values( array_filter( $_jt_unmet_membership, static fn( $r ) => '' !== $r['url'] ) );
+		$_jt_one  = $_jt_unmet_membership[0];
+		if ( count( $_jt_unmet_membership ) > 1 ) {
+			$_jt_how = $_jt_ways
+				? __( 'Any one of them gives you access, from the moment you have it until it ends.', 'jetonomy' )
+				: __( 'Ask a site administrator how to get one of them.', 'jetonomy' );
+		} elseif ( '' === $_jt_one['url'] ) {
+			$_jt_how = '' !== $_jt_one['kind']
+				/* translators: %s: what the visitor needs, lowercase (e.g. course, group). */
+				? sprintf( __( 'Ask a site administrator to add you to this %s.', 'jetonomy' ), mb_strtolower( $_jt_one['kind'] ) )
+				: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' );
+		} elseif ( ! empty( $_jt_one['purchase'] ) ) {
+			$_jt_how = '' !== $_jt_one['kind']
+				/* translators: %s: what the visitor buys, lowercase (e.g. subscription, membership plan). */
+				? sprintf( __( 'Your access starts as soon as your %s is active, and ends if it lapses.', 'jetonomy' ), mb_strtolower( $_jt_one['kind'] ) )
+				: __( 'Your access starts as soon as the plan is active, and ends if it lapses.', 'jetonomy' );
+		} else {
+			/* translators: %s: what the visitor joins, lowercase (e.g. course, group). */
+			$_jt_how = sprintf( __( 'You get access as soon as you join this %s, and lose it if you leave it.', 'jetonomy' ), mb_strtolower( $_jt_one['kind'] ) );
 		}
 
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(
-				'icon'        => 'lock',
-				'message'     => sprintf(
+				'icon'            => 'lock',
+				'message'         => sprintf(
 					/* translators: 1: the singular space label (e.g. space, group), 2: comma-separated plan names. */
 					__( 'This %1$s is included with %2$s.', 'jetonomy' ),
 					\Jetonomy\space_label( false, true ),
 					implode( ', ', $_jt_tier_names )
 				),
-				'description' => '' !== $_jt_kind
-					? sprintf(
-						'' !== $_jt_first_url
-							/* translators: %s: what the visitor must join, lowercase (e.g. course, group). */
-							? __( 'You get access as soon as you join this %s, and lose it if you leave it.', 'jetonomy' )
-							/* translators: %s: what the visitor must join, lowercase (e.g. course, group). */
-							: __( 'Ask a site administrator to add you to this %s.', 'jetonomy' ),
-						mb_strtolower( $_jt_kind )
-					)
-					: ( '' !== $_jt_first_url
-						? __( 'Your access starts as soon as the plan is active, and ends if it lapses.', 'jetonomy' )
-						: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' ) ),
-				'cta_label'   => '' !== $_jt_first_url
-					/* translators: %s: plan name. */
-					? sprintf( __( 'Get %s', 'jetonomy' ), $_jt_first_name )
-					: '',
-				'cta_url'     => $_jt_first_url,
-				'tone'        => 'forbidden',
+				'description'     => $_jt_how,
+				/* translators: %s: plan, course or group name. */
+				'cta_label'       => isset( $_jt_ways[0] ) ? sprintf( __( 'Get %s', 'jetonomy' ), $_jt_ways[0]['name'] ) : '',
+				'cta_url'         => $_jt_ways[0]['url'] ?? '',
+				/* translators: %s: plan, course or group name. */
+				'secondary_label' => isset( $_jt_ways[1] ) ? sprintf( __( 'Get %s', 'jetonomy' ), $_jt_ways[1]['name'] ) : '',
+				'secondary_url'   => $_jt_ways[1]['url'] ?? '',
+				'tone'            => 'forbidden',
 			)
 		);
 		return;

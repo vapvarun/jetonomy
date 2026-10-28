@@ -41,7 +41,8 @@ class AccessRule extends Model {
 		// The roster role is derived from the grant, never chosen, for every
 		// writer (REST, wp-admin, Pro provisioners): read is Viewer, participate
 		// and full are Member.
-		$data['space_role'] = self::role_for_grants( (string) ( $data['grants'] ?? 'read' ) );
+		$data['grants']     = self::grants_for_type( (string) ( $data['grants'] ?? 'read' ), (string) ( $data['rule_type'] ?? '' ) );
+		$data['space_role'] = self::role_for_grants( $data['grants'] );
 
 		$id = static::insert( $data );
 
@@ -110,6 +111,29 @@ class AccessRule extends Model {
 	}
 
 	/**
+	 * Whether "Full" means anything for this rule type. Full adds editing,
+	 * closing and pinning only for people whose WordPress role already allows
+	 * moderation, which only a role or capability rule can single out; for any
+	 * other rule an ordinary member gets exactly Participate.
+	 *
+	 * @param string $rule_type Rule type.
+	 */
+	public static function offers_full( string $rule_type ): bool {
+		return in_array( $rule_type, array( 'role', 'capability' ), true );
+	}
+
+	/**
+	 * The grant stored for a rule type: Full on a type that cannot offer it is
+	 * saved as Participate, which is what it would do anyway.
+	 *
+	 * @param string $grants    read | participate | full.
+	 * @param string $rule_type Rule type.
+	 */
+	public static function grants_for_type( string $grants, string $rule_type ): string {
+		return 'full' === $grants && ! self::offers_full( $rule_type ) ? 'participate' : $grants;
+	}
+
+	/**
 	 * The roster role a grant records: Viewer for read, Member for participate and full.
 	 *
 	 * @param string $grants read | participate | full.
@@ -130,13 +154,15 @@ class AccessRule extends Model {
 	 * @return bool|\WP_Error True on success.
 	 */
 	public static function update_grants( int $id, string $grants ): bool|\WP_Error {
-		if ( ! static::find( $id ) ) {
+		$rule = static::find( $id );
+		if ( ! $rule ) {
 			return new \WP_Error( 'jetonomy_rule_not_found', __( 'Access rule not found.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 		if ( ! in_array( $grants, array( 'read', 'participate', 'full' ), true ) ) {
 			return new \WP_Error( 'jetonomy_invalid_grants', __( 'Invalid grants value.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
-		$saved = parent::update(
+		$grants = self::grants_for_type( $grants, (string) $rule->rule_type );
+		$saved  = parent::update(
 			$id,
 			array(
 				'grants'     => $grants,
@@ -701,15 +727,17 @@ class AccessRule extends Model {
 	private static function describe_requirement( string $level_id ): array {
 		$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( $level_id );
 		return array(
-			'level_id' => $level_id,
-			'name'     => $described['value'],
-			'type'     => $described['type'],
-			'kind'     => $described['kind'],
-			'label'    => '' !== $described['kind']
+			'level_id'  => $level_id,
+			'name'      => $described['value'],
+			'type'      => $described['type'],
+			'kind'      => $described['kind'],
+			'label'     => '' !== $described['kind']
 				/* translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group). */
 				? sprintf( __( '%1$s (%2$s)', 'jetonomy' ), $described['value'], $described['kind'] )
 				: $described['value'],
-			'url'      => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( $level_id ),
+			'url'       => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( $level_id ),
+			'purchase'  => \Jetonomy\Adapters\Adapter_Registry::membership_level_is_purchase( $level_id ),
+			'available' => \Jetonomy\Adapters\Adapter_Registry::membership_level_available( $level_id ),
 		);
 	}
 }
