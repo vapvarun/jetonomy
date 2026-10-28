@@ -96,5 +96,8 @@ class AccessRuleOwnerFriendlyTest extends WP_UnitTestCase {
 		$this->assertTrue( $unmet['sub_live']['available'] );
 		$this->assertFalse( $unmet['course_gone']['purchase'] );
 		$this->assertFalse( $unmet['course_gone']['available'], 'A trashed course is flagged, not offered.' );
+		$this->assertSame( 'Gold', $unmet['sub_live']['label'], 'A paid plan is named without its kind ("Gold (Subscription)" is noise).' );
+		$this->assertSame( 'Old course (Course)', $unmet['course_gone']['label'], 'A course or group keeps its kind: it tells two ways in apart.' );
+		$this->assertTrue( ( new \Jetonomy\Adapters\PMPro_Adapter() )->level_is_purchase( 'pmpro_3' ), 'A PMPro level is bought at checkout.' );
 	}
 }

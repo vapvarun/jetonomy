@@ -726,17 +726,19 @@ class AccessRule extends Model {
 	 */
 	private static function describe_requirement( string $level_id ): array {
 		$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( $level_id );
+		$purchase  = \Jetonomy\Adapters\Adapter_Registry::membership_level_is_purchase( $level_id );
 		return array(
 			'level_id'  => $level_id,
 			'name'      => $described['value'],
 			'type'      => $described['type'],
 			'kind'      => $described['kind'],
-			'label'     => '' !== $described['kind']
+			// "Gold (Level)" is noise; "(Course)" / "(Group)" tells two ways in apart.
+			'label'     => '' !== $described['kind'] && ! $purchase
 				/* translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group). */
 				? sprintf( __( '%1$s (%2$s)', 'jetonomy' ), $described['value'], $described['kind'] )
 				: $described['value'],
 			'url'       => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( $level_id ),
-			'purchase'  => \Jetonomy\Adapters\Adapter_Registry::membership_level_is_purchase( $level_id ),
+			'purchase'  => $purchase,
 			'available' => \Jetonomy\Adapters\Adapter_Registry::membership_level_available( $level_id ),
 		);
 	}

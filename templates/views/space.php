@@ -118,29 +118,34 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		if ( $_jt_live ) {
 			$_jt_unmet_membership = $_jt_live;
 		}
+		$_jt_none_left  = ! $_jt_live;
 		$_jt_tier_names = wp_list_pluck( $_jt_unmet_membership, 'label' );
 		// Every way in that can still be bought or joined gets its own button
 		// (the partial has room for two), not only the first course.
 		$_jt_ways = array_values( array_filter( $_jt_unmet_membership, static fn( $r ) => '' !== $r['url'] ) );
 		$_jt_one  = $_jt_unmet_membership[0];
-		if ( count( $_jt_unmet_membership ) > 1 ) {
+		if ( $_jt_none_left ) {
+			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+			$_jt_how = sprintf( __( 'This %s is not open to join right now.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		} elseif ( count( $_jt_unmet_membership ) > 1 ) {
 			$_jt_how = $_jt_ways
 				? __( 'Any one of them gives you access, from the moment you have it until it ends.', 'jetonomy' )
 				: __( 'Ask a site administrator how to get one of them.', 'jetonomy' );
-		} elseif ( '' === $_jt_one['url'] ) {
-			$_jt_how = '' !== $_jt_one['kind']
-				/* translators: %s: what the visitor needs, lowercase (e.g. course, group). */
-				? sprintf( __( 'Ask a site administrator to add you to this %s.', 'jetonomy' ), mb_strtolower( $_jt_one['kind'] ) )
-				: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' );
 		} elseif ( ! empty( $_jt_one['purchase'] ) ) {
-			$_jt_how = '' !== $_jt_one['kind']
-				/* translators: %s: what the visitor buys, lowercase (e.g. subscription, membership plan). */
-				? sprintf( __( 'Your access starts as soon as your %s is active, and ends if it lapses.', 'jetonomy' ), mb_strtolower( $_jt_one['kind'] ) )
-				: __( 'Your access starts as soon as the plan is active, and ends if it lapses.', 'jetonomy' );
+			// One sentence for every paid plan, whatever the plugin calls it.
+			$_jt_how = '' !== $_jt_one['url']
+				? __( 'Your access starts as soon as your membership is active, and ends if it lapses.', 'jetonomy' )
+				: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' );
+		} elseif ( '' === $_jt_one['url'] ) {
+			/* translators: %s: what the visitor needs, lowercase (e.g. course, group). */
+			$_jt_how = sprintf( __( 'Ask a site administrator to add you to this %s.', 'jetonomy' ), mb_strtolower( $_jt_one['kind'] ) );
 		} else {
 			/* translators: %s: what the visitor joins, lowercase (e.g. course, group). */
 			$_jt_how = sprintf( __( 'You get access as soon as you join this %s, and lose it if you leave it.', 'jetonomy' ), mb_strtolower( $_jt_one['kind'] ) );
 		}
+		// Two buttons carry their kind ("(Course)", "(Group)"): a course and a
+		// group can share a name, and two identical links help nobody.
+		$_jt_btn = static fn( array $way ): string => sprintf( /* translators: %s: plan, course or group name. */ __( 'Get %s', 'jetonomy' ), count( $_jt_ways ) > 1 ? $way['label'] : $way['name'] );
 
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
@@ -153,11 +158,9 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 					implode( ', ', $_jt_tier_names )
 				),
 				'description'     => $_jt_how,
-				/* translators: %s: plan, course or group name. */
-				'cta_label'       => isset( $_jt_ways[0] ) ? sprintf( __( 'Get %s', 'jetonomy' ), $_jt_ways[0]['name'] ) : '',
+				'cta_label'       => isset( $_jt_ways[0] ) ? $_jt_btn( $_jt_ways[0] ) : '',
 				'cta_url'         => $_jt_ways[0]['url'] ?? '',
-				/* translators: %s: plan, course or group name. */
-				'secondary_label' => isset( $_jt_ways[1] ) ? sprintf( __( 'Get %s', 'jetonomy' ), $_jt_ways[1]['name'] ) : '',
+				'secondary_label' => isset( $_jt_ways[1] ) ? $_jt_btn( $_jt_ways[1] ) : '',
 				'secondary_url'   => $_jt_ways[1]['url'] ?? '',
 				'tone'            => 'forbidden',
 			)

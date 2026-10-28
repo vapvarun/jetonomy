@@ -138,7 +138,7 @@ Multiple rules can be stacked. Jetonomy grants the highest matching permission l
 
 **When a course, product or plan is gone.** If the course, product or plan a rule points to is trashed, deleted or unpublished, the rules list flags it, for example "Course no longer available", because nobody can get it. Publish it again or delete the rule. Visitors are only offered the ways in that still exist.
 
-**What a visitor without access sees.** The space says what it is included with and gives a **Get** button for each way in (up to two). A course or group reads "You get access as soon as you join this course, and lose it if you leave it."; a subscription or plan reads "Your access starts as soon as your subscription is active, and ends if it lapses."
+**What a visitor without access sees.** The space says what it is included with and gives a **Get** button for each way in (up to two). With two buttons each names its kind, for example **Get Poetry Masterclass (Course)** and **Get Poetry Masterclass (Group)**. A course or group reads "You get access as soon as you join this course, and lose it if you leave it." Every paid plan (PMPro, MemberPress, WooCommerce, Restrict Content Pro, SureMembers and others) reads "Your access starts as soon as your membership is active, and ends if it lapses." If nothing the space is included with can still be had, it reads "This space is not open to join right now."
 
 **What a member sees.** Someone a membership rule lets in sees "You have access through Community Writing Basics (Course)." under the space description, linked to the course or plan, so they know what keeps them in. People who joined, were invited, or are site staff do not see it.
 
