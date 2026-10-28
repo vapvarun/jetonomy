@@ -100,7 +100,7 @@ Leave a field blank to keep the default.
 
 Turn on each feature at **Jetonomy → Extensions** first.
 
-**Email Digest.** Open **Email Digest** in the **Advanced** group of **Jetonomy → Settings**. Tick **Enable Digests**, choose a **Default Frequency** of **Daily**, **Weekly** or **None (opt-in only)**, then click **Save Digest Settings**. Use **Send Test Daily** or **Send Test Weekly** to see one first. See [Email Digest](../pro-features/08-email-digest.md).
+**Email Digest.** Turn on **Email Digest** under **Jetonomy → Extensions**, then open **Email Digest** in the **Advanced** group of **Jetonomy → Settings**. Choose a **Default Frequency** of **Daily**, **Weekly** or **None (opt-in only)**, then click **Save Digest Settings**. Use **Send Test Daily** or **Send Test Weekly** to see one first. See [Email Digest](../pro-features/08-email-digest.md).
 
 **Reply by Email.** Open **Reply by Email** in the same group. You need an inbound address on your own domain. Set **Email Domain** and choose an **Inbound Method**. Your host or mail provider can help with this part. See [Reply by Email](../pro-features/11-reply-by-email.md).
 
