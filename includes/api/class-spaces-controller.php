@@ -694,7 +694,10 @@ class Spaces_Controller extends Base_Controller {
 			return $combo;
 		}
 
-		$cover = esc_url_raw( (string) $request->get_param( 'cover_image' ) );
+		$cover = \Jetonomy\http_url( (string) $request->get_param( 'cover_image' ) );
+		if ( null === $cover ) {
+			return \Jetonomy\invalid_url_error( 'cover_image' );
+		}
 		if ( ! \Jetonomy\Permissions\Capabilities::can_set_image( $cover, '', get_current_user_id() ) ) {
 			return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to upload images.', 'jetonomy' ), array( 'status' => 403 ) );
 		}
@@ -871,7 +874,10 @@ class Spaces_Controller extends Base_Controller {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );
 		}
 		if ( null !== $request->get_param( 'cover_image' ) ) {
-			$data['cover_image'] = esc_url_raw( (string) $request->get_param( 'cover_image' ) );
+			$data['cover_image'] = \Jetonomy\http_url( (string) $request->get_param( 'cover_image' ) );
+			if ( null === $data['cover_image'] ) {
+				return \Jetonomy\invalid_url_error( 'cover_image' );
+			}
 			if ( ! \Jetonomy\Permissions\Capabilities::can_set_image( $data['cover_image'], (string) ( $space->cover_image ?? '' ), get_current_user_id() ) ) {
 				return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to upload images.', 'jetonomy' ), array( 'status' => 403 ) );
 			}

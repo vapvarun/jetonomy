@@ -39,8 +39,49 @@ class Divi_Theme_Builder {
 		// While a layout renders, Divi picks where its styles go. Read as singular,
 		// it uses the page's stylesheet, which prints in the footer; otherwise a
 		// per-layout one whose turn to print came before the header rendered.
-		add_action( 'et_theme_builder_after_layout_opening_wrappers', array( $this, 'open' ) );
-		add_action( 'et_theme_builder_before_layout_closing_wrappers', array( $this, 'close' ) );
+		add_action( 'et_theme_builder_after_layout_opening_wrappers', array( $this, 'open_layout' ) );
+		add_action( 'et_theme_builder_before_layout_closing_wrappers', array( $this, 'close_layout' ) );
+	}
+
+	/**
+	 * Queried objects to restore after each layout render (a stack, like $saved).
+	 *
+	 * @var array<int, object|null>
+	 */
+	private array $saved_object = array();
+
+	/**
+	 * Open the window for a layout render. Code inside the layout that trusts
+	 * is_singular() reads the queried object: a Menu module with no items falls
+	 * back to wp_list_pages(), which reads get_queried_object()->post_type and
+	 * warned on null. An empty, non-hierarchical post answers it harmlessly.
+	 */
+	public function open_layout(): void {
+		$depth = count( $this->saved );
+		$this->open();
+		if ( count( $this->saved ) === $depth ) {
+			return; // Not a community route: nothing was opened.
+		}
+		global $wp_query;
+		$this->saved_object[] = $wp_query->queried_object;
+		if ( null === $wp_query->queried_object ) {
+			$wp_query->queried_object = new \WP_Post(
+				(object) array(
+					'ID'        => 0,
+					'post_type' => '',
+				)
+			);
+		}
+	}
+
+	/**
+	 * Close the layout window and put the queried object back.
+	 */
+	public function close_layout(): void {
+		if ( $this->saved_object ) {
+			$GLOBALS['wp_query']->queried_object = array_pop( $this->saved_object );
+			$this->close();
+		}
 	}
 
 	/**

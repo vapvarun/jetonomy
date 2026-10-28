@@ -32,6 +32,9 @@ class FeedAndUrlInputTest extends WP_UnitTestCase {
 		$this->assertSame( 'https://example.com/logo.png', \Jetonomy\http_url( ' https://example.com/logo.png ' ) );
 		$this->assertSame( 'http://localhost:11434', \Jetonomy\http_url( 'http://localhost:11434' ) );
 		$this->assertSame( '/wp-content/uploads/logo.png', \Jetonomy\http_url( '/wp-content/uploads/logo.png' ) );
+		$this->assertNotNull( \Jetonomy\http_url( 'HTTPS://EXAMPLE.COM/A.PNG' ), 'Browsers take an upper-case scheme.' );
+		$this->assertNotNull( \Jetonomy\http_url( 'https://bücher.de/logo.png' ), 'And a Unicode domain name.' );
+		$this->assertNull( \Jetonomy\http_url( 'http://not%20a%20url' ), 'The value esc_url_raw() used to make of "not a url".' );
 	}
 
 	public function test_the_settings_save_keeps_the_old_address_and_says_why(): void {

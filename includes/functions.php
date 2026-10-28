@@ -1762,8 +1762,30 @@ function http_url( string $raw ): ?string {
 	}
 	$parts = wp_parse_url( $raw );
 	$host  = (string) ( $parts['host'] ?? '' );
-	if ( in_array( $parts['scheme'] ?? '', array( 'http', 'https' ), true ) && '' !== $host && false !== filter_var( $host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME ) ) {
+	// Browsers take HTTPS:// and Unicode domain names (bücher.de); check the
+	// host in its ASCII form, or with letters standing in when intl is missing.
+	$ascii = $host;
+	if ( preg_match( '/[^\x00-\x7F]/', $host ) ) {
+		$ascii = function_exists( 'idn_to_ascii' ) ? (string) idn_to_ascii( $host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46 ) : (string) preg_replace( '/[^\x00-\x7F]/u', 'a', $host );
+	}
+	$scheme = strtolower( (string) ( $parts['scheme'] ?? '' ) );
+	if ( in_array( $scheme, array( 'http', 'https' ), true ) && '' !== $ascii && false !== filter_var( $ascii, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME ) ) {
 		return esc_url_raw( $raw, array( 'http', 'https' ) );
 	}
 	return null;
+}
+
+/**
+ * The refusal for an address field that is not a web address, worded once.
+ *
+ * @param string $label What the owner or member calls the field, e.g. "Cover image".
+ * @return \WP_Error 400 jetonomy_invalid_url.
+ */
+function invalid_url_error( string $label ): \WP_Error {
+	return new \WP_Error(
+		'jetonomy_invalid_url',
+		/* translators: %s: field label, e.g. "Cover image". */
+		sprintf( __( '%s must be a full address starting with http:// or https://.', 'jetonomy' ), $label ),
+		array( 'status' => 400 )
+	);
 }

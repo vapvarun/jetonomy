@@ -45,6 +45,22 @@ class DiviThemeBuilderTest extends WP_UnitTestCase {
 		$this->assertSame( 0, $divi->no_post_id( 534 ), 'A layout id is never taken as the page post.' );
 	}
 
+	public function test_a_layout_window_answers_queried_object_and_restores_it(): void {
+		global $wp_query;
+		$divi = new Divi_Theme_Builder();
+		set_query_var( 'jetonomy_route', 'home' );
+		$wp_query->is_singular    = false;
+		$wp_query->queried_object = null;
+
+		$divi->open_layout();
+		$this->assertTrue( is_singular() );
+		$this->assertSame( '', get_queried_object()->post_type, 'wp_list_pages() can read post_type without a warning.' );
+		$this->assertFalse( is_post_type_hierarchical( get_queried_object()->post_type ) );
+		$divi->close_layout();
+		$this->assertFalse( is_singular() );
+		$this->assertNull( $wp_query->queried_object );
+	}
+
 	public function test_nothing_changes_off_community_routes(): void {
 		global $wp_query;
 		$divi                  = new Divi_Theme_Builder();
@@ -58,8 +74,8 @@ class DiviThemeBuilderTest extends WP_UnitTestCase {
 
 	public function test_every_layout_render_runs_inside_a_window(): void {
 		$divi = new Divi_Theme_Builder();
-		$this->assertNotFalse( has_action( 'et_theme_builder_after_layout_opening_wrappers', array( $divi, 'open' ) ) );
-		$this->assertNotFalse( has_action( 'et_theme_builder_before_layout_closing_wrappers', array( $divi, 'close' ) ) );
+		$this->assertNotFalse( has_action( 'et_theme_builder_after_layout_opening_wrappers', array( $divi, 'open_layout' ) ) );
+		$this->assertNotFalse( has_action( 'et_theme_builder_before_layout_closing_wrappers', array( $divi, 'close_layout' ) ) );
 		$this->assertSame( 9, has_action( 'wp', array( $divi, 'setup_module_styles' ) ), 'Before Divi sets up its stylesheet at 10.' );
 	}
 }

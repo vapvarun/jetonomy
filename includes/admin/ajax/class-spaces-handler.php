@@ -94,11 +94,14 @@ class Spaces_Handler {
 		$visibility  = sanitize_text_field( wp_unslash( $_POST['visibility'] ?? 'public' ) );
 		$join_policy = sanitize_text_field( wp_unslash( $_POST['join_policy'] ?? 'open' ) );
 		$icon        = sanitize_text_field( wp_unslash( $_POST['icon'] ?? '' ) );
-		$cover_image = esc_url_raw( wp_unslash( $_POST['cover_image'] ?? '' ) );
+		$cover_image = \Jetonomy\http_url( (string) wp_unslash( $_POST['cover_image'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- http_url() validates and cleans it.
 		$status      = sanitize_text_field( wp_unslash( $_POST['status'] ?? 'active' ) );
 
 		if ( empty( $title ) ) {
 			wp_send_json_error( __( 'Title is required.', 'jetonomy' ) );
+		}
+		if ( null === $cover_image ) {
+			wp_send_json_error( \Jetonomy\invalid_url_error( __( 'Cover image', 'jetonomy' ) )->get_error_message() );
 		}
 
 		// An unknown type is refused by Space::create() below, not swapped.
@@ -246,7 +249,11 @@ class Spaces_Handler {
 			$data['sort_order'] = absint( wp_unslash( $_POST['sort_order'] ) );
 		}
 		if ( isset( $_POST['cover_image'] ) ) {
-			$data['cover_image'] = esc_url_raw( wp_unslash( $_POST['cover_image'] ) ) ?: null;
+			$cover = \Jetonomy\http_url( (string) wp_unslash( $_POST['cover_image'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- http_url() validates and cleans it.
+			if ( null === $cover ) {
+				wp_send_json_error( \Jetonomy\invalid_url_error( __( 'Cover image', 'jetonomy' ) )->get_error_message() );
+			}
+			$data['cover_image'] = '' !== $cover ? $cover : null;
 		}
 		if ( isset( $_POST['settings'] ) ) {
 			$settings_raw = $_POST['settings'];
