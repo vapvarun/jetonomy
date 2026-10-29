@@ -27,3 +27,4 @@ marketing
 includes/qa
 test-results
 playwright-report
+.wbcom-i18n-glossary.json

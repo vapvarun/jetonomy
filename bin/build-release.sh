@@ -273,6 +273,7 @@ phpstan-stubs/
 playwright.config.js
 .contract-audit-baseline.json
 .wbcom-i18n.json
+.wbcom-i18n-glossary.json
 EOF
 
 rsync -a --exclude-from="$EXCLUDES_FILE" ./ "$STAGE/"
@@ -387,7 +388,8 @@ for pattern in \
 	"$STAGE/phpstan-stubs" \
 	"$STAGE/playwright.config.js" \
 	"$STAGE/.contract-audit-baseline.json" \
-	"$STAGE/.wbcom-i18n.json"; do
+	"$STAGE/.wbcom-i18n.json" \
+	"$STAGE/.wbcom-i18n-glossary.json"; do
 	[ -e "$pattern" ] && CRUFT+=( "${pattern#$STAGE/}" )
 done
 while IFS= read -r f; do

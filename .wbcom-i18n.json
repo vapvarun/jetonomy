@@ -14,13 +14,8 @@
     "REST",
     "API",
     "URL",
-    "CSV",
-    "AI"
+    "CSV"
   ],
-  "glossary": {
-    "Space": "",
-    "Trust Level": ""
-  },
   "locales": [
     {
       "locale": "de_DE",
@@ -45,8 +40,7 @@
     {
       "locale": "ko_KR",
       "name": "Korean",
-      "register": "polite (해요체)",
-      "model": "sonnet"
+      "register": "polite (해요체)"
     },
     {
       "locale": "pt_BR",
@@ -66,14 +60,15 @@
     {
       "locale": "ja",
       "name": "Japanese",
-      "register": "polite (です/ます)",
-      "model": "sonnet"
+      "register": "polite (です/ます)"
     },
     {
       "locale": "zh_CN",
       "name": "Chinese (Simplified)",
-      "register": "neutral",
-      "model": "sonnet"
+      "register": "neutral"
     }
-  ]
+  ],
+  "glossaryFile": ".wbcom-i18n-glossary.json",
+  "review": true,
+  "makePhp": false
 }
