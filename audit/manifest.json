@@ -3903,6 +3903,17 @@
       "notes": "2.0.7. Lets a host plugin count its own site-wide read-only state. Every permission check reads it; SQL-only paths (not_banned_sql, notification actor exclusion) read the table directly."
     },
     {
+      "name": "jetonomy_label_lowercase",
+      "type": "filter",
+      "args_count": 2,
+      "args_signature": [
+        "bool $lowercase",
+        "string $locale"
+      ],
+      "where": "includes/functions.php (jetonomy_label)",
+      "notes": "2.0.7. Whether a mid-sentence product-noun label is lowercased. False by default for de and lb, which capitalise every noun."
+    },
+    {
       "name": "jetonomy_users_query_args",
       "type": "filter",
       "args": "",

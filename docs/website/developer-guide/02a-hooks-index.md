@@ -188,6 +188,7 @@ Plugin version: 2.0.6 - 115 actions, 141 filters.
 | `jetonomy_importers` | importers | includes/import/class-import-manager.php |
 | `jetonomy_journey_strict_input` | $strict (bool, default true), $input (array), $allowed (string[]) | includes/cli/journeys/class-journey-input.php (Journey_Input::unknown_keys) |
 | `jetonomy_label` | string $label, string $noun, bool $plural, bool $lower | includes/functions.php |
+| `jetonomy_label_lowercase` | bool $lowercase, string $locale | includes/functions.php (jetonomy_label) |
 | `jetonomy_leaderboard_items` |  | includes/api/class-leaderboards-controller.php:176 |
 | `jetonomy_link_preview_cache_ttl` | ttl | includes/api/class-posts-controller.php |
 | `jetonomy_link_preview_data` | data, url | includes/api/class-posts-controller.php |

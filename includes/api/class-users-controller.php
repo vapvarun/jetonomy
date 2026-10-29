@@ -1039,7 +1039,8 @@ class Users_Controller extends Base_Controller {
 			'avatar_url'    => array(
 				'type'     => 'string',
 				'required' => false,
-				'format'   => 'uri',
+				// No 'format' => 'uri': WordPress would esc_url_raw() it first, turning
+				// javascript:/data: into '' (= clear). The handler validates the raw input.
 			),
 			'email_opt_out' => array(
 				'type'     => 'boolean',

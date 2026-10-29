@@ -31,6 +31,7 @@ class Router {
 		// type called "community" and it served its own 404 XML over ours
 		// Priority 0 puts us ahead of that and of
 		// anything else hooking parse_request or template_redirect.
+		add_action( 'parse_request', array( $this, 'redirect_case_variant' ), 0 );
 		add_action( 'parse_request', array( $this, 'claim_sitemap_request' ), 0 );
 		add_action( 'parse_query', array( $this, 'correct_query_state' ), 1 );
 		// The SEO Framework titles a page from its WP object. Our virtual routes
@@ -547,6 +548,33 @@ class Router {
 		);
 
 		return JETONOMY_DIR . 'includes/template-canvas.php';
+	}
+
+	/**
+	 * 301 a case variant of a community address to its lower-case form.
+	 *
+	 * WordPress matches rewrite rules case-sensitively, so /COMMUNITY/ missed every
+	 * route: a 404, or the WordPress page that shares the slug (page lookup is not
+	 * case-sensitive). Slugs are stored lower-case, so the lower-cased path is the
+	 * address Jetonomy itself prints. Runs on parse_request at priority 0, before
+	 * any page or 404 is resolved.
+	 *
+	 * @param \WP $wp The main WordPress environment instance.
+	 */
+	public function redirect_case_variant( $wp ): void {
+		if ( is_admin() ) {
+			return;
+		}
+		$path  = (string) $wp->request;
+		$lower = strtolower( $path );
+		$base  = base_slug();
+		if ( $path === $lower || ( $lower !== $base && ! str_starts_with( $lower, $base . '/' ) ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only the query string is reused, and wp_safe_redirect() validates the target.
+		$query = (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_QUERY );
+		wp_safe_redirect( home_url( user_trailingslashit( $lower ) ) . ( '' !== $query ? '?' . $query : '' ), 301 );
+		exit;
 	}
 
 	/**

@@ -368,7 +368,23 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 		$label = (string) apply_filters( 'jetonomy_space_label', $label, $plural, $lower );
 	}
 
-	return $lower ? mb_strtolower( $label ) : $label;
+	if ( ! $lower ) {
+		return $label;
+	}
+
+	/**
+	 * Whether a mid-sentence label is lowercased. German and Luxembourgish
+	 * capitalise every noun ("Mitglieder", never "mitglieder"), so they keep the
+	 * label as written; add any other such locale here.
+	 *
+	 * @param bool   $lowercase True to lowercase.
+	 * @param string $locale    The locale the label renders in.
+	 */
+	$locale = determine_locale();
+	if ( ! apply_filters( 'jetonomy_label_lowercase', ! in_array( strtok( $locale, '_' ), array( 'de', 'lb' ), true ), $locale ) ) {
+		return $label;
+	}
+	return mb_strtolower( $label );
 }
 
 /**

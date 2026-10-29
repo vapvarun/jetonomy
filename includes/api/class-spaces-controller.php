@@ -1750,7 +1750,8 @@ class Spaces_Controller extends Base_Controller {
 			'cover_image' => array(
 				'type'     => 'string',
 				'required' => false,
-				'format'   => 'uri',
+				// No 'format' => 'uri': WordPress would esc_url_raw() it first, turning
+				// javascript:/data: into '' (= clear). The handler validates the raw input.
 			),
 			'sort_order'  => array(
 				'type'     => 'integer',
