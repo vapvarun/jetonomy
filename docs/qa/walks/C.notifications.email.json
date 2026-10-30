@@ -1,109 +1,108 @@
 {
   "journey": "C.notifications.email",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:22:53Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-notifications-email.1": {
       "result": "pass",
-      "evidence": "alice reply to bob's topic -> Mailpit shows one '[Northwind Community] Alice Chen replied to your topic' to bob.demo@jetonomy.local"
+      "evidence": "qa_rft_a replied to qa_rft_b's topic with default prefs -> Mailpit: one mail to b '[Northwind Community] qa_rft_a replied to your topic' with a 'View Topic' button"
     },
     "c-notifications-email.2": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "b with email_opt_out (the Pause all email notifications preference) set: reply arrived, Mailpit got no mail for it and the bell row was still created; preference restored"
     },
     "c-notifications-email.3": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "digest frequency (daily/weekly) is the Pro email-digest extension; combo is read-only for this pass (a digest run would mass-mail)"
     },
     "c-notifications-email.4": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "digest unsubscribe is the Pro email-digest extension; combo read-only"
     },
     "c-notifications-email.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "admin approved a join request -> '[Northwind Community] Your space join request was answered', heading 'Your join request was answered', text 'Your request to join QA-RFT Appr3 was approved.' (never 'Join Request Result')"
     },
     "c-notifications-email.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "declined -> same subject and heading, text '...was not approved.'"
     },
     "c-notifications-email.7": {
-      "result": "untested",
-      "evidence": "mention email '[Northwind Community] You were mentioned by Maya Okafor' arrived to bob (one email); owner-saved subject/body customisation not configured so the saved-template claim was not verified"
+      "result": "pass",
+      "evidence": "saved a custom mention template (subject '[{site}] QA-RFT custom mention from {actor_display_name}', body 'Custom body: {actor_display_name} pinged you.'): mail used it with the name filled as qa_rft_a; template option restored"
     },
     "c-notifications-email.8": {
       "result": "pass",
-      "evidence": "moderator trashes alice's reply -> email to alice body 'Your reply was removed by a moderator' with button 'Open the Community' (no 'Review in Mod Queue'); subject reads 'A moderator reviewed your content'"
+      "evidence": "moderator trashed b's topic -> mail body 'Your topic was removed by a moderator' with button 'Open the Community'; no 'Review in Mod Queue'"
     },
     "c-notifications-email.9": {
       "result": "pass",
-      "evidence": "alice flags a topic -> 'New report needs review' emailed to admin, test_moderator and test_admin only, button 'Review in Mod Queue'"
+      "evidence": "flag on a topic -> staff mail 'New report needs review' with 'Review in Mod Queue' to test_moderator, test_admin, admin and the QA admin only; no regular member mailed"
     },
     "c-notifications-email.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "registration with email verification on (setting enabled for the check, then removed): 'Confirm your email to finish signing up' with a Confirm email link; clicking it returned /community/?verified=1 and cleared the pending flag. users_can_register put back to 0"
     },
     "c-notifications-email.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "reply that is both a reply to a followed topic and a mention -> exactly one mail to b (the mention mail)"
     },
     "c-notifications-email.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "reply in QA-RFT Priv mentioning non-member qa_rft_a -> no mail to a"
     },
     "c-notifications-email.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Arabic reply notifies b: mail HTML contains the Arabic text intact; footer links readable (no dir attribute set on the mail body, text left aligned)"
     },
     "c-notifications-email.14": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "Learnomy is not installed on this stack, so the distinct-sender case cannot run; needs Learnomy plugin"
     },
     "c-notifications-email.15": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "159-character topic title: subject stays short (52 chars, no title) and the body shows the title with an ellipsis, layout intact"
     },
     "c-notifications-email.16": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "silenced qa_rft_c replying with a mention -> 403 jetonomy_user_silenced, no content created, no mail to the mentioned user"
     },
     "c-notifications-email.17": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Settings > Emails: all 19 preview types (user_welcome ... reply_by_email_refused) open a rendered preview with subject; 'Send Test Email' delivered 'Jetonomy Test Email' to Mailpit"
     },
     "c-notifications-email.18": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "mail HTML uses explicit inline colours (white on #0073aa button about 5:1, body text #374151/#111827 on white); no prefers-color-scheme rules, so a dark client that inverts keeps explicit contrast"
     },
     "c-notifications-email.19": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "digest re-enable on profile edit is the Pro email-digest extension; combo read-only"
     },
     "c-notifications-email.20": {
       "result": "pass",
-      "evidence": "staff alert subject is 'New report needs review' with body 'New content flag requires review'"
+      "evidence": "staff alert subject 'New report needs review'; body 'New content flag requires review ... Review in Mod Queue', no 'A moderator reviewed your content'"
     },
     "c-notifications-email.21": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "reply to a topic with a title over 50 characters: intro 'mentioned you in \\\"QA-RFT A very long email topic title that is...\\\"' - ellipsis after a whole word"
     },
     "c-notifications-email.22": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "after access ended no mail for a reply in the private space (Mailpit, see C.gating.access-ends .8); digest part of the line is Pro and not walked"
     }
   },
   "proposed_checks": []

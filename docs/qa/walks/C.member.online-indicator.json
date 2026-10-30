@@ -1,81 +1,71 @@
 {
   "journey": "C.member.online-indicator",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:33:47Z",
-  "walker": "lane A3",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:25:07Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-online-indicator.1": {
       "result": "pass",
-      "evidence": "alice active (autologin seconds earlier): the dot (jt-avatar-wrap is-online) shows on her topic-page header avatar (topic 6323, dot at the avatar top-right), on reply cards, on her profile header and on sidebar leaders. The home page now has no avatars outside the sidebar leaders, which are all wrapped.",
-      "screenshot": "online-topic-head.png"
+      "evidence": "bob (active, used instead of alice): .jt-avatar-wrap.is-online with a green dot (rgb 22,163,74) on the topic author avatar, every reply card and his profile header. Home feed has no avatars to check."
     },
     "c-member-online-indicator.2": {
       "result": "pass",
-      "evidence": "carlos (last_seen_at null) profile header: no is-online, no dot",
-      "carried_forward": true
+      "evidence": "Carlos and Omar (last seen more than 300s ago) have no is-online class on reply cards, and carlos' profile header has none."
     },
     "c-member-online-indicator.3": {
       "result": "pass",
-      "evidence": "dot is an ::after 10px green circle at top/right of the avatar wrap: 64px profile avatar top 1px right -5px, 30px reply/sidebar avatar top -2px right -2px; top-right in both sizes (md/lg not separately sampled)",
-      "carried_forward": true
+      "evidence": "Dot ::after is absolute top -2px, 10px wide, at left 24px on a 36px avatar and left 18px on a 30px avatar: top-right corner at both sizes. Large size (profile header) not measured."
     },
     "c-member-online-indicator.4": {
-      "result": "not_performed",
-      "evidence": "A real RTL locale needs the site locale switched to ar (installed), which is a shared-site change; html dir=rtl emulation does not load the -rtl.css, so it proves nothing."
+      "result": "pass",
+      "evidence": "he_IL RTL (cookie-scoped locale): the dot stays attached to the avatar corner (left:55px of a 64px avatar, same corner as LTR, 2px ring), no drift; note it is not mirrored to the left corner."
     },
     "c-member-online-indicator.5": {
       "result": "pass",
-      "evidence": "alice at 390 dark rendered the fallback (initials) avatar with the dot attached; Grace herself has a photo avatar (not an initials one), so the initials case was verified on alice, not Grace",
-      "carried_forward": true
+      "evidence": "Grace (initials avatar, GR) made active: her profile shows an online dot on the initials avatar."
     },
     "c-member-online-indicator.6": {
       "result": "pass",
-      "evidence": "GET /users/<id> has no online flag; last_seen_at is returned as \"now\" for an active member and null for an inactive one (carlos), matching the dot, exact time only for self or staff (class-user-profile.php:295)",
-      "carried_forward": true
+      "evidence": "As a member GET /users/9 (alice, online) -> last_seen_at \"2026-10-30 21:24:34\"; GET /users/16 (carlos, offline) -> null; no is_online field."
     },
     "c-member-online-indicator.7": {
-      "result": "not_performed",
-      "evidence": "There is still no site setting or per-member privacy option to hide online status (nothing in includes/ or templates/), so the switched-off arm cannot be produced; the runbook line names a switch that does not exist."
+      "result": "untested",
+      "evidence": "No online-status setting and no member privacy toggle exists in this build (nothing in includes/ defines one), so the \"switch off\" arm cannot be run; the check line describes a control that is not shipped."
     },
     "c-member-online-indicator.8": {
       "result": "pass",
-      "evidence": "guest on alice's profile: 4 is-online wraps shown; guest GET /users/3754 returns last_seen_at as the current time (12:33:08) not the stored 12:32:07, no is_online flag."
+      "evidence": "Guest sees 6 online dots on a topic page, consistent with member view; guest REST last_seen_at is the current server time (moves 21:24:00 -> 21:24:04), never a stored time."
     },
     "c-member-online-indicator.9": {
       "result": "pass",
-      "evidence": "omar (space-banned) and finn (silenced) after activity: profile header shows the dot normally",
-      "carried_forward": true
+      "evidence": "omar (space-banned) and finn (silenced) made active show a normal dot on their profiles."
     },
     "c-member-online-indicator.10": {
       "result": "pass",
-      "evidence": "390 dark: dot has a 2px ring in the dark surface colour, visible and not clipped (overflow visible)",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-A/online-390-dark.png",
-      "carried_forward": true
+      "evidence": "390px dark: dot has a 2px ring in the dark surface colour, overflow visible, scrollWidth 390 (screenshot jt207-w3-online-390dark.png)."
     },
     "c-member-online-indicator.11": {
       "result": "pass",
-      "evidence": "reply 10190 by author 0 renders as [deleted] with the wrap but no is-online dot and no error",
-      "carried_forward": true
+      "evidence": "Reply by deleted account on \"Favourite lens for street photography?\": 0 online dots and the .jt-avatar-anon silhouette, no error."
     },
     "c-member-online-indicator.12": {
       "result": "pass",
-      "evidence": "guest GET /users/3754 last_seen_at = now (12:33:08) while the stored value is 12:32:07: never the exact stored time."
+      "evidence": "Logged-out GET /users/9 returns the current server time (21:24:00 then 21:24:04, tracking now) for an online member and null for an offline one (user 15); the stored value is never exposed to guests."
     }
   },
   "proposed_checks": [
-    "- `c-member-online-indicator.7` @member #ui +settings-off: replace with a statement of the contract, there is no online-status switch (site or member), so drop the check or add the setting."
-  ],
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+    "`c-member-online-indicator.13` @guest #rest !refuse: GET /users/<id> as a guest for an online member -> response has no last_seen_at field (today it returns the exact timestamp while the member is online)."
+  ]
 }

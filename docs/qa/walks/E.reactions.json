@@ -1,16 +1,19 @@
 {
   "journey": "E.reactions",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:06:00Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,83 +21,81 @@
   },
   "checks": {
     "e-reactions.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser, bob 1440: reaction picker on a reply in 'Dark mode for the community on phones' -> Like -> chip '\ud83d\udc4d 1' is-mine and aria-pressed=true, still highlighted after reload"
     },
     "e-reactions.2": {
       "result": "pass",
-      "evidence": "bob POST same reaction twice on reply 1244: heart added then removed (action removed)"
+      "evidence": "REST toggle: bob POST the same emoji again -> action \"removed\", counts [] (second POST re-adds). The JS-built chip undo in the browser was not driven"
     },
     "e-reactions.3": {
       "result": "pass",
-      "evidence": "bob thumbsup then heart on the same reply -> counts {heart:1} only (one reaction per member)"
+      "evidence": "bob had thumbsup then POST heart on the same reply -> DB shows one row for bob (heart), counts {heart:1}; Like not kept alongside"
     },
     "e-reactions.4": {
       "result": "pass",
-      "evidence": "alice and maya thumbsup -> GET /replies/1244/reactions counts {thumbsup:2}"
+      "evidence": "alice and bob added Love to maya's reply -> GET /replies/{id}/reactions counts {heart:2}; ?emoji=heart gives reactors label \"Love: Bob Martinez and Alice Chen\" total 2"
     },
     "e-reactions.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: hover and keyboard focus on a Like chip with 15 reactors show role=tooltip 'Like: <10 names> and 5 others' (280 px wide); with 2 reactors 'Like: Alice Chen and Bob Martinez' (full names); Escape closes it. Touch long-press not driven (no touch context)"
     },
     "e-reactions.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: bob reacted Love and, with no reload, hovering his chip showed 'Love: Bob Martinez'"
     },
     "e-reactions.7": {
       "result": "pass",
-      "evidence": "emoji 'not-real' -> 400 jetonomy_invalid_emoji 'Invalid or disabled emoji.'"
+      "evidence": "bob POST emoji \"not-real\" -> 400 jetonomy_invalid_emoji \"Invalid or disabled emoji.\""
     },
     "e-reactions.8": {
       "result": "pass",
-      "evidence": "bob POST and GET reactions on Customer Advisory Board topic 234 and on 99999 -> identical 404 jetonomy_not_found 'Content not found.'"
+      "evidence": "bob POST and GET /posts/{id}/reactions on a topic in Customer Advisory Board (id 234) and on nonexistent 999999 -> all four 404 jetonomy_not_found \"Content not found.\""
     },
     "e-reactions.9": {
       "result": "pass",
-      "evidence": "guest POST -> 401; guest GET public reply reactions 200; nonexistent/hidden -> 404"
+      "evidence": "guest POST -> 401 rest_not_logged_in; guest GET of a public reply's reactions -> 200 with counts only; with ?emoji=heart -> adds reactors; hidden-space topic GET -> 404 \"Content not found.\""
     },
     "e-reactions.10": {
       "result": "pass",
-      "evidence": "bob react to trashed reply 1296 -> 409 jetonomy_already_trashed, no row"
+      "evidence": "bob POST on a trashed reply (1296) -> 409 jetonomy_already_trashed \"This item is already in the trash. A moderator can restore it or delete it permanently.\"; no row written"
     },
     "e-reactions.11": {
-      "result": "untested",
-      "evidence": "finn reaction POST -> 403 silenced (REST); UI and -4 score display not walked"
+      "result": "pass",
+      "evidence": "finn (silenced) POST a reaction -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; the -4 score display was not checked"
     },
     "e-reactions.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "fail",
+      "evidence": "Re-read line, REST as members on bob's reply: alice's first reaction -> one bell row 'Someone reacted to your reply'; alice's emoji swap and un-toggle -> none; bob reacting to his own reply -> none; carlos (a further member) reacting -> NO new row, so only the first reactor notifies. Line expects one per further member. Email: none seen in Mailpit for a reaction. (Earlier pass saw a second row for maya, so behaviour looks time-window dependent)"
     },
     "e-reactions.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser, admin: Settings > Reactions with all 8 emoji unticked -> notice 'No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.'; normal save -> 'Reaction settings saved.'. Settings restored (all ticked)"
     },
     "e-reactions.14": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: unticked Celebrate after it had counts -> existing chip '\ud83c\udf89 2' still renders as a normal button, picker no longer offers Celebrate, POST reaction hooray -> 400 jetonomy_invalid_emoji 'Invalid or disabled emoji.'. Restored afterwards"
     },
     "e-reactions.15": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "fail",
+      "evidence": "Browser, bob 390 dark: a reply with 25 reactions across 6 emoji shows all chips in ONE row running to x=457 while the reply card ends at x=359 and the viewport is 390 (page scrollWidth stays 390, so the strip overflows its card, likely scrolling); chips do not wrap onto lines. Tooltip stays inside the viewport (8-288 px, 280 wide)"
     },
     "e-reactions.16": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser 390 dark: highlighted chip uses a dark slate fill (rgb 59,67,80) with light text and a light-blue border; the tooltip is a light grey box (229,229,229) with dark text, readable contrast"
     },
     "e-reactions.17": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: network dropped, clicked own Love chip -> chip rolled back to '\u2764\ufe0f 1' (still mine) and an error 'Could not save reaction.' shown"
     },
     "e-reactions.18": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: bob and alice picked Haha on the same reply at the same instant (Promise.all) -> count rose by exactly 2 (\ud83d\ude02 4, both see is-mine after reload)"
     },
     "e-reactions.19": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: on page 2 (?rpg=2) of the 45-reply topic, reacting to a reply (Celebrate) and to the topic post (Like) both work and update the chip without reload"
     }
   },
-  "proposed_checks": [
-    "- `e-reactions.20` @member #rest: reaction keys are thumbsup/heart/celebrate (not Like); document the REST emoji key and that a send of the emoji character is refused 400 jetonomy_invalid_emoji."
-  ]
+  "proposed_checks": []
 }

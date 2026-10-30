@@ -1,16 +1,19 @@
 {
   "journey": "E.white-label",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:18:29Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,56 +21,56 @@
   },
   "checks": {
     "e-white-label.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser, admin 1440: Branding tab saved 'Hearthside Community' / 'Hearthside' / dashicons-groups / 'Built with care by the Hearthside team' -> notice 'Branding settings saved.' and the fields keep their values; admin menu label reads Hearthside. Settings cleared again afterwards"
     },
     "e-white-label.2": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "after saving community name \"Hearthside Community\" and label \"Hearthside\": the Settings page h1 reads \"Hearthside Community Settings\", the admin submenu list shows \"Hearthside > ...\" entries, and the Plugins page rows read \"Hearthside Community\" and \"Hearthside Community Pro\". One plain \"Jetonomy\" and one \"Jetonomy Pro\" string remain on that Plugins page (checked by text count only)"
     },
     "e-white-label.3": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: Jetonomy screen footer shows the custom footer text; with footer blank and a community name it reads 'Thank you for building your community with Hearthside Community.'; with everything blank it returns 'Thank you for building your community with Jetonomy.'"
     },
     "e-white-label.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "footer text \"Bob's Q&A\" renders once-escaped (Bob&#039;s Q&amp;A in the Branding page source, no &amp;amp;)"
     },
     "e-white-label.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: Settings page heading and sidebar read 'Hearthside Community Settings' / 'Hearthside Community' after branding was set (Data card and trust-level hint text not individually inspected)"
     },
     "e-white-label.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "/community/ as a guest with the rebrand on: the page source contains 0 occurrences of \"Hearth\" (frontend unchanged); emails and page titles not checked"
     },
     "e-white-label.7": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "The test notification email was not sent and checked in this pass"
     },
     "e-white-label.8": {
       "result": "pass",
-      "evidence": "admin GET /settings/white-label returns community_name, footer_text, admin_label, admin_icon; PATCH community_name '<b>Hearth</b>' stored 'Hearth' (restored to empty)"
+      "evidence": "GET /settings/white-label returns the four fields (community_name, footer_text, admin_label, admin_icon); PATCH community_name \"<b>Hearth</b>\" stored as \"Hearth\""
     },
     "e-white-label.9": {
       "result": "pass",
-      "evidence": "test_moderator and bob GET and PATCH -> 403; guest -> 401"
+      "evidence": "test_moderator GET and bob PATCH -> 403 jetonomy_forbidden; guest GET -> 401 rest_forbidden"
     },
     "e-white-label.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: 120-char community name and admin label -> admin menu stays 160 px wide, page scrollWidth equals the viewport at 1440 and 390 on the Spaces list and Settings screens"
     },
     "e-white-label.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "PATCH all four fields to empty strings: Branding page h1 and menu return to Jetonomy (0 \"Hearth\" strings left); settings restored to the original empty state"
     },
     "e-white-label.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "wp jetonomy-pro white-label get printed the same four values as GET /settings/white-label (the update subcommand was not run)"
     },
     "e-white-label.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "admin_icon \"not a valid icon ###\", \"javascript:alert(1)\" and \"zzz bad\" -> 400 rest_invalid_param \"Admin menu icon must be a full address starting with http:// or https://, a Dashicon class (dashicons-...), or an SVG data URI.\"; the stored dashicons-groups value was kept after the refusal (v2.0.7 behaviour). The full-image-URL rendering in the menu was not viewed"
     }
   },
   "proposed_checks": []

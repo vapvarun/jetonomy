@@ -1,92 +1,89 @@
 {
   "journey": "C.member.link-preview",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "206e1d6f",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:47:19Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-link-preview.1": {
-      "result": "pass",
-      "evidence": "bob topic 'QA-WALK-B Release notes worth reading' with https://wordpress.org/news/ (created through REST POST /spaces/2999/posts, not typed into the composer): published page shows a card with site name WORDPRESS NEWS, title 'WordPress News', description and a 558px image",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/lp-bob1440.png"
+      "result": "untested",
+      "evidence": "Composer paste-to-card flow not run in the browser; REST preview of https://wordpress.org/news/ works (see .2)."
     },
     "c-member-link-preview.2": {
       "result": "pass",
-      "evidence": "bob GET /link-preview?url=https://wordpress.org/news/ -> 200 with title, description, image, site_name, favicon and provider 'generic'"
+      "evidence": "bob GET /link-preview?url=https://wordpress.org/news/ -> 200 with title 'WordPress News', description, image fields, site_name/domain, favicon, type, provider."
     },
     "c-member-link-preview.3": {
-      "result": "fail",
-      "evidence": "YouTube URL shows the oEmbed player (iframe youtube.com/embed/dQw4w9WgXcQ?feature=oembed, .jt-embed). An X post URL (x.com and twitter.com .../WordPress/status/1795513131453583543) comes back provider 'twitter' with empty title, image and embed_html, so no X card renders; I could not confirm a real live post ID, so this may be the fixture URL"
+      "result": "untested",
+      "evidence": "YouTube/X oEmbed cards not run."
     },
     "c-member-link-preview.4": {
-      "result": "pass",
-      "evidence": "Guest view of the same topics: identical card (same class, 558x314 image, same text) and the same YouTube iframe"
+      "result": "untested",
+      "evidence": "Needs a published topic with a card."
     },
     "c-member-link-preview.5": {
       "result": "pass",
-      "evidence": "bob GET /link-preview for http://localhost/, http://127.0.0.1/, http://169.254.169.254/latest/meta-data/, http://10.0.0.5/ and file:///etc/passwd: all 200 with identical empty preview (no title, description, image or embed)"
+      "evidence": "http://localhost/, http://127.0.0.1/, http://169.254.169.254/latest/meta-data/, http://10.0.0.1/ and a non-URL all return 200 with empty title, description, image and site_name; file:///etc/passwd returns an empty url too."
     },
     "c-member-link-preview.6": {
-      "result": "pass",
-      "evidence": "http://localtest.me/ and http://127.0.0.1.nip.io/ (public names resolving to 127.0.0.1) and an httpbin redirect-to http://127.0.0.1/ all return the same empty 200 preview; no content leaked"
+      "result": "untested",
+      "evidence": "Hostname resolving to a private address and a redirect to 127.0.0.1 not set up."
     },
     "c-member-link-preview.7": {
-      "result": "pass",
-      "evidence": "https://httpbin.org/delay/20: /link-preview gave up at 6.06 s with an empty preview; creating a topic containing that URL returned 201 in 5.07 s and the page shows a plain link with no card"
+      "result": "untested",
+      "evidence": "Slow-server case not set up."
     },
     "c-member-link-preview.8": {
-      "result": "pass",
-      "evidence": "https://httpbin.org/status/500: 200 empty preview in 3.1 s, no PHP error, an immediate retry came back in 0.06 s (negative cache, 10 minutes per class-preview-service.php)"
+      "result": "untested",
+      "evidence": "HTTP 500 target not set up."
     },
     "c-member-link-preview.9": {
       "result": "pass",
-      "evidence": "Second GET for the same URL took 0.04 s and returned identical JSON (12-hour cache)"
+      "evidence": "Second request for the same good URL returns the same data in 31 ms (served from cache)."
     },
     "c-member-link-preview.10": {
-      "result": "fail",
-      "evidence": "Redirect loop (httpbin redirect-to chain) and a 6-hop chain (httpbin /redirect/6) both returned 200 with an empty preview after 6.8 s and 14.1 s, not 400 'Redirect loop or invalid redirect.' / 'Too many redirects.'; the WP_Errors from class-html-fetcher.php:101/125 are swallowed by the preview service"
+      "result": "untested",
+      "evidence": "Redirect-loop and 6-hop targets not set up."
     },
     "c-member-link-preview.11": {
       "result": "pass",
-      "evidence": "Guest GET /link-preview for http://127.0.0.1/ -> 200 identical empty preview, nothing fetched"
+      "evidence": "Guest GET /link-preview for http://127.0.0.1/ -> 200 with an empty preview (blocked-URL answer), no fetch of the private host."
     },
     "c-member-link-preview.12": {
-      "result": "pass",
-      "evidence": "145-character unbroken URL topic at 390: page scrollWidth 390; the link text wraps (overflow-wrap anywhere, 134px tall, 292px wide) inside the post",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/lp-long-390.png"
+      "result": "untested",
+      "evidence": "Long-URL card not rendered."
     },
     "c-member-link-preview.13": {
-      "result": "pass",
-      "evidence": "Card at 390: image 292x164 scales to the column, title wraps, the whole card is an anchor 313px tall (tap target well above 40px), no sideways scroll"
+      "result": "untested",
+      "evidence": "Card at 390 not rendered."
     },
     "c-member-link-preview.14": {
-      "result": "pass",
-      "evidence": "Dark mode card background rgb(47,49,58)-ish on the dark surface rgb(35,38,47), title text stays light; checked via computed colours at 390",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/lp-bob390d.png"
+      "result": "untested",
+      "evidence": "Dark card not rendered."
     },
     "c-member-link-preview.15": {
-      "result": "pass",
-      "evidence": "Link to ar.wordpress.org: card title is Arabic, dir=auto resolves to rtl, text-align start (right on RTL text)",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/lp-arabic.png"
+      "result": "untested",
+      "evidence": "Arabic target page not available."
     },
     "c-member-link-preview.16": {
       "result": "fail",
-      "evidence": "Guest GET /link-preview for 40 different public URLs (example.com?qawalkb=N) in 66 s: every one 200, no 401 and no 429, so the endpoint is an open server-side fetch for logged-out visitors"
+      "evidence": "Guest GET /link-preview?url=https://wordpress.org/news/ -> 200 with the full fetched preview (title, description). Expected 401 or a rate-limited answer; the endpoint is an open server-side fetch for logged-out visitors (the check line itself notes this)."
     },
     "c-member-link-preview.17": {
-      "result": "pass",
-      "evidence": "Standalone link https://wordpress.org/news/2024/04/regina/ renders a card with title 'WordPress 6.5 Regina', image and site 'WordPress News'"
+      "result": "untested",
+      "evidence": "Standalone wordpress.org post link card not rendered in a published topic."
     }
-  }
+  },
+  "proposed_checks": []
 }

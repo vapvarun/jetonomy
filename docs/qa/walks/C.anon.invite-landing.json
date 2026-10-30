@@ -1,106 +1,93 @@
 {
   "journey": "C.anon.invite-landing",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:01:35Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
     "mode": "free (Jetonomy Free active, Pro inactive)",
     "site": "http://localhost:8912",
-    "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
-      1024,
       390
     ],
-    "schemes": [
-      "light",
-      "dark (Reign only)"
-    ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-anon-invite-landing.1": {
       "result": "pass",
-      "evidence": "No invite links existed in the seed; created with InviteLink::generate. With registration open the guest page reads \"You've been invited to join AI Assistant Experiments <description>\" with \"Create free account\" and \"Log in to accept invite\"; membership unchanged."
+      "evidence": "Valid QA-RFT invite (Mentorship Circle): page names the space, offers \"Log in to accept invite\" and, with users_can_register=1, \"Create free account\" (restored to 0); nobody added."
     },
     "c-anon-invite-landing.2": {
       "result": "pass",
-      "evidence": "Guest clicked \"Log in to accept invite\" (redirect_to=invite URL), logged in as bob with a temporary password (hash restored) -> returned to /community/invite/<token>/ showing \"Join Space\"; bob not in wp_jt_space_members for Nairobi Chapter (0 rows)."
+      "evidence": "Guest login link carries redirect_to=the invite URL; after login as qa_rft_m1 the invite page shows Join Space, member count unchanged."
     },
     "c-anon-invite-landing.3": {
       "result": "pass",
-      "evidence": "bob clicked Join Space on the AI Assistant Experiments invite -> POST form (jt_invite_nonce) -> landed on /community/s/ai-assistant-experiments/ and members went 1 -> 2; invite use_count 1."
+      "evidence": "qa_rft_m1 clicks \"Join Space\" (nonce POST) -> lands on /community/s/mentorship-circle/, member count 1 -> 2."
     },
     "c-anon-invite-landing.4": {
       "result": "pass",
-      "evidence": "bob reopening the invite as a member sees \"You are already a member of AI Assistant Experiments. Go to Space\" (a visible page, not a redirect); one membership row."
+      "evidence": "Already-member qa_rft_m1 sees \"You are already a member of Mentorship Circle. Go to Space\"; one membership row only."
     },
     "c-anon-invite-landing.5": {
       "result": "pass",
-      "evidence": "As alice: GET x2, HEAD, a POST without the nonce and a POST with a bad nonce on a one-use invite all answered 200 (page re-rendered) and no wp_jt_space_members row for alice, use_count stayed 0."
+      "evidence": "GET twice and HEAD on the invite -> member_count unchanged (1 -> 1), no membership row."
     },
     "c-anon-invite-landing.6": {
       "result": "pass",
-      "evidence": "POST without nonce and with a bad nonce did not join alice (DB confirmed). The response is a silent 200 re-render of the invite page, not a 403 or visible nonce error."
+      "evidence": "POST to invite page without jt_invite_nonce -> page renders again (200 with Join form), count unchanged."
     },
     "c-anon-invite-landing.7": {
       "result": "pass",
-      "evidence": "With users_can_register = 0 the guest invite page shows only \"Log in to accept invite\". Option restored to 0 afterwards."
+      "evidence": "users_can_register=0: guest invite page offers only \"Log in to accept invite\" (0 \"Create free account\")."
     },
     "c-anon-invite-landing.8": {
-      "result": "fail",
-      "evidence": "/community/invite/does-not-exist/ (hyphen in the code) returns the THEME 404 page (HTTP 404), not the community \"invalid invite\" page, because the route only matches [a-zA-Z0-9]+. A well-formed unknown code gives the proper \"Invalid invite link.\" page (see .16). No fatal."
+      "result": "pass",
+      "evidence": "/community/invite/does-not-exist/ -> 404 \"Invalid invite link. Back to the community\"."
     },
     "c-anon-invite-landing.9": {
       "result": "pass",
-      "evidence": "Expired invite (expires_at 2026-01-01): guest and bob get HTTP 410 \"This invite link has expired or reached its usage limit.\" and no Join button."
+      "evidence": "Expired QA-RFT invite -> HTTP 410 \"This invite link has expired or reached its usage limit.\", no Join button."
     },
     "c-anon-invite-landing.10": {
       "result": "pass",
-      "evidence": "Invite with max_uses 1 and use_count 1: bob gets HTTP 410 with the same expired/limit message and no Join button."
+      "evidence": "Used-up (1/1) invite as member -> 410 same message, no Join button."
     },
     "c-anon-invite-landing.11": {
       "result": "pass",
-      "evidence": "bob on an invite to archived 2025 Hackathon: \"This space is archived or locked and is not taking new members.\" with no form or Join button."
+      "evidence": "Invite to archived 2025 Hackathon -> \"This space is archived or locked and is not taking new members.\", no Join button."
     },
     "c-anon-invite-landing.12": {
       "result": "pass",
-      "evidence": "omar (member row kept, ban in wp_jt_restrictions) on an Off-Topic Lounge invite: \"You have been banned from this space and cannot take part in it.\" with no form; a forced POST also answers the banned message."
+      "evidence": "omar (space-banned) opens Off-Topic Lounge invite -> \"You have been banned from this space and cannot take part in it.\"; forced POST /invite/<token> -> 403 jetonomy_user_space_banned."
     },
     "c-anon-invite-landing.13": {
       "result": "pass",
-      "evidence": "Two separate browser contexts (alice and bob) clicked Join on a one-use invite at once: only bob was added (DB), alice saw \"This invite link has expired or reached its usage limit.\"; use_count 1."
+      "evidence": "qa_rft_m2 and qa_rft_m3 click Join on a one-use invite simultaneously: m2 added and redirected to the space, m3 shown the limit message; use_count 1."
     },
     "c-anon-invite-landing.14": {
       "result": "pass",
-      "evidence": "Guest at 390 dark (registration off): documentElement scrollWidth 390, \"Log in to accept invite\" 328x41 full-width, dark surface; screenshot checked. Registration-on two-button state not re-checked at 390."
+      "evidence": "390px dark: scrollWidth 390, \"Log in to accept invite\" button 328x41 full width (screenshot jt207-w3-invite-390dark.png)."
     },
     "c-anon-invite-landing.15": {
       "result": "pass",
-      "evidence": "Guest on an invite to hidden Moderators' Room: shows \"You've been invited to join Moderators' Room\" plus its description only; no members or topics listed."
+      "evidence": "Guest on a Moderators' Room invite sees the space name and description (invite holder), no members or topics; QA-RFT token only."
     },
     "c-anon-invite-landing.16": {
       "result": "pass",
-      "evidence": "Guest /community/invite/<32-char unknown token>/ -> HTTP 404 \"Invalid invite link. Back to the community\" (soft-404 issue is fixed)."
+      "evidence": "Well-formed unknown token /invite/abcdef0123456789abcdef0123456789/ -> \"Invalid invite link.\" with HTTP 404."
     },
     "c-anon-invite-landing.17": {
       "result": "pass",
-      "evidence": "Same as .12: omar, who still has a member row, sees the banned message instead of a redirect into the space."
+      "evidence": "omar (member row exists in Off-Topic Lounge) opening its invite sees the banned message, no silent redirect."
     },
     "c-anon-invite-landing.18": {
       "result": "pass",
-      "evidence": "Decision observed: an existing member sees a visible \"You are already a member of <space>. Go to Space\" page; this matches check 4, no silent redirect."
+      "evidence": "Existing member on invite to his space sees the visible \"already a member ... Go to Space\" page, matching check 4."
     }
   },
-  "proposed_checks": [
-    "- `c-anon-invite-landing.19` @guest #ui !refuse: open /community/invite/<code with a hyphen or underscore>/ -> the community Invalid invite page (live: the theme 404 because the route only matches [a-zA-Z0-9]+).",
-    "- `c-anon-invite-landing.20` @member #rest !refuse: POST to the invite URL with a missing or bad jt_invite_nonce answers a visible refusal (live: silent 200 re-render of the invite page)."
-  ],
-  "walked_before_new_commits": true,
-  "note": "walked after the first change notice but before commits 1e89d24d/d5233d9 were announced; free hash recorded is the commit first given"
+  "proposed_checks": []
 }

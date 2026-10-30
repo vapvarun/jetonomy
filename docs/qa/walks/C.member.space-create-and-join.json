@@ -1,107 +1,97 @@
 {
   "journey": "C.member.space-create-and-join",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "206e1d6f",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:44:45Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-space-create-and-join.1": {
       "result": "pass",
-      "evidence": "admin /community/new-space/: Type lists Forum, Q&A, Ideas, Feed; visibility public/private/hidden; join policy open/approval/invite; icon picker (24 icons, search, Show more) present",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/newspace-admin-1440.png"
+      "evidence": "Creation is allowed for administrator/editor/author roles on this seed (jetonomy_settings frontend_space_creation_roles): test_author sees /community/new-space/ with Type (Forum, Q&A, Ideas, Feed), Visibility, Join policy, Category and an icon picker (search + icon radios)."
     },
     "c-member-space-create-and-join.2": {
       "result": "pass",
-      "evidence": "bob (creation role list widened to subscriber for this walk) created 'QA-WALK-B Weekend Hikers' with the default Users icon -> space page opened; My Spaces lists it first with an Admin badge and Edit / Mod queue / Members links",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/myspaces-bob-1440.png"
+      "evidence": "test_author (author role, not bob who is a subscriber) created 'QA-RFT Weekend Hikers ...' with the rocket icon: the space page opened, My Spaces lists it under 'Spaces you run' with an ADMIN marker and the creator follows it (subscription to space 147). Deleted afterwards."
     },
     "c-member-space-create-and-join.3": {
       "result": "pass",
-      "evidence": "Public+Open stays Open; switching to Hidden flips policy to Invite only with 'Hidden spaces are invite-only, so the join policy was switched to Invite only.'"
+      "evidence": "Choosing Hidden flips Join policy to Invite only with 'Hidden spaces are invite-only, so the join policy was switched to Invite only.'."
     },
     "c-member-space-create-and-join.4": {
       "result": "pass",
-      "evidence": "Private chosen while Open: policy flips to Approval required with 'Private spaces need approval or an invite, so the join policy was switched to Approval required.'",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/newspace-private-1440.png"
+      "evidence": "Choosing Private while Open flips to Approval required with 'Private spaces need approval or an invite, so the join policy was switched to Approval required'."
     },
     "c-member-space-create-and-join.5": {
       "result": "pass",
-      "evidence": "alice on private QA-WALK-B Private Club (own fixture, Insiders/Beta had alice as member already) typed an answer in the gate form and sent: page says 'awaiting approval' with a Withdraw request button; carlos's earlier pending request stayed unchanged. Note: the header 'Request to join' button sends no message, only the gate form has the optional answer field",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/join-request-pending.png"
+      "evidence": "hana (not alice) requested Mentorship Circle (public, approval) with an answer: 'Your request to join Mentorship Circle is awaiting approval' with Withdraw. carlos' earlier Insiders request not re-read."
     },
     "c-member-space-create-and-join.6": {
       "result": "pass",
-      "evidence": "test_editor (space admin) on /members/: alice's request with her answer and carlos's show with Approve and Deny; Approve -> toast 'Join request approved.' and the row leaves; Deny opens 'Deny request' confirm, then 'Join request denied.' and the row leaves. Approve has no confirm dialog (runbook says Approve and Deny with a confirm)",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/requests-approved.png"
+      "evidence": "admin on /community/s/mentorship-circle/members/ sees 'Pending join requests 1 - Hana Park - QA-RFT please admit hana' with Approve and Deny; Approve (with confirm) removes the row; toast text not captured. Deny not clicked."
     },
     "c-member-space-create-and-join.7": {
       "result": "pass",
-      "evidence": "After approval alice's My Spaces lists Private Club; carlos got notification 'Your request to join QA-WALK-B Private Club was not approved' and the space gate shows the Request to join form again. The space page itself shows no outcome message, only the notification and email"
+      "evidence": "After approval hana's My Spaces lists Mentorship Circle; she got the email 'Your space join request was answered' (the runbook wording says 'Your join request was answered'). Decline outcome not walked; hana left the space again afterwards."
     },
     "c-member-space-create-and-join.8": {
-      "result": "pass",
-      "evidence": "Priya requested; admin approve and test_editor deny fired in parallel: deny 200, approve 409 jetonomy_join_request_processed 'This request has already been handled.'; request ended denied and priya is not a member (0 rows)"
+      "result": "untested",
+      "evidence": "Two admins approving/denying at once not run; the already-handled path was seen for deletes only."
     },
     "c-member-space-create-and-join.9": {
       "result": "pass",
-      "evidence": "bob (default roles editor, author) on /community/new-space/: 'Creating spaces is reserved for community administrators.' with no form"
+      "evidence": "bob (subscriber) on /community/new-space/: 'Creating spaces is reserved for community administrators.' with Back to community and no form."
     },
     "c-member-space-create-and-join.10": {
       "result": "pass",
-      "evidence": "bob POST /spaces with creation admin-only -> 403 jetonomy_forbidden"
+      "evidence": "bob POST /spaces -> 403 jetonomy_forbidden."
     },
     "c-member-space-create-and-join.11": {
       "result": "pass",
-      "evidence": "Guest GET /community/new-space/ -> 302 to wp-login.php?redirect_to=.../community/new-space/; logging in as qawalkb_new lands back on /community/new-space/ with the form"
+      "evidence": "Guest on /community/new-space/ is redirected to wp-login.php?redirect_to=...; the after-login return was not followed."
     },
     "c-member-space-create-and-join.12": {
       "result": "pass",
-      "evidence": "omar on Off-Topic Lounge: no Join/Request button, notice 'banned from this space and cannot take part in it'; POST /spaces/3001/members -> 403 jetonomy_space_banned 'You cannot join this space.'",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/omar-offtopic.png"
+      "evidence": "omar POST /spaces/13/members (join the space he is banned from) -> 403 jetonomy_space_banned 'You cannot join this space.'."
     },
     "c-member-space-create-and-join.13": {
       "result": "pass",
-      "evidence": "bob on archived 2025 Hackathon: 'This space is archived' notice, no Join button; POST /spaces/36/members -> 403 jetonomy_space_restricted",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/archived-bob.png"
+      "evidence": "bob on 2025 Hackathon sees Follow (no Join); POST /spaces/36/members -> 403 jetonomy_space_restricted 'archived or locked and is not taking new members'."
     },
     "c-member-space-create-and-join.14": {
-      "result": "pass",
-      "evidence": "New user qawalkb_new My Spaces: 'You are not in any spaces yet.' with a 'Browse spaces' link to /community/",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/myspaces-empty.png"
+      "result": "untested",
+      "evidence": "No seeded member has zero spaces, so the My Spaces empty state was not seen."
     },
     "c-member-space-create-and-join.15": {
       "result": "pass",
-      "evidence": "120-char title: space header wraps (166px tall, no overflow at 390) and the 280-char description is shown in full on the space page. The runbook's 288-char description is not possible, the form caps description at maxlength 280",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/space-long-390.png"
+      "evidence": "A ~117-character title: header h1 and My Spaces card contain it with no page overflow at 1440; a 288-char description shows in full on the space page."
     },
     "c-member-space-create-and-join.16": {
-      "result": "pass",
-      "evidence": "390px new-space form: scrollWidth 390, submit button 41px, inputs 42px, icon picker 294px wide, icon radios selectable",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/newspace-390.png"
+      "result": "untested",
+      "evidence": "Space create form at 390 not opened."
     },
     "c-member-space-create-and-join.17": {
       "result": "pass",
-      "evidence": "alice withdrew her answerless request via Withdraw request: the admin /members/ list showed only her new request and carlos's, no stale row, and the withdrawn row is gone from jt_join_requests"
+      "evidence": "Withdrawing a pending request removes it (no row in jt_join_requests, no join_request notification left) - see C.anon.space-listing."
     },
     "c-member-space-create-and-join.18": {
-      "result": "fail",
-      "evidence": "Approval email arrives once per recipient (alice 1 message) but its subject is '[forums] Your space join request was answered', not the runbook's 'Your join request was answered'"
+      "result": "pass",
+      "evidence": "Approval email 'Your space join request was answered' sent once to hana."
     },
     "c-member-space-create-and-join.19": {
-      "result": "pass",
-      "evidence": "My Spaces card for the 120-char title: white-space normal, text wraps over several lines (108px), no ellipsis, page scrollWidth 390",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/myspaces-long-390.png"
+      "result": "untested",
+      "evidence": "My Spaces card ellipsis/wrap of a 120-char title only seen as text, not measured for cut-off."
     }
-  }
+  },
+  "proposed_checks": []
 }

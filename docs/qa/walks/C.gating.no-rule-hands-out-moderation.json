@@ -1,57 +1,56 @@
 {
   "journey": "C.gating.no-rule-hands-out-moderation",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:04:55Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-gating-no-rule-hands-out-moderation.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "membership rule with grants=read and space_role=admin saved (201) -> stored space_role viewer"
     },
     "c-gating-no-rule-hands-out-moderation.2": {
       "result": "pass",
-      "evidence": "re-walked: matched subscriber aisha moderate/edit others/delete others/pin -> 403 jetonomy_forbidden each"
+      "evidence": "subscriber matched by Read+admin rule: trash 403, PATCH others 403, DELETE others 403, pin 403 (jetonomy_forbidden)"
     },
     "c-gating-no-rule-hands-out-moderation.3": {
       "result": "pass",
-      "evidence": "re-walked: grants=full with space_role=admin -> stored participate/member; DB roster roles for the space are only admin and moderator rows I created by hand (none from rules); distinct stored grants in jt_access_rules are read,participate only"
+      "evidence": "Participate and grants=full with space_role=admin: stored participate/member; same four calls 403; roster never admin/moderator"
     },
     "c-gating-no-rule-hands-out-moderation.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "fired jetonomy_membership_activated for plain subscriber with rule read+space_role=admin -> roster row role viewer, source tier; post 403 and moderate/edit/delete/pin all denied"
     },
     "c-gating-no-rule-hands-out-moderation.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "participate membership rule via hook -> roster role member (Free has no membership plugin so tier rows lapse at reconcile); posting as member proved with a role rule in C.gating.participate.3/4"
     },
     "c-gating-no-rule-hands-out-moderation.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Members tab after hook-admitted users: roles viewer/member only; no moderator/admin among rule-admitted"
     },
     "c-gating-no-rule-hands-out-moderation.7": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "subscriber on /community/s/qa-rft-priv/mod/ -> 403 'You do not have permission to moderate this space.'"
     },
     "c-gating-no-rule-hands-out-moderation.8": {
       "result": "pass",
-      "evidence": "test_moderator POST /moderation/spam on a topic in a private space where a Logged In rule admits him -> 200 (via Moderate capability)"
+      "evidence": "test_moderator pin/close/trash 200 in public QA-RFT Pub via Moderate capability, not from a rule"
     },
     "c-gating-no-rule-hands-out-moderation.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "live preview reads 'Everyone can read, post, reply, vote and report. They are recorded as Member.' (also on role/trust/capability) with Participate; never Moderator"
     }
   },
   "proposed_checks": []

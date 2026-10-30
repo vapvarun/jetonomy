@@ -1,73 +1,72 @@
 {
   "journey": "C.gating.builder-explains-itself",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:07:26Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-gating-builder-explains-itself.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Access Rules tab (QA-RFT Priv): intro 'Choose who this rule lets in. Nothing changes until you add the rule.', empty state 'Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.'"
     },
     "c-gating-builder-explains-itself.2": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "stepped Everyone, Logged In, Role, Capability, Trust Level: each shows a 'Matches ...' sentence under the live preview; Role/Capability/Trust Level value box shows examples subscriber / edit_posts / 2. Membership option is disabled in the dropdown with no membership plugin installed ('needs a membership plugin such as MemberPress or Paid Memberships Pro'), so its sentence was not shown"
     },
     "c-gating-builder-explains-itself.3": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Everyone and Logged In: only the rule-type and grants selects are visible, no value input"
     },
     "c-gating-builder-explains-itself.4": {
       "result": "pass",
-      "evidence": "REST trust_level rule with no level, level 0 and level 9 -> 400 'Choose a trust level from 1 to 5.' each"
+      "evidence": "UI save with trust level empty, 0 and 9 -> toast 'Choose a trust level from 1 to 5.' each; rule count stayed 0 (button is disabled on an empty value, forced the click to see the server message)"
     },
     "c-gating-builder-explains-itself.5": {
       "result": "pass",
-      "evidence": "role ghost_role -> 400 'Choose a role that exists on this site.'"
+      "evidence": "role ghost_role -> toast 'Choose a role that exists on this site.'"
     },
     "c-gating-builder-explains-itself.6": {
       "result": "pass",
-      "evidence": "empty capability and empty membership value -> 400 'Enter a value for this rule.'"
+      "evidence": "empty capability -> toast 'Enter a value for this rule.'; membership empty via REST 400 'Enter a value for this rule.'; no rule created"
     },
     "c-gating-builder-explains-itself.7": {
       "result": "pass",
-      "evidence": "same bad values via POST access-rules return the messages above (400) and GET access-rules lists only the 3 valid rules"
+      "evidence": "REST POST bad values -> 400 with the same messages (trust 9 and empty, ghost_role, capability empty, membership empty); GET rules lists none of them"
     },
     "c-gating-builder-explains-itself.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "test_editor opens wp-admin Access Rules URL for Help Desk -> HTTP 403 page 'Only site administrators can manage access rules for this space.' with a 'Back to Help Desk' link, no builder"
     },
     "c-gating-builder-explains-itself.9": {
       "result": "pass",
-      "evidence": "aisha POST /spaces/43/access-rules -> 403"
+      "evidence": "subscriber POST rule -> 403 jetonomy_forbidden"
     },
     "c-gating-builder-explains-itself.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "390px: Add Rule button 40px high, rule-type select 42px, no horizontal overflow"
     },
     "c-gating-builder-explains-itself.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "not applicable by owner rule (wp-admin has no dark mode); builder text uses wp-admin tokens"
     },
     "c-gating-builder-explains-itself.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "qa_rft_adm with locale ar: html dir=rtl lang=ar, value input direction rtl with text-align start, example 'subscriber' shown"
     },
     "c-gating-builder-explains-itself.13": {
       "result": "pass",
-      "evidence": "re-walked: POST grants=full space_role=admin -> stored grants participate and space_role member (preview text not viewed in UI)"
+      "evidence": "Participate preview reads '...They are recorded as Member.'; rule row shows Space Role Member; REST grants=full space_role=admin stored participate/member"
     }
   },
   "proposed_checks": []

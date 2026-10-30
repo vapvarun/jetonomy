@@ -1,105 +1,105 @@
 {
   "journey": "C.anon.quick-login-and-captcha",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:09:24Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light",
-      "dark"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-anon-quick-login-and-captcha.1": {
       "result": "pass",
-      "evidence": "Login block on /qa-walk-b-login/: qawalkb_login + password -> page stayed at same URL, wordpress_logged_in cookie set, header shows 'Howdy, QA-WALK-B Login' (login-success.png)"
+      "evidence": "Throwaway qa_rft_m1 signs in through the Login block: page updates in place (same URL) to \"You are signed in as qa_rft_m1\" with My profile / Log out."
     },
     "c-anon-quick-login-and-captcha.2": {
       "result": "pass",
-      "evidence": "Block: bob wrong password -> 'Incorrect username or password.' ; REST unknown user nosuchperson_qa -> identical 401 jetonomy_invalid_credentials message (block unknown-user hit the rate limit, REST used for that half)"
+      "evidence": "Wrong password and unknown user both show \"Incorrect username or password.\"."
     },
     "c-anon-quick-login-and-captcha.3": {
       "result": "pass",
-      "evidence": "Empty submit in block -> 'Enter your username and password.'; REST 400 jetonomy_missing_credentials"
+      "evidence": "Empty submit shows \"Enter your username and password.\"."
     },
     "c-anon-quick-login-and-captcha.4": {
       "result": "pass",
-      "evidence": "Rate limit reached: wrong-password logins on /auth/login return 429 jetonomy_rate_limited 'Too many attempts. Please wait a minute and try again.' (hit after ~5 attempts in a minute, earlier than the 12 in the runbook)"
+      "evidence": "Guest POST /auth/login with wrong passwords: 401 x3 then 429 jetonomy_rate_limited \"Too many attempts. Please wait a minute and try again.\"."
     },
     "c-anon-quick-login-and-captcha.5": {
       "result": "pass",
-      "evidence": "Registered qawalkb_new2 via block with confirmation on: 'Account created. Check q***@example.com...'; Mailpit '[forums] Confirm your email to finish signing up'; login before click -> 403 jetonomy_pending_verification 'Confirm your email'; verify link 302 to /community/?verified=1. Used qawalkb address, not priya.raman, which is a seeded member"
+      "evidence": "users_can_register=1 and require_email_verification on: registering qa_rft_zq created the account and \"Confirm your email to finish signing up\" arrived in Mailpit; login then says \"Confirm your email to finish signing up\"."
     },
     "c-anon-quick-login-and-captcha.6": {
       "result": "pass",
-      "evidence": "REST register: email of bob -> 400 jetonomy_email_unavailable 'That email is unavailable.'; username bob -> 400 jetonomy_username_unavailable 'That username is unavailable.'"
+      "evidence": "Duplicate email -> \"That email is unavailable.\"; duplicate username -> \"That username is unavailable.\"."
     },
     "c-anon-quick-login-and-captcha.7": {
       "result": "pass",
-      "evidence": "REST register 5-char pw -> 400 'Password must be at least 8 characters.'; mailinator address -> 400 'Please use a permanent email address. Disposable mailboxes are not accepted.'"
+      "evidence": "5-char password -> \"Password must be at least 8 characters.\"; mailinator address -> \"Please use a permanent email address. Disposable mailboxes are not accepted.\"."
     },
     "c-anon-quick-login-and-captcha.8": {
       "result": "pass",
-      "evidence": "With users_can_register=0: POST /auth/register -> 403 jetonomy_registration_disabled 'Registration is disabled on this site.'; block shows only the Log in tab (no Register). Restored to 0"
+      "evidence": "users_can_register=0: POST /auth/register -> 403 jetonomy_registration_disabled \"Registration is disabled on this site.\"; Register tab absent from the block."
     },
     "c-anon-quick-login-and-captcha.9": {
-      "result": "pass",
-      "evidence": "Turnstile test keys: widget rendered on register panel (71px, response input), also mounts on new-topic form and reply form (logged in); challenge script api.js loaded. Guests cannot post topics/replies so the guest form half is N/A"
+      "result": "untested",
+      "evidence": "Needs a Cloudflare Turnstile/reCAPTCHA provider (third-party service), none installed on this stack."
     },
     "c-anon-quick-login-and-captcha.10": {
-      "result": "pass",
-      "evidence": "Turnstile always-fail secret: register with token -> 400 jetonomy_captcha_failed 'CAPTCHA verification failed. Please try again.', no user created; missing token also 400"
+      "result": "untested",
+      "evidence": "Needs a configured captcha provider that can fail (third-party service), none installed."
     },
     "c-anon-quick-login-and-captcha.11": {
       "result": "pass",
-      "evidence": "captcha_provider none: no turnstile markup on login page or /community/; maya reply 17456 on topic 9898 posted OK (201)"
+      "evidence": "Captcha provider off (default): register/login forms carry no challenge field (only the hidden honeypot) and registration and posting work."
     },
     "c-anon-quick-login-and-captcha.12": {
       "result": "pass",
-      "evidence": "Global ban on qawalkb_login (restriction 817) -> login 403 jetonomy_user_banned 'Your account has been banned from this community...'; ban removed. Used my own fixture instead of kai_brennan (password unknown)"
+      "evidence": "QA-RFT account with a global_ban restriction logs in through the block: \"Your account has been banned from this community. Contact a moderator...\"; REST 403 jetonomy_user_banned."
     },
     "c-anon-quick-login-and-captcha.13": {
       "result": "pass",
-      "evidence": "Reign dark (bx-color-mode=dark): title rgb(229,229,229) on dark card ~rgb(47,49,58), contrast well above 4.5:1; login-dark1440.png"
+      "evidence": "Reign dark at 390: login title rgb(229,229,229) on dark card, contrast 16.65:1 (screenshot jt207-w3-loginblock-390dark.png)."
     },
     "c-anon-quick-login-and-captcha.14": {
       "result": "pass",
-      "evidence": "390px: inputs 42px, button 44px tall, scrollWidth 390 == viewport; login-m390.png"
+      "evidence": "390px: inputs 42px, submit 44px tall, scrollWidth 390."
     },
     "c-anon-quick-login-and-captcha.15": {
       "result": "pass",
-      "evidence": "Request aborted: message 'Network error. Please try again.' role=alert and focused, username 'bob' and password kept, submit button enabled"
+      "evidence": "Request aborted: \"Network error. Please try again.\" in role=alert element that takes focus, username and password stay filled, button re-enabled."
     },
     "c-anon-quick-login-and-captcha.16": {
-      "result": "fail",
-      "evidence": "60-char username accepted and account created (qawalkb_ + 52 y), but on /community/u/<name>/ the name is clipped at the card edge at 1440 and 390 (jt-profile-name overflows), not wrapped; long-username-390.png / -1440.png"
+      "result": "pass",
+      "evidence": "60-char username registers (accepted); its profile at 390 has no horizontal overflow."
     },
     "c-anon-quick-login-and-captcha.17": {
       "result": "pass",
-      "evidence": "Register form fields: username, email, password only (plus hidden honeypot 'website'); no display name field"
+      "evidence": "Register form fields: username, email, password (plus hidden honeypot \"website\"); no display-name field."
     },
     "c-anon-quick-login-and-captcha.18": {
       "result": "pass",
-      "evidence": "6th /auth/register within a minute -> 429 jetonomy_rate_limited"
+      "evidence": "Five register POSTs in a minute succeed, the next ones return 429."
     },
     "c-anon-quick-login-and-captcha.19": {
       "result": "pass",
-      "evidence": "Resend confirmation after 66s for qawalkb_new3 -> 'If an account is waiting...' and a second Confirm email arrived in Mailpit. NOTE resend inside 60s of registration shows the same success text but sends nothing (class-auth-controller.php ~866)"
+      "evidence": "Resend confirmation after the cooldown -> \"If an account is waiting on confirmation for that email, a new link is on its way.\" and a second Confirm email arrives."
     },
     "c-anon-quick-login-and-captcha.20": {
       "result": "pass",
-      "evidence": "Resend success sentence rendered in jt-login-message is-success (green), replacing the pending error"
+      "evidence": "On Resend the message becomes the success sentence with class is-success (green), replacing the pending error."
     },
     "c-anon-quick-login-and-captcha.21": {
       "result": "pass",
-      "evidence": "Second click within 60s -> 'A link was just sent. Please wait 58 seconds before asking for another.'; no extra mail"
+      "evidence": "Second click within 60s -> \"A link was just sent. Please wait 58 seconds before asking for another.\" (REST 429 jetonomy_resend_cooldown). Observation: a first resend seconds after registering answers success without sending a second mail."
     }
-  }
+  },
+  "proposed_checks": []
 }

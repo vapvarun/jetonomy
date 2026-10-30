@@ -1,85 +1,89 @@
 {
- "journey": "E.reply-by-email",
- "free": "dcdb0750",
- "pro": "404b0af",
- "walked_at": "2026-10-21T09:49:29Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "e-reply-by-email.1": {
-   "result": "fail",
-   "evidence": "PARTIAL: Settings > Reply by Email with Enable + Inbound webhook method saved -> notice \"Reply by Email settings saved.\"; there is NO domain-and-signing-secret input (secret is auto-generated, email domain defaults to forums.local); IMAP password \"Leave blank to keep\" placeholder NOT PERFORMED (IMAP fields are hidden in webhook mode, placeholder empty when no password stored)",
-   "screenshot": "rbe-settings"
+  "journey": "E.reply-by-email",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:24:13Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
+  "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "e-reply-by-email.2": {
-   "result": "pass",
-   "evidence": "after enabling, alice replies produced notification emails to bob with Reply-To reply+<token>@... and the token differs per post (p=8989 vs p=9023 decoded from the two Reply-To values); per-user difference not compared"
+  "checks": {
+    "e-reply-by-email.1": {
+      "result": "pass",
+      "evidence": "Settings > Reply by Email has no Enable box (2.0.7); with IMAP method and no host the page says \"Not set up yet. Fill in IMAP Host, IMAP Username, IMAP Password, or choose the webhook method. Until then no reply address is added to emails.\" Saved domain mail.example.test + Inbound webhook -> \"Reply by Email settings saved.\"; the page shows the inbound URL and the read-only signing secret (no secret field to type). The IMAP \"Leave blank to keep\" placeholder was empty because no password is stored. A bad domain \"not a domain!!\" -> \"Email Domain was not changed: it must be a domain such as reply.example.com. The previous value was kept. Your other changes were saved.\" and the stored domain stayed localhost"
+    },
+    "e-reply-by-email.2": {
+      "result": "untested",
+      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+    },
+    "e-reply-by-email.3": {
+      "result": "pass",
+      "evidence": "Mailgun-style signed POST /reply-by-email/inbound with bob's token (generated with Extension::generate_token) and body \"QA-RFT Thanks, restarting the queue worker fixed it for me.\" -> 200 {\"success\":true}; the new reply on the topic has author_id 10 (bob), status publish"
+    },
+    "e-reply-by-email.4": {
+      "result": "pass",
+      "evidence": "inbound body with a \"> quoted\" block and a \"-- \" signature -> stored reply \"QA-RFT new text here\\n\\nsecond para\" (quote and signature removed, paragraph break kept)"
+    },
+    "e-reply-by-email.5": {
+      "result": "pass",
+      "evidence": "token \"garbage\" and a token with a suffix -> 400 jetonomy_reply_token_invalid \"Invalid token structure.\"; the expired (older than 7 days) case not built"
+    },
+    "e-reply-by-email.6": {
+      "result": "untested",
+      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+    },
+    "e-reply-by-email.7": {
+      "result": "pass",
+      "evidence": "unsigned -> 403 jetonomy_webhook_missing_signature \"Webhook request is not signed.\"; bad signature -> 403 jetonomy_webhook_signature_invalid \"Webhook signature mismatch.\"; timestamp two hours old -> 403 \"Webhook timestamp is outside the accepted window.\""
+    },
+    "e-reply-by-email.8": {
+      "result": "pass",
+      "evidence": "Re-read line (earlier fail was about the error code name, not the line): extension off -> inbound route is not registered (404 rest_no_route); extension on with IMAP chosen and the webhook called -> 503 'Reply by Email is not set up yet.'"
+    },
+    "e-reply-by-email.9": {
+      "result": "pass",
+      "evidence": "no To -> 400 jetonomy_inbound_recipient_missing \"No To address found in payload.\"; To without a token -> 400 jetonomy_reply_token_missing \"No reply token found in To address.\"; empty body -> 400 jetonomy_reply_empty \"Email body is empty.\""
+    },
+    "e-reply-by-email.10": {
+      "result": "pass",
+      "evidence": "11 inbound replies in a row for bob (10 counted including earlier checks): after the limit -> 429 jetonomy_rate_limited \"Rate limit exceeded or content empty.\" (3 of the last 11 requests); other members were not tried against the same transient"
+    },
+    "e-reply-by-email.11": {
+      "result": "pass",
+      "evidence": "valid token for finn (silenced) -> HTTP 200 {\"success\":true} but no reply row was created (silently dropped, no bounce), as the check records"
+    },
+    "e-reply-by-email.12": {
+      "result": "pass",
+      "evidence": "valid token for omar on a topic in Off-Topic Lounge -> 200 success but no reply row created; closed-topic and archived-space cases not tried"
+    },
+    "e-reply-by-email.13": {
+      "result": "untested",
+      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+    },
+    "e-reply-by-email.14": {
+      "result": "untested",
+      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+    },
+    "e-reply-by-email.15": {
+      "result": "untested",
+      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+    },
+    "e-reply-by-email.16": {
+      "result": "untested",
+      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+    }
   },
-  "e-reply-by-email.3": {
-   "result": "pass",
-   "evidence": "signed (Mailgun-style timestamp/token/signature fields) POST /reply-by-email/inbound with bob token and \"Thanks, restarting the queue worker fixed it for me.\" -> 200 {\"success\":true}; reply 16436 created on topic 8989 with author_id 3755 (bob), status publish. Notification delivery for that reply not separately inspected"
-  },
-  "e-reply-by-email.4": {
-   "result": "pass",
-   "evidence": "body with \"> On Mon, Alice wrote:\" quoted lines and a \"-- \" signature -> stored reply 16437 contains only \"First paragraph... \\n\\nSecond paragraph with detail.\" (quote and signature stripped, paragraph break kept)"
-  },
-  "e-reply-by-email.5": {
-   "result": "pass",
-   "evidence": "invalid token -> 400 jetonomy_reply_token_invalid \"Invalid token structure.\"; expired token -> 400 jetonomy_reply_token_expired \"Reply token has expired.\"; no reply rows created"
-  },
-  "e-reply-by-email.6": {
-   "result": "fail",
-   "evidence": "PARTIAL: tampered expiry and tampered user id -> 400 jetonomy_reply_token_invalid \"Token signature mismatch.\"; replaying a bob token against a different post id NOT PERFORMED (post id is inside the signed token)"
-  },
-  "e-reply-by-email.7": {
-   "result": "pass",
-   "evidence": "unsigned -> 403 jetonomy_webhook_missing_signature \"Webhook request is not signed.\"; wrong signature -> 403 jetonomy_webhook_signature_invalid \"Webhook signature mismatch.\"; timestamp 2h old -> 403 \"Webhook timestamp is outside the accepted window.\"; empty secret -> 403 jetonomy_webhook_not_configured \"Inbound webhook is not configured with a signing secret.\""
-  },
-  "e-reply-by-email.8": {
-   "result": "pass",
-   "evidence": "extension setting disabled -> 503 jetonomy_extension_disabled \"Reply by Email is not enabled.\"; method set to IMAP while webhook is called -> 400 jetonomy_inbound_method_disabled \"Inbound webhook method is not enabled.\""
-  },
-  "e-reply-by-email.9": {
-   "result": "pass",
-   "evidence": "no To -> 400 \"No To address found in payload.\"; To without token -> 400 \"No reply token found in To address.\"; empty body -> 400 \"Email body is empty.\""
-  },
-  "e-reply-by-email.10": {
-   "result": "fail",
-   "evidence": "bob inbound replies hit 429 jetonomy_rate_limited \"Rate limit exceeded or content empty.\" after 7 accepted replies in the window (runbook says after more than 10; the limit is lower or shared with the free reply limiter); other-member unaffected case NOT PERFORMED"
-  },
-  "e-reply-by-email.11": {
-   "result": "pass",
-   "evidence": "valid token for silenced finn -> no reply row created; endpoint still answers 200 {\"success\":true}; finn is sent a \"Your emailed reply was not posted\" bounce email (runbook expected no bounce)"
-  },
-  "e-reply-by-email.12": {
-   "result": "fail",
-   "evidence": "PARTIAL: valid token for space-banned omar on Off-Topic Lounge topic 5764 -> no reply row, 200 success:true, omar got \"Your emailed reply was not posted\" bounce; the closed topic \"Scheduled maintenance on Saturday\" and archived Hackathon space cases NOT PERFORMED"
-  },
-  "e-reply-by-email.13": {
-   "result": "pass",
-   "evidence": "valid token for bob on CAB topic 5865 (not a member) -> no reply created; response is the same 200 {\"success\":true} as a normal accepted reply, with a generic bounce email \"Your emailed reply was not posted\" (no topic title leak)"
-  },
-  "e-reply-by-email.14": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: held-reply (approval required) and rule-flag via inbound email not exercised"
-  },
-  "e-reply-by-email.15": {
-   "result": "fail",
-   "evidence": "PARTIAL: emailed reply \"@alice can you confirm this works?\" (reply 16441) -> alice received exactly 1 new email; in-app notification count and follower double-notice NOT PERFORMED"
-  },
-  "e-reply-by-email.16": {
-   "result": "fail",
-   "evidence": "PARTIAL: Arabic body stored as correct UTF-8 (hex D985D8B1D8ADD8A8D8A7...) and a 5,010-character body stored in full via form-encoded fields; quoted-printable and base64 MIME decoding NOT PERFORMED (webhook gets already-parsed fields)"
-  }
- }
+  "proposed_checks": []
 }

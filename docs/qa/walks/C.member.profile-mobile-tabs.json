@@ -1,66 +1,57 @@
 {
   "journey": "C.member.profile-mobile-tabs",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:32:15Z",
-  "walker": "lane A3",
+  "free": "206e1d6f",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:42:01Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-profile-mobile-tabs.1": {
       "result": "pass",
-      "evidence": "bob /community/u/bob/ at 390: tab strip scrolls (432 vs 328 wide), active Topics visible."
+      "evidence": "bob's own profile at 390: tab strip (.jt-profile-tabs, overflow auto, 432px content in 328px) shows Topics active at the left edge; Bookmarks and Drafts are to the right and scrollable."
     },
     "c-member-profile-mobile-tabs.2": {
       "result": "pass",
-      "evidence": "Strip holds Topics, Replies, Votes, Bookmarks, Drafts (matches the runbook wording); each scrolled into view and fully inside the strip."
+      "evidence": "Every tab (Topics, Replies, Votes, Bookmarks, Drafts) exists in a horizontally scrollable strip (scrollWidth 432 > clientWidth 328, overflow-x auto); swipe/tap not simulated."
     },
     "c-member-profile-mobile-tabs.3": {
       "result": "pass",
-      "evidence": "/community/u/bob/drafts/ at 390: scrollLeft 104, active Drafts tab fully visible.",
-      "screenshot": "profile-drafts-390.png"
+      "evidence": "/community/u/bob/drafts/ at 390: strip scrolled to scrollLeft 104 so Drafts (x 282-359) is the visible active tab."
     },
     "c-member-profile-mobile-tabs.4": {
       "result": "pass",
-      "evidence": "guest at 390: Topics, Replies, Votes only, strip fits (scrollWidth = clientWidth 328), nothing off-screen",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-A/ptabs-guest-390.png",
-      "carried_forward": true
+      "evidence": "Guest at 390 sees only Topics, Replies, Votes (no owner tabs), all visible without scrolling."
     },
     "c-member-profile-mobile-tabs.5": {
       "result": "pass",
-      "evidence": "alice (390) on bob's profile: only Topics, Replies, Votes tabs."
+      "evidence": "hana viewing bob: only Topics, Replies, Votes; /u/bob/drafts/ renders bob's public profile, not his drafts."
     },
     "c-member-profile-mobile-tabs.6": {
-      "result": "pass",
-      "evidence": "RTL emulated by setting html dir=rtl plus rtl class (not a real Arabic locale): strip starts at the right (Topics at 278-359 of nav 31-359), active tab visible",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "Arabic locale not enabled (site-wide setting)."
     },
     "c-member-profile-mobile-tabs.7": {
       "result": "pass",
-      "evidence": "grace (Grace Oluwaseun Adeyemi-Whitfield) at 390: name wraps to two lines (heading height 82), tab strip stays one row (height 44), no page horizontal scroll",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-A/ptabs-grace-390.png",
-      "carried_forward": true
+      "evidence": "Grace's 'Grace Oluwaseun Adeyemi-Whitfield' header at 390: name wraps inside the viewport (right edge 338), page scrollWidth 390, tab bar stays one row."
     },
     "c-member-profile-mobile-tabs.8": {
-      "result": "pass",
-      "evidence": "dark at 390: active tab text rgb(192,217,245) with 2px rgb(151,192,238) underline on dark surface; visually clear (contrast ratio not measured numerically)",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-A/ptabs-dark-390.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "Dark-mode active underline contrast not measured."
     },
     "c-member-profile-mobile-tabs.9": {
-      "result": "pass",
-      "evidence": "On /u/bob/drafts: 390 to 1024 to 390 without reload: scrollLeft back to 104 and the active Drafts tab fully inside the strip (the resize re-reveal works)."
+      "result": "untested",
+      "evidence": "Rotate 390 -> 1024 -> 390 not stepped through with the tab measurement."
     }
   },
-  "proposed_checks": [],
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": []
 }

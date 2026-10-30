@@ -1,109 +1,97 @@
 {
   "journey": "C.member.subscribe-thread-and-space",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:28:07Z",
-  "walker": "lane A3",
+  "free": "206e1d6f",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:35:52Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-subscribe-thread-and-space.1": {
       "result": "pass",
-      "evidence": "bob clicked Follow on topic 16651 (UI): button became Following and /community/subscriptions/ listed it."
+      "evidence": "bob clicked Follow on the Feature Requests topic: button became Following and /community/subscriptions/ lists it."
     },
     "c-member-subscribe-thread-and-space.2": {
       "result": "pass",
-      "evidence": "bob follows 9030, alice replies: bob gets one reply_to_post bell row and one Mailpit email \"[forums] Alice Chen replied in QA-WALK-A vote fixture topic\"",
-      "carried_forward": true
+      "evidence": "hana (not alice) replied in the thread bob follows: bob got one bell row (reply_to_post) and one Mailpit email 'Hana Park replied in Dark mode for the community on phones' (not 'replied to your topic'; the OP got that one)."
     },
     "c-member-subscribe-thread-and-space.3": {
       "result": "pass",
-      "evidence": "bob clicked Following (UI): button reverted to Follow and GET /subscriptions no longer holds the topic."
+      "evidence": "After bob unfollowed (button back to Follow), hana's next reply created no notification row for bob."
     },
     "c-member-subscribe-thread-and-space.4": {
       "result": "pass",
-      "evidence": "bob follows Help Desk space; alice new topic 9033-range: bob gets one new_post_in_sub notification",
-      "carried_forward": true
+      "evidence": "bob followed Feature Requests (space) and hana's new QA-RFT topic there gave bob one new_post_in_sub notification (Help Desk not used)."
     },
     "c-member-subscribe-thread-and-space.5": {
       "result": "pass",
-      "evidence": "POST /subscriptions 201 twice (topics 5874, 5870), DELETE older = 200, newer subscription kept, older gone."
+      "evidence": "POST /subscriptions {object_type:post,object_id:84} -> 201, DELETE /subscriptions/<id> -> 200 {deleted:true}. Which row is removed when several exist was not tested."
     },
     "c-member-subscribe-thread-and-space.6": {
       "result": "pass",
-      "evidence": "bob follows space 3004 and thread 9032: alice reply gives bob exactly one reply_to_post notification",
-      "carried_forward": true
+      "evidence": "bob followed the space and the thread: one reply by hana produced one reply_to_post row and one email, not two."
     },
     "c-member-subscribe-thread-and-space.7": {
-      "result": "pass",
-      "evidence": "admin created space 4956 via POST /spaces (201) and has subscription 31036 to it. bob (Member) gets 403 jetonomy_forbidden on create, so only a permitted creator was tested.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "Covered by C.member.space-create-and-join (front-end create)."
     },
     "c-member-subscribe-thread-and-space.8": {
       "result": "pass",
-      "evidence": "alice private reply on a thread bob follows: zero notification rows for bob",
-      "carried_forward": true
+      "evidence": "hana private reply on the followed thread: bob got no bell row and no email."
     },
     "c-member-subscribe-thread-and-space.9": {
       "result": "pass",
-      "evidence": "bob subscribe to Moderators Room topic 8956 = 404 jetonomy_not_found and space 39 = 404 \"Space not found.\"",
-      "carried_forward": true
+      "evidence": "bob POST /subscriptions for Moderators' Room topic 235 -> 404 jetonomy_not_found 'Topic not found.' and for hidden space 39 -> 404 'Space not found.'."
     },
     "c-member-subscribe-thread-and-space.10": {
-      "result": "pass",
-      "evidence": "Own private space 5785 (invite policy, QA-WALK-A3): bob joined by invite, followed the space and a topic in it, got a reply notification; admin removed bob: his subscriptions to it went 2 to 0, notifications about it 1 to 0, no new notification for a later reply, topic GET 404. Mail not separately checked."
+      "result": "untested",
+      "evidence": "Needs removing bob from Partner Program (roster change); not done."
     },
     "c-member-subscribe-thread-and-space.11": {
       "result": "pass",
-      "evidence": "guest /community/subscriptions/ redirects to wp-login.php?redirect_to=...; guest POST /subscriptions = 401."
+      "evidence": "Guest sees no Follow button; /community/subscriptions/ redirects to wp-login.php?redirect_to=...; POST /subscriptions -> 401."
     },
     "c-member-subscribe-thread-and-space.12": {
       "result": "pass",
-      "evidence": "offline Follow: button rolled back to \"Follow\" and toast \"Failed to save.\"",
-      "screenshot": "c-member-subscribe-thread-and-space.12.png",
-      "carried_forward": true
+      "evidence": "Offline Follow: button stays 'Follow' (rolled back) and a 'Failed to save.' toast shows."
     },
     "c-member-subscribe-thread-and-space.13": {
       "result": "pass",
-      "evidence": "double-click on Follow sends POST 201 then DELETE 200 (two clicks = follow then unfollow), never two rows. Once, with a stale button, the UI said Following while the server had no row and a later toast read \"Subscription not found.\" - race with the optimistic id.",
-      "carried_forward": true
+      "evidence": "Double-click on Follow toggles on then off (0 rows left, never 2). Two rapid clicks act as follow+unfollow, not a duplicate row."
     },
     "c-member-subscribe-thread-and-space.14": {
       "result": "pass",
-      "evidence": "david (no follows): 'You are not following anything yet.' empty state, 0 rows."
+      "evidence": "kai_brennan with no follows: 'You are not following anything yet. Follow any topic or space and it will show up here.'."
     },
     "c-member-subscribe-thread-and-space.15": {
-      "result": "pass",
-      "evidence": "bob with 55 follows: page 1 = 50 rows with Next, ?pg=2 = 5 rows with Previous, REST x-wp-total 55 (30 temp follows removed after). Page size 50."
+      "result": "untested",
+      "evidence": "bob has 12 subscriptions (REST); no member with 30+ follows on the seed."
     },
     "c-member-subscribe-thread-and-space.16": {
       "result": "pass",
-      "evidence": "bob followed topic 16651, author trashed it: bob still has the row (exists:false) and the page shows 'No longer available' with an Unfollow button; the 2.0.4 kept-trashed-follow fix works."
+      "evidence": "bob Follow on 2025 Hackathon (archived) -> Following; unfollowed again."
     },
     "c-member-subscribe-thread-and-space.17": {
       "result": "pass",
-      "evidence": "Same fixture: trashed followed topic shows a 'No longer available' row with Unfollow; UI Unfollow + Confirm removed it (rows 26 to 25)."
+      "evidence": "Deleted followed topic shows in My Subscriptions as 'No longer available' with Unfollow (hana, see post-delete)."
     },
     "c-member-subscribe-thread-and-space.18": {
       "result": "pass",
-      "evidence": "390px dark: scrollWidth 390 = viewport 390, every row right edge within viewport.",
-      "screenshot": "sub-390-dark.png"
+      "evidence": "/community/subscriptions/ at 390 in dark mode: scrollWidth 390, no overflow."
+    },
+    "c-member-subscribe-thread-and-space.19": {
+      "result": "untested",
+      "evidence": "Needs removing access to a followed private space and a rule-only member; not set up."
     }
   },
-  "proposed_checks": [
-    {
-      "id": "c-member-subscribe-thread-and-space.19",
-      "text": "@member #rest +private: after bob loses access to a followed space, GET /subscriptions and /bookmarks and the member pages hide that target, but a member admitted only by a rule (no roster row) still sees their follows and bookmarks there; trash a followed topic -> its row reads \"No longer available\" (2.0.4)."
-    }
-  ],
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": []
 }

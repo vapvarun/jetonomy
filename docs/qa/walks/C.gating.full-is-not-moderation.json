@@ -1,53 +1,52 @@
 {
   "journey": "C.gating.full-is-not-moderation",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:04:55Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-gating-full-is-not-moderation.1": {
-      "result": "untested",
-      "evidence": "Access Rules tab HTML not present in curl of wp-admin edit&tab=access (rendered client side); needs a browser admin session to read the grant options"
+      "result": "pass",
+      "evidence": "Access Rules tab grant selects (add form and rule row) offer Read/Participate only"
     },
     "c-gating-full-is-not-moderation.2": {
       "result": "pass",
-      "evidence": "re-walked on the changed code: POST /spaces/43/access-rules role rule grants=full space_role=admin -> 201 stored grants participate, space_role member"
+      "evidence": "POST grants=full role/subscriber -> 201 stored grants participate, space_role member"
     },
     "c-gating-full-is-not-moderation.3": {
       "result": "pass",
-      "evidence": "re-walked: aisha under that rule posted topic 201, replied 201, edited own 200, deleted own 200, read 200 (vote returned 409 because she had already voted)"
+      "evidence": "under that rule qa_rft_a replied 201/voted 200 (post/own edit-delete walked in participate)"
     },
     "c-gating-full-is-not-moderation.4": {
       "result": "pass",
-      "evidence": "aisha under Full rule: PATCH, DELETE, close, pin on another member's topic -> 403 jetonomy_forbidden each; POST /moderation/trash/post -> 403"
+      "evidence": "UI topic page as subscriber under participate: no Edit/Delete/Close/Pin controls"
     },
     "c-gating-full-is-not-moderation.5": {
       "result": "pass",
-      "evidence": "re-walked: aisha PATCH, DELETE, close, pin on another member's topic 259 -> 403 jetonomy_forbidden each"
+      "evidence": "PATCH/DELETE/close/pin on b's topic each 403 jetonomy_forbidden; topic still publish and unchanged"
     },
     "c-gating-full-is-not-moderation.6": {
       "result": "pass",
-      "evidence": "re-walked: aisha GET /community/s/gating-lab-private/mod/ -> 403; POST /moderation/trash/post/259 -> 403 jetonomy_forbidden"
+      "evidence": "/community/s/qa-rft-priv/mod/ -> HTTP 403 page 'You do not have permission to moderate this space.'; POST /moderation/trash/post and /reply -> 403 jetonomy_forbidden"
     },
     "c-gating-full-is-not-moderation.7": {
-      "result": "untested",
-      "evidence": "needs a Pro/Free migration trigger on a DB row with grants=full; not run"
+      "result": "pass",
+      "evidence": "DB row inserted with grants=full,space_role=moderator; Migration_2_0_7::up() -> row reads participate/member and REST rules list shows participate/member"
     },
     "c-gating-full-is-not-moderation.8": {
       "result": "pass",
-      "evidence": "re-walked: test_moderator POST /moderation/spam on topic in same space -> 200 via Moderate capability"
+      "evidence": "test_moderator (editor with Moderate cap) in public QA-RFT Pub: pin 200, close 200, trash 200"
     }
   },
   "proposed_checks": []

@@ -1,16 +1,19 @@
 {
   "journey": "E.pro-privacy-and-abilities",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:24:13Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,52 +21,52 @@
   },
   "checks": {
     "e-pro-privacy-and-abilities.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "result": "pass",
+      "evidence": "Ran the registered personal-data exporters for maya: groups \"Jetonomy Pro: Private Messages\" (x2), \"Reactions\" (x4), \"Badges\" (x5), \"Poll Votes\" (x1) present with real rows. \"Custom Fields\" and \"Push Devices\" groups did not appear for maya because she has no such rows on this stack (seed has no push subscription or custom field value for her), so those two were checked on a throwaway user instead (see .4). Walked through the exporter callbacks, not the Tools > Export screen"
     },
     "e-pro-privacy-and-abilities.2": {
-      "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "result": "pass",
+      "evidence": "jamal (no DMs) exports only groups that have rows (Reactions x6, Badges x2, Poll Votes x2): no empty Pro group and no PHP notice; the >100 reactions paging was not exercised"
     },
     "e-pro-privacy-and-abilities.3": {
       "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
     },
     "e-pro-privacy-and-abilities.4": {
       "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
     },
     "e-pro-privacy-and-abilities.5": {
       "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
     },
     "e-pro-privacy-and-abilities.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "result": "pass",
+      "evidence": "wp_delete_user(qa_rft_priv, reassign 1) after re-adding a reaction and a push subscription: 0 rows left in jt_pro_reactions, poll_votes, user_badges, push_subscriptions and push_devices"
     },
     "e-pro-privacy-and-abilities.7": {
       "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
     },
     "e-pro-privacy-and-abilities.8": {
       "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
     },
     "e-pro-privacy-and-abilities.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "result": "pass",
+      "evidence": "WP 7.1.3: 39 jetonomy abilities are registered (jetonomy-pro/ messaging, analytics, polls, badges, webhooks, reactions, custom fields, moderation rules); with Polls switched off the count dropped to 36 and returned to 39 when switched on. The WPMediaVerse part is not testable (not installed)"
     },
     "e-pro-privacy-and-abilities.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "result": "pass",
+      "evidence": "bob GET jetonomy-pro/get-analytics and export-analytics -> 403 rest_ability_cannot_execute; bob get-conversation for a thread he is not in -> 404 \"Conversation not found.\"; guest get-analytics -> 401 rest_ability_cannot_execute"
     },
     "e-pro-privacy-and-abilities.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "result": "pass",
+      "evidence": "finn (silenced) POST jetonomy-pro/send-message ability -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; no QA message row created"
     },
     "e-pro-privacy-and-abilities.12": {
       "result": "untested",
-      "evidence": "not walked in this pass: needs Tools export/erase UI and WP-CLI user delete"
+      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
     }
   },
   "proposed_checks": []

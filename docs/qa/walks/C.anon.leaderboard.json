@@ -1,75 +1,68 @@
 {
   "journey": "C.anon.leaderboard",
-  "free": "dcdb0750",
-  "pro": "404b0af",
-  "walked_at": "2026-10-21T09:06:01Z",
-  "walker": "lane A",
+  "free": "607c4b7b",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:56:27Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light",
-      "dark"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-anon-leaderboard.1": {
       "result": "pass",
-      "evidence": "Guest /community/leaderboard/: 20 rows with rank number or medal, avatar, name, REP and TOPICS; Load More link to the rest (39 members total).",
-      "screenshot": "c-anon-leaderboard.1.png"
+      "evidence": "/community/leaderboard/ 200: ranked list with rank, avatar, name, REP and TOPICS (Maya 1840 first)."
     },
     "c-anon-leaderboard.2": {
       "result": "pass",
-      "evidence": "Pills All time / This month / This week link to ?period=month|week; the active pill carries class \"on\" and aria-current. Week and month show 28 members, all time 39.",
-      "screenshot": "c-anon-leaderboard.2.png"
+      "evidence": "All time / This month / This week pills link ?period=; selected pill has jt-pill on; week list differs (Theo absent, 11 rows vs 20)."
     },
     "c-anon-leaderboard.3": {
       "result": "pass",
-      "evidence": "GET /leaderboards?period=week|month|all -> 200 each; week/month total 28, all total 39, so population differs; scores are lifetime reputation, so top ordering is identical. Invalid period -> 400 rest_invalid_param (see .11)."
+      "evidence": "Guest REST period=week/month/all 200 with different row counts (11/11/20); period=bogus 400 rest_invalid_param."
     },
     "c-anon-leaderboard.4": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: no period has zero activity (28 members seen in the last 7 days); producing one means rewriting last_seen_at for every member on the shared site. Supporting evidence only: \\Jetonomy\\leaderboard_empty_state(\"week\") returns \"No activity this week.\" with CTA \"See all time\" -> /community/leaderboard/."
+      "result": "untested",
+      "evidence": "Seeded activity is within the last 24h so every period has rows; a no-activity period needs data aging, not done on shared seed."
     },
     "c-anon-leaderboard.5": {
       "result": "pass",
-      "evidence": "Grace row (rank 16): GR initials avatar, name inside 746px row, no overflow. Reign 1440 only for the row; 390 overflow checked in .10.",
-      "screenshot": "c-anon-leaderboard.5.png"
+      "evidence": "Grace Olu... truncates with ellipsis inside the row at 390 with a GR initials avatar (screenshot jt207-w3-lb-grace.png)."
     },
     "c-anon-leaderboard.6": {
       "result": "pass",
-      "evidence": "finn (week list, rank 16): shows real reputation 26 with FI initials; no restriction or private-space wording on the board."
+      "evidence": "Finn (reputation 28) listed at rank 18 in all-time using his real reputation; row shows no private content."
     },
     "c-anon-leaderboard.7": {
       "result": "pass",
-      "evidence": "Created fixture user with reputation 5000 and a global_ban: listed in week/month/all before the ban, absent from all three and from the page after; fixture removed. Seed kai_brennan (global_ban) has reputation 0 so is excluded anyway."
+      "evidence": "kai_brennan (global_ban) absent from week, month and all-time REST and UI."
     },
     "c-anon-leaderboard.8": {
       "result": "pass",
-      "evidence": "Pro active: rows show rank, avatar, name, REP and TOPICS only; no badge column."
+      "evidence": "Combo 8911 (read-only curl): rows show rank, name, points; no badge column (jt-leader-* markup has no badge cell)."
     },
     "c-anon-leaderboard.9": {
       "result": "pass",
-      "evidence": "bob on /leaderboard/: banner \"#7 Your rank of 39 members\" highlighted at top; his row (rank 7, 664 REP) is in the list.",
-      "screenshot": "c-anon-leaderboard.9.png"
+      "evidence": "bob sees a \"Your rank #4 of 22 members\" card (jt-leader-you)."
     },
     "c-anon-leaderboard.10": {
       "result": "pass",
-      "evidence": "390px dark: scrollWidth 390, 0 elements past the viewport, row bg rgb(~52,55,63) on body rgb(35,38,47), name text light grey, readable.",
-      "screenshot": "c-anon-leaderboard.10.png"
+      "evidence": "390px dark: body rgb(35,38,47), scrollWidth 390, rows readable (screenshot jt207-w3-lb-390dark.png)."
     },
     "c-anon-leaderboard.11": {
       "result": "pass",
-      "evidence": "GET /leaderboards?period=bogus, period=year and empty period -> 400 rest_invalid_param \"period is not one of all, month, and week.\""
+      "evidence": "GET /leaderboards?period=bogus -> 400 rest_invalid_param."
     },
     "c-anon-leaderboard.12": {
-      "result": "fail",
-      "evidence": "Banned half passed (see .7: absent from week, month, all and REST). Quiet-week half NOT PERFORMED (see .4): \"No activity this week.\" and \"See all time\" link verified only through leaderboard_empty_state(\"week\"), not rendered on the page."
+      "result": "untested",
+      "evidence": "Banned member absence verified (see .7); the quiet-week \"No activity this week.\" state needs a window with no activity, not producible on the shared seed."
     }
   },
   "proposed_checks": []

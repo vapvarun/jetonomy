@@ -1,43 +1,34 @@
 {
   "journey": "F.chromium",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:32:54Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
     "mode": "free (Jetonomy Free active, Pro inactive)",
     "site": "http://localhost:8912",
-    "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
       1024,
       390
     ],
-    "schemes": [
-      "light",
-      "dark (Reign only)"
-    ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "f-chromium.1": {
       "result": "pass",
-      "evidence": "Guest at 1440, 1024 and 390 on /community/, a space, a topic and a profile (12 loads): zero console errors/warnings, zero failed requests, zero HTTP >= 400 responses, no page errors."
+      "evidence": "guest loaded /community/, a space, a topic and a profile at 1440, 1024 and 390: no console errors, no page errors, no failed requests, no 4xx/5xx"
     },
     "f-chromium.2": {
-      "result": "untested",
-      "evidence": "reaction submit is Pro; covered by combo walk. In Free: bob's composer reply posted, vote and un-vote, new-topic composer opens - no pageerror, no console error, no unhandledrejection."
+      "result": "pass",
+      "evidence": "alice posted a reply from the composer (stored and shown), voted and opened Report with no console error or uncaught rejection; reactions are Pro and were not on this stack"
     },
     "f-chromium.3": {
       "result": "pass",
-      "evidence": "Reign dark toggle sets body rgb(35,38,47); it stays dark after reload and on another community page; clearing localStorage returns light (rgb 250,251,253)."
+      "evidence": "theme toggle adds body.jt-dark (background rgb(35,38,47)), stays after reload and on another page, and toggles back"
     }
   },
-  "proposed_checks": [
-    "- `f-chromium.4` @guest #ui +dark: toggling dark mode on Reign (.bx-color-mode-toggle__btn) works at 390 where the header toggle is a different control from the desktop one."
-  ]
+  "proposed_checks": []
 }

@@ -1,61 +1,60 @@
 {
   "journey": "C.gating.admission-without-a-roster-row",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:07:26Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-gating-admission-without-a-roster-row.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "role rule participate added, Sync Members not pressed: GET /spaces/149/members lists only roster users, qa_rft_e (matched) absent"
     },
     "c-gating-admission-without-a-roster-row.2": {
       "result": "pass",
-      "evidence": "aisha admitted by the logged_in Participate rule posted and replied while GET members listed only admin and user 24"
+      "evidence": "qa_rft_e (matched, unlisted) POST topic 201, replies 201"
     },
     "c-gating-admission-without-a-roster-row.3": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "Sync Members on a membership rule needs a membership provider (MemberPress/PMPro) to list plan holders; with none installed the button toasts 'Synced 0 existing members.' (third-party service not installed)"
     },
     "c-gating-admission-without-a-roster-row.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "'How access rules work' panel (Access Rules tab) reads: The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well."
     },
     "c-gating-admission-without-a-roster-row.5": {
       "result": "pass",
-      "evidence": "guest GET /spaces/43/posts 403 (no admission without login)"
+      "evidence": "guest GET private space 403 jetonomy_forbidden / POST 401; no admission without login"
     },
     "c-gating-admission-without-a-roster-row.6": {
       "result": "pass",
-      "evidence": "aisha not matching a role rule gets 403 jetonomy_forbidden on topic create and 404 jetonomy_not_found on topics she cannot see (Partner Program topic 233 GET -> 404)"
+      "evidence": "test_moderator (editor role, not matched by the subscriber rule) POST topic 403 jetonomy_forbidden; POST reply on a topic he cannot see 404 jetonomy_not_found"
     },
     "c-gating-admission-without-a-roster-row.7": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "2000-person membership Sync needs a membership provider (third-party) to return plan holders"
     },
     "c-gating-admission-without-a-roster-row.8": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "double Sync needs a membership provider; roster insert is keyed (space_id,user_id) so duplicates are impossible, but the Sync path itself returns 0 with none installed"
     },
     "c-gating-admission-without-a-roster-row.9": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "pre-2.0 membership rule admitting without a roster row needs a membership provider"
     },
     "c-gating-admission-without-a-roster-row.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "qa_rft_d (space-banned) matched by the role rule: POST 403 jetonomy_user_space_banned - ban wins"
     }
   },
   "proposed_checks": []

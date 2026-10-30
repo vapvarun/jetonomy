@@ -1,85 +1,69 @@
 {
   "journey": "C.cron",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:11:51Z",
-  "walker": "lane B2",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:10:03Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-cron.1": {
       "result": "pass",
-      "evidence": "wp action-scheduler action list --group=jetonomy --status=pending --per_page=200 shows pending trust_evaluation, cleanup_expired, prune_activity, cleanup_notifications, verification_reminder, reconcile_rosters, cleanup_media (the CLI default page of 5 rows hides most; needs --per_page)",
-      "carried_forward": true
+      "evidence": "Free: pending actions in group jetonomy: trust_evaluation, cleanup_expired, prune_activity, cleanup_notifications, verification_reminder, reconcile_rosters, cleanup_media (each once)"
     },
     "c-cron.2": {
       "result": "pass",
-      "evidence": "Pro active: pro_send_daily_digest, pro_send_weekly_digest, pro_evaluate_badges, pro_license_check (+edd_sl weekly cron for both) each pending exactly once; pro_ai_batch_review not pending (AI off); after a second activation still one each",
-      "carried_forward": true
+      "evidence": "combo (8911) read-only list: pro_send_daily_digest, pro_send_weekly_digest, pro_evaluate_badges, pro_license_check, pro_prune_webhook_deliveries each once, pro_ai_batch_review absent (AI off); edd_sl weekly check once per plugin"
     },
     "c-cron.3": {
       "result": "pass",
-      "evidence": "Deactivated jetonomy-pro then jetonomy: 0 pending jetonomy_* actions remain, only edd_sl cron events, no fatal in debug.log",
-      "carried_forward": true
+      "evidence": "Free: deactivated jetonomy -> 0 pending jetonomy actions, only edd_sl weekly cron left; no fatal. Pro leg read on combo only (not toggled there)"
     },
     "c-cron.4": {
       "result": "pass",
-      "evidence": "Ran the 7 free recurring hooks plus pro_prune_webhook_deliveries and pro_evaluate_badges via action-scheduler action run: each 'Executed 1 action' and status complete; no new debug.log error. Pro daily/weekly digest and license check not run (would mass-mail / call licence server)",
-      "carried_forward": true
+      "evidence": "ran all 7 recurring hooks by action-scheduler action run: each 'Executed 1 action.'; failed-status list for group jetonomy empty"
     },
     "c-cron.5": {
       "result": "pass",
-      "evidence": "deactivate then activate jetonomy+pro in sequence: all 7 free and 4 pro recurring events rescheduled once each, /community/messages/ answers 302 (login redirect), /community/ 200. Side effect: a pending jetonomy_pro_rbe_imap_poll and badges_eval_user were dropped by the deactivate and not re-armed",
-      "carried_forward": true
+      "evidence": "deactivate then activate (WP-CLI): the 7 events rescheduled once each; /community/ 200; /community/messages/ is a Pro route: 404 on Free by design, 302 to login on combo (resolves)"
     },
     "c-cron.6": {
       "result": "pass",
-      "evidence": "Fixture expired global_ban (user n1) and expired invite: after jetonomy_cleanup_expired the ban row is gone; invite row 574 kept and /community/invite/<token>/ says 'expired or reached its usage limit' (unknown token says 'Invalid invite link.'). Fixtures removed",
-      "carried_forward": true
+      "evidence": "expired global_ban restriction row lifted by jetonomy_cleanup_expired; expired invite row kept and /community/invite/<token>/ says 'expired or reached its usage limit'"
     },
     "c-cron.7": {
       "result": "pass",
-      "evidence": "tier roster row in private space 4955 with no rule: jetonomy_reconcile_rosters removed it; manual row for admin kept",
-      "carried_forward": true
+      "evidence": "membership rule with a lapsed provider: jetonomy_reconcile_rosters removed the tier roster rows (qa_rft_g/h/i) and the people read 403 afterwards"
     },
     "c-cron.8": {
       "result": "pass",
-      "evidence": "On a full clone of the site DB (not forums.local) seeded with 5,000 extra profiles (5,047 with trust_level<4): Cron::evaluate_trust_batch ran 11 times, cursor jetonomy_trust_eval_cursor advanced 900452, 900952 ... 904952 in 500-row slices and was deleted after the last partial slice; slowest run 0.03s. No promotions occurred with the seeded stats, so the promotion write path was not exercised on this run"
+      "evidence": "5000 seeded profiles: jetonomy_trust_evaluation resets cursor, then 11 jetonomy_trust_evaluation_batch runs, cursor 701, 1201 ... 5201 then deleted, each batch about 0.4s; seed removed"
     },
     "c-cron.9": {
       "result": "pass",
-      "evidence": "bob scheduled a topic for 10:04:20 UTC (draft): hook run at 10:02:40 left it draft and re-armed; run at 10:04:24 published it at 10:04:25; subscribed follower alice got one new_post_in_sub notice",
-      "carried_forward": true
+      "evidence": "draft scheduled 5 minutes ahead: publish run leaves it draft; after published_at passed the run publishes it (status publish); space follower qa_rft_e got exactly 1 notification; second run adds none"
     },
     "c-cron.10": {
-      "result": "not_performed",
-      "evidence": "Action Scheduler cannot be made missing on this site: Jetonomy bundles its own copy (libs/action-scheduler) and woocommerce, lifterlms, sensei, pmpro and wpmediaverse ship others, so as_enqueue_async_action stays defined with every other copy skipped. Code read: Queue::has_as() falls back to WP-Cron silently, and a grep of includes/ finds no admin notice for a missing Action Scheduler, so the 'shows a notice' half of the check has no implementation"
+      "result": "untested",
+      "evidence": "Action Scheduler is bundled in libs/action-scheduler; removing it needs a disposable install (walked at the release Docker install step)"
     },
     "c-cron.11": {
       "result": "pass",
-      "evidence": "Pro deactivate/reactivate: failed rows unchanged (attachments_gc 5, daily 5, weekly 3, evaluate_badges 4, prune_webhook 3); no new 'no callbacks are registered' failures",
-      "carried_forward": true
+      "evidence": "failed list for group jetonomy empty after the deactivate/activate cycle on Free; combo failed list empty (read-only)"
     },
     "c-cron.12": {
       "result": "pass",
-      "evidence": "Expired invite rows are kept by design (see .6): after cleanup_expired the row stayed and the link says expired",
-      "carried_forward": true
+      "evidence": "expired jt_invite_links row is kept by design (check .6): link answers the expired message instead of invalid"
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
-  "proposed_checks": [
-    {
-      "id": "c-cron.13",
-      "text": "Reword .10: Jetonomy bundles Action Scheduler, so the missing-AS case needs a build without libs/action-scheduler; decide whether a notice should exist at all."
-    }
-  ]
+  "proposed_checks": []
 }

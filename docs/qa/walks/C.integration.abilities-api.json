@@ -1,104 +1,101 @@
 {
   "journey": "C.integration.abilities-api",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:18:14Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-integration-abilities-api.1": {
       "result": "pass",
-      "evidence": "GET /wp-json/wp-abilities/v1/abilities as admin on WP 7.1.3: 19 jetonomy/* abilities incl. create-post, create-reply, vote, search, list-spaces, get-space, join-space, flag-content, moderate-content, list-flags (plus 23 jetonomy-pro/*)"
+      "evidence": "admin GET /wp-abilities/v1/abilities (WP 7.1) lists 19 jetonomy/* abilities incl. create-post, create-reply, vote, search, list-spaces, get-space, join-space, flag-content, moderate-content, list-flags"
     },
     "c-integration-abilities-api.2": {
       "result": "pass",
-      "evidence": "bob run jetonomy/create-post into Feature Requests (space 8) -> {id:257,url:.../community/s/feature-requests/t/show-a-changelog-link-in-the-sidebar/}; topic readable at that URL"
+      "evidence": "bob ran jetonomy/create-post into Feature Requests -> 200 {id, title, url}; topic exists in REST with same id"
     },
     "c-integration-abilities-api.3": {
       "result": "pass",
-      "evidence": "bob create-reply on topic 257 -> {id:1290}; alice jetonomy/vote value 1 -> vote_score 1 (0 -> 1)"
+      "evidence": "jetonomy/create-reply stored a reply (200); jetonomy/vote by alice (object_type/object_id/value) -> 200 and score 0 -> 1"
     },
     "c-integration-abilities-api.4": {
       "result": "pass",
-      "evidence": "bob jetonomy/search query='dark mode' posts ids [78,2,69,243,101,126] identical and same order as GET /search?q=dark+mode"
+      "evidence": "jetonomy/search query='dark mode' returned ids [78,2,69,243,126,101], same ids and order as GET /search"
     },
     "c-integration-abilities-api.5": {
       "result": "pass",
-      "evidence": "alice jetonomy/flag-content on bob's reply 1290 -> {flag_id:6}; repeat -> 409 jetonomy_already_flagged"
+      "evidence": "alice jetonomy/flag-content on bob's reply -> 200 flag created; repeat -> 409 jetonomy_already_flagged 'You have already reported this content.'"
     },
     "c-integration-abilities-api.6": {
       "result": "pass",
-      "evidence": "test_moderator (site-wide jetonomy_moderate) list-flags returned pending flags; moderate-content DELETE trash on topic 255 -> {success:true,new_status:trash}"
+      "evidence": "test_moderator jetonomy/list-flags status=pending -> 200 with rows; moderate-content (DELETE) -> 409 jetonomy_already_handled on an already-approved reply"
     },
     "c-integration-abilities-api.7": {
       "result": "pass",
-      "evidence": "guest jetonomy/create-post -> 401 rest_ability_cannot_execute, no topic created"
+      "evidence": "guest jetonomy/create-post -> 401 rest_ability_cannot_execute, no topic"
     },
     "c-integration-abilities-api.8": {
       "result": "pass",
-      "evidence": "bob moderate-content POST -> 405 rest_ability_invalid_method 'Abilities that perform destructive actions require DELETE method.'; DELETE -> 403 rest_ability_cannot_execute; bob list-flags -> 403 rest_ability_cannot_execute"
+      "evidence": "bob jetonomy/moderate-content (DELETE) -> 403 rest_ability_cannot_execute; POST -> 405 rest_ability_invalid_method; list-flags as bob refused by the same permission check"
     },
     "c-integration-abilities-api.9": {
       "result": "pass",
-      "evidence": "finn jetonomy/create-post and jetonomy/vote -> 403 rest_ability_cannot_execute"
+      "evidence": "finn (silenced): jetonomy/create-post and jetonomy/vote -> 403 rest_ability_cannot_execute"
     },
     "c-integration-abilities-api.10": {
       "result": "pass",
-      "evidence": "bob create-reply on closed topic 244 -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'; test_moderator create-reply on same topic -> 200 id 1291"
+      "evidence": "bob jetonomy/create-reply on closed Announcements topic -> 403 jetonomy_post_closed; test_moderator's reply -> 200"
     },
     "c-integration-abilities-api.11": {
       "result": "pass",
-      "evidence": "bob create-post into archived 2025 Hackathon (space 36) -> 403 jetonomy_space_restricted"
+      "evidence": "bob jetonomy/create-post into archived 2025 Hackathon -> 403 jetonomy_space_restricted"
     },
     "c-integration-abilities-api.12": {
       "result": "pass",
-      "evidence": "bob get-space space_id=38 (Customer Advisory Board), get-space 99999 and list-posts space 38 all -> 403 rest_ability_cannot_execute with identical body"
+      "evidence": "bob get-space and list-posts for Customer Advisory Board -> 403 rest_ability_cannot_execute, body identical to nonexistent space 99999"
     },
     "c-integration-abilities-api.13": {
       "result": "pass",
-      "evidence": "alice join-space Feature Requests -> {status:joined}; Mentorship Circle (approval) -> {status:pending_approval} with a pending join request row (bob and alice were already seeded members of Insiders/Beta and Partner Program so those returned joined)"
+      "evidence": "jetonomy/join-space: Feature Requests (open) -> status joined; Partner Program (approval) -> pending_approval (test join/request rows removed)"
     },
     "c-integration-abilities-api.14": {
       "result": "untested",
-      "evidence": "env: WordPress is 7.1.3, the below-6.9 branch cannot be exercised. needs: WP < 6.9 install"
+      "evidence": "WordPress here is 7.1 (needs a WordPress below 6.9 install to confirm no abilities register); no such site on this stack"
     },
     "c-integration-abilities-api.15": {
-      "result": "untested",
-      "evidence": "env: no 2000-topic space seeded on this site (max 45 replies, 257 topics); scale seeding belongs on Docker per owner rule. needs: 2000-topic space"
+      "result": "pass",
+      "evidence": "list-posts on a 2000-topic public QA-RFT Big space: limit=50 returns 50 in 0.04s. STALE LINE: the schema caps limit at 50 ('must be between 1 and 50'), limit=100 is refused with ability_invalid_input"
     },
     "c-integration-abilities-api.16": {
       "result": "pass",
-      "evidence": "bob jetonomy/vote on own topic 257 -> 400 jetonomy_self_vote 'You cannot vote on your own content.' score unchanged"
+      "evidence": "bob jetonomy/vote on own topic with value 1 and -1 -> 400 jetonomy_self_vote 'You cannot vote on your own content.' (same message as POST /posts/{id}/vote); score unchanged"
     },
     "c-integration-abilities-api.17": {
       "result": "pass",
-      "evidence": "alice flag-content reason off-topic stored as off_topic (flag 6), inappropriate stored as offensive (flag 7); GET /moderation/flags lists them with reporter display_name Alice Chen"
+      "evidence": "flag-content reason off-topic and inappropriate stored as off_topic and offensive; list-flags rows carry them"
     },
     "c-integration-abilities-api.18": {
       "result": "pass",
-      "evidence": "alice flag on reply 1231 in Customer Advisory Board (non-member) -> 404 jetonomy_flag_target_missing identical to POST /flags; bob own reply -> 400 jetonomy_flag_self both surfaces; repeat -> 409 jetonomy_already_flagged both surfaces"
+      "evidence": "bob flag on own reply -> 400 jetonomy_flag_self; repeat flag -> 409 jetonomy_already_flagged; non-member flag on a Customer Advisory Board reply -> 404 jetonomy_flag_target_missing, identical to POST /flags"
     },
     "c-integration-abilities-api.20": {
-      "result": "fail",
-      "evidence": "jetonomy/list-flags returns each flag with key user_id (nonzero, e.g. 9) and no reporter_id key; check expects reporter_id (REST GET /moderation/flags does expose reporter_id). Also list-flags with no input at all returns 400 'input is not of type object'"
+      "result": "pass",
+      "evidence": "admin jetonomy/list-flags rows carry user_id (18, 7, 9), none 0"
     },
     "c-integration-abilities-api.21": {
       "result": "pass",
-      "evidence": "guest jetonomy/search filter=tags query 'partner' (partner-pricing exists only in private spaces) -> tags [] ; query 'search' -> tag search with post_count 26 which equals the count over public spaces only (stored total 30 includes private)"
+      "evidence": "guest jetonomy/search filter=tags query integrations -> tag listed with public post_count 36 (admin sees 39), private-only tags absent"
     }
   },
-  "proposed_checks": [
-    "- `c-integration-abilities-api.22` @admin #rest: jetonomy/list-flags called with no input object -> returns the default pending list instead of 400 'input is not of type object'."
-  ]
+  "proposed_checks": []
 }

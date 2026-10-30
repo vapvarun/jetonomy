@@ -1,112 +1,93 @@
 {
   "journey": "C.admin.recount",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:00:46Z",
-  "walker": "lane B2",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:11:36Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-admin-recount.1": {
       "result": "pass",
-      "evidence": "Corrupted my own fixture (space 4954 member_count 999, topic 8981 reply_count 99) rather than Help Desk; Overview > Recount counters -> confirm modal -> request -> reload with notice 'Counters rebuilt from your content.'; DB back to member_count 4 and reply_count 2 (true counts).",
-      "screenshot": "recount-notice.png",
-      "carried_forward": true
+      "evidence": "set Help Desk member_count 999 and a topic reply_count 99; Overview > Recount counters > Confirm -> notice 'Counters rebuilt from your content.' and DB back to 24 and 2 (true counts)"
     },
     "c-admin-recount.2": {
       "result": "pass",
-      "evidence": "vote_score of fixture topic 8981 set to -7; POST /admin/recount type=votes -> 200 {status ok, updated.post_vote_scores 1}; vote_score now 3 = sum of 3 up-votes.",
-      "carried_forward": true
+      "evidence": "corrupted vote_score 77; POST /admin/recount type=votes -> 200 status ok, score 0 = sum of votes"
     },
     "c-admin-recount.3": {
       "result": "pass",
-      "evidence": "POST type=spaces -> 200 with updated.space_post_counts, space_member_counts (and category_space_counts); type=bogus -> 400 rest_invalid_param 'type is not one of all, posts, spaces, votes, and users.'",
-      "carried_forward": true
+      "evidence": "type=spaces -> 200 with updated.space_post_counts, space_member_counts, category_space_counts; type=bogus refused (see .16)"
     },
     "c-admin-recount.4": {
       "result": "pass",
-      "evidence": "Set profile post_count of maya (3752) to 4242 / later 777; wp jetonomy recount --type=users printed 'user_post_counts: 1 rows / user_reply_counts: 0 rows / Success: Recount complete.' and the count returned to 21.",
-      "carried_forward": true
+      "evidence": "post_count set to 55 for bob; `wp jetonomy recount --type=users` printed 'user_post_counts: 1 rows' and the profile read 12 = true count"
     },
     "c-admin-recount.5": {
       "result": "pass",
-      "evidence": "Guest home pulse: set fixture space post_count=500 and cleared the transient -> guest saw '809 topics' (cached wrong); after POST /admin/recount type=all the very next guest load showed '310 topics' (= true), no hour wait (Cache::flush deletes jetonomy_community_pulse). Member count (50) comes from jt_user_profiles rows so cannot drift by itself.",
-      "carried_forward": true
+      "evidence": "guest home /community/ shows the true topic total straight away (242 after a new topic, equals published topics in public spaces) before and after Recount; no hour-long stale value observed on this Docker (no persistent object cache)"
     },
     "c-admin-recount.6": {
-      "result": "not_performed",
-      "evidence": "Loading demo data (setup card / wp jetonomy demo-seed) adds content to the shared forums.local that other lanes are walking, and demo-cleanup removes all demo data including anything seeded the same way; not run to avoid disturbing their data."
+      "result": "untested",
+      "evidence": "loading demo data would rewrite the shared seeded community; needs a disposable install (walked at the release Docker install step)"
     },
     "c-admin-recount.7": {
-      "result": "pass",
-      "evidence": "bbPress fixture (1 forum, 3 topics) imported to the end from the Import screen (Re-Import > Confirm, 'Import complete'): the logged-out home moved 274 -> 278 topics immediately and Overview TOTAL TOPICS 2,356 -> 2,360, same delta, no wait (guest counts public spaces only, so they differ from the Overview total by design). Fixture, imported space/category, import map and import history removed afterwards."
+      "result": "untested",
+      "evidence": "bbPress import needs bbPress (third-party plugin not installed here); needs a disposable install"
     },
     "c-admin-recount.8": {
       "result": "pass",
-      "evidence": "Drifted fixture counters (topic reply_count 5, space post_count 9 / member_count 77, profile post_count 777 / reply_count 888) then POST recount type=all -> reply 1, post_count 2, member_count 4, profile 21/63; front end space list shows '1 reply' singular and '2 replies'.",
-      "carried_forward": true
+      "evidence": "drifted counters (member_count, reply_count, vote_score, post_count) all restored by one recount run"
     },
     "c-admin-recount.9": {
       "result": "pass",
-      "evidence": "bob POST /admin/recount -> 403 jetonomy_forbidden; counters unchanged.",
-      "carried_forward": true
+      "evidence": "bob POST /admin/recount -> 403 jetonomy_forbidden"
     },
     "c-admin-recount.10": {
       "result": "pass",
-      "evidence": "test_moderator opening Overview (admin.php?page=jetonomy) -> 'Sorry, you are not allowed to access this page.' (no #jetonomy-recount button rendered); POST /admin/recount -> 403 jetonomy_forbidden.",
-      "carried_forward": true
+      "evidence": "test_moderator GET wp-admin Overview -> 403 and no #jetonomy-recount in the markup; POST /admin/recount 403 jetonomy_forbidden"
     },
     "c-admin-recount.11": {
       "result": "pass",
-      "evidence": "Guest POST /admin/recount -> 401 rest_not_logged_in.",
-      "carried_forward": true
+      "evidence": "guest POST /admin/recount -> 401 rest_not_logged_in"
     },
     "c-admin-recount.12": {
-      "result": "pass",
-      "evidence": "Site now has 2,356 topics: Overview > Recount counters (confirm modal) finished in 75ms with notice 'Counters rebuilt from your content.'; the button turned disabled with 'Recounting…' and then recovered; Overview total stayed 2,356 (matches SUM(post_count))."
+      "result": "untested",
+      "evidence": "2000-topic seed not created on this shared site (scale seeding is the owner's Docker-last step); recount runs set-based UPDATEs, 242 topics took under a second"
     },
     "c-admin-recount.13": {
       "result": "pass",
-      "evidence": "Delayed the recount request 2s with a route; after confirm the button is disabled and reads 'Recounting…'; a forced second click did nothing and only 1 request hit the endpoint; counters correct afterwards.",
-      "screenshot": "recount-busy.png",
-      "carried_forward": true
+      "evidence": "two simultaneous POST /admin/recount -> both 200, counters unchanged and correct; UI button is replaced by 'Recounting...' and the page reloads on finish"
     },
     "c-admin-recount.14": {
       "result": "pass",
-      "evidence": "Aborted the recount request (offline): button re-enabled with its 'Recount counters' label, dialog 'Network error. Please try again.', counters untouched (no reload/notice).",
-      "screenshot": "recount-offline.png",
-      "carried_forward": true
+      "evidence": "offline click: dialog 'Unable to connect. Please check your Internet connection.' with OK; button back to 'Recount counters', counters unchanged"
     },
     "c-admin-recount.15": {
       "result": "pass",
-      "evidence": "bob created a new public topic in fixture space: guest home stays 310 topics (hour cache) while Overview TOTAL TOPICS = 376 = SUM(jt_spaces.post_count), already right without any recount.",
-      "carried_forward": true
+      "evidence": "new topic by qa_rft_b without recount: guest home topic total 241 -> 242 immediately and the Overview total is right"
     },
     "c-admin-recount.16": {
       "result": "pass",
-      "evidence": "POST type=bogus -> 400 rest_invalid_param (rest_not_in_enum); no counters changed.",
-      "carried_forward": true
+      "evidence": "type=bogus -> 400 rest_invalid_param"
     },
     "c-admin-recount.17": {
       "result": "pass",
-      "evidence": "wp jetonomy recount --type=users prints 'user_post_counts: 1 rows ...'; wp jetonomy recount users -> 'Error: Too many positional arguments: users' (rejected, but one error line, not full usage help).",
-      "carried_forward": true
+      "evidence": "`wp jetonomy recount --type=users` prints rows updated; `wp jetonomy recount users` -> 'Error: Too many positional arguments: users'"
     },
     "c-admin-recount.19": {
       "result": "pass",
-      "evidence": "Aborted request -> alert dialog 'Network error. Please try again.' (names the cause), not core's 'Could not get a valid response from the server.'.",
-      "screenshot": "recount-offline.png",
-      "carried_forward": true
+      "evidence": "offline recount error dialog names the cause: 'Unable to connect. Please check your Internet connection.' (not 'Could not get a valid response')"
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": []
 }

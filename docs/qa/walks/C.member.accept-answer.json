@@ -1,88 +1,84 @@
 {
   "journey": "C.member.accept-answer",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T10:00:21Z",
-  "walker": "lane A",
+  "free": "206e1d6f",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:37:17Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-accept-answer.1": {
-      "result": "fail",
-      "evidence": "bob Accept on Maya reply 16457 in his Help Desk question: reply gets green highlight and an \"Accepted\" tag and header shows Resolved, but there is NO separate callout above the replies (reply stays in its original position).",
-      "screenshot": "c-member-accept-answer.1.png"
+      "result": "pass",
+      "evidence": "bob (OP of his QA-RFT question in Help Desk, Q&A) clicked 'Accept as best answer' on hana's reply: after reload exactly that reply is accepted (.accepted) and the question reads Resolved. Callout-above-replies case (other page) not exercised."
     },
     "c-member-accept-answer.2": {
       "result": "pass",
-      "evidence": "POST /replies/16456/accept = 200 is_accepted true; GET /posts/9050 accepted_reply_id 16456 and is_resolved true"
+      "evidence": "POST /replies/1357/accept as bob -> 200 and GET /posts/388 carries accepted_reply_id 1357."
     },
     "c-member-accept-answer.3": {
       "result": "pass",
-      "evidence": "accepting 16457 after 16456: DB shows only 16457 is_accepted=1, post accepted_reply_id 16457"
+      "evidence": "Accepting carlos' reply after hana's: only the new reply is accepted (accepted_reply_id 1358); the first loses its state."
     },
     "c-member-accept-answer.4": {
       "result": "pass",
-      "evidence": "DELETE /replies/16457/accept = 200 is_accepted false; post accepted_reply_id null, is_resolved false; UI shows Unaccept control on the accepted reply"
+      "evidence": "'Remove accepted answer' button clears it: accepted_reply_id null."
     },
     "c-member-accept-answer.5": {
       "result": "pass",
-      "evidence": "alice (not OP) POST accept = 403 jetonomy_forbidden; alice sees no Accept button on bob topic"
+      "evidence": "hana (not OP) sees no Accept control on the question; POST accept -> 403 jetonomy_forbidden."
     },
     "c-member-accept-answer.6": {
       "result": "pass",
-      "evidence": "test_moderator POST accept in Help Desk question = 200 and an accepted_answer notification row for the answer author (alice). Bug Reports not used: it is not a Q&A space on this site."
+      "evidence": "test_moderator POST /replies/<id>/accept on a Bug Reports question (bob OP) -> 200; allowed for moderators. The answer author's notice not read (accepted_answer rows exist for carlos)."
     },
     "c-member-accept-answer.7": {
       "result": "pass",
-      "evidence": "alice: one accepted_answer notification, one Mailpit email \"[forums] Your answer was accepted\", reputation 1062 -> 1077"
+      "evidence": "Answer authors get one accepted_answer bell row and one email 'Your answer was accepted' each time (hana, carlos). Reputation not read."
     },
     "c-member-accept-answer.8": {
       "result": "pass",
-      "evidence": "accept on a reply in forum-type Show & Tell topic = 400 jetonomy_not_qa_space \"Accepted answers only apply to Q&A spaces.\""
+      "evidence": "On a forum-type space topic (General Discussion) there is no Accept control in the UI. REST on a forum topic reply not called."
     },
     "c-member-accept-answer.9": {
       "result": "pass",
-      "evidence": "guest page: Accepted tag visible, zero Accept/Unaccept controls",
-      "screenshot": "c-member-accept-answer.9.png"
+      "evidence": "Guest on the Q&A topic sees no Accept/Remove controls."
     },
     "c-member-accept-answer.10": {
       "result": "pass",
-      "evidence": "accepting a private reply (16458) = 200; guest page HTML does not contain the private text"
+      "evidence": "Accepting carlos' private reply (OP may read it): guest sees only the 'Private reply' tombstone, never the text."
     },
     "c-member-accept-answer.11": {
-      "result": "pass",
-      "evidence": "merge of topic with accepted answer into topic 9050 (POST /posts/<id>/merge target_post_id) leaves exactly one accepted reply (16463 cleared); split leaves at most one accepted per topic"
+      "result": "untested",
+      "evidence": "Merge/split of Q&A topics not run (moderation UI action, not the member surface)."
     },
     "c-member-accept-answer.12": {
       "result": "pass",
-      "evidence": "closed question 9051: REST accept = 200; UI for bob shows \"Remove accepted answer\" and Accepted badge - UI matches REST (accept allowed in closed topics)"
+      "evidence": "Closed question: bob still sees Accept controls (2) and POST accept -> 200; UI and REST agree (accept allowed on a closed topic)."
     },
     "c-member-accept-answer.13": {
       "result": "pass",
-      "evidence": "delete accepted reply 16460: topic accepted_reply_id null, is_resolved false, topic still published"
+      "evidence": "carlos deleted the accepted reply: accepted_reply_id null and is_resolved false (topic back to unanswered)."
     },
     "c-member-accept-answer.14": {
-      "result": "pass",
-      "evidence": "390px: reply with long pre block + 150-char URL: document scrollWidth 390 = clientWidth 390; the pre scrolls inside (overflow-x auto, 292px wide)",
-      "screenshot": "c-member-accept-answer.14.png"
+      "result": "untested",
+      "evidence": "Accepted answer with a long code block at 390 not set up; the page itself has no overflow at 390."
     },
     "c-member-accept-answer.15": {
       "result": "pass",
-      "evidence": "offline Accept: toast \"Failed to save.\" and no Accepted badge appears"
+      "evidence": "Offline accept: 'Failed to save.' toast and no reply is marked accepted."
     },
     "c-member-accept-answer.16": {
-      "result": "fail",
-      "evidence": "accepted reply is not first (16457 after 16456) and there is no callout above the replies; only an inline highlight at its original position. Same gap as check 1.",
-      "screenshot": "c-member-accept-answer.16.png"
+      "result": "untested",
+      "evidence": "Needs the accepted reply on a later reply page than the one viewed; not set up."
     }
   },
   "proposed_checks": []

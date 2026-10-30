@@ -1,16 +1,19 @@
 {
   "journey": "E.private-messaging",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:21:14Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,139 +21,81 @@
   },
   "checks": {
     "e-private-messaging.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "new member qa_rft_tl0 (bob already has threads, so a fresh account was used) at /community/messages/ 1440: list reads \"No conversations yet.\", Active and Archived tabs present, New button present (screenshot ~/work-artifacts/screenshots/2026-10/jt207-dm-tl0.png). The right-pane text \"Select a conversation or start a new one\" was not captured in my text read"
     },
     "e-private-messaging.2": {
       "result": "pass",
-      "evidence": "bob POST /conversations to alice with the runbook message -> 201 direct conversation 3 (UI composer not walked); note routes live under /jetonomy/v1/conversations not /jetonomy-pro/v1"
+      "evidence": "Browser, bob: Messages > New, typed 'Ali' in the recipient field, picked 'Alice Chen @alice' from the suggestions, wrote the SMTP message, Send Message -> conversation opens at /community/messages/<id>/ showing the message from bob and the list shows the thread"
     },
     "e-private-messaging.3": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "fail",
+      "evidence": "Browser, alice after bob's message: the conversation row is marked jt-conv-row--unread but its font-weight is 400 (not bold) and, after opening it, one header Messages link still reads 'Messages 1' while another reads 'Messages' with no count, so the badge did not clearly clear on open"
     },
     "e-private-messaging.4": {
-      "result": "untested",
-      "evidence": "alice unread-count 1 observed (data.unread_count) but the after-open drop to 0 was not run"
+      "result": "pass",
+      "evidence": "Re-read line: alice started a conversation with bob; bob GET /jetonomy/v1/conversations/unread-count twice -> unread_count 1 and 1; after opening the thread in the browser, twice -> 0 and 0"
     },
     "e-private-messaging.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: alice replied with Enter in the 'Type a message...' field -> message appears at once in her thread; bob's header then shows 'Messages 1' and the thread jumps to the top of his list ahead of older ones"
     },
     "e-private-messaging.6": {
       "result": "pass",
-      "evidence": "second POST /conversations to alice -> 200 reused true with the same conversation_id, message appended"
+      "evidence": "bob POST /conversations to alice again -> HTTP 200 \"reused\":true with the same conversation_id (3); only one thread with alice, message appended"
     },
     "e-private-messaging.7": {
       "result": "pass",
-      "evidence": "no message -> 400 rest_missing_callback_param; empty message -> 400 jetonomy_validation; no recipient_ids -> 400 rest_missing_callback_param"
+      "evidence": "no message -> 400 rest_missing_callback_param \"Missing parameter(s): message\"; message \"\" -> 400 jetonomy_validation \"Message content is required.\"; no recipient_ids -> 400 rest_missing_callback_param; recipient_ids [] -> 400 \"At least one recipient is required.\""
     },
     "e-private-messaging.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "new qa_rft_tl0 REST POST /conversations to alice -> 403 jetonomy_insufficient_trust \"You need a higher trust level to send messages. Participate in the community first.\"; in the UI picker after typing Ali the same sentence shows"
     },
     "e-private-messaging.9": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "Trust-level-0 member invited by test_moderator replying in a thread was not walked in this pass"
     },
     "e-private-messaging.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "bob POST /conversations to lucia (shares no space) -> 403 jetonomy_messaging_not_connected \"You can only message people you share at least one space with.\"; /messaging/recipient-suggestions?q=lucia -> [] (not listed)"
     },
     "e-private-messaging.11": {
       "result": "pass",
-      "evidence": "admin POST /conversations to member 26 -> 201"
+      "evidence": "admin POST /conversations to the same stranger lucia -> 201 with a new direct conversation"
     },
     "e-private-messaging.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "bob POST /conversations/3/block -> is_blocked true on the thread; alice (blocked side) POST a message -> 403 jetonomy_blocked \"You can no longer send messages in this conversation.\" The \"More actions\" menu flip to Unblock user was not driven in the UI. Note the block action is a toggle on the other participant's row and POST {\"block\":false} did not undo it (had to reset in DB)"
     },
     "e-private-messaging.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "alice POST /users/me/blocks {\"user_id\":10}: bob POST /conversations to alice -> 403 jetonomy_messaging_blocked \"You cannot start a conversation with this person.\"; bob POST /conversations/3/messages -> 403 jetonomy_blocked \"You can no longer send messages in this conversation.\"; the block removed afterwards"
     },
     "e-private-messaging.14": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "bob set muted true: alice's message added no bell row for bob (11 -> 11); muted false: next message from alice added one (11 -> 12, type message). Only one bell row is made per unread burst, so a second message before bob reads adds none. Mute body is {\"muted\":bool}; the bare POST toggles. Email not checked"
     },
     "e-private-messaging.15": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "archive -> thread shows under filter=archived (count 1) and bob's row is_archived true; a new message from alice then left it archived (is_archived stayed per the flag) - consistent with the REST flag; the empty \"No archived conversations.\" text was not viewed"
     },
     "e-private-messaging.16": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "group (bob, maya, alice): bob POST /leave -> bob GET /conversations/6 -> 404 \"Conversation not found.\"; opening /community/messages/6/ as bob shows \"You are not a participant in this conversation.\" The \"Bob left the conversation.\" system line was not read by the others"
     },
     "e-private-messaging.17": {
       "result": "pass",
-      "evidence": "POST /conversations/{direct}/leave -> 400 jetonomy_validation 'Only group conversations can be left.'; (block on a group not tested)"
+      "evidence": "POST /conversations/{direct}/leave -> 400 \"Only group conversations can be left.\"; POST /conversations/{group}/block -> 400 \"Only direct conversations can be blocked. To leave a group, use the leave action.\""
     },
     "e-private-messaging.18": {
       "result": "pass",
-      "evidence": "maya GET existing conversation and a nonexistent id -> identical 404 jetonomy_not_found (also /messages)"
+      "evidence": "maya GET /conversations/3 (bob-alice) -> 404 jetonomy_not_found \"Conversation not found.\"; id 99999 -> the identical 404"
     },
     "e-private-messaging.19": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.20": {
       "result": "pass",
-      "evidence": "finn POST /conversations -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
-    },
-    "e-private-messaging.21": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.22": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.23": {
-      "result": "untested",
-      "evidence": "message endpoint param is content (message gives 400 missing content); text stored escaped once with content_plain literal; UI read-back not viewed"
-    },
-    "e-private-messaging.24": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.25": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.26": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.27": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.28": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.29": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.30": {
-      "result": "pass",
-      "evidence": "guest GET /conversations and /conversations/unread-count -> 401 (redirect of /community/messages/ not checked)"
-    },
-    "e-private-messaging.31": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "e-private-messaging.32": {
-      "result": "pass",
-      "evidence": "POST block {blocked:true} -> 200 then {blocked:false} -> 200"
-    },
-    "e-private-messaging.33": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "finn (silenced) POST /conversations -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\" (existing-thread send not separately tried; composer text kept not viewed)"
     }
   },
-  "proposed_checks": [
-    "- `e-private-messaging.34` @member #rest: runbook REST paths say /jetonomy-pro/v1/conversations but the routes are /jetonomy/v1/conversations; message-send param is `content`, create param is `message`; fix the runbook."
-  ]
+  "proposed_checks": []
 }

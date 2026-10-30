@@ -1,15 +1,19 @@
 {
   "journey": "E.site-announcements",
-  "free": "9b977fcb",
-  "pro": "a830e82",
-  "walked_at": "2026-10-21T12:51:08Z",
-  "walker": "lane C3",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:10:57Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,81 +22,64 @@
   "checks": {
     "e-site-announcements.1": {
       "result": "pass",
-      "evidence": "Admin opened topic \"QA-WALK-C Scheduled maintenance on Saturday\" (Announcements space), clicked \"Pin to community\": label flipped to \"Unpin from community\" with aria-pressed=true and no reload. No separate success toast was seen; the label flip is the only confirmation",
-      "screenshot": "ann-pinned",
-      "carried_forward": true
+      "evidence": "admin POST /jetonomy-pro/v1/site-announcements/244 (\"Scheduled maintenance on Saturday: what to expect\") -> {success, pinned true, ids [244]}; GET lists it with count 1 and limit 5. The \"Pin to community\" label flip in the topic UI was not clicked"
     },
     "e-site-announcements.2": {
       "result": "pass",
-      "evidence": "admin-pinned topic shows first in bob's General Discussion listing with an 'Announcement' pill; the pill carries aria-label 'Pinned site-wide by an administrator' (an accessible name, not a title tooltip) and appears once"
+      "evidence": "bob's and a guest's listings of General Discussion, Help Desk and Feature Requests each contain the announcement title and the \"Pinned site-wide by an administrator\" pill (checked in the page HTML)"
     },
     "e-site-announcements.3": {
       "result": "pass",
-      "evidence": "Guest sees the pinned announcement first on General Discussion, Help Desk, Feature Requests and London Chapter. A pinned topic from the private Customer Advisory Board space is not in the guest or non-member bob list (GET /announcements/active: guest and bob 9234 only, maya as CAB member 9234,9235)",
-      "carried_forward": true
+      "evidence": "guest sees the same pill and title on public space listings; /jetonomy/v1/announcements/active lists only space 1 (public Announcements); private-space hiding for guests not walked separately"
     },
     "e-site-announcements.4": {
       "result": "pass",
-      "evidence": "Clicking \"Unpin from community\" removed the pill and topic from General Discussion and Help Desk on the very next load (bob), and the topic still shows in its own Announcements space",
-      "carried_forward": true
+      "evidence": "admin DELETE /site-announcements/244 -> {unpinned true}; bob's General Discussion listing then had 0 \"Pinned site-wide\" matches immediately (no stale cache); the topic itself stays in its own space"
     },
     "e-site-announcements.5": {
       "result": "pass",
-      "evidence": "With a space-pinned topic \"QA-WALK-C space-pinned house rules\" in General Discussion plus the announcement pinned: order = announcement, space-pinned topic, then the rest; the announcement that is also sticky in its own space appears once (\"Pinned ANNOUNCEMENT\")",
-      "carried_forward": true
+      "evidence": "Browser, bob: General Discussion listing shows the 3 site-wide announcements first, then the space's own pinned topic ('Pinned') in its place, none duplicated; an announcement also pinned in its own space (Announcements) appears once in that listing"
     },
     "e-site-announcements.6": {
       "result": "pass",
-      "evidence": "Pinned 5 (ids 9234,9238-9241), the 6th -> 400 jetonomy_pin_limit \"You can only pin 5 announcements at a time. Unpin one first.\"; clicking the UI button on the 6th topic showed \"You can only pin 5 announcements at a time.\" and the label stayed \"Pin to community\". Draft topic 9243 and unknown id 99999999 -> 404 jetonomy_invalid_post \"Topic not found or not published.\" (the runbook says \"Post not found...\", noun renamed)",
-      "screenshot": "ann-limit-ui",
-      "carried_forward": true
+      "evidence": "pinned 5 topics, the 6th POST -> 400 jetonomy_pin_limit \"You can only pin 5 announcements at a time. Unpin one first.\" A draft/trashed topic could not be tried (no non-published topic on this stack; its id route returned 404)"
     },
     "e-site-announcements.7": {
       "result": "pass",
-      "evidence": "test_moderator POST/DELETE /jetonomy-pro/v1/site-announcements/{id} -> 403 jetonomy_forbidden (role lacks jetonomy_manage_spaces) and bob 403 on GET/POST/DELETE, which matches the current runbook wording"
+      "evidence": "test_moderator POST and DELETE on /site-announcements/{id} -> 403 jetonomy_forbidden"
     },
     "e-site-announcements.8": {
       "result": "pass",
-      "evidence": "bob GET /jetonomy/v1/announcements/active lists only 9234 and not the CAB announcement 9235; maya (CAB member) and admin get 9234,9235; guest gets 9234",
-      "carried_forward": true
+      "evidence": "bob GET /jetonomy/v1/announcements/active lists only the public Announcements-space topic; no private-space topic appears (the member-of-private-space case not walked)"
     },
     "e-site-announcements.9": {
       "result": "pass",
-      "evidence": "alice authored a pinned announcement; after bob blocked alice (POST /users/me/blocks) it disappeared from his Help Desk list and /announcements/active; after unblocking it returned (admins cannot be blocked: jetonomy_cannot_block_moderator)",
-      "carried_forward": true
+      "evidence": "Browser, bob: lena's topic pinned site-wide shows at the top of Help Desk; after bob blocks lena (POST /users/me/blocks) it is gone from his listing, back after unblock. (Admins cannot be blocked: block of the admin author answers 403)"
     },
     "e-site-announcements.10": {
       "result": "pass",
-      "evidence": "no dismiss control rendered on the pill (span.jt-badge-announcement) or the card in the listing and none exists in the extension code, which is the pass state per the current runbook"
+      "evidence": "Browser, bob: no dismiss button or control inside the ANNOUNCEMENT pill or the announcement rows in the listing"
     },
     "e-site-announcements.11": {
-      "result": "not_performed",
-      "evidence": "PARTIAL: 159-character title and Arabic title pinned: at 390px pill is inline before the title, long title wraps in the card with no overlap and no horizontal overflow (screenshots). Arabic title is not aligned right and the pill stays on the left in the LTR page; real RTL site mode NOT PERFORMED",
-      "screenshot": "ann-long-row-390",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Browser 390: the 159-char title wraps (row 243 px tall) and the Arabic title shows inside the card (x 32-358, page scrollWidth 390); the pill sits inline before the title with no overlap. Page is LTR so the pill is on the left"
     },
     "e-site-announcements.12": {
-      "result": "fail",
-      "evidence": "pinned topic 16801 then DELETE /posts/16801 -> removed at once from /announcements/active (total 0), but GET /jetonomy-pro/v1/site-announcements still lists the ghost entry {id:16801,status:'trash'} and keeps a pin slot until DELETE /site-announcements/16801. Suspected cause: no post-delete/trash hook prunes the pin list"
+      "result": "pass",
+      "evidence": "Admin deleted a pinned topic -> it disappeared from General Discussion at once and from GET /site-announcements (no ghost id), and a pin slot was free to pin again"
     },
     "e-site-announcements.13": {
-      "result": "not_performed",
-      "evidence": "re-test blocked: Amsterdam Chapter now holds a topic, so no empty space is available to check whether the empty-state text stays with the announcement above it (earlier walk: announcement shown, empty-state text gone)"
+      "result": "fail",
+      "evidence": "A new empty space shows the 4 site-wide announcements but no empty-state text ('No topics yet / Be the first' absent) even though the space has 0 topics of its own"
     },
     "e-site-announcements.14": {
-      "result": "fail",
-      "evidence": "PARTIAL: at 390px listing layout holds (scrollWidth 390, pill and card usable). Dark mode NOT verified: emulated prefers-color-scheme dark leaves the page light (body rgb(250,251,253), pill colour unchanged); the pill uses --jt-accent tokens in the extension stylesheet",
-      "screenshot": "ann-gd-390",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Browser 390 dark (theme toggle): pill uses light-blue text on a slate fill, rows span x 32-358 with no overflow, listing layout holds"
+    },
+    "e-site-announcements.15": {
+      "result": "pass",
+      "evidence": "admin DELETE of the pinned topic 244 -> GET /site-announcements count 0 and /announcements/active no longer lists 244; restoring the topic status to publish brought the pin back (count 1), so the pin row is kept while the topic is trashed. All pins removed afterwards"
     }
   },
-  "proposed_checks": [
-    "Pin of a missing post answers \"Topic not found or not published.\" - runbook .6 says \"Post not found or not published.\".",
-    "The Announcement pill exposes aria-label, not a title attribute - runbook .2 should say aria-label.",
-    "Add a check that a pinned topic that is trashed or deleted drops out of GET /site-announcements.",
-    {
-      "id": "e-site-announcements.15",
-      "text": "@admin #rest: trash or delete a pinned topic -> it drops out of GET /site-announcements and /site-announcements, and its pin slot is free to pin another topic."
-    }
-  ]
+  "proposed_checks": []
 }

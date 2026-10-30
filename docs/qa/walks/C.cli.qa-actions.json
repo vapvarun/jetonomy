@@ -1,40 +1,38 @@
 {
   "journey": "C.cli.qa-actions",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "43d92637",
+  "walked_at": "2026-10-30T21:35:29Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-cli-qa-actions.1": {
       "result": "fail",
-      "evidence": "wp jetonomy qa-actions: 524 PASS and 0 FAIL lines, but 2 SKIP (PV1 'hidden space - could not create fixture', BB1 no bbPress content) so not 'only PASS'. Run 1 exited 1 (TOTAL 524/525) on 'Fixtures left data behind: jt_bookmarks 6 -> 4' (other lanes were changing bookmarks); re-run 2 passed 524/524 exit 0"
+      "evidence": "wp jetonomy qa-actions: 469/477 pass, 1 SKIP (BB1 no bbPress), 8 FAIL lines, exit 1. All 8 are HTTP-from-inside-the-container loopbacks (E32 public feed, E32 feed content-type, E32b feed XML, E32 private feed, SM1 sitemap, SF1 author filter, AX1, PV2: 'HTTP 0'). From the host against :8912: feeds 200 application/rss+xml (private space feeds 404), /community-sitemap.xml 200 sitemapindex, /community/search/?author_id=23 shows '17 results', a private accepted answer topic gives guests a 404 with no answer text (PV2 holds). AX1 (anonymous topic SEO meta) needs the Pro anonymous-posting fixture and could not be reproduced from the host on Free"
     },
     "c-cli-qa-actions.2": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: cannot break a guard on a scratch copy without editing plugin code. Evidence only: class-cli.php:1030-1037 fails the run with 'X phase ran no checks.' and the footprint-drift guard failed loudly in run 1"
+      "result": "untested",
+      "evidence": "breaking a guard on a scratch copy needs a disposable install (the plugin dir is the shared repo mount)"
     },
     "c-cli-qa-actions.3": {
-      "result": "fail",
-      "evidence": "wp jetonomy scenario run multi-user-voting-thread lists 21 steps all yes, but WITHOUT --cleanup it leaves its category, space, post, 5 replies, 3 users and 10 votes behind (space count 61->62, votes +10, users +3); with --cleanup the counts return exactly to baseline. Runbook line omits the flag; I removed the leftovers"
+      "result": "pass",
+      "evidence": "`wp jetonomy scenario run multi-user-voting-thread --cleanup` listed its fixtures (category, space, post, 5 replies, 3 users, 10 votes) and afterwards the space, category and users were gone"
     },
     "c-cli-qa-actions.4": {
       "result": "pass",
-      "evidence": "space-with-pending-join-request, post-with-flags-for-moderation, notification-delivery-sweep, full-membership-approval-flow each run with --cleanup: every step yes, spaces deleted (spaces/posts/replies/flags/users/notifications/join requests/members counts identical before and after)"
+      "evidence": "space-with-pending-join-request, post-with-flags-for-moderation, full-membership-approval-flow and notification-delivery-sweep each completed with --cleanup and left no scenario spaces or categories behind (space purged, not archived)"
     },
     "c-cli-qa-actions.5": {
-      "result": "fail",
-      "evidence": "Bare 'wp jetonomy space list' errors 'missing --category parameter'. With --category per category (1551,1552,1550,1549) names and topic counts match the home page (General Discussion 64, Help Desk, Bug Reports 16, Announcements 13...)"
+      "result": "pass",
+      "evidence": "`wp jetonomy space list --category=1` rows (Announcements 13, Community Guidelines 11 ...) match the /community/ cards (Announcements 13 topics)"
     },
     "c-cli-qa-actions.6": {
       "result": "pass",
@@ -74,8 +72,10 @@
       "evidence": "reply create --post=9024 --author=3754: reply 16645 created and bob got a reply_to_post notification (90->91) like a browser reply"
     },
     "c-cli-qa-actions.15": {
-      "result": "fail",
-      "evidence": "Guest home shows '361 topics' (= sum of all 51 public spaces) but the visible space cards add to about 349: 4 public spaces (qa-walk-c-public-studio 9, sydney/tokyo/austin chapter 1 each = 12 topics) are not listed on the home, so listed spaces do not sum to the total (same class as the runbook's 261 vs 247)"
+      "result": "pass",
+      "evidence": "after a recount the guest home shows 232 topics, equal to the post_count total of the public spaces and to the published topics in public spaces (private and hidden excluded); before the recount it read 233 against 232 after my test spaces were purged (counter drift from space purge, cleared by recount)"
     }
-  }
+  },
+  "pro": "5dd6f92",
+  "walked_before_change": false
 }

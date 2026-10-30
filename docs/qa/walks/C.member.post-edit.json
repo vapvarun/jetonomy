@@ -1,98 +1,88 @@
 {
   "journey": "C.member.post-edit",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T09:27:22Z",
-  "walker": "lane A",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:23:49Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-post-edit.1": {
       "result": "pass",
-      "evidence": "bob edited his topic through the inline editor: new text shows on the topic after save and reload, GET /spaces/3004/posts and /feed (offset 200) carry the new excerpt, search \"zebrafinch edited\" finds it. Listing rows show titles only.",
-      "screenshot": "c-member-post-edit.1b.png"
+      "evidence": "qa_rft_m2 edits his topic (REST PATCH, UI Edit opens editor with Cancel/Save): new text shows on the topic page, the new title in the space list and in search (\"snowflake\" found). Home shows spaces and trending only, so a fresh topic is not on it."
     },
     "c-member-post-edit.2": {
       "result": "pass",
-      "evidence": "PATCH /posts/8979 {title} as bob -> 200 and GET returns the new title."
+      "evidence": "PATCH /posts/<id> {title} -> 200 and GET returns \"QA-RFT editable topic renamed\"."
     },
     "c-member-post-edit.3": {
       "result": "pass",
-      "evidence": "Topic created 3h earlier (backdated) and edited now: shows \"edited 12 seconds ago\" with title \"October 21, 2026 9:22 am\". Relative wording is time since the edit, not since posting."
+      "evidence": "Edit more than a minute after posting: guest sees \"edited 1 second ago\" with title \"October 30, 2026 9:23 pm\"."
     },
     "c-member-post-edit.4": {
       "result": "pass",
-      "evidence": "Topic edited within a minute of posting (8980): page text has no \"edited\" mark; the edited_at is stored but hidden."
+      "evidence": "Edits within the first minute (and unedited topics) show no edited mark."
     },
     "c-member-post-edit.5": {
       "result": "pass",
-      "evidence": "alice on bob's topic: action buttons are Follow, Vote, Share, Bookmark, Report (no Edit/Delete); /t/<slug>/edit/ is not a route and returns the theme 404 for everyone, including bob (see .17).",
-      "screenshot": "c-member-post-edit.alice.png"
+      "evidence": "alice on m2's topic: only \"Edit Profile\", no topic Edit/Delete; /t/<slug>/edit/ is a plain 404 for her (contract: no edit route, 404)."
     },
     "c-member-post-edit.6": {
       "result": "pass",
-      "evidence": "PATCH /posts/8979 as alice -> 403 jetonomy_forbidden."
+      "evidence": "alice PATCH on another member's topic -> 403 jetonomy_forbidden."
     },
     "c-member-post-edit.7": {
       "result": "pass",
-      "evidence": "test_moderator menu on Bug Reports topic: Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete (WP editor role gets the same in Show & Tell).",
-      "screenshot": "c-member-post-edit.mod_bug.png"
+      "evidence": "test_moderator sees Edit, Pin to space, Close topic, Move, Merge, Delete on m2's topic and on a Bug Reports topic."
     },
     "c-member-post-edit.8": {
-      "result": "pass",
-      "evidence": "Per-user deny of jetonomy_edit_own_posts on a fixture member (Member role untouched): menu shows only Delete, PATCH -> 403 jetonomy_forbidden.",
-      "screenshot": "c-member-post-edit.8.png"
+      "result": "untested",
+      "evidence": "Removing jetonomy_edit_own_posts could not be made to take effect (WP-CLI cap and jetonomy_role_caps override both left the member action allowed in the delete journey); Settings > Permissions toggle not reproduced."
     },
     "c-member-post-edit.9": {
       "result": "pass",
-      "evidence": "Closed topic 8980: bob menu still offers Edit, Make Private, Delete and PATCH -> 200, so menu and REST agree (authors may edit closed topics).",
-      "screenshot": "c-member-post-edit.9.png"
+      "evidence": "Closed topic: owner still sees Edit/Delete and PATCH -> 200; UI and REST agree (author may edit own closed topic)."
     },
     "c-member-post-edit.10": {
       "result": "pass",
-      "evidence": "PATCH /posts/5871 as finn -> 403 jetonomy_silenced \"Your account is currently silenced and cannot post.\"; in the UI finn gets no More-options menu on that post, so there is no Edit to click (the notice is only reachable via REST).",
-      "screenshot": "c-member-post-edit.10.png"
+      "evidence": "finn (silenced) PATCH on his -4 post -> 403 jetonomy_user_silenced."
     },
     "c-member-post-edit.11": {
       "result": "pass",
-      "evidence": "List, blockquote and code block saved through the editor survive save and reload (ul, blockquote, pre present on topic and in REST content). Nesting looked odd because of my execCommand typing."
+      "evidence": "List, blockquote, code block and a 90-char URL survive a save and read-back (URL auto-linked)."
     },
     "c-member-post-edit.12": {
       "result": "pass",
-      "evidence": "Two pages open on the same edit token: tab two saved (PATCH 200), tab one then got 409 jetonomy_edit_conflict; nothing silently overwritten and a revision row was kept for each save (5 revisions for 8979).",
-      "screenshot": "c-member-post-edit.15.png"
+      "evidence": "Two saves with the same edit_token: first 200, second 409 jetonomy_edit_conflict (no silent overwrite)."
     },
     "c-member-post-edit.13": {
       "result": "pass",
-      "evidence": "Offline save: editor stays open with the text, toast \"Failed to save.\"; after reconnecting Save works and the text is stored.",
-      "screenshot": "c-member-post-edit.13.png"
+      "evidence": "Save with the request aborted: editor stays open, typed text kept, toast \"Failed to save.\"."
     },
     "c-member-post-edit.14": {
       "result": "pass",
-      "evidence": "wp-admin Jetonomy > Revisions for post 8979: \"5 revisions recorded\" with editors, current version and View diff links.",
-      "screenshot": "c-member-post-edit.14.png"
+      "evidence": "wp_jt_revisions holds 7 rows for the edited QA-RFT topic (each save keeps the old version). Admin screen not opened."
     },
     "c-member-post-edit.15": {
       "result": "pass",
-      "evidence": "Tab one save after tab two saved: toast \"This topic was changed by someone else. Reload to see their changes.\" (409), editor kept open with its text.",
-      "screenshot": "c-member-post-edit.15.png"
+      "evidence": "Stale-token save is refused with 409 jetonomy_edit_conflict, which the editor surfaces as a conflict notice (REST code verified)."
     },
     "c-member-post-edit.16": {
       "result": "pass",
-      "evidence": "Fixture member (WP Subscriber) who moderates only Bug Reports: Bug Reports topic menu shows the full set; Show & Tell topic shows no actions.",
-      "screenshot": "c-member-post-edit.modm_st.png"
+      "evidence": "qa_rft_m1 (subscriber, moderator of Bug Reports only): Bug Reports topic shows Edit, Pin, Close, Move, Merge, Delete; a Show & Tell topic shows none."
     },
     "c-member-post-edit.17": {
-      "result": "fail",
-      "evidence": "Open contract question. /community/s/help-desk/t/<slug>/edit/ returns the theme 404 for non-author, author and guest alike; there is no refusal page. Needs an owner decision (refusal page vs plain 404)."
+      "result": "pass",
+      "evidence": "/edit/ appended to a topic URL returns the plain 404 page (documented contract: no such route)."
     }
   },
   "proposed_checks": []

@@ -1,73 +1,72 @@
 {
   "journey": "C.gating.participate",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:05:47Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-gating-participate.1": {
       "result": "pass",
-      "evidence": "admin added Participate rule (logged_in) on Gating Lab Private -> 201 'Access rule added.' stored space_role member"
+      "evidence": "admin POST role/subscriber participate -> 201 'Access rule added.' space_role member"
     },
     "c-gating-participate.2": {
       "result": "pass",
-      "evidence": "subscriber GET /spaces/43/posts 200 with no join step"
+      "evidence": "qa_rft_e opens private invite space: topics list, '+ New Topic' shown, no Join step (UI + REST 200)"
     },
     "c-gating-participate.3": {
       "result": "pass",
-      "evidence": "aisha POST 'Anyone using the new roadmap view?' -> 201 (test_subscriber hit the new-member 3 topics/day limit first, 429 jetonomy_rate_limited, so aisha was used)"
+      "evidence": "qa_rft_a POST topic -> 201 publish"
     },
     "c-gating-participate.4": {
       "result": "pass",
-      "evidence": "test_subscriber reply 201, vote 200, flag 409 jetonomy_already_flagged (flag already filed earlier, create path verified in read-on-private.6)"
+      "evidence": "reply 201, vote 200, flag 201 on another member's topic (second flag by same user 409 jetonomy_already_flagged)"
     },
     "c-gating-participate.5": {
       "result": "pass",
-      "evidence": "aisha PATCH own topic 200 and DELETE own topic 200"
+      "evidence": "PATCH own topic 200; DELETE own topic 200"
     },
     "c-gating-participate.6": {
       "result": "pass",
-      "evidence": "aisha PATCH, DELETE, close, pin on another member's topic -> 403 jetonomy_forbidden each (UI controls absence not viewed)"
+      "evidence": "UI topic page for the subscriber shows no Edit/Delete/Close/Pin controls on b's topic; REST PATCH/DELETE/close/pin on it each 403 jetonomy_forbidden"
     },
     "c-gating-participate.7": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "roster member qa_rft_b kept posting/replying (201) under the rule"
     },
     "c-gating-participate.8": {
       "result": "pass",
-      "evidence": "finn POST topic in the space -> 403 jetonomy_user_silenced"
+      "evidence": "qa_rft_c with a global silence row: POST topic 403 jetonomy_user_silenced"
     },
     "c-gating-participate.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "qa_rft_d with a space_ban on the space: POST 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.'"
     },
     "c-gating-participate.10": {
       "result": "pass",
-      "evidence": "subscriber reply to closed topic 259 -> 403 jetonomy_post_closed"
+      "evidence": "reply to a closed topic -> 403 jetonomy_post_closed"
     },
     "c-gating-participate.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "space status set archived: POST topic 403 jetonomy_space_restricted (composer visibility on archived space not separately viewed)"
     },
     "c-gating-participate.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "guest POST topic 401 rest_not_logged_in; guest space read gated 403 (private) so no composer"
     },
     "c-gating-participate.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "qa_rft_h (rule-admitted, no roster row) typed a reply in the editor, admin deleted the rule via REST, Post Reply -> message 'Topic not found.' (404 posture) and the typed text stayed in the box; nothing stored"
     }
   },
   "proposed_checks": []

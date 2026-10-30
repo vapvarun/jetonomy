@@ -1,61 +1,60 @@
 {
   "journey": "C.gating.read-on-private",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:04:55Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-gating-read-on-private.1": {
       "result": "pass",
-      "evidence": "subscriber GET /spaces/43/posts and /spaces/43 -> 403 before any rule"
+      "evidence": "qa_rft_e/a before any rule: GET /spaces/149 403 jetonomy_forbidden, GET posts 403, topic GET 404 (REST); private-invite space shows no topics"
     },
     "c-gating-read-on-private.2": {
       "result": "pass",
-      "evidence": "admin POST Read rule (logged_in) on Gating Lab Private -> 201 'Access rule added.'"
+      "evidence": "admin POST role=subscriber grants=read -> 201 'Access rule added.'"
     },
     "c-gating-read-on-private.3": {
       "result": "pass",
-      "evidence": "subscriber GET /spaces/43/posts 200 and /posts/259 200 with the Read rule"
+      "evidence": "UI as qa_rft_e at 1440 and 390: /community/s/qa-rft-priv/ lists the topics; REST 200"
     },
     "c-gating-read-on-private.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "UI: no '+ New Topic' control on the space page; topic page vote buttons are aria-disabled with title 'Voting is not available to you here.' and score unchanged"
     },
     "c-gating-read-on-private.5": {
       "result": "pass",
-      "evidence": "with Read rule subscriber POST topic -> 403 jetonomy_forbidden 'You cannot post in this space.'; reply -> 403 same message; vote -> 403 jetonomy_forbidden"
+      "evidence": "POST topic/reply/vote -> 403 jetonomy_forbidden 'You cannot post in this space.'"
     },
     "c-gating-read-on-private.6": {
       "result": "pass",
-      "evidence": "Read-rule subscriber POST /flags on topic 259 -> 201; vote -> 403 jetonomy_forbidden"
+      "evidence": "vote 403 jetonomy_forbidden; POST /flags on the topic -> 201 {created:true}"
     },
     "c-gating-read-on-private.7": {
       "result": "pass",
-      "evidence": "guest GET /spaces/43/posts 403 and /posts/259 404 while the rule applied only to logged-in users"
+      "evidence": "guest GET /spaces/149/posts 403 jetonomy_forbidden, topic 404"
     },
     "c-gating-read-on-private.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "DELETE rule -> next GET by the subscriber 403 jetonomy_forbidden"
     },
     "c-gating-read-on-private.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "159-character title topic at 1440 (470px wide, 95px high) and 390 (202px wide, 237px high, right edge 290 < 390): wraps, nothing clipped"
     },
     "c-gating-read-on-private.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "390px space page: no horizontal overflow, topics stack"
     }
   },
   "proposed_checks": []

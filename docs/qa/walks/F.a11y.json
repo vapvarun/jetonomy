@@ -1,90 +1,77 @@
 {
   "journey": "F.a11y",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:32:54Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
     "mode": "free (Jetonomy Free active, Pro inactive)",
     "site": "http://localhost:8912",
-    "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
-      1024,
       390
     ],
-    "schemes": [
-      "light",
-      "dark (Reign only)"
-    ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "f-a11y.1": {
       "result": "pass",
-      "evidence": "First Tab on /community/ focuses \"Skip to content\" (href #content); activating it sets the hash and scrolls to the content area (focus itself stays on body). Theme-provided link."
+      "evidence": "guest /community/: first Tab lands on 'Skip to content' (#content); <main> landmark present"
     },
     "f-a11y.2": {
-      "result": "fail",
-      "evidence": "Tabbing 57-59 stops per page on Reign light: .jt-btn-ghost \"Follow\"/\"Leave Space\", the vote up/down buttons, the disabled score button and the notifications bell (.jt-community-nav-notif) report outline-width 0 and no box-shadow when focus-visible (Follow: outline \"solid 0px\", border and background unchanged). The community's own controls show no discernible focus ring. Only Reign light was run; BuddyX and TT25 and dark not repeated.",
-      "screenshot": "qa-artifacts/jt207-free/focus-follow2.png"
+      "result": "pass",
+      "evidence": "tabbed 90 stops on the space and topic pages in light and dark (prefers-color-scheme plus jt-dark): every stop has an outline or box-shadow ring after 210ms except the WordPress/Reign admin-bar search input (theme element, not Jetonomy); reading order follows the DOM except the header/admin-bar jump"
     },
     "f-a11y.3": {
-      "result": "fail",
-      "evidence": "Topic page icon controls: Share (.jt-share-btn) and More options (.jt-more-trigger) open popups but carry no aria-expanded or aria-haspopup; several editor-bar buttons (link, quote, image) have no aria-label (only \"Code block\" and \"Insert emoji\" are labelled, B/I rely on their letters); an avatar link a.user-link wraps an img alt=\"\" with no text, so it has no accessible name. Bookmark (aria-pressed) and the theme toggle (aria-pressed false) are fine."
+      "result": "pass",
+      "evidence": "icon-only controls all carry aria-label: Vote up/down (aria-pressed), Share (aria-expanded), Bookmark (aria-pressed), Report, Quote, composer toolbar (Code, Code block, Link, Blockquote, Upload Image, Insert emoji with aria-expanded), notifications bell, font-size and theme toggle; the Pro anonymous toggle needs Pro and was not on this stack"
     },
     "f-a11y.4": {
-      "result": "fail",
-      "evidence": "Reply editor is named \"Reply editor\" (role textbox, aria-multiline) and the Title and Tags inputs have labels, but the new-topic editor body (.jt-editor-body on /s/<space>/new/) has no aria-label. Poll option inputs are Pro (not walked)."
+      "result": "untested",
+      "evidence": "reply editor is role=textbox aria-label='Reply editor'; the new-topic title input label and poll option labels (Pro) were not inspected"
     },
     "f-a11y.5": {
       "result": "untested",
-      "evidence": "reaction chips are Pro. Vote part observed: buttons read \"Vote up\", \"Remove your upvote\" and the score button \"Score 0. You cannot vote on your own content.\" so state is in the label."
+      "evidence": "vote buttons expose aria-pressed and 'Remove your upvote'; the enabled-state score announcement and reaction chips (Pro Reactions) were not read"
     },
     "f-a11y.6": {
       "result": "pass",
-      "evidence": "Report on a reply opens a modal containing a radiogroup labelled by #jt-report-title (5 reasons), focus lands on the first radio (spam), Tab cycles inside (textarea, Cancel, Report, radio), Escape closes it and focus returns to the Report button. The overlay itself has no role=dialog or aria-modal."
+      "evidence": "Report on a reply opens a dialog labelled by 'jt-report-title' with a radio group of 5 reasons; focus lands on the first reason (spam), Tab stays inside the dialog across 14 presses, Escape closes it and focus returns to the Report control"
     },
     "f-a11y.7": {
-      "result": "fail",
-      "evidence": "Moderation queue (/community/s/billing-accounts/mod/ as test_moderator): the action buttons read just \"Remove\" and \"Dismiss\" (twice each) with no aria-label naming the flagged content. Confirmations are the community's own modal (not window.alert)."
+      "result": "pass",
+      "evidence": "moderation queue buttons are real <button>s named by aria-describedby to the target (Approve/Spam/Reject 'QA-RFT held topic N', Restore/Delete permanently, Lift restriction 'qa_rft_d'); confirms are role dialogs ('Reject this submission? ...'), not alert()"
     },
     "f-a11y.8": {
-      "result": "fail",
-      "evidence": "Share dropdown, More options menu and notification panel open with Enter but focus stays on the trigger and ArrowDown does not move focus within; Escape closes and focus is still on the trigger. No arrow-key navigation inside the three menus."
+      "result": "pass",
+      "evidence": "Share opens with Enter (aria-expanded true, 5 items), ArrowDown moves focus to the first item, Escape closes and returns focus to the trigger; notifications bell opens with Space, Escape closes and returns focus"
     },
     "f-a11y.9": {
-      "result": "pass",
-      "evidence": "Contrast measured on Help Desk and Announcements, light and dark: active/inactive pills 8.4-10.3, tags 5.7-8.7, Closed badge 5.95 light / 5.66 dark, Answered 6.1, Needs answer 6.6-6.8, ADMIN role pill 7.6 / 6.1, row stats and time 7.1-9.4, placeholders 18.9 / 12, blocked-user tombstone text ~9 on dark. All >= 4.5. (Announcement pill and pinned label are not present in this seed.)"
+      "result": "untested",
+      "evidence": "my contrast sampler could not resolve gradient/filled backgrounds (reported 1:1 on filled buttons), so no AA verdict; needs an axe or manual pass in light and dark"
     },
     "f-a11y.10": {
-      "result": "fail",
-      "evidence": "At 390 the A / A+ / A++ font-size control is not shown (all three buttons have offsetWidth 0), so it cannot be tapped; CSS zoom 2 at 390 gives no horizontal scroll. At 1440 A++ scales plugin text (reply body 17 -> 19.2, h1 25.5 -> 28.8, nav 15.9 -> 18) but the theme's header menu stays 16px, so it does not change all text. Tap targets at 390 are 40-49px."
+      "result": "pass",
+      "evidence": "390px with root font-size 200%: no horizontal overflow; no .jt-app button or action link under 40px tall or wide on the topic page"
     },
     "f-a11y.11": {
       "result": "untested",
-      "evidence": "toast live region confirmed (.jt-toast role=status aria-live=polite); form errors with aria-describedby (the poll form message) are Pro and were not walked"
+      "evidence": "a11y-speak polite/assertive regions exist and form errors use role=alert; aria-describedby linkage of errors to their field was not checked"
     },
     "f-a11y.12": {
-      "result": "pass",
-      "evidence": "finn's New Topic page renders the plain text \"Your account is currently silenced and cannot post.\" (no composer) and the reply area on a topic reads the same sentence; it is page text (screen readers read it), not a colour-only banner. It carries no role=alert."
+      "result": "untested",
+      "evidence": "silenced refusal text 'Your account is currently silenced and cannot post.' verified over REST; how the disabled composer exposes it to assistive tech was not inspected"
     },
     "f-a11y.13": {
-      "result": "fail",
-      "evidence": "Topic breadcrumb is a nav labelled \"Breadcrumb\", the page has one h1 and headings run 1,2,3,3,4... with no skipped level, but the current page item has no aria-current=\"page\" (plain text)."
+      "result": "pass",
+      "evidence": "topic page: nav aria-label=Breadcrumb with aria-current=page; one h1; heading levels 1,2,3,3,4... no skips"
     },
     "f-a11y.14": {
       "result": "untested",
-      "evidence": "RTL keyboard-only end-to-end flow (post-create, reply, vote, report) not walked; only layout and quote direction checked in RTL"
+      "evidence": "front-end RTL needs a locale switch: a user's locale (set to ar) does not change the front-end language and the site locale must not be changed here; keyboard-only reply (editor -> Tab -> Post Reply -> Enter) works end to end in LTR"
     }
   },
-  "proposed_checks": [
-    "- `f-a11y.15` @member #ui: community buttons .jt-btn-ghost (Follow, Leave Space), .jt-v-btn, the notifications bell and mod queue buttons show a visible :focus-visible ring (live: outline-width 0, no box-shadow).",
-    "- `f-a11y.16` @member #ui: the Report and confirm modals carry role=dialog and aria-modal=true with the title as their name (live: overlay has no role).",
-    "- `f-a11y.17` @member #ui: the new-topic editor body has an accessible name like \"Topic editor\" (live: none)."
-  ]
+  "proposed_checks": []
 }

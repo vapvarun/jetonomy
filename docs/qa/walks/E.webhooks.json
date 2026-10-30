@@ -1,90 +1,93 @@
 {
- "journey": "E.webhooks",
- "free": "dcdb0750",
- "pro": "404b0af",
- "walked_at": "2026-10-21T09:57:09Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "e-webhooks.1": {
-   "result": "fail",
-   "evidence": "PARTIAL: Add Webhook (URL, events post.created + reply.created) -> notice \"Webhook saved.\"; list shows URL, events, Active, last-triggered \"-\" and fail count. The runbook URL https://hooks.example.test/jetonomy was REFUSED with \"Enter a valid webhook URL\" because the host does not resolve (wp_http_validate_url); a same-host URL http://forums.local/qa-walk-c-hook/... was used. No signing secret is visible as text in the list or edit view (a 40-char hex string exists only in markup)",
-   "screenshot": "webhooks-list"
+  "journey": "E.webhooks",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:22:26Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
+  "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "e-webhooks.2": {
-   "result": "pass",
-   "evidence": "malformed URL \"not-a-url\" -> \"Enter a valid webhook URL. The webhook was not saved.\"; valid URL with no events -> \"Choose at least one event. A webhook with no events would never fire, so it was not saved.\""
+  "checks": {
+    "e-webhooks.1": {
+      "result": "pass",
+      "evidence": "Browser, admin: Add Webhook with URL https://example.com/jetonomy-qa-rft and events post.created + reply.created -> notice 'Webhook saved.'; list row shows the URL, both events, Active, last triggered dash, 0 failures. The line's URL https://hooks.example.test/jetonomy is refused with 'Enter a valid webhook URL' because the host does not resolve (webhook deleted afterwards)"
+    },
+    "e-webhooks.2": {
+      "result": "pass",
+      "evidence": "Browser: URL 'not a url' -> 'Enter a valid webhook URL. The webhook was not saved.'; valid URL with no events ticked -> 'Choose at least one event. A webhook with no events would never fire, so it was not saved.'"
+    },
+    "e-webhooks.3": {
+      "result": "pass",
+      "evidence": "POST /webhooks with ftp://x, an unknown event \"bogus\", http://127.0.0.1, http://10.0.0.5 and http://localhost:8921 -> all 400 jetonomy_webhook_url_invalid \"Invalid webhook URL.\" (the bogus-event call got the URL message because its URL was a non-resolving host; the \"At least one valid event is required.\" text was not seen); loopback and private addresses are refused at save"
+    },
+    "e-webhooks.4": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.5": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.6": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.7": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.8": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.9": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.10": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.11": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.12": {
+      "result": "pass",
+      "evidence": "PATCH /webhooks/99999 -> 404 jetonomy_webhook_not_found \"Webhook not found.\"; DELETE of the real webhook removed its row (table back to 0 rows)"
+    },
+    "e-webhooks.13": {
+      "result": "pass",
+      "evidence": "bob GET, test_moderator POST, bob PATCH, DELETE and /test -> all 403 jetonomy_forbidden; guest GET -> 401; the admin list response has no secret field (the secret only appears in the create response)"
+    },
+    "e-webhooks.14": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.15": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.16": {
+      "result": "not_performed",
+      "evidence": "needs a public webhook receiver (a request-catcher reachable from the container); none is available on this stack"
+    },
+    "e-webhooks.17": {
+      "result": "pass",
+      "evidence": "Browser 390: Webhooks tab form and list tables stay inside the viewport (scrollWidth 390, tables 366 px in 366 px wrapper); no secret field is shown on the page"
+    }
   },
-  "e-webhooks.3": {
-   "result": "pass",
-   "evidence": "POST /webhooks ftp://x -> 400 jetonomy_webhook_url_invalid \"Invalid webhook URL.\"; events [\"bogus\"] -> 400 jetonomy_webhook_events_invalid \"At least one valid event is required.\"; loopback http://127.0.0.1 and private 192.168.1.10 rejected at save with the same 400 (earlier than delivery)"
-  },
-  "e-webhooks.4": {
-   "result": "pass",
-   "evidence": "POST /webhooks/6/test -> {success:true,status_code:200}; catcher saw body {\"event\":\"test\",\"timestamp\":...,\"data\":{\"message\":\"This is a test webhook from Jetonomy.\"}} with X-Jetonomy-Signature sha256 HMAC verified against the stored secret (no X-Jetonomy-Event header on test); receiver 500 -> success:false,status_code:500; unreachable -> success:false,status_code:0,error:\"Could not resolve host...\" (receiver simulated by a temporary mu-plugin pre_http_request filter, since DNS/outbound catchers a"
-  },
-  "e-webhooks.5": {
-   "result": "pass",
-   "evidence": "bob published \"QA-WALK-C Anyone using the new SMTP preset?\" -> async job fired post.created with id,title,author_id 3755,space_id 2999,created_at, header X-Jetonomy-Event: post.created and valid signature header (delivered after the Action Scheduler job ran, via the same simulated receiver)"
-  },
-  "e-webhooks.6": {
-   "result": "pass",
-   "evidence": "edit -> post.updated once, reply edit -> reply.updated once, reply create -> reply.created once, reply delete -> reply.deleted once, topic delete -> post.deleted once (Mailpit-style single catcher lines, no duplicates)"
-  },
-  "e-webhooks.7": {
-   "result": "pass",
-   "evidence": "topic matching a hold rule (9035) fired nothing while pending; after moderator bulk approve exactly one post.created for 9035; a draft topic fired nothing"
-  },
-  "e-webhooks.8": {
-   "result": "fail",
-   "evidence": "PARTIAL: topic created with is_private=true (9036) fired no webhook (pass); a topic in hidden space Customer Advisory Board (9038 by admin) DID fire post.created to the external URL, so hidden-space content leaves the site (recorded for the owner)"
-  },
-  "e-webhooks.9": {
-   "result": "pass",
-   "evidence": "anonymous topic 9037 fired post.created with author_id 0"
-  },
-  "e-webhooks.10": {
-   "result": "pass",
-   "evidence": "receiver returning 500 for five deliveries -> webhook 7 is_active 0, fail_count 5, last_status_code 500; later success on an active hook (one 500 then one 200) -> fail_count back to 0 (the list shows disabled with last status as text \"Disabled ... (200)\")"
-  },
-  "e-webhooks.11": {
-   "result": "pass",
-   "evidence": "GET /webhooks/7/deliveries returned 20 rows with event, status_code, response and created_at; response field is truncated at 500 characters (1,200-char receiver body). 30-day pruning NOT PERFORMED"
-  },
-  "e-webhooks.12": {
-   "result": "pass",
-   "evidence": "PATCH /webhooks/99999 -> 404 jetonomy_webhook_not_found \"Webhook not found.\"; DELETE of the two webhooks succeeded and a following bob topic produced no delivery"
-  },
-  "e-webhooks.13": {
-   "result": "pass",
-   "evidence": "bob and test_moderator GET/POST/PATCH/DELETE/test -> 403; guest -> 401; list items contain no secret key"
-  },
-  "e-webhooks.14": {
-   "result": "fail",
-   "evidence": "PARTIAL: user.registered fired for a wp-cli created user, space.member_joined and space.member_left fired for space 4860 join/leave (and for other lanes' admin joins). user.trust_level_changed did NOT fire when `wp jetonomy user set-trust 7095 --level=2` changed trust (CLI path may bypass the action); flag.created and flag.resolved also fired"
-  },
-  "e-webhooks.15": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: 20 webhooks and 5,000 delivery rows not seeded; Last Triggered timezone not checked"
-  },
-  "e-webhooks.16": {
-   "result": "fail",
-   "evidence": "PARTIAL: topic creation returned in 65ms while dispatch is a queued Action Scheduler job (async confirmed). The >15s receiver timeout and status 0 delivery log row were NOT PERFORMED (the simulated receiver cannot enforce the HTTP timeout)"
-  },
-  "e-webhooks.17": {
-   "result": "pass",
-   "evidence": "at 390px the Webhooks tab has no page horizontal scroll (scrollWidth 390), event checkboxes stay inside the viewport, list table scrolls inside its wrapper (overflow-x auto)",
-   "screenshot": "webhooks-390"
-  }
- }
+  "proposed_checks": []
 }

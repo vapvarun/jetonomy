@@ -1,62 +1,60 @@
 {
   "journey": "C.anon.tag",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T09:03:21Z",
-  "walker": "lane A",
+  "free": "607c4b7b",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:55:43Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-anon-tag.1": {
       "result": "pass",
-      "evidence": "Guest /community/tag/email/: header \"36 topics\"; 30 rows on page 1 plus 6 on pg=2 = 36 unique, matches the count.",
-      "screenshot": "c-anon-tag.1.png"
+      "evidence": "/community/tag/email/ shows \"41 topics\"; pages 1+2 list 30+11=41 unique topics."
     },
     "c-anon-tag.2": {
       "result": "pass",
-      "evidence": "No CAB-only tag exists in the data, so partner-pricing (used only in a Partner Program topic) is the proxy: guest page \"0 topics\", \"No topics with this tag yet.\", no title leak; guest /tags omits it. A CAB-specific tag was not created (tag PATCH needs other fields)."
+      "evidence": "partner-pricing (used only in Partner Program) guest page: \"0 topics\", no Referral topic or title leaked."
     },
     "c-anon-tag.3": {
       "result": "pass",
-      "evidence": "Guest /tags returns 13 tags with post_count (email 36 vs stored 40, mobile 31 vs 35 ...), excluding private-space topics; partner-pricing absent for guest, present (1) for bob and admin."
+      "evidence": "Guest /tags counts equal DB counts of published topics in public spaces (email 41 vs 43 total); partner-pricing absent from guest list."
     },
     "c-anon-tag.4": {
       "result": "pass",
-      "evidence": "/community/tag/no-such-tag/ -> 404 \"Tag not found.\" inside theme chrome, no PHP error."
+      "evidence": "/community/tag/no-such-tag/ 404 \"Tag not found. Back to the community\", no PHP error."
     },
     "c-anon-tag.5": {
       "result": "pass",
-      "evidence": "Sidebar Popular Tags counts for guest (email 36, migration 39, integrations 33, search 36, mobile 31, billing 31, roadmap 29 ...) equal the tag page counts and the /tags counts."
+      "evidence": "Sidebar Popular tags are name chips without counts; counts on tag pages match REST counts, so nothing disagrees."
     },
     "c-anon-tag.6": {
       "result": "pass",
-      "evidence": "bob on email: 40 topics (30 + 10 across pg=1,2, 40 unique) vs guest 36; bob sees partner-pricing page listing \"Referral fees for 2026: what changed\", guest sees 0."
+      "evidence": "bob (Partner member) sees \"1 topic\" on partner-pricing; guest sees 0."
     },
     "c-anon-tag.7": {
       "result": "pass",
-      "evidence": "Same as .4: 404 status, \"Tag not found.\", no PHP error."
+      "evidence": "Same 404 page, no PHP notice in markup."
     },
     "c-anon-tag.8": {
       "result": "pass",
-      "evidence": "email (36 topics): Next goes to ?sort=latest&pg=2 (6 rows), 36 unique rows, no duplicates across pages. (Pager href is HTML-escaped &#038;; followed correctly in browser.)"
+      "evidence": "email (41 topics): page 1 = 30, page 2 = 11, page 3 = 0; no duplicates across pages."
     },
     "c-anon-tag.9": {
       "result": "pass",
-      "evidence": "Tag email at 390: rows 326px wide, scrollWidth 390, no horizontal scroll. Light mode only.",
-      "screenshot": "c-anon-tag.9.png"
+      "evidence": "390px /tag/email/ scrollWidth 390, no sideways scroll."
     },
     "c-anon-tag.10": {
       "result": "pass",
-      "evidence": "For all 13 guest-visible tags the /tags post_count equals the topic count on its tag page for a guest (checked 13/13)."
+      "evidence": "REST /tags counts equal tag-page counts for guest (email 41/41)."
     }
   },
   "proposed_checks": []

@@ -1,97 +1,96 @@
 {
   "journey": "C.member.mention",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T09:48:25Z",
-  "walker": "lane A",
+  "free": "206e1d6f",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:32:16Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-mention.1": {
       "result": "pass",
-      "evidence": "reply 16418-range check: bob reply \"@alice thanks, that fixed it for me\" renders <a class=\"jt-mention\" href=/community/u/alice/>@alice</a> on the topic page (guest HTML)"
+      "evidence": "bob typed '@hana thanks @hana, that fixed it' in a reply (hana used instead of alice): saved reply shows both @hana as links to /community/u/hana/."
     },
     "c-member-mention.2": {
       "result": "pass",
-      "evidence": "alice has exactly one notifications row type=mention for the reply (DB). Bell link target not clicked."
+      "evidence": "hana has exactly one 'mention' notification row for that reply (wp_jt_notifications 743 -> reply 1345)."
     },
     "c-member-mention.3": {
       "result": "pass",
-      "evidence": "Mailpit: \"[forums] You were mentioned by Bob Martinez\" to alice, one email; body uses Settings > Emails default (template not customised on this site)"
+      "evidence": "Mailpit email to hana: subject '[Northwind Community] You were mentioned by Bob Martinez' (actor name present). Body not compared with the saved Mention template."
     },
     "c-member-mention.4": {
       "result": "pass",
-      "evidence": "bob replies to 5719 mentioning @alice (OP): alice gets one mention notification row and one email (\"replied to your topic\"); no second notice"
+      "evidence": "hana is OP of the topic and was mentioned: one mention bell row and one mention email, no separate 'replied to your topic' row for that reply."
     },
     "c-member-mention.5": {
       "result": "pass",
-      "evidence": "maya follows 5719; bob mentions @maya: maya gets one mention notification row and one mention email, no extra reply_to_post row"
+      "evidence": "hana follows the thread and bob replied mentioning @hana: one mention bell row (751) and one email 'You were mentioned by Bob Martinez'; no reply notice for that reply."
     },
     "c-member-mention.6": {
       "result": "pass",
-      "evidence": "two @alice in one reply: two links in markup, still one notification row"
+      "evidence": "Same person mentioned twice in one reply: two links, one notification."
     },
     "c-member-mention.7": {
       "result": "pass",
-      "evidence": "new topic body \"Hello @alice in a post body\": content saved with raw @alice, alice got one mention notification"
+      "evidence": "Post body '<p>hello @hana in a post body</p>' -> one mention notification (750) for hana; link rendering of the post body not inspected."
     },
     "c-member-mention.8": {
       "result": "pass",
-      "evidence": "POST reply with @alice = 201, content keeps raw @alice, no *_html field, page render adds the link, alice notification exists"
+      "evidence": "POST /posts/385/replies with '@hana' -> 201, content stays raw '@hana' (no content_html key), the page renders it as a link, DB has the mention row for hana. GET /notifications as hana not called."
     },
     "c-member-mention.9": {
       "result": "pass",
-      "evidence": "@nobodyhere stays plain text in markup (<p>QA-WALK-A @nobodyhere stays plain</p>), 201, no error"
+      "evidence": "'@nobodyhere' stays plain text (no anchor in the reply body), reply saved with 201, no error."
     },
     "c-member-mention.10": {
       "result": "pass",
-      "evidence": "bob private reply mentioning @theo (cannot read it): zero notification rows"
+      "evidence": "bob private reply mentioning @carlos (carlos may not read it): no notification row for carlos. The case where the mentioned reader may read it was not run."
     },
     "c-member-mention.11": {
       "result": "pass",
-      "evidence": "maya (CAB member) mention of @alice (not a CAB member) in CAB topic 8955 and of @bob (not a member) in Moderators Room topic 8956: no mention notification rows for them"
+      "evidence": "bob (Partner Program admin) mention of @hana, a non-member, in a Partner Program topic: no notification for hana. CAB and Moderators' Room posting not possible for bob."
     },
     "c-member-mention.12": {
       "result": "pass",
-      "evidence": "finn mention reply = 403 jetonomy_user_silenced, no notification created"
+      "evidence": "finn (silenced) reply is refused with 403 jetonomy_user_silenced (see reply-create), so no notification is created."
     },
     "c-member-mention.13": {
-      "result": "pass",
-      "evidence": "alice PATCH notification_preferences mention web/email off: bob mention created no notification row and no Mailpit email. Settings restored to original []."
+      "result": "untested",
+      "evidence": "Needs hana's mention preference switched off via her notification settings; not run."
     },
     "c-member-mention.14": {
-      "result": "pass",
-      "evidence": "autocomplete row shows full \"Grace Oluwaseun Adeyemi-Whitfield\" and @grace; saved link href /community/u/grace/",
-      "screenshot": "c-member-mention.14.png"
+      "result": "untested",
+      "evidence": "Autocomplete dropdown rows (full name, long name) could not be captured: the popup did not appear in DOM or screenshot after typing '@gra'. Typing '@gra' then Enter does insert '@grace ' (see .18)."
     },
     "c-member-mention.15": {
       "result": "pass",
-      "evidence": "bob mentioning @bob: no notification row"
+      "evidence": "bob replying '@bob' links himself but no mention notification row exists for bob."
     },
     "c-member-mention.16": {
-      "result": "pass",
-      "evidence": "Arabic sentence with @omar: omar got mention notification and email; link rendered as <a dir=\"ltr\"> inside the sentence. Not visually screenshotted."
+      "result": "untested",
+      "evidence": "The test sentence began with Latin 'QA-RFT' so the paragraph stayed ltr; the @omar link rendered and omar got a mention row, direction inside an Arabic-first sentence not verified."
     },
     "c-member-mention.17": {
       "result": "pass",
-      "evidence": "removing the mention in an edit leaves the old notification (stays per contract); editing other text and re-adding the mention created no second notification"
+      "evidence": "After editing a reply to remove '@hana' the existing notification (744) stays and no second one is created."
     },
     "c-member-mention.18": {
       "result": "pass",
-      "evidence": "Enter on autocomplete inserts \"@grace \" and typing continues \"@grace could you look\"; saved reply links to /community/u/grace/"
+      "evidence": "Typing '@gra' and pressing Enter inserts '@grace ' and further typing continues after a space ('@grace could you help')."
     },
     "c-member-mention.19": {
-      "result": "pass",
-      "evidence": "member without avatar shows initials \"GR\" (no img); name not clipped (scrollWidth 199 = clientWidth 199, wraps)"
+      "result": "untested",
+      "evidence": "Autocomplete rows not captured (see .14)."
     }
   },
   "proposed_checks": []

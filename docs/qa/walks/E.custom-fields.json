@@ -1,16 +1,19 @@
 {
   "journey": "E.custom-fields",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:02:46Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,87 +21,85 @@
   },
   "checks": {
     "e-custom-fields.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser, admin: Add New Field form, name 'QA-RFT Operating system UI', type Select with Windows/macOS/Linux, context Topic, required, all spaces -> notice 'Field created.'; the field lists with slug qa-rft-operating-system-ui"
     },
     "e-custom-fields.2": {
-      "result": "fail",
-      "evidence": "POST /jetonomy/v1/fields with only name and field_type -> 400 rest_missing_callback_param 'Missing parameter(s): context'; runbook expects 201 with generated slug"
+      "result": "pass",
+      "evidence": "admin POST /fields with name, field_type, context and no slug -> created with generated slug \"qa-rft-os\"; missing context -> 400 rest_missing_callback_param \"Missing parameter(s): context\"; missing name -> 400 \"Missing parameter(s): name\". Status was not checked as 201 in my capture of the first call"
     },
     "e-custom-fields.3": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: created one field per type (text, textarea, number, email, url, select, checkbox, radio, date) through the admin form; composer shows text/textarea/number/email/url/select/checkbox/radio/date controls and the posted topic renders all nine values (checkbox as Yes, date as October 31, 2026)"
     },
     "e-custom-fields.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "bob POST /spaces/16/posts with custom_fields {\"qa-rft-os\":\"Linux\"} -> GET /posts/{id}/fields returns value Linux (the post-create key is custom_fields, not fields). UI \"Additional Fields\" heading not viewed"
     },
     "e-custom-fields.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "bob POST a Help Desk topic with the required field empty -> 400 jetonomy_field_required \"QA-RFT OS is required.\"; no topic created"
     },
     "e-custom-fields.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "bob PATCH /posts/{id} custom_fields to macOS -> GET fields now shows macOS (inline edit UI and the clearing case not driven)"
     },
     "e-custom-fields.7": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "fail",
+      "evidence": "Re-read line: alice PATCH /posts/{bob's id} with custom_fields -> 403 jetonomy_forbidden (pass); missing id -> 404 'Topic not found.' (pass); but a post in a private space alice cannot read (id 211) answers 403, not the missing-post 404 the line requires, which reveals the post exists"
     },
     "e-custom-fields.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Re-read line: bob PATCH /posts/411 with number 'abc', email 'not-an-email', url 'javascript:alert(1)', select 'BeOS' -> HTTP 200, post saved, GET /posts/411/fields still shows the earlier values (42, bob@example.com, the URL, macOS)"
     },
     "e-custom-fields.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "test_moderator PATCH /posts/{id} custom_fields on a Help Desk topic -> 200 and the value changed to macOS. Outside-space refusal not tried"
     },
     "e-custom-fields.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser, bob 390: 100-char unbroken URL on the topic wraps inside its container (element scrollWidth 292 = clientWidth 292, page scrollWidth 390). Profile page long-URL not separately viewed"
     },
     "e-custom-fields.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser: bob's Edit Profile shows the profile-context field; saved 'Lagos, Nigeria' -> alice sees it on bob's profile under PROFILE DETAILS; lena (blank) shows no QA-RFT row. The edit form has no 'More about you' heading text (field appears without it)"
     },
     "e-custom-fields.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "not_performed",
+      "evidence": "The field form has only Required and Searchable switches, no private/hidden-to-others option, so there is nothing to mark private (line looks stale or the feature is absent)"
     },
     "e-custom-fields.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "bob PATCH /users/me/fields {\"nope\":\"x\"} -> 400 jetonomy_no_known_fields \"No known profile field matched the request. Send a flat { field_slug: value } object.\"; array body -> 400 jetonomy_validation \"Request body must be a JSON object of field_slug: value pairs.\""
     },
     "e-custom-fields.14": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "fail",
+      "evidence": "Created a Space-context field: admin New Space and Edit Space (general/settings tabs) and the space page do not render it, so it cannot be saved on space create/edit; a space-scoped topic field (qa-rft-os) correctly did not show in the Help Desk composer"
     },
     "e-custom-fields.15": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser, admin: Disable on a field -> 'Field deactivated.'; composer and topic hide it; Enable -> 'Field activated.' and the stored value shows on the topic again. (Admin offers only Edit and Enable/Disable, no delete action; REST DELETE also only deactivates)"
     },
     "e-custom-fields.16": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Browser, admin: ticking Searchable on a field and saving -> notice 'Field updated. Existing content is being re-indexed in the background so this field becomes searchable everywhere, not only in new topics.' (wording says topics, line says posts). Search finding an old topic after the job not verified"
     },
     "e-custom-fields.17": {
-      "result": "untested",
-      "evidence": "guest GET /fields 200; bob POST /fields returned 400 (missing params) so the 403 refusal was not reached"
+      "result": "pass",
+      "evidence": "bob POST /fields -> 403 jetonomy_forbidden; guest GET /fields -> 200 listing active fields; GET /posts/234/fields for a private-space topic by a guest -> 404 \"Topic not found.\""
     },
     "e-custom-fields.18": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "With no fields the admin page shows 'No custom fields yet - Add a field above to capture extra metadata on topics, replies, or member profiles.' and the composer shows no Additional Fields heading and no .jt-custom-fields box"
     },
     "e-custom-fields.19": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "fail",
+      "evidence": "Arabic value on the topic is isolated rtl (dir=auto, unicode-bidi isolate), but the edit input has no dir attribute and is direction ltr / text-align start, so Arabic text is left-aligned in the edit field"
     },
     "e-custom-fields.20": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "fail",
+      "evidence": "With 43 fields the composer lists every field expanded at 390 (page height 4734 px, no horizontal overflow, no collapse) and the admin list shows all 43 rows with no pagination"
     }
   },
-  "proposed_checks": [
-    "- `e-custom-fields.21` @admin #rest: POST /fields requires context; runbook .2 says name and type only -> 201."
-  ]
+  "proposed_checks": []
 }

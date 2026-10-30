@@ -1,16 +1,19 @@
 {
   "journey": "E.extensions-manager",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:22:49Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,52 +21,52 @@
   },
   "checks": {
     "e-extensions-manager.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Admin Extensions page: 17 cards each with name, description, category tag and a checkbox whose aria-label is \"Enable or disable <name>\" (17/17); category filter Content narrows to 4 visible cards; filter buttons show counts (All 17, Administration 3, Intelligence 1, Privacy 1, Content 4, Engagement 3, Communication 4, Moderation 1)"
     },
     "e-extensions-manager.2": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Toggled Polls off via the card form POST: redirect to ?updated=1 shows \"Extension settings updated.\"; /jetonomy/v1/posts/1/poll went from 404 jetonomy_not_found (route live) to 404 rest_no_route (route gone); on again the route returned and wp_jt_pro_polls still had 3 rows. (Pro routes live under /jetonomy/v1/, not /jetonomy-pro/v1/ as the check text says)"
     },
     "e-extensions-manager.3": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Disabled then enabled all 17 extensions one by one: every POST redirected cleanly, all 17 cards active again at the end, wp-content/debug.log unchanged at 4547 bytes (no new line). Enable notices now name the next step, e.g. \"Polls is on. Next: members add a poll when they start a topic. Close or delete polls under Polls.\", \"SEO Pro is on. Next: set titles and descriptions for each space: Spaces, edit it, SEO tab.\", \"Email Digest is on. Next: use the Settings link on its card.\" Cards link to their setup screen (Settings tab, Manage rules, Conversations, Turn on per space) except Site Announcements, which names the Pin to community action in text"
     },
     "e-extensions-manager.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "wp_jt_pro_reactions held 74 rows; Reactions off: table still 74 and the reactions route returned rest_no_route; on again: GET /posts/1/reactions returned the counts {rocket,heart,thumbsup} again"
     },
     "e-extensions-manager.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "not_performed",
+      "evidence": "WPMediaVerse is a paid third-party plugin and is not installed on this stack"
     },
     "e-extensions-manager.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "bob and test_moderator POSTed the toggle form with their own valid nonce: both HTTP 403; an admin POST with a bad nonce: 403; all 17 cards stayed active"
     },
     "e-extensions-manager.7": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "At 1440 admin viewed Analytics, Badges, Custom Fields, Moderation > Auto rules, Polls, Conversations, Webhooks settings: each renders a titled page with the shared styling and no PHP notice text; Polls and Conversations are standard WP list-table screens"
     },
     "e-extensions-manager.8": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "Renamed product nouns were not set and re-checked across Pro screens in this pass"
     },
     "e-extensions-manager.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "wp action-scheduler action list --status=pending shows pro_send_daily_digest, pro_send_weekly_digest, pro_evaluate_badges, pro_license_check, pro_prune_webhook_deliveries pending once each (AI batch absent while AI has no provider); run step not repeated here, debug.log unchanged"
     },
     "e-extensions-manager.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "390px: Extensions page has 0px horizontal overflow, filter chips wrap to 4 rows, card toggle and Settings link both reachable (screenshot ~/work-artifacts/screenshots/2026-10/jt207-ext-390.png). The same-filter-after-reload part was not exercised because the toggle form reloads to the unfiltered grid"
     },
     "e-extensions-manager.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "not_performed",
+      "evidence": "Admin dark mode is out of scope for this pass (owner rule: no admin dark checks)"
     },
     "e-extensions-manager.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "fail",
+      "evidence": "Browser, two separate admin sessions clicked the Reactions and Polls toggles at the same moment: after reload only Reactions had changed, Polls stayed on, so one of the two writes did not persist (could be harness timing; both toggles were restored afterwards)"
     }
   },
   "proposed_checks": []

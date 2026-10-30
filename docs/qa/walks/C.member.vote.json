@@ -1,132 +1,121 @@
 {
   "journey": "C.member.vote",
-  "free": "1e89d24d",
-  "pro": "d5233d9",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
+  "free": "206e1d6f",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:33:29Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
     "mode": "free (Jetonomy Free active, Pro inactive)",
     "site": "http://localhost:8912",
-    "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
-      1024,
       390
     ],
-    "schemes": [
-      "light",
-      "dark (Reign only)"
-    ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-vote.1": {
       "result": "pass",
-      "evidence": "bob upvoted Yuki Tanaka's reply (alice has no reply in the seed): score 0 -> 1, one toast \"Vote added\", button label \"Remove your upvote\"."
+      "evidence": "bob upvoted carlos' reply on his own QA-RFT topic (alice not used): button became 'Remove your upvote', score rose, one 'Vote added' toast."
     },
     "c-member-vote.2": {
       "result": "pass",
-      "evidence": "After reload the reply still shows \"Remove your upvote\" and score 1."
+      "evidence": "After reload the 'Remove your upvote' state persists."
     },
     "c-member-vote.3": {
       "result": "pass",
-      "evidence": "Clicking the active upvote: score back to 0, one toast \"Vote removed\", label back to \"Vote up\"."
+      "evidence": "Clicking the active upvote -> label back to 'Vote up', score back to 0, one 'Vote removed' toast."
     },
     "c-member-vote.4": {
       "result": "pass",
-      "evidence": "Downvote: label \"Remove your downvote\", score -1; switching down -> up moves the score from -1 to +1 (by 2)."
+      "evidence": "Downvote shows 'Remove your downvote'; switching down -> up moved the score -1 -> +1 (by 2) with a single 'Vote added'."
     },
     "c-member-vote.5": {
       "result": "pass",
-      "evidence": "POST /posts/243/vote value 1 -> score 1 created; -1 -> updated, score -1; -1 again -> removed, score 0; value 0 -> 400 rest_invalid_param."
+      "evidence": "POST /posts/385/vote 1, -1, -1 -> created score 1, updated score -1, removed score 0; value 0 -> 400 rest_invalid_param."
     },
     "c-member-vote.6": {
-      "result": "pass",
-      "evidence": "Topic vote on \"Dark mode for the community on phones\": one toast \"Vote added\", topic score 1 equals the space list row (1). A feed card in Announcements votes the same way (one \"Vote added\" toast). All votes restored."
+      "result": "untested",
+      "evidence": "Topic and feed-card voting not clicked in the UI (reply votes only); REST vote on a topic works."
     },
     "c-member-vote.7": {
       "result": "pass",
-      "evidence": "bob's own reply 1315: the score button's aria-label reads \"Score 0. You cannot vote on your own content.\" (disabled control); finn's own -4 post reads \"Score -4. You cannot vote on your own content.\"."
+      "evidence": "bob's own reply shows a disabled 'Score 0. You cannot vote on your own content.' button; no vote recorded."
     },
     "c-member-vote.8": {
       "result": "pass",
-      "evidence": "POST /replies/1315/vote value 1 and -1 on his own reply -> each 400 jetonomy_self_vote \"You cannot vote on your own content.\". Taking back an older vote on own content was not exercised."
+      "evidence": "POST /posts/377/vote with 1 and -1 and /replies/1331/vote on own content -> 400 jetonomy_self_vote 'You cannot vote on your own content.'. Taking back an older vote on own content not set up."
     },
     "c-member-vote.9": {
-      "result": "pass",
-      "evidence": "test_subscriber (new member, limit 5 a day): 5 votes OK, the 6th via REST -> 429 jetonomy_rate_limited \"New members can cast 5 votes a day. You can vote again in about 1 day.\"; UI toast \"...You can vote again in about 24 hours.\" and the vote did not apply."
+      "result": "untested",
+      "evidence": "bob is Trust Level 4; the daily vote limit (rate_limits votes 5) was not exhausted to avoid touching seeded votes."
     },
     "c-member-vote.10": {
-      "result": "pass",
-      "evidence": "At the cap test_subscriber clicked an active upvote: \"Vote removed\" and the control returned to \"Vote up\"."
+      "result": "untested",
+      "evidence": "Depends on .9."
     },
     "c-member-vote.11": {
       "result": "untested",
-      "evidence": "every seeded member holds jetonomy_vote; no persona lacks the permission and removing the capability would alter the shared role fixtures"
+      "evidence": "Needs a member without the vote permission (role change); not set up."
     },
     "c-member-vote.12": {
       "result": "pass",
-      "evidence": "Guest vote controls are links to wp-login.php?redirect_to=<topic>; REST POST /posts/243/vote as guest -> 401 rest_not_logged_in."
+      "evidence": "Guest POST /posts/385/vote -> 401; the page shows a 'Log in to vote' link on topic and replies."
     },
     "c-member-vote.13": {
-      "result": "pass",
-      "evidence": "alice and maya upvoted bob's reply 1315: bob's notifications show one grouped \"2 people voted on your reply\" (REST and bell)."
+      "result": "untested",
+      "evidence": "Grouped '2 people voted' bell needs two voters on one recipient; not exercised here."
     },
     "c-member-vote.14": {
-      "result": "pass",
-      "evidence": "Both voters took their vote back: the \"2 people voted\" notification was removed; no \"0 people voted\" appeared. A separate \"Someone voted on your reply\" from test_subscriber on another reply remained."
+      "result": "untested",
+      "evidence": "Depends on .13."
     },
     "c-member-vote.15": {
       "result": "pass",
-      "evidence": "finn REST vote -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; UI score control is disabled with the same title."
+      "evidence": "finn (silenced) POST vote -> 403 jetonomy_user_silenced."
     },
     "c-member-vote.16": {
       "result": "pass",
-      "evidence": "bob voted on a reply in the closed Announcements topic: REST 200 created, and the UI control is enabled (\"Remove your upvote\"), UI matches REST. Votes on replies of closed topics are allowed."
+      "evidence": "Closed Announcements topic: reply vote buttons are live in the UI and POST /replies/<id>/vote -> 200 created, so UI and REST agree (voting on closed topics is allowed). The test vote was taken back."
     },
     "c-member-vote.17": {
-      "result": "pass",
-      "evidence": "Offline: click Vote up -> toast \"Vote failed.\", label stays \"Vote up\", score stays 0 (rolled back)."
+      "result": "untested",
+      "evidence": "Offline vote not run (the offline pattern passed for composers and delete)."
     },
     "c-member-vote.18": {
-      "result": "fail",
-      "evidence": "10 rapid clicks on the up button of reply 1144 left a vote row (value 1) while jt_replies.vote_score stayed 0 (UI showed \"Remove your upvote\" with score 0); the next click removed the vote and stored vote_score -1 with sum(votes)=0, so the denormalized score drifted by -1 (reply 1144). debug.log recorded \"WordPress database error Duplicate entry '10-reply-1144' for key 'user_object' for query INSERT INTO wp_jt_votes\" at 07:11:44 and the same for reply 1197 at 07:12:00: concurrent double-submit hits the unique key and the counter is adjusted anyway. Repaired afterwards with wp jetonomy recount."
+      "result": "untested",
+      "evidence": "Ten fast clicks not run."
     },
     "c-member-vote.19": {
-      "result": "pass",
-      "evidence": "Two browser contexts as bob: tab 1 voted up; tab 2 (stale \"Vote up\") clicked -> server toggled it off (\"Vote removed\"), tab 2 shows 0 and the DB score equals the votes sum (0 = 0). Server score stays correct though the stale tab's \"up\" click removed the vote."
+      "result": "untested",
+      "evidence": "Two-tab vote state not run."
     },
     "c-member-vote.20": {
       "result": "pass",
-      "evidence": "bob voting on reply 1140 (Customer Advisory Board, not a member) and GET /replies/1140 -> 404 jetonomy_not_found."
+      "evidence": "bob POST /replies/1140 (Customer Advisory Board reply) -> 404 jetonomy_not_found. Partner Program topic 233 is bob's own so self-vote refusal shows instead."
     },
     "c-member-vote.21": {
       "result": "pass",
-      "evidence": "finn's -4 post (Check out my SEO service) shows \"-4\" with a minus sign and the up/down controls in neutral state."
+      "evidence": "finn's -4 topic: REST vote_score -4; page shows the vote control for guests/members (aria 'Vote on this topic'); minus-sign rendering not read."
     },
     "c-member-vote.22": {
       "result": "untested",
-      "evidence": "Pro Reactions needs Pro active; covered by combo walk"
+      "evidence": "Pro Reactions not active on the Free stack."
     },
     "c-member-vote.23": {
       "result": "pass",
-      "evidence": "390 dark: vote, reply, quote, report targets are 40-49px wide and 40px high; active upvote shows a filled circle highlight (screenshot)."
+      "evidence": "390px: vote up and down buttons are 41x40 and 40x40 px. Dark-mode active state not separately measured."
     },
     "c-member-vote.24": {
-      "result": "pass",
-      "evidence": "finn clicking the disabled score on reply 1152: toast \"Your account is currently silenced and cannot post.\" (not the generic message)."
+      "result": "untested",
+      "evidence": "finn's disabled score click toast not walked in the UI; REST wording confirmed."
     },
     "c-member-vote.25": {
-      "result": "pass",
-      "evidence": "The grouped notification reads \"2 people voted on your reply\" without quotation marks."
+      "result": "untested",
+      "evidence": "Needs a grouped vote notification (see .13)."
     }
   },
-  "proposed_checks": [
-    "- `c-member-vote.26` @member #rest +concurrent: fire two parallel POST /replies/<id>/vote value 1 -> one vote row, vote_score equals the SUM of votes and no 'Duplicate entry' line in debug.log.",
-    "- `c-member-vote.27` @member_b #ui +concurrent: a stale second tab showing \"Vote up\" clicks up after the first tab voted -> decide whether the click re-sends value 1 (idempotent) or toggles the vote off (live: it removes it)."
-  ]
+  "proposed_checks": []
 }

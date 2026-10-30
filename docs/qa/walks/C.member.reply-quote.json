@@ -1,84 +1,76 @@
 {
   "journey": "C.member.reply-quote",
-  "free": "1e89d24d",
-  "pro": "d5233d9",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
+  "free": "206e1d6f",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:30:44Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
     "mode": "free (Jetonomy Free active, Pro inactive)",
     "site": "http://localhost:8912",
-    "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
-      1024,
       390
     ],
-    "schemes": [
-      "light",
-      "dark (Reign only)"
-    ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-reply-quote.1": {
       "result": "pass",
-      "evidence": "bob clicked Quote on Yuki Tanaka's reply (alice has no reply in this seed): composer prefilled with <blockquote class=\"jt-quote\"><cite>Yuki Tanaka</cite><p>...</p></blockquote>; after posting, the reply shows the quote as a blockquote with a 3px left bar."
+      "evidence": "bob clicked Quote on carlos' reply: composer prefilled with <blockquote class=jt-quote><cite>Carlos Mendes</cite>... ; the posted reply shows the blockquote (cite + text) preserved. Used carlos/bob (alice not used)."
     },
     "c-member-reply-quote.2": {
       "result": "pass",
-      "evidence": "Reply on a reply shows chip \"Replying to Yuki Tanaka \"35mm. You will get closer to the action...\"\" with a cancel; the posted reply (parent_id 1144) shows \"in reply to Yuki Tanaka\"."
+      "evidence": "Reply on a reply shows 'Replying to Carlos Mendes \"QA-RFT public reply by carlos\"' with a cancel cross; a posted quote/reply shows 'in reply to' linking back (parent set)."
     },
     "c-member-reply-quote.3": {
       "result": "pass",
-      "evidence": "Cancel reply on the chip, then posting: wp_jt_replies row has parent_id NULL (plain top-level reply)."
+      "evidence": "'Cancel reply' removes the chip; the next reply posts with parent_id null (REST confirms)."
     },
     "c-member-reply-quote.4": {
       "result": "pass",
-      "evidence": "Quoting a reply that has a list, <pre><code> block and a 100+ char URL: blockquote keeps ul and pre; at 1440 and 390 documentElement scrollWidth == viewport, the quote does not overflow, pre overflow-x auto."
+      "evidence": "Quoting a ~2000-char reply with a 100-char URL and posting it: no horizontal overflow at 1440, blockquote contained. List/code-block structure not tested in the quoted source."
     },
     "c-member-reply-quote.5": {
       "result": "pass",
-      "evidence": "bob on closed \"Scheduled maintenance on Saturday: what to expect\": the reply carries no Quote or Reply button."
+      "evidence": "bob on the closed Announcements topic: no Quote/Reply buttons and no composer."
     },
     "c-member-reply-quote.6": {
       "result": "pass",
-      "evidence": "Guest: no Quote or Reply button on any reply of the lens topic (only \"Log in to reply\" under the thread)."
+      "evidence": "Guest sees no Quote or Reply buttons on a reply (hidden, not redirected)."
     },
     "c-member-reply-quote.7": {
       "result": "pass",
-      "evidence": "bob quoting the deleted-account reply: cite reads \"[deleted]\" with the quoted text."
+      "evidence": "Quote on a reply by a deleted account (General Discussion street-photography topic) prefills cite '[deleted]'; nothing posted."
     },
     "c-member-reply-quote.8": {
-      "result": "pass",
-      "evidence": "bob's own private reply carries no Quote button (so it cannot be quoted); alice sees \"Private reply, visible to the topic author and moderators.\" and never the text."
+      "result": "untested",
+      "evidence": "Quoting a bob private reply then viewing as another member not run; but a private reply the reader may see shows no Quote button (see .14)."
     },
     "c-member-reply-quote.9": {
       "result": "pass",
-      "evidence": "ar locale, Quote on the Arabic reply by Aisha Khan: quote blockquote direction rtl, bar on the right (border-right 3px, left 0), cite \"Aisha Khan\"."
+      "evidence": "Quote of an Arabic reply: blockquote dir=auto, paragraph direction rtl."
     },
     "c-member-reply-quote.10": {
       "result": "pass",
-      "evidence": "Reign dark: quote bar 3px rgb ~(185,186,188) on dark surface, text and cite readable."
+      "evidence": "Dark mode: quote text colour ~0.80 luminance on bg ~0.20, cite 0.73, readable."
     },
     "c-member-reply-quote.11": {
       "result": "pass",
-      "evidence": "Observed contract: a Quote reply is saved with parent_id set (1313 -> parent 1144, shows \"in reply to\"), same as Reply. The runbook asks for the owner to decide; recorded as observed, no defect."
+      "evidence": "Observed contract: Quote posts a threaded reply (parent set, shows 'in reply to'), same as Reply."
     },
     "c-member-reply-quote.12": {
       "result": "pass",
-      "evidence": "Dark quote bar colour is ~73% white (0.726) on rgb(52,55,63) surface, well above 3:1 (runbook's 12%-white note is out of date)."
+      "evidence": "Dark mode quote bar is a 3px border rgb ~(185,186,188) on a ~(52,55,63) panel, clearly visible."
     },
     "c-member-reply-quote.13": {
       "result": "pass",
-      "evidence": "The [deleted] reply (1145) carries no OP badge; the OP badge appears only on Riley Thompson's reply."
+      "evidence": "Reply by a deleted account carries no OP/Author badge (checked on the street-photography topic)."
     },
     "c-member-reply-quote.14": {
       "result": "pass",
-      "evidence": "admin viewing the readable private reply sees Reply but no Quote button; bob on his own private reply likewise."
+      "evidence": "carlos' private reply, viewed by bob (OP, may read it): buttons are Vote, Reply, Report, Accept; no Quote."
     }
   },
   "proposed_checks": []

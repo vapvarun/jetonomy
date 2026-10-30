@@ -1,75 +1,73 @@
 {
   "journey": "C.member.share",
-  "free": "1e89d24d",
-  "pro": "d5233d9",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
+  "free": "e20af89a",
+  "pro": "373c1a0",
+  "walked_at": "2026-10-30T20:39:01Z",
+  "walker": "agent:sonnet scoped re-walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
+    "mode": "free (Jetonomy Free 2.0.7 active, Pro inactive)",
+    "site": "http://localhost:8912 (Docker)",
     "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
+      "reign"
     ],
     "viewports": [
       1440,
-      1024,
       390
     ],
     "schemes": [
-      "light",
-      "dark (Reign only)"
+      "light"
     ],
     "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
+    "locale": "en_US, ar for the 390 RTL check (restored)"
   },
   "checks": {
     "c-member-share.1": {
       "result": "pass",
-      "evidence": "Share on the topic opens .jt-share-dropdown anchored under the button (top 586 vs button bottom 582, right-aligned to it) with Copy link, Twitter / X, Facebook and LinkedIn."
+      "evidence": "bob on a topic: Share opens a 187px dropdown directly under the button (menu x191-378, y488; button bottom y484) with Copy link, Twitter / X, Facebook, LinkedIn.",
+      "screenshot": "rft-share-open-1440.png"
     },
     "c-member-share.2": {
       "result": "pass",
-      "evidence": "Copy link wrote the topic URL to the clipboard (navigator.clipboard.readText returned the topic URL) and showed \"Link copied\"; dropdown closed."
+      "evidence": "Copy link wrote the exact topic URL to the clipboard (readText equals the page URL) and showed the toast 'Link copied'."
     },
     "c-member-share.3": {
       "result": "pass",
-      "evidence": "Each social item opened a new tab: x.com intent/tweet?url=<encoded topic URL> (via X login redirect), facebook.com/sharer/sharer.php?u=<topic URL>, linkedin.com shareArticle?url=<encoded topic URL> (via login redirect)."
+      "evidence": "Each item opens a new tab: X intent/tweet with url and text=<title>, Facebook sharer.php?u=<url>, LinkedIn shareArticle?url=<url> (X and LinkedIn bounce through their login redirects, the target URL is preserved)."
     },
     "c-member-share.4": {
       "result": "pass",
-      "evidence": "Scrolling the page closed the dropdown, and a click on the heading inside the community app closed it. A click on the empty page margin outside #jetonomy-app (x=20) did not close it."
+      "evidence": "With the dropdown open, a wheel scroll closes it (aria-expanded false); a click outside closes it."
     },
     "c-member-share.5": {
       "result": "pass",
-      "evidence": "Escape closed the dropdown and focus returned to the Share button (.jt-share-btn)."
+      "evidence": "Escape closes the dropdown, aria-expanded returns to false and focus returns to the Share button; Enter and Space open it, ArrowDown/ArrowUp/Home/End move between the four items."
     },
     "c-member-share.6": {
       "result": "pass",
-      "evidence": "Guest sees the same dropdown (Copy link, Twitter / X, Facebook, LinkedIn)."
+      "evidence": "Guest on a public topic: the Share button opens its dropdown (aria-expanded true, 187x150px, anchored). Nit: a click in the first ~1.2s after load is ignored until the interactive store hydrates (works from ~1.6s)."
     },
     "c-member-share.7": {
       "result": "pass",
-      "evidence": "bob on a Partner Program topic: Share offers the same four items and the link is the same private URL; no body text is exposed in the dropdown."
+      "evidence": "alice (member) on a Partner Program topic: Share offers the same four items with the same private URL; the oEmbed endpoint returns 404 for that topic, so nothing from the body is exposed through sharing."
     },
     "c-member-share.8": {
       "result": "pass",
-      "evidence": "Guest GET /oembed?url=<public topic> -> 200 {\"type\":\"rich\",\"title\":\"Dark mode for the community on phones\",\"author_name\":\"Sofia Romano\",...}; for a Partner Program or Moderators' Room topic -> 404 jetonomy_oembed_not_found \"Thread not found.\"."
+      "evidence": "Guest GET /oembed?url=<public topic> -> 200 with title and author_name (Grace...); partner-program topic and a moderators-room URL -> 404 jetonomy_oembed_not_found."
     },
     "c-member-share.9": {
       "result": "pass",
-      "evidence": "Grace's 159-char topic: dropdown (x 191-378 of 1440) stays in view; Facebook share opens with the URL."
+      "evidence": "Grace's 159-char title: the X link carries the title in text=, the heading wraps (159px tall) at 390, the dropdown stays inside the viewport."
     },
     "c-member-share.10": {
       "result": "pass",
-      "evidence": "390px + ar locale on the Arabic topic: Share dropdown spans x 40-227 of 390 (button x 187-227), fully inside the viewport and opening toward the inline end."
+      "evidence": "390px with site language ar (RTL, restored): dropdown x40-227 of 390, opening toward the inline end and fully inside the viewport.",
+      "screenshot": "rft-share-390-rtl.png"
     },
     "c-member-share.11": {
       "result": "pass",
-      "evidence": "With navigator.clipboard.writeText rejecting and execCommand('copy') false, Copy link shows the toast \"Could not copy the link. Copy it from the address bar.\"."
+      "evidence": "With navigator.clipboard.writeText rejecting and execCommand('copy') false, Copy link shows 'Could not copy the link. Copy it from the address bar.'"
     }
   },
-  "proposed_checks": [
-    "- `c-member-share.12` @member #ui: a click on the empty page margin outside the community container closes the dropdown (live: only clicks inside the app close it)."
-  ]
+  "proposed_checks": []
 }

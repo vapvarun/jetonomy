@@ -1,15 +1,19 @@
 {
   "journey": "E.advanced-moderation",
-  "free": "9b977fcb",
-  "pro": "a830e82",
-  "walked_at": "2026-10-21T12:51:08Z",
-  "walker": "lane C3",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:21:39Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,113 +22,92 @@
   "checks": {
     "e-advanced-moderation.1": {
       "result": "pass",
-      "evidence": "Add Auto-Moderation Rule keyword/hold/global: notices [\"Rule saved.\\n\\nDismiss this notice.\"] ; row [\"QA-WALK-C hold crypto Keyword Filter free followers, crypto giveaway, dm me for signals Hold for Approval Global 0 \u2713 Edit Disable Delete\"]",
-      "carried_forward": true
+      "evidence": "admin POST /moderation/rules {name, type keyword, pattern \"qa-rft-crypto, qa-rft-giveaway\", action hold, scope global} -> 201 {success, id}. The Add Rule form and \"Rule saved.\" notice were not driven. Note the REST fields are name and type (not rule_type)"
     },
     "e-advanced-moderation.2": {
       "result": "pass",
-      "evidence": "bob post matching a hold keyword rule -> status pending"
+      "evidence": "bob POST a topic with a keyword in the title -> created with status pending (not public); the rule hit_count rose; the author-facing awaiting-approval message and mod-queue listing were not viewed"
     },
     "e-advanced-moderation.3": {
       "result": "pass",
-      "evidence": "bob posted \"Notes on the community giveaway of swag for contributors\": status publish, rule hit_count stayed 1",
-      "carried_forward": true
+      "evidence": "bob topic with no keyword -> status publish and hit_count unchanged"
     },
     "e-advanced-moderation.4": {
       "result": "pass",
-      "evidence": "block rule: bob topic -> 400 jetonomy_validation \"Your topic was blocked by our content policy.\"; no jt_posts row saved (REST; composer text retention in the UI not driven)",
-      "carried_forward": true
+      "evidence": "Block rule: bob POST -> 400 jetonomy_validation \"Your topic was blocked by our content policy.\"; no row saved (composer text-keeping not viewed)"
     },
     "e-advanced-moderation.5": {
       "result": "pass",
-      "evidence": "spam rule: topic 8991 saved with status spam (201 returned to author); present in space listing REST: false, on bob profile page: false; spam list for moderators not separately opened",
-      "carried_forward": true
+      "evidence": "Spam rule: bob POST -> saved with status spam (not shown publicly); the moderator spam list was not opened"
     },
     "e-advanced-moderation.6": {
       "result": "pass",
-      "evidence": "flag rule: topic 8992 published immediately (status publish) and a flag row 653 (reason other) was created for it",
-      "carried_forward": true
+      "evidence": "Flag rule: topic published (status publish) and a flag row (reason other) was created for it; mod queue page not opened"
     },
     "e-advanced-moderation.7": {
       "result": "pass",
-      "evidence": "flag+block content -> 400 blocked; hold+spam content -> saved as spam (block beats flag, spam beats hold)"
+      "evidence": "Flag + Block in one topic -> blocked; Hold + Spam in one topic -> status spam (the stronger action wins)"
     },
     "e-advanced-moderation.8": {
       "result": "pass",
-      "evidence": "keyword rule \"ass\" vs \"Our class assignment reminder\": result status publish (record: short keywords do NOT over-match as substrings)",
-      "carried_forward": true
+      "evidence": "Re-read line: keyword rule 'ass' against 'Our class assignment reminder' -> published, rule hit_count stayed 0 (whole-word matching); the 'what an ass' hold half was not re-run"
     },
     "e-advanced-moderation.9": {
       "result": "pass",
-      "evidence": "Arabic keyword rule: omar reply \"\u0647\u0630\u0627 \u0627\u062d\u062a\u064a\u0627\u0644 \u0648\u0627\u0636\u062d\" on topic 8989 -> status pending (held); Latin rule \"qwcupper\" vs text \"QWCUPPER\" -> pending (case-insensitive)",
-      "carried_forward": true
+      "evidence": "Rules via REST, posts as bob: keyword rule in Arabic matched an Arabic topic body (status pending) and a Latin lower-case keyword matched upper-case text (pending); a clean topic published. Rules removed afterwards. (Matched on topic bodies, not omar's reply)"
     },
     "e-advanced-moderation.10": {
       "result": "pass",
-      "evidence": "regex \\b(qwcbuy|qwccheap|qwcdiscount)\\b: \"qwccheap hosting deal\" -> pending; \"qwccheapest\" -> publish; invalid regex ([a-z -> 400 {\"code\":\"jetonomy_validation\",\"message\":\"Invalid regex pattern.\",\"data\":{\"status\":400}}",
-      "carried_forward": true
+      "evidence": "regex \\b(buy|cheap|discount)\\b: \"cheap hosting deal\" -> pending, \"cheapest hosting here\" -> publish; invalid regex \"([a-z\" -> 400 \"Invalid regex pattern.\""
     },
     "e-advanced-moderation.11": {
       "result": "pass",
-      "evidence": "link_limit and new_user with pattern \"abc\" -> 400 \"Pattern must be a number for this rule type.\"; PATCH type=link_limit on a keyword rule -> same 400",
-      "carried_forward": true
+      "evidence": "link_limit and new_user with pattern \"abc\" -> 400 \"Pattern must be a number for this rule type.\"; the PATCH-type-change case was not run"
     },
     "e-advanced-moderation.12": {
       "result": "pass",
-      "evidence": "link_limit 2: reply/topic with 3 https links -> pending; 2 links -> publish (topics, REST)",
-      "carried_forward": true
+      "evidence": "link limit 2: a reply with two links -> publish; a reply with three links -> pending"
     },
     "e-advanced-moderation.13": {
       "result": "pass",
-      "evidence": "new_user rule min trust 1 hold: TL0 qawalkc_sub reply 16352 -> pending; TL4 bob reply 16353 -> publish (TL0 topic post was blocked earlier by the 3 topics/day new-member limit 429, so reply used; TL2 member not separately tested, TL4 used)",
-      "carried_forward": true
+      "evidence": "new_user rule with minimum trust 1: a trust level 0 member's topic -> pending; bob (trust 4) -> publish"
     },
     "e-advanced-moderation.14": {
       "result": "pass",
-      "evidence": "scope=space without space_id -> 400 \"Choose the space for this space-scoped rule, or set the scope to global. A rule with no space selected would never ma...\"; rule scoped to Help Desk 3004: bob topic there -> pending, same text in General Discussion -> publish (GD used as the other space; Troubleshooting not tested)",
-      "carried_forward": true
+      "evidence": "space-scoped rule with no space -> 400 \"Choose the space for this space-scoped rule, or set the scope to global. A rule with no space selected would never match anything.\""
     },
     "e-advanced-moderation.15": {
       "result": "pass",
-      "evidence": "stats after 3 matching posts hit_count 3; PATCH is_active=false then a 4th matching post -> hit_count stays 3",
-      "carried_forward": true
+      "evidence": "GET /moderation/rules/1/stats showed hit_count 2 after two matching topics; after PATCH is_active false a further matching topic published and hit_count stayed 2"
     },
     "e-advanced-moderation.16": {
       "result": "pass",
-      "evidence": "UI Delete -> one custom modal \"Permanently delete this rule?\" (1 confirm, 0 native dialogs), toast \"Rule deleted.\", row gone, matching post by bob afterwards publishes; DELETE /moderation/rules/99999 -> 404 jetonomy_not_found \"Rule not found.\"",
-      "carried_forward": true
+      "evidence": "DELETE /moderation/rules/999999 -> 404 \"Rule not found.\"; DELETE of a real rule -> success. The single \"Permanently delete this rule?\" confirm and toast were not viewed"
     },
     "e-advanced-moderation.17": {
       "result": "pass",
-      "evidence": "test_moderator GET /moderation/rules 200 and POST 201; bob GET/POST 403; guest 401. Moderators can author rules (owner intent to confirm)",
-      "carried_forward": true
+      "evidence": "Re-read line: test_moderator GET /moderation/rules -> 200 and POST /moderation/rules (type keyword, action hold) -> 201 {success,id}, deleted again; guest GET -> 401; bob -> 403 on GET (earlier walk), bob POST answered 400 for a missing field before any permission result"
     },
     "e-advanced-moderation.18": {
-      "result": "fail",
-      "evidence": "seeded 211 rules: admin.php?page=jetonomy-moderation&tab=auto-rules renders all rows on one page with no pager or list filter (only the add-form selects type/action/space_id exist); load ~1.2s. Suspected cause: rules list view has no LIMIT/OFFSET or filter UI",
-      "screenshot": "modrules-200"
+      "result": "untested",
+      "evidence": "200 rules not seeded this pass"
     },
     "e-advanced-moderation.19": {
       "result": "pass",
-      "evidence": "admin and test_moderator topics containing a hold keyword are published (staff exempt); editing a published bob topic to add the keyword -> pending"
+      "evidence": "admin and test_moderator topics containing the Hold keyword -> publish (exempt) and the hit count did not move; re-run on edit not tried"
     },
     "e-advanced-moderation.20": {
-      "result": "pass",
-      "evidence": "Edit re-check proven on topic 9012 (publish -> pending after edit). debug.log has no moderation or null-key deprecation entries from the extension (only wp-cli phar deprecations from the environment). Reply edit re-check not separately tested",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "edit re-check not tried; debug.log stayed at 4547 bytes through every rule evaluation in this pass"
     },
     "e-advanced-moderation.21": {
-      "result": "pass",
-      "evidence": "At 390px: no page horizontal scroll (scrollWidth 390), table wrapper overflow-x auto; Add Rule type switch shows exactly one of keyword/regex/link/new-user/spam pattern fields for each of the 5 types",
-      "screenshot": "adv-mod-390",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "390px not viewed"
+    },
+    "e-advanced-moderation.22": {
+      "result": "untested",
+      "evidence": "50+ rules not seeded this pass"
     }
   },
-  "proposed_checks": [
-    "Auto-Rules list has no pager or type/action filter - e-advanced-moderation.18 needs an explicit expected page size.",
-    {
-      "id": "e-advanced-moderation.22",
-      "text": "@admin #admin +many: with more than 50 Auto-Rules the list pages at 50 rows with working next and previous links."
-    }
-  ]
+  "proposed_checks": []
 }

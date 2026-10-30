@@ -1,16 +1,19 @@
 {
   "journey": "E.seo-pro",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:16:43Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,64 +21,68 @@
   },
   "checks": {
     "e-seo-pro.1": {
-      "result": "untested",
-      "evidence": "REST PATCH /spaces/16/seo returned the title/description (200 persisted); og:image and admin SEO tab not walked (values restored to empty)"
+      "result": "pass",
+      "evidence": "admin PATCH /spaces/16/seo with meta_title \"Help Desk - Get answers from the community | {site_name}\", a description and an og_image -> saved and returned by GET (the SEO tab form itself was not driven). A description containing <script>alert(1)</script> was stored with the script tag stripped"
     },
     "e-seo-pro.2": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "guest view of /community/s/help-desk/: one <title> \"Help Desk - Get answers from the community | Northwind Community\" ({site_name} filled), one meta description, og:title, og:description, og:image (https://example.com/og.png), twitter:card summary_large_image and one canonical; each tag appears once"
     },
     "e-seo-pro.3": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Guest request of a Help Desk topic head: title 'Members cannot see ... \u2013 Help Desk \u2013 Northwind Community', og:type article, og:title/description present, article:author = member public name (Riley Thompson), published/modified times ISO 8601 (+00:00), article:section = Help Desk"
     },
     "e-seo-pro.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "General Discussion (no overrides): title \"General Discussion - Northwind Community\" and 0 empty content=\"\" meta tags on the page"
     },
     "e-seo-pro.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Help Desk space meta description is trimmed to 30 words ending '...' (entities escaped); a 159-char General Discussion topic title appears whole in <title> and og:title with the head intact"
     },
     "e-seo-pro.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "noindex+nofollow on Help Desk -> <meta name=\"robots\" content=\"noindex, nofollow\"> appears and the canonical_base override https://canon.example.com/help/ is used on that space only; untick removes the robots tag (0) and General Discussion has none"
     },
     "e-seo-pro.7": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "Sitemap exclude/priority/changefreq overrides were not walked in this pass"
     },
     "e-seo-pro.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Guest request of two Customer Advisory Board topics -> HTTP 404, <title> 'Page not available - Northwind Community', no topic title in og tags or JSON-LD"
     },
     "e-seo-pro.9": {
       "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "No anonymous topic was left on the stack to inspect (the anonymous-posting walk removed its own); article:author on anonymous topics not re-checked"
     },
     "e-seo-pro.10": {
       "result": "pass",
-      "evidence": "bob and test_moderator PATCH /spaces/16/seo -> 403; guest PATCH and GET -> 401; admin sitemap_priority 'high' saved as '' (reset)"
+      "evidence": "bob and test_moderator PATCH /spaces/16/seo -> 403 jetonomy_forbidden; bob GET -> 403; guest GET -> 401. An invalid sitemap_priority \"high\" was reset to empty (default) and the save succeeded"
     },
     "e-seo-pro.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "meta description with quotes and a <script> tag: the script tag was stripped on save and the quotes rendered as &quot; in the page head (once-escaped)"
     },
     "e-seo-pro.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Arabic topic head: <title> and og:title and meta description carry the Arabic text as UTF-8 (only the dash is an HTML entity), not double-encoded"
     },
     "e-seo-pro.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "/robots.txt lists the Sitemap lines and a \"Jetonomy Forum SEO Pro\" block with Allow /community/ and /community/s/*/, Disallow /community/notifications/; it does not disallow public spaces. An excluded-space rule line was not tested"
     },
     "e-seo-pro.14": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "with SEO Pro off: Help Desk title falls back to \"Help Desk - Northwind Community\", no noindex robots tag from the leftover setting, and the default free JSON-LD schema still prints; switched back on afterwards"
     },
     "e-seo-pro.15": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "after each PATCH the change showed in the very next frontend request (title, robots and canonical changed immediately, no cache clear)"
+    },
+    "e-seo-pro.new1": {
+      "result": "pass",
+      "evidence": "2.0.7: PATCH /spaces/16/seo with og_image \"not a url\" -> 400 rest_invalid_param (og_image \"Invalid parameter.\"); canonical_base \"javascript:alert(1)\" and \"ftp://x\" -> 400 (canonical_base \"Invalid parameter.\"); the stored values were kept"
     }
   },
   "proposed_checks": []

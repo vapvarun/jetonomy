@@ -1,15 +1,19 @@
 {
   "journey": "E.polls",
-  "free": "9b977fcb",
-  "pro": "a830e82",
-  "walked_at": "2026-10-21T12:51:08Z",
-  "walker": "lane C3",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:07:39Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,97 +22,88 @@
   "checks": {
     "e-polls.1": {
       "result": "pass",
-      "evidence": "bob (UI) in General Discussion composer: Add Poll, question + two options, Post Topic -> topic published at /community/s/general-discussion/t/qa-walk-c3-ui-poll-one-option/ showing the question and both options"
+      "evidence": "Browser, bob: General Discussion composer > Add Poll, question 'Which day suits the monthly community call?', three options, Single choice, Post Topic -> topic publishes and the poll shows all three options (0%, 0 voters)"
     },
     "e-polls.2": {
       "result": "pass",
-      "evidence": "composer with question and only one option, Post Topic -> inline 'Question and at least 2 options required.' and URL stayed on /new/ (no topic created)",
-      "screenshot": "poll-compose-1opt"
+      "evidence": "Browser: question plus one filled option and one blank -> modal 'Question and at least 2 options required.', stays on /new/, no topic created (the button is labelled Post Topic, not Create Poll)"
     },
     "e-polls.3": {
       "result": "pass",
-      "evidence": "bob POST /posts/{id}/poll: blank option -> 400 'A poll requires at least 2 non-empty options.'; 501-char question -> 400 'Poll question must be 500 characters or fewer.'; 256-char option -> 400 'Poll option must be 255 characters or fewer.'; closes_at 'notadate' -> 400 'Invalid close date format.'"
+      "evidence": "bob POST /posts/{id}/poll: blank option -> 400 \"A poll requires at least 2 non-empty options.\"; 501-char question -> 400 \"Poll question must be 500 characters or fewer.\"; 256-char option -> 400 \"Poll option must be 255 characters or fewer.\"; closes_at \"notadate\" -> 400 \"Invalid close date format.\""
     },
     "e-polls.4": {
       "result": "pass",
-      "evidence": "second POST /posts/16662/poll -> 409 jetonomy_duplicate 'This topic already has a poll.' (matches current runbook); topic keeps one poll (172)"
+      "evidence": "second POST on the same topic -> 409 jetonomy_duplicate \"This topic already has a poll.\""
     },
     "e-polls.5": {
       "result": "pass",
-      "evidence": "priya voted Thursday via REST then via UI on a fresh poll: option shows 100% and jt-poll-option--voted (mine); DB vote_count equals real vote rows"
+      "evidence": "REST: alice vote on Thursday -> total_voters 1, option count 1 (UI marking of her choice not viewed)"
     },
     "e-polls.6": {
       "result": "pass",
-      "evidence": "priya moved her vote on poll 172 (Thursday -> Saturday) and in the UI (Thursday -> Tuesday): old 0%, new 100%; DB option counts 526:1, 527:0, 528:1 equal the vote rows (one voter each)"
+      "evidence": "REST: alice then voted Saturday -> Thursday 0, Saturday 1, total_voters stays 1"
     },
     "e-polls.7": {
       "result": "pass",
-      "evidence": "priya DELETE /polls/172/vote -> 200, second DELETE -> 404 jetonomy_not_found 'No vote found to remove.'"
+      "evidence": "alice DELETE /polls/{id}/vote -> 200 all counts 0, total_voters 0; second DELETE -> 404 \"No vote found to remove.\""
     },
     "e-polls.8": {
       "result": "pass",
-      "evidence": "maya multiple-choice poll 173: options 529+530 -> 200, empty option_ids -> 200 (cleared); DB counts back to 0, never negative"
+      "evidence": "Browser, maya on a Multiple choice poll: ticking Alpha then Beta votes instantly (Alpha 100%, then Alpha 50% / Beta 50%, persists after reload); unticking both returns to 0 voters, never negative. There is no submit button, each tick saves"
     },
     "e-polls.9": {
       "result": "pass",
-      "evidence": "single poll: option_ids [526,527] -> 400 'This poll allows only one choice.'; option 529 of another poll -> 400 'Option 529 does not belong to this poll.'; [] -> 400 'At least one option is required.'"
+      "evidence": "maya single-choice vote with two option_ids -> 400 \"This poll allows only one choice.\"; option id 1 from another poll -> 400 \"Option 1 does not belong to this poll.\"; empty option_ids -> 400 \"At least one option is required.\""
     },
     "e-polls.10": {
       "result": "pass",
-      "evidence": "maya fired 3 simultaneous POST /polls/172/vote for the same option (all 200) and 2 simultaneous on multi poll 173: DB vote_count 1 equals 1 vote row for each option (previously double counted). Fixed since previous walk"
+      "evidence": "Browser: double-click on an option -> count 1 (Thursday 100%); lena voting the same option from two tabs at once -> 2 voters total, Tuesday 50% / Thursday 50%, sum 100"
     },
     "e-polls.11": {
       "result": "pass",
-      "evidence": "bob PATCH /polls/172 closes_at 2020: priya vote -> 403 jetonomy_closed 'This poll has closed.'; unvote -> 403 'This poll has closed. Votes cannot be changed.'"
+      "evidence": "set closes_at in the past on the poll: maya vote -> 403 jetonomy_closed \"This poll has closed.\"; alice DELETE vote -> 403 \"This poll has closed. Votes cannot be changed.\" (REST status is 403, matches the runbook alternative); results still returned"
     },
     "e-polls.12": {
       "result": "pass",
-      "evidence": "bob PATCH closes_at null reopened poll 172; priya vote 200 afterwards"
+      "evidence": "Re-read line, bob as topic author: PATCH /polls/{id} closes_at 2020-01-01 -> response closed:true and the page shows closed on reload; closes_at null -> closed:false; PATCH body {closed:true} alone changes nothing (closed stays false)"
     },
     "e-polls.13": {
       "result": "pass",
-      "evidence": "priya PATCH /polls/172 -> 403 'You do not have permission to modify this poll.'; priya POST /posts/16662/poll -> 403 jetonomy_forbidden 'You do not have permission to create a poll on this topic.' (runbook says 'post'; noun is the owner topic label)"
+      "evidence": "alice PATCH bob's poll -> 403 \"You do not have permission to modify this poll.\"; alice POST a poll on bob's topic -> 403 \"You do not have permission to create a poll on this topic.\" (wording says \"topic\", runbook says \"post\"); moderator/space_admin success not walked"
     },
     "e-polls.14": {
       "result": "pass",
-      "evidence": "guest: poll results visible on public topic (\"Thursday 09:00 UTC 100% ... 1 voter \u00b7 Log in to vote.\"), no vote control; POST /polls/151/vote -> 401 rest_not_logged_in. Note \"Log in to vote.\" is plain text, not a link",
-      "screenshot": "poll-guest",
-      "carried_forward": true
+      "evidence": "guest POST /polls/{id}/vote -> 401 rest_not_logged_in; guest GET of the poll route has no GET route (rest_no_route) so results appear through the topic page only (page not viewed here)"
     },
     "e-polls.15": {
       "result": "pass",
-      "evidence": "bob vote on CAB poll 153: 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Poll not found.\",\"data\":{\"status\":404}} | nonexistent poll 99999: 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Poll not found.\",\"data\":{\"status\":404}} | PATCH CAB: 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Poll not found.\",\"data\":{\"status\":404}} vs missing: 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Poll not found.\",\"data\":{\"status\":404}} | guest vote CAB: 401 {\"code\":\"rest_not_logged_in\",\"message\":\"You must be logged in to ",
-      "carried_forward": true
+      "evidence": "poll in private Customer Advisory Board: bob vote -> 404 jetonomy_not_found \"Poll not found.\" identical to a nonexistent poll id (99999); guest GET -> 404 rest_no_route; (v2.0.7 privacy follow-through holds for vote)"
     },
     "e-polls.16": {
       "result": "pass",
-      "evidence": "finn POST /polls/172/vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+      "evidence": "finn (silenced) POST vote -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\""
     },
     "e-polls.17": {
       "result": "pass",
-      "evidence": "omar (space-banned from Off-Topic Lounge) POST /polls/174/vote on admin-created lounge poll -> 404 jetonomy_not_found 'Poll not found.'; option count stays 0"
+      "evidence": "omar (space_ban on Off-Topic Lounge) vote on a poll in that space -> 404 \"Poll not found.\" (refused, hidden like a missing poll); vote count unchanged at 0"
     },
     "e-polls.18": {
       "result": "pass",
-      "evidence": "480-char Arabic question + 250-char Arabic option and 480-char Latin question + long option at 390px: documentElement scrollWidth 390 == clientWidth, .jt-poll scrollWidth == clientWidth; Arabic question/options carry dir=auto and compute direction rtl, Latin ltr (fixed since previous walk)",
-      "screenshot": "poll-qa-walk-c3-poll-rtl-long-390"
+      "evidence": "Browser, maya 390: poll with 480-char question and 250-char option stays inside the card (poll x 32-358, children max 337, page scrollWidth 390); Arabic question and options render dir rtl with dir=auto and start alignment, so right-aligned"
     },
     "e-polls.19": {
       "result": "pass",
-      "evidence": "wp-admin Jetonomy > Polls: Poll Management list shows topic titles (e.g. \"Q1 roadmap draft for review\", \"QA-WALK-C poll target topic\"); poll #104 whose topic is gone shows a \"\u2014\" placeholder; rows-per-page selector and search present. Menu slug is jetonomy-pro-polls",
-      "screenshot": "polls-admin",
-      "carried_forward": true
+      "evidence": "wp-admin Jetonomy > Polls lists Question and Topic columns with real topic titles (e.g. \"How important is dark mode to you?\" with its topic); deleted-topic placeholder and paging not walked"
     },
     "e-polls.20": {
       "result": "fail",
-      "evidence": "no 'hide results until vote' setting exists in the Polls extension (grep of includes and polls-frontend.js finds none; results are always shown); contract question still open for the owner (runbook depth note)"
+      "evidence": "No 'hide results until vote' mode exists: the Polls admin page and settings have no such switch and the pro polls code has no such option; the line asks for a missing setting to be raised"
+    },
+    "e-polls.21": {
+      "result": "pass",
+      "evidence": "alice voted then changed vote on a single-choice poll: one count moved from old to new and total_voters stayed 1 (same data as .5/.6)"
     }
   },
-  "proposed_checks": [
-    "Failure message for a non-owner creating a poll says \"on this topic\" - runbook polls.13 still says \"post\".",
-    {
-      "id": "e-polls.21",
-      "text": "@member #ui: vote on a single-choice poll -> its count rises by exactly one and the total by one; change the vote -> one count moves from the old option to the new and the total is unchanged."
-    }
-  ]
+  "proposed_checks": []
 }

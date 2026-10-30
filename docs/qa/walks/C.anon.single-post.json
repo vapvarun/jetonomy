@@ -1,148 +1,133 @@
 {
   "journey": "C.anon.single-post",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
+  "free": "607c4b7b",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:00:04Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
     "mode": "free (Jetonomy Free active, Pro inactive)",
     "site": "http://localhost:8912",
-    "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
-      1024,
       390
     ],
-    "schemes": [
-      "light",
-      "dark (Reign only)"
-    ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-anon-single-post.1": {
       "result": "pass",
-      "evidence": "Guest on \"Dark mode for the community on phones\" (Feature Requests): title, body, author Sofia Romano, vote count 0, Replies 45 and replies render."
+      "evidence": "Guest opens \"Favourite lens for street photography?\" and \"Dark mode for the community on phones\": title, body, author, votes and replies render."
     },
     "c-anon-single-post.2": {
       "result": "pass",
-      "evidence": "Guest vote controls and \"Log in to reply\" are links to wp-login.php?redirect_to=<topic URL> (no Subscribe control is offered to guests). Clicking Log in to reply, logging in as bob (temporary password, hash restored) returned to the same topic URL with the composer showing."
+      "evidence": "Guest sees \"Log in to reply\" linking wp-login with redirect_to the topic URL; REST votes/replies give 401 (no silent 403)."
     },
     "c-anon-single-post.3": {
       "result": "pass",
-      "evidence": "Guest POST /posts/243/replies and /posts/243/vote -> 401 code rest_not_logged_in (\"You must be logged in to perform this action.\"). Status is 401, never 200; the code is rest_not_logged_in rather than jetonomy_login_required."
+      "evidence": "Guest POST /posts/237/replies and /posts/237/vote -> 401 each."
     },
     "c-anon-single-post.4": {
       "result": "pass",
-      "evidence": "Yuki Tanaka's reply on Favourite lens for street photography shows \"edited 2 hours ago\" with title \"October 30, 2026 4:36 am\" (exact time on hover)."
+      "evidence": "Reply edited 2h after posting shows \"edited 16 hours ago\" with title \"October 30, 2026 4:36 am\"."
     },
     "c-anon-single-post.5": {
       "result": "pass",
-      "evidence": "bob's reply edited seconds after posting shows no edited mark; Riley's unedited reply shows none either."
+      "evidence": "QA-RFT reply edited seconds after posting shows no edited mark; unedited replies show none."
     },
     "c-anon-single-post.6": {
       "result": "pass",
-      "evidence": "Riley Thompson's reply shows \"in reply to Yuki Tanaka\" linking to #reply-1144."
+      "evidence": "Nested reply shows \"in reply to Yuki Tanaka\" linking #reply-1144."
     },
     "c-anon-single-post.7": {
       "result": "pass",
-      "evidence": "Empty-state text on a zero-reply open topic: guest \"No replies yet.\"; bob \"No replies yet. Be the first to reply!\"."
+      "evidence": "Zero-reply topic: guest sees \"No replies yet.\" with login panel, no \"Be the first\"; bob sees \"No replies yet. Be the first to reply!\" with composer."
     },
     "c-anon-single-post.8": {
       "result": "pass",
-      "evidence": "Guest on closed \"Community guidelines updated for 2026\" (0 replies): Closed badge, no composer, \"No replies yet.\". (The runbook's closed Announcements topic with a reply is not zero-reply; this seed's closed zero-reply topic was used.)"
+      "evidence": "Closed topic \"Community guidelines updated for 2026\" (0 replies, Announcements): Closed badge, \"No replies yet.\", no composer for guest."
     },
     "c-anon-single-post.9": {
       "result": "pass",
-      "evidence": "test_moderator on the closed zero-reply topic: composer present and \"No replies yet. Be the first to reply!\". bob on the same topic: \"No replies yet.\" and no composer."
+      "evidence": "test_moderator on the same closed empty topic sees composer and \"Be the first to reply!\"."
     },
     "c-anon-single-post.10": {
       "result": "pass",
-      "evidence": "Guest on Partner Program topic: HTTP 404, title \"Page not available\", text \"Topic not found. This topic may have been removed, or the link is wrong.\" identical to a made-up topic slug."
+      "evidence": "Guest on a Partner Program topic: 404 \"Topic not found. This topic may have been removed, or the link is wrong.\" same as missing topic."
     },
     "c-anon-single-post.11": {
       "result": "pass",
-      "evidence": "Guest on Moderators' Room topic URL: same 404 page, same title and text as a missing topic; names neither space nor topic. Customer Advisory Board topic identical."
+      "evidence": "Hidden Moderators' Room topic URL: identical 404 page/title (\"Page not available\") as a missing topic; no space/topic name."
     },
     "c-anon-single-post.12": {
       "result": "pass",
-      "evidence": "Guest GET /replies/1141 (Moderators' Room) -> 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Reply not found.\"}, byte-identical to /replies/9999999."
+      "evidence": "GET /replies/1141 (Moderators' Room) -> 404 jetonomy_not_found \"Reply not found.\", same body as /replies/9999999."
     },
     "c-anon-single-post.13": {
       "result": "pass",
-      "evidence": "Guest GET /replies/1140 (Customer Advisory Board) -> 404 jetonomy_not_found, same body as a missing id (not 403)."
+      "evidence": "GET /replies/1140 (Customer Advisory Board) -> 404 jetonomy_not_found, same body as missing id."
     },
     "c-anon-single-post.14": {
       "result": "pass",
-      "evidence": "Guest GET /updates?scope=post&id=235 (hidden topic) and id=9999999 -> both 404 jetonomy_not_found \"Topic not found.\"."
+      "evidence": "Guest /updates?scope=post&id=235 (hidden topic) -> 404, same as id 9999999."
     },
     "c-anon-single-post.15": {
       "result": "pass",
-      "evidence": "Guest GET /updates?scope=post&id=243&since=<5 min ago> -> 200 {\"data\":[],\"meta\":{\"count\":0,\"has_more\":false}} (an empty reply id list, not 401)."
+      "evidence": "Guest /updates?scope=post&id=237&since=... -> 200 {data:[...]} (QA-RFT topic returned the approved reply id)."
     },
     "c-anon-single-post.16": {
       "result": "pass",
-      "evidence": "Guest GET /updates?scope=global and ?scope=space&id=8 -> 401 jetonomy_unauthorized."
+      "evidence": "Guest /updates?scope=global and scope=space&id=11 -> 401."
     },
     "c-anon-single-post.17": {
       "result": "pass",
-      "evidence": "Guest and bob see the tombstone \"Private reply, visible to the topic author and moderators.\"; admin sees the text (\"Private Sending you the shop I bought mine from privately...\"). test_moderator (moderator of Bug Reports and Moderators' Room only, not General Discussion) also sees the tombstone, consistent with per-space moderation; author could not be tested because the private reply's author is a deleted account."
+      "evidence": "Guest sees \"Private reply, visible to the topic author and moderators\" tombstone, text not rendered. (Author/moderator view of the text covered by the member journeys.)"
     },
     "c-anon-single-post.18": {
       "result": "pass",
-      "evidence": "Guest GET /replies/1198 (private reply) -> 404 jetonomy_not_found; GET /posts/237/replies returns reply 1198 with is_private true and empty content/content_plain."
+      "evidence": "Guest GET /replies/1198 (private) -> 404 jetonomy_not_found; list endpoint returns it with is_private true and empty content."
     },
     "c-anon-single-post.19": {
       "result": "pass",
-      "evidence": "Grace's phpBB topic (159-char title, list, quote, code block, unbroken URL): 1440 and 390 documentElement scrollWidth == viewport; the <pre> code block has overflow-x:auto and scrolls inside itself at 390; the URL wraps.",
-      "screenshot": "qa-artifacts/jt207-free/t241-390.png"
+      "evidence": "Grace's 159-char topic at 1440 and 390: scrollWidth equals viewport; code block is overflow:auto and scrolls inside itself at 390."
     },
     "c-anon-single-post.20": {
       "result": "pass",
-      "evidence": "ar locale on Omar's Arabic topic: body, author header (OM avatar on the right), reply cards and the vote/actions row mirror; direction rtl, scrollWidth == viewport. Relative times read \"ago شهرين\" (English \"ago\" untranslated beside the Arabic unit).",
-      "screenshot": "qa-artifacts/jt207-free/rtl-topic.png"
+      "evidence": "Omar's Arabic topic under he_IL RTL: dir rtl, heading right-aligned (start), no overflow."
     },
     "c-anon-single-post.21": {
       "result": "pass",
-      "evidence": "Feature Requests 45-reply topic: header \"Replies 45\", 30 reply elements rendered and a Load More button."
+      "evidence": "Feature Requests 45-reply topic: 30 replies on page 1 and a Load More link (?rpg=2) for the rest; count reads 45 in the header."
     },
     "c-anon-single-post.22": {
-      "result": "fail",
-      "evidence": "Reply by a deleted account shows \"[deleted]\" as the name but renders no avatar at all (no img and no initials fallback in the reply header), where the check expects a default avatar. Name and no PHP notice are fine."
+      "result": "pass",
+      "evidence": "Reply by deleted author shows \"[deleted]\" with one .jt-avatar-anon avatar."
     },
     "c-anon-single-post.23": {
       "result": "pass",
-      "evidence": "390px: Grace Oluwaseun Adeyemi-Whitfield as topic author shows the GR initials avatar and the full name wrapped on its own line, no overlap (no seeded reply authored by Grace; topic header used)."
+      "evidence": "Grace's long name stays within the viewport at 390 (right edge <= 390) with GR initials avatar."
     },
     "c-anon-single-post.24": {
       "result": "pass",
-      "evidence": "Reign dark on the phpBB topic: blockquote rgb(204,204,204)-range text on rgb(43,50,60) with a visible border; readable."
+      "evidence": "Dark mode topic with blockquote and code: code block rgb(30,30,30) bg / rgb(212,212,212) text, blockquote text light (screenshot jt207-w3-post-dark.png)."
     },
     "c-anon-single-post.25": {
       "result": "pass",
-      "evidence": "Breadcrumb links Home / Community / General Discussion all return 200 (category and space pages); topic crumb is the current page."
+      "evidence": "Topic page breadcrumb \"Home / Community / General Discussion / <topic>\" with working links."
     },
     "c-anon-single-post.26": {
       "result": "pass",
-      "evidence": "Dark code block: rgb(212,212,212) on rgb(30,30,30), not a white panel (screenshot)."
+      "evidence": "Dark code block uses dark tokens (#1e1e1e), not a white panel."
     },
     "c-anon-single-post.27": {
       "result": "pass",
-      "evidence": "Topic body link to https://photoclub.example.org/... renders as a plain link (target _blank, rel noopener, no preview card) and loading the page logs no console error or failed request."
+      "evidence": "QA-RFT topic with link to unreachable.invalid: plain <a href>, zero console errors."
     },
     "c-anon-single-post.28": {
-      "result": "untested",
-      "evidence": "needs a require-approval space with a held reply; none seeded (qa-actions covers the REST side only)"
+      "result": "pass",
+      "evidence": "QA-RFT reply held (pending): /updates?scope=post&id=<topic> lists only the approved reply id 1369, not the held 1370."
     }
   },
-  "proposed_checks": [
-    "- `c-anon-single-post.29` @guest #rest !refuse: state the expected error code for logged-out POST (runbook says jetonomy_login_required or rest_forbidden; live code is rest_not_logged_in).",
-    "- `c-anon-single-post.30` @guest #ui +deleted: reply by a deleted account shows [deleted] and a neutral avatar (live: no avatar element)."
-  ],
-  "walked_before_new_commits": true,
-  "note": "walked after the first change notice but before commits 1e89d24d/d5233d9 were announced; free hash recorded is the commit first given"
+  "proposed_checks": []
 }

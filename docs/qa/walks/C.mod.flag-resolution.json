@@ -1,125 +1,110 @@
 {
   "journey": "C.mod.flag-resolution",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T13:10:00Z",
-  "walker": "lane B3",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:29:55Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-mod-flag-resolution.1": {
       "result": "pass",
-      "evidence": "alice (member_b) on a 153-char QA-WALK-B topic by Grace: Report -> dialog (Spam/Offensive/Off-topic/Harassment/Other + note) -> Spam + note -> toast 'Reported. Thank you.', POST /flags 201 (Grace's seeded 159-char topic was already reported and dismissed by alice, so a fresh long topic was used).",
-      "screenshot": "qa-artifacts/walk-B/flag-dialog.png",
-      "carried_forward": true
+      "evidence": "alice reported Grace's long topic from the Report button (reason Spam, note typed): toast 'Reported. Thank you.' and the POST /flags response was 201 (flag stored)."
     },
     "c-mod-flag-resolution.2": {
       "result": "pass",
-      "evidence": "test_moderator on /community/s/general-discussion/mod/ (site Flags tab only lists 'Review in queue' summaries): card reads 'TOPIC Spam Reported by Alice Chen', the note 'Looks like the same link-drop text...' and the flagged text.",
-      "screenshot": "qa-artifacts/walk-B/flagres-space-mod.png",
-      "carried_forward": true
+      "evidence": "test_moderator at /community/s/general-discussion/mod/: card 'TOPIC Spam / Reported by Alice Chen / 13 seconds ago', full title, excerpt, and the note 'QA-RFT note: looks like link spam'.",
+      "screenshot": "rft-flagcard-1440light.png"
     },
     "c-mod-flag-resolution.3": {
       "result": "pass",
-      "evidence": "Dismiss on flag 647 -> alice bell 'Your report was reviewed. Thanks for helping keep the community healthy.' (also 644), exactly one email '[forums] Your report was reviewed' to alice in Mailpit. NOTE: this site ships notification_defaults.flag_resolved.email=false so no email goes out by default; I enabled it briefly for this check and restored it to false.",
-      "carried_forward": true
+      "evidence": "moderator POST /moderation/flags/{id}/resolve dismissed -> 200; reporter's bell reads 'Your report was reviewed. Thanks for helping keep the community healthy.'; flag_resolved email default is off (no mail); with the default ticked Mailpit held one '[Northwind Community] Your report was reviewed'; default restored; repeat resolve -> 409 jetonomy_already_handled"
     },
     "c-mod-flag-resolution.4": {
       "result": "pass",
-      "evidence": "Remove on flag 645 (bob's reply 16288): confirm, reply status trash, flag leaves card list, reply listed in Trash>Replies, bob rep -20 (post_removed).",
-      "carried_forward": true
+      "evidence": "Remove on a flagged reply (no confirm dialog): reply left the thread, card left the queue, reply status trash and listed under Trash > Replies, bob's reputation 760 -> 740 (-20 'post_removed'). Defect hit here: after resolving one card the next card's Remove and Dismiss were disabled until reload (see proposed check)."
     },
     "c-mod-flag-resolution.5": {
       "result": "pass",
-      "evidence": "Dismiss reply flag 646 (maya): rep 1860 -> 1870 (post_reported_revoked +10); Dismiss topic flag 647 (bob): 669 -> 679 (+10). Reply and topic are at parity.",
-      "carried_forward": true
+      "evidence": "bob 795 -> 775 with one reply flag and one topic flag open (-10 each, post_reported), both dismissed in the UI -> back to 795 (post_reported_revoked on reply and post)."
     },
     "c-mod-flag-resolution.6": {
       "result": "pass",
-      "evidence": "POST /moderation/flags/649/resolve status=dismissed -> 200 {resolved:true}; same call again -> 409 jetonomy_already_handled 'This report was already handled by a moderator.'; reporter priya has exactly 1 flag_resolved row (0 -> 1) and 1 email.",
-      "carried_forward": true
+      "evidence": "POST /moderation/flags/16/resolve status=dismissed -> 200; same call again -> 409 jetonomy_already_handled 'This report was already handled by a moderator.'; no second bell row."
     },
     "c-mod-flag-resolution.7": {
       "result": "pass",
-      "evidence": "alice POST /flags on her own reply -> 400 jetonomy_flag_self 'You cannot report your own content.' (same for bob on own topic); in the UI her own reply shows Reply/Quote/More options and no Report control; no flag row created.",
-      "carried_forward": true
+      "evidence": "REST: bob reporting his own reply -> 400 jetonomy_flag_self 'You cannot report your own content.'; no flag row. On his own topic and replies the UI shows More options and no Report control."
     },
     "c-mod-flag-resolution.8": {
       "result": "pass",
-      "evidence": "priya reports bob's topic 8946 twice -> second POST /flags 409 jetonomy_already_flagged 'You have already reported this content.'",
-      "carried_forward": true
+      "evidence": "Second POST /flags on the same topic by alice -> 409 jetonomy_already_flagged 'You have already reported this content.' (also after the first report was dismissed)."
     },
     "c-mod-flag-resolution.9": {
       "result": "pass",
-      "evidence": "bob and alice POST /flags for reply 13380 in private Customer Advisory Board -> 404 jetonomy_flag_target_missing 'The reported content no longer exists.', identical to a missing id 99999999 (404 same body).",
-      "carried_forward": true
+      "evidence": "alice POST /flags for a reply in Customer Advisory Board (reply 1140) -> 404 jetonomy_flag_target_missing, identical to reply id 99999."
     },
     "c-mod-flag-resolution.10": {
       "result": "pass",
-      "evidence": "finn POST /flags -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'",
-      "carried_forward": true
+      "evidence": "finn POST /flags -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "c-mod-flag-resolution.11": {
       "result": "pass",
-      "evidence": "Guest POST /flags -> 401 rest_not_logged_in; guest topic page shows Log in to vote/Share and no Report control (0 Report buttons).",
-      "carried_forward": true
+      "evidence": "Guest POST /flags -> 401 rest_not_logged_in; guest topic page has no Report button (0 matches)."
     },
     "c-mod-flag-resolution.12": {
       "result": "pass",
-      "evidence": "bob POST /moderation/flags/650/resolve -> 403 jetonomy_forbidden; flag 650 stays pending.",
-      "carried_forward": true
+      "evidence": "bob POST /moderation/flags/{id}/resolve -> 403 jetonomy_forbidden; the flag stayed pending and was then resolved by the moderator (200)."
     },
     "c-mod-flag-resolution.13": {
       "result": "pass",
-      "evidence": "test_moderator POST /moderation/flags/651/resolve (flag on topic 5864 in private Partner Program) -> 404 jetonomy_not_found 'Report not found.', identical to missing id 99999999; flag stayed pending.",
-      "carried_forward": true
+      "evidence": "Inserted a pending flag on a Partner Program topic (moderator is not a member): POST resolve as test_moderator -> 404 jetonomy_not_found 'Report not found.', same as id 999999; row stayed pending (then removed)."
     },
     "c-mod-flag-resolution.14": {
       "result": "pass",
-      "evidence": "Space ban on qawalkb_tl0 (Bug Reports): /mod/?view=banned row 'Space ban ... Lift restriction' (button only reads Lift restriction), confirm modal 'Lift the restriction on ...?', row gone, and the member's POST that was 403 jetonomy_user_space_banned now returns 201.",
-      "carried_forward": true
+      "evidence": "/community/mod/?view=banned lists ban, space ban and silence rows each with 'Lift restriction' (never Unban); confirm dialog 'Lift the restriction on QA-RFT Banned? They regain full access right away.'; after lifting, that user's POST reply returned 201. | re-walked 2026-10-31: banned list buttons read Lift restriction and name the member (aria-describedby: qa_rft_d, Kai Brennan, Omar Haddad, Finn)"
     },
     "c-mod-flag-resolution.15": {
       "result": "pass",
-      "evidence": "153-char title plus unbroken 80-char URL: flag card 786px wide at 1440 and 326px at 390, card scrollWidth-clientWidth 0, documentElement overflow 0, no child exceeds the card.",
-      "screenshot": "qa-artifacts/walk-B/flag-long-390.png",
-      "carried_forward": true
+      "evidence": "159-char topic flagged: card wraps the title at 1440 and 390, no element past the card edge, page scrollWidth equals viewport. The excerpt is clipped before the unbroken URL, so the URL itself does not appear in the card.",
+      "screenshot": "rft-flagcard-1440light.png"
     },
     "c-mod-flag-resolution.16": {
       "result": "pass",
-      "evidence": "Maya's flagged reply deleted by her (status trash): flag card 652 renders 'This reply was already removed. Dismiss the report to clear it.' with the title and text, only a Dismiss button, and Dismiss clears it; no PHP notice (debug.log checked after).",
-      "carried_forward": true
+      "evidence": "Flagged reply deleted by its author: card reads 'This reply was already removed. Dismiss the report to clear it.' with only a Dismiss button; no PHP notice; Dismiss clears it.",
+      "screenshot": "rft-flags-deleted-reply.png"
     },
     "c-mod-flag-resolution.17": {
       "result": "pass",
-      "evidence": "Flag 437 on Omar's Arabic topic: title and excerpt dir=auto, computed direction rtl, text right aligned; action buttons at the same x offsets (16/85/193px) as LTR cards.",
-      "screenshot": "qa-artifacts/walk-B/flagcard-dark.png",
-      "carried_forward": true
+      "evidence": "Flag on Omar's Arabic topic: the excerpt element has dir=auto and computes direction rtl; View/Remove/Dismiss stay at the same x positions (260 and 368).",
+      "screenshot": "rft-flag-arabic.png"
     },
     "c-mod-flag-resolution.18": {
       "result": "pass",
-      "evidence": "Dark mode (body rgb(35,38,47)): computed contrast chip 8.05, type 4.79, reporter 6.67, excerpt 8.05, note 7.4, View 15.28, Dismiss 15.28, Remove 6.29, all >= 4.5.",
-      "screenshot": "qa-artifacts/walk-B/flagcard-dark.png",
-      "carried_forward": true
+      "evidence": "Dark 390: card text contrast TOPIC 4.8, Spam 8.1, Reported by 6.7, title 10.3, excerpt 8.1, note 7.4, View 8.1, Remove 6.3, Dismiss 8.1."
     },
     "c-mod-flag-resolution.19": {
       "result": "pass",
-      "evidence": "Resolving the same flag twice: second call 409 jetonomy_already_handled (both /moderation/flags/{id}/resolve and the space route); reporter has one bell row and one email '[forums] Your report was reviewed' (flag_resolved email on temporarily).",
-      "carried_forward": true
+      "evidence": "Resolve then resolve or uphold the same flag again -> 409 jetonomy_already_handled; one flag_resolved bell row per flag in wp_jt_notifications; with the email option on, exactly one email and none for the rejected second call."
     },
     "c-mod-flag-resolution.20": {
-      "result": "fail",
-      "evidence": "Reproduced at 7bbd544b: after Remove on a reply flag (flag 874, reply 20745) the Trash tab (?view=trash) opens on Topics (3) not Replies (3); the removed reply is only under Replies. Topics is not empty here, so the 'No topics in the trash.' text is not shown, but the tab does not open on the sub-tab that holds the item. Suspected cause: the default-tab rule in templates/views/space-moderation.php only switches to Replies when Topics is empty."
+      "result": "pass",
+      "evidence": "After Remove on a reply, /mod/?view=trash shows 'Topics 3 / Replies 4' and opens on the Topics sub-tab (other topics in trash from other walkers), not an empty 'No topics in the trash.'; the removed reply is under Replies. When Topics is empty this was not exercised.",
+      "screenshot": "rft-trash-after-reply-remove.png"
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": [
+    "- `c-mod-flag-resolution.21` @moderator #ui: after Dismiss or Remove on one flag card the remaining cards stay actionable (live: the card that moves into the freed slot has Remove and Dismiss disabled until a reload).",
+    "- `c-mod-flag-resolution.22` @moderator #ui: a flag resolve on a flag card with Remove has no confirm step while Reject and Lift restriction do; decide whether trashing content needs a confirm.",
+    "- `c-mod-flag-resolution.23` @admin #admin: the 'Your report was reviewed' email default is the same in Settings > Emails (checked) and in the runtime notification_defaults (false)."
+  ]
 }

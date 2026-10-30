@@ -1,91 +1,81 @@
 {
   "journey": "C.member.bookmarks",
-  "free": "1e89d24d",
-  "pro": "d5233d9",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:13:15Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
     "mode": "free (Jetonomy Free active, Pro inactive)",
     "site": "http://localhost:8912",
-    "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
-      1024,
       390
     ],
-    "schemes": [
-      "light",
-      "dark (Reign only)"
-    ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-member-bookmarks.1": {
       "result": "pass",
-      "evidence": "bob clicked Bookmark on \"Dark mode for the community on phones\": aria-label became \"Remove bookmark\", aria-pressed true, icon filled, toast \"Bookmarked\"."
+      "evidence": "qa_rft_m1 clicks Bookmark on \"Dark mode for the community on phones\": aria-pressed true and toast \"Bookmarked\"."
     },
     "c-member-bookmarks.2": {
       "result": "pass",
-      "evidence": "/community/bookmarks/ lists the topic with title, author, space (Feature Requests), 45 replies and age."
+      "evidence": "/community/bookmarks/ lists the topic with title, author, space (Feature Requests) and reply count."
     },
     "c-member-bookmarks.3": {
       "result": "pass",
-      "evidence": "From the list, clicking Remove bookmark removed the row (3 rows -> 2). The page shows no bookmark count, so \"count drops\" is by row count only."
+      "evidence": "Remove bookmark on a list row: row disappears, page rows 20 -> 19."
     },
     "c-member-bookmarks.4": {
       "result": "pass",
-      "evidence": "Removing the last row shows \"You haven't bookmarked anything yet. Bookmark topics to find them here later.\" with Browse link, URL unchanged; clicking Leaderboard then rendered the full leaderboard."
+      "evidence": "Removing the last bookmark shows the \"You haven't bookmarked anything yet\" state immediately without reload; the page has no content tabs, only the community nav links."
     },
     "c-member-bookmarks.5": {
       "result": "pass",
-      "evidence": "POST /bookmarks {post_id:241} -> 200 {\"bookmarked\":true}; again -> {\"bookmarked\":false}; again -> true (no duplicate rows, DB checked); DELETE /bookmarks/241 -> 200 {\"deleted\":true}; repeat DELETE -> 200."
+      "evidence": "POST /bookmarks toggles ({bookmarked:true}/{false}), DELETE /bookmarks/243 -> 200 {deleted:true} twice; list never shows a duplicate."
     },
     "c-member-bookmarks.6": {
       "result": "pass",
-      "evidence": "POST /bookmarks {post_id:235} (Moderators' Room topic) -> 404 jetonomy_not_found \"Topic not found.\"."
+      "evidence": "POST /bookmarks for Moderators' Room topic 235 -> 404 jetonomy_not_found \"Topic not found.\"."
     },
     "c-member-bookmarks.7": {
       "result": "pass",
-      "evidence": "Guest: no bookmark button on a topic; /community/bookmarks/ redirects to wp-login.php?redirect_to=.../community/bookmarks/; POST /bookmarks -> 401."
+      "evidence": "Guest: /community/bookmarks/ redirects to wp-login.php?redirect_to=.../community/bookmarks/, no bookmark button on topic, POST /bookmarks 401."
     },
     "c-member-bookmarks.8": {
       "result": "pass",
-      "evidence": "alice's /community/bookmarks/ lists none of bob's bookmarks (empty)."
+      "evidence": "alice's /bookmarks/ shows 0 rows and not bob's/qa user's topic."
     },
     "c-member-bookmarks.9": {
       "result": "pass",
-      "evidence": "bob trashed his own bookmarked topic (REST DELETE 200): the bookmarks list dropped from 3 to 2 rows with no broken row. (Topic then restored in DB.)"
+      "evidence": "Bookmarked then trashed QA-RFT topic is omitted from the list, no broken row."
     },
     "c-member-bookmarks.10": {
-      "result": "untested",
-      "evidence": "bob is admin of Partner Program so cannot \"leave\"; testing needs a plain member leaving a private space and re-adding by DB; not done"
+      "result": "pass",
+      "evidence": "Bookmarked Partner Program topic (member), removed membership -> it disappears from the list."
     },
     "c-member-bookmarks.11": {
       "result": "pass",
-      "evidence": "With 72 bookmarks the page shows 20 rows and a Load More button (paginates)."
+      "evidence": "42 bookmarks: page 1 shows 20 rows and a Load More link (?pg=2)."
     },
     "c-member-bookmarks.12": {
       "result": "pass",
-      "evidence": "Offline click on Bookmark: label stays \"Bookmark\" (rolled back) and toast \"Failed to save.\"."
+      "evidence": "Bookmark request aborted: button stays unpressed state and toast \"Failed to save.\"."
     },
     "c-member-bookmarks.13": {
       "result": "pass",
-      "evidence": "Grace's 159-char phpBB topic in the list at 390 wraps inside its row (row 32-358, no overflow)."
+      "evidence": "Grace's 159-char topic row wraps inside its row (326px row at 390, title within row)."
     },
     "c-member-bookmarks.14": {
       "result": "pass",
-      "evidence": "Bookmarks page at 390 in Reign dark: body rgb(35,38,47), row text rgb(229,229,229), no overflow."
+      "evidence": "390px dark: body rgb(35,38,47), scrollWidth 390, rows readable (screenshot jt207-w3-bookmarks-390dark.png)."
     },
     "c-member-bookmarks.15": {
       "result": "pass",
-      "evidence": "At 390 the reply count (\"45 replies\", x 250-298) sits left of the bookmark button (x 306-346), not under it."
+      "evidence": "390px: no reply-count text overlaps the bookmark toggle in any of 20 rows."
     }
   },
-  "proposed_checks": [
-    "- `c-member-bookmarks.16` @member_c #ui +private: use a plain member (not the space admin bob) to leave Partner Program and verify the bookmark disappears."
-  ]
+  "proposed_checks": []
 }

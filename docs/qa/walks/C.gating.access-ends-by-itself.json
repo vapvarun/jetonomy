@@ -1,74 +1,75 @@
 {
   "journey": "C.gating.access-ends-by-itself",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:07:26Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-gating-access-ends-by-itself.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "DELETE /access-rules/{id} -> {deleted:true}; wp-admin builder toast text path same as add"
     },
     "c-gating-access-ends-by-itself.2": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "qa_rft_e GET posts 200 with rule, 403 jetonomy_forbidden on the next call after the delete"
     },
     "c-gating-access-ends-by-itself.3": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "e POST reply right after -> 404 jetonomy_not_found, nothing stored"
     },
     "c-gating-access-ends-by-itself.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "lapse simulated with jetonomy_membership_deactivated and the jetonomy_reconcile_rosters action: tier roster rows removed and the person read 403 straight after"
     },
     "c-gating-access-ends-by-itself.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "after the rule ended e's subscriptions went 3 -> 0 and bookmarks 1 -> 0 in REST lists"
     },
     "c-gating-access-ends-by-itself.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "roster member qa_rft_b kept posting (201) after the rule was deleted"
     },
     "c-gating-access-ends-by-itself.7": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "e GET /posts/{id} after the delete -> 404 jetonomy_not_found (same as a missing topic); UI for a roster-less member gives the generic 'Page not available' page (bob on Customer Advisory Board topic, same title as a missing slug)"
     },
     "c-gating-access-ends-by-itself.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Mailpit: replies to e's topic with the rule active mailed e; the reply made after the rule was removed sent no email (only 2 mails total to e)"
     },
     "c-gating-access-ends-by-itself.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "qa_rft_h typed a reply, admin deleted the rule, Post Reply -> message 'Topic not found.' and the typed text stayed in the editor"
     },
     "c-gating-access-ends-by-itself.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "re-added role rule: e read 200 and replied 201 on the next call with no Sync"
     },
     "c-gating-access-ends-by-itself.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "tier roster rows kept after the membership rule was deleted, but the person read 403 on the very next call (live_role requires a rule), reconcile then removed the rows"
     },
     "c-gating-access-ends-by-itself.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "after access ended a reply to e's own topic sent no email (Mailpit) and created no notification row (DB)"
     },
     "c-gating-access-ends-by-itself.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "fail",
+      "evidence": "rule-admitted e (role rule, no roster row): follows 3 and bookmarks 1 are listed, the reply email arrives, but the reply_to_post notification row (id 812) is hidden from GET /notifications (total 0) and unread-count 0. Cause: Notification::visibility_sql uses Space::content_visibility_sql (roster/public only), not readable_with_rules_sql"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "rule-admitted reply notification should list in the bell: seed role rule on a private space, post a topic as the rule-admitted subscriber, reply as another user, GET /notifications -> 1 row"
+  ]
 }

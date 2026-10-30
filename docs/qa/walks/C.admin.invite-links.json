@@ -1,101 +1,100 @@
 {
   "journey": "C.admin.invite-links",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:14:33Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-admin-invite-links.1": {
-      "result": "untested",
-      "evidence": "REST POST /spaces/38/invite max_uses 2 expires_at tomorrow -> 201 expires_label 'October 31, 2026' use_count 0; wp-admin toast 'Invite link generated.' and list display not viewed"
+      "result": "pass",
+      "evidence": "admin POST /spaces/149/invite max_uses=2 expires tomorrow -> 201 with invite_url, expires 2026-11-01 23:59:59 and expires_label 'November 1, 2026' (site format); front-end Members tab lists the link"
     },
     "c-admin-invite-links.2": {
       "result": "pass",
-      "evidence": "guest GET /community/invite/<token>/ -> 200 card 'You've been invited to join Customer Advisory Board', its description, 'Log in to accept invite' linking to wp-login.php?redirect_to=<invite url>; no membership created"
+      "evidence": "guest opens the link: card 'You've been invited to join QA-RFT Priv' with a 'Log in to accept invite' link (redirect_to returns to the invite); roster count unchanged"
     },
     "c-admin-invite-links.3": {
       "result": "pass",
-      "evidence": "bob POST /invite/<token> -> joined Customer Advisory Board, use_count 0 -> 1 (bob removed from the roster afterwards)"
+      "evidence": "qa_rft_e POST /invite/{token} -> 200 joined, roster role member, use_count 1"
     },
     "c-admin-invite-links.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "qa_rft_e opened the invite page (Join Space button shown) without clicking: no roster row until the POST"
     },
     "c-admin-invite-links.5": {
       "result": "pass",
-      "evidence": "carlos used the 2nd use then alice POST -> 410 jetonomy_invite_expired 'This invite link has expired or reached its usage limit.', alice not added"
+      "evidence": "after 2 uses qa_rft_g POST -> 410 jetonomy_invite_expired 'This invite link has expired or reached its usage limit.'; page shows the same text; not added"
     },
     "c-admin-invite-links.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "two users POSTed the last use at once: one 200 joined, other 410 jetonomy_invite_expired; use_count 2 of 2"
     },
     "c-admin-invite-links.7": {
       "result": "pass",
-      "evidence": "expires_at yesterday and an unreadable date -> 400 jetonomy_invalid_expiry 'Choose an expiry date in the future.', nothing stored"
+      "evidence": "expires_at 2020-01-01 and 'not-a-date' -> 400 jetonomy_invalid_expiry 'Choose an expiry date in the future.'; invite count unchanged"
     },
     "c-admin-invite-links.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "expiry today stored 2026-10-31 23:59:59 and link is_valid true at 21:12 (site timezone is UTC); end-of-day storage means it fails from the next morning"
     },
     "c-admin-invite-links.9": {
-      "result": "untested",
-      "evidence": "REST DELETE /spaces/38/invites/1 -> 200 then token returns 404 jetonomy_invalid_invite 'Invalid invite link.'; wp-admin toast 'Invite link revoked.' not viewed"
+      "result": "pass",
+      "evidence": "DELETE /spaces/149/invites/{id} -> {revoked:true}; the link page then says 'Invalid invite link.'"
     },
     "c-admin-invite-links.10": {
       "result": "pass",
-      "evidence": "bob (admin of Partner Program) GET /spaces/37/invites -> 200; test_editor GET same -> 403 jetonomy_forbidden"
+      "evidence": "bob (space admin of Partner Program) GET /spaces/37/invites 200; test_editor 403 jetonomy_forbidden"
     },
     "c-admin-invite-links.11": {
       "result": "pass",
-      "evidence": "bob (not a member of Customer Advisory Board at that moment) POST /spaces/38/invite -> 403 jetonomy_forbidden"
+      "evidence": "bob POST /spaces/38/invite (not a member, private) -> 403 jetonomy_forbidden, nothing created"
     },
     "c-admin-invite-links.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "61 invite links and 40 join requests on QA-RFT Priv: front-end Members tab 'Invite links 61', 'Page 1 of 4'; REST total 61; wp-admin Join Requests tab '1-20 of 40' with pager"
     },
     "c-admin-invite-links.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "request to join approval space returned 202 pending, admin notification row created; withdraw 200 -> pending list 0 and the admin notification row gone"
     },
     "c-admin-invite-links.14": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "invite link of a purged space: HTTP 404 page 'Invalid invite link.', no PHP error; invite and request rows gone"
     },
     "c-admin-invite-links.15": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "390px member view of the invite page: 'Join Space' button 41px high, 328px wide, no overflow, description wraps"
     },
     "c-admin-invite-links.16": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "guest invite page: space name 'You've been invited to join QA-RFT Priv', description and 'Log in to accept invite' link; says what the link is"
     },
     "c-admin-invite-links.17": {
       "result": "pass",
-      "evidence": "bob POST /spaces/39/invite (hidden) and /spaces/99999/invite -> identical 404 jetonomy_not_found 'Space not found.'"
+      "evidence": "non-member POST invite on hidden space 39 and id 99999 -> both 404 jetonomy_not_found 'Space not found.'; private listed space gives 403 (see .11)"
     },
     "c-admin-invite-links.18": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "`wp jetonomy space delete --mode=purge` removed wp_jt_invite_links rows with the space (counts 1 -> 0); default mode transfer archives and keeps rows by design"
     },
     "c-admin-invite-links.19": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "wp-admin space Join Requests tab: 'Pending Join Requests (40)' table with Approve and Deny buttons and '1-20 of 40' pager"
     },
     "c-admin-invite-links.20": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "guest at 390px: invitation card 328px wide (full gutter width), centred, 'Log in to accept invite' button 41px, no overflow"
     }
   },
   "proposed_checks": []

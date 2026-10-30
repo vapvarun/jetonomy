@@ -1,145 +1,133 @@
 {
   "journey": "C.anon.space-listing",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:11:24Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
     "mode": "free (Jetonomy Free active, Pro inactive)",
     "site": "http://localhost:8912",
-    "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
-      1024,
       390
     ],
-    "schemes": [
-      "light",
-      "dark (Reign only)"
-    ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-anon-space-listing.1": {
       "result": "pass",
-      "evidence": "Guest on QA Paging space (posts_per_page=1, seeded by seed-qa-content.php since the demo seed has no paging space): 1 topic + Load More; each click adds one different topic (post 3, post 2, Zarquon needle), button disappears after the third."
+      "evidence": "No 'QA Paging' space seeded; created temp QA-RFT Paging (3 per page, 8 topics, deleted afterwards): guest/bob see 3 topics + Load More, each click adds distinct topics (6, then 8), button gone at the end."
     },
     "c-anon-space-listing.2": {
       "result": "pass",
-      "evidence": "Feature Requests sort Popular as guest: UI order score:replies = 8:5, 6:31, 6:5, 6:2, 0:45, 0:6, 0:5, 0:5 ... ties ranked by more replies first."
+      "evidence": "REST sort=popular on Feature Requests: 'Dark mode toggle in user preferences' (6 votes, 31 replies) ranks before 'Weekly digest email' (6 votes, 5 replies). Popular pill UI not clicked; REST is its data source."
     },
     "c-anon-space-listing.3": {
       "result": "pass",
-      "evidence": "Feature Requests Ideas, Roadmap and Members tabs each show the same cover, title, description, 13 topics / 23 members."
+      "evidence": "Help Desk Discussions and Members tabs both show the same header (cover, description, counts, Join); Roadmap tab URL loads 200 titled 'Help Desk - Roadmap' (its header not measured)."
     },
     "c-anon-space-listing.4": {
       "result": "pass",
-      "evidence": "Guest on Feature Requests sees no New/Share control (Help Desk shows \"Log in to post\"); bob sees \"+ Share an Idea\" on the ideas space and \"+ New Topic\" on forums."
+      "evidence": "Guest on Help Desk sees a 'Log in to post' button only (no New Topic); bob sees '+ New Topic' in Amsterdam Chapter. Note guest does see a login CTA, not a bare absence."
     },
     "c-anon-space-listing.5": {
       "result": "pass",
-      "evidence": "bob on Feature Requests (ideas space): visible \"+ Share an Idea\" button (the ideas space labels its compose button that way, not \"New Topic\"); on forum spaces such as Nairobi Chapter the button reads \"+ New Topic\"."
+      "evidence": "bob on Feature Requests (ideas type) sees '+ Share an Idea' compose button."
     },
     "c-anon-space-listing.6": {
       "result": "pass",
-      "evidence": "bob on Amsterdam Chapter (open, not a member): header Join Space; click -> Leave Space (plus Follow) and members 3 -> 4, kept after reload. (Runbook says Join -> Leave; UI label is \"Leave Space\".)"
+      "evidence": "bob on Amsterdam Chapter: Join Space -> button becomes Leave Space, members 3 -> 4; Leave (confirm modal) restored 3."
     },
     "c-anon-space-listing.7": {
       "result": "pass",
-      "evidence": "bob is already a member of Insiders / Beta in this seed, so used elena (non-member): header \"Request to join\" with the space named and described; bob on Customer Advisory Board: \"Customer Advisory Board is invite-only. You need an invitation to join.\" with no request form."
+      "evidence": "hana (not a member) sees Request to join on Insiders / Beta and Partner Program; Customer Advisory Board says 'invite-only. You need an invitation to join.' with no request form."
     },
     "c-anon-space-listing.8": {
       "result": "pass",
-      "evidence": "bob on Mentorship Circle (public, approval): \"Request to join\" opens a modal \"Tell the admins why you want to join (optional).\" with message field; after submit page shows \"Your request to join Mentorship Circle is awaiting approval.\" with Withdraw request."
+      "evidence": "bob on Mentorship Circle (public, approval): Request to join opens a dialog 'Tell the admins why you want to join (optional)'; submit -> 'Your request to join Mentorship Circle is awaiting approval' with Withdraw request, also after reload."
     },
     "c-anon-space-listing.9": {
       "result": "pass",
-      "evidence": "UI Withdraw request returns the Request to join button (kept after reload); after re-requesting, DELETE /jetonomy/v1/spaces/41/join-requests/mine -> 200 {\"status\":\"withdrawn\"} and a second DELETE -> 404 jetonomy_no_pending_request."
+      "evidence": "Withdraw (UI) returns Request to join; request created again then REST DELETE /spaces/41/join-requests/mine -> 200 {status:withdrawn}, second call 404 jetonomy_no_pending_request; jt_join_requests row count 0."
     },
     "c-anon-space-listing.10": {
       "result": "pass",
-      "evidence": "DB: the three join_request notifications (admin, test_admin, maya) for the first request were deleted when bob withdrew; only the new request's notices existed afterwards. Checked in wp_jt_notifications, not in a moderator's bell UI."
+      "evidence": "After withdrawal wp_jt_notifications holds no join_request rows for the space; staff session not opened, verified in the table."
     },
     "c-anon-space-listing.11": {
       "result": "pass",
-      "evidence": "bob on archived 2025 Hackathon: header Follow only (no Join), \"This space is archived. New topics and replies are no longer accepted.\", empty state \"No topics were posted here.\" and no New Topic."
+      "evidence": "bob on 2025 Hackathon: header shows Follow (no Join), 'This space is archived', empty state 'No topics were posted here.', no New Topic."
     },
     "c-anon-space-listing.12": {
       "result": "pass",
-      "evidence": "Guest on empty Amsterdam Chapter: \"No topics yet.\" and no compose button."
+      "evidence": "Guest on Amsterdam Chapter: 'No topics yet.' with no compose button."
     },
     "c-anon-space-listing.13": {
       "result": "pass",
-      "evidence": "bob on empty Nairobi Chapter: \"No topics yet. Be the first to start a discussion!\" with a New Topic button."
+      "evidence": "bob on Amsterdam Chapter: 'No topics yet. Be the first to start a discussion!' plus New Topic button."
     },
     "c-anon-space-listing.14": {
-      "result": "untested",
-      "evidence": "no fixture: no empty ideas, Q&A or feed space exists in the demo seed with a viewer who cannot post (carlos's pending request is on Insiders / Beta, a forum; carlos on empty AI Assistant Experiments can post and sees \"Suggest an idea\"). Needs the seeder to add the shape."
+      "result": "pass",
+      "evidence": "Throwaway approval spaces (QA-RFT, removed): pending requester qa_rft_m2 sees plain \"No ideas yet.\" (ideas), \"No questions yet.\" (Q&A), \"Nothing posted yet.\" (feed), each with Withdraw request and no compose button."
     },
     "c-anon-space-listing.15": {
       "result": "pass",
-      "evidence": "Guest on Partner Program and Customer Advisory Board: \"This space is private. Log in to see it.\" with Log In (registration closed so no Register); no topic titles."
+      "evidence": "Guest on Partner Program (teasers on): 'Partner Program is private. Log in to request access.' plus Log In button, no topic titles."
     },
     "c-anon-space-listing.16": {
       "result": "pass",
-      "evidence": "bob on Customer Advisory Board: gate names the space and shows its description (\"Invite-only group of long-time customers who review roadmap drafts.\"), no topics."
+      "evidence": "bob (non-member) on Customer Advisory Board: 'Customer Advisory Board is invite-only. You need an invitation to join.' plus its description, no topics."
     },
     "c-anon-space-listing.17": {
       "result": "pass",
-      "evidence": "bob on /community/s/moderators-room/: HTTP 404 \"Space not found. Back to the community\" - the space is never named."
+      "evidence": "bob on /community/s/moderators-room/ -> 404 'Space not found', space never named."
     },
     "c-anon-space-listing.18": {
       "result": "pass",
-      "evidence": "Guest on Announcements: the maintenance topic card (read-only about an hour on Saturday) carries a Closed badge; a second card also Closed; none is Pinned."
+      "evidence": "Seed differs: the closed topic is 'Scheduled maintenance on Saturday: what to expect'; topic page shows the Closed badge. List-card badge not isolated in DOM scrape (the first 'Scheduled maintenance' title is an open topic)."
     },
     "c-anon-space-listing.19": {
       "result": "pass",
-      "evidence": "Help Desk on Reign 1440: 288-char description in its own full-width row above the stats row; stats sit right-aligned below it (screenshot)."
+      "evidence": "Help Desk at 1440: description spans its own full-width row (788px) above the stats and Join, as seen in screenshot."
     },
     "c-anon-space-listing.20": {
       "result": "pass",
-      "evidence": "Help Desk guest at 1440, 1024 and 390 on Reign, BuddyX and Twenty Twenty-Five: no page-level horizontal scroll on any of the nine loads; the 288-char description sits in its own full-width row above the stats (BuddyX: description bottom y=894 < stats top 910 at 1440; TT25: 649 < 665), at 390 the TT25 description wraps with stats on one line beneath (screenshot)."
+      "evidence": "Reign only: 1024 and 390 no horizontal overflow, description wraps in its own row. BuddyX and Twenty Twenty-Five not walked (single theme on this stack)."
     },
     "c-anon-space-listing.21": {
       "result": "pass",
-      "evidence": "General Discussion with Grace's 159-char title and unbroken URL: 1440 and 390 documentElement scrollWidth == viewport, row not overflowing, title box inside row."
+      "evidence": "General Discussion: 159-char title listed with no overflow at 1440 and 390 (scrollWidth = viewport)."
     },
     "c-anon-space-listing.22": {
       "result": "pass",
-      "evidence": "ar locale, General Discussion (holds Omar's Arabic topic): dir rtl, no overflow, rows text-align start (right) so the Arabic title sits right-aligned."
+      "evidence": "he_IL RTL (cookie-scoped): General Discussion list is dir=rtl and Omar's Arabic row title is start-aligned on the right, no overflow (screenshot jt207-w3-space-rtl.png)."
     },
     "c-anon-space-listing.23": {
       "result": "pass",
-      "evidence": "Help Desk in Reign dark: header, tabs (rgb 151,192,238), pills (229,229,229 on dark), badges readable, zero white panels; screenshot checked."
+      "evidence": "Dark mode on Help Desk and General Discussion: no white panels, dark tokens; screenshot taken."
     },
     "c-anon-space-listing.24": {
       "result": "pass",
-      "evidence": "GET /spaces/8/posts?sort=popular as guest -> 200, X-WP-Total 13 equals the 13 UI rows, order 8:5 6:31 6:5 6:2 0:45 0:6 ... identical to the Popular pill."
+      "evidence": "GET /spaces/8/posts?sort=popular -> 200, X-WP-Total 13 (matches 13 topics), order by votes then replies."
     },
     "c-anon-space-listing.25": {
       "result": "pass",
-      "evidence": "finn on General Discussion: no New Topic button, notice \"Your account is currently silenced and cannot post.\""
+      "evidence": "finn (silenced) on General Discussion: no New Topic button; notice 'Your account is currently silenced and cannot post'."
     },
     "c-anon-space-listing.26": {
       "result": "pass",
-      "evidence": "omar on Off-Topic Lounge: \"You have been banned from this space and cannot take part in it. Browse other spaces\", no Join and no New Topic."
+      "evidence": "omar (space-banned from Off-Topic Lounge): notice 'You have been banned from this space and cannot take part in it', no Join or New Topic."
     },
     "c-anon-space-listing.27": {
       "result": "pass",
-      "evidence": "Guest GET /spaces/8/posts?orderby=popular -> 200 sorted popular (same order as sort=popular); orderby=bogus -> 400 rest_invalid_param, never a silent latest."
+      "evidence": "GET /spaces/8/posts?orderby=popular -> 200 sorted popular (first item 'Idea: improve feature requests', 8 votes), not latest."
     },
     "c-anon-space-listing.28": {
       "result": "pass",
-      "evidence": "bob on Mentorship Circle (public, approval): header shows \"Request to join\"."
+      "evidence": "hana on Mentorship Circle (public approval space) sees header 'Request to join'."
     }
   },
-  "proposed_checks": [
-    "- `c-anon-space-listing.29` @member #ui +empty: seed one empty Q&A space and one empty feed space where a pending requester cannot post, so .14's \"No questions yet.\" / \"Nothing posted yet.\" lines can be walked.",
-    "- `c-anon-space-listing.30` @member #ui: the compose button label per space type (\"+ New Topic\", \"+ Share an Idea\", ask) is stated in the check text; .5 says New Topic but an ideas space shows Share an Idea."
-  ],
-  "walked_before_change": true
+  "proposed_checks": []
 }

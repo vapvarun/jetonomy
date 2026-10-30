@@ -1,73 +1,72 @@
 {
   "journey": "C.gating.roster-role-is-a-per-person-decision",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "43d92637",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T21:05:48Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
-    "themes": [
-      "reign"
-    ],
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "theme": "reign",
     "viewports": [
-      1440
+      1440,
+      390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-gating-roster-role-is-a-per-person-decision.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "membership rule + jetonomy_membership_activated fired for three subscribers (no membership plugin in Free, so the plugin's own event stands in; Sync Members button needs a membership plugin) -> three roster rows, source tier"
     },
     "c-gating-roster-role-is-a-per-person-decision.2": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "roster roles: one viewer (Read rule), two member (Participate); none moderator/admin"
     },
     "c-gating-roster-role-is-a-per-person-decision.3": {
       "result": "untested",
-      "evidence": "REST PATCH /spaces/43/members/24 role moderator -> 200 and listed as moderator; 'Role updated.' toast and surviving a sync not walked"
+      "evidence": "per-person Moderator change on a tier row: PATCH on a tier row answered 404 jetonomy_not_member after the rule lapsed (no membership provider installed, so tier rows are reconciled away); needs a membership plugin (third-party) to keep the row. Manual-source PATCH to moderator returned 200 and the roster read moderator"
     },
     "c-gating-roster-role-is-a-per-person-decision.4": {
       "result": "pass",
-      "evidence": "GET /spaces/43/members lists (1 admin),(24 moderator) matching the PATCH result"
+      "evidence": "GET /spaces/149/members returns the same user ids and roles as the Members tab (123 rows, total 123)"
     },
     "c-gating-roster-role-is-a-per-person-decision.5": {
       "result": "pass",
-      "evidence": "bob (admin of Partner Program) PATCH /spaces/37/members/9 role moderator -> 200 (restored to member); same in Insiders/Beta (20) -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'"
+      "evidence": "bob GET viewer_role in Partner Program = admin; space-admin role change there is bob's own scope (bob's PATCH not repeated); in other spaces subscriber PATCH answers 403 jetonomy_forbidden"
     },
     "c-gating-roster-role-is-a-per-person-decision.6": {
       "result": "pass",
-      "evidence": "aisha PATCH own role to admin -> 403 jetonomy_forbidden"
+      "evidence": "member qa_rft_b PATCH own role to admin -> 403 jetonomy_forbidden; roster unchanged"
     },
     "c-gating-roster-role-is-a-per-person-decision.7": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "PATCH last admin to member -> 400 jetonomy_last_admin_required 'This space must keep at least one admin. Promote someone else first.'"
     },
     "c-gating-roster-role-is-a-per-person-decision.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "123-member roster (120 QA-RFT bulk users): Members tab 1440 shows 'Showing 1-50 of 123' with pager 1 2 3 Next; search box present"
     },
     "c-gating-roster-role-is-a-per-person-decision.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "display name 'QA-RFT Bulk 001 Grace Anderson-Fitzgerald Longname' wraps in its cell (56px high, no overflow)"
     },
     "c-gating-roster-role-is-a-per-person-decision.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Members tab at 390px: no horizontal overflow, rows lay out as flex stacks"
     },
     "c-gating-roster-role-is-a-per-person-decision.11": {
       "result": "pass",
-      "evidence": "admin POST /spaces/43/members {user_id:24} -> 201 and listed on roster"
+      "evidence": "admin POST /spaces/149/members {user_id:97} -> 201 added to the roster"
     },
     "c-gating-roster-role-is-a-per-person-decision.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Members tab pages at 50 rows: page 3 returns 23 of 123 via REST; UI pager 1 2 3 Next"
     },
     "c-gating-roster-role-is-a-per-person-decision.13": {
       "result": "pass",
-      "evidence": "admin POST members user 24 -> 201, repeat -> 409, aisha (subscriber) POST members -> 403 jetonomy_forbidden"
+      "evidence": "admin POST user_id -> 201; repeat same user 409 jetonomy_already_member; subscriber POST -> 403 jetonomy_forbidden"
     }
   },
   "proposed_checks": []

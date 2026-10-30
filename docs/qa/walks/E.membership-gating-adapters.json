@@ -1,16 +1,19 @@
 {
   "journey": "E.membership-gating-adapters",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "607c4b7b",
+  "pro": "5dd6f92",
+  "walked_at": "2026-10-30T20:50:55Z",
+  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "walked_before_change": false,
   "env": {
+    "mode": "combo (Free + Pro 2.0.7)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -18,52 +21,52 @@
   },
   "checks": {
     "e-membership-gating-adapters.1": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Browser, admin 1440: space Access Rules tab rule-type dropdown lists only Tutor LMS and LifterLMS (active); WooCommerce (no Memberships), LearnDash, MemberPress, PMPro, Sensei not listed; no fatal"
     },
     "e-membership-gating-adapters.2": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Browser: Tutor LMS rule on QA-RFT private space, searched level by name, saved with Participate -> toast 'Rule added: Tutor LMS: QA-RFT Tutor Course ... can read, post, reply, vote and report. They are recorded as Member.'; row shows Tutor LMS Course, level name, Member"
     },
     "e-membership-gating-adapters.3": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Browser: bob enrolled in the Tutor course -> space opens ('You have access through ... (Course)'), bob posted a topic via composer, and bob is listed in the space members roster (space_members row role member)"
     },
     "e-membership-gating-adapters.4": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Browser: alice (not enrolled) sees 'This space is included with <course>... You get access as soon as you join this course' with a 'Get <course>' link to the course page, which returns 200 with Enroll Now. A guest sees the private-space 'Log in to see it' prompt instead of the buy link (enrolment needs an account first); judged acceptable, line wording 'works for guests too' is loose"
     },
     "e-membership-gating-adapters.5": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Browser context request as guest: GET /spaces/147 and /spaces/147/posts -> 403 jetonomy_forbidden; unknown space 99999 -> 404 'Space not found.'; guest page shows only 'This space is private. Log in to see it.'"
     },
     "e-membership-gating-adapters.6": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Tutor enrolment cancelled -> bob's next request shows the locked teaser, his topic remains visible to admin, and his space_members row is gone (roster lists admin only)"
     },
     "e-membership-gating-adapters.7": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Bob on the teaser, then enrolled in the Tutor course (stand-in for payment; Woo Memberships is paid) -> plain page reload opens the space with no cache clear or re-login"
     },
     "e-membership-gating-adapters.8": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Bob via rule as Member: POST /posts/408/pin, /close, /spaces/147/moderation/trash/post/408 and GET /moderation/queue all 403 jetonomy_forbidden. Site-role escalation not attempted"
     },
     "e-membership-gating-adapters.9": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "not_performed",
+      "evidence": "WP Fusion and SureMembers are not installed on this stack (paid third-party plugins), so their per-space tabs do not exist"
     },
     "e-membership-gating-adapters.10": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Deleted the Tutor course the rule points to -> Access Rules row reads 'tutor_course_63 Course no longer available. It was deleted, trashed or unpublished, so nobody can get it and this rule lets nobody in'; bob and alice both get 'This space is not open to join right now'; no fatal"
     },
     "e-membership-gating-adapters.11": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "Level picker is a type-ahead search (placeholder 'Tutor LMS...'); typing 'QA-RFT' returned only matching courses, nothing preloaded. 500-course volume not seeded"
     },
     "e-membership-gating-adapters.12": {
-      "result": "untested",
-      "evidence": "env: no membership/LMS plugin activated in this pass (WooCommerce, PMPro etc. inactive); needs plugin activation"
+      "result": "pass",
+      "evidence": "390 dark (theme toggle): locked teaser has no overflow (scrollWidth 390), the 'Get <course>' button wraps its long title to 85px tall inside 52-338px, colours follow tokens (dark bg 35,38,47). Admin Access Rules at 390: no overflow, Add Rule button 40px tall"
     }
   },
   "proposed_checks": []
