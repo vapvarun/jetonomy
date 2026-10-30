@@ -1273,10 +1273,13 @@ class Admin {
 
 		// Not "admin.js": `wp i18n make-json` strips /.min.js$/ unescaped, which
 		// turns admin.js into a.js, so its translation JSON would never load.
+		// Shared custom-field collector, so the admin space forms send Pro's
+		// space-context fields exactly as the front-end forms do.
+		wp_register_script( 'jetonomy-custom-fields', JETONOMY_URL . 'assets/js/lib/custom-fields.min.js', array(), JETONOMY_VERSION, true );
 		wp_enqueue_script(
 			'jetonomy-admin',
 			JETONOMY_URL . 'assets/js/admin-common.js',
-			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'jetonomy-modals', 'wp-i18n' ),
+			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'jetonomy-modals', 'wp-i18n', 'jetonomy-custom-fields' ),
 			JETONOMY_VERSION,
 			true
 		);
@@ -1423,7 +1426,7 @@ class Admin {
 			'total_posts'   => Post::count( array( 'status' => 'publish' ) ),
 			'total_replies' => Reply::count( array( 'status' => 'publish' ) ),
 			'active_spaces' => Space::count( array( 'status' => 'active' ) ),
-			'users'         => UserProfile::count(),
+			'users'         => UserProfile::count_members(),
 			'pending_flags' => Flag::count_pending( \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() ) ),
 			'posts_today'   => Post::count_published_since( $today . ' 00:00:00' ),
 		);
@@ -1575,7 +1578,7 @@ class Admin {
 			$categories      = Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );
 			$member_search   = sanitize_text_field( wp_unslash( $_GET['ms'] ?? '' ) );
 			$member_total    = SpaceMember::count_by_space( $space_id, $member_search );
-			$member_per_page = 50;
+			$member_per_page = 25;
 			$member_pages    = max( 1, (int) ceil( $member_total / $member_per_page ) );
 			$member_paged    = min( $member_pages, max( 1, absint( $_GET['mpg'] ?? 1 ) ) );
 			$members         = SpaceMember::list_by_space( $space_id, $member_per_page, ( $member_paged - 1 ) * $member_per_page, $member_search );
@@ -1878,8 +1881,12 @@ class Admin {
 		$per_page     = 20;
 		$offset       = ( $paged - 1 ) * $per_page;
 
+		$orderby = sanitize_key( $_GET['orderby'] ?? 'reputation' );
+		$orderby = isset( UserProfile::ADMIN_SORTS[ $orderby ] ) ? $orderby : 'reputation';
+		$order   = 'ASC' === strtoupper( sanitize_key( $_GET['order'] ?? 'DESC' ) ) ? 'ASC' : 'DESC';
+
 		$total       = UserProfile::count_for_admin( $filter_trust, $search );
-		$users       = UserProfile::list_for_admin( $filter_trust, $search, $per_page, $offset );
+		$users       = UserProfile::list_for_admin( $filter_trust, $search, $per_page, $offset, $orderby, $order );
 		$total_pages = ceil( $total / $per_page );
 		// One query for the whole page, so each row can name its active restriction.
 		$restrictions = Restriction::active_rows_for_users( array_map( static fn( $u ) => (int) $u->user_id, $users ) );

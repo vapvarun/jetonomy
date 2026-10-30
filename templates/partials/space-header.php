@@ -22,22 +22,119 @@ $_jt_is_admin    = $_jt_is_admin ?? current_user_can( 'manage_options' );
 $_jt_join_policy = $_jt_join_policy ?? \Jetonomy\Models\Space::effective_join_policy( $space );
 $space_status    = $space->status ?? 'active';
 $is_restricted   = in_array( $space_status, array( 'archived', 'locked' ), true );
+$_jt_has_cover   = ! empty( $space->cover_image );
 ?>
-	<?php if ( ! empty( $space->cover_image ) ) : ?>
-	<div class="jt-space-cover jt-space-cover--image" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')">
-<?php else : ?>
-	<div class="jt-space-cover jt-space-cover--tonal">
+<?php
+// A banner only when the space has a cover photo. Without one the header is a
+// compact card with a slim accent strip, so the first topic is not pushed a
+// screen down by an empty gradient.
+if ( $_jt_has_cover ) :
+	?>
+	<div class="jt-space-cover" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')" aria-hidden="true"></div>
 <?php endif; ?>
-	<div class="jt-space-cover__identity">
-		<?php jetonomy_render_space_icon( $space->icon ?? '', 32, 'jt-space-emoji' ); ?>
-		<h1 class="jt-space-cover__title" dir="auto"><?php echo esc_html( $space->title ); ?></h1>
-	</div>
-</div>
 <?php
 $_jt_can_edit_space = is_user_logged_in()
 	&& \Jetonomy\Permissions\Permission_Engine::is_space_admin( $_jt_user_id, (int) $space->id );
 ?>
-<div class="jt-space-head">
+<div class="jt-space-head<?php echo $_jt_has_cover ? ' jt-space-head--covered' : ''; ?>">
+		<div class="jt-space-head__identity">
+			<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-emoji', (string) ( $space->type ?? '' ) ); ?>
+			<div class="jt-space-head__titles">
+				<h1 class="jt-space-head__title" dir="auto"><?php echo esc_html( $space->title ); ?></h1>
+				<div class="jt-space-nums">
+					<span class="jt-num"><span class="jt-num-val"><?php echo esc_html( number_format_i18n( (int) $space->post_count ) ); ?></span> <span class="jt-num-lbl"><?php echo esc_html( \Jetonomy\count_noun( (int) $space->post_count, 'topic' ) ); ?></span></span>
+					<span class="jt-num"><span class="jt-num-val"><?php echo esc_html( number_format_i18n( (int) $space->member_count ) ); ?></span> <span class="jt-num-lbl"><?php echo esc_html( \Jetonomy\count_noun( (int) $space->member_count, 'member' ) ); ?></span></span>
+				</div>
+			</div>
+		</div>
+		<div class="jt-space-head__actions">
+		<?php
+		// An archived or locked space takes no new members (SpaceMember::join_blocked()),
+		// so a non-member there gets Follow, never a Join button that would fail.
+		if ( is_user_logged_in() ) :
+			if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted ) :
+				// Invite-only: show a disabled badge instead of Follow/Join.
+				?>
+				<span class="jt-btn jt-btn-sm jt-btn-ghost jt-btn--status">
+					<?php esc_html_e( 'Invite Only', 'jetonomy' ); ?>
+				</span>
+				<?php
+			elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted && \Jetonomy\Models\SpaceMember::may_join_spaces( $_jt_user_id ) ) :
+				// Approval required: check for existing pending request. Pending
+				// gets the same Withdraw the private-space gate offers; the
+				// "awaiting approval" message renders under the header.
+				$_jt_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
+				if ( $_jt_pending ) :
+					?>
+					<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost jt-withdraw-request-btn" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Withdraw request', 'jetonomy' ); ?></button>
+					<?php
+				else :
+					$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
+					?>
+					<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-request-btn"
+						data-space-id="<?php echo absint( $space->id ); ?>"
+						data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
+						<?php esc_html_e( 'Request to join', 'jetonomy' ); ?>
+					</button>
+				<?php endif; ?>
+				<?php
+			elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted && \Jetonomy\Models\SpaceMember::may_join_spaces( $_jt_user_id ) ) :
+				// Open space, non-member: show Join Space button (instant membership).
+				$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
+				?>
+				<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-btn"
+					data-space-id="<?php echo absint( $space->id ); ?>"
+					data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
+					<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
+					<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
+				</button>
+				<?php
+			else :
+				// Membership and following are two different things: membership
+				// is one "Joined" control whose menu holds Leave (with a confirm
+				// naming the space), and following is a separate bell toggle that
+				// only decides whether new activity notifies you.
+				$is_following_space = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'space', (int) $space->id );
+				// Leave: only for an actual ROSTER member (has a row to remove)
+				// who is not the space author (the owner can't leave their own
+				// space). Rule-admitted-only viewers have no roster row, so
+				// $_jt_is_member is false for them and no Leave is offered.
+				if ( $_jt_is_member && (int) $space->author_id !== (int) $_jt_user_id ) :
+					?>
+					<div class="jt-more-menu jt-membership-menu" data-wp-interactive="jetonomy">
+						<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost jt-more-trigger jt-membership-trigger"
+							aria-haspopup="menu" aria-expanded="false"
+							data-wp-on--click="actions.toggleMoreMenu">
+							<?php jetonomy_echo_icon( 'check-circle', 14 ); ?>
+							<span><?php esc_html_e( 'Joined', 'jetonomy' ); ?></span>
+							<?php jetonomy_echo_icon( 'chevron-down', 14 ); ?>
+						</button>
+						<div class="jt-more-dropdown" role="menu" hidden>
+							<button type="button" role="menuitem" class="jt-more-item jt-more-item--danger jt-leave-space-btn"
+								data-wp-on--click="actions.leaveSpace"
+								data-space-id="<?php echo absint( $space->id ); ?>"
+								data-space-title="<?php echo esc_attr( $space->title ); ?>"
+								data-user-id="<?php echo absint( $_jt_user_id ); ?>">
+								<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
+								<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+								<?php echo esc_html( sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
+							</button>
+						</div>
+					</div>
+				<?php endif; ?>
+				<button type="button" class="jt-btn jt-btn-sm jt-follow-space-btn <?php echo esc_attr( $is_following_space ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
+					data-wp-interactive="jetonomy"
+					data-wp-on--click="actions.followSpace"
+					data-space-id="<?php echo absint( $space->id ); ?>"
+					data-following="<?php echo esc_attr( $is_following_space ? '1' : '0' ); ?>"
+					aria-pressed="<?php echo $is_following_space ? 'true' : 'false'; ?>"
+					title="<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ echo esc_attr( sprintf( __( 'Get notified about new activity in this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>">
+					<?php jetonomy_echo_icon( 'bell', 14 ); ?>
+					<span class="jt-follow-label"><?php echo $is_following_space ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?></span>
+				</button>
+			<?php endif; ?>
+		<?php endif; ?>
+		</div>
 		<div class="jt-space-head__meta">
 			<?php if ( ! empty( $space->description ) ) : ?>
 				<p class="jt-space-desc" dir="auto"><?php echo esc_html( $space->description ); ?></p>
@@ -124,87 +221,6 @@ $_jt_can_edit_space = is_user_logged_in()
 				</p>
 			<?php endif; ?>
 		</div>
-		<div class="jt-space-nums">
-			<div class="jt-num">
-				<div class="jt-num-val"><?php echo esc_html( (int) $space->post_count ); ?></div>
-				<div class="jt-num-lbl"><?php echo esc_html( \Jetonomy\count_noun( (int) $space->post_count, 'topic' ) ); ?></div>
-			</div>
-			<div class="jt-num">
-				<div class="jt-num-val"><?php echo esc_html( (int) $space->member_count ); ?></div>
-				<div class="jt-num-lbl"><?php echo esc_html( \Jetonomy\count_noun( (int) $space->member_count, 'member' ) ); ?></div>
-			</div>
-		</div>
-		<?php
-		// An archived or locked space takes no new members (SpaceMember::join_blocked()),
-		// so a non-member there gets Follow, never a Join button that would fail.
-		if ( is_user_logged_in() ) :
-			if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted ) :
-				// Invite-only: show a disabled badge instead of Follow/Join.
-				?>
-				<span class="jt-btn jt-btn-sm jt-btn-ghost jt-btn--status">
-					<?php esc_html_e( 'Invite Only', 'jetonomy' ); ?>
-				</span>
-				<?php
-			elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted && \Jetonomy\Models\SpaceMember::may_join_spaces( $_jt_user_id ) ) :
-				// Approval required: check for existing pending request. Pending
-				// gets the same Withdraw the private-space gate offers; the
-				// "awaiting approval" message renders under the header.
-				$_jt_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
-				if ( $_jt_pending ) :
-					?>
-					<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost jt-withdraw-request-btn" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Withdraw request', 'jetonomy' ); ?></button>
-					<?php
-				else :
-					$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
-					?>
-					<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-request-btn"
-						data-space-id="<?php echo absint( $space->id ); ?>"
-						data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
-						<?php esc_html_e( 'Request to join', 'jetonomy' ); ?>
-					</button>
-				<?php endif; ?>
-				<?php
-			elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted && \Jetonomy\Models\SpaceMember::may_join_spaces( $_jt_user_id ) ) :
-				// Open space, non-member: show Join Space button (instant membership).
-				$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
-				?>
-				<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-btn"
-					data-space-id="<?php echo absint( $space->id ); ?>"
-					data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
-					<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
-					<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
-				</button>
-				<?php
-			else :
-				// Member or open space: show Follow/Following toggle.
-				$is_following_space = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'space', (int) $space->id );
-				?>
-				<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following_space ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
-					data-wp-interactive="jetonomy"
-					data-wp-on--click="actions.followSpace"
-					data-space-id="<?php echo absint( $space->id ); ?>"
-					data-following="<?php echo esc_attr( $is_following_space ? '1' : '0' ); ?>">
-					<?php echo $is_following_space ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
-				</button>
-				<?php
-				// Leave space: only for an actual ROSTER member (has a row to
-				// remove) who is not the space author (the owner can't leave
-				// their own space). Follow (a subscription) is separate and
-				// stays. Rule-admitted-only viewers have no roster row, so
-				// $_jt_is_member is false for them and no Leave is offered.
-				if ( $_jt_is_member && (int) $space->author_id !== (int) $_jt_user_id ) :
-					?>
-					<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost jt-leave-space-btn"
-						data-wp-interactive="jetonomy"
-						data-wp-on--click="actions.leaveSpace"
-						data-space-id="<?php echo absint( $space->id ); ?>"
-						data-user-id="<?php echo absint( $_jt_user_id ); ?>">
-						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-						<?php echo esc_html( sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
-					</button>
-				<?php endif; ?>
-			<?php endif; ?>
-		<?php endif; ?>
 	</div>
 
 <?php if ( ! empty( $_jt_pending ) ) : ?>

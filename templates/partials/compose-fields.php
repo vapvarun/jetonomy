@@ -118,7 +118,7 @@ $_post_type               = $_space_type_to_post_type[ $_space_type ] ?? 'topic'
 <?php if ( $_show_tags ) : ?>
 	<div class="jt-form-group">
 		<label for="jt-post-tags" class="jt-label"><?php esc_html_e( 'Tags', 'jetonomy' ); ?> <span class="jt-label-hint"><?php esc_html_e( '(optional, comma-separated)', 'jetonomy' ); ?></span></label>
-		<input type="text" id="jt-post-tags" name="tags" class="jt-input" value="<?php echo esc_attr( isset( $tags_value ) ? (string) $tags_value : '' ); ?>" placeholder="<?php esc_attr_e( 'e.g. python, django, architecture', 'jetonomy' ); ?>">
+		<input type="text" id="jt-post-tags" name="tags" class="jt-input" value="<?php echo esc_attr( isset( $tags_value ) ? (string) $tags_value : '' ); ?>" placeholder="<?php esc_attr_e( 'Add a few tags, separated by commas', 'jetonomy' ); ?>">
 	</div>
 <?php endif; ?>
 
@@ -245,8 +245,9 @@ if ( '' !== $_extras_html ) {
 					<?php echo esc_html( $_submit_label ); ?>
 				</button>
 				<button type="button" class="jt-btn jt-btn-fill jt-publish-mode__toggle"
-						aria-label="<?php esc_attr_e( 'More publishing options', 'jetonomy' ); ?>"
-						aria-haspopup="true"
+						aria-label="<?php esc_attr_e( 'Publish now, save as draft or schedule', 'jetonomy' ); ?>"
+						title="<?php esc_attr_e( 'Publish now, save as draft or schedule', 'jetonomy' ); ?>"
+						aria-haspopup="menu" aria-expanded="false"
 						data-wp-on--click="actions.togglePublishMenu">
 					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 				</button>

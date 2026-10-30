@@ -9,6 +9,8 @@
  * @var int        $total_pages
  * @var string     $search
  * @var int|string $filter_trust
+ * @var string     $orderby      Sort column, a UserProfile::ADMIN_SORTS key.
+ * @var string     $order        ASC or DESC.
  * @var array      $restrictions user_id => active restriction {id, user_id, type, space_id} (Restriction::active_rows_for_users()).
  * @var array      $space_titles space id => title, for the spaces named by a space ban.
  *
@@ -85,6 +87,8 @@ $restriction_labels = array(
 		<div class="alignleft actions">
 			<form method="get" action="" class="jetonomy-user-filters">
 				<input type="hidden" name="page" value="jetonomy-users">
+				<input type="hidden" name="orderby" value="<?php echo esc_attr( $orderby ); ?>">
+				<input type="hidden" name="order" value="<?php echo esc_attr( $order ); ?>">
 				<input type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search users...', 'jetonomy' ); ?>" class="regular-text">
 				<select name="trust_level">
 					<option value=""><?php esc_html_e( 'All Trust Levels', 'jetonomy' ); ?></option>
@@ -109,38 +113,47 @@ $restriction_labels = array(
 	jetonomy_admin_table(
 		array(
 			'rows'      => $users ?? array(),
+			'sort'      => array(
+				'orderby' => $orderby,
+				'order'   => $order,
+			),
 			'row_attrs' => fn( $u ) => array( 'data-user-id' => absint( $u->user_id ) ),
 			'columns'   => array(
-				'username'     => array(
-					'label'   => __( 'Username', 'jetonomy' ),
+				// One identity cell (name over @login, like core's Users screen):
+				// a separate Display Name column squeezed the primary cell until its
+				// row actions wrapped onto three lines and every row stood 105px tall.
+				'username'   => array(
+					'label'   => __( 'User', 'jetonomy' ),
 					'primary' => true,
 				),
-				'display-name' => array( 'label' => __( 'Display Name', 'jetonomy' ) ),
 				// Widths snap to the shared xs/s/m/l scale rather than inline px; the scale
 				// drops to auto below 782px, which a hardcoded width does not.
-				'trust'        => array(
+				'trust'      => array(
 					'label' => __( 'Trust Level', 'jetonomy' ),
 					'width' => 'm',
 				),
-				'reputation'   => array(
-					'label' => __( 'Reputation', 'jetonomy' ),
-					'width' => 's',
+				'reputation' => array(
+					'label'    => __( 'Reputation', 'jetonomy' ),
+					'width'    => 'm',
+					'sortable' => 'reputation',
 				),
-				'posts'        => array(
+				'posts'      => array(
 					'label' => \Jetonomy\jetonomy_label( 'topic', true ),
 					'width' => 'xs',
 				),
-				'replies'      => array(
+				'replies'    => array(
 					'label' => \Jetonomy\jetonomy_label( 'reply', true ),
 					'width' => 's',
 				),
-				'joined'       => array(
-					'label' => __( 'Joined', 'jetonomy' ),
-					'width' => 'm',
+				'joined'     => array(
+					'label'    => __( 'Joined', 'jetonomy' ),
+					'width'    => 'm',
+					'sortable' => 'joined',
 				),
-				'last-seen'    => array(
-					'label' => __( 'Last Seen', 'jetonomy' ),
-					'width' => 'm',
+				'last-seen'  => array(
+					'label'    => __( 'Last Seen', 'jetonomy' ),
+					'width'    => 'm',
+					'sortable' => 'last_seen',
 				),
 			),
 			'empty'     => array(
@@ -153,7 +166,7 @@ $restriction_labels = array(
 				switch ( $col ) {
 					case 'username':
 						echo get_avatar( $u->user_id, 24 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core markup.
-						echo '<strong>' . esc_html( $u->user_login ) . '</strong>';
+						echo '<strong>' . esc_html( $u->wp_display_name ?: ( $u->display_name ?: $u->user_login ) ) . '</strong> <span class="jt-admin-subline jt-admin-subline--inline">@' . esc_html( $u->user_login ) . '</span>';
 						$jt_restriction = $restrictions[ (int) $u->user_id ] ?? null;
 						if ( $jt_restriction && isset( $restriction_labels[ $jt_restriction->type ] ) ) {
 							$jt_label = $restriction_labels[ $jt_restriction->type ];
@@ -185,9 +198,6 @@ $restriction_labels = array(
 							<?php endif; ?>
 						</div>
 						<?php
-						break;
-					case 'display-name':
-						echo esc_html( $u->wp_display_name ?: $u->display_name );
 						break;
 					case 'trust':
 						?>

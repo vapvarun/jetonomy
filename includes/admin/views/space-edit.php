@@ -212,6 +212,11 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					</td>
 				</tr>
 			</table>
+			<?php
+			// Same hook as the front-end edit form: Pro custom fields (context =
+			// space) render here pre-filled; admin-common.js sends them as `custom_fields`.
+			do_action( 'jetonomy_space_edit_fields', $space );
+			?>
 			<p class="submit">
 				<?php /* translators: %s: the label of the item being saved (the configured noun). */ ?>
 				<button type="submit" class="button button-primary"><?php echo esc_html( sprintf( __( 'Update %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></button>

@@ -286,6 +286,133 @@
 		}
 	});
 
+	/* ── Phone tab bar: "My Profile" menu ──
+	 * The tab bar has no tab for the top-nav links without a .jt-nav-dup twin
+	 * (Moderation, Pro's Messages, anything on jetonomy_header_nav_items). On
+	 * phones the top row is hidden (jetonomy.css), so when such links exist the
+	 * My Profile tab opens a menu holding them, cloned from that row so the hook
+	 * output is never rendered twice. With none, the tab stays a plain link. */
+	function tabMenuExtras() {
+		return Array.prototype.slice.call(document.querySelectorAll('.jt-community-nav-links > a:not(.jt-nav-dup)'));
+	}
+	function closeTabMenu(returnFocus) {
+		var menu = document.querySelector('.jt-mobile-tab-menu');
+		var tab = document.querySelector('.jt-mobile-tab[data-jt-tab="profile"]');
+		if (!menu || menu.hidden) { return; }
+		menu.hidden = true;
+		if (tab) {
+			tab.setAttribute('aria-expanded', 'false');
+			if (returnFocus) { tab.focus(); }
+		}
+	}
+	function prepareProfileTab() {
+		var tab = document.querySelector('.jt-mobile-tab[data-jt-tab="profile"]');
+		if (!tab || !tabMenuExtras().length) { return; }
+		tab.setAttribute('aria-haspopup', 'menu');
+		tab.setAttribute('aria-expanded', 'false');
+		tab.setAttribute('aria-controls', 'jt-mobile-tab-menu');
+	}
+	function openTabMenu(tab) {
+		var bar = tab.closest('.jt-mobile-tabs');
+		var menu = document.getElementById('jt-mobile-tab-menu');
+		if (menu) { menu.remove(); }
+		menu = document.createElement('div');
+		menu.id = 'jt-mobile-tab-menu';
+		menu.className = 'jt-mobile-tab-menu';
+		menu.setAttribute('role', 'menu');
+		var own = document.createElement('a');
+		own.href = tab.href;
+		var ownIcon = tab.querySelector('svg');
+		if (ownIcon) { own.appendChild(ownIcon.cloneNode(true)); }
+		var ownLabel = document.createElement('span');
+		ownLabel.textContent = (tab.querySelector('span') || tab).textContent.trim();
+		own.appendChild(ownLabel);
+		[own].concat(tabMenuExtras().map(function (a) { return a.cloneNode(true); })).forEach(function (a) {
+			a.className = 'jt-more-item';
+			a.removeAttribute('title');
+			a.setAttribute('role', 'menuitem');
+			menu.appendChild(a);
+		});
+		bar.appendChild(menu);
+		tab.setAttribute('aria-expanded', 'true');
+		var first = menu.querySelector('a');
+		if (first) { first.focus(); }
+	}
+	prepareProfileTab();
+	document.addEventListener('jetonomy:navigated', function () {
+		closeTabMenu(false);
+		prepareProfileTab();
+	});
+	document.addEventListener('click', function (e) {
+		if (!e.target || !e.target.closest) { return; }
+		var tab = e.target.closest('.jt-mobile-tab[data-jt-tab="profile"]');
+		if (tab && tabMenuExtras().length) {
+			e.preventDefault();
+			var open = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
+			if (open) { closeTabMenu(false); } else { openTabMenu(tab); }
+			return;
+		}
+		// A click outside the menu, or on one of its links, closes it.
+		if (!e.target.closest('.jt-mobile-tab-menu') || e.target.closest('.jt-mobile-tab-menu a')) { closeTabMenu(false); }
+	});
+	document.addEventListener('keydown', function (e) {
+		var menu = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
+		if (!menu) { return; }
+		if ('Escape' === e.key) {
+			closeTabMenu(true);
+		} else if (menu.contains(document.activeElement) && window.jetonomySmartDropdown && window.jetonomySmartDropdown.menuKeys) {
+			window.jetonomySmartDropdown.menuKeys(menu, e);
+		}
+	});
+
+	/* ── Sticky Reply (phones) steps aside once the composer is on screen,
+	 * so it never covers the composer's own Post button. */
+	var composerObserver = null;
+	function watchComposer() {
+		if (composerObserver) { composerObserver.disconnect(); composerObserver = null; }
+		var composer = document.getElementById('jt-composer');
+		var fab = document.querySelector('.jt-reply-fab');
+		if (!composer || !fab || !('IntersectionObserver' in window)) { return; }
+		composerObserver = new IntersectionObserver(function (entries) {
+			fab.classList.toggle('is-away', entries[0].isIntersecting);
+		});
+		composerObserver.observe(composer);
+	}
+	watchComposer();
+	document.addEventListener('jetonomy:navigated', watchComposer);
+
+	/* ── Log in without leaving the community ──
+	 * Login links carry data-jt-login and a wp-login.php fallback href (with
+	 * redirect back). When the page has the sidebar login card (#jt-login), take
+	 * the visitor there instead and put the cursor in its first field. */
+	document.addEventListener('click', function (e) {
+		if (!e.target || !e.target.closest || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) { return; }
+		var link = e.target.closest('a[data-jt-login]');
+		var card = link && document.getElementById('jt-login');
+		if (!card || !card.offsetParent) { return; }
+		e.preventDefault();
+		card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		var field = card.querySelector('.jt-login-form.is-active input:not([type="hidden"]), input[name="login"]');
+		if (field) { field.focus({ preventScroll: true }); }
+	});
+
+	/* ── Scrolling tab strips (profile, notifications, space): bring the
+	 * active tab into view on load, after client navigation and on resize. */
+	function revealActiveTabs() {
+		document.querySelectorAll('.jt-profile-tabs, .jt-notif-tabs, .jt-space-tabs').forEach(function (strip) {
+			if (strip.scrollWidth <= strip.clientWidth) { return; }
+			var active = strip.querySelector('[aria-current], .is-active, .active');
+			if (active) { active.scrollIntoView({ inline: 'nearest', block: 'nearest' }); }
+		});
+	}
+	revealActiveTabs();
+	document.addEventListener('jetonomy:navigated', revealActiveTabs);
+	var revealTimer = null;
+	window.addEventListener('resize', function () {
+		clearTimeout(revealTimer);
+		revealTimer = setTimeout(revealActiveTabs, 150);
+	}, { passive: true });
+
 	/* ── Search Overlay ── */
 	var searchEl = null;
 	var searchTimer = null;

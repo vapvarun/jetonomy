@@ -89,6 +89,7 @@
   /* ── Avatar ── */
   .jt-avatar { border-radius: 50%; background: var(--jt-bg-muted); color: var(--jt-text-secondary); display: flex; align-items: center; justify-content: center; font-weight: 600; font-family: var(--jt-font); flex-shrink: 0; }
   .jt-avatar-sm { width: 30px; height: 30px; font-size: 0.75em; }
+  .jt-notif-avatar { display: flex; }
   .jt-avatar-md { width: 36px; height: 36px; font-size: 0.875em; }
   .jt-avatar-lg { width: 48px; height: 48px; font-size: 1.125em; }
   .jt-avatar img, img.jt-avatar { border-radius: 50%; object-fit: cover; }
@@ -157,93 +158,68 @@
   .jt-crumb a { color: var(--jt-text-tertiary); }
   .jt-crumb a:hover { color: var(--jt-text-secondary); }
 
-  /* ── Space cover image ── */
+  /* ── Space header ──
+     One compact block: icon + title + counts on the left, the viewer's
+     actions on the right, description and helper links underneath. A banner
+     only renders when the space has a cover photo; without one the block
+     carries a slim accent strip, so the first topic is not pushed a screen
+     down by an empty gradient. */
   .jt-space-cover {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    min-height: 180px;
+    min-height: 140px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    /* All four corners: the header under the cover sits on the page, not in
-       a card, so a top-only radius left the banner looking cut off. */
-    border-radius: var(--jt-radius-lg);
-    overflow: hidden;
-    margin-bottom: 0;
+    border-start-start-radius: var(--jt-radius-lg);
+    border-start-end-radius: var(--jt-radius-lg);
   }
-  /* Tonal cover fallback — a space with no cover image still gets a branded
-     banner (matches BuddyNext's gradient space cover). */
-  .jt-space-cover--tonal {
-    background-image: linear-gradient(135deg, color-mix(in srgb, var(--jt-accent) 22%, var(--jt-surface)), color-mix(in srgb, var(--jt-accent) 7%, var(--jt-surface)));
-  }
-  /* Scrim — only on photo covers, so the overlaid avatar + title stay legible. */
-  .jt-space-cover--image::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 38%, transparent 70%);
-    pointer-events: none;
-  }
-  /* Identity overlaid on the cover's lower edge: avatar tile + title — the
-     BuddyNext space-header pattern (identity lives ON the cover, not below it). */
-  .jt-space-cover__identity {
-    position: relative;
-    z-index: 1;
+  .jt-space-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 14px;
-    width: 100%;
+    gap: var(--jt-space-3) var(--jt-space-4);
     padding: var(--jt-space-4);
+    margin-bottom: var(--jt-space-4);
+    background: var(--jt-surface);
+    border: 1px solid var(--jt-border);
+    border-block-start: 3px solid var(--jt-accent);
+    border-radius: var(--jt-radius-lg);
   }
-  .jt-space-cover__title {
-    margin: 0;
-    font-family: var(--jt-font-heading);
-    font-weight: 700;
-    font-size: var(--jt-text-2xl);
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-    color: var(--jt-text);
-  }
-  .jt-space-cover--image .jt-space-cover__title { color: var(--jt-white); }
-  /* Space avatar tile — surface fill, ring, soft shadow; reads on tonal + photo. */
-  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: var(--jt-radius-lg); background: var(--jt-surface); border: 3px solid var(--jt-surface); box-shadow: var(--jt-shadow-sm); color: var(--jt-accent); flex-shrink: 0; }
-  .jt-space-emoji svg { width: 32px; height: 32px; }
-  .jt-space-emoji.dashicons { font-size: 30px; width: auto; height: auto; }
-
-  @media (max-width: 640px) {
-  .jt-crop-dialog { max-width: none; padding: var(--jt-space-lg, 16px); }
-
-    .jt-space-cover { min-height: 150px; border-radius: 0; margin-left: -16px; margin-right: -16px; }
-    .jt-space-cover__identity { flex-direction: column; align-items: center; text-align: center; gap: 8px; }
-  }
-
-  /* ── Space header (below the cover) — description + stats + follow ── */
-  /* container-type: boxed themes (Reign) shrink the MAIN column far below the
-     viewport, so a 900px @media never fires while description + stats + Join
-     still collide. Query THIS header's width, not the window. */
-  .jt-space-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; padding: var(--jt-space-4) 0 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); container-type: inline-size; }
-  /* Description on its own row; every action, the stats and Join/Follow then
-     share the next row and wrap as single items only when the header runs out of
-     width. __meta is a wrapper, not a box: `contents` makes its children siblings
-     of the stats and the Join button, because as a separate flex box it took a
-     whole row whenever the header was narrower than the old 860px container
-     query (Reign's main column is ~790px), pushing stats + Join under the actions. */
-  .jt-space-head__meta { display: contents; }
+  .jt-space-head--covered { border-block-start-width: 1px; border-start-start-radius: 0; border-start-end-radius: 0; }
+  .jt-space-head__identity { display: flex; align-items: center; gap: var(--jt-space-3); flex: 1 1 16rem; min-width: 0; }
+  .jt-space-head__titles { min-width: 0; }
+  .jt-app .jt-space-head__title { font-size: var(--jt-text-2xl); letter-spacing: -0.02em; line-height: 1.2; overflow-wrap: anywhere; }
+  .jt-space-head__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); margin-inline-start: auto; }
+  .jt-space-head__actions .jt-more-menu { margin-inline-start: 0; }
+  .jt-space-head__actions .jt-btn svg { flex-shrink: 0; }
+  .jt-follow-space-btn, .jt-membership-trigger { display: inline-flex; align-items: center; gap: var(--jt-space-1); }
+  /* Description, custom fields and the edit / queue links: one row below. */
+  .jt-space-head__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); flex: 1 1 100%; }
+  .jt-space-head__meta:empty { display: none; }
   .jt-space-head__meta > .jt-space-desc { flex: 1 1 100%; margin: 0; }
   .jt-space-head__meta > .jt-space-edit-cta { margin: 0; }
-  /* Integration output (custom fields, course link) keeps its own row. */
   .jt-space-head__meta > .jt-space-fields { flex: 1 1 100%; }
   .jt-space-head__meta > .jt-space-fields:empty { display: none; }
   .jt-space-head__meta > .jt-space-access-note { flex: 1 1 100%; }
   .jt-space-access-note { display: flex; align-items: center; gap: var(--jt-space-2); margin: 0; color: var(--jt-text-secondary); font-size: 0.875rem; }
   .jt-space-access-note svg { flex-shrink: 0; width: 16px; height: 16px; color: var(--jt-accent); }
-  .jt-space-access-note a { color: var(--jt-accent); text-decoration: underline; }
+  .jt-space-access-note a { color: var(--jt-accent-strong); text-decoration: underline; }
   .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; }
-  .jt-space-nums { display: flex; gap: 20px; margin-inline-start: auto; }
-  .jt-num { text-align: center; }
-  .jt-num-val { font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 700; }
-  .jt-num-lbl { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
+  /* Space avatar tile. */
+  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: var(--jt-radius-lg); background: var(--jt-accent-light); color: var(--jt-accent-strong); flex-shrink: 0; }
+  .jt-space-emoji svg { width: 24px; height: 24px; }
+  .jt-space-emoji.dashicons { font-size: 24px; }
+  /* Counts read as one quiet line under the title: "39 topics · 25 members". */
+  .jt-space-nums { display: flex; flex-wrap: wrap; gap: var(--jt-space-3); margin-top: 2px; font-size: 0.875rem; color: var(--jt-text-secondary); }
+  .jt-num { display: inline-flex; align-items: baseline; gap: var(--jt-space-1); }
+  .jt-num-val { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--jt-text); }
+  .jt-num-lbl { text-transform: lowercase; }
+
+  /* Site-wide announcements (Pro) injected into a space listing: a labelled
+     group above the space's own topics, never mixed in with them. */
+  .jt-site-announcements { margin-bottom: var(--jt-space-4); }
+  .jt-app .jt-site-announcements__title { display: flex; align-items: center; gap: var(--jt-space-1); margin: 0 0 var(--jt-space-2); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--jt-text-secondary); }
+  .jt-site-announcements__title svg { color: var(--jt-accent); }
+  .jt-topics--site { border-color: color-mix(in srgb, var(--jt-accent) 35%, var(--jt-border)); background: color-mix(in srgb, var(--jt-accent) 5%, var(--jt-surface)); }
 
   /* ── Toolbar ── */
   .jt-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--jt-space-4); }
@@ -279,7 +255,9 @@
      beat the blanket; the design tokens keep them theme-adaptive. */
   .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-accent-fg) !important; border-color: transparent !important; }
   /* Sub-category chevron: the chip's own surface, and the accent tint while its spaces are shown. */
-  .jt-app button.jt-cat-chip-toggle { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; }
+  /* The expand half of the split chip reads as its own button: a tinted
+     fill and a divider, so it is not mistaken for part of the chip label. */
+  .jt-app button.jt-cat-chip-toggle { background-color: var(--jt-bg-muted) !important; color: var(--jt-text) !important; border-inline-start-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-cat-chip-toggle:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-accent) !important; }
   .jt-app button.jt-cat-chip-toggle[aria-expanded="true"] { background-color: var(--jt-accent-light) !important; color: var(--jt-accent-strong) !important; border-color: var(--jt-accent) !important; }
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
@@ -327,6 +305,11 @@
   .jt-app button.jt-v-btn.jt-voted,
   .jt-app button.jt-feed-act.voted,
   .jt-app button.jt-feed-act.jt-voted { color: var(--jt-accent) !important; background-color: var(--jt-accent-light) !important; }
+  /* The vote buttons that carry the score: the number is text, so it takes the
+     -strong shade (4.5:1 on the tint); the chevron keeps the brand accent. */
+  .jt-app button.jt-act.voted,
+  .jt-app button.jt-feed-act.voted,
+  .jt-app button.jt-feed-act.jt-voted { color: var(--jt-accent-strong) !important; }
   .jt-app button.jt-bookmark-btn.bookmarked svg,
   .jt-app button.jt-bookmark-toggle.bookmarked svg,
   .jt-app button.jt-act.voted svg,
@@ -334,6 +317,9 @@
   .jt-app button.jt-v-btn.jt-voted svg,
   .jt-app button.jt-feed-act.voted svg,
   .jt-app button.jt-feed-act.jt-voted svg { fill: currentColor; }
+  .jt-app button.jt-act.voted svg,
+  .jt-app button.jt-feed-act.voted svg,
+  .jt-app button.jt-feed-act.jt-voted svg { color: var(--jt-accent); }
   /* Reported/flagged. The class the template and view.js actually set is
      `is-flagged` (single-post.php, view.js). The previous rule here named
      .jt-act.jt-flagged-indicator, which is only ever on an <a> - so it matched
@@ -504,7 +490,7 @@
 
   /* Tag-page + future paginated lists. */
   .jt-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-block-start: 24px; padding-block: 16px; }
-  .jt-pagination-link { color: var(--jt-accent); text-decoration: none; font-weight: 600; padding: 8px 14px; border-radius: var(--jt-radius); transition: background 0.1s; }
+  .jt-pagination-link { color: var(--jt-accent-strong); text-decoration: none; font-weight: 600; padding: 8px 14px; border-radius: var(--jt-radius); transition: background 0.1s; }
   .jt-pagination-link:hover { background: var(--jt-bg-hover); }
   .jt-pagination-status { color: var(--jt-text-secondary); font-size: 0.875rem; }
   @media ( max-width: 640px ) {
@@ -539,11 +525,12 @@
   .jt-v-btn.jt-voted, .jt-v-btn.voted { color: var(--jt-accent); }
   /* Keep the chevron from collapsing to 0 width as a flex child (Chromium SVG-in-flex quirk). */
   .jt-v-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-  .jt-act.voted { color: var(--jt-accent); }
+  .jt-act.voted { color: var(--jt-accent-strong); }
+  .jt-act.voted svg { color: var(--jt-accent); }
   /* Logged-out vote control is a "Log in to vote" link (1.5.0) — match the
      button look (no underline, inherited colour, pointer). */
   .jt-act.jt-act-login { text-decoration: none; color: var(--jt-text-secondary); cursor: pointer; }
-  .jt-act.jt-act-login:hover { color: var(--jt-accent); }
+  .jt-act.jt-act-login:hover { color: var(--jt-accent-strong); }
   /* Moderator "open reports" indicator: danger-tinted so flagged content reads
      as needing attention; the count badge sits on the flag icon. */
   .jt-act.jt-flagged-indicator { color: var(--jt-danger); text-decoration: none; }
@@ -570,10 +557,10 @@
   .jt-tag-ideas { background: var(--jt-warn-light); color: var(--jt-warn-strong); font-weight: 600; }
 
   /* ── Inline mentions & hashtag links ── */
-  .jt-mention { color: var(--jt-accent); font-weight: 600; }
+  .jt-mention { color: var(--jt-accent-strong); font-weight: 600; }
   .jt-mention:hover { text-decoration: underline; }
   .jt-tag-link { color: var(--jt-text-tertiary); text-decoration: none; font-size: 0.875rem; }
-  .jt-tag-link:hover { color: var(--jt-accent); text-decoration: underline; }
+  .jt-tag-link:hover { color: var(--jt-accent-strong); text-decoration: underline; }
 
   /* Post-body tag row — tags moved out of byline (1.4.1 byline cleanup) */
   /* Tags are a sibling of .jt-post-body, so they don't inherit its horizontal
@@ -699,9 +686,15 @@
        small to thumb-tap, and up/down sit right on top of each other. Give
        each the full tap token on touch so voting from a listing is reliable. */
     .jt-v-btn { height: var(--jt-tap); }
+    /* No Ctrl key on a touch screen: drop the keyboard-shortcut hint. */
+    .jt-editor-hint { display: none; }
   }
   .jt-act:hover { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: none; }
   .jt-act .n { font-variant-numeric: tabular-nums; font-weight: 700; }
+  /* Reply jump + sticky Reply only where this viewer has a composer. */
+  .jt-app:not(:has(#jt-composer)) :is(.jt-reply-jump, .jt-reply-fab) { display: none !important; }
+  .jt-app a.jt-reply-fab { display: none; }
+  .jt-app a.jt-reply-fab.is-away { visibility: hidden; }
 
   /* ── Replies ── */
   .jt-replies-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--jt-space-4); }
@@ -776,7 +769,7 @@
   .jt-reply-blocked { border-style: dashed; }
   .jt-reply-tombstone { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); color: var(--jt-text-tertiary); font-size: 0.9375rem; font-style: italic; }
   .jt-reply-tombstone svg { flex-shrink: 0; }
-  .jt-unblock-btn { margin-inline-start: auto; font-style: normal; font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent); background: none; border: none; cursor: pointer; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-sm); }
+  .jt-unblock-btn { margin-inline-start: auto; font-style: normal; font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent-strong); background: none; border: none; cursor: pointer; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-sm); }
   .jt-unblock-btn:hover, .jt-unblock-btn:focus-visible { background: var(--jt-accent-light); }
 
   /* Blocked-author tombstone — full single-post view (single-post.php). Deep
@@ -803,10 +796,10 @@
   /* Reply-to indicator */
   .jt-replying-to { font-size: 0.9375rem; color: var(--jt-text-tertiary); padding: 8px 14px; border-inline-start: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); margin-bottom: 8px; border-start-end-radius: var(--jt-radius); border-end-end-radius: var(--jt-radius); display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
   .jt-replying-to-excerpt { color: var(--jt-text-secondary); font-style: italic; text-decoration: none; min-width: 0; overflow-wrap: anywhere; }
-  .jt-replying-to-excerpt:hover, .jt-replying-to-excerpt:focus-visible { color: var(--jt-accent); text-decoration: underline; }
+  .jt-replying-to-excerpt:hover, .jt-replying-to-excerpt:focus-visible { color: var(--jt-accent-strong); text-decoration: underline; }
   .jt-replying-to-cancel { cursor: pointer; color: var(--jt-text-tertiary); border: none; background: none; padding: 4px; margin-inline-start: auto; }
   .jt-in-reply-to { display: inline-flex; align-items: center; gap: 4px; margin: var(--jt-space-2) var(--jt-space-4) 0; font-size: 0.8125rem; color: var(--jt-text-tertiary); text-decoration: none; }
-  .jt-in-reply-to:hover, .jt-in-reply-to:focus-visible { color: var(--jt-accent); text-decoration: underline; }
+  .jt-in-reply-to:hover, .jt-in-reply-to:focus-visible { color: var(--jt-accent-strong); text-decoration: underline; }
 
   /* ── Composer ── */
   .jt-editor { border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius-lg); overflow: hidden; background: var(--jt-bg); transition: border-color 0.2s; }
@@ -827,7 +820,11 @@
   @media (max-width: 640px) {
     .jt-card { padding-block: var(--jt-space-4); padding-inline: var(--jt-space-4); }
   }
-  .jt-card h4 { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); margin: 0 0 12px; }
+  /* Sidebar card titles are h2 (they sit right under the page h1) but keep the
+     small uppercase label look; .jt-app prefix beats the .jt-app h2 reset.
+     The bare h4 selector stays for cards that still print one. */
+  .jt-card h4,
+  .jt-app .jt-card .jt-card-title { font-family: inherit; font-size: 0.8125rem; font-weight: 700; line-height: 1.35; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); margin: 0 0 12px; }
 
   /* ── Space card (grid) ── */
   .jt-space-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
@@ -840,8 +837,9 @@
 
   /* ── Private replies (1.8.1) ── */
   .jt-private-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--jt-warn-strong); background: var(--jt-warn-light); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); }
-  .jt-reply-private-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--jt-text-secondary); cursor: pointer; user-select: none; }
-  .jt-reply-private-toggle input { margin: 0; }
+  .jt-reply-private-toggle { display: inline-flex; align-items: flex-start; gap: 6px; font-size: 0.8125rem; color: var(--jt-text-secondary); cursor: pointer; user-select: none; }
+  .jt-reply-private-toggle input { margin: 0; margin-block-start: 3px; flex-shrink: 0; }
+  .jt-reply-private-help { display: block; color: var(--jt-text-tertiary); font-size: 0.75rem; }
 
   /* ── My Subscriptions ── */
   /* .jt-app prefix so the margin survives the .jt-app h2 reset (0,1,1) — a bare
@@ -853,15 +851,13 @@
   .jt-subs-row + .jt-subs-row { border-block-start: 1px solid var(--jt-border); }
   .jt-subs-main { display: flex; align-items: center; gap: var(--jt-space-3); min-width: 0; }
   .jt-subs-title { font-weight: 600; color: var(--jt-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .jt-subs-title:hover { color: var(--jt-accent); }
+  .jt-subs-title:hover { color: var(--jt-accent-strong); }
   .jt-subs-title--gone { color: var(--jt-text-tertiary); font-style: italic; font-weight: 400; }
   .jt-subs-via { font-size: 0.75rem; color: var(--jt-text-tertiary); background: var(--jt-bg-subtle); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); flex-shrink: 0; }
 
   /* ── Profile ── */
   .jt-profile { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
-  /* Same tonal recipe as the space cover (.jt-space-cover--tonal): a saturated
-     accent slab here out-shouted the member's name and read as a different
-     product from the space header beside it. */
+  /* A soft accent tint: a saturated accent slab out-shouted the member's name. */
   .jt-profile-banner { height: 120px; background: var(--jt-accent-light); background: linear-gradient(135deg, color-mix(in srgb, var(--jt-accent) 22%, var(--jt-surface)), color-mix(in srgb, var(--jt-accent) 7%, var(--jt-surface))); }
   .jt-profile-body { padding: 0 20px 20px; margin-top: -32px; }
   .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: var(--jt-accent-fg); display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
@@ -911,17 +907,17 @@
   .jt-leader:last-child { border-bottom: none; }
   /* "You are ranked #N" summary — accent-tinted card above the board. */
   .jt-leader-you { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 16px; border-inline-start: 3px solid var(--jt-accent); background: var(--jt-accent-light, var(--jt-bg-subtle)); }
-  .jt-leader-you-rank { font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 700; color: var(--jt-accent); }
+  .jt-leader-you-rank { font-variant-numeric: tabular-nums; font-size: 1.25rem; font-weight: 700; color: var(--jt-accent-strong); }
   .jt-leader-you-label { display: flex; flex-direction: column; line-height: 1.3; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); }
   .jt-leader-you-label small { font-size: 0.8125rem; font-weight: 400; color: var(--jt-text-tertiary); }
   /* Mobile-only column header — hidden on desktop. See ≤640px block. */
-  .jt-leader-head { display: none; }
   /* Flex-centred so the top-3 medal sits on the row's centre line like the
      numbers below it; as inline content it rode the text baseline 4px high. */
-  .jt-leader-rank { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 700; color: var(--jt-text-tertiary); width: 20px; }
+  .jt-leader-rank { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 700; color: var(--jt-text-tertiary); min-width: 2rem; }
   /* Top-3 medal colors for the leaderboard award icon (Lucide award.svg
      uses currentColor for stroke; we tint via the wrapper). */
-  .jt-medal { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+  .jt-medal { display: inline-flex; align-items: center; justify-content: center; gap: 1px; line-height: 1; }
+  .jt-medal-num { font-size: 0.75rem; font-weight: 700; color: var(--jt-text-secondary); }
   .jt-medal-gold   { color: var(--jt-badge-gold); }
   .jt-medal-silver { color: var(--jt-badge-silver); }
   .jt-medal-bronze { color: var(--jt-badge-bronze); }
@@ -955,6 +951,11 @@
      read as one undifferentiated block. Spacing comes from .jt-empty-desc and
      .jt-empty-cta, so the gap above the button is 16 with or without a desc. */
   .jt-empty-text { font-size: var(--jt-text-md); font-weight: 600; color: var(--jt-text); margin: 0; }
+  /* A gate / not-found page: the message is the page's h1. */
+  .jt-app h1.jt-empty-text { font-size: var(--jt-text-xl); line-height: 1.3; }
+  .jt-empty-hint { margin-top: var(--jt-space-2); color: var(--jt-text-secondary); }
+  .jt-empty-search { display: flex; gap: var(--jt-space-2); max-width: 28rem; margin: var(--jt-space-5) auto 0; }
+  .jt-empty-search .jt-input { flex: 1 1 auto; min-width: 0; min-height: var(--jt-tap); }
 
   /* ── Animations ── */
   @keyframes jt-fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -977,14 +978,6 @@
     .jt-two-col > .jt-sidebar,
     .jt-two-col > aside { position: static; top: auto; }
     .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .jt-space-head { flex-direction: column; align-items: center; text-align: center; }
-    /* The header centres itself here with text-align, which reached the action
-       buttons for free while __meta was display:block and they were inline.
-       They are flex items now, and a flex item is placed by justify-content -
-       text-align does not touch it - so without this the buttons sat hard left
-       under a centred title, description, stat block and Follow button. */
-    .jt-space-head__meta { justify-content: center; }
-    .jt-space-nums { margin-inline-start: 0; }
     .jt-header { padding: 10px 16px; }
     .jt-mobile-toggle { display: flex; }
     .jt-nav { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--jt-bg); z-index: 200; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
@@ -1035,13 +1028,17 @@
 
     /* Topic listing rows — `.jt-row, a.jt-row` specificity match is
        load-bearing (desktop `a.jt-row` is 0,1,1). */
-    .jt-row, a.jt-row { grid-template-columns: 36px 1fr 48px; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-3); }
+    .jt-row, a.jt-row { grid-template-columns: var(--jt-tap) 1fr 48px; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-3); }
     /* Drafts rows stack on mobile: the inline title|actions shape squeezes the
        title to a per-word column at 390px. One column = title full width, then
        the time + Publish-now actions row beneath it. */
     .jt-row.jt-row--draft { grid-template-columns: 1fr; }
     .jt-row.jt-row--draft .jt-row-stat { justify-content: flex-start; margin-top: var(--jt-space-2); }
-    .jt-row .jt-votes { width: 36px; }
+    /* Vote column is one tap wide and each chevron a full 40x40 target, on
+       touch or not: up and down sit 1px apart, so the ::after hit-area floor
+       alone left them overlapping and too narrow to aim at. */
+    .jt-row .jt-votes { width: var(--jt-tap); }
+    .jt-app .jt-row .jt-v-btn { inline-size: var(--jt-tap); block-size: var(--jt-tap); }
     .jt-row-title { font-size: var(--jt-text-base); line-height: var(--jt-leading-snug); }
     .jt-row-sub { font-size: var(--jt-text-xs); gap: var(--jt-space-2); margin-top: var(--jt-space-1); }
     .jt-row-sub .jt-tl { width: 16px; height: 16px; font-size: 0.6875rem; }
@@ -1092,22 +1089,16 @@
        beside TOPICS at 16px in the same row. */
     .jt-leader .jt-leader-stat-val,
     .jt-leader .jt-leader-pts { font-size: var(--jt-text-sm); }
-    .jt-leader-rank { font-size: var(--jt-text-sm); width: 18px; }
+    .jt-leader-rank { font-size: var(--jt-text-sm); }
 
-    /* Hide per-row "rep" and "posts" labels on mobile. The header row
-       added above the list serves as the column legend. */
-    .jt-leader:not(.jt-leader-head) .jt-leader-stat-lbl { display: none; }
-
-    /* Show the mobile header row. It renders as a dimmed, uppercase
-       column legend aligned with the stat values below. */
-    .jt-leader-head { display: flex; align-items: center; background: var(--jt-bg-subtle); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); font-weight: 600; padding: var(--jt-space-2) var(--jt-space-3); }
-    .jt-leader-head .jt-leader-head-spacer { width: 36px; flex-shrink: 0; }
-    .jt-leader-head .jt-leader-name { font-size: 0.6875rem; font-weight: 600; color: var(--jt-text-tertiary); }
-    .jt-leader-head .jt-leader-stats { color: var(--jt-text-tertiary); }
-    /* Header labels and row values share one column width so REP / TOPICS
-       sit over their numbers (the header alone had a min-width; REP landed
-       46px left of its values). 56px fits the widest label, "TOPICS". */
-    .jt-leader .jt-leader-stats > div { min-width: calc(var(--jt-space-12) + var(--jt-space-2)); text-align: end; }
+    /* The name gets the row: rep and topics drop to a quiet line under it
+       ("949 rep  12 topics"), so names no longer truncate behind two stat
+       columns. The line starts under the name (rank 2rem + avatar 36px + two
+       gaps), and each stat keeps its own label, so no column legend. */
+    .jt-leader { flex-wrap: wrap; row-gap: 0; }
+    .jt-leader .jt-leader-stats { flex: 1 1 100%; justify-content: flex-start; gap: var(--jt-space-3); margin-inline-start: calc(2rem + 36px + 2 * var(--jt-space-2)); text-align: start; }
+    .jt-leader .jt-leader-stats > div { display: inline-flex; align-items: baseline; gap: var(--jt-space-1); }
+    .jt-leader .jt-leader-stat-lbl { font-size: var(--jt-text-xs); text-transform: none; letter-spacing: 0; }
 
     /* Stacked roadmap columns size to their cards; the 350px floor that
        evens the desktop row left 70-185px holes under short columns. */
@@ -1163,49 +1154,63 @@
     .jt-reply-foot .jt-reaction-trigger { min-width: 34px; min-height: 34px; padding: 6px; }
     .jt-post-foot .jt-btn-label,
     .jt-reply-foot .jt-btn-label { display: none; }
+    /* Reply and Share keep their words on phones: an icon-only row left the
+       two most-used actions as guesses. */
+    .jt-post-foot .jt-btn-label--keep,
+    .jt-reply-foot .jt-btn-label--keep { display: inline; }
+
+    /* Sticky Reply on long threads: one tap to the composer (single-post.php). */
+    .jt-app a.jt-reply-fab { position: fixed; inset-inline-end: var(--jt-space-4); bottom: max(var(--jt-space-4), calc(var(--jt-tab-bar-clearance, 0px) - var(--jt-space-2))); z-index: 998; display: inline-flex; align-items: center; gap: var(--jt-space-2); min-height: var(--jt-tap); padding-inline: var(--jt-space-4); border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-accent-fg); font-weight: 600; text-decoration: none; box-shadow: var(--jt-shadow-md); }
+    .jt-app a.jt-reply-fab:hover, .jt-app a.jt-reply-fab:focus-visible { color: var(--jt-accent-fg); background: var(--jt-accent-strong); }
+    .jt-container { padding-block-start: 0; }
+
+    /* Composer toolbars (reply, new topic) stay on one row: the 44px
+       buttons wrapped to two rows and stranded emoji on its own line. The row
+       scrolls sideways; the fade at the end says there is more. The emoji
+       picker is position: fixed, so the scroll box never clips it. */
+    .jt-editor-bar { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding-inline-end: var(--jt-space-6); --jt-fade: var(--jt-space-6); }
+    .jt-editor-bar::-webkit-scrollbar { display: none; }
+
+    /* Tab strips that scroll sideways (profile, notifications, space tabs):
+       the fade at the end turns a tab cut mid-word into a visible "more this
+       way" cue, and snapping stops a swipe on a whole tab. header.js scrolls
+       the active tab into view. */
+    :is(.jt-profile-tabs, .jt-notif-tabs, .jt-space-tabs:not(.jt-space-tabs--wrap)) { scroll-snap-type: x proximity; scroll-padding-inline: var(--jt-space-2); padding-inline-end: var(--jt-space-6); }
+    /* The end-of-row fade on every sideways-scrolling row; --jt-fade is its width. */
+    :is(.jt-editor-bar, .jt-profile-tabs, .jt-notif-tabs, .jt-space-tabs:not(.jt-space-tabs--wrap)) { --jt-fade-dir: to right; -webkit-mask-image: linear-gradient(var(--jt-fade-dir), #000 calc(100% - var(--jt-fade, var(--jt-space-8))), transparent); mask-image: linear-gradient(var(--jt-fade-dir), #000 calc(100% - var(--jt-fade, var(--jt-space-8))), transparent); }
+    [dir="rtl"] :is(.jt-editor-bar, .jt-profile-tabs, .jt-notif-tabs, .jt-space-tabs:not(.jt-space-tabs--wrap)) { --jt-fade-dir: to left; }
+    :is(.jt-profile-tab, .jt-notif-tab, .jt-space-tab) { scroll-snap-align: start; flex-shrink: 0; }
+    .jt-editor-bar > * { flex-shrink: 0; }
 
     /* Reply composer footer stacks vertically */
     .jt-editor-foot { flex-direction: column; gap: var(--jt-space-2); align-items: stretch; }
     .jt-editor-foot .jt-btn { width: 100%; justify-content: center; }
 
-    /* One nav layer on phones. The fixed bottom tab bar carries Community,
-       Search, Ranks, Alerts and Profile, so the same icons in the top row were
-       a second (unlabelled) copy - four nav layers before any content. Hide
-       the duplicates (header.php marks them .jt-nav-dup) only when the tab bar
-       is actually rendered (BuddyNext suppresses it), and drop the row when
-       no unique link is left. Moderation and the Pro Messages link have no
-       tab, so they keep the row. */
-    .jt-community-nav:has(~ .jt-mobile-tabs) .jt-nav-dup { display: none; }
-    .jt-community-nav:has(~ .jt-mobile-tabs):not(:has(.jt-community-nav-links > a:not(.jt-nav-dup))) { display: none; }
-    /* The one or two links left (Messages, Moderation) keep their label: a
-       lone unlabelled glyph on its own bordered row read as a stray icon,
-       not a destination. Label + icon reads as a tab of its own. */
-    .jt-community-nav:has(~ .jt-mobile-tabs) .jt-community-nav-links a { gap: var(--jt-space-2); }
-    .jt-community-nav:has(~ .jt-mobile-tabs) .jt-community-nav-links a > .jt-nav-label { display: inline; }
+    /* One nav layer on phones. The fixed bottom tab bar carries Home,
+       Search, Leaderboard, Notifications and My Profile, so the top row is
+       hidden whenever the tab bar is rendered (BuddyNext suppresses it). The
+       links that have no tab (Moderation, Pro's Messages, extension items)
+       move into the My Profile tab's menu (header.js), instead of keeping a
+       second nav row and its gap above every page's content. */
+    .jt-community-nav:has(~ .jt-mobile-tabs) { display: none; }
 
     /* Heading order holds on phones: h1 20 > h2 17 > h3 15 (tokens file). */
     .jt-app h1, .jt-app .jt-page-title { font-size: var(--jt-text-2xl); }
     .jt-app h2, .jt-app .jt-cat-name, .jt-app .jt-home-welcome-title { font-size: var(--jt-text-lg); }
-    .jt-app h3 { font-size: var(--jt-text-base); }
+    .jt-app h3, .jt-app .jt-crop-dialog .jt-crop-dialog__title { font-size: var(--jt-text-base); }
 
-    /* Compact space hero - the first screen showed header + hero + stats and
-       no topics. Identity goes back to one row (icon beside title), the cover
-       shrinks to a band, the description wraps in full (it was clamped with
-       no way to read the rest) and the stats
-       sit inline with their labels. */
-    .jt-space-cover { min-height: 0; }
-    .jt-space-cover--image { min-height: 96px; }
-    .jt-space-cover__identity { flex-direction: row; align-items: center; text-align: start; gap: var(--jt-space-3); padding: var(--jt-space-3) var(--jt-space-4); }
-    .jt-space-cover .jt-space-emoji { width: 40px; height: 40px; }
-    .jt-space-cover .jt-space-emoji svg { width: 20px; height: 20px; }
-    .jt-space-cover__title { font-size: var(--jt-text-2xl); }
-    .jt-space-head { flex-direction: row; flex-wrap: wrap; align-items: center; text-align: start; gap: var(--jt-space-2); padding-block: var(--jt-space-3); margin-bottom: var(--jt-space-4); }
-    .jt-space-head__meta, .jt-space-nums { flex: 1 1 100%; }
-    .jt-space-head__meta { justify-content: flex-start; }
-    .jt-space-desc { margin-top: 0; }
-    .jt-space-nums { gap: var(--jt-space-4); margin-inline-start: 0; }
-    .jt-num { display: inline-flex; align-items: baseline; gap: var(--jt-space-1); }
-    .jt-num-val { font-size: var(--jt-text-base); }
+    .jt-crop-dialog { max-width: none; padding: var(--jt-space-lg, 16px); }
+
+    /* Space header on a phone: identity and actions share a row when they
+       fit and wrap as whole groups when they do not; the cover photo is a
+       short band. */
+    .jt-space-cover { min-height: 96px; }
+    .jt-space-head { padding: var(--jt-space-3); gap: var(--jt-space-2) var(--jt-space-3); }
+    .jt-space-head__identity { flex-basis: 100%; }
+    .jt-space-head__actions { margin-inline-start: 0; }
+    .jt-space-head__actions .jt-btn { min-height: var(--jt-tap); }
+    .jt-space-emoji { width: 40px; height: 40px; }
+    .jt-space-emoji svg { width: 20px; height: 20px; }
 
     /* 12px of padding gives the crumb links' 40px hit areas room inside the
        crumb's overflow:hidden; text -> next block stays 20px (12 + 8). */
@@ -1256,7 +1261,7 @@
   .jt-cat-emoji { font-size: 1.25em; }
   .jt-cat-name { font-family: var(--jt-font-heading); font-size: var(--jt-text-xl); font-weight: 700; margin: 0; min-width: 0; overflow-wrap: anywhere; }
   .jt-app .jt-cat-name a { color: inherit; text-decoration: none; }
-  .jt-app .jt-cat-name a:hover, .jt-app .jt-cat-name a:focus-visible { color: var(--jt-accent); text-decoration: underline; }
+  .jt-app .jt-cat-name a:hover, .jt-app .jt-cat-name a:focus-visible { color: var(--jt-accent-strong); text-decoration: underline; }
   .jt-cat-desc { flex-basis: 100%; font-size: 0.9375rem; color: var(--jt-text-tertiary); }
   .jt-invite-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--jt-space-2); margin-top: var(--jt-space-4); }
   .jt-cat-chips { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); list-style: none; margin: 0; padding: 0; }
@@ -1268,14 +1273,14 @@
   .jt-cat-chip-count { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); background: var(--jt-bg-muted); border-radius: var(--jt-radius-full); padding: 0 var(--jt-space-2); }
   /* Sub-category chip + chevron read as one pill; the chevron shows that sub-category's spaces inline. Every property is set here so a theme styling bare `button` cannot restyle it. */
   .jt-cat-chip-group { display: inline-flex; align-items: stretch; }
-  .jt-app .jt-cat-chip-group .jt-cat-chip { border-start-end-radius: 0; border-end-end-radius: 0; }
-  .jt-app .jt-cat-chip-toggle { appearance: none; display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; margin: 0; padding: 0 var(--jt-space-2); border: 1px solid var(--jt-border); border-inline-start: 0; border-start-start-radius: 0; border-end-start-radius: 0; border-start-end-radius: var(--jt-radius-full); border-end-end-radius: var(--jt-radius-full); font: inherit; line-height: 1; text-transform: none; box-shadow: none; cursor: pointer; transition: border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
+  .jt-app .jt-cat-chip-group .jt-cat-chip { border-start-end-radius: 0; border-end-end-radius: 0; border-inline-end: 0; }
+  .jt-app .jt-cat-chip-toggle { appearance: none; display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; margin: 0; padding: 0 var(--jt-space-2); border: 1px solid var(--jt-border); border-inline-start-color: var(--jt-border-strong); border-start-start-radius: 0; border-end-start-radius: 0; border-start-end-radius: var(--jt-radius-full); border-end-end-radius: var(--jt-radius-full); font: inherit; line-height: 1; text-transform: none; box-shadow: none; cursor: pointer; transition: border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
   .jt-app .jt-cat-chip-toggle:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-app .jt-cat-chip-toggle svg { transition: transform var(--jt-dur) var(--jt-ease); }
   .jt-app .jt-cat-chip-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
   /* The open panel is a nested group: an accent rule and its own heading keep its spaces apart from the parent's grid below. */
   .jt-cat-sub-panel { margin-top: var(--jt-space-3); padding-inline-start: var(--jt-space-3); border-inline-start: 2px solid var(--jt-accent); }
-  .jt-app .jt-cat-sub-title { margin: 0 0 var(--jt-space-2); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
+  .jt-app .jt-cat-sub-title { margin: 0 0 var(--jt-space-2); line-height: 1.35; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-cat-subs + * { margin-top: var(--jt-space-3); }
   @media (prefers-reduced-motion: reduce) { .jt-app .jt-cat-chip-toggle svg { transition: none; } }
   /* No padding, and the host theme's paragraph margin zeroed: an empty
@@ -1355,10 +1360,12 @@
   .jt-feed-card-body p:last-child { margin-block-end: 0; }
   .jt-feed-card-body img { max-width: 100%; height: auto; border-radius: var(--jt-radius-sm); }
   .jt-feed-card-foot { display: flex; align-items: center; gap: 4px; margin-block-start: 14px; padding-block-start: 12px; border-block-start: 1px solid var(--jt-border); }
+  /* Vote group (named "Votes: N" for screen readers); lays its buttons out as the footer did. */
+  .jt-feed-votes { display: inline-flex; align-items: center; gap: 4px; }
   .jt-feed-act { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; background: transparent; border: 0; color: var(--jt-text-secondary); font: inherit; font-size: 0.875rem; cursor: pointer; border-radius: var(--jt-radius-sm); text-decoration: none; transition: background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
   .jt-feed-act:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
   .jt-feed-act:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); outline: 2px solid var(--jt-accent); outline-offset: 2px; }
-  .jt-feed-act.jt-voted, .jt-feed-act.voted { color: var(--jt-accent); }
+  .jt-feed-act.jt-voted, .jt-feed-act.voted { color: var(--jt-accent-strong); }
   .jt-feed-act svg { flex-shrink: 0; }
   .jt-feed-act-n { font-weight: 600; font-variant-numeric: tabular-nums; }
   .jt-feed-act-permalink { margin-inline-start: auto; color: var(--jt-text-tertiary); }
@@ -1427,7 +1434,7 @@
   #jt-edit-profile > .jt-form-group[id] { scroll-margin-block-start: 96px; }
   .jt-space-tab { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); text-decoration: none; border-block-end: 2px solid transparent; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease); }
   .jt-space-tab:hover, .jt-space-tab:focus-visible { color: var(--jt-text); }
-  .jt-space-tab.on { color: var(--jt-accent); border-block-end-color: var(--jt-accent); }
+  .jt-space-tab.on { color: var(--jt-accent-strong); border-block-end-color: var(--jt-accent); }
   @media (max-width: 640px) { .jt-space-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; } .jt-space-tab { white-space: nowrap; } }
   /* Edit Profile has three links an owner must see at once: wrap them instead
      of scrolling, so none is clipped on a narrow theme (Reign at 390px). */
@@ -1536,10 +1543,10 @@
   .jt-home-welcome-sub { margin: 0 0 0.75rem; color: var(--jt-text-secondary); max-width: 60ch; }
   .jt-home-welcome-pulse { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; color: var(--jt-text-tertiary); }
   .jt-home-welcome-pulse .jt-pulse-stat strong { color: var(--jt-text); font-weight: 700; }
-  .jt-pulse-stat--live strong { color: var(--jt-accent); }
+  .jt-pulse-stat--live strong { color: var(--jt-accent-strong); }
   .jt-home-welcome-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
   .jt-page-title-sm { font-size: 1.25rem; }
-  .jt-leader-stats { display: flex; gap: 16px; margin-left: auto; text-align: right; }
+  .jt-leader-stats { display: flex; gap: 16px; margin-inline-start: auto; text-align: end; }
   .jt-leader-stat-val { font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 600; }
   .jt-leader-stat-lbl { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: .05em; }
   /* Leaderboard-page row: the page card's own 20px gutter is the whole inset,
@@ -1561,7 +1568,7 @@
      block carried 24px of its own while the cards used .jt-mb-md (16px). */
   .jt-app .jt-sidebar > * { margin-block: 0 var(--jt-space-4); }
   .jt-app .jt-sidebar > :last-child { margin-block-end: 0; }
-  .jt-sidebar-link-text { font-size: 0.9375rem; color: var(--jt-accent); font-weight: 500; }
+  .jt-sidebar-link-text { font-size: 0.9375rem; color: var(--jt-accent-strong); font-weight: 500; }
   .jt-tag-count { color: var(--jt-text-tertiary); font-size: 0.9375rem; margin-left: 3px; }
 
   /* ── Managed by sidebar card (1.4.0 G1) ───────────────────────────── */
@@ -1590,7 +1597,7 @@
   }
   .jt-managed-by-link:hover .jt-managed-by-name,
   .jt-managed-by-link:focus-visible .jt-managed-by-name {
-    color: var(--jt-accent);
+    color: var(--jt-accent-strong);
   }
   .jt-managed-by-avatar {
     width: 32px;
@@ -1697,7 +1704,7 @@
   .jt-notif-tab:hover { color: var(--jt-text); }
 
   .jt-notif-tab.is-active {
-    color: var(--jt-accent);
+    color: var(--jt-accent-strong);
     border-bottom-color: var(--jt-accent);
   }
 
@@ -1933,7 +1940,7 @@
   .jt-mod-flag-reason--off_topic { background: var(--jt-accent-light); color: var(--jt-accent-strong); }
   .jt-mod-flag-row .jt-mod-flag-type { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--jt-text-tertiary); background: transparent; padding: 0; }
   .jt-mod-flag-space { font-size: 0.875rem; font-weight: 500; color: var(--jt-text); text-decoration: none; }
-  .jt-mod-flag-space:hover { color: var(--jt-accent); text-decoration: underline; }
+  .jt-mod-flag-space:hover { color: var(--jt-accent-strong); text-decoration: underline; }
   .jt-mod-flag-age { margin-inline-start: auto; font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-mod-flag-title { font-weight: 600; font-size: 0.9375rem; color: var(--jt-text); }
   /* The per-space card (flag-card.php) stacks title and excerpt above its actions. */
@@ -1943,7 +1950,7 @@
   .jt-mod-flag-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); border-block-start: 1px solid var(--jt-border); }
   .jt-mod-flag-row .jt-mod-flag-reporter { margin-inline-start: 0; font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-mod-flag-row .jt-mod-flag-note { display: inline-flex; align-items: center; gap: var(--jt-space-1); font-size: 0.8125rem; color: var(--jt-text-secondary); background: transparent; padding: 0; cursor: help; }
-  .jt-mod-flag-action { display: inline-flex; align-items: center; gap: var(--jt-space-1); margin-inline-start: auto; font-size: 0.875rem; font-weight: 500; color: var(--jt-accent); text-decoration: none; }
+  .jt-mod-flag-action { display: inline-flex; align-items: center; gap: var(--jt-space-1); margin-inline-start: auto; font-size: 0.875rem; font-weight: 500; color: var(--jt-accent-strong); text-decoration: none; }
   .jt-mod-flag-action:hover { text-decoration: underline; }
 
   /* Awaiting-approval queue (1.9.4).
@@ -2051,7 +2058,7 @@
   .jt-search-page-input input::placeholder { color: var(--jt-text-tertiary); }
   /* Same uppercase-label treatment as .jt-card h4 — same 12px gap contract.
      .jt-app prefix so the margin survives the .jt-app h3 reset. */
-  .jt-app .jt-section-label { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--jt-text-tertiary); margin-bottom: 12px; }
+  .jt-app .jt-section-label { line-height: 1.35; font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--jt-text-tertiary); margin-bottom: 12px; }
   .jt-search-result-count { color: var(--jt-text-tertiary); }
 
   /* ── Tag page ── */
@@ -2067,6 +2074,11 @@
   .jt-reply-author { }
   .jt-reply-op { font-size: 0.9375rem; color: var(--jt-text-secondary); font-weight: 600; }
   .jt-reply-author { font-weight: 600; font-size: 0.9375rem; line-height: 1.4; color: var(--jt-text); text-decoration: none; }
+  /* Name always sits beside the avatar, photo or initials alike: a long name
+     is capped at the rest of the row and ends in an ellipsis (title holds the
+     full name) instead of wrapping onto its own line under the avatar. */
+  .jt-reply-head > .jt-reply-author { display: inline-flex; min-width: 0; max-width: calc(100% - 30px - var(--jt-space-2)); }
+  .jt-reply-author__name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .jt-reply-author:hover { text-decoration: underline; color: var(--jt-text); }
   .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; line-height: 1.4; white-space: nowrap; }
   .jt-edited { color: var(--jt-text-tertiary); font-size: 0.8125rem; font-style: italic; white-space: nowrap; }
@@ -2200,7 +2212,8 @@
     box-shadow: var(--jt-shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.2));
   }
   .jt-crop-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
-  .jt-crop-dialog__title { margin: 0 0 4px; font-size: 1.0625rem; }
+  /* h2 (the dialog's own heading) sized as the h3 it replaced. */
+  .jt-app .jt-crop-dialog__title { margin: 0 0 4px; font-size: var(--jt-text-lg); line-height: 1.35; }
   .jt-crop-dialog__hint { margin: 0 0 12px; font-size: 0.8125rem; color: var(--jt-text-secondary); }
   .jt-crop-viewport {
     position: relative;
@@ -2714,7 +2727,7 @@
 
 
 /* Mentions */
-.jt-mention { color: var(--jt-accent); font-weight: 500; }
+.jt-mention { color: var(--jt-accent-strong); font-weight: 500; }
 
 /* ── Image Upload: Drag-over state ── */
 .jt-editor-dragover { border-color: var(--jt-accent) !important; background: var(--jt-accent-muted); }
@@ -2916,7 +2929,7 @@
 .jt-share-item-icon svg { width: 16px; height: 16px; display: block; }
 .jt-share-item-label { display: inline-block; }
 .jt-share-item:hover,
-.jt-share-item:focus-visible { background: var(--jt-bg-hover); color: var(--jt-accent); }
+.jt-share-item:focus-visible { background: var(--jt-bg-hover); color: var(--jt-accent-strong); }
 .jt-share-item:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; }
 .jt-share-item:hover .jt-share-item-icon,
 .jt-share-item:focus-visible .jt-share-item-icon { color: var(--jt-accent); }
@@ -3019,14 +3032,19 @@
 }
 .jt-mobile-tab {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 6px 8px; min-width: 56px;
+  /* Page names as labels (Leaderboard, Notifications) fit five across at
+     320px with 4px side padding; flex shares out the rest so each tab is a
+     wide target. */
+  flex: 1 1 auto; padding: 6px 4px; min-width: var(--jt-tap); min-height: var(--jt-tap);
+  white-space: nowrap;
   color: var(--jt-text-tertiary); text-decoration: none;
   font-size: 0.6875rem; font-weight: 500;
   transition: color var(--jt-dur);
   position: relative;
 }
 .jt-mobile-tab svg { display: block; }
-.jt-mobile-tab:hover, .jt-mobile-tab.active { color: var(--jt-accent); }
+.jt-mobile-tab:hover, .jt-mobile-tab.active { color: var(--jt-accent-strong); }
+.jt-mobile-tab:hover svg, .jt-mobile-tab.active svg { color: var(--jt-accent); }
 .jt-mobile-tab-badge {
   position: absolute; top: 2px; right: 4px;
   background: var(--jt-danger-solid); color: var(--jt-danger-fg);
@@ -3035,6 +3053,16 @@
   border-radius: var(--jt-radius-full);
   display: inline-flex; align-items: center; justify-content: center;
 }
+
+/* The My Profile tab's menu (header.js): the nav-only links on phones. */
+.jt-mobile-tab-menu {
+  position: absolute; bottom: calc(100% + var(--jt-space-2)); inset-inline-end: var(--jt-space-2);
+  min-width: 12rem; padding: var(--jt-space-1) 0;
+  background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg);
+  box-shadow: var(--jt-shadow-md);
+}
+.jt-mobile-tab-menu .jt-more-item { min-height: var(--jt-tap); padding-inline: var(--jt-space-4); font-size: 0.9375rem; }
+.jt-mobile-tab-menu .jt-more-item svg { flex-shrink: 0; width: 18px; height: 18px; color: var(--jt-text-secondary); }
 
 /* ── Toast notification (standalone fallback) ── */
 .jt-toast {
@@ -3231,24 +3259,30 @@
 .jt-notif-dropdown-wrap { position: relative; display: inline-flex; }
 .jt-notif-panel {
   position: absolute; top: 100%; right: 0; z-index: 200;
-  width: 340px; max-height: 420px;
+  width: 340px;
+  /* A column: head, the optional push prompt and the "View all" footer stay
+     put and only the list scrolls, so the footer is never clipped. */
+  display: flex; flex-direction: column;
+  max-height: min(480px, calc(100vh - 140px));
   background: var(--jt-bg); border: 1px solid var(--jt-border);
   border-radius: var(--jt-radius-lg);
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   overflow: hidden;
   animation: jt-fadeIn 0.2s ease;
 }
+.jt-notif-panel[hidden] { display: none; }
+.jt-notif-panel > * { flex-shrink: 0; }
 .jt-notif-panel-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px; border-bottom: 1px solid var(--jt-border);
 }
 .jt-notif-panel-head strong { font-size: 0.875rem; }
 .jt-notif-mark-read {
-  border: none; background: none; color: var(--jt-accent);
+  border: none; background: none; color: var(--jt-accent-strong);
   font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 0;
   font-family: var(--jt-font);
 }
-.jt-notif-mark-read:hover { border: none; background: none; color: var(--jt-accent); text-decoration: underline; }
+.jt-notif-mark-read:hover { border: none; background: none; color: var(--jt-accent-strong); text-decoration: underline; }
 /* A prompt above a notification list (Pro's "Get notified on this device"):
    the bell panel and the Notifications page share it. */
 .jt-notif-prompt {
@@ -3259,10 +3293,12 @@
 .jt-notif-prompt[hidden] { display: none; }
 .jt-notif-prompt__text { flex: 1 1 12rem; margin: 0; font-size: 0.8125rem; color: var(--jt-text); }
 .jt-notif-prompt .jt-btn { flex: 0 0 auto; }
+/* In the 340px bell panel the text takes its own line; Turn on and Not now share the next. */
+.jt-notif-panel .jt-notif-prompt__text { flex-basis: 100%; }
 .jt-notif-prompt__status { flex: 1 0 100%; margin: 0; font-size: 0.8125rem; color: var(--jt-text-secondary); }
 .jt-notif-prompt__status:empty { display: none; }
 .jt-notifications-head ~ .jt-notif-prompt { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-block-end: var(--jt-space-4); }
-.jt-notif-panel-body { max-height: 280px; overflow-y: auto; }
+.jt-notif-panel > .jt-notif-panel-body { flex: 1 1 auto; min-height: 6rem; overflow-y: auto; overscroll-behavior: contain; }
 .jt-notif-panel-loading, .jt-notif-panel-empty {
   padding: 24px 16px; text-align: center;
   color: var(--jt-text-tertiary); font-size: 0.875rem;
@@ -3280,10 +3316,10 @@
 .jt-notif-panel-footer {
   display: block; text-align: center;
   padding: 10px 16px; border-top: 1px solid var(--jt-border);
-  font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent);
+  font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent-strong);
   text-decoration: none; transition: background 0.1s;
 }
-.jt-notif-panel-footer:hover { background: var(--jt-bg-hover); color: var(--jt-accent); }
+.jt-notif-panel-footer:hover { background: var(--jt-bg-hover); color: var(--jt-accent-strong); }
 @media (max-width: 640px) {
   .jt-notif-panel { width: calc(100vw - 32px); right: -16px; }
 }
@@ -3338,7 +3374,7 @@
 .jt-hl { background: var(--jt-warn-light); color: inherit; font-weight: inherit; padding: 0; border-radius: var(--jt-radius-sm); }
 .jt-search-overlay-all {
   display: block; padding: var(--jt-space-3) var(--jt-space-5);
-  color: var(--jt-accent); font-size: 0.875rem; font-weight: 600; text-decoration: none;
+  color: var(--jt-accent-strong); font-size: 0.875rem; font-weight: 600; text-decoration: none;
 }
 .jt-search-overlay-all:hover { background: var(--jt-bg-hover); }
 .jt-search-overlay-all:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; }
@@ -3456,7 +3492,7 @@
 .jt-row:not(:has(.jt-votes)):has(.jt-bookmark-toggle) { grid-template-columns: minmax(0, 1fr) 96px 104px var(--jt-tap); }
 @media (max-width: 640px) {
 	/* The time cell is hidden on phones (it is no longer :last-child here). */
-	.jt-row:has(.jt-bookmark-toggle) { grid-template-columns: 36px minmax(0, 1fr) 48px var(--jt-tap); }
+	.jt-row:has(.jt-bookmark-toggle) { grid-template-columns: var(--jt-tap) minmax(0, 1fr) 48px var(--jt-tap); }
 	.jt-row:not(:has(.jt-votes)):has(.jt-bookmark-toggle) { grid-template-columns: minmax(0, 1fr) 48px var(--jt-tap); }
 	.jt-row:has(.jt-bookmark-toggle) .jt-row-stat:has(.jt-row-time) { display: none; }
 }
@@ -3551,7 +3587,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-nav-space > a:hover,
 .jt-nav-space > a:focus-visible {
 	background: var(--jt-bg-hover, var(--jt-bg-subtle));
-	color: var(--jt-accent, var(--jt-text));
+	color: var(--jt-accent-strong, var(--jt-text));
 }
 .jt-nav-space.is-active > a,
 .jt-nav-space > a[aria-current="page"] {
@@ -3822,6 +3858,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	border-color: var(--jt-border-strong);
 	color: var(--jt-text);
 }
+.jt-subspaces__link .jt-space-emoji { width: 28px; height: 28px; border-radius: var(--jt-radius); }
+.jt-subspaces__link .jt-space-emoji svg { width: 16px; height: 16px; }
 .jt-subspaces__name { font-weight: 600; }
 .jt-subspaces__count {
 	font-size: var(--jt-text-xs);

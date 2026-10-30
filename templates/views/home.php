@@ -26,7 +26,9 @@ $base                 = \Jetonomy\base_url();
 $settings        = get_option( 'jetonomy_settings', array() );
 $community_title = \Jetonomy\community_title();
 ?>
-<h1 class="jt-page-title jt-home-title"><?php echo esc_html( $community_title ); ?></h1>
+<?php if ( is_user_logged_in() ) : ?>
+	<h1 class="jt-page-title jt-home-title"><?php echo esc_html( $community_title ); ?></h1>
+<?php endif; ?>
 <?php
 // Newcomer welcome — the home was a wall of space cards with no orientation
 // for a first-time visitor (the top expectation-audit finding). Show a short
@@ -56,7 +58,8 @@ if ( ! is_user_logged_in() ) :
 	?>
 	<section class="jt-home-welcome" aria-label="<?php esc_attr_e( 'Welcome', 'jetonomy' ); ?>">
 		<div class="jt-home-welcome-body">
-			<h2 class="jt-home-welcome-title"><?php echo esc_html( $jt_welcome_heading ); ?></h2>
+			<?php // Visitors get one heading - this one is the page's h1 - not the community name above a "Welcome to" card. ?>
+			<h1 class="jt-home-welcome-title"><?php echo esc_html( $jt_welcome_heading ); ?></h1>
 			<p class="jt-home-welcome-sub"><?php echo esc_html( $jt_welcome_sub ); ?></p>
 			<div class="jt-home-welcome-pulse">
 				<span class="jt-pulse-stat"><?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $jt_pulse['members'], 'member' ) ), '<strong>' . esc_html( number_format_i18n( (int) $jt_pulse['members'] ) ) . '</strong>' ), array( 'strong' => array() ) ); ?></span>
@@ -70,7 +73,7 @@ if ( ! is_user_logged_in() ) :
 			<?php if ( $jt_can_register ) : ?>
 				<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( wp_registration_url() ); ?>"><?php esc_html_e( 'Create free account', 'jetonomy' ); ?></a>
 			<?php endif; ?>
-			<a class="jt-btn <?php echo $jt_can_register ? 'jt-btn-ghost' : 'jt-btn-fill'; ?>" href="<?php echo esc_url( wp_login_url( \Jetonomy\base_url() . '/' ) ); ?>"><?php esc_html_e( 'Log in', 'jetonomy' ); ?></a>
+			<a class="jt-btn <?php echo $jt_can_register ? 'jt-btn-ghost' : 'jt-btn-fill'; ?>" href="<?php echo esc_url( wp_login_url( \Jetonomy\base_url() . '/' ) ); ?>" data-jt-login><?php esc_html_e( 'Log in', 'jetonomy' ); ?></a>
 		</div>
 	</section>
 <?php else : ?>

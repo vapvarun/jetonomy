@@ -24,7 +24,7 @@ foreach ( (array) $jt_spaces as $jt_s ) {
 	$jt_space_names[ (int) $jt_s->id ] = (string) $jt_s->title;
 }
 ?>
-<div class="wrap jt-cmedia">
+<div class="wrap jetonomy-admin jt-cmedia">
 	<h1 class="wp-heading-inline"><?php esc_html_e( 'Community Media', 'jetonomy' ); ?></h1>
 	<hr class="wp-header-end">
 

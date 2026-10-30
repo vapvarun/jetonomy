@@ -137,6 +137,11 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					</td>
 				</tr>
 			</table>
+			<?php
+			// Same hook as the front-end create form: Pro custom fields (context =
+			// space) render here; admin-common.js sends them as `custom_fields`.
+			do_action( 'jetonomy_new_space_fields' );
+			?>
 			<p class="submit">
 				<button type="submit" class="button button-primary"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?></button>
 
@@ -162,20 +167,20 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 			<div class="jt-content-toolbar">
 				<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 				<input type="search" name="s" value="<?php echo esc_attr( $search_query ); ?>" class="regular-text" placeholder="<?php echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>">
-				<select name="category_id">
+				<select name="category_id" aria-label="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?>">
 					<option value=""><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ) ) ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
 						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( $filter_category, (int) $cat->id ); ?>><?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?></option>
 					<?php endforeach; ?>
 				</select>
-				<select name="type">
+				<select name="type" aria-label="<?php esc_attr_e( 'Filter by type', 'jetonomy' ); ?>">
 					<option value=""><?php esc_html_e( 'All Types', 'jetonomy' ); ?></option>
 					<option value="forum" <?php selected( $filter_type, 'forum' ); ?>><?php esc_html_e( 'Forum', 'jetonomy' ); ?></option>
 					<option value="qa" <?php selected( $filter_type, 'qa' ); ?>><?php esc_html_e( 'Q&A', 'jetonomy' ); ?></option>
 					<option value="ideas" <?php selected( $filter_type, 'ideas' ); ?>><?php esc_html_e( 'Ideas', 'jetonomy' ); ?></option>
 					<option value="feed" <?php selected( $filter_type, 'feed' ); ?>><?php esc_html_e( 'Feed', 'jetonomy' ); ?></option>
 				</select>
-				<select name="status">
+				<select name="status" aria-label="<?php esc_attr_e( 'Filter by status', 'jetonomy' ); ?>">
 					<option value=""><?php esc_html_e( 'All Statuses', 'jetonomy' ); ?></option>
 					<option value="active" <?php selected( $filter_status, 'active' ); ?>><?php esc_html_e( 'Active', 'jetonomy' ); ?></option>
 					<option value="archived" <?php selected( $filter_status, 'archived' ); ?>><?php esc_html_e( 'Archived', 'jetonomy' ); ?></option>
@@ -291,7 +296,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 								echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
 							}
 							echo '<strong><a href="' . esc_url( $edit_url ) . '">' . esc_html( $space->title ) . '</a></strong>';
-							echo '<br><code>/' . esc_html( \Jetonomy\base_slug() . '/s/' . $space->slug ) . '/</code>';
+							echo '<span class="jt-admin-subline">/' . esc_html( \Jetonomy\base_slug() . '/s/' . $space->slug ) . '/</span>';
 							?>
 							<div class="row-actions">
 								<span class="edit"><a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>

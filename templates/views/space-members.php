@@ -31,13 +31,22 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 // roster queries so a non-member never triggers them.
 if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
 	status_header( 403 );
+	$jt_gate_name = \Jetonomy\Models\Space::gate_name( $space, get_current_user_id() );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		array(
-			'icon'    => 'lock',
+			'icon'      => 'lock',
 			/* translators: 1: singular member label; 2: singular space label; 3: plural member label. */
-			'message' => sprintf( __( 'You need to join this %1$s to see its %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
-			'tone'    => 'forbidden',
+			'message'   => sprintf( __( 'You need to join this %1$s to see its %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+			'tone'      => 'forbidden',
+			'crumb'     => $jt_gate_name,
+			// The join / request controls live on the space page.
+			'cta_label' => $jt_gate_name === (string) $space->title
+				/* translators: %s: space title. */
+				? sprintf( __( 'Go to %s', 'jetonomy' ), $space->title )
+				/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+				: sprintf( __( 'Go to the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			'cta_url'   => \Jetonomy\route_url( 'space', $space->slug ),
 		)
 	);
 	return;

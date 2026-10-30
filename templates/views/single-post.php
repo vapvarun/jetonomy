@@ -22,8 +22,6 @@ $jt_not_found = static function (): void {
 			'icon_size'   => 48,
 			'message'     => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			'description' => sprintf( /* translators: %s: the singular topic label, lowercase. */ __( 'This %s may have been removed, or the link is wrong.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-			'cta_label'   => __( 'Back to the community', 'jetonomy' ),
-			'cta_url'     => \Jetonomy\base_url(),
 		)
 	);
 };
@@ -664,7 +662,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// inside the cluster.
 					?>
 					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
-						<div class="jt-vote-cluster" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Vote on this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
+						<?php $jt_vote_gid = wp_unique_id( 'jt-votes-post-' . absint( $post->id ) . '-' ); ?>
+						<div class="jt-vote-cluster"<?php echo jetonomy_vote_group_attrs( $jt_vote_gid ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
 							<?php $jt_own_post = is_user_logged_in() && (int) $post->author_id === get_current_user_id(); // Your own topic takes no vote. ?>
 							<?php if ( $jt_is_live && ! $jt_own_post && jetonomy_viewer_can_vote( $space ) ) : ?>
@@ -674,7 +673,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								data-post-id="<?php echo absint( $post->id ); ?>"
 								<?php echo jetonomy_vote_attrs( 'up', 1 === $user_post_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-								<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+								<span class="n" id="<?php echo esc_attr( $jt_vote_gid ); ?>-n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</button>
 							<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
 								aria-pressed="<?php echo -1 === $user_post_vote ? 'true' : 'false'; ?>"
@@ -690,14 +689,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								// wanted to vote stuck. Make it a link to log in (and
 								// return here), so the intent has somewhere to go.
 								?>
-							<a class="jt-act jt-act-login" href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"
+							<a class="jt-act jt-act-login" data-jt-login href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"
 								title="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>"
 								aria-label="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+								<span class="n" id="<?php echo esc_attr( $jt_vote_gid ); ?>-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</a>
 							<?php else : ?>
-								<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16, $space, $jt_own_post ); ?>
+								<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16, $space, $jt_own_post, $jt_vote_gid . '-n' ); ?>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
@@ -710,12 +709,18 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<?php jetonomy_echo_icon( 'eye', 14 ); ?>
 						<span class="n"><?php echo esc_html( (int) $post->view_count ); ?></span>
 					</span>
+				<?php
+				// Reply jumps to the composer below. It hides itself (CSS
+				// :has) when there is no composer for this viewer, so it never
+				// promises a reply box that is not there.
+				?>
+				<a class="jt-act jt-reply-jump" href="#jt-composer"><?php jetonomy_echo_icon( 'corner-up-left', 16 ); ?> <span class="jt-btn-label jt-btn-label--keep"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></span></a>
 				<button class="jt-act jt-share-btn"
 					data-wp-on--click="actions.sharePost"
 					data-post-url="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' ); ?>"
 					data-post-title="<?php echo esc_attr( jetonomy_post_title_or_excerpt( $post ) ); ?>"
 					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"
-					aria-label="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>" aria-expanded="false"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
+					aria-label="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>" aria-expanded="false"><?php jetonomy_echo_icon( 'link', 16 ); ?> <span class="jt-btn-label jt-btn-label--keep" aria-hidden="true"><?php esc_html_e( 'Share', 'jetonomy' ); ?></span></button>
 				<?php
 				if ( is_user_logged_in() && $jt_is_live ) :
 					$is_bookmarked = \Jetonomy\Models\Bookmark::is_bookmarked( get_current_user_id(), (int) $post->id );
@@ -1084,6 +1089,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<?php printf( /* translators: %s: singular topic label. */ esc_html__( 'This %s is closed. As a moderator, you can still take part.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
 					</div>
 				<?php endif; ?>
+				<?php // Phones: a sticky Reply that jumps here from anywhere in a long thread (CSS shows it <= 640px). ?>
+				<a class="jt-reply-fab" href="#jt-composer"><?php jetonomy_echo_icon( 'corner-up-left', 16 ); ?> <?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></a>
 				<div class="jt-reply-composer" id="jt-composer">
 					<h3>
 						<?php printf( /* translators: %s: singular reply label. */ esc_html__( 'Your %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>

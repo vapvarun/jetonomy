@@ -1846,6 +1846,8 @@ class Template_Loader {
 			'leaveSpace'            => sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label() ),
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'confirmLeaveSpace'     => sprintf( __( 'Leave this %s? You can rejoin at any time.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			/* translators: %s: the title of the space being left. */
+			'confirmLeaveNamed'     => __( 'Leave %s? You can rejoin at any time.', 'jetonomy' ),
 			'leave'                 => __( 'Leave', 'jetonomy' ),
 			'leaveSpaceFailed'      => __( 'Could not leave. Please try again.', 'jetonomy' ),
 			'copyLink'              => __( 'Copy link', 'jetonomy' ),
@@ -1929,6 +1931,7 @@ class Template_Loader {
 			/* translators: %s: the singular topic label the site owner configured. */
 			'titleRequired'         => sprintf( __( 'Please enter a title for your %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'bodyRequired'          => __( 'Please add some details before posting.', 'jetonomy' ),
+			'editEmpty'             => __( 'Add some text before saving.', 'jetonomy' ),
 			'loginRequired'         => __( 'Please sign in to use this.', 'jetonomy' ),
 			// Pro Private Messaging composer (consumed by jetonomy-pro/assets/js/pro-view.js).
 			'messageSending'        => __( 'Sending...', 'jetonomy' ),

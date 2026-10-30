@@ -453,6 +453,9 @@
 	grid-template-columns: 1fr 340px;
 	gap: 20px;
 	margin-top: 20px;
+	/* Each card is as tall as its content; stretching the activity card to the
+	   sidebar's height left a large blank panel under ten rows. */
+	align-items: start;
 }
 
 @media (max-width: 1200px) {
@@ -515,6 +518,16 @@
 	align-items: center;
 	gap: 6px;
 	justify-content: center;
+}
+
+.jetonomy-quick-actions .jt-quick-action-help {
+	margin: -4px 0 4px;
+	font-size: 12px;
+	color: var(--jt-admin-text-muted);
+}
+
+.jt-dashboard-card__more {
+	margin: 12px 0 0;
 }
 
 .jetonomy-quick-actions .dashicons {
@@ -1190,10 +1203,10 @@
 
 .jetonomy-categories-layout .column-name .description {
 	display: block;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	max-width: 320px;
+	/* Wraps on word boundaries (the PHP trims to whole words); the old
+	   one-line ellipsis cut descriptions mid-word. */
+	white-space: normal;
+	overflow-wrap: anywhere;
 	font-size: 12px;
 	color: var(--jt-admin-text-wp-3);
 	margin-top: 2px;
@@ -1208,9 +1221,6 @@
 		position: static;
 	}
 
-	.jetonomy-categories-layout .column-name .description {
-		max-width: 100%;
-	}
 }
 
 /* Tags page reuses the Categories split layout — no new rules needed. */
@@ -1394,12 +1404,18 @@
    Moderation Actions
    ═══════════════════════════════════════════════════════════ */
 
-.jetonomy-mod-actions {
-	white-space: nowrap;
+/* Row action groups (Moderation, Users, Pro's Conversations and Webhooks)
+   wrap inside their cell instead of running past the card edge. */
+.jt-row-actions {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	align-items: center;
+	max-width: 100%;
 }
 
-.jetonomy-mod-actions .button + .button {
-	margin-right: 4px;
+.jt-row-actions .button {
+	margin: 0;
 }
 
 .jetonomy-content-preview {
@@ -2790,14 +2806,6 @@ tr.jetonomy-moderated td {
 		width: 100%;
 	}
 
-	.jetonomy-mod-actions {
-		white-space: normal;
-	}
-
-	.jetonomy-mod-actions .button {
-		margin-bottom: 4px;
-	}
-
 	/* Settings sidebar collapses on mobile */
 	.jt-settings-layout {
 		flex-direction: column;
@@ -3328,6 +3336,7 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .wp-list-table th.jt-col-s  { width: 90px; }
 	.jetonomy-admin .wp-list-table th.jt-col-m  { width: 120px; }
 	.jetonomy-admin .wp-list-table th.jt-col-l  { width: 180px; }
+	.jetonomy-admin .wp-list-table th.jt-col-xl { width: 240px; }
 }
 
 /* The 1024px cliff: the media query above keys on
@@ -3351,7 +3360,8 @@ tr.jetonomy-moderated td {
 		.jetonomy-admin .wp-list-table th.jt-col-xs,
 		.jetonomy-admin .wp-list-table th.jt-col-s,
 		.jetonomy-admin .wp-list-table th.jt-col-m,
-		.jetonomy-admin .wp-list-table th.jt-col-l { width: auto; }
+		.jetonomy-admin .wp-list-table th.jt-col-l,
+		.jetonomy-admin .wp-list-table th.jt-col-xl { width: auto; }
 		/* Keep the identity column from being outvoted by long secondary
 		   content in auto layout. */
 		.jetonomy-admin .wp-list-table th.column-primary { min-width: 240px; }
@@ -4352,22 +4362,30 @@ tr.jetonomy-moderated td {
 	cursor: pointer;
 	list-style: none;
 	position: relative;
-	padding-inline-end: 28px;
+	padding-inline-end: 56px;
 }
 .jt-settings-card--disclosure > summary::-webkit-details-marker { display: none; }
+.jt-settings-card--disclosure > summary:hover {
+	background: var(--jt-admin-surface-2, #f6f7f7);
+}
+/* A bordered 32px chevron button at mid-height reads as "open me"; the old
+   20px caret in the corner read as a static header. */
 .jt-settings-card--disclosure > summary::after {
-	content: "\203A";
+	content: "";
 	position: absolute;
-	inset-inline-end: 4px;
-	top: 0;
-	font-size: 20px;
-	line-height: 1;
-	color: var(--jt-admin-text-3);
-	transform: rotate(-90deg);
+	inset-inline-end: 16px;
+	top: 50%;
+	width: 32px;
+	height: 32px;
+	margin-top: -16px;
+	box-sizing: border-box;
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: 50%;
+	background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2350575e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 16px no-repeat;
 	transition: transform 0.15s;
 }
 .jt-settings-card--disclosure[open] > summary::after {
-	transform: rotate(90deg);
+	transform: rotate(-180deg);
 }
 .jt-settings-card--disclosure > summary:focus-visible {
 	outline: 2px solid var(--jt-admin-blue-wp);
@@ -4399,4 +4417,112 @@ tr.jetonomy-moderated td {
 }
 .jetonomy-admin .jt-access-help__body {
 	padding: var(--jt-space-3, 12px) var(--jt-space-5, 20px) 0;
+}
+
+/* ── Shared admin list primitives (2.0.7 admin UX pass) ──────────────────── */
+
+/* Secondary line under a row's name: an address, a login. Muted reference
+   text, not a code chip or a column of its own. */
+.jetonomy-admin .jt-admin-subline {
+	display: block;
+	margin-block-start: 2px;
+	font-size: 12px;
+	line-height: 1.4;
+	color: var(--jt-admin-text-muted);
+	overflow-wrap: anywhere;
+}
+
+.jetonomy-admin .jt-admin-subline--inline {
+	display: inline;
+	margin-block-start: 0;
+}
+
+/* Small number fields are sized to their content. Core's .small-text is 50px,
+   which after our 12px padding showed "128(" for 1280 and "Defa" for the
+   "Default" placeholder. */
+.jetonomy-admin input[type="number"].small-text {
+	width: calc(7ch + 56px);
+	max-width: 100%;
+}
+
+/* Search boxes leave room for their placeholder ("Name, username or email"
+   was cut to "Name, username or er"). */
+.jetonomy-admin .search-box input[type="search"] {
+	width: 18rem;
+	max-width: 100%;
+}
+
+/* A labelled filter: the label sits above its control, so no filter in a
+   toolbar is an unexplained box. */
+.jetonomy-admin .jt-filter-field {
+	display: inline-flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+}
+
+.jetonomy-admin .jt-filter-field__label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--jt-admin-text-2);
+}
+
+.jetonomy-admin .jt-activity-filters .alignleft.actions {
+	align-items: flex-end;
+}
+
+/* Hover-revealed row actions reserved a 34px line in every row on desktop,
+   which is most of why list rows stood 85-105px tall. With a mouse (wider
+   than the 1024px touch band) the links keep WCAG 2.5.8's 24px target and
+   the row gets that space back; touch widths keep their larger floors. */
+@media screen and (min-width: 1025px) {
+	.jetonomy-admin .wp-list-table .row-actions a {
+		min-height: 24px;
+	}
+}
+
+/* What a trust level unlocks: one ability per line. */
+.jetonomy-admin .jt-unlock-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.jetonomy-admin .jt-unlock-list li {
+	margin: 0 0 2px;
+}
+
+.jetonomy-admin .jt-unlock-note {
+	margin: 6px 0 0;
+	font-style: italic;
+}
+
+@media screen and (max-width: 782px) {
+	/* Tab rows scroll sideways on one line instead of wrapping into a
+	   three-row stack (Moderation's five tabs at 390). */
+	.jetonomy-admin .nav-tab-wrapper {
+		display: flex;
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: thin;
+	}
+
+	.jetonomy-admin .nav-tab-wrapper .nav-tab {
+		flex: 0 0 auto;
+		float: none;
+		white-space: nowrap;
+	}
+
+	/* Destructive row actions sit on their own line, away from Edit / View,
+	   so a thumb aimed at a safe action cannot land on Delete. */
+	.jetonomy-admin .wp-list-table .row-actions .delete {
+		display: block;
+		flex-basis: 100%; /* The phone row-actions bar is a flex row. */
+		width: 100%;
+		margin-block-start: 8px;
+		padding-block-start: 8px;
+		border-block-start: 1px solid var(--jt-admin-border);
+	}
 }

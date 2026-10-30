@@ -218,6 +218,10 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 			</div>
 		</div>
 
+		<?php
+		// One load for every actor's profile + avatar on the page.
+		\Jetonomy\Avatar::prime( array_map( 'intval', wp_list_pluck( $notifications, 'actor_id' ) ) );
+		?>
 		<div class="jt-card jt-card-flush jt-notif-list" data-jt-notif-list>
 			<?php foreach ( $notifications as $notif ) : ?>
 				<?php
@@ -292,8 +296,18 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 						// type icon where there is genuinely nobody to show.
 						if ( $actor ) :
 							?>
-							<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
-								<?php echo esc_html( strtoupper( mb_substr( \Jetonomy\user_display_name( $actor ), 0, 2 ) ) ); ?>
+							<?php // The shared avatar partial: a member with a photo shows it here too, initials only without one. ?>
+							<span class="jt-notif-avatar jt-flex-shrink-0" aria-hidden="true">
+								<?php
+								\Jetonomy\Template_Loader::partial(
+									'avatar',
+									array(
+										'user_id' => (int) $actor->ID,
+										'size'    => 30,
+										'class'   => 'jt-avatar-sm',
+									)
+								);
+								?>
 							</span>
 						<?php elseif ( $jt_notif_anon ) : ?>
 							<span class="jt-avatar jt-avatar-anon jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">

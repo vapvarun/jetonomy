@@ -319,7 +319,7 @@ class Activity_List_Table extends \WP_List_Table {
 			/* translators: %s: the revealed author's name, linked to their profile. */
 			return sprintf( esc_html__( 'Real author: %s', 'jetonomy' ), $who );
 		}
-		$text = self::details_text( $item );
+		$text = self::details_text( $item, $this->context );
 		return '' === $text ? '&mdash;' : esc_html( $text );
 	}
 
@@ -346,8 +346,17 @@ class Activity_List_Table extends \WP_List_Table {
 				$ids[ $type ][] = (int) $row->object_id;
 			}
 			$ids['user'][] = (int) ( $row->user_id ?? 0 );
+			$meta          = self::metadata( $row );
 			if ( 'anonymous_author_revealed' === (string) ( $row->action ?? '' ) ) {
-				$ids['user'][] = (int) ( self::metadata( $row )['real_author'] ?? 0 );
+				$ids['user'][] = (int) ( $meta['real_author'] ?? 0 );
+			}
+			// The Details column names the space / topic a row's metadata points
+			// at, so load those with the rest instead of printing raw ids.
+			if ( ! empty( $meta['space_id'] ) ) {
+				$ids['space'][] = (int) $meta['space_id'];
+			}
+			if ( ! empty( $meta['post_id'] ) ) {
+				$ids['post'][] = (int) $meta['post_id'];
 			}
 		}
 
@@ -454,10 +463,12 @@ class Activity_List_Table extends \WP_List_Table {
 	 * The row's metadata in plain words (why reputation changed, the new
 	 * trust level, the role a member joined with). Empty when there is none.
 	 *
-	 * @param object $row Activity log row.
+	 * @param object $row     Activity log row.
+	 * @param array  $context Output of prime() for the rows being rendered; names the
+	 *                        space or topic a row's metadata points at.
 	 * @return string Unescaped.
 	 */
-	public static function details_text( object $row ): string {
+	public static function details_text( object $row, array $context = array() ): string {
 		$meta = self::metadata( $row );
 		if ( ! $meta ) {
 			return '';
@@ -486,9 +497,22 @@ class Activity_List_Table extends \WP_List_Table {
 				return sprintf( __( 'Role: %s', 'jetonomy' ), $humanize( $meta['role'] ?? '' ) );
 		}
 
-		// Unknown action (an add-on's): readable "Key: value" pairs.
+		// Unknown action (an add-on's): readable "Key: value" pairs. A space or
+		// topic id is shown as its name (loaded by prime()), never as a raw id.
 		$parts = array();
 		foreach ( $meta as $key => $value ) {
+			if ( 'space_id' === $key ) {
+				$space = $context['spaces'][ (int) $value ] ?? null;
+				/* translators: %s: space name. */
+				$parts[] = $space ? sprintf( __( 'In %s', 'jetonomy' ), (string) $space->title ) : self::deleted_label( 'space' );
+				continue;
+			}
+			if ( 'post_id' === $key ) {
+				$post = $context['posts'][ (int) $value ] ?? null;
+				/* translators: %s: topic title. */
+				$parts[] = $post ? sprintf( __( 'On %s', 'jetonomy' ), jetonomy_post_title_or_excerpt( $post ) ) : self::deleted_label( 'topic' );
+				continue;
+			}
 			$parts[] = $humanize( $key ) . ': ' . ( is_scalar( $value ) ? wp_trim_words( (string) $value, 6, '…' ) : wp_json_encode( $value ) );
 		}
 		return implode( ' · ', $parts );
@@ -566,42 +590,41 @@ class Activity_List_Table extends \WP_List_Table {
 		?>
 		<div class="jt-activity-filters tablenav top">
 			<div class="alignleft actions">
-				<label class="screen-reader-text" for="jt-activity-user"><?php esc_html_e( 'Filter by user', 'jetonomy' ); ?></label>
-				<input
-					type="number"
-					id="jt-activity-user"
-					name="user_id"
-					min="0"
-					step="1"
-					value="<?php echo esc_attr( (string) $filters['user_id'] ); ?>"
-					placeholder="<?php esc_attr_e( 'User ID', 'jetonomy' ); ?>"
-					class="small-text"
-				/>
+				<?php // Every filter carries a visible label: four bare boxes (one showing "0") gave no clue what each one filtered. ?>
+				<label class="jt-filter-field" for="jt-activity-user">
+					<span class="jt-filter-field__label"><?php esc_html_e( 'User ID', 'jetonomy' ); ?></span>
+					<input
+						type="number"
+						id="jt-activity-user"
+						name="user_id"
+						min="1"
+						step="1"
+						value="<?php echo $filters['user_id'] ? esc_attr( (string) $filters['user_id'] ) : ''; ?>"
+						placeholder="<?php esc_attr_e( 'Any', 'jetonomy' ); ?>"
+						class="small-text"
+					/>
+				</label>
 
-				<label class="screen-reader-text" for="jt-activity-action"><?php esc_html_e( 'Filter by type', 'jetonomy' ); ?></label>
-				<select id="jt-activity-action" name="action_type">
-					<option value=""><?php esc_html_e( 'All types', 'jetonomy' ); ?></option>
-					<?php foreach ( $actions as $code ) : ?>
-						<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $filters['action'], $code ); ?>>
-							<?php echo esc_html( Admin::action_label( (string) $code ) ); ?>
-						</option>
-					<?php endforeach; ?>
-				</select>
+				<label class="jt-filter-field" for="jt-activity-action">
+					<span class="jt-filter-field__label"><?php esc_html_e( 'Type', 'jetonomy' ); ?></span>
+					<select id="jt-activity-action" name="action_type">
+						<option value=""><?php esc_html_e( 'All types', 'jetonomy' ); ?></option>
+						<?php foreach ( $actions as $code ) : ?>
+							<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $filters['action'], $code ); ?>>
+								<?php echo esc_html( Admin::action_label( (string) $code ) ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</label>
 
-				<label class="screen-reader-text" for="jt-activity-from"><?php esc_html_e( 'From date', 'jetonomy' ); ?></label>
-				<input
-					type="date"
-					id="jt-activity-from"
-					name="date_from"
-					value="<?php echo esc_attr( $filters['date_from'] ); ?>"
-				/>
-				<label class="screen-reader-text" for="jt-activity-to"><?php esc_html_e( 'To date', 'jetonomy' ); ?></label>
-				<input
-					type="date"
-					id="jt-activity-to"
-					name="date_to"
-					value="<?php echo esc_attr( $filters['date_to'] ); ?>"
-				/>
+				<label class="jt-filter-field" for="jt-activity-from">
+					<span class="jt-filter-field__label"><?php esc_html_e( 'From', 'jetonomy' ); ?></span>
+					<input type="date" id="jt-activity-from" name="date_from" value="<?php echo esc_attr( $filters['date_from'] ); ?>" />
+				</label>
+				<label class="jt-filter-field" for="jt-activity-to">
+					<span class="jt-filter-field__label"><?php esc_html_e( 'To', 'jetonomy' ); ?></span>
+					<input type="date" id="jt-activity-to" name="date_to" value="<?php echo esc_attr( $filters['date_to'] ); ?>" />
+				</label>
 
 				<?php submit_button( __( 'Filter', 'jetonomy' ), 'secondary', 'jt-activity-filter', false ); ?>
 

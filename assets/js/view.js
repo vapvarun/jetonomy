@@ -12,6 +12,13 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
  */
 const jtModalI18n = () => ( ( typeof window !== 'undefined' && window.jetonomyData && window.jetonomyData.i18n ) || {} );
 
+// Ask the question a button carries in data-confirm. Resolves true when the
+// button carries none (the action needs no confirmation).
+function confirmButton( btn, opts = {} ) {
+	const message = btn.getAttribute( 'data-confirm' );
+	return message ? jetonomyConfirm( message, opts ) : Promise.resolve( true );
+}
+
 // opts.danger: red confirm button and initial focus on Cancel, so Enter backs
 // out of a destructive action. Delegates to the shared toolkit
 // (jetonomy-modals.js, which also handles Esc and focus trapping) wherever it
@@ -1143,6 +1150,58 @@ function jetonomyVoteToast( data ) {
     setTimeout( () => { if ( window._jetonomyVoteToasted === msg ) window._jetonomyVoteToasted = false; }, 2000 );
 }
 
+let jtFieldErrorSeq = 0;
+
+/**
+ * Tie a validation message to the field it is about. The field gets
+ * aria-invalid and aria-describedby pointing at the message (the field's own
+ * describedby ids are kept), and focus, so a screen-reader user lands on the
+ * field and hears what is wrong. The first edit to the field undoes both and
+ * runs onFix, which clears the message.
+ *
+ * @param {Element|null} field  The input, textarea, select or contenteditable.
+ * @param {Element|null} errEl  The element that shows the message.
+ * @param {Function}     [onFix] Clears the message.
+ */
+function jtFlagField( field, errEl, onFix ) {
+    if ( ! field || ! errEl ) return;
+    if ( ! errEl.id ) errEl.id = `jt-field-error-${ ++jtFieldErrorSeq }`;
+    const own = ( field.getAttribute( 'aria-describedby' ) || '' ).split( /\s+/ ).filter( ( id ) => id && id !== errEl.id );
+    field.setAttribute( 'aria-describedby', [ ...own, errEl.id ].join( ' ' ) );
+    field.setAttribute( 'aria-invalid', 'true' );
+    // After the message renders, so the field is read with its description.
+    requestAnimationFrame( () => field.focus() );
+    const clear = () => {
+        field.removeEventListener( 'input', clear );
+        field.removeEventListener( 'change', clear );
+        field.removeAttribute( 'aria-invalid' );
+        if ( own.length ) field.setAttribute( 'aria-describedby', own.join( ' ' ) );
+        else field.removeAttribute( 'aria-describedby' );
+        if ( onFix ) onFix();
+    };
+    field.addEventListener( 'input', clear );
+    field.addEventListener( 'change', clear );
+}
+
+/**
+ * Show an empty-body error under an inline editor (topic or reply edit in place),
+ * tied to the editable. Reuses one message element per editor.
+ *
+ * @param {Element} editable The contenteditable.
+ */
+function jtInlineEditorEmpty( editable ) {
+    let errEl = editable.parentNode.querySelector( ':scope > .jt-inline-edit-error' );
+    if ( ! errEl ) {
+        errEl = document.createElement( 'p' );
+        errEl.className = 'jt-form-error jt-inline-edit-error';
+        errEl.setAttribute( 'role', 'alert' );
+        editable.after( errEl );
+    }
+    errEl.hidden = false;
+    errEl.textContent = state.i18n?.editEmpty || 'Add some text before saving.';
+    jtFlagField( editable, errEl, () => { errEl.hidden = true; errEl.textContent = ''; } );
+}
+
 function jetonomySetVoted( el, on ) {
     if ( ! el ) return;
     el.classList.toggle( 'voted', !! on );
@@ -1211,9 +1270,6 @@ const reloadRegion = async () => {
     if ( regionObserver ) regionObserver.takeRecords();
     document.dispatchEvent( new CustomEvent( 'jetonomy:navigated', { detail: { href: window.location.href } } ) );
 };
-
-// initProfileTabsActive() binds its resize listener once per page load.
-let profileTabsResizeBound = false;
 
 const { state, actions } = store( 'jetonomy', {
     state: {
@@ -1539,10 +1595,7 @@ const { state, actions } = store( 'jetonomy', {
             const sid = btn.getAttribute( 'data-subscription-id' );
             if ( ! sid ) return;
 
-            if ( 'function' === typeof window.jetonomyConfirm ) {
-                const ok = yield window.jetonomyConfirm( btn.getAttribute( 'data-confirm' ) || 'Unfollow?' );
-                if ( ! ok ) return;
-            }
+            if ( ! ( yield jetonomyConfirm( btn.getAttribute( 'data-confirm' ) || 'Unfollow?' ) ) ) return;
 
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/subscriptions/' + parseInt( sid, 10 ), { method: 'DELETE' } );
@@ -1983,8 +2036,7 @@ const { state, actions } = store( 'jetonomy', {
             const form = btn && btn.closest( '.jt-reschedule' );
             const id = form && parseInt( form.getAttribute( 'data-post-id' ), 10 );
             if ( ! id ) return;
-            const confirmMsg = btn.getAttribute( 'data-confirm' );
-            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg ) ) ) return;
+            if ( ! ( yield confirmButton( btn ) ) ) return;
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { published_at: '' } } );
             if ( res.ok ) {
@@ -2322,7 +2374,10 @@ const { state, actions } = store( 'jetonomy', {
                 const content     = editable.innerHTML.trim();
                 const plainCheck  = ( editable.textContent || '' ).trim();
                 const hasMediaTag = /<(?:img|video|audio|iframe|embed)\b/i.test( content );
-                if ( ! plainCheck && ! hasMediaTag ) return;
+                if ( ! plainCheck && ! hasMediaTag ) {
+                    jtInlineEditorEmpty( editable );
+                    return;
+                }
 
                 saveBtn.disabled = true;
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
@@ -2426,15 +2481,19 @@ const { state, actions } = store( 'jetonomy', {
             const wasFollowing = btnEl.dataset.following === '1';
             if ( ! spaceId ) return;
 
+            // The space header's toggle carries a bell icon beside its text, so
+            // write the label span when there is one instead of wiping the icon.
+            const labelEl = btnEl.querySelector( '.jt-follow-label' ) || btnEl;
             const applyFollowingUI = ( following ) => {
+                btnEl.setAttribute( 'aria-pressed', following ? 'true' : 'false' );
                 if ( following ) {
                     btnEl.dataset.following = '1';
-                    btnEl.textContent = state.i18n?.following || 'Following';
+                    labelEl.textContent = state.i18n?.following || 'Following';
                     btnEl.classList.remove( 'jt-btn-ghost' );
                     btnEl.classList.add( 'jt-btn-fill', 'jt-following' );
                 } else {
                     btnEl.dataset.following = '0';
-                    btnEl.textContent = state.i18n?.follow || 'Follow';
+                    labelEl.textContent = state.i18n?.follow || 'Follow';
                     btnEl.classList.remove( 'jt-btn-fill', 'jt-following' );
                     btnEl.classList.add( 'jt-btn-ghost' );
                 }
@@ -2493,9 +2552,15 @@ const { state, actions } = store( 'jetonomy', {
             const userId  = btnEl.dataset.userId;
             if ( ! spaceId || ! userId ) return;
 
+            // Name the space in the question, so the member knows exactly what
+            // they are leaving (the button sits inside the "Joined" menu).
+            const spaceTitle = btnEl.dataset.spaceTitle || '';
+            const question   = spaceTitle && state.i18n?.confirmLeaveNamed
+                ? state.i18n.confirmLeaveNamed.replace( '%s', spaceTitle )
+                : ( state.i18n?.confirmLeaveSpace || 'Leave this space? You can rejoin at any time.' );
             const confirmed = 'function' === typeof window.jetonomyConfirm
                 ? yield window.jetonomyConfirm(
-                    state.i18n?.confirmLeaveSpace || 'Leave this space? You can rejoin at any time.',
+                    question,
                     {
                         title: state.i18n?.leaveSpace || 'Leave space',
                         confirmLabel: state.i18n?.leave || 'Leave',
@@ -2962,7 +3027,10 @@ const { state, actions } = store( 'jetonomy', {
                 const content     = editable.innerHTML.trim();
                 const plainCheck  = ( editable.textContent || '' ).trim();
                 const hasMediaTag = /<(?:img|video|audio|iframe|embed)\b/i.test( content );
-                if ( ! plainCheck && ! hasMediaTag ) return;
+                if ( ! plainCheck && ! hasMediaTag ) {
+                    jtInlineEditorEmpty( editable );
+                    return;
+                }
 
                 saveBtn.disabled = true;
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
@@ -3268,8 +3336,7 @@ const { state, actions } = store( 'jetonomy', {
             const path = btn.getAttribute( 'data-rest-path' );
             if ( ! path ) return;
 
-            const confirmMsg = btn.getAttribute( 'data-confirm' );
-            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg, { danger: true } ) ) ) return;
+            if ( ! ( yield confirmButton( btn, { danger: true } ) ) ) return;
 
             btn.disabled = true;
             try {
@@ -3675,6 +3742,10 @@ const { state, actions } = store( 'jetonomy', {
             const endpoint   = card.getAttribute( 'data-resolve-endpoint' );
             if ( ! flagId || ! resolution || ! endpoint ) return;
 
+            // Remove trashes the content, so its button carries data-confirm
+            // (as Reject on an approval card does). Dismiss changes nothing.
+            if ( ! ( yield confirmButton( btn, { danger: true } ) ) ) return;
+
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const base = ( ( window.jetonomyData && window.jetonomyData.restBase ) || '' ).replace( /\/+$/, '' );
             let path = endpoint + flagId + '/resolve';
@@ -3743,10 +3814,8 @@ const { state, actions } = store( 'jetonomy', {
                 // stays disabled) but re-check anyway: the dialog is
                 // convenience, never the control.
                 confirmed = null !== typed && String( typed ).trim() === title;
-            } else if ( 'function' === typeof window.jetonomyConfirm ) {
-                confirmed = yield window.jetonomyConfirm( message );
             } else {
-                confirmed = false;
+                confirmed = yield jetonomyConfirm( message );
             }
             if ( ! confirmed ) return;
 
@@ -3863,11 +3932,7 @@ const { state, actions } = store( 'jetonomy', {
 
             // Reject is destructive, so its button carries data-confirm.
             // Approve does not — it is the outcome the author already asked for.
-            const confirmMsg = btn.getAttribute( 'data-confirm' );
-            if ( confirmMsg && 'function' === typeof window.jetonomyConfirm ) {
-                const ok = yield window.jetonomyConfirm( confirmMsg, { danger: true } );
-                if ( ! ok ) return;
-            }
+            if ( ! ( yield confirmButton( btn, { danger: true } ) ) ) return;
 
             const base = ( ( window.jetonomyData && window.jetonomyData.restBase ) || '' ).replace( /\/+$/, '' );
             let path = endpoint + action + '/' + kind + '/' + objectId;
@@ -3954,6 +4019,7 @@ const { state, actions } = store( 'jetonomy', {
             // missing instead of silently refusing.
             if ( ! ( body.textContent || '' ).trim() && ! body.querySelector( 'img, video, iframe, audio, hr, table, blockquote, pre' ) ) {
                 ctx.error = ctx.emptyError || state.i18n?.failedSave || 'Failed to save.';
+                jtFlagField( body, editorWrap?.querySelector( '.jt-editor-error' ), () => { ctx.error = ''; } );
                 body.focus();
                 return;
             }
@@ -4214,11 +4280,21 @@ const { state, actions } = store( 'jetonomy', {
             // don't block submit on emptiness. The server is the source of
             // truth on "must this space have a title" — sending '' for a feed
             // space is a valid request.
+            // The message box the error lands in: the embed keeps one per
+            // instance inside its form, the page composer one bound to state.
+            const errEl = 'context' === o.errorSink
+                ? form.querySelector( '.jt-compose-topic-error' )
+                : document.querySelector( '[data-wp-text="state.submitError"]' );
+            const fieldError = ( field, msg ) => {
+                writeError( msg );
+                jtFlagField( field, errEl, () => writeError( '' ) );
+                setIdle();
+            };
+
             const titleInput = form.querySelector( '[name="title"]' );
             const title      = titleInput ? ( titleInput.value || '' ).trim() : '';
             if ( false !== o.requireTitle && ! title ) {
-                writeError( state.i18n?.titleRequired || 'Please enter a title for your topic.' );
-                setIdle();
+                fieldError( titleInput, state.i18n?.titleRequired || 'Please enter a title for your topic.' );
                 return;
             }
 
@@ -4231,18 +4307,18 @@ const { state, actions } = store( 'jetonomy', {
             // `textarea` mode reads .value directly.
             let content      = '';
             let contentPlain = '';
+            const bodyField  = 'textarea' === o.bodySource
+                ? form.querySelector( 'textarea[name="content"], .jt-compose-topic-body' )
+                : form.querySelector( '[contenteditable]' );
             if ( 'textarea' === o.bodySource ) {
-                const ta = form.querySelector( 'textarea[name="content"], .jt-compose-topic-body' );
-                content      = ta ? ( ta.value || '' ).trim() : '';
+                content      = bodyField ? ( bodyField.value || '' ).trim() : '';
                 contentPlain = content;
             } else {
-                const bodyEl = form.querySelector( '[contenteditable]' );
-                content      = bodyEl ? ( bodyEl.innerHTML || '' ).trim() : '';
-                contentPlain = bodyEl ? ( bodyEl.textContent || '' ).trim() : '';
+                content      = bodyField ? ( bodyField.innerHTML || '' ).trim() : '';
+                contentPlain = bodyField ? ( bodyField.textContent || '' ).trim() : '';
             }
             if ( ! contentPlain ) {
-                writeError( state.i18n?.bodyRequired || 'Please add some details before posting.' );
-                setIdle();
+                fieldError( bodyField, state.i18n?.bodyRequired || 'Please add some details before posting.' );
                 return;
             }
 
@@ -4267,8 +4343,11 @@ const { state, actions } = store( 'jetonomy', {
                 publishedAt = jtScheduleValue( form );
             }
             if ( o.collectSchedule && 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
-                writeError( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
-                setIdle();
+                // Point at the first of date / hour / minute still empty.
+                const missing = [ 'published_date', 'published_hour', 'published_minute' ]
+                    .map( ( n ) => form.querySelector( `[name="${ n }"]` ) )
+                    .find( ( f ) => f && ! ( f.value || '' ).trim() );
+                fieldError( missing || null, state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
                 return;
             }
 
@@ -4693,6 +4772,8 @@ const { state, actions } = store( 'jetonomy', {
             // Picker mode demands a chosen space before anything else.
             if ( ! ctx.spaceId ) {
                 ctx.error = state.i18n?.chooseSpace || 'Choose the space first.';
+                const embed = getElement()?.ref?.closest( '.jt-compose-topic-embed' );
+                jtFlagField( embed?.querySelector( '.jt-compose-topic-space' ), embed?.querySelector( '.jt-compose-topic-error' ), () => { ctx.error = ''; } );
                 return;
             }
 
@@ -4717,33 +4798,6 @@ const { state, actions } = store( 'jetonomy', {
 
     callbacks: {
         // (Notification polling lives in header.js.)
-
-        // On mobile, the profile tabs row is horizontally scrollable to fit
-        // all five tabs. When the viewer lands on a sub-page whose tab sits
-        // off-screen (e.g. /drafts/ at 390px), they can't see the active
-        // underline without scrolling the tab row manually. Scroll the
-        // active tab into view once on load so the indicator is visible.
-        // Re-run on a debounced resize (rotation, a desktop window narrowed
-        // past the tab row), bound once per page so client navigation does not
-        // stack listeners; it re-queries the row, so a page without one is a no-op.
-        initProfileTabsActive() {
-            const reveal = () => {
-                const container = document.querySelector( '.jt-profile-tabs' );
-                if ( ! container ) return;
-                if ( container.scrollWidth <= container.clientWidth ) return;
-                const active = container.querySelector( '.jt-profile-tab.active' );
-                if ( ! active ) return;
-                active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
-            };
-            reveal();
-            if ( profileTabsResizeBound ) return;
-            profileTabsResizeBound = true;
-            let timer = null;
-            window.addEventListener( 'resize', () => {
-                clearTimeout( timer );
-                timer = setTimeout( reveal, 150 );
-            }, { passive: true } );
-        },
 
         // Poll for new replies and show a sticky banner. Adaptive + visibility-
         // aware: pauses entirely while the tab is hidden, and backs the interval

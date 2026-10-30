@@ -201,7 +201,7 @@ if ( ! function_exists( 'jetonomy_community_pulse' ) ) {
 			// Total posts: sum the denormalised per-space counter (cheap) rather
 			// than COUNT the posts table.
 			'posts'      => \Jetonomy\Models\Space::sum_post_counts( 0 ),
-			'members'    => \Jetonomy\Models\UserProfile::count(),
+			'members'    => \Jetonomy\Models\UserProfile::count_members(),
 			'posts_week' => \Jetonomy\Models\Post::count_published_since( gmdate( 'Y-m-d H:i:s', time() - WEEK_IN_SECONDS ), 0 ),
 		);
 
@@ -428,7 +428,7 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	 * uses it is responsive by construction. bin/audit-admin-tables.php
 	 * fails the release build when a new admin view bypasses it.
 	 *
-	 * Column widths are CLASSES applied desktop-only (`.jt-col-xs|s|m|l`),
+	 * Column widths are CLASSES applied desktop-only (`.jt-col-xs|s|m|l|xl`),
 	 * never inline pixel styles - fixed inline widths were the second half
 	 * of the mobile breakage.
 	 *
@@ -437,7 +437,7 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	 *
 	 *     @type array    $columns   Required. key => { label, primary?, width?, class? }.
 	 *                               Exactly one column may set primary; defaults
-	 *                               to the FIRST column. width: 'xs'|'s'|'m'|'l'.
+	 *                               to the FIRST column. width: 'xs'|'s'|'m'|'l'|'xl'.
 	 *     @type iterable $rows      Row items (arrays or objects).
 	 *     @type callable $cell      Required. function( $row, string $key ): void - ECHOES cell content.
 	 *     @type callable $row_attrs Optional. function( $row ): array of attr => value for the <tr>.
@@ -517,7 +517,7 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 			if ( (string) $key === $primary ) {
 				$th_class .= ' column-primary';
 			}
-			if ( ! empty( $col['width'] ) && in_array( $col['width'], array( 'xs', 's', 'm', 'l' ), true ) ) {
+			if ( ! empty( $col['width'] ) && in_array( $col['width'], array( 'xs', 's', 'm', 'l', 'xl' ), true ) ) {
 				$th_class .= ' jt-col-' . $col['width'];
 			}
 			if ( ! empty( $col['class'] ) ) {

@@ -87,6 +87,7 @@ $jt_children = \Jetonomy\Models\Category::list_children( (int) $category->id );
 				array(
 					'children'      => $jt_children,
 					'spaces_by_cat' => $jt_children ? \Jetonomy\Models\Space::visible_by_category() : array(),
+					'heading_level' => 2,
 				)
 			);
 			?>

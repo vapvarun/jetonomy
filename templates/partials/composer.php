@@ -13,7 +13,7 @@ if ( ! is_user_logged_in() ) {
 	$login_url = wp_login_url( isset( $post_url ) ? $post_url : \Jetonomy\current_url() );
 	?>
 	<div class="jt-editor jt-editor-login">
-		<a href="<?php echo esc_url( $login_url ); ?>" class="jt-btn jt-btn-fill">
+		<a href="<?php echo esc_url( $login_url ); ?>" class="jt-btn jt-btn-fill" data-jt-login>
 			<?php esc_html_e( 'Log in to reply', 'jetonomy' ); /* jt-terms-ok: verb */ ?>
 		</a>
 	</div>
@@ -82,20 +82,20 @@ $_context = array(
 	?>
 	<div class="jt-editor-foot">
 		<?php
-		// 1.4.1 platform-aware hint: phones / tablets do not have a Ctrl key,
-		// so the desktop submit-shortcut copy reads as nonsense there. Detect
-		// touch via wp_is_mobile() (matches WP's own mobile signal) and swap.
-		// The editor formats through its toolbar; it does not convert typed
-		// Markdown, so the hint must not promise it.
-		$_jt_composer_hint = wp_is_mobile()
-			? __( 'Use the toolbar to format.', 'jetonomy' )
-			: __( 'Use the toolbar to format · Ctrl+Enter to submit', 'jetonomy' );
+		// Keyboard hint for mouse-and-keyboard users only: CSS (hover: none)
+		// hides it on touch devices, which have no Ctrl key. No server-side
+		// device check, so a cached page is the same for every visitor. The
+		// editor does not convert typed Markdown, so no promise.
 		?>
-		<span class="jt-editor-hint"><?php echo esc_html( $_jt_composer_hint ); ?></span>
+		<span class="jt-editor-hint"><?php esc_html_e( 'Use the toolbar to format · Ctrl+Enter to submit', 'jetonomy' ); ?></span>
 		<?php if ( is_user_logged_in() ) : ?>
-			<label class="jt-reply-private-toggle" title="<?php printf( /* translators: %s: singular topic label. */ esc_attr__( 'Only you, the %s author, and moderators will be able to read it.', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
+			<?php // Says who can read it, matching Permission_Engine::can_read_reply(): the author, the topic author, moderators (and site admins). ?>
+			<label class="jt-reply-private-toggle">
 				<input type="checkbox" data-jt-reply-private>
-				<?php printf( /* translators: %s: singular reply label. */ esc_html__( 'Private %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
+				<span>
+					<?php printf( /* translators: %s: singular reply label. */ esc_html__( 'Private %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
+					<span class="jt-reply-private-help"><?php printf( /* translators: %s: singular topic label. */ esc_html__( 'Only you, the %s author and moderators can see it.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></span>
+				</span>
 			</label>
 		<?php endif; ?>
 		<div class="jt-flex jt-items-center jt-gap-sm">

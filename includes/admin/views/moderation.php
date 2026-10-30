@@ -100,7 +100,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							),
 							'actions' => array(
 								'label' => __( 'Actions', 'jetonomy' ),
-								'width' => 'l',
+								'width' => 'xl',
 							),
 						),
 						'rows'      => $pending_posts,
@@ -130,7 +130,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									break;
 								case 'actions':
 									?>
-									<span class="jetonomy-mod-actions">
+									<span class="jt-row-actions">
 										<button type="button" class="button button-primary button-small jetonomy-moderate-btn" data-action="approve" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
 										<button type="button" class="button button-small jetonomy-moderate-btn" data-action="spam" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Spam', 'jetonomy' ); ?></button>
 										<button type="button" class="button button-small button-link-delete jetonomy-moderate-btn" data-action="trash" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Trash', 'jetonomy' ); ?></button>
@@ -215,7 +215,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							),
 							'actions' => array(
 								'label' => __( 'Actions', 'jetonomy' ),
-								'width' => 'l',
+								'width' => 'xl',
 							),
 						),
 						'rows'      => $pending_replies,
@@ -241,7 +241,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									break;
 								case 'actions':
 									?>
-									<span class="jetonomy-mod-actions">
+									<span class="jt-row-actions">
 										<button type="button" class="button button-primary button-small jetonomy-moderate-btn" data-action="approve" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
 										<button type="button" class="button button-small jetonomy-moderate-btn" data-action="spam" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Spam', 'jetonomy' ); ?></button>
 										<button type="button" class="button button-small button-link-delete jetonomy-moderate-btn" data-action="trash" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Trash', 'jetonomy' ); ?></button>
@@ -326,7 +326,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							),
 							'actions'     => array(
 								'label' => __( 'Actions', 'jetonomy' ),
-								'width' => 'l',
+								'width' => 'xl',
 							),
 						),
 						'rows'      => $pending_flags,
@@ -370,7 +370,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									break;
 								case 'actions':
 									?>
-									<span class="jetonomy-mod-actions">
+									<span class="jt-row-actions">
 										<button type="button" class="button button-small button-link-delete jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="valid" title="<?php esc_attr_e( 'The report is right: close it and move the content to the trash.', 'jetonomy' ); ?>"><?php esc_html_e( 'Uphold and trash', 'jetonomy' ); ?></button>
 										<button type="button" class="button button-small jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="dismissed" title="<?php esc_attr_e( 'The report is wrong: close it and leave the content as it is.', 'jetonomy' ); ?>"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></button>
 									</span>
@@ -504,7 +504,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 										break; // Lifting needs the authority that issued it.
 									}
 									?>
-									<span class="jetonomy-mod-actions"><button type="button" class="button button-primary button-small jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></button></span>
+									<span class="jt-row-actions"><button type="button" class="button button-primary button-small jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></button></span>
 									<?php
 									break;
 							}

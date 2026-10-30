@@ -363,7 +363,7 @@ $crumbs = array(
 			 */
 			$jt_profile_tabs = apply_filters( 'jetonomy_profile_tabs', $jt_profile_tabs, $user, $is_own );
 			?>
-			<div class="jt-profile-tabs" data-wp-interactive="jetonomy" data-wp-init--active-tab="callbacks.initProfileTabsActive">
+			<div class="jt-profile-tabs">
 				<?php
 				foreach ( (array) $jt_profile_tabs as $jt_tab_slug => $jt_tab ) :
 					if ( empty( $jt_tab['label'] ) || ! isset( $jt_tab['url'] ) ) {
@@ -402,7 +402,7 @@ $crumbs = array(
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $ur_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $ur_space ) ) : ?>
 									<div class="jt-votes">
-										<span class="jt-v-num"><?php echo esc_html( (int) $ur->vote_score ); ?></span>
+										<?php jetonomy_vote_score_static( (int) $ur->vote_score ); ?>
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
@@ -467,7 +467,7 @@ $crumbs = array(
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $uv_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $uv_space ) ) : ?>
 									<div class="jt-votes">
-										<span class="jt-v-num"><?php echo esc_html( (int) $uv->vote_score ); ?></span>
+										<?php jetonomy_vote_score_static( (int) $uv->vote_score ); ?>
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
@@ -618,7 +618,7 @@ $crumbs = array(
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $bk_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $bk_space ) ) : ?>
 									<div class="jt-votes">
-										<span class="jt-v-num"><?php echo esc_html( (int) $bk_post->vote_score ); ?></span>
+										<?php jetonomy_vote_score_static( (int) $bk_post->vote_score ); ?>
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
@@ -666,7 +666,7 @@ $crumbs = array(
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $post_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $r_space ) ) : ?>
 									<div class="jt-votes">
-										<span class="jt-v-num"><?php echo esc_html( (int) $r_post->vote_score ); ?></span>
+										<?php jetonomy_vote_score_static( (int) $r_post->vote_score ); ?>
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">

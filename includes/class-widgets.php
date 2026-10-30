@@ -32,8 +32,8 @@ class Widgets {
 						'description'   => __( 'Shown at the bottom of the sidebar on every community page.', 'jetonomy' ),
 						'before_widget' => '<section id="%1$s" class="%2$s jt-card jt-mb-md">',
 						'after_widget'  => '</section>',
-						'before_title'  => '<h4>',
-						'after_title'   => '</h4>',
+						'before_title'  => '<h2 class="jt-card-title">',
+						'after_title'   => '</h2>',
 					)
 				);
 			}

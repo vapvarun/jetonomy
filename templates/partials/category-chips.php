@@ -5,6 +5,8 @@
  * Args (extracted to locals by Template_Loader::partial()):
  * - $children      object[] Visible sub-categories, already ordered.
  * - $spaces_by_cat array    Space::visible_by_category() map, for the counts.
+ * - $heading_level int      Level of each panel's heading: 3 under a category's
+ *                           h2 on the home page, 2 on the category page (under its h1).
  *
  * Each chip links to the sub-category page and counts
  * only the spaces this viewer can see, so a hidden space is never disclosed by
@@ -20,6 +22,7 @@ if ( empty( $jt_children ) ) {
 	return;
 }
 $jt_spaces_by_cat = $spaces_by_cat ?? array();
+$jt_sub_h         = 2 === (int) ( $heading_level ?? 3 ) ? 'h2' : 'h3';
 ?>
 <?php
 // Each chip keeps its link to the sub-category page; the chevron beside it
@@ -57,7 +60,7 @@ $jt_spaces_by_cat = $spaces_by_cat ?? array();
 		<div class="jt-cat-sub-panel" id="jt-cat-sub-<?php echo (int) $jt_child->id; ?>" hidden
 			data-wp-context="<?php echo esc_attr( (string) wp_json_encode( array( 'subId' => (int) $jt_child->id ) ) ); ?>"
 			data-wp-bind--hidden="!state.isSubOpen">
-			<h3 class="jt-cat-sub-title"><?php echo esc_html( $jt_child->name ); ?></h3>
+			<<?php echo $jt_sub_h; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- literal h2/h3. ?> class="jt-cat-sub-title"><?php echo esc_html( $jt_child->name ); ?></<?php echo $jt_sub_h; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- literal h2/h3. ?>>
 			<?php jetonomy_render_space_grid( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? array(), \Jetonomy\base_url(), \Jetonomy\route_url( 'category', $jt_child->slug ) ); ?>
 		</div>
 	<?php endforeach; ?>

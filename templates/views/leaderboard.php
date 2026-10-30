@@ -118,7 +118,10 @@ $crumbs = array(
 							sprintf(
 								/* translators: 1: count, 2: plural member label. */
 								__( 'of %1$d %2$s', 'jetonomy' ),
-								$_jt_total,
+								// Every member, the home's cached figure: a rank is a
+								// place among all members, not only the ranked ones
+								// on this period's board.
+								(int) jetonomy_community_pulse()['members'],
 								\Jetonomy\jetonomy_label( 'member', true, true )
 							)
 						);
@@ -140,16 +143,6 @@ $crumbs = array(
 			?>
 		<?php else : ?>
 			<div class="jt-card">
-				<?php /* Mobile-only column header — hidden on desktop via .jt-leader-head CSS. */ ?>
-				<div class="jt-leader jt-leader-head" aria-hidden="true">
-					<span class="jt-leader-rank"></span>
-					<span class="jt-leader-head-spacer"></span>
-					<span class="jt-leader-name"><?php echo esc_html( \Jetonomy\jetonomy_label( 'member' ) ); ?></span>
-					<div class="jt-leader-stats">
-						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'rep', 'jetonomy' ); ?></div>
-						<div class="jt-leader-stat-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ); ?></div>
-					</div>
-				</div>
 				<?php /* Appendable list — pagination-frontend.js targets .jt-leaderboard-list to inject page 2+ rows. */ ?>
 				<div class="jt-leaderboard-list">
 				<?php
@@ -204,6 +197,9 @@ $crumbs = array(
 								// of truth for icon shape across the plugin.
 								echo '<span class="' . esc_attr( $medal_class ) . '" aria-hidden="true">';
 								jetonomy_echo_icon( 'award', 20 );
+								// The number beside the medal: gold, silver and bronze
+								// are told apart without relying on colour.
+								echo '<span class="jt-medal-num">' . (int) $jt_comp_rank . '</span>';
 								echo '</span>';
 								// The medal is decorative, so the rank it stands
 								// for still has to reach a screen reader.

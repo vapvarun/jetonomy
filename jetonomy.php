@@ -514,6 +514,37 @@ function jetonomy_vote_attrs( string $direction, bool $active ): string {
 }
 
 /**
+ * Attributes for the element that groups a vote control.
+ *
+ * The group is named "Votes: 12": its own aria-label ("Votes:") followed by the
+ * visible score, which carries the id "{$id}-n". Pointing aria-labelledby at the
+ * group itself pulls in that aria-label, and reading the number from the page
+ * keeps the name right after view.js changes the score, with no JS of its own.
+ * The buttons inside keep their own names and aria-pressed for the viewer's vote.
+ *
+ * @param string $id Unique id for the group; the score element takes "{$id}-n". Build it with
+ *                   wp_unique_id() over a prefix holding the item id, so rows appended by
+ *                   Load More (a separate request, counter restarted) never repeat an id.
+ * @return string Escaped attribute string, leading space included.
+ */
+function jetonomy_vote_group_attrs( string $id ): string {
+	/* translators: Start of a vote control's accessible name; the score follows, e.g. "Votes: 12". */
+	$label = __( 'Votes:', 'jetonomy' );
+	return ' role="group" id="' . esc_attr( $id ) . '" aria-label="' . esc_attr( $label ) . '" aria-labelledby="' . esc_attr( $id . ' ' . $id . '-n' ) . '"';
+}
+
+/**
+ * Print a read-only vote score for list rows ("12", read as "12 votes").
+ *
+ * @param int $score Vote score.
+ */
+function jetonomy_vote_score_static( int $score ): void {
+	/* translators: %d: vote score. */
+	$label = sprintf( _n( '%d vote', '%d votes', $score, 'jetonomy' ), $score );
+	echo '<span class="jt-v-num" aria-hidden="true">' . esc_html( (string) $score ) . '</span><span class="jt-sr-only">' . esc_html( $label ) . '</span>';
+}
+
+/**
  * Print the vote score for a logged-in viewer who may not vote here.
  *
  * Shows the score and explains on hover, to screen readers and (via the
@@ -525,8 +556,9 @@ function jetonomy_vote_attrs( string $direction, bool $active ): string {
  * @param int         $icon_size Icon size in px.
  * @param object|null $space     Space the item is in, so a space ban is named.
  * @param bool        $own       The viewer wrote this post or reply.
+ * @param string      $score_id  Id for the score element, so the vote group can name itself from it.
  */
-function jetonomy_vote_denied_control( int $score, int $icon_size, $space = null, bool $own = false ): void {
+function jetonomy_vote_denied_control( int $score, int $icon_size, $space = null, bool $own = false, string $score_id = '' ): void {
 	$restricted = $own ? null : \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'vote', ( $space && ! empty( $space->id ) ) ? (int) $space->id : null );
 	if ( $own ) {
 		$why = \Jetonomy\Models\Vote::self_vote_error()->get_error_message();
@@ -543,7 +575,7 @@ function jetonomy_vote_denied_control( int $score, int $icon_size, $space = null
 		title="<?php echo esc_attr( $why ); ?>"
 		aria-label="<?php echo esc_attr( $label ); ?>">
 		<?php jetonomy_echo_icon( 'chevron-up', $icon_size ); ?>
-		<span class="n"><?php echo esc_html( (string) $score ); ?></span>
+		<span class="n"<?php echo '' !== $score_id ? ' id="' . esc_attr( $score_id ) . '"' : ''; ?>><?php echo esc_html( (string) $score ); ?></span>
 	</button>
 	<?php
 }
@@ -579,7 +611,13 @@ function jetonomy_idea_status_label( string $status ): string {
  * @param string $status One of Post::valid_idea_statuses(), or empty.
  */
 function jetonomy_render_idea_status_pill( string $status ): void {
-	if ( '' === $status || ! in_array( $status, \Jetonomy\Models\Post::valid_idea_statuses(), true ) ) {
+	// An idea with no roadmap stage yet is open for votes and discussion. Say
+	// so, so every idea row carries a status and the list scans like the board.
+	if ( '' === $status ) {
+		echo '<span class="jt-idea-pill jt-idea-pill-open">' . esc_html__( 'Open', 'jetonomy' ) . '</span>';
+		return;
+	}
+	if ( ! in_array( $status, \Jetonomy\Models\Post::valid_idea_statuses(), true ) ) {
 		return;
 	}
 	echo '<span class="jt-idea-pill jt-idea-pill-' . esc_attr( $status ) . '">'

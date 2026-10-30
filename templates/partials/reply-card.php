@@ -122,11 +122,9 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			?>
 		</span>
 		<?php if ( '' !== $display['url'] ) : ?>
-			<a class="jt-reply-author" href="<?php echo esc_url( $display['url'] ); ?>">
-				<?php echo esc_html( $display['name'] ); ?>
-			</a>
+			<a class="jt-reply-author" href="<?php echo esc_url( $display['url'] ); ?>" title="<?php echo esc_attr( $display['name'] ); ?>"><span class="jt-reply-author__name"><?php echo esc_html( $display['name'] ); ?></span></a>
 		<?php else : ?>
-			<span class="jt-reply-author"><?php echo esc_html( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?></span>
+			<span class="jt-reply-author" title="<?php echo esc_attr( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>"><span class="jt-reply-author__name"><?php echo esc_html( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?></span></span>
 		<?php endif; ?>
 		<?php
 		// 1.4.0 G3: role pill — same as post-card.php, scoped to the
@@ -230,7 +228,8 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		// one side. JS bindings are untouched and verified live.
 		?>
 		<?php if ( jetonomy_space_allows_voting( $space ?? null ) ) : ?>
-		<div class="jt-vote-cluster" role="group" aria-label="<?php printf( /* translators: %s: the singular label of the item (the configured noun). */ esc_attr__( 'Vote on this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>">
+			<?php $jt_vote_gid = wp_unique_id( 'jt-votes-reply-' . absint( $reply->id ) . '-' ); ?>
+		<div class="jt-vote-cluster"<?php echo jetonomy_vote_group_attrs( $jt_vote_gid ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 			<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
 			<?php $jt_own_reply = $reply_viewer_id && (int) $reply->author_id === $reply_viewer_id; // Your own reply takes no vote. ?>
 			<?php if ( $jt_thread_live && ! $jt_own_reply && jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
@@ -239,7 +238,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				aria-pressed="<?php echo 1 === $reply_viewer_vote ? 'true' : 'false'; ?>"
 				<?php echo jetonomy_vote_attrs( 'up', 1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
-				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
+				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n" id="<?php echo esc_attr( $jt_vote_gid ); ?>-n"><?php echo (int) $reply->vote_score; ?></span>
 			</button>
 			<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyDown"
@@ -252,14 +251,14 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				// failed on click (no auth). Match the post-vote control — a
 				// "Log in to vote" link that takes the intent somewhere.
 				?>
-			<a class="jt-act jt-act-login"
+			<a class="jt-act jt-act-login" data-jt-login
 				href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"
 				title="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>">
-				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
+				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n" id="<?php echo esc_attr( $jt_vote_gid ); ?>-n"><?php echo (int) $reply->vote_score; ?></span>
 			</a>
 			<?php else : ?>
-				<?php jetonomy_vote_denied_control( (int) $reply->vote_score, 14, $space ?? null, $jt_own_reply ); ?>
+				<?php jetonomy_vote_denied_control( (int) $reply->vote_score, 14, $space ?? null, $jt_own_reply, $jt_vote_gid . '-n' ); ?>
 			<?php endif; ?>
 		</div>
 		<?php endif; ?>
@@ -269,7 +268,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				data-reply-author="<?php echo esc_attr( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>"
 				title="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"
-				aria-label="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <span class="jt-btn-label"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></span></button>
+				aria-label="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <span class="jt-btn-label jt-btn-label--keep"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></span></button>
 			<?php if ( empty( $reply->is_private ) ) : // A quote would republish a private reply to every reader. ?>
 			<button class="jt-act"
 				data-wp-on--click="actions.quoteReply"

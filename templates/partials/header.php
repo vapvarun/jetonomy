@@ -169,24 +169,29 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 	</a>
 	<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>" class="jt-mobile-tab <?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 		<?php jetonomy_echo_icon( 'award', 20 ); ?>
-		<span><?php esc_html_e( 'Ranks', 'jetonomy' ); ?></span>
+		<span><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span>
 	</a>
 	<?php if ( $user_id ) : ?>
 		<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" data-jt-unread-host="jt-mobile-tab-badge" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 			<?php jetonomy_echo_icon( 'bell', 20 ); ?>
-			<span><?php esc_html_e( 'Alerts', 'jetonomy' ); ?></span>
+			<span><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></span>
 			<?php if ( $unread > 0 ) : ?>
 				<span class="jt-mobile-tab-badge"><?php echo (int) $unread; ?></span>
 			<?php endif; ?>
 		</a>
-		<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" class="jt-mobile-tab <?php echo 'profile' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-			<?php jetonomy_echo_icon( 'users', 20 ); ?>
-			<span><?php esc_html_e( 'Profile', 'jetonomy' ); ?></span>
+		<?php
+		// header.js turns this tab into a small menu when the top nav holds
+		// links the tab bar has no tab for (Moderation, Pro's Messages), so
+		// phones can drop that second nav row and still reach them.
+		?>
+		<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" data-jt-tab="profile" class="jt-mobile-tab <?php echo in_array( $current_route, array( 'profile', 'moderation', 'space-moderation', 'messages' ), true ) ? esc_attr( 'active' ) : ''; ?>">
+			<?php jetonomy_echo_icon( 'user', 20 ); ?>
+			<span><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
 		</a>
 	<?php else : ?>
-		<a href="<?php echo esc_url( wp_login_url( $base . '/' ) ); ?>" class="jt-mobile-tab">
+		<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>" class="jt-mobile-tab" data-jt-login>
 			<?php jetonomy_echo_icon( 'users', 20 ); ?>
-			<span><?php esc_html_e( 'Login', 'jetonomy' ); ?></span>
+			<span><?php esc_html_e( 'Log in', 'jetonomy' ); ?></span>
 		</a>
 	<?php endif; ?>
 </nav>

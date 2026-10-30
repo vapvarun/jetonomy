@@ -78,6 +78,18 @@ $jt_fc_type = $jt_fc_is_user
 $jt_fc_target    = ( $jt_fc_is_user && isset( $context->object ) ) || isset( $context->object, $context->topic );
 $jt_fc_target_id = 'jt-flag-' . absint( $flag->id ) . '-target';
 $jt_fc_describe  = $jt_fc_target ? ' aria-describedby="' . esc_attr( $jt_fc_target_id ) . '"' : '';
+// Remove trashes the content, so it asks first like Reject and Lift restriction do, naming what goes.
+$jt_fc_noun = \Jetonomy\jetonomy_label( 'reply' === $flag->object_type ? 'reply' : 'topic', false, true );
+if ( ! isset( $context->topic ) ) {
+	/* translators: %s: singular topic or reply label, lowercase. */
+	$jt_fc_confirm = sprintf( __( 'Remove this %s? It moves to trash and its author is notified.', 'jetonomy' ), $jt_fc_noun );
+} elseif ( 'reply' === $flag->object_type ) {
+	/* translators: 1: singular reply label, lowercase; 2: title of the topic the reply is on. */
+	$jt_fc_confirm = sprintf( __( 'Remove this %1$s on “%2$s”? It moves to trash and its author is notified.', 'jetonomy' ), $jt_fc_noun, jetonomy_post_title_or_excerpt( $context->topic ) );
+} else {
+	/* translators: 1: singular topic label, lowercase; 2: the topic's title. */
+	$jt_fc_confirm = sprintf( __( 'Remove the %1$s “%2$s”? It moves to trash and its author is notified.', 'jetonomy' ), $jt_fc_noun, jetonomy_post_title_or_excerpt( $context->topic ) );
+}
 ?>
 <div class="jt-mod-flag jt-mod-item"
 	data-flag-id="<?php echo absint( $flag->id ); ?>"
@@ -172,7 +184,8 @@ $jt_fc_describe  = $jt_fc_target ? ' aria-describedby="' . esc_attr( $jt_fc_targ
 			class="jt-btn jt-btn-fill jt-btn-danger jt-mod-resolve"
 			data-wp-on--click="actions.resolveFlag"
 			data-flag-id="<?php echo absint( $flag->id ); ?>"<?php echo $jt_fc_describe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above. ?>
-			data-resolution="valid">
+			data-resolution="valid"
+			data-confirm="<?php echo esc_attr( $jt_fc_confirm ); ?>">
 			<?php jetonomy_echo_icon( 'trash', 14 ); ?>
 			<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
 		</button>

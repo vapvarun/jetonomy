@@ -1065,6 +1065,22 @@ class Space extends Model {
 	}
 
 	/**
+	 * The name a gate page (403 / ban / join prompt) may show this viewer:
+	 * the title, or "Private space" for a hidden space or a withheld name.
+	 * Every gate's breadcrumb and button read this, so none can leak the title.
+	 *
+	 * @param object   $space   Space row.
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 */
+	public static function gate_name( object $space, ?int $user_id ): string {
+		if ( 'hidden' === ( $space->visibility ?? '' ) || self::name_withheld_from_viewer( $space, $user_id ) ) {
+			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+			return sprintf( __( 'Private %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		}
+		return (string) $space->title;
+	}
+
+	/**
 	 * Whether the owner lists private spaces to guests as locked cards.
 	 */
 	private static function guest_teasers_on(): bool {

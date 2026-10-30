@@ -356,6 +356,30 @@ class UserProfile extends Model {
 	}
 
 	/**
+	 * Who counts as a community member: a profile whose WP user still exists
+	 * and who is not banned site-wide. One definition for every "N members"
+	 * figure (the home pulse, "Your rank #N of M") and the base of the
+	 * leaderboard population, so the numbers never disagree.
+	 *
+	 * @return string SQL condition on this table's user_id (no leading WHERE).
+	 */
+	protected static function member_sql(): string {
+		global $wpdb;
+		return "EXISTS (SELECT 1 FROM {$wpdb->users} u WHERE u.ID = user_id)" . Restriction::not_banned_sql( 'user_id', 0 );
+	}
+
+	/**
+	 * Number of community members (see member_sql()).
+	 *
+	 * @return int
+	 */
+	public static function count_members(): int {
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) static::db()->get_var( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE ' . static::member_sql() );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	/**
 	 * Build the recent-activity WHERE clause for leaderboard queries.
 	 *
 	 * Centralises the period window shared by the server-rendered leaderboard
@@ -366,8 +390,6 @@ class UserProfile extends Model {
 	 * @return string SQL fragment beginning with ' WHERE '.
 	 */
 	protected static function leaderboard_period_where( string $period ): string {
-		global $wpdb;
-
 		/*
 		 * A profile whose WP user is gone is not a member, and must not occupy a rank:
 		 * the view cannot render it (no user to name or link), so dropping it after its
@@ -384,7 +406,7 @@ class UserProfile extends Model {
 		 * EXISTS over IN: a semi-join against the users PK, so this stays an
 		 * index lookup per row instead of materialising the user table.
 		 */
-		$is_member = "EXISTS (SELECT 1 FROM {$wpdb->users} u WHERE u.ID = user_id)";
+		$is_member = static::member_sql();
 
 		/*
 		 * A rank is earned. Reputation 0 is the "has not participated yet"
@@ -397,11 +419,9 @@ class UserProfile extends Model {
 		 * [jetonomy_leaderboard], the block and classic widget that render it,
 		 * GET /leaderboards) reads list_for_leaderboard(), so none can drift.
 		 */
+		// A member banned site-wide holds no rank either: member_sql() leaves
+		// them out (one anti-join on the restrictions (user_id, type) index).
 		$eligible = "{$is_member} AND reputation > 0";
-
-		// A member banned site-wide holds no rank either; same population rule,
-		// one anti-join on the restrictions (user_id, type) index.
-		$eligible .= Restriction::not_banned_sql( 'user_id', 0 );
 
 		if ( 'week' === $period ) {
 			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)";
@@ -551,25 +571,43 @@ class UserProfile extends Model {
 
 
 	/**
+	 * Sortable columns of the wp-admin Users screen, each an indexed column of
+	 * this table: reputation (reputation_user), last seen (seen_reputation) and
+	 * joined as account order (the primary key; user ids grow with registration,
+	 * and wp_users.user_registered carries no index).
+	 */
+	public const ADMIN_SORTS = array(
+		'reputation' => 'p.reputation',
+		'last_seen'  => 'p.last_seen_at',
+		'joined'     => 'p.user_id',
+	);
+
+	/**
 	 * The wp-admin Users screen: profiles joined to their account, by
 	 * reputation, filtered by trust level and a login/name/email search.
 	 *
 	 * @param string $trust  Trust level, or '' for any.
 	 * @param string $search Text to match.
-	 * @param int    $limit  Max rows.
-	 * @param int    $offset Offset.
+	 * @param int    $limit   Max rows.
+	 * @param int    $offset  Offset.
+	 * @param string $orderby One of the ADMIN_SORTS keys; anything else falls back to reputation.
+	 * @param string $order   ASC or DESC.
 	 * @return object[] Profile rows plus user_login, wp_display_name, user_email, user_registered.
 	 */
-	public static function list_for_admin( string $trust, string $search, int $limit, int $offset ): array {
+	public static function list_for_admin( string $trust, string $search, int $limit, int $offset, string $orderby = 'reputation', string $order = 'DESC' ): array {
 		global $wpdb;
 		[ $where, $args ] = self::admin_where( $trust, $search );
+		$column           = self::ADMIN_SORTS[ $orderby ] ?? self::ADMIN_SORTS['reputation'];
+		$dir              = 'ASC' === strtoupper( $order ) ? 'ASC' : 'DESC';
+		// user_id breaks ties so paging never repeats or skips a row.
+		$order_sql = 'p.user_id' === $column ? "p.user_id {$dir}" : "{$column} {$dir}, p.user_id {$dir}";
 		return static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				'SELECT p.*, u.user_login, u.display_name as wp_display_name, u.user_email, u.user_registered FROM ' . static::table() . " p
 				 INNER JOIN {$wpdb->users} u ON u.ID = p.user_id
 				 WHERE {$where}
-				 ORDER BY p.reputation DESC
+				 ORDER BY {$order_sql}
 				 LIMIT %d OFFSET %d",
 				...array_merge( $args, array( $limit, $offset ) )
 			)

@@ -314,6 +314,6 @@ class Settings_Handler {
 		}
 
 		flush_rewrite_rules();
-		wp_send_json_success( array( 'message' => __( 'Rewrite rules flushed.', 'jetonomy' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Community links repaired.', 'jetonomy' ) ) );
 	}
 }

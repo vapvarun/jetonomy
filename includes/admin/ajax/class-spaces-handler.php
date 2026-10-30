@@ -80,6 +80,20 @@ class Spaces_Handler {
 		return \Jetonomy\route_url( 'invite', $token );
 	}
 
+	/**
+	 * The admin form's extension data as the REST request the space save hooks
+	 * hand listeners, so an extension saves admin and front-end edits through
+	 * one listener. Only `custom_fields` is carried; listeners validate it.
+	 * Callers have already checked the nonce and capability.
+	 */
+	private static function extension_request(): \WP_REST_Request {
+		$request = new \WP_REST_Request( 'POST' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce checked by the caller; values are validated and sanitized per field type by the listener.
+		$fields = isset( $_POST['custom_fields'] ) && is_array( $_POST['custom_fields'] ) ? wp_unslash( $_POST['custom_fields'] ) : array();
+		$request->set_param( 'custom_fields', $fields );
+		return $request;
+	}
+
 	public function ajax_create_space(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
 		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
@@ -146,6 +160,9 @@ class Spaces_Handler {
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
+
+		/** This action is documented in includes/api/class-spaces-controller.php */
+		do_action( 'jetonomy_after_create_space', (int) $id, self::extension_request() );
 
 		wp_send_json_success(
 			array(
@@ -298,6 +315,17 @@ class Spaces_Handler {
 		}
 
 		$saved = Space::find( $id );
+
+		/** This action is documented in includes/api/class-spaces-controller.php */
+		do_action(
+			'jetonomy_after_update_space',
+			$saved,
+			array(
+				'user_id' => get_current_user_id(),
+				'request' => self::extension_request(),
+			)
+		);
+
 		wp_send_json_success(
 			array(
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */

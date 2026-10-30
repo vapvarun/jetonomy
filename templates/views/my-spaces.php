@@ -90,11 +90,14 @@ $crumbs = array(
 		// One H1 ("My Spaces") + the per-card ADMIN / MOD pill is enough
 		// to tell the viewer which spaces they run vs are just in. The
 		// section eyebrows are omitted: they would read as a third heading layer saying the
-		// same thing.
+		// same thing. Screen-reader users still get one h2 per section, so the
+		// card h3s sit under a heading instead of straight under the h1.
 		?>
 
 		<?php if ( ! empty( $privileged_spaces ) ) : ?>
 			<section class="jt-my-spaces-section">
+				<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
+				<h2 class="jt-sr-only"><?php echo esc_html( sprintf( __( '%s you run', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>
 				<ul class="jt-space-list">
 					<?php foreach ( $privileged_spaces as $sp ) : ?>
 						<?php
@@ -154,6 +157,8 @@ $crumbs = array(
 
 		<?php if ( ! empty( $member_spaces ) ) : ?>
 			<section class="jt-my-spaces-section">
+				<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
+				<h2 class="jt-sr-only"><?php echo esc_html( sprintf( __( '%s you are part of', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>
 				<ul class="jt-space-list">
 					<?php foreach ( $member_spaces as $sp ) : ?>
 						<li class="jt-space-card">

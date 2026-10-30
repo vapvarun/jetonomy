@@ -28,7 +28,7 @@ $role_labels = array(
 <div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 		<?php if ( ! $bn_active ) : ?>
-			<h4><?php esc_html_e( 'Managed by', 'jetonomy' ); ?></h4>
+			<h2 class="jt-card-title"><?php esc_html_e( 'Managed by', 'jetonomy' ); ?></h2>
 		<?php else : ?>
 			<?php esc_html_e( 'Managed by', 'jetonomy' ); ?>
 		<?php endif; ?>

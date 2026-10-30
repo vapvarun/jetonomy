@@ -31,6 +31,9 @@
 			// %1$s stays a literal %s, filled with the space name at click time.
 			purgeTypeToConfirm:   sprintf( /* translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase. */ __( 'This destroys every %2$s, %3$s and attachment in %1$s, including content written by other %4$s. It cannot be undone. Type the %5$s name to confirm.', 'jetonomy' ), '%s', TOPIC, REPLY, MEMBERS, SPACE ),
 			purgeConfirmLabel:    __( 'Delete permanently', 'jetonomy' ),
+			// %1$s stays a literal %s, filled with the category name at click time.
+			/* translators: 1: the category name. 2: category label, lowercase. */
+			confirmDeleteCategory: sprintf( __( 'Delete the %2$s "%1$s"? This cannot be undone.', 'jetonomy' ), '%s', lbl( 'category', 'one_lower', 'category' ) ),
 			confirmSpam:          __( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
 			confirmTrash:         __( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
 			saving:               __( 'Saving…', 'jetonomy' ),
@@ -125,6 +128,7 @@
 
 		init: function() {
 			this.showPendingToast();
+			this.revealActiveTab();
 			this.bindDashboard();
 			this.bindCategoryActions();
 			this.bindSpaceActions();
@@ -322,6 +326,18 @@
 		//  Dashboard
 		// ═══════════════════════════════════════════════════════════
 
+		// Tab rows scroll sideways on phones; bring the current tab into view
+		// so it is never the one hidden off the edge.
+		revealActiveTab: function() {
+			$('.jetonomy-admin .nav-tab-wrapper').each(function() {
+				var active = this.querySelector('.nav-tab-active');
+				if (active && this.scrollWidth > this.clientWidth) {
+					var a = active.getBoundingClientRect(), w = this.getBoundingClientRect();
+					this.scrollLeft += a.left - w.left - (w.width - a.width) / 2;
+				}
+			});
+		},
+
 		bindDashboard: function() {
 			var self = this;
 
@@ -459,8 +475,10 @@
 				e.preventDefault();
 				var $row = $(this).closest('tr');
 				var id = $row.data('id');
+				var name = $(this).data('name');
+				var msg = name ? self.i18n.confirmDeleteCategory.replace('%s', name) : self.i18n.confirmDelete;
 
-				self.confirmAsync(self.i18n.confirmDelete, { danger: true }).then(function(ok) {
+				self.confirmAsync(msg, { danger: true }).then(function(ok) {
 					if (!ok) return;
 					self.ajax('jetonomy_delete_category', { id: id }).done(function(res) {
 						if (res.success) {
@@ -645,7 +663,8 @@
 					join_policy: $('#space-join-policy').val(),
 					status: $('#space-status').val(),
 					icon: ($('input[name="icon"]:checked').val() || ''),
-					cover_image: $('#space-cover-image').val()
+					cover_image: $('#space-cover-image').val(),
+					custom_fields: window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields($form[0]) : {}
 				}).done(function(res) {
 					if (res.success) {
 						self.reloadWithToast(res.data.message, 'admin.php?page=jetonomy-spaces&action=edit&space_id=' + res.data.id);
@@ -683,7 +702,8 @@
 					status: $('#space-status').val(),
 					sort_order: $('#space-sort-order').val(),
 					icon: ($('input[name="icon"]:checked').val() || ''),
-					cover_image: $('#space-cover-image').val()
+					cover_image: $('#space-cover-image').val(),
+					custom_fields: window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields($form[0]) : {}
 				}).done(function(res) {
 					if (res.success) {
 						// The form stays open, so its next save is checked against what was just saved.

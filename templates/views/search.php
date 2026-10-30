@@ -223,6 +223,8 @@ $crumbs = array(
 <div class="jt-two-col">
 		<main>
 			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
+			<?php // The page's one h1: the search box says what the page is to sighted readers, the outline needs it too. ?>
+			<h1 class="jt-sr-only"><?php esc_html_e( 'Search', 'jetonomy' ); ?></h1>
 			<!-- Search form -->
 			<form method="get" action="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-search-page-form" autocomplete="off">
 				<div class="jt-search-page-input">
@@ -350,9 +352,9 @@ $crumbs = array(
 				<?php else : ?>
 
 					<?php if ( ! empty( $posts ) ) : ?>
-						<h3 class="jt-section-label">
+						<h2 class="jt-section-label">
 							<?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?>
-						</h3>
+						</h2>
 						<div class="jt-topics jt-mb-lg">
 							<?php
 							// Authors, profiles and spaces in one query each, not per row.
@@ -367,7 +369,7 @@ $crumbs = array(
 								<a href="<?php echo esc_url( $post_url ); ?>" class="jt-row">
 									<?php if ( jetonomy_space_allows_voting( $_jt_search_space ) ) : ?>
 										<div class="jt-votes">
-											<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
+											<?php jetonomy_vote_score_static( (int) $post->vote_score ); ?>
 										</div>
 									<?php endif; ?>
 									<div class="jt-row-main">
@@ -396,9 +398,9 @@ $crumbs = array(
 					<?php endif; ?>
 
 					<?php if ( ! empty( $spaces ) ) : ?>
-						<h3 class="jt-section-label">
+						<h2 class="jt-section-label">
 							<?php echo esc_html( \Jetonomy\space_label( true ) ); ?>
-						</h3>
+						</h2>
 						<div class="jt-space-grid jt-mb-lg">
 							<?php foreach ( $spaces as $space ) : ?>
 								<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
@@ -421,9 +423,9 @@ $crumbs = array(
 					<?php endif; ?>
 
 					<?php if ( ! empty( $tags ) ) : ?>
-						<h3 class="jt-section-label">
+						<h2 class="jt-section-label">
 							<?php esc_html_e( 'Tags', 'jetonomy' ); ?>
-						</h3>
+						</h2>
 						<div class="jt-tags">
 							<?php foreach ( $tags as $tag ) : ?>
 								<a href="<?php echo esc_url( \Jetonomy\route_url( 'tag', $tag->slug ) ); ?>" class="jt-tag">

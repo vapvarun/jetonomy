@@ -540,10 +540,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 												$jt_unlocks[] = $jt_ability_labels[ $jt_ab ];
 											}
 										}
-										echo $jt_unlocks ? esc_html( implode( ', ', $jt_unlocks ) ) : esc_html__( 'None', 'jetonomy' );
+										// One unlock per line: Level 3's seven abilities ran together as one comma-joined sentence.
+										if ( $jt_unlocks ) {
+											echo '<ul class="jt-unlock-list"><li>' . implode( '</li><li>', array_map( 'esc_html', $jt_unlocks ) ) . '</li></ul>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each item escaped.
+										} else {
+											esc_html_e( 'None', 'jetonomy' );
+										}
 										if ( $jt_unlocks && 3 === $level ) {
 											// The trust floor only matters for a role already ticked for these caps above.
-											echo '<br>' . esc_html__( 'Only for roles that already have these permissions.', 'jetonomy' );
+											echo '<p class="jt-unlock-note">' . esc_html__( 'Only for roles that already have these permissions.', 'jetonomy' ) . '</p>';
 										}
 										?>
 									</td>
@@ -653,7 +658,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tbody>
 						<?php foreach ( $jt_cap_labels as $jt_cap => $jt_cap_label ) : ?>
 							<tr>
-								<th scope="row"><strong><?php echo esc_html( $jt_cap_label ); ?></strong><br><code style="font-size:11px;color:var(--jt-admin-text-wp-2, #646970);"><?php echo esc_html( $jt_cap ); ?></code></th>
+								<?php // The capability key is for developers: a tooltip on the label, not a second line under every row. ?>
+								<th scope="row"><strong title="<?php echo esc_attr( $jt_cap ); ?>"><?php echo esc_html( $jt_cap_label ); ?></strong></th>
 								<?php foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) : ?>
 									<td data-colname="<?php echo esc_attr( $jt_role_label ); ?>">
 										<input type="checkbox"

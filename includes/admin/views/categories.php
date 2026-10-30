@@ -134,7 +134,6 @@ defined( 'ABSPATH' ) || exit;
 						'label'   => __( 'Name', 'jetonomy' ),
 						'primary' => true,
 					),
-					'slug'       => array( 'label' => __( 'Slug', 'jetonomy' ) ),
 					'spaces'     => array(
 						'label' => \Jetonomy\space_label( true ),
 						'width' => 's',
@@ -182,19 +181,18 @@ defined( 'ABSPATH' ) || exit;
 							}
 							echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
 							echo '<strong>' . esc_html( $cat->name ) . '</strong>';
+							// The address is reference, not a column of its own: a muted line under the name.
+							echo '<span class="jt-admin-subline">' . esc_html( (string) wp_parse_url( \Jetonomy\route_url( 'category', $cat->slug ), PHP_URL_PATH ) ) . '</span>';
 							if ( ! $cat->jt_is_child && ! empty( $cat->description ) ) {
-								echo '<span class="description">' . esc_html( wp_trim_words( $cat->description, 12 ) ) . '</span>';
+								echo '<span class="description">' . esc_html( wp_trim_words( $cat->description, 24 ) ) . '</span>';
 							}
 							?>
 							<div class="row-actions">
 								<span class="edit"><a href="#" class="jetonomy-edit-category" data-id="<?php echo absint( $cat->id ); ?>" data-name="<?php echo esc_attr( $cat->name ); ?>" data-slug="<?php echo esc_attr( $cat->slug ); ?>" data-description="<?php echo esc_attr( $cat->description ?? '' ); ?>" data-parent="<?php echo absint( $cat->parent_id ); ?>" data-icon="<?php echo esc_attr( $cat->icon ?? '' ); ?>" data-color="<?php echo esc_attr( $cat->color ?? '' ); ?>" data-visibility="<?php echo esc_attr( $cat->visibility ); ?>" data-edit-token="<?php echo esc_attr( \Jetonomy\Models\Model::edit_token( $cat, \Jetonomy\Admin\Ajax\Categories_Handler::EDIT_FIELDS ) ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
 								<span class="view"><a href="<?php echo esc_url( \Jetonomy\route_url( 'category', $cat->slug ) ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
-								<span class="delete"><a href="#" class="jetonomy-delete-category" data-id="<?php echo absint( $cat->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
+								<span class="delete"><a href="#" class="jetonomy-delete-category" data-id="<?php echo absint( $cat->id ); ?>" data-name="<?php echo esc_attr( $cat->name ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
 							</div>
 							<?php
-							break;
-						case 'slug':
-							echo '<code>' . esc_html( wp_parse_url( \Jetonomy\route_url( 'category', $cat->slug ), PHP_URL_PATH ) ) . '</code>';
 							break;
 						case 'spaces':
 							echo absint( $cat->space_count );

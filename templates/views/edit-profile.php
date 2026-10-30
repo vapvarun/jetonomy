@@ -143,7 +143,7 @@ if ( ! $cancel_url ) {
 			</div>
 
 			<dialog id="jt-avatar-crop" class="jt-crop-dialog" aria-labelledby="jt-crop-title">
-				<h3 id="jt-crop-title" class="jt-crop-dialog__title"><?php esc_html_e( 'Crop your photo', 'jetonomy' ); ?></h3>
+				<h2 id="jt-crop-title" class="jt-crop-dialog__title"><?php esc_html_e( 'Crop your photo', 'jetonomy' ); ?></h2>
 				<p class="jt-crop-dialog__hint"><?php esc_html_e( 'Drag to reposition. Use the slider to zoom.', 'jetonomy' ); ?></p>
 				<div class="jt-crop-viewport" id="jt-crop-viewport">
 					<img id="jt-crop-image" src="" alt="" draggable="false">
