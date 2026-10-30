@@ -285,6 +285,14 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Improve  - Menus open and move with the keyboard: arrow keys, Home and End, and Escape returns focus to the button.
 * Improve  - Screen readers hear the current breadcrumb, the editor toolbar buttons and which item each moderation action acts on.
 * Improve  - The community menu keeps every label on one line and switches to icons when the theme's column is narrow.
+* Improve  - Space pages open with a compact header, and members get one Joined menu (Leave asks first) with a separate Follow bell.
+* Improve  - On phones the topic starts sooner, a Reply button stays in reach, composer toolbars keep to one row and tab strips show the active tab.
+* Improve  - Screen readers hear vote scores, headings run in order, and composer errors are tied to their field and take focus.
+* Improve  - Vote buttons are at least 40px on phones, and text in the theme's accent colour meets WCAG AA contrast.
+* Improve  - Private, invite-only and not-found pages have a heading, a way back and the next step, and guests log in without leaving the community.
+* Improve  - The leaderboard keeps names readable on phones, gold, silver and bronze differ, and every member count uses one definition.
+* Improve  - Admin lists fit their cards, Users sort by reputation, joined and last seen, space members page, and the Activity Log shows names instead of ids.
+* Improve  - Every destructive admin action asks first and names what it removes.
 * Fix      - Address fields (terms, privacy, support, logos, share image, space cover, avatar) refuse a value that is not an address by name and keep the saved one.
 * Fix      - Community addresses typed in another case, such as /COMMUNITY/, redirect to the lower-case address instead of a 404.
 * Fix      - Removing a vote takes back the reputation and notification it gave.
@@ -304,8 +312,10 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - Members a rule admits to a private space see that space's notifications, as they already see its follows and bookmarks.
 * Fix      - A member's profile no longer lists their replies under a deleted topic.
 * Fix      - The access rule grant picker keeps its arrow inside the box.
+* Fix      - Removing a reported post asks first, and the next report card's buttons work without a reload.
 * Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.
 * Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
+* Security - Guests never see a private space's name on its members or roadmap page.
 * Compat   - Aligned with Jetonomy Pro 2.0.7. Install both updates together.
 
 = 2.0.6 - October 2026 =

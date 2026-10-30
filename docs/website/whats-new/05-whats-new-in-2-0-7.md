@@ -40,6 +40,11 @@ Access rules that are harder to get wrong, a membership gate that tells visitors
 - **Privacy.** On a private community a signed-out visitor gets no answer from any action, including polls, reactions and attachment downloads.
 - **Accessibility.** Admin text meets WCAG AA contrast on every Jetonomy screen. Menus work from the keyboard (arrow keys, Home, End, Escape), and screen readers hear the current breadcrumb and what each moderation action acts on.
 - **Long names.** A very long member name wraps on profiles and member lists instead of widening the page on phones.
+- **Space pages.** A compact header puts topics on the first screen. Members get one Joined menu (Leave asks first) and a separate Follow bell.
+- **Phones.** Topics start sooner, a Reply button stays in reach, composer toolbars keep to one row, and tab strips show the active tab.
+- **Clear next steps.** Private, invite-only and not-found pages have a heading, a way back and what to do next, and guests log in without leaving the community.
+- **Menu bar.** Labels stay on one line and switch to icons when the theme's column is narrow.
+- **Admin screens.** Lists fit their cards, Users sort by reputation, joined and last seen, space members page, the Activity Log shows names, and every destructive action asks first.
 - **Translations.** All 10 languages were re-translated with one glossary per language and checked to 99% or more. German keeps the capital letter on nouns mid-sentence.
 
 ## What's new in Pro
@@ -50,3 +55,9 @@ Access rules that are harder to get wrong, a membership gate that tells visitors
 - **Settings never say saved over a refused value.** Reply by Email, Email Digest, Web Push, AI, SEO Pro and the branding icon keep the stored value and name the field.
 - **WooCommerce.** Subscriptions pending cancellation keep access until the term ends.
 - **Polls and reactions** follow the community privacy setting.
+- **Analytics.** A daily or weekly column chart with a table view, "New" instead of a misleading +100%, and the median time to first reply.
+- **Conversations screen.** Search, filters and pages, with participants named and a confirm before purging.
+- **Custom fields.** Space fields on New and Edit Space and on the space page, optional fields folded under More details, admin pages, and delete.
+- **Course discussion links** on Tutor LMS, LifterLMS, LearnDash and Sensei course pages.
+- **Web Push** asks "Get notified on this device" in the notifications panel and page, never in the menu bar.
+- **Messages.** Unread conversations stand out, and reading one updates every count.
