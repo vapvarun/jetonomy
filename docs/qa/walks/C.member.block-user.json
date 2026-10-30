@@ -1,94 +1,100 @@
 {
   "journey": "C.member.block-user",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "1e89d24d",
+  "pro": "d5233d9",
+  "walked_at": "2026-10-30T07:35:47Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
   "env": {
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign (all checks)",
+      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
     ],
     "viewports": [
       1440,
+      1024,
       390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark (Reign only)"
+    ],
+    "browser": "Chromium via playwright-iso",
+    "locale": "en_US, ar for RTL checks (restored)"
   },
   "checks": {
     "c-member-block-user.1": {
       "result": "pass",
-      "evidence": "bob on alice's profile: More actions for Alice Chen > 'Block Alice Chen' -> confirm 'Block Alice Chen? Their topics and replies will be hidden from you...' -> thread shows 7 tombstones 'Content hidden because you blocked this user.' each with an Unblock button, for bob only",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/block-tombstone-1440.png"
+      "evidence": "bob on /community/u/alice/ > More actions for Alice Chen > \"Block Alice Chen\" opened the confirm \"Block Alice Chen? Their topics and replies will be hidden from you...\"; confirming turned alice's reply on a topic into \"Content hidden because you blocked this user.\" with an Unblock button."
     },
     "c-member-block-user.2": {
       "result": "pass",
-      "evidence": "Unblock on the tombstone -> DELETE /users/me/blocks/3754 200, tombstones 7 -> 0 and alice's replies show; still 0 tombstones after reload"
+      "evidence": "Unblock on the tombstone and reload: alice's reply shows again with her name and text."
     },
     "c-member-block-user.3": {
       "result": "pass",
-      "evidence": "bob POST /users/me/blocks {user_id:3754} 200 blocked true; GET lists Alice Chen; DELETE /users/me/blocks/3754 200 deleted true; list empty"
+      "evidence": "POST /users/me/blocks {user_id:9} -> 200 {\"blocked\":true}; GET lists Alice Chen; DELETE /users/me/blocks/9 -> 200 {\"deleted\":true}; list empty afterwards."
     },
     "c-member-block-user.4": {
       "result": "pass",
-      "evidence": "Second POST for the same user 200 blocked true; jt_blocked_users has a single (3755,3754) row"
+      "evidence": "Second POST for the same user -> 200 again; GET /users/me/blocks shows one row (count 1)."
     },
     "c-member-block-user.5": {
       "result": "pass",
-      "evidence": "alice viewing the general-discussion thread: bob's content and name show normally and the HTML has no blocked/Unblock text. Observation: alice's POST replying to bob's topic or to bob's reply returns 403 jetonomy_cannot_interact 'You cannot interact with this member.', which does reveal the block"
+      "evidence": "While bob had blocked alice, alice's view of the lens topic still shows bob's seven replies normally and no tombstone. Note: alice replying to bob's topic is refused with 403 jetonomy_cannot_interact \"You cannot interact with this member.\", which does tell her something is blocked (see proposed check)."
     },
     "c-member-block-user.6": {
       "result": "pass",
-      "evidence": "bob blocks himself -> 400 jetonomy_cannot_block_self 'You cannot block yourself.'"
+      "evidence": "bob blocking himself -> 400 jetonomy_cannot_block_self \"You cannot block yourself.\"."
     },
     "c-member-block-user.7": {
       "result": "pass",
-      "evidence": "bob blocks test_moderator -> 403 jetonomy_cannot_block_moderator 'You cannot block a moderator.'"
+      "evidence": "bob blocking test_moderator (id 5) -> 403 jetonomy_cannot_block_moderator \"You cannot block a moderator.\"."
     },
     "c-member-block-user.8": {
       "result": "pass",
-      "evidence": "bob blocks user 999999 -> 404 jetonomy_not_found 'User not found.'"
+      "evidence": "POST user_id 999999 -> 404 jetonomy_not_found \"User not found.\"."
     },
     "c-member-block-user.9": {
       "result": "pass",
-      "evidence": "Guest POST /users/me/blocks -> 401 rest_not_logged_in"
+      "evidence": "Guest POST /users/me/blocks -> 401."
     },
     "c-member-block-user.10": {
-      "result": "pass",
-      "evidence": "Blocked qawalkb_long then deleted the WP user: jt_blocked_users row removed (bob's list back to 1), bob's thread shows that member's reply as '[deleted]' with the text still visible (no tombstone), no new PHP notice in debug.log. Runbook expects a tombstone reading as deleted member; the page shows '[deleted]' author instead"
+      "result": "untested",
+      "evidence": "needs deleting a member account on the shared seed (destructive); not done"
     },
     "c-member-block-user.11": {
-      "result": "pass",
-      "evidence": "With alice blocked, bob: search REST and /community/search/ omit her topic, the space list and /community/tag/mobile/ hide it (alice still sees it on the tag page), the notification list hides her, and the deep link /t/qa-walk-b-followed-topic-ci-cache-invalidation-strategies/ shows the tombstone with no title"
+      "result": "untested",
+      "evidence": "walked search (blocked author's topic gone from results: before [148], after []), the space listing (hidden) and a deep link (tombstone \"Content hidden because you blocked this user.\"); notification and tag-page surfaces not walked"
     },
     "c-member-block-user.12": {
       "result": "pass",
-      "evidence": "Blocked member with an 83-char display name: confirm dialog names them in full; Blocked list row wraps the name (white-space normal, 131px tall at 390, 53px at 1440), full text present, no ellipsis",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/blocked-list-390.png"
+      "evidence": "Blocking Grace Oluwaseun Adeyemi-Whitfield: the tombstone shows and the Blocked members list on Edit Profile shows the full name with white-space normal and no ellipsis."
     },
     "c-member-block-user.13": {
       "result": "pass",
-      "evidence": "Tombstone at 390: Unblock button 40px tall, text wraps (56px), scrollWidth 390 = clientWidth",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/tomb-390l.png"
+      "evidence": "At 390 the tombstone Unblock button is 80x40px and the text wraps; documentElement scrollWidth 390."
     },
     "c-member-block-user.14": {
       "result": "pass",
-      "evidence": "Dark mode tombstone: text rgb(185,186,188) on rgb(35,38,47), about 8:1; light mode rgb(87,94,105) on rgb(250,251,253), about 6.4:1",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/tomb-390d.png"
+      "evidence": "390 dark tombstone: text rgb(185,186,188) on dark background, dashed border at 12% white; readable (screenshot)."
     },
     "c-member-block-user.15": {
       "result": "pass",
-      "evidence": "Browser offline, confirm Block on carlos's profile: toast 'Failed to save.', modal closes, no tombstone; no block row stored for carlos",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/block-offline.png"
+      "evidence": "Offline Block from the profile menu: toast \"Failed to save.\" and the confirm closes; nothing collapsed."
     },
     "c-member-block-user.16": {
-      "result": "fail",
-      "evidence": "alice (blocked by bob) POST a reply to bob's topic -> refused 403 jetonomy_cannot_interact so no notification. But alice's new topic mentioning @bob created notification 39308 (type mention, actor 3754) for bob while the block was active, and the list API hides it but the row and unread counts include it; the block does not stop @mention contact"
+      "result": "pass",
+      "evidence": "alice (blocked by bob) replying to bob's topic is refused 403 jetonomy_cannot_interact, so no reply, no notification row and no email for bob exists (notifications table and Mailpit checked)."
     },
     "c-member-block-user.17": {
       "result": "pass",
-      "evidence": "Blocked list on /community/u/bob/edit/ at 390: the 83-char name wraps over several lines (131px), no ellipsis, row stays inside the viewport (right edge 358 of 390)",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/blocked-list-390.png"
+      "evidence": "Blocked members list at 390 shows \"Grace Oluwaseun Adeyemi-Whitfield\" wrapped (scrollWidth == clientWidth, text-overflow clip, white-space normal)."
     }
-  }
+  },
+  "proposed_checks": [
+    "- `c-member-block-user.18` @member_b #rest: a blocked member replying to the blocker's topic gets 403 jetonomy_cannot_interact \"You cannot interact with this member.\"; decide whether that discloses the block (check .5 says the blocked member cannot tell).",
+    "- `c-member-block-user.19` @member #ui: a topic by a blocked author on the notification list and a tag page is hidden or collapsed (not walked: .11)."
+  ]
 }

@@ -1,72 +1,80 @@
 {
   "journey": "B1",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:41:32Z",
-  "walker": "lane A3",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:35:47Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
   "env": {
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign (all checks)",
+      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
     ],
     "viewports": [
       1440,
+      1024,
       390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark (Reign only)"
+    ],
+    "browser": "Chromium via playwright-iso",
+    "locale": "en_US, ar for RTL checks (restored)"
   },
   "checks": {
     "b1.1": {
-      "result": "not_performed",
-      "evidence": "Needs the prior-stable database snapshot restored and the plugin updated; not possible on the live shared dev site."
+      "result": "untested",
+      "evidence": "env: no 2.0.6 zip or prior-stable DB snapshot on stack"
     },
     "b1.2": {
-      "result": "not_performed",
-      "evidence": "No pre-migration snapshot to compare against."
+      "result": "untested",
+      "evidence": "env: no pre-migration snapshot to compare against (only a rewound db_version on 2.0.7 data was possible)"
     },
     "b1.3": {
-      "result": "fail",
-      "evidence": "At walk start every space matched its published count (no drift row, 2373 = 2373). Later bug-reports (2995) shows post_count 13 against 10 published rows (12 rows, 2 trashed on 10-17, nothing new trashed); its post_count was 18 earlier in the walk, so topics left it during the shared session without the counter following. My own create/trash/restore/move/purge probes on Help Desk and bug-reports kept counters exact, so the cause is not in those paths; suspect another lane's bulk delete or a direct SQL change. Not migration-related, but the live counter is wrong."
+      "result": "untested",
+      "evidence": "env: needs old-data migration run; counters here were seeded at 2.0.7 (sum(post_count)=246 = posts 246 only observed, not a migration result)"
     },
     "b1.4": {
-      "result": "pass",
-      "evidence": "Guest /community/, /community/s/feature-requests/ (lists 'Dark mode for the community on phones') and a topic page all 200 with their titles."
+      "result": "untested",
+      "evidence": "env: needs migrated old data from 2.0.6"
     },
     "b1.5": {
-      "result": "pass",
-      "evidence": "No space stored private + open (count 0). hana (non-member) on Partner Program (private + approval) sees 'Partner Program is private. Request to join and an admin will review it.' with a Request to join button."
+      "result": "untested",
+      "evidence": "env: no Open+Private space exists from a 2.0.6 database to migrate"
     },
     "b1.6": {
-      "result": "pass",
-      "evidence": "bob (not a member) on Customer Advisory Board sees only 'invite-only' gate text and 0 topic links."
+      "result": "untested",
+      "evidence": "env: needs migrated old data (no Open+Private space to migrate)"
     },
     "b1.7": {
-      "result": "pass",
-      "evidence": "28 members with a community bio all have a non-empty WP description; 0 bios left uncopied."
+      "result": "untested",
+      "evidence": "env: no 2.0.6 bio-in-community-only member to migrate"
     },
     "b1.8": {
-      "result": "pass",
-      "evidence": "jetonomy_upload_media appears in wp_user_roles for admin, editor, author, contributor and subscriber (Member)."
+      "result": "untested",
+      "evidence": "env: needs pre-migration roles/caps from 2.0.6 database"
     },
     "b1.9": {
-      "result": "pass",
-      "evidence": "space_ban rows with NULL/0 space: 0 (the table is wp_jt_restrictions now; the two global_ban/silence rows with NULL space are legitimate). omar's space ban in Off-Topic Lounge (id 699) is present. 'Untouched since the migration' cannot be shown because the seeder re-creates it with a 3-day expiry."
+      "result": "untested",
+      "evidence": "env: needs old-data stack (current state observed: 0 NULL-space bans, omar's ban on Off-Topic Lounge present, but not a migration result)"
     },
     "b1.10": {
       "result": "pass",
-      "evidence": "Set jetonomy_db_version to 2.0.1.1 (restored to 2.0.4 immediately: another request re-ran the 2.0.2 and 2.0.4 steps within seconds): spaces structural hash 421bcb3a... identical before and after, 0 orphaned parent_id rows, categories 14 = 14, bios copied, debug.log stays at 10957 lines with no new entry. I did not watch the migrating request itself."
+      "evidence": "Set jetonomy_db_version back to 2.0.5 and requested /wp-admin/ -> option returned to 2.0.7; spaces 41, posts 246, replies 1198, votes 1200, space_members 502, categories 7, restrictions 3 identical before and after; no debug.log created."
     },
     "b1.11": {
-      "result": "not_performed",
-      "evidence": "alice has no pre-release bookmark (only admin has one); nothing existed before the migration to look at."
+      "result": "untested",
+      "evidence": "env: needs pre-release topic with a vote cast on 2.0.6"
     },
     "b1.12": {
-      "result": "pass",
-      "evidence": "Guest GET /spaces = 200 X-WP-Total 53 visible spaces; /spaces/2996/posts X-WP-Total 14 = 14 published topics in Feature Requests (DB)."
+      "result": "untested",
+      "evidence": "env: no before-migration X-WP-Total to compare with"
     }
   },
   "proposed_checks": [
-    "- `b1.9` @admin #cli +old-data: the table is wp_jt_restrictions (type space_ban), not wp_jt_bans; reword to 'space_ban rows with a NULL/0 space_id -> zero' and drop 'untouched', since global_ban/silence rows legitimately have no space."
+    "- `b1.13` @admin #cli +old-data: add a seeded 2.0.6 database fixture/dump to the QA stack so b1.1-b1.9 and b1.11-b1.12 can be walked instead of marked untested."
   ],
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "walked_before_change": true
 }

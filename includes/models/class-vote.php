@@ -140,7 +140,7 @@ class Vote extends Model {
 					}
 					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to record vote.', 'jetonomy' ), array( 'status' => 500 ) );
 				}
-				static::update_target_score( $object_type, $object_id, $value );
+				static::update_target_score( $object_type, $object_id );
 				if ( static::db()->last_error ) {
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -181,7 +181,7 @@ class Vote extends Model {
 					}
 					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to remove vote.', 'jetonomy' ), array( 'status' => 500 ) );
 				}
-				static::update_target_score( $object_type, $object_id, -$value );
+				static::update_target_score( $object_type, $object_id );
 				if ( static::db()->last_error ) {
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -218,7 +218,7 @@ class Vote extends Model {
 				}
 				return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update vote.', 'jetonomy' ), array( 'status' => 500 ) );
 			}
-			static::update_target_score( $object_type, $object_id, -$old_value + $value );
+			static::update_target_score( $object_type, $object_id );
 			if ( static::db()->last_error ) {
 				if ( null !== $started ) {
 					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -457,13 +457,12 @@ class Vote extends Model {
 	}
 
 	/**
-	 * Apply a score delta to the vote_score column of the target post or reply.
+	 * Set the target post or reply's vote_score to the sum of its votes.
 	 *
 	 * @param string $object_type 'post' or 'reply'.
 	 * @param int    $object_id
-	 * @param int    $delta
 	 */
-	private static function update_target_score( string $object_type, int $object_id, int $delta ): void {
+	private static function update_target_score( string $object_type, int $object_id ): void {
 		if ( 'post' === $object_type ) {
 			$target_table = table( 'posts' );
 		} elseif ( 'reply' === $object_type ) {
@@ -472,11 +471,16 @@ class Vote extends Model {
 			return;
 		}
 
+		// Recomputed from the votes, never incremented: two quick clicks can
+		// race (both read "no vote yet", one insert loses to the unique key),
+		// and an increment would then leave the score off by one for good.
+		// object_created (object_type, object_id, ...) covers the SUM.
 		static::db()->query(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"UPDATE {$target_table} SET vote_score = vote_score + %d WHERE id = %d",
-				$delta,
+				"UPDATE {$target_table} SET vote_score = ( SELECT COALESCE( SUM( v.value ), 0 ) FROM " . static::table() . ' v WHERE v.object_type = %s AND v.object_id = %d ) WHERE id = %d',
+				$object_type,
+				$object_id,
 				$object_id
 			)
 		);

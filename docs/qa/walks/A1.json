@@ -1,62 +1,73 @@
 {
   "journey": "A1",
-  "free": "603a4284",
-  "pro": "cb07244",
-  "walked_at": "2026-10-24T18:40:00Z",
-  "walker": "release 2.0.5 (scoped walk, owner exception)",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:35:47Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
   "env": {
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "buddyx (buddynext-dev)",
-      "default theme (clean Docker install)"
+      "reign (all checks)",
+      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
     ],
     "viewports": [
       1440,
+      1024,
       390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark (Reign only)"
+    ],
+    "browser": "Chromium via playwright-iso",
+    "locale": "en_US, ar for RTL checks (restored)"
   },
   "checks": {
     "a1.1": {
       "result": "pass",
-      "evidence": "Clean Docker install of the built jetonomy-2.0.5.zip + jetonomy-pro-2.0.5.zip: activation then first requests /community/ 200, /community/leaderboard/ 200, /wp-json/jetonomy/v1/ 200, no Permalinks visit. Also on buddynext-dev: deactivate + activate, first /community/, /community/leaderboard/, /community/s/announcements/ all 200."
+      "evidence": "Deactivate+activate on the stack (not a clean install; no other fresh stack available): first requests /community/ 200, /community/leaderboard/ 200, /community/s/general-discussion/ 200 via curl, no Permalinks visit."
     },
     "a1.2": {
       "result": "pass",
-      "evidence": "buddynext-dev after reactivation: rewrite_rules holds 31 community patterns (^community/?$, ^community/s/([^/]+)/?$, members, roadmap, category, sitemap)."
+      "evidence": "wp option get rewrite_rules holds community patterns: ^community/?$, ^community/s/([^/]+)/?$, category, sitemap, connect-app, invite, u/ routes (27 community-matching entries)."
     },
     "a1.3": {
       "result": "pass",
-      "evidence": "Guest /community/ on buddynext-dev (BuddyX): site header with Log in / Register, community nav, Welcome card, space cards, login sidebar; screenshot work-artifacts/screenshots/2026-10/jetonomy-2.0.5-a1.3-guest-home-1440.png."
+      "evidence": "Guest /community/ HTTP 200 inside Reign: header, tab nav, welcome card (\"25 members 232 topics\"), space cards, login panel."
     },
     "a1.4": {
-      "result": "pass",
-      "evidence": "Messages off (private-messaging extension inactive). Admin /community/messages/ -> HTTP 404 'Page not available', inside the community shell with site header and community nav: 'This page is not available... Back to the community'."
+      "result": "untested",
+      "evidence": "Messages is a Pro module; no Messages setting in Free and the route is not registered in Free (guest/admin /community/messages/ gives the theme 404 \"Page not found\", not a community page). Needs Pro active - covered by combo walk."
     },
     "a1.5": {
       "result": "pass",
-      "evidence": "Guest GET /wp-json/jetonomy/v1/messages -> 404 rest_no_route, clean JSON."
+      "evidence": "GET /wp-json/jetonomy/v1/messages in Free -> 404 {\"code\":\"rest_no_route\"}; no data, no PHP notice in body."
     },
     "a1.6": {
       "result": "pass",
-      "evidence": "Clean Docker install with Plain permalinks: plugins.php, Jetonomy Dashboard, Spaces, Settings and Moderation each show the error notice with a link to options-permalink.php. (On buddynext-dev no admin notice of any plugin renders: a site-specific notice suppression, not Jetonomy.)"
+      "evidence": "With permalink_structure empty (Plain), Jetonomy Dashboard, Spaces, Settings and Moderation each show a .notice.notice-error \"your community cannot be reached while permalinks are set to Plain\" linking to options-permalink.php."
     },
     "a1.7": {
       "result": "fail",
-      "evidence": "Pre-existing, unchanged since 2.0.4 (router untouched; the 2.0.4 walk also failed a1.7). Clean install, Plain permalinks: /?jetonomy_route=space&jetonomy_space=zzz-nope renders 'Space not found' inside .jt-app but with HTTP 200 and no link back to the community; /community/s/zzz-nope/ falls to the homepage (expected under Plain). Pretty permalinks on buddynext-dev: /community/s/zzz-nope/ -> 404 'Space not found' with community nav, no explicit back link. Follow-up card."
+      "evidence": "Plain permalinks: /?pagename=community -> HTTP 404 but the THEME 404 (\"Page not found\", Go Back button), not a community not-found page; /community/s/zzz-nope/ -> HTTP 200 serving the site homepage (the admin notice says visitors see the homepage); only /?jetonomy_route=space&jetonomy_slug=zzz-nope gives the community \"Page not available\" 404 with a Community link. Check text and behaviour disagree.",
+      "screenshot": "qa-artifacts/jt207-free/a1-7-plain-pagename.png"
     },
     "a1.8": {
       "result": "pass",
-      "evidence": "wp jetonomy qa-actions on buddynext-dev: TOTAL 530/530. debug.log from reactivation to first routed request: 0 lines from jetonomy, edd-sl-sdk or package-signatures (the only lines are from the WP-CLI wrapper and a WooCommerce eval by the walker). Clean Docker install: debug.log has no Jetonomy or library lines."
+      "evidence": "wp jetonomy qa-actions run with Permalinks restored; wp-content/debug.log does not exist (zero new lines). Note: qa-actions itself reported 469/477 (8 fails: E32 x3, SM1, AX1, PV2 are HTTP 0 loopback from the wpcli container = env; SF1 'author filter ... author 23 -> 0 results' unexplained)."
     },
     "a1.9": {
       "result": "pass",
-      "evidence": "Guest /community/ at 390px on buddynext-dev: no horizontal scroll; the theme menu button opens the menu panel; screenshot jetonomy-2.0.5-a1.9-menu-390.png."
+      "evidence": "390px /community/ scrollWidth 390 = clientWidth 390; tapping the Reign menu toggler adds body.mobile-panel-open."
     },
     "a1.10": {
       "result": "pass",
-      "evidence": "buddynext-dev deactivate + reactivate free and Pro: 4 categories and 21 spaces before and after, no duplicates; /community/ 200 with the seeded spaces."
+      "evidence": "Deactivate then activate on seeded community: 23 jt tables (same as schema), 7 categories no duplicates, 41 spaces, 246 posts, 1198 replies unchanged; /community/ 200 and lists seeded spaces."
     }
-  }
+  },
+  "proposed_checks": [
+    "- `a1.11` @admin #cli +plain: with Plain permalinks request /community/s/zzz-nope/ and /?pagename=community -> decide the contract (today the first returns the site homepage with 200 and the second the theme 404); the check a1.7 expects a community not-found page."
+  ],
+  "walked_before_change": true
 }

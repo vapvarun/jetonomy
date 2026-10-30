@@ -1,78 +1,90 @@
 {
- "journey": "F.a11y",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T10:37:47Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
+  "journey": "F.a11y",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:35:47Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
+  "env": {
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "themes": [
+      "reign (all checks)",
+      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
+    ],
+    "viewports": [
+      1440,
+      1024,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark (Reign only)"
+    ],
+    "browser": "Chromium via playwright-iso",
+    "locale": "en_US, ar for RTL checks (restored)"
+  },
+  "checks": {
+    "f-a11y.1": {
+      "result": "pass",
+      "evidence": "First Tab on /community/ focuses \"Skip to content\" (href #content); activating it sets the hash and scrolls to the content area (focus itself stays on body). Theme-provided link."
+    },
+    "f-a11y.2": {
+      "result": "fail",
+      "evidence": "Tabbing 57-59 stops per page on Reign light: .jt-btn-ghost \"Follow\"/\"Leave Space\", the vote up/down buttons, the disabled score button and the notifications bell (.jt-community-nav-notif) report outline-width 0 and no box-shadow when focus-visible (Follow: outline \"solid 0px\", border and background unchanged). The community's own controls show no discernible focus ring. Only Reign light was run; BuddyX and TT25 and dark not repeated.",
+      "screenshot": "qa-artifacts/jt207-free/focus-follow2.png"
+    },
+    "f-a11y.3": {
+      "result": "fail",
+      "evidence": "Topic page icon controls: Share (.jt-share-btn) and More options (.jt-more-trigger) open popups but carry no aria-expanded or aria-haspopup; several editor-bar buttons (link, quote, image) have no aria-label (only \"Code block\" and \"Insert emoji\" are labelled, B/I rely on their letters); an avatar link a.user-link wraps an img alt=\"\" with no text, so it has no accessible name. Bookmark (aria-pressed) and the theme toggle (aria-pressed false) are fine."
+    },
+    "f-a11y.4": {
+      "result": "fail",
+      "evidence": "Reply editor is named \"Reply editor\" (role textbox, aria-multiline) and the Title and Tags inputs have labels, but the new-topic editor body (.jt-editor-body on /s/<space>/new/) has no aria-label. Poll option inputs are Pro (not walked)."
+    },
+    "f-a11y.5": {
+      "result": "untested",
+      "evidence": "reaction chips are Pro. Vote part observed: buttons read \"Vote up\", \"Remove your upvote\" and the score button \"Score 0. You cannot vote on your own content.\" so state is in the label."
+    },
+    "f-a11y.6": {
+      "result": "pass",
+      "evidence": "Report on a reply opens a modal containing a radiogroup labelled by #jt-report-title (5 reasons), focus lands on the first radio (spam), Tab cycles inside (textarea, Cancel, Report, radio), Escape closes it and focus returns to the Report button. The overlay itself has no role=dialog or aria-modal."
+    },
+    "f-a11y.7": {
+      "result": "fail",
+      "evidence": "Moderation queue (/community/s/billing-accounts/mod/ as test_moderator): the action buttons read just \"Remove\" and \"Dismiss\" (twice each) with no aria-label naming the flagged content. Confirmations are the community's own modal (not window.alert)."
+    },
+    "f-a11y.8": {
+      "result": "fail",
+      "evidence": "Share dropdown, More options menu and notification panel open with Enter but focus stays on the trigger and ArrowDown does not move focus within; Escape closes and focus is still on the trigger. No arrow-key navigation inside the three menus."
+    },
+    "f-a11y.9": {
+      "result": "pass",
+      "evidence": "Contrast measured on Help Desk and Announcements, light and dark: active/inactive pills 8.4-10.3, tags 5.7-8.7, Closed badge 5.95 light / 5.66 dark, Answered 6.1, Needs answer 6.6-6.8, ADMIN role pill 7.6 / 6.1, row stats and time 7.1-9.4, placeholders 18.9 / 12, blocked-user tombstone text ~9 on dark. All >= 4.5. (Announcement pill and pinned label are not present in this seed.)"
+    },
+    "f-a11y.10": {
+      "result": "fail",
+      "evidence": "At 390 the A / A+ / A++ font-size control is not shown (all three buttons have offsetWidth 0), so it cannot be tapped; CSS zoom 2 at 390 gives no horizontal scroll. At 1440 A++ scales plugin text (reply body 17 -> 19.2, h1 25.5 -> 28.8, nav 15.9 -> 18) but the theme's header menu stays 16px, so it does not change all text. Tap targets at 390 are 40-49px."
+    },
+    "f-a11y.11": {
+      "result": "untested",
+      "evidence": "toast live region confirmed (.jt-toast role=status aria-live=polite); form errors with aria-describedby (the poll form message) are Pro and were not walked"
+    },
+    "f-a11y.12": {
+      "result": "pass",
+      "evidence": "finn's New Topic page renders the plain text \"Your account is currently silenced and cannot post.\" (no composer) and the reply area on a topic reads the same sentence; it is page text (screen readers read it), not a colour-only banner. It carries no role=alert."
+    },
+    "f-a11y.13": {
+      "result": "fail",
+      "evidence": "Topic breadcrumb is a nav labelled \"Breadcrumb\", the page has one h1 and headings run 1,2,3,3,4... with no skipped level, but the current page item has no aria-current=\"page\" (plain text)."
+    },
+    "f-a11y.14": {
+      "result": "untested",
+      "evidence": "RTL keyboard-only end-to-end flow (post-create, reply, vote, report) not walked; only layout and quote direction checked in RTL"
+    }
+  },
+  "proposed_checks": [
+    "- `f-a11y.15` @member #ui: community buttons .jt-btn-ghost (Follow, Leave Space), .jt-v-btn, the notifications bell and mod queue buttons show a visible :focus-visible ring (live: outline-width 0, no box-shadow).",
+    "- `f-a11y.16` @member #ui: the Report and confirm modals carry role=dialog and aria-modal=true with the title as their name (live: overlay has no role).",
+    "- `f-a11y.17` @member #ui: the new-topic editor body has an accessible name like \"Topic editor\" (live: none)."
   ]
- },
- "checks": {
-  "f-a11y.1": {
-   "result": "pass",
-   "evidence": "Guest /community/: first Tab = \"Skip to content\" (#content), 2nd \"forums\"; Enter moves to #content and next Tab lands on \"Community\" inside main (focus stays on BODY itself, sequential start point moves)."
-  },
-  "f-a11y.2": {
-   "result": "fail",
-   "evidence": "bob, 40 Tab stops on a Feature Requests topic in light mode: all stops show outline or box-shadow ring except one INPUT. NOT PERFORMED: dark mode ring check, header and space listing walk, and a strict reading-order comparison."
-  },
-  "f-a11y.3": {
-   "result": "fail",
-   "evidence": "99 visible icon-only buttons on a topic all have aria-label/title; vote/bookmark/emoji toggles carry aria-pressed/aria-expanded. FAIL: Share button has no aria-expanded or aria-haspopup. Anonymous toggle, composer toolbar and notification bell states not individually verified."
-  },
-  "f-a11y.4": {
-   "result": "fail",
-   "evidence": "Reply editor is role=textbox aria-multiline=true aria-label \"Reply editor\". NOT PERFORMED: topic title input label and poll option \"Option 1\" labels."
-  },
-  "f-a11y.5": {
-   "result": "fail",
-   "evidence": "Vote cluster is role=group \"Vote on this reply\" with buttons \"Vote up/Vote down\" and aria-pressed. Reaction controls expose only \"React\", \"Like\", \"Love\"; no \"Like, N reactions, you reacted\" label found; score announcement not verified."
-  },
-  "f-a11y.6": {
-   "result": "pass",
-   "evidence": "bob, Report on a reply: role=dialog aria-modal=true aria-labelledby=jt-report-title, radiogroup of 5 reasons labelled by the title, focus on first radio, 14 Tabs stay inside the dialog, Escape closes it and focus returns to the Report button.",
-   "screenshot": "a11y-report2"
-  },
-  "f-a11y.7": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: /community/mod/ queue had no items for test_moderator, so approve/remove/spam/ban/close buttons were not available; no alert() calls found in page scripts.",
-   "screenshot": "a11y-mod"
-  },
-  "f-a11y.8": {
-   "result": "fail",
-   "evidence": "Share opened with Enter; arrow keys moved focus to a BUTTON and Escape returned focus to Share, but the trigger exposes no aria-expanded state. NOT PERFORMED: user menu and notification panel keyboard behaviour."
-  },
-  "f-a11y.9": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED reliably: scripted contrast sampling gave 2.26:1 for .jt-pill/.jt-tag text but backgrounds are partly translucent/inherited, so the figure is indicative only; dark mode contrast not measured."
-  },
-  "f-a11y.10": {
-   "result": "fail",
-   "evidence": "390px topic page: no horizontal overflow, font-size control present (A / A+ / A++). FAIL: 132 interactive elements smaller than 40px (font-size buttons 30x30, theme toggle 32x32, inline author/breadcrumb links 17-22px high). 200% zoom NOT PERFORMED."
-  },
-  "f-a11y.11": {
-   "result": "fail",
-   "evidence": "aria-live/status/alert regions exist (polite, assertive, status, alert) on the topic page. NOT PERFORMED: toast announcement and aria-describedby linkage of form errors to fields."
-  },
-  "f-a11y.12": {
-   "result": "pass",
-   "evidence": "finn (silenced) on a topic: no editor rendered, visible text \"Your account is currently silenced and cannot post.\" present in DOM (element has no role=alert/status). Banned member message not separately walked.",
-   "screenshot": "a11y-silenced"
-  },
-  "f-a11y.13": {
-   "result": "fail",
-   "evidence": "Topic page has exactly one h1 and heading levels 1,2,3,3,4... with no skipped level; breadcrumb is a nav labelled \"Breadcrumb\". FAIL: no aria-current=\"page\" on the current crumb. Profile page headings not checked."
-  },
-  "f-a11y.14": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: keyboard-only create/reply/vote/report end to end in RTL was not run (RTL locale restored before this pass)."
-  }
- }
 }

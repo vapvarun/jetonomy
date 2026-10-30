@@ -1,47 +1,57 @@
 {
- "journey": "F.firefox-desktop-and-f-safari-ios",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T10:33:50Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "f-firefox-desktop-and-f-safari-ios.1": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
+  "journey": "F.firefox-desktop-and-f-safari-ios",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:35:47Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
+  "env": {
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
+    "themes": [
+      "reign (all checks)",
+      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
+    ],
+    "viewports": [
+      1440,
+      1024,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark (Reign only)"
+    ],
+    "browser": "Chromium via playwright-iso",
+    "locale": "en_US, ar for RTL checks (restored)"
   },
-  "f-firefox-desktop-and-f-safari-ios.2": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
+  "checks": {
+    "f-firefox-desktop-and-f-safari-ios.1": {
+      "result": "untested",
+      "evidence": "Firefox is not launchable: the playwright-iso tool is Chromium-only; needs a human on Firefox desktop"
+    },
+    "f-firefox-desktop-and-f-safari-ios.2": {
+      "result": "untested",
+      "evidence": "Safari iOS/WebKit is not launchable with this tool; needs a human on a real iPhone"
+    },
+    "f-firefox-desktop-and-f-safari-ios.3": {
+      "result": "untested",
+      "evidence": "Safari iOS not launchable; needs a human"
+    },
+    "f-firefox-desktop-and-f-safari-ios.4": {
+      "result": "untested",
+      "evidence": "Safari iOS and the Messages pane (Pro) not available; needs a human on Pro + iPhone"
+    },
+    "f-firefox-desktop-and-f-safari-ios.5": {
+      "result": "untested",
+      "evidence": "Safari iOS and Pro Reactions not available; needs a human"
+    },
+    "f-firefox-desktop-and-f-safari-ios.6": {
+      "result": "untested",
+      "evidence": "Firefox not launchable; needs a human on Firefox desktop"
+    },
+    "f-firefox-desktop-and-f-safari-ios.7": {
+      "result": "untested",
+      "evidence": "Firefox and Safari not launchable; needs a human"
+    }
   },
-  "f-firefox-desktop-and-f-safari-ios.3": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
-  },
-  "f-firefox-desktop-and-f-safari-ios.4": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
-  },
-  "f-firefox-desktop-and-f-safari-ios.5": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
-  },
-  "f-firefox-desktop-and-f-safari-ios.6": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
-  },
-  "f-firefox-desktop-and-f-safari-ios.7": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: only Chromium is available to the Playwright MCP; needs a human with Firefox / real iPhone Safari (manual_required)."
-  }
- }
+  "proposed_checks": []
 }

@@ -1,82 +1,87 @@
 {
   "journey": "C.anon.sitemap",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:36:32Z",
-  "walker": "lane A3",
+  "free": "1e89d24d",
+  "pro": "d5233d9",
+  "walked_at": "2026-10-30T07:35:47Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
   "env": {
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign (all checks)",
+      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
     ],
     "viewports": [
       1440,
+      1024,
       390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark (Reign only)"
+    ],
+    "browser": "Chromium via playwright-iso",
+    "locale": "en_US, ar for RTL checks (restored)"
   },
   "checks": {
     "c-anon-sitemap.1": {
       "result": "pass",
-      "evidence": "GET /community-sitemap.xml: 200 application/xml, <sitemapindex> listing community-sitemap-spaces-1.xml and community-sitemap-posts-1.xml (58 ms)."
+      "evidence": "Guest GET /community-sitemap.xml -> 200, application/xml, <sitemapindex> listing community-sitemap-spaces-1.xml and community-sitemap-posts-1.xml."
     },
     "c-anon-sitemap.2": {
       "result": "pass",
-      "evidence": "spaces-1: 50 <url> with loc, lastmod, changefreq, priority; posts-1: 302 <url> in 36 ms; three sampled locs return 200."
+      "evidence": "spaces-1 (39 urls) and posts-1 (239 urls) are <urlset> with loc, lastmod, changefreq, priority; six sampled locs (3 spaces, 3 topics) all return 200."
     },
     "c-anon-sitemap.3": {
       "result": "pass",
-      "evidence": "No customer-advisory, moderators-room, insiders, partner-program or qa-walk-c2-private slug appears in either child sitemap."
+      "evidence": "Neither child sitemap contains customer-advisory-board, moderators-room, insiders-beta, partner-program or release-planning."
     },
     "c-anon-sitemap.4": {
       "result": "pass",
-      "evidence": "/community-sitemap-posts-99.xml = 404."
+      "evidence": "/community-sitemap-posts-99.xml and /community-sitemap-spaces-99.xml -> HTTP 404 (with an empty <urlset> body)."
     },
     "c-anon-sitemap.5": {
-      "result": "not_performed",
-      "evidence": "Seeding 12,000 public topics on the shared site is not safe; the public posts sitemap holds 302 URLs on one page, so the three-page split was not exercised."
+      "result": "untested",
+      "evidence": "needs 12,000 public topics; large-data seeding is Docker-scale work not done in this smoke (stack has 239 topics)"
     },
     "c-anon-sitemap.6": {
-      "result": "pass",
-      "evidence": "seo_sitemap on (restored after): /community-sitemap.xml 0.05s and posts-1 page 1,451 URLs in 0.07s on a 1,513-topic site. 2000+ not reached",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "2000+ topics not available; with 239 topics the index answers in 17-18 ms and posts-1 in 17 ms, but the check's 2000+ condition was not met"
     },
     "c-anon-sitemap.7": {
-      "result": "pass",
-      "evidence": "Archived 2025 Hackathon: neither the space nor its topics are listed (archived spaces are left out of the sitemap by policy), so the 'lastmod is the last activity date' part cannot be observed",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "the archived 2025 Hackathon has no topics and its space URL is not in the spaces sitemap (policy: archived excluded); lastmod-as-last-activity could not be verified with no topics"
     },
     "c-anon-sitemap.8": {
       "result": "pass",
-      "evidence": "Two fixture topics: trashing one dropped it at once and the other (still published) was listed; trashing the second removed it from posts-1 on the very next request (Sitemap_Emitter::flush on trash, no TTL wait)."
+      "evidence": "bob created \"Where do you back up your RAW archive?\" (in posts-1 immediately), deleted it, and the next request no longer listed it (no cache delay)."
     },
     "c-anon-sitemap.9": {
       "result": "pass",
-      "evidence": "Set seo_sitemap off: /community-sitemap.xml and posts-1 -> 404 and robots.txt lost the community Sitemap line (the wp-sitemap.xml line stays); settings restored from backup, sitemap 200 and the line is back",
-      "carried_forward": true
+      "evidence": "With jetonomy_settings seo_sitemap=false /community-sitemap.xml -> 404 and robots.txt has no community-sitemap line; restored (unset = default on) -> 200 and the line returns."
     },
     "c-anon-sitemap.10": {
       "result": "pass",
-      "evidence": "/robots.txt has 'Sitemap: http://forums.local/community-sitemap.xml'."
+      "evidence": "robots.txt contains \"Sitemap: http://localhost:8912/community-sitemap.xml\" (also wp-sitemap.xml)."
     },
     "c-anon-sitemap.11": {
-      "result": "not_performed",
-      "evidence": "Yoast SEO is not installed on forums.local, so the with-Yoast arm cannot be produced."
+      "result": "untested",
+      "evidence": "Yoast SEO is not installed on this stack (only akismet, buddypress, hello, memberpress, PMPro present)"
     },
     "c-anon-sitemap.12": {
       "result": "pass",
-      "evidence": "Three listed pages (london-chapter space, qa-rft-poll-topic, the Arabic topic) at 1440 and 390: status 200 and scrollWidth equals clientWidth for all six",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/sitemap-ar-390.png",
-      "carried_forward": true
+      "evidence": "Three space URLs from the sitemap at 1440 and 390: documentElement scrollWidth <= viewport on each (6 loads)."
     },
     "c-anon-sitemap.13": {
       "result": "pass",
-      "evidence": "X-Robots-Tag: noindex, follow on the sitemap index."
+      "evidence": "All sitemap responses carry X-Robots-Tag: noindex, follow."
     },
     "c-anon-sitemap.14": {
       "result": "pass",
-      "evidence": "Arabic topic URLs in posts-1 are percent-encoded (%d8...) with no raw Arabic characters."
+      "evidence": "Omar's Arabic topic appears with a percent-encoded loc (.../t/%d8%aa%d8%ac%d8%b1...) and the XML is well formed."
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": [
+    "- `c-anon-sitemap.15` @guest #rest +empty: the archived 2025 Hackathon space is absent from the spaces sitemap; state the policy and give the space a topic so lastmod can be compared."
+  ]
 }

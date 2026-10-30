@@ -1,89 +1,93 @@
 {
   "journey": "C.member.space-pagination",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:30:32Z",
-  "walker": "lane A3",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:35:47Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
   "env": {
+    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign (all checks)",
+      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
     ],
     "viewports": [
       1440,
+      1024,
       390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark (Reign only)"
+    ],
+    "browser": "Chromium via playwright-iso",
+    "locale": "en_US, ar for RTL checks (restored)"
   },
   "checks": {
     "c-member-space-pagination.1": {
       "result": "pass",
-      "evidence": "jt-qa-paging (3 topics, space batch size 1) as bob: exactly 1 topic and a Load More link."
+      "evidence": "bob on QA Paging space (posts_per_page=1): exactly 1 topic and a Load More button."
     },
     "c-member-space-pagination.2": {
       "result": "pass",
-      "evidence": "One Load More click: 2 topics, no duplicate."
+      "evidence": "One Load More click at 390: 2 rows, no duplicates."
     },
     "c-member-space-pagination.3": {
       "result": "pass",
-      "evidence": "Scrolling to the bottom with the wheel: still 1 topic, nothing loaded."
+      "evidence": "Wheel-scroll to the bottom as guest: still 1 row, nothing loaded."
     },
     "c-member-space-pagination.4": {
       "result": "pass",
-      "evidence": "Load More until the end: 3 topics, no duplicates, X-WP-Total 3, button gone."
-    },
-    "c-member-space-pagination.7": {
-      "result": "pass",
-      "evidence": "london-chapter (19 topics) and jt-qa-feed (1 topic): no Load More link."
-    },
-    "c-member-space-pagination.8": {
-      "result": "pass",
-      "evidence": "topic posted while page 1 open: Load More showed no duplicate and no skipped row",
-      "carried_forward": true
-    },
-    "c-member-space-pagination.9": {
-      "result": "pass",
-      "evidence": "offline: error shown, button stays, retry works",
-      "carried_forward": true
-    },
-    "c-member-space-pagination.10": {
-      "result": "pass",
-      "evidence": "changing posts_per_page changed first batch size (restored afterwards)",
-      "carried_forward": true
-    },
-    "c-member-space-pagination.11": {
-      "result": "pass",
-      "evidence": "guest on /community/s/partner-program/: 200, 0 topic links, 0 Load More, private-space gate text only."
-    },
-    "c-member-space-pagination.12": {
-      "result": "pass",
-      "evidence": "390 dark, bob: Load More full width (328 of 390), no horizontal overflow (390/390), keyboard Enter on it loads the next batch (20 to 40) and focus lands on the first control of the new rows.",
-      "screenshot": "pagination-390-dark.png"
-    },
-    "c-member-space-pagination.13": {
-      "result": "pass",
-      "evidence": "no duplicate row after a new topic was posted",
-      "carried_forward": true
-    },
-    "c-member-space-pagination.14": {
-      "result": "pass",
-      "evidence": "offline error message shown and button kept",
-      "carried_forward": true
+      "evidence": "Clicking until the end: 3 rows, button gone after the last batch."
     },
     "c-member-space-pagination.5": {
-      "result": "pass",
-      "evidence": "General Discussion (42 topics, X-WP-Total 42) at the site posts_per_page of 20 (the setting was not changed, a shared-settings write was blocked): first batch 20, Load More gives 40, then 42, no duplicate, button gone. Not run at 30 per page."
+      "result": "untested",
+      "evidence": "no space in the demo seed has 30+ topics (largest is General Discussion with 17); needs a seeded large space"
     },
     "c-member-space-pagination.6": {
       "result": "pass",
-      "evidence": "GET /spaces/2999/posts: limit=5 gives ids 16670..16664; page=2 gives 16662..16616 and equals offset=5; offset=500 and page=99 give an empty list. page is now honoured."
+      "evidence": "GET /spaces/11/posts?limit=5&offset=5 -> next 5 rows (237,111,118,119,116); offset=100 -> empty list; ?page=2 with default limit -> empty only because 17 < 20 (page honoured, not ignored)."
+    },
+    "c-member-space-pagination.7": {
+      "result": "pass",
+      "evidence": "Amsterdam Chapter (0 topics) and General Discussion (17, under one page) show no Load More."
+    },
+    "c-member-space-pagination.8": {
+      "result": "pass",
+      "evidence": "Topic posted while page 1 was open: first Load More click returned only the already-shown topic (de-duplicated, so the click visibly added nothing); further clicks added post 2 and the needle - no duplicate row, no skipped existing row. See proposed check."
+    },
+    "c-member-space-pagination.9": {
+      "result": "pass",
+      "evidence": "Offline: click Load More -> message \"Could not load more. Check your connection and try again.\" and the button stays; back online the retry adds the next row."
+    },
+    "c-member-space-pagination.10": {
+      "result": "pass",
+      "evidence": "Global posts_per_page set to 5 (restored to unset afterwards): General Discussion first batch 5, then 10, 15, 17 rows, no duplicates, button removed at the end; REST X-WP-Total 17."
+    },
+    "c-member-space-pagination.11": {
+      "result": "pass",
+      "evidence": "Guest on Partner Program: \"This space is private. Log in to see it.\" with Log In, no topics, no Load More."
+    },
+    "c-member-space-pagination.12": {
+      "result": "pass",
+      "evidence": "390px dark (Reign toggle): Load More button 328px wide (row 326px), 41px high, dark surface; keyboard Enter on it loads the next row and focus lands on the first vote control of the new row."
+    },
+    "c-member-space-pagination.13": {
+      "result": "pass",
+      "evidence": "Same run as .8: no duplicate row after Load More following a new topic."
+    },
+    "c-member-space-pagination.14": {
+      "result": "pass",
+      "evidence": "Same run as .9: offline Load More keeps the button and shows the error."
+    },
+    "c-member-space-pagination.15": {
+      "result": "fail",
+      "evidence": "GET /spaces/11/posts?per_page=1 returns all 17 topics (per_page ignored, only limit is read) and ?per_page=1&page=2 returns 16 rows starting at offset 1 (overlaps page 1) instead of the second 1-row slice. /spaces?per_page=1&page=2 and /posts/243/replies?per_page=1&page=2 slice correctly. Cause: class-posts-controller.php reads only raw limit; get_pagination() reads per_page for offset. Also with posts_per_page=5, ?page=2 returned [] because offset used the default 20. /subscriptions not walked (bob has none)."
     }
   },
   "proposed_checks": [
-    {
-      "id": "c-member-space-pagination.15",
-      "text": "@member #rest: GET list routes (spaces, topics, replies, subscriptions, bookmarks) with ?page=2 and per_page=1 -> return the second slice, not the first page again."
-    }
+    "- `c-member-space-pagination.16` @member #rest: GET /spaces/<id>/posts?per_page=1 returns exactly one row and ?per_page=1&page=2 the second row (live: per_page is ignored, 17 rows returned).",
+    "- `c-member-space-pagination.17` @member #ui +concurrent: when the only batch returned by Load More is a row already on screen (new topic arrived), the click should still show feedback or fetch the next row (live: nothing visibly happens)."
   ],
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "walked_before_change": true
 }
