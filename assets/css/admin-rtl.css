@@ -4066,18 +4066,22 @@ tr.jetonomy-moderated td {
 	}
 
 	/* base-select draws its own ::picker-icon, and core paints a chevron as a
-	   background SVG for the `appearance: none` case. Keep one arrow. */
+	   background SVG for the `appearance: none` case. Keep one arrow.
+	   A select sized to its content leaves the icon out of that size, so the
+	   icon sits in reserved end padding instead of the flow; otherwise it
+	   spilled outside the box in the Access Rules grant column. */
 	.jetonomy-admin select {
 		background-image: none;
-		padding-inline-end: 10px;
+		position: relative;
+		padding-inline-end: 32px;
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
 	}
 
 	.jetonomy-admin select::picker-icon {
+		position: absolute;
+		inset-inline-end: 10px;
 		color: var(--jt-admin-text-3, #646970);
-		margin-inline-start: auto;
 		transition: transform 0.15s ease;
 	}
 
@@ -4369,6 +4373,12 @@ tr.jetonomy-moderated td {
 	outline: 2px solid var(--jt-admin-blue-wp);
 	outline-offset: 2px;
 	border-radius: 4px;
+}
+
+/* The grant select in the rules list: one width for every row, so Read and
+   Participate rows line up. */
+.jetonomy-admin .jetonomy-rule-grants {
+	min-width: 9rem;
 }
 
 /* An access rule whose course, product or plan is gone: it lets nobody in. */
