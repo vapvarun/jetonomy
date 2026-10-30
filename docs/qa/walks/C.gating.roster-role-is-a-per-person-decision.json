@@ -1,15 +1,16 @@
 {
   "journey": "C.gating.roster-role-is-a-per-person-decision",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T13:10:00Z",
-  "walker": "lane B3",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
@@ -17,61 +18,57 @@
   },
   "checks": {
     "c-gating-roster-role-is-a-per-person-decision.1": {
-      "result": "pass",
-      "evidence": "PMPro level pmpro_3 membership rule on QA-WALK-B3 Private, Sync Members -> toast 'Synced 5 existing members.'; the synced people are listed on the Members tab."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-roster-role-is-a-per-person-decision.2": {
-      "result": "pass",
-      "evidence": "DB roster of the space: rows added by the rule (source tier) all role member (4 rows), none moderator or admin."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-roster-role-is-a-per-person-decision.3": {
-      "result": "pass",
-      "evidence": "Members tab: Grace changed to Moderator -> toast 'Role updated.'; after another Sync Members ('Synced 0 existing members.') she is still moderator; restored to Member."
+      "result": "untested",
+      "evidence": "REST PATCH /spaces/43/members/24 role moderator -> 200 and listed as moderator; 'Role updated.' toast and surviving a sync not walked"
     },
     "c-gating-roster-role-is-a-per-person-decision.4": {
       "result": "pass",
-      "evidence": "GET /spaces/{id}/members as admin -> 200, roles as shown on the Members tab (admin first)."
+      "evidence": "GET /spaces/43/members lists (1 admin),(24 moderator) matching the PATCH result"
     },
     "c-gating-roster-role-is-a-per-person-decision.5": {
       "result": "pass",
-      "evidence": "bob PATCH /spaces/37/members/3754 role=moderator -> 200 (reverted to member 200); the same PATCH in another space -> 403 jetonomy_forbidden 'You do not have permission to perform this action.' (runbook wording now matches)."
+      "evidence": "bob (admin of Partner Program) PATCH /spaces/37/members/9 role moderator -> 200 (restored to member); same in Insiders/Beta (20) -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'"
     },
     "c-gating-roster-role-is-a-per-person-decision.6": {
       "result": "pass",
-      "evidence": "A roster member PATCH own role=admin -> 403 jetonomy_forbidden; role unchanged."
+      "evidence": "aisha PATCH own role to admin -> 403 jetonomy_forbidden"
     },
     "c-gating-roster-role-is-a-per-person-decision.7": {
-      "result": "pass",
-      "evidence": "Demote the only admin to Member on the Members tab -> 'This space must keep at least one admin. Promote someone else first.'; role still admin after reload."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-roster-role-is-a-per-person-decision.8": {
-      "result": "pass",
-      "evidence": "Members tab with 127 roster rows: pager '1-50 of 127' with pages 1, 2, 3 and Next, a search box; searching 'grace' (?ms=grace) lists only Grace Oluwaseun Adeyemi-Whitfield.",
-      "screenshot": "qa-artifacts/walk-B3/members-1440.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-roster-role-is-a-per-person-decision.9": {
-      "result": "pass",
-      "evidence": "1440px: Grace's row is 1236x56, name on one line inside the row, no horizontal overflow (scrollWidth 1440)."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-roster-role-is-a-per-person-decision.10": {
-      "result": "pass",
-      "evidence": "390px Members tab: Grace row 366x60, scrollWidth 390 = clientWidth, rows stack.",
-      "screenshot": "qa-artifacts/walk-B3/members-390.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-roster-role-is-a-per-person-decision.11": {
-      "result": "fail",
-      "evidence": "Admin POST /spaces/{id}/members {user_id: 3752} and {user_id: 3756} (neither on the roster) -> 409 jetonomy_already_member 'You are already in this space.' for both; the route ignores user_id and only joins the caller, so no other person can be added to the roster by REST. Runbook still expects the person to be added."
+      "result": "pass",
+      "evidence": "admin POST /spaces/43/members {user_id:24} -> 201 and listed on roster"
+    },
+    "c-gating-roster-role-is-a-per-person-decision.12": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-roster-role-is-a-per-person-decision.13": {
+      "result": "pass",
+      "evidence": "admin POST members user 24 -> 201, repeat -> 409, aisha (subscriber) POST members -> 403 jetonomy_forbidden"
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
-  "proposed_checks": [
-    {
-      "id": "c-gating-roster-role-is-a-per-person-decision.12",
-      "text": "@admin #admin +many: the space Members tab with more than 50 people pages at 50 rows and its search box finds a member on a later page."
-    },
-    {
-      "id": "c-gating-roster-role-is-a-per-person-decision.13",
-      "text": "@admin #rest !refuse: POST /spaces/{id}/members with a user_id as staff -> 201 and the person is on the roster; the same call as a subscriber -> 403; repeating it for the same user -> 409."
-    }
-  ]
+  "proposed_checks": []
 }

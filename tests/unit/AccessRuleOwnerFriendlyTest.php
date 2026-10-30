@@ -10,7 +10,8 @@ use Jetonomy\Models\Space;
 use Jetonomy\DB\Schema;
 
 /**
- * QA 10453398183: "Full" is offered only where it can differ from Participate,
+ * QA 10453398183: "Full" (removed in 2.0.7, it never gave more than Participate)
+ * is saved as Participate,
  * the gate names a way in that can still be bought, and says "subscribe" for
  * a subscription instead of "join this subscription".
  */
@@ -25,23 +26,27 @@ class AccessRuleOwnerFriendlyTest extends WP_UnitTestCase {
 		$this->space = Space::create( array( 'title' => 'OF', 'slug' => 'of-' . uniqid(), 'category_id' => $cat, 'visibility' => 'private' ) );
 	}
 
-	public function test_full_is_kept_only_on_role_and_capability_rules(): void {
+	public function test_full_is_saved_as_participate_on_every_rule_type(): void {
 		$membership = AccessRule::create( array( 'space_id' => $this->space, 'rule_type' => 'membership', 'rule_value' => 'x_1', 'grants' => 'full' ) );
-		$role       = AccessRule::create( array( 'space_id' => $this->space, 'rule_type' => 'role', 'rule_value' => 'editor', 'grants' => 'full' ) );
+		$role       = AccessRule::create( array( 'space_id' => $this->space, 'rule_type' => 'role', 'rule_value' => 'editor', 'grants' => 'read' ) );
 
-		$this->assertSame( 'participate', AccessRule::find( $membership )->grants, 'Full on a membership rule is what it did anyway: Participate.' );
-		$this->assertSame( 'full', AccessRule::find( $role )->grants );
-
-		AccessRule::update_grants( $membership, 'full' );
 		$this->assertSame( 'participate', AccessRule::find( $membership )->grants );
-		$this->assertTrue( AccessRule::offers_full( 'capability' ) );
-		$this->assertFalse( AccessRule::offers_full( 'logged_in' ) );
+		AccessRule::update_grants( $role, 'full' );
+		$this->assertSame( 'participate', AccessRule::find( $role )->grants, 'Full on a role rule is Participate too.' );
 	}
 
-	public function test_upgrade_turns_meaningless_full_into_participate(): void {
+	public function test_a_legacy_full_row_resolves_as_participate(): void {
+		global $wpdb;
+		$id = AccessRule::create( array( 'space_id' => $this->space, 'rule_type' => 'logged_in', 'grants' => 'read' ) );
+		$wpdb->update( $wpdb->prefix . 'jt_access_rules', array( 'grants' => 'full' ), array( 'id' => $id ) ); // Not yet migrated.
+		AccessRule::reset_memo();
+		$this->assertSame( 'participate', AccessRule::resolve_access( self::factory()->user->create(), $this->space )['grants'] );
+	}
+
+	public function test_upgrade_turns_every_full_rule_into_participate(): void {
 		global $wpdb;
 		$table = $wpdb->prefix . 'jt_access_rules';
-		$id    = AccessRule::create( array( 'space_id' => $this->space, 'rule_type' => 'everyone', 'grants' => 'read' ) );
+		$id    = AccessRule::create( array( 'space_id' => $this->space, 'rule_type' => 'role', 'rule_value' => 'editor', 'grants' => 'read' ) );
 		$wpdb->update( $table, array( 'grants' => 'full' ), array( 'id' => $id ) ); // A row saved before 2.0.7.
 
 		( new \Jetonomy\DB\Migrations\Migration_2_0_7() )->up();

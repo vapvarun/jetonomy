@@ -14,7 +14,7 @@ Access rules that are harder to get wrong, a membership gate that tells visitors
 
 - **Change a grant in place.** Each rule in the Access Rules list has a grant select, so you can move a rule between Read and Participate without deleting it.
 - **Built to avoid accidents.** The form starts on who the rule lets in, Add Rule stays off until the rule is complete, and a rule that would open a private space to everyone asks you to confirm first.
-- **Full only where it means something.** Full is offered on role and capability rules only. On other rules it always acted as Participate, and saved rules are converted on upgrade.
+- **Two clear levels.** Rules grant Read or Participate. The old Full level never gave a member more than Participate (moderation comes from a person's role on the Members tab), so it is removed and saved Full rules become Participate on upgrade. Nobody's access changes.
 - **Retired plans are flagged.** A rule on a deleted, trashed or unpublished course, product or membership plan shows "no longer available" in the rules list, for every membership plugin.
 - **Search every level.** The level picker searches the server as you type, so courses and plans past the first 500 can be chosen.
 

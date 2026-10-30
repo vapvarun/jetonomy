@@ -1,89 +1,94 @@
 {
   "journey": "C.site.host-integrations",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ]
   },
   "checks": {
     "c-site-host-integrations.1": {
-      "result": "pass",
-      "evidence": "Reign /community/: Inter = body font, text rgb(64,72,85), primary #1d76da, container 1140 (theme width), one h1, no h-scroll 1440/390; shot host-reign-*.png. Sidebar setting does not exist (see 17)."
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.2": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyX/TT5 would need a site-wide theme switch that disrupts lanes A and C"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.3": {
-      "result": "pass",
-      "evidence": "Appearance: container_width=custom 900 saved; /community/ .jt-app width 1440 viewport = 900px on reload; restored to theme (verified). No sidebar-position setting exists. host-width900.png"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.4": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.5": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.6": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.7": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.8": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.9": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.10": {
-      "result": "pass",
-      "evidence": "Community loads with no BuddyPress/Fluent present (200, no PHP error on /community/ with WP_DEBUG on, no empty tab)"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.11": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED for BuddyX; Reign dark verified only (bg rgb(35,38,47), text rgb(229,229,229)) - runbook needs both themes"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.12": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED for BuddyX/TT5; Reign only: no h-scroll at 390 on /community/ and topic"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.13": {
-      "result": "pass",
-      "evidence": "Topic 5872 (159 chars) on Reign: h1 wraps (650px wide x128 at 1440; 294x159 at 390), scrollWidth==viewport, no page overflow. 100-char URL not separately probed. host-grace-*.png"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.14": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: no Arabic language pack installed"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.15": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: maintenance mode would take the shared site down for lanes A and C"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.16": {
-      "result": "pass",
-      "evidence": "front_page on: / returned 200 with .jt-app community; off: / shows no jt-app. Restored false. Maintenance gate half not performed (see 15)."
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
+    },
+    "c-site-host-integrations.18": {
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     },
     "c-site-host-integrations.17": {
-      "result": "fail",
-      "evidence": "No Sidebar setting exists in Settings > Appearance (grep: sidebar_visibility only a stray saved option value, no code or field); BuddyX also not tested. Runbook check has no corresponding feature"
+      "result": "untested",
+      "evidence": "env: needs theme switching/plugins not walked"
     }
-  }
+  },
+  "proposed_checks": []
 }

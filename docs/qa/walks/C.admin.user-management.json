@@ -1,15 +1,16 @@
 {
   "journey": "C.admin.user-management",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:10:52Z",
-  "walker": "lane B2",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
@@ -17,125 +18,95 @@
   },
   "checks": {
     "c-admin-user-management.1": {
-      "result": "pass",
-      "evidence": "Users screen search 'Grace' -> one row 'Grace Oluwaseun Adeyemi-Whitfield' (display name column, 258px wide, full name present); at 390px docW==viewport and the row collapses to WP's 'Show more details'. Avatar cell is blank in the local env (gravatar needs internet; admin-bar avatar blank too), no broken-image icon.",
-      "screenshot": "users-search-grace.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.2": {
-      "result": "pass",
-      "evidence": "alice is trust level 4 on this site (not 1), so used grace (level 1): UI row action Change Trust Level -> 3 -> toast 'Trust level updated.', badge 'Trusted (3)' persisted after reload; trust_level_names option is empty so default names show. REST POST /admin/users/trust-level {user_ids:[3765],level:3} -> 200 status ok updated [3765]. Restored grace to 1 via UI and REST.",
-      "screenshot": "users-trust-3.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "REST POST /admin/users/trust-level {user_ids:[9],level:3} -> 200 {level:3,updated_count:1} (alice restored to 1); admin UI toast 'Trust level updated.' not walked"
     },
     "c-admin-user-management.3": {
-      "result": "pass",
-      "evidence": "Ban dialog from row action Ban: title 'Ban User', toast 'User banned.', listing row shows 'Banned' badge after reload.",
-      "screenshot": "users-ban-dialog.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "REST global_ban carlos -> 201 and carlos POST then 403 jetonomy_user_banned 'Your account has been banned from this community.' (lifted afterwards, he posts again); dialog title/toast/listing label UI not walked"
     },
     "c-admin-user-management.4": {
-      "result": "pass",
-      "evidence": "Admin Users screen: carlos row Lift restriction -> dialog 'Lift this restriction?' -> toast 'Ban lifted.' (matches current runbook) and the row shows Ban | Silence | Ban IP address again",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/users-unban-toast.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.5": {
-      "result": "pass",
-      "evidence": "finn is already silenced on this site (restriction 639), so silenced priya instead: dialog titled 'Silence User', confirm button 'Silence User', toast 'User silenced.', listing row shows 'Silenced'. Lifted afterwards.",
-      "screenshot": "users-silence-dialog.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.6": {
-      "result": "pass",
-      "evidence": "Row action Ban IP address: dialog 'Ban IP address', IP field shown, reason row hidden; 203.0.113.77 -> toast 'IP address banned.'; listed in Moderation > Banned with issuer varundubey and a 'Lift restriction' button; lifted via UI ('IP address ban lifted.').",
-      "screenshot": "users-ip-ban.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.7": {
       "result": "pass",
-      "evidence": "UI: 999.1.1.1 -> 'Enter a valid IPv4 or IPv6 address.'; already banned -> 'This IP address is already banned.'; 127.0.0.1 and ::1 (own loopback address here) -> 'This is a loopback or reserved address...'. REST POST /moderation/ban type=ip_ban: not-an-ip 400 jetonomy_invalid_ip, 127.0.0.1 400 jetonomy_reserved_ip, duplicate 409 jetonomy_ip_already_banned, 2001:db8::1234 400 jetonomy_reserved_ip. Note: a real non-loopback own address could not be tested on localhost.",
-      "carried_forward": true
+      "evidence": "REST POST /moderation/ban type=ip_ban: invalid 'not-an-ip' -> 400 jetonomy_invalid_ip 'Enter a valid IPv4 or IPv6 address.'; own address 192.168.65.1 -> 400 jetonomy_cannot_ban_own_ip 'This is the IP address you are using right now. Banning it would lock you out.'; repeat 203.0.113.9 -> 409 jetonomy_ip_already_banned; 127.0.0.1 -> 400 jetonomy_reserved_ip"
     },
     "c-admin-user-management.8": {
       "result": "pass",
-      "evidence": "wp jetonomy mod ban --type=ip_ban --ip=127.0.0.1 --target=3755 --issuer=1 -> 'Error: This is a loopback or reserved address, not a visitor...'; no restriction row for 3755.",
-      "carried_forward": true
+      "evidence": "wp jetonomy mod ban --type=ip_ban --ip=127.0.0.1 --target=10 --issuer=1 -> 'Error: This is a loopback or reserved address, not a visitor. Banning it could lock everyone out.'; ip_ban row count stayed 0"
     },
     "c-admin-user-management.9": {
-      "result": "pass",
-      "evidence": "Ban dialog Type select offers only site-wide choices: global_ban 'Global Ban', silence 'Silence', ip_ban 'IP address ban'; no space ban option (space bans are made from the space Members screen).",
-      "screenshot": "users-ban-dialog.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.10": {
       "result": "pass",
-      "evidence": "test_editor: wp-admin Users screen 'Sorry, you are not allowed to access this page.' so no Ban IP address option exists for her; REST POST /moderation/ban type=ip_ban -> 403 jetonomy_forbidden (bob also 403).",
-      "carried_forward": true
+      "evidence": "test_editor POST /moderation/ban type=ip_ban -> 403 jetonomy_forbidden (UI option absence not separately walked, REST refusal observed)"
     },
     "c-admin-user-management.11": {
-      "result": "pass",
-      "evidence": "Fixture staff qawalkb_staff1/2 (Editor + only jetonomy_manage_users): Users screen opens (not an Error page, nonce present). admin-ajax change_trust_level on self -> success:false 'You cannot change your own trust level.'; on other staff -> success:false 'Only an administrator can change the trust level of an administrator, moderator or user manager.'",
-      "screenshot": "users-staff-delegated.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.12": {
-      "result": "pass",
-      "evidence": "omar (space ban Off-Topic Lounge only): space page shows the banned banner text and no composer; REST post there 403 jetonomy_user_space_banned with the exact runbook message; General Discussion shows + New Topic and REST post 201.",
-      "screenshot": "omar-offtopic.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "omar POST in Off-Topic Lounge refused 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.' and POST in General Discussion returned 201 (REST); UI composer not walked"
     },
     "c-admin-user-management.13": {
       "result": "pass",
-      "evidence": "finn REST POST /spaces/2999/posts, /posts/16604/replies and /posts/16604/vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; in the UI on another member's topic the vote control is a button with aria-disabled=true, title 'Your account is currently silenced and cannot post.', the composer is absent and the silenced notice shows",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/finn-topic.png"
+      "evidence": "finn POST topic, reply and vote each 403 jetonomy_user_silenced; topic page vote cluster renders denied control with title 'Your account is currently silenced and cannot post.'"
     },
     "c-admin-user-management.14": {
-      "result": "fail",
-      "evidence": "GET /moderation/ban?type=global_ban lists the ban with the issuer name; after deleting the issuing account (temp admin, wp user delete) the row reads issuer_name 'System' and issued_by 0, not '[deleted]'. The '[deleted]' branch at includes/api/class-moderation-controller.php:900 only fires when issued_by stays non-zero, but account deletion zeroes it"
+      "result": "untested",
+      "evidence": "GET /moderation/ban?type=global_ban lists ban with issuer_name 'admin'; the deleted-issuer '[deleted]' case not set up"
     },
     "c-admin-user-management.15": {
-      "result": "pass",
-      "evidence": "491 members with profiles (450 generated, trust levels 0-5): Users screen shows 20 per page, page 5 loads in 132ms, search 'user_1_144' finds it on page 5 as 1 user, trust level filter 3 -> 78 users and 0 -> 95 users",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.16": {
-      "result": "pass",
-      "evidence": "Ban dialog with colorScheme dark + bx-color-mode=dark: wp-admin has no dark mode so the dialog stays light; measured contrast title 15.9, labels 14.6, inputs 16.7, primary button 5.17, secondary button 5.61 (all >= 4.5).",
-      "screenshot": "users-ban-dialog-dark.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.17": {
       "result": "pass",
-      "evidence": "bob POST /admin/users/trust-level -> 403 jetonomy_forbidden; grace level unchanged (1). Guest -> 401.",
-      "carried_forward": true
+      "evidence": "bob POST /admin/users/trust-level -> 403 jetonomy_forbidden"
     },
     "c-admin-user-management.18": {
-      "result": "pass",
-      "evidence": "After banning carlos and silencing priya the Users rows show a 'Banned' / 'Silenced' badge next to the username, and the row actions switch to Lift restriction.",
-      "screenshot": "users-priya-silenced.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.19": {
       "result": "pass",
-      "evidence": "UI IP ban listed in Moderation > Banned as '203.0.113.77 | IP address ban | Permanent | varundubey' with no member name; REST POST /moderation/ban {type:ip_ban, ip:198.51.100.23} without user_id -> 201 user_id 0; both lifted.",
-      "screenshot": "banned-list-ip.png",
-      "carried_forward": true
+      "evidence": "admin POST /moderation/ban type=ip_ban ip=203.0.113.9 without user_id -> 201 user_id 0; GET /moderation/ban?type=ip_ban lists address with issuer_name admin and user null"
     },
     "c-admin-user-management.20": {
-      "result": "pass",
-      "evidence": "wp jetonomy mod ban --type=ip_ban --reason=127.0.0.1 --target=3755 --issuer=1 -> 'Error: --type=ip_ban needs the address to block: pass --ip=<address>.' (clear message, not 'insert failed'); unknown flag --bogusflag -> 'Parameter errors: unknown --bogusflag parameter'. Note --ip is now a real flag (runbook .8 uses it), so line .20's 'unknown flag such as --ip' is stale.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "check text is stale: --ip is now a supported flag (see .8); with only --reason=127.0.0.1 the CLI says 'Error: --type=ip_ban needs the address to block: pass --ip=<address>.' not a loopback message. needs: runbook edit"
     },
     "c-admin-user-management.21": {
-      "result": "pass",
-      "evidence": "Trust level save shows toast 'Trust level updated.' and the badge updates in place with no page reload; after a manual reload the new level persists.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-user-management.22": {
-      "result": "pass",
-      "evidence": "Lifting a silence (priya) toast reads 'Silence lifted.' (not 'Ban removed.'); IP ban lift reads 'IP address ban lifted.'.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": [
+    "- `c-admin-user-management.23` @admin #cli: wp jetonomy mod ban --type=ip_ban --ip=<loopback> -> refused with the loopback message (replaces stale .20 which says --ip is rejected)."
+  ]
 }

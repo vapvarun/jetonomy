@@ -622,12 +622,12 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$result = AccessRule::update_grants( absint( $_POST['id'] ?? 0 ), sanitize_key( wp_unslash( $_POST['grants'] ?? '' ) ) );
+		$grants = sanitize_key( wp_unslash( $_POST['grants'] ?? '' ) );
+		$result = AccessRule::update_grants( absint( $_POST['id'] ?? 0 ), $grants );
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( $result->get_error_message() );
 		}
 
-		$grants = sanitize_key( wp_unslash( $_POST['grants'] ) );
 		wp_send_json_success(
 			array(
 				'message' => __( 'Access rule updated.', 'jetonomy' ),

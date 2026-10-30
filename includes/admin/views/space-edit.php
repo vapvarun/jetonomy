@@ -518,7 +518,6 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<select id="rule-grants">
 						<option value="read"><?php esc_html_e( 'Read', 'jetonomy' ); ?></option>
 						<option value="participate" selected><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
-						<option value="full"><?php esc_html_e( 'Full', 'jetonomy' ); ?></option>
 					</select>
 					<?php
 					// Space Role is derived from the access level and submitted as a hidden field. It
@@ -611,9 +610,6 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								<select class="jetonomy-rule-grants" data-id="<?php echo absint( $rule->id ); ?>" aria-label="<?php esc_attr_e( 'What this rule grants', 'jetonomy' ); ?>">
 									<option value="read" <?php selected( $rule->grants, 'read' ); ?>><?php esc_html_e( 'Read', 'jetonomy' ); ?></option>
 									<option value="participate" <?php selected( $rule->grants, 'participate' ); ?>><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
-									<?php if ( \Jetonomy\Models\AccessRule::offers_full( (string) $rule->rule_type ) ) : ?>
-										<option value="full" <?php selected( $rule->grants, 'full' ); ?>><?php esc_html_e( 'Full', 'jetonomy' ); ?></option>
-									<?php endif; ?>
 								</select>
 								<?php
 								break;
@@ -668,14 +664,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
 							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* jt-terms-ok: "reply" is the verb here. */ esc_html_e( 'Read, plus post, reply, vote and report. The usual choice for a paid plan.', 'jetonomy' ); ?></td>
 						</tr>
-						<tr>
-							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Full', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Participate, plus edit other people\'s content, close and pin %1$s for people whose WordPress role already allows moderation. Offered only on WP Role and Capability rules: for any other rule an ordinary %2$s would get exactly Participate.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></td>
-						</tr>
 					</tbody>
 				</table>
 				<p class="description">
-					<?php /* jt-terms-ok: Viewer / Member / Moderator are space role names. */ /* translators: 1: member label (e.g. "Member"). 2: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%1$s lists show a matching role - Read is listed as Viewer, Participate and Full as Member. To give one person a different role, change it on the %2$s tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
+					<?php /* jt-terms-ok: Viewer / Member / Moderator are space role names. */ /* translators: 1: member label (e.g. "Member"). 2: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%1$s lists show a matching role - Read is listed as Viewer, Participate as Member. To give one person a different role, change it on the %2$s tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
 				</p>
 				<p class="description">
 					<strong><?php esc_html_e( 'A rule can never hand out moderation.', 'jetonomy' ); ?></strong>

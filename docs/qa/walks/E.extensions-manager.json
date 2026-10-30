@@ -1,70 +1,70 @@
 {
- "journey": "E.extensions-manager",
- "free": "dcdb0750",
- "pro": "404b0af",
- "walked_at": "2026-10-21T09:59:23Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "e-extensions-manager.1": {
-   "result": "fail",
-   "evidence": "PARTIAL: Extensions page lists 16 toggles (17th Private Messaging is dormant) each with aria-label \"Enable or disable <Name>\", name, description, category tag and version; category pills show counts (All 17, Administration 3, Intelligence 1, Privacy 1, Content 4, Engagement 3, Communication 4, Moderation 1). Filtering by clicking a category not exercised",
-   "screenshot": "extensions-page"
+  "journey": "E.extensions-manager",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "e-extensions-manager.2": {
-   "result": "fail",
-   "evidence": "PARTIAL: toggling Polls off -> notice \"Extension settings updated.\", the Polls admin menu disappears and /polls route 404s; toggling on -> menu returns and the polls table still lists 10 rows; composer poll control hide/return not checked in the browser"
+  "checks": {
+    "e-extensions-manager.1": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.2": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.3": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.4": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.5": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.6": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.7": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.8": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.9": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.10": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.11": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "e-extensions-manager.12": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    }
   },
-  "e-extensions-manager.3": {
-   "result": "fail",
-   "evidence": "PARTIAL: UI toggle exercised for Polls and Reactions only; web-push, seo-pro, email-digest, webhooks, reply-by-email, ai were toggled by option edit in their own journeys with no fatal. Full 17-extension UI loop with a debug.log check after each NOT PERFORMED"
-  },
-  "e-extensions-manager.4": {
-   "result": "pass",
-   "evidence": "jt_pro_reactions row count was 70 before, 70 with the extension off, and 70 after switching back on (tables not dropped); toggled through the option rather than the UI for this count"
-  },
-  "e-extensions-manager.5": {
-   "result": "pass",
-   "evidence": "Private Messaging card with WPMediaVerse active reads \"WPMediaVerse is active and its messaging engine takes over all direct messages. This extension stays dormant while WPMediaVerse runs.\" with a \"Dormant\" badge and no on/off toggle"
-  },
-  "e-extensions-manager.6": {
-   "result": "fail",
-   "evidence": "PARTIAL: bob POSTing the toggle form (admin nonce fields, jetonomy_pro_toggle_extension=reactions) to admin.php?page=jetonomy-extensions -> 403; test_moderator not separately tried and a nonce-only/capability-only distinction was not isolated"
-  },
-  "e-extensions-manager.7": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: a page-by-page comparison of header/cards/buttons across Analytics, Badges, Custom Fields, Moderation Rules, Webhooks, Polls, Conversations against free screens was not done (screens opened individually during their journeys looked consistent)"
-  },
-  "e-extensions-manager.8": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: renamed-noun settings were not changed to confirm Pro screens pick them up"
-  },
-  "e-extensions-manager.9": {
-   "result": "fail",
-   "evidence": "PARTIAL: `wp action-scheduler run` completed pending jobs (jetonomy_pro_digest_batch, jetonomy_pro_dispatch_webhook, jetonomy_pro_badges_eval_user) and debug.log showed no plugin errors; `wp action-scheduler list` does not exist in this install so the pending list could not be shown"
-  },
-  "e-extensions-manager.10": {
-   "result": "pass",
-   "evidence": "at 390px the Extensions page has no page horizontal scroll (scrollWidth 390) and every toggle sits inside the viewport",
-   "screenshot": "extensions-390"
-  },
-  "e-extensions-manager.11": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: dark-mode token check of cards/toggles/tags (wp-admin has no dark scheme in this build)"
-  },
-  "e-extensions-manager.12": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: two simultaneous admin toggles were not run"
-  }
- }
+  "proposed_checks": []
 }

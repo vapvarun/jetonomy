@@ -40,8 +40,8 @@ class AccessRule extends Model {
 		);
 		// The roster role is derived from the grant, never chosen, for every
 		// writer (REST, wp-admin, Pro provisioners): read is Viewer, participate
-		// and full are Member.
-		$data['grants']     = self::grants_for_type( (string) ( $data['grants'] ?? 'read' ), (string) ( $data['rule_type'] ?? '' ) );
+		// is Member.
+		$data['grants']     = self::normalize_grants( (string) ( $data['grants'] ?? 'read' ) );
 		$data['space_role'] = self::role_for_grants( $data['grants'] );
 
 		$id = static::insert( $data );
@@ -111,32 +111,20 @@ class AccessRule extends Model {
 	}
 
 	/**
-	 * Whether "Full" means anything for this rule type. Full adds editing,
-	 * closing and pinning only for people whose WordPress role already allows
-	 * moderation, which only a role or capability rule can single out; for any
-	 * other rule an ordinary member gets exactly Participate.
+	 * The grant to store and act on. "Full" was removed in 2.0.7: it never gave
+	 * a member more than Participate, so an old API client or row saying "full"
+	 * means Participate.
 	 *
-	 * @param string $rule_type Rule type.
+	 * @param string $grants read | participate (| full, legacy).
 	 */
-	public static function offers_full( string $rule_type ): bool {
-		return in_array( $rule_type, array( 'role', 'capability' ), true );
+	public static function normalize_grants( string $grants ): string {
+		return 'full' === $grants ? 'participate' : $grants;
 	}
 
 	/**
-	 * The grant stored for a rule type: Full on a type that cannot offer it is
-	 * saved as Participate, which is what it would do anyway.
+	 * The roster role a grant records: Viewer for read, Member for participate.
 	 *
-	 * @param string $grants    read | participate | full.
-	 * @param string $rule_type Rule type.
-	 */
-	public static function grants_for_type( string $grants, string $rule_type ): string {
-		return 'full' === $grants && ! self::offers_full( $rule_type ) ? 'participate' : $grants;
-	}
-
-	/**
-	 * The roster role a grant records: Viewer for read, Member for participate and full.
-	 *
-	 * @param string $grants read | participate | full.
+	 * @param string $grants read | participate.
 	 */
 	public static function role_for_grants( string $grants ): string {
 		return self::cap_space_role( $grants, 'admin' );
@@ -150,7 +138,7 @@ class AccessRule extends Model {
 	 * member's role needs no rewrite: SpaceMember caps it by the live grant.
 	 *
 	 * @param int    $id     Rule row ID.
-	 * @param string $grants read | participate | full.
+	 * @param string $grants read | participate ("full" is saved as participate).
 	 * @return bool|\WP_Error True on success.
 	 */
 	public static function update_grants( int $id, string $grants ): bool|\WP_Error {
@@ -161,7 +149,7 @@ class AccessRule extends Model {
 		if ( ! in_array( $grants, array( 'read', 'participate', 'full' ), true ) ) {
 			return new \WP_Error( 'jetonomy_invalid_grants', __( 'Invalid grants value.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
-		$grants = self::grants_for_type( $grants, (string) $rule->rule_type );
+		$grants = self::normalize_grants( $grants );
 		$saved  = parent::update(
 			$id,
 			array(
@@ -448,10 +436,10 @@ class AccessRule extends Model {
 	 * rule advertises.
 	 *
 	 * No rule ever records anyone above `member`, whatever its type or grants
-	 * (owner decision 2026-10-17): Full is full participation, never moderation.
+	 * (owner decision 2026-10-17): a rule grants participation, never moderation.
 	 * Moderators and admins are appointed per person on the Members tab.
 	 *
-	 * @param string $grants     read | participate | full.
+	 * @param string $grants     read | participate (legacy full = participate).
 	 * @param string $space_role Requested roster role.
 	 * @param string $rule_type  Rule type. Unused since every type shares one
 	 *                           ladder; kept because adapters pass it.
@@ -468,10 +456,9 @@ class AccessRule extends Model {
 		$ceiling = array(
 			'read'        => 'viewer',
 			'participate' => 'member',
-			'full'        => 'member',
 		);
 
-		$max  = $ceiling[ $grants ] ?? 'viewer';
+		$max  = $ceiling[ self::normalize_grants( $grants ) ] ?? 'viewer';
 		$want = $ladder[ $space_role ] ?? 1;
 
 		return $want > $ladder[ $max ] ? $max : $space_role;
@@ -557,7 +544,6 @@ class AccessRule extends Model {
 		$rank = array(
 			'read'        => 1,
 			'participate' => 2,
-			'full'        => 3,
 		);
 		$best = null;
 
@@ -613,7 +599,7 @@ class AccessRule extends Model {
 					break;
 			}
 
-			if ( $matched && ( ! $best || ( $rank[ $rule->grants ] ?? 0 ) > ( $rank[ $best->grants ] ?? 0 ) ) ) {
+			if ( $matched && ( ! $best || ( $rank[ self::normalize_grants( $rule->grants ) ] ?? 0 ) > ( $rank[ self::normalize_grants( $best->grants ) ] ?? 0 ) ) ) {
 				$best = $rule;
 			}
 		}
@@ -623,7 +609,7 @@ class AccessRule extends Model {
 		}
 
 		return array(
-			'grants'     => $best->grants,     // 'read', 'participate', or 'full'
+			'grants'     => self::normalize_grants( $best->grants ), // 'read' or 'participate'
 			'space_role' => $best->space_role,
 			'rule_id'    => (int) $best->id,
 			'rule_type'  => $best->rule_type,

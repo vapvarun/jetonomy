@@ -380,7 +380,7 @@ class Model_Tests {
 
 			// BR1.
 			$ban  = Restriction::ban( $voter, 'space_ban', $this->qa_admin, $space, 'QA 207' );
-			$bans = method_exists( Restriction::class, 'space_bans_for_users' ) ? Restriction::space_bans_for_users( $space, array( $voter, $author ) ) : array();
+			$bans = Restriction::active_rows_for_users( array( $voter, $author ), $space );
 			$this->check( 'BR1: the roster sees who is banned from this space, and only them', $ban > 0 && isset( $bans[ $voter ] ) && (int) $bans[ $voter ]->id === $ban && ! isset( $bans[ $author ] ) );
 			if ( $ban > 0 ) {
 				Restriction::remove_ban( $ban );

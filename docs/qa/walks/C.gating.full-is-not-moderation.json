@@ -1,51 +1,54 @@
 {
- "journey": "C.gating.full-is-not-moderation",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T08:43:16Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "c-gating-full-is-not-moderation.1": {
-   "result": "pass",
-   "evidence": "Logged In + Full rule on 4861 -> toast \"Access rule added.\"; preview \"People who match this rule can read, post, reply, vote, report, and - if their WordPress role already allows m\""
+  "journey": "C.gating.full-is-not-moderation",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "c-gating-full-is-not-moderation.7": {
-   "result": "pass",
-   "evidence": "Access Rules tab help text: \"Full Participate, plus edit other people's content, close and pin topics - but only for people whose WordPress role already allows moderation. For an ordinary member this behaves exactly like Participate.\"; rule row: [\"Logged in \u2014 Full Member Delete\"]"
+  "checks": {
+    "c-gating-full-is-not-moderation.1": {
+      "result": "untested",
+      "evidence": "Access Rules tab HTML not present in curl of wp-admin edit&tab=access (rendered client side); needs a browser admin session to read the grant options"
+    },
+    "c-gating-full-is-not-moderation.2": {
+      "result": "pass",
+      "evidence": "re-walked on the changed code: POST /spaces/43/access-rules role rule grants=full space_role=admin -> 201 stored grants participate, space_role member"
+    },
+    "c-gating-full-is-not-moderation.3": {
+      "result": "pass",
+      "evidence": "re-walked: aisha under that rule posted topic 201, replied 201, edited own 200, deleted own 200, read 200 (vote returned 409 because she had already voted)"
+    },
+    "c-gating-full-is-not-moderation.4": {
+      "result": "pass",
+      "evidence": "aisha under Full rule: PATCH, DELETE, close, pin on another member's topic -> 403 jetonomy_forbidden each; POST /moderation/trash/post -> 403"
+    },
+    "c-gating-full-is-not-moderation.5": {
+      "result": "pass",
+      "evidence": "re-walked: aisha PATCH, DELETE, close, pin on another member's topic 259 -> 403 jetonomy_forbidden each"
+    },
+    "c-gating-full-is-not-moderation.6": {
+      "result": "pass",
+      "evidence": "re-walked: aisha GET /community/s/gating-lab-private/mod/ -> 403; POST /moderation/trash/post/259 -> 403 jetonomy_forbidden"
+    },
+    "c-gating-full-is-not-moderation.7": {
+      "result": "untested",
+      "evidence": "needs a Pro/Free migration trigger on a DB row with grants=full; not run"
+    },
+    "c-gating-full-is-not-moderation.8": {
+      "result": "pass",
+      "evidence": "re-walked: test_moderator POST /moderation/spam on topic in same space -> 200 via Moderate capability"
+    }
   },
-  "c-gating-full-is-not-moderation.2": {
-   "result": "pass",
-   "evidence": "sub5 under Full rule: post 201, reply 201, vote 200, report 201, edit own 200, delete own 200"
-  },
-  "c-gating-full-is-not-moderation.3": {
-   "result": "pass",
-   "evidence": "sub5 on alice topic 8739: topic-level Edit/Delete/Close/Pin controls = []"
-  },
-  "c-gating-full-is-not-moderation.4": {
-   "result": "pass",
-   "evidence": "PATCH 403 jetonomy_forbidden, DELETE 403 jetonomy_forbidden, close 403 jetonomy_forbidden, pin 403 jetonomy_forbidden"
-  },
-  "c-gating-full-is-not-moderation.5": {
-   "result": "pass",
-   "evidence": "sub5 GET /mod/ HTTP 403 text \"A A+ A++ You do not have permission to moderate this space.\""
-  },
-  "c-gating-full-is-not-moderation.6": {
-   "result": "pass",
-   "evidence": "POST /moderation/trash/post/8739 as sub5 -> 403 jetonomy_forbidden"
-  },
-  "c-gating-full-is-not-moderation.8": {
-   "result": "pass",
-   "evidence": "test_moderator (site Editor): close topic 8739 200 then reopen 200; /mod/ page HTTP 200 text \"Moderation 82 A A+ A++ Home / Community / QA-WALK-C Private Lab / Moderation QA-WALK-C Private Lab 1 pending flag 1 pend\" - moderation comes from WP role (rule only Full/Member)"
-  }
- }
+  "proposed_checks": []
 }

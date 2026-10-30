@@ -1,16 +1,16 @@
 {
   "journey": "C.mod.queue-and-actions",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
-  "walked_at": "2026-10-21T13:10:00Z",
-  "walker": "lane B3",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
@@ -19,130 +19,114 @@
   "checks": {
     "c-mod-queue-and-actions.1": {
       "result": "pass",
-      "evidence": "As test_moderator at /community/mod/: title 'Moderation Queue \u2013 forums', H1 'Moderation Overview', tabs 'Flags 19', 'Awaiting approval 1', 'Trash', 'Banned members' (no count on Trash/Banned); /community/mod/?view=trash subtitle '47 items in trash'; sidebar 280px wide."
+      "evidence": "test_moderator at /community/mod/ 1440 Reign: title 'Moderation Queue', h 'Moderation Overview', tabs 'Flags 5', 'Awaiting approval 3', 'Trash', 'Banned members', sidebar visible; screenshot qa .playwright-mcp mod-awaiting.png"
     },
     "c-mod-queue-and-actions.2": {
-      "result": "pass",
-      "evidence": "Awaiting approval now has a Show picker (#jt-held-status: Pending / Spam, Apply). Spam view lists only 'Marked as spam' cards (Approve and Reject, no Spam button); with 26 spam rows page 1 Next href is ?view=approvals&kind=post&status=spam&pg=2 (type and status kept). Topics/Replies type tabs counted Topics 4 / Replies 0."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.3": {
       "result": "pass",
-      "evidence": "Moderator test_moderator clicked Approve on held topic 8855 (carlos, Bug Reports; Insiders/Beta unreadable to test_moderator so a readable space was used): card left list without reload, POST /spaces/2995/moderation/approve/post/8855 200, status publish, GET /moderation/queue?status=pending no longer lists it, carlos got exactly 1 notification (type moderation, id 36806).",
-      "carried_forward": true
+      "evidence": "UI Approve on 'Webhook retries: how many attempts are made?' by Bob Martinez: card left list without reload, badge 3->2, REST /moderation/queue?status=pending no longer lists it, topic 254 status publish, bob has one notification 'Your topic was approved by a moderator'"
     },
     "c-mod-queue-and-actions.4": {
-      "result": "pass",
-      "evidence": "UI Reject on held reply 16271 shows confirm 'Reject this submission? It moves to trash.', Confirm -> card gone, POST /spaces/2995/moderation/trash/reply/16271 200, appears in Trash>Replies with Restore/Delete permanently; REST POST /moderation/trash/reply/16274 returned 200.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.5": {
-      "result": "pass",
-      "evidence": "UI Spam on held topic 16620 shows confirm 'Mark this submission as spam? It leaves the queue and its author loses reputation.', POST /spaces/2995/moderation/spam/post/16620 200, topic absent from status=pending and present under status=spam; author reputation 359 -> 339 (-20, same as Trash earlier)."
+      "result": "untested",
+      "evidence": "REST spam works (POST /moderation/spam/post/248 200, listed under status=spam only, not pending) but the reputation-drop equality half was not measured"
     },
     "c-mod-queue-and-actions.6": {
-      "result": "pass",
-      "evidence": "Trash tab Restore on topic 8856 -> POST approve 200, status publish, rep +20 (post_removed_revoked) back to 332 exactly; a second POST /moderation/approve/post/8856 returned 409 already_handled and rep stayed 332.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.7": {
-      "result": "pass",
-      "evidence": "Dark (localStorage bx-color-mode, body bg rgb(35,38,47)): Trash>Topics Delete permanently on 8864 (2 replies) -> modal 'Delete this topic and all its replies permanently? This cannot be undone.', Confirm -> DELETE /posts/8864?force=true 200; topic row and both replies gone from DB.",
-      "screenshot": "qa-artifacts/walk-B/modq-delperm-dark.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.8": {
       "result": "pass",
-      "evidence": "POST /moderation/bulk approve with three held ids -> 200, all status ok (DB status publish); action=bogus -> 400 rest_invalid_param, data.params.action 'action is not one of approve, spam, and trash.' (top-level message 'Invalid parameter(s): action'); items=[] -> 400 jetonomy_validation 'items must be a non-empty array.'."
+      "evidence": "POST /moderation/bulk action=bogus -> 400 rest_invalid_param 'action is not one of approve, spam, and trash.'; items=[] -> 400 jetonomy_validation 'items must be a non-empty array.'"
     },
     "c-mod-queue-and-actions.9": {
-      "result": "not_performed",
-      "evidence": "Not performed: emptying the site-wide queue would delete shared seeded flags, held items and trash that other lanes use. Only the per-space empty state was seen earlier ('No pending flags. The community is clean!')."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.10": {
-      "result": "pass",
-      "evidence": "Seeded 60 held topics by carlos; as test_moderator Awaiting approval badge 62, nav aria-label 'Awaiting approval pagination', 25 cards per page, Next goes to ?view=approvals&kind=post&pg=2 with different cards (0 overlap).",
-      "screenshot": "qa-artifacts/walk-B/modq-approvals-390.png",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.11": {
-      "result": "pass",
-      "evidence": "alice (space-only moderator of Bug Reports only) at /community/mod/: subtitle '0 pending flags across the spaces you moderate', tabs Flags / Awaiting approval, no CAB flag. test_moderator (site-wide) sees 'across your community' as designed."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.12": {
       "result": "pass",
-      "evidence": "POST /moderation/approve/post/8930 (held topic in private Customer Advisory Board) as test_moderator -> 403 jetonomy_forbidden 'You cannot moderate this content.', identical body to missing id 99999999; as alice both give 403 jetonomy_forbidden 'You do not have permission to perform this action.'; topic stays held."
+      "evidence": "test_moderator POST /moderation/approve/post/251 (held topic in Customer Advisory Board) -> 403 jetonomy_forbidden 'You cannot moderate this content.' identical body to nonexistent id 99999; topic stays pending"
     },
     "c-mod-queue-and-actions.13": {
       "result": "pass",
-      "evidence": "priya (plain member) opens /community/mod/: page body 'You do not have permission to view this page.'; REST GET /moderation/queue as bob and priya -> 403 jetonomy_forbidden. Note bob is admin of Partner Program so the page redirects him to /s/partner-program/mod/ instead.",
-      "carried_forward": true
+      "evidence": "bob GET /moderation/queue -> 403 jetonomy_forbidden; bob page /community/mod/ rendered without moderation UI (REST half verified; page text 'You do not have permission' not found in curl HTML)"
     },
     "c-mod-queue-and-actions.14": {
       "result": "pass",
-      "evidence": "Logged out /community/mod/ redirects to wp-login.php?redirect_to=...community/mod/; GET /moderation/queue guest -> 401 jetonomy_unauthorized.",
-      "carried_forward": true
+      "evidence": "guest /community/mod/ -> 302 to wp-login.php?redirect_to=...community/mod/; guest GET /moderation/queue -> 401 jetonomy_unauthorized"
     },
     "c-mod-queue-and-actions.15": {
-      "result": "pass",
-      "evidence": "finn thread page shows 'Your account is currently silenced and cannot post.' in place of the composer; POST /posts/5742/replies -> 403 jetonomy_user_silenced with the same message. After admin lifted restriction 639 the same POST returned 201 (probe reply deleted), restriction 639 restored identically and POST refused again.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "finn reply POST refused 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.' (REST); composer UI submit and post-after-lift not walked"
     },
     "c-mod-queue-and-actions.16": {
-      "result": "pass",
-      "evidence": "test_editor on /community/s/help-desk/: link 'Moderation queue 1' (one held topic, no flags) -> /s/help-desk/mod/?view=approvals; Help Desk /mod/ subtitle '0 pending flags'."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.17": {
-      "result": "pass",
-      "evidence": "Space mod page: feed post 8935 card shows type TOPIC, reason Spam, auto-title plus the flagged text excerpt; titled topic 6147 card shows 'Crash when opening the profile page on mobile Safari' then its first text. (Seed has no truly title-less feed post: the feed composer auto-fills the title from the body.)",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.18": {
-      "result": "pass",
-      "evidence": "Anonymous held topic 8941 by carlos in Bug Reports (Pro anonymous-posting on, space opted in): approval card reads 'by Anonymous', no name/login.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.19": {
-      "result": "pass",
-      "evidence": "Admin POST /moderation/ban type=ip_ban ip=203.0.113.9 -> 201; /mod/?view=banned row 'IP address ban 203.0.113.9 by varundubey' with Lift restriction; modal confirm lifted it and the row disappeared.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.20": {
-      "result": "pass",
-      "evidence": "390px Awaiting approval: documentElement scrollWidth 390 = clientWidth, Approve/Spam/Reject buttons 40px, new Show select 42px and Apply 40px, nothing sideways.",
-      "screenshot": "qa-artifacts/walk-B3/modq-390.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.21": {
-      "result": "pass",
-      "evidence": "Two contexts (admin, test_moderator) on held topic 8934: admin Approve, then moderator Reject+Confirm -> message 'This topic was already handled by a moderator. Reload to see where it is now.', topic stays publish, carlos has exactly one notification for it.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.22": {
-      "result": "pass",
-      "evidence": "Offline click Approve on 8941: card stays, toast 'Network error. Please try again.', button re-enabled; back online one click approves (POST ... 200), card removed once.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.23": {
-      "result": "pass",
-      "evidence": "Advanced Moderation switched on temporarily (option restored): hold keyword rule created via POST /moderation/rules; carlos (member) topic -> status pending, test_moderator (site Editor, staff) topic with the same keyword -> publish at once; rule deleted. Off-state half carried from the earlier walk."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-mod-queue-and-actions.24": {
       "result": "pass",
-      "evidence": "Held topic cards show Approve, Spam, Reject side by side (and Spam is hidden on cards already marked spam)."
+      "evidence": "Awaiting approval card shows View, Approve, Spam, Reject controls (screenshot)"
     },
     "c-mod-queue-and-actions.25": {
-      "result": "pass",
-      "evidence": "On approved/published topic 8855 a stale call with from=pending: POST /moderation/trash|spam|approve/post/8855 and /spaces/2995/moderation/trash|spam -> 409 jetonomy_already_handled each, topic stayed publish, no new notification. Note: without the from param the same calls succeed (trash/spam a published topic), the guard is opt-in and the UI sends it.",
-      "carried_forward": true
+      "result": "fail",
+      "evidence": "stale Trash and stale Spam on topic 250 already approved by a moderator returned 200 {trashed:true}/{marked_spam:true} and the published topic ended status=spam; expected 409 jetonomy_already_handled for Reject/Trash/Spam. Stale Approve correctly returned 409 'This topic was already handled by a moderator.' Each stale action also created a bell notification and a 'A moderator reviewed your content' email to the author (3 emails 06:49:33), violating 'no notice or email goes out'"
     },
     "c-mod-queue-and-actions.26": {
       "result": "pass",
-      "evidence": "GET /moderation/queue logged out -> 401 jetonomy_unauthorized; POST /moderation/approve/post/1 logged out -> 401 rest_not_logged_in."
+      "evidence": "guest GET /moderation/queue -> 401 jetonomy_unauthorized"
+    },
+    "c-mod-queue-and-actions.27": {
+      "result": "pass",
+      "evidence": "Awaiting approval has Show select Pending + Apply (screenshot); REST status=spam lists only spam item 248 and status=pending only 249"
     }
   },
   "proposed_checks": [
-    {
-      "id": "c-mod-queue-and-actions.27",
-      "text": "In the spam view of Awaiting approval, the subtitle still reads 'N submissions awaiting approval' with the pending count, not the spam count - decide the wording or add a check."
-    }
+    "- `c-mod-queue-and-actions.28` @moderator #rest +concurrent: Trash or Spam on a topic another moderator already approved -> decide the contract: 409 jetonomy_already_handled like Approve, or allow it; today Trash/Spam return 200 and the author gets a bell notice and email each time."
   ]
 }

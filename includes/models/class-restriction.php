@@ -571,24 +571,29 @@ class Restriction extends Model {
 	/**
 	 * Map user IDs to their single most-severe active restriction row, in one
 	 * query: the same lookup as active_map_for_users(), with the id a list needs
-	 * to offer "Lift restriction" and the user_id lift_error() judges.
+	 * to offer "Lift restriction" and the user_id lift_error() judges. With a
+	 * space id, only that space's bans (the space Members list offers Lift).
 	 *
 	 * @param int[] $user_ids
+	 * @param int   $space_id Only bans from this space; 0 = every restriction.
 	 * @return array<int,object{id:int,user_id:int,type:string,space_id:int}>
 	 */
-	public static function active_rows_for_users( array $user_ids ): array {
+	public static function active_rows_for_users( array $user_ids, int $space_id = 0 ): array {
 		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
 		if ( empty( $ids ) ) {
 			return array();
 		}
 
-		// IDs are ints (intval above), safe to inline; only $now is bound.
-		$in   = implode( ',', $ids );
-		$rows = static::db()->get_results(
+		// IDs are ints (intval above), safe to inline.
+		$in    = implode( ',', $ids );
+		$scope = $space_id > 0
+			? static::db()->prepare( "type = 'space_ban' AND space_id = %d", $space_id )
+			: "type IN ('global_ban','space_ban','silence')";
+		$rows  = static::db()->get_results(
 			static::db()->prepare(
 				'SELECT id, user_id, type, space_id FROM ' . static::table() . "
 				WHERE user_id IN ($in)
-				  AND type IN ('global_ban','space_ban','silence')
+				  AND {$scope}
 				  AND (expires_at IS NULL OR expires_at > %s)
 				ORDER BY FIELD(type,'global_ban','space_ban','silence'), id DESC",
 				now()
@@ -607,47 +612,6 @@ class Restriction extends Model {
 					'space_id' => (int) $row->space_id,
 				);
 			}
-		}
-
-		return $map;
-	}
-
-	/**
-	 * Active bans from one space for a page of users, in one query: the space
-	 * Members list shows who is banned and offers Lift instead of Ban.
-	 *
-	 * @param int   $space_id Space.
-	 * @param int[] $user_ids Users on the page.
-	 * @return array<int,object{id:int,user_id:int,type:string,space_id:int}> Keyed by user id.
-	 */
-	public static function space_bans_for_users( int $space_id, array $user_ids ): array {
-		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
-		if ( ! $space_id || empty( $ids ) ) {
-			return array();
-		}
-
-		// IDs are ints (intval above), safe to inline.
-		$in   = implode( ',', $ids );
-		$rows = static::db()->get_results(
-			static::db()->prepare(
-				'SELECT id, user_id, type, space_id FROM ' . static::table() . "
-				WHERE user_id IN ($in)
-				  AND type = 'space_ban'
-				  AND space_id = %d
-				  AND (expires_at IS NULL OR expires_at > %s)",
-				$space_id,
-				now()
-			)
-		);
-
-		$map = array();
-		foreach ( $rows as $row ) {
-			$map[ (int) $row->user_id ] = (object) array(
-				'id'       => (int) $row->id,
-				'user_id'  => (int) $row->user_id,
-				'type'     => 'space_ban',
-				'space_id' => (int) $row->space_id,
-			);
 		}
 
 		return $map;

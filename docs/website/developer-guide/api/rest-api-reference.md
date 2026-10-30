@@ -108,14 +108,13 @@ only from wp-admin, so an API-driven or app-based space-admin flow could not
 touch them.
 
 `rule_type` is one of `membership`, `role`, `capability`, `trust_level`,
-`logged_in`, `everyone`. `grants` is `read` (read and report), `participate` or
-`full`. The rule's `space_role` is derived from the grant, not sent: `read`
-stores `viewer`, `participate` and `full` store `member`. A rule never stores
+`logged_in`, `everyone`. `grants` is `read` (read and report) or `participate`; `full` (removed in
+2.0.7) is still accepted and stored as `participate`. The rule's `space_role`
+is derived from the grant, not sent: `read` stores `viewer`, `participate`
+stores `member`. A rule never stores
 `moderator` or `admin`. Since 2.0.7 a `space_role` sent in the request is
 ignored, and `PATCH /access-rules/{id}` with `{"grants": "..."}` changes an
-existing rule's grant and its role together. `full` is kept only on `role`
-and `capability` rules; on any other type it is stored as `participate`
-(what it does there) and the response shows the stored value.
+existing rule's grant and its role together.
 
 Access rules are managed by site administrators only (`jetonomy_manage_spaces`).
 Anyone else, a space admin included, gets `403 jetonomy_forbidden` with the

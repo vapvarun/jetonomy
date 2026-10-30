@@ -273,7 +273,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * New      - Divi Theme Builder global headers and footers, with their styles, show on community pages.
 * New      - Members suspended or blocked in BuddyNext are read-only or blocked in the forum too, through the new jetonomy_user_is_silenced and jetonomy_blocked_user_ids filters.
 * Improve  - The Access Rules form starts on who the rule lets in, asks before opening a private space to everyone, and keeps the help below the form.
-* Improve  - Full is offered only on role and capability rules, where it means something; saved rules are converted on upgrade.
+* Improve  - Access rules grant Read or Participate; the old Full level never gave more than Participate, so saved Full rules become Participate on upgrade.
 * Improve  - The membership gate has one sentence for every paid plan, a button for each way in, and says a space is not open to join when nothing it includes can still be had.
 * Improve  - A rule on a deleted course, product or membership plan is flagged "no longer available" in the admin and never shows its raw id to visitors.
 * Improve  - The Access Rules picker searches the server, so courses and plans past the first 500 can be chosen.

@@ -1,71 +1,74 @@
 {
- "journey": "C.gating.participate",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T08:42:50Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "c-gating-participate.1": {
-   "result": "pass",
-   "evidence": "Logged In + Participate rule on private space 4861 -> toast \"Access rule added.\""
+  "journey": "C.gating.participate",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "c-gating-participate.2": {
-   "result": "pass",
-   "evidence": "sub2 (not on roster) opens private space 4861: topics listed, \"+ New Topic\" link present, no Join/Request control inside .jt-app (0 matches)"
+  "checks": {
+    "c-gating-participate.1": {
+      "result": "pass",
+      "evidence": "admin added Participate rule (logged_in) on Gating Lab Private -> 201 'Access rule added.' stored space_role member"
+    },
+    "c-gating-participate.2": {
+      "result": "pass",
+      "evidence": "subscriber GET /spaces/43/posts 200 with no join step"
+    },
+    "c-gating-participate.3": {
+      "result": "pass",
+      "evidence": "aisha POST 'Anyone using the new roadmap view?' -> 201 (test_subscriber hit the new-member 3 topics/day limit first, 429 jetonomy_rate_limited, so aisha was used)"
+    },
+    "c-gating-participate.4": {
+      "result": "pass",
+      "evidence": "test_subscriber reply 201, vote 200, flag 409 jetonomy_already_flagged (flag already filed earlier, create path verified in read-on-private.6)"
+    },
+    "c-gating-participate.5": {
+      "result": "pass",
+      "evidence": "aisha PATCH own topic 200 and DELETE own topic 200"
+    },
+    "c-gating-participate.6": {
+      "result": "pass",
+      "evidence": "aisha PATCH, DELETE, close, pin on another member's topic -> 403 jetonomy_forbidden each (UI controls absence not viewed)"
+    },
+    "c-gating-participate.7": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-participate.8": {
+      "result": "pass",
+      "evidence": "finn POST topic in the space -> 403 jetonomy_user_silenced"
+    },
+    "c-gating-participate.9": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-participate.10": {
+      "result": "pass",
+      "evidence": "subscriber reply to closed topic 259 -> 403 jetonomy_post_closed"
+    },
+    "c-gating-participate.11": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-participate.12": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-participate.13": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    }
   },
-  "c-gating-participate.3": {
-   "result": "pass",
-   "evidence": "sub3 (Meera Kapoor) via composer UI posted; landed on http://forums.local/community/s/qa-walk-c-private-lab/t/anyone-using-the-new-roadmap-view-1/"
-  },
-  "c-gating-participate.4": {
-   "result": "pass",
-   "evidence": "sub3 on alice topic: reply 201, vote 200, report 201"
-  },
-  "c-gating-participate.5": {
-   "result": "pass",
-   "evidence": "sub3 own topic 8931: PATCH 200 , DELETE 200 "
-  },
-  "c-gating-participate.6": {
-   "result": "pass",
-   "evidence": "sub3 on alice topic 8739: PATCH/DELETE/close/pin all 403 jetonomy_forbidden; page shows Edit/Delete only on sub3 own reply (.jt-reply-foot), none on alice's topic itself, no Close/Pin controls"
-  },
-  "c-gating-participate.7": {
-   "result": "pass",
-   "evidence": "alice (roster member) reply on own topic -> 201 (unchanged abilities)"
-  },
-  "c-gating-participate.8": {
-   "result": "pass",
-   "evidence": "finn (silenced) POST topic in rule-admitted space -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\""
-  },
-  "c-gating-participate.9": {
-   "result": "fail",
-   "evidence": "omar space-banned from the test space is refused (403 jetonomy_user_space_banned, ban wins over the Participate rule), but the message is \"You have been banned from this space and cannot take part in it.\" not the runbook-quoted \"Your account has been banned from this community.\" (that text looks like the site-wide ban copy; runbook wording vs space-ban copy mismatch, not an access hole)"
-  },
-  "c-gating-participate.10": {
-   "result": "pass",
-   "evidence": "admin closed topic 8739 (200 {\"id\":8739,\"space_id\":4861,\"author_id\":3754,\"prefix\":null,\"prefix_color\":null,\"title\":\"QA-WALK-C priv: which tripod do you recommend for travel?\",\"slu); sub3 reply -> 403 jetonomy_post_closed"
-  },
-  "c-gating-participate.11": {
-   "result": "pass",
-   "evidence": "space archived via admin General tab (\"Space updated.\"); sub3 POST topic 403 jetonomy_space_restricted; New Topic link present=false; page text \"mmunity / QA-WALK-C Private Lab QA-WALK-C Private Lab Walk fixture for access gating. Safe to delete. 4 TOPICS 2 MEMBERS Follow This space i\""
-  },
-  "c-gating-participate.12": {
-   "result": "pass",
-   "evidence": "guest on private participate space: space page text \"-WALK-C Private Lab is private and invite-only. Log in if you have an invitation. Walk fixture for access gating. Safe t\", New Topic link=false, login link=true; /new/ HTTP 200 composer forms=0 text \"Password Remember Me Lost your password? \u2190 Go to forums Language English (United States) \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \""
-  },
-  "c-gating-participate.13": {
-   "result": "pass",
-   "evidence": "rule 39 deleted (server-side) while sub4 had a filled composer; submit -> stayed on /new/, toast \"You cannot post in this space.\", title \"Which lens hood works for a 35mm?\" and body text kept in the box"
-  }
- }
+  "proposed_checks": []
 }

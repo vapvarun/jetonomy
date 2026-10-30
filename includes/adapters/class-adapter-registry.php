@@ -177,7 +177,7 @@ class Adapter_Registry {
 	 * Adapters whose catalog is capped for the picker preload (LearnDash,
 	 * WooCommerce) declare an optional `search_levels( $query, $limit )` that
 	 * queries the database, so level 501 and beyond stay selectable. Others
-	 * are matched against their full `get_all_levels()` list.
+	 * have their full list preloaded and are filtered in the browser.
 	 *
 	 * @param string $adapter_id Membership adapter id.
 	 * @param string $query      Search text.
@@ -186,13 +186,10 @@ class Adapter_Registry {
 	 */
 	public static function search_levels( string $adapter_id, string $query, int $limit = 20 ): array {
 		$adapter = self::$membership[ $adapter_id ] ?? null;
-		if ( ! $adapter || ! $adapter->is_active() || '' === $query ) {
+		if ( ! $adapter || ! $adapter->is_active() || '' === $query || ! method_exists( $adapter, 'search_levels' ) ) {
 			return array();
 		}
-		$levels = method_exists( $adapter, 'search_levels' )
-			? (array) $adapter->search_levels( $query, $limit )
-			: array_filter( $adapter->get_all_levels(), static fn( $l ) => false !== mb_stripos( (string) $l['label'], $query ) );
-		return array_slice( array_values( $levels ), 0, $limit );
+		return array_slice( array_values( (array) $adapter->search_levels( $query, $limit ) ), 0, $limit );
 	}
 
 	/**

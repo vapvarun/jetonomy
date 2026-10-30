@@ -925,7 +925,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-mod-queue-and-actions.22` @moderator #ui +offline: go offline and click Approve -> the card stays in the list, an error toast shows, and reconnecting then clicking Approve works once.
 - `c-mod-queue-and-actions.23` @moderator #ui #rest +settings-off: with the Pro Advanced Moderation extension off, hold a topic by an auto-rule match -> no rule-held items appear, and with it on a keyword rule "Hold for Approval" puts a new topic from a trust level 0 member in Awaiting approval.
 - `c-mod-queue-and-actions.24` @moderator #ui: open a held topic card in Awaiting approval -> a Mark as spam control sits beside Approve and Reject, or the check is dropped.
-- `c-mod-queue-and-actions.25` @moderator #rest !refuse +concurrent: a stale Reject, Approve, Trash or Spam on a topic another moderator already approved -> 409 jetonomy_already_handled, the topic stays published and no notice or email goes out.
+- `c-mod-queue-and-actions.25` @moderator #rest !refuse +concurrent: a stale Reject, Approve, Trash or Spam (sent with `from=pending`, as the queue card does) on a topic another moderator already approved -> 409 jetonomy_already_handled, the topic stays published and no notice or email goes out; the same action without `from` is a direct moderation of a published topic and is allowed.
 - `c-mod-queue-and-actions.26` @guest #rest !refuse: GET /moderation/queue logged out -> 401 jetonomy_unauthorized (a GET; the write routes return rest_not_logged_in).
 - `c-mod-queue-and-actions.27` @moderator #ui: the Awaiting approval view has a Pending/Spam select -> choosing Spam lists only spam items and choosing Pending lists only pending ones, and the choice survives approving one item.
 
@@ -1046,7 +1046,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-user-management.17` @member #rest !refuse: bob POSTs /admin/users/trust-level -> 403 jetonomy_forbidden and no level changes.
 - `c-admin-user-management.18` @admin #admin: ban carlos and silence finn -> the Users listing shows a Banned / Silenced label on the row, not only a changed row action.
 - `c-admin-user-management.19` @admin #admin: ban an IP address -> the Banned Users list shows the address and issuer and no unrelated member name; REST accepts ip_ban without user_id.
-- `c-admin-user-management.20` @admin #cli: run `wp jetonomy mod ban --type=ip_ban --reason=127.0.0.1 --target=<id> --issuer=1` -> refused with a loopback/reserved message, not 'insert failed'; an unknown flag such as --ip is rejected, never ignored.
+- `c-admin-user-management.20` @admin #cli: run `wp jetonomy mod ban --type=ip_ban --target=<id> --issuer=1` with no --ip -> refused, naming --ip; with `--ip=127.0.0.1` -> refused with a loopback/reserved message, not 'insert failed'; an unknown flag is rejected, never ignored.
 - `c-admin-user-management.21` @admin #admin: change a trust level -> the success toast is visible after the page reloads.
 - `c-admin-user-management.22` @admin #admin: lift a silence -> toast says 'Restriction lifted' wording that matches a silence, not 'Ban removed.'.
 
@@ -1588,7 +1588,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-integration-abilities-api.16` @member #rest !refuse: run jetonomy/vote on your own topic with value 1 and -1 -> refused with the same jetonomy_self_vote message as POST /posts/{id}/vote, score unchanged.
 - `c-integration-abilities-api.17` @member_b #rest: run jetonomy/flag-content with reason off-topic and with reason inappropriate -> a flag is created with the REST enum value (off_topic, offensive) and shows in the moderator queue with the reporter's name.
 - `c-integration-abilities-api.18` @member_b #rest !refuse: run jetonomy/flag-content on your own reply, on a reply you cannot read (Customer Advisory Board) and on content you already reported -> the same refusals as POST /flags.
-- `c-integration-abilities-api.20` @admin #rest: run jetonomy/list-flags -> every flag carries the reporter's user id (reporter_id), not 0.
+- `c-integration-abilities-api.20` @admin #rest: run jetonomy/list-flags -> every flag carries the reporter's user id (`user_id`), not 0.
 - `c-integration-abilities-api.21` @guest #rest !refuse +private card:10430601579: run jetonomy/search with filter=tags and a query matching a tag used only in a private space -> that tag is not in the result, and a tag used in a public space still is, with its public count.
 **Depth note:** no viewport applies; the surface is REST only.
 
@@ -1632,7 +1632,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-rule-never-locks-out.3` @member #ui: repeat read, post, reply, vote after the rule -> all four still work.
 - `c-gating-rule-never-locks-out.4` @guest #ui: view the public space after the Logged In rule -> guest can still read it (the rule did not close the space).
 - `c-gating-rule-never-locks-out.5` @admin #admin: add a Role, Capability, Trust Level or Membership rule to the public space -> toast "Access rule added. This space was switched to Private so the rule can restrict access. A rule cannot gate a public space.".
-- `c-gating-rule-never-locks-out.6` @member #ui: after that switch the subscriber outside the roster opens the space -> he can read but cannot post.
+- `c-gating-rule-never-locks-out.6` @member #ui !refuse: after that switch the subscriber outside the roster and not matched by the rule opens the space -> the private-space refusal for read and post (REST 403 jetonomy_forbidden); the space is now Private with join policy Requires Approval, as the add-rule toast said.
 - `c-gating-rule-never-locks-out.7` @member_b #ui: an existing roster member of the space keeps posting after any rule is added -> yes, unchanged.
 - `c-gating-rule-never-locks-out.8` @admin #admin: open the Access Rules tab intro -> it says a rule lets more people in and does not restrict.
 - `c-gating-rule-never-locks-out.9` @member #rest !refuse: POST /spaces/{id}/access-rules as the subscriber -> 403 jetonomy_forbidden and no rule is created.
@@ -1696,18 +1696,18 @@ Setup once: a **public** space with open joining, a **private** space with invit
 ### C.gating.full-is-not-moderation
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
 **Verified:** 64212bb5
-**What to verify:** with a **Full** rule on the private space, an ordinary subscriber gets exactly what Participate gives and cannot edit, delete, close or pin anyone else's topic. Full is recorded as Member for every rule type, never Moderator.
-**Promise:** "For an ordinary member this behaves exactly like Participate."
-**Why it matters:** "Full" reads like "everything". It is not, and never has been.
+**What to verify:** the old **Full** grant is gone (2.0.7): the Access Rules screen offers Read and Participate only, a rule saved as Full before 2.0.7 (or sent as `grants=full` by an old API client) is stored and acts as Participate, and an ordinary subscriber under it cannot edit, delete, close or pin anyone else's topic. It is recorded as Member for every rule type, never Moderator.
+**Promise:** "A rule can open a space; it never hands out moderation."
+**Why it matters:** "Full" read like "everything". It never was, so 2.0.7 removed it.
 
 **Checks:**
-- `c-gating-full-is-not-moderation.1` @admin #admin: add a Full rule to the private space -> toast "Access rule added.".
-- `c-gating-full-is-not-moderation.2` @member #ui: the subscriber posts, replies, votes, reports, edits and deletes his own -> all work, same as Participate.
-- `c-gating-full-is-not-moderation.3` @member #ui !refuse: open another member's topic -> no Edit, Delete, Close or Pin control is shown.
-- `c-gating-full-is-not-moderation.4` @member #rest !refuse: PATCH and DELETE another member's topic, POST /posts/{id}/close and /pin -> each returns 403 jetonomy_forbidden and the topic is unchanged.
-- `c-gating-full-is-not-moderation.5` @member #ui !refuse: open /community/s/{slug}/mod/ -> permission message, no queue.
-- `c-gating-full-is-not-moderation.6` @member #rest !refuse: POST /moderation/trash/post/{id} -> 403.
-- `c-gating-full-is-not-moderation.7` @admin #admin: read the Full rule help text -> "For an ordinary member this behaves exactly like Participate.".
+- `c-gating-full-is-not-moderation.1` @admin #admin: open the private space's Access Rules tab -> the add form and each rule's grant select offer Read and Participate only; the help table has no Full row.
+- `c-gating-full-is-not-moderation.2` @admin #rest +old-data: POST /spaces/{id}/access-rules with grants=full on a role rule -> 201 and the stored grant is participate, role Member.
+- `c-gating-full-is-not-moderation.3` @member #ui: under that rule the subscriber posts, replies, votes, reports, edits and deletes his own -> all work.
+- `c-gating-full-is-not-moderation.4` @member #ui !refuse: open another member's topic -> no Edit, Delete, Close or Pin control is shown.
+- `c-gating-full-is-not-moderation.5` @member #rest !refuse: PATCH and DELETE another member's topic, POST /posts/{id}/close and /pin -> each returns 403 jetonomy_forbidden and the topic is unchanged.
+- `c-gating-full-is-not-moderation.6` @member #ui !refuse: open /community/s/{slug}/mod/ -> permission message, no queue; POST /moderation/trash/post/{id} -> 403.
+- `c-gating-full-is-not-moderation.7` @admin #cli +old-data: set a rule's grants to 'full' in the database (a row saved before 2.0.7) and run the 2.0.7 migration -> the row reads participate and the rules list shows Participate.
 - `c-gating-full-is-not-moderation.8` @moderator #ui: test_moderator (site Moderate capability) in the same space moderates -> yes, from his WordPress role, not from the rule.
 
 ### C.gating.no-rule-hands-out-moderation
@@ -1720,13 +1720,13 @@ Setup once: a **public** space with open joining, a **private** space with invit
 **Checks:**
 - `c-gating-no-rule-hands-out-moderation.1` @admin #admin: add a Read rule and set the Space Role as high as the screen allows -> the rule saves.
 - `c-gating-no-rule-hands-out-moderation.2` @member #rest !refuse: the matched subscriber calls moderate, edit others' posts, delete others' posts and pin -> each returns 403 jetonomy_forbidden.
-- `c-gating-no-rule-hands-out-moderation.3` @admin #admin: repeat with Participate and then Full at the highest role -> same refusals; the roster role stored is member (or viewer for Read), never admin or moderator.
+- `c-gating-no-rule-hands-out-moderation.3` @admin #admin: repeat with Participate (and grants=full over REST) at the highest role -> same refusals; the roster role stored is member (or viewer for Read), never admin or moderator.
 - `c-gating-no-rule-hands-out-moderation.4` @admin #cli: fire the membership enrolment hook for a plain subscriber with a rule grants=read, space_role=admin -> the roster role is viewer and moderate, edit_others_posts, delete_others_posts, pin_posts are all denied.
 - `c-gating-no-rule-hands-out-moderation.5` @member #cli: repeat with grants=participate -> roster role is member and he CAN post and reply.
 - `c-gating-no-rule-hands-out-moderation.6` @admin #admin: open the Members tab after the matches -> nobody admitted by the rule is Moderator or Admin.
 - `c-gating-no-rule-hands-out-moderation.7` @member #ui: the subscriber opens the space /mod/ page -> permission message.
 - `c-gating-no-rule-hands-out-moderation.8` @moderator #ui: test_moderator, in a space he can read (public, or he is on the roster), still moderates -> yes, via the Moderate capability (a site moderator does not reach a private space he cannot read; it answers 404).
-- `c-gating-no-rule-hands-out-moderation.9` @admin #admin: on the Access Rules tab choose Full for each rule type and read the live preview -> it says "They are recorded as Member." and never Moderator.
+- `c-gating-no-rule-hands-out-moderation.9` @admin #admin: on the Access Rules tab choose Participate for each rule type and read the live preview -> it says "They are recorded as Member." and never Moderator.
 
 ### C.gating.roster-role-is-a-per-person-decision
 **Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-space-member.php, templates/views/space-members.php
@@ -1807,7 +1807,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-builder-explains-itself.10` @admin #admin +390: the builder at 390px -> dropdown, preview and sentence stack and the Add button is 40px.
 - `c-gating-builder-explains-itself.11` @admin #admin +dark: builder in a dark scheme -> text readable.
 - `c-gating-builder-explains-itself.12` @admin #admin +rtl: builder in Arabic -> the example text is right to left.
-- `c-gating-builder-explains-itself.13` @admin #admin: pick Full with any rule type (Logged In, Role, Capability, Trust Level, or a membership plan) -> the preview says "They are recorded as Member."; after Add Rule the Space Role column shows Member; POST /spaces/{id}/access-rules with grants=full and space_role=admin stores space_role member.
+- `c-gating-builder-explains-itself.13` @admin #admin: pick Participate with any rule type (Logged In, Role, Capability, Trust Level, or a membership plan) -> the preview says "They are recorded as Member."; after Add Rule the Space Role column shows Member; POST /spaces/{id}/access-rules with grants=full and space_role=admin stores grants participate and space_role member.
 
 ### C.gating.surfaces-agree
 **Covers:** includes/class-visibility.php, includes/permissions/class-permission-engine.php, includes/search/class-fulltext-search.php, templates/views/home.php, templates/partials/sidebar.php, includes/api/class-search-controller.php, includes/api/class-base-controller.php, includes/api/class-posts-controller.php, includes/class-template-loader.php, includes/models/class-space.php
@@ -1818,7 +1818,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 ---
 
 **Checks:**
-- `c-gating-surfaces-agree.1` @member #ui !refuse: bob (not a member of Customer Advisory Board) opens its space page -> he sees the same page as for a missing space (404).
+- `c-gating-surfaces-agree.1` @member #ui !refuse: bob (not a member of Customer Advisory Board, private and invite-only) opens its space page -> the invite-only message with the space title and description, and no topics; the hidden Moderators' Room shows the same page as a missing space (404).
 - `c-gating-surfaces-agree.2` @member #ui !refuse: bob opens a topic URL in Customer Advisory Board -> the same 404 page as a missing topic, and the page title does not reveal that it exists.
 - `c-gating-surfaces-agree.3` @member #ui !refuse: bob searches a unique word from a topic there -> "No results for ...".
 - `c-gating-surfaces-agree.4` @member #ui !refuse: bob opens the tag pages for tags used there -> the topics are not listed and the tag count excludes them.
@@ -2140,7 +2140,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 **Checks:**
 - `e-custom-fields.1` @admin #admin: Add New Field: name "Operating system", type Select with options Windows, macOS, Linux, context Post, required, all spaces -> notice "Field created." and the field lists with its slug.
-- `e-custom-fields.2` @admin #rest: `POST /jetonomy/v1/fields` with only name and type (no slug) -> 201 with a generated slug, no fatal; missing name -> 400 `rest_missing_callback_param` "Missing parameter(s): name"; unknown `field_type` -> 400 `rest_invalid_param` "field_type is not one of ..." (the param is `field_type`).
+- `e-custom-fields.2` @admin #rest: `POST /jetonomy/v1/fields` with name, field_type and context (no slug) -> 201 with a generated slug, no fatal; missing context -> 400 "Missing parameter(s): context"; missing name -> 400 `rest_missing_callback_param` "Missing parameter(s): name"; unknown `field_type` -> 400 `rest_invalid_param` "field_type is not one of ..." (the param is `field_type`).
 - `e-custom-fields.3` @admin #admin: create one field per type (text, textarea, number, email, url, select, checkbox, radio, date) -> each renders the right control in the composer and on the topic.
 - `e-custom-fields.4` @member #ui: bob starts a Help Desk topic with Operating system = Linux -> the topic shows "Additional Fields" with Linux; reload keeps it.
 - `e-custom-fields.5` @member #ui !refuse: submit the composer with the required field empty -> blocked with "Operating system is required." (REST 400 `jetonomy_field_required`) and no topic created.

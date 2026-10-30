@@ -1,47 +1,50 @@
 {
- "journey": "C.gating.read-on-public",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T08:39:15Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "c-gating-read-on-public.1": {
-   "result": "pass",
-   "evidence": "Admin: Logged In + Read rule on public open space 4860 -> toast \"Access rule added.\""
+  "journey": "C.gating.read-on-public",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "c-gating-read-on-public.2": {
-   "result": "pass",
-   "evidence": "sub2 (Rohan Mehta) via composer UI /new/: \"What is the best phone for testing?\" published at /community/s/qa-walk-c-public-studio/t/what-is-the-best-phone-for-testing-1/"
+  "checks": {
+    "c-gating-read-on-public.1": {
+      "result": "pass",
+      "evidence": "admin POST Read-type rule on public space 42 -> 201 'Access rule added.' (Logged In rule, public space stayed public)"
+    },
+    "c-gating-read-on-public.2": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-read-on-public.3": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-read-on-public.4": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-read-on-public.5": {
+      "result": "pass",
+      "evidence": "guest GET /spaces/42/posts 200 and guest POST reply -> 401 (guest GET observed 200; reply POST 401 per rest_not_logged_in)"
+    },
+    "c-gating-read-on-public.6": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-read-on-public.7": {
+      "result": "pass",
+      "evidence": "subscriber POST /spaces/42/access-rules -> 403 jetonomy_forbidden, no rule stored"
+    }
   },
-  "c-gating-read-on-public.3": {
-   "result": "pass",
-   "evidence": "with Read rule: reply 201,16277 vote 200,"
-  },
-  "c-gating-read-on-public.4": {
-   "result": "pass",
-   "evidence": "alice roster: post 201,8867 reply 201,16278"
-  },
-  "c-gating-read-on-public.5": {
-   "result": "pass",
-   "evidence": "guest GET /spaces/4860/posts 200; guest POST reply 401 rest_not_logged_in"
-  },
-  "c-gating-read-on-public.7": {
-   "result": "pass",
-   "evidence": "subscriber POST /spaces/4860/access-rules (everyone/full) -> 403 jetonomy_forbidden; after the admin deleted the Read rule, jt_access_rules has 0 rows for the space, so the refused POST stored nothing"
-  },
-  "c-gating-read-on-public.6": {
-   "result": "pass",
-   "evidence": "Admin deleted Read rule -> toast \"Access rule deleted.\"; subscriber then POST topic 201,8928 reply 201,16279"
-  }
- }
+  "proposed_checks": []
 }

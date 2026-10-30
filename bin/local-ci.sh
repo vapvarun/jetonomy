@@ -281,7 +281,13 @@ if [ "$DO_COMBO" -eq 1 ]; then
     COMBO=$(echo "$COMBO_OUT" | grep -E "^Tests: " | tail -1)
     # PHPUnit elides "Failures:" from the summary line when failures = 0, so
     # the presence of "FAILURES!" in the output is the canonical fail marker.
-    if echo "$COMBO_OUT" | grep -q "^FAILURES!"; then
+    if [ -z "$COMBO" ]; then
+        # No "Tests:" line means the run never finished (killed, OOM, boot
+        # fatal). That is a failure, never a pass with nothing to show.
+        FAILED_GATES+=("phpunit-combo: no result line (run did not finish)")
+        fail "PHPUnit combo did not finish"
+        echo "$COMBO_OUT" | tail -5
+    elif echo "$COMBO_OUT" | grep -q "^FAILURES!"; then
         FAIL_LINE=$(echo "$COMBO" | grep -oE 'Failures: [0-9]+')
         FAILED_GATES+=("phpunit-combo: ${FAIL_LINE:-failures detected}")
         warn "PHPUnit combo failed — $COMBO"

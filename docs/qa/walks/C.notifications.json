@@ -1,16 +1,16 @@
 {
   "journey": "C.notifications",
-  "free": "dcdb0750",
-  "pro": "404b0af",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
@@ -19,120 +19,116 @@
   "checks": {
     "c-notifications.1": {
       "result": "pass",
-      "evidence": "alice (REST) replied to bob's topic 8983: bob unread-count 23 -> 24 (+1 exactly); /community/notifications/ lists 'Alice Chen replied to your topic \"...\"' as unread top row and the bell badge showed 24.",
-      "screenshot": "notif-bob-1440.png"
+      "evidence": "alice POST reply on bob's topic 'Webhook retries: how many attempts are made?' -> bob unread-count 9 -> 10 and /notifications lists 'Alice Chen replied to your topic \"Webhook retries...\"' (REST; bell UI not viewed)"
     },
     "c-notifications.2": {
       "result": "pass",
-      "evidence": "maya replied '@bob ...' in bob's topic: exactly one notification row (type mention, 'Maya Okafor mentioned you in ...') for that reply, no duplicate reply_to_post; /community/notifications/?filter=mentions shows 1 row.",
-      "screenshot": "notif-mentions.png"
+      "evidence": "maya @bob reply -> bob gets exactly one new notification type mention 'Maya Okafor mentioned you in \"Webhook retries...\"' (unread 10 -> 11)"
     },
     "c-notifications.3": {
-      "result": "pass",
-      "evidence": "Fixture topic with 34 replies (30 per page): clicking bob's notification navigated to ?rpg=2#reply-16349 and the reply (on page 2) was in view; row class went from 'jt-notif-item unread' to read. (The real 45-reply Dark mode topic was not used to avoid writing into seed content.)",
-      "screenshot": "notif-click-page2.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.4": {
-      "result": "pass",
-      "evidence": "Fresh fixture member qawalkb_n1 with 4 unread: clicking Mark all as read with 0 navigations -> bell badge gone, sidebar Notifications badge gone, Unread tab count gone, 0 unread rows; GET /notifications/unread-count -> 0. Host bar (wp admin bar) has no unread badge on this theme.",
-      "screenshot": "notif-after-markall.png"
+      "result": "untested",
+      "evidence": "REST POST /notifications/mark-all-read -> {success:true} and unread-count 0; the bell/host bar/tab badge drop without reload in the UI not walked"
     },
     "c-notifications.5": {
       "result": "pass",
-      "evidence": "PATCH /notifications/{id} {read:true}: unread-count 5 -> 4 (exactly 1); POST /notifications/bulk {ids:[a,b],action:mark_read} -> affected 2 and the other unread items stayed unread."
+      "evidence": "bob PATCH /notifications/{id} read=true on one item -> unread-count 11 -> 10 (exactly 1)"
     },
     "c-notifications.6": {
-      "result": "pass",
-      "evidence": "New member qawalkb_n1: All tab 'No notifications yet - When members reply to your topics or mention you, those updates land here.'; Unread filter 'You're all caught up! Nothing new since you last checked. Switch to All to see your history.'",
-      "screenshot": "notif-empty-all.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.7": {
-      "result": "pass",
-      "evidence": "Fixture member with 85 notifications: page shows 20 with 'Load More' (?pg=2); 'Select all on page' selected 20 (count badge 20); Delete removed exactly 20 (85 -> 65 in DB)"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.8": {
-      "result": "pass",
-      "evidence": "flag 657 dismissed by test_moderator; alice got 'Your report was reviewed. Thanks for helping keep the community healthy.' exactly once"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.9": {
-      "result": "fail",
-      "evidence": "Admin notice reads 'Grace Oluwaseun Adeyemi-Whitfield requested to join Insiders / Beta'; runbook expects 'asked to join one of your spaces' wording. Withdraw (DELETE /spaces/3008/join-requests/mine) removed the notice. Wording drift (stale runbook text likely)"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.10": {
-      "result": "pass",
-      "evidence": "Notices 'Your request to join Insiders / Beta was approved' and '...was not approved' delivered; grace removed from Insiders afterwards"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.11": {
-      "result": "pass",
-      "evidence": "Trust promotion 'Congratulations! You have been promoted to Regular (Level 2)' once; badge_earned 'Congratulations! You earned the First Post badge'"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.12": {
       "result": "pass",
-      "evidence": "'Your reply was removed by a moderator' delivered once"
+      "evidence": "test_moderator trash on alice's reply -> alice unread 1 -> 2 with 'Your reply was removed by a moderator' (one notification)"
     },
     "c-notifications.13": {
-      "result": "pass",
-      "evidence": "Fixture n1 + private space 4955: count 7->6 after removal, list empty, no new notice for later reply"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.14": {
-      "result": "pass",
-      "evidence": "@bob in CAB topic and reply created no notification for bob (count 57->57)"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.15": {
-      "result": "pass",
-      "evidence": "Author-deleted reply's notice hidden from list and count dropped"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.16": {
-      "result": "pass",
-      "evidence": "handle: '@alice replied...'; both: 'Alice Chen @alice...'; display_name: 'Alice Chen...'; setting restored to display_name"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.17": {
-      "result": "pass",
-      "evidence": "'Anonymous replied to your topic ...' no actor login or profile link"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.18": {
-      "result": "pass",
-      "evidence": "390px: Grace row wraps over 6 lines, no horizontal overflow"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.19": {
-      "result": "fail",
-      "evidence": "No polling by design (header.js 'never on a timer'); 2nd tab stale at 70s, updates only on focus/visibilitychange. Runbook expects 'next poll'. Runbook/plugin mismatch"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.20": {
-      "result": "pass",
-      "evidence": "200 generated followers subscribed to topic 9898; maya replied (reply 20662): after the fan-out finished 201 notifications exist, one each for author + 200 followers, max 1 per user, no duplicates (notifier.php FANOUT_BATCH walk)"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.21": {
       "result": "pass",
-      "evidence": "Guest GET /notifications -> 401; GET /notifications/unread-count -> 401."
+      "evidence": "guest GET /notifications and /notifications/unread-count -> 401"
     },
     "c-notifications.22": {
       "result": "pass",
-      "evidence": "alice PATCH /notifications/37154 (bob's unread) -> 404 jetonomy_not_found 'Notification not found.' (not 403); bob's item stays unread."
+      "evidence": "alice PATCH bob's notification id -> 404 jetonomy_not_found; bob's item stays as before"
     },
     "c-notifications.23": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: no admin-announcement notification exists. Pro site-announcements extension only pins posts (GET /announcements/active); no jt_notifications 'announcement' type created"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.24": {
-      "result": "pass",
-      "evidence": "dark: unread bg avg ~69 (<100), text rgb(229,229,229)"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.25": {
-      "result": "pass",
-      "evidence": "aborted mark-all-read left count at 3; toast 'Could not mark notifications as read. Check your connection and try again.'"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.26": {
-      "result": "pass",
-      "evidence": "Long title cut at word boundary with ellipsis"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.27": {
-      "result": "fail",
-      "evidence": "Same as .19: second tab not updated within one minute; refreshes only on focus/visibility. Runbook expects within one minute"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-notifications.28": {
       "result": "pass",
-      "evidence": "alice PATCH bob's existing notification id and a nonexistent id (99999999) -> identical 404 jetonomy_not_found; no 403."
+      "evidence": "alice PATCH someone else's id and PATCH id 999999 -> both 404 jetonomy_not_found"
     }
-  }
+  },
+  "proposed_checks": []
 }

@@ -116,9 +116,8 @@ Each rule has three parts:
 |-------|--------|
 | Read | Can view and report posts and replies, cannot post, reply or vote |
 | Participate | Can read, post, and reply |
-| Full | Everything Participate allows, plus the moderator actions the person's own WordPress capabilities already permit. Offered only on WordPress Role and Capability rules |
 
-> **Full does not hand out moderation by itself.** A rule can open a space to someone; it cannot give them a power their WordPress role does not carry. Only a WordPress Role or Capability rule can single out people whose role allows moderation, so Full is offered only there. On any other rule it would do exactly what Participate does; rules saved that way before 2.0.7 are shown as Participate. Grant moderation deliberately, by setting the person's role on the space's **Members** tab.
+> **A rule never hands out moderation.** A rule can open a space to someone; it cannot give them a power their WordPress role does not carry. Grant moderation deliberately, by setting the person's role on the space's **Members** tab. Jetonomy 2.0.7 removed the old Full level: it never gave more than Participate, and saved Full rules became Participate.
 
 > **When rules overlap, the most generous one wins.** If someone matches two rules, for example a Logged In rule set to Read and a membership rule set to Participate, they get Participate. Jetonomy refuses a second rule with the same type and value as an existing one, because only one of them could ever apply.
 

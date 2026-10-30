@@ -1,59 +1,62 @@
 {
- "journey": "C.gating.admission-without-a-roster-row",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T08:50:37Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "c-gating-admission-without-a-roster-row.1": {
-   "result": "pass",
-   "evidence": "PMPro Gold membership rule (Participate) added, Sync not pressed: Members tab has 307 rows and does not list Neha Rao (level holder)"
+  "journey": "C.gating.admission-without-a-roster-row",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "c-gating-admission-without-a-roster-row.2": {
-   "result": "pass",
-   "evidence": "level holder not on roster: space page 200 lists topics=true; POST topic 201, reply 201"
+  "checks": {
+    "c-gating-admission-without-a-roster-row.1": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-admission-without-a-roster-row.2": {
+      "result": "pass",
+      "evidence": "aisha admitted by the logged_in Participate rule posted and replied while GET members listed only admin and user 24"
+    },
+    "c-gating-admission-without-a-roster-row.3": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-admission-without-a-roster-row.4": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-admission-without-a-roster-row.5": {
+      "result": "pass",
+      "evidence": "guest GET /spaces/43/posts 403 (no admission without login)"
+    },
+    "c-gating-admission-without-a-roster-row.6": {
+      "result": "pass",
+      "evidence": "aisha not matching a role rule gets 403 jetonomy_forbidden on topic create and 404 jetonomy_not_found on topics she cannot see (Partner Program topic 233 GET -> 404)"
+    },
+    "c-gating-admission-without-a-roster-row.7": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-admission-without-a-roster-row.8": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-admission-without-a-roster-row.9": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-admission-without-a-roster-row.10": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    }
   },
-  "c-gating-admission-without-a-roster-row.4": {
-   "result": "pass",
-   "evidence": "Access Rules help: \"The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well.\""
-  },
-  "c-gating-admission-without-a-roster-row.3": {
-   "result": "pass",
-   "evidence": "Sync Members -> toast \"Synced 1 existing member.\"; Neha Rao now listed as member; roster rows 307 -> 308"
-  },
-  "c-gating-admission-without-a-roster-row.5": {
-   "result": "pass",
-   "evidence": "guest: space page text \"-WALK-C Private Lab is private and invite-only. Log in if you have an invitation. Walk fixture for access gati\", POST topic 401 rest_not_logged_in"
-  },
-  "c-gating-admission-without-a-roster-row.6": {
-   "result": "fail",
-   "evidence": "non-matching subscriber (no PMPro level): POST topic 403 jetonomy_forbidden, reply 404 jetonomy_not_found (note: alice/member_b is a roster member so a non-roster non-holder was used)"
-  },
-  "c-gating-admission-without-a-roster-row.7": {
-   "result": "pass",
-   "evidence": "PMPro rule pmpro_1 matched 2005 holders (2000 seeded qawalkc_bulk users + 5): admin Sync Members -> toast \"Synced 2000 existing members.\" in 2.5s (server pages users in bounded batches, ajax_sync_access_rule); roster rows 8 -> 2008, 0 duplicates, tier rows 2005. jt_spaces.member_count column read 2015 (drift of 7 caused by my direct-SQL fixture inserts/deletes, not by Sync)"
-  },
-  "c-gating-admission-without-a-roster-row.8": {
-   "result": "pass",
-   "evidence": "Two simultaneous jetonomy_sync_access_rule AJAX posts (roster cleared first): replies \"Synced 2000\" and \"Synced 0\"; roster 2008 rows, 0 duplicate user_ids"
-  },
-  "c-gating-admission-without-a-roster-row.9": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: needs a space created before 2.0 with a membership rule; every space on this site was created on 2.0.x so there is no pre-2.0 data to walk (the equivalent no-roster-row admission was proven in .2 on current data)"
-  },
-  "c-gating-admission-without-a-roster-row.10": {
-   "result": "pass",
-   "evidence": "omar holds PMPro level 1 (rule matches; hook even wrote a tier roster row) while space-banned from 4861 (restriction 702): space page says \"You have been banned from this space and cannot take part in it.\", REST posts GET 403 jetonomy_user_space_banned, POST topic 403 jetonomy_user_space_banned. Ban wins. (Fixture: test space instead of Off-Topic Lounge, which is public and where a rule would flip it to private.)"
-  }
- }
+  "proposed_checks": []
 }

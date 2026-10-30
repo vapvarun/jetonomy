@@ -410,7 +410,7 @@ $role_labels = array(
 				// One query each for the page: who is banned from this space
 				// (space admins see Lift instead of Ban), and whom the viewer
 				// has blocked (shown to the viewer only).
-				$jt_space_bans = $viewer_is_sadm ? \Jetonomy\Models\Restriction::space_bans_for_users( (int) $space->id, $jt_page_user_ids ) : array();
+				$jt_space_bans = $viewer_is_sadm ? \Jetonomy\Models\Restriction::active_rows_for_users( $jt_page_user_ids, (int) $space->id ) : array();
 				$jt_blocked    = $viewer_id ? array_flip( \Jetonomy\Models\BlockedUser::blocked_ids( $viewer_id ) ) : array();
 				?>
 				<div class="jt-card jt-card-flush">

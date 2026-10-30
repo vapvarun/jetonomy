@@ -1,16 +1,16 @@
 {
   "journey": "C.admin.plugin-pages",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
-  "walked_at": "2026-10-21T11:56:20Z",
-  "walker": "lane B2",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
@@ -19,98 +19,96 @@
   "checks": {
     "c-admin-plugin-pages.1": {
       "result": "pass",
-      "evidence": "As admin opened 18 Jetonomy admin pages (Dashboard, Categories, Tags, Spaces, Content, Moderation x5 tabs, Activity Log, Revisions, Users, Import, Settings x11 tabs, Extensions, Pro Analytics, Custom Fields, Polls, Badges, Conversations): all HTTP 200, no Fatal/Warning/Notice/Deprecated text, debug.log gained no lines from my loop."
+      "evidence": "admin fetched 18 Jetonomy/Pro admin pages (Dashboard, Categories, Tags, Spaces, Content, Moderation, Activity Log, Revisions, Users, Import, Settings, Extensions, Community Media, Analytics, Badges, Custom Fields, Polls, Conversations): all 200 with 0 PHP Warning/Notice/Fatal in the HTML and no jetonomy line in debug.log"
     },
     "c-admin-plugin-pages.2": {
-      "result": "pass",
-      "evidence": "Browser walk of 31 admin URLs (all 11 Settings tabs, all 5 Moderation tabs, Content and the rest): 0 responses >= 400 and 0 console errors; every panel loaded."
+      "result": "untested",
+      "evidence": "all 17 Settings tabs fetched 200 with no PHP notices, but clicking tabs and watching for AJAX errors/network failures was not done in the browser"
     },
     "c-admin-plugin-pages.3": {
       "result": "pass",
-      "evidence": "Pro pages Analytics, Custom Fields, Badges, Polls and Conversations (dormant notice) render with the same admin layout and no notices; White Label settings under Settings > Branding loads."
+      "evidence": "Pro pages Analytics, Custom Fields, Conversations, Badges, Polls render 200 with no notices (White Label lives in Settings > Branding, also 200)"
     },
     "c-admin-plugin-pages.4": {
-      "result": "pass",
-      "evidence": "Dashboard 'Review flags' link goes to admin.php?page=jetonomy-moderation&tab=flags and the screen opens on 'Flags (18)'."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.5": {
-      "result": "pass",
-      "evidence": "Settings sidebar: all 11 rows (General ... Branding) carry an icon; Permissions labels say topics/replies per Terminology."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.6": {
-      "result": "pass",
-      "evidence": "Settings > Email lists Reaction on your topic, Your report was reviewed, Space join request, Your join request was answered and Confirm your email (new accounts); saved a subject and body for reaction, flag_resolved, join_request, join_request_result and verification -> 'Settings saved.' and all five persisted after reload. Option restored to its original value afterwards.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/settings-email.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.7": {
-      "result": "pass",
-      "evidence": "Activity Log rows read 'Gained 15 reputation points ... Their reply was accepted', 'Gained 1 reputation point ... They posted a new reply' with topic titles; Settings > General has the 'Activity Log' retention card of its own."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.8": {
-      "result": "pass",
-      "evidence": "390px Settings > Permissions: matrix scroller (jt-matrix-scroll, 575 wide in 366) scrolled 200px and the first column stayed at x=11 (position sticky); trust-level name inputs 44px high, 1px border, 12px padding like other fields.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/perm-390.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.9": {
-      "result": "pass",
-      "evidence": "Revisions page 2: rows show the stored title with '(deleted)' and author 'Not recorded' for deleted topics and replies."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.10": {
-      "result": "pass",
-      "evidence": "With the Pro Anonymous Posting extension temporarily enabled (restored after) and fixture space opted in, maya posted an anonymous topic and reply: Content list author 'Anonymous' (no 'maya' text), Activity Log 'Anonymous', Revisions 'Anonymous'."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.11": {
-      "result": "pass",
-      "evidence": "PATCH /settings/white-label community_name='Harbor Community': admin headings read 'Harbor Community Dashboard' and 'Harbor Community Settings'; clearing it restores 'Jetonomy Dashboard'."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.12": {
-      "result": "pass",
-      "evidence": "Setup wizard (admin.php?page=jetonomy-setup) uses 'Feed' and the page has no 'Social'."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.13": {
       "result": "pass",
-      "evidence": "test_editor: wp-admin Jetonomy, Spaces, Users and Extensions each answer 'Sorry, you are not allowed to access this page.'; her wp-admin menu has no Jetonomy entry."
+      "evidence": "test_editor opens wp-admin Jetonomy, Spaces, Users and Extensions -> 'Sorry, you are not allowed to access this page.'"
     },
     "c-admin-plugin-pages.14": {
       "result": "pass",
-      "evidence": "bob: admin.php?page=jetonomy, -spaces, -users, -extensions each 'Sorry, you are not allowed to access this page.'; no Jetonomy menu."
+      "evidence": "bob opens admin.php?page=jetonomy and the Spaces, Users, Extensions pages -> 'Sorry, you are not allowed to access this page.'"
     },
     "c-admin-plugin-pages.15": {
-      "result": "pass",
-      "evidence": "Site now has 2,364 topics (scale seed by another lane): Content list pages at 20 with a total ('1-20 of 2,364'), loads in 238ms, sort by Date asc 161ms, page 50 shows '981-1,000 of 2,364'."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.16": {
-      "result": "fail",
-      "evidence": "Midnight admin colour scheme + prefers-color-scheme dark on the Dashboard: 14 raw white panels remain (jetonomy-stat-card, dashboard cards, widefat table) on a #f0f0f0 body. Contrast sampling found no sub-4.5 text this time. The plugin ships no dark admin treatment (assets/css/admin.css unchanged since the first walk); WordPress core's own content area is light in every admin scheme, so the runbook expectation may need rewording.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/dash-midnight-dark.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.17": {
-      "result": "pass",
-      "evidence": "Settings > Email, From Name edited then Save with the context offline: navigation failed net::ERR_INTERNET_DISCONNECTED and nothing was stored; back online Save stored the value and showed 'Settings saved.'; original value restored."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.18": {
-      "result": "pass",
-      "evidence": "Settings > Permissions capability labels: 'Create topics', 'Create replies', 'Edit own topics and replies', 'Delete own topics and replies', 'Edit others' topics and replies', 'Move topics between spaces', 'Close topics', 'Pin topics'; capability slugs (jetonomy_create_posts) shown only as secondary text."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.19": {
-      "result": "pass",
-      "evidence": "admin.php?page=jetonomy-pro-conversations with WPMediaVerse active: tab title 'Conversations ‹ forums — WordPress' and notice 'Private Messaging is dormant on this site. WPMediaVerse is active...'."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.20": {
-      "result": "fail",
-      "evidence": "After an admin reveal of an anonymous topic (POST /anonymous/reveal), the Activity Log 'Anonymous Author Revealed' row prints 'Real author: Maya Okafor' as a link to /community/u/maya/: the member's name and login slug are in the list, while the check says the row never prints the real author's ID or login. The numeric id is not printed. Conflicts with .23 which accepts naming the member; runbook needs one rule."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.21": {
-      "result": "pass",
-      "evidence": "Spaces list (68 spaces): search box input[name=s], sortable Title/Members/Topics columns, pages at 20 ('1-20 of 68')."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.22": {
-      "result": "pass",
-      "evidence": "Content columns Date/Replies and Spaces columns Title/Members/Topics are sortable links; the active column gets the sorted asc/desc class (Content default Date desc, orderby=reply_count&order=asc shows REPLIES:asc)."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-plugin-pages.23": {
-      "result": "pass",
-      "evidence": "Admin-only audit row: after the reveal the Activity Log (manage_options page; bob and test_editor are refused) shows 'Real author: Maya Okafor' as a profile link; the Pro/Free personal-data export for maya contains the topic but no reveal event."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     }
-  }
+  },
+  "proposed_checks": []
 }

@@ -44,9 +44,8 @@ An Access Rule has **one** setting that decides what a matching member can do:
 |---|---|
 | Read | View and report topics and replies, but not post or reply |
 | Participate | Read, post topics, and reply (the usual choice for a course or paid space) |
-| Full | Offered only on WordPress Role and Capability rules, not on a membership rule |
 
-> **Why a membership rule has no Full.** Full adds moderator actions only for people whose WordPress role already allows them, which a membership level cannot single out, so for a plan it would do exactly what Participate does. A rule can open a space to someone; it cannot give them a power their role does not carry. Appoint moderators on the space's **Members** tab.
+> **A rule never makes someone a moderator.** A rule can open a space to someone; it cannot give them a power their role does not carry. Appoint moderators on the space's **Members** tab. (Before 2.0.7 there was a third level, Full. It never gave more than Participate, so it was removed and saved Full rules became Participate.)
 
 The space role a matching member is recorded as is **derived from the access level**, not chosen separately, and it is the same for every rule type (membership, role, capability, trust level):
 

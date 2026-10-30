@@ -156,9 +156,8 @@ class AccessRulePromisesTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * PROMISE: "Full - ... but only for people whose WordPress role already
-	 * allows moderation. For an ordinary member this behaves exactly like
-	 * Participate."
+	 * PROMISE: a legacy "full" grant (removed in 2.0.7; old API clients may
+	 * still send it) behaves exactly like Participate for an ordinary member.
 	 */
 	public function test_full_behaves_exactly_like_participate_for_an_ordinary_member(): void {
 		$user = $this->subscriber();

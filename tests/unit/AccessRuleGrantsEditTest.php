@@ -63,12 +63,11 @@ class AccessRuleGrantsEditTest extends WP_UnitTestCase {
 	}
 
 	public function test_patch_changes_grant_and_role_together(): void {
-		// A role rule: the only kind besides capability where Full is kept (2.0.7).
 		$id  = AccessRule::create( array( 'space_id' => $this->space_id, 'rule_type' => 'role', 'rule_value' => 'editor', 'grants' => 'read' ) );
-		$res = $this->rest( 'PATCH', "/access-rules/{$id}", array( 'grants' => 'full' ), $this->admin() );
+		$res = $this->rest( 'PATCH', "/access-rules/{$id}", array( 'grants' => 'participate' ), $this->admin() );
 		$this->assertSame( 200, $res->get_status() );
 		$rule = AccessRule::find( $id );
-		$this->assertSame( 'full', $rule->grants );
+		$this->assertSame( 'participate', $rule->grants );
 		$this->assertSame( 'member', $rule->space_role );
 	}
 

@@ -1,76 +1,74 @@
 {
- "journey": "C.gating.builder-explains-itself",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T08:55:12Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440,
-   390
-  ],
-  "schemes": [
-   "light",
-   "dark"
-  ]
- },
- "checks": {
-  "c-gating-builder-explains-itself.1": {
-   "result": "pass",
-   "evidence": "Intro: \"A rule lets more people in to this space: ... Who else gets in is set by the space's visibility and join policy.\"; empty state \"No access rules - Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.\""
+  "journey": "C.gating.builder-explains-itself",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "c-gating-builder-explains-itself.2": {
-   "result": "pass",
-   "evidence": "Stepped Everyone, Logged In, WP Role, Capability, Trust Level, PMPro: each preview carries a second sentence (\"Matches every visitor...\", \"Matches anyone with an account...\", \"Matches anyone holding this WordPress role...\", \"...whose WordPress role carries this capability...\", \"...at or above this trust level, 1 to 5...\", \"Matches members who hold the PMPro level you pick below.\"); value-box examples: role \"subscriber\", capability \"edit_posts\", trust level \"2\"; PMPro uses a picker with placehold"
+  "checks": {
+    "c-gating-builder-explains-itself.1": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-builder-explains-itself.2": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-builder-explains-itself.3": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-builder-explains-itself.4": {
+      "result": "pass",
+      "evidence": "REST trust_level rule with no level, level 0 and level 9 -> 400 'Choose a trust level from 1 to 5.' each"
+    },
+    "c-gating-builder-explains-itself.5": {
+      "result": "pass",
+      "evidence": "role ghost_role -> 400 'Choose a role that exists on this site.'"
+    },
+    "c-gating-builder-explains-itself.6": {
+      "result": "pass",
+      "evidence": "empty capability and empty membership value -> 400 'Enter a value for this rule.'"
+    },
+    "c-gating-builder-explains-itself.7": {
+      "result": "pass",
+      "evidence": "same bad values via POST access-rules return the messages above (400) and GET access-rules lists only the 3 valid rules"
+    },
+    "c-gating-builder-explains-itself.8": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-builder-explains-itself.9": {
+      "result": "pass",
+      "evidence": "aisha POST /spaces/43/access-rules -> 403"
+    },
+    "c-gating-builder-explains-itself.10": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-builder-explains-itself.11": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-builder-explains-itself.12": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-builder-explains-itself.13": {
+      "result": "pass",
+      "evidence": "re-walked: POST grants=full space_role=admin -> stored grants participate and space_role member (preview text not viewed in UI)"
+    }
   },
-  "c-gating-builder-explains-itself.3": {
-   "result": "pass",
-   "evidence": "Everyone and Logged In: #rule-value hidden (offsetParent null) and membership box hidden"
-  },
-  "c-gating-builder-explains-itself.4": {
-   "result": "pass",
-   "evidence": "Trust Level empty / 0 / 9 -> toast \"Choose a trust level from 1 to 5.\" each; no rule created (0 rules listed)"
-  },
-  "c-gating-builder-explains-itself.5": {
-   "result": "pass",
-   "evidence": "Role \"ghost_role\" -> toast \"Choose a role that exists on this site.\""
-  },
-  "c-gating-builder-explains-itself.6": {
-   "result": "pass",
-   "evidence": "Empty Capability -> \"Enter a value for this rule.\"; empty PMPro membership value -> \"Enter a value for this rule.\"; rules table still 0 rows"
-  },
-  "c-gating-builder-explains-itself.7": {
-   "result": "pass",
-   "evidence": "REST bad values: trust_level/ => 400 Choose a trust level from 1 to 5. ; trust_level/0 => 400 Choose a trust level from 1 to 5. ; trust_level/9 => 400 Choose a trust level from 1 to 5. ; role/ghost_role => 400 Choose a role that exists on this site. ; capability/ => 400 Enter a value for this rule. ; membership/ => 400 Enter a value for this rule. ; GET lists 0 rules"
-  },
-  "c-gating-builder-explains-itself.9": {
-   "result": "pass",
-   "evidence": "subscriber POST access-rules -> 403 jetonomy_forbidden"
-  },
-  "c-gating-builder-explains-itself.8": {
-   "result": "pass",
-   "evidence": "test_editor on Help Desk Access Rules tab: sentence shown, links [\"Back to Help Desk\"], builder forms=0"
-  },
-  "c-gating-builder-explains-itself.13": {
-   "result": "pass",
-   "evidence": "Full preview \"They are recorded as Member.\" for logged_in/role/capability/trust_level (see no-rule-hands-out-moderation.9); admin table row \"Full Member\"; POST grants=full space_role=admin -> 201 stored space_role=member"
-  },
-  "c-gating-builder-explains-itself.10": {
-   "result": "pass",
-   "evidence": "390px role rule: controls [[\"rule-type\",36,1399,101,42],[\"rule-value\",36,1449,318,40],[\"rule-grants\",36,1497,118,42],[\"jetonomy-add-rule\",35,1547,94,40],[\"P\",35,1601,318,121]] ; Add button height 40 ; scrollWidth 390/390",
-   "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-C/builder-390.png"
-  },
-  "c-gating-builder-explains-itself.11": {
-   "result": "pass",
-   "evidence": "prefers-color-scheme dark + bx-color-mode=dark in wp-admin: contrast {\"preview\":{\"fg\":\"rgb(100, 116, 139)\",\"bg\":\"rgb(255, 255, 255)\",\"ratio\":4.76},\"value\":{\"fg\":\"rgb(30, 30, 30)\",\"bg\":\"rgb(255, 255, 255)\",\"ratio\":16.67},\"type\":{\"fg\":\"rgb(30, 30, 30)\",\"bg\":\"rgb(255, 255, 255)\",\"ratio\":16.67},\"intro\":{\"fg\":\"rgb(60, 67, 74)\",\"bg\":\"rgb(255, 255, 255)\",\"ratio\":10.03}} (wp-admin itself has no dark scheme, so the builder keeps its light styling)",
-   "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-C/builder-dark.png"
-  },
-  "c-gating-builder-explains-itself.12": {
-   "result": "pass",
-   "evidence": "test_admin locale=ar (restored after): html dir=rtl lang=ar, value input direction rtl text-align start, preview direction rtl/start, rule-type select inline offsets left 1141 / right 208, Add button left 566 / right 781, placeholder \"subscriber\" (Jetonomy has no ar strings; layout flips)",
-   "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-C/builder-rtl.png"
-  }
- }
+  "proposed_checks": []
 }

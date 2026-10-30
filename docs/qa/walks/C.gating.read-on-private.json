@@ -1,63 +1,62 @@
 {
- "journey": "C.gating.read-on-private",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T08:40:20Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440,
-   390
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "c-gating-read-on-private.1": {
-   "result": "pass",
-   "evidence": "sub2 before any rule: space page HTTP 200 text \"Community Search Leaderboard My Profile 2 A A+ A++ QA-WALK-C Private Lab is invite-only. You need an invitation to join. Walk fixture for access gating. Safe to\"; topic URL HTTP 404; REST posts 403 jetonomy_forbidden",
-   "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-C/private-before-rule.png"
+  "journey": "C.gating.read-on-private",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
+  "env": {
+    "themes": [
+      "reign"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ]
   },
-  "c-gating-read-on-private.2": {
-   "result": "pass",
-   "evidence": "Logged In + Read rule on private space 4861 -> toast \"Access rule added.\""
+  "checks": {
+    "c-gating-read-on-private.1": {
+      "result": "pass",
+      "evidence": "subscriber GET /spaces/43/posts and /spaces/43 -> 403 before any rule"
+    },
+    "c-gating-read-on-private.2": {
+      "result": "pass",
+      "evidence": "admin POST Read rule (logged_in) on Gating Lab Private -> 201 'Access rule added.'"
+    },
+    "c-gating-read-on-private.3": {
+      "result": "pass",
+      "evidence": "subscriber GET /spaces/43/posts 200 and /posts/259 200 with the Read rule"
+    },
+    "c-gating-read-on-private.4": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-read-on-private.5": {
+      "result": "pass",
+      "evidence": "with Read rule subscriber POST topic -> 403 jetonomy_forbidden 'You cannot post in this space.'; reply -> 403 same message; vote -> 403 jetonomy_forbidden"
+    },
+    "c-gating-read-on-private.6": {
+      "result": "pass",
+      "evidence": "Read-rule subscriber POST /flags on topic 259 -> 201; vote -> 403 jetonomy_forbidden"
+    },
+    "c-gating-read-on-private.7": {
+      "result": "pass",
+      "evidence": "guest GET /spaces/43/posts 403 and /posts/259 404 while the rule applied only to logged-in users"
+    },
+    "c-gating-read-on-private.8": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-read-on-private.9": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-gating-read-on-private.10": {
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    }
   },
-  "c-gating-read-on-private.3": {
-   "result": "pass",
-   "evidence": "sub2 with Read rule: space page 200 lists tripod topic=true; topic page HTTP 200 text \"Community Search Leaderboard My Profile 2 A A+ A++ Home / Community / QA-WALK-C Private Lab / QA-WALK-C priv: which trip\""
-  },
-  "c-gating-read-on-private.4": {
-   "result": "pass",
-   "evidence": "sub2 with Read rule: no composer/new-post link on space page or topic page (no reply composer); clicking the vote control keeps score 0 and shows toast \"Voting is not available to you here.\" (button class jt-act-denied, aria-disabled)"
-  },
-  "c-gating-read-on-private.5": {
-   "result": "pass",
-   "evidence": "Read-rule member: POST topic 403 jetonomy_forbidden \"You cannot post in this space.\"; reply 403 jetonomy_forbidden \"You cannot post in this space.\"; vote 403 jetonomy_forbidden"
-  },
-  "c-gating-read-on-private.6": {
-   "result": "pass",
-   "evidence": "vote 403 jetonomy_forbidden; POST /flags on topic 8739 -> 201 {\"created\":true,\"id\":639}"
-  },
-  "c-gating-read-on-private.7": {
-   "result": "pass",
-   "evidence": "guest: space page HTTP 200 text \"Community Search Leaderboard A A+ A++ QA-WALK-C Private Lab is private and invite-only. Log in if you have an \" (no topics); REST posts 403 jetonomy_forbidden; topic URL 404"
-  },
-  "c-gating-read-on-private.9": {
-   "result": "pass",
-   "evidence": "1440 topic with 159-char title incl. unbroken URL: h1 width 650 height 128 (wrapped over lines), scrollWidth 1440/1440, links beyond viewport 0",
-   "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-C/private-long-1440.png"
-  },
-  "c-gating-read-on-private.10": {
-   "result": "pass",
-   "evidence": "390px space page: scrollWidth 390/390 ; long-title topic: scrollWidth 390/390, h1 height 159",
-   "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-C/private-space-390.png"
-  },
-  "c-gating-read-on-private.8": {
-   "result": "pass",
-   "evidence": "rule removed (\"Access rule deleted.\"); sub2 next load: page text \"Community Search Leaderboard My Profile 2 A A+ A++ QA-WALK-C Private Lab is invite-only. Y\", REST posts 403 jetonomy_forbidden"
-  }
- }
+  "proposed_checks": []
 }

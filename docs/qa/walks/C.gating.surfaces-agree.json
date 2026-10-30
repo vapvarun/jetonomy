@@ -1,15 +1,16 @@
 {
   "journey": "C.gating.surfaces-agree",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T13:10:00Z",
-  "walker": "lane B3",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
@@ -18,77 +19,74 @@
   "checks": {
     "c-gating-surfaces-agree.1": {
       "result": "fail",
-      "evidence": "bob (not on the Customer Advisory Board roster; private + invite) GET /community/s/customer-advisory-board/ -> 200, title 'Customer Advisory Board \u2013 forums', body 'Customer Advisory Board is invite-only. You need an invitation to join.' (locked card with name), whereas a missing space gives 404 'Page not available'. A hidden space (Moderators' Room) does give bob 404 on the space page and its topic. Private-but-listed spaces showing a locked request card is the 2.0.2 owner decision, so the runbook wording looks stale rather than the code wrong."
+      "evidence": "bob (not a member of Customer Advisory Board, private+invite) GET /community/s/customer-advisory-board/ -> 200 with title 'Customer Advisory Board' and body 'Customer Advisory Board is invite-only. You need an invitation to join.' plus the space description; a missing space returns 404 'Page not available'. Runbook expects the same 404 page; check .7 expects 403 for private-listed space so the two checks conflict"
     },
     "c-gating-surfaces-agree.2": {
       "result": "pass",
-      "evidence": "bob GET .../customer-advisory-board/t/q1-roadmap-draft-for-review/ -> 404, title 'Page not available \u2013 forums', 'Topic not found.' identical to a missing topic slug."
+      "evidence": "bob GET /community/s/customer-advisory-board/t/q1-roadmap-draft-for-review/ -> 404 title 'Page not available', identical to a missing topic URL"
     },
     "c-gating-surfaces-agree.3": {
       "result": "pass",
-      "evidence": "bob searched 'Q1 roadmap draft for review' on /community/search/: '0 results', 'No results for ...'; REST /search?q=roadmap draft for review -> 200 data [] total 0."
+      "evidence": "bob searches 'Q1 roadmap draft for review' -> 'No results for \"Q1 roadmap draft for review\"'"
     },
     "c-gating-surfaces-agree.4": {
-      "result": "pass",
-      "evidence": "Tagged my public topic 8738 and my private-space topic 8739 (private invite space, tag qa-walk-c-gate; seeded CAB/PP topics carry no tags). Non-member sub2: /community/tag/qa-walk-c-gate/ lists only the public topic (\"1 topic\"), REST tag post_count 1; roster member alice sees both (\"2 topics\", count 2)",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-surfaces-agree.5": {
-      "result": "fail",
-      "evidence": "bob loads /community/: no CAB or Moderators' Room topic text, and no Moderators' Room card, but the spaces grid has one 'Customer Advisory Board' card linking to its locked page. Same private-but-listed decision as .1; runbook says no space name appears."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-surfaces-agree.6": {
       "result": "pass",
-      "evidence": "Guest: /community-sitemap.xml 200 with 2 sub-sitemaps, neither lists partner-program, customer-advisory, moderators-room, q1-roadmap or referral-fees; GET /updates?scope=global&since=... -> 401 jetonomy_unauthorized."
+      "evidence": "guest /community-sitemap.xml 200 contains no customer-advisory/partner-program URL; GET /updates?scope=global&since=0 -> 401 jetonomy_unauthorized"
     },
     "c-gating-surfaces-agree.7": {
       "result": "pass",
-      "evidence": "maya (not in Partner Program): GET /posts/5864 and /posts/5864/replies 404 jetonomy_not_found; /spaces/37, /spaces/37/posts, /search?space_id=37 403 jetonomy_forbidden. priya (not in the hidden Moderators' Room): /spaces/39, /spaces/39/posts, /search?space_id=39 -> 404 jetonomy_not_found 'Space not found.', same status and body as id 99999."
+      "evidence": "aisha (non-member): Partner Program GET /posts/233 and /posts/233/replies -> 404; /spaces/37, /spaces/37/posts, /search?space_id=37 -> 403 jetonomy_forbidden; hidden space 39 and 99999 -> 404 jetonomy_not_found same body"
     },
     "c-gating-surfaces-agree.8": {
       "result": "pass",
-      "evidence": "Guest GET /updates?scope=post&id=5864&since=... (private Partner Program topic) -> 404 jetonomy_not_found; public topic 5875 -> 200 {data:[...]}. Runbook now says 404, matches."
+      "evidence": "guest GET /updates?scope=post&id=234&since=0 (private post) -> 404 jetonomy_not_found 'Topic not found.'"
     },
     "c-gating-surfaces-agree.9": {
-      "result": "pass",
-      "evidence": "Guest with Show private spaces to logged-out visitors off: /community/s/partner-program/ and /customer-advisory-board/ both show only 'This space is private. Log in to see it.' + Log In; <title> 'Community \u2013 forums'; no name, description or topics."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-surfaces-agree.10": {
-      "result": "pass",
-      "evidence": "Setting guest_private_teasers switched on (restored to false afterwards): guest sees 'Partner Program is private. Log in to request access.' + description, title 'Partner Program \u2013 forums'; CAB 'is private and invite-only. Log in if you have an invitation.'; no topic text."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-surfaces-agree.11": {
-      "result": "pass",
-      "evidence": "alice (Partner Program member): topic 'Referral fees for 2026' on the space page, in search, in REST /spaces/37/posts; /community/ is a spaces grid without it (as the runbook now says)."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-surfaces-agree.12": {
-      "result": "pass",
-      "evidence": "test_moderator sees Moderators' Room topic 5866 on space page, search and REST /spaces/39/posts; bob gets 404 on the space page and REST, and no hit in search."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-surfaces-agree.13": {
-      "result": "pass",
-      "evidence": "alice removed from Partner Program roster: space page no longer shows \"Referral fees for 2026\", search page only echoes query text (1 hit = query), REST search no hit; re-added afterwards",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-surfaces-agree.14": {
-      "result": "pass",
-      "evidence": "Space 4860 flipped public->private (DB, simulating old data): non-member sub10 sees no topic on space page (locked), search page only echoes query, REST no hit, home no mention; roster member sub2 still sees all. Restored to public.",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-surfaces-agree.15": {
-      "result": "not_performed",
-      "evidence": "Not performed: 2000 topics across private spaces are not seeded, and seeding them is destructive-scale on the shared site."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-surfaces-agree.16": {
       "result": "pass",
-      "evidence": "Guest (teasers off) on partner-program and customer-advisory-board: <title> 'Community \u2013 forums', never the space name."
+      "evidence": "guest on /community/s/partner-program/ -> document title 'Community \u2013 Northwind Community' (no space name)"
+    },
+    "c-gating-surfaces-agree.17": {
+      "result": "pass",
+      "evidence": "guest /community/s/partner-program/ markup contains 'This space is private' and does not contain 'Partner Program' anywhere"
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
   "proposed_checks": [
-    {
-      "id": "c-gating-surfaces-agree.17",
-      "text": "@guest #ui !refuse: open a private space URL logged out with the locked preview off -> the page shows only \"This space is private\", with no space name or description anywhere in the markup."
-    }
+    "- `c-gating-surfaces-agree.18` @member #ui: reconcile .1 with .7: a private-but-listed invite-only space shows its name, description and 'invite-only' notice (200 locked card) to a logged-in non-member, REST answers 403; state which is the contract."
   ]
 }

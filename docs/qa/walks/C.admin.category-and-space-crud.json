@@ -1,16 +1,16 @@
 {
   "journey": "C.admin.category-and-space-crud",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
-  "walked_at": "2026-10-21T11:43:02Z",
-  "walker": "lane B2",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
@@ -18,120 +18,117 @@
   },
   "checks": {
     "c-admin-category-and-space-crud.1": {
-      "result": "pass",
-      "evidence": "Admin UI create category 'QA-WALK-B2 Product Questions': after reload the toast 'Category created.' shows; the category (with a space) is listed on the guest community home.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/crud-cat-toast.png"
+      "result": "untested",
+      "evidence": "REST POST /categories 'Product Questions' -> 201 slug product-questions; the 'Category created.' toast and home listing not viewed in wp-admin UI"
     },
     "c-admin-category-and-space-crud.2": {
-      "result": "pass",
-      "evidence": "Renamed category 2979 (toast 'Category updated.') and reordered via the same jetonomy_reorder_categories request the drag handle sends (drag gesture not used): DB sort_order 2981=0, 2979=1, 2980=2 and admin GET /categories returns [2981,2979,2980] after reload."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.3": {
       "result": "pass",
-      "evidence": "Admin ajax and REST delete of a category with a space -> 'Cannot delete this category while it contains spaces' / 409 jetonomy_category_has_spaces; category with a sub-category -> 'Cannot delete ... sub-categories'; rows intact."
+      "evidence": "DELETE /categories/{id} of a category holding the Gardening Tips space -> 409 jetonomy_category_has_spaces 'Cannot delete this category while it contains spaces. Move or delete the spaces first.'"
     },
     "c-admin-category-and-space-crud.4": {
-      "result": "pass",
-      "evidence": "Admin UI created 'QA-WALK-B2 Gardening UI' (forum, icon, in category 2980): toast 'Space created.', redirected to its edit page, front end /community/s/qa-walk-b2-gardening-ui/ answers 200 and is listed in admin's My Spaces. Runbook title prefixed per walk rules."
+      "result": "untested",
+      "evidence": "REST create Forum space 'Gardening Tips' -> 201 slug gardening-tips url /community/s/gardening-tips/; toast 'Space created.' and My Spaces listing not viewed"
     },
     "c-admin-category-and-space-crud.5": {
-      "result": "pass",
-      "evidence": "New-space form: choose Hidden -> join policy select becomes 'invite' and note 'Hidden spaces must use Invite Only. Join policy switched.' shows."
+      "result": "untested",
+      "evidence": "REST create hidden+open -> 400 'Hidden spaces must use the invite-only join policy.'; the admin form's auto-switch note 'Hidden spaces must use Invite Only. Join policy switched.' not viewed (UI)"
     },
     "c-admin-category-and-space-crud.6": {
-      "result": "pass",
-      "evidence": "Public+Open then choose Private -> join policy becomes 'approval' with note 'Private spaces need approval or an invite. Join policy switched to Approval Required.'",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/crud-space-private-note.png"
+      "result": "untested",
+      "evidence": "REST create private+open -> 201 join_policy coerced to approval (no note in REST body); admin form note not viewed"
     },
     "c-admin-category-and-space-crud.7": {
       "result": "pass",
-      "evidence": "Seeded settings {qa_marker,who_can_reply,allow_voting} on space 5761, saved posts_per_page=15 from the admin Settings tab, GET /spaces/5761 shows posts_per_page 15 and qa_marker and who_can_reply retained (merge)."
+      "evidence": "PATCH /spaces/44 settings {allow_polls:true} then {x_other:keep} -> GET shows both keys {allow_polls:true,x_other:keep} (merge)"
     },
     "c-admin-category-and-space-crud.8": {
-      "result": "pass",
-      "evidence": "Space 5761 has one admin (user 1): admin change_member_role to member and remove_space_member both answer 'This space must keep at least one admin. Promote someone else first.'; roster still shows 1 admin."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.9": {
-      "result": "pass",
-      "evidence": "Fixture space with 1,701 topics: admin Spaces list > Delete permanently (type-name confirm) shows toast 'This space is locked and its content is being deleted in the background.'; polling POST /spaces/<id>/posts as bob during the drain returned 403 jetonomy_space_restricted ('archived or locked') for 29 of 30 tries (the first raced in before the lock); the space and all topics were gone within seconds.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/crud-delete-big.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.10": {
-      "result": "pass",
-      "evidence": "Fixture space with a topic, a temporary header-triggered mu-plugin made every jt_ DELETE fail for that one request: admin ajax delete returned success:false 'The space could not be deleted, so it was kept with its content. Deletion will be retried shortly.'; space still active with its topic (mu-plugin removed afterwards)."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.11": {
-      "result": "pass",
-      "evidence": "Fixture space 5767 (owner admin 1, alice admin, lena member): ajax jetonomy_delete_space mode=transfer (the Archive action) -> 'Space archived and transferred. Its content was kept.'; DB status=archived, author_id=3754 (alice), former owner user 1 now moderator. Real 2025 Hackathon not used (0 topics)."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.12": {
       "result": "pass",
-      "evidence": "Archived fixture 5767 with a topic as member lena: topic readable at 1440 and 390 (scrollWidth equals clientWidth), 0 visible composer/textarea elements; POST /posts/14533/replies and POST /spaces/5767/posts -> 403 jetonomy_space_restricted.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/archived-topic-390.png"
+      "evidence": "bob POST topic into archived 2025 Hackathon -> 403 jetonomy_space_restricted (composer absence not viewed)"
     },
     "c-admin-category-and-space-crud.13": {
-      "result": "pass",
-      "evidence": "Space 5760 saved with a 288-char description: DB CHAR_LENGTH=288; Spaces list row text is 166 chars at 1440 and 126 at 390 (truncated) with no horizontal page scroll.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/spaces-list-390.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.14": {
       "result": "pass",
-      "evidence": "Two more categories saved with the same name 'QA-WALK-B2 Product Questions': slugs qa-walk-b2-product-questions-1 and -2, no error, original untouched."
+      "evidence": "second category 'Product Questions' saved with slug product-questions-1 (201)"
     },
     "c-admin-category-and-space-crud.15": {
-      "result": "pass",
-      "evidence": "Empty Amsterdam/Nairobi/Lisbon/Seoul/Mexico City Chapters (ids 30-34): 0 topics in DB for all five, front end says 'No topics yet.' for all five. Edit and delete proved on my own empty fixture (edit toast 'Space updated.', purge -> 'Space and all its content were deleted.', gone from DB and wp jetonomy space list). Amsterdam's description was edited by mistake during the walk and restored to its seeded text."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.16": {
-      "result": "pass",
-      "evidence": "test_editor (nonce derived from her session) posting jetonomy_delete_space to a fixture space I own, mode=purge and mode=transfer -> 'Permission denied.' both times; fixture intact. The seeded Moderators' Room was deliberately not touched; same handler."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.17": {
       "result": "pass",
-      "evidence": "bob POST /spaces and POST /categories -> 403 jetonomy_forbidden for both."
+      "evidence": "bob POST /spaces and /categories -> 403 jetonomy_forbidden both"
     },
     "c-admin-category-and-space-crud.18": {
       "result": "pass",
-      "evidence": "Space 'QA-WALK-B2 Q&A: Roadmap & Plans': DB title stored with literal &; admin list, page <title> (Q&#038;A), h1 and breadcrumb show it; 0 occurrences of &amp;amp; in the space page."
+      "evidence": "space 'Q&A: Roadmap & Plans' stored with title 'Q&A: Roadmap & Plans' (no &amp;) slug qa-roadmap-plans via REST; Spaces list/breadcrumb not viewed"
     },
     "c-admin-category-and-space-crud.19": {
-      "result": "pass",
-      "evidence": "Settings tab (tab A) and General tab (tab G) saved from two open tabs: both persisted (posts_per_page 15 and description 'QA-WALK-B2 desc from general tab'); each form has its own edit token."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.20": {
       "result": "pass",
-      "evidence": "Purged fixture spaces 5756/5762/5765 (topics, members): 0 topics/members left; wp jetonomy space list no longer lists them; scan-orphans clean."
+      "evidence": "after DELETE of 5 fixture spaces: orphan rows in jt_space_members, jt_join_requests, jt_posts = 0"
     },
     "c-admin-category-and-space-crud.21": {
-      "result": "pass",
-      "evidence": "Category save and space create both show their toast after the reload/redirect ('Category created.', 'Space created.')."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.22": {
-      "result": "pass",
-      "evidence": "Two Settings tabs: tab A saved ('Space updated.'); stale tab B save refused with toast 'This space was changed by someone else. Reload to see their changes.'; DB kept A's value (15, not B's 33)."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.23": {
       "result": "pass",
-      "evidence": "bob POST /categories and /spaces both return 403 jetonomy_forbidden with the identical message."
+      "evidence": "bob POST /categories and /spaces return the same code jetonomy_forbidden"
     },
     "c-admin-category-and-space-crud.24": {
       "result": "pass",
-      "evidence": "After deleting fixtures 5756/5762/5765/5770/5771: wp jetonomy space scan-orphans reports no rows for space_members, subscriptions, read_status or activity_log for them (a final scan said 'No orphaned space data')."
+      "evidence": "after deleting spaces, jt_space_members and jt_join_requests hold 0 rows for missing spaces (jt_subscriptions/jt_read_status/jt_invites have no space_id column to check)"
     },
     "c-admin-category-and-space-crud.25": {
-      "result": "pass",
-      "evidence": "Admin Spaces list has the search box input[name=s] (used with s=QA-WALK-B2+Big/Gardening and returned the matching row) plus filters."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-admin-category-and-space-crud.26": {
       "result": "pass",
-      "evidence": "scan-orphans found 13 orphan rows (2 space_members for spaces 3075/3076, 11 activity_log) from 7 deleted spaces; wp jetonomy space purge-orphans removed 13 rows ('database reports 0 remaining'); follow-up scan 'No orphaned space data'; count query for member rows without a space = 0."
+      "evidence": "SELECT COUNT of jt_space_members rows for spaces that no longer exist = 0"
     },
     "c-admin-category-and-space-crud.27": {
-      "result": "pass",
-      "evidence": "Archived fixture 5767 with topic 14533 as member lena: readable at 1440 and 390, no reply composer; reply POST -> 403 jetonomy_space_restricted."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+    },
+    "c-admin-category-and-space-crud.28": {
+      "result": "untested",
+      "evidence": "sub-space parent param not found in REST (parent_id ignored on create, PATCH parent_id -> 'No fields provided for update'); delete parent left child at top level (parent null) but loop refusal untestable. needs: admin UI walk"
     }
   },
-  "proposed_checks": [
-    "- `c-admin-category-and-space-crud.28` @admin #admin: delete a space that has a sub-space -> the sub-space moves up to the deleted space's own parent (top level when it had none) and is not left pointing at a missing parent (2.0.4 reparent; verified 5771.parent_id 5770 -> 0)."
-  ]
+  "proposed_checks": []
 }

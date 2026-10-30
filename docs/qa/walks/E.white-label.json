@@ -1,9 +1,10 @@
 {
   "journey": "E.white-label",
-  "free": "9b977fcb",
-  "pro": "a830e82",
-  "walked_at": "2026-10-21T12:51:08Z",
-  "walker": "lane C3",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
@@ -17,69 +18,56 @@
   },
   "checks": {
     "e-white-label.1": {
-      "result": "pass",
-      "evidence": "save with the four values -> notices [\"Branding settings saved.\\n\\nDismiss this notice.\"] ; fields keep [\"Hearthside Community\",\"Hearthside\",\"dashicons-groups\",\"Built with care by the Hearthside team\"]",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.2": {
-      "result": "pass",
-      "evidence": "after save: sidebar menu label \"Hearthside\" with dashicons-groups icon; dashboard heading \"Hearthside Community Dashboard\"; Plugins page lists \"Hearthside Community\" and \"Hearthside Community Pro\"; settings text uses \"Hearthside Community\"",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.3": {
-      "result": "pass",
-      "evidence": "custom footer shown (earlier); name set + footer blank -> \"Thank you for building your community with Hearthside Community.\"; all four blank -> footer \"Thank you for building your community with Jetonomy.\n\nVersion 7.1.3\"",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.4": {
-      "result": "pass",
-      "evidence": "footer \"Bob's Q&A\" renders text Bob's Q&A and HTML Bob's Q&amp;A (single-escaped, not &amp;amp;)",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.5": {
-      "result": "pass",
-      "evidence": "Settings page headings and Data card \"Remove all community data when Hearthside Community is deleted\", activity-log hint \"under Hearthside Community > Activity\" all use the brand name",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.6": {
-      "result": "pass",
-      "evidence": "guest /community/ with rebrand on: title \"Community – forums\", no \"Hearthside\" anywhere in HTML",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.7": {
-      "result": "pass",
-      "evidence": "with Hearthside Community branding set, admin POST /admin/digest/test: Mailpit message \"[TEST] forums: Your Daily Community Digest\" From \"forums <varun@wbcomdesigns.com>\", no \"Hearthside\" in HTML or text - email uses site settings, not white-label",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.8": {
       "result": "pass",
-      "evidence": "GET 200 {\"data\":{\"community_name\":\"Hearthside Community\",\"footer_text\":\"\",\"admin_label\":\"Hearthside\",\"admin_icon\":\"dashicons-groups\"}} | PATCH <b>Hearth</b> 200 {\"success\":true,\"data\":{\"community_name\":\"Hearth\",\"footer_text\":\"\",\"admin_label\":\"Hearthside\",\"admin_icon\":\"dashicons-groups\"}} | GET after 200 {\"data\":{\"community_name\":\"Hearth\",\"footer_text\":\"\",\"admin_label\":\"Hearthside\",\"admin_icon\":\"dashicons-groups\"}}",
-      "carried_forward": true
+      "evidence": "admin GET /settings/white-label returns community_name, footer_text, admin_label, admin_icon; PATCH community_name '<b>Hearth</b>' stored 'Hearth' (restored to empty)"
     },
     "e-white-label.9": {
       "result": "pass",
-      "evidence": "test_moderator GET/PATCH 403,403; bob 403,403; guest 401",
-      "carried_forward": true
+      "evidence": "test_moderator and bob GET and PATCH -> 403; guest -> 401"
     },
     "e-white-label.10": {
-      "result": "pass",
-      "evidence": "110-char community name: scrollWidth/clientWidth 1440 1440/1440, 390 390/390 (heading right edge 1420)",
-      "screenshot": "wl-long-390",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.11": {
-      "result": "pass",
-      "evidence": "all four fields cleared and saved: admin menu label returns to 'Jetonomy' with the default SVG icon (no blank icon)"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.12": {
-      "result": "pass",
-      "evidence": "wp jetonomy-pro white-label get prints the same four values as GET /settings/white-label; update (flags are hyphenated --community-name, --admin-label, --footer-text; underscore form errors \"Did you mean --community-name\") changed all three and get confirmed",
-      "carried_forward": true
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "e-white-label.13": {
-      "result": "pass",
-      "evidence": "invalid icon 'not a real icon!!' is sanitized to empty and the menu falls back to the default SVG icon; a full image URL renders an <img>; dashicons-groups renders the dashicon",
-      "screenshot": "wl-invalid-icon"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     }
   },
   "proposed_checks": []

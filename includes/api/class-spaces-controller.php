@@ -318,9 +318,10 @@ class Spaces_Controller extends Base_Controller {
 						),
 						'rule_value' => array( 'type' => 'string' ),
 						'grants'     => array(
-							'type'    => 'string',
-							'default' => 'read',
-							'enum'    => array( 'read', 'participate', 'full' ),
+							'type'        => 'string',
+							'default'     => 'read',
+							'description' => 'read or participate. "full" (removed in 2.0.7) is still accepted and saved as participate.',
+							'enum'        => array( 'read', 'participate', 'full' ),
 						),
 						'priority'   => array(
 							'type'    => 'integer',
@@ -341,9 +342,10 @@ class Spaces_Controller extends Base_Controller {
 					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
 					'args'                => array(
 						'grants' => array(
-							'type'     => 'string',
-							'required' => true,
-							'enum'     => array( 'read', 'participate', 'full' ),
+							'type'        => 'string',
+							'required'    => true,
+							'description' => 'read or participate. "full" (removed in 2.0.7) is still accepted and saved as participate.',
+							'enum'        => array( 'read', 'participate', 'full' ),
 						),
 					),
 				),

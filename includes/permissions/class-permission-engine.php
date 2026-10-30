@@ -366,12 +366,10 @@ class Permission_Engine {
 		}
 		if ( $access ) {
 			// Access rule grants access — check if sufficient for the action.
-			// Member-grade only: 'full' gives an ordinary member what
-			// 'participate' does. Moderation comes from a real space mod role.
+			// Member-grade only: moderation comes from a real space mod role.
 			$grants_map      = array(
 				'read'        => array( 'read' ),
 				'participate' => self::MEMBER_GRADE_ACTIONS,
-				'full'        => self::MEMBER_GRADE_ACTIONS,
 			);
 			$allowed_actions = $grants_map[ $access['grants'] ] ?? array( 'read' );
 			if ( in_array( $action, $allowed_actions, true ) ) {

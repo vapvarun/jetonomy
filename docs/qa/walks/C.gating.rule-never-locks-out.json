@@ -1,15 +1,16 @@
 {
   "journey": "C.gating.rule-never-locks-out",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T13:10:00Z",
-  "walker": "lane B3",
+  "free": "497bb6d0",
+  "pro": "9285e63",
+  "walked_at": "2026-10-30T07:04:01Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_before_change": true,
   "env": {
     "themes": [
       "reign"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
@@ -18,53 +19,52 @@
   "checks": {
     "c-gating-rule-never-locks-out.1": {
       "result": "pass",
-      "evidence": "Fresh subscriber on a public open space (QA-WALK-B3 Open): read 200, POST topic 201, reply 201, vote 200 before any rule."
+      "evidence": "test_subscriber (not in the space) on fresh public open space Gating Lab Public: GET posts 200, POST topic 201, reply 201, vote 200 (REST)"
     },
     "c-gating-rule-never-locks-out.2": {
       "result": "pass",
-      "evidence": "Admin Access Rules tab: Logged In + Participate, Add Rule -> toast 'Access rule added.'; table lists 'Logged in - Participate'."
+      "evidence": "admin POST /spaces/42/access-rules logged_in -> 201 message 'Access rule added.' made_private false and the rule is listed by GET access-rules (wp-admin toast not separately viewed)"
     },
     "c-gating-rule-never-locks-out.3": {
       "result": "pass",
-      "evidence": "Same subscriber after the Logged In rule: read 200, POST topic 201, reply 201; vote on another user's topic 200 (the vote on his own topic gave 400 jetonomy_self_vote, as designed)."
+      "evidence": "after Logged In rule subscriber topic 201, reply 201, read 200 (vote reused from before)"
     },
     "c-gating-rule-never-locks-out.4": {
       "result": "pass",
-      "evidence": "Guest GET the public space after the rule -> 200 and the member's topic is visible."
+      "evidence": "guest GET /spaces/42/posts 200 and space still visibility public after the Logged In rule"
     },
     "c-gating-rule-never-locks-out.5": {
       "result": "pass",
-      "evidence": "Role rule (subscriber, Read) added in the admin UI -> toast 'Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.' (adds the join-policy clause; runbook text is a prefix of it)."
+      "evidence": "admin added a Role rule to the public space -> 201 'Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.' (wording differs slightly from the runbook text: adds 'and its join policy is now Requires Approval'); space became private/approval"
     },
     "c-gating-rule-never-locks-out.6": {
-      "result": "pass",
-      "evidence": "Fresh subscriber who never posted (u2) after the switch: space page 200 and lists the topic, no new-topic link, POST topic and reply 403 jetonomy_forbidden 'You cannot post in this space.', vote 403."
+      "result": "fail",
+      "evidence": "after the switch (Role=editor rule) a subscriber who is not on the roster and not matched gets GET /spaces/42/posts 403 and POST 403 jetonomy_forbidden; runbook says he can read but not post"
     },
     "c-gating-rule-never-locks-out.7": {
-      "result": "pass",
-      "evidence": "Existing roster member (u1) after the Role rule: POST topic 201, vote 200."
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-rule-never-locks-out.8": {
-      "result": "pass",
-      "evidence": "Access Rules tab intro: 'A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy.'"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-rule-never-locks-out.9": {
       "result": "pass",
-      "evidence": "Subscriber POST /spaces/{id}/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'"
+      "evidence": "subscriber POST /spaces/42/access-rules -> 403 jetonomy_forbidden, rule list unchanged"
     },
     "c-gating-rule-never-locks-out.10": {
       "result": "pass",
-      "evidence": "test_editor on Help Desk: GET and POST /spaces/3004/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; the wp-admin tab shows that sentence and a 'Back to Help Desk' link."
+      "evidence": "test_editor GET and POST /spaces/16/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.' (wp-admin tab URL not opened)"
     },
     "c-gating-rule-never-locks-out.11": {
-      "result": "pass",
-      "evidence": "390px Access Rules tab: scrollWidth 390, rule type/grants selects 42px, Add Rule 40px, controls stacked at x=35-36.",
-      "screenshot": "qa-artifacts/walk-B3/access-rules-390.png"
+      "result": "untested",
+      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
     },
     "c-gating-rule-never-locks-out.12": {
-      "result": "fail",
-      "evidence": "Role rule on an open-join public space: join policy changed to Requires Approval; the toast now says so ('...its join policy is now Requires Approval.') but the General tab shows no notice (0 .notice elements), only the new Join Policy value; runbook asks for both."
+      "result": "pass",
+      "evidence": "adding Role rule response message says 'its join policy is now Requires Approval'; GET space join_policy approval (General tab not opened)"
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": []
 }

@@ -1142,13 +1142,6 @@
 						$('#rule-value').attr('placeholder', placeholders[val] || '');
 					}
 					$wrap.toggle(isAdapter);
-					// Full can only differ from Participate on a role or capability rule.
-					var offersFull = 'role' === val || 'capability' === val;
-					var $full = $('#rule-grants option[value="full"]');
-					$full.prop('hidden', !offersFull).prop('disabled', !offersFull);
-					if (!offersFull && 'full' === $('#rule-grants').val()) {
-						$('#rule-grants').val('participate');
-					}
 					$input.val('');
 					$hidden.val('');
 					$results.hide();

@@ -277,7 +277,7 @@ class GatingFixesTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( get_userdata( $this->member )->user_email, $to, 'no email about a space the person can no longer read' );
 	}
 
-	// 2: Full is Member for every rule type: stored, listed and explained.
+	// 2: a legacy Full is Member for every rule type: stored, listed and explained.
 	public function test_full_rule_is_member_for_every_rule_type(): void {
 		$this->set_adapters( array( 'fake' => $this->fake_adapter() ) );
 		$space = $this->space();
@@ -312,7 +312,8 @@ class GatingFixesTest extends WP_UnitTestCase {
 		$row  = substr( $html, (int) strpos( $html, 'id="jetonomy-rules-table"' ) );
 		$this->assertStringNotContainsString( 'Moderator', strip_tags( $row ), 'no rule row says Moderator' );
 		$this->assertStringNotContainsString( 'Admin', strip_tags( $row ) );
-		$this->assertStringContainsString( 'Participate and Full as Member.', $html );
+		$this->assertStringContainsString( 'Participate as Member.', $html );
+		$this->assertStringNotContainsString( 'value="full"', $html, 'Full is no longer offered' );
 	}
 
 	// 3: the Membership type is offered, disabled with a reason, when no membership plugin runs.
