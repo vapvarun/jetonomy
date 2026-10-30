@@ -337,7 +337,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **Checks:**
 - `c-anon-single-post.1` @guest #ui: open "Dark mode for the community on phones" -> title, body, author, vote count and replies render.
 - `c-anon-single-post.2` @guest #ui: click Reply, vote or Subscribe -> the browser goes to login (reply area offers a "Log in to reply" button) and returns to the topic after login; no silent 403.
-- `c-anon-single-post.3` @guest #rest !refuse: POST /jetonomy/v1/posts/<id>/replies and /posts/<id>/vote without auth -> 401 jetonomy_login_required (or rest_forbidden), never 200.
+- `c-anon-single-post.3` @guest #rest !refuse: POST /jetonomy/v1/posts/<id>/replies and /posts/<id>/vote without auth -> 401 (`rest_not_logged_in`, `jetonomy_login_required` or `rest_forbidden`), never 200.
 - `c-anon-single-post.4` @guest #ui: view a reply edited 2 hours after posting -> it shows "edited 2 hours ago" and hovering shows the exact time.
 - `c-anon-single-post.5` @guest #ui: view a reply edited 30 seconds after posting and an unedited reply -> neither shows an "edited" mark.
 - `c-anon-single-post.6` @guest #ui: view a nested reply -> it shows "in reply to <name>" linking to the parent reply.
@@ -423,7 +423,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-leaderboard.8` @guest #ui: view the leaderboard with Pro active -> rank, name and reputation show for each member; badges are not a leaderboard column (they show on the member's profile).
 - `c-anon-leaderboard.9` @member #ui: open the leaderboard as bob -> his own row is highlighted or marked.
 - `c-anon-leaderboard.10` @guest #ui +390: open the leaderboard at 390px in dark mode -> rows do not overflow and text is readable.
-- `c-anon-leaderboard.11` @guest #rest !refuse: GET /leaderboards?period=bogus -> 400 invalid period (currently 200 all-time).
+- `c-anon-leaderboard.11` @guest #rest !refuse: GET /leaderboards?period=bogus -> 400 invalid period.
 - `c-anon-leaderboard.12` @guest #ui !refuse: a site-banned member with reputation is absent from week, month and all time and from REST /leaderboards; a quiet week says "No activity this week." with a "See all time" link.
 
 ### C.anon.search
@@ -461,7 +461,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-invite-landing.3` @member #ui: as bob click Join on the invite -> a POST with nonce adds him and he lands in the space; the member count rises by one.
 - `c-anon-invite-landing.4` @member #ui !refuse: open the same invite as already-member bob -> it shows he already belongs and a link to the space, with no duplicate membership row.
 - `c-anon-invite-landing.5` @member #rest !refuse: GET the invite URL twice and send a HEAD/prefetch request -> no membership row is created (check wp_jt_space_members count unchanged).
-- `c-anon-invite-landing.6` @member #rest !refuse: POST to the join endpoint without the nonce -> rejected (403 or a nonce error), the member is not added.
+- `c-anon-invite-landing.6` @member #rest !refuse: POST to the join form without the nonce -> the invite page renders again and the member is not added.
 - `c-anon-invite-landing.7` @admin #admin +settings-off: turn registration off and open the invite as guest -> only "Log in to accept invite" shows, no Create free account.
 - `c-anon-invite-landing.8` @guest #ui !refuse: open /invite/does-not-exist/ -> a clean "invalid invite" error page, no fatal.
 - `c-anon-invite-landing.9` @guest #ui !refuse +old-data: open an expired invite -> a clean "expired" error, no Join button.
@@ -681,7 +681,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-flag.3` @member #ui: submit with Spam -> toast "Reported. Thank you." appears.
 - `c-member-flag.4` @moderator #ui: test_moderator opens the moderation queue -> the report is listed with reason Spam and the reporter name.
 - `c-member-flag.5` @member #ui !refuse: bob reports the same reply again -> toast "You have already reported this content." (REST 409 jetonomy_already_flagged) and no second queue row.
-- `c-member-flag.6` @member #rest: POST /moderation/flags with target and reason -> 201; invalid reason returns 400.
+- `c-member-flag.6` @member #rest: `POST /jetonomy/v1/flags` with `object_type`, `object_id` and `reason` -> 201; an invalid reason returns 400.
 - `c-member-flag.7` @member #ui: report a reply and report a member profile -> both reach the queue with the right target type.
 - `c-member-flag.8` @member #rest !refuse: report your own content -> 400 jetonomy_flag_self.
 - `c-member-flag.9` @member #rest !refuse: report a reply id in Customer Advisory Board as bob (not a member) -> 404 jetonomy_not_found, the same as a missing id.
@@ -887,13 +887,13 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-online-indicator.3` @member #ui: check the dot placement on small, medium and large avatars -> it sits on the top-right corner of the avatar in every size.
 - `c-member-online-indicator.4` @member #ui +rtl: view under a real RTL locale (the -rtl.css only loads for one; html dir=rtl emulation does not load it) -> the dot stays attached at the avatar's corner (mirrored) without drifting.
 - `c-member-online-indicator.5` @member #ui +long: Grace (no avatar, initials avatar) while active -> the dot attaches to the initials avatar.
-- `c-member-online-indicator.6` @member_b #rest: GET /users/<id> -> the last-active or online flag matches the UI.
+- `c-member-online-indicator.6` @member_b #rest: GET /users/<id> -> `last_seen_at` matches the UI dot: set (online now) for an online member, null for an offline one; there is no separate is_online field.
 - `c-member-online-indicator.7` @member #ui +settings-off: switch off online status display (or the member hides it in privacy) -> no dot anywhere for that member.
 - `c-member-online-indicator.8` @guest #ui !refuse: guest views an active member -> follow the contract: dot shown or hidden consistently in all contexts, no precise last-seen time revealed.
 - `c-member-online-indicator.9` @member #ui +banned: omar (banned from one space) while active -> the dot shows normally; finn silenced shows normally.
 - `c-member-online-indicator.10` @member #ui +390 +dark: dot at 390px dark mode -> a visible ring separates it from the avatar and it is not clipped.
 - `c-member-online-indicator.11` @member #ui +deleted: reply by deleted account -> no dot and no error.
-- `c-member-online-indicator.12` @guest #rest !refuse: GET /users/<id> logged out does not return the exact last_seen_at of a member.
+- `c-member-online-indicator.12` @guest #rest !refuse: GET /users/<id> logged out never returns the member's stored last_seen_at: an online member reads as the current server time ("online now"), an offline one as null; the member, moderators and admins get the exact time.
 
 ### C.mod.queue-and-actions
 **Covers:** templates/views/moderation.php, templates/partials/moderation/*.php, includes/api/class-moderation-controller.php, includes/moderation/class-moderation-service.php, assets/js/jetonomy-modals.js, includes/models/class-restriction.php, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php, templates/partials/pagination-nav.php, templates/partials/empty-state.php, pro:includes/extensions/advanced-moderation/*.php, pro:assets/js/moderation-admin.js, pro:includes/extensions/ai/*.php
@@ -937,7 +937,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **Checks:**
 - `c-mod-flag-resolution.1` @member_b #ui #rest: report Grace's long General Discussion topic with reason "Spam" from the topic menu -> a toast confirms the report, and POST /flags returns 201.
 - `c-mod-flag-resolution.2` @moderator #ui: open Flags -> the card shows "Reported by Alice ..." with the reason and note the reporter typed, and the flagged text.
-- `c-mod-flag-resolution.3` @moderator #ui #email: click Dismiss on the flag -> the card leaves Flags, the reporter's bell reads "Your report was reviewed. Thanks for helping keep the community healthy.", and Mailpit holds one email "[site] Your report was reviewed".
+- `c-mod-flag-resolution.3` @moderator #ui #email: click Dismiss on the flag -> the card leaves Flags and the reporter's bell reads "Your report was reviewed. Thanks for helping keep the community healthy."; the email is off by default (Settings > Emails shows it unticked), and with it ticked Mailpit holds one email "[site] Your report was reviewed".
 - `c-mod-flag-resolution.4` @moderator #ui: click Remove on a flag for a reply -> the reply leaves the thread, the card leaves Flags, the reply shows in Trash, and the reply author's reputation drops.
 - `c-mod-flag-resolution.5` @moderator #ui: Dismiss a flag on a reply, then on a topic -> in both cases the author's reputation returns to what it was before the flag (reply parity with topic).
 - `c-mod-flag-resolution.6` @moderator #rest: POST /moderation/flags/{id}/resolve with status=dismissed, then the same call again -> the first returns 200, the second returns the "Flag not found." or already-resolved error and sends no second notification.
@@ -1345,7 +1345,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-quick-login-and-captcha.1` @guest #block: sign in with a valid member through the Login block -> the page updates in place to the logged-in state without leaving the page.
 - `c-anon-quick-login-and-captcha.2` @guest #block !refuse: sign in with a wrong password -> "Incorrect username or password." and the same message for an unknown user, so no account is revealed.
 - `c-anon-quick-login-and-captcha.3` @guest #block !refuse: submit the form empty -> "Enter your username and password." (400).
-- `c-anon-quick-login-and-captcha.4` @guest #rest !refuse: POST /auth/login 12 times in a minute with a wrong password -> a 429 jetonomy_rate_limited reading "Too many attempts. Please wait a minute and try again.".
+- `c-anon-quick-login-and-captcha.4` @guest #rest !refuse: `POST /auth/login` with `user_login` and a wrong `user_password` 12 times in a minute -> a 429 jetonomy_rate_limited reading "Too many attempts. Please wait a minute and try again.".
 - `c-anon-quick-login-and-captcha.5` @guest #block: register a new account "priya.raman@example.com" -> the account is created and, if confirmation is on, the email "[site] Confirm your email to finish signing up" arrives in Mailpit and login says confirm first until clicked.
 - `c-anon-quick-login-and-captcha.6` @guest #block !refuse: register with an email that already has an account -> "That email is unavailable." and the same wording for a taken username "That username is unavailable.".
 - `c-anon-quick-login-and-captcha.7` @guest #block !refuse: register with a 5-character password -> "Password must be at least 8 characters." and with a disposable address "Please use a permanent email address. Disposable mailboxes are not accepted.".
@@ -1907,7 +1907,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-private-messaging.1` @member #ui: open Messages (/community/messages/) as bob with no conversations -> the empty list reads "No conversations yet." and the right pane reads "Select a conversation or start a new one"; the Active/Archived tabs are present.
 - `e-private-messaging.2` @member #ui: click new message, type "Ali" in the recipient field, pick alice, write "Hi Alice, saw your answer on the Help Desk thread about SMTP settings - could you share the plugin you used?" and press "Send Message" -> the conversation opens with the message shown as sent by bob, and the list row shows alice with a "just now"-style time.
 - `e-private-messaging.3` @member_b #ui: as alice open Messages -> the conversation from bob is bold/unread, the header Messages badge shows 1, opening it clears the unread state and the badge drops to 0 without reload.
-- `e-private-messaging.4` @member_b #rest: `GET /jetonomy-pro/v1/conversations/unread-count` before and after opening the thread, twice within 30s -> `data.unread_count` goes 1 then 0 (the 30s cache is busted by the read), never stays at 1.
+- `e-private-messaging.4` @member_b #rest: `GET /jetonomy/v1/conversations/unread-count` before and after opening the thread, twice within 30s -> `data.unread_count` goes 1 then 0 (the 30s cache is busted by the read), never stays at 1.
 - `e-private-messaging.5` @member_b #ui: reply "Thanks Bob, it was WP Mail SMTP with the Brevo preset" -> message appears at once; as bob the unread badge shows 1 and the conversation moves to the top of the list.
 - `e-private-messaging.6` @member #rest: `POST /conversations` with the same recipient again -> HTTP 200 with `reused: true` and the same `conversation_id` (no second thread with alice), the message is appended.
 - `e-private-messaging.7` @member #rest !refuse: `POST /conversations` with `recipient_ids: [alice]` but no `message` -> 400 `rest_missing_callback_param` "Missing parameter(s): message" (an empty-string message gives `jetonomy_validation` "Message content is required."); with no `recipient_ids` -> 400 `rest_missing_callback_param` (an empty list gives "At least one recipient is required."); with recipient id 99999 -> 400 "No valid recipients provided.".
@@ -1956,7 +1956,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-polls.9` @member_c #rest !refuse: single-choice poll, `POST /polls/{id}/vote` with `option_ids` of two options -> 400 "This poll allows only one choice."; an option id from another poll -> 400 "Option N does not belong to this poll."; no option -> 400 "At least one option is required.".
 - `e-polls.10` @member_c #ui +concurrent: double-click Vote or submit from two tabs at once -> the option count rises by exactly one (no double count) and the percentages still sum to 100.
 - `e-polls.11` @member #ui +closed: a poll with a past `closes_at` -> shows as closed and voting is refused with "This poll has closed." (REST 409/403 `jetonomy_closed`); unvote refused with "This poll has closed. Votes cannot be changed."; results still readable.
-- `e-polls.12` @member #rest: `PATCH /polls/{id}` by the topic author to close and then reopen -> closed flag flips both ways and the page reflects it without a cache delay.
+- `e-polls.12` @member #rest: `PATCH /polls/{id}` by the topic author with `closes_at` in the past, then cleared -> the response's read-only `closed` flag flips both ways and the page reflects it without a cache delay. `closed` itself is derived and not writable; a body that sends only `closed` changes nothing.
 - `e-polls.13` @member_b #rest !refuse: alice `POST /posts/{bob's post}/poll` and `PATCH /polls/{id}` on bob's poll -> 403 "You do not have permission to create a poll on this post." / "You do not have permission to modify this poll."; moderator and space_admin succeed.
 - `e-polls.14` @guest #ui !refuse: logged out, the poll results -> are visible on a public topic but the vote control asks the guest to log in; `POST /polls/{id}/vote` returns 401.
 - `e-polls.15` @member #rest !refuse +private: bob votes on, and `GET /polls/{id}` for, a poll in Customer Advisory Board (bob not a member) -> 404 with the same code and message as a poll id that does not exist, and the same for the guest, so the answer reveals nothing.
@@ -1985,7 +1985,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-reactions.9` @guest #rest !refuse: logged-out `POST /posts/{id}/reactions` -> 401; logged-out `GET` of a public topic's reactions -> 200 with counts (`reactors` is included only when `?emoji=` names a reaction that has reactors); of a hidden-space topic -> 404.
 - `e-reactions.10` @member #rest !refuse +deleted: react to a trashed or unpublished reply -> 409 (target not live), no row written; the chip does not appear.
 - `e-reactions.11` @silenced #ui !refuse +silenced: finn reacts to a reply -> refused with the silenced reason and no reaction recorded; also when finn's own post scored -4 is reacted to by others, the count still shows correctly.
-- `e-reactions.12` @member_b #email: the FIRST reaction on bob's reply notifies bob once; a second and third reaction and an emoji swap by the sole reactor -> send no further notification or email; reacting to your own post sends none.
+- `e-reactions.12` @member_b #email: the first reaction on bob's reply notifies bob once; an emoji swap by the same reactor sends nothing more; each further member who reacts adds one notification; reacting to your own post sends none.
 - `e-reactions.13` @admin #admin: Settings > Reactions: save with every emoji unticked -> the notice reads "No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none."; saving normally shows "Reaction settings saved."
 - `e-reactions.14` @admin #admin +old-data: disable the Celebrate reaction after members used it -> existing Celebrate counts are not shown as broken chips, and members cannot add it again.
 - `e-reactions.15` @member #ui +many: a reply with 40 reactions across 6 emoji -> wraps the chips onto lines at 390px without overflowing the reply card on Reign; names tooltip stays inside the viewport (max 280px).
@@ -2010,7 +2010,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-analytics.2` @admin #admin: topics in last 30d -> never exceeds total topics; replies and members follow the same rule; the "Avg Reply Time" label and the section nouns use the owner's renamed Topic/Reply/Member labels.
 - `e-analytics.3` @admin #admin: switch the range 7d, 30d, 90d quickly three times -> after the last click the numbers belong to 90d only (never the previous range's data), and the active range button matches.
 - `e-analytics.4` @admin #rest: `GET /jetonomy/v1/analytics/overview?range=7d` then `30d` -> `days` and totals differ and the 7d total is <= the 30d total.
-- `e-analytics.5` @admin #rest: custom range with `start` and `end` inside the seeded data -> numbers match the sum of the daily rows; an end before start silently becomes 30d, so verify the page tells the person which range is showing.
+- `e-analytics.5` @admin #rest: `GET /analytics/overview?range=custom&start=..&end=..` inside the seeded data -> numbers match the sum of the daily rows; without `range=custom` the start/end are ignored (30d); an end before start is refused by REST.
 - `e-analytics.6` @admin #admin: export CSV -> file jetonomy-analytics-YYYY-MM-DD.csv downloads with header Date, Topics, Replies, New Users, ...; row count equals the days in range; values equal the dashboard totals.
 - `e-analytics.7` @admin #cli: `wp jetonomy-pro analytics export --format=csv` -> prints the same CSV to stdout without PHP warnings.
 - `e-analytics.8` @admin #admin: top spaces and top contributors -> lists are capped at the ranked-list limit, Grace's long name wraps inside its row without breaking the table or page at 1440 and 390 (tables scroll inside their wrapper), and the Local Chapters appear only when active in range (needs several chapters active in range, else mark that part untested).
@@ -2085,7 +2085,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-advanced-moderation.5` @member #ui: a rule with action "Mark as Spam" -> the post is saved as spam, hidden from the space and from the author's profile, and visible in the spam list for moderators.
 - `e-advanced-moderation.6` @member #ui: a rule with action "Flag for Review" -> the post publishes immediately and a flag appears in the mod queue.
 - `e-advanced-moderation.7` @member #ui: content matching a Flag rule and a Block rule at once -> the stronger action (Block) wins; with Hold plus Spam, Spam wins.
-- `e-advanced-moderation.8` @member #ui: a keyword rule "ass" against the sentence "Our class assignment reminder" -> record whether it holds the post (substring match) so the owner is warned that short keywords over-match.
+- `e-advanced-moderation.8` @member #ui: a keyword rule "ass" against the sentence "Our class assignment reminder" -> the post is NOT held (keywords match whole words); the same rule holds "what an ass".
 - `e-advanced-moderation.9` @member #ui +rtl: a keyword rule in Arabic -> matches an Arabic reply by omar and case-insensitive Latin keywords match upper-case text.
 - `e-advanced-moderation.10` @admin #admin: Regex rule `\b(buy|cheap|discount)\b` -> matches "cheap hosting deal" and not "cheapest"; an invalid regex `([a-z` is refused on save with "Invalid regex pattern." (REST 400).
 - `e-advanced-moderation.11` @admin #rest !refuse: Link limit and New user rules with a non-numeric pattern -> 400 "Pattern must be a number for this rule type."; PATCH changing only the type to link_limit on an existing text pattern -> the same 400.
@@ -2094,7 +2094,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-advanced-moderation.14` @admin #admin: a space-scoped rule for Help Desk without choosing a space -> refused with "Choose the space for this space-scoped rule, or set the scope to global. A rule with no space selected would never match anything."; a rule scoped to Help Desk does not fire in Troubleshooting.
 - `e-advanced-moderation.15` @admin #rest: `GET /moderation/rules/{id}/stats` after three matching posts -> `hit_count` 3; deactivating the rule stops the count.
 - `e-advanced-moderation.16` @admin #admin: delete a rule -> one confirm "Permanently delete this rule?" (not two), toast "Rule deleted.", the rule stops firing; `DELETE` on a nonexistent id returns an error, not success.
-- `e-advanced-moderation.17` @moderator #rest: test_moderator can -> list and create rules (`jetonomy_moderate`) while bob and a guest get 403/401; record whether the owner intends moderators to author rules.
+- `e-advanced-moderation.17` @moderator #rest: test_moderator can list and create rules (`jetonomy_moderate`) while bob and a guest get 403/401.
 - `e-advanced-moderation.18` @admin #admin +many: with 200 rules the -> list paginates, filters by type/action, and loads within a second.
 - `e-advanced-moderation.19` @admin #admin: exempt behaviour - posts by admins and by test_moderator -> are not held by a keyword rule (or the owner is shown they are), and edits to an existing post re-run the rules.
 - `e-advanced-moderation.20` @admin #admin +old-data: replies and topics edited after the rule was created -> are re-checked; the debug.log stays empty (no PHP 8.1 null-key deprecation per post).
@@ -2145,8 +2145,8 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-custom-fields.4` @member #ui: bob starts a Help Desk topic with Operating system = Linux -> the topic shows "Additional Fields" with Linux; reload keeps it.
 - `e-custom-fields.5` @member #ui !refuse: submit the composer with the required field empty -> blocked with "Operating system is required." (REST 400 `jetonomy_field_required`) and no topic created.
 - `e-custom-fields.6` @member #ui: edit the topic inline -> the field is pre-populated, can be changed to macOS, and the change persists after update; clearing an optional field removes it from the display.
-- `e-custom-fields.7` @member_b #rest !refuse: alice `PATCH /posts/{bob's id}/fields` -> 403 "You do not have permission to update fields on this post."; a missing post id -> 404 "Post not found."; for a post in a space alice cannot read the answer must equal the missing-post 404.
-- `e-custom-fields.8` @member #rest !refuse: `PATCH /posts/{id}/fields` with a number field value "abc", an email field "not-an-email", a url field "javascript:alert(1)", a select value outside the options -> 400 "Some fields failed validation." naming the fields; nothing saved.
+- `e-custom-fields.7` @member_b #rest !refuse: alice `PATCH /posts/{bob's id}` with `custom_fields` -> 403 with the standard permission message; a missing post id -> 404; for a post in a space alice cannot read the answer must equal the missing-post 404. (`/posts/{id}/fields` is GET only.)
+- `e-custom-fields.8` @member #rest: `PATCH /posts/{id}` with `custom_fields` holding a number field "abc", an email field "not-an-email", a url field "javascript:alert(1)" and a select value outside the options -> the post saves (an optional field never blocks a post), each invalid value is skipped and the stored values are unchanged; the composer's own controls cannot submit those values.
 - `e-custom-fields.9` @moderator #rest: test_moderator and space_admin (edit others' posts in their space) -> may update fields on a topic in that space; test_moderator outside Moderators' Room/Bug Reports may not.
 - `e-custom-fields.10` @member #ui +390 +long: a url field holding a 100-character unbroken URL -> wraps inside its container (`scrollWidth === clientWidth`) at 390px on Reign, on the topic and on the profile.
 - `e-custom-fields.11` @member #ui: Edit Profile shows profile-context fields under "More about you"; bob saves "Timezone/Location: Lagos, Nigeria" -> other members see it on his profile under "Profile Details"; a member who left it blank shows no empty row.
@@ -2198,7 +2198,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-reply-by-email.5` @guest #rest !refuse: inbound with an invalid token -> 400 `jetonomy_reply_token_invalid` "Malformed token." / "Invalid token structure." / "Token signature mismatch."; an expired token (older than 7 days) -> 400 `jetonomy_reply_token_expired`; no reply is created.
 - `e-reply-by-email.6` @guest #rest !refuse: inbound with a tampered expiry or user id in the token -> signature mismatch; a valid token for bob replayed against another post id -> rejected.
 - `e-reply-by-email.7` @guest #rest !refuse: webhook not signed -> 403/400 `jetonomy_webhook_missing_signature` "Webhook request is not signed."; wrong signature -> 403 "Webhook signature mismatch."; timestamp outside the window -> "Webhook timestamp is outside the accepted window."; no secret configured -> "Inbound webhook is not configured with a signing secret.".
-- `e-reply-by-email.8` @admin #rest !refuse +settings-off: extension disabled -> 503 `jetonomy_extension_disabled`; method set to IMAP while the webhook is called -> 400 "Inbound webhook method is not enabled.".
+- `e-reply-by-email.8` @admin #rest !refuse +settings-off: extension switched off -> the inbound route is not registered (404 `rest_no_route`); switched on with IMAP chosen while the webhook is called -> 503 "Reply by Email is not set up yet.".
 - `e-reply-by-email.9` @guest #rest !refuse: payload without a To address -> 400 "No To address found in payload."; To without a token -> 400 "No reply token found in To address."; empty body -> 400 "Email body is empty.".
 - `e-reply-by-email.10` @member #rest !refuse +limit: more than 10 inbound replies within the hourly rate window for bob (reset the `jt_rbe_rl_<uid>` transient first, earlier checks count toward it) -> 429 "Rate limit exceeded or content empty."; other members unaffected.
 - `e-reply-by-email.11` @silenced #rest !refuse +silenced: a valid token for finn -> the endpoint must not create a reply; note the REST answer is still success:true even though free drops it silently, so the sender gets no bounce (see report).
@@ -2238,7 +2238,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 **Checks:**
 - `e-web-push.1` @admin #admin: Settings > Web Push: enable, set notification title and icon, save -> "Web Push settings saved."; VAPID public/private keys are generated automatically on first enable and persist across saves.
-- `e-web-push.2` @guest #rest: `GET /jetonomy-pro/v1/push/vapid-key` -> 200 public key only (no private key in the body); `GET /push/service-worker.js` -> 200 with a JavaScript content type and a scope header.
+- `e-web-push.2` @guest #rest: `GET /jetonomy/v1/push/vapid-key` -> 200 public key only (no private key in the body); `GET /push/service-worker.js` -> 200 with a JavaScript content type and a scope header.
 - `e-web-push.3` @member #ui: on an HTTPS site, press the push subscribe control -> the browser permission prompt appears, accepting registers the subscription and the control flips to enabled; denying shows a clear message and leaves it off.
 - `e-web-push.4` @member #rest: `POST /push/subscribe` with a real endpoint, p256dh and auth -> 201 `subscribed:true, created:true`; the same endpoint again -> 201 with `created:false` and no duplicate row; `DELETE /push/subscribe` -> `unsubscribed:true` and no more pushes.
 - `e-web-push.5` @member #rest !refuse: `POST /push/subscribe` with `endpoint: "not a url"` -> 400 `jetonomy_push_endpoint_invalid` "Invalid push endpoint URL."; logged out -> 401.
@@ -2251,7 +2251,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-web-push.12` @silenced #ui +silenced: finn's reply (if any) and notifications about content removed by a moderator -> do not push.
 - `e-web-push.13` @member #rest: `POST /push/register-device` with an `ExponentPushToken[...]` -> registered; a malformed token -> 400 "Invalid Expo push token."; `DELETE` unregisters; a native push goes to the Expo API with a deep link {type,id}.
 - `e-web-push.14` @member #rest !refuse +concurrent: alice subscribes the browser bob used earlier (same endpoint, other account) -> the subscription must move to alice and bob must stop receiving alice's pushes on that browser; record what actually happens.
-- `e-web-push.15` @admin #cli: `wp jetonomy-pro web-push` subcommands (status, test) -> report the key state and send a test push to a subscribed browser.
+- `e-web-push.15` @admin #cli: `wp jetonomy-pro web-push vapid-key` -> the public key and whether Web Push is configured; `count` -> active subscriptions; `subscriptions --user=<id>` lists that user's; `send` dispatches to a subscribed user.
 - `e-web-push.16` @admin #admin +settings-off: disable the extension -> the service worker route is unregistered and all sends stop, with subscriptions kept.
 **Depth note:** the end-to-end subscription flow needs HTTPS and a real browser push service; on http://forums.local only the REST, key and queue checks (1, 2, 4, 5, 8, 13) can pass.
 
@@ -2349,7 +2349,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 - `e-pro-privacy-and-abilities.1` @admin #admin: Tools > Export Personal Data for maya (who has DMs, reactions, poll votes, badges, custom field values and a push subscription) -> the export lists groups "Jetonomy Pro: Private Messages", "Reactions", "Custom Fields", "Badges", "Poll Votes" and "Push Devices" (with "Browser subscription"), each with real values.
 - `e-pro-privacy-and-abilities.2` @admin #admin: the export for a member with none of those -> has no empty group headings and no PHP notice; a member with >100 reactions pages correctly via `done:false`.
 - `e-pro-privacy-and-abilities.3` @admin #admin: the exported messages -> include only maya's own side and what she can lawfully receive; other participants' private data (their email, their other threads) is not in her file.
-- `e-pro-privacy-and-abilities.4` @admin #admin: Erase Personal Data for Jamal (a demo member no persona depends on) -> result text "Jetonomy Pro: Messages anonymized. Reactions, custom fields, badges, poll votes, and push subscriptions/devices deleted."; her reactions, field values, badges, poll votes and subscriptions are gone.
+- `e-pro-privacy-and-abilities.4` @admin #admin: Erase Personal Data for Jamal (a demo member no persona depends on) through Tools > Erase Personal Data (WordPress calls the eraser page by page until it reports done) -> the final page's result text reads "Jetonomy Pro: Messages anonymized. Reactions, custom fields, badges, poll votes, and push subscriptions/devices deleted."; her reactions, field values, badges, poll votes and subscriptions are gone. Calling only page 1 by hand returns no message by design.
 - `e-pro-privacy-and-abilities.5` @member #ui: after erasure, bob's thread with Jamal still -> shows bob's messages and Jamal's as "Deleted User"; bob's own data, reactions and votes are untouched, and poll totals drop by exactly maya's votes.
 - `e-pro-privacy-and-abilities.6` @admin #cli: `wp user delete <a member registered for this check> --reassign=1` -> clears the same Pro rows (orphan columns) with no orphan rows left in `jt_reactions`, `jt_poll_votes`, `jt_user_badges`, `jt_push_subscriptions`.
 - `e-pro-privacy-and-abilities.7` @admin #admin +many: erase a member with 5,000 reactions across several requests (the per-request row limit) -> eventually done, no timeout.
@@ -2581,7 +2581,7 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 **Checks:**
 - `f-a11y.1` @guest #ui: from the top of /community/ press Tab -> a "skip to content" link (or main landmark reachable) appears within the first 3 Tab presses and moves focus to the main content.
 - `f-a11y.2` @member #ui: Tab through the header, a space listing and a topic -> every interactive element gets a visible focus ring (not suppressed by the Reign, BuddyX or Twenty Twenty-Five theme) in light and dark, and tab order matches reading order. Measure the outline after the button's 150ms transition settles; reading it the instant focus lands reports 0px.
-- `f-a11y.3` @member #ui: icon-only buttons (theme toggle, font-size control, vote up/down, share, bookmark, notifications bell, "More actions", composer toolbar buttons, anonymous toggle) each -> have an `aria-label` that says what they do and `aria-pressed`/`aria-expanded` where they are toggles.
+- `f-a11y.3` @member #ui: icon-only buttons (theme toggle, font-size control, vote up/down, share, bookmark, notifications bell, "More actions", composer toolbar buttons, and with Pro's Anonymous Posting on, the anonymous toggle) each -> have an `aria-label` that says what they do and `aria-pressed`/`aria-expanded` where they are toggles.
 - `f-a11y.4` @member #ui: the topic and reply editors -> are announced as named edit text (aria-label, or aria-labelledby pointing at the visible "Content" label), the title input has a label, and the poll option inputs have labels like "Option 1".
 - `f-a11y.5` @member #ui: the vote controls -> announce current score and state (voted/not), and the reaction chips announce "Like, 12 reactions, you reacted" rather than only an emoji.
 - `f-a11y.6` @member #ui: open the report dialog on a reply -> it is a labelled radio group, focus moves to the first reason, Tab stays inside, Escape closes it and returns focus to the Report control.
