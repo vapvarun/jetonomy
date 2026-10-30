@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.1
-Stable tag: 2.0.6
+Stable tag: 2.0.7
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,39 @@ Absolutely. Jetonomy has 84 REST routes / 115 method-endpoints (143 routes acros
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 2.0.7 - October 2026 =
+
+Clearer access rules and membership gates, safer address fields, Divi Theme Builder support and redone translations.
+
+* New      - Change an access rule's grant in place from the rules list or the REST API.
+* New      - The space header tells a member which course or plan gives them access.
+* New      - Divi Theme Builder global headers and footers, with their styles, show on community pages.
+* New      - Members suspended or blocked in BuddyNext are read-only or blocked in the forum too, through the new jetonomy_user_is_silenced and jetonomy_blocked_user_ids filters.
+* Improve  - The Access Rules form starts on who the rule lets in, asks before opening a private space to everyone, and keeps the help below the form.
+* Improve  - Full is offered only on role and capability rules, where it means something; saved rules are converted on upgrade.
+* Improve  - The membership gate has one sentence for every paid plan, a button for each way in, and says a space is not open to join when nothing it includes can still be had.
+* Improve  - A rule on a deleted course, product or membership plan is flagged "no longer available" in the admin and never shows its raw id to visitors.
+* Improve  - The Access Rules picker searches the server, so courses and plans past the first 500 can be chosen.
+* Improve  - The ban dialog explains what Global Ban and Silence do.
+* Improve  - Edit Profile links jump to each section and wrap on phones.
+* Improve  - Admin text meets WCAG AA contrast on every Jetonomy screen.
+* Improve  - All 10 translations redone with consistent wording, checked to 99%+ in every language.
+* Improve  - German and Luxembourgish keep the capital letter on product labels mid-sentence; the jetonomy_label_lowercase filter decides for other languages.
+* Fix      - Address fields (terms, privacy, support, logos, share image, space cover, avatar) refuse a value that is not an address by name and keep the saved one.
+* Fix      - Community addresses typed in another case, such as /COMMUNITY/, redirect to the lower-case address instead of a 404.
+* Fix      - Removing a vote takes back the reputation and notification it gave.
+* Fix      - When two access rules match, the most generous one wins, and exact duplicate rules are refused.
+* Fix      - Space feeds drop control characters pasted from Word or a PDF, so feed readers accept them.
+* Fix      - Silenced and banned members cannot start a space, including BuddyPress group forums.
+* Fix      - Ban, silence and lift show the server's reason when they fail.
+* Fix      - Every not-found page links back to the community.
+* Fix      - The sitemap refreshes when a space is created or a topic is published.
+* Fix      - Importers fold accented letters and keep wpForo category slugs unique.
+* Fix      - An empty Divi header menu no longer prints a warning on community pages.
+* Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.
+* Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
+* Compat   - Aligned with Jetonomy Pro 2.0.7. Install both updates together.
 
 = 2.0.6 - October 2026 =
 

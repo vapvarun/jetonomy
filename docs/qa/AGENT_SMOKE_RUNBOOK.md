@@ -1540,7 +1540,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **Depth note:** the sitemap is a public read-only surface with one role; the refusal cases above (private spaces absent, page 99) stand in for a role ladder.
 
 ### C.site.host-integrations
-**Covers:** includes/integrations/class-buddypress.php, includes/integrations/class-fluent-community.php, includes/integrations/class-layout-css.php, includes/integrations/class-theme-integration.php, assets/css/buddypress.css, assets/css/fluent-community.css
+**Covers:** includes/integrations/class-buddypress.php, includes/integrations/class-fluent-community.php, includes/integrations/class-layout-css.php, includes/integrations/class-theme-integration.php, includes/integrations/class-divi-theme-builder.php, assets/css/buddypress.css, assets/css/fluent-community.css
 **Verified:** pending - new journey, not walked yet
 **What to verify:** On a BuddyPress site, a Fluent Community site, and under BuddyX or Reign themes, community pages pick up the theme's colours and fonts, the layout settings (width, sidebar) set by the admin apply, and the BuddyPress profile tab shows the member's Jetonomy activity. Nothing breaks when the host plugin is absent. Check 1440 and 390 widths, light and dark mode.
 
@@ -1561,6 +1561,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-site-host-integrations.14` @member #ui +rtl: switch the site to Arabic on Reign -> the community mirrors and the sidebar swaps sides.
 - `c-site-host-integrations.15` @guest #ui !refuse: view the community while the site is in maintenance mode -> the maintenance page shows and Jetonomy pages do not leak.
 - `c-site-host-integrations.16` @admin #ui: set "Community as homepage" -> the root `/` shows the community and still obeys the maintenance gate.
+- `c-site-host-integrations.18` @guest #ui: on the Divi theme with a Theme Builder global header and footer, open /community/ and a topic -> the Divi header and footer render with their module styles, and debug.log has no warning from an empty Divi menu.
 - `c-site-host-integrations.17` @admin #admin: set Settings > Appearance > Sidebar to 'Hide on community pages' on a theme that shows a sidebar (BuddyX) -> the theme sidebar goes and the Jetonomy sidebar stays, or the option says which one it hides.
 
 ### C.integration.abilities-api
