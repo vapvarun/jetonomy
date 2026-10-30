@@ -60,6 +60,11 @@
 		var panel = wrap.querySelector('.jt-notif-panel');
 		var isOpen = !panel.hidden;
 		panel.hidden = isOpen;
+		btn.setAttribute('aria-expanded', String(!isOpen));
+		if (!isOpen) {
+			var first = panel.querySelector('button, a[href]');
+			if (first) { first.focus({ preventScroll: true }); }
+		}
 		if (!isOpen && !notifLoaded) {
 			notifLoaded = true;
 			window.jetonomyRest.restFetch('/notifications?limit=5').then(function (res) {
@@ -255,8 +260,29 @@
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
 		if (!e.target.closest('.jt-notif-dropdown-wrap')) {
-			var panel = document.querySelector('.jt-notif-panel');
-			if (panel) { panel.hidden = true; }
+			closeNotifPanel(false);
+		}
+	});
+
+	function closeNotifPanel(returnFocus) {
+		var panel = document.querySelector('.jt-notif-panel');
+		var btn = document.querySelector('.jt-community-nav-notif');
+		if (!panel || panel.hidden) { return; }
+		panel.hidden = true;
+		if (btn) {
+			btn.setAttribute('aria-expanded', 'false');
+			if (returnFocus) { btn.focus(); }
+		}
+	}
+
+	// Escape closes the panel and returns focus to the bell; arrows move between its items.
+	document.addEventListener('keydown', function (e) {
+		var panel = document.querySelector('.jt-notif-panel');
+		if (!panel || panel.hidden) { return; }
+		if ('Escape' === e.key) {
+			closeNotifPanel(true);
+		} else if (panel.contains(document.activeElement) && window.jetonomySmartDropdown) {
+			window.jetonomySmartDropdown.menuKeys(panel, e);
 		}
 	});
 

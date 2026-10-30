@@ -2661,6 +2661,7 @@ const { state, actions } = store( 'jetonomy', {
             // pattern on Twitter / Reddit / GitHub: dismiss on scroll rather
             // than reposition-tracking. Click-outside still applies.
             const cleanup = () => {
+                el.ref.setAttribute( 'aria-expanded', 'false' );
                 dropdown.remove();
                 document.removeEventListener( 'click', closeHandler );
                 document.removeEventListener( 'keydown', keyHandler );
@@ -2668,11 +2669,13 @@ const { state, actions } = store( 'jetonomy', {
                 window.removeEventListener( 'resize', scrollHandler );
             };
             dropdown.jtClose = cleanup;
-            // Escape closes and hands focus back to the Share button.
+            // Escape closes and hands focus back to the Share button; arrows move between items.
             const keyHandler = ( e ) => {
                 if ( 'Escape' === e.key ) {
                     cleanup();
                     el.ref.focus();
+                } else if ( dropdown.contains( document.activeElement ) ) {
+                    window.jetonomySmartDropdown.menuKeys( dropdown, e );
                 }
             };
             const closeHandler = ( e ) => {
@@ -2690,6 +2693,8 @@ const { state, actions } = store( 'jetonomy', {
             window.addEventListener( 'scroll', scrollHandler, { passive: true, capture: true } );
             window.addEventListener( 'resize', scrollHandler, { passive: true } );
             document.addEventListener( 'keydown', keyHandler );
+            el.ref.setAttribute( 'aria-expanded', 'true' );
+            dropdown.querySelector( 'button' )?.focus( { preventScroll: true } );
             // Click-outside is the only listener that needs the next-tick
             // defer — the click that opened the dropdown is still bubbling
             // when we register, and we don't want it to instantly trigger

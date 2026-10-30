@@ -4,7 +4,10 @@
  * Lightweight, framework-free positioner for trigger/panel pairs.
  * Handles flip-on-overflow (vertical), shift-on-overflow (horizontal),
  * RTL placement swap, outside-click + Escape close, and "group" exclusivity
- * (opening one in a group closes any other in the same group).
+ * (opening one in a group closes any other in the same group). Keyboard:
+ * the trigger carries aria-expanded, opening focuses the first item, arrow
+ * keys / Home / End move between items, Escape returns focus to the trigger.
+ * menuKeys() is exported for hand-built panels (share, notifications).
  *
  *   const dd = window.jetonomySmartDropdown( trigger, panel, {
  *     placement:      'bottom-end',  // bottom-start | bottom-end | top-start | top-end
@@ -43,6 +46,25 @@
 			}
 		}
 		return window.innerHeight;
+	}
+
+	var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+	function items( panelEl ) {
+		return Array.prototype.filter.call( panelEl.querySelectorAll( FOCUSABLE ), function ( el ) {
+			return el.offsetParent !== null || el.getClientRects().length > 0;
+		} );
+	}
+
+	// Arrow keys, Home and End move focus between a panel's items.
+	function menuKeys( panelEl, e ) {
+		var list = items( panelEl );
+		if ( ! list.length ) return;
+		var i = list.indexOf( document.activeElement );
+		var next = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: list.length - 1 }[ e.key ];
+		if ( next === undefined ) return;
+		e.preventDefault();
+		list[ ( next + list.length ) % list.length ].focus();
 	}
 
 	function clamp( v, lo, hi ) {
@@ -130,9 +152,15 @@
 		}
 
 		function escHandler( e ) {
-			if ( ! closeOnEscape || ! open ) return;
-			if ( e.key === 'Escape' || e.keyCode === 27 ) {
+			if ( ! open ) return;
+			if ( closeOnEscape && ( e.key === 'Escape' || e.keyCode === 27 ) ) {
+				var returnTo = triggerEl;
 				doClose();
+				if ( returnTo ) returnTo.focus();
+				return;
+			}
+			if ( panelEl && panelEl.contains( document.activeElement ) ) {
+				menuKeys( panelEl, e );
 			}
 		}
 
@@ -159,6 +187,9 @@
 			open = true;
 			reposition();
 			attach();
+			triggerEl.setAttribute( 'aria-expanded', 'true' );
+			var first = items( panelEl )[ 0 ];
+			if ( first ) first.focus( { preventScroll: true } );
 			if ( group ) groupMap.set( group, instance );
 			if ( onOpen ) {
 				try { onOpen(); } catch ( _e ) {}
@@ -168,6 +199,7 @@
 		function doClose() {
 			if ( ! open ) return;
 			open = false;
+			if ( triggerEl ) triggerEl.setAttribute( 'aria-expanded', 'false' );
 			if ( panelEl ) panelEl.style.display = 'none';
 			detach();
 			if ( group && groupMap.get( group ) === instance ) groupMap.delete( group );
@@ -197,5 +229,7 @@
 		return instance;
 	}
 
+	smartDropdown.menuKeys = menuKeys;
+	smartDropdown.items = items;
 	window.jetonomySmartDropdown = smartDropdown;
 } )( window, document );

@@ -288,7 +288,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		<?php endif; ?>
 		<?php if ( $jt_rp_can_edit || $jt_rp_can_del || $jt_rp_can_split ) : ?>
 			<div class="jt-more-menu">
-				<button class="jt-act jt-more-trigger" type="button"
+				<button class="jt-act jt-more-trigger" type="button" aria-expanded="false"
 					data-wp-on--click="actions.toggleMoreMenu"
 					title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 					aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'more-horizontal', 14 ); ?></button>

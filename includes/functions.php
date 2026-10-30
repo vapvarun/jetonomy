@@ -1490,7 +1490,9 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 	$name_html = $show_name ? ' <span class="jt-user-name">' . esc_html( $name ) . '</span>' : '';
 
 	if ( $url ) {
-		return '<a href="' . esc_url( $url ) . '" class="jt-user-link">' . $avatar_html . $name_html . '</a>';
+		// Avatar-only links would otherwise be announced as the initials.
+		$label = $show_name ? '' : ' aria-label="' . esc_attr( $name ) . '"';
+		return '<a href="' . esc_url( $url ) . '" class="jt-user-link"' . $label . '>' . $avatar_html . $name_html . '</a>';
 	}
 
 	return $avatar_html . $name_html;

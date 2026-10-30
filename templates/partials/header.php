@@ -116,7 +116,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 				?>
 				<?php // jt-nav-dup: the phone tab bar's Alerts tab is the same destination. ?>
 				<div class="jt-notif-dropdown-wrap jt-nav-dup">
-					<button type="button" class="jt-community-nav-notif" data-jt-unread-host="jt-community-nav-badge" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>">
+					<button type="button" class="jt-community-nav-notif" data-jt-unread-host="jt-community-nav-badge" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>" aria-expanded="false">
 						<?php jetonomy_echo_icon( 'bell', 16 ); ?>
 						<?php if ( $unread > 0 ) : ?>
 							<span class="jt-community-nav-badge"><?php echo (int) $unread; ?></span>

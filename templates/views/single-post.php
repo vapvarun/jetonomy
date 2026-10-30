@@ -715,7 +715,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					data-post-url="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' ); ?>"
 					data-post-title="<?php echo esc_attr( jetonomy_post_title_or_excerpt( $post ) ); ?>"
 					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"
-					aria-label="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
+					aria-label="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>" aria-expanded="false"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
 				<?php
 				if ( is_user_logged_in() && $jt_is_live ) :
 					$is_bookmarked = \Jetonomy\Models\Bookmark::is_bookmarked( get_current_user_id(), (int) $post->id );
@@ -792,7 +792,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				?>
 				<?php if ( $jt_can_edit || $jt_can_del || $jt_can_pin || $jt_can_close || $jt_can_move || current_user_can( 'jetonomy_manage_settings' ) ) : ?>
 					<div class="jt-more-menu">
-						<button class="jt-act jt-more-trigger" type="button"
+						<button class="jt-act jt-more-trigger" type="button" aria-expanded="false"
 							title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>

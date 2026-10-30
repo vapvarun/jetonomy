@@ -363,7 +363,7 @@ class Router {
 		add_rewrite_rule( "^{$base}/tag/([^/]+)/?$", 'index.php?jetonomy_route=tag&jetonomy_slug=$matches[1]', 'top' );
 
 		// Invite link
-		add_rewrite_rule( "^{$base}/invite/([a-zA-Z0-9]+)/?$", 'index.php?jetonomy_route=invite&jetonomy_slug=$matches[1]', 'top' );
+		add_rewrite_rule( "^{$base}/invite/([^/]+)/?$", 'index.php?jetonomy_route=invite&jetonomy_slug=$matches[1]', 'top' );
 
 		// Messages (Pro module registers its own rules, but the free plugin
 		// reserves the URL pattern so that flushing works correctly when

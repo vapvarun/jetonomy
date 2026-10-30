@@ -157,14 +157,14 @@ endif;
 	<?php else : ?>
 		<div class="jt-editor" id="jt-post-editor">
 			<div class="jt-editor-bar">
-				<button type="button" data-cmd="bold" title="<?php esc_attr_e( 'Bold', 'jetonomy' ); ?>"><strong>B</strong></button>
-				<button type="button" data-cmd="italic" title="<?php esc_attr_e( 'Italic', 'jetonomy' ); ?>"><em>I</em></button>
-				<button type="button" data-cmd="code" title="<?php esc_attr_e( 'Code', 'jetonomy' ); ?>">&lt;/&gt;</button>
+				<button type="button" data-cmd="bold" title="<?php esc_attr_e( 'Bold', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Bold', 'jetonomy' ); ?>"><strong>B</strong></button>
+				<button type="button" data-cmd="italic" title="<?php esc_attr_e( 'Italic', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Italic', 'jetonomy' ); ?>"><em>I</em></button>
+				<button type="button" data-cmd="code" title="<?php esc_attr_e( 'Code', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Code', 'jetonomy' ); ?>">&lt;/&gt;</button>
 				<button type="button" data-cmd="codeblock" title="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>">{ }</button>
-				<button type="button" data-cmd="link" title="<?php esc_attr_e( 'Link', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
-				<button type="button" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 16 ); ?></button>
+				<button type="button" data-cmd="link" title="<?php esc_attr_e( 'Link', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Link', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
+				<button type="button" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 16 ); ?></button>
 				<?php if ( \Jetonomy\Permissions\Capabilities::can_upload() ) : ?>
-				<button type="button" data-cmd="image" title="<?php esc_attr_e( 'Upload image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>
+				<button type="button" data-cmd="image" title="<?php esc_attr_e( 'Upload image', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Upload image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>
 				<?php endif; ?>
 				<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it. ?>
 				<button type="button" data-cmd="emoji" title="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-haspopup="menu" aria-expanded="false" aria-controls="jt-emoji-picker"><?php jetonomy_echo_icon( 'smile-plus', 16 ); ?></button>

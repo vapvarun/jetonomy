@@ -14,9 +14,12 @@ ob_start();
 ?>
 <nav class="jt-crumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'jetonomy' ); ?>">
 	<a href="<?php echo esc_url( \Jetonomy\base_url() . '/' ); ?>"><?php esc_html_e( 'Home', 'jetonomy' ); ?></a>
-	<?php foreach ( $crumbs as $crumb ) : ?>
-		<span>/</span>
-		<?php if ( ! empty( $crumb['url'] ) ) : ?>
+	<?php $jt_last_crumb = array_key_last( $crumbs ); ?>
+	<?php foreach ( $crumbs as $jt_crumb_key => $crumb ) : ?>
+		<span aria-hidden="true">/</span>
+		<?php if ( $jt_crumb_key === $jt_last_crumb ) : ?>
+			<span aria-current="page"><?php echo esc_html( $crumb['label'] ); ?></span>
+		<?php elseif ( ! empty( $crumb['url'] ) ) : ?>
 			<a href="<?php echo esc_url( $crumb['url'] ); ?>"><?php echo esc_html( $crumb['label'] ); ?></a>
 		<?php else : ?>
 			<span><?php echo esc_html( $crumb['label'] ); ?></span>

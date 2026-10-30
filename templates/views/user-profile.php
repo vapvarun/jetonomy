@@ -189,7 +189,7 @@ $crumbs = array(
 							$jt_name = \Jetonomy\user_display_name( $user );
 							?>
 							<div class="jt-more-menu jt-flex-shrink-0">
-								<button class="jt-btn jt-btn-ghost jt-more-trigger" type="button"
+								<button class="jt-btn jt-btn-ghost jt-more-trigger" type="button" aria-expanded="false"
 									aria-haspopup="menu"
 									aria-label="<?php /* translators: %s: member display name. */ echo esc_attr( sprintf( __( 'More actions for %s', 'jetonomy' ), $jt_name ) ); ?>"
 									data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>

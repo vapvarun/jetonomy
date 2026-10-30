@@ -136,7 +136,7 @@
      breadcrumb and tab edge. Only the outer container pads. */
   .jt-container .jt-container { max-width: none; padding-inline: 0; }
   .jt-two-col { display: grid !important; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
-  .jt-two-col > main { min-width: 0; }
+  .jt-two-col > * { min-width: 0; }
   .jt-two-col > .jt-sidebar,
   .jt-two-col > aside { position: sticky; top: 24px; align-self: start; }
 
@@ -153,7 +153,7 @@
      every theme (it inherited the theme's body line-height: 17-20px). */
   /* Inline text flow, not flex: as flex items a long category name wrapped
      inside its own column, so the trail broke into ragged side-by-side blocks. */
-  .jt-crumb { display: block; font-size: 0.8125rem; line-height: var(--jt-leading-normal); color: var(--jt-text-secondary); margin-bottom: var(--jt-space-5); }
+  .jt-crumb { display: block; font-size: 0.8125rem; line-height: var(--jt-leading-normal); color: var(--jt-text-secondary); margin-bottom: var(--jt-space-5); overflow-wrap: anywhere; }
   .jt-crumb a { color: var(--jt-text-tertiary); }
   .jt-crumb a:hover { color: var(--jt-text-secondary); }
 
@@ -865,7 +865,7 @@
   .jt-profile-banner { height: 120px; background: var(--jt-accent-light); background: linear-gradient(-135deg, color-mix(in srgb, var(--jt-accent) 22%, var(--jt-surface)), color-mix(in srgb, var(--jt-accent) 7%, var(--jt-surface))); }
   .jt-profile-body { padding: 0 20px 20px; margin-top: -32px; }
   .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: var(--jt-accent-fg); display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
-  .jt-profile-name { font-family: var(--jt-font-heading); font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0; flex-wrap: wrap; row-gap: 8px; }
+  .jt-profile-name { font-family: var(--jt-font-heading); font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0; flex-wrap: wrap; row-gap: 8px; min-width: 0; overflow-wrap: anywhere; }
   .jt-profile-name > * { flex-shrink: 0; }
   /* Grouped header actions (Report / Silence / Ban / Message / Edit) sit as one
      cluster on the right, not spread across the row. */
@@ -925,7 +925,7 @@
   .jt-medal-gold   { color: var(--jt-badge-gold); }
   .jt-medal-silver { color: var(--jt-badge-silver); }
   .jt-medal-bronze { color: var(--jt-badge-bronze); }
-  .jt-leader-name { flex: 1; font-weight: 500; }
+  .jt-leader-name { flex: 1; font-weight: 500; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .jt-leader-pts { font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
 
   /* ── Trending ── */
@@ -1071,7 +1071,7 @@
        at the top of the card instead. Desktop keeps the per-row labels
        since space isn't an issue there. */
     .jt-leader { gap: var(--jt-space-2); padding: var(--jt-space-2) var(--jt-space-3); }
-    .jt-leader-name { font-size: var(--jt-text-sm); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .jt-leader-name { font-size: var(--jt-text-sm); }
     .jt-leader-stats { gap: var(--jt-space-3); }
     /* .jt-leader prefix: the desktop .jt-leader-stat-val rule sits later in
        the file at the same specificity and won, so on phones REP read 14px
@@ -2096,7 +2096,7 @@
      at desktop widths. The name keeps 12rem; the controls drop a line first. */
   .jt-member-item { flex-wrap: wrap; }
   .jt-member-item > .jt-flex-1 { flex: 1 1 12rem; }
-  .jt-member-name { font-weight: 600; color: var(--jt-text); }
+  .jt-member-name { font-weight: 600; color: var(--jt-text); min-width: 0; overflow-wrap: anywhere; }
   .jt-member-joined { font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-top: 2px; }
   /* Reputation is the last cell in the row, so its width sets where every
      control to its left lands. Left free, a 4-digit score pushed the role

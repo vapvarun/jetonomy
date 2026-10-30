@@ -180,7 +180,7 @@ At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<r
 - `a1.4` @admin #ui +settings-off: switch Messages off, then open /community/messages/ -> a "page not available" page renders inside the community layout (site header and community nav present, full width, no sidebar), not a blank page.
 - `a1.5` @guest #rest +settings-off: with Messages off, GET /wp-json/jetonomy/v1/messages -> a 404 error, never a 200 with data and never a PHP notice in the body.
 - `a1.6` @admin #admin +settings-off: set Settings > Permalinks to Plain, then open Jetonomy > Dashboard, Spaces, Settings and Moderation -> every screen shows an error notice linking to Settings > Permalinks.
-- `a1.7` @guest #ui !refuse: with Plain permalinks open /?pagename=community and a made-up community route such as /community/s/zzz-nope/ -> it shows the community "not found" page (HTTP 404) with a link back to the community, and no fatal (a made-up path outside the community routes gets the theme's own 404, which is correct).
+- `a1.7` @admin #admin !refuse: set permalinks to Plain -> every wp-admin screen except Settings > Permalinks shows the error notice "your community cannot be reached while permalinks are set to Plain" with a "Choose a permalink structure" link, and no fatal; switching back to Post name makes /community/ and a made-up /community/s/zzz-nope/ answer again (the latter with the community "not found" page, HTTP 404).
 - `a1.8` @admin #cli: after switching back to Post name permalinks run `wp jetonomy qa-actions` smoke and read wp-content/debug.log, with no other walker writing to the site (the fixture-leak detector compares global row counts) -> zero new Fatal, Warning, Notice or Deprecated lines from activation to the first routed request.
 - `a1.9` @guest #ui +390: open /community/ at 390px right after activation -> no horizontal scroll and the header menu button opens.
 - `a1.10` @admin #cli +old-data: deactivate then reactivate on the seeded community -> no duplicate tables or duplicate default categories, and /community/ still lists the seeded spaces with 200.
@@ -265,7 +265,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-home.9` @guest #rest !refuse: GET /jetonomy/v1/feed and /spaces as guest -> neither response contains Moderators' Room or any topic from Customer Advisory Board.
 - `c-anon-home.10` @guest #ui +long: view the home page's space cards and trending list -> long titles and the 288-character Help Desk description stay inside their cards with no horizontal overflow, at 1440 and 390.
 - `c-anon-home.11` @guest #ui +rtl: with the site language set to Arabic (lane A), view the home page -> the layout mirrors (cards, chips, stats) and nothing overlaps.
-- `c-anon-home.12` @guest #ui +390: open home at 390px -> category chips scroll sideways inside their strip, cards stack in one column, no horizontal page scroll.
+- `c-anon-home.12` @guest #ui +390: open home at 390px -> category chips wrap onto extra lines inside their strip (none clipped), cards stack in one column, no horizontal page scroll.
 - `c-anon-home.13` @guest #ui +dark: toggle dark mode on Reign -> cards, sidebar and chips use dark tokens with readable text and no white panels.
 - `c-anon-home.14` @guest #ui +empty: on a fresh community with no posts (jt-qa seed cleaned) -> the home shows an empty state that invites a visitor to log in, not a blank column.
 - `c-anon-home.15` @guest #ui: click a feed card title and the author name -> the topic page and the author's profile open with 200.
@@ -356,7 +356,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-single-post.19` @guest #ui +long: open Grace's General Discussion topic (159-character title, list, quote, code block, unbroken 100-character URL) on Reign at 1440 and 390 -> the code block scrolls inside itself, the URL wraps or scrolls, the page has no horizontal scroll.
 - `c-anon-single-post.20` @guest #ui +rtl: open Omar's Arabic topic -> body, replies and the vote column mirror correctly.
 - `c-anon-single-post.21` @guest #ui +many: open Feature Requests' 45-reply topic -> 30 replies show, a page 2 control or Load More brings the rest, and the reply count reads 45.
-- `c-anon-single-post.22` @guest #ui +deleted: view a reply whose author account was deleted -> the author shows as a neutral deleted-user name with a default avatar, not a PHP notice or blank.
+- `c-anon-single-post.22` @guest #ui +deleted: view a reply whose author account was deleted -> the author shows as "[deleted]" with the grey user-silhouette avatar (`.jt-avatar-anon`), not a PHP notice or blank.
 - `c-anon-single-post.23` @guest #ui +long: view Grace (long name, no avatar) as author of a reply on 390px -> the name wraps, the initials avatar shows, and meta does not overlap the vote buttons.
 - `c-anon-single-post.24` @guest #ui +dark: toggle dark mode on a topic with blockquote and code -> contrast stays readable.
 - `c-anon-single-post.25` @guest #ui: use the breadcrumb on a topic -> category > space > topic links work.
@@ -2580,15 +2580,15 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 
 **Checks:**
 - `f-a11y.1` @guest #ui: from the top of /community/ press Tab -> a "skip to content" link (or main landmark reachable) appears within the first 3 Tab presses and moves focus to the main content.
-- `f-a11y.2` @member #ui: Tab through the header, a space listing and a topic -> every interactive element gets a visible focus ring (not suppressed by the Reign, BuddyX or Twenty Twenty-Five theme) in light and dark, and tab order matches reading order.
+- `f-a11y.2` @member #ui: Tab through the header, a space listing and a topic -> every interactive element gets a visible focus ring (not suppressed by the Reign, BuddyX or Twenty Twenty-Five theme) in light and dark, and tab order matches reading order. Measure the outline after the button's 150ms transition settles; reading it the instant focus lands reports 0px.
 - `f-a11y.3` @member #ui: icon-only buttons (theme toggle, font-size control, vote up/down, share, bookmark, notifications bell, "More actions", composer toolbar buttons, anonymous toggle) each -> have an `aria-label` that says what they do and `aria-pressed`/`aria-expanded` where they are toggles.
-- `f-a11y.4` @member #ui: the topic and reply editors -> are announced as named edit text (aria-label), the title input has a label, and the poll option inputs have labels like "Option 1".
+- `f-a11y.4` @member #ui: the topic and reply editors -> are announced as named edit text (aria-label, or aria-labelledby pointing at the visible "Content" label), the title input has a label, and the poll option inputs have labels like "Option 1".
 - `f-a11y.5` @member #ui: the vote controls -> announce current score and state (voted/not), and the reaction chips announce "Like, 12 reactions, you reacted" rather than only an emoji.
 - `f-a11y.6` @member #ui: open the report dialog on a reply -> it is a labelled radio group, focus moves to the first reason, Tab stays inside, Escape closes it and returns focus to the Report control.
 - `f-a11y.7` @moderator #ui: moderation actions (approve, -> remove, mark spam, ban, close) have accessible names including the target and are reachable by keyboard; destructive confirms are real dialogs, not `alert`.
 - `f-a11y.8` @member #ui: the share dropdown, the user menu and the notification panel -> open with Enter/Space, arrow keys move within, Escape closes and returns focus to the trigger.
 - `f-a11y.9` @member #ui +dark: text and control contrast -> meets WCAG AA 4.5:1 (3:1 for large text and UI borders) on cards, badges, pills (Announcement), pinned/closed labels, the "Content hidden because you blocked this user." line and placeholders in light and dark.
-- `f-a11y.10` @member #ui +390: zoom text to 200% and tap the controls at 390px -> no horizontal scrolling, tap targets are at least 40px, and the font-size control changes all text.
+- `f-a11y.10` @member #ui +390: zoom text to 200% and tap the controls at 390px -> no horizontal scrolling and tap targets are at least 40px; at desktop width the header font-size control (hidden on phones, where browser zoom does the job) scales all community text and leaves the theme's own header alone.
 - `f-a11y.11` @member #ui: status messages (toast "Badge awarded.", "Reaction settings saved.", form errors such as "Question and at least 2 options required.") -> are announced through an `aria-live` region and linked to their field with `aria-describedby`.
 - `f-a11y.12` @silenced #ui +silenced: the refusal message for a silenced or banned member -> is exposed to assistive tech (not only a coloured banner) and the disabled composer explains why.
 - `f-a11y.13` @member #ui: breadcrumbs -> are a labelled `nav` with the current page marked `aria-current="page"`; headings follow a single `h1` per page with no skipped levels on topic and profile pages.

@@ -74,6 +74,10 @@ if ( $jt_fc_count > 1 ) {
 $jt_fc_type = $jt_fc_is_user
 	? \Jetonomy\jetonomy_label( 'member' )
 	: \Jetonomy\jetonomy_label( 'reply' === $flag->object_type ? 'reply' : 'topic' );
+// The action buttons say only "Remove" / "Dismiss"; describedby names what they act on.
+$jt_fc_target    = ( $jt_fc_is_user && isset( $context->object ) ) || isset( $context->object, $context->topic );
+$jt_fc_target_id = 'jt-flag-' . absint( $flag->id ) . '-target';
+$jt_fc_describe  = $jt_fc_target ? ' aria-describedby="' . esc_attr( $jt_fc_target_id ) . '"' : '';
 ?>
 <div class="jt-mod-flag jt-mod-item"
 	data-flag-id="<?php echo absint( $flag->id ); ?>"
@@ -104,7 +108,7 @@ $jt_fc_type = $jt_fc_is_user
 	</div>
 
 	<?php if ( $jt_fc_is_user && isset( $context->object ) ) : ?>
-		<p class="jt-mod-flag-title" dir="auto">
+		<p class="jt-mod-flag-title" id="<?php echo esc_attr( $jt_fc_target_id ); ?>" dir="auto">
 			<?php if ( $object_url ) : ?>
 				<a href="<?php echo esc_url( $object_url ); ?>"><?php echo esc_html( \Jetonomy\user_display_name( $context->object ) ); ?></a>
 			<?php else : ?>
@@ -129,7 +133,7 @@ $jt_fc_type = $jt_fc_is_user
 		$jt_fc_plain   = (string) ( $context->object->content_plain ?? wp_strip_all_tags( (string) ( $context->object->content ?? '' ) ) );
 		$jt_fc_excerpt = mb_strlen( $jt_fc_plain ) > 140 ? trim( mb_substr( $jt_fc_plain, 0, 140 ) ) . '…' : trim( $jt_fc_plain );
 		?>
-		<p class="jt-mod-flag-title" dir="auto">
+		<p class="jt-mod-flag-title" id="<?php echo esc_attr( $jt_fc_target_id ); ?>" dir="auto">
 			<?php if ( $object_url ) : ?>
 				<a href="<?php echo esc_url( $object_url ); ?>"><?php echo esc_html( jetonomy_post_title_or_excerpt( $context->topic ) ); ?></a>
 			<?php else : ?>
@@ -158,7 +162,7 @@ $jt_fc_type = $jt_fc_is_user
 			<button type="button"
 				class="jt-btn jt-btn-fill jt-mod-resolve"
 				data-wp-on--click="actions.resolveFlag"
-				data-flag-id="<?php echo absint( $flag->id ); ?>"
+				data-flag-id="<?php echo absint( $flag->id ); ?>"<?php echo $jt_fc_describe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above. ?>
 				data-resolution="valid">
 				<?php jetonomy_echo_icon( 'check-circle', 14 ); ?>
 				<?php esc_html_e( 'Uphold', 'jetonomy' ); ?>
@@ -167,7 +171,7 @@ $jt_fc_type = $jt_fc_is_user
 		<button type="button"
 			class="jt-btn jt-btn-fill jt-btn-danger jt-mod-resolve"
 			data-wp-on--click="actions.resolveFlag"
-			data-flag-id="<?php echo absint( $flag->id ); ?>"
+			data-flag-id="<?php echo absint( $flag->id ); ?>"<?php echo $jt_fc_describe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above. ?>
 			data-resolution="valid">
 			<?php jetonomy_echo_icon( 'trash', 14 ); ?>
 			<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
@@ -176,7 +180,7 @@ $jt_fc_type = $jt_fc_is_user
 		<button type="button"
 			class="jt-btn jt-btn-ghost jt-mod-resolve"
 			data-wp-on--click="actions.resolveFlag"
-			data-flag-id="<?php echo absint( $flag->id ); ?>"
+			data-flag-id="<?php echo absint( $flag->id ); ?>"<?php echo $jt_fc_describe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above. ?>
 			data-resolution="dismissed">
 			<?php esc_html_e( 'Dismiss', 'jetonomy' ); ?>
 		</button>
