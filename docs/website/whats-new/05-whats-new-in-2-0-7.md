@@ -38,7 +38,8 @@ Access rules that are harder to get wrong, a membership gate that tells visitors
 - **Moderation.** The ban dialog explains what Global Ban and Silence do, and ban, silence and lift show the reason when they fail. Silenced and banned members cannot start a space.
 - **BuddyNext.** A member suspended in BuddyNext is read-only in the forum, and a member blocked in BuddyNext is blocked here too.
 - **Privacy.** On a private community a signed-out visitor gets no answer from any action, including polls, reactions and attachment downloads.
-- **Accessibility.** Admin text meets WCAG AA contrast on every Jetonomy screen, and Edit Profile section links wrap on phones.
+- **Accessibility.** Admin text meets WCAG AA contrast on every Jetonomy screen. Menus work from the keyboard (arrow keys, Home, End, Escape), and screen readers hear the current breadcrumb and what each moderation action acts on.
+- **Long names.** A very long member name wraps on profiles and member lists instead of widening the page on phones.
 - **Translations.** All 10 languages were re-translated with one glossary per language and checked to 99% or more. German keeps the capital letter on nouns mid-sentence.
 
 ## What's new in Pro
