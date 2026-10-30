@@ -299,6 +299,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - A malformed invite link says "Invalid invite link." instead of showing the theme's 404 page.
 * Fix      - A reply's vote score always matches its votes, even after fast repeated clicks.
 * Fix      - The space topics REST endpoint honours per_page.
+* Fix      - The notice after adding an access rule shows in full in every language.
 * Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.
 * Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
 * Compat   - Aligned with Jetonomy Pro 2.0.7. Install both updates together.
