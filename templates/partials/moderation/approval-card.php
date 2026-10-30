@@ -67,6 +67,10 @@ $jt_permalink = $jt_slug
 
 // The JS appends "{action}/{kind}/{id}" to this.
 $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id . '/moderation/' ) );
+
+// Screen readers hear which item each action acts on: the title, or the excerpt when there is none.
+$jt_ac_target   = 'jt-approval-' . sanitize_key( $kind ) . '-' . absint( $item->id ) . ( '' !== $jt_title ? '-title' : '-text' );
+$jt_ac_describe = ' aria-describedby="' . esc_attr( $jt_ac_target ) . '"';
 ?>
 <div class="jt-mod-flag jt-mod-item jt-mod-approval"
 	data-object-kind="<?php echo esc_attr( $kind ); ?>"
@@ -100,7 +104,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 	</div>
 
 	<?php if ( '' !== $jt_title ) : ?>
-		<div class="jt-mod-flag-title">
+		<div class="jt-mod-flag-title" id="<?php echo esc_attr( $jt_ac_target ); ?>">
 			<?php
 			if ( $jt_is_reply ) {
 				/* translators: %s: title of the thread the held reply belongs to */
@@ -112,7 +116,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 		</div>
 	<?php endif; ?>
 
-	<div class="jt-mod-flag-excerpt" dir="auto">
+	<div class="jt-mod-flag-excerpt" id="<?php echo esc_attr( 'jt-approval-' . sanitize_key( $kind ) . '-' . absint( $item->id ) . '-text' ); ?>" dir="auto">
 		<?php echo esc_html( $jt_excerpt ); ?>
 	</div>
 
@@ -126,7 +130,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 			<?php // Restore is the approve action: trash -> publish through the same moderation choke-point. ?>
 			<button type="button"
 				class="jt-btn jt-btn-fill jt-mod-approve"
-				data-wp-on--click="actions.moderateApproval"
+				data-wp-on--click="actions.moderateApproval"<?php echo $jt_ac_describe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_attr() above. ?>
 				data-action-name="approve">
 				<?php jetonomy_echo_icon( 'check-circle', 14 ); ?>
 				<?php esc_html_e( 'Restore', 'jetonomy' ); ?>
@@ -134,7 +138,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 			<?php // Permanent delete is DELETE /posts|replies/{id}?force=true, not a moderation status. ?>
 			<button type="button"
 				class="jt-btn jt-btn-ghost jt-btn-danger jt-mod-approve"
-				data-wp-on--click="actions.moderateApproval"
+				data-wp-on--click="actions.moderateApproval"<?php echo $jt_ac_describe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_attr() above. ?>
 				data-action-name="delete"
 				data-rest-method="DELETE"
 				data-rest-path="<?php echo esc_attr( ( $jt_is_reply ? '/replies/' : '/posts/' ) . absint( $item->id ) . '?force=true' ); ?>"
@@ -145,7 +149,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 		<?php else : ?>
 		<button type="button"
 			class="jt-btn jt-btn-fill jt-mod-approve"
-			data-wp-on--click="actions.moderateApproval"
+			data-wp-on--click="actions.moderateApproval"<?php echo $jt_ac_describe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_attr() above. ?>
 			data-action-name="approve">
 			<?php jetonomy_echo_icon( 'check-circle', 14 ); ?>
 			<?php esc_html_e( 'Approve', 'jetonomy' ); ?>
@@ -154,7 +158,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 			<?php if ( ! $jt_is_spam ) : ?>
 		<button type="button"
 			class="jt-btn jt-btn-ghost jt-mod-approve"
-			data-wp-on--click="actions.moderateApproval"
+			data-wp-on--click="actions.moderateApproval"<?php echo $jt_ac_describe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_attr() above. ?>
 			data-action-name="spam"
 			data-confirm="<?php esc_attr_e( 'Mark this submission as spam? It leaves the queue and its author loses reputation.', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'shield', 14 ); ?>
@@ -163,7 +167,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 			<?php endif; ?>
 		<button type="button"
 			class="jt-btn jt-btn-ghost jt-btn-danger jt-mod-approve"
-			data-wp-on--click="actions.moderateApproval"
+			data-wp-on--click="actions.moderateApproval"<?php echo $jt_ac_describe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_attr() above. ?>
 			data-action-name="trash"
 			data-confirm="<?php esc_attr_e( 'Reject this submission? It moves to trash.', 'jetonomy' ); ?>">
 			<?php jetonomy_echo_icon( 'trash', 14 ); ?>

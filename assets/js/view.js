@@ -3704,6 +3704,9 @@ const { state, actions } = store( 'jetonomy', {
             // removal here made that click a full page load (regionDirty).
             try {
                 yield reloadRegion();
+                // The router reuses this card's nodes for the flag that slides
+                // into its place, and the server markup never carries `disabled`.
+                buttons.forEach( ( b ) => { b.disabled = false; } );
             } catch ( e ) {
                 window.location.reload(); // the flag is resolved; never leave a stale card
             }

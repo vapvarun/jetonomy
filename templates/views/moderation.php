@@ -355,9 +355,9 @@ $crumbs = array(
 						<div class="jt-mod-flag-row-head">
 							<span class="jt-badge jt-badge-danger"><?php echo esc_html( $jt_ban_label ); ?></span>
 							<?php if ( $jt_is_ip_ban ) : // An IP ban blocks an address, not the member it was issued from. ?>
-								<code class="jt-mod-flag-space"><?php echo esc_html( (string) $jt_ban->reason ); ?></code>
+								<code class="jt-mod-flag-space" id="<?php echo esc_attr( 'jt-ban-' . absint( $jt_ban->id ) . '-who' ); ?>"><?php echo esc_html( (string) $jt_ban->reason ); ?></code>
 							<?php else : ?>
-							<a class="jt-mod-flag-space" href="<?php echo esc_url( $jt_banned_user ? \Jetonomy\get_profile_url( (int) $jt_banned_user->ID ) : '' ); ?>">
+							<a class="jt-mod-flag-space" id="<?php echo esc_attr( 'jt-ban-' . absint( $jt_ban->id ) . '-who' ); ?>" href="<?php echo esc_url( $jt_banned_user ? \Jetonomy\get_profile_url( (int) $jt_banned_user->ID ) : '' ); ?>">
 								<?php echo esc_html( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : __( '[deleted]', 'jetonomy' ) ); ?>
 							</a>
 							<?php endif; ?>
@@ -379,6 +379,7 @@ $crumbs = array(
 							<button type="button"
 								class="jt-btn jt-btn-ghost jt-btn-sm jt-flex-shrink-0"
 								data-wp-on--click="actions.liftRestriction"
+								aria-describedby="<?php echo esc_attr( 'jt-ban-' . absint( $jt_ban->id ) . '-who' ); ?>"
 								data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
 								data-user-name="<?php echo esc_attr( $jt_is_ip_ban ? (string) $jt_ban->reason : ( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : '' ) ); ?>">
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
