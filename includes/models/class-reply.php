@@ -1419,6 +1419,8 @@ class Reply extends Model {
 		$posts_tbl   = \Jetonomy\table( 'posts' );
 		$spaces_tbl  = \Jetonomy\table( 'spaces' );
 
+		// The parent topic must be published too: trashing a topic leaves its
+		// replies 'publish', and they must not stay readable here.
 		// Space-visibility + per-post is_private gate on the PARENT post: a
 		// reply in a private/hidden space (or under a private post) must not
 		// surface to non-member / non-author viewers of this user's profile.
@@ -1453,7 +1455,7 @@ class Reply extends Model {
 				 FROM {$replies_tbl} r
 				 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-				 WHERE r.author_id = %d AND r.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
+				 WHERE r.author_id = %d AND r.status = 'publish' AND p.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
 				 ORDER BY r.created_at DESC, r.id DESC
 				 LIMIT %d OFFSET %d",
 				$user_id,
