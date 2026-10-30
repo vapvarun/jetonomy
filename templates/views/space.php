@@ -151,13 +151,15 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 			'empty-state',
 			array(
 				'icon'            => 'lock',
-				'message'         => sprintf(
+				// Nothing left to get: never name a plan that is gone (a deleted
+				// level has only its raw id, e.g. "pmpro_999").
+				'message'         => $_jt_none_left ? $_jt_how : sprintf(
 					/* translators: 1: the singular space label (e.g. space, group), 2: comma-separated plan names. */
 					__( 'This %1$s is included with %2$s.', 'jetonomy' ),
 					\Jetonomy\space_label( false, true ),
 					implode( ', ', $_jt_tier_names )
 				),
-				'description'     => $_jt_how,
+				'description'     => $_jt_none_left ? '' : $_jt_how,
 				'cta_label'       => isset( $_jt_ways[0] ) ? $_jt_btn( $_jt_ways[0] ) : '',
 				'cta_url'         => $_jt_ways[0]['url'] ?? '',
 				'secondary_label' => isset( $_jt_ways[1] ) ? $_jt_btn( $_jt_ways[1] ) : '',

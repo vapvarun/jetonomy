@@ -3881,17 +3881,6 @@
       "notes": "Emit half of the mention contract; must be paired with jetonomy_resolve_mention_handles."
     },
     {
-      "name": "jetonomy_user_is_banned",
-      "type": "filter",
-      "args_count": 2,
-      "args_signature": [
-        "bool $banned",
-        "int $user_id"
-      ],
-      "where": "includes/models/class-restriction.php (Restriction::is_banned)",
-      "notes": "2.0.7. Lets a host plugin count its own site-wide ban (BuddyNext suspension). Every permission check reads it; SQL-only paths (not_banned_sql, notification actor exclusion) read the table directly."
-    },
-    {
       "name": "jetonomy_user_is_silenced",
       "type": "filter",
       "args_count": 2,

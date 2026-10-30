@@ -559,16 +559,22 @@ class Router {
 	 * address Jetonomy itself prints. Runs on parse_request at priority 0, before
 	 * any page or 404 is resolved.
 	 *
+	 * Only GET and HEAD: a 301 turns a POST into a GET and drops its body.
+	 * Invite tokens are mixed-case, so /invite/ addresses are left as typed.
+	 * Percent-escapes keep their case, so a non-ASCII address (%C3%BC) is not
+	 * sent round once just to lower-case its hex.
+	 *
 	 * @param \WP $wp The main WordPress environment instance.
 	 */
 	public function redirect_case_variant( $wp ): void {
-		if ( is_admin() ) {
+		$method = strtoupper( sanitize_key( wp_unslash( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_key() cleans it.
+		if ( is_admin() || ! in_array( $method, array( 'GET', 'HEAD' ), true ) ) {
 			return;
 		}
 		$path  = (string) $wp->request;
-		$lower = strtolower( $path );
+		$lower = (string) preg_replace_callback( '/%[0-9A-Fa-f]{2}|[^%]+/', static fn( $m ) => '%' === $m[0][0] ? $m[0] : strtolower( $m[0] ), $path );
 		$base  = base_slug();
-		if ( $path === $lower || ( $lower !== $base && ! str_starts_with( $lower, $base . '/' ) ) ) {
+		if ( $path === $lower || ( $lower !== $base && ! str_starts_with( $lower, $base . '/' ) ) || str_starts_with( $lower, $base . '/invite/' ) ) {
 			return;
 		}
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only the query string is reused, and wp_safe_redirect() validates the target.

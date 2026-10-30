@@ -8,8 +8,8 @@ use Jetonomy\Models\Restriction;
 use Jetonomy\DB\Schema;
 
 /**
- * A host plugin (BuddyNext) bans and blocks with its own records. Its answer
- * must count wherever Jetonomy asks, so a member is never banned or blocked twice.
+ * A host plugin (BuddyNext) silences and blocks with its own records. Its answer
+ * must count wherever Jetonomy asks, so a member is never silenced or blocked twice.
  */
 class HostModerationFiltersTest extends WP_UnitTestCase {
 
@@ -19,24 +19,20 @@ class HostModerationFiltersTest extends WP_UnitTestCase {
 	}
 
 	public function tear_down(): void {
-		remove_all_filters( 'jetonomy_user_is_banned' );
 		remove_all_filters( 'jetonomy_user_is_silenced' );
 		remove_all_filters( 'jetonomy_blocked_user_ids' );
 		Cache::reset_memos();
 		parent::tear_down();
 	}
 
-	public function test_a_host_ban_or_silence_counts(): void {
+	public function test_a_host_silence_counts(): void {
 		$user = self::factory()->user->create();
-		$this->assertFalse( Restriction::is_banned( $user ) );
 		$this->assertFalse( Restriction::is_silenced( $user ) );
 
-		add_filter( 'jetonomy_user_is_banned', fn( $banned, $id ) => $banned || $id === $user, 10, 2 );
 		add_filter( 'jetonomy_user_is_silenced', fn( $silenced, $id ) => $silenced || $id === $user, 10, 2 );
 
-		$this->assertTrue( Restriction::is_banned( $user ) );
 		$this->assertTrue( Restriction::is_silenced( $user ) );
-		$this->assertFalse( Restriction::is_banned( self::factory()->user->create() ), 'Only the host-banned member.' );
+		$this->assertFalse( Restriction::is_silenced( self::factory()->user->create() ), 'Only the host-silenced member.' );
 	}
 
 	public function test_a_host_block_counts_in_every_block_check(): void {

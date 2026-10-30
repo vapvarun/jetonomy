@@ -218,9 +218,11 @@ class Adapter_Registry {
 
 	/**
 	 * Whether a membership level can still be bought or joined: false for a
-	 * trashed, unpublished or deleted course, product or plan. Adapters opt in
-	 * with an optional `level_available( string $level_id ): bool`; without it
-	 * (or with the adapter inactive) the level counts as available.
+	 * trashed, unpublished or deleted course, product or plan. Adapters may
+	 * implement an optional `level_available( string $level_id ): bool`; without
+	 * it, a level the adapter cannot name (get_level_label() falls back to the
+	 * raw id, e.g. a deleted PMPro level "pmpro_999") counts as gone. With no
+	 * adapter registered the level counts as available.
 	 *
 	 * @param string $level_id Stored rule value.
 	 * @return bool
@@ -228,7 +230,10 @@ class Adapter_Registry {
 	public static function membership_level_available( string $level_id ): bool {
 		$adapter_id = '' !== $level_id ? self::level_owner( $level_id )['adapter'] : '';
 		$adapter    = '' !== $adapter_id ? self::get_membership( $adapter_id ) : null;
-		return ! $adapter || ! method_exists( $adapter, 'level_available' ) || (bool) $adapter->level_available( $level_id );
+		if ( ! $adapter ) {
+			return true;
+		}
+		return method_exists( $adapter, 'level_available' ) ? (bool) $adapter->level_available( $level_id ) : $adapter->get_level_label( $level_id ) !== $level_id;
 	}
 
 	/**

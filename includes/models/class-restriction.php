@@ -292,7 +292,7 @@ class Restriction extends Model {
 	 * @return bool
 	 */
 	public static function is_banned( int $user_id ): bool {
-		$own = self::memo(
+		return self::memo(
 			"banned:{$user_id}",
 			static function () use ( $user_id ): bool {
 				$now = now();
@@ -312,17 +312,6 @@ class Restriction extends Model {
 				return null !== $row;
 			}
 		);
-
-		/**
-		 * Filter whether a user is banned site-wide.
-		 *
-		 * A host plugin can count its own site-wide ban, e.g. a BuddyNext suspension.
-		 *
-		 * @since 2.0.7
-		 * @param bool $banned  Banned in Jetonomy.
-		 * @param int  $user_id User ID.
-		 */
-		return (bool) apply_filters( 'jetonomy_user_is_banned', $own, $user_id );
 	}
 
 	/**
