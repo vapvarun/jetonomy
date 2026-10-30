@@ -123,7 +123,7 @@ class Adapter_Registry {
 		);
 
 		$owner   = self::level_owner( $level_id );
-		$adapter = '' !== $owner['adapter'] ? self::get_membership( $owner['adapter'] ) : null;
+		$adapter = self::$membership[ $owner['adapter'] ] ?? null;
 		if ( ! $adapter ) {
 			return $fallback;
 		}
@@ -152,7 +152,7 @@ class Adapter_Registry {
 	public static function level_owner( string $level_id ): array {
 		foreach ( self::$membership as $adapter_id => $adapter ) {
 			/** @var Membership_Adapter $adapter */
-			if ( 'wp-roles' === $adapter_id || ! method_exists( $adapter, 'level_prefixes' ) || ! $adapter->is_active() ) {
+			if ( ! method_exists( $adapter, 'level_prefixes' ) || ! $adapter->is_active() ) {
 				continue;
 			}
 			foreach ( (array) $adapter->level_prefixes() as $prefix => $kind ) {
@@ -206,7 +206,7 @@ class Adapter_Registry {
 			return true;
 		}
 		$owner   = self::level_owner( $level_id );
-		$adapter = '' !== $owner['adapter'] ? self::get_membership( $owner['adapter'] ) : null;
+		$adapter = self::$membership[ $owner['adapter'] ] ?? null;
 		if ( $adapter && method_exists( $adapter, 'level_is_purchase' ) ) {
 			return (bool) $adapter->level_is_purchase( $level_id );
 		}
@@ -226,7 +226,7 @@ class Adapter_Registry {
 	 */
 	public static function membership_level_available( string $level_id ): bool {
 		$adapter_id = '' !== $level_id ? self::level_owner( $level_id )['adapter'] : '';
-		$adapter    = '' !== $adapter_id ? self::get_membership( $adapter_id ) : null;
+		$adapter    = self::$membership[ $adapter_id ] ?? null;
 		if ( ! $adapter ) {
 			return true;
 		}
@@ -257,7 +257,7 @@ class Adapter_Registry {
 
 		if ( '' !== $level_id ) {
 			$adapter_id = self::level_owner( $level_id )['adapter'];
-			$adapter    = '' !== $adapter_id ? self::get_membership( $adapter_id ) : null;
+			$adapter    = self::$membership[ $adapter_id ] ?? null;
 
 			if ( $adapter && method_exists( $adapter, 'get_level_url' ) ) {
 				$url = (string) $adapter->get_level_url( $level_id );

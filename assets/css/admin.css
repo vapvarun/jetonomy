@@ -29,7 +29,7 @@
 	--jt-admin-text-muted: #5f6b7d; /* 4.75:1 on the lightest admin grey (WCAG AA). */
 	--jt-admin-text-wp: #1d2327;
 	--jt-admin-text-wp-2: #646970;
-	--jt-admin-text-wp-3: #5f6b7d; /* Text only; #8c8f94 measured 2.85:1 on #f0f0f1. */
+	--jt-admin-text-wp-3: var(--jt-admin-text-muted); /* Text only; #8c8f94 measured 2.85:1 on #f0f0f1. */
 	--jt-admin-text-step: #666666;
 	--jt-admin-text-arrow: #cccccc;
 
@@ -551,21 +551,6 @@
 .jetonomy-badge--hidden {
 	background: var(--jt-admin-surface-wp);
 	color: var(--jt-admin-text-wp-2);
-}
-
-.jetonomy-badge--read {
-	background: var(--jt-admin-info-light);
-	color: var(--jt-admin-info);
-}
-
-.jetonomy-badge--participate {
-	background: var(--jt-admin-warn-light);
-	color: var(--jt-admin-warn-dark);
-}
-
-.jetonomy-badge--full {
-	background: var(--jt-admin-success-light);
-	color: var(--jt-admin-success-dark);
 }
 
 .jetonomy-badge--ban {
@@ -4373,7 +4358,7 @@ tr.jetonomy-moderated td {
 	top: 0;
 	font-size: 20px;
 	line-height: 1;
-	color: #55606e;
+	color: var(--jt-admin-text-3);
 	transform: rotate(90deg);
 	transition: transform 0.15s;
 }
@@ -4381,11 +4366,10 @@ tr.jetonomy-moderated td {
 	transform: rotate(-90deg);
 }
 .jt-settings-card--disclosure > summary:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--jt-admin-blue-wp);
 	outline-offset: 2px;
 	border-radius: 4px;
 }
-
 
 /* An access rule whose course, product or plan is gone: it lets nobody in. */
 .jt-rule-unavailable {

@@ -32,7 +32,6 @@ defined( 'ABSPATH' ) || exit;
  * granted rather than sold: WP Roles, WP Fusion tags, SureMembers access
  * groups, and the tag-membership bridge. Site owners direct people to those
  * however their funnel works, via `jetonomy_membership_upgrade_url`.
-
  *
  * Also OPTIONAL, for the same reason:
  *

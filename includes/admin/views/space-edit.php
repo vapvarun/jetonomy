@@ -520,7 +520,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<option value="participate" selected><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
 					</select>
 					<?php
-					// Space Role is derived from the access level and submitted as a hidden field. It
+					// Space Role is derived from the access level on save (AccessRule::role_for_grants()). It
 					// never affects access (Permission_Engine reads only `grants`), and a free choice
 					// would let "Sync Members" deposit space admins from a rule labelled "Read". To
 					// give one person a different role, use the Members tab, where roster roles belong.

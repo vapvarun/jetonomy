@@ -808,16 +808,6 @@ async function appendNewReply( newId ) {
     }
 }
 
-/**
- * URL of the page a new top-level reply lands on, anchored to it.
- *
- * Under the default oldest-first order a new reply is the last one, so it sits
- * on the last page; on a long thread that is not the page being read. Returns
- * '' for other orders (newest-first puts it on page 1, best is unknown).
- *
- * @param {number|string} newId Reply id from the create response.
- * @return {string}
- */
 // Ban, silence and lift all end here: a failure says why and keeps the page;
 // a success reloads (the server re-renders badge + controls) and confirms it.
 function moderationDone( btn, res, okMsg, failMsg ) {
@@ -837,6 +827,16 @@ function moderationDone( btn, res, okMsg, failMsg ) {
     window.location.reload();
 }
 
+/**
+ * URL of the page a new top-level reply lands on, anchored to it.
+ *
+ * Under the default oldest-first order a new reply is the last one, so it sits
+ * on the last page; on a long thread that is not the page being read. Returns
+ * '' for other orders (newest-first puts it on page 1, best is unknown).
+ *
+ * @param {number|string} newId Reply id from the create response.
+ * @return {string}
+ */
 function lastReplyPageUrl( newId ) {
     const list    = document.getElementById( 'jt-replies-container' );
     const perPage = parseInt( list?.dataset.perPage, 10 );
@@ -1889,7 +1889,6 @@ const { state, actions } = store( 'jetonomy', {
             const menu = trigger.closest( '[data-jt-notif-menu]' );
             const panel = menu && menu.querySelector( '.jt-notif-item__menu-list' );
             if ( ! panel ) return;
-            panel.removeAttribute( 'hidden' );
             if ( ! trigger._jtDropdown ) {
                 trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {
                     placement: 'bottom-end',
@@ -2694,7 +2693,7 @@ const { state, actions } = store( 'jetonomy', {
             window.addEventListener( 'resize', scrollHandler, { passive: true } );
             document.addEventListener( 'keydown', keyHandler );
             el.ref.setAttribute( 'aria-expanded', 'true' );
-            dropdown.querySelector( 'button' )?.focus( { preventScroll: true } );
+            window.jetonomySmartDropdown.items( dropdown )[0]?.focus( { preventScroll: true } );
             // Click-outside is the only listener that needs the next-tick
             // defer — the click that opened the dropdown is still bubbling
             // when we register, and we don't want it to instantly trigger
@@ -2848,10 +2847,6 @@ const { state, actions } = store( 'jetonomy', {
             const panel = menu.querySelector( '.jt-more-dropdown' );
             if ( ! panel ) return;
 
-            // SSR markup ships `hidden` on the panel; the smart-dropdown
-            // primitive flips display/position inline once it takes over,
-            // so we drop the attribute on first activation.
-            panel.removeAttribute( 'hidden' );
 
             if ( ! trigger._jtDropdown ) {
                 trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {
@@ -4058,7 +4053,6 @@ const { state, actions } = store( 'jetonomy', {
             const menu = trigger.closest( '.jt-publish-mode' );
             const panel = menu?.querySelector( '.jt-publish-mode__menu' );
             if ( ! panel ) return;
-            panel.removeAttribute( 'hidden' );
 
             if ( ! trigger._jtDropdown ) {
                 trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {

@@ -529,38 +529,23 @@ class Vote extends Model {
 	 * @param int    $author_id The object author's user ID.
 	 * @param int    $object_id The voted post or reply, logged as the source of the change.
 	 */
-	private static function adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id = 0 ): void {
+	private static function adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id ): void {
 		if ( ! $author_id ) {
 			return;
 		}
-
-		$source    = array(
+		$source = array(
 			'object_type' => $type,
 			'object_id'   => $object_id,
 		);
-		$action    = $result['action'];
-		$old_value = $result['old_value'] ?? null;
-
-		// No reputation change if nothing happened.
-		if ( 'none' === $action ) {
-			return;
+		// Removing a vote takes back its award; changing direction takes back the old one.
+		$taken_back = array(
+			'removed' => $value,
+			'updated' => $result['old_value'] ?? null,
+		)[ $result['action'] ] ?? null;
+		if ( null !== $taken_back ) {
+			Reputation::revoke( $author_id, self::reputation_action_for( $type, $taken_back ), $source );
 		}
-
-		if ( 'created' === $action ) {
-			// New vote: award via Reputation class.
-			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
-			return;
-		}
-
-		if ( 'removed' === $action ) {
-			// Undo vote: revoke the original award.
-			Reputation::revoke( $author_id, self::reputation_action_for( $type, $value ), $source );
-			return;
-		}
-
-		if ( 'updated' === $action && null !== $old_value ) {
-			// Changed vote direction: revoke old award and apply new one.
-			Reputation::revoke( $author_id, self::reputation_action_for( $type, $old_value ), $source );
+		if ( in_array( $result['action'], array( 'created', 'updated' ), true ) ) {
 			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
 		}
 	}
@@ -573,9 +558,6 @@ class Vote extends Model {
 	 * @return string
 	 */
 	private static function reputation_action_for( string $type, int $value ): string {
-		if ( $value > 0 ) {
-			return 'post' === $type ? 'post_upvoted' : 'reply_upvoted';
-		}
-		return 'post' === $type ? 'post_downvoted' : 'reply_downvoted';
+		return $type . ( $value > 0 ? '_upvoted' : '_downvoted' );
 	}
 }

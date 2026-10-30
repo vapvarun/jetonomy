@@ -31,7 +31,7 @@
 		};
 	}
 
-	// A toast parked before a reload (window.jtReloadWithToast) shows on this load.
+	// A toast parked before a reload (moderationDone() in view.js) shows on this load.
 	try {
 		var parked = window.sessionStorage.getItem('jetonomyToast');
 		if (parked) {

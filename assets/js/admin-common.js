@@ -93,7 +93,6 @@
 					/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
 					read:        sprintf( __( 'read and report posts and %s', 'jetonomy' ), REPLIES ),
 					participate: __( 'read, post, reply, vote and report', 'jetonomy' ), // jt-terms-ok: "reply" is the verb here, not the noun.
-					full:        sprintf( /* translators: %s: topic label, plural lowercase (e.g. "topics"). */ __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s %s', 'jetonomy' ), TOPICS ), // jt-terms-ok: "reply" is the verb; the noun is the placeholder.
 				},
 				// The consequence of each rule type, not its definition.
 				typeNotes: {
@@ -1247,8 +1246,8 @@
 				var ruleType = isAdapter ? 'membership' : ruleTypeVal;
 				var ruleValue = isAdapter ? $('#rule-value-membership').val() : $('#rule-value').val();
 				var i18n      = (self.i18n && self.i18n.rulePreview) || {};
-				// The rule in plain words: the first sentence of the preview.
-				var summary   = $.trim($('[data-jt-rule-preview] > span').first().text().split('. ')[0]) + '.';
+				// The rule in plain words, as the preview showed it.
+				var summary   = $.trim($('[data-jt-rule-preview] > span').first().text());
 				var opensAll  = ('everyone' === ruleType || 'logged_in' === ruleType) && '1' === String($btn.data('private'));
 				var asked     = opensAll
 					? self.confirmAsync(
@@ -1268,9 +1267,8 @@
 						priority: $('#rule-priority').val()
 					}).done(function(res) {
 						if (res.success) {
-							// Keep any note after the server's first sentence (e.g. "switched to Private").
-							var extra = String(res.data.message || '').replace(/^[^.]*\.\s*/, '');
-							self.reloadWithToast((i18n.added || '%s').replace('%s', summary) + (extra ? ' ' + extra : ''));
+							// A space switched to Private gets the server's explanation instead.
+							self.reloadWithToast(res.data.made_private ? res.data.message : (i18n.added || '%s').replace('%s', summary));
 						} else {
 							self.toast(res.data || self.i18n.error, 'error');
 							$btn.prop('disabled', false);
