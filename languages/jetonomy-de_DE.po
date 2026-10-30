@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-10-30T19:53:23+00:00\n"
+"POT-Creation-Date: 2026-10-30T21:26:38+00:00\n"
 "PO-Revision-Date: 2026-06-28 11:51:58+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -790,9 +790,7 @@ msgstr "Ungültige Benutzer-ID."
 #. translators: 1: space label, lowercase (e.g. "space"). 2: member label, lowercase (e.g. "member"). 3: member label, plural (e.g. "Members").
 #, fuzzy, php-format
 msgid "This ban needs a specific %1$s. Ban the %2$s from that %1$s's %3$s screen."
-msgstr ""
-"Diese Sperre braucht einen eindeutigen Bezug: %1$s. %2$s in der Ansicht "
-"„%3$s“ dieses Bezugs sperren."
+msgstr "[object Object]"
 
 #: includes/admin/ajax/class-users-handler.php:121
 msgid "Failed to ban user."
@@ -893,7 +891,7 @@ msgstr "Details"
 #: templates/partials/feed-card.php:67
 #: templates/partials/moderation/flag-card.php:105
 #: templates/partials/post-card.php:167 templates/partials/reply-card.php:159
-#: templates/views/moderation.php:599 templates/views/notifications.php:317
+#: templates/views/moderation.php:600 templates/views/notifications.php:322
 #: templates/views/search.php:381 templates/views/single-post.php:558
 #: templates/views/user-profile.php:436 templates/views/user-profile.php:565
 #: templates/views/user-profile.php:689
@@ -927,7 +925,7 @@ msgstr "System"
 #: templates/partials/avatar.php:17 templates/partials/feed-card.php:31
 #: templates/partials/post-card.php:125 templates/partials/reply-card.php:129
 #: templates/partials/reply-card.php:270 templates/partials/reply-card.php:277
-#: templates/views/notifications.php:227 templates/views/single-post.php:327
+#: templates/views/notifications.php:232 templates/views/single-post.php:327
 #: templates/views/single-post.php:551
 msgid "Anonymous"
 msgstr "Anonym"
@@ -1192,7 +1190,7 @@ msgid "Trashed content"
 msgstr "Hat Inhalte in den Papierkorb verschoben"
 
 #: includes/admin/class-admin.php:372
-#: templates/partials/moderation/approval-card.php:85
+#: templates/partials/moderation/approval-card.php:89
 msgid "Marked as spam"
 msgstr "Als Spam markiert"
 
@@ -1691,7 +1689,7 @@ msgstr "Suchen: %s…"
 #: includes/admin/views/categories.php:108 includes/admin/views/tags.php:103
 #: includes/class-nav-menus.php:117 includes/class-template-loader.php:1117
 #: includes/seo/class-schema-markup.php:519 templates/partials/header.php:81
-#: templates/partials/header.php:83 templates/partials/header.php:159
+#: templates/partials/header.php:83 templates/partials/header.php:168
 #: templates/views/search.php:216 templates/views/space-members.php:383
 #: assets/js/header.js:503
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
@@ -1742,7 +1740,7 @@ msgstr "Bearbeiten"
 
 #: includes/admin/views/categories.php:191 includes/admin/views/content.php:313
 #: includes/admin/views/spaces.php:298
-#: templates/partials/moderation/approval-card.php:122
+#: templates/partials/moderation/approval-card.php:126
 #: templates/partials/moderation/flag-card.php:157
 msgid "View"
 msgstr "Anzeigen"
@@ -1750,7 +1748,7 @@ msgstr "Anzeigen"
 #: includes/admin/views/categories.php:192
 #: includes/admin/views/space-edit.php:629 includes/admin/views/tags.php:81
 #: includes/admin/views/tags.php:155 templates/partials/reply-card.php:323
-#: templates/views/notifications.php:211 templates/views/notifications.php:341
+#: templates/views/notifications.php:216 templates/views/notifications.php:346
 #: templates/views/single-post.php:854
 #. translators: 1: number of topics; 2: topic label with the right number, lowercase; 3: topic label, plural lowercase.
 msgid "Delete"
@@ -1879,7 +1877,7 @@ msgstr "(kein Titel)"
 #: includes/class-abilities.php:1532
 #: includes/notifications/class-notifier.php:1044
 #: templates/partials/moderation/flag-card.php:69
-#: templates/views/moderation.php:562
+#: templates/views/moderation.php:563
 msgid "Unknown"
 msgstr "Unbekannt"
 
@@ -1933,7 +1931,7 @@ msgstr "Mehrfachaktionen"
 
 #: includes/admin/views/content.php:99 includes/admin/views/content.php:294
 #: includes/admin/views/replies.php:137 includes/admin/views/replies.php:297
-#: templates/partials/moderation/approval-card.php:132
+#: templates/partials/moderation/approval-card.php:136
 #: templates/views/single-post.php:427
 msgid "Restore"
 msgstr "Wiederherstellen"
@@ -1947,7 +1945,7 @@ msgstr "Endgültig löschen"
 #: includes/admin/views/moderation.php:134
 #: includes/admin/views/moderation.php:245 includes/admin/views/replies.php:140
 #: includes/admin/views/replies.php:261 includes/admin/views/space-edit.php:910
-#: templates/partials/moderation/approval-card.php:151
+#: templates/partials/moderation/approval-card.php:155
 #: templates/views/space-members.php:201
 msgid "Approve"
 msgstr "Genehmigen"
@@ -1961,7 +1959,7 @@ msgid "Mark as Spam"
 msgstr "Als Spam markieren"
 
 #: includes/admin/views/content.php:107 includes/admin/views/replies.php:145
-#: includes/admin/views/tags.php:83 templates/views/moderation.php:442
+#: includes/admin/views/tags.php:83 templates/views/moderation.php:443
 #: templates/views/search.php:280 templates/views/space-moderation.php:260
 msgid "Apply"
 msgstr "Anwenden"
@@ -2049,9 +2047,9 @@ msgstr "Papierkorb"
 #: includes/admin/views/content.php:283 includes/admin/views/moderation.php:135
 #: includes/admin/views/moderation.php:246 includes/admin/views/replies.php:286
 #: includes/class-template-loader.php:1861 includes/functions.php:1699
-#: templates/partials/moderation/approval-card.php:161
+#: templates/partials/moderation/approval-card.php:165
 #: templates/partials/moderation/flag-card.php:33
-#: templates/views/moderation.php:231 templates/views/moderation.php:440
+#: templates/views/moderation.php:231 templates/views/moderation.php:441
 #: templates/views/space-moderation.php:258
 msgid "Spam"
 msgstr "Spam"
@@ -2731,7 +2729,7 @@ msgstr "Dauerhaft"
 
 #: includes/admin/views/moderation.php:507 includes/admin/views/users.php:175
 #: includes/class-template-loader.php:466
-#: includes/class-template-loader.php:467 templates/views/moderation.php:385
+#: includes/class-template-loader.php:467 templates/views/moderation.php:386
 #: templates/views/user-profile.php:226 assets/js/admin-common.js:45
 msgid "Lift restriction"
 msgstr "Einschränkung aufheben"
@@ -4693,9 +4691,8 @@ msgid "Threaded discussions, %1$s, %2$s"
 msgstr "Verschachtelte Diskussionen: %1$s, %2$s"
 
 #: includes/admin/views/setup-wizard.php:132
-#, fuzzy
 msgid "Q&amp;A"
-msgstr "Q&amp;A"
+msgstr "Fragen &amp; Antworten"
 
 #: includes/admin/views/setup-wizard.php:133
 msgid "Questions, answers, accepted solution"
@@ -5217,11 +5214,11 @@ msgid ""
 "the rule is what decides who gets in."
 msgstr ""
 "Eine Zugriffsregel lässt mehr Personen hinein: Wer sie erfüllt, erhält, was "
-"sie gewährt, ohne auf die Liste „%2$s“ gesetzt zu werden. Wer sonst "
-"hineinkommt, bestimmen Sichtbarkeit und Beitrittsregel von %1$s. Wird bei "
-"öffentlicher Sichtbarkeit eine Regel nach Rolle, Berechtigung, "
-"Vertrauensstufe oder Mitgliedschaft hinzugefügt, wird die Sichtbarkeit von "
-"%1$s automatisch auf privat gestellt, damit die Regel bestimmt, wer "
+"sie gewährt, ohne auf die Liste der %2$s gesetzt zu werden. Wer sonst "
+"hineinkommt, bestimmen Sichtbarkeit und Beitrittsregel von %1$s. Wird eine "
+"Regel nach Rolle, Berechtigung, Vertrauensstufe oder Mitgliedschaft "
+"hinzugefügt, während die Sichtbarkeit öffentlich ist, wird die Sichtbarkeit "
+"von %1$s automatisch auf privat gestellt, damit die Regel bestimmt, wer "
 "hineinkommt."
 
 #: includes/admin/views/space-edit.php:655
@@ -5249,17 +5246,17 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:670
 #. translators: 1: member label (e.g. "Member"). 2: member label, plural (e.g. "Members").
-#, php-format, fuzzy
+#, php-format
 msgid ""
 "%1$s lists show a matching role - Read is listed as Viewer, Participate as "
 "Member. To give one person a different role, change it on the %2$s tab; "
 "that keeps it a visible, per-person decision rather than a side effect of a "
 "rule."
 msgstr ""
-"%1$s: Die Listen zeigen eine passende Rolle – „Lesen“ erscheint als "
-"„Betrachter“, „Teilnehmen“ als „%1$s“. Um einer Person eine andere Rolle zu "
-"geben, ändere sie im Reiter „%2$s“; so bleibt es eine bewusste Entscheidung "
-"pro Person und kein Nebeneffekt einer Regel."
+"Listen von %1$s zeigen eine passende Rolle: „Lesen“ erscheint als "
+"„Betrachter“, „Teilnehmen“ als Mitglied. Um einer Person eine andere Rolle "
+"zu geben, ändere sie im Reiter „%2$s“. So bleibt es eine bewusste "
+"Entscheidung pro Person und kein Nebeneffekt einer Regel."
 
 #: includes/admin/views/space-edit.php:673
 msgid "A rule can never hand out moderation."
@@ -5489,7 +5486,7 @@ msgid "Archive"
 msgstr "Archivieren"
 
 #: includes/admin/views/spaces.php:315 includes/class-template-loader.php:402
-#: templates/partials/moderation/approval-card.php:143
+#: templates/partials/moderation/approval-card.php:147
 #: templates/views/single-post.php:436 templates/views/space-edit.php:397
 #: assets/js/admin-common.js:33
 msgid "Delete permanently"
@@ -7115,7 +7112,7 @@ msgstr "%s von dir"
 #: includes/notifications/class-notifier.php:870
 #: includes/notifications/class-notifier.php:923
 #: includes/notifications/class-notifier.php:1964
-#: templates/views/notifications.php:227
+#: templates/views/notifications.php:232
 msgid "Someone"
 msgstr "Jemand"
 
@@ -7559,8 +7556,8 @@ msgid ""
 "Ban %1$s from this %2$s? They will lose access to its %3$s and %4$s until "
 "you lift the ban."
 msgstr ""
-"%1$s in %2$s sperren? %1$s verliert den Zugriff auf %3$s und %4$s, bis du "
-"die Sperre aufhebst."
+"%1$s sperren? Betrifft: %2$s. %1$s verliert den Zugriff auf %3$s und %4$s, "
+"bis du die Sperre aufhebst."
 
 #: includes/class-template-loader.php:452
 #: includes/class-template-loader.php:458
@@ -8389,7 +8386,7 @@ msgstr "Neuer Status"
 msgid "Published"
 msgstr "Veröffentlicht"
 
-#: includes/functions.php:1698 templates/views/moderation.php:439
+#: includes/functions.php:1698 templates/views/moderation.php:440
 #: templates/views/space-moderation.php:257
 msgid "Pending"
 msgstr "Ausstehend"
@@ -9391,17 +9388,17 @@ msgstr "Akzeptierte Antworten gibt es nur für Q&A-%s."
 msgid "This %s is not the accepted answer."
 msgstr "%s ist nicht die akzeptierte Antwort."
 
-#: includes/models/class-reply.php:1826
+#: includes/models/class-reply.php:1828
 #. translators: 1: the singular Topic label, lowercase, 2: the plural Reply label, lowercase.
 #, php-format
 msgid "This %1$s has private %2$s. Make them public before splitting it."
 msgstr "%1$s enthält private %2$s. Mache sie öffentlich, bevor du es aufteilst."
 
-#: includes/models/class-reply.php:1915
+#: includes/models/class-reply.php:1917
 msgid "another discussion"
 msgstr "eine andere Diskussion"
 
-#: includes/models/class-reply.php:1924
+#: includes/models/class-reply.php:1926
 #. translators: 1: singular reply label, 2: link to the new topic, or "another discussion".
 #, php-format
 msgid "This %1$s was split into a new discussion: %2$s"
@@ -10895,7 +10892,7 @@ msgstr "Zu %s"
 msgid "Breadcrumb"
 msgstr "Brotkrumennavigation"
 
-#: templates/partials/breadcrumb.php:16 templates/partials/header.php:155
+#: templates/partials/breadcrumb.php:16 templates/partials/header.php:164
 #: templates/partials/icon-picker.php:113 assets/js/header.js:509
 msgid "Home"
 msgstr "Startseite"
@@ -11162,48 +11159,48 @@ msgstr "Community-Navigation"
 msgid "Mark all read"
 msgstr "Alle als gelesen markieren"
 
-#: templates/partials/header.php:131
+#: templates/partials/header.php:140
 msgid "Loading..."
 msgstr "Wird geladen..."
 
-#: templates/partials/header.php:134
+#: templates/partials/header.php:143
 msgid "View all notifications"
 msgstr "Alle Benachrichtigungen anzeigen"
 
-#: templates/partials/header.php:141
+#: templates/partials/header.php:150
 msgid "Font size"
 msgstr "Schriftgröße"
 
-#: templates/partials/header.php:142
+#: templates/partials/header.php:151
 msgid "Default font size"
 msgstr "Standardschriftgröße"
 
-#: templates/partials/header.php:143
+#: templates/partials/header.php:152
 msgid "Large font size"
 msgstr "Große Schriftgröße"
 
-#: templates/partials/header.php:144
+#: templates/partials/header.php:153
 msgid "Extra large font size"
 msgstr "Sehr große Schriftgröße"
 
-#: templates/partials/header.php:152
+#: templates/partials/header.php:161
 msgid "Mobile navigation"
 msgstr "Mobile Navigation"
 
-#: templates/partials/header.php:163
+#: templates/partials/header.php:172
 msgid "Ranks"
 msgstr "Ränge"
 
-#: templates/partials/header.php:168 templates/partials/icon-picker.php:140
+#: templates/partials/header.php:177 templates/partials/icon-picker.php:140
 msgid "Alerts"
 msgstr "Benachrichtigungen"
 
-#: templates/partials/header.php:175 templates/partials/icon-picker.php:128
+#: templates/partials/header.php:184 templates/partials/icon-picker.php:128
 #: templates/views/edit-profile.php:53
 msgid "Profile"
 msgstr "Profil"
 
-#: templates/partials/header.php:180 assets/js/blocks-editor.js:232
+#: templates/partials/header.php:189 assets/js/blocks-editor.js:232
 msgid "Login"
 msgstr "Anmelden"
 
@@ -11287,36 +11284,36 @@ msgstr "Verwaltet von"
 msgid "No moderators yet."
 msgstr "Noch keine Moderatoren."
 
-#: templates/partials/moderation/approval-card.php:83
+#: templates/partials/moderation/approval-card.php:87
 msgid "In trash"
 msgstr "Im Papierkorb"
 
-#: templates/partials/moderation/approval-card.php:87
+#: templates/partials/moderation/approval-card.php:91
 #: templates/views/moderation.php:317 templates/views/space-moderation.php:216
 msgid "Awaiting approval"
 msgstr "Wartet auf Freigabe"
 
-#: templates/partials/moderation/approval-card.php:97
+#: templates/partials/moderation/approval-card.php:101
 #: templates/views/moderation.php:370
 #. translators: 1: a person's display name; 2: human-readable time elapsed.
 #, php-format
 msgid "by %1$s · %2$s ago"
 msgstr "von %1$s · vor %2$s"
 
-#: templates/partials/moderation/approval-card.php:107
+#: templates/partials/moderation/approval-card.php:111
 #. translators: %s: title of the thread the held reply belongs to
 #, php-format
 msgid "In: %s"
 msgstr "In: %s"
 
-#: templates/partials/moderation/approval-card.php:141
+#: templates/partials/moderation/approval-card.php:145
 #: assets/js/admin-replies.js:27
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #, php-format
 msgid "Delete this %s permanently? This cannot be undone."
 msgstr "Endgültig löschen: %s? Das lässt sich nicht rückgängig machen."
 
-#: templates/partials/moderation/approval-card.php:141
+#: templates/partials/moderation/approval-card.php:145
 #: templates/views/single-post.php:434
 #. translators: 1: singular topic label; 2: plural reply label.
 #, php-format
@@ -11325,7 +11322,7 @@ msgstr ""
 "Endgültig löschen: %1$s samt allen zugehörigen %2$s? Das lässt sich nicht "
 "rückgängig machen."
 
-#: templates/partials/moderation/approval-card.php:159
+#: templates/partials/moderation/approval-card.php:163
 msgid ""
 "Mark this submission as spam? It leaves the queue and its author loses "
 "reputation."
@@ -11333,11 +11330,11 @@ msgstr ""
 "Diesen Beitrag als Spam markieren? Er verschwindet aus der Warteschlange "
 "und die verfassende Person verliert Reputation."
 
-#: templates/partials/moderation/approval-card.php:168
+#: templates/partials/moderation/approval-card.php:172
 msgid "Reject this submission? It moves to trash."
 msgstr "Diesen Beitrag ablehnen? Er wird in den Papierkorb verschoben."
 
-#: templates/partials/moderation/approval-card.php:170
+#: templates/partials/moderation/approval-card.php:174
 msgid "Reject"
 msgstr "Ablehnen"
 
@@ -11350,7 +11347,7 @@ msgid "Misinformation"
 msgstr "Falschinformation"
 
 #: templates/partials/moderation/flag-card.php:72
-#: templates/views/moderation.php:566
+#: templates/views/moderation.php:567
 #. translators: 1: newest reporter's display name; 2: number of other members who reported the same item.
 #, php-format
 msgid "%1$s and %2$s other"
@@ -11367,14 +11364,14 @@ msgstr[0] "%s Meldung"
 msgstr[1] "%s Meldungen"
 
 #: templates/partials/moderation/flag-card.php:103
-#: templates/views/moderation.php:621
+#: templates/views/moderation.php:622
 #. translators: %s: reporter's display name
 #, php-format
 msgid "Reported by %s"
 msgstr "Gemeldet von %s"
 
 #: templates/partials/moderation/flag-card.php:124
-#: templates/views/moderation.php:613
+#: templates/views/moderation.php:614
 #. translators: %s: singular topic or reply label, lowercase.
 #, php-format
 msgid "This %s was already removed. Dismiss the report to clear it."
@@ -12035,21 +12032,21 @@ msgstr "%s gesperrt"
 msgid "No %s are currently banned or silenced."
 msgstr "Aktuell sind keine gesperrten oder stummgeschalteten Einträge vorhanden: %s"
 
-#: templates/views/moderation.php:401
+#: templates/views/moderation.php:402
 #. translators: %s: plural member label.
 #, php-format
 msgid "Banned %s pagination"
 msgstr "Seitennavigation für gesperrte Einträge: %s"
 
-#: templates/views/moderation.php:409 templates/views/space-moderation.php:227
+#: templates/views/moderation.php:410 templates/views/space-moderation.php:227
 msgid "Content type"
 msgstr "Inhaltstyp"
 
-#: templates/views/moderation.php:437 templates/views/space-moderation.php:255
+#: templates/views/moderation.php:438 templates/views/space-moderation.php:255
 msgid "Show"
 msgstr "Anzeigen"
 
-#: templates/views/moderation.php:450 templates/views/moderation.php:451
+#: templates/views/moderation.php:451 templates/views/moderation.php:452
 #: templates/views/space-moderation.php:268
 #: templates/views/space-moderation.php:269
 #. translators: %s: plural label of the items in this tab (topics or replies).
@@ -12057,7 +12054,7 @@ msgstr "Anzeigen"
 msgid "No %s in the trash."
 msgstr "Der Papierkorb enthält keine Einträge: %s"
 
-#: templates/views/moderation.php:454 templates/views/moderation.php:455
+#: templates/views/moderation.php:455 templates/views/moderation.php:456
 #: templates/views/space-moderation.php:272
 #: templates/views/space-moderation.php:273
 #. translators: %s: plural label of the items in this tab (topics or replies).
@@ -12065,7 +12062,7 @@ msgstr "Der Papierkorb enthält keine Einträge: %s"
 msgid "No %s are marked as spam."
 msgstr "Als Spam markiert: keine %s"
 
-#: templates/views/moderation.php:458 templates/views/moderation.php:459
+#: templates/views/moderation.php:459 templates/views/moderation.php:460
 #: templates/views/space-moderation.php:276
 #: templates/views/space-moderation.php:277
 #. translators: %s: plural label of the items in this tab (topics or replies).
@@ -12073,37 +12070,37 @@ msgstr "Als Spam markiert: keine %s"
 msgid "No %s are waiting for approval."
 msgstr "Keine %s warten auf Freigabe."
 
-#: templates/views/moderation.php:464 templates/views/space-moderation.php:282
+#: templates/views/moderation.php:465 templates/views/space-moderation.php:282
 msgid "The trash is empty."
 msgstr "Der Papierkorb ist leer."
 
-#: templates/views/moderation.php:510 templates/views/space-moderation.php:324
+#: templates/views/moderation.php:511 templates/views/space-moderation.php:324
 msgid "Trash pagination"
 msgstr "Seitennavigation des Papierkorbs"
 
-#: templates/views/moderation.php:510 templates/views/space-moderation.php:324
+#: templates/views/moderation.php:511 templates/views/space-moderation.php:324
 msgid "Awaiting approval pagination"
 msgstr "Seitennavigation der Inhalte, die auf Freigabe warten"
 
-#: templates/views/moderation.php:519
+#: templates/views/moderation.php:520
 msgid "No pending flags anywhere. Your community is clean."
 msgstr "Keine ausstehenden Meldungen. Deine Community ist sauber."
 
-#: templates/views/moderation.php:521
+#: templates/views/moderation.php:522
 #. translators: %s: plural space label.
 #, php-format
 msgid "No pending flags in the %s you moderate."
 msgstr "Keine ausstehenden Meldungen in den Bereichen, die du moderierst: %s."
 
-#: templates/views/moderation.php:627
+#: templates/views/moderation.php:628
 msgid "Note"
 msgstr "Hinweis"
 
-#: templates/views/moderation.php:631
+#: templates/views/moderation.php:632
 msgid "Review in queue"
 msgstr "In der Warteschlange prüfen"
 
-#: templates/views/moderation.php:646 templates/views/space-moderation.php:360
+#: templates/views/moderation.php:647 templates/views/space-moderation.php:360
 msgid "Moderation queue pagination"
 msgstr "Seitennavigation der Moderationswarteschlange"
 
@@ -12329,7 +12326,7 @@ msgstr "Deine Beitrittsanfrage wurde beantwortet"
 msgid "A moderator reviewed your report"
 msgstr "Ein Moderator hat deine Meldung geprüft"
 
-#: templates/views/notifications.php:114 templates/views/notifications.php:322
+#: templates/views/notifications.php:114 templates/views/notifications.php:327
 msgid "Unread"
 msgstr "Ungelesen"
 
@@ -12413,27 +12410,27 @@ msgstr "Alle als gelesen markieren"
 msgid "Notification settings"
 msgstr "Benachrichtigungseinstellungen"
 
-#: templates/views/notifications.php:160
+#: templates/views/notifications.php:165
 msgid "Filter notifications"
 msgstr "Benachrichtigungen filtern"
 
-#: templates/views/notifications.php:203
+#: templates/views/notifications.php:208
 msgid "Select all on page"
 msgstr "Alle auf dieser Seite auswählen"
 
-#: templates/views/notifications.php:208
+#: templates/views/notifications.php:213
 msgid "Mark read"
 msgstr "Als gelesen markieren"
 
-#: templates/views/notifications.php:277
+#: templates/views/notifications.php:282
 msgid "Select notification"
 msgstr "Benachrichtigung auswählen"
 
-#: templates/views/notifications.php:328
+#: templates/views/notifications.php:333
 msgid "Notification actions"
 msgstr "Benachrichtigungsaktionen"
 
-#: templates/views/notifications.php:335
+#: templates/views/notifications.php:340
 msgid "Mark as read"
 msgstr "Als gelesen markieren"
 
@@ -13403,14 +13400,13 @@ msgstr ""
 
 #: assets/js/admin-common.js:32
 #. translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase.
-#, fuzzy
 msgid ""
 "This destroys every %2$s, %3$s and attachment in %1$s, including content "
 "written by other %4$s. It cannot be undone. Type the %5$s name to confirm."
 msgstr ""
-"Dadurch werden alle %2$s, %3$s und Anhänge in „%1$s“ unwiderruflich "
-"gelöscht, auch die Beiträge anderer %4$s. Das lässt sich nicht rückgängig "
-"machen. Gib zur Bestätigung den Namen von %5$s ein: „%1$s“."
+"Dadurch werden in „%1$s“ unwiderruflich gelöscht: %2$s, %3$s, Anhänge und "
+"Beiträge anderer %4$s. Das lässt sich nicht rückgängig machen. Zur "
+"Bestätigung %5$s-Name eingeben."
 
 #: assets/js/admin-common.js:34
 msgid "Mark this as spam? It will be hidden from the community."
@@ -14207,7 +14203,7 @@ msgid_plural "Show %s replies"
 msgstr[0] "%s Antwort anzeigen"
 msgstr[1] "%s Antworten anzeigen"
 
-#: assets/js/view.js:4789
+#: assets/js/view.js:4792
 #. translators: %s: number of new replies.
 msgid "%s new reply. Click to refresh."
 msgid_plural "%s new replies. Click to refresh."

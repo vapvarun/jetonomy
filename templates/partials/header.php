@@ -127,6 +127,15 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 							<strong><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></strong>
 							<button type="button" class="jt-notif-mark-read"><?php esc_html_e( 'Mark all read', 'jetonomy' ); ?></button>
 						</div>
+						<?php
+						/**
+						 * A prompt above the notification list (Pro's "Get notified on this device").
+						 *
+						 * @since 2.0.7
+						 * @param string $context 'panel' here, 'page' on the Notifications page.
+						 */
+						do_action( 'jetonomy_notifications_prompt', 'panel' );
+						?>
 						<div class="jt-notif-panel-body">
 							<div class="jt-notif-panel-loading"><?php esc_html_e( 'Loading...', 'jetonomy' ); ?></div>
 						</div>

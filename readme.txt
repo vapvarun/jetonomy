@@ -127,7 +127,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 **Developer Tools**
 - 84 REST routes (115 method-endpoints) at `/wp-json/jetonomy/v1/`
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
-- 258 action hooks and filters for customization (115 actions, 143 filters)
+- 259 action hooks and filters for customization (116 actions, 143 filters)
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
 - RTL stylesheet included
@@ -256,7 +256,7 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 84 REST routes / 115 method-endpoints (143 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 258 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 84 REST routes / 115 method-endpoints (143 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 259 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
@@ -284,6 +284,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Improve  - German and Luxembourgish keep the capital letter on product labels mid-sentence; the jetonomy_label_lowercase filter decides for other languages.
 * Improve  - Menus open and move with the keyboard: arrow keys, Home and End, and Escape returns focus to the button.
 * Improve  - Screen readers hear the current breadcrumb, the editor toolbar buttons and which item each moderation action acts on.
+* Improve  - The community menu keeps every label on one line and switches to icons when the theme's column is narrow.
 * Fix      - Address fields (terms, privacy, support, logos, share image, space cover, avatar) refuse a value that is not an address by name and keep the saved one.
 * Fix      - Community addresses typed in another case, such as /COMMUNITY/, redirect to the lower-case address instead of a 404.
 * Fix      - Removing a vote takes back the reputation and notification it gave.
@@ -300,6 +301,9 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - A reply's vote score always matches its votes, even after fast repeated clicks.
 * Fix      - The space topics REST endpoint honours per_page.
 * Fix      - The notice after adding an access rule shows in full in every language.
+* Fix      - Members a rule admits to a private space see that space's notifications, as they already see its follows and bookmarks.
+* Fix      - A member's profile no longer lists their replies under a deleted topic.
+* Fix      - The access rule grant picker keeps its arrow inside the box.
 * Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.
 * Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
 * Compat   - Aligned with Jetonomy Pro 2.0.7. Install both updates together.

@@ -516,9 +516,11 @@ class Notification extends Model {
 		// The target's space must still be readable by the viewer: a member
 		// removed from a private space kept seeing its topic titles here and in
 		// the host bell, and the link landed on a 403.
-		// Same set-based read rule search and feeds use; fails closed.
-		[ $read_p, $read_p_params ] = Space::content_visibility_sql( $user_id, 'nvs' );
-		[ $read_r, $read_r_params ] = Space::content_visibility_sql( $user_id, 'nvrs' );
+		// A member's own rows: readable_with_rules_sql(), as follows and
+		// bookmarks use, so a member a rule admits (no roster row) still sees
+		// notifications from that space. Fails closed.
+		[ $read_p, $read_p_params ] = Space::readable_with_rules_sql( $user_id, 'nvs' );
+		[ $read_r, $read_r_params ] = Space::readable_with_rules_sql( $user_id, 'nvrs' );
 
 		$sql = " AND NOT EXISTS ( SELECT 1 FROM {$restrictions} nvr WHERE nvr.user_id = n.actor_id AND nvr.type = 'global_ban' AND ( nvr.expires_at IS NULL OR nvr.expires_at > %s ) )"
 			. " AND ( n.type IN ({$exempt})"
@@ -597,8 +599,8 @@ class Notification extends Model {
 			$ids = array_values( array_unique( $post_keys ) );
 			$in  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
-			[ $read, $read_params ] = Space::content_visibility_sql( $viewer_id, 's' );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed tables, %d placeholders, $read from content_visibility_sql().
+			[ $read, $read_params ] = Space::readable_with_rules_sql( $viewer_id, 's' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed tables, %d placeholders, $read from readable_with_rules_sql().
 			$dead_posts = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT p.id FROM ' . \Jetonomy\table( 'posts' ) . " p WHERE p.id IN ({$in}) AND ( p.status <> 'publish' OR NOT EXISTS ( SELECT 1 FROM " . \Jetonomy\table( 'spaces' ) . " s WHERE s.id = p.space_id AND {$read} ) )", ...array_merge( $ids, $read_params ) ) ) );
 		}
 		$dead_replies = array();
@@ -607,8 +609,8 @@ class Notification extends Model {
 			$ids = array_values( array_unique( $reply_keys ) );
 			$in  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
-			[ $read, $read_params ] = Space::content_visibility_sql( $viewer_id, 's' );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed tables, %d placeholders, $read from content_visibility_sql().
+			[ $read, $read_params ] = Space::readable_with_rules_sql( $viewer_id, 's' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed tables, %d placeholders, $read from readable_with_rules_sql().
 			$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT r.id, ( r.status <> \'publish\' OR p.status <> \'publish\' OR NOT EXISTS ( SELECT 1 FROM ' . \Jetonomy\table( 'spaces' ) . " s WHERE s.id = p.space_id AND {$read} ) ) AS dead FROM " . \Jetonomy\table( 'replies' ) . ' r INNER JOIN ' . \Jetonomy\table( 'posts' ) . " p ON p.id = r.post_id WHERE r.id IN ({$in})", ...array_merge( $read_params, $ids ) ) );
 			foreach ( $rows as $row ) {
 				$live_replies[] = (int) $row->id;

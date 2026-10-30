@@ -157,6 +157,11 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 		</div>
 	</div>
 
+	<?php
+	/** This action is documented in templates/partials/header.php */
+	do_action( 'jetonomy_notifications_prompt', 'page' );
+	?>
+
 	<nav class="jt-notif-tabs" aria-label="<?php esc_attr_e( 'Filter notifications', 'jetonomy' ); ?>">
 		<?php
 		foreach ( $filter_tabs as $tab_slug => $tab_label ) :

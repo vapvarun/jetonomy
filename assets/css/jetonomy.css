@@ -71,10 +71,10 @@
   .jt-app a:hover { color: var(--jt-text-secondary); }
 
   /* ── Community Sub-Navigation (below theme header) ── */
-  .jt-community-nav { border-bottom: 1px solid var(--jt-border); margin-bottom: 24px; }
+  .jt-community-nav { border-bottom: 1px solid var(--jt-border); margin-bottom: 24px; container-type: inline-size; }
   .jt-community-nav-inner { display: flex; align-items: center; justify-content: space-between; }
   .jt-community-nav-links { display: flex; gap: 2px; }
-  .jt-community-nav-links a { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9375rem; color: var(--jt-text-secondary); font-weight: 500; padding: 10px 14px; border-bottom: 2px solid transparent; transition: all var(--jt-dur) var(--jt-ease); }
+  .jt-community-nav-links a { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 0.9375rem; color: var(--jt-text-secondary); font-weight: 500; padding: 10px 14px; border-bottom: 2px solid transparent; transition: all var(--jt-dur) var(--jt-ease); }
   .jt-community-nav-links a svg { flex-shrink: 0; }
   .jt-community-nav-links a:hover { color: var(--jt-text); border-bottom-color: var(--jt-border-strong); }
   .jt-community-nav-links a.active { color: var(--jt-text); border-bottom-color: var(--jt-accent); font-weight: 600; }
@@ -999,15 +999,29 @@
      Do NOT add new `@media` queries elsewhere in this file.
      ═══════════════════════════════════════════════════════════════════ */
 
-  /* ── Tablet + below (≤1024px) ──────────────────────────────────────
-     Nav row affordances: scroll fallback, hide font-scale. Typography
-     and layout stay desktop-sized. Applies to phones too via cascade. */
-  @media (max-width: 1024px) {
+  /* ── Community nav, sized by its own width ─────────────────────────
+     The theme's content column, not the viewport, decides how much room
+     the nav row has: Reign's column is about 1000px on a wide screen, where
+     labels used to wrap ("My / Profile"). So these are container queries on
+     .jt-community-nav. Labels go first (titles keep each link named): early
+     when Pro adds Moderation and Messages, later for a short row. The links
+     scroll as a last resort; the font-size control stays on desktop. */
+  @container (max-width: 1040px) {
+    .jt-community-nav-links:has(> a:nth-of-type(6)) a { gap: 0; min-width: var(--jt-tap); justify-content: center; }
+    .jt-community-nav-links:has(> a:nth-of-type(6)) a > .jt-nav-label { display: none; }
+  }
+  @container (max-width: 760px) {
+    .jt-community-nav-links a { gap: 0; min-width: var(--jt-tap); justify-content: center; }
+    .jt-community-nav-links a > .jt-nav-label { display: none; }
+  }
+  @container (max-width: 1100px) {
     .jt-community-nav-inner { gap: var(--jt-space-2); }
     .jt-community-nav-links { flex: 1 1 0; min-width: 0; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .jt-community-nav-links::-webkit-scrollbar { display: none; }
     .jt-community-nav-links a { white-space: nowrap; flex: 0 0 auto; padding: var(--jt-space-3) var(--jt-space-3); font-size: var(--jt-text-base); min-height: var(--jt-tap); }
     .jt-community-nav-actions { flex: 0 0 auto; }
+  }
+  @media (max-width: 1024px) {
     .jt-community-nav-actions .jt-font-scale { display: none; }
   }
 
@@ -3235,6 +3249,19 @@
   font-family: var(--jt-font);
 }
 .jt-notif-mark-read:hover { border: none; background: none; color: var(--jt-accent); text-decoration: underline; }
+/* A prompt above a notification list (Pro's "Get notified on this device"):
+   the bell panel and the Notifications page share it. */
+.jt-notif-prompt {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2) var(--jt-space-3);
+  padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-accent-light);
+  border-bottom: 1px solid var(--jt-border);
+}
+.jt-notif-prompt[hidden] { display: none; }
+.jt-notif-prompt__text { flex: 1 1 12rem; margin: 0; font-size: 0.8125rem; color: var(--jt-text); }
+.jt-notif-prompt .jt-btn { flex: 0 0 auto; }
+.jt-notif-prompt__status { flex: 1 0 100%; margin: 0; font-size: 0.8125rem; color: var(--jt-text-secondary); }
+.jt-notif-prompt__status:empty { display: none; }
+.jt-notifications-head ~ .jt-notif-prompt { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-block-end: var(--jt-space-4); }
 .jt-notif-panel-body { max-height: 280px; overflow-y: auto; }
 .jt-notif-panel-loading, .jt-notif-panel-empty {
   padding: 24px 16px; text-align: center;

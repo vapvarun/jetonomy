@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-10-30T19:53:23+00:00\n"
+"POT-Creation-Date: 2026-10-30T21:26:38+00:00\n"
 "PO-Revision-Date: 2026-06-28 11:51:58+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -886,7 +886,7 @@ msgstr "Details"
 #: templates/partials/feed-card.php:67
 #: templates/partials/moderation/flag-card.php:105
 #: templates/partials/post-card.php:167 templates/partials/reply-card.php:159
-#: templates/views/moderation.php:599 templates/views/notifications.php:317
+#: templates/views/moderation.php:600 templates/views/notifications.php:322
 #: templates/views/search.php:381 templates/views/single-post.php:558
 #: templates/views/user-profile.php:436 templates/views/user-profile.php:565
 #: templates/views/user-profile.php:689
@@ -920,7 +920,7 @@ msgstr "Systeem"
 #: templates/partials/avatar.php:17 templates/partials/feed-card.php:31
 #: templates/partials/post-card.php:125 templates/partials/reply-card.php:129
 #: templates/partials/reply-card.php:270 templates/partials/reply-card.php:277
-#: templates/views/notifications.php:227 templates/views/single-post.php:327
+#: templates/views/notifications.php:232 templates/views/single-post.php:327
 #: templates/views/single-post.php:551
 msgid "Anonymous"
 msgstr "Anoniem"
@@ -1185,7 +1185,7 @@ msgid "Trashed content"
 msgstr "Inhoud naar de prullenbak verplaatst"
 
 #: includes/admin/class-admin.php:372
-#: templates/partials/moderation/approval-card.php:85
+#: templates/partials/moderation/approval-card.php:89
 msgid "Marked as spam"
 msgstr "Gemarkeerd als spam"
 
@@ -1676,7 +1676,7 @@ msgstr "Zoeken: %s…"
 #: includes/admin/views/categories.php:108 includes/admin/views/tags.php:103
 #: includes/class-nav-menus.php:117 includes/class-template-loader.php:1117
 #: includes/seo/class-schema-markup.php:519 templates/partials/header.php:81
-#: templates/partials/header.php:83 templates/partials/header.php:159
+#: templates/partials/header.php:83 templates/partials/header.php:168
 #: templates/views/search.php:216 templates/views/space-members.php:383
 #: assets/js/header.js:503
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
@@ -1725,7 +1725,7 @@ msgstr "Bewerken"
 
 #: includes/admin/views/categories.php:191 includes/admin/views/content.php:313
 #: includes/admin/views/spaces.php:298
-#: templates/partials/moderation/approval-card.php:122
+#: templates/partials/moderation/approval-card.php:126
 #: templates/partials/moderation/flag-card.php:157
 msgid "View"
 msgstr "Bekijken"
@@ -1733,7 +1733,7 @@ msgstr "Bekijken"
 #: includes/admin/views/categories.php:192
 #: includes/admin/views/space-edit.php:629 includes/admin/views/tags.php:81
 #: includes/admin/views/tags.php:155 templates/partials/reply-card.php:323
-#: templates/views/notifications.php:211 templates/views/notifications.php:341
+#: templates/views/notifications.php:216 templates/views/notifications.php:346
 #: templates/views/single-post.php:854
 #. translators: 1: number of topics; 2: topic label with the right number, lowercase; 3: topic label, plural lowercase.
 msgid "Delete"
@@ -1862,7 +1862,7 @@ msgstr "(geen titel)"
 #: includes/class-abilities.php:1532
 #: includes/notifications/class-notifier.php:1044
 #: templates/partials/moderation/flag-card.php:69
-#: templates/views/moderation.php:562
+#: templates/views/moderation.php:563
 msgid "Unknown"
 msgstr "Onbekend"
 
@@ -1916,7 +1916,7 @@ msgstr "Bulkacties"
 
 #: includes/admin/views/content.php:99 includes/admin/views/content.php:294
 #: includes/admin/views/replies.php:137 includes/admin/views/replies.php:297
-#: templates/partials/moderation/approval-card.php:132
+#: templates/partials/moderation/approval-card.php:136
 #: templates/views/single-post.php:427
 msgid "Restore"
 msgstr "Herstellen"
@@ -1930,7 +1930,7 @@ msgstr "Definitief verwijderen"
 #: includes/admin/views/moderation.php:134
 #: includes/admin/views/moderation.php:245 includes/admin/views/replies.php:140
 #: includes/admin/views/replies.php:261 includes/admin/views/space-edit.php:910
-#: templates/partials/moderation/approval-card.php:151
+#: templates/partials/moderation/approval-card.php:155
 #: templates/views/space-members.php:201
 msgid "Approve"
 msgstr "Goedkeuren"
@@ -1944,7 +1944,7 @@ msgid "Mark as Spam"
 msgstr "Als spam markeren"
 
 #: includes/admin/views/content.php:107 includes/admin/views/replies.php:145
-#: includes/admin/views/tags.php:83 templates/views/moderation.php:442
+#: includes/admin/views/tags.php:83 templates/views/moderation.php:443
 #: templates/views/search.php:280 templates/views/space-moderation.php:260
 msgid "Apply"
 msgstr "Toepassen"
@@ -2034,9 +2034,9 @@ msgstr "Prullenbak"
 #: includes/admin/views/content.php:283 includes/admin/views/moderation.php:135
 #: includes/admin/views/moderation.php:246 includes/admin/views/replies.php:286
 #: includes/class-template-loader.php:1861 includes/functions.php:1699
-#: templates/partials/moderation/approval-card.php:161
+#: templates/partials/moderation/approval-card.php:165
 #: templates/partials/moderation/flag-card.php:33
-#: templates/views/moderation.php:231 templates/views/moderation.php:440
+#: templates/views/moderation.php:231 templates/views/moderation.php:441
 #: templates/views/space-moderation.php:258
 msgid "Spam"
 msgstr "Spam"
@@ -2705,7 +2705,7 @@ msgstr "Permanent"
 
 #: includes/admin/views/moderation.php:507 includes/admin/views/users.php:175
 #: includes/class-template-loader.php:466
-#: includes/class-template-loader.php:467 templates/views/moderation.php:385
+#: includes/class-template-loader.php:467 templates/views/moderation.php:386
 #: templates/views/user-profile.php:226 assets/js/admin-common.js:45
 msgid "Lift restriction"
 msgstr "Beperking opheffen"
@@ -5435,7 +5435,7 @@ msgid "Archive"
 msgstr "Archiveren"
 
 #: includes/admin/views/spaces.php:315 includes/class-template-loader.php:402
-#: templates/partials/moderation/approval-card.php:143
+#: templates/partials/moderation/approval-card.php:147
 #: templates/views/single-post.php:436 templates/views/space-edit.php:397
 #: assets/js/admin-common.js:33
 msgid "Delete permanently"
@@ -7038,7 +7038,7 @@ msgstr "jouw %s"
 #: includes/notifications/class-notifier.php:870
 #: includes/notifications/class-notifier.php:923
 #: includes/notifications/class-notifier.php:1964
-#: templates/views/notifications.php:227
+#: templates/views/notifications.php:232
 msgid "Someone"
 msgstr "Iemand"
 
@@ -7949,8 +7949,8 @@ msgid ""
 "This %1$s will be MOVED out of this %2$s and become the first post of a new "
 "one. Title for the new %2$s:"
 msgstr ""
-"%1$s wordt VERPLAATST uit %2$s en wordt de openingspost van een nieuwe "
-"%2$s. Titel voor nieuwe %2$s:"
+"%1$s wordt VERPLAATST uit %2$s en wordt het eerste bericht van zijn eigen "
+"%2$s. Titel voor zijn eigen %2$s:"
 
 #: includes/class-template-loader.php:1913
 #. translators: 1: singular reply label, 2: singular topic label the site owner configured.
@@ -8310,7 +8310,7 @@ msgstr "Nieuwe status"
 msgid "Published"
 msgstr "Gepubliceerd"
 
-#: includes/functions.php:1698 templates/views/moderation.php:439
+#: includes/functions.php:1698 templates/views/moderation.php:440
 #: templates/views/space-moderation.php:257
 msgid "Pending"
 msgstr "In afwachting"
@@ -9291,7 +9291,7 @@ msgstr "Geaccepteerde antwoorden gelden alleen voor Q&A: %s."
 msgid "This %s is not the accepted answer."
 msgstr "%s is niet het geaccepteerde antwoord."
 
-#: includes/models/class-reply.php:1826
+#: includes/models/class-reply.php:1828
 #. translators: 1: the singular Topic label, lowercase, 2: the plural Reply label, lowercase.
 #, php-format
 msgid "This %1$s has private %2$s. Make them public before splitting it."
@@ -9299,11 +9299,11 @@ msgstr ""
 "Hier zitten privé-antwoorden in (%1$s / %2$s). Maak ze openbaar voordat je "
 "splitst."
 
-#: includes/models/class-reply.php:1915
+#: includes/models/class-reply.php:1917
 msgid "another discussion"
 msgstr "een andere discussie"
 
-#: includes/models/class-reply.php:1924
+#: includes/models/class-reply.php:1926
 #. translators: 1: singular reply label, 2: link to the new topic, or "another discussion".
 #, php-format
 msgid "This %1$s was split into a new discussion: %2$s"
@@ -10789,7 +10789,7 @@ msgstr "Over: %s"
 msgid "Breadcrumb"
 msgstr "Kruimelpad"
 
-#: templates/partials/breadcrumb.php:16 templates/partials/header.php:155
+#: templates/partials/breadcrumb.php:16 templates/partials/header.php:164
 #: templates/partials/icon-picker.php:113 assets/js/header.js:509
 msgid "Home"
 msgstr "Start"
@@ -11055,48 +11055,48 @@ msgstr "Community-navigatie"
 msgid "Mark all read"
 msgstr "Alles als gelezen markeren"
 
-#: templates/partials/header.php:131
+#: templates/partials/header.php:140
 msgid "Loading..."
 msgstr "Bezig met laden..."
 
-#: templates/partials/header.php:134
+#: templates/partials/header.php:143
 msgid "View all notifications"
 msgstr "Alle meldingen bekijken"
 
-#: templates/partials/header.php:141
+#: templates/partials/header.php:150
 msgid "Font size"
 msgstr "Tekstgrootte"
 
-#: templates/partials/header.php:142
+#: templates/partials/header.php:151
 msgid "Default font size"
 msgstr "Standaard lettergrootte"
 
-#: templates/partials/header.php:143
+#: templates/partials/header.php:152
 msgid "Large font size"
 msgstr "Grote lettergrootte"
 
-#: templates/partials/header.php:144
+#: templates/partials/header.php:153
 msgid "Extra large font size"
 msgstr "Extra grote lettergrootte"
 
-#: templates/partials/header.php:152
+#: templates/partials/header.php:161
 msgid "Mobile navigation"
 msgstr "Mobiele navigatie"
 
-#: templates/partials/header.php:163
+#: templates/partials/header.php:172
 msgid "Ranks"
 msgstr "Rangen"
 
-#: templates/partials/header.php:168 templates/partials/icon-picker.php:140
+#: templates/partials/header.php:177 templates/partials/icon-picker.php:140
 msgid "Alerts"
 msgstr "Notificaties"
 
-#: templates/partials/header.php:175 templates/partials/icon-picker.php:128
+#: templates/partials/header.php:184 templates/partials/icon-picker.php:128
 #: templates/views/edit-profile.php:53
 msgid "Profile"
 msgstr "Profiel"
 
-#: templates/partials/header.php:180 assets/js/blocks-editor.js:232
+#: templates/partials/header.php:189 assets/js/blocks-editor.js:232
 msgid "Login"
 msgstr "Inloggen"
 
@@ -11180,36 +11180,36 @@ msgstr "Beheerd door"
 msgid "No moderators yet."
 msgstr "Nog geen moderators."
 
-#: templates/partials/moderation/approval-card.php:83
+#: templates/partials/moderation/approval-card.php:87
 msgid "In trash"
 msgstr "In de prullenbak"
 
-#: templates/partials/moderation/approval-card.php:87
+#: templates/partials/moderation/approval-card.php:91
 #: templates/views/moderation.php:317 templates/views/space-moderation.php:216
 msgid "Awaiting approval"
 msgstr "Wacht op goedkeuring"
 
-#: templates/partials/moderation/approval-card.php:97
+#: templates/partials/moderation/approval-card.php:101
 #: templates/views/moderation.php:370
 #. translators: 1: a person's display name; 2: human-readable time elapsed.
 #, php-format
 msgid "by %1$s · %2$s ago"
 msgstr "door %1$s · %2$s geleden"
 
-#: templates/partials/moderation/approval-card.php:107
+#: templates/partials/moderation/approval-card.php:111
 #. translators: %s: title of the thread the held reply belongs to
 #, php-format
 msgid "In: %s"
 msgstr "In: %s"
 
-#: templates/partials/moderation/approval-card.php:141
+#: templates/partials/moderation/approval-card.php:145
 #: assets/js/admin-replies.js:27
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #, php-format
 msgid "Delete this %s permanently? This cannot be undone."
 msgstr "Dit item definitief verwijderen (%s)? Dit kan niet ongedaan worden gemaakt."
 
-#: templates/partials/moderation/approval-card.php:141
+#: templates/partials/moderation/approval-card.php:145
 #: templates/views/single-post.php:434
 #. translators: 1: singular topic label; 2: plural reply label.
 #, php-format
@@ -11218,7 +11218,7 @@ msgstr ""
 "%1$s en alle bijbehorende %2$s definitief verwijderen? Dit kan niet "
 "ongedaan worden gemaakt."
 
-#: templates/partials/moderation/approval-card.php:159
+#: templates/partials/moderation/approval-card.php:163
 msgid ""
 "Mark this submission as spam? It leaves the queue and its author loses "
 "reputation."
@@ -11226,11 +11226,11 @@ msgstr ""
 "Deze inzending als spam markeren? Hij verdwijnt uit de wachtrij en de "
 "auteur verliest reputatie."
 
-#: templates/partials/moderation/approval-card.php:168
+#: templates/partials/moderation/approval-card.php:172
 msgid "Reject this submission? It moves to trash."
 msgstr "Deze inzending afwijzen? Hij gaat naar de prullenbak."
 
-#: templates/partials/moderation/approval-card.php:170
+#: templates/partials/moderation/approval-card.php:174
 msgid "Reject"
 msgstr "Afwijzen"
 
@@ -11243,7 +11243,7 @@ msgid "Misinformation"
 msgstr "Desinformatie"
 
 #: templates/partials/moderation/flag-card.php:72
-#: templates/views/moderation.php:566
+#: templates/views/moderation.php:567
 #. translators: 1: newest reporter's display name; 2: number of other members who reported the same item.
 #, php-format
 msgid "%1$s and %2$s other"
@@ -11260,14 +11260,14 @@ msgstr[0] "%s melding"
 msgstr[1] "%s meldingen"
 
 #: templates/partials/moderation/flag-card.php:103
-#: templates/views/moderation.php:621
+#: templates/views/moderation.php:622
 #. translators: %s: reporter's display name
 #, php-format
 msgid "Reported by %s"
 msgstr "Gemeld door %s"
 
 #: templates/partials/moderation/flag-card.php:124
-#: templates/views/moderation.php:613
+#: templates/views/moderation.php:614
 #. translators: %s: singular topic or reply label, lowercase.
 #, php-format
 msgid "This %s was already removed. Dismiss the report to clear it."
@@ -11925,21 +11925,21 @@ msgstr "Verbannen: %s"
 msgid "No %s are currently banned or silenced."
 msgstr "Er zijn momenteel geen verbannen of gedempte accounts: %s."
 
-#: templates/views/moderation.php:401
+#: templates/views/moderation.php:402
 #. translators: %s: plural member label.
 #, php-format
 msgid "Banned %s pagination"
 msgstr "Paginering van verbannen %s"
 
-#: templates/views/moderation.php:409 templates/views/space-moderation.php:227
+#: templates/views/moderation.php:410 templates/views/space-moderation.php:227
 msgid "Content type"
 msgstr "Type inhoud"
 
-#: templates/views/moderation.php:437 templates/views/space-moderation.php:255
+#: templates/views/moderation.php:438 templates/views/space-moderation.php:255
 msgid "Show"
 msgstr "Weergeven"
 
-#: templates/views/moderation.php:450 templates/views/moderation.php:451
+#: templates/views/moderation.php:451 templates/views/moderation.php:452
 #: templates/views/space-moderation.php:268
 #: templates/views/space-moderation.php:269
 #. translators: %s: plural label of the items in this tab (topics or replies).
@@ -11947,7 +11947,7 @@ msgstr "Weergeven"
 msgid "No %s in the trash."
 msgstr "De prullenbak bevat geen %s."
 
-#: templates/views/moderation.php:454 templates/views/moderation.php:455
+#: templates/views/moderation.php:455 templates/views/moderation.php:456
 #: templates/views/space-moderation.php:272
 #: templates/views/space-moderation.php:273
 #. translators: %s: plural label of the items in this tab (topics or replies).
@@ -11955,7 +11955,7 @@ msgstr "De prullenbak bevat geen %s."
 msgid "No %s are marked as spam."
 msgstr "Er zijn geen %s als spam gemarkeerd."
 
-#: templates/views/moderation.php:458 templates/views/moderation.php:459
+#: templates/views/moderation.php:459 templates/views/moderation.php:460
 #: templates/views/space-moderation.php:276
 #: templates/views/space-moderation.php:277
 #. translators: %s: plural label of the items in this tab (topics or replies).
@@ -11963,37 +11963,37 @@ msgstr "Er zijn geen %s als spam gemarkeerd."
 msgid "No %s are waiting for approval."
 msgstr "Er wachten geen %s op goedkeuring."
 
-#: templates/views/moderation.php:464 templates/views/space-moderation.php:282
+#: templates/views/moderation.php:465 templates/views/space-moderation.php:282
 msgid "The trash is empty."
 msgstr "De prullenbak is leeg."
 
-#: templates/views/moderation.php:510 templates/views/space-moderation.php:324
+#: templates/views/moderation.php:511 templates/views/space-moderation.php:324
 msgid "Trash pagination"
 msgstr "Paginering van prullenbak"
 
-#: templates/views/moderation.php:510 templates/views/space-moderation.php:324
+#: templates/views/moderation.php:511 templates/views/space-moderation.php:324
 msgid "Awaiting approval pagination"
 msgstr "Paginering van items in afwachting van goedkeuring"
 
-#: templates/views/moderation.php:519
+#: templates/views/moderation.php:520
 msgid "No pending flags anywhere. Your community is clean."
 msgstr "Geen openstaande meldingen. Je community is schoon."
 
-#: templates/views/moderation.php:521
+#: templates/views/moderation.php:522
 #. translators: %s: plural space label.
 #, php-format
 msgid "No pending flags in the %s you moderate."
 msgstr "Geen openstaande meldingen in de %s die je modereert."
 
-#: templates/views/moderation.php:627
+#: templates/views/moderation.php:628
 msgid "Note"
 msgstr "Notitie"
 
-#: templates/views/moderation.php:631
+#: templates/views/moderation.php:632
 msgid "Review in queue"
 msgstr "Beoordelen in moderatiewachtrij"
 
-#: templates/views/moderation.php:646 templates/views/space-moderation.php:360
+#: templates/views/moderation.php:647 templates/views/space-moderation.php:360
 msgid "Moderation queue pagination"
 msgstr "Paginering van de moderatiewachtrij"
 
@@ -12221,7 +12221,7 @@ msgstr "Je verzoek om deel te nemen is beantwoord"
 msgid "A moderator reviewed your report"
 msgstr "Een moderator heeft je melding bekeken"
 
-#: templates/views/notifications.php:114 templates/views/notifications.php:322
+#: templates/views/notifications.php:114 templates/views/notifications.php:327
 msgid "Unread"
 msgstr "Ongelezen"
 
@@ -12305,27 +12305,27 @@ msgstr "Alles als gelezen markeren"
 msgid "Notification settings"
 msgstr "Meldingsinstellingen"
 
-#: templates/views/notifications.php:160
+#: templates/views/notifications.php:165
 msgid "Filter notifications"
 msgstr "Meldingen filteren"
 
-#: templates/views/notifications.php:203
+#: templates/views/notifications.php:208
 msgid "Select all on page"
 msgstr "Alles op deze pagina selecteren"
 
-#: templates/views/notifications.php:208
+#: templates/views/notifications.php:213
 msgid "Mark read"
 msgstr "Als gelezen markeren"
 
-#: templates/views/notifications.php:277
+#: templates/views/notifications.php:282
 msgid "Select notification"
 msgstr "Melding selecteren"
 
-#: templates/views/notifications.php:328
+#: templates/views/notifications.php:333
 msgid "Notification actions"
 msgstr "Meldingsacties"
 
-#: templates/views/notifications.php:335
+#: templates/views/notifications.php:340
 msgid "Mark as read"
 msgstr "Als gelezen markeren"
 
@@ -14065,7 +14065,7 @@ msgid_plural "Show %s replies"
 msgstr[0] "%s antwoord tonen"
 msgstr[1] "%s antwoorden tonen"
 
-#: assets/js/view.js:4789
+#: assets/js/view.js:4792
 #. translators: %s: number of new replies.
 msgid "%s new reply. Click to refresh."
 msgid_plural "%s new replies. Click to refresh."
