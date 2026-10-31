@@ -394,7 +394,7 @@ class Users_Controller extends Base_Controller {
 			return $this->not_found( 'User' );
 		}
 
-		$profile     = UserProfile::find_by_user( $id );
+		$profile     = UserProfile::find_public( $id ); // Counts exclude anonymous items.
 		$trust_level = (int) ( $profile->trust_level ?? 0 );
 
 		$data = array(
@@ -470,7 +470,7 @@ class Users_Controller extends Base_Controller {
 		}
 
 		$id          = (int) $wp_user->ID;
-		$profile     = UserProfile::find_by_user( $id );
+		$profile     = UserProfile::find_public( $id ); // Counts exclude anonymous items.
 		$trust_level = (int) ( $profile->trust_level ?? 0 );
 
 		$data = array(

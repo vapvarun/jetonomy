@@ -313,9 +313,13 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - A member's profile no longer lists their replies under a deleted topic.
 * Fix      - The access rule grant picker keeps its arrow inside the box.
 * Fix      - Removing a reported post asks first, and the next report card's buttons work without a reload.
+* Fix      - Moderation cards wrap long links and show right-to-left text in its own direction.
+* Fix      - A topic title over 255 characters is refused with a clear message instead of an error.
+* Fix      - A space whose plans were all deleted offers no button to a checkout that no longer exists.
 * Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.
 * Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
 * Security - Guests never see a private space's name on its members or roadmap page.
+* Security - Erasing a member's personal data also removes them as the uploader of their attachments.
 * Compat   - Aligned with Jetonomy Pro 2.0.7. Install both updates together.
 
 = 2.0.6 - October 2026 =

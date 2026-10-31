@@ -1094,7 +1094,7 @@ class BuddyPress {
 	/* ── Profile Shared Helpers ── */
 
 	private function render_profile_stats( int $user_id ): void {
-		$profile     = UserProfile::find_by_user( $user_id );
+		$profile     = UserProfile::find_public( $user_id );
 		$post_count  = $profile ? (int) $profile->post_count : 0;
 		$reply_count = $profile ? (int) $profile->reply_count : 0;
 		$reputation  = $profile ? (int) $profile->reputation : 0;

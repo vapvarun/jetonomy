@@ -656,7 +656,9 @@
      inline-end: 0 drops a theme's physical border-left, which an RTL quote
      showed as a second bar. */
   .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-text-tertiary); border-inline-end: 0; color: var(--jt-text-secondary); }
-  .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-3); border-top: 1px solid var(--jt-border); }
+  /* Wraps: extensions add actions (React, Reveal author, Pin), and a nowrap row
+     squeezed the reactions strip to 0px so its button overlapped the next one. */
+  .jt-post-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-3); border-top: 1px solid var(--jt-border); }
 
   /* ── Action buttons ── */
   .jt-act { display: inline-flex; align-items: center; gap: var(--jt-space-2); padding-block: var(--jt-space-2); padding-inline: var(--jt-space-3); border-radius: var(--jt-radius-full); font-size: 0.8125rem; color: var(--jt-text-tertiary); font-weight: 500; transition: all 0.1s; border: none; background: none; cursor: pointer; font-family: var(--jt-font); min-block-size: 36px; }
@@ -760,7 +762,7 @@
      keep their own styling. */
   .jt-app :is(.jt-post-body, .jt-reply-body) a:not(.jt-mention, .jt-link-preview) { color: var(--jt-accent-strong); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.15em; }
   .jt-app :is(.jt-post-body, .jt-reply-body) a:not(.jt-mention, .jt-link-preview):hover { color: var(--jt-accent-strong); text-decoration-thickness: 2px; }
-  .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-1); }
+  .jt-reply-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-1); }
   .jt-accepted-tag { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: 0.8125rem; font-weight: 600; color: var(--jt-success-strong); white-space: nowrap; }
   .jt-accepted-tag svg { flex-shrink: 0; }
 
@@ -1890,7 +1892,9 @@
   .jt-mod-flag-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jt-space-2); margin-bottom: var(--jt-space-2); }
   .jt-mod-flag-type { font-size: var(--jt-text-2xs); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-danger-light); color: var(--jt-danger-strong); white-space: nowrap; }
   .jt-mod-flag-reason { font-size: var(--jt-text-sm); font-weight: 500; color: var(--jt-text-secondary); }
-  .jt-mod-flag-reporter { margin-left: auto; font-size: var(--jt-text-xs); color: var(--jt-text-tertiary); white-space: nowrap; }
+  .jt-mod-flag-reporter { margin-inline-start: auto; font-size: var(--jt-text-xs); color: var(--jt-text-tertiary); }
+  /* Member-written text (titles, bodies, notes, names) can be one unbroken URL: wrap it inside the card. */
+  .jt-mod-flag, .jt-mod-flag-row { overflow-wrap: anywhere; }
   .jt-mod-flag-note { font-size: var(--jt-text-sm); color: var(--jt-text-secondary); margin-bottom: var(--jt-space-2); padding: var(--jt-space-2); background: var(--jt-bg-subtle); border-radius: var(--jt-radius-sm); }
   .jt-mod-flag-actions { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); align-items: center; }
   /* Compact buttons inside moderation rows — the base .jt-btn is hero-sized
@@ -3898,7 +3902,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
       centred ::after - the tap lands on the control, nothing reflows.
    ═══════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
-  .jt-app :is(.jt-pill, .jt-act, .jt-reaction-trigger, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button, .jt-member-role-select, .jt-mod-flag-actions .jt-btn, .jt-btn, .jt-managed-by-link) {
+  .jt-app :is(.jt-pill, .jt-act, .jt-reaction-trigger, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button, .jt-member-role-select, .jt-mod-flag-actions .jt-btn, .jt-btn, .jt-managed-by-link, .jt-mod-flag-action) {
     min-block-size: var(--jt-tap);
   }
   .jt-app :is(.jt-act, .jt-reaction-trigger, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button) {

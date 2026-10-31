@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-10-30T22:57:33+00:00\n"
+"POT-Creation-Date: 2026-10-31T05:59:26+00:00\n"
 "PO-Revision-Date: 2026-06-28 11:51:58+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -133,10 +133,10 @@ msgstr "레벨"
 #: includes/admin/ajax/class-categories-handler.php:182
 #: includes/admin/ajax/class-content-handler.php:50
 #: includes/admin/ajax/class-content-handler.php:73
-#: includes/admin/ajax/class-content-handler.php:119
-#: includes/admin/ajax/class-content-handler.php:145
-#: includes/admin/ajax/class-content-handler.php:195
-#: includes/admin/ajax/class-content-handler.php:219
+#: includes/admin/ajax/class-content-handler.php:123
+#: includes/admin/ajax/class-content-handler.php:149
+#: includes/admin/ajax/class-content-handler.php:199
+#: includes/admin/ajax/class-content-handler.php:223
 #: includes/admin/ajax/class-import-handler.php:28
 #: includes/admin/ajax/class-moderation-handler.php:48
 #: includes/admin/ajax/class-moderation-handler.php:63
@@ -200,9 +200,9 @@ msgstr "%s 만들었어요."
 #: includes/admin/ajax/class-categories-handler.php:92
 #: includes/admin/ajax/class-categories-handler.php:162
 #: includes/admin/ajax/class-content-handler.php:78
-#: includes/admin/ajax/class-content-handler.php:125
-#: includes/admin/ajax/class-content-handler.php:151
-#: includes/admin/ajax/class-content-handler.php:202
+#: includes/admin/ajax/class-content-handler.php:129
+#: includes/admin/ajax/class-content-handler.php:155
+#: includes/admin/ajax/class-content-handler.php:206
 #: includes/admin/ajax/class-spaces-handler.php:185
 #: includes/admin/ajax/class-spaces-handler.php:387
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
@@ -226,8 +226,8 @@ msgid "Failed to update %s."
 msgstr "%s 업데이트에 실패했어요."
 
 #: includes/admin/ajax/class-categories-handler.php:148
-#: includes/admin/ajax/class-content-handler.php:113
-#: includes/admin/ajax/class-content-handler.php:185
+#: includes/admin/ajax/class-content-handler.php:117
+#: includes/admin/ajax/class-content-handler.php:189
 #: includes/admin/ajax/class-spaces-handler.php:332
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #, php-format
@@ -262,12 +262,12 @@ msgstr "순서가 저장됐어요."
 msgid "Nothing selected."
 msgstr "선택한 항목이 없어요."
 
-#: includes/admin/ajax/class-content-handler.php:94
-#: includes/admin/ajax/class-content-handler.php:164
+#: includes/admin/ajax/class-content-handler.php:98
+#: includes/admin/ajax/class-content-handler.php:168
 msgid "Nothing to update."
 msgstr "업데이트할 내용이 없어요."
 
-#: includes/admin/ajax/class-content-handler.php:227
+#: includes/admin/ajax/class-content-handler.php:231
 msgid "Invalid bulk action."
 msgstr "유효하지 않은 일괄 작업이에요."
 
@@ -5706,7 +5706,7 @@ msgid "%s name is required."
 msgstr "%s 이름을 입력해 주세요."
 
 #: includes/api/class-categories-controller.php:210
-#: includes/api/class-posts-controller.php:834
+#: includes/api/class-posts-controller.php:842
 #: includes/api/class-replies-controller.php:519
 #: includes/api/class-spaces-controller.php:908
 msgid "No fields provided for update."
@@ -5821,34 +5821,34 @@ msgstr "고정(true) 또는 고정 해제(false)예요. 생략하면 전환돼�
 msgid "Security check failed. Please refresh the page and try again."
 msgstr "보안 검사에 실패했어요. 페이지를 새로 고침하고 다시 시도해 주세요."
 
-#: includes/api/class-posts-controller.php:495
+#: includes/api/class-posts-controller.php:499
 msgid "Post content is required."
 msgstr "게시물 내용이 필요해요."
 
-#: includes/api/class-posts-controller.php:510
+#: includes/api/class-posts-controller.php:514
 msgid "Status update"
 msgstr "상태 업데이트"
 
-#: includes/api/class-posts-controller.php:512
+#: includes/api/class-posts-controller.php:516
 msgid "Post title is required."
 msgstr "게시물 제목이 필요해요."
 
-#: includes/api/class-posts-controller.php:618
+#: includes/api/class-posts-controller.php:622
 msgid ""
 "You already scheduled this for the same time. Find it in your profile under "
 "Drafts."
 msgstr "같은 시간으로 이미 예약했어요. 프로필의 임시글에서 확인해 보세요."
 
-#: includes/api/class-posts-controller.php:652
+#: includes/api/class-posts-controller.php:656
 #: includes/class-abilities.php:1246
 msgid "Failed to create post."
 msgstr "게시물 작성에 실패했어요."
 
-#: includes/api/class-posts-controller.php:743
+#: includes/api/class-posts-controller.php:747
 msgid "Could not publish this draft."
 msgstr "이 임시글을 게시할 수 없어요."
 
-#: includes/api/class-posts-controller.php:841
+#: includes/api/class-posts-controller.php:849
 #: includes/api/class-replies-controller.php:469
 #: includes/moderation/class-moderation-service.php:773
 #. translators: %s: the singular Topic or Reply label, lowercase.
@@ -5856,51 +5856,51 @@ msgstr "이 임시글을 게시할 수 없어요."
 msgid "Your %s was blocked by our content policy."
 msgstr "콘텐츠 정책에 따라 작성하신 내용이 차단되었어요. (%s)"
 
-#: includes/api/class-posts-controller.php:927
+#: includes/api/class-posts-controller.php:935
 msgid "Choose a time as well as a date to schedule this."
 msgstr "예약하려면 날짜와 함께 시간도 선택해 주세요."
 
-#: includes/api/class-posts-controller.php:934
+#: includes/api/class-posts-controller.php:942
 msgid ""
 "The scheduled time has already passed. Choose a time in the future, or "
 "publish now."
 msgstr "예약 시간이 이미 지났어요. 앞으로의 시간을 선택하거나 지금 게시해 주세요."
 
-#: includes/api/class-posts-controller.php:982
+#: includes/api/class-posts-controller.php:990
 msgid "The post could not be deleted."
 msgstr "게시물을 삭제할 수 없었어요."
 
-#: includes/api/class-posts-controller.php:1086
+#: includes/api/class-posts-controller.php:1094
 #. translators: %s: the plural Space label, lowercase.
 #, php-format
 msgid "Roadmap status only applies to Ideas %s."
 msgstr "로드맵 상태는 아이디어 유형에만 적용돼요. (%s)"
 
-#: includes/api/class-posts-controller.php:1102
+#: includes/api/class-posts-controller.php:1110
 msgid "Invalid roadmap status."
 msgstr "잘못된 로드맵 상태예요."
 
-#: includes/api/class-posts-controller.php:1163
+#: includes/api/class-posts-controller.php:1171
 #. translators: 1: maximum number of pinned topics allowed per space, 2: the topic label (singular or plural to match the number), lowercase, 3: the singular space label, lowercase.
 #, php-format
 msgid "You can pin up to %1$d %2$s per %3$s. Unpin one first."
 msgstr "%3$s당 %2$s은(는) 최대 %1$d개까지 고정할 수 있어요. 먼저 하나를 고정 해제해 주세요."
 
-#: includes/api/class-posts-controller.php:1199
+#: includes/api/class-posts-controller.php:1207
 msgid "A valid target_space_id is required."
 msgstr "유효한 target_space_id가 필요해요."
 
-#: includes/api/class-posts-controller.php:1203
+#: includes/api/class-posts-controller.php:1211
 #. translators: 1: the singular Topic label, 2: the singular Space label, lowercase.
 #, php-format
 msgid "%1$s is already in the target %2$s."
 msgstr "이미 대상 위치에 있어요. (%1$s, %2$s)"
 
-#: includes/api/class-posts-controller.php:1250
+#: includes/api/class-posts-controller.php:1258
 msgid "Cannot merge a post with itself."
 msgstr "게시물을 자기 자신과 병합할 수 없어요."
 
-#: includes/api/class-posts-controller.php:1270
+#: includes/api/class-posts-controller.php:1278
 #: includes/class-template-loader.php:1901
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #, php-format
@@ -6889,7 +6889,7 @@ msgstr "게시물 수"
 msgid "%s Count"
 msgstr "%s 수"
 
-#: includes/class-privacy.php:716
+#: includes/class-privacy.php:718
 #. translators: 1: the plural Topic label, 2: the plural Reply label, lowercase.
 #, php-format
 msgid "Jetonomy: %1$s and %2$s anonymized. Personal data deleted."
@@ -6918,7 +6918,7 @@ msgstr "jetonomy_widget: 알 수 없는 id \"%1$s\"예요. 사용할 수 있는 
 #: includes/class-shortcodes.php:237 includes/class-shortcodes.php:381
 #: includes/class-shortcodes.php:561 includes/functions.php:175
 #: templates/views/single-post.php:1028 templates/views/space-members.php:408
-#: templates/views/space.php:571 templates/views/user-profile.php:389
+#: templates/views/space.php:573 templates/views/user-profile.php:389
 #: templates/views/user-profile.php:653
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #, php-format
@@ -8198,7 +8198,7 @@ msgstr "포럼에서 공유됐어요"
 msgid "View discussion"
 msgstr "토론 보기"
 
-#: includes/integrations/class-buddypress.php:864 templates/views/space.php:441
+#: includes/integrations/class-buddypress.php:864 templates/views/space.php:443
 #. translators: %s: the compose action for this space type, e.g. "Ask a Question".
 #, php-format
 msgid "+ %s"
@@ -8822,13 +8822,19 @@ msgstr "가입 요청을 거부했어요."
 msgid "This %s was changed by someone else. Reload to see their changes."
 msgstr "다른 사람이 이 %s을(를) 수정했어요. 새로고침해서 변경 내용을 확인해 주세요."
 
-#: includes/models/class-post.php:2279
+#: includes/models/class-post.php:43
+#. translators: %s: maximum number of characters allowed in a title.
+#, php-format
+msgid "The title is too long. Keep it to %s characters or fewer."
+msgstr "제목이 너무 길어요. %s자 이하로 입력해 주세요."
+
+#: includes/models/class-post.php:2308
 #. translators: %s: the singular Topic label, lowercase.
 #, php-format
 msgid "This %s is private. Make it public before merging it."
 msgstr "이 %s은(는) 비공개예요. 병합하기 전에 공개로 바꿔 주세요."
 
-#: includes/models/class-post.php:2352
+#: includes/models/class-post.php:2381
 #. translators: %s: title of the topic that was merged in.
 #, php-format
 msgid "Merged from \"%s\":"
@@ -10309,8 +10315,8 @@ msgstr "탐색 경로"
 msgid "Home"
 msgstr "홈"
 
-#: templates/partials/category-chips.php:36 templates/views/space.php:364
-#: templates/views/space.php:368
+#: templates/partials/category-chips.php:36 templates/views/space.php:366
+#: templates/views/space.php:370
 #. translators: %s: a plural label the site owner configured (e.g. spaces, categories).
 #, php-format
 msgid "Sub-%s"
@@ -10955,11 +10961,11 @@ msgstr "전체 순위 보기"
 msgid "Popular Tags"
 msgstr "인기 태그"
 
-#: templates/partials/space-header.php:69 templates/views/space.php:213
+#: templates/partials/space-header.php:69 templates/views/space.php:215
 msgid "Withdraw request"
 msgstr "요청 철회"
 
-#: templates/partials/space-header.php:77 templates/views/space.php:235
+#: templates/partials/space-header.php:77 templates/views/space.php:237
 #: assets/js/composer.js:839
 msgid "Request to join"
 msgstr "가입 요청"
@@ -10976,7 +10982,7 @@ msgstr "이 %s의 새 활동 알림 받기"
 msgid "You have access through %s."
 msgstr "다음 멤버십으로 이용할 수 있어요: %s"
 
-#: templates/partials/space-header.php:230 templates/views/space.php:209
+#: templates/partials/space-header.php:230 templates/views/space.php:211
 #. translators: %s: space title.
 #, php-format
 msgid "Your request to join %s is awaiting approval."
@@ -12371,162 +12377,162 @@ msgstr "%s은(는) 비공개예요. 로그인한 뒤 접근을 요청해 주세�
 msgid "Log In"
 msgstr "로그인"
 
-#: templates/views/space.php:134
+#: templates/views/space.php:136
 #. translators: %s: the singular space label, lowercase (e.g. space, group).
 #, php-format
 msgid "This %s is not open to join right now."
 msgstr "지금은 %s 가입을 받고 있지 않아요."
 
-#: templates/views/space.php:137
+#: templates/views/space.php:139
 msgid "Any one of them gives you access, from the moment you have it until it ends."
 msgstr "이 중 하나만 있어도 이용 기간 동안 접근할 수 있어요."
 
-#: templates/views/space.php:138
+#: templates/views/space.php:140
 msgid "Ask a site administrator how to get one of them."
 msgstr "사이트 관리자에게 이 중 하나를 얻는 방법을 문의해 주세요."
 
-#: templates/views/space.php:142
+#: templates/views/space.php:144
 msgid ""
 "Your access starts as soon as your membership is active, and ends if it "
 "lapses."
 msgstr "멤버십이 활성화되면 바로 접근 권한이 시작되고, 멤버십이 만료되면 권한도 끝나요."
 
-#: templates/views/space.php:143
+#: templates/views/space.php:145
 msgid "Ask a site administrator how to get access to this plan."
 msgstr "사이트 관리자에게 이 플랜에 접근하는 방법을 문의해 주세요."
 
-#: templates/views/space.php:146
+#: templates/views/space.php:148
 #. translators: %s: what the visitor needs, lowercase (e.g. course, group).
 #, php-format
 msgid "Ask a site administrator to add you to this %s."
 msgstr "사이트 관리자에게 이 %s에 추가해 달라고 요청해 주세요."
 
-#: templates/views/space.php:149
+#: templates/views/space.php:151
 #. translators: %s: what the visitor joins, lowercase (e.g. course, group).
 #, php-format
 msgid "You get access as soon as you join this %s, and lose it if you leave it."
 msgstr "이 %s에 가입하는 즉시 접근할 수 있고, 나가면 접근 권한이 사라져요."
 
-#: templates/views/space.php:153
+#: templates/views/space.php:155
 #. translators: %s: plan, course or group name.
 #, php-format
 msgid "Get %s"
 msgstr "%s 시작하기"
 
-#: templates/views/space.php:164
+#: templates/views/space.php:166
 #. translators: 1: the singular space label (e.g. space, group), 2: comma-separated plan names.
 #, php-format
 msgid "This %1$s is included with %2$s."
 msgstr "이 %1$s 항목은 %2$s에 포함되어 있어요."
 
-#: templates/views/space.php:183
+#: templates/views/space.php:185
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #, php-format
 msgid "This %s is hidden and invite-only. You need an invitation to join."
 msgstr "이 %s은(는) 숨겨진 초대 전용이에요. 가입하려면 초대가 필요해요."
 
-#: templates/views/space.php:185
+#: templates/views/space.php:187
 #. translators: %s: space title.
 #, php-format
 msgid "%s is invite-only. You need an invitation to join."
 msgstr "%s 공간은 초대로만 가입할 수 있어요. 가입하려면 초대가 필요해요."
 
-#: templates/views/space.php:194
+#: templates/views/space.php:196
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #, php-format
 msgid "Ask a %s admin or a site administrator to invite you."
 msgstr "%s 관리자 또는 사이트 관리자에게 초대를 요청하세요."
 
-#: templates/views/space.php:227
+#: templates/views/space.php:229
 #. translators: %s: space title.
 #, php-format
 msgid "%s is private. Request to join and an admin will review it."
 msgstr "%s 공간은 비공개예요. 가입을 요청하면 관리자가 검토해요."
 
-#: templates/views/space.php:234
+#: templates/views/space.php:236
 msgid "Message to the admins (optional)"
 msgstr "관리자에게 보낼 메시지 (선택 사항)"
 
-#: templates/views/space.php:234 assets/js/composer.js:838
+#: templates/views/space.php:236 assets/js/composer.js:838
 msgid "Optional: why do you want to join?"
 msgstr "선택 사항: 가입하려는 이유를 알려 주세요."
 
-#: templates/views/space.php:404 templates/views/tag.php:97
+#: templates/views/space.php:406 templates/views/tag.php:97
 #: assets/js/blocks-editor.js:100
 msgid "Latest"
 msgstr "최신"
 
-#: templates/views/space.php:405 templates/views/tag.php:98
+#: templates/views/space.php:407 templates/views/tag.php:98
 msgid "Popular"
 msgstr "인기"
 
-#: templates/views/space.php:406
+#: templates/views/space.php:408
 msgid "Unanswered"
 msgstr "미답변"
 
-#: templates/views/space.php:452
+#: templates/views/space.php:454
 msgid "Log in to post"
 msgstr "게시하려면 로그인해 주세요"
 
-#: templates/views/space.php:498
+#: templates/views/space.php:500
 msgid "Community announcements"
 msgstr "커뮤니티 공지"
 
-#: templates/views/space.php:558
+#: templates/views/space.php:560
 #. translators: %s: plural topic label.
 #, php-format
 msgid "No %s were posted here."
 msgstr "여기에는 게시된 %s 항목이 없어요."
 
-#: templates/views/space.php:561
+#: templates/views/space.php:563
 msgid "Every question has an accepted answer."
 msgstr "모든 질문에 채택된 답변이 있어요."
 
-#: templates/views/space.php:562
+#: templates/views/space.php:564
 #. translators: 1: plural topic label; 2: plural reply label.
 #, php-format
 msgid "No %1$s without %2$s yet."
 msgstr "%2$s 없는 %1$s 항목이 아직 없어요."
 
-#: templates/views/space.php:566
+#: templates/views/space.php:568
 msgid "No questions yet."
 msgstr "아직 질문이 없어요."
 
-#: templates/views/space.php:567
+#: templates/views/space.php:569
 msgid "Nothing posted yet."
 msgstr "아직 게시된 내용이 없어요."
 
-#: templates/views/space.php:568
+#: templates/views/space.php:570
 msgid "No ideas yet."
 msgstr "아직 아이디어가 없어요."
 
-#: templates/views/space.php:575
+#: templates/views/space.php:577
 msgid "No questions yet. Ask the first one and get answers from the community."
 msgstr "아직 질문이 없어요. 첫 번째 질문을 올리고 커뮤니티의 답변을 받아 보세요."
 
-#: templates/views/space.php:578
+#: templates/views/space.php:580
 msgid "Nothing posted yet. Share the first update."
 msgstr "아직 게시된 내용이 없어요. 첫 번째 업데이트를 공유해 주세요."
 
-#: templates/views/space.php:581
+#: templates/views/space.php:583
 msgid "No ideas yet. Suggest the first one and let the community vote."
 msgstr "아직 아이디어가 없어요. 첫 번째 아이디어를 제안하고 커뮤니티의 투표를 받아 보세요."
 
-#: templates/views/space.php:585
+#: templates/views/space.php:587
 #. translators: %s: plural topic label.
 #, php-format
 msgid "No %s yet. Be the first to start a discussion!"
 msgstr "아직 %s 항목이 없어요. 첫 번째로 토론을 시작해 보세요!"
 
-#: templates/views/space.php:589
+#: templates/views/space.php:591
 msgid "Ask a question"
 msgstr "질문하기"
 
-#: templates/views/space.php:590
+#: templates/views/space.php:592
 msgid "Share an update"
 msgstr "업데이트 공유하기"
 
-#: templates/views/space.php:591
+#: templates/views/space.php:593
 msgid "Suggest an idea"
 msgstr "아이디어 제안하기"
 

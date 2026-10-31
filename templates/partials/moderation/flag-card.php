@@ -158,7 +158,7 @@ if ( ! isset( $context->topic ) ) {
 	<?php endif; ?>
 
 	<?php if ( ! empty( $flag->description ) ) : ?>
-		<p class="jt-mod-flag-note">
+		<p class="jt-mod-flag-note" dir="auto">
 			<?php echo esc_html( (string) $flag->description ); ?>
 		</p>
 	<?php endif; ?>

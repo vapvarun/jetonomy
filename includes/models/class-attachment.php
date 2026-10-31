@@ -334,6 +334,35 @@ class Attachment {
 	}
 
 	/**
+	 * Clear the uploader (post_author -> 0) on media linked to forum content.
+	 *
+	 * The privacy eraser and account deletion anonymise topics and replies
+	 * (author_id -> 0, rows kept); the files on them follow the same rule: the
+	 * file stays with its post, the link to the person goes. Only linked media,
+	 * since the rest of the member's library is WordPress's to handle. Bounded
+	 * so the paged eraser can drain it.
+	 *
+	 * @param int $user_id Member being erased.
+	 * @param int $limit   Max media items this call.
+	 * @return int Media items changed.
+	 */
+	public static function anonymize_uploader( int $user_id, int $limit ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_author = %d AND post_type = 'attachment' AND ID IN ( SELECT attachment_id FROM " . static::table() . ' ) LIMIT %d', $user_id, $limit ) );
+		$ids = array_map( 'intval', (array) $ids );
+		if ( ! $ids ) {
+			return 0;
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "UPDATE {$wpdb->posts} SET post_author = 0 WHERE ID IN (" . implode( ',', $ids ) . ')' );
+		foreach ( $ids as $id ) {
+			clean_post_cache( $id );
+		}
+		return count( $ids );
+	}
+
+	/**
 	 * Delete link rows whose WP attachment no longer exists (a media-library
 	 * delete that bypassed the cascade). Deletes no files.
 	 *

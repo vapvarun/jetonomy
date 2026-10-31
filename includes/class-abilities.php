@@ -1586,7 +1586,7 @@ class Abilities {
 		if ( ! $user ) {
 			return new WP_Error( 'jetonomy_not_found', __( 'User not found.', 'jetonomy' ) );
 		}
-		$profile = UserProfile::find_by_user( $user_id );
+		$profile = UserProfile::find_public( $user_id );
 		return array(
 			'user_id'      => $user_id,
 			'display_name' => \Jetonomy\user_display_name( $user ),

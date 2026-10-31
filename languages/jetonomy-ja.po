@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-10-30T22:57:33+00:00\n"
+"POT-Creation-Date: 2026-10-31T05:59:26+00:00\n"
 "PO-Revision-Date: 2026-06-28 11:51:58+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -133,10 +133,10 @@ msgstr "レベル"
 #: includes/admin/ajax/class-categories-handler.php:182
 #: includes/admin/ajax/class-content-handler.php:50
 #: includes/admin/ajax/class-content-handler.php:73
-#: includes/admin/ajax/class-content-handler.php:119
-#: includes/admin/ajax/class-content-handler.php:145
-#: includes/admin/ajax/class-content-handler.php:195
-#: includes/admin/ajax/class-content-handler.php:219
+#: includes/admin/ajax/class-content-handler.php:123
+#: includes/admin/ajax/class-content-handler.php:149
+#: includes/admin/ajax/class-content-handler.php:199
+#: includes/admin/ajax/class-content-handler.php:223
 #: includes/admin/ajax/class-import-handler.php:28
 #: includes/admin/ajax/class-moderation-handler.php:48
 #: includes/admin/ajax/class-moderation-handler.php:63
@@ -200,9 +200,9 @@ msgstr "%sを作成しました。"
 #: includes/admin/ajax/class-categories-handler.php:92
 #: includes/admin/ajax/class-categories-handler.php:162
 #: includes/admin/ajax/class-content-handler.php:78
-#: includes/admin/ajax/class-content-handler.php:125
-#: includes/admin/ajax/class-content-handler.php:151
-#: includes/admin/ajax/class-content-handler.php:202
+#: includes/admin/ajax/class-content-handler.php:129
+#: includes/admin/ajax/class-content-handler.php:155
+#: includes/admin/ajax/class-content-handler.php:206
 #: includes/admin/ajax/class-spaces-handler.php:185
 #: includes/admin/ajax/class-spaces-handler.php:387
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
@@ -226,8 +226,8 @@ msgid "Failed to update %s."
 msgstr "%sを更新できませんでした。"
 
 #: includes/admin/ajax/class-categories-handler.php:148
-#: includes/admin/ajax/class-content-handler.php:113
-#: includes/admin/ajax/class-content-handler.php:185
+#: includes/admin/ajax/class-content-handler.php:117
+#: includes/admin/ajax/class-content-handler.php:189
 #: includes/admin/ajax/class-spaces-handler.php:332
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #, php-format
@@ -262,12 +262,12 @@ msgstr "並び順を保存しました。"
 msgid "Nothing selected."
 msgstr "何も選択されていません。"
 
-#: includes/admin/ajax/class-content-handler.php:94
-#: includes/admin/ajax/class-content-handler.php:164
+#: includes/admin/ajax/class-content-handler.php:98
+#: includes/admin/ajax/class-content-handler.php:168
 msgid "Nothing to update."
 msgstr "更新する内容がありません。"
 
-#: includes/admin/ajax/class-content-handler.php:227
+#: includes/admin/ajax/class-content-handler.php:231
 msgid "Invalid bulk action."
 msgstr "無効な一括操作です。"
 
@@ -3102,7 +3102,7 @@ msgid ""
 "destroys their contributions too. With this on, %1$s admins can choose "
 "permanent deletion instead. Site administrators can always do either."
 msgstr ""
-"初期設定ではオフです。削除された%1$sは、他の%2$sが書いた%3$sや%4$sを含んでいるため、通常は移管してアーカイブされます。%1$"
+"初期設定ではオフです。削除された%1$sは、他の%2$sが書いた%3$sや%4$sを含むため、通常は移管してアーカイブされます。%1$"
 "sを完全に削除すると、それらの投稿も失われます。この設定をオンにすると、%1$"
 "sの管理者は代わりに完全削除を選択できます。サイト管理者はいつでもどちらも選択できます。"
 
@@ -5010,8 +5010,8 @@ msgid ""
 "that keeps it a visible, per-person decision rather than a side effect of a "
 "rule."
 msgstr ""
-"%1$s一覧には対応するロールが表示されます。たとえば「閲覧」は「閲覧者」、「参加」は「%1$s」として表示されます。特定の1"
-"人だけ別のロールにしたい場合は、「%2$s」タブで変更してください。その方が、ルールの副作用ではなく個人ごとの明確な設定として残ります。"
+"%1$s一覧には対応するロールが表示されます。「閲覧」は「閲覧者」、「参加」は「%1$s」として表示されます。特定の1"
+"人だけ別のロールにしたい場合は、「%2$s」タブで変更してください。その方が、ルールの副作用ではなく、個人ごとの明確な設定として残ります。"
 
 #: includes/admin/views/space-edit.php:678
 msgid "A rule can never hand out moderation."
@@ -5710,7 +5710,7 @@ msgid "%s name is required."
 msgstr "%s の名前は必須です。"
 
 #: includes/api/class-categories-controller.php:210
-#: includes/api/class-posts-controller.php:834
+#: includes/api/class-posts-controller.php:842
 #: includes/api/class-replies-controller.php:519
 #: includes/api/class-spaces-controller.php:908
 msgid "No fields provided for update."
@@ -5825,34 +5825,34 @@ msgstr "固定(true)または固定解除(false)します。省略すると切�
 msgid "Security check failed. Please refresh the page and try again."
 msgstr "セキュリティチェックに失敗しました。ページを更新して再度お試しください。"
 
-#: includes/api/class-posts-controller.php:495
+#: includes/api/class-posts-controller.php:499
 msgid "Post content is required."
 msgstr "投稿内容は必須です。"
 
-#: includes/api/class-posts-controller.php:510
+#: includes/api/class-posts-controller.php:514
 msgid "Status update"
 msgstr "ステータス更新"
 
-#: includes/api/class-posts-controller.php:512
+#: includes/api/class-posts-controller.php:516
 msgid "Post title is required."
 msgstr "投稿タイトルは必須です。"
 
-#: includes/api/class-posts-controller.php:618
+#: includes/api/class-posts-controller.php:622
 msgid ""
 "You already scheduled this for the same time. Find it in your profile under "
 "Drafts."
 msgstr "同じ日時ですでに予約済みです。プロフィールの「下書き」で確認できます。"
 
-#: includes/api/class-posts-controller.php:652
+#: includes/api/class-posts-controller.php:656
 #: includes/class-abilities.php:1246
 msgid "Failed to create post."
 msgstr "投稿の作成に失敗しました。"
 
-#: includes/api/class-posts-controller.php:743
+#: includes/api/class-posts-controller.php:747
 msgid "Could not publish this draft."
 msgstr "この下書きを公開できませんでした。"
 
-#: includes/api/class-posts-controller.php:841
+#: includes/api/class-posts-controller.php:849
 #: includes/api/class-replies-controller.php:469
 #: includes/moderation/class-moderation-service.php:773
 #. translators: %s: the singular Topic or Reply label, lowercase.
@@ -5860,51 +5860,51 @@ msgstr "この下書きを公開できませんでした。"
 msgid "Your %s was blocked by our content policy."
 msgstr "%s はコンテンツポリシーによりブロックされました。"
 
-#: includes/api/class-posts-controller.php:927
+#: includes/api/class-posts-controller.php:935
 msgid "Choose a time as well as a date to schedule this."
 msgstr "予約するには、日付に加えて時刻も選択してください。"
 
-#: includes/api/class-posts-controller.php:934
+#: includes/api/class-posts-controller.php:942
 msgid ""
 "The scheduled time has already passed. Choose a time in the future, or "
 "publish now."
 msgstr "予約日時はすでに過ぎています。未来の日時を選択するか、今すぐ公開してください。"
 
-#: includes/api/class-posts-controller.php:982
+#: includes/api/class-posts-controller.php:990
 msgid "The post could not be deleted."
 msgstr "投稿を削除できませんでした。"
 
-#: includes/api/class-posts-controller.php:1086
+#: includes/api/class-posts-controller.php:1094
 #. translators: %s: the plural Space label, lowercase.
 #, php-format
 msgid "Roadmap status only applies to Ideas %s."
 msgstr "ロードマップのステータスは、アイデア型の%sにのみ適用されます。"
 
-#: includes/api/class-posts-controller.php:1102
+#: includes/api/class-posts-controller.php:1110
 msgid "Invalid roadmap status."
 msgstr "ロードマップのステータスが無効です。"
 
-#: includes/api/class-posts-controller.php:1163
+#: includes/api/class-posts-controller.php:1171
 #. translators: 1: maximum number of pinned topics allowed per space, 2: the topic label (singular or plural to match the number), lowercase, 3: the singular space label, lowercase.
 #, php-format
 msgid "You can pin up to %1$d %2$s per %3$s. Unpin one first."
 msgstr "1つの%3$sに固定できるのは、最大%1$d件の%2$sです。先に固定を1件解除してください。"
 
-#: includes/api/class-posts-controller.php:1199
+#: includes/api/class-posts-controller.php:1207
 msgid "A valid target_space_id is required."
 msgstr "有効な target_space_id が必要です。"
 
-#: includes/api/class-posts-controller.php:1203
+#: includes/api/class-posts-controller.php:1211
 #. translators: 1: the singular Topic label, 2: the singular Space label, lowercase.
 #, php-format
 msgid "%1$s is already in the target %2$s."
 msgstr "この%1$sはすでに移動先の%2$sに含まれています。"
 
-#: includes/api/class-posts-controller.php:1250
+#: includes/api/class-posts-controller.php:1258
 msgid "Cannot merge a post with itself."
 msgstr "投稿を自分自身とマージすることはできません。"
 
-#: includes/api/class-posts-controller.php:1270
+#: includes/api/class-posts-controller.php:1278
 #: includes/class-template-loader.php:1901
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #, php-format
@@ -6892,7 +6892,7 @@ msgstr "投稿数"
 msgid "%s Count"
 msgstr "%s の数"
 
-#: includes/class-privacy.php:716
+#: includes/class-privacy.php:718
 #. translators: 1: the plural Topic label, 2: the plural Reply label, lowercase.
 #, php-format
 msgid "Jetonomy: %1$s and %2$s anonymized. Personal data deleted."
@@ -6921,7 +6921,7 @@ msgstr "jetonomy_widget: ID「%1$s」は不明です。有効な ID は %2$s で
 #: includes/class-shortcodes.php:237 includes/class-shortcodes.php:381
 #: includes/class-shortcodes.php:561 includes/functions.php:175
 #: templates/views/single-post.php:1028 templates/views/space-members.php:408
-#: templates/views/space.php:571 templates/views/user-profile.php:389
+#: templates/views/space.php:573 templates/views/user-profile.php:389
 #: templates/views/user-profile.php:653
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #, php-format
@@ -7596,11 +7596,11 @@ msgstr "別の%sに統合"
 
 #: includes/class-template-loader.php:1897
 #. translators: 1: singular topic label, 2: plural reply label the site owner configured.
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "Merge this %1$s into the selected one? Its post, %2$s, votes and followers "
 "move there and this %1$s goes to the trash."
-msgstr "この%1$sを、選択した%1$sに統合しますか？最初の投稿、%2$s、投票、フォロワーは統合先に移り、この%1$sはゴミ箱に移されます。"
+msgstr "この%1$sを選択先に統合しますか？最初の投稿、%2$s、投票、フォロワーは統合先に移り、この%1$sはゴミ箱に移動されます。"
 
 #: includes/class-template-loader.php:1899
 #. translators: %s: the plural topic label the site owner configured.
@@ -8203,7 +8203,7 @@ msgstr "フォーラムから共有"
 msgid "View discussion"
 msgstr "ディスカッションを表示"
 
-#: includes/integrations/class-buddypress.php:864 templates/views/space.php:441
+#: includes/integrations/class-buddypress.php:864 templates/views/space.php:443
 #. translators: %s: the compose action for this space type, e.g. "Ask a Question".
 #, php-format
 msgid "+ %s"
@@ -8827,13 +8827,19 @@ msgstr "参加リクエストを拒否しました。"
 msgid "This %s was changed by someone else. Reload to see their changes."
 msgstr "この%sは他のユーザーによって変更されました。再読み込みして変更内容を確認してください。"
 
-#: includes/models/class-post.php:2279
+#: includes/models/class-post.php:43
+#. translators: %s: maximum number of characters allowed in a title.
+#, php-format
+msgid "The title is too long. Keep it to %s characters or fewer."
+msgstr "タイトルが長すぎます。%s文字以内に収めてください。"
+
+#: includes/models/class-post.php:2308
 #. translators: %s: the singular Topic label, lowercase.
 #, php-format
 msgid "This %s is private. Make it public before merging it."
 msgstr "この%sは非公開です。統合する前に公開に変更してください。"
 
-#: includes/models/class-post.php:2352
+#: includes/models/class-post.php:2381
 #. translators: %s: title of the topic that was merged in.
 #, php-format
 msgid "Merged from \"%s\":"
@@ -10317,8 +10323,8 @@ msgstr "パンくずリスト"
 msgid "Home"
 msgstr "ホーム"
 
-#: templates/partials/category-chips.php:36 templates/views/space.php:364
-#: templates/views/space.php:368
+#: templates/partials/category-chips.php:36 templates/views/space.php:366
+#: templates/views/space.php:370
 #. translators: %s: a plural label the site owner configured (e.g. spaces, categories).
 #, php-format
 msgid "Sub-%s"
@@ -10963,11 +10969,11 @@ msgstr "ランキングをすべて見る"
 msgid "Popular Tags"
 msgstr "人気のタグ"
 
-#: templates/partials/space-header.php:69 templates/views/space.php:213
+#: templates/partials/space-header.php:69 templates/views/space.php:215
 msgid "Withdraw request"
 msgstr "リクエストを取り消す"
 
-#: templates/partials/space-header.php:77 templates/views/space.php:235
+#: templates/partials/space-header.php:77 templates/views/space.php:237
 #: assets/js/composer.js:839
 msgid "Request to join"
 msgstr "参加をリクエスト"
@@ -10984,7 +10990,7 @@ msgstr "この%sの新着アクティビティの通知を受け取る"
 msgid "You have access through %s."
 msgstr "%s からアクセスできます。"
 
-#: templates/partials/space-header.php:230 templates/views/space.php:209
+#: templates/partials/space-header.php:230 templates/views/space.php:211
 #. translators: %s: space title.
 #, php-format
 msgid "Your request to join %s is awaiting approval."
@@ -12376,162 +12382,162 @@ msgstr "「%s」は非公開です。ログインしてアクセスをリクエ�
 msgid "Log In"
 msgstr "ログイン"
 
-#: templates/views/space.php:134
+#: templates/views/space.php:136
 #. translators: %s: the singular space label, lowercase (e.g. space, group).
 #, php-format
 msgid "This %s is not open to join right now."
 msgstr "この%sは現在参加を受け付けていません。"
 
-#: templates/views/space.php:137
+#: templates/views/space.php:139
 msgid "Any one of them gives you access, from the moment you have it until it ends."
 msgstr "いずれか1つを持っていれば、取得した時点から終了するまでアクセスできます。"
 
-#: templates/views/space.php:138
+#: templates/views/space.php:140
 msgid "Ask a site administrator how to get one of them."
 msgstr "入手方法はサイト管理者にお問い合わせください。"
 
-#: templates/views/space.php:142
+#: templates/views/space.php:144
 msgid ""
 "Your access starts as soon as your membership is active, and ends if it "
 "lapses."
 msgstr "メンバーシップが有効になった時点からアクセスできるようになり、失効すると終了します。"
 
-#: templates/views/space.php:143
+#: templates/views/space.php:145
 msgid "Ask a site administrator how to get access to this plan."
 msgstr "このプランへのアクセス方法はサイト管理者にお問い合わせください。"
 
-#: templates/views/space.php:146
+#: templates/views/space.php:148
 #. translators: %s: what the visitor needs, lowercase (e.g. course, group).
 #, php-format
 msgid "Ask a site administrator to add you to this %s."
 msgstr "この%sに追加してもらうよう、サイト管理者に依頼してください。"
 
-#: templates/views/space.php:149
+#: templates/views/space.php:151
 #. translators: %s: what the visitor joins, lowercase (e.g. course, group).
 #, php-format
 msgid "You get access as soon as you join this %s, and lose it if you leave it."
 msgstr "この%sに参加するとすぐにアクセスでき、退会するとアクセスできなくなります。"
 
-#: templates/views/space.php:153
+#: templates/views/space.php:155
 #. translators: %s: plan, course or group name.
 #, php-format
 msgid "Get %s"
 msgstr "%sを入手"
 
-#: templates/views/space.php:164
+#: templates/views/space.php:166
 #. translators: 1: the singular space label (e.g. space, group), 2: comma-separated plan names.
 #, php-format
 msgid "This %1$s is included with %2$s."
 msgstr "この%1$sは%2$sに含まれています。"
 
-#: templates/views/space.php:183
+#: templates/views/space.php:185
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #, php-format
 msgid "This %s is hidden and invite-only. You need an invitation to join."
 msgstr "この%sは非表示の招待制です。参加するには招待が必要です。"
 
-#: templates/views/space.php:185
+#: templates/views/space.php:187
 #. translators: %s: space title.
 #, php-format
 msgid "%s is invite-only. You need an invitation to join."
 msgstr "%s は招待制です。参加するには招待が必要です。"
 
-#: templates/views/space.php:194
+#: templates/views/space.php:196
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #, php-format
 msgid "Ask a %s admin or a site administrator to invite you."
 msgstr "%sの管理者またはサイト管理者に招待を依頼してください。"
 
-#: templates/views/space.php:227
+#: templates/views/space.php:229
 #. translators: %s: space title.
 #, php-format
 msgid "%s is private. Request to join and an admin will review it."
 msgstr "%s は非公開です。参加をリクエストすると、管理者が確認します。"
 
-#: templates/views/space.php:234
+#: templates/views/space.php:236
 msgid "Message to the admins (optional)"
 msgstr "管理者へのメッセージ（任意）"
 
-#: templates/views/space.php:234 assets/js/composer.js:838
+#: templates/views/space.php:236 assets/js/composer.js:838
 msgid "Optional: why do you want to join?"
 msgstr "任意：参加したい理由を教えてください。"
 
-#: templates/views/space.php:404 templates/views/tag.php:97
+#: templates/views/space.php:406 templates/views/tag.php:97
 #: assets/js/blocks-editor.js:100
 msgid "Latest"
 msgstr "最新"
 
-#: templates/views/space.php:405 templates/views/tag.php:98
+#: templates/views/space.php:407 templates/views/tag.php:98
 msgid "Popular"
 msgstr "人気"
 
-#: templates/views/space.php:406
+#: templates/views/space.php:408
 msgid "Unanswered"
 msgstr "未回答"
 
-#: templates/views/space.php:452
+#: templates/views/space.php:454
 msgid "Log in to post"
 msgstr "投稿するにはログインしてください"
 
-#: templates/views/space.php:498
+#: templates/views/space.php:500
 msgid "Community announcements"
 msgstr "コミュニティのお知らせ"
 
-#: templates/views/space.php:558
+#: templates/views/space.php:560
 #. translators: %s: plural topic label.
 #, php-format
 msgid "No %s were posted here."
 msgstr "ここにはまだ %s が投稿されていません。"
 
-#: templates/views/space.php:561
+#: templates/views/space.php:563
 msgid "Every question has an accepted answer."
 msgstr "すべての質問にベストアンサーがあります。"
 
-#: templates/views/space.php:562
+#: templates/views/space.php:564
 #. translators: 1: plural topic label; 2: plural reply label.
 #, php-format
 msgid "No %1$s without %2$s yet."
 msgstr "%2$s のない %1$s はまだありません。"
 
-#: templates/views/space.php:566
+#: templates/views/space.php:568
 msgid "No questions yet."
 msgstr "まだ質問がありません。"
 
-#: templates/views/space.php:567
+#: templates/views/space.php:569
 msgid "Nothing posted yet."
 msgstr "まだ投稿がありません。"
 
-#: templates/views/space.php:568
+#: templates/views/space.php:570
 msgid "No ideas yet."
 msgstr "まだアイデアがありません。"
 
-#: templates/views/space.php:575
+#: templates/views/space.php:577
 msgid "No questions yet. Ask the first one and get answers from the community."
 msgstr "まだ質問がありません。最初の質問を投稿して、コミュニティから回答をもらいましょう。"
 
-#: templates/views/space.php:578
+#: templates/views/space.php:580
 msgid "Nothing posted yet. Share the first update."
 msgstr "まだ投稿がありません。最初のアップデートを共有しましょう。"
 
-#: templates/views/space.php:581
+#: templates/views/space.php:583
 msgid "No ideas yet. Suggest the first one and let the community vote."
 msgstr "まだアイデアがありません。最初のアイデアを提案して、コミュニティに投票してもらいましょう。"
 
-#: templates/views/space.php:585
+#: templates/views/space.php:587
 #. translators: %s: plural topic label.
 #, php-format
 msgid "No %s yet. Be the first to start a discussion!"
 msgstr "まだ %s がありません。最初のディスカッションを始めましょう！"
 
-#: templates/views/space.php:589
+#: templates/views/space.php:591
 msgid "Ask a question"
 msgstr "質問する"
 
-#: templates/views/space.php:590
+#: templates/views/space.php:592
 msgid "Share an update"
 msgstr "アップデートを共有する"
 
-#: templates/views/space.php:591
+#: templates/views/space.php:593
 msgid "Suggest an idea"
 msgstr "アイデアを提案する"
 

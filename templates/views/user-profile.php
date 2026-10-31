@@ -24,7 +24,7 @@ if ( ! $user ) {
 	return;
 }
 
-$profile         = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
+$profile         = \Jetonomy\Models\UserProfile::find_public( (int) $user->ID ); // Counts exclude anonymous items.
 $trust           = $profile ? (int) $profile->trust_level : 0;
 $rep             = $profile ? (int) $profile->reputation : 0;
 $p_count         = $profile ? (int) $profile->post_count : 0;

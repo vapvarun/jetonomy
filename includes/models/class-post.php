@@ -20,6 +20,31 @@ class Post extends Model {
 	/** Columns the topic edit form writes; fingerprinted by edit_token(). */
 	public const EDIT_FIELDS = array( 'title', 'content' );
 
+	/** Longest title the `title` varchar(255) column holds, in characters. */
+	public const TITLE_MAX_LENGTH = 255;
+
+	/**
+	 * Refuse a title the column cannot hold, before anything is written.
+	 *
+	 * Every create and update path calls this (REST, admin AJAX, Abilities,
+	 * and Post::create() itself as the net), so an over-long title is a clear
+	 * 400 instead of a failed INSERT surfacing as a 500.
+	 *
+	 * @param string $title Sanitized title.
+	 * @return \WP_Error|null Error when the title is too long, null when it fits.
+	 */
+	public static function title_length_error( string $title ): ?\WP_Error {
+		if ( mb_strlen( $title ) <= self::TITLE_MAX_LENGTH ) {
+			return null;
+		}
+		return new \WP_Error(
+			'jetonomy_title_too_long',
+			/* translators: %s: maximum number of characters allowed in a title. */
+			sprintf( __( 'The title is too long. Keep it to %s characters or fewer.', 'jetonomy' ), number_format_i18n( self::TITLE_MAX_LENGTH ) ),
+			array( 'status' => 400 )
+		);
+	}
+
 	/**
 	 * Get the table name suffix.
 	 *
@@ -67,6 +92,10 @@ class Post extends Model {
 		$data = apply_filters( 'jetonomy_before_create_post', $data, $data['author_id'] ?? 0, $data['space_id'] ?? 0 );
 		if ( is_wp_error( $data ) ) {
 			return $data;
+		}
+		$title_error = self::title_length_error( (string) ( $data['title'] ?? '' ) );
+		if ( $title_error ) {
+			return $title_error;
 		}
 
 		$now  = now();

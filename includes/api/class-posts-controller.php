@@ -489,7 +489,11 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Security check failed. Please refresh the page and try again.', 'jetonomy' ) );
 		}
 
-		$title   = sanitize_text_field( (string) $request->get_param( 'title' ) );
+		$title       = sanitize_text_field( (string) $request->get_param( 'title' ) );
+		$title_error = Post::title_length_error( $title );
+		if ( $title_error ) {
+			return $title_error;
+		}
 		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
 		if ( empty( $content ) ) {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
@@ -749,6 +753,10 @@ class Posts_Controller extends Base_Controller {
 
 		if ( null !== $request->get_param( 'title' ) ) {
 			$update_data['title'] = sanitize_text_field( $request->get_param( 'title' ) );
+			$title_error          = Post::title_length_error( $update_data['title'] );
+			if ( $title_error ) {
+				return $title_error;
+			}
 		}
 
 		if ( null !== $request->get_param( 'content' ) ) {

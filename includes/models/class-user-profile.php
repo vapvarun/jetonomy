@@ -244,6 +244,76 @@ class UserProfile extends Model {
 	}
 
 	/**
+	 * Profile rows with the topic and reply counts members are allowed to see.
+	 *
+	 * The stored post_count / reply_count include anonymous items on purpose:
+	 * trust levels, badges and spam checks read them and anonymous work is real
+	 * activity. Any count SHOWN next to a name must not, or "3 topics" beside a
+	 * stream of 2 tells everyone the member wrote the anonymous one. Every
+	 * display surface (profile header, REST users, leaderboard, profile card,
+	 * BuddyPress stats, abilities) routes through here, so none can leak.
+	 *
+	 * Two grouped queries for the whole set (KEY author_created), no N+1.
+	 *
+	 * @param object[] $rows Rows carrying user_id, post_count and reply_count.
+	 * @return object[] Same order and keys; changed rows are clones.
+	 */
+	public static function with_public_counts( array $rows ): array {
+		$ids = array();
+		foreach ( $rows as $row ) {
+			if ( ! empty( $row->user_id ) ) {
+				$ids[] = (int) $row->user_id;
+			}
+		}
+		$ids = array_values( array_unique( $ids ) );
+		if ( ! $ids ) {
+			return $rows;
+		}
+
+		$in      = implode( ',', $ids ); // Integers only, cast above.
+		$posts   = \Jetonomy\table( 'posts' );
+		$replies = \Jetonomy\table( 'replies' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$anon_posts = static::db()->get_results(
+			"SELECT author_id, COUNT(*) AS n FROM {$posts} WHERE author_id IN ({$in}) AND status = 'publish' AND is_anonymous = 1 GROUP BY author_id",
+			OBJECT_K
+		);
+		// Same scope as the stored reply_count (Recount): published replies in published topics.
+		$anon_replies = static::db()->get_results(
+			"SELECT r.author_id, COUNT(*) AS n FROM {$replies} r INNER JOIN {$posts} p ON p.id = r.post_id WHERE r.author_id IN ({$in}) AND r.status = 'publish' AND p.status = 'publish' AND r.is_anonymous = 1 GROUP BY r.author_id",
+			OBJECT_K
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( ! $anon_posts && ! $anon_replies ) {
+			return $rows;
+		}
+
+		foreach ( $rows as $key => $row ) {
+			$uid = (int) ( $row->user_id ?? 0 );
+			$dp  = isset( $anon_posts[ $uid ] ) ? (int) $anon_posts[ $uid ]->n : 0;
+			$dr  = isset( $anon_replies[ $uid ] ) ? (int) $anon_replies[ $uid ]->n : 0;
+			if ( $dp || $dr ) {
+				$row              = clone $row;
+				$row->post_count  = max( 0, (int) ( $row->post_count ?? 0 ) - $dp );
+				$row->reply_count = max( 0, (int) ( $row->reply_count ?? 0 ) - $dr );
+				$rows[ $key ]     = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * One member's profile with showable counts (see with_public_counts()).
+	 *
+	 * @param int $user_id User ID.
+	 * @return object|null
+	 */
+	public static function find_public( int $user_id ): ?object {
+		$row = static::find_by_user( $user_id );
+		return $row ? static::with_public_counts( array( $row ) )[0] : null;
+	}
+
+	/**
 	 * Update the last_seen_at timestamp for a user.
 	 *
 	 * Uses a transient to rate-limit updates to once per minute,
@@ -484,7 +554,7 @@ class UserProfile extends Model {
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $rows ? $rows : array();
+		return $rows ? static::with_public_counts( $rows ) : array();
 	}
 
 	/**

@@ -104,7 +104,7 @@ $jt_ac_describe = ' aria-describedby="' . esc_attr( $jt_ac_target ) . '"';
 	</div>
 
 	<?php if ( '' !== $jt_title ) : ?>
-		<div class="jt-mod-flag-title" id="<?php echo esc_attr( $jt_ac_target ); ?>">
+		<div class="jt-mod-flag-title" id="<?php echo esc_attr( $jt_ac_target ); ?>" dir="auto">
 			<?php
 			if ( $jt_is_reply ) {
 				/* translators: %s: title of the thread the held reply belongs to */

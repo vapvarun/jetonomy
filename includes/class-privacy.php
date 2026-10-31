@@ -682,6 +682,8 @@ class Privacy {
 			}
 			$work += $this->batch_anonymize_author( $authored, $uid, $batch );
 		}
+		// The files on that content follow it: kept, uploader cleared.
+		$work += Models\Attachment::anonymize_uploader( $uid, $batch );
 
 		// Delete personal data, bounded per table (shared list — see PURGE_TABLES).
 		foreach ( self::PURGE_TABLES as [ $table_key, $user_col ] ) {
@@ -866,6 +868,11 @@ class Privacy {
 				continue;
 			}
 			$wpdb->update( table( $t ), array( 'author_id' => 0 ), array( 'author_id' => $user_id ) );
+		}
+		// Same for the files on that content. Runs before core deletes the
+		// account's posts, so they stay with the topics instead of breaking them.
+		while ( Models\Attachment::anonymize_uploader( $user_id, 1000 ) > 0 ) {
+			continue;
 		}
 
 		// Capture vote/membership targets before deleting so the denormalized

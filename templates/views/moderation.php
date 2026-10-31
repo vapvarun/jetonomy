@@ -372,7 +372,7 @@ $crumbs = array(
 							</span>
 						</div>
 						<?php if ( ! empty( $jt_ban->reason ) && ! $jt_is_ip_ban ) : ?>
-							<div class="jt-mod-flag-excerpt"><?php echo esc_html( (string) $jt_ban->reason ); ?></div>
+							<div class="jt-mod-flag-excerpt" dir="auto"><?php echo esc_html( (string) $jt_ban->reason ); ?></div>
 						<?php endif; ?>
 						<div class="jt-mod-flag-foot">
 							<?php if ( null === Moderation_Permissions::lift_error( $user_id, $jt_ban ) ) : // Lifting needs the authority that issued it. ?>
