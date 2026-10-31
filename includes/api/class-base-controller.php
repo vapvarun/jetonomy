@@ -864,6 +864,27 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * Per-viewer action flags for one post or reply (additive, 2.0.7).
+	 *
+	 * Same rules the edit/delete/close handlers enforce, published so clients
+	 * render controls from the server's answer instead of guessing from global
+	 * capabilities (which ignore per-space roles). Reads Permission_Engine
+	 * directly so a false flag never records a denied action.
+	 *
+	 * @return array<string,bool>
+	 */
+	protected function viewer_content_caps( int $uid, int $author_id, int $space_id ): array {
+		$is_author = $uid > 0 && $author_id === $uid;
+		$can       = static fn ( string $action ): bool => $uid > 0 && Permission_Engine::can( $uid, $action, $space_id );
+
+		return array(
+			'viewer_can_edit'     => ( $is_author && $can( 'edit_own_posts' ) ) || $can( 'edit_others_posts' ),
+			'viewer_can_delete'   => ( $is_author && $can( 'delete_own_posts' ) ) || $can( 'delete_others_posts' ),
+			'viewer_can_moderate' => $can( 'moderate' ),
+		);
+	}
+
+	/**
 	 * Serialize a post row for API output.
 	 *
 	 * Promoted here from Posts_Controller in 1.9.1 so /search can emit the same
@@ -1058,6 +1079,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			&& $real_author_id !== $uid
 			&& ! user_can( $real_author_id, 'manage_options' )
 			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
+		$data           += $this->viewer_content_caps( $uid, $real_author_id, (int) $post->space_id );
 		// Additive (1.9.3): has THIS viewer already reported this post? A second
 		// report is answered 409 jetonomy_already_flagged, but the API published
 		// nothing to read that state from, so the app kept "reported" in local

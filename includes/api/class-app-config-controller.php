@@ -86,6 +86,15 @@ class App_Config_Controller extends Base_Controller {
 			// free-only (or unlicensed) install. Fail closed.
 			'app_enabled'  => false,
 			'features'     => $features,
+			// The report dialog's reasons and note limit, from the same list web uses.
+			'flag_reasons' => array_map(
+				static fn ( string $value, string $label ): array => array(
+					'value' => $value,
+					'label' => $label,
+				),
+				array_keys( \Jetonomy\Models\Flag::reason_labels() ),
+				array_values( \Jetonomy\Models\Flag::reason_labels() )
+			),
 			// The attachments{} object is ALWAYS present so the app has one
 			// consistent shape whether or not the feature is active. Free ships
 			// the defaults with enabled reflecting the flag; the Pro attachments

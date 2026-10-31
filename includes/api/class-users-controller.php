@@ -372,6 +372,8 @@ class Users_Controller extends Base_Controller {
 					// the cap); this only tells the client what to render.
 					'is_admin'             => user_can( $user_id, 'manage_options' ),
 					'capabilities'         => \Jetonomy\Permissions\Capabilities::map_for_user( $user_id ),
+					// Same gate POST /spaces enforces (admin-saved creation roles), so clients render the control from the answer.
+					'can_create_spaces'    => \Jetonomy\Permissions\Capabilities::can_create_space_frontend( (int) $user_id ),
 				)
 			),
 			200

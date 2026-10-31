@@ -1859,13 +1859,7 @@ class Template_Loader {
 			'reportPrompt'          => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
 			// The report dialog's reasons: the moderation queue's own list.
-			'reportReasons'         => array(
-				'spam'       => __( 'Spam', 'jetonomy' ),
-				'offensive'  => __( 'Offensive', 'jetonomy' ),
-				'off_topic'  => __( 'Off-topic', 'jetonomy' ), // jt-terms-ok: report reason idiom, not the noun.
-				'harassment' => __( 'Harassment', 'jetonomy' ),
-				'other'      => __( 'Other', 'jetonomy' ),
-			),
+			'reportReasons'         => \Jetonomy\Models\Flag::reason_labels(),
 			/* translators: %s: maximum number of characters. */
 			'reportDetails'         => sprintf( __( 'Add details (optional, up to %s characters)', 'jetonomy' ), number_format_i18n( \Jetonomy\Models\Flag::DESCRIPTION_MAX ) ),
 			'reportDetailsMax'      => \Jetonomy\Models\Flag::DESCRIPTION_MAX,
