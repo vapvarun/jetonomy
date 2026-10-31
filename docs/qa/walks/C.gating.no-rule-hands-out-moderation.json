@@ -1,8 +1,8 @@
 {
   "journey": "C.gating.no-rule-hands-out-moderation",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:04:55Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:58:36Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -17,40 +17,40 @@
   },
   "checks": {
     "c-gating-no-rule-hands-out-moderation.1": {
-      "result": "pass",
-      "evidence": "membership rule with grants=read and space_role=admin saved (201) -> stored space_role viewer"
+      "result": "fail",
+      "evidence": "stale line: the Access Rules form has no Space Role selector any more (role is derived from grants); admin POST Read rule with space_role=admin saves 201 and stores grants read, space_role viewer"
     },
     "c-gating-no-rule-hands-out-moderation.2": {
       "result": "pass",
-      "evidence": "subscriber matched by Read+admin rule: trash 403, PATCH others 403, DELETE others 403, pin 403 (jetonomy_forbidden)"
+      "evidence": "subscriber under Read rule (and space_role=admin sent): trash/moderate, PATCH, DELETE, pin on another's topic each 403 jetonomy_forbidden"
     },
     "c-gating-no-rule-hands-out-moderation.3": {
       "result": "pass",
-      "evidence": "Participate and grants=full with space_role=admin: stored participate/member; same four calls 403; roster never admin/moderator"
+      "evidence": "Participate and grants=full with space_role=admin: saved as participate/member; the same four calls 403"
     },
     "c-gating-no-rule-hands-out-moderation.4": {
       "result": "pass",
-      "evidence": "fired jetonomy_membership_activated for plain subscriber with rule read+space_role=admin -> roster row role viewer, source tier; post 403 and moderate/edit/delete/pin all denied"
+      "evidence": "PMPro active: fired jetonomy_membership_activated for plain subscriber with membership rule read+space_role=admin: roster row viewer (source tier); moderation 403"
     },
     "c-gating-no-rule-hands-out-moderation.5": {
       "result": "pass",
-      "evidence": "participate membership rule via hook -> roster role member (Free has no membership plugin so tier rows lapse at reconcile); posting as member proved with a role rule in C.gating.participate.3/4"
+      "evidence": "same with participate rule: roster row member (source tier). A tier row only grants access while a live membership plan backs it; member posting via role-rule path proven in C.gating.participate (201)"
     },
     "c-gating-no-rule-hands-out-moderation.6": {
       "result": "pass",
-      "evidence": "Members tab after hook-admitted users: roles viewer/member only; no moderator/admin among rule-admitted"
+      "evidence": "Members tab after Sync Members: admin Admin, b and rule-admitted people all Member, nobody Moderator/Admin from a rule"
     },
     "c-gating-no-rule-hands-out-moderation.7": {
       "result": "pass",
-      "evidence": "subscriber on /community/s/qa-rft-priv/mod/ -> 403 'You do not have permission to moderate this space.'"
+      "evidence": "/community/s/qa-rft-w2-priv/mod/ as rule-admitted subscriber: 403 \"do not have permission to moderate this space.\""
     },
     "c-gating-no-rule-hands-out-moderation.8": {
       "result": "pass",
-      "evidence": "test_moderator pin/close/trash 200 in public QA-RFT Pub via Moderate capability, not from a rule"
+      "evidence": "test_moderator trashed a public-space topic via /moderation/trash/post (200) through the Moderate capability; on private space he is not on the roster he gets 403, on a hidden one 404, and sees it once rostered"
     },
     "c-gating-no-rule-hands-out-moderation.9": {
       "result": "pass",
-      "evidence": "live preview reads 'Everyone can read, post, reply, vote and report. They are recorded as Member.' (also on role/trust/capability) with Participate; never Moderator"
+      "evidence": "Access Rules builder, Participate with Role/Capability/Trust Level/Logged In/Everyone: preview ends \"They are recorded as Member.\"; never Moderator"
     }
   },
   "proposed_checks": []

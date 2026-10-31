@@ -1,8 +1,10 @@
 {
   "journey": "C.cli.qa-actions",
-  "free": "43d92637",
-  "walked_at": "2026-10-30T21:35:29Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:05:05Z",
   "walker": "agent:sonnet release walk 2026-10-31",
+  "walked_before_change": false,
   "env": {
     "mode": "free (Jetonomy Free active, Pro inactive)",
     "site": "http://localhost:8912",
@@ -16,66 +18,64 @@
   "checks": {
     "c-cli-qa-actions.1": {
       "result": "fail",
-      "evidence": "wp jetonomy qa-actions: 469/477 pass, 1 SKIP (BB1 no bbPress), 8 FAIL lines, exit 1. All 8 are HTTP-from-inside-the-container loopbacks (E32 public feed, E32 feed content-type, E32b feed XML, E32 private feed, SM1 sitemap, SF1 author filter, AX1, PV2: 'HTTP 0'). From the host against :8912: feeds 200 application/rss+xml (private space feeds 404), /community-sitemap.xml 200 sitemapindex, /community/search/?author_id=23 shows '17 results', a private accepted answer topic gives guests a 404 with no answer text (PV2 holds). AX1 (anonymous topic SEO meta) needs the Pro anonymous-posting fixture and could not be reproduced from the host on Free"
-    },
-    "c-cli-qa-actions.2": {
-      "result": "untested",
-      "evidence": "breaking a guard on a scratch copy needs a disposable install (the plugin dir is the shared repo mount)"
-    },
-    "c-cli-qa-actions.3": {
-      "result": "pass",
-      "evidence": "`wp jetonomy scenario run multi-user-voting-thread --cleanup` listed its fixtures (category, space, post, 5 replies, 3 users, 10 votes) and afterwards the space, category and users were gone"
-    },
-    "c-cli-qa-actions.4": {
-      "result": "pass",
-      "evidence": "space-with-pending-join-request, post-with-flags-for-moderation, full-membership-approval-flow and notification-delivery-sweep each completed with --cleanup and left no scenario spaces or categories behind (space purged, not archived)"
+      "evidence": "wp jetonomy qa-actions in the container: 469/477 pass, 1 skip (BB1), 8 FAIL. Six are loopback HTTP 0 (E32 x4 feeds, SM1 sitemap, SF1) and confirm from the host: /community-sitemap.xml 200 sitemapindex, space feed 200 application/rss+xml, private space feed 404, /community/search/?author_id=1 52 results and an unknown author 0 results. AX1 and PV2 (anonymous topic page SEO/JSON-LD, private accepted answer in guest page) also need loopback pages built from fixtures the command creates and could not be re-created on the host, so they are unconfirmed"
     },
     "c-cli-qa-actions.5": {
       "result": "pass",
-      "evidence": "`wp jetonomy space list --category=1` rows (Announcements 13, Community Guidelines 11 ...) match the /community/ cards (Announcements 13 topics)"
+      "evidence": "wp jetonomy space list --category=3 matches the spaces under that category on /community/"
+    },
+    "c-cli-qa-actions.2": {
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+    },
+    "c-cli-qa-actions.3": {
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+    },
+    "c-cli-qa-actions.4": {
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.6": {
-      "result": "pass",
-      "evidence": "post get 5709, member list-members, mod flags, tag popular (email 40 = tag page), category get/list, privacy scan, notification unread-count, config get and user all run one read command and return the data the screens show"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.7": {
-      "result": "pass",
-      "evidence": "After alice replied to bob: CLI 'notification unread-count --to=3755' = 97, REST unread-count = 97, bell/userpanel badge in browser = 97 (command takes --to; --user is a wp-cli global so the runbook flag is stale)"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.8": {
-      "result": "pass",
-      "evidence": "mod ban --target=1 -> 'Administrators cannot be restricted.'; admin banning self and moderator banning self -> 'You cannot restrict your own account.'; restriction count unchanged (flags are --target/--issuer, not --user)"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.9": {
-      "result": "pass",
-      "evidence": "post create --space=36 (archived 2025 Hackathon) -> [jetonomy_space_restricted] 'This space is archived or locked...'; space still 0 posts"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.10": {
-      "result": "pass",
-      "evidence": "CLI-created post 9232 renders at 1440 and 390: scrollWidth equals clientWidth on both, long unbroken token wraps",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/cli10-390.png"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.11": {
-      "result": "pass",
-      "evidence": "On 1,612-topic seed: wp jetonomy post get 10125 in 0.6s wall, wp jetonomy recount in 0.64s; recounted totals match Overview (1513 topics, 3809 replies)"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.12": {
-      "result": "pass",
-      "evidence": "wp jetonomy recount prints rows per counter (post_reply_counts 1, post_last_reply_at 60, space_member_counts 3, ...); guest home General Discussion 64 and Bug Reports 16 equal the DB immediately"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.13": {
-      "result": "pass",
-      "evidence": "reply create into a closed topic -> [jetonomy_post_closed]; post create as silenced finn -> [jetonomy_user_silenced]; as banned kai -> [jetonomy_user_banned]; same codes as REST; no rows added"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.14": {
-      "result": "pass",
-      "evidence": "reply create --post=9024 --author=3754: reply 16645 created and bob got a reply_to_post notification (90->91) like a browser reply"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     },
     "c-cli-qa-actions.15": {
-      "result": "pass",
-      "evidence": "after a recount the guest home shows 232 topics, equal to the post_count total of the public spaces and to the published topics in public spaces (private and hidden excluded); before the recount it read 233 against 232 after my test spaces were purged (counter drift from space purge, cleared by recount)"
+      "result": "untested",
+      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
     }
   },
-  "pro": "5dd6f92",
-  "walked_before_change": false
+  "proposed_checks": []
 }

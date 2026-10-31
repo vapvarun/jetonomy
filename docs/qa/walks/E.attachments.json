@@ -1,9 +1,9 @@
 {
   "journey": "E.attachments",
-  "free": "607c4b7b",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:58:00Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:09:37Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
     "mode": "combo (Free + Pro 2.0.7)",
@@ -22,76 +22,78 @@
   "checks": {
     "e-attachments.1": {
       "result": "pass",
-      "evidence": "Browser, admin: Settings > Attachments saved 8 MB / 5 files -> max size clamps to the 2 MB server upload limit; 9999 MB / 99 files -> 2 MB / 20; 0 / 0 -> 1 MB / 1; all 12 types stay ticked. Values restored to 10 MB afterwards"
+      "evidence": "Browser, admin 1440, Settings > Attachments (all 12 types ticked incl. pdf, png, jpg, docx): 8 MB/5 -> saved as 2 MB/5 with notice 'Maximum file size was set to 2 MB, not 8 MB: this server does not accept uploads larger than that.'; 9999 MB/99 -> 2 MB/20; 0/0 -> 1 MB/1 'Attachment settings saved.' (server limit on this stack is 2 MB, so 8 MB cannot persist). Original values restored after"
     },
     "e-attachments.2": {
       "result": "pass",
-      "evidence": "stored jetonomy_pro_attachments allowed_types contains no svg; a raw-request save was not posted, but REST upload of notes.svg is refused (see .5)"
+      "evidence": "Raw POST of the settings form (nonce included) with jt_attach_types[]=svg and svgz added -> 200; wp option get jetonomy_pro_attachments allowed_types has no svg/svgz"
     },
     "e-attachments.3": {
       "result": "pass",
-      "evidence": "Browser, bob 1440: Attach files in the Help Desk composer with 'Dashboard layout.png' and 'Community guidelines v3.pdf' -> chips, post -> image thumbnail inside a link (jt-attach-img) and a PDF card '1 page \u00b7 192 B'"
+      "evidence": "Browser 1440, qa_rft_w4_a: Help Desk composer, Attach files 'Dashboard layout.png' (1.19 MB) + 'Community guidelines v3.pdf' -> posted; image renders as a 300px thumbnail inside a target=_blank link to the file (jt-attach-img), PDF as a card 'Community-guidelines-v3.pdf 2 pages \u00b7 858 B Open viewer'"
     },
     "e-attachments.4": {
       "result": "pass",
-      "evidence": "Click/Enter on the PDF card opens role=dialog aria-modal=true with the PDF (Page 1/1), focus trapped through Tab, Esc closes and focus returns to the card, overlay click closes too; pdf-viewer.js and pdf.min.mjs requested only after the click, none on page load"
+      "evidence": "Enter on the PDF card opens .jt-modal-box.jt-pdf-box role=dialog aria-modal=true showing 'Page 1 / 2' with prev/next/zoom/new-tab; 8 Tab presses stay inside the dialog; Esc and click on the overlay both close it and focus returns to the .jt-attach-pdf card; pdf-viewer.js, pdf.min.mjs and pdf.worker.min.mjs requested only after the click (none on page load)"
     },
     "e-attachments.5": {
-      "result": "pass",
-      "evidence": "bob POST /jetonomy/v1/media with setup.exe and with notes.svg -> both 400 jetonomy_upload_type \"This file type is not allowed.\"; nothing linked. The 20 MB size refusal and the allowed-types wording in the composer were not tried"
+      "result": "fail",
+      "evidence": "Browser composer: setup.exe and notes.svg -> modal 'That file type is not allowed.'; big20mb.pdf -> modal 'That file is too large.'; nothing linked. The line expects messages naming the allowed types and the size limit; the composer names neither (REST /media says 'File is too large. Maximum size is 2 MB.' but the UI shows the shorter text). Product copy gap or stale line"
     },
     "e-attachments.6": {
       "result": "pass",
-      "evidence": "bob POST /attachments linking alice's upload id -> 403 jetonomy_attach_forbidden \"You can only attach your own uploads.\"; the type re-check and cap refusals were not tried. Route is /jetonomy-pro/v1/attachments"
+      "evidence": "w4 b POST /jetonomy-pro/v1/attachments with w4 a's upload -> 403 jetonomy_attach_forbidden 'You can only attach your own uploads.'; a file named .png whose bytes are not an image (own upload) -> 400 jetonomy_attach_type 'This file type is not allowed.'; sixth file on a post with max 5 -> 400 jetonomy_attach_limit 'You can attach at most 5 files.' (note: changing only post_mime_type does not trip the type re-check, it inspects the file bytes)"
     },
     "e-attachments.7": {
       "result": "pass",
-      "evidence": "bob linked the same media to the same post twice -> both responses 200 with link_id 1 (one link, no second row)"
+      "evidence": "Create post with inline attachment_ids=<pdf> then POST /attachments for the same (post, attachment) -> 200 and COUNT(*) for that triple = 1; same-file double POST also 200 with one row"
     },
     "e-attachments.8": {
       "result": "pass",
-      "evidence": "Browser: attached a PDF to a reply in the 45-reply 'dark mode for the community on phones' topic -> strip renders on that reply (page 2). Batch priming of page-2 attachment queries not measured"
+      "evidence": "Browser, w4 a attached the PDF to a reply in the 45-reply 'dark mode for the community on phones' topic -> reply posted with the strip on that reply (landed on page 2, ?rpg=2); the page-2 load renders the strip server-side with no extra attachments REST calls. Query-per-row count not instrumented"
     },
     "e-attachments.9": {
       "result": "pass",
-      "evidence": "guest POST /jetonomy/v1/media -> 401 rest_not_logged_in; guest POST /jetonomy-pro/v1/attachments with full params -> 401 (with no params it answers 400 missing params first, a small order oddity); guest download of a public topic attachment not confirmed because the link was removed with the post"
+      "evidence": "Guest POST /jetonomy/v1/media -> 401 rest_not_logged_in; guest POST /jetonomy-pro/v1/attachments -> 401; guest GET /attachments/{id}/download for an attachment on a public Help Desk topic -> 200 application/pdf; composer is absent for guests"
     },
     "e-attachments.10": {
       "result": "fail",
-      "evidence": "Re-walked: attachment links on a post moved into private Insiders / Beta: guest and non-member carlos get 404 on /attachments/{id}/download and /posts/{id}/attachments, but the stored file URL /wp-content/uploads/jetonomy/<16-hex>/<name>.pdf answers 200 to a guest (curl). Only an unguessable folder protects it; product gap or documented trade-off needing a decision"
+      "evidence": "Attachment on a Customer Advisory Board (private) topic: guest and non-member carlos GET /attachments/{id}/download -> 404; carlos GET /attachments/batch -> 403; admin 200. But the stored file URL /wp-content/uploads/jetonomy/<16-hex>/Dashboard-layout.png answers 200 to a guest (only the unguessable folder protects it). Product gap or documented trade-off needing a decision"
     },
     "e-attachments.11": {
       "result": "fail",
-      "evidence": "Bob deleted the topic through More options > Delete > Confirm: it is soft-trashed (status trash) and both jt_attachments rows remain; the line expects the rows removed on delete, so either soft delete keeps them until purge by design (stale line) or the rows should go"
+      "evidence": "stale line: member delete is a soft delete. w4 b DELETE /posts/629 -> status trash, wp_jt_attachments row and media file remain; permanent delete by admin (?force=true) removes the row at once and leaves the media file"
     },
     "e-attachments.12": {
-      "result": "pass",
-      "evidence": "The job moved to free: hook is jetonomy_cleanup_media (Action Scheduler, not WP-Cron; jetonomy_pro_attachments_gc is a no-op). Ran do_action twice (first sweep is report-only by design): own upload older than 24 h deleted, own upload 1 h old kept, subscriber file tagged only _jetonomy_media kept. The line's command name is stale"
+      "result": "fail",
+      "evidence": "stale line: jetonomy_pro_attachments_gc no longer exists; the sweep is free's Action Scheduler job jetonomy_cleanup_media. Ran do_action twice with: own upload aged 48 h (deleted), own upload 1 h old (kept), subscriber-authored file tagged _jetonomy_media only aged 48 h (kept), orphan link row with attachment_id 99999 (removed) -> all as the line expects"
     },
     "e-attachments.13": {
-      "result": "pass",
-      "evidence": "Browser, bob 390 dark composer: 95-char 'Quarterly community engagement report - final draft v7 (reviewed by moderators).pdf' wraps over 3 lines inside the chip (no ellipsis, .pdf visible, no overflow); the Arabic file name renders correctly. Wrapping instead of truncating differs from the line's wording"
+      "result": "fail",
+      "evidence": "stale line: Browser 390: the 95-character file name wraps over 2 lines in its compose chip (text-overflow clip, white-space normal, extension visible, scrollWidth 390) instead of truncating with an ellipsis; the Arabic name renders correctly (bidi) in a 42px chip"
     },
     "e-attachments.14": {
       "result": "pass",
-      "evidence": "Browser 390: five mixed attachments wrap in the strip (scrollWidth 390, no overflow); the sixth attach attempt shows a modal 'You can attach at most 5 files.' and the file chooser does not open"
+      "evidence": "Browser 390: five mixed attachments (long pdf, Arabic pdf, png, pdf, png) wrap in the compose strip, scrollWidth 390; the sixth attach shows modal 'You can attach at most 5 files.' and adds no chip"
     },
     "e-attachments.15": {
-      "result": "fail",
-      "evidence": "Browser: dropped the network during upload -> chip reads 'Upload failed' and the post still publishes without it with no half-linked row, but the chip has no Retry control"
+      "result": "pass",
+      "evidence": "Browser: context offline during attach -> chip 'Dashboard layout.png: Upload failed Retry x' with Retry and Remove buttons; back online Retry succeeds (chip normal); with the failed chip removed the topic posts normally with no attachment strip and no half-linked row"
     },
     "e-attachments.16": {
       "result": "pass",
-      "evidence": "finn (silenced) POST /jetonomy/v1/media -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; nothing uploaded"
+      "evidence": "finn (silenced): reply composer and attach button are not rendered, page shows 'Your account is currently silenced and cannot post.'; REST POST /media -> 403 jetonomy_user_silenced and POST /attachments -> 403 jetonomy_user_silenced; nothing uploaded"
     },
     "e-attachments.17": {
-      "result": "fail",
-      "evidence": "Browser 390 dark: chips use dark token colours, but the chip is 36 px tall and its remove x is 24x24 px, below the 40 px tap target the line expects"
+      "result": "pass",
+      "evidence": "Browser 390 dark: compose chips use token surfaces (bg ~rgb(52,55,63), text rgb(229,229,229) on body rgb(35,38,47)), height 42px, remove button 40x40; light mode same sizes"
     },
     "e-attachments.18": {
       "result": "fail",
-      "evidence": "Admin Community Media page (jetonomy-community-media) lists uploads with member and space filters and a View / edit link, but offers no search by post and no remove action in the list (removal only through the WP media edit screen)"
+      "evidence": "Admin Community Media page lists uploads as a grid with filters by member (search), space and sort, each with a 'View / edit' link to the WP media editor; no search by post and no remove action on the page. Removal only via the media edit screen"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "Attachments: the composer refusals should name the allowed types and the size limit, and the private-topic file URL should not be a direct 200 from uploads."
+  ]
 }

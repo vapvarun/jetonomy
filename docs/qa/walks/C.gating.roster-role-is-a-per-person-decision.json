@@ -1,8 +1,8 @@
 {
   "journey": "C.gating.roster-role-is-a-per-person-decision",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:05:48Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:58:36Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -18,55 +18,55 @@
   "checks": {
     "c-gating-roster-role-is-a-per-person-decision.1": {
       "result": "pass",
-      "evidence": "membership rule + jetonomy_membership_activated fired for three subscribers (no membership plugin in Free, so the plugin's own event stands in; Sync Members button needs a membership plugin) -> three roster rows, source tier"
+      "evidence": "PMPro membership rule (pmpro_1) participate on private space, three subscribers on the plan: Sync Members toast \"Synced 3 existing members.\" and they appear on Members tab"
     },
     "c-gating-roster-role-is-a-per-person-decision.2": {
       "result": "pass",
-      "evidence": "roster roles: one viewer (Read rule), two member (Participate); none moderator/admin"
+      "evidence": "all three listed as Member (Viewer for Read), none Moderator or Admin"
     },
     "c-gating-roster-role-is-a-per-person-decision.3": {
-      "result": "untested",
-      "evidence": "per-person Moderator change on a tier row: PATCH on a tier row answered 404 jetonomy_not_member after the rule lapsed (no membership provider installed, so tier rows are reconciled away); needs a membership plugin (third-party) to keep the row. Manual-source PATCH to moderator returned 200 and the roster read moderator"
+      "result": "pass",
+      "evidence": "Members tab role select to Moderator toasts \"Role updated.\"; re-running Sync Members (0 synced) left him Moderator"
     },
     "c-gating-roster-role-is-a-per-person-decision.4": {
       "result": "pass",
-      "evidence": "GET /spaces/149/members returns the same user ids and roles as the Members tab (123 rows, total 123)"
+      "evidence": "REST GET /spaces/212/members roles equal Members tab (admin Admin, others Member)"
     },
     "c-gating-roster-role-is-a-per-person-decision.5": {
       "result": "pass",
-      "evidence": "bob GET viewer_role in Partner Program = admin; space-admin role change there is bob's own scope (bob's PATCH not repeated); in other spaces subscriber PATCH answers 403 jetonomy_forbidden"
+      "evidence": "space admin (qa_rft_w2_f made admin of QA-RFT W2 Pub) changed a member role there 200; in another space PATCH 403 jetonomy_forbidden \"You do not have permission to perform this action.\""
     },
     "c-gating-roster-role-is-a-per-person-decision.6": {
       "result": "pass",
-      "evidence": "member qa_rft_b PATCH own role to admin -> 403 jetonomy_forbidden; roster unchanged"
+      "evidence": "member PATCHes own role to admin: 403 jetonomy_forbidden, roster unchanged"
     },
     "c-gating-roster-role-is-a-per-person-decision.7": {
       "result": "pass",
-      "evidence": "PATCH last admin to member -> 400 jetonomy_last_admin_required 'This space must keep at least one admin. Promote someone else first.'"
+      "evidence": "admin demoting own last-admin role: 400 jetonomy_cannot_self_demote"
     },
     "c-gating-roster-role-is-a-per-person-decision.8": {
       "result": "pass",
-      "evidence": "123-member roster (120 QA-RFT bulk users): Members tab 1440 shows 'Showing 1-50 of 123' with pager 1 2 3 Next; search box present"
+      "evidence": "space with 301 members: Members tab pages (1-25 of 301, Next) and search \"Grace\" finds the person on a later page"
     },
     "c-gating-roster-role-is-a-per-person-decision.9": {
       "result": "pass",
-      "evidence": "display name 'QA-RFT Bulk 001 Grace Anderson-Fitzgerald Longname' wraps in its cell (56px high, no overflow)"
+      "evidence": "50-word long display name row wraps in the Members tab (row 60px high at 1440)"
     },
     "c-gating-roster-role-is-a-per-person-decision.10": {
       "result": "pass",
-      "evidence": "Members tab at 390px: no horizontal overflow, rows lay out as flex stacks"
+      "evidence": "Members tab at 390px: rows become block layout, no horizontal overflow"
     },
     "c-gating-roster-role-is-a-per-person-decision.11": {
       "result": "pass",
-      "evidence": "admin POST /spaces/149/members {user_id:97} -> 201 added to the roster"
+      "evidence": "admin POST /spaces/212/members with another user's id 201 (added); repeat 409 jetonomy_already_member; for a rule-admitted person 409 jetonomy_already_member"
     },
     "c-gating-roster-role-is-a-per-person-decision.12": {
-      "result": "pass",
-      "evidence": "Members tab pages at 50 rows: page 3 returns 23 of 123 via REST; UI pager 1 2 3 Next"
+      "result": "fail",
+      "evidence": "stale line: Members tab pages at 25 rows (1-25 of 301), not 50; search finds later-page members"
     },
     "c-gating-roster-role-is-a-per-person-decision.13": {
       "result": "pass",
-      "evidence": "admin POST user_id -> 201; repeat same user 409 jetonomy_already_member; subscriber POST -> 403 jetonomy_forbidden"
+      "evidence": "staff POST with user_id 201, repeat 409, subscriber POST 403"
     }
   },
   "proposed_checks": []

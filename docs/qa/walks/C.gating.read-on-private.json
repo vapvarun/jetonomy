@@ -1,8 +1,8 @@
 {
   "journey": "C.gating.read-on-private",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:04:55Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:57:51Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -18,43 +18,43 @@
   "checks": {
     "c-gating-read-on-private.1": {
       "result": "pass",
-      "evidence": "qa_rft_e/a before any rule: GET /spaces/149 403 jetonomy_forbidden, GET posts 403, topic GET 404 (REST); private-invite space shows no topics"
+      "evidence": "e (not in space, no rule): space GET 403, posts 403, topic 404; UI shows invite-only message, no topics"
     },
     "c-gating-read-on-private.2": {
       "result": "pass",
-      "evidence": "admin POST role=subscriber grants=read -> 201 'Access rule added.'"
+      "evidence": "admin POST Read rule 201 \"Access rule added.\""
     },
     "c-gating-read-on-private.3": {
       "result": "pass",
-      "evidence": "UI as qa_rft_e at 1440 and 390: /community/s/qa-rft-priv/ lists the topics; REST 200"
+      "evidence": "e reads space and topics: REST 200; UI lists 8 topics"
     },
     "c-gating-read-on-private.4": {
-      "result": "pass",
-      "evidence": "UI: no '+ New Topic' control on the space page; topic page vote buttons are aria-disabled with title 'Voting is not available to you here.' and score unchanged"
+      "result": "fail",
+      "evidence": "stale line: for a Read-only member the UI renders no composer and no vote buttons at all (only Report), not a vote message; REST vote 403"
     },
     "c-gating-read-on-private.5": {
       "result": "pass",
-      "evidence": "POST topic/reply/vote -> 403 jetonomy_forbidden 'You cannot post in this space.'"
+      "evidence": "post, reply 403 jetonomy_forbidden \"You cannot post in this space.\"; vote 403 jetonomy_forbidden \"You do not have permission to perform this action.\"; no row stored"
     },
     "c-gating-read-on-private.6": {
       "result": "pass",
-      "evidence": "vote 403 jetonomy_forbidden; POST /flags on the topic -> 201 {created:true}"
+      "evidence": "Read-rule member vote 403; POST /flags on the topic 201 (stored)"
     },
     "c-gating-read-on-private.7": {
       "result": "pass",
-      "evidence": "guest GET /spaces/149/posts 403 jetonomy_forbidden, topic 404"
+      "evidence": "guest: space posts 403, topic 404; rule does not apply to guests"
     },
     "c-gating-read-on-private.8": {
       "result": "pass",
-      "evidence": "DELETE rule -> next GET by the subscriber 403 jetonomy_forbidden"
+      "evidence": "rule removed: next read 403 jetonomy_forbidden"
     },
     "c-gating-read-on-private.9": {
       "result": "pass",
-      "evidence": "159-character title topic at 1440 (470px wide, 95px high) and 390 (202px wide, 237px high, right edge 290 < 390): wraps, nothing clipped"
+      "evidence": "159-char title topic at 1440 and 390: h1 wraps (294px wide at 390), no overflow"
     },
     "c-gating-read-on-private.10": {
       "result": "pass",
-      "evidence": "390px space page: no horizontal overflow, topics stack"
+      "evidence": "390px space page: no horizontal overflow, topics list stacks"
     }
   },
   "proposed_checks": []

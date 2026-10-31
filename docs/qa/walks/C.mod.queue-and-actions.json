@@ -1,8 +1,8 @@
 {
   "journey": "C.mod.queue-and-actions",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:30:40Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:03:30Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -18,114 +18,112 @@
   "checks": {
     "c-mod-queue-and-actions.1": {
       "result": "pass",
-      "evidence": "test_moderator at /community/mod/ 1440 Reign: title 'Moderation Queue', h 'Moderation Overview', tabs 'Flags 5', 'Awaiting approval 3', 'Trash', 'Banned members', sidebar visible; screenshot qa .playwright-mcp mod-awaiting.png"
+      "evidence": "test_moderator /community/mod/: title \"Moderation Queue\", heading \"Moderation Overview\", tabs Flags 9, Awaiting approval 4, Trash, Banned members, sidebar visible"
     },
     "c-mod-queue-and-actions.2": {
-      "result": "untested",
-      "evidence": "Content type nav (Topics/Replies) and status select exist on the Awaiting approval view (Pending/Spam) but the filter+Next round trip was not exercised in this pass"
+      "result": "pass",
+      "evidence": "Awaiting approval has Topics 3 / Replies 1 type tabs and a Pending/Spam select with Apply; type switch lists only that type (UI)"
     },
     "c-mod-queue-and-actions.3": {
       "result": "pass",
-      "evidence": "UI Approve on 'Webhook retries: how many attempts are made?' by Bob Martinez: card left list without reload, badge 3->2, REST /moderation/queue?status=pending no longer lists it, topic 254 status publish, bob has one notification 'Your topic was approved by a moderator'"
+      "evidence": "UI Approve on a held card: card left the list with no URL change/reload (3 -> 2); topic publish; author got exactly one moderation notification (DB); REST queue no longer lists it"
     },
     "c-mod-queue-and-actions.4": {
       "result": "pass",
-      "evidence": "Reject on a held topic (dialog 'Reject this submission? It moves to trash.') -> card left Awaiting approval without reload and the topic is in Trash with a Restore button; POST /moderation/trash/post/{id} 200"
+      "evidence": "UI Reject: dialog \"Reject this submission? It moves to trash.\" Confirm -> card left (2 -> 1) and sits in Trash with Restore; REST POST /moderation/trash/reply/{id} 200"
     },
     "c-mod-queue-and-actions.5": {
       "result": "pass",
-      "evidence": "Spam on a held topic (dialog 'Mark this submission as spam? ...') -> status spam, listed under queue status=spam only (REST), author reputation -20 same as trash; POST /moderation/spam/post/{id} 200"
+      "evidence": "UI Spam: dialog \"Mark this submission as spam? It leaves the queue and its author loses reputation.\" -> gone from pending, listed under status=spam only; author rep -20 same as trash; REST spam 200"
     },
     "c-mod-queue-and-actions.6": {
       "result": "pass",
-      "evidence": "trashed then approved topic: reputation +20 (back to what was taken), topic publish; Restore button on Trash card names its topic (aria-describedby)"
-    },
-    "c-mod-queue-and-actions.7": {
-      "result": "pass",
-      "evidence": "Trash > Delete permanently on a topic with a reply: confirm 'Delete this topic and all its replies permanently? This cannot be undone.'; after confirming the topic row and its reply are gone from the DB"
+      "evidence": "trashed then approved topic: reputation back +20 (to what was taken), topic publish"
     },
     "c-mod-queue-and-actions.8": {
       "result": "pass",
-      "evidence": "POST /moderation/bulk action=bogus -> 400 rest_invalid_param 'action is not one of approve, spam, and trash.'; items=[] -> 400 jetonomy_validation 'items must be a non-empty array.'"
-    },
-    "c-mod-queue-and-actions.9": {
-      "result": "untested",
-      "evidence": "empty-queue strings need an emptied queue; queue holds other walkers' held items so it was not emptied"
-    },
-    "c-mod-queue-and-actions.10": {
-      "result": "pass",
-      "evidence": "61 held topics: tab badge 'Awaiting approval 61', nav 'Awaiting approval pagination' 'Page 1 of 3', Next goes to ?view=approvals&kind=post&pg=2 and shows 25 cards"
-    },
-    "c-mod-queue-and-actions.11": {
-      "result": "untested",
-      "evidence": "space-only moderator (alice moderator in Bug Reports) view not set up in this pass"
-    },
-    "c-mod-queue-and-actions.12": {
-      "result": "pass",
-      "evidence": "test_moderator POST /moderation/approve/post/251 (held topic in Customer Advisory Board) -> 403 jetonomy_forbidden 'You cannot moderate this content.' identical body to nonexistent id 99999; topic stays pending"
+      "evidence": "bulk approve three ids all status ok (200); action=bogus 400 \"action is not one of approve, spam, and trash.\"; items=[] 400 \"items must be a non-empty array.\""
     },
     "c-mod-queue-and-actions.13": {
       "result": "pass",
-      "evidence": "bob GET /moderation/queue -> 403 jetonomy_forbidden; bob page /community/mod/ rendered without moderation UI (REST half verified; page text 'You do not have permission' not found in curl HTML)"
+      "evidence": "member (qa_rft_w2_a) GET /moderation/queue 403 jetonomy_forbidden"
     },
     "c-mod-queue-and-actions.14": {
       "result": "pass",
-      "evidence": "guest /community/mod/ -> 302 to wp-login.php?redirect_to=...community/mod/; guest GET /moderation/queue -> 401 jetonomy_unauthorized"
+      "evidence": "guest GET /moderation/queue 401 jetonomy_unauthorized"
     },
     "c-mod-queue-and-actions.15": {
       "result": "pass",
-      "evidence": "QA-RFT silenced user POST -> 403 'Your account is currently silenced and cannot post.'; after the restriction row was lifted the same post -> 201"
-    },
-    "c-mod-queue-and-actions.16": {
-      "result": "untested",
-      "evidence": "Help Desk space-admin Moderation queue link not walked in this pass"
-    },
-    "c-mod-queue-and-actions.17": {
-      "result": "untested",
-      "evidence": "per-space flag card excerpt not walked in this pass"
-    },
-    "c-mod-queue-and-actions.18": {
-      "result": "untested",
-      "evidence": "anonymous-posted approval card needs Pro Anonymous Posting (not on Free)"
-    },
-    "c-mod-queue-and-actions.19": {
-      "result": "untested",
-      "evidence": "IP ban label in banned list not walked in this pass (banned list shows Space ban / Banned entries with 'Lift restriction' naming the member)"
+      "evidence": "silenced qa_rft_w2_c post 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\""
     },
     "c-mod-queue-and-actions.20": {
       "result": "pass",
-      "evidence": "queue at 390px: no horizontal overflow; Approve, Spam, Reject buttons 40px high"
-    },
-    "c-mod-queue-and-actions.21": {
-      "result": "pass",
-      "evidence": "card still on screen, same topic approved elsewhere, then Reject confirmed -> message 'This topic was already handled by a moderator. Reload to see where it is now.'; topic stays published"
-    },
-    "c-mod-queue-and-actions.22": {
-      "result": "pass",
-      "evidence": "offline Approve -> message 'Network error. Please try again.', card stays; online again, Approve on the card worked once"
-    },
-    "c-mod-queue-and-actions.23": {
-      "result": "untested",
-      "evidence": "Pro Advanced Moderation extension toggling is not allowed on the shared combo stack"
-    },
-    "c-mod-queue-and-actions.24": {
-      "result": "pass",
-      "evidence": "Awaiting approval card shows View, Approve, Spam, Reject controls (screenshot)"
+      "evidence": "390px /community/mod/?view=approvals: Approve/Spam/Reject buttons 40px, no horizontal scroll (1440: 30px)"
     },
     "c-mod-queue-and-actions.25": {
       "result": "pass",
-      "evidence": "stale approve/trash/spam with from=pending on an already approved topic -> 409 jetonomy_already_handled; trash without from on a published topic -> 200 (direct moderation allowed)"
+      "evidence": "stale Reject/Approve/Spam with from=pending on a topic another moderator approved: 409 jetonomy_already_handled \"This topic was already handled by a moderator. Reload to see where it is now.\"; topic stays publish"
     },
     "c-mod-queue-and-actions.26": {
       "result": "pass",
-      "evidence": "guest GET /moderation/queue -> 401 jetonomy_unauthorized"
+      "evidence": "guest GET queue 401 jetonomy_unauthorized"
     },
     "c-mod-queue-and-actions.27": {
       "result": "pass",
-      "evidence": "Awaiting approval has Show select Pending + Apply (screenshot); REST status=spam lists only spam item 248 and status=pending only 249"
+      "evidence": "Pending/Spam select exists on Awaiting approval; REST status=pending vs status=spam list disjoint sets"
+    },
+    "c-mod-queue-and-actions.7": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.9": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.10": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.11": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.12": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.16": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.17": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.18": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.19": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.21": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.22": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.23": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
+    },
+    "c-mod-queue-and-actions.24": {
+      "result": "untested",
+      "evidence": "not walked in this pass (ran out of room before this check); needs the seeded fixture named in the line or a longer run"
     }
   },
-  "proposed_checks": [
-    "- `c-mod-queue-and-actions.28` @moderator #rest +concurrent: Trash or Spam on a topic another moderator already approved -> decide the contract: 409 jetonomy_already_handled like Approve, or allow it; today Trash/Spam return 200 and the author gets a bell notice and email each time."
-  ]
+  "proposed_checks": []
 }

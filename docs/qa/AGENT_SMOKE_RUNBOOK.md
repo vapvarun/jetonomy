@@ -281,7 +281,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-category.1` @guest #ui: open the Local Chapters category page -> all 14 city spaces list as cards with a working link into each.
 - `c-anon-category.2` @guest #ui: look at a private space card (Partner Program) when private teasers are on -> it carries a "Private" badge and says how to join (request or invite).
 - `c-anon-category.3` @guest #ui: look at an invite-only card (Customer Advisory Board) -> the card says it is invite only and offers no Join button.
-- `c-anon-category.4` @guest #ui !refuse: open a category holding only hidden spaces (Moderators' Room's category) -> the same community not-found page as a missing slug, with no breadcrumb, name or space count revealing it.
+- `c-anon-category.4` @guest #ui !refuse: open a category whose spaces are all hidden (the seeded Staff category, holding Release Planning; Moderators' Room sits in the visible Help & Support category) -> the same community not-found page as a missing slug ("Category not found" with a browse-spaces link), with no breadcrumb, name or space count revealing it.
 - `c-anon-category.5` @guest #rest !refuse: GET /jetonomy/v1/categories/<hidden category id> and GET /categories?per_page=100 -> by id a 404 jetonomy_not_found; the list omits that category and its space_count.
 - `c-anon-category.6` @guest #ui: look at the category's breadcrumb and space counts on a mixed category -> counts include only spaces the guest can see, not the hidden ones.
 - `c-anon-category.7` @guest #ui +empty: open a category whose spaces are all empty (the last five city spaces) -> cards show 0 topics and no error.
@@ -559,6 +559,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-post-delete.16` @member_b #ui +deleted: alice followed a topic that is then deleted -> My Subscriptions marks it 'No longer available' with an Unfollow button (a trashed topic can be restored, so the follow is kept and stays manageable), and alice gets no further notifications from it.
 - `c-member-post-delete.17` @member #ui: delete a topic that has replies -> its replies are not left as published rows under a trashed parent, or the contract says so and the counters follow.
 - `c-member-post-delete.18` @moderator #ui: restore the deleted topic from Moderation > Trash -> the topic, its replies, the accepted answer and the counts come back.
+- `c-member-post-delete.19` @guest #ui !refuse: after a topic with replies is trashed, open the author's profile Replies tab -> none of the trashed topic's replies are listed.
 
 ### C.member.reply-create
 **Covers:** templates/views/single-post.php, includes/api/class-replies-controller.php, includes/models/class-reply.php, includes/notifications/class-notifier.php, includes/permissions/class-rate-limiter.php, pro:includes/extensions/reply-by-email/*.php, pro:includes/extensions/webhooks/*.php, pro:assets/js/pro-view.js
@@ -936,7 +937,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 **Checks:**
 - `c-mod-flag-resolution.1` @member_b #ui #rest: report Grace's long General Discussion topic with reason "Spam" from the topic menu -> a toast confirms the report, and POST /flags returns 201.
-- `c-mod-flag-resolution.2` @moderator #ui: open Flags -> the card shows "Reported by Alice ..." with the reason and note the reporter typed, and the flagged text.
+- `c-mod-flag-resolution.2` @moderator #ui: open the cross-space Flags tab on /community/mod/ -> each card shows the flagged content type, space, title and "Reported by Alice" with a "Review in queue" link; the reason chips, the reporter's note, the flagged text and the Remove/Dismiss actions are in that space's own moderation queue.
 - `c-mod-flag-resolution.3` @moderator #ui #email: click Dismiss on the flag -> the card leaves Flags and the reporter's bell reads "Your report was reviewed. Thanks for helping keep the community healthy."; the email is off by default (Settings > Emails shows it unticked), and with it ticked Mailpit holds one email "[site] Your report was reviewed".
 - `c-mod-flag-resolution.4` @moderator #ui: click Remove on a flag for a reply -> the reply leaves the thread, the card leaves Flags, the reply shows in Trash, and the reply author's reputation drops.
 - `c-mod-flag-resolution.5` @moderator #ui: Dismiss a flag on a reply, then on a topic -> in both cases the author's reputation returns to what it was before the flag (reply parity with topic).
@@ -1046,9 +1047,10 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-user-management.17` @member #rest !refuse: bob POSTs /admin/users/trust-level -> 403 jetonomy_forbidden and no level changes.
 - `c-admin-user-management.18` @admin #admin: ban carlos and silence finn -> the Users listing shows a Banned / Silenced label on the row, not only a changed row action.
 - `c-admin-user-management.19` @admin #admin: ban an IP address -> the Banned Users list shows the address and issuer and no unrelated member name; REST accepts ip_ban without user_id.
-- `c-admin-user-management.20` @admin #cli: run `wp jetonomy mod ban --type=ip_ban --target=<id> --issuer=1` with no --ip -> refused, naming --ip; with `--ip=127.0.0.1` -> refused with a loopback/reserved message, not 'insert failed'; an unknown flag is rejected, never ignored.
+- `c-admin-user-management.20` @admin #cli: run `wp jetonomy mod ban --type=ip_ban --target=<id> --issuer=1` with no --ip -> `Error: --type=ip_ban needs the address to block: pass --ip=<address>.`; an unknown flag is rejected, never ignored.
 - `c-admin-user-management.21` @admin #admin: change a trust level -> the success toast is visible after the page reloads.
 - `c-admin-user-management.22` @admin #admin: lift a silence -> toast says 'Restriction lifted' wording that matches a silence, not 'Ban removed.'.
+- `c-admin-user-management.23` @admin #cli: run `wp jetonomy mod ban --type=ip_ban --target=<id> --issuer=1 --ip=127.0.0.1` -> refused with a loopback/reserved-address message, not 'insert failed'.
 
 ### C.admin.invite-links
 **Covers:** includes/models/class-invite-link.php, templates/views/invite.php, includes/api/class-spaces-controller.php, templates/views/space-edit.php, templates/partials/space-header.php
@@ -1224,13 +1226,13 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-cron.3` @admin #cli: deactivate Jetonomy and re-run the list -> no pending Jetonomy action remains and the Pro jobs go with Pro, with no "class not found" fatal.
 - `c-cron.4` @admin #cli: run each recurring hook once with `wp action-scheduler run` -> every action completes with status complete and debug.log gains no error.
 - `c-cron.5` @admin #cli: activate, deactivate and reactivate in one command -> the events are rescheduled and `/community/messages/` still resolves.
-- `c-cron.6` @admin #cli +old-data: run jetonomy_cleanup_expired with an expired temporary ban and an expired invite -> the ban is lifted; the invite row is kept so its link says "expired" rather than "invalid".
+- `c-cron.6` @admin #cli +old-data: run jetonomy_cleanup_expired with an expired temporary ban and an expired invite -> the ban row is removed and the member can post again; the invite row is untouched (the job only clears lapsed restrictions), so its link says "expired" rather than "invalid".
 - `c-cron.7` @admin #cli: run jetonomy_reconcile_rosters with a lapsed membership rule -> the person's roster row is removed.
 - `c-cron.8` @admin #cli +many: seed 5000 users and run the trust evaluation -> it runs in batches (cursor option updates) and each run stays under the time limit.
 - `c-cron.9` @member #ui: schedule a topic for 5 minutes ahead and run jetonomy_publish_scheduled -> the topic goes live at its publish time, not early, and followers are notified once.
 - `c-cron.10` @admin #cli +settings-off: with Action Scheduler missing the plugin shows a notice and the site still loads, no WSOD.
 - `c-cron.11` @admin #cli: run `wp action-scheduler action list --group=jetonomy --status=failed` after a deactivate/reactivate of Pro -> no failed 'no callbacks are registered' rows are added for jetonomy_pro_* hooks (older rows from 2026-10-10 show Pro jobs failing while Pro was off).
-- `c-cron.12` @admin #cli +old-data: run jetonomy_cleanup_expired with an expired invite link -> the expired jt_invite_links row is removed, or the check says expired invites are kept by design.
+- `c-cron.12` @admin #cli +old-data: run jetonomy_cleanup_expired with an expired invite link -> the expired jt_invite_links row is kept, by design, so the link can say expired (as c-cron.6 expects); only restrictions are deleted.
 **Depth note:** cron is not a role-gated surface; the person who runs it is the site admin through #cli, so there is no refusal case.
 
 ### C.cli.qa-actions
@@ -1628,10 +1630,10 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 **Checks:**
 - `c-gating-rule-never-locks-out.1` @member #ui: as a fresh subscriber (not in either space) note what he can do in the public open space: read, post, reply, vote -> all four work.
-- `c-gating-rule-never-locks-out.2` @admin #admin: add a Logged In rule to the public space -> toast "Access rule added." and the Access Rules tab lists the rule.
+- `c-gating-rule-never-locks-out.2` @admin #admin: add a Logged In rule to the public space -> toast "Rule added: Logged In can read and report posts and replies. They are recorded as Viewer." and the Access Rules tab lists the rule; on a private space a confirm "Logged In will be let in to this private space and can take part right away. Continue?" comes first.
 - `c-gating-rule-never-locks-out.3` @member #ui: repeat read, post, reply, vote after the rule -> all four still work.
 - `c-gating-rule-never-locks-out.4` @guest #ui: view the public space after the Logged In rule -> guest can still read it (the rule did not close the space).
-- `c-gating-rule-never-locks-out.5` @admin #admin: add a Role, Capability, Trust Level or Membership rule to the public space -> toast "Access rule added. This space was switched to Private so the rule can restrict access. A rule cannot gate a public space.".
+- `c-gating-rule-never-locks-out.5` @admin #admin: add a Role, Capability, Trust Level or Membership rule to the public space -> toast "Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.".
 - `c-gating-rule-never-locks-out.6` @member #ui !refuse: after that switch the subscriber outside the roster and not matched by the rule opens the space -> the private-space refusal for read and post (REST 403 jetonomy_forbidden); the space is now Private with join policy Requires Approval, as the add-rule toast said.
 - `c-gating-rule-never-locks-out.7` @member_b #ui: an existing roster member of the space keeps posting after any rule is added -> yes, unchanged.
 - `c-gating-rule-never-locks-out.8` @admin #admin: open the Access Rules tab intro -> it says a rule lets more people in and does not restrict.
@@ -1647,7 +1649,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 **Promise:** "Lets matching people in to read. It takes nothing away from people who already get in another way, such as members on the roster."
 
 **Checks:**
-- `c-gating-read-on-public.1` @admin #admin: add a Read rule (Everyone or Logged In) to the public open-join space -> toast "Access rule added.".
+- `c-gating-read-on-public.1` @admin #admin: add a Read rule (Everyone or Logged In) to the public open-join space -> the rule saves (REST 201 "Access rule added.") and the admin toast reads "Rule added: <who> can read and report posts and replies. They are recorded as Viewer.".
 - `c-gating-read-on-public.2` @member #ui: the subscriber opens the space and posts a topic "What is the best phone for testing?" -> it publishes.
 - `c-gating-read-on-public.3` @member #ui: the subscriber replies and votes -> both still work.
 - `c-gating-read-on-public.4` @member_b #ui: a roster member keeps all abilities -> unchanged.
@@ -1664,7 +1666,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-read-on-private.1` @member #ui !refuse: before any rule the subscriber opens the private space -> he sees the locked state (or 404 for hidden) and no topics.
 - `c-gating-read-on-private.2` @admin #admin: add a Read rule -> toast "Access rule added.".
 - `c-gating-read-on-private.3` @member #ui: the subscriber reads the space and its topics -> topics show.
-- `c-gating-read-on-private.4` @member #ui !refuse: the subscriber tries to post, reply and vote -> the composer is absent, and the vote shows a message instead of changing the score.
+- `c-gating-read-on-private.4` @member #ui !refuse: the subscriber tries to post, reply and vote -> the composer and the vote buttons are absent (only Report remains), and a direct REST vote is refused with 403.
 - `c-gating-read-on-private.5` @member #rest !refuse: POST a topic, a reply and a vote -> each returns 403 jetonomy_forbidden "You cannot post in this space." and no row is stored.
 - `c-gating-read-on-private.6` @member #rest: a Read-rule member votes -> 403 jetonomy_forbidden; POST /flags on a topic there -> 201 and the report is stored (Read is read and report).
 - `c-gating-read-on-private.7` @guest #ui !refuse: a guest opens the same private space -> not readable (login prompt or 404), the rule did not apply to guests.
@@ -1718,7 +1720,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 **Why it matters:** **this is the 1.9.1 escalation.** Before the fix, a rule set to Read with an elevated space role made every matched person a space admin. If this step ever fails again, it is a security bug - file it immediately and say so in the title.
 
 **Checks:**
-- `c-gating-no-rule-hands-out-moderation.1` @admin #admin: add a Read rule and set the Space Role as high as the screen allows -> the rule saves.
+- `c-gating-no-rule-hands-out-moderation.1` @admin #admin: add a Read rule (the form has no Space Role selector; the role is derived from the grant) and POST it with space_role=admin -> the rule saves with grants read and the stored space role Viewer, never admin.
 - `c-gating-no-rule-hands-out-moderation.2` @member #rest !refuse: the matched subscriber calls moderate, edit others' posts, delete others' posts and pin -> each returns 403 jetonomy_forbidden.
 - `c-gating-no-rule-hands-out-moderation.3` @admin #admin: repeat with Participate (and grants=full over REST) at the highest role -> same refusals; the roster role stored is member (or viewer for Read), never admin or moderator.
 - `c-gating-no-rule-hands-out-moderation.4` @admin #cli: fire the membership enrolment hook for a plain subscriber with a rule grants=read, space_role=admin -> the roster role is viewer and moderate, edit_others_posts, delete_others_posts, pin_posts are all denied.
@@ -1746,7 +1748,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-roster-role-is-a-per-person-decision.9` @admin #admin +long: Grace's full name in the Members tab -> wraps in the row.
 - `c-gating-roster-role-is-a-per-person-decision.10` @admin #admin +390: the Members tab at 390px -> rows stack.
 - `c-gating-roster-role-is-a-per-person-decision.11` @admin #rest: POST /spaces/{id}/members with another user's id -> the person is added to the roster (today the route only joins the caller and answers 409 'You are already in this space.' for anyone a rule already admits).
-- `c-gating-roster-role-is-a-per-person-decision.12` @admin #admin +many: the space Members tab with more than 50 people pages at 50 rows and its search box finds a member on a later page.
+- `c-gating-roster-role-is-a-per-person-decision.12` @admin #admin +many: the space Members tab with more than 25 people pages at 25 rows ("1-25 of N") and its search box finds a member on a later page.
 - `c-gating-roster-role-is-a-per-person-decision.13` @admin #rest !refuse: POST /spaces/{id}/members with a user_id as staff -> 201 and the person is on the roster; the same call as a subscriber -> 403; repeating it for the same user -> 409.
 
 ### C.gating.admission-without-a-roster-row
@@ -1945,8 +1947,8 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **What to verify:** an author can attach a poll to a new topic, multiple options render on the topic page, a member can vote once, vote counts update, results display honors the "hide results until vote" mode if set. A composer poll with a question but fewer than two options blocks the post with "Question and at least 2 options required.". The Polls admin list shows topic titles.
 
 **Checks:**
-- `e-polls.1` @member #ui: in the new-topic composer of General Discussion choose Add poll, ask "Which day suits the monthly community call?" with options "Tuesday 17:00 UTC", "Thursday 09:00 UTC", "Saturday 15:00 UTC", pick Single choice and press "Create Poll" -> the topic publishes and the poll shows all three options on the topic page.
-- `e-polls.2` @member #ui !refuse: in the composer enter a question and only one option, press "Create Poll" -> the post is blocked with "Question and at least 2 options required." and no topic is created.
+- `e-polls.1` @member #ui: in the new-topic composer of General Discussion choose Add poll, ask "Which day suits the monthly community call?" with options "Tuesday 17:00 UTC", "Thursday 09:00 UTC", "Saturday 15:00 UTC", pick Single choice and press "Post Topic" -> the topic publishes and the poll shows all three options (0%, 0 voters) on the topic page.
+- `e-polls.2` @member #ui !refuse: in the composer enter a question and only one option, press "Post Topic" -> the post is blocked with "Question and at least 2 options required.", the page stays on the new-topic form and no topic is created.
 - `e-polls.3` @member #rest !refuse: `POST /posts/{id}/poll` with 2 options where one is blank -> 400 "A poll requires at least 2 non-empty options."; question over 500 characters -> 400 "Poll question must be 500 characters or fewer."; an option over 255 characters -> 400 "Poll option must be 255 characters or fewer."; bad `closes_at` -> 400 "Invalid close date format.".
 - `e-polls.4` @member #rest !refuse: `POST /posts/{id}/poll` on a post that already has a poll -> 409 `jetonomy_duplicate` "This topic already has a poll."; the topic page still shows exactly one poll.
 - `e-polls.5` @member_b #ui: alice votes for "Thursday 09:00 UTC" -> that option's count goes to 1 and its bar updates, "total voters" shows 1, and alice's choice is marked as hers.
@@ -1957,7 +1959,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-polls.10` @member_c #ui +concurrent: double-click Vote or submit from two tabs at once -> the option count rises by exactly one (no double count) and the percentages still sum to 100.
 - `e-polls.11` @member #ui +closed: a poll with a past `closes_at` -> shows as closed and voting is refused with "This poll has closed." (REST 409/403 `jetonomy_closed`); unvote refused with "This poll has closed. Votes cannot be changed."; results still readable.
 - `e-polls.12` @member #rest: `PATCH /polls/{id}` by the topic author with `closes_at` in the past, then cleared -> the response's read-only `closed` flag flips both ways and the page reflects it without a cache delay. `closed` itself is derived and not writable; a body that sends only `closed` changes nothing.
-- `e-polls.13` @member_b #rest !refuse: alice `POST /posts/{bob's post}/poll` and `PATCH /polls/{id}` on bob's poll -> 403 "You do not have permission to create a poll on this post." / "You do not have permission to modify this poll."; moderator and space_admin succeed.
+- `e-polls.13` @member_b #rest !refuse: alice `POST /posts/{bob's post}/poll` and `PATCH /polls/{id}` on bob's poll -> 403 "You do not have permission to create a poll on this topic." / "You do not have permission to modify this poll."; moderator and space_admin succeed.
 - `e-polls.14` @guest #ui !refuse: logged out, the poll results -> are visible on a public topic but the vote control asks the guest to log in; `POST /polls/{id}/vote` returns 401.
 - `e-polls.15` @member #rest !refuse +private: bob votes on, and `GET /polls/{id}` for, a poll in Customer Advisory Board (bob not a member) -> 404 with the same code and message as a poll id that does not exist, and the same for the guest, so the answer reveals nothing.
 - `e-polls.16` @silenced #rest !refuse +silenced: finn `POST /polls/{id}/vote` -> must be refused with the silenced reason; record what actually happens.
@@ -1985,7 +1987,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-reactions.9` @guest #rest !refuse: logged-out `POST /posts/{id}/reactions` -> 401; logged-out `GET` of a public topic's reactions -> 200 with counts (`reactors` is included only when `?emoji=` names a reaction that has reactors); of a hidden-space topic -> 404.
 - `e-reactions.10` @member #rest !refuse +deleted: react to a trashed or unpublished reply -> 409 (target not live), no row written; the chip does not appear.
 - `e-reactions.11` @silenced #ui !refuse +silenced: finn reacts to a reply -> refused with the silenced reason and no reaction recorded; also when finn's own post scored -4 is reacted to by others, the count still shows correctly.
-- `e-reactions.12` @member_b #email: the first reaction on bob's reply notifies bob once; an emoji swap by the same reactor sends nothing more; each further member who reacts adds one notification; reacting to your own post sends none.
+- `e-reactions.12` @member_b #email: the first reaction on bob's reply notifies bob once (the 0 -> 1 reactor transition); an emoji swap by the same reactor sends nothing more; further members who react send no further notification; reacting to your own post sends none; removing the only reaction and adding it again counts as a new first reaction.
 - `e-reactions.13` @admin #admin: Settings > Reactions: save with every emoji unticked -> the notice reads "No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none."; saving normally shows "Reaction settings saved."
 - `e-reactions.14` @admin #admin +old-data: disable the Celebrate reaction after members used it -> existing Celebrate counts are not shown as broken chips, and members cannot add it again.
 - `e-reactions.15` @member #ui +many: a reply with 40 reactions across 6 emoji -> wraps the chips onto lines at 390px without overflowing the reply card on Reign; names tooltip stays inside the viewport (max 280px).
@@ -2006,8 +2008,8 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **Why it bounced twice before this row existed:** "empty space" reports are axis-ambiguous - the first two fixes attacked vertical space (the dev panel) while QA meant the horizontal `max-width: 1200px` cap. Measure BOTH axes at the reporter's viewport before fixing any layout-gap report.
 
 **Checks:**
-- `e-analytics.1` @admin #admin: open admin.php?page=jetonomy-pro-analytics on the seeded site -> overview shows non-zero topics, replies, new members and votes, each with a change versus the previous period.
-- `e-analytics.2` @admin #admin: topics in last 30d -> never exceeds total topics; replies and members follow the same rule; the "Avg Reply Time" label and the section nouns use the owner's renamed Topic/Reply/Member labels.
+- `e-analytics.1` @admin #admin: open admin.php?page=jetonomy-pro-analytics on the seeded site -> overview shows non-zero Topics, Replies, Active users and Votes; each card shows a percentage change versus the previous period, or "New" when the previous period had nothing to compare against.
+- `e-analytics.2` @admin #admin: topics in last 30d -> never exceeds total topics, and replies follow the same rule (7d <= 30d <= 90d); the card and column nouns use the owner's renamed Topic/Reply labels; the health row shows median first reply time and the share of topics answered within 24h.
 - `e-analytics.3` @admin #admin: switch the range 7d, 30d, 90d quickly three times -> after the last click the numbers belong to 90d only (never the previous range's data), and the active range button matches.
 - `e-analytics.4` @admin #rest: `GET /jetonomy/v1/analytics/overview?range=7d` then `30d` -> `days` and totals differ and the 7d total is <= the 30d total.
 - `e-analytics.5` @admin #rest: `GET /analytics/overview?range=custom&start=..&end=..` inside the seeded data -> numbers match the sum of the daily rows; without `range=custom` the start/end are ignored (30d); an end before start is refused by REST.
@@ -2033,9 +2035,9 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **Checks:**
 - `e-custom-badges.1` @admin #admin: Badge Builder: create "Conversationalist" with a Lucide icon, a description, criteria posts >= 25 and replies >= 50, press "Save Badge" -> notice "Badge saved." and the badge appears in the admin list with its criteria summary.
 - `e-custom-badges.2` @admin #admin: create a badge with no criteria -> the list shows "Manual award only".
-- `e-custom-badges.3` @admin #admin: with zero custom badges the -> list shows "No badges yet" and "Create your first badge to start rewarding members milestones." with a create link.
+- `e-custom-badges.3` @admin #admin: open Badges on a site with no custom badges -> the list shows the nine seeded default badges (they are re-created whenever the table is empty), so the "No badges yet" empty state is not reachable from the UI.
 - `e-custom-badges.4` @admin #admin: Award Badge dialog: search "Maya", pick her, press Award Badge (picking the user and pressing the button is the confirmation, there is no second confirm) -> alert "Badge awarded." and after OK the page reloads with the recipient count on the badge up by one.
-- `e-custom-badges.5` @member_c #ui: maya opens her profile -> the badge shows with name, icon and description; the public badge list also shows it; the post cards by maya show the badge where badges are displayed.
+- `e-custom-badges.5` @member_c #ui: maya opens her profile -> the badge shows under Badges with name and tier chip, and GET /badges lists it for a guest; there is no public badge list page and post cards show no author badges.
 - `e-custom-badges.6` @member_b #ui: alice's profile does NOT -> show maya's badge and her badge count is unchanged (negative case).
 - `e-custom-badges.7` @admin #rest !refuse: `POST /badges/{id}/award` for maya a second time on a non-repeatable badge -> 409 `jetonomy_duplicate` "Badge already awarded to this user."; maya still holds exactly one and "Earned by" counts members, not awards.
 - `e-custom-badges.8` @admin #rest: award a repeatable badge twice -> both succeed up to max_awards; confirm max_awards is enforced on manual award, or record that it is not.
@@ -2047,7 +2049,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-custom-badges.14` @member #ui: bob reaches the threshold (post count) -> the badge is awarded automatically by the scheduled check (every 6 hours) exactly once, a notification is sent once, and no duplicate row appears after the job runs again.
 - `e-custom-badges.15` @member #ui +old-data: open the profile of a member who held duplicate awards before the repair -> one badge is shown and the "Earned by" count equals distinct members.
 - `e-custom-badges.16` @admin #admin +long: a badge named "Community Champion of the Year for Outstanding Helpfulness" with a 300-character description -> wraps inside the card and the profile badge strip on Reign at 390px.
-- `e-custom-badges.17` @admin #admin +offline: save with the request blocked -> after 30 seconds "Save timed out after 30 seconds. The server did not respond. Reload the page and try again." (or the blocked-request text naming the endpoint) and the form values stay.
+- `e-custom-badges.17` @admin #admin +offline: save the Badge Builder with the request blocked -> the save is a native form POST, so the browser's own network error shows (no in-page timeout message), the page stays on the form and the typed values remain.
 - `e-custom-badges.18` @member #ui +390 +dark: profile badge strip at 390px -> wraps without overflow and uses token colours in dark mode.
 - `e-custom-badges.19` @member_c #email: the award notifies maya once in the bell, and an email only if her notification preferences allow it; revoke -> sends nothing.
 - `e-custom-badges.20` @admin #admin: create a badge with the manual-only criterion -> it saves, appears in the list, and no activity ever auto-awards it; only Award on a profile gives it.
@@ -2168,7 +2170,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **Checks:**
 - `e-email-digest.1` @admin #admin: Settings > Email Digest: set default frequency Weekly and send time, save -> settings persist; the sender is blank -> digests use the sender from Settings > Emails.
 - `e-email-digest.2` @admin #rest: `POST /admin/digest/test` with frequency daily -> 200 `success: true` "Test digest sent to <admin email>." and the message is in Mailpit within 30 seconds with subject for a test digest.
-- `e-email-digest.3` @admin #email: open the test digest -> sections New in Spaces You Follow, top topics, replies to you, badges earned, poll engagement and stats render with real seeded titles (Dark mode for the community on phones; Scheduled maintenance on Saturday) and the header "Community Digest: <date>", no broken images, no `&amp;` in titles.
+- `e-email-digest.3` @admin #email: open the test digest -> the header reads "Community Digest: <date>" and the sections that have content for the recipient and period render (Trending, top topics, New in Spaces You Follow, replies to you, badges earned, poll engagement, stats), listing real activity from that period; empty sections are left out; no broken images, no `&amp;` in titles, and the plain-text part has no HTML.
 - `e-email-digest.4` @member #rest: `PATCH /users/me/digest-preferences` frequency none, daily, weekly -> each saves and `GET` returns it; "monthly" -> 400 `rest_invalid_param` "frequency is not one of none, daily, and weekly.".
 - `e-email-digest.5` @member #cli: `wp cron event run` (or the digest command) for daily as bob with frequency daily and activity since the last digest -> one email arrives, and running it again immediately sends nothing (since-date moves forward).
 - `e-email-digest.6` @member #email +empty: a member with no activity in range -> gets no digest at all (not an empty shell).
@@ -2223,11 +2225,11 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-seo-pro.6` @guest #ui: noindex and nofollow ticked on a space -> `<meta name="robots" content="noindex, nofollow">` appears; unticked removes it; a canonical base override is used on that space only.
 - `e-seo-pro.7` @guest #ui: sitemap controls: exclude_sitemap on a space -> removes it and its topics from /community sitemap; priority and changefreq overrides show in the sitemap entries; a space left at defaults keeps 0.7/age-based values.
 - `e-seo-pro.8` @guest #ui !refuse +private: view source of a topic in Customer Advisory Board and Moderators' Room as a guest -> the response is the not-found page with no topic title in `<title>`, og tags or JSON-LD; the space's overrides do not leak either.
-- `e-seo-pro.9` @guest #ui +hidden: an anonymous topic -> emits no `article:author` and no author in schema.
+- `e-seo-pro.9` @guest #ui +hidden: an anonymous topic -> emits no `article:author`; its JSON-LD carries only the generic author name "Anonymous" (schema needs an author), never the member's name.
 - `e-seo-pro.10` @admin #rest !refuse: `PATCH /spaces/{id}/seo` as bob and as test_moderator without `jetonomy_manage_spaces` -> 403; invalid `sitemap_priority` ("high") is reset to default; `GET` as a guest -> 401/403.
 - `e-seo-pro.11` @admin #admin: a meta description containing quotes and `<script>` -> is stored and echoed escaped in `<head>`.
 - `e-seo-pro.12` @admin #ui +rtl: an Arabic meta title and description -> appear intact (UTF-8, not `&#...;` doubled) in the head of the Arabic topic's page.
-- `e-seo-pro.13` @guest #ui: robots.txt -> contains the Pro rules for excluded spaces and does not disallow public spaces.
+- `e-seo-pro.13` @guest #ui: robots.txt -> contains the Pro block (Allow the community base and its spaces; Disallow notifications, mod and search) and does not disallow public spaces; a space excluded from the sitemap gets no robots.txt line of its own.
 - `e-seo-pro.14` @admin #ui +settings-off: with the extension disabled, no Pro meta, no leftover noindex, and the default free schema still -> prints.
 - `e-seo-pro.15` @admin #admin: saving the SEO tab busts the space cache -> the change appears on the frontend at once without a manual cache clear.
 
@@ -2237,7 +2239,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **What to verify:** the browser push subscription flow completes end-to-end, a test push reaches the subscribed browser. VAPID keys and service worker endpoints respond correctly.
 
 **Checks:**
-- `e-web-push.1` @admin #admin: Settings > Web Push: enable, set notification title and icon, save -> "Web Push settings saved."; VAPID public/private keys are generated automatically on first enable and persist across saves.
+- `e-web-push.1` @admin #admin: Settings > Web Push (enabling is on the Extensions page): set Default Notification Title and Notification Icon URL, save -> "Web Push settings saved."; the VAPID public key is generated automatically, shown read-only and unchanged by saves.
 - `e-web-push.2` @guest #rest: `GET /jetonomy/v1/push/vapid-key` -> 200 public key only (no private key in the body); `GET /push/service-worker.js` -> 200 with a JavaScript content type and a scope header.
 - `e-web-push.3` @member #ui: on an HTTPS site, press the push subscribe control -> the browser permission prompt appears, accepting registers the subscription and the control flips to enabled; denying shows a clear message and leaves it off.
 - `e-web-push.4` @member #rest: `POST /push/subscribe` with a real endpoint, p256dh and auth -> 201 `subscribed:true, created:true`; the same endpoint again -> 201 with `created:false` and no duplicate row; `DELETE /push/subscribe` -> `unsubscribed:true` and no more pushes.
@@ -2247,11 +2249,11 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-web-push.8` @member #rest: push service returns 410 Gone -> the dead subscription row is deleted; other subscriptions of bob still receive.
 - `e-web-push.9` @member #ui +private: a notification about a topic bob cannot -> read (he was removed from Partner Program) never sends a push with its title; mentions in readable topics do.
 - `e-web-push.10` @member #ui +hidden: a reply by an anonymous author -> pushes with the masked name "Anonymous", not the real member.
-- `e-web-push.11` @member #ui: a direct message push -> shows what the owner intends on a lock screen (full text vs "New message") -- record it; muting the conversation or pausing all email notifications stops the push.
+- `e-web-push.11` @member #ui: a direct message push -> the body reads "New message from <sender>" (never the message text); muting the conversation stops the push.
 - `e-web-push.12` @silenced #ui +silenced: finn's reply (if any) and notifications about content removed by a moderator -> do not push.
 - `e-web-push.13` @member #rest: `POST /push/register-device` with an `ExponentPushToken[...]` -> registered; a malformed token -> 400 "Invalid Expo push token."; `DELETE` unregisters; a native push goes to the Expo API with a deep link {type,id}.
 - `e-web-push.14` @member #rest !refuse +concurrent: alice subscribes the browser bob used earlier (same endpoint, other account) -> the subscription must move to alice and bob must stop receiving alice's pushes on that browser; record what actually happens.
-- `e-web-push.15` @admin #cli: `wp jetonomy-pro web-push vapid-key` -> the public key and whether Web Push is configured; `count` -> active subscriptions; `subscriptions --user=<id>` lists that user's; `send` dispatches to a subscribed user.
+- `e-web-push.15` @admin #cli: `wp jetonomy-pro web-push vapid-key` -> the public key and whether Web Push is configured; `count` -> active subscriptions; `subscriptions --for=<id>` lists that user's; `send --to=<id> --title --body` dispatches to that user and reports sent/failed.
 - `e-web-push.16` @admin #admin +settings-off: disable the extension -> the service worker route is unregistered and all sends stop, with subscriptions kept.
 **Depth note:** the end-to-end subscription flow needs HTTPS and a real browser push service; on http://forums.local only the REST, key and queue checks (1, 2, 4, 5, 8, 13) can pass.
 
@@ -2389,9 +2391,9 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 - `e-lms-course-spaces-and-automator.1` @admin #admin: publish a course "Introduction to WordPress Plugin Development" in the installed LMS -> exactly one discussion space is created with the course title, the type and visibility (private) chosen in the integration settings, and an access rule bound to that course.
 - `e-lms-course-spaces-and-automator.2` @admin #admin: update and re-publish the same course (draft then publish again) -> still one space; no second space and no duplicate access rule.
 - `e-lms-course-spaces-and-automator.3` @member #ui: an enrolled student opens the course page and /community -> sees the course space and its topics; the course shows the "Course discussion" / "View course discussion" link to it.
-- `e-lms-course-spaces-and-automator.4` @member_b #ui !refuse: an unenrolled member searching for the course space -> gets the not-found/locked teaser, never the topic list; the space is not listed in the space directory.
+- `e-lms-course-spaces-and-automator.4` @member_b #ui !refuse: an unenrolled member searching for the course space -> sees its card in the directory and search (a private space is listed, not hidden) but opening it shows only the locked "included with <course>" teaser, never the topic list; REST /spaces and My Spaces do not list it.
 - `e-lms-course-spaces-and-automator.5` @member #ui: unenrol the student -> access ends at once; re-enrol -> returns; their posts remain.
-- `e-lms-course-spaces-and-automator.6` @admin #admin +deleted: trash the course -> the space is archived or hidden per the documented behaviour, dead access rules are dropped, and republishing a restored course reuses the live space rather than making another.
+- `e-lms-course-spaces-and-automator.6` @admin #admin +deleted: unpublish or delete the course (Tutor cannot trash) -> the space stays active and private, its access rule is kept and flagged "Course no longer available ... this rule lets nobody in", and republishing the course reuses the same space rather than making another.
 - `e-lms-course-spaces-and-automator.7` @admin #admin: the bulk "create spaces for existing courses" action (if offered) -> creates one per course and is safe to run twice.
 - `e-lms-course-spaces-and-automator.8` @admin #rest !refuse: a course author calling the Learnomy REST route for a course they do not own -> 403 "You can only change courses you own."; unknown course -> "That course could not be found."; Learnomy inactive -> "Learnomy is not active.".
 - `e-lms-course-spaces-and-automator.9` @admin #admin: Uncanny Automator recipe "Add the user to <space>" fired for a test user -> the user becomes a member of that space with the chosen role; "Remove the user from <space>" removes them; "Set role" changes the role; each shows in the recipe log as completed.
@@ -2496,9 +2498,9 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 - `e-attachments.8` @member #ui: attach a PDF to a reply in the 45-reply Feature Requests topic -> the strip renders on that reply and page 2 loads attachments without one query per row (primed in batch).
 - `e-attachments.9` @guest #ui !refuse: a guest sees no attach button and `POST /media` or `/attachments` -> 401; the guest can download attachments of public topics.
 - `e-attachments.10` @member #rest !refuse +private: bob requests the file URL/download of an attachment on a Customer Advisory Board topic -> not found/denied exactly like a missing file, not a direct 200 from the uploads folder; the topic's attachment list endpoint gives 404.
-- `e-attachments.11` @member #ui: bob deletes the post -> its `wp_jt_attachments` rows are removed; the media file remains in the library until the 24-hour garbage sweep reclaims abandoned uploads.
-- `e-attachments.12` @admin #cli: `wp cron event run jetonomy_pro_attachments_gc` -> orphan links are removed; our own unlinked upload older than 24 h (tagged `_jetonomy_media_origin = upload`) is deleted; one younger than 24 h survives; a subscriber-authored attachment tagged `_jetonomy_media` only (another forum plugin's file) is NEVER deleted.
-- `e-attachments.13` @member #ui +long: a file named "Quarterly community engagement -> report - final draft v7 (reviewed by moderators).pdf" truncates with an ellipsis and keeps its extension visible in the chip at 390px; a name with Arabic characters displays right-to-left.
+- `e-attachments.11` @member #ui: bob deletes the post -> it is a soft delete: the topic goes to trash and its `wp_jt_attachments` rows and media file remain; a permanent delete by an admin removes the rows at once and leaves the media file for the media sweep.
+- `e-attachments.12` @admin #cli: run the Action Scheduler job `jetonomy_cleanup_media` (free) -> orphan links are removed; our own unlinked upload older than 24 h (tagged `_jetonomy_media_origin = upload`) is deleted; one younger than 24 h survives; a subscriber-authored attachment tagged `_jetonomy_media` only (another forum plugin's file) is NEVER deleted.
+- `e-attachments.13` @member #ui +long: a file named "Quarterly community engagement report - final draft v7 (reviewed by moderators).pdf" wraps onto two lines in the compose chip at 390px with its extension visible and no horizontal overflow; a name with Arabic characters displays right-to-left.
 - `e-attachments.14` @member #ui +many: five attachments of mixed types on one post -> wrap in the strip at 390px without overflow; the sixth is refused with the limit message.
 - `e-attachments.15` @member #ui +offline: attach with the network dropped mid-upload -> the chip shows failed with a retry, no half-linked row, and the post can still be sent without it.
 - `e-attachments.16` @silenced #ui !refuse +silenced: finn attaches a file to a reply -> refused with the silenced reason, nothing uploaded or linked.
@@ -2517,7 +2519,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 - `e-pro-cli.3` @admin #cli: `wp jetonomy qa-actions` with Pro active runs the Pro journey phase -> each extension journey passes, a disabled extension is reported as skipped rather than failed, and no phase runs zero checks.
 - `e-pro-cli.4` @admin #cli !refuse: run a command with a bad argument (unknown id, wrong type) -> a clear `Error:` line and non-zero exit, no stack trace.
 - `e-pro-cli.5` @admin #cli: `wp jetonomy-pro extension disable polls` then `list` -> shows it off, journeys skip it, `enable` restores it; debug.log stays empty throughout.
-- `e-pro-cli.6` @admin #cli +many: `wp jetonomy-pro analytics export --format=csv` and `webhooks deliveries` on 5,000 rows -> finish within a reasonable time and respect limits/pagination.
+- `e-pro-cli.6` @admin #cli +many: `wp jetonomy-pro analytics export --format=csv` over a 30-day range with 5,000 seeded rows -> finishes within a reasonable time and returns one row per day; there is no `webhooks deliveries` command (webhooks has create, delete, disable, enable, events, get, list, test, update).
 - `e-pro-cli.7` @admin #cli: confirm which Pro extensions -> have no CLI group (anonymous-posting, attachments, site-announcements) and record them against the three-entry-point rule.
 - `e-pro-cli.8` @admin #cli +settings-off: with Pro licence invalid or free deactivated, `wp jetonomy-pro` -> prints a clean notice instead of a fatal.
 **Depth note:** CLI has one role (site administrator running WP-CLI), so no owner-versus-other check applies; a failing journey blocks the whole Pro walk.

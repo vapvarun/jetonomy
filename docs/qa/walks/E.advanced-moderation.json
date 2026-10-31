@@ -1,113 +1,111 @@
 {
   "journey": "E.advanced-moderation",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:21:39Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:32:20Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, current HEAD)",
     "site": "http://localhost:8911",
-    "themes": [
-      "reign"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "e-advanced-moderation.1": {
       "result": "pass",
-      "evidence": "admin POST /moderation/rules {name, type keyword, pattern \"qa-rft-crypto, qa-rft-giveaway\", action hold, scope global} -> 201 {success, id}. The Add Rule form and \"Rule saved.\" notice were not driven. Note the REST fields are name and type (not rule_type)"
+      "evidence": "Moderation > Auto-Rules form: Keyword Filter + 3 keywords + Hold for Approval + Global + Save Rule -> notice \"Rule saved.\" and row lists type, pattern, action, scope Global, 0 hits"
     },
     "e-advanced-moderation.2": {
       "result": "pass",
-      "evidence": "bob POST a topic with a keyword in the title -> created with status pending (not public); the rule hit_count rose; the author-facing awaiting-approval message and mod-queue listing were not viewed"
+      "evidence": "a posts \"Anyone tried the crypto giveaway on Telegram?\" in the composer -> stays on /new/ with \"Your topic is awaiting moderation and will appear once approved.\"; REST status pending; rule hit_count went to 1"
     },
     "e-advanced-moderation.3": {
       "result": "pass",
-      "evidence": "bob topic with no keyword -> status publish and hit_count unchanged"
+      "evidence": "\"Notes on the community giveaway of swag for contributors\" publishes (status publish) and hit_count stays 1"
     },
     "e-advanced-moderation.4": {
       "result": "pass",
-      "evidence": "Block rule: bob POST -> 400 jetonomy_validation \"Your topic was blocked by our content policy.\"; no row saved (composer text-keeping not viewed)"
+      "evidence": "Block rule: composer shows \"Your topic was blocked by our content policy.\" (REST 400 jetonomy_validation), no row saved, title and body kept in the composer"
     },
     "e-advanced-moderation.5": {
       "result": "pass",
-      "evidence": "Spam rule: bob POST -> saved with status spam (not shown publicly); the moderator spam list was not opened"
+      "evidence": "Mark as Spam: post status spam, other member GET -> 404, absent from author's profile and the space; visible under wp-admin Content > Spam filter"
     },
     "e-advanced-moderation.6": {
       "result": "pass",
-      "evidence": "Flag rule: topic published (status publish) and a flag row (reason other) was created for it; mod queue page not opened"
+      "evidence": "Flag for Review: post publishes immediately and appears in GET /moderation/flags"
     },
     "e-advanced-moderation.7": {
       "result": "pass",
-      "evidence": "Flag + Block in one topic -> blocked; Hold + Spam in one topic -> status spam (the stronger action wins)"
+      "evidence": "flag+block -> 400 blocked; hold+spam -> status spam"
     },
     "e-advanced-moderation.8": {
       "result": "pass",
-      "evidence": "Re-read line: keyword rule 'ass' against 'Our class assignment reminder' -> published, rule hit_count stayed 0 (whole-word matching); the 'what an ass' hold half was not re-run"
+      "evidence": "keyword \"ass\": \"Our class assignment reminder\" publishes, \"what an ass\" goes pending"
     },
     "e-advanced-moderation.9": {
       "result": "pass",
-      "evidence": "Rules via REST, posts as bob: keyword rule in Arabic matched an Arabic topic body (status pending) and a Latin lower-case keyword matched upper-case text (pending); a clean topic published. Rules removed afterwards. (Matched on topic bodies, not omar's reply)"
+      "evidence": "Arabic keyword matches omar's Arabic reply (pending) and \"SpAmMyWoRd\" matches the lower-case keyword (pending); plain reply publishes"
     },
     "e-advanced-moderation.10": {
       "result": "pass",
-      "evidence": "regex \\b(buy|cheap|discount)\\b: \"cheap hosting deal\" -> pending, \"cheapest hosting here\" -> publish; invalid regex \"([a-z\" -> 400 \"Invalid regex pattern.\""
+      "evidence": "regex \\b(buy|cheap|discount)\\b holds \"cheap hosting deal\" and publishes \"the cheapest hosting\"; invalid regex ([a-z -> 400 \"Invalid regex pattern.\""
     },
     "e-advanced-moderation.11": {
       "result": "pass",
-      "evidence": "link_limit and new_user with pattern \"abc\" -> 400 \"Pattern must be a number for this rule type.\"; the PATCH-type-change case was not run"
+      "evidence": "link_limit and new_user with pattern \"abc\" -> 400 \"Pattern must be a number for this rule type.\""
     },
     "e-advanced-moderation.12": {
       "result": "pass",
-      "evidence": "link limit 2: a reply with two links -> publish; a reply with three links -> pending"
+      "evidence": "Link limit 2: reply with three https:// links pending, two links publish"
     },
     "e-advanced-moderation.13": {
       "result": "pass",
-      "evidence": "new_user rule with minimum trust 1: a trust level 0 member's topic -> pending; bob (trust 4) -> publish"
+      "evidence": "New user restriction min trust 1: TL0 member's post pending, TL1 and TL2 (carlos) published"
     },
     "e-advanced-moderation.14": {
       "result": "pass",
-      "evidence": "space-scoped rule with no space -> 400 \"Choose the space for this space-scoped rule, or set the scope to global. A rule with no space selected would never match anything.\""
+      "evidence": "space-scoped rule without a space -> 400 with the \"Choose the space for this space-scoped rule...\" text; rule scoped to Help Desk held a post there and let the same text through in Troubleshooting"
     },
     "e-advanced-moderation.15": {
       "result": "pass",
-      "evidence": "GET /moderation/rules/1/stats showed hit_count 2 after two matching topics; after PATCH is_active false a further matching topic published and hit_count stayed 2"
+      "evidence": "stats hit_count 3 after three matching posts; PATCH is_active false -> a further matching post did not move the count (stays 3)"
     },
     "e-advanced-moderation.16": {
       "result": "pass",
-      "evidence": "DELETE /moderation/rules/999999 -> 404 \"Rule not found.\"; DELETE of a real rule -> success. The single \"Permanently delete this rule?\" confirm and toast were not viewed"
+      "evidence": "Delete in the UI: single \"Permanently delete this rule?\" Cancel/Confirm modal, toast \"Rule deleted.\", row gone; DELETE on id 999999 -> 404 jetonomy_not_found \"Rule not found.\""
     },
     "e-advanced-moderation.17": {
       "result": "pass",
-      "evidence": "Re-read line: test_moderator GET /moderation/rules -> 200 and POST /moderation/rules (type keyword, action hold) -> 201 {success,id}, deleted again; guest GET -> 401; bob -> 403 on GET (earlier walk), bob POST answered 400 for a missing field before any permission result"
+      "evidence": "test_moderator GET rules 200 and POST rule 201; member b GET/POST 403; guest 401"
     },
     "e-advanced-moderation.18": {
-      "result": "untested",
-      "evidence": "200 rules not seeded this pass"
+      "result": "fail",
+      "evidence": "stale line / product gap: with 221 rules the Auto-Rules list loads in 0.45s and pages at 50 (1-50 of 221, Next/Previous, page 2 = 51-100), but there is no list filter by type or action - the only type/action selects belong to the Add Rule form"
     },
     "e-advanced-moderation.19": {
       "result": "pass",
-      "evidence": "admin and test_moderator topics containing the Hold keyword -> publish (exempt) and the hit count did not move; re-run on edit not tried"
+      "evidence": "admin and test_moderator posts containing the held keyword publish; editing an existing post/reply to add a held keyword moves it to pending"
     },
     "e-advanced-moderation.20": {
-      "result": "untested",
-      "evidence": "edit re-check not tried; debug.log stayed at 4547 bytes through every rule evaluation in this pass"
+      "result": "pass",
+      "evidence": "edited topic and reply re-checked (status changed to pending); no new PHP warnings or deprecations in debug.log during the walk"
     },
     "e-advanced-moderation.21": {
-      "result": "untested",
-      "evidence": "390px not viewed"
+      "result": "pass",
+      "evidence": "390: doc 390/390, rules table and Add Rule form fit the 366px wrapper; switching type shows only that type's pattern field (keyword/regex/link_limit/new_user/spam_score)"
     },
     "e-advanced-moderation.22": {
-      "result": "untested",
-      "evidence": "50+ rules not seeded this pass"
+      "result": "pass",
+      "evidence": "221 rules: \"1-50 of 221 1 2 3 ... 5 Next\" with working Next and Previous"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "Auto-Rules list has no filter by type/action; with hundreds of rules owners cannot narrow the list"
+  ]
 }

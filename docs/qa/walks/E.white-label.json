@@ -1,77 +1,75 @@
 {
   "journey": "E.white-label",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:18:29Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:27:28Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, current HEAD)",
     "site": "http://localhost:8911",
-    "themes": [
-      "reign"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "e-white-label.1": {
       "result": "pass",
-      "evidence": "Browser, admin 1440: Branding tab saved 'Hearthside Community' / 'Hearthside' / dashicons-groups / 'Built with care by the Hearthside team' -> notice 'Branding settings saved.' and the fields keep their values; admin menu label reads Hearthside. Settings cleared again afterwards"
+      "evidence": "Settings > Branding (4 text fields): Hearthside Community / Hearthside / dashicons-groups / \"Built with care by the Hearthside team\" -> \"Branding settings saved.\" and all four values kept"
     },
     "e-white-label.2": {
       "result": "pass",
-      "evidence": "after saving community name \"Hearthside Community\" and label \"Hearthside\": the Settings page h1 reads \"Hearthside Community Settings\", the admin submenu list shows \"Hearthside > ...\" entries, and the Plugins page rows read \"Hearthside Community\" and \"Hearthside Community Pro\". One plain \"Jetonomy\" and one \"Jetonomy Pro\" string remain on that Plugins page (checked by text count only)"
+      "evidence": "sidebar label \"Hearthside\" with dashicons-groups icon class; headings \"Hearthside Community Settings\", \"Hearthside Community\"; Plugins page row reads \"Hearthside Community\""
     },
     "e-white-label.3": {
       "result": "pass",
-      "evidence": "Browser: Jetonomy screen footer shows the custom footer text; with footer blank and a community name it reads 'Thank you for building your community with Hearthside Community.'; with everything blank it returns 'Thank you for building your community with Jetonomy.'"
+      "evidence": "custom footer text shown on Jetonomy screen; footer blank + name set -> \"Thank you for building your community with Hearthside Community.\"; both blank -> default \"Thank you for building your community with Jetonomy.\" returns"
     },
     "e-white-label.4": {
       "result": "pass",
-      "evidence": "footer text \"Bob's Q&A\" renders once-escaped (Bob&#039;s Q&amp;A in the Branding page source, no &amp;amp;)"
+      "evidence": "footer \"Bob's Q&A\" renders once-escaped as Bob's Q&A (no &amp;amp;)"
     },
     "e-white-label.5": {
       "result": "pass",
-      "evidence": "Browser: Settings page heading and sidebar read 'Hearthside Community Settings' / 'Hearthside Community' after branding was set (Data card and trust-level hint text not individually inspected)"
+      "evidence": "every Settings tab except Integrations shows 0 \"Jetonomy\" and the brand name instead (sidebar text, Data card \"Remove all community data when Hearthside Community is deleted\", hints); only Integrations marketing copy keeps the product name 3 times"
     },
     "e-white-label.6": {
       "result": "pass",
-      "evidence": "/community/ as a guest with the rebrand on: the page source contains 0 occurrences of \"Hearth\" (frontend unchanged); emails and page titles not checked"
+      "evidence": "guest /community/ title \"Community – Northwind Community\" and HTML had no \"Hearthside\" before and while the rebrand was on"
     },
     "e-white-label.7": {
-      "result": "untested",
-      "evidence": "The test notification email was not sent and checked in this pass"
+      "result": "pass",
+      "evidence": "with community_name \"Hearthside Community\" set, a DM notification mail has From \"Northwind Community\", subject \"[Northwind Community] QA W3 b: ...\" and a Northwind footer; no white-label name"
     },
     "e-white-label.8": {
       "result": "pass",
-      "evidence": "GET /settings/white-label returns the four fields (community_name, footer_text, admin_label, admin_icon); PATCH community_name \"<b>Hearth</b>\" stored as \"Hearth\""
+      "evidence": "GET /settings/white-label returns the four fields; PATCH community_name \"<b>Hearth</b>\" stored \"Hearth\""
     },
     "e-white-label.9": {
       "result": "pass",
-      "evidence": "test_moderator GET and bob PATCH -> 403 jetonomy_forbidden; guest GET -> 401 rest_forbidden"
+      "evidence": "test_moderator and member GET/PATCH -> 403 jetonomy_forbidden; guest -> 401"
     },
     "e-white-label.10": {
       "result": "pass",
-      "evidence": "Browser: 120-char community name and admin label -> admin menu stays 160 px wide, page scrollWidth equals the viewport at 1440 and 390 on the Spaces list and Settings screens"
+      "evidence": "120-char community name: doc scrollWidth equals viewport at 1440 and 390, admin menu and header do not overflow"
     },
     "e-white-label.11": {
       "result": "pass",
-      "evidence": "PATCH all four fields to empty strings: Branding page h1 and menu return to Jetonomy (0 \"Hearth\" strings left); settings restored to the original empty state"
+      "evidence": "all four fields cleared and saved -> menu label \"Jetonomy\" with the default svg icon, footer default text back"
     },
     "e-white-label.12": {
       "result": "pass",
-      "evidence": "wp jetonomy-pro white-label get printed the same four values as GET /settings/white-label (the update subcommand was not run)"
+      "evidence": "wp jetonomy-pro white-label get matches the admin page and GET; update with community-name, footer-text, admin-label, admin-icon changed all four"
     },
     "e-white-label.13": {
       "result": "pass",
-      "evidence": "admin_icon \"not a valid icon ###\", \"javascript:alert(1)\" and \"zzz bad\" -> 400 rest_invalid_param \"Admin menu icon must be a full address starting with http:// or https://, a Dashicon class (dashicons-...), or an SVG data URI.\"; the stored dashicons-groups value was kept after the refusal (v2.0.7 behaviour). The full-image-URL rendering in the menu was not viewed"
+      "evidence": "admin_icon \"https://example.com/icon.png\" renders as an img in the menu; an invalid string via CLI renders the default svg icon (note: saving the invalid string through the Branding form kept the previous icon instead)"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "Branding form: saving an invalid icon string keeps the previous icon while the CLI stores the raw string and shows the default - make both paths sanitise the same way"
+  ]
 }

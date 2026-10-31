@@ -1,9 +1,9 @@
 {
   "journey": "E.web-push",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:20:35Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:44:44Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
     "mode": "combo (Free + Pro 2.0.7)",
@@ -21,69 +21,71 @@
   },
   "checks": {
     "e-web-push.1": {
-      "result": "pass",
-      "evidence": "Settings > Web Push has no Enable box (2.0.7: Extensions page only); it shows the auto-generated VAPID public key, Default Notification Title and Notification Icon URL. Saving a valid icon -> \"Web Push settings saved.\"; the VAPID key option stayed the same across saves. A bad icon \"not-a-url\" -> \"Notification Icon was not changed: it must be an http:// or https:// image address. The previous value was kept. Your other changes were saved.\""
+      "result": "fail",
+      "evidence": "stale line: Settings > Web Push (1440) has no Enable control (enabling is on the Extensions page); it shows the auto-generated VAPID public key, 'Default Notification Title' and 'Notification Icon URL'. Saving title 'QA-RFT Push Title' + an icon URL -> 'Web Push settings saved.' and the VAPID key is unchanged after the save; original values restored afterwards"
     },
     "e-web-push.2": {
       "result": "pass",
-      "evidence": "Re-read line, guest: GET /jetonomy/v1/push/vapid-key -> 200 {public_key} only (no private key in the body); GET /push/service-worker.js -> 200 application/javascript; charset=UTF-8 with Service-Worker-Allowed: /"
+      "evidence": "Guest GET /jetonomy/v1/push/vapid-key -> 200 {\"public_key\":...} only (no private key); GET /push/service-worker.js -> 200 Content-Type application/javascript; charset=UTF-8 with Service-Worker-Allowed: /"
     },
     "e-web-push.3": {
       "result": "not_performed",
-      "evidence": "needs a live push service and a real browser permission grant; none is available on this stack"
+      "evidence": "Browser (Chromium, localhost is a secure context, permission granted): the bell panel shows 'Get notified on this device, even when this tab is closed.' with Turn on / Not now; Turn on shows 'Could not turn on notifications. Please try again.' because pushManager.subscribe cannot reach a browser push service (FCM) from this sandbox - needs a live third-party push service. Denied path walked: toast 'Notifications are blocked for this site in your browser settings.' and the control stays off"
     },
     "e-web-push.4": {
       "result": "pass",
-      "evidence": "bob POST /push/subscribe {endpoint (fcm.googleapis.com), p256dh, auth} -> 201 subscribed true created true; the same again -> created false and one row only; DELETE /push/subscribe -> unsubscribed true. Note the body takes flat p256dh/auth (not keys{}); an endpoint on an unknown host such as push.example.test is refused as invalid"
+      "evidence": "w4 a POST /push/subscribe {endpoint on fcm.googleapis.com, p256dh, auth} -> 201 subscribed true created true; same again -> 201 created false, one row; DELETE of the endpoint by another account answers unsubscribed true without removing the owner's row"
     },
     "e-web-push.5": {
       "result": "pass",
-      "evidence": "endpoint \"not a url\" -> 400 jetonomy_push_endpoint_invalid \"Invalid push endpoint URL.\"; logged-out POST -> 401 rest_not_logged_in"
+      "evidence": "endpoint 'not a url' -> 400 jetonomy_push_endpoint_invalid 'Invalid push endpoint URL.'; logged-out POST with full params -> 401 rest_not_logged_in (with params missing it answers 400 missing params first)"
     },
     "e-web-push.6": {
-      "result": "not_performed",
-      "evidence": "needs a live push service and a real browser permission grant; none is available on this stack"
+      "result": "pass",
+      "evidence": "Subscription-level observation (no real push service): w4 c replied to w4 a's topic -> one queued jetonomy_pro_send_push job for a's endpoint only: title 'Northwind Community', body 'qa_rft_w4_c replied to your topic \"...\"', url .../t/<topic>/#reply-1609 (opens that reply); the non-subscribed member got no job. Delivery to a browser itself needs a live push service"
     },
     "e-web-push.7": {
       "result": "not_performed",
-      "evidence": "needs a live push service and a real browser permission grant; none is available on this stack"
+      "evidence": "Delivery after reconnect depends on a real push service holding the message for the TTL (code sends TTL 86400 via async queue); needs a live third-party push service, not available here"
     },
     "e-web-push.8": {
       "result": "not_performed",
-      "evidence": "needs a live push service and a real browser permission grant; none is available on this stack"
+      "evidence": "A 410 Gone from the push service cannot be produced: endpoints must be on real push hosts and pass the public-IP guard, so a fake service is refused; code path (410 -> delete row) read only. Needs a live push service"
     },
     "e-web-push.9": {
-      "result": "not_performed",
-      "evidence": "needs a live push service and a real browser permission grant; none is available on this stack"
+      "result": "pass",
+      "evidence": "Admin @mentioned w4 b (subscribed) in a topic of the private space w4 b cannot read -> no notification row and no push job for b; the same mention in a readable topic queued a push 'admin mentioned you in \"...\"' for b"
     },
     "e-web-push.10": {
-      "result": "not_performed",
-      "evidence": "needs a live push service and a real browser permission grant; none is available on this stack"
+      "result": "pass",
+      "evidence": "w4 c replied anonymously to admin's topic (admin subscribed) -> queued push body 'Anonymous replied to your topic \"QA-RFT w4 anon thread host\"', no real name"
     },
     "e-web-push.11": {
-      "result": "not_performed",
-      "evidence": "needs a live push service and a real browser permission grant; none is available on this stack"
+      "result": "fail",
+      "evidence": "stale line (part): a direct message queues a push with body 'New message from admin' (sender only, never the text) - recorded as the owner-intent answer; muting the conversation stops pushes (job count unchanged after a message while muted). There is no 'pause all email notifications' control to test"
     },
     "e-web-push.12": {
-      "result": "not_performed",
-      "evidence": "needs a live push service and a real browser permission grant; none is available on this stack"
+      "result": "fail",
+      "evidence": "finn (silenced) cannot reply (403 jetonomy_user_silenced). A moderator removing w4 a's reply still queues a push to w4 a 'Your reply was removed by a moderator' (link /community/notifications/) - the line says content removed by a moderator should not push; decide whether notifying the author is intended and rewrite the line"
     },
     "e-web-push.13": {
       "result": "pass",
-      "evidence": "bob POST /push/register-device {\"expo_push_token\":\"ExponentPushToken[...]\",\"platform\":\"ios\"} -> 201 registered true created true; \"bad\" -> 400 jetonomy_invalid_expo_token \"Invalid Expo push token.\"; DELETE -> unregistered true. Param name is expo_push_token. The Expo API send was not observed"
+      "evidence": "w4 a POST /push/register-device {expo_push_token ExponentPushToken[...], platform} -> 201 registered true; 'bad' -> 400 jetonomy_invalid_expo_token 'Invalid Expo push token.'; a reply to a's topic queues jetonomy_pro_send_expo_push with data {\"type\":\"reply\",\"id\":1613}; DELETE -> unregistered true. Expo API call itself not observed"
     },
     "e-web-push.14": {
       "result": "pass",
-      "evidence": "alice POST /push/subscribe with the endpoint bob had used -> 201 and the row's user_id moved from bob (10) to alice (9); bob's later DELETE of that endpoint answered unsubscribed true but did not remove alice's row (count stayed 1)"
+      "evidence": "w4 b POST /push/subscribe with the endpoint w4 a used -> 201 created false and the row's user_id moved from a to b; the next reply to a's topic queued 0 push jobs (a's browser no longer gets a's pushes); a's later DELETE of that endpoint answers unsubscribed true but leaves b's row"
     },
     "e-web-push.15": {
       "result": "fail",
-      "evidence": "Re-read line: `wp jetonomy-pro web-push vapid-key` prints public_key and is_configured 1, `count` prints 0 active subscriptions; but `subscriptions --user=10` errors 'missing --for parameter' (the real flag is --for) and `send` takes --to, not a positional user. Looks like a stale check line; `subscriptions --for=10` answers 'No rows.'"
+      "evidence": "stale line: `wp jetonomy-pro web-push vapid-key` prints public_key and is_configured 1; `count` 3; `subscriptions --for=200` lists that user's two rows; `send --to=200 --title --body` reports sent: 2, failed: 0. The line's `--user=<id>` form errors 'missing --for parameter'"
     },
     "e-web-push.16": {
       "result": "pass",
-      "evidence": "Web Push switched off: /push/service-worker.js -> 404 and the subscription row inserted beforehand was kept (count 1); switched back on -> 200"
+      "evidence": "Disabled Web Push on the Extensions page: /push/service-worker.js and /push/vapid-key -> 404, a reply to a subscribed member queued no push job (41 before and after), the stored subscription row (id 8) was kept; enabled again -> service worker 200 and the row still there"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "Web push: decide whether moderation-removal notices should push; rewrite line 11/12/15 flag names."
+  ]
 }

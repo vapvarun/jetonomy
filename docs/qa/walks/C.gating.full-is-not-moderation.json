@@ -1,8 +1,8 @@
 {
   "journey": "C.gating.full-is-not-moderation",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:04:55Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:57:51Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -18,35 +18,35 @@
   "checks": {
     "c-gating-full-is-not-moderation.1": {
       "result": "pass",
-      "evidence": "Access Rules tab grant selects (add form and rule row) offer Read/Participate only"
+      "evidence": "Access Rules tab add form and each grant select offer Read and Participate only; How-it-works table has no Full row"
     },
     "c-gating-full-is-not-moderation.2": {
       "result": "pass",
-      "evidence": "POST grants=full role/subscriber -> 201 stored grants participate, space_role member"
+      "evidence": "POST grants=full on a role rule 201, stored grants participate, space_role member"
     },
     "c-gating-full-is-not-moderation.3": {
       "result": "pass",
-      "evidence": "under that rule qa_rft_a replied 201/voted 200 (post/own edit-delete walked in participate)"
+      "evidence": "under that rule e posts, replies, votes, reports and edits/deletes own (REST 2xx), as in participate journey"
     },
     "c-gating-full-is-not-moderation.4": {
       "result": "pass",
-      "evidence": "UI topic page as subscriber under participate: no Edit/Delete/Close/Pin controls"
+      "evidence": "UI on another member's topic shows no Edit, Delete, Close or Pin"
     },
     "c-gating-full-is-not-moderation.5": {
       "result": "pass",
-      "evidence": "PATCH/DELETE/close/pin on b's topic each 403 jetonomy_forbidden; topic still publish and unchanged"
+      "evidence": "PATCH, DELETE, close, pin on another's topic each 403 jetonomy_forbidden, topic still published and open"
     },
     "c-gating-full-is-not-moderation.6": {
       "result": "pass",
-      "evidence": "/community/s/qa-rft-priv/mod/ -> HTTP 403 page 'You do not have permission to moderate this space.'; POST /moderation/trash/post and /reply -> 403 jetonomy_forbidden"
+      "evidence": "/community/s/<slug>/mod/ as e: HTTP 403 \"do not have permission to moderate this space.\"; POST /moderation/trash/post and /reply 403"
     },
     "c-gating-full-is-not-moderation.7": {
       "result": "pass",
-      "evidence": "DB row inserted with grants=full,space_role=moderator; Migration_2_0_7::up() -> row reads participate/member and REST rules list shows participate/member"
+      "evidence": "row set to grants=full in DB, Migration_2_0_7::up() run: row reads participate and REST rules list shows participate"
     },
     "c-gating-full-is-not-moderation.8": {
       "result": "pass",
-      "evidence": "test_moderator (editor with Moderate cap) in public QA-RFT Pub: pin 200, close 200, trash 200"
+      "evidence": "test_moderator (site Moderate cap, editor role) reads a public space and a space he is rostered in via his WordPress role; he gets 403 on a private space he is not in (answer comes from role, never the rule)"
     }
   },
   "proposed_checks": []

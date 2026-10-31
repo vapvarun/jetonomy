@@ -1,93 +1,90 @@
 {
   "journey": "E.email-digest",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:23:59Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:34:48Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, current HEAD)",
     "site": "http://localhost:8911",
-    "themes": [
-      "reign"
-    ],
+    "theme": "reign",
     "viewports": [
-      1440,
-      390
+      1440
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
-    "e-email-digest.1": {
-      "result": "pass",
-      "evidence": "Settings > Email Digest has no Enable box (v2.0.7: switched from the Extensions page); form has Default Frequency, From Name, From Email. Saved weekly->daily with sender name and a valid email, values persisted in jetonomy_pro_digest_settings; blank From Email keeps the site default. Time-of-day field was not present on this form. Settings reset to weekly/blank afterwards"
-    },
     "e-email-digest.2": {
       "result": "pass",
-      "evidence": "admin POST /jetonomy/v1/admin/digest/test {\"frequency\":\"daily\"} -> 200 {\"success\":true,\"message\":\"Test digest sent to admin@example.com.\"}; Mailpit received \"[TEST] Northwind Community: Your Daily Community Digest\" to admin@example.com within the same second"
+      "evidence": "admin POST /admin/digest/test frequency daily -> 200 success \"Test digest sent to admin@example.com.\"; \"[TEST] Northwind Community: Your Daily Community Digest\" in Mailpit within 5s"
     },
     "e-email-digest.3": {
-      "result": "pass",
-      "evidence": "the test digest HTML shows Trending, New in Spaces You Follow, Replies to Your Topics (with real seeded titles such as \"Welcome to the lab public space\") and the stats line \"7 new topics, 115 replies, and 27 active members today\". Badges-earned and poll-engagement sections were not present for the admin account's window; they were not separately verified"
+      "result": "fail",
+      "evidence": "stale line / data: the test digest has \"Community Digest: October 31, 2026\" header, Trending, \"You earned a new badge\", poll, stats and no `&amp;amp;`, no images, plain text has no HTML, but it lists only today's activity (QA-RFT topics), not the seeded titles \"Dark mode for the community on phones\" / \"Scheduled maintenance on Saturday\"; no \"New in Spaces You Follow\" or \"Replies to you\" block for admin"
     },
     "e-email-digest.4": {
       "result": "pass",
-      "evidence": "bob PATCH /users/me/digest-preferences none / daily / weekly each saved and GET returned weekly last; \"monthly\" -> 400 rest_invalid_param \"frequency is not one of none, daily, and weekly.\""
-    },
-    "e-email-digest.5": {
-      "result": "pass",
-      "evidence": "bob set to daily via the CLI, ran the daily digest hook jetonomy_pro_send_daily_digest and the batch action -> exactly one 'Your Daily Community Digest' email to bob in Mailpit; running both again immediately sent nothing (subscribers list shows only bob). bob's digest preference put back to disabled afterwards"
-    },
-    "e-email-digest.6": {
-      "result": "pass",
-      "evidence": "After the first send, the immediate second run (no activity since the last digest) produced no email, not an empty shell"
-    },
-    "e-email-digest.7": {
-      "result": "untested",
-      "evidence": "The daily preview for bob and priya listed none of the Customer Advisory Board, Insiders/Beta topic titles, but those topics are older than the daily window so the private-space filter was not exercised"
-    },
-    "e-email-digest.8": {
-      "result": "pass",
-      "evidence": "the unsubscribe link from the test email (?jetonomy_digest_unsub=1&uid=&token=) opened logged out: page \"Unsubscribed - You have been unsubscribed from community digest emails. You can re-enable them anytime from your profile settings.\" with links to notification settings; the account's frequency read none afterwards (then restored to weekly)"
+      "evidence": "member b PATCH digest-preferences none, daily, weekly each saved and GET returned it; \"monthly\" -> 400 rest_invalid_param \"frequency is not one of none, daily, and weekly.\""
     },
     "e-email-digest.9": {
       "result": "pass",
-      "evidence": "wrong token -> HTTP 403 page; no token -> HTTP 400 \"Invalid unsubscribe link.\"; frequency unchanged. (The 403 page title says Unsubscribe; its body text was not read in full)"
-    },
-    "e-email-digest.10": {
-      "result": "untested",
-      "evidence": "The 'Pause all email notifications' preference was not set and the digest rerun in this pass"
-    },
-    "e-email-digest.11": {
-      "result": "untested",
-      "evidence": "Digest for a silenced member (finn) was not run in this pass"
-    },
-    "e-email-digest.12": {
-      "result": "untested",
-      "evidence": "Digest after blocking an author was not run in this pass"
-    },
-    "e-email-digest.13": {
-      "result": "untested",
-      "evidence": "3,000 subscribers were not seeded in this pass"
+      "evidence": "unsubscribe link (?jetonomy_digest_unsub=1&uid=..&token=..) with a wrong token -> 403 \"Invalid or expired unsubscribe link.\"; with no token -> 400 \"Invalid unsubscribe link.\"; a valid token logged out -> 200 \"You have been unsubscribed from community digest emails. You can re-enable them anytime from your profile settings.\" and frequency became none"
     },
     "e-email-digest.14": {
       "result": "pass",
-      "evidence": "admin GET /admin/digest/stats -> {daily 0, weekly 0, none 0, no_preference 27, total 27}; bob GET stats 403 and bob POST /admin/digest/test 403"
+      "evidence": "GET /admin/digest/stats as admin -> {daily:1, weekly:1, none:0, no_preference:88, total:90}; member b GET stats and POST test -> 403"
+    },
+    "e-email-digest.1": {
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+    },
+    "e-email-digest.5": {
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+    },
+    "e-email-digest.6": {
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+    },
+    "e-email-digest.7": {
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+    },
+    "e-email-digest.8": {
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+    },
+    "e-email-digest.10": {
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+    },
+    "e-email-digest.11": {
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+    },
+    "e-email-digest.12": {
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+    },
+    "e-email-digest.13": {
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
     },
     "e-email-digest.15": {
       "result": "untested",
-      "evidence": "Arabic and 159-char title digest rendering in a 390px mail client was not checked in this pass"
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
     },
     "e-email-digest.16": {
-      "result": "pass",
-      "evidence": "with Email Digest switched off, the old unsubscribe URL answered a clear page \"Invalid or expired unsubscribe link.\" (HTTP 403), not a 404 or fatal; no digest jobs were pending in Action Scheduler while it was off; switched back on afterwards"
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
     },
     "e-email-digest.17": {
-      "result": "not_performed",
-      "evidence": "needs PMPro active with a membership; PMPro is installed but inactive on this stack and was not switched on"
+      "result": "untested",
+      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "Check 8 and 9 use a link shaped ?jetonomy_digest_unsub=1&uid=&token= (not jetonomy_unsubscribe); update the check text"
+  ]
 }

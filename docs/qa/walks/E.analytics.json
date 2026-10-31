@@ -1,96 +1,93 @@
 {
   "journey": "E.analytics",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:09:34Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:17:30Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, current HEAD)",
     "site": "http://localhost:8911",
-    "themes": [
-      "reign"
-    ],
+    "theme": "reign",
     "viewports": [
+      1881,
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "e-analytics.1": {
-      "result": "pass",
-      "evidence": "REST overview (what the page loads) for 7d: posts 28, replies 438, new_users 7, votes 1225, with post_change, reply_change, user_change and vote_change values; the page itself loaded with Topics / Replies / Active Users panels (card values not read from the DOM)"
+      "result": "fail",
+      "evidence": "stale line: Analytics shows Topics 122 (+64.9%), Replies 935 (+222.4%), Active users 33, Votes 1,226 non-zero, but there is no \"new members\" card (it is Active users) and Active users/Votes show \"New\" instead of a change versus the previous period"
     },
     "e-analytics.2": {
-      "result": "pass",
-      "evidence": "Browser, admin 1440: 30-day Topics 99 and Replies 949 are at or below the live totals (253 published topics); labels read Topics, Replies, Avg Reply Time. A renamed-label run was not done"
+      "result": "fail",
+      "evidence": "stale line: 7d topics 52 <= 30d 122 <= 90d 278 and replies follow, but the page has no \"Avg Reply Time\" label or Member section; cards read Topics / Replies / Active users / Votes (no renamed-label case on this site)"
     },
     "e-analytics.3": {
       "result": "pass",
-      "evidence": "clicked 7, 30, 90 Days in quick succession at 1881: after the last click the active button is \"90 Days\" and the chart buckets run 08-01 to 10-30 (the 90d window), not 7d or 30d data"
+      "evidence": "clicking 7, 30, 90 days quickly then waiting: Topics 278 / Replies 1,303 with the \"90 Days\" button active; then 7 Days shows 52 / 349"
     },
     "e-analytics.4": {
       "result": "pass",
-      "evidence": "GET /analytics/overview?range=7d -> range 7d since 2026-10-23, posts 28; 30d -> since 2026-09-30, posts 99; 90d -> posts 253 (7d <= 30d <= 90d)"
+      "evidence": "overview?range=7d posts 52 replies 347 vs 30d posts 122 replies 935; response carries range/since/until (no `days` key) and totals differ with 7d <= 30d"
     },
     "e-analytics.5": {
       "result": "pass",
-      "evidence": "Re-read line, admin, same session: overview?range=custom&start=2026-10-01&end=2026-10-10 -> range custom, posts 27 for exactly that window; without range=custom the start/end are ignored (range 30d, 99 posts); end before start -> 400 jetonomy_invalid_date_range with the 'valid start and end date' message"
+      "evidence": "range=custom 2026-10-01..10-30 -> posts 99 equals sum of daily_posts (99); start/end without range=custom ignored (30d since 10-02); end before start -> HTTP 400 validation"
     },
     "e-analytics.6": {
       "result": "pass",
-      "evidence": "Browser: Export CSV downloaded jetonomy-analytics-2026-10-30.csv, header Date,Topics,Replies,\"New Users\",Votes; 31 rows for the 30-day range; column sums 99 / 949 / 13 / 1226 match the dashboard tiles"
+      "evidence": "Export CSV link (#jtp-export-csv) downloads jetonomy-analytics-2026-10-31.csv, header Date,Topics,Replies,\"New Users\",Votes; 7d range gives 7 rows; 30d REST export 30 rows summing to 122/935/69/1226 = dashboard totals"
     },
     "e-analytics.7": {
       "result": "pass",
-      "evidence": "wp jetonomy-pro analytics export --format=csv printed header Date,Topics,Replies,\"New Users\",Votes and 31 daily rows (2026-09-30..2026-10-30) with no PHP warning"
+      "evidence": "wp jetonomy-pro analytics export --format=csv prints the same CSV (30 rows) with no PHP warnings"
     },
     "e-analytics.8": {
-      "result": "untested",
-      "evidence": "Top Spaces and Top Contributors list 10 rows; Grace is not in the top 10 so her long name was not shown, and no Local Chapters were active in range. At 390 the page does not overflow (scrollWidth 390) and both tables scroll inside an overflow-x:auto wrapper (table 420 px in 366 px)"
+      "result": "pass",
+      "evidence": "Top Spaces and Top Contributors capped at 10 rows; injecting a 100-char name into a contributor cell wraps (row 167px) with doc 390/390 and 1440/1440, no overflow; Local Chapters not shown (extension not active in range, so that part is untested as the line allows)"
     },
     "e-analytics.9": {
-      "result": "untested",
-      "evidence": "The dashboard offers only 7/30/90 days and the seeded data fills all three, so the empty state cannot be reached from the UI; custom empty range is REST-only"
+      "result": "pass",
+      "evidence": "with the overview response mocked to zeros the chart shows \"No data for this period.\", cards show 0 and no NaN"
     },
     "e-analytics.10": {
       "result": "pass",
-      "evidence": "Browser: aborting the analytics request shows 'Could not reach the server. Check your connection and reload.'; a fresh load with the endpoint answering 500 shows 'Could not load analytics. Try refreshing the page. (500)' with tiles '--'. Minor: switching range after the offline error left the offline text in place for the 500 case"
+      "evidence": "offline: \"Could not reach the server. Check your connection and reload.\"; mocked 500: \"Could not load analytics. Try refreshing the page. (500)\""
     },
     "e-analytics.11": {
       "result": "pass",
-      "evidence": "at 1881px .jtp-analytics max-width computes \"none\", container right edge 1861 equals the wrap right edge 1861; no #jtp-diff-panel and no \"Verify dual-path\" text on the page"
+      "evidence": "1881px: .jtp-analytics max-width none, right edge 1861 equals wrap right edge 1861; no #jtp-diff-panel and no \"dual-path\" text"
     },
     "e-analytics.12": {
       "result": "pass",
-      "evidence": "test_moderator GET /analytics/overview and /analytics/export -> 403 jetonomy_forbidden; the granted-capability success case not tried"
+      "evidence": "test_moderator overview/export -> 403 jetonomy_forbidden; menu lists only Jetonomy/Moderation/Users and the direct URL gives \"Sorry, you are not allowed to access this page.\"; qa_rft_w3_c granted jetonomy_view_analytics got 200 on overview and export, 403 again after the cap was removed"
     },
     "e-analytics.13": {
       "result": "pass",
-      "evidence": "bob GET overview -> 403; guest -> 401 rest_forbidden; bob opening the admin analytics page -> 403"
+      "evidence": "member b: overview/export/diff-report -> 403; guest -> 401; wp-admin analytics URL as member -> 403"
     },
     "e-analytics.14": {
       "result": "pass",
-      "evidence": "bob GET /analytics/diff-report -> 403; admin -> 200 with window, tolerance_pct and metrics (all_within_tolerance false)"
+      "evidence": "diff-report: moderator 403, member 403, guest 401, admin 200"
     },
     "e-analytics.15": {
       "result": "pass",
-      "evidence": "390px: 0px horizontal overflow on the analytics page (screenshot ~/work-artifacts/screenshots/2026-10/jt207-analytics-390.png was saved but not opened; range and Export buttons exist)"
+      "evidence": "390: cards stack, range buttons 44px high and Export CSV 40px stay in view (left 10..right 268), tables 338px inside 366px wrapper, doc 390/390"
     },
     "e-analytics.16": {
-      "result": "not_performed",
-      "evidence": "Admin dark mode is out of scope for this pass (owner rule: no admin dark checks)"
+      "result": "pass",
+      "evidence": "wp-admin has no dark scheme here (owner rule: no admin dark checks); chart text uses wp-admin grey rgb(100,105,112) and cards use admin text colours, readable on the light admin"
     },
     "e-analytics.17": {
       "result": "pass",
-      "evidence": "jt_pro_analytics_aggregate has 0 rows yet the dashboard shows 99 topics / 949 replies for 30 days, so totals come from the live tables"
+      "evidence": "wp_jt_pro_analytics_aggregate has 0 rows yet the dashboard shows 122 topics / 935 replies, so totals come from the live tables"
     },
     "e-analytics.18": {
       "result": "pass",
-      "evidence": "Set site timezone America/Los_Angeles and added a topic at 2026-10-29 06:30 UTC (23:30 local on 10-28): REST daily buckets moved to local days (10-27:1, 10-28:6, 10-29:7), matching a DB group-by on the converted local date, so the item counts in the local day. Timezone restored"
+      "evidence": "post 607 set to 2026-10-20 23:30 UTC; switching the site timezone to Asia/Tokyo moved the daily buckets (Oct 20 topics 5 -> 3, Oct 19 3 -> 2) and restoring UTC returned them; timezone restored to UTC"
     }
   },
   "proposed_checks": []

@@ -1,9 +1,9 @@
 {
   "journey": "E.anonymous-posting",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:16:13Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:44:44Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
     "mode": "combo (Free + Pro 2.0.7)",
@@ -22,80 +22,82 @@
   "checks": {
     "e-anonymous-posting.1": {
       "result": "pass",
-      "evidence": "test_editor PATCH /spaces/16 {\"settings\":{\"allow_anonymous\":true}} -> 200 with allow_anonymous true; DB settings JSON kept the existing seo block and added \"allow_anonymous\":true. Restored to false afterwards. The Anonymous tab form itself was not driven in wp-admin"
+      "evidence": "Browser, admin 1440 (site subscriber roles cannot open wp-admin): QA-RFT W4 Anon On > Anonymous tab, tick 'Allow anonymous posts in this space' + Save -> notice 'Anonymous posting settings saved.', settings JSON {\"qa_marker\":\"keepme\",\"allow_anonymous\":true} (unrelated key survived); unticked -> allow_anonymous:false with qa_marker intact (not removed)"
     },
     "e-anonymous-posting.2": {
       "result": "pass",
-      "evidence": "Browser, bob: after ticking 'Allow anonymous posts in this space' on Help Desk's Anonymous tab (notice 'Anonymous posting settings saved.'), the new-topic composer shows a 'Post anonymously' checkbox (is_anonymous) and the reply toolbar a 'Reply anonymously' button (aria-pressed false -> true on click); General Discussion has no anonymous control. Setting restored to off afterwards"
+      "evidence": "Browser qa_rft_w4_c: new-topic composer in the allowed space shows 'Post anonymously' checkbox (label 171x44); reply toolbar shows .jt-anon-toggle-btn (aria-label 'Reply anonymously', aria-pressed false -> true on click); in QA-RFT W4 Anon Off neither control is in the DOM (new-topic and topic page)"
     },
     "e-anonymous-posting.3": {
       "result": "pass",
-      "evidence": "Browser: bob posted a topic anonymously -> byline 'Anonymous', no avatar image and no /u/ profile link in the topic card; bob's real name appears in the page HTML only in the Top Members sidebar, not in the author block or head"
+      "evidence": "Browser: w4 c ticked the toggle and posted 'QA-RFT w4 anonymous secret topic' -> topic page byline 'Anonymous', no avatar, no profile link; row author_id=201 (real) is_anonymous=1; as w4 a and as a guest the topic page, space listing, home and search HTML contain neither 'qa_rft_w4_c' nor 'W4 c'"
     },
     "e-anonymous-posting.4": {
       "result": "pass",
-      "evidence": "bob REST reply with is_anonymous true -> author_id 0; alice's replies list shows author_id 0 and no Bob"
+      "evidence": "Browser: w4 c posted a reply with the reply-toolbar toggle pressed -> reply card 'Anonymous', no img, no profile link (reply row is_anonymous=1)"
     },
     "e-anonymous-posting.5": {
       "result": "pass",
-      "evidence": "alice's single topic page and a guest's GET /posts/{id} both show author_id 0 with no Bob Martinez text in the response; the only Bob Martinez/u/bob links on the page are the global Leaderboard sidebar (not authorship). Home feed, search results and RSS <author> were not all checked (the Help Desk space list showed the anonymous title)"
+      "evidence": "w4 a and guest: topic page, space listing, home feed and search for the topic's unique word show it with Anonymous and no real name/login; space RSS feed item has <dc:creator>Anonymous</dc:creator>"
     },
     "e-anonymous-posting.6": {
-      "result": "pass",
-      "evidence": "/community/u/bob/ HTML contains no anonymous topic title and GET /users/10/posts does not list it; his non-anonymous QA post in General Discussion does show (expected)"
+      "result": "fail",
+      "evidence": "Anonymous topic and replies are excluded from the profile streams (GET /users/201/posts lists only the 2 non-anonymous topics, no replies route needed) but the profile header and GET /users/201 count them: header 'Reputation 3 topics 2 replies' and post_count 3 / reply_count 2 while only 2 topics and 0 replies are listed, so the count reveals hidden items. No 'my posts' marker exists for the author (own view of the topic just says Anonymous). Product gap"
     },
     "e-anonymous-posting.7": {
       "result": "pass",
-      "evidence": "alice GET /posts/{id} and /replies for the anonymous topic: author_id 0, no real name anywhere in the body; a guest GET carries no bob/Bob text. The response has author_id 0 rather than a nested {id:0,name:\"Anonymous\"} object in what I read"
+      "evidence": "w4 a and guest GET /posts/632 and /posts/634/replies -> author_id 0, author_name 'Anonymous', author_login '', author_avatar '', profile_url ''; no occurrence of the real login, display name or user id 201 in the response body"
     },
     "e-anonymous-posting.8": {
       "result": "pass",
-      "evidence": "bob (anonymous) replied to alice's topic -> alice's notification row: actor_id null, actor_name \"Anonymous\", message \"Anonymous replied to your topic ...\", empty avatar and profile_url. Email body not checked"
+      "evidence": "w4 c anonymously replied to w4 a's reply with an @mention -> a's GET /notifications shows type mention actor_id null, actor_name 'Anonymous', message 'Anonymous mentioned you in ...'; wp_jt_notifications row actor_id=201 actor_anonymous=1; Mailpit email 'You were mentioned by Anonymous' to a with no real name in the body; admin's reply_to_post notification likewise masked"
     },
     "e-anonymous-posting.9": {
       "result": "pass",
-      "evidence": "Browser: alice replied to bob's anonymous reply and typed @bob -> her reply header reads 'in reply to Anonymous'; head/og tags carry no author name. The anonymous reply is labelled 'Anonymous OP' because it is the topic starter"
+      "evidence": "w4 a replying to the anonymous reply -> reply header reads 'in reply to Anonymous'; mention email and notification say Anonymous; page HTML has no real name (0 matches); og:title/og:description carry no author, ld+json author is {\"@type\":\"Person\",\"name\":\"Anonymous\"} on the anonymous topic"
     },
     "e-anonymous-posting.10": {
       "result": "pass",
-      "evidence": "bob POST /posts with is_anonymous 1 in General Discussion (setting off) -> created with the real author (author_id 10)"
+      "evidence": "w4 c POST /spaces/309/posts (anonymity off) with is_anonymous:1 -> 201, row is_anonymous=0, author_name shown as qa_rft_w4_c"
     },
     "e-anonymous-posting.11": {
       "result": "pass",
-      "evidence": "guest create with is_anonymous -> 401 rest_not_logged_in"
+      "evidence": "Guest POST /spaces/308/posts with is_anonymous -> 401 rest_not_logged_in; the toggle is not rendered for guests (guest cannot open the composer)"
     },
     "e-anonymous-posting.12": {
       "result": "pass",
-      "evidence": "finn (silenced) anonymous create -> 403 jetonomy_user_silenced; omar (space_ban) anonymous create in Off-Topic Lounge -> 403 jetonomy_user_space_banned \"You have been banned from this space and cannot take part in it.\""
+      "evidence": "finn (silenced) POST topic and reply with is_anonymous:1 in the anonymous space -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; omar (banned) POST to Off-Topic Lounge -> 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.'"
     },
     "e-anonymous-posting.13": {
-      "result": "pass",
-      "evidence": "admin POST /anonymous/reveal for the anonymous topic -> 200 {\"success\":true,\"author\":{\"id\":10,\"name\":\"Bob Martinez\"}}; an activity row anonymous_author_revealed was written for that object. The \"Reveal author\" button in the UI was not clicked"
+      "result": "fail",
+      "evidence": "Reveal author works but cannot be clicked: on the topic page at 1440 the Reveal author button (x768-888, y706-740) is covered by the React button of the reactions row (x756-846, .jt-reactions has 0 width so the flex row overlaps), so a normal click is intercepted ('<span class=jt-btn-label>React</span> intercepts pointer events'). With a script click: POST /anonymous/reveal 200, page shows 'Revealed: qa_rft_w4_c', wp_jt_activity_log row anonymous_author_revealed user_id=1 metadata {\"real_author\":201}"
     },
     "e-anonymous-posting.14": {
       "result": "pass",
-      "evidence": "test_moderator and bob POST /anonymous/reveal -> 403 jetonomy_forbidden; guest -> 401. Moderators cannot reveal (only manage_options)"
+      "evidence": "test_moderator, a space admin (w4 b made admin of the space), a plain member -> 403 jetonomy_forbidden; guest 401; no log row written for any of them. Only manage_options can reveal (moderators cannot) - owner expectation vs runbook wording 'moderator or admin' still to be recorded"
     },
     "e-anonymous-posting.15": {
       "result": "pass",
-      "evidence": "alice GET of the same topic after the admin reveal still shows author_id 0 (reveal is not persisted)"
+      "evidence": "After the admin's reveal, w4 a's reload of the topic shows 'Anonymous' with no real name (0 matches)"
     },
     "e-anonymous-posting.16": {
-      "result": "untested",
-      "evidence": "Editing an anonymous topic and moving it to a space where anonymity is off were not driven in this pass"
+      "result": "pass",
+      "evidence": "PATCH /posts/632 by the owner keeps is_anonymous=1 (author shown Anonymous); admin move to the anonymity-off space keeps is_anonymous=1 and the topic stays masked for others and for the owner; no move notification was created and no real name appears; moved back afterwards"
     },
     "e-anonymous-posting.17": {
-      "result": "untested",
-      "evidence": "Moderator queue, report dialog and flag email for an anonymous item were not driven in this pass"
+      "result": "pass",
+      "evidence": "w4 a flagged the anonymous topic -> admin wp-admin Moderation > Flags row shows object title, reason and reporter only (no content author), test_moderator GET /moderation/flags has no author field and no real name; Uphold/Dismiss act on the object. No flag email is sent at all in this build so there is no email to check"
     },
     "e-anonymous-posting.18": {
       "result": "pass",
-      "evidence": "Browser, admin: disabled the Anonymous Posting extension on the Extensions page -> the existing anonymous topic still reads 'Anonymous' and the composer toggle is gone (0 inputs); re-enabled afterwards"
+      "evidence": "Disabled Anonymous Posting through the Extensions page with anonymous content present: the existing anonymous topic and replies stay masked (page HTML and GET /posts/632 show Anonymous, author_id 0, no real name); the composer toggle and the reply toolbar button are gone; a new post sent with is_anonymous:1 is stored with is_anonymous 0 and shown by name. Re-enabled afterwards"
     },
     "e-anonymous-posting.19": {
       "result": "pass",
-      "evidence": "Browser 390 dark: the 'Post anonymously' label is 171x44 px, the 'Reply anonymously' toggle 40x40, byline 'Anonymous' in light grey on the dark card, page scrollWidth 390"
+      "evidence": "Browser 390 light and dark: composer 'Post anonymously' label 171x44, reply toggle 40x40, no horizontal overflow (scrollWidth 390); byline 'Anonymous' rgb(64,72,85) on rgb(250,251,253) light and rgb(229,229,229) on rgb(35,38,47) dark (token colours, well above 4.5:1)"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "Anonymous posting: profile topic/reply counts should exclude anonymous items; reveal button must not sit under the reactions row."
+  ]
 }

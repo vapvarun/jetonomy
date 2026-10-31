@@ -1,89 +1,82 @@
 {
   "journey": "E.seo-pro",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:16:43Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:33:55Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, current HEAD)",
     "site": "http://localhost:8911",
-    "themes": [
-      "reign"
-    ],
+    "theme": "reign",
     "viewports": [
-      1440,
-      390
+      1440
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "e-seo-pro.1": {
       "result": "pass",
-      "evidence": "admin PATCH /spaces/16/seo with meta_title \"Help Desk - Get answers from the community | {site_name}\", a description and an og_image -> saved and returned by GET (the SEO tab form itself was not driven). A description containing <script>alert(1)</script> was stored with the script tag stripped"
+      "evidence": "PATCH /spaces/16/seo with meta_title, meta_description and og_image returns the three values and they persist (set via REST; the admin Space edit SEO tab was not re-clicked in this pass)"
     },
     "e-seo-pro.2": {
       "result": "pass",
-      "evidence": "guest view of /community/s/help-desk/: one <title> \"Help Desk - Get answers from the community | Northwind Community\" ({site_name} filled), one meta description, og:title, og:description, og:image (https://example.com/og.png), twitter:card summary_large_image and one canonical; each tag appears once"
+      "evidence": "guest /community/s/help-desk/: <title> \"Help Desk - Get answers from the community | Northwind Community\", one each of meta description, og:title, og:description, og:image, canonical, twitter:card summary_large_image"
     },
     "e-seo-pro.3": {
       "result": "pass",
-      "evidence": "Guest request of a Help Desk topic head: title 'Members cannot see ... \u2013 Help Desk \u2013 Northwind Community', og:type article, og:title/description present, article:author = member public name (Riley Thompson), published/modified times ISO 8601 (+00:00), article:section = Help Desk"
+      "evidence": "topic in Help Desk: title/og:title follow the space template (no topic title since template lacks {post_title}), description override, og:type article, article:author \"Omar Haddad\", ISO published/modified times, article:section \"Help Desk\""
     },
     "e-seo-pro.4": {
       "result": "pass",
-      "evidence": "General Discussion (no overrides): title \"General Discussion - Northwind Community\" and 0 empty content=\"\" meta tags on the page"
+      "evidence": "General Discussion (no overrides): title \"General Discussion – Northwind Community\", description = trimmed space description, no content=\"\" meta tags"
     },
     "e-seo-pro.5": {
       "result": "pass",
-      "evidence": "Help Desk space meta description is trimmed to 30 words ending '...' (entities escaped); a 159-char General Discussion topic title appears whole in <title> and og:title with the head intact"
+      "evidence": "288-char Help Desk description trimmed to a 221-char meta description ending \"...\" ; the 159-char topic title exists and pages render normally"
     },
     "e-seo-pro.6": {
       "result": "pass",
-      "evidence": "noindex+nofollow on Help Desk -> <meta name=\"robots\" content=\"noindex, nofollow\"> appears and the canonical_base override https://canon.example.com/help/ is used on that space only; untick removes the robots tag (0) and General Discussion has none"
+      "evidence": "noindex+nofollow -> <meta name=\"robots\" content=\"noindex, nofollow\"> on Help Desk only; canonical_base replaced the canonical on that space only; unticking removed both"
     },
     "e-seo-pro.7": {
-      "result": "untested",
-      "evidence": "Sitemap exclude/priority/changefreq overrides were not walked in this pass"
+      "result": "pass",
+      "evidence": "/community-sitemap-spaces-1.xml: exclude_sitemap removes Help Desk and its topics (0 help-desk topic URLs); overrides 0.3 / monthly show in the entry; defaults are 0.7 / daily for spaces (priority \"0.9\" is not an allowed value and falls back to default)"
     },
     "e-seo-pro.8": {
       "result": "pass",
-      "evidence": "Guest request of two Customer Advisory Board topics -> HTTP 404, <title> 'Page not available - Northwind Community', no topic title in og tags or JSON-LD"
+      "evidence": "guest: Customer Advisory Board topic -> 404 \"Page not available\" with no topic title, og tags or JSON-LD; Moderators' Room space 404; no overrides leak"
     },
     "e-seo-pro.9": {
-      "result": "untested",
-      "evidence": "No anonymous topic was left on the stack to inspect (the anonymous-posting walk removed its own); article:author on anonymous topics not re-checked"
+      "result": "fail",
+      "evidence": "anonymous topic emits no article:author, but its JSON-LD still has author Person name \"Anonymous\"; the line says no author in schema (stale line or product choice - the name does not identify the member)"
     },
     "e-seo-pro.10": {
       "result": "pass",
-      "evidence": "bob and test_moderator PATCH /spaces/16/seo -> 403 jetonomy_forbidden; bob GET -> 403; guest GET -> 401. An invalid sitemap_priority \"high\" was reset to empty (default) and the save succeeded"
+      "evidence": "member b and test_moderator PATCH /spaces/16/seo -> 403; guest GET -> 401; invalid sitemap_priority \"high\" saved as \"\""
     },
     "e-seo-pro.11": {
       "result": "pass",
-      "evidence": "meta description with quotes and a <script> tag: the script tag was stripped on save and the quotes rendered as &quot; in the page head (once-escaped)"
+      "evidence": "description with quotes, <script> and & is stored sanitised (script stripped) and echoed escaped (&quot; &amp;) in meta and og:description; no raw <script>"
     },
     "e-seo-pro.12": {
       "result": "pass",
-      "evidence": "Arabic topic head: <title> and og:title and meta description carry the Arabic text as UTF-8 (only the dash is an HTML entity), not double-encoded"
+      "evidence": "Arabic meta title and description appear intact in <title> and meta description (UTF-8, no doubled entities); checked on the space page"
     },
     "e-seo-pro.13": {
-      "result": "pass",
-      "evidence": "/robots.txt lists the Sitemap lines and a \"Jetonomy Forum SEO Pro\" block with Allow /community/ and /community/s/*/, Disallow /community/notifications/; it does not disallow public spaces. An excluded-space rule line was not tested"
+      "result": "fail",
+      "evidence": "robots.txt has the Pro block (Allow /community/, /community/s/*/; Disallow notifications, mod, search) and does not disallow public spaces, but excluding Help Desk from the sitemap added no Disallow line for it, so there is no per-excluded-space rule"
     },
     "e-seo-pro.14": {
-      "result": "pass",
-      "evidence": "with SEO Pro off: Help Desk title falls back to \"Help Desk - Northwind Community\", no noindex robots tag from the leftover setting, and the default free JSON-LD schema still prints; switched back on afterwards"
+      "result": "fail",
+      "evidence": "cannot run here: the walk must not switch extensions on or off on the combo site (another agent owns extension switching), so the SEO Pro off-state was not observed"
     },
     "e-seo-pro.15": {
       "result": "pass",
-      "evidence": "after each PATCH the change showed in the very next frontend request (title, robots and canonical changed immediately, no cache clear)"
-    },
-    "e-seo-pro.new1": {
-      "result": "pass",
-      "evidence": "2.0.7: PATCH /spaces/16/seo with og_image \"not a url\" -> 400 rest_invalid_param (og_image \"Invalid parameter.\"); canonical_base \"javascript:alert(1)\" and \"ftp://x\" -> 400 (canonical_base \"Invalid parameter.\"); the stored values were kept"
+      "evidence": "every PATCH was visible on the very next frontend fetch with no cache clear (title, robots, canonical, sitemap entry)"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "robots.txt: decide whether excluded spaces should get a Disallow line, or drop \"rules for excluded spaces\" from check 13"
+  ]
 }

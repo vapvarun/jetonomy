@@ -1,8 +1,8 @@
 {
   "journey": "C.gating.read-on-public",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:04:55Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:57:51Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -18,31 +18,31 @@
   "checks": {
     "c-gating-read-on-public.1": {
       "result": "pass",
-      "evidence": "read Read rule on public QA-RFT Pub (everyone/read): 201 'Access rule added.' made_private false"
+      "evidence": "admin REST POST Everyone/read rule on public open space 201 \"Access rule added.\"; UI toast on public space is \"Rule added: Everyone can read and report...\" (wording only)"
     },
     "c-gating-read-on-public.2": {
       "result": "pass",
-      "evidence": "qa_rft_f posted 'QA-RFT What is the best phone for testing?' -> 201 status publish"
+      "evidence": "subscriber posted \"What is the best phone for testing?\" with the Read rule: 201"
     },
     "c-gating-read-on-public.3": {
       "result": "pass",
-      "evidence": "f reply 201; vote 200 on another member's topic (own topic correctly 400 jetonomy_self_vote)"
+      "evidence": "same subscriber replied 201 and voted 200"
     },
     "c-gating-read-on-public.4": {
       "result": "pass",
-      "evidence": "roster member qa_rft_b posted 201 with the rule in place"
+      "evidence": "roster member b keeps abilities (reply 201)"
     },
     "c-gating-read-on-public.5": {
       "result": "pass",
-      "evidence": "guest GET /spaces/148/posts 200; guest POST reply 401 rest_not_logged_in"
+      "evidence": "guest GET posts 200; guest POST reply 401 rest_not_logged_in"
     },
     "c-gating-read-on-public.6": {
       "result": "pass",
-      "evidence": "DELETE rule -> {deleted:true}; f posted again 201"
+      "evidence": "admin DELETE rule 200, UI toast \"Access rule deleted.\"; subscriber still posts 201"
     },
     "c-gating-read-on-public.7": {
       "result": "pass",
-      "evidence": "subscriber POST /spaces/148/access-rules -> 403 jetonomy_forbidden, rule count stays 0"
+      "evidence": "subscriber POST access-rules 403 jetonomy_forbidden, count unchanged"
     }
   },
   "proposed_checks": []

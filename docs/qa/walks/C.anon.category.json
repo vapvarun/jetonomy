@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.category",
-  "free": "607c4b7b",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:55:09Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:44:40Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -18,63 +18,63 @@
   "checks": {
     "c-anon-category.1": {
       "result": "pass",
-      "evidence": "local-chapters category lists 14 chapter cards, each links to its space."
+      "evidence": "Local Chapters category lists 14 city cards, each linking to its space (links 200)."
     },
     "c-anon-category.2": {
       "result": "pass",
-      "evidence": "With teasers on, Partner Program card carries Private badge and \"Approval required\" plus \"Request to join and the partner team reviews it\"."
+      "evidence": "/community/category/product-engineering/ guest: Partner Program card has Private badge + \"Approval required\"."
     },
     "c-anon-category.3": {
       "result": "pass",
-      "evidence": "Customer Advisory Board card (community category) shows Private + \"Invite only\"; card is a link, no Join button."
+      "evidence": "Customer Advisory Board card shows Private + \"Invite only\" and no Join/Request button (0 buttons in card)."
     },
     "c-anon-category.4": {
-      "result": "pass",
-      "evidence": "/community/category/staff/ (only Release Planning, hidden) is HTTP 404 community not-found page; no space name in body."
+      "result": "fail",
+      "evidence": "stale line: the only all-hidden category is Staff (Release Planning): guest gets 404 \"Category not found. Browse spaces\" with no breadcrumb/name/count - correct. Moderators' Room sits in the mixed Help & Support category, which is visible; the line names the wrong category."
     },
     "c-anon-category.5": {
       "result": "pass",
-      "evidence": "Guest GET /categories/7 -> 404 jetonomy_not_found; /categories?per_page=100 omits staff (lists community:9, help-support:5, product-engineering:6, start-here:5)."
+      "evidence": "Guest GET /categories/7 (Staff) -> 404 jetonomy_not_found; /categories?per_page=100 lists 4 top-level cats, Staff and its space_count absent."
     },
     "c-anon-category.6": {
       "result": "pass",
-      "evidence": "help-support shows 5 spaces to guest (6 exist; hidden Moderators' Room excluded) in REST space_count."
+      "evidence": "Help & Support reports space_count 5 while DB has 6 spaces (Moderators' Room hidden): guest page shows 5 cards, no Moderators text."
     },
     "c-anon-category.7": {
       "result": "pass",
-      "evidence": "Five empty city cards show \"0 topics\", no error."
+      "evidence": "Local Chapters: last five city cards show \"0 topics\", no error."
     },
     "c-anon-category.8": {
       "result": "pass",
-      "evidence": "/community/category/does-not-exist/ 404 with link back to /community/."
+      "evidence": "/community/category/does-not-exist/ -> HTTP 404 \"Category not found. Browse spaces\" with link back to community."
     },
     "c-anon-category.9": {
       "result": "pass",
-      "evidence": "2025 Hackathon card has Archived badge in labs category; opens read-only space."
+      "evidence": "Labs category: 2025 Hackathon card carries Archived marker; opens its space."
     },
     "c-anon-category.10": {
       "result": "pass",
-      "evidence": "390px: city cards 328px wide single column, scrollWidth 390."
+      "evidence": "390px Local Chapters category: scrollWidth 390, cards single column."
     },
     "c-anon-category.11": {
       "result": "pass",
-      "evidence": "Help Desk card (345-char text) stays inside card at 1440 (scrollWidth<=clientWidth)."
+      "evidence": "390px Help Desk card with 288-char description: scrollWidth<=clientWidth, no page overflow; wraps inside card."
     },
     "c-anon-category.12": {
       "result": "pass",
-      "evidence": "Dark mode: Archived and Forum/Ideas badges legible (screenshot jt207-w3-cat-dark.png)."
+      "evidence": "Dark mode (Reign): Private, Invite only and Forum badges legible on dark cards (w1-cat-dark.png); Archived badge viewed on Labs."
     },
     "c-anon-category.13": {
       "result": "pass",
-      "evidence": "bob (Partner Program member) sees card with his role label; hana (not a member) sees \"Approval required\" card with request-to-join description."
+      "evidence": "bob (Partner Program member/admin) sees the card marked with his role and it opens the space; hana (non-member) card reads \"Approval required\" (request path)."
     },
     "c-anon-category.14": {
       "result": "pass",
-      "evidence": "maya sees Release Planning (Hidden) in /category/staff/; bob gets 404 for the same URL."
+      "evidence": "maya sees Moderators' Room (Hidden badge) listed in Help & Support and 200 on Staff category; bob does not see the card (list empty) and gets 404 on the hidden-only Staff category."
     },
     "c-anon-category.15": {
       "result": "pass",
-      "evidence": "bob's Partner Program card shows a role marker (\"Admin\"), not \"Approval required\". (bob is a space admin in the seed; a plain member would show \"Member\" per the template.)"
+      "evidence": "bob's Partner Program card shows a role marker (\"Admin\") instead of \"Approval required/Request to join\" wording."
     }
   },
   "proposed_checks": []

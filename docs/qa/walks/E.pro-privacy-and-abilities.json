@@ -1,9 +1,9 @@
 {
   "journey": "E.pro-privacy-and-abilities",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:24:13Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:44:44Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
     "mode": "combo (Free + Pro 2.0.7)",
@@ -22,52 +22,54 @@
   "checks": {
     "e-pro-privacy-and-abilities.1": {
       "result": "pass",
-      "evidence": "Ran the registered personal-data exporters for maya: groups \"Jetonomy Pro: Private Messages\" (x2), \"Reactions\" (x4), \"Badges\" (x5), \"Poll Votes\" (x1) present with real rows. \"Custom Fields\" and \"Push Devices\" groups did not appear for maya because she has no such rows on this stack (seed has no push subscription or custom field value for her), so those two were checked on a throwaway user instead (see .4). Walked through the exporter callbacks, not the Tools > Export screen"
+      "evidence": "Browser, admin 1440: Tools > Export Personal Data for throwaway qa_rft_w4_f (seeded with a DM, 4 reactions, a poll vote, a badge, a user custom-field value, a browser subscription and an Expo device) -> export zip lists Jetonomy Pro: Private Messages, Reactions (4), Badges, Poll Votes, Push Devices (2) with real values; Custom Fields appears once a user-object field value exists (exporter output 'QA-RFT Arabic: f-user-field-value'). maya's seeded data has no Custom Fields or Push rows, so the line's premise for maya does not hold on this seed"
     },
     "e-pro-privacy-and-abilities.2": {
       "result": "pass",
-      "evidence": "jamal (no DMs) exports only groups that have rows (Reactions x6, Badges x2, Poll Votes x2): no empty Pro group and no PHP notice; the >100 reactions paging was not exercised"
+      "evidence": "qa_rft_w4_reg (no Pro data): every Jetonomy Pro exporter returns 0 items, no empty groups, no notices; qa_rft_w4_g with 5,000 reactions pages as 51 exporter requests of 100 with done:false until the last"
     },
     "e-pro-privacy-and-abilities.3": {
-      "result": "untested",
-      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
+      "result": "pass",
+      "evidence": "f's message export lists only f's own message (conversation 74, 'f replies privately'); the admin's message and any email address are not in it"
     },
     "e-pro-privacy-and-abilities.4": {
-      "result": "untested",
-      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
+      "result": "pass",
+      "evidence": "Browser: Tools > Erase Personal Data on qa_rft_w4_f -> row ends 'Erasure completed.'; counts for f go from 4 reactions / 1 vote / 1 badge / 1 message / 1 subscription / 1 device / 1 field value to 0 across the board, message row kept with sender_id 0. The eraser's final page returns exactly 'Jetonomy Pro: Messages anonymized. Reactions, custom fields, badges, poll votes, and push subscriptions/devices deleted.' (read from the callback; the core screen itself shows only 'Erasure completed.'). Throwaway user used instead of seeded Jamal"
     },
     "e-pro-privacy-and-abilities.5": {
-      "result": "untested",
-      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
+      "result": "pass",
+      "evidence": "Browser, admin opens conversation 74: the erased member's message shows under 'Deleted User' and the admin's own message remains; poll 35 totals dropped to 0 voters (f's vote gone, nothing else touched)"
     },
     "e-pro-privacy-and-abilities.6": {
       "result": "pass",
-      "evidence": "wp_delete_user(qa_rft_priv, reassign 1) after re-adding a reaction and a push subscription: 0 rows left in jt_pro_reactions, poll_votes, user_badges, push_subscriptions and push_devices"
+      "evidence": "wp user delete 258 --reassign=1 on a user with a reaction, poll vote, badge, push subscription and user field value -> all of those rows gone (counts 0) with none left in jt_pro_reactions, jt_pro_poll_votes, jt_pro_user_badges, jt_pro_push_subscriptions or field_values; message rows were not seeded for this user (sender_id column not exercised)"
     },
     "e-pro-privacy-and-abilities.7": {
-      "result": "untested",
-      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
+      "result": "pass",
+      "evidence": "Erased qa_rft_w4_g with 5,000 reactions: the Pro eraser completes in 6 requests (1,000 rows each) ending done, 0.02 s total, 0 rows left"
     },
     "e-pro-privacy-and-abilities.8": {
-      "result": "untested",
-      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
+      "result": "fail",
+      "evidence": "Erased qa_rft_w4_e (anonymous topic with an attachment): the topic row is anonymised (author_id 0, is_anonymous 1, still published) but the linked attachment keeps its link row and the WordPress attachment post still has post_author 255 (the erased user) - the media is left linking to a real author id; no policy removes or reassigns it"
     },
     "e-pro-privacy-and-abilities.9": {
-      "result": "pass",
-      "evidence": "WP 7.1.3: 39 jetonomy abilities are registered (jetonomy-pro/ messaging, analytics, polls, badges, webhooks, reactions, custom fields, moderation rules); with Polls switched off the count dropped to 36 and returned to 39 when switched on. The WPMediaVerse part is not testable (not installed)"
+      "result": "not_performed",
+      "evidence": "Observed: with all extensions on GET /wp-abilities/v1/abilities lists 20 jetonomy-pro abilities (messaging, analytics, badges, polls, webhooks, reactions, custom fields, moderation); disabling Polls in the Extensions page dropped the total from 116 to 113 (create-poll, vote-poll, get-poll-results gone) and enabling restored them. The WPMediaVerse-messaging half needs WPMediaVerse active, which would take over direct messages for the other agent walking this site"
     },
     "e-pro-privacy-and-abilities.10": {
       "result": "pass",
-      "evidence": "bob GET jetonomy-pro/get-analytics and export-analytics -> 403 rest_ability_cannot_execute; bob get-conversation for a thread he is not in -> 404 \"Conversation not found.\"; guest get-analytics -> 401 rest_ability_cannot_execute"
+      "evidence": "qa_rft_w4_a calling jetonomy-pro/get-analytics and export-analytics -> 403 rest_ability_cannot_execute; get-conversation for a conversation w4 b is not in -> 404 'Conversation not found.' (admin gets it); guest get-analytics -> 401"
     },
     "e-pro-privacy-and-abilities.11": {
       "result": "pass",
-      "evidence": "finn (silenced) POST jetonomy-pro/send-message ability -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; no QA message row created"
+      "evidence": "finn (silenced) jetonomy-pro/send-message ability -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.', same as the REST conversation create"
     },
     "e-pro-privacy-and-abilities.12": {
-      "result": "untested",
-      "evidence": "not reached in this browser pass (run out of room before the privacy export/erase walk)"
+      "result": "pass",
+      "evidence": "Browser 390: Tools > Export Personal Data and Erase Personal Data have no horizontal overflow (scrollWidth 390), the email field spans 10-378 px and the request rows remain usable"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "Privacy: attachment media authored by an erased member should be reassigned or removed; the erase screen could show the eraser's message."
+  ]
 }

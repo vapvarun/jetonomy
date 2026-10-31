@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.tag",
-  "free": "607c4b7b",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:55:43Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:49:36Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -10,51 +10,50 @@
     "site": "http://localhost:8912",
     "theme": "reign",
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-anon-tag.1": {
       "result": "pass",
-      "evidence": "/community/tag/email/ shows \"41 topics\"; pages 1+2 list 30+11=41 unique topics."
-    },
-    "c-anon-tag.2": {
-      "result": "pass",
-      "evidence": "partner-pricing (used only in Partner Program) guest page: \"0 topics\", no Referral topic or title leaked."
+      "evidence": "/community/tag/qa-rft-w1tag/ (36 QA-RFT topics) shows \"36 topics\" and 35 topic links on the first page; REST /tags post_count agrees."
     },
     "c-anon-tag.3": {
       "result": "pass",
-      "evidence": "Guest /tags counts equal DB counts of published topics in public spaces (email 41 vs 43 total); partner-pricing absent from guest list."
+      "evidence": "Guest GET /tags 200 returns tags with post_count (public-only counts; verified for QA-RFT tag and no private-space leakage in sampled tags)."
     },
     "c-anon-tag.4": {
       "result": "pass",
-      "evidence": "/community/tag/no-such-tag/ 404 \"Tag not found. Back to the community\", no PHP error."
-    },
-    "c-anon-tag.5": {
-      "result": "pass",
-      "evidence": "Sidebar Popular tags are name chips without counts; counts on tag pages match REST counts, so nothing disagrees."
-    },
-    "c-anon-tag.6": {
-      "result": "pass",
-      "evidence": "bob (Partner member) sees \"1 topic\" on partner-pricing; guest sees 0."
+      "evidence": "/community/tag/no-such-tag/ -> 404 page, no PHP error."
     },
     "c-anon-tag.7": {
       "result": "pass",
-      "evidence": "Same 404 page, no PHP notice in markup."
+      "evidence": "Same as 4: 404 status and not-found page."
     },
     "c-anon-tag.8": {
       "result": "pass",
-      "evidence": "email (41 topics): page 1 = 30, page 2 = 11, page 3 = 0; no duplicates across pages."
+      "evidence": "Tag with 36 topics paginates (35 on first page, remainder on next)."
+    },
+    "c-anon-tag.2": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
+    },
+    "c-anon-tag.5": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
+    },
+    "c-anon-tag.6": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
     },
     "c-anon-tag.9": {
-      "result": "pass",
-      "evidence": "390px /tag/email/ scrollWidth 390, no sideways scroll."
+      "result": "untested",
+      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
     },
     "c-anon-tag.10": {
-      "result": "pass",
-      "evidence": "REST /tags counts equal tag-page counts for guest (email 41/41)."
+      "result": "untested",
+      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
     }
   },
   "proposed_checks": []

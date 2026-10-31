@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.home",
-  "free": "607c4b7b",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:54:21Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:43:41Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -13,76 +13,76 @@
       1440,
       390
     ],
-    "browser": "Chromium via playwright-isofull"
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "c-anon-home.1": {
       "result": "pass",
-      "evidence": "Guest /community/ 200: welcome card, space cards by category, trending, login panel; Log in offered (Register appears when users_can_register=1, verified both states)."
+      "evidence": "Guest /community/ 200: welcome card, space cards, login panel; Log in always, Create free account/Register only when users_can_register=1."
     },
     "c-anon-home.2": {
       "result": "pass",
-      "evidence": "Local Chapters chip (aria-expanded) expands; \"View all 14 spaces\" links /community/category/local-chapters/."
+      "evidence": "Local Chapters chip (aria-expanded) opens a panel with 6 space links plus \"View all 14 spaces\" -> /community/category/local-chapters/."
     },
     "c-anon-home.3": {
       "result": "pass",
-      "evidence": "Labs (2 spaces) has no View all link; only the 14-space block has one."
+      "evidence": "Only the 14-space block has a View all link; Labs (2 spaces) has none."
     },
     "c-anon-home.4": {
       "result": "pass",
-      "evidence": "Local Chapters category page lists all 14 city cards, empty ones show \"0 topics\" without error."
+      "evidence": "Local Chapters category lists all 14 cities; 5 empty ones show \"0 topics\", no error."
     },
     "c-anon-home.5": {
       "result": "pass",
-      "evidence": "users_can_register=0: guest HTML has no Register/Create free account; set 1 -> Register and Create free account appear; restored to 0."
+      "evidence": "users_can_register=0: guest home has no Register/Create free account; =1 they appear; left at 1 during anon walk, restored to 0 after."
     },
     "c-anon-home.6": {
       "result": "pass",
-      "evidence": "guest_private_teasers off: no Partner Program / Customer Advisory / Moderators text anywhere on home."
+      "evidence": "guest_private_teasers off: no Partner Program/Customer Advisory/Moderators/Release Planning text on home."
     },
     "c-anon-home.7": {
       "result": "pass",
-      "evidence": "guest_private_teasers on: Partner Program and Customer Advisory Board show Private badge cards, no topics; /s/partner-program/ shows \"Partner Program is private. Log in to request access.\" with Log In."
+      "evidence": "Teasers on: Partner Program and Customer Advisory Board show Private/Invite only badges, no topics; /s/partner-program/ shows \"Partner Program is private. Log in to request access.\" with Log In."
     },
     "c-anon-home.8": {
       "result": "pass",
-      "evidence": "With teasers on, Moderators' Room and Release Planning absent from home/category; /community/s/moderators-room/ is 404 not-found page."
+      "evidence": "Teasers on: Moderators' Room and Release Planning absent from home; /community/s/moderators-room/ is 404 \"Page not available\"."
     },
     "c-anon-home.9": {
       "result": "pass",
-      "evidence": "Guest GET /jetonomy/v1/feed and /spaces 200; neither contains Moderators' Room or Customer Advisory Board content."
+      "evidence": "Guest GET /jetonomy/v1/feed and /spaces 200; neither contains Moderators or Customer Advisory content."
     },
     "c-anon-home.10": {
       "result": "pass",
-      "evidence": "Help Desk card inside its box (scrollWidth<=clientWidth); no horizontal page overflow at 1440 or 390."
+      "evidence": "No card overflow at 1440 or 390 (scrollWidth == clientWidth, 0 cards with scrollWidth>clientWidth); Help Desk card inside its box."
     },
     "c-anon-home.11": {
       "result": "pass",
-      "evidence": "RTL via he_IL (cookie-scoped locale filter, site locale untouched): dir=rtl, cards/chips/stats mirror, no overlap, no page overflow (screenshot jt207-w3-home-rtl.png)."
+      "evidence": "Hebrew via cookie-scoped locale (site locale untouched): dir=rtl, welcome card, login panel, cards and stats mirror, no overlap, no page overflow (w1-home-rtl.png)."
     },
     "c-anon-home.12": {
       "result": "pass",
-      "evidence": "390px: chip strip flex-wrap, not clipped, cards one column, page scrollWidth 390."
+      "evidence": "390px: one-column cards, chip strip shows chip + count + chevron unclipped, page scrollWidth 390 (w1-home-390.png)."
     },
     "c-anon-home.13": {
       "result": "pass",
-      "evidence": "Reign dark toggle at 390: dark surfaces for welcome card/cards, readable text (screenshot jt207-w3-home-dark390.png)."
+      "evidence": "Reign dark toggle at 390: body rgb(35,38,47), cards dark, text light and readable (w1-home-dark390.png); toggled back after."
     },
     "c-anon-home.14": {
       "result": "untested",
-      "evidence": "Needs a community with every topic deleted; destructive on the shared seeded site, not run."
+      "evidence": "Needs a community with every topic deleted; destructive on the shared walk site while another agent walks it, no safe copy on this stack."
     },
     "c-anon-home.15": {
       "result": "pass",
-      "evidence": "First feed topic link and author link (/community/u/maya/) both open 200."
+      "evidence": "First feed topic link and author link (/community/u/maya/) both 200."
     },
     "c-anon-home.16": {
       "result": "pass",
-      "evidence": "At 1440 none of the 28 \"Active N ago\" lines overflow or ellipsis."
+      "evidence": "At 1440 zero \"Active N ago\" lines are clipped (scrollWidth<=clientWidth)."
     },
     "c-anon-home.19": {
       "result": "untested",
-      "evidence": "Needs all topics deleted to see the welcome pulse go to zero; destructive on shared seed, not run."
+      "evidence": "Needs all topics deleted to watch the welcome pulse update; destructive on the shared walk site, not run."
     }
   },
   "proposed_checks": []

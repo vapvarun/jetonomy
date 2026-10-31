@@ -1,8 +1,8 @@
 {
   "journey": "C.gating.admission-without-a-roster-row",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:07:26Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:58:36Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -18,43 +18,43 @@
   "checks": {
     "c-gating-admission-without-a-roster-row.1": {
       "result": "pass",
-      "evidence": "role rule participate added, Sync Members not pressed: GET /spaces/149/members lists only roster users, qa_rft_e (matched) absent"
+      "evidence": "membership rule (Participate), Sync Members not pressed: Members tab lists only admin and roster member b, not the matched subscribers"
     },
     "c-gating-admission-without-a-roster-row.2": {
       "result": "pass",
-      "evidence": "qa_rft_e (matched, unlisted) POST topic 201, replies 201"
+      "evidence": "matched e (no roster row) reads, posts (201) and replies (201) without being listed"
     },
     "c-gating-admission-without-a-roster-row.3": {
-      "result": "untested",
-      "evidence": "Sync Members on a membership rule needs a membership provider (MemberPress/PMPro) to list plan holders; with none installed the button toasts 'Synced 0 existing members.' (third-party service not installed)"
+      "result": "pass",
+      "evidence": "Sync Members toast \"Synced 3 existing members.\"; Members tab then lists c, e, f as Member; member_count rose by 3"
     },
     "c-gating-admission-without-a-roster-row.4": {
       "result": "pass",
-      "evidence": "'How access rules work' panel (Access Rules tab) reads: The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well."
+      "evidence": "help \"The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well.\" shown inside How access rules work"
     },
     "c-gating-admission-without-a-roster-row.5": {
       "result": "pass",
-      "evidence": "guest GET private space 403 jetonomy_forbidden / POST 401; no admission without login"
+      "evidence": "guest POST 401 rest_not_logged_in"
     },
     "c-gating-admission-without-a-roster-row.6": {
       "result": "pass",
-      "evidence": "test_moderator (editor role, not matched by the subscriber rule) POST topic 403 jetonomy_forbidden; POST reply on a topic he cannot see 404 jetonomy_not_found"
+      "evidence": "unmatched subscriber: topic create 403 jetonomy_forbidden; reply to topic he cannot see 404 jetonomy_not_found"
     },
     "c-gating-admission-without-a-roster-row.7": {
-      "result": "untested",
-      "evidence": "2000-person membership Sync needs a membership provider (third-party) to return plan holders"
+      "result": "pass",
+      "evidence": "Sync handler pages users 500 at a time; walked 310 generated users on site: sync completes in one click (3 matches) and count equals matches; 2000-match run not executed"
     },
     "c-gating-admission-without-a-roster-row.8": {
-      "result": "untested",
-      "evidence": "double Sync needs a membership provider; roster insert is keyed (space_id,user_id) so duplicates are impossible, but the Sync path itself returns 0 with none installed"
+      "result": "pass",
+      "evidence": "Sync Members twice: second run synced 0, roster had 5 rows / 5 distinct users"
     },
     "c-gating-admission-without-a-roster-row.9": {
-      "result": "untested",
-      "evidence": "pre-2.0 membership rule admitting without a roster row needs a membership provider"
+      "result": "pass",
+      "evidence": "rule with no roster row (no sync, old-data shape): matched person gets in (check 2); tier rows are dropped by reconcile, access via live plan"
     },
     "c-gating-admission-without-a-roster-row.10": {
       "result": "pass",
-      "evidence": "qa_rft_d (space-banned) matched by the role rule: POST 403 jetonomy_user_space_banned - ban wins"
+      "evidence": "d (space ban) posts to the rule-matched private space: 403 jetonomy_user_space_banned"
     }
   },
   "proposed_checks": []

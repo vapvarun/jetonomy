@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.space-listing",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:11:24Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:48:40Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -11,6 +11,7 @@
     "theme": "reign",
     "viewports": [
       1440,
+      1024,
       390
     ],
     "browser": "Chromium via playwright-iso"
@@ -18,115 +19,115 @@
   "checks": {
     "c-anon-space-listing.1": {
       "result": "pass",
-      "evidence": "No 'QA Paging' space seeded; created temp QA-RFT Paging (3 per page, 8 topics, deleted afterwards): guest/bob see 3 topics + Load More, each click adds distinct topics (6, then 8), button gone at the end."
-    },
-    "c-anon-space-listing.2": {
-      "result": "pass",
-      "evidence": "REST sort=popular on Feature Requests: 'Dark mode toggle in user preferences' (6 votes, 31 replies) ranks before 'Weekly digest email' (6 votes, 5 replies). Popular pill UI not clicked; REST is its data source."
+      "evidence": "QA-RFT W1 Paging (37 topics): first load shows a page, Load More clicked twice appends remaining topics until the button disappears (23 -> 42 links incl. sidebar)."
     },
     "c-anon-space-listing.3": {
       "result": "pass",
-      "evidence": "Help Desk Discussions and Members tabs both show the same header (cover, description, counts, Join); Roadmap tab URL loads 200 titled 'Help Desk - Roadmap' (its header not measured)."
+      "evidence": "Feature Requests Discussions, Members and Roadmap tabs all 200 and carry the same space header for a guest."
     },
     "c-anon-space-listing.4": {
       "result": "pass",
-      "evidence": "Guest on Help Desk sees a 'Log in to post' button only (no New Topic); bob sees '+ New Topic' in Amsterdam Chapter. Note guest does see a login CTA, not a bare absence."
-    },
-    "c-anon-space-listing.5": {
-      "result": "pass",
-      "evidence": "bob on Feature Requests (ideas type) sees '+ Share an Idea' compose button."
-    },
-    "c-anon-space-listing.6": {
-      "result": "pass",
-      "evidence": "bob on Amsterdam Chapter: Join Space -> button becomes Leave Space, members 3 -> 4; Leave (confirm modal) restored 3."
-    },
-    "c-anon-space-listing.7": {
-      "result": "pass",
-      "evidence": "hana (not a member) sees Request to join on Insiders / Beta and Partner Program; Customer Advisory Board says 'invite-only. You need an invitation to join.' with no request form."
-    },
-    "c-anon-space-listing.8": {
-      "result": "pass",
-      "evidence": "bob on Mentorship Circle (public, approval): Request to join opens a dialog 'Tell the admins why you want to join (optional)'; submit -> 'Your request to join Mentorship Circle is awaiting approval' with Withdraw request, also after reload."
-    },
-    "c-anon-space-listing.9": {
-      "result": "pass",
-      "evidence": "Withdraw (UI) returns Request to join; request created again then REST DELETE /spaces/41/join-requests/mine -> 200 {status:withdrawn}, second call 404 jetonomy_no_pending_request; jt_join_requests row count 0."
-    },
-    "c-anon-space-listing.10": {
-      "result": "pass",
-      "evidence": "After withdrawal wp_jt_notifications holds no join_request rows for the space; staff session not opened, verified in the table."
-    },
-    "c-anon-space-listing.11": {
-      "result": "pass",
-      "evidence": "bob on 2025 Hackathon: header shows Follow (no Join), 'This space is archived', empty state 'No topics were posted here.', no New Topic."
+      "evidence": "Guest on Feature Requests sees no New Topic/New Idea button."
     },
     "c-anon-space-listing.12": {
       "result": "pass",
-      "evidence": "Guest on Amsterdam Chapter: 'No topics yet.' with no compose button."
-    },
-    "c-anon-space-listing.13": {
-      "result": "pass",
-      "evidence": "bob on Amsterdam Chapter: 'No topics yet. Be the first to start a discussion!' plus New Topic button."
-    },
-    "c-anon-space-listing.14": {
-      "result": "pass",
-      "evidence": "Throwaway approval spaces (QA-RFT, removed): pending requester qa_rft_m2 sees plain \"No ideas yet.\" (ideas), \"No questions yet.\" (Q&A), \"Nothing posted yet.\" (feed), each with Withdraw request and no compose button."
+      "evidence": "Guest on empty Lisbon Chapter sees \"No topics yet.\" (a visible create-style link exists in the header area, probably Create free account; not a New Topic button)."
     },
     "c-anon-space-listing.15": {
       "result": "pass",
-      "evidence": "Guest on Partner Program (teasers on): 'Partner Program is private. Log in to request access.' plus Log In button, no topic titles."
-    },
-    "c-anon-space-listing.16": {
-      "result": "pass",
-      "evidence": "bob (non-member) on Customer Advisory Board: 'Customer Advisory Board is invite-only. You need an invitation to join.' plus its description, no topics."
-    },
-    "c-anon-space-listing.17": {
-      "result": "pass",
-      "evidence": "bob on /community/s/moderators-room/ -> 404 'Space not found', space never named."
+      "evidence": "Guest on Partner Program sees the login prompt and no topic titles (referral fees topic absent)."
     },
     "c-anon-space-listing.18": {
       "result": "pass",
-      "evidence": "Seed differs: the closed topic is 'Scheduled maintenance on Saturday: what to expect'; topic page shows the Closed badge. List-card badge not isolated in DOM scrape (the first 'Scheduled maintenance' title is an open topic)."
+      "evidence": "Announcements guest listing shows 2 \"Closed\" badges (closed topics)."
     },
     "c-anon-space-listing.19": {
       "result": "pass",
-      "evidence": "Help Desk at 1440: description spans its own full-width row (788px) above the stats and Join, as seen in screenshot."
+      "evidence": "Help Desk description renders full width at 1440 (description element width measured, no overflow)."
     },
     "c-anon-space-listing.20": {
       "result": "pass",
-      "evidence": "Reign only: 1024 and 390 no horizontal overflow, description wraps in its own row. BuddyX and Twenty Twenty-Five not walked (single theme on this stack)."
+      "evidence": "Help Desk at 1024 and 390: page scrollWidth equals viewport, no overflow (Reign only; BuddyX/TT25 not installed on this stack)."
     },
     "c-anon-space-listing.21": {
       "result": "pass",
-      "evidence": "General Discussion: 159-char title listed with no overflow at 1440 and 390 (scrollWidth = viewport)."
+      "evidence": "QA-RFT long-title topic in the listing at 1440: scrollWidth 1440, no overflow."
     },
     "c-anon-space-listing.22": {
       "result": "pass",
-      "evidence": "he_IL RTL (cookie-scoped): General Discussion list is dir=rtl and Omar's Arabic row title is start-aligned on the right, no overflow (screenshot jt207-w3-space-rtl.png)."
-    },
-    "c-anon-space-listing.23": {
-      "result": "pass",
-      "evidence": "Dark mode on Help Desk and General Discussion: no white panels, dark tokens; screenshot taken."
+      "evidence": "he_IL RTL on the space listing: dir=rtl, scrollWidth 1440."
     },
     "c-anon-space-listing.24": {
       "result": "pass",
-      "evidence": "GET /spaces/8/posts?sort=popular -> 200, X-WP-Total 13 (matches 13 topics), order by votes then replies."
-    },
-    "c-anon-space-listing.25": {
-      "result": "pass",
-      "evidence": "finn (silenced) on General Discussion: no New Topic button; notice 'Your account is currently silenced and cannot post'."
-    },
-    "c-anon-space-listing.26": {
-      "result": "pass",
-      "evidence": "omar (space-banned from Off-Topic Lounge): notice 'You have been banned from this space and cannot take part in it', no Join or New Topic."
+      "evidence": "GET /spaces/8/posts?sort=popular -> 200, X-WP-Total 13."
     },
     "c-anon-space-listing.27": {
       "result": "pass",
-      "evidence": "GET /spaces/8/posts?orderby=popular -> 200 sorted popular (first item 'Idea: improve feature requests', 8 votes), not latest."
+      "evidence": "GET /spaces/8/posts?orderby=popular -> 200; orderby=bogus and sort=bogus -> 400, never a silent latest."
+    },
+    "c-anon-space-listing.2": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.5": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.6": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.7": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.8": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.9": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.10": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.11": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.13": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.14": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.16": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.17": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.23": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.25": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
+    },
+    "c-anon-space-listing.26": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
     },
     "c-anon-space-listing.28": {
-      "result": "pass",
-      "evidence": "hana on Mentorship Circle (public approval space) sees header 'Request to join'."
+      "result": "untested",
+      "evidence": "Not walked in this pass (member/moderator-role checks and join-request flow ran out of room)."
     }
   },
   "proposed_checks": []

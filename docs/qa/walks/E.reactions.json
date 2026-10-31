@@ -1,101 +1,100 @@
 {
   "journey": "E.reactions",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:06:00Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-31T00:13:13Z",
+  "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, current HEAD)",
     "site": "http://localhost:8911",
-    "themes": [
-      "reign"
-    ],
+    "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "schemes": [
-      "light"
-    ]
+    "browser": "Chromium via playwright-iso"
   },
   "checks": {
     "e-reactions.1": {
       "result": "pass",
-      "evidence": "Browser, bob 1440: reaction picker on a reply in 'Dark mode for the community on phones' -> Like -> chip '\ud83d\udc4d 1' is-mine and aria-pressed=true, still highlighted after reload"
+      "evidence": "b (390/1440) on a's reply in QA-RFT topic: React > Like -> chip \"👍 1\" highlighted (is-mine, aria-pressed true); reload keeps it"
     },
     "e-reactions.2": {
       "result": "pass",
-      "evidence": "REST toggle: bob POST the same emoji again -> action \"removed\", counts [] (second POST re-adds). The JS-built chip undo in the browser was not driven"
+      "evidence": "b clicks the server-rendered chip -> removed; re-adds via picker (JS-built chip) and clicks it again with no reload -> removed; re-add works"
     },
     "e-reactions.3": {
       "result": "pass",
-      "evidence": "bob had thumbsup then POST heart on the same reply -> DB shows one row for bob (heart), counts {heart:1}; Like not kept alongside"
+      "evidence": "b had Like, picks Celebrate -> chips show only \"🎉 1*\" (Like gone), one reaction per member"
     },
     "e-reactions.4": {
       "result": "pass",
-      "evidence": "alice and bob added Love to maya's reply -> GET /replies/{id}/reactions counts {heart:2}; ?emoji=heart gives reactors label \"Love: Bob Martinez and Alice Chen\" total 2"
+      "evidence": "counts match: UI chips 👍18 🎉8 ... equal GET /replies/1601/reactions counts and the DB group-by (44+ rows)"
     },
     "e-reactions.5": {
       "result": "pass",
-      "evidence": "Browser: hover and keyboard focus on a Like chip with 15 reactors show role=tooltip 'Like: <10 names> and 5 others' (280 px wide); with 2 reactors 'Like: Alice Chen and Bob Martinez' (full names); Escape closes it. Touch long-press not driven (no touch context)"
+      "evidence": "13 reactors: focus/hover (real mouse move)/long-press (touch) show \"Like: QA W3 P11, ... P2 and 3 others\" (10 names); 2 reactors \"Celebrate: QA W3 c and QA W3 b\"; Escape hides it; quick touch tap toggled the reaction (13 -> 12) without a tooltip"
     },
     "e-reactions.6": {
       "result": "pass",
-      "evidence": "Browser: bob reacted Love and, with no reload, hovering his chip showed 'Love: Bob Martinez'"
+      "evidence": "c reacts Celebrate then focuses the chip with no reload -> tooltip already lists \"QA W3 c and QA W3 b\""
     },
     "e-reactions.7": {
       "result": "pass",
-      "evidence": "bob POST emoji \"not-real\" -> 400 jetonomy_invalid_emoji \"Invalid or disabled emoji.\""
+      "evidence": "emoji \"not-real\" on post and reply -> 400 jetonomy_invalid_emoji \"Invalid or disabled emoji.\"; disabled hooray -> same 400"
     },
     "e-reactions.8": {
       "result": "pass",
-      "evidence": "bob POST and GET /posts/{id}/reactions on a topic in Customer Advisory Board (id 234) and on nonexistent 999999 -> all four 404 jetonomy_not_found \"Content not found.\""
+      "evidence": "a on topic 609 in Customer Advisory Board and on id 9999999: POST and GET all return identical 404 jetonomy_not_found \"Content not found.\""
     },
     "e-reactions.9": {
       "result": "pass",
-      "evidence": "guest POST -> 401 rest_not_logged_in; guest GET of a public reply's reactions -> 200 with counts only; with ?emoji=heart -> adds reactors; hidden-space topic GET -> 404 \"Content not found.\""
+      "evidence": "guest POST -> 401; guest GET public reply -> 200 counts, reactors only with ?emoji=hooray; hidden-space topic GET -> 404"
     },
     "e-reactions.10": {
       "result": "pass",
-      "evidence": "bob POST on a trashed reply (1296) -> 409 jetonomy_already_trashed \"This item is already in the trash. A moderator can restore it or delete it permanently.\"; no row written"
+      "evidence": "react to a trashed reply -> 409 jetonomy_already_trashed, 0 rows written"
     },
     "e-reactions.11": {
       "result": "pass",
-      "evidence": "finn (silenced) POST a reaction -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; the -4 score display was not checked"
+      "evidence": "finn POST reaction -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; no row recorded (the -4 score clause not separately walked)"
     },
     "e-reactions.12": {
       "result": "fail",
-      "evidence": "Re-read line, REST as members on bob's reply: alice's first reaction -> one bell row 'Someone reacted to your reply'; alice's emoji swap and un-toggle -> none; bob reacting to his own reply -> none; carlos (a further member) reacting -> NO new row, so only the first reactor notifies. Line expects one per further member. Email: none seen in Mailpit for a reaction. (Earlier pass saw a second row for maya, so behaviour looks time-window dependent)"
+      "evidence": "stale line / product: notification only fires on the 0 -> 1 reactor transition (code comment in the Reactions extension); 12 further members reacting (c, p1..p11) produced no notification for the author, only b's first reaction (and b's re-add after removing, which is a new 0 -> 1) did; swap sends nothing and self-react sends none. Line says each further member adds one"
     },
     "e-reactions.13": {
       "result": "pass",
-      "evidence": "Browser, admin: Settings > Reactions with all 8 emoji unticked -> notice 'No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.'; normal save -> 'Reaction settings saved.'. Settings restored (all ticked)"
+      "evidence": "Settings > Reactions with all unticked + save -> \"No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.\" plus \"Reaction settings saved.\"; normal save shows \"Reaction settings saved.\"; all eight restored afterwards"
     },
     "e-reactions.14": {
       "result": "pass",
-      "evidence": "Browser: unticked Celebrate after it had counts -> existing chip '\ud83c\udf89 2' still renders as a normal button, picker no longer offers Celebrate, POST reaction hooray -> 400 jetonomy_invalid_emoji 'Invalid or disabled emoji.'. Restored afterwards"
+      "evidence": "Celebrate unticked: existing \"🎉 2\" chip still renders as a normal chip, picker no longer offers it, REST hooray -> 400 invalid emoji; setting restored"
     },
     "e-reactions.15": {
-      "result": "fail",
-      "evidence": "Browser, bob 390 dark: a reply with 25 reactions across 6 emoji shows all chips in ONE row running to x=457 while the reply card ends at x=359 and the viewport is 390 (page scrollWidth stays 390, so the strip overflows its card, likely scrolling); chips do not wrap onto lines. Tooltip stays inside the viewport (8-288 px, 280 wide)"
+      "result": "pass",
+      "evidence": "390: reply with 46 reactions across 6 emoji: 6 chips wrap onto 2 rows, doc 390/390, card 326/326, max chip right 320; tooltip 148px wide inside viewport (cap 280)"
     },
     "e-reactions.16": {
       "result": "pass",
-      "evidence": "Browser 390 dark: highlighted chip uses a dark slate fill (rgb 59,67,80) with light text and a light-blue border; the tooltip is a light grey box (229,229,229) with dark text, readable contrast"
+      "evidence": "jt-dark at 390: tooltip is light grey (rgb 229) with dark text, mine chip dark bg with light text and light-blue border, readable; token driven"
     },
     "e-reactions.17": {
       "result": "pass",
-      "evidence": "Browser: network dropped, clicked own Love chip -> chip rolled back to '\u2764\ufe0f 1' (still mine) and an error 'Could not save reaction.' shown"
+      "evidence": "offline reaction: chip rolls back to previous counts and a toast \"Could not save reaction.\" shows"
     },
     "e-reactions.18": {
       "result": "pass",
-      "evidence": "Browser: bob and alice picked Haha on the same reply at the same instant (Promise.all) -> count rose by exactly 2 (\ud83d\ude02 4, both see is-mine after reload)"
+      "evidence": "two users react Eyes at the same instant -> both pages after reload show 👀 2 and the same chip set"
     },
     "e-reactions.19": {
-      "result": "pass",
-      "evidence": "Browser: on page 2 (?rpg=2) of the 45-reply topic, reacting to a reply (Celebrate) and to the topic post (Like) both work and update the chip without reload"
+      "result": "fail",
+      "evidence": "product bug: on /community/s/feature-requests/t/dark-mode-for-the-community-on-phones/ the Load More button appends replies, but on an appended reply the React trigger does nothing (picker stays hidden, hidden=true) while the same click on the first replies works; the ?rpg=2 page rendered by the server works"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [
+    "Reply Load More should hydrate the appended reaction bars (Interactivity API) so React works on appended replies",
+    "Reactions notify only on the first reaction; decide whether every new reactor should notify or fix the check line"
+  ]
 }

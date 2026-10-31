@@ -1,8 +1,8 @@
 {
   "journey": "C.anon.search",
-  "free": "607c4b7b",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:57:50Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:49:36Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -16,69 +16,69 @@
     "browser": "Chromium via playwright-iso"
   },
   "checks": {
-    "c-anon-search.1": {
-      "result": "pass",
-      "evidence": "\"dark mode\": the five titles with the phrase rank first, \"A dark-mode screenshot...\" and \"dark-mode polish\" (hyphenated) rank last; all share the token."
-    },
     "c-anon-search.2": {
       "result": "pass",
-      "evidence": "\"qzxvbnm\" -> \"0 results / No results for ...\" with hint, no raw error."
-    },
-    "c-anon-search.3": {
-      "result": "pass",
-      "evidence": "Guest \"self-promotion wave\" (Moderators' Room topic) 0 results; \"roadmap drafts\" (CAB topic) returns only the CAB space teaser (teasers on), no topic."
+      "evidence": "Search \"qzxvbnm\" -> \"No results for \"qzxvbnm\" Try different or fewer keywords, or browse the community.\""
     },
     "c-anon-search.4": {
       "result": "pass",
-      "evidence": "Guest REST /search?q=Referral+fees -> 200, data [], total 0."
+      "evidence": "Guest GET /search?q=referral+fees (Partner Program topic) -> 200 with data [] and total 0."
     },
     "c-anon-search.5": {
       "result": "pass",
-      "evidence": "Text only in a private reply (\"shop I bought mine\") -> 0 results; topic does not match through it."
-    },
-    "c-anon-search.6": {
-      "result": "pass",
-      "evidence": "bob (Partner member) finds \"Referral fees for 2026\"; hana (not a member) gets 0 results."
-    },
-    "c-anon-search.7": {
-      "result": "pass",
-      "evidence": "\"/\" opens Jetonomy overlay (jt-search-overlay-input); typing \"dark mode\" drops down suggestions; Enter opens /community/search/?q=dark%20mode (screenshot jt207-w3-search-overlay.png)."
-    },
-    "c-anon-search.8": {
-      "result": "pass",
-      "evidence": "\"photography forum phpBB\" finds Grace's 159-char topic, 4 marks, no horizontal overflow."
-    },
-    "c-anon-search.9": {
-      "result": "pass",
-      "evidence": "Arabic \"التصوير\" finds Omar's topic; under RTL (he_IL cookie) direction rtl and row right-aligned."
-    },
-    "c-anon-search.10": {
-      "result": "pass",
-      "evidence": "bob created a topic via REST, search \"zyxquillion\" returned it immediately (total 1); QA-RFT topic deleted afterwards."
+      "evidence": "Guest GET /search?q=SECRETWORD (text only in a private reply) -> 200 empty, total 0."
     },
     "c-anon-search.11": {
       "result": "pass",
-      "evidence": "REST /search?q=a and empty q -> 400 each."
-    },
-    "c-anon-search.12": {
-      "result": "pass",
-      "evidence": "After deleting the QA-RFT topic, search total 0."
+      "evidence": "GET /search?q=a and empty q -> 400 jetonomy_validation \"Search query must be at least 2 characters.\""
     },
     "c-anon-search.13": {
       "result": "pass",
-      "evidence": "390px results page for \"dark mode\": 6 results, no horizontal overflow."
+      "evidence": "390px search results page scrollWidth 390."
+    },
+    "c-anon-search.1": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
+    },
+    "c-anon-search.3": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
+    },
+    "c-anon-search.6": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
+    },
+    "c-anon-search.7": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
+    },
+    "c-anon-search.8": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
+    },
+    "c-anon-search.9": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
+    },
+    "c-anon-search.10": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
+    },
+    "c-anon-search.12": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
     },
     "c-anon-search.14": {
-      "result": "pass",
-      "evidence": "Overlay: type 2+ chars, Enter -> full results page for that query opens."
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
     },
     "c-anon-search.15": {
-      "result": "pass",
-      "evidence": "Overlay and results page list the same titles in the same order (Dark mode toggle in user preferences ... Dark mode for the community on phones)."
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
     },
     "c-anon-search.16": {
-      "result": "pass",
-      "evidence": "Used hana (not a member of Partner Program): 0 results for \"Referral fees\"."
+      "result": "untested",
+      "evidence": "Not walked in this pass (member sessions, FTS index and overlay checks ran out of room)."
     }
   },
   "proposed_checks": []

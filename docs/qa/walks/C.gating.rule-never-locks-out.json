@@ -1,8 +1,8 @@
 {
   "journey": "C.gating.rule-never-locks-out",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:04:16Z",
+  "free": "3de49dfb",
+  "pro": "fd16507",
+  "walked_at": "2026-10-30T23:57:51Z",
   "walker": "agent:sonnet release walk 2026-10-31",
   "walked_before_change": false,
   "env": {
@@ -18,51 +18,51 @@
   "checks": {
     "c-gating-rule-never-locks-out.1": {
       "result": "pass",
-      "evidence": "qa_rft_a (fresh subscriber) in public open QA-RFT Pub: GET posts 200, POST topic 201, reply 201, vote 200 (REST)"
+      "evidence": "fresh subscriber qa_rft_w2_a in QA-RFT W2 Pub (public/open): read 200, post 201, reply 201, vote 200 (REST) and New Topic present in UI"
     },
     "c-gating-rule-never-locks-out.2": {
-      "result": "pass",
-      "evidence": "admin POST /spaces/148/access-rules logged_in/read -> 201 'Access rule added.'; UI toast text same path via Access Rules tab (verified UI add on QA-RFT Priv: trust-level row appears, Add Rule at 1440)"
+      "result": "fail",
+      "evidence": "stale line: admin UI add of Logged In on a public space toasts \"Rule added: Logged In can read and report posts and replies. They are recorded as Viewer.\" (not \"Access rule added.\"); the row is listed. On a private space a confirm modal \"Logged In will be let in to this private space and can take part right away. Continue?\" comes first"
     },
     "c-gating-rule-never-locks-out.3": {
       "result": "pass",
-      "evidence": "same subscriber after Logged In rule: read 200, post 201, reply 201, vote 200"
+      "evidence": "same subscriber after the Logged In rule: read 200, post 201, reply 201, vote 200"
     },
     "c-gating-rule-never-locks-out.4": {
       "result": "pass",
-      "evidence": "guest GET /spaces/148/posts after the rule -> 200 (space still readable)"
+      "evidence": "guest GET posts of the space after the Logged In rule 200"
     },
     "c-gating-rule-never-locks-out.5": {
-      "result": "pass",
-      "evidence": "role rule (editor) on public space -> 201 message 'Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.'"
+      "result": "fail",
+      "evidence": "stale line: Role rule on public space switched it to Private and approval; message is \"Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.\" (adds the join-policy clause)"
     },
     "c-gating-rule-never-locks-out.6": {
       "result": "pass",
-      "evidence": "qa_rft_a (not on roster, not an editor) after the switch: GET posts 403 jetonomy_forbidden, POST topic 403 jetonomy_forbidden; space reads visibility=private, join_policy=approval"
+      "evidence": "unmatched, unrostered qa_rft_w2_e after the switch: read 403 jetonomy_forbidden, post 403 \"You cannot post in this space.\"; space private/approval"
     },
     "c-gating-rule-never-locks-out.7": {
       "result": "pass",
-      "evidence": "roster member qa_rft_b posted 201 after the Logged In rule and after the role rule was added"
+      "evidence": "roster member qa_rft_w2_b keeps posting after rules added (201)"
     },
     "c-gating-rule-never-locks-out.8": {
       "result": "pass",
-      "evidence": "Access Rules tab (QA-RFT Priv, 1440): empty state reads 'Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.'; tab intro 'Choose who this rule lets in. Nothing changes until you add the rule.'"
+      "evidence": "Access Rules tab: \"A rule lets more people in to this space: ... Who else gets in is set by the space's visibility and join policy\" inside How access rules work; empty state says only visibility and join policy decide"
     },
     "c-gating-rule-never-locks-out.9": {
       "result": "pass",
-      "evidence": "qa_rft_a POST /spaces/148/access-rules -> 403 jetonomy_forbidden, no rule stored"
+      "evidence": "subscriber POST /spaces/211/access-rules 403 jetonomy_forbidden, rule count unchanged"
     },
     "c-gating-rule-never-locks-out.10": {
       "result": "pass",
-      "evidence": "test_editor GET and POST /spaces/148/access-rules -> 403 jetonomy_forbidden (REST). wp-admin tab sentence for a space admin is walked in C.gating.builder-explains-itself.8"
+      "evidence": "test_editor GET and POST access-rules 403 \"Only site administrators can manage access rules for this space.\"; wp-admin tab URL for Help Desk shows that sentence with \"Back to Help Desk\" (HTTP 403)"
     },
     "c-gating-rule-never-locks-out.11": {
       "result": "pass",
-      "evidence": "Access Rules tab at 390px: Add Rule button 40px high, rule-type select 42px, no horizontal overflow"
+      "evidence": "390px: type select, value box and Add Rule stack in one column, Add Rule height 40px, no horizontal overflow"
     },
     "c-gating-rule-never-locks-out.12": {
       "result": "pass",
-      "evidence": "the add-rule message (toast/REST message) states the join policy changed to Requires Approval; verified the space reads private/approval right after (REST message text quoted in .5)"
+      "evidence": "Role rule on public open space: REST message and General tab show join policy moved to Requires Approval (space read back private/approval)"
     }
   },
   "proposed_checks": []
