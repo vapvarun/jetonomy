@@ -72,6 +72,7 @@ Plugin version: 2.0.7 - 115 actions, 143 filters.
 | `jetonomy_profile_after_stats` | user_id | templates/profile.php |
 | `jetonomy_profile_display_fields` | user_id | templates/profile.php |
 | `jetonomy_profile_edit_fields` | user_id | templates/profile-edit.php |
+| `jetonomy_notifications_prompt` | string $context ('panel' or 'page') | templates/partials/header.php, templates/views/notifications.php |
 | `jetonomy_profile_notification_fields` | user_id | templates/views/edit-profile.php |
 | `jetonomy_purge_orphan_space` | $space_id (int) | includes/class-space-backfill.php (Space_Backfill::run_batch) |
 | `jetonomy_purge_orphan_user` | $user_id (int) | includes/class-privacy-backfill.php (Privacy_Backfill::run_batch) |

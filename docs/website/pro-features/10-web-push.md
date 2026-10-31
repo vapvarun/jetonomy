@@ -39,7 +39,7 @@ Looking for push on a native iOS or Android app instead of the browser? The same
 
 ## Member Subscription
 
-The first time a logged-in member visits any community page after you enable Web Push, a **Enable push notifications** prompt appears at the top of the page. Clicking **Enable** triggers the browser's native permission dialog.
+After you enable Web Push, logged-in members see an **Enable push notifications** prompt inside the notifications bell panel and at the top of their Notifications page. Clicking **Enable** triggers the browser's native permission dialog. **Not now** hides the prompt in that browser for 30 days. If the browser refuses permission, the prompt says notifications are blocked in the browser's settings. Members who have already blocked notifications for the site don't see the prompt.
 
 Members who grant permission are subscribed automatically. Their subscription is stored in the Jetonomy database and associated with their account.
 

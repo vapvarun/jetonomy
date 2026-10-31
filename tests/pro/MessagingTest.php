@@ -385,6 +385,25 @@ class MessagingTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Leaving inserts a system message, which no member sent, so it must not
+	 * fire jetonomy_pro_message_sent; a real message still does. Basecamp 10462570276.
+	 */
+	public function test_leave_system_message_does_not_fire_message_sent(): void {
+		$group_id = $this->create_group_conversation();
+
+		$before = did_action( 'jetonomy_pro_message_sent' );
+		$this->do_request( 'POST', "/jetonomy/v1/conversations/{$group_id}/leave", [], $this->admin_id );
+		$this->assertSame( $before, did_action( 'jetonomy_pro_message_sent' ),
+			'Leaving a conversation must not count as sending a message.' );
+
+		$direct_id = $this->create_direct_conversation();
+		$before    = did_action( 'jetonomy_pro_message_sent' );
+		$this->do_request( 'POST', "/jetonomy/v1/conversations/{$direct_id}/messages", [ 'content' => 'Still here.' ], $this->admin_id );
+		$this->assertSame( $before + 1, did_action( 'jetonomy_pro_message_sent' ),
+			'A member-written message must still fire jetonomy_pro_message_sent.' );
+	}
+
+	/**
 	 * POST /conversations/{id}/block is rejected for group conversations
 	 * and toggles is_blocked for direct conversations.
 	 */
