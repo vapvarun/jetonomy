@@ -11,6 +11,12 @@
       "title": "Post poll listed held replies and the search ability listed private-space tags",
       "guard": "phpunit:PollAndTagSearchVisibilityTest",
       "added": "2026-10-22"
+    },
+    {
+      "card": "10462503018",
+      "title": "Profile Badges heading was an h4 under the h1, and an unavailable settings tab showed an empty page",
+      "guard": "runbook:f-a11y.12,c-admin-plugin-pages.24",
+      "added": "2026-10-31"
     }
   ]
 }
