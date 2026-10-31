@@ -331,6 +331,7 @@ Updates and licence checks now use a dedicated update server, plus fixes for spa
 * Fix      - Space RSS feeds are valid XML again when a topic excerpt is shortened, so Mailchimp and other feed readers import them.
 * Fix      - Members whose username is an email address or contains a space can be found for messages and profile cards.
 * Fix      - Join dates on profiles and space member lists show in the site timezone.
+* Fix      - A settings address for a tab that is not available, such as one from a turned-off extension, now says so instead of showing an empty page.
 * Dev      - Updated the bundled licensing library; when several plugins bundle it, the newest copy runs.
 * Dev      - The test suite never contacts the live store.
 * Compat   - Aligned with Jetonomy Pro 2.0.6. Install both updates together.

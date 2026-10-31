@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-10-31T05:59:26+00:00\n"
+"POT-Creation-Date: 2026-10-31T12:14:22+00:00\n"
 "PO-Revision-Date: 2026-06-28 11:51:58+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -4421,10 +4421,20 @@ msgid "Requires \"Broadcast %s to group activity\" to be enabled."
 msgstr "「%s をグループアクティビティに配信」を有効にする必要があります。"
 
 #: includes/admin/views/settings.php:1653
-#: includes/admin/views/settings.php:1672
+#: includes/admin/views/settings.php:1687
 #: includes/admin/views/space-edit.php:823
 msgid "Save Settings"
 msgstr "設定を保存"
+
+#: includes/admin/views/settings.php:1676
+msgid ""
+"This settings tab is not available. It may belong to an extension that is "
+"turned off."
+msgstr "この設定タブは利用できません。無効になっている拡張機能に属している可能性があります。"
+
+#: includes/admin/views/settings.php:1677
+msgid "Go to General settings"
+msgstr "一般設定に移動"
 
 #: includes/admin/views/setup-wizard.php:55
 #. translators: 1: category label, lowercase (e.g. "category"). 2: the singular space label the site owner configured (e.g. space, group).

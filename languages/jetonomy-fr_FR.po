@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-10-31T05:59:26+00:00\n"
+"POT-Creation-Date: 2026-10-31T12:14:22+00:00\n"
 "PO-Revision-Date: 2026-06-28 11:51:58+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -4672,10 +4672,22 @@ msgstr ""
 "activée."
 
 #: includes/admin/views/settings.php:1653
-#: includes/admin/views/settings.php:1672
+#: includes/admin/views/settings.php:1687
 #: includes/admin/views/space-edit.php:823
 msgid "Save Settings"
 msgstr "Enregistrer les réglages"
+
+#: includes/admin/views/settings.php:1676
+msgid ""
+"This settings tab is not available. It may belong to an extension that is "
+"turned off."
+msgstr ""
+"Cet onglet de réglages n’est pas disponible. Il fait peut-être partie d’une "
+"extension désactivée."
+
+#: includes/admin/views/settings.php:1677
+msgid "Go to General settings"
+msgstr "Aller aux réglages généraux"
 
 #: includes/admin/views/setup-wizard.php:55
 #. translators: 1: category label, lowercase (e.g. "category"). 2: the singular space label the site owner configured (e.g. space, group).

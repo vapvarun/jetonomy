@@ -1664,6 +1664,21 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		} elseif ( $jt_ext_html ) {
 			echo $jt_ext_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension
 		}
+
+		// A typed or stale tab (an extension since turned off, License without
+		// Pro, Free vs Pro with Pro) would otherwise leave an empty page.
+		$jt_has_pro = defined( 'JETONOMY_PRO_VERSION' );
+		if ( '' === $jt_ext_html && ! in_array( $active_tab, array( 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam', 'integrations' ), true )
+			&& ! ( 'license' === $active_tab && $jt_has_pro ) && ! ( 'free-vs-pro' === $active_tab && ! $jt_has_pro ) ) :
+			?>
+			<div class="notice notice-warning inline">
+				<p>
+					<?php esc_html_e( 'This settings tab is not available. It may belong to an extension that is turned off.', 'jetonomy' ); ?>
+					<a href="<?php echo esc_url( $settings_url ); ?>"><?php esc_html_e( 'Go to General settings', 'jetonomy' ); ?></a>
+				</p>
+			</div>
+			<?php
+		endif;
 		?>
 
 				</div><!-- /.jt-settings-cards -->
