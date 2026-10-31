@@ -127,7 +127,9 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		$_jt_tier_names = wp_list_pluck( $_jt_unmet_membership, 'label' );
 		// Every way in that can still be bought or joined gets its own button
 		// (the partial has room for two), not only the first course.
-		$_jt_ways = array_values( array_filter( $_jt_unmet_membership, static fn( $r ) => '' !== $r['url'] ) );
+		// A plan that no longer exists has no way in, even when its plugin can
+		// still build a checkout link from the id alone (PMPro, RCP).
+		$_jt_ways = $_jt_none_left ? array() : array_values( array_filter( $_jt_unmet_membership, static fn( $r ) => '' !== $r['url'] ) );
 		$_jt_one  = $_jt_unmet_membership[0];
 		if ( $_jt_none_left ) {
 			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
