@@ -193,16 +193,16 @@ $crumbs = array(
 									aria-haspopup="menu"
 									aria-label="<?php /* translators: %s: member display name. */ echo esc_attr( sprintf( __( 'More actions for %s', 'jetonomy' ), $jt_name ) ); ?>"
 									data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
-								<div class="jt-more-dropdown" hidden>
-									<button class="jt-more-item" type="button"
+								<div class="jt-more-dropdown" role="menu" hidden>
+									<button role="menuitem" class="jt-more-item" type="button"
 										data-wp-on--click="actions.flagUser"
 										data-user-id="<?php echo absint( $profile_user_id ); ?>"><?php jetonomy_echo_icon( 'flag', 14 ); ?> <?php esc_html_e( 'Report', 'jetonomy' ); ?></button>
 									<?php if ( $jt_blocked ) : ?>
-										<button class="jt-more-item" type="button"
+										<button role="menuitem" class="jt-more-item" type="button"
 											data-wp-on--click="actions.unblockUser"
 											data-user-id="<?php echo absint( $profile_user_id ); ?>"><?php jetonomy_echo_icon( 'user-check', 14 ); ?> <?php /* translators: %s: member display name. */ echo esc_html( sprintf( __( 'Unblock %s', 'jetonomy' ), $jt_name ) ); ?></button>
 									<?php elseif ( $jt_blockable ) : ?>
-										<button class="jt-more-item jt-more-item--danger" type="button"
+										<button role="menuitem" class="jt-more-item jt-more-item--danger" type="button"
 											data-wp-on--click="actions.blockMember"
 											data-user-id="<?php echo absint( $profile_user_id ); ?>"
 											data-confirm-title="<?php /* translators: %s: member display name. */ echo esc_attr( sprintf( __( 'Block %s?', 'jetonomy' ), $jt_name ) ); ?>"

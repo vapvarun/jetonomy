@@ -194,8 +194,8 @@ if ( ! $cancel_url ) {
 			<div class="jt-notif-prefs">
 				<div class="jt-notif-row jt-notif-header">
 					<span></span>
-					<span><?php esc_html_e( 'Web', 'jetonomy' ); ?></span>
-					<span><?php esc_html_e( 'Email', 'jetonomy' ); ?></span>
+					<span id="jt-np-col-web"><?php esc_html_e( 'Web', 'jetonomy' ); ?></span>
+					<span id="jt-np-col-email"><?php esc_html_e( 'Email', 'jetonomy' ); ?></span>
 				</div>
 				<?php
 				foreach ( $notif_types as $key => $label ) :
@@ -203,13 +203,14 @@ if ( ! $cancel_url ) {
 					$email_on = isset( $notif_prefs[ $key ]['email'] ) ? ! empty( $notif_prefs[ $key ]['email'] ) : \Jetonomy\Notifications\Notifier::default_email( $key, (array) $global_defs );
 					?>
 					<div class="jt-notif-row">
-						<span><?php echo esc_html( $label ); ?></span>
+						<span id="jt-np-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></span>
 						<label class="jt-toggle">
-							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][web]" value="1" <?php checked( $web_on ); ?>>
+							<?php // Named "<row>, Web" / "<row>, Email": the label holds only the slider. ?>
+							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][web]" value="1" aria-labelledby="jt-np-<?php echo esc_attr( $key ); ?> jt-np-col-web" <?php checked( $web_on ); ?>>
 							<span class="jt-toggle-slider"></span>
 						</label>
 						<label class="jt-toggle">
-							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][email]" value="1" <?php checked( $email_on ); ?>>
+							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][email]" value="1" aria-labelledby="jt-np-<?php echo esc_attr( $key ); ?> jt-np-col-email" <?php checked( $email_on ); ?>>
 							<span class="jt-toggle-slider"></span>
 						</label>
 					</div>

@@ -138,17 +138,18 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 			$_jt_how = $_jt_ways
 				? __( 'Any one of them gives you access, from the moment you have it until it ends.', 'jetonomy' )
 				: __( 'Ask a site administrator how to get one of them.', 'jetonomy' );
-		} elseif ( ! empty( $_jt_one['purchase'] ) ) {
-			// One sentence for every paid plan, whatever the plugin calls it.
+		} elseif ( ! empty( $_jt_one['purchase'] ) || '' === (string) $_jt_one['kind'] ) {
+			// One sentence for every paid plan, whatever the plugin calls it,
+			// and for any level with no kind to name.
 			$_jt_how = '' !== $_jt_one['url']
 				? __( 'Your access starts as soon as your membership is active, and ends if it lapses.', 'jetonomy' )
 				: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' );
 		} elseif ( '' === $_jt_one['url'] ) {
 			/* translators: %s: what the visitor needs, lowercase (e.g. course, group). */
-			$_jt_how = sprintf( __( 'Ask a site administrator to add you to this %s.', 'jetonomy' ), mb_strtolower( $_jt_one['kind'] ) );
+			$_jt_how = sprintf( __( 'Ask a site administrator to add you to this %s.', 'jetonomy' ), \Jetonomy\mid_sentence( $_jt_one['kind'] ) );
 		} else {
 			/* translators: %s: what the visitor joins, lowercase (e.g. course, group). */
-			$_jt_how = sprintf( __( 'You get access as soon as you join this %s, and lose it if you leave it.', 'jetonomy' ), mb_strtolower( $_jt_one['kind'] ) );
+			$_jt_how = sprintf( __( 'You get access as soon as you join this %s, and lose it if you leave it.', 'jetonomy' ), \Jetonomy\mid_sentence( $_jt_one['kind'] ) );
 		}
 		// Two buttons carry their kind ("(Course)", "(Group)"): a course and a
 		// group can share a name, and two identical links help nobody.

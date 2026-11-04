@@ -287,19 +287,19 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		<?php endif; ?>
 		<?php if ( $jt_rp_can_edit || $jt_rp_can_del || $jt_rp_can_split ) : ?>
 			<div class="jt-more-menu">
-				<button class="jt-act jt-more-trigger" type="button" aria-expanded="false"
+				<button class="jt-act jt-more-trigger" type="button" aria-haspopup="menu" aria-expanded="false"
 					data-wp-on--click="actions.toggleMoreMenu"
 					title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 					aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'more-horizontal', 14 ); ?></button>
-				<div class="jt-more-dropdown" hidden>
+				<div class="jt-more-dropdown" role="menu" hidden>
 					<?php if ( $jt_rp_can_edit ) : ?>
-					<button class="jt-more-item"
+					<button role="menuitem" class="jt-more-item"
 						data-wp-on--click="actions.editReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>"
 						data-edit-token="<?php echo esc_attr( \Jetonomy\Models\Reply::edit_token( $reply, \Jetonomy\Models\Reply::EDIT_FIELDS ) ); ?>">
 						<?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 					</button>
-					<button class="jt-more-item"
+					<button role="menuitem" class="jt-more-item"
 						data-wp-on--click="actions.toggleReplyPrivacy"
 						data-reply-id="<?php echo (int) $reply->id; ?>"
 						data-private="<?php echo empty( $reply->is_private ) ? '0' : '1'; ?>">
@@ -307,7 +307,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 					</button>
 					<?php endif; ?>
 					<?php if ( $jt_rp_can_split ) : ?>
-					<button class="jt-more-item"
+					<button role="menuitem" class="jt-more-item"
 						data-wp-on--click="actions.splitReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>"
 						data-post-id="<?php echo (int) $post->id; ?>"
@@ -316,7 +316,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 					</button>
 					<?php endif; ?>
 					<?php if ( $jt_rp_can_del ) : ?>
-					<button class="jt-more-item jt-more-item--danger"
+					<button role="menuitem" class="jt-more-item jt-more-item--danger"
 						data-wp-on--click="actions.deleteReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>">
 						<?php jetonomy_echo_icon( 'trash', 14 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?>
@@ -326,21 +326,13 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			</div>
 		<?php endif; ?>
 	<?php
-	// Accept Answer button — Q&A spaces, for non-accepted replies. Shown to the
-	// post author OR anyone who can close posts in the space (space moderators
-	// and admins), mirroring Replies_Controller::accept_reply()'s permission gate
-	// so the button appears exactly when the action would succeed. Space-role
-	// moderators hold `close_posts` but not `moderate`, so this uses close_posts.
+	// Accept Answer button, for non-accepted replies: shown exactly when the
+	// accept would succeed (Reply::viewer_can_accept(), shared with the REST flag).
 	if (
 		$jt_thread_live
-		&& is_user_logged_in()
 		&& isset( $post, $space )
-		&& 'qa' === ( $space->type ?? '' )
-		&& (
-			get_current_user_id() === (int) $post->author_id
-			|| \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'close_posts', (int) ( $post->space_id ?? 0 ) )
-		)
 		&& ! $is_accepted
+		&& \Jetonomy\Models\Reply::viewer_can_accept( $jt_card_viewer, $post, $space )
 	) :
 		?>
 		<button class="jt-act"

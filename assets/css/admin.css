@@ -4393,10 +4393,12 @@ tr.jetonomy-moderated td {
 	border-radius: 4px;
 }
 
-/* The grant select in the rules list: one width for every row, so Read and
-   Participate rows line up. */
+/* The grant select in the rules list fills its cell, so Read and Participate
+   rows line up, and is never narrower than its longest option: where the
+   table lays out by content (narrow screens) the column grows to fit it. */
 .jetonomy-admin .jetonomy-rule-grants {
-	min-width: 9rem;
+	inline-size: 100%;
+	min-inline-size: max-content;
 }
 
 /* An access rule whose course, product or plan is gone: it lets nobody in. */

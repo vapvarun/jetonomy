@@ -797,17 +797,17 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				?>
 				<?php if ( $jt_can_edit || $jt_can_del || $jt_can_pin || $jt_can_close || $jt_can_move || current_user_can( 'jetonomy_manage_settings' ) ) : ?>
 					<div class="jt-more-menu">
-						<button class="jt-act jt-more-trigger" type="button" aria-expanded="false"
+						<button class="jt-act jt-more-trigger" type="button" aria-haspopup="menu" aria-expanded="false"
 							title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
-						<div class="jt-more-dropdown" hidden>
+						<div class="jt-more-dropdown" role="menu" hidden>
 							<?php if ( $jt_can_edit ) : ?>
-								<button class="jt-more-item"
+								<button role="menuitem" class="jt-more-item"
 									data-wp-on--click="actions.editPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-edit-token="<?php echo esc_attr( \Jetonomy\Models\Post::edit_token( $post, \Jetonomy\Models\Post::EDIT_FIELDS ) ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
-								<button class="jt-more-item"
+								<button role="menuitem" class="jt-more-item"
 									data-wp-on--click="actions.togglePrivate"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-private="<?php echo esc_attr( ! empty( $post->is_private ) ? '1' : '0' ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
@@ -830,37 +830,37 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									/* translators: %s: singular space label. */
 									: sprintf( __( 'Pin to %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 								?>
-								<button class="jt-more-item"
+								<button role="menuitem" class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
 									data-pin="<?php echo $post->is_sticky ? '0' : '1'; ?>"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo esc_html( $jt_pin_label ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_close ) : ?>
-									<button class="jt-more-item"
+									<button role="menuitem" class="jt-more-item"
 										data-wp-on--click="actions.toggleClose"
 										data-close="<?php echo empty( $post->is_closed ) ? '1' : '0'; ?>"
 										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Reopen %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) : esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_move ) : ?>
-								<button class="jt-more-item"
+								<button role="menuitem" class="jt-more-item"
 									data-wp-on--click="actions.movePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'move', 14 ); ?> <?php esc_html_e( 'Move', 'jetonomy' ); ?></button>
 								<?php // Merge moves replies across topics, so REST gates it on move_posts too. ?>
-								<button class="jt-more-item"
+								<button role="menuitem" class="jt-more-item"
 									data-wp-on--click="actions.mergePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'merge', 14 ); ?> <?php esc_html_e( 'Merge', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_del ) : ?>
-								<button class="jt-more-item jt-more-item--danger"
+								<button role="menuitem" class="jt-more-item jt-more-item--danger"
 									data-wp-on--click="actions.deletePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php // Gate matches the TARGET: the jetonomy-spaces admin page requires jetonomy_manage_settings, so a space-level moderator (subscriber WP role) must not see a link that lands on Access Denied. The moderation actions above correctly stay on the space-role gate. ?>
 							<?php if ( current_user_can( 'jetonomy_manage_settings' ) ) : ?>
-								<a class="jt-more-item" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>"><?php jetonomy_echo_icon( 'settings', 14 ); ?> <?php esc_html_e( 'Admin', 'jetonomy' ); ?></a>
+								<a role="menuitem" class="jt-more-item" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>"><?php jetonomy_echo_icon( 'settings', 14 ); ?> <?php esc_html_e( 'Admin', 'jetonomy' ); ?></a>
 							<?php endif; ?>
 						</div>
 					</div>

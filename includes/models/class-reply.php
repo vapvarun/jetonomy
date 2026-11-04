@@ -534,6 +534,27 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Whether accepting an answer on this topic would succeed for the viewer:
+	 * the topic author or anyone who can close posts in the space (the REST
+	 * gate in Replies_Controller::accept_reply()), not silenced or banned, in a
+	 * Q&A space (accept_as_answer()'s guards). One rule for the REST
+	 * viewer_can_accept flag and the Accept button, so neither offers an
+	 * accept that fails.
+	 *
+	 * @param int         $user_id Viewer.
+	 * @param object      $post    Topic row.
+	 * @param object|null $space   The topic's space when the caller has it.
+	 */
+	public static function viewer_can_accept( int $user_id, object $post, ?object $space = null ): bool {
+		$space = $space ?? Space::find( (int) $post->space_id );
+		return $space && 'qa' === ( $space->type ?? '' )
+			&& $user_id > 0
+			&& ( (int) $post->author_id === $user_id
+				|| \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'close_posts', (int) $post->space_id ) )
+			&& ! \Jetonomy\Permissions\Permission_Engine::restriction_error( $user_id, 'close_posts', (int) $post->space_id );
+	}
+
+	/**
 	 * Accept a reply as its post's answer - the one "accept" transaction.
 	 *
 	 * Writes both sides (reply is_accepted + post accepted_reply_id /

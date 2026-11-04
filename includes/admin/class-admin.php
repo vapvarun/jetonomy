@@ -736,7 +736,7 @@ class Admin {
 	 * @return string
 	 */
 	private function url_setting( array $input, array $clean, string $key, string $label ): string {
-		$url = \Jetonomy\http_url( (string) ( $input[ $key ] ?? '' ) );
+		$url = \Jetonomy\absolute_url( (string) ( $input[ $key ] ?? '' ) );
 		if ( null !== $url ) {
 			return $url;
 		}

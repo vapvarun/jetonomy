@@ -582,6 +582,8 @@ $crumbs = array(
 					)
 				);
 				$queue_url    = \Jetonomy\route_url( 'space-moderation', $space->slug );
+				$jt_flag_ref  = 'jt-mod-flag-' . absint( $flag->id );
+				$jt_has_title = ! $is_reply && ! empty( $obj->title );
 				?>
 				<li class="jt-mod-flag-row">
 					<div class="jt-mod-flag-row-head">
@@ -601,10 +603,10 @@ $crumbs = array(
 							?>
 						</span>
 					</div>
-					<?php if ( ! $is_reply && ! empty( $obj->title ) ) : ?>
-						<div class="jt-mod-flag-title" dir="auto"><?php echo esc_html( (string) $obj->title ); ?></div>
+					<?php if ( $jt_has_title ) : ?>
+						<div class="jt-mod-flag-title" id="<?php echo esc_attr( $jt_flag_ref . '-title' ); ?>" dir="auto"><?php echo esc_html( (string) $obj->title ); ?></div>
 					<?php endif; ?>
-					<div class="jt-mod-flag-excerpt" dir="auto">
+					<div class="jt-mod-flag-excerpt" id="<?php echo esc_attr( $jt_flag_ref . '-excerpt' ); ?>" dir="auto">
 						<?php echo esc_html( $excerpt ); ?>
 					</div>
 					<?php if ( ! empty( $jt_ctx->removed ) ) : ?>
@@ -628,7 +630,8 @@ $crumbs = array(
 								<?php esc_html_e( 'Note', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
-						<a class="jt-mod-flag-action" href="<?php echo esc_url( $queue_url ); ?>">
+						<a class="jt-mod-flag-action" href="<?php echo esc_url( $queue_url ); ?>"
+							aria-describedby="<?php echo esc_attr( ( $jt_has_title ? $jt_flag_ref . '-title ' : '' ) . $jt_flag_ref . '-excerpt' ); ?>">
 							<?php esc_html_e( 'Review in queue', 'jetonomy' ); ?>
 							<?php jetonomy_echo_icon( 'arrow-right', 14 ); ?>
 						</a>

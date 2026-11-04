@@ -904,18 +904,15 @@ class Replies_Controller extends Base_Controller {
 		 * client re-deriving it. Clients that predate this field fall back to
 		 * their old behaviour, so the flag is additive, never required.
 		 */
-		$data['can_block_author'] = $uid > 0
+		$data['can_block_author']  = $uid > 0
 			&& $real_author_id > 0
 			&& $real_author_id !== $uid
 			&& ! user_can( $real_author_id, 'manage_options' )
 			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
-		$reply_post               = \Jetonomy\Models\Post::find( (int) $reply->post_id );
-		$reply_space_id           = (int) ( $reply_post->space_id ?? 0 );
-		$data                    += $this->viewer_content_caps( $uid, $real_author_id, $reply_space_id );
-		// Mirrors accept_reply(): the topic author, or anyone who can close posts.
-		$data['viewer_can_accept'] = $uid > 0 && $reply_post
-			&& ( (int) $reply_post->author_id === $uid
-				|| \Jetonomy\Permissions\Permission_Engine::can( $uid, 'close_posts', $reply_space_id ) );
+		$reply_post                = \Jetonomy\Models\Post::find( (int) $reply->post_id );
+		$reply_space_id            = (int) ( $reply_post->space_id ?? 0 );
+		$data                     += $this->viewer_content_caps( $uid, $real_author_id, $reply_space_id );
+		$data['viewer_can_accept'] = $reply_post && Reply::viewer_can_accept( $uid, $reply_post );
 		// See the identical note in prepare_post().
 		$data['viewer_flagged'] = isset( $reply->viewer_flagged )
 			? (bool) $reply->viewer_flagged

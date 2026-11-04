@@ -368,10 +368,16 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 		$label = (string) apply_filters( 'jetonomy_space_label', $label, $plural, $lower );
 	}
 
-	if ( ! $lower ) {
-		return $label;
-	}
+	return $lower ? mid_sentence( $label ) : $label;
+}
 
+/**
+ * A noun as it reads mid-sentence: lowercased, except in locales that
+ * capitalise every noun.
+ *
+ * @param string $noun Noun as written ("Course", "Kurs").
+ */
+function mid_sentence( string $noun ): string {
 	/**
 	 * Whether a mid-sentence label is lowercased. German and Luxembourgish
 	 * capitalise every noun ("Mitglieder", never "mitglieder"), so they keep the
@@ -382,9 +388,9 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 	 */
 	$locale = determine_locale();
 	if ( ! apply_filters( 'jetonomy_label_lowercase', ! in_array( strtok( $locale, '_' ), array( 'de', 'lb' ), true ), $locale ) ) {
-		return $label;
+		return $noun;
 	}
-	return mb_strtolower( $label );
+	return mb_strtolower( $noun );
 }
 
 /**
@@ -1791,6 +1797,19 @@ function http_url( string $raw ): ?string {
 		return esc_url_raw( $raw, array( 'http', 'https' ) );
 	}
 	return null;
+}
+
+/**
+ * A full web address typed into a setting, or null. For addresses used off the
+ * site, where a relative path cannot resolve: the app's links and logo, email
+ * images, share images, canonicals and API endpoints.
+ *
+ * @param string $raw Value as typed.
+ * @return string|null '' for empty, the cleaned address, or null.
+ */
+function absolute_url( string $raw ): ?string {
+	$url = http_url( $raw );
+	return null === $url || str_starts_with( $url, '/' ) ? null : $url;
 }
 
 /**

@@ -52,6 +52,10 @@
      Follows BuddyNext type scale: base 15px, headings 1.375→0.8125rem.
      Works identically with or without BuddyNext active. */
   .jt-app { font-family: var(--jt-font); font-size: 0.9375rem; line-height: 1.65; color: var(--jt-text); }
+  /* Member content (dir="auto") aligns to its own direction: a theme's
+     body{text-align:left} would otherwise pin Arabic to the left. Zero
+     specificity, so any component's own alignment still wins. */
+  :where(.jt-app [dir="auto"]) { text-align: start; }
   .jt-app *, .jt-app *::before, .jt-app *::after { box-sizing: border-box; }
 
   /* Heading reset — override BuddyX/WordPress heading styles within the app */
@@ -1441,6 +1445,8 @@
   /* Edit Profile has three links an owner must see at once: wrap them instead
      of scrolling, so none is clipped on a narrow theme (Reign at 390px). */
   @media (max-width: 640px) { .jt-space-tabs--wrap { flex-wrap: wrap; overflow-x: visible; } }
+  /* Three section links fit one row on a 390px phone. */
+  @media (max-width: 400px) { .jt-space-tabs--wrap .jt-space-tab { padding-inline: 10px; } }
 
   /* ── Private toggle on new post form ── */
   /* Token-aligned gap above the Private toggle so it doesn't sit flush against
@@ -3008,7 +3014,7 @@
    fixing the report (last-reply More menu clipped). We keep
    z-index/border/background here; everything else is JS-controlled. */
 .jt-more-dropdown { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; }
-.jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
+.jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; min-block-size: 40px; box-sizing: border-box; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
 .jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
 .jt-more-item--danger { color: var(--jt-danger-strong); }
 .jt-more-item--danger:hover { background: var(--jt-danger-light); color: var(--jt-danger-strong); }

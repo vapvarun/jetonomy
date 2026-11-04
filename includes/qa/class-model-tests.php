@@ -298,6 +298,9 @@ class Model_Tests {
 	 *
 	 * VD1-VD2 removing a vote through DELETE takes back reputation and the notification (10430806939)
 	 * SN1     a silenced member cannot start a space (10431281298)
+ * AU1     off-site address settings take only full addresses (10469968650)
+ * MS1     the gate sentence keeps German nouns capitalised (10469968511)
+ * AC1-AC3 Accept is offered only where accepting succeeds: Q&A spaces, unsilenced authors (10469967795)
 	 * GP1     a private community admits no signed-out visitor at the engine (10430808705)
 	 * OR1-OR2 overlapping rules: most generous wins; an exact duplicate is refused (10435942224)
 	 * LP1     a level is named and typed by its adapter's prefix, even when the catalog omits it (10436110349)
@@ -353,6 +356,34 @@ class Model_Tests {
 				Restriction::remove_ban( $sil );
 			}
 
+			// AC1-AC3. The Accept offer matches what accepting would do.
+			$topic_row = \Jetonomy\Models\Post::find( $topic );
+			$this->check( 'AC1: outside a Q&A space the topic author is not offered Accept', $topic_row && ! \Jetonomy\Models\Reply::viewer_can_accept( $author, $topic_row ) );
+			Space::update( $space, array( 'type' => 'qa' ) );
+			\Jetonomy\Cache::reset_memos();
+			$qa_row = Space::find( $space );
+			$this->check( 'AC2: in a Q&A space the topic author is offered Accept, another member is not', $topic_row && \Jetonomy\Models\Reply::viewer_can_accept( $author, $topic_row, $qa_row ) && ! \Jetonomy\Models\Reply::viewer_can_accept( $voter, $topic_row, $qa_row ) );
+			$sil = Restriction::ban( $author, 'silence', $this->qa_admin, null, 'QA 207' );
+			Restriction::reset_memo();
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'AC3: a silenced topic author is not offered Accept', $topic_row && ! \Jetonomy\Models\Reply::viewer_can_accept( $author, $topic_row, $qa_row ) );
+			if ( $sil > 0 ) {
+				Restriction::remove_ban( $sil );
+			}
+			Restriction::reset_memo();
+			Space::update( $space, array( 'type' => 'forum' ) );
+			\Jetonomy\Cache::reset_memos();
+
+			// MS1. A mid-sentence noun keeps its capital where every noun has one.
+			$de = static fn(): string => 'de_DE';
+			add_filter( 'determine_locale', $de );
+			$kurs = \Jetonomy\mid_sentence( 'Kurs' );
+			remove_filter( 'determine_locale', $de );
+			$this->check( 'MS1: a mid-sentence noun keeps its capital in German and is lowercased in English', 'Kurs' === $kurs && 'course' === \Jetonomy\mid_sentence( 'Course' ), "de={$kurs}" );
+
+			// AU1. Addresses used off the site must be full addresses.
+			$this->check( 'AU1: an off-site address setting refuses a site-relative path and keeps a full one', null === \Jetonomy\absolute_url( '/terms' ) && 'https://example.com/terms' === \Jetonomy\absolute_url( 'https://example.com/terms' ) && '' === \Jetonomy\absolute_url( '' ) );
+
 			// GP1.
 			$private = static function ( $o ) {
 				$o               = (array) $o;
@@ -366,10 +397,11 @@ class Model_Tests {
 			\Jetonomy\Cache::reset_memos();
 			$this->check( 'GP1: on a private community a signed-out visitor cannot read even a public space', ! $guest_reads && Permission_Engine::can( 0, 'read', $space ) );
 
-			// OR1-OR2. Older rule is the more generous one, so "newest wins" fails.
+			// OR1-OR2.
 			Space::update( $space, array( 'visibility' => 'private', 'join_policy' => 'approval' ) );
-			AccessRule::create( array( 'space_id' => $space, 'rule_type' => 'logged_in', 'rule_value' => '1', 'grants' => 'participate', 'priority' => 0 ) );
+			// Read first: 2.0.6 returned the first match, so this order fails there.
 			AccessRule::create( array( 'space_id' => $space, 'rule_type' => 'role', 'rule_value' => 'subscriber', 'grants' => 'read', 'priority' => 0 ) );
+			AccessRule::create( array( 'space_id' => $space, 'rule_type' => 'logged_in', 'rule_value' => '1', 'grants' => 'participate', 'priority' => 0 ) );
 			AccessRule::reset_memo();
 			$won = AccessRule::resolve_access( $voter, $space );
 			$this->check( 'OR1: when two rules match, the most generous grant wins', 'participate' === ( $won['grants'] ?? '' ), 'got ' . ( $won['grants'] ?? 'none' ) );
@@ -391,7 +423,7 @@ class Model_Tests {
 			SpaceMember::add( $space, $named, 'member' );
 			$this->check( 'MN1: the public members search matches names, never email addresses', 1 === SpaceMember::count_by_space( $space, 'Zephyr ' . $suffix, true ) && 0 === SpaceMember::count_by_space( $space, 'jt_qa_207n_' . $suffix . '@', true ) );
 		} else {
-			foreach ( array( 'VD1', 'VD2', 'SN1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1' ) as $id ) {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'MS1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1' ) as $id ) {
 				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
 			}
 		}

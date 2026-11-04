@@ -397,12 +397,17 @@
 	});
 
 	/* ── Scrolling tab strips (profile, notifications, space): bring the
-	 * active tab into view on load, after client navigation and on resize. */
+	 * active tab into view on load, after client navigation and on resize.
+	 * Only the strip scrolls: scrollIntoView() also moved the page, and iOS
+	 * fires resize as its toolbar collapses, pulling a reader back up. */
 	function revealActiveTabs() {
 		document.querySelectorAll('.jt-profile-tabs, .jt-notif-tabs, .jt-space-tabs').forEach(function (strip) {
 			if (strip.scrollWidth <= strip.clientWidth) { return; }
 			var active = strip.querySelector('[aria-current], .is-active, .active');
-			if (active) { active.scrollIntoView({ inline: 'nearest', block: 'nearest' }); }
+			if (!active) { return; }
+			var a = active.getBoundingClientRect(), w = strip.getBoundingClientRect();
+			if (a.left < w.left) { strip.scrollLeft += a.left - w.left; }
+			else if (a.right > w.right) { strip.scrollLeft += a.right - w.right; }
 		});
 	}
 	revealActiveTabs();

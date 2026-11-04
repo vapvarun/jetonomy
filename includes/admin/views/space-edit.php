@@ -556,7 +556,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						'value'   => array( 'label' => __( 'Value', 'jetonomy' ) ),
 						'grants'  => array(
 							'label' => __( 'Grants', 'jetonomy' ),
-							'width' => 's',
+							'width' => 'm',
 						),
 						'role'    => array(
 							/* translators: %s: the singular space label the site owner configured (e.g. space, group). */

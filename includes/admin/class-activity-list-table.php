@@ -468,7 +468,7 @@ class Activity_List_Table extends \WP_List_Table {
 	 *                        space or topic a row's metadata points at.
 	 * @return string Unescaped.
 	 */
-	public static function details_text( object $row, array $context = array() ): string {
+	public static function details_text( object $row, array $context ): string {
 		$meta = self::metadata( $row );
 		if ( ! $meta ) {
 			return '';

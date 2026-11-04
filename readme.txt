@@ -321,6 +321,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Security - Guests never see a private space's name on its members or roadmap page.
 * Security - Erasing a member's personal data also removes them as the uploader of their attachments.
 * Compat   - Aligned with Jetonomy Pro 2.0.7. Install both updates together.
+* Compat   - BuddyNext suspensions and blocks carry into the forum with BuddyNext 1.2.8 or later.
 
 = 2.0.6 - October 2026 =
 

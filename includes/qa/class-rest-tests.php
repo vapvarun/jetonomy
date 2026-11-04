@@ -1338,12 +1338,13 @@ class REST_Tests {
 			$this->check( 'H42: Subscriber cannot pin → 403', $r->get_status() === 403 );
 		}
 
-		// H43: Subscriber CANNOT move a post to another space.
+		// H43: Subscriber CANNOT move a post to another space. The target must be
+		// public: an unreadable target correctly answers 404, not 403.
 		if ( $this->post_id ) {
 			global $wpdb;
 			$spaces_t = table( 'spaces' );
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$other = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$spaces_t} WHERE status = 'active' AND id != %d LIMIT 1", (int) $this->space->id ) );
+			$other = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$spaces_t} WHERE status = 'active' AND visibility = 'public' AND id != %d LIMIT 1", (int) $this->space->id ) );
 			// phpcs:enable
 			$target = $other ? (int) $other->id : (int) $this->space->id;
 			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/move', array(
