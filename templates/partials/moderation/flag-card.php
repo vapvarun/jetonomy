@@ -92,6 +92,7 @@ if ( ! isset( $context->topic ) ) {
 }
 ?>
 <div class="jt-mod-flag jt-mod-item"
+	data-wp-key="flag-<?php echo absint( $flag->id ); ?>"
 	data-flag-id="<?php echo absint( $flag->id ); ?>"
 	data-resolve-endpoint="<?php echo esc_attr( $resolve_endpoint ); ?>">
 	<div class="jt-mod-flag-head">

@@ -674,8 +674,18 @@ final class Jetonomy {
 		// and dark-scheme toggle into Jetonomy's CSS tokens.
 		new Integrations\Theme_Integration();
 		new Integrations\Layout_CSS();
-		// Divi Theme Builder: global header/footer on community pages.
-		new Integrations\Divi_Theme_Builder();
+		// Divi Theme Builder: global header/footer on community pages. Built
+		// only where Divi runs: the Divi Builder plugin defines ET_BUILDER_VERSION
+		// on init, and the Divi and Extra themes define ET_BUILDER_THEME before it.
+		add_action(
+			'init',
+			static function () {
+				if ( defined( 'ET_BUILDER_THEME' ) || defined( 'ET_BUILDER_VERSION' ) ) {
+					new Integrations\Divi_Theme_Builder();
+				}
+			},
+			PHP_INT_MAX
+		);
 
 		// App-connect wiring (Wbcom App Auth standard): joins BuddyNext's
 		// bridge-scheme allowlist and resolves which connect bridge this

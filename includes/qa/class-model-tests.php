@@ -441,6 +441,11 @@ class Model_Tests {
 		\Jetonomy\Adapters\Adapter_Registry::register_membership( 'qa207', $probe );
 		$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( 'qa207_course_9' );
 		$this->check( 'LP1: a level is named and typed by its adapter prefix, even when the catalog omits it', 'Probe course' === $described['value'] && 'Course' === $described['kind'], wp_json_encode( $described ) );
+		// The registry has no unregister (production never needs one); drop the
+		// probe so later checks in this run see only the real adapters.
+		$jt_reg = new \ReflectionProperty( \Jetonomy\Adapters\Adapter_Registry::class, 'membership' );
+		$jt_reg->setValue( null, array_diff_key( $jt_reg->getValue(), array( 'qa207' => true ) ) );
+		( new \ReflectionProperty( \Jetonomy\Adapters\Adapter_Registry::class, 'level_owners' ) )->setValue( null, null );
 
 		// SX1.
 		set_transient( 'jt_sitemap_cursors_spaces', array( 'cursors' => array( 1 ) ), HOUR_IN_SECONDS );

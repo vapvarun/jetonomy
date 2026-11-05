@@ -1,6 +1,6 @@
 # Add a Nav Item
 
-Add a link or button to Jetonomy's community top nav using the `jetonomy_header_nav_items` action - no template override needed.
+Add a link to Jetonomy's community top nav using the `jetonomy_header_nav_items` action - no template override needed. On phones the nav row is hidden and each link you add appears in the Profile tab's menu, which copies top-level `<a>` elements only.
 
 ---
 

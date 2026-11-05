@@ -41,11 +41,11 @@ function jetonomyConfirm( message, opts = {} ) {
 		actions.className = 'jt-modal-actions';
 		const cancelBtn = document.createElement( 'button' );
 		cancelBtn.className = 'jt-btn jt-btn-ghost';
-		cancelBtn.textContent = t.modalCancel || 'Cancel';
+		cancelBtn.textContent = opts.cancelLabel || t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( false ); } );
 		const okBtn = document.createElement( 'button' );
 		okBtn.className = 'jt-btn ' + ( opts.danger ? 'jt-btn-danger' : 'jt-btn-fill' );
-		okBtn.textContent = t.modalConfirm || 'Confirm';
+		okBtn.textContent = opts.confirmLabel || t.modalConfirm || 'Confirm';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( true ); } );
 		actions.appendChild( cancelBtn );
 		actions.appendChild( okBtn );
@@ -910,10 +910,9 @@ function notifSetTabCounts( counts ) {
  */
 window.jtReloadNotifList = async function () {
     if ( ! document.querySelector( '[data-jt-notif-list], .jt-notif-tabs' ) ) return;
-    // Ticks are position-based in the DOM; re-apply them by id so a new row on top cannot shift them onto other notifications.
-    const ticked = new Set( [ ...document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ) ].map( ( cb ) => cb.value ) );
+    // Rows carry data-wp-key, so the router keeps each row's node (and its
+    // tick) by notification id; a new row on top gets a node of its own.
     await reloadRegion();
-    document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb' ).forEach( ( cb ) => { cb.checked = ticked.has( cb.value ); } );
     notifUpdateBulkbar();
 };
 
@@ -1467,13 +1466,11 @@ const { state, actions } = store( 'jetonomy', {
                 .replace( '%name%', name || i18n.thisMember || 'this member' )
                 .replace( '%from%', labels[ prev ] || prev )
                 .replace( '%to%', labels[ role ] || role );
-            const confirmed = 'function' === typeof window.jetonomyConfirm
-                ? yield window.jetonomyConfirm( confirmBody, {
-                    title: i18n.confirmRoleChangeTitle || 'Change role',
-                    confirmLabel: i18n.confirmLabel || 'Change role',
-                    cancelLabel: i18n.cancelLabel || 'Cancel',
-                } )
-                : true;
+            const confirmed = yield jetonomyConfirm( confirmBody, {
+                title: i18n.confirmRoleChangeTitle || 'Change role',
+                confirmLabel: i18n.confirmLabel || 'Change role',
+                cancelLabel: i18n.cancelLabel || 'Cancel',
+            } );
             if ( ! confirmed ) { select.value = prev; return; }
 
             const oldErr = row && row.querySelector( '.jt-member-role-error' );
@@ -1519,11 +1516,11 @@ const { state, actions } = store( 'jetonomy', {
             const spaceId = btn.getAttribute( 'data-space-id' );
             const userId  = btn.getAttribute( 'data-user-id' );
             const name    = btn.getAttribute( 'data-user-name' );
-            if ( ! spaceId || ! userId || 'function' !== typeof window.jetonomyConfirm ) return;
+            if ( ! spaceId || ! userId ) return;
 
             const i18n    = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const banBody = ( i18n.banConfirmFormat || 'Ban %s from this space? They will lose access to its posts and replies until you lift the ban.' ).replace( '%s', name || '' );
-            const ok = yield window.jetonomyConfirm( banBody, {
+            const ok = yield jetonomyConfirm( banBody, {
                 title: i18n.banMemberTitle || 'Ban member',
                 confirmLabel: i18n.banLabel || 'Ban',
                 danger: true,
@@ -1549,14 +1546,14 @@ const { state, actions } = store( 'jetonomy', {
             const userId = btn.getAttribute( 'data-user-id' );
             const name   = btn.getAttribute( 'data-user-name' );
             const type   = btn.getAttribute( 'data-restrict-type' ) || 'global_ban';
-            if ( ! userId || 'function' !== typeof window.jetonomyConfirm ) return;
+            if ( ! userId ) return;
 
             const i18n      = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const isSilence = 'silence' === type;
             const bodyTpl   = isSilence
                 ? ( i18n.silenceConfirmFormat || 'Silence %s? They stay in the community but cannot post, reply, or file reports until you lift it.' )
                 : ( i18n.banSiteConfirmFormat || 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.' );
-            const ok = yield window.jetonomyConfirm( bodyTpl.replace( '%s', name || '' ), {
+            const ok = yield jetonomyConfirm( bodyTpl.replace( '%s', name || '' ), {
                 title: isSilence ? ( i18n.silenceTitle || 'Silence member' ) : ( i18n.banSiteTitle || 'Ban member' ),
                 confirmLabel: isSilence ? ( i18n.silenceLabel || 'Silence' ) : ( i18n.banLabel || 'Ban' ),
                 danger: true,
@@ -1575,10 +1572,10 @@ const { state, actions } = store( 'jetonomy', {
             const btn = getElement().ref;
             const rid  = btn.getAttribute( 'data-restriction-id' );
             const name = btn.getAttribute( 'data-user-name' );
-            if ( ! rid || 'function' !== typeof window.jetonomyConfirm ) return;
+            if ( ! rid ) return;
 
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
-            const ok = yield window.jetonomyConfirm(
+            const ok = yield jetonomyConfirm(
                 ( i18n.liftConfirmFormat || 'Lift the restriction on %s? They regain full access right away.' ).replace( '%s', name || '' ),
                 { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift restriction' }
             );
@@ -1631,13 +1628,11 @@ const { state, actions } = store( 'jetonomy', {
         *denyJoinRequest() {
             const btn  = getElement().ref;
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
-            if ( 'function' === typeof window.jetonomyConfirm ) {
-                const ok = yield window.jetonomyConfirm(
-                    i18n.denyJoinBody || 'Deny this join request? The member can request again later.',
-                    { title: i18n.denyJoinTitle || 'Deny request', confirmLabel: i18n.denyLabel || 'Deny', danger: true }
-                );
-                if ( ! ok ) return;
-            }
+            const ok = yield jetonomyConfirm(
+                i18n.denyJoinBody || 'Deny this join request? The member can request again later.',
+                { title: i18n.denyJoinTitle || 'Deny request', confirmLabel: i18n.denyLabel || 'Deny', danger: true }
+            );
+            if ( ! ok ) return;
             yield jtModerateJoinRequest( btn, 'deny' );
         },
 
@@ -1718,17 +1713,15 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! spaceId || ! inviteId ) return;
 
             // Destructive and irreversible — the row is DELETEd, not flagged.
-            if ( 'function' === typeof window.jetonomyConfirm ) {
-                const confirmed = yield window.jetonomyConfirm(
-                    panel.dataset.jtRevokeBody || 'Revoke this invite link?',
-                    {
-                        title: panel.dataset.jtRevokeTitle || 'Revoke invite link',
-                        confirmLabel: panel.dataset.jtRevokeLabel || 'Revoke',
-                        danger: true,
-                    }
-                );
-                if ( ! confirmed ) return;
-            }
+            const confirmed = yield jetonomyConfirm(
+                panel.dataset.jtRevokeBody || 'Revoke this invite link?',
+                {
+                    title: panel.dataset.jtRevokeTitle || 'Revoke invite link',
+                    confirmLabel: panel.dataset.jtRevokeLabel || 'Revoke',
+                    danger: true,
+                }
+            );
+            if ( ! confirmed ) return;
 
             jtInviteError( panel, '' );
             row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = true; } );
@@ -2558,16 +2551,11 @@ const { state, actions } = store( 'jetonomy', {
             const question   = spaceTitle && state.i18n?.confirmLeaveNamed
                 ? state.i18n.confirmLeaveNamed.replace( '%s', spaceTitle )
                 : ( state.i18n?.confirmLeaveSpace || 'Leave this space? You can rejoin at any time.' );
-            const confirmed = 'function' === typeof window.jetonomyConfirm
-                ? yield window.jetonomyConfirm(
-                    question,
-                    {
-                        title: state.i18n?.leaveSpace || 'Leave space',
-                        confirmLabel: state.i18n?.leave || 'Leave',
-                        cancelLabel: state.i18n?.cancel || 'Cancel',
-                    }
-                )
-                : true;
+            const confirmed = yield jetonomyConfirm( question, {
+                title: state.i18n?.leaveSpace || 'Leave space',
+                confirmLabel: state.i18n?.leave || 'Leave',
+                cancelLabel: state.i18n?.cancel || 'Cancel',
+            } );
             if ( ! confirmed ) return;
 
             btnEl.disabled = true;
@@ -3775,9 +3763,6 @@ const { state, actions } = store( 'jetonomy', {
             // removal here made that click a full page load (regionDirty).
             try {
                 yield reloadRegion();
-                // The router reuses this card's nodes for the flag that slides
-                // into its place, and the server markup never carries `disabled`.
-                buttons.forEach( ( b ) => { b.disabled = false; } );
             } catch ( e ) {
                 window.location.reload(); // the flag is resolved; never leave a stale card
             }

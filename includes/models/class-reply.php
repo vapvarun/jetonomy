@@ -546,9 +546,11 @@ class Reply extends Model {
 	 * @param object|null $space   The topic's space when the caller has it.
 	 */
 	public static function viewer_can_accept( int $user_id, object $post, ?object $space = null ): bool {
+		if ( $user_id <= 0 ) {
+			return false;
+		}
 		$space = $space ?? Space::find( (int) $post->space_id );
 		return $space && 'qa' === ( $space->type ?? '' )
-			&& $user_id > 0
 			&& ( (int) $post->author_id === $user_id
 				|| \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'close_posts', (int) $post->space_id ) )
 			&& ! \Jetonomy\Permissions\Permission_Engine::restriction_error( $user_id, 'close_posts', (int) $post->space_id );

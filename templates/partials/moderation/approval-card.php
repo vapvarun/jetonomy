@@ -73,6 +73,7 @@ $jt_ac_target   = 'jt-approval-' . sanitize_key( $kind ) . '-' . absint( $item->
 $jt_ac_describe = ' aria-describedby="' . esc_attr( $jt_ac_target ) . '"';
 ?>
 <div class="jt-mod-flag jt-mod-item jt-mod-approval"
+	data-wp-key="<?php echo esc_attr( $kind . '-' . absint( $item->id ) ); ?>"
 	data-object-kind="<?php echo esc_attr( $kind ); ?>"
 	data-object-id="<?php echo absint( $item->id ); ?>"
 	data-object-status="<?php echo esc_attr( (string) ( $item->status ?? '' ) ); ?>"

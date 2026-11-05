@@ -344,8 +344,8 @@ class Spaces_Controller extends Base_Controller {
 						'grants' => array(
 							'type'        => 'string',
 							'required'    => true,
-							'description' => 'read or participate. "full" (removed in 2.0.7) is still accepted and saved as participate.',
-							'enum'        => array( 'read', 'participate', 'full' ),
+							'description' => 'read or participate.',
+							'enum'        => array( 'read', 'participate' ),
 						),
 					),
 				),

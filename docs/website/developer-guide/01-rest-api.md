@@ -680,6 +680,8 @@ All analytics endpoints require the `jetonomy_view_analytics` capability.
 | GET | `/analytics/moderation` | Flags, bans, spam actions |
 | GET | `/analytics/export` | CSV download |
 
+The overview's `post_change`, `reply_change`, `user_change`, `active_change` and `vote_change` are `null` when the previous period had no activity (a rise from zero has no percentage). Draw charts from `trend`; `daily_posts`, `daily_replies` and `daily_active` are deprecated since 2.0.7 and still returned for older clients.
+
 **Analytics parameters (all endpoints)**
 
 | Parameter | Type | Default | Description |

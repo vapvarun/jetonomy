@@ -581,7 +581,7 @@ class Spaces_Handler {
 			wp_send_json_error( $invalid->get_error_message() );
 		}
 
-		if ( ! in_array( $grants, array( 'read', 'participate', 'full' ), true ) ) {
+		if ( ! in_array( $grants, array( 'read', 'participate' ), true ) ) {
 			$grants = 'read';
 		}
 

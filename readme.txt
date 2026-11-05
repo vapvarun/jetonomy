@@ -312,8 +312,11 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - Members a rule admits to a private space see that space's notifications, as they already see its follows and bookmarks.
 * Fix      - A member's profile no longer lists their replies under a deleted topic.
 * Fix      - The access rule grant picker keeps its arrow inside the box.
+* Fix      - Changing a member's role, banning, silencing, lifting a restriction, denying a join request, revoking an invite link and leaving a space always ask first, on every page.
+* Fix      - After a flag is resolved, the next flag in the moderation queue keeps working buttons.
 * Fix      - Removing a reported post asks first, and the next report card's buttons work without a reload.
 * Fix      - Moderation cards wrap long links and show right-to-left text in its own direction.
+* Fix      - On right-to-left sites, empty search, topic title and editor fields start on the right side, then follow the language you type.
 * Fix      - A topic title over 255 characters is refused with a clear message instead of an error.
 * Fix      - A space whose plans were all deleted offers no button to a checkout that no longer exists.
 * Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.

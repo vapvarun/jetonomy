@@ -38,10 +38,15 @@ class AccessRule extends Model {
 			),
 			$data
 		);
+		// "Full" was removed in 2.0.7: it never gave a member more than
+		// Participate, so an old API client creating a rule with "full" gets
+		// Participate. Migration_2_0_7 rewrote stored rows, so readers never see
+		// "full", and edits (new in 2.0.7) refuse it.
 		// The roster role is derived from the grant, never chosen, for every
 		// writer (REST, wp-admin, Pro provisioners): read is Viewer, participate
 		// is Member.
-		$data['grants']     = self::normalize_grants( (string) ( $data['grants'] ?? 'read' ) );
+		$grants             = (string) ( $data['grants'] ?? 'read' );
+		$data['grants']     = 'full' === $grants ? 'participate' : $grants;
 		$data['space_role'] = self::role_for_grants( $data['grants'] );
 
 		$id = static::insert( $data );
@@ -111,17 +116,6 @@ class AccessRule extends Model {
 	}
 
 	/**
-	 * The grant to store and act on. "Full" was removed in 2.0.7: it never gave
-	 * a member more than Participate, so an old API client or row saying "full"
-	 * means Participate.
-	 *
-	 * @param string $grants read | participate (| full, legacy).
-	 */
-	public static function normalize_grants( string $grants ): string {
-		return 'full' === $grants ? 'participate' : $grants;
-	}
-
-	/**
 	 * The roster role a grant records: Viewer for read, Member for participate.
 	 *
 	 * @param string $grants read | participate.
@@ -138,7 +132,7 @@ class AccessRule extends Model {
 	 * member's role needs no rewrite: SpaceMember caps it by the live grant.
 	 *
 	 * @param int    $id     Rule row ID.
-	 * @param string $grants read | participate ("full" is saved as participate).
+	 * @param string $grants read | participate.
 	 * @return bool|\WP_Error True on success.
 	 */
 	public static function update_grants( int $id, string $grants ): bool|\WP_Error {
@@ -146,11 +140,10 @@ class AccessRule extends Model {
 		if ( ! $rule ) {
 			return new \WP_Error( 'jetonomy_rule_not_found', __( 'Access rule not found.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
-		if ( ! in_array( $grants, array( 'read', 'participate', 'full' ), true ) ) {
+		if ( ! in_array( $grants, array( 'read', 'participate' ), true ) ) {
 			return new \WP_Error( 'jetonomy_invalid_grants', __( 'Invalid grants value.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
-		$grants = self::normalize_grants( $grants );
-		$saved  = parent::update(
+		$saved = parent::update(
 			$id,
 			array(
 				'grants'     => $grants,
@@ -458,7 +451,7 @@ class AccessRule extends Model {
 			'participate' => 'member',
 		);
 
-		$max  = $ceiling[ self::normalize_grants( $grants ) ] ?? 'viewer';
+		$max  = $ceiling[ $grants ] ?? 'viewer';
 		$want = $ladder[ $space_role ] ?? 1;
 
 		return $want > $ladder[ $max ] ? $max : $space_role;
@@ -599,7 +592,7 @@ class AccessRule extends Model {
 					break;
 			}
 
-			if ( $matched && ( ! $best || ( $rank[ self::normalize_grants( $rule->grants ) ] ?? 0 ) > ( $rank[ self::normalize_grants( $best->grants ) ] ?? 0 ) ) ) {
+			if ( $matched && ( ! $best || ( $rank[ $rule->grants ] ?? 0 ) > ( $rank[ $best->grants ] ?? 0 ) ) ) {
 				$best = $rule;
 			}
 		}
@@ -609,7 +602,7 @@ class AccessRule extends Model {
 		}
 
 		return array(
-			'grants'     => self::normalize_grants( $best->grants ), // 'read' or 'participate'
+			'grants'     => $best->grants, // 'read' or 'participate'
 			'space_role' => $best->space_role,
 			'rule_id'    => (int) $best->id,
 			'rule_type'  => $best->rule_type,

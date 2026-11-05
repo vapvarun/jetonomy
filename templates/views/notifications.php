@@ -281,6 +281,7 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 				}
 				?>
 				<div class="<?php echo esc_attr( $row_class ); ?>"
+					data-wp-key="notif-<?php echo esc_attr( (int) $notif->id ); ?>"
 					data-jt-notif-id="<?php echo esc_attr( (int) $notif->id ); ?>"
 					data-jt-notif-read="<?php echo esc_attr( $notif->is_read ? '1' : '0' ); ?>">
 					<label class="jt-notif-item__select" aria-label="<?php esc_attr_e( 'Select notification', 'jetonomy' ); ?>">
