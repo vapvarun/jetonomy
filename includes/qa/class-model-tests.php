@@ -273,6 +273,7 @@ class Model_Tests {
 		$this->test_app_strings_defined();
 		$this->test_import_map();
 		$this->test_recount_backfill();
+		$this->test_demo_users();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -3382,6 +3383,59 @@ class Model_Tests {
 	 * its own span, or the cursor stops meaning anything and a resumed job
 	 * would silently skip whatever the dead batch had not yet committed.
 	 */
+	/**
+	 * DS1-DS4 (10478659544): the demo seeder never adopts a real user whose
+	 * login matches a demo name, and cleanup deletes only users it created.
+	 * Runs in a transaction that is rolled back, so a site's own demo seed and
+	 * members are left as they were.
+	 */
+	private function test_demo_users(): void {
+		global $wpdb;
+		\WP_CLI::log( '  Demo users' );
+		$seeder = \Jetonomy\Admin\Ajax\Demo_Seeder::class;
+		$def    = \Jetonomy\Admin\Ajax\Demo_Content::users()[0];
+		$create = new \ReflectionMethod( $seeder, 'create_users' );
+		$delete = new \ReflectionMethod( $seeder, 'delete_demo_users' );
+		$create->setAccessible( true );
+		$delete->setAccessible( true );
+
+		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		try {
+			// A real member holding the first demo login, with their own email and bio.
+			$real = (int) username_exists( $def['login'] );
+			if ( $real ) {
+				$wpdb->update( $wpdb->users, array( 'user_email' => 'qa-real-' . $real . '@example.test' ), array( 'ID' => $real ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				delete_user_meta( $real, 'jetonomy_demo_user' );
+				clean_user_cache( $real );
+			} else {
+				$real = (int) wp_insert_user( array( 'user_login' => $def['login'], 'user_pass' => wp_generate_password(), 'user_email' => 'qa-real-' . wp_generate_password( 6, false ) . '@example.test', 'role' => 'editor' ) );
+			}
+			update_user_meta( $real, 'description', 'QA real bio' );
+			$post = (int) wp_insert_post( array( 'post_title' => 'QA real post', 'post_status' => 'publish', 'post_author' => $real ) );
+
+			$users = $create->invoke( null, current_time( 'mysql', true ) );
+			$demo  = (int) ( $users[ $def['login'] ] ?? 0 );
+			$this->check( 'DS1: a login clash creates a separate demo user and leaves the real bio alone', $demo && $demo !== $real && 'QA real bio' === get_user_meta( $real, 'description', true ), "demo=$demo real=$real" );
+			$this->check( 'DS2: the demo user carries the seeder marker', (bool) get_user_meta( $demo, 'jetonomy_demo_user', true ) );
+
+			// A manifest that lists the real member (as a 2.0.6 seed wrote it).
+			$delete->invoke( null, array( $real, $demo ) );
+			clean_user_cache( $real );
+			clean_user_cache( $demo );
+			$this->check( 'DS3: cleanup keeps the real member and their post, deletes the demo user', get_userdata( $real ) && get_post( $post ) && ! get_userdata( $demo ) );
+
+			// A demo user from a seed made before the marker is still cleaned by its demo email.
+			$old = (int) ( $users[ \Jetonomy\Admin\Ajax\Demo_Content::users()[1]['login'] ] ?? 0 );
+			delete_user_meta( $old, 'jetonomy_demo_user' );
+			$delete->invoke( null, array( $old ) );
+			clean_user_cache( $old );
+			$this->check( 'DS4: a demo user without the marker is cleaned by its demo email', $old && ! get_userdata( $old ) );
+		} finally {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			wp_cache_flush();
+		}
+	}
+
 	private function test_recount_backfill(): void {
 		global $wpdb;
 

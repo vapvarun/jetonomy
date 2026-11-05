@@ -803,6 +803,21 @@ class Admin {
 			$reset = sanitize_key( $input['role_caps_reset'] ?? '' );
 			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) ) {
 				unset( $overrides[ $reset ] );
+				// The row reloads with nothing ticked, which reads as "still no
+				// access": say where the access now comes from.
+				$roles_all = wp_roles()->get_names();
+				add_settings_error(
+					'jetonomy_settings',
+					'jetonomy_role_caps_reset',
+					sprintf(
+						/* translators: 1: member label, plural (e.g. "Members"). 2: role name. 3: space label, plural, lowercase (e.g. "spaces"). */
+						__( '%1$s with the %2$s role can now read and post in the %3$s they belong to. Nothing needs ticking for that; tick boxes only to give this role more.', 'jetonomy' ), // jt-terms-ok: "post" is the verb here.
+						\Jetonomy\jetonomy_label( 'member', true ),
+						isset( $roles_all[ $reset ] ) ? translate_user_role( $roles_all[ $reset ] ) : $reset,
+						\Jetonomy\jetonomy_label( 'space', true, true )
+					),
+					'success'
+				);
 			}
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $overrides, false );
 			\Jetonomy\Permissions\Capabilities::register();

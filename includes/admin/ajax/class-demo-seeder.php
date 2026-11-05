@@ -49,6 +49,9 @@ class Demo_Seeder {
 	/** Target topics per space (anchors + templated backfill). */
 	private const TOPICS_PER_SPACE = 11;
 
+	/** User meta the seeder writes on every demo user it creates; cleanup deletes only those. */
+	private const USER_MARKER = 'jetonomy_demo_user';
+
 	// ── Entry point ────────────────────────────────────────────────────────────
 
 	/**
@@ -431,15 +434,8 @@ class Demo_Seeder {
 
 		// Delete demo users (and their profiles) tracked from a prior seed
 		// before we truncate the profile table out from under them.
-		$prior      = get_option( 'jetonomy_demo_data', array() );
-		$user_ids   = array_filter( array_map( 'absint', $prior['users'] ?? array() ) );
-		$profiles_t = table( 'user_profiles' );
-		// wp_delete_user() lives in wp-admin; REST and WP-CLI requests do not load it.
-		require_once ABSPATH . 'wp-admin/includes/user.php';
-		foreach ( $user_ids as $uid ) {
-			$wpdb->delete( $profiles_t, array( 'user_id' => $uid ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			wp_delete_user( $uid );
-		}
+		$prior = get_option( 'jetonomy_demo_data', array() );
+		self::delete_demo_users( array_filter( array_map( 'absint', $prior['users'] ?? array() ) ) );
 		delete_option( 'jetonomy_demo_data' );
 
 		// Free content tables.
@@ -844,10 +840,29 @@ class Demo_Seeder {
 
 		// --- Users ---
 
+		self::delete_demo_users( $user_ids );
+	}
+
+	/**
+	 * Delete the users this seeder created, with their Jetonomy profiles.
+	 *
+	 * A manifest id is not proof: a 2.0.6 seed adopted any existing user whose
+	 * login matched a demo name. Only a user carrying the seeder's marker, or
+	 * its demo email (seeds made before the marker), is deleted.
+	 *
+	 * @param int[] $user_ids Ids from a demo manifest.
+	 */
+	private static function delete_demo_users( array $user_ids ): void {
+		global $wpdb;
+		$emails     = array_column( Demo_Content::users(), 'email' );
 		$profiles_t = table( 'user_profiles' );
 		// wp_delete_user() lives in wp-admin; REST and WP-CLI requests do not load it.
 		require_once ABSPATH . 'wp-admin/includes/user.php';
 		foreach ( $user_ids as $uid ) {
+			$user = get_userdata( $uid );
+			if ( ! $user || ( ! get_user_meta( $uid, self::USER_MARKER, true ) && ! in_array( $user->user_email, $emails, true ) ) ) {
+				continue;
+			}
 			$wpdb->delete( $profiles_t, array( 'user_id' => $uid ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			wp_delete_user( $uid );
 		}
@@ -1170,11 +1185,20 @@ class Demo_Seeder {
 		$users      = array();
 
 		foreach ( Demo_Content::users() as $def ) {
-			$uid = username_exists( $def['login'] );
+			// Reuse only a user this seeder made (found by its demo email). A
+			// real member who happens to be called "alice" is never adopted: the
+			// demo user gets a free login instead, so cleanup cannot delete them.
+			$uid = email_exists( $def['email'] );
 			if ( ! $uid ) {
+				$login = $def['login'];
+				$n     = 1;
+				while ( username_exists( $login ) ) {
+					$login = $def['login'] . '-demo' . ( $n > 1 ? $n : '' );
+					++$n;
+				}
 				$uid = wp_insert_user(
 					array(
-						'user_login'   => $def['login'],
+						'user_login'   => $login,
 						'user_email'   => $def['email'],
 						'display_name' => $def['display'],
 						'user_pass'    => wp_generate_password( 24, true, true ),
@@ -1185,6 +1209,7 @@ class Demo_Seeder {
 					continue;
 				}
 			}
+			update_user_meta( (int) $uid, self::USER_MARKER, 1 );
 
 			UserProfile::find_or_create( (int) $uid );
 

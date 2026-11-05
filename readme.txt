@@ -293,6 +293,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Improve  - The leaderboard keeps names readable on phones, gold, silver and bronze differ, and every member count uses one definition.
 * Improve  - Admin lists fit their cards, Users sort by reputation, joined and last seen, space members page, and the Activity Log shows names instead of ids.
 * Improve  - Every destructive admin action asks first and names what it removes.
+* Improve  - After "Give members access" on the Permissions tab, a notice explains that the role now gets access through its spaces with nothing ticked.
 * Fix      - Address fields (terms, privacy, support, logos, share image, space cover, avatar) refuse a value that is not an address by name and keep the saved one.
 * Fix      - Community addresses typed in another case, such as /COMMUNITY/, redirect to the lower-case address instead of a 404.
 * Fix      - Removing a vote takes back the reputation and notification it gave.
@@ -319,6 +320,8 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - On right-to-left sites, empty search, topic title and editor fields start on the right side, then follow the language you type.
 * Fix      - A topic title over 255 characters is refused with a clear message instead of an error.
 * Fix      - A space whose plans were all deleted offers no button to a checkout that no longer exists.
+* Fix      - Removing the demo community no longer deletes a real member whose username matches a demo name, or rewrites their bio.
+* Fix      - On phones, the theme footer is no longer hidden behind the community tab bar.
 * Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.
 * Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
 * Security - Guests never see a private space's name on its members or roadmap page.
