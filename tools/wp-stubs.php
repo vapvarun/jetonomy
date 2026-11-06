@@ -56,6 +56,7 @@ function apply_filters( string $tag, $val, ...$args ) { return $val; }
 function has_action( ...$a ): bool { return false; }
 function has_filter( ...$a ): bool { return false; }
 function did_action( ...$a ): int { return 0; }
+function determine_locale(): string { return 'en_US'; }
 
 function register_activation_hook( ...$a ): void {}
 function register_deactivation_hook( ...$a ): void {}
