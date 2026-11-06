@@ -310,6 +310,8 @@ class Model_Tests {
 	 * MN1     the public members search never matches an email address (10430894693)
 	 * LV1     the leave confirm follows the join policy (10483409032)
 	 * RM1-RM3 Permissions: the reset copies Subscriber, ticking only adds, Join matches the route (10463415760)
+	 * RM4     a role without WordPress read is shown only Read ticked (10483588613)
+	 * SI1     space and topic pages fall back to the Default share image, SEO Pro on or off (10483605549)
 	 * SX1     a new space drops the cached sitemap (10430894693)
 	 * IS1-IS2 import slugs: NFD accents fold without intl; wpForo boards never share a category (10441705185, 10441707350)
 	 */
@@ -564,10 +566,31 @@ class Model_Tests {
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $pm_caps_was, false );
 			\Jetonomy\Permissions\Capabilities::register();
 			$this->check( 'RM3: a role without WordPress read is not offered Join, which the join route refuses', ! SpaceMember::may_join_spaces( $pm_bare ) );
+			$this->check( 'RM4: the Permissions column for a role without WordPress read ticks only Read, the one thing it gets', array( 'jetonomy_read' ) === \Jetonomy\Permissions\Capabilities::unmapped_caps( 'jt_qa_pmx_' . $suffix ) && ! Permission_Engine::can( $pm_bare, 'create_posts', $space ) );
 			remove_role( 'jt_qa_pm_' . $suffix );
 			remove_role( 'jt_qa_pmx_' . $suffix );
+
+			// SI1. A space with no cover or SEO image, and a topic in it with no
+			// inline image, still share the Default share image, with SEO Pro on or off.
+			Space::update( $space, array( 'visibility' => 'public' ) ); // GP1 above left it private, which prints no share meta.
+			$si_was                         = get_option( 'jetonomy_settings', array() );
+			$si_set                         = is_array( $si_was ) ? $si_was : array();
+			$si_set['seo_default_og_image'] = 'https://example.com/qa-share-' . $suffix . '.png';
+			update_option( 'jetonomy_settings', $si_set );
+			$si_slug = (string) Space::find( $space )->slug;
+			$si_tag  = '<meta property="og:image" content="' . $si_set['seo_default_og_image'] . '"';
+			$si_ok   = true;
+			$si_got  = array();
+			foreach ( array( \Jetonomy\route_url( 'space', $si_slug ), \Jetonomy\route_url( 'post', $si_slug, (string) \Jetonomy\Models\Post::find( (int) $topic )->slug ) ) as $si_url ) {
+				$si_res   = wp_remote_get( $si_url, array( 'timeout' => 20 ) );
+				$si_body  = wp_remote_retrieve_body( $si_res );
+				$si_ok    = $si_ok && str_contains( $si_body, $si_tag );
+				$si_got[] = wp_remote_retrieve_response_code( $si_res ) . ( preg_match( '/<meta property="og:image" content="([^"]*)"/', $si_body, $si_m ) ? ' ' . $si_m[1] : ' no og:image' );
+			}
+			update_option( 'jetonomy_settings', $si_was );
+			$this->check( 'SI1: space and topic pages without an image of their own share the Default share image', $si_ok, implode( '; ', $si_got ) );
 		} else {
-			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'GG1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3' ) as $id ) {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'GG1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3', 'RM4', 'SI1' ) as $id ) {
 				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
 			}
 		}

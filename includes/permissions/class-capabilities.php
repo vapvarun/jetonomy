@@ -69,11 +69,17 @@ class Capabilities {
 	 * What a role nobody has mapped holds through the engine's fallback: the
 	 * member-grade actions in its spaces, and joining. The Permissions table
 	 * shows these ticked for such a role, so ticking one more box adds to what
-	 * it already has instead of replacing it.
+	 * it already has instead of replacing it. A role without WordPress read
+	 * gets reading only: every write route and joining need read.
 	 *
+	 * @param string $role_slug Role slug; '' for a role that has read.
 	 * @return string[]
 	 */
-	public static function unmapped_caps(): array {
+	public static function unmapped_caps( string $role_slug = '' ): array {
+		$role = '' !== $role_slug ? get_role( $role_slug ) : null;
+		if ( $role && ! $role->has_cap( 'read' ) ) {
+			return array_values( array_intersect( self::all(), array( 'jetonomy_read' ) ) );
+		}
 		$caps   = array_map( static fn( string $action ): string => 'jetonomy_' . $action, Permission_Engine::MEMBER_GRADE_ACTIONS );
 		$caps[] = 'jetonomy_join_spaces';
 		return array_values( array_intersect( self::all(), $caps ) );

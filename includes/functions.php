@@ -1813,6 +1813,29 @@ function absolute_url( string $raw ): ?string {
 }
 
 /**
+ * The image a share card shows: the page's own image when it resolves to a
+ * full address, else the Default share image, the site logo, then the site icon.
+ * One chain for Free's head and Pro's SEO extension, so the two cannot drift.
+ *
+ * @param string $route_image The page's own image (space cover, SEO image, first inline image), may be site-relative.
+ * @return string A full address, or '' when the site has no image at all.
+ */
+function share_image( string $route_image = '' ): string {
+	if ( str_starts_with( $route_image, '/' ) && ! str_starts_with( $route_image, '//' ) ) {
+		$route_image = home_url( $route_image );
+	}
+	$image = absolute_url( $route_image ) ?? '';
+	if ( '' === $image ) {
+		$image = absolute_url( (string) ( get_option( 'jetonomy_settings', array() )['seo_default_og_image'] ?? '' ) ) ?? '';
+	}
+	if ( '' === $image ) {
+		$logo_id = (int) get_theme_mod( 'custom_logo' );
+		$image   = $logo_id > 0 ? (string) wp_get_attachment_image_url( $logo_id, 'full' ) : '';
+	}
+	return '' !== $image ? $image : (string) get_site_icon_url( 512 );
+}
+
+/**
  * The refusal for an address field that is not a web address, worded once.
  *
  * @param string $label What the owner or member calls the field, e.g. "Cover image".

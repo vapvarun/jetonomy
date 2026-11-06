@@ -3723,7 +3723,8 @@ tr.jetonomy-moderated td {
 	box-shadow: inset -1px 0 0 var(--jt-admin-border), 6px 0 8px -6px var(--jt-admin-border-strong);
 }
 
-.jetonomy-admin .jt-matrix-scroll-hint {
+.jetonomy-admin .jt-matrix-scroll-hint,
+.jetonomy-admin .jt-role-no-read {
 	margin: 0;
 	padding: 10px 20px 0;
 }
@@ -3741,7 +3742,8 @@ tr.jetonomy-moderated td {
 		word-break: break-all;
 	}
 
-	.jetonomy-admin .jt-matrix-scroll-hint {
+	.jetonomy-admin .jt-matrix-scroll-hint,
+	.jetonomy-admin .jt-role-no-read {
 		padding-inline: 14px;
 	}
 }

@@ -1302,7 +1302,7 @@ class Template_Loader {
 							$image_alt    = $post->title;
 
 							if ( preg_match( '/<img[^>]+src=["\']([^"\']+)["\']/i', (string) $post->content, $m ) ) {
-								$image = esc_url_raw( $m[1] );
+								$image = html_entity_decode( $m[1] );
 							}
 
 							// jt_user_profiles.display_name is never written by free or
@@ -1478,33 +1478,7 @@ class Template_Loader {
 				}
 
 				$jt_seo_settings = get_option( 'jetonomy_settings', array() );
-
-				/**
-				 * og:image fallback chain — when the route-specific image is
-				 * empty, fall back through admin-configured default → site
-				 * logo → site icon so social shares always carry a card
-				 * image instead of letting the platform render a blank tile.
-				 */
-				if ( '' === $image ) {
-					// Read through absolute_url(): a site-relative value saved before
-					// 2.0.7 refused it cannot resolve on a social network.
-					$default_og = \Jetonomy\absolute_url( (string) ( $jt_seo_settings['seo_default_og_image'] ?? '' ) ) ?? '';
-					if ( '' !== $default_og ) {
-						$image = $default_og;
-					}
-				}
-				if ( '' === $image ) {
-					$logo_id = (int) get_theme_mod( 'custom_logo' );
-					if ( $logo_id > 0 ) {
-						$image = (string) wp_get_attachment_image_url( $logo_id, 'full' );
-					}
-					if ( '' === $image ) {
-						$icon_url = (string) get_site_icon_url( 512 );
-						if ( '' !== $icon_url ) {
-							$image = $icon_url;
-						}
-					}
-				}
+				$image           = \Jetonomy\share_image( $image );
 				if ( '' === $image_alt && '' !== $title ) {
 					$image_alt = $title;
 				}

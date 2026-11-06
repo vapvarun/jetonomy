@@ -778,7 +778,7 @@ class Admin {
 					if ( ! in_array( $role_slug, $shown_roles, true ) ) {
 						continue;
 					}
-					$shown = \Jetonomy\Permissions\Capabilities::unmapped_caps();
+					$shown = \Jetonomy\Permissions\Capabilities::unmapped_caps( $role_slug );
 					sort( $shown );
 					$sorted = $caps;
 					sort( $sorted );

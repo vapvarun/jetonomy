@@ -119,6 +119,30 @@
       "title": "German membership gate sentences were missing articles",
       "guard": "qa-actions:GG1",
       "added": "2026-11-06"
+    },
+    {
+      "card": "10483605549",
+      "title": "With SEO Pro on, space and topic pages printed no og:image when the page had no image of its own",
+      "guard": "qa-actions:SI1",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483605549",
+      "title": "With SEO Pro on, space and topic pages printed no og:image when the page had no image of its own",
+      "guard": "runbook:e-seo-pro.16",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483588613",
+      "title": "Permissions ticked fallback boxes for a role without WordPress read",
+      "guard": "qa-actions:RM4",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483588613",
+      "title": "Permissions ticked fallback boxes for a role without WordPress read",
+      "guard": "runbook:c-admin-plugin-pages.27",
+      "added": "2026-11-06"
     }
   ]
 }
