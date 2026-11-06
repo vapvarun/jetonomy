@@ -16512,3 +16512,12 @@ msgstr "加入后即可访问，退出后将失去访问权限。"
 
 msgid "People you have blocked"
 msgstr "你屏蔽的人"
+
+msgid "%1$s with the %2$s role now have the same access as the %3$s role. Their column below shows it; tick or untick boxes to change it."
+msgstr "拥有%2$s角色的%1$s现在拥有与%3$s角色相同的权限。下方的列会显示这一点；勾选或取消勾选即可更改。"
+
+msgid "No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, so only Read can be ticked for them."
+msgstr "没有 WordPress 阅读权限的角色：%1$s。其%2$s可以阅读，但不能发帖、投票或加入，因此只能勾选“浏览社区”。"
+
+msgid "Give %1$s %2$s the same access as the %3$s role"
+msgstr "授予%1$s角色的%2$s与%3$s角色相同的权限"

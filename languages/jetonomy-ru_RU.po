@@ -17660,3 +17660,12 @@ msgstr "Доступ откроется, как только вы вступит
 
 msgid "People you have blocked"
 msgstr "Люди, которых вы заблокировали"
+
+msgid "%1$s with the %2$s role now have the same access as the %3$s role. Their column below shows it; tick or untick boxes to change it."
+msgstr "%1$s с ролью %2$s теперь имеют тот же доступ, что и роль %3$s. Это видно в их столбце ниже; ставьте или снимайте отметки, чтобы изменить его."
+
+msgid "No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, so only Read can be ticked for them."
+msgstr "Нет права чтения WordPress: %1$s. Их %2$s могут читать, но не могут публиковать, голосовать или вступать, поэтому для них можно отметить только «Чтение сообщества»."
+
+msgid "Give %1$s %2$s the same access as the %3$s role"
+msgstr "Дать %2$s с ролью %1$s тот же доступ, что и у роли %3$s"

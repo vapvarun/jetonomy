@@ -17598,3 +17598,12 @@ msgstr "Ottieni l’accesso non appena ti unisci e lo perdi se esci."
 
 msgid "People you have blocked"
 msgstr "Persone che hai bloccato"
+
+msgid "%1$s with the %2$s role now have the same access as the %3$s role. Their column below shows it; tick or untick boxes to change it."
+msgstr "I %1$s con il ruolo %2$s ora hanno lo stesso accesso del ruolo %3$s. La loro colonna qui sotto lo mostra; seleziona o deseleziona le caselle per cambiarlo."
+
+msgid "No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, so only Read can be ticked for them."
+msgstr "Senza la capacità di lettura di WordPress: %1$s. I loro %2$s possono leggere, ma non pubblicare, votare o unirsi, quindi si può selezionare solo «Leggi la community»."
+
+msgid "Give %1$s %2$s the same access as the %3$s role"
+msgstr "Dai ai %2$s del ruolo %1$s lo stesso accesso del ruolo %3$s"

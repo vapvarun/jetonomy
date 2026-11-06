@@ -16555,3 +16555,12 @@ msgstr "참여하면 바로 이용할 수 있고, 나가면 이용할 수 없어
 
 msgid "People you have blocked"
 msgstr "내가 차단한 사람"
+
+msgid "%1$s with the %2$s role now have the same access as the %3$s role. Their column below shows it; tick or untick boxes to change it."
+msgstr "%2$s 역할의 %1$s은(는) 이제 %3$s 역할과 같은 권한을 가집니다. 아래 열에서 확인할 수 있으며, 체크를 켜거나 꺼서 바꿀 수 있습니다."
+
+msgid "No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, so only Read can be ticked for them."
+msgstr "WordPress 읽기 권한이 없는 역할: %1$s. 이 역할의 %2$s은(는) 읽을 수는 있지만 글쓰기, 투표, 가입은 할 수 없으므로 '커뮤니티 읽기'만 체크할 수 있습니다."
+
+msgid "Give %1$s %2$s the same access as the %3$s role"
+msgstr "%1$s 역할의 %2$s에게 %3$s 역할과 같은 권한 부여"

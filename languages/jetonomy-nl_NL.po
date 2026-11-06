@@ -17544,3 +17544,12 @@ msgstr "Je krijgt toegang zodra je lid wordt en verliest die als je vertrekt."
 
 msgid "People you have blocked"
 msgstr "Mensen die je hebt geblokkeerd"
+
+msgid "%1$s with the %2$s role now have the same access as the %3$s role. Their column below shows it; tick or untick boxes to change it."
+msgstr "%1$s met de rol %2$s hebben nu dezelfde toegang als de rol %3$s. Hun kolom hieronder laat het zien; vink vakjes aan of uit om het te wijzigen."
+
+msgid "No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, so only Read can be ticked for them."
+msgstr "Geen WordPress-leesrecht: %1$s. Hun %2$s kunnen lezen, maar niet posten, stemmen of lid worden, dus alleen ‘De community lezen’ kan voor hen worden aangevinkt."
+
+msgid "Give %1$s %2$s the same access as the %3$s role"
+msgstr "Geef %2$s met de rol %1$s dezelfde toegang als de rol %3$s"

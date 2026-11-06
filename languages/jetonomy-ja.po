@@ -16569,3 +16569,12 @@ msgstr "参加するとすぐにアクセスでき、退出するとアクセス
 
 msgid "People you have blocked"
 msgstr "ブロックしたユーザー"
+
+msgid "%1$s with the %2$s role now have the same access as the %3$s role. Their column below shows it; tick or untick boxes to change it."
+msgstr "%2$s ロールの%1$sは、%3$s ロールと同じアクセス権を持つようになりました。下の列で確認でき、チェックを付けたり外したりして変更できます。"
+
+msgid "No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, so only Read can be ticked for them."
+msgstr "WordPress の閲覧権限がないロール: %1$s。これらの%2$sは閲覧はできますが、投稿・投票・参加はできないため、「コミュニティを閲覧」のみチェックできます。"
+
+msgid "Give %1$s %2$s the same access as the %3$s role"
+msgstr "%1$s の%2$sに %3$s ロールと同じアクセス権を付与"
