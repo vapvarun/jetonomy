@@ -208,60 +208,7 @@ final class Jetonomy {
 		$changed  = false;
 
 		if ( empty( $settings['notification_defaults'] ) ) {
-			$settings['notification_defaults'] = array(
-				'reply_to_post'       => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'reply_to_reply'      => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'mention'             => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'accepted_answer'     => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'idea_status_changed' => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'new_post_in_sub'     => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'badge_earned'        => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'vote_on_post'        => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'reaction'            => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'moderation'          => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'flag_resolved'       => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'join_request'        => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'join_request_result' => array(
-					'web'   => true,
-					'email' => true,
-				),
-			);
+			$settings['notification_defaults'] = \Jetonomy\Notifications\Notifier::defaults();
 			$changed                           = true;
 		}
 

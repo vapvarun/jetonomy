@@ -384,6 +384,7 @@ Blocking now stops direct contact, importers resume cleanly, and a round of acce
 * Fix      - Divi 5 pages show the community header with full styling.
 * Fix      - The emoji picker fits its container on touch screens.
 * Fix      - Join respects the Join spaces capability, and the Silence and Ban IP actions show only on members without a restriction.
+* Fix      - Resetting notification defaults from WP-CLI restores every notification type, including roadmap idea updates, reactions and report reviews.
 * Security - Private communities refuse guests on every read ability, matching the website and REST API.
 * Security - Link previews and web push connect only to the address that was checked, and link previews are rate limited.
 * Security - Replies posted through the Abilities API follow the same rate limits and rules as the website.

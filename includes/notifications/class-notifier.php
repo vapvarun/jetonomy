@@ -1341,6 +1341,71 @@ class Notifier {
 	}
 
 	/**
+	 * Notification defaults seeded on activation and by
+	 * `wp jetonomy config reset notification_defaults`. One list, so the two
+	 * can never drift (they did: the reset copy lacked four types).
+	 *
+	 * @since 2.0.7
+	 * @return array<string,array<string,bool>>
+	 */
+	public static function defaults(): array {
+		return array(
+			'reply_to_post'       => array(
+				'web'   => true,
+				'email' => true,
+			),
+			'reply_to_reply'      => array(
+				'web'   => true,
+				'email' => false,
+			),
+			'mention'             => array(
+				'web'   => true,
+				'email' => true,
+			),
+			'accepted_answer'     => array(
+				'web'   => true,
+				'email' => true,
+			),
+			'idea_status_changed' => array(
+				'web'   => true,
+				'email' => true,
+			),
+			'new_post_in_sub'     => array(
+				'web'   => true,
+				'email' => false,
+			),
+			'badge_earned'        => array(
+				'web'   => true,
+				'email' => false,
+			),
+			'vote_on_post'        => array(
+				'web'   => true,
+				'email' => false,
+			),
+			'reaction'            => array(
+				'web'   => true,
+				'email' => false,
+			),
+			'moderation'          => array(
+				'web'   => true,
+				'email' => true,
+			),
+			'flag_resolved'       => array(
+				'web'   => true,
+				'email' => false,
+			),
+			'join_request'        => array(
+				'web'   => true,
+				'email' => true,
+			),
+			'join_request_result' => array(
+				'web'   => true,
+				'email' => true,
+			),
+		);
+	}
+
+	/**
 	 * Email default for a type the owner has not stored a default for.
 	 *
 	 * Types added after a site seeded notification_defaults have no stored

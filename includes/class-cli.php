@@ -622,17 +622,17 @@ class CLI {
 		$record( 'rewrite_rules', "Base slug '{$base}' is non-empty", ! empty( $base ) );
 
 		$expected_patterns = array(
-			"^{$base}/?$"                       => 'Community home',
-			"^{$base}/category/([^/]+)/?$"      => 'Category view',
-			"^{$base}/s/([^/]+)/?$"             => 'Space view',
-			"^{$base}/s/([^/]+)/t/([^/]+)/?$"   => 'Single post',
-			"^{$base}/u/([^/]+)/?$"             => 'User profile',
-			"^{$base}/notifications/?$"         => 'Notifications',
-			"^{$base}/search/?$"                => 'Search',
-			"^{$base}/leaderboard/?$"           => 'Leaderboard',
-			"^{$base}/mod/?$"                   => 'Moderation',
-			"^{$base}/tag/([^/]+)/?$"           => 'Tag view',
-			"^{$base}/invite/([a-zA-Z0-9]+)/?$" => 'Invite link',
+			"^{$base}/?$"                     => 'Community home',
+			"^{$base}/category/([^/]+)/?$"    => 'Category view',
+			"^{$base}/s/([^/]+)/?$"           => 'Space view',
+			"^{$base}/s/([^/]+)/t/([^/]+)/?$" => 'Single post',
+			"^{$base}/u/([^/]+)/?$"           => 'User profile',
+			"^{$base}/notifications/?$"       => 'Notifications',
+			"^{$base}/search/?$"              => 'Search',
+			"^{$base}/leaderboard/?$"         => 'Leaderboard',
+			"^{$base}/mod/?$"                 => 'Moderation',
+			"^{$base}/tag/([^/]+)/?$"         => 'Tag view',
+			"^{$base}/invite/([^/]+)/?$"      => 'Invite link',
 		);
 
 		if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
@@ -667,6 +667,8 @@ class CLI {
 
 			if ( $ext_dir && is_dir( $ext_dir ) ) {
 				$ext_files = glob( $ext_dir . '*/class-extension.php' );
+				// Every namespace: some extensions register under jetonomy-pro/v1.
+				$every_route = array_keys( $server->get_routes() );
 				foreach ( $ext_files as $ext_file ) {
 					$ext_id           = basename( dirname( $ext_file ) );
 					$discovered_ids[] = $ext_id;
@@ -700,9 +702,10 @@ class CLI {
 							foreach ( $ext_route_paths as $ext_path ) {
 								$expected_key      = '/jetonomy/v1' . $ext_path;
 								$found_in_registry = false;
-								foreach ( array_keys( $all_routes ) as $rk ) {
+								foreach ( $every_route as $rk ) {
 									$static_prefix = rtrim( explode( '(', $ext_path )[0], '/' );
-									if ( $rk === $expected_key || str_starts_with( $rk, '/jetonomy/v1' . $static_prefix ) ) {
+									// Extensions may use their own namespace (jetonomy-pro/v1), so match the path under any /<ns>/vN.
+									if ( $rk === $expected_key || str_starts_with( $rk, '/jetonomy/v1' . $static_prefix ) || preg_match( '#^/[a-z0-9-]+/v\d+' . preg_quote( $ext_path, '#' ) . '$#', $rk ) ) {
 										$found_in_registry = true;
 										break;
 									}

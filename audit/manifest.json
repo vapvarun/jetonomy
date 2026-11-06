@@ -4490,6 +4490,7 @@
     "review_cross_check": [
       "Ponytail review cross-check: empty dir=auto fields follow the page via one CSS rule in jetonomy.css (:where(.jt-app,.jetonomy-admin) [dir=auto]:placeholder-shown / [contenteditable]:empty -> direction:inherit), also loaded on Pro admin; AJAX access-rule create allow-list is read|participate; Reply::viewer_can_accept returns early for guests; .jt-more-item text-align:start.",
       "Batch A (2026-11-05): phone tab-bar clearance moved from .jt-app to body:has(.jt-mobile-tabs) so the theme footer clears it (card 10469777893); Demo_Seeder never adopts an existing user (reuses only by demo email, unique login on clash, user meta jetonomy_demo_user) and delete_demo_users() deletes only marked/demo-email users from cleanup() and reset_all() (card 10478659544, QA DS1-DS4); role_caps_reset adds a success notice explaining membership-based access (card 10463415760)."
-    ]
+    ],
+    "qa_suite_fixes": "NEW Notifier::defaults() is the single notification_defaults list (activation + `wp jetonomy config reset notification_defaults`); Config_Journey::notification_defaults() removed (it had drifted: lacked idea_status_changed, reaction, flag_resolved, join_request_result). wp jetonomy qa: invite rewrite check matches the router's ([^/]+) pattern from cb0280ed; Pro extension route check searches every REST namespace (site-announcements registers under jetonomy-pro/v1)."
   }
 }
