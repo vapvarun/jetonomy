@@ -1486,7 +1486,9 @@ class Template_Loader {
 				 * image instead of letting the platform render a blank tile.
 				 */
 				if ( '' === $image ) {
-					$default_og = isset( $jt_seo_settings['seo_default_og_image'] ) ? (string) $jt_seo_settings['seo_default_og_image'] : '';
+					// Read through absolute_url(): a site-relative value saved before
+					// 2.0.7 refused it cannot resolve on a social network.
+					$default_og = \Jetonomy\absolute_url( (string) ( $jt_seo_settings['seo_default_og_image'] ?? '' ) ) ?? '';
 					if ( '' !== $default_og ) {
 						$image = $default_og;
 					}

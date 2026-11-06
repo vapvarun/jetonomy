@@ -295,6 +295,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Improve  - Every destructive admin action asks first and names what it removes.
 * Improve  - After "Give members access" on the Permissions tab, a notice explains that the role now gets access through its spaces with nothing ticked.
 * Fix      - Address fields (terms, privacy, support, logos, share image, space cover, avatar) refuse a value that is not an address by name and keep the saved one.
+* Fix      - Terms, privacy and support links, the app logo, the email logo and the default share image saved as a site path like /terms are no longer sent to the mobile app, emails or social shares, which cannot open them.
 * Fix      - Community addresses typed in another case, such as /COMMUNITY/, redirect to the lower-case address instead of a 404.
 * Fix      - Removing a vote takes back the reputation and notification it gave.
 * Fix      - The activity log no longer records a removed vote as a vote.

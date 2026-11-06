@@ -1853,7 +1853,9 @@ class Notifier {
 		// Generic Jetonomy header logo filter — surfaces with no email-specific
 		// override (Pro white-label, integrations) can drive both via the
 		// shared `jetonomy_header_logo` contract.
-		$logo_url = \Jetonomy\header_logo( $logo_url );
+		// A mail client cannot resolve a site-relative path (saved before 2.0.7
+		// refused one, or returned by a filter): fall back to the site-name text.
+		$logo_url = \Jetonomy\absolute_url( \Jetonomy\header_logo( $logo_url ) ) ?? '';
 
 		$type_labels = array(
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */

@@ -385,6 +385,27 @@ class Model_Tests {
 			// AU1. Addresses used off the site must be full addresses.
 			$this->check( 'AU1: an off-site address setting refuses a site-relative path and keeps a full one', null === \Jetonomy\absolute_url( '/terms' ) && 'https://example.com/terms' === \Jetonomy\absolute_url( 'https://example.com/terms' ) && '' === \Jetonomy\absolute_url( '' ) );
 
+			// AU2. Relative values saved before 2.0.7 never leave the site: the app
+			// config sends '' and the email header falls back to text.
+			$au_old = static function ( $o ) {
+				return array_merge(
+					(array) $o,
+					array(
+						'terms_url'      => '/terms',
+						'support_url'    => '/support',
+						'logo_url'       => '/wp-content/uploads/logo.png',
+						'email_logo_url' => '/wp-content/uploads/mail.png',
+					)
+				);
+			};
+			add_filter( 'option_jetonomy_settings', $au_old );
+			$au_cfg  = rest_do_request( new \WP_REST_Request( 'GET', '/jetonomy/v1/app/config' ) )->get_data();
+			$au_cfg  = (array) ( $au_cfg['data'] ?? $au_cfg );
+			$au_mail = \Jetonomy\Notifications\Notifier::render_email_template( 'mention', 'AU2', wp_get_current_user() );
+			remove_filter( 'option_jetonomy_settings', $au_old );
+			$au_sent = array_intersect_key( $au_cfg, array_flip( array( 'terms_url', 'support_url', 'logo_url' ) ) );
+			$this->check( 'AU2: relative addresses saved before 2.0.7 reach neither the app config nor the email header', array( '' ) === array_values( array_unique( $au_sent ) ) && 3 === count( $au_sent ) && ! str_contains( $au_mail, 'uploads/mail.png' ), wp_json_encode( $au_sent ) );
+
 			// GP1.
 			$private = static function ( $o ) {
 				$o               = (array) $o;
