@@ -785,10 +785,10 @@
           "POST"
         ],
         "handler": "Moderation_Controller::create_flag",
-        "permission": "REST_Auth::auth_mutation('jetonomy_flag')",
+        "permission": "REST_Auth::auth_mutation('read')",
         "purpose": "Create a flag report against a post, reply, or user",
         "auth": "auth_mutation",
-        "capability": "jetonomy_flag",
+        "capability": "read (then Permission_Engine::can flag in the handler)",
         "ownership_check": "handler_enforces",
         "audit_notes": "POST only - listing lives at GET /moderation/flags (require_moderate). object_type enum: post|reply|user. Handler additionally enforces silenced-gate, target existence (404), self-flag (400), and duplicate (409). Corrected 2026-07-30 (Basecamp 10130360032): entry previously advertised GET,POST with __return_true, which never matched source. 1.9.3: the reported state this endpoint enforces (409 on a repeat) is now readable as viewer_flagged on the post and reply shapes."
       },

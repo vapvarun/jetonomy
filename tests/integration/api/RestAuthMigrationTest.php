@@ -65,7 +65,8 @@ class RestAuthMigrationTest extends WP_UnitTestCase {
 			'moderation trash'               => array( 'POST', '/jetonomy/v1/moderation/trash/post/1', array(), 'jetonomy_moderate' ),
 			'moderation bulk'                => array( 'POST', '/jetonomy/v1/moderation/bulk', array( 'action' => 'approve', 'items' => array( array( 'type' => 'post', 'id' => 1 ) ) ), 'jetonomy_moderate' ),
 			'moderation unban'               => array( 'DELETE', '/jetonomy/v1/moderation/ban/1', array(), 'jetonomy_moderate' ),
-			'flag create'                    => array( 'POST', '/jetonomy/v1/flags', array( 'object_type' => 'post', 'object_id' => 1, 'reason' => 'spam' ), 'jetonomy_flag' ),
+			// auth_mutation('read'): whether the member may report is Permission_Engine::can( flag ) in the handler (qa-actions RT1).
+			'flag create'                    => array( 'POST', '/jetonomy/v1/flags', array( 'object_type' => 'post', 'object_id' => 1, 'reason' => 'spam' ), null ),
 			'flag resolve'                   => array( 'POST', '/jetonomy/v1/moderation/flags/1/resolve', array( 'status' => 'dismissed' ), 'jetonomy_moderate' ),
 			'notifications mark all'         => array( 'POST', '/jetonomy/v1/notifications/mark-all-read', array(), null ),
 			'notifications mark one'         => array( 'PATCH', '/jetonomy/v1/notifications/1', array(), null ),

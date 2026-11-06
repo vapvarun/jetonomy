@@ -194,9 +194,11 @@ $crumbs = array(
 									aria-label="<?php /* translators: %s: member display name. */ echo esc_attr( sprintf( __( 'More actions for %s', 'jetonomy' ), $jt_name ) ); ?>"
 									data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
 								<div class="jt-more-dropdown" role="menu" hidden>
+									<?php if ( \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'flag' ) ) : // The same answer POST /flags gives. ?>
 									<button role="menuitem" class="jt-more-item" type="button"
 										data-wp-on--click="actions.flagUser"
 										data-user-id="<?php echo absint( $profile_user_id ); ?>"><?php jetonomy_echo_icon( 'flag', 14 ); ?> <?php esc_html_e( 'Report', 'jetonomy' ); ?></button>
+									<?php endif; ?>
 									<?php if ( $jt_blocked ) : ?>
 										<button role="menuitem" class="jt-more-item" type="button"
 											data-wp-on--click="actions.unblockUser"

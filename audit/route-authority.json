@@ -593,8 +593,8 @@
     },
     "POST /jetonomy/v1/flags": {
       "audience": "member",
-      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_flag; opts=)",
-      "reason": "auth_mutation(jetonomy_flag): reports content the caller can read. Read-only access-rule members may report (owner policy). A private-space topic is refused to a non-member (probed).",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read), then Moderation_Service::check_flag() asks Permission_Engine::can(flag) in the target's space: reports content the caller can read. Read-only access-rule members may report (owner policy). A private-space topic is refused to a non-member (probed).",
       "probe": "post",
       "probe_body": {
         "object_type": "post",

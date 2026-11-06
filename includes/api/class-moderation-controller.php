@@ -93,7 +93,10 @@ class Moderation_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'create_flag' ),
-				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_flag' ),
+				// Whether this member may report here is the engine's answer, in
+				// Moderation_Service::check_flag(), so the route and the Report
+				// buttons cannot disagree.
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => array(
 					'object_type' => array(
 						'type'     => 'string',

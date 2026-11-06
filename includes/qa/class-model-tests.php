@@ -312,6 +312,7 @@ class Model_Tests {
 	 * RM1-RM3 Permissions: the reset copies Subscriber, ticking only adds, Join matches the route (10463415760)
 	 * RM4-RM5 a role without WordPress read is shown only Read, and is refused writes even when ticked (10483588613)
 	 * SI1     space and topic pages fall back to the Default share image, SEO Pro on or off (10483605549)
+	 * RT1-RT2 Report follows Permission_Engine::can( flag ) on the route and the buttons (10483720093)
 	 * SX1     a new space drops the cached sitemap (10430894693)
 	 * IS1-IS2 import slugs: NFD accents fold without intl; wpForo boards never share a category (10441705185, 10441707350)
 	 */
@@ -602,8 +603,34 @@ class Model_Tests {
 			}
 			update_option( 'jetonomy_settings', $si_was );
 			$this->check( 'SI1: space and topic pages without an image of their own share the Default share image', $si_ok, implode( '; ', $si_got ) );
+
+			// RT1-RT2. Report follows the engine: with Report off for a role the
+			// route refuses and the button is hidden (same can()); a Subscriber
+			// and an unmapped role with read may report.
+			$fl_was = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+			add_role( 'jt_qa_fl_' . $suffix, 'QA FL', array( 'read' => true ) );
+			add_role( 'jt_qa_flu_' . $suffix, 'QA FLU', array( 'read' => true ) );
+			$fl_off = $mk( 'jt_qa_fl_' . $suffix, 'jt_qa_fl_' . $suffix );
+			$fl_unm = $mk( 'jt_qa_flu_' . $suffix, 'jt_qa_flu_' . $suffix );
+			SpaceMember::add( $space, $fl_off, 'member' );
+			SpaceMember::add( $space, $fl_unm, 'member' );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array( 'jt_qa_fl_' . $suffix => array( 'jetonomy_read', 'jetonomy_create_replies' ) ) + ( is_array( $fl_was ) ? $fl_was : array() ), false );
+			\Jetonomy\Permissions\Capabilities::register();
+			clean_user_cache( $fl_off );
+			\Jetonomy\Cache::reset_memos();
+			$fl_refused = \Jetonomy\Moderation\Moderation_Service::check_flag( $fl_off, 'post', (int) $topic );
+			$fl_hidden  = ! Permission_Engine::can( $fl_off, 'flag', $space );
+			$fl_sub     = \Jetonomy\Moderation\Moderation_Service::check_flag( $voter, 'post', (int) $topic );
+			$fl_unmok   = \Jetonomy\Moderation\Moderation_Service::check_flag( $fl_unm, 'post', (int) $topic );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $fl_was, false );
+			\Jetonomy\Permissions\Capabilities::register();
+			\Jetonomy\Cache::reset_memos();
+			remove_role( 'jt_qa_fl_' . $suffix );
+			remove_role( 'jt_qa_flu_' . $suffix );
+			$this->check( 'RT1: with Report off for a role, POST /flags refuses (403) and the Report button is hidden', is_wp_error( $fl_refused ) && 403 === ( $fl_refused->get_error_data()['status'] ?? 0 ) && $fl_hidden );
+			$this->check( 'RT2: a Subscriber and a custom role on the fallback may report a topic they can read', true === $fl_sub && true === $fl_unmok, is_wp_error( $fl_sub ) ? $fl_sub->get_error_code() : ( is_wp_error( $fl_unmok ) ? 'fallback: ' . $fl_unmok->get_error_code() : '' ) );
 		} else {
-			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'GG1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3', 'RM4', 'RM5', 'SI1' ) as $id ) {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'GG1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3', 'RM4', 'RM5', 'SI1', 'RT1', 'RT2' ) as $id ) {
 				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
 			}
 		}

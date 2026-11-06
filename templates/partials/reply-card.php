@@ -278,7 +278,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				aria-label="<?php esc_attr_e( 'Quote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 14 ); ?></button>
 			<?php endif; ?>
 		<?php endif; ?>
-		<?php if ( $jt_thread_live && is_user_logged_in() && get_current_user_id() !== (int) $reply->author_id ) : ?>
+		<?php if ( $jt_thread_live && is_user_logged_in() && get_current_user_id() !== (int) $reply->author_id && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'flag', $jt_rp_sid ) ) : // The same answer POST /flags gives. ?>
 			<button class="jt-act"
 				data-wp-on--click="actions.flagReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"

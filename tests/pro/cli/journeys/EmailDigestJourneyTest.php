@@ -93,7 +93,7 @@ class EmailDigestJourneyTest extends WP_UnitTestCase {
 		$this->assertSame( $this->user_id, (int) $result->data['user_id'] );
 		$this->assertContains( $result->data['frequency'], array( 'none', 'daily', 'weekly' ) );
 		$this->assertIsBool( $result->data['enabled'] );
-		$this->assertIsArray( $result->data['subscribed_types'] );
+		$this->assertArrayNotHasKey( 'subscribed_types', $result->data, '2.0.7 removed per-type digest subscriptions.' );
 	}
 
 	public function test_set_preferences_persists_valid_frequency(): void {

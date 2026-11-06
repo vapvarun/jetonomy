@@ -299,6 +299,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - Leaving a space now uses the red confirm button with Cancel focused, and the message says how to get back in: rejoin any time, request again, or wait for a new invitation.
 * Fix      - Permissions: "Give members the same access as the Subscriber role" now copies the Subscriber boxes into that role, the table shows what a custom role really holds, and ticking one more box never takes access away.
 * Fix      - A member whose role cannot use the join route is no longer shown a Join button that fails.
+* Fix      - Report follows the Report content permission: a role that cannot report sees no Report button, and a custom role allowed to report can.
 * Fix      - Permissions: a role without the WordPress read capability can only be given Read, and its members are never shown New Topic, Reply or Join buttons that the request would refuse.
 * Fix      - After dismissing a flag, approving a request or any other change, moving to another community page or pressing Back shows the updated page instead of an older copy.
 * Fix      - Gate messages on spaces sold with a course, group or plan read correctly in German and other languages whose nouns take an article: "Included with ...", "You get access as soon as you join", "Ask a site administrator to add you". Edit Profile now says "People you have blocked".

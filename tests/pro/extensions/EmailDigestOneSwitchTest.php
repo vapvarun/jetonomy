@@ -22,6 +22,8 @@ class EmailDigestOneSwitchTest extends WP_UnitTestCase {
 		if ( ! class_exists( Extension::class ) ) {
 			$this->markTestSkipped( 'Jetonomy Pro is not active.' );
 		}
+		// The box is retired once, on the upgrade from a version that had it.
+		update_option( 'jetonomy_pro_db_version', '2.0.6' );
 	}
 
 	private function is_on(): bool {

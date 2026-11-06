@@ -732,7 +732,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						aria-pressed="<?php echo esc_attr( $is_bookmarked ? 'true' : 'false' ); ?>"
 						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"
 						aria-label="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'bookmark', 16 ); ?></button>
-					<?php if ( (int) $post->author_id !== get_current_user_id() ) : ?>
+					<?php if ( (int) $post->author_id !== get_current_user_id() && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'flag', (int) $post->space_id ) ) : // The same answer POST /flags gives. ?>
 						<?php
 						// Mark the report button if the current user already filed
 						// an open flag on this post. Without this, the user can

@@ -1009,9 +1009,10 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'execute_flag_content' ),
-				// The capability POST /flags requires; the rest is Moderation_Service::create_flag().
+				// As POST /flags: signed in with read; whether this member may report
+				// the target is Moderation_Service::check_flag(), the engine's answer.
 				'permission_callback' => function () {
-					return current_user_can( 'jetonomy_flag' );
+					return is_user_logged_in() && current_user_can( 'read' );
 				},
 				'meta'                => array(
 					'annotations'  => array(

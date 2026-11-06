@@ -149,6 +149,18 @@
       "title": "A role without WordPress read was offered writes the owner ticked, which every write route refuses",
       "guard": "qa-actions:RM5",
       "added": "2026-11-06"
+    },
+    {
+      "card": "10483720093",
+      "title": "The Report button showed for a role the owner took Report from, then failed with 403",
+      "guard": "qa-actions:RT1",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483720093",
+      "title": "The Report button showed for a role the owner took Report from, then failed with 403",
+      "guard": "runbook:c-mod-flag-resolution.22",
+      "added": "2026-11-06"
     }
   ]
 }
