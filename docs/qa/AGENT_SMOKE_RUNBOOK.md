@@ -747,6 +747,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-accept-answer.14` @member #ui +long: accepted answer with long code block -> callout does not overflow at 390.
 - `c-member-accept-answer.15` @member #ui +offline: accept offline -> badge rolls back and an error shows.
 - `c-member-accept-answer.16` @member #ui: the Accepted callout is shown above the replies when the accepted reply is on a later page than the one being viewed (on the same page it is highlighted inline).
+- `c-member-accept-answer.17` @silenced #ui !refuse card:10469967795: a silenced topic author in a Q&A space sees neither Accept nor Unaccept on the replies; once unsilenced both come back (qa-actions AC1-AC4).
 
 ### C.member.profile-edit
 **Covers:** templates/views/edit-profile.php, includes/api/class-users-controller.php, includes/models/class-user-profile.php, includes/class-avatar.php, pro:includes/extensions/custom-fields/*.php, pro:assets/js/admin-custom-fields.js
@@ -876,6 +877,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-profile-mobile-tabs.7` @member #ui +390 +long: Grace's long name with tabs -> the name wraps and the tab bar stays one row.
 - `c-member-profile-mobile-tabs.8` @member #ui +390 +dark: dark mode -> active underline and text contrast pass.
 - `c-member-profile-mobile-tabs.9` @member #ui +390: rotate to 1024 and back -> the layout recalculates, active tab remains visible.
+- `c-member-profile-mobile-tabs.10` @member #ui +long card:10469777893: at 390 on BuddyX Pro and Twenty Twenty-Five, scroll to the bottom of /community/, a space and a topic -> the theme footer sits fully above the fixed tab bar; at 1440 nothing changes.
+- `c-member-profile-mobile-tabs.11` @member #ui card:10469967914: scroll the page, then resize the window across 390 and 1024 -> a tab strip scrolls on its own and the page scroll position does not move.
 
 ### C.member.online-indicator
 **Covers:** templates/partials/reply-card.php, templates/views/user-profile.php, templates/partials/sidebar.php, includes/models/class-user-profile.php, templates/partials/avatar.php
@@ -956,6 +959,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-mod-flag-resolution.18` @moderator #ui +dark: open a flag card in dark mode -> reason chips, note and buttons keep readable contrast (4.5:1).
 - `c-mod-flag-resolution.19` @moderator #rest !refuse +concurrent: resolve or dismiss the same flag twice -> the second call answers 409 jetonomy_already_handled, and the reporter gets exactly one bell row and one email.
 - `c-mod-flag-resolution.20` @moderator #ui: remove a flag on a reply, then open Trash -> the Trash tab opens on the Replies sub-tab (or the one that holds the item) instead of 'No topics in the trash.'.
+- `c-mod-flag-resolution.21` @moderator #ui +concurrent card:10483409192: from /community/mod/ open a space's queue, Dismiss its only flag, then use the in-app Moderation link and browser Back -> the overview no longer lists that space, with no full page reload.
 
 ### C.admin.plugin-pages
 **Covers:** includes/admin/class-admin.php, includes/admin/views/*.php, assets/css/admin.css, assets/js/admin-common.js, assets/js/admin-confirm.js, assets/js/admin-content.js, assets/js/admin-dashboard.js, assets/js/admin-media-grid.js, assets/js/admin-nav-menus.js, assets/js/admin-replies.js, assets/js/admin-revisions.js, assets/js/admin-settings.js, assets/js/admin-tags.js, includes/admin/class-activity-list-table.php, includes/admin/class-revisions-list-table.php, includes/admin/ajax/class-content-handler.php, includes/admin/ajax/class-moderation-handler.php, includes/admin/ajax/class-tags-handler.php, includes/class-activity-tracker.php, includes/class-admin-bar.php, includes/class-nav-menus.php, includes/models/class-activity-log.php, includes/models/class-revision.php, pro:includes/extensions/white-label/*.php, pro:includes/extensions/analytics/views/*.php, pro:includes/extensions/custom-fields/views/*.php, pro:includes/extensions/private-messaging/views/*.php
@@ -987,6 +991,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-plugin-pages.22` @admin #admin: Content and Spaces list column headers sort (date, replies) with the active sort shown.
 - `c-admin-plugin-pages.23` @admin #admin: open the Activity Log row for Anonymous Author Revealed where the real author still exists -> the row names the revealed member as an audit record visible to admins only, and is not visible in any member-facing or exported surface (today it prints the display name as a profile link).
 - `c-admin-plugin-pages.24` @admin #admin !refuse card:10462503018: open Settings with `&tab=` set to an unknown slug, to a turned-off extension's tab, to `license` without Pro and to `free-vs-pro` with Pro -> each shows "This settings tab is not available" with a link to General, never an empty page; every real tab in the sidebar shows no such notice.
+- `c-admin-plugin-pages.25` @admin #admin +settings-off card:10463415760: Permissions: save a custom role with nothing ticked, click 'Give ... the same access as the Subscriber role' -> its column shows Subscriber's boxes; tick one more box and save -> the member still joins an open space, posts and replies (qa-actions RM1-RM2).
+- `c-admin-plugin-pages.26` @admin #admin #rest +old-data card:10469968650: saved terms, privacy, support, logo and share-image values that are site paths like /terms -> /app/config returns empty strings, emails use the text header and no og:image is printed; a full https value passes through (qa-actions AU1-AU2).
 
 ### C.admin.category-and-space-crud
 **Covers:** includes/admin/ajax/class-categories-handler.php, includes/admin/ajax/class-spaces-handler.php, includes/admin/views/categories.php, includes/admin/views/spaces.php, includes/models/class-space.php, includes/models/class-category.php, includes/api/class-categories-controller.php, includes/class-space-purge.php, includes/models/class-model.php, pro:includes/class-space-relations.php
@@ -1022,6 +1028,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-category-and-space-crud.26` @admin #cli: after deleting spaces 179, 306-555, 3061-3064 earlier, jt_space_members still holds 256 rows for spaces that no longer exist -> a one-off cleanup (or recount step) removes them and a count query returns 0.
 - `c-admin-category-and-space-crud.27` @member #ui +archived: open a topic inside an archived space -> the topic is readable, no reply composer shows, and a reply POST returns 403 jetonomy_space_restricted (needs a topic in the archived 2025 Hackathon; the reseed left it empty).
 - `c-admin-category-and-space-crud.28` @admin #admin: delete a space that has a sub-space -> the sub-space moves up to the deleted space's own parent (top level when it had none) and is not left pointing at a missing parent; setting a space as its own parent, or a parent that loops back to it, is refused.
+- `c-admin-category-and-space-crud.29` @admin #admin #rest !refuse card:10469967914: at 1024, open a space's Access Rules -> the Grants select sits inside its cell; PATCH the rule with grants=full -> 400 and the rule keeps its grant (PHPUnit AccessRuleAdminAjaxTest).
 
 ### C.admin.user-management
 **Covers:** includes/admin/ajax/class-users-handler.php, includes/admin/views/users.php, includes/trust/class-trust-levels.php, includes/permissions/class-capabilities.php, includes/trust/class-trust-evaluator.php
@@ -1285,6 +1292,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-admin-setup-wizard.16` @admin #admin +rtl: in the Arabic admin the URL preview under the slug field reads http://forums.local/community/ left to right with the slash at the end.
 - `c-admin-setup-wizard.17` @admin #admin !refuse: run the wizard twice with the same category and space names -> the second run says the names already exist or merges, and does not add a duplicate 'Getting Started' category (a second 'Getting Started' space was created beside the seeded one).
 - `c-admin-setup-wizard.18` @admin #admin +390: the floating Messages button does not cover the Create Space or Next buttons at 390px.
+- `c-admin-setup-wizard.19` @admin #admin +old-data card:10478659544: create member alice with a bio and a topic, Import Demo Data, then Remove All Demo Data -> alice, her bio and her topic are kept; a demo user from before 2.0.7 (no marker, demo email) is still removed (qa-actions DS1-DS4).
 
 ### C.admin.import
 **Covers:** includes/import/*.php, includes/admin/ajax/class-import-handler.php, includes/models/class-import-map.php
@@ -1392,6 +1400,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-space-create-and-join.17` @member #ui: withdraw a pending request -> it leaves the admin's request list and no stale notice is left.
 - `c-member-space-create-and-join.18` @member_b #email: the approval is emailed "Your join request was answered", once.
 - `c-member-space-create-and-join.19` @member #ui +long: the My Spaces card wraps a 120-character title instead of cutting it with an ellipsis.
+- `c-member-space-create-and-join.20` @member #ui card:10483409032: Joined > Leave in an open, an approval and an invite-only space -> red Leave button with Cancel focused, and the message says rejoin any time, request again, or wait for a new invitation (qa-actions LV1).
 
 ### C.mod.space-moderation
 **Covers:** templates/views/space-moderation.php, includes/api/class-space-moderation-controller.php
@@ -1838,6 +1847,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-surfaces-agree.15` @member #ui +many: with 2000 topics across private spaces, open home -> counts and lists load in one pass and no topic leaks on page 2.
 - `c-gating-surfaces-agree.16` @guest #ui: open a private space URL logged out with the locked preview off -> the document title is the site name only, never the space name.
 - `c-gating-surfaces-agree.17` @guest #ui !refuse: open a private space URL logged out with the locked preview off -> the page shows only "This space is private", with no space name or description anywhere in the markup.
+- `c-gating-surfaces-agree.18` @member #ui #rest !refuse card:10463415760: a member whose only role is a custom role with no WordPress read -> no Join button and no New Topic; POST /spaces/{id}/members answers 403 (qa-actions RM3).
 
 ## D - Known-regression guards
 
@@ -2162,6 +2172,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-custom-fields.18` @admin #admin +empty: with no fields the admin page -> shows "No custom fields yet" with a hint; the composer shows no empty "Additional Fields" heading.
 - `e-custom-fields.19` @member #ui +rtl: an Arabic text value -> displays right-to-left in the field list and in the edit input.
 - `e-custom-fields.20` @admin #admin +many: 30 fields -> keep the composer usable at 390px (fields collapse or scroll) and the admin list paginates.
+- `e-custom-fields.21` @admin #rest #admin card:10469970853: turn a field's Searchable off, on, or delete the field -> the topics holding it are re-indexed, and search stops or starts matching the value (qa-actions CF5).
 
 ### E.email-digest
 **Covers:** includes/adapters/interface-email-adapter.php, includes/notifications/class-notifier.php, pro:includes/extensions/email-digest/*.php, pro:assets/js/admin-email-digest.js
@@ -2186,6 +2197,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-email-digest.15` @member #email +rtl +long: a digest containing the Arabic topic and the 159-character topic title -> renders right-to-left in that block and wraps in a 390px mail client without horizontal scroll; dark-mode clients keep readable text.
 - `e-email-digest.16` @admin #email +settings-off: with the extension disabled, no digest cron -> runs and the unsubscribe URL of an old email still lands on a clear page instead of a 404 fatal.
 - `e-email-digest.17` @admin #email: with PMPro active, the digest's text/plain part is real plain text (no HTML tags) for an admin recipient as well as a member.
+- `e-email-digest.18` @member #email card:10469970853: a member follows a space where they and a second member both posted -> the digest lists the other member's topic and leaves out their own (qa-actions ED8).
 **Depth note:** real inbox delivery (SPF/DKIM, client rendering) needs a real mailbox, not only Mailpit.
 
 ### E.reply-by-email
@@ -2256,6 +2268,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-web-push.14` @member #rest !refuse +concurrent: alice subscribes the browser bob used earlier (same endpoint, other account) -> the subscription must move to alice and bob must stop receiving alice's pushes on that browser; record what actually happens.
 - `e-web-push.15` @admin #cli: `wp jetonomy-pro web-push vapid-key` -> the public key and whether Web Push is configured; `count` -> active subscriptions; `subscriptions --for=<id>` lists that user's; `send --to=<id> --title --body` dispatches to that user and reports sent/failed.
 - `e-web-push.16` @admin #admin +settings-off: disable the extension -> the service worker route is unregistered and all sends stop, with subscriptions kept.
+- `e-web-push.17` @admin #admin +old-data card:10469967641: upgrade a 2.0.6 site whose Web Push tab was never saved -> Web Push comes up off, Email Digest and Reply by Email keep their state, and a site that had the box ticked keeps Web Push on (qa-actions EB1-EB5).
 **Depth note:** the end-to-end subscription flow needs HTTPS and a real browser push service; on http://forums.local only the REST, key and queue checks (1, 2, 4, 5, 8, 13) can pass.
 
 ### E.webhooks
@@ -2381,6 +2394,10 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 - `e-membership-gating-adapters.10` @admin #admin +deleted: delete the plan/course that a rule points to -> the rule is shown as pointing at a missing level (or removed), does not grant access to everyone, and does not fatal.
 - `e-membership-gating-adapters.11` @admin #admin +many: a site with 500 courses/plans: -> the level picker searches/paginates instead of loading all options at once.
 - `e-membership-gating-adapters.12` @member #ui +390 +dark: the locked teaser and the Access Rules screen at 390px -> wrap the buy button and level name, with token colours in dark mode.
+- `e-membership-gating-adapters.13` @member #ui #rest card:10462612523: a new WooCommerce Memberships purchase, including a free-trial plan, opens the gated space with no admin action, and cancelling the membership closes it again (qa-actions WC1, WC4; PHPUnit WooMembershipFirstPurchaseTest).
+- `e-membership-gating-adapters.14` @member #rest +old-data card:10430748231: edit an existing membership's status in WooCommerce -> access follows the status-change event alone, with one definition of an active status for the live check and the event (qa-actions WC2).
+- `e-membership-gating-adapters.15` @member #ui +settings-off card:10483361510: site language German, a space included with a course: one with a sales page, one without -> 'Enthalten in <Kurs>.' then 'Du erhältst Zugang, sobald du beitrittst ...' or 'Bitte einen Website-Administrator ...'; no sentence puts the label after 'diesen/diese' (qa-actions GG1).
+- `e-membership-gating-adapters.16` @member #ui card:10469968511: German site, a space gated by a level with no kind -> the plan sentence shows; a course kind keeps its capital mid-sentence (Kurs) (qa-actions MS1).
 **Depth note:** the walk needs each membership or LMS plugin installed with a test level and an enrolled and a non-enrolled user: WooCommerce (Memberships/Subscriptions), MemberPress, PMPro, RCP, LearnDash, Tutor LMS, LifterLMS, Sensei, MasterStudy, Learnomy, BuddyNext Pro, WP Fusion, SureMembers. Only those installed can be walked; the dev site does not have most of them, so say which were walked.
 
 ### E.lms-course-spaces-and-automator
@@ -2523,6 +2540,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 - `e-pro-cli.6` @admin #cli +many: `wp jetonomy-pro analytics export --format=csv` over a 30-day range with 5,000 seeded rows -> finishes within a reasonable time and returns one row per day; there is no `webhooks deliveries` command (webhooks has create, delete, disable, enable, events, get, list, test, update).
 - `e-pro-cli.7` @admin #cli: confirm which Pro extensions -> have no CLI group (anonymous-posting, attachments, site-announcements) and record them against the three-entry-point rule.
 - `e-pro-cli.8` @admin #cli +settings-off: with Pro licence invalid or free deactivated, `wp jetonomy-pro` -> prints a clean notice instead of a fatal.
+- `e-pro-cli.9` @admin #cli card:10469968838: wp jetonomy-pro email-digest set-prefs <user> --frequency=off -> stored as none; --frequency=bogus is refused; the command help lists 'off' (qa-actions CLI1).
 **Depth note:** CLI has one role (site administrator running WP-CLI), so no owner-versus-other check applies; a failing journey blocks the whole Pro walk.
 
 ## F - Cross-browser, RTL, accessibility
@@ -2572,6 +2590,7 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 - `f-rtl.6` @member #ui +rtl +long: Grace's long name and the 159-character topic title -> wrap correctly in RTL on Reign at 390px.
 - `f-rtl.7` @member #ui +rtl: pagination, vote buttons, reaction chips, polls bars and the Messages pane -> mirror; poll bars fill from the right.
 - `f-rtl.8` @admin #admin +rtl: wp-admin Jetonomy and Pro screens (Analytics, Badges, Settings) -> lay out correctly in RTL with `margin-inline-*` and no clipped tables.
+- `f-rtl.9` @member #ui +rtl card:10469968283: on an Arabic (RTL) page under a left-aligned theme, an empty dir=auto field computes rtl and on an LTR page ltr; saved Arabic content still starts at the right.
 **Depth note:** a real `ar` locale must be installed; simulating dir=rtl on an English locale is not a pass. Only one role is needed.
 
 ### F.a11y
@@ -2597,6 +2616,8 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 - `f-a11y.12` @silenced #ui +silenced: the refusal message for a silenced or banned member -> is exposed to assistive tech (not only a coloured banner) and the disabled composer explains why.
 - `f-a11y.13` @member #ui: breadcrumbs -> are a labelled `nav` with the current page marked `aria-current="page"`; headings follow a single `h1` per page with no skipped levels on topic and profile pages.
 - `f-a11y.14` @member #ui +rtl: a keyboard-only user can complete post-create, reply, vote and -> report end to end in RTL.
+- `f-a11y.16` @member #ui card:10469968030: on Notifications settings, read the toggles' accessible names -> each is unique and names its notification type.
+- `f-a11y.17` @moderator #ui card:10469968030: open More options on a topic with the keyboard -> the list is role=menu with menuitem children, Escape closes it and focus returns to the trigger; each 'Review in queue' link has aria-describedby naming its space.
 **Depth note:** screen-reader output (VoiceOver, NVDA) cannot be fully asserted by the Chromium agent; the checks above list the DOM and keyboard facts that are asserted, and a human spot check with a real screen reader should accompany the release.
 
 ## G - Post-release monitoring (first 24h after tag)
