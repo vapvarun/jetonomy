@@ -11,6 +11,14 @@ use WP_UnitTestCase;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * The partial reads the response status, and PHP 8.3+ refuses to set one once
+ * output has started (the test bootstrap prints first), so each test runs in
+ * its own process.
+ *
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class NotFoundBackLinkTest extends WP_UnitTestCase {
 
 	private function render(): string {
@@ -19,18 +27,13 @@ class NotFoundBackLinkTest extends WP_UnitTestCase {
 		return (string) ob_get_clean();
 	}
 
-	public function tear_down(): void {
-		http_response_code( 200 );
-		parent::tear_down();
-	}
-
 	public function test_a_404_empty_state_links_back_to_the_community(): void {
-		http_response_code( 404 );
+		status_header( 404 );
 		$this->assertStringContainsString( esc_url( \Jetonomy\base_url() ), $this->render() );
 	}
 
 	public function test_an_ordinary_empty_state_gets_no_link(): void {
-		http_response_code( 200 );
+		status_header( 200 );
 		$this->assertStringNotContainsString( 'Back to the community', $this->render() );
 	}
 }
