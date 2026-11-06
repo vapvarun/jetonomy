@@ -30,7 +30,15 @@ Access rules that are harder to get wrong, a membership gate that tells visitors
 - Address fields (terms, privacy and support pages, logos, the default share image, space covers and avatars) refuse anything that is not a full address, say which field, and keep the value you had.
 - Addresses starting with `javascript:` or `data:` are refused instead of silently clearing the image.
 
+## Permissions
+
+- **The grid shows what a custom role really holds.** A role from another plugin that you never saved here shows the boxes its members get through the fallback, so ticking one more box adds to that instead of replacing it.
+- **Give a role the same access as Subscriber.** A role saved with nothing ticked shows a button that copies the Subscriber role's boxes into it.
+- **Roles without WordPress read.** Their members can read but cannot post, vote, report or join. The grid says so, names the role, and only lets you tick Read for it.
+- **Buttons match what members can do.** Join, New Topic and Report only show for members whose role and space allow it, so nobody fills in a form that is then refused.
+
 ## Other improvements
+
 
 - **Divi Theme Builder.** Global headers and footers built in the Divi Theme Builder now show on community pages, with their styles.
 - **Community addresses in any case.** `/COMMUNITY/` and other case variants redirect to the lower-case address instead of showing a 404.
@@ -52,6 +60,7 @@ Access rules that are harder to get wrong, a membership gate that tells visitors
 - **Extensions say where to set them up.** Each extension that is on links to its settings, and switching one on names the next step.
 - **One switch per extension.** Email Digest, Web Push and Reply by Email are switched on and off only from the Extensions page. If you had unticked their old Enable box, the extension is switched off on upgrade, so nothing starts on its own.
 - **Reply by Email** says "Not set up yet" and what is missing until it can read replies.
+- **Share images with SEO Pro.** Space and topic pages that have no image of their own use the Default share image, the site logo or the site icon, as the rest of the community does.
 - **Settings never say saved over a refused value.** Reply by Email, Email Digest, Web Push, AI, SEO Pro and the branding icon keep the stored value and name the field.
 - **WooCommerce.** Subscriptions pending cancellation keep access until the term ends.
 - **Polls and reactions** follow the community privacy setting.
