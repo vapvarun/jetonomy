@@ -345,17 +345,14 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		</button>
 	<?php endif; ?>
 	<?php
-		// Un-accept — shown on the accepted reply to the post author or a moderator
-		// (close_posts), so a wrongly-accepted answer can be reverted.
+		// Un-accept: the same rule as Accept (the shared Reply::viewer_can_accept()),
+		// on the accepted reply, so a wrongly-accepted answer can be reverted and a
+		// silenced or banned author, or a closed thread, is never offered it.
 	if (
-			is_user_logged_in()
+			$jt_thread_live
 			&& isset( $post, $space )
-			&& 'qa' === ( $space->type ?? '' )
 			&& $is_accepted
-			&& (
-				get_current_user_id() === (int) $post->author_id
-				|| \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'close_posts', (int) ( $post->space_id ?? 0 ) )
-			)
+			&& \Jetonomy\Models\Reply::viewer_can_accept( $jt_card_viewer, $post, $space )
 		) :
 		?>
 			<button class="jt-act"

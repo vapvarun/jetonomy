@@ -301,7 +301,7 @@ class Model_Tests {
 	 * SN1     a silenced member cannot start a space (10431281298)
  * AU1     off-site address settings take only full addresses (10469968650)
  * MS1     the gate sentence keeps German nouns capitalised (10469968511)
- * AC1-AC3 Accept is offered only where accepting succeeds: Q&A spaces, unsilenced authors (10469967795)
+ * AC1-AC4 Accept and Unaccept are offered only where they succeed: Q&A spaces, unsilenced authors (10469967795)
 	 * GP1     a private community admits no signed-out visitor at the engine (10430808705)
 	 * OR1-OR2 overlapping rules: most generous wins; an exact duplicate is refused (10435942224)
 	 * LP1     a level is named and typed by its adapter's prefix, even when the catalog omits it (10436110349)
@@ -368,9 +368,32 @@ class Model_Tests {
 			Restriction::reset_memo();
 			\Jetonomy\Cache::reset_memos();
 			$this->check( 'AC3: a silenced topic author is not offered Accept', $topic_row && ! \Jetonomy\Models\Reply::viewer_can_accept( $author, $topic_row, $qa_row ) );
+
+			// AC4. Unaccept follows the same rule on the accepted reply's card.
+			$ac_reply = (int) \Jetonomy\Models\Reply::create( array( 'post_id' => $topic, 'author_id' => $voter, 'content' => '<p>QA AC4</p>', 'status' => 'publish' ) );
+			\Jetonomy\Models\Reply::accept_as_answer( $ac_reply, 0 );
+			$ac_card = static function () use ( $ac_reply, $topic, $space ): string {
+				\Jetonomy\Cache::reset_memos();
+				ob_start();
+				\Jetonomy\Template_Loader::partial(
+					'reply-card',
+					array(
+						'reply' => \Jetonomy\Models\Reply::find( $ac_reply ),
+						'post'  => \Jetonomy\Models\Post::find( $topic ),
+						'space' => Space::find( $space ),
+					)
+				);
+				return (string) ob_get_clean();
+			};
+			wp_set_current_user( $author );
+			$ac_silenced = $ac_card();
 			if ( $sil > 0 ) {
 				Restriction::remove_ban( $sil );
 			}
+			Restriction::reset_memo();
+			$ac_live = $ac_card();
+			wp_set_current_user( 0 );
+			$this->check( 'AC4: a silenced topic author is not offered Unaccept; once unsilenced they are', ! str_contains( $ac_silenced, 'actions.unacceptReply' ) && str_contains( $ac_live, 'actions.unacceptReply' ) );
 			Restriction::reset_memo();
 			Space::update( $space, array( 'type' => 'forum' ) );
 			\Jetonomy\Cache::reset_memos();
@@ -472,7 +495,7 @@ class Model_Tests {
 			SpaceMember::add( $space, $named, 'member' );
 			$this->check( 'MN1: the public members search matches names, never email addresses', 1 === SpaceMember::count_by_space( $space, 'Zephyr ' . $suffix, true ) && 0 === SpaceMember::count_by_space( $space, 'jt_qa_207n_' . $suffix . '@', true ) );
 		} else {
-			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'MS1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1' ) as $id ) {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1' ) as $id ) {
 				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
 			}
 		}

@@ -300,6 +300,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - Removing a vote takes back the reputation and notification it gave.
 * Fix      - The activity log no longer records a removed vote as a vote.
 * Fix      - When two access rules match, the most generous one wins, and exact duplicate rules are refused.
+* Fix      - Accept and Unaccept answer buttons show only where they work: in Q&A spaces, for the topic author or a moderator, never for a silenced or banned member or on a closed topic, on the web and in the app.
 * Fix      - Space feeds drop control characters pasted from Word or a PDF, so feed readers accept them.
 * Fix      - Silenced and banned members cannot start a space, including BuddyPress group forums.
 * Fix      - Ban, silence and lift show the server's reason when they fail.
