@@ -1074,7 +1074,7 @@ class Space extends Model {
 	 */
 	public static function gate_name( object $space, ?int $user_id ): string {
 		if ( 'hidden' === ( $space->visibility ?? '' ) || self::name_withheld_from_viewer( $space, $user_id ) ) {
-			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+			/* translators: %s: a singular label, lowercase (space, group or reply). */
 			return sprintf( __( 'Private %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		}
 		return (string) $space->title;

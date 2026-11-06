@@ -42,7 +42,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 			'crumb'     => $jt_gate_name,
 			// The join / request controls live on the space page.
 			'cta_label' => $jt_gate_name === (string) $space->title
-				/* translators: %s: space title. */
+				/* translators: %s: a space title, or the singular space label. */
 				? sprintf( __( 'Go to %s', 'jetonomy' ), $space->title )
 				/* translators: %s: the singular space label, lowercase (e.g. space, group). */
 				: sprintf( __( 'Go to the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),

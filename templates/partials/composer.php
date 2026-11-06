@@ -93,7 +93,7 @@ $_context = array(
 			<label class="jt-reply-private-toggle">
 				<input type="checkbox" data-jt-reply-private>
 				<span>
-					<?php printf( /* translators: %s: singular reply label. */ esc_html__( 'Private %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
+					<?php printf( /* translators: %s: a singular label, lowercase (space, group or reply). */ esc_html__( 'Private %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
 					<span class="jt-reply-private-help"><?php printf( /* translators: %s: singular topic label. */ esc_html__( 'Only you, the %s author and moderators can see it.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></span>
 				</span>
 			</label>

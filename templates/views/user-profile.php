@@ -409,7 +409,7 @@ $crumbs = array(
 								<?php endif; ?>
 								<div class="jt-row-main">
 									<?php if ( ! empty( $ur->is_private_hidden ) ) : ?>
-										<div class="jt-row-title jt-row-title--private"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo esc_html( sprintf( /* translators: %s: singular reply label. */ __( 'Private %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?></div>
+										<div class="jt-row-title jt-row-title--private"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo esc_html( sprintf( /* translators: %s: a singular label, lowercase (space, group or reply). */ __( 'Private %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?></div>
 									<?php else : ?>
 										<div class="jt-row-title" dir="auto"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
 									<?php endif; ?>

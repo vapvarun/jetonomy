@@ -509,7 +509,7 @@ class Activity_List_Table extends \WP_List_Table {
 			}
 			if ( 'post_id' === $key ) {
 				$post = $context['posts'][ (int) $value ] ?? null;
-				/* translators: %s: topic title. */
+				/* translators: %s: a topic title, or the singular topic label. */
 				$parts[] = $post ? sprintf( __( 'On %s', 'jetonomy' ), jetonomy_post_title_or_excerpt( $post ) ) : self::deleted_label( 'topic' );
 				continue;
 			}

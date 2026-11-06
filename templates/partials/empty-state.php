@@ -56,7 +56,7 @@ $jt_es_page       = isset( $crumb ) || $jt_es_is_404;
 $jt_es_hint       = isset( $hint ) ? (string) $hint : '';
 $jt_es_crumb      = isset( $crumb ) ? (string) $crumb : ( $jt_es_is_404 ? __( 'Not found', 'jetonomy' ) : '' );
 $jt_es_browse_url = \Jetonomy\base_url() . '/';
-/* translators: %s: plural space label the site owner configured (e.g. spaces). */
+/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 $jt_es_browse_label = sprintf( __( 'Browse %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) );
 
 // A gate or not-found page is never a dead end: it always offers the space

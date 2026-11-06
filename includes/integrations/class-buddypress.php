@@ -1043,7 +1043,7 @@ class BuddyPress {
 				$post_url = \Jetonomy\route_url( 'post', $reply->space_slug, $reply->post_slug );
 				$time_ago = human_time_diff( strtotime( $reply->created_at ), time() );
 				$snippet  = ! empty( $reply->is_private_hidden )
-					? sprintf( /* translators: %s: singular reply label. */ __( 'Private %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) )
+					? sprintf( /* translators: %s: a singular label, lowercase (space, group or reply). */ __( 'Private %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) )
 					: wp_trim_words( $reply->content_plain, 15, '...' );
 				echo '<li>';
 				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $snippet ) . '</a>';

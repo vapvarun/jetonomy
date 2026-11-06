@@ -539,7 +539,7 @@ function jetonomy_vote_group_attrs( string $id ): string {
  * @param int $score Vote score.
  */
 function jetonomy_vote_score_static( int $score ): void {
-	/* translators: %d: vote score. */
+	/* translators: %d: number of votes. */
 	$label = sprintf( _n( '%d vote', '%d votes', $score, 'jetonomy' ), $score );
 	echo '<span class="jt-v-num" aria-hidden="true">' . esc_html( (string) $score ) . '</span><span class="jt-sr-only">' . esc_html( $label ) . '</span>';
 }
