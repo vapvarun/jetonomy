@@ -56,6 +56,8 @@ class Permission_Engine {
 	 */
 	public static function reset_memo(): void {
 		self::$memo = array();
+		// Rule-admitted space lists are built from these verdicts.
+		\Jetonomy\Models\AccessRule::reset_memo();
 	}
 
 	/**

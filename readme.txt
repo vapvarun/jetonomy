@@ -297,6 +297,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - Address fields (terms, privacy, support, logos, share image, space cover, avatar) refuse a value that is not an address by name and keep the saved one.
 * Fix      - Community addresses typed in another case, such as /COMMUNITY/, redirect to the lower-case address instead of a 404.
 * Fix      - Removing a vote takes back the reputation and notification it gave.
+* Fix      - The activity log no longer records a removed vote as a vote.
 * Fix      - When two access rules match, the most generous one wins, and exact duplicate rules are refused.
 * Fix      - Space feeds drop control characters pasted from Word or a PDF, so feed readers accept them.
 * Fix      - Silenced and banned members cannot start a space, including BuddyPress group forums.

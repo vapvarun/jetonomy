@@ -180,7 +180,11 @@ class AccessRule extends Model {
 	 * live so third-party entitlements granted mid-request (a checkout
 	 * completing) are never frozen.
 	 *
-	 * @var array<int, object[]>
+	 * Also holds 'admitted:{user}' => space ids from admitted_space_ids(). Those
+	 * are Permission_Engine::can() verdicts, already memoized per request, so
+	 * this adds no staleness: Permission_Engine::reset_memo() empties both.
+	 *
+	 * @var array<int|string, array<int, object|int>>
 	 */
 	private static array $memo = array();
 
@@ -500,8 +504,14 @@ class AccessRule extends Model {
 		if ( $user_id <= 0 ) {
 			return array();
 		}
-		$ids = static::db()->get_col( 'SELECT DISTINCT space_id FROM ' . static::table() ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table name, no input.
-		return array_values( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'read', $id ) ) );
+		// Notifications, follows and search each ask several times per request;
+		// the memo is emptied with the permission memo and on every rule write.
+		$key = 'admitted:' . $user_id;
+		if ( ! isset( self::$memo[ $key ] ) ) {
+			$ids                = static::db()->get_col( 'SELECT DISTINCT space_id FROM ' . static::table() ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table name, no input.
+			self::$memo[ $key ] = array_values( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'read', $id ) ) );
+		}
+		return self::$memo[ $key ];
 	}
 
 	/**

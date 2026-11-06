@@ -406,8 +406,33 @@ class Model_Tests {
 			AccessRule::reset_memo();
 			$won = AccessRule::resolve_access( $voter, $space );
 			$this->check( 'OR1: when two rules match, the most generous grant wins', 'participate' === ( $won['grants'] ?? '' ), 'got ' . ( $won['grants'] ?? 'none' ) );
-			$dup = method_exists( AccessRule::class, 'duplicate_error' ) ? AccessRule::duplicate_error( $space, 'role', 'subscriber' ) : null;
+			$dup = AccessRule::duplicate_error( $space, 'role', 'subscriber' );
 			$this->check( 'OR2: a second rule with the same type and value is refused', is_wp_error( $dup ) && null === AccessRule::duplicate_error( $space, 'role', 'editor' ) );
+			$wpdb->delete( table( 'access_rules' ), array( 'space_id' => $space ) );
+			AccessRule::reset_memo();
+
+			// VR1. Removing a vote fires jetonomy_after_vote with 0; it must not log a vote.
+			$voted = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . table( 'activity_log' ) . " WHERE user_id = %d AND action = 'voted'", $voter ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$v0    = $voted();
+			do_action( 'jetonomy_after_vote', 'post', 1, $voter, 0 );
+			$v1 = $voted();
+			do_action( 'jetonomy_after_vote', 'post', 1, $voter, 1 );
+			$v2 = $voted();
+			$this->check( 'VR1: a removed vote logs no vote activity, a cast vote does', $v0 === $v1 && $v2 === $v1 + 1, "before=$v0 removed=$v1 cast=$v2" );
+			$wpdb->delete( table( 'activity_log' ), array( 'user_id' => $voter, 'action' => 'voted' ) );
+
+			// AM1. The rule-admitted list is memoized per request, so it must
+			// follow a rule write and a ban made in the same request.
+			$admitted = static fn(): bool => in_array( (int) $space, AccessRule::admitted_space_ids( $voter ), true );
+			$no_rule  = $admitted();
+			$rule_id  = AccessRule::create( array( 'space_id' => $space, 'rule_type' => 'logged_in', 'rule_value' => '1', 'grants' => 'read', 'priority' => 0 ) );
+			$by_rule  = $admitted();
+			$am_ban   = Restriction::ban( $voter, 'space_ban', $this->qa_admin, $space, 'QA AM1' );
+			$banned   = $admitted();
+			if ( $am_ban > 0 ) {
+				Restriction::remove_ban( $am_ban );
+			}
+			$this->check( 'AM1: the rule-admitted space list follows a new rule and a ban in the same request', ! $no_rule && $rule_id && $by_rule && ! $banned, "no_rule=$no_rule by_rule=$by_rule banned=$banned" );
 			$wpdb->delete( table( 'access_rules' ), array( 'space_id' => $space ) );
 			AccessRule::reset_memo();
 
@@ -3399,6 +3424,9 @@ class Model_Tests {
 		$create->setAccessible( true );
 		$delete->setAccessible( true );
 
+		$real  = 0;
+		$post  = 0;
+		$users = array();
 		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		try {
 			// A real member holding the first demo login, with their own email and bio.
@@ -3432,7 +3460,16 @@ class Model_Tests {
 			$this->check( 'DS4: a demo user without the marker is cleaned by its demo email', $old && ! get_userdata( $old ) );
 		} finally {
 			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			wp_cache_flush();
+			// Drop only what the rolled-back writes cached, not the whole site cache.
+			foreach ( array_unique( array_merge( array( $real ), array_map( 'intval', array_values( $users ) ) ) ) as $uid ) {
+				if ( $uid ) {
+					clean_user_cache( $uid );
+				}
+			}
+			if ( $post ) {
+				clean_post_cache( $post );
+			}
+			\Jetonomy\Cache::flush();
 		}
 	}
 
