@@ -57,7 +57,47 @@ function jt_changed( string $dir, string $since, array $globs ): array {
 		return array();
 	}
 	$cmd = 'git -C ' . escapeshellarg( $dir ) . ' diff --name-only ' . escapeshellarg( $since ) . ' HEAD -- ' . implode( ' ', array_map( static fn( $g ) => escapeshellarg( ':(glob)' . $g ), $globs ) );
-	return array_filter( explode( "\n", trim( (string) shell_exec( $cmd . ' 2>/dev/null' ) ) ) );
+	$all = array_filter( explode( "\n", trim( (string) shell_exec( $cmd . ' 2>/dev/null' ) ) ) );
+	return array_values( array_filter( $all, static fn( string $f ): bool => jt_behaviour_changed( $dir, $since, $f ) ) );
+}
+
+/**
+ * Whether a file's change since a commit can alter what a walker sees.
+ *
+ * Whitespace never can, nor can comment lines in PHP or JS (a docblock edit in
+ * a shared helper used to mark every journey covering it stale, so nobody
+ * trusted the list). Any other changed line counts, so a real change is never
+ * hidden. Memoized: many journeys share files.
+ *
+ * @param string $dir   Repo root.
+ * @param string $since Commit.
+ * @param string $file  Path relative to the repo.
+ */
+function jt_behaviour_changed( string $dir, string $since, string $file ): bool {
+	static $memo = array();
+	$key = $dir . '|' . $since . '|' . $file;
+	if ( isset( $memo[ $key ] ) ) {
+		return $memo[ $key ];
+	}
+	$diff    = (string) shell_exec( 'git -C ' . escapeshellarg( $dir ) . ' diff -w -U0 ' . escapeshellarg( $since ) . ' HEAD -- ' . escapeshellarg( $file ) . ' 2>/dev/null' );
+	$code    = (bool) preg_match( '/\.(php|js)$/', $file ) && ! str_ends_with( $file, '.min.js' );
+	$changed = false;
+	foreach ( explode( "\n", $diff ) as $line ) {
+		if ( '' === $line || str_starts_with( $line, '+++' ) || str_starts_with( $line, '---' ) || ! in_array( $line[0], array( '+', '-' ), true ) ) {
+			continue;
+		}
+		$text = trim( substr( $line, 1 ) );
+		if ( '' === $text || ( $code && preg_match( '#^(//|\#|/\*|\*/|\*(\s|$))#', $text ) ) ) {
+			continue;
+		}
+		$changed = true;
+		break;
+	}
+	// A deleted or binary file has no +/- text lines but is still a change.
+	if ( ! $changed && '' !== $diff && ! str_contains( $diff, '@@' ) ) {
+		$changed = true;
+	}
+	return $memo[ $key ] = $changed;
 }
 
 $jt_problems = array();

@@ -136,5 +136,29 @@ if ! bin/check-data-layer.sh; then
     exit 1
 fi
 
+# Runbook structure: unique check ids, known roles and surfaces, a refusal on
+# C/E journeys, a check for every escape. Walk records are a release question
+# (CI on release PRs); a broken check must not wait for that.
+STAGED_QA=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(docs/qa/AGENT_SMOKE_RUNBOOK\.md|docs/qa/qa-config\.json|audit/escapes\.json)$' || true)
+if [ -n "$STAGED_QA" ]; then
+    echo "  -> journey structure"
+    if ! php bin/check-journey-depth.php --structure; then
+        echo "pre-commit FAILED: fix the runbook structure above."
+        exit 1
+    fi
+fi
+
+# A gate script that changes must still prove it can fail.
+STAGED_GATES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^bin/(check-journey-depth|check-runbook-fresh)\.php$' || true)
+for gate in $STAGED_GATES; do
+    name=$(basename "$gate" .php)
+    echo "  -> self-test $name"
+    if ! bash "bin/test-$name.sh" > /dev/null; then
+        bash "bin/test-$name.sh" | grep -v '^ok'
+        echo "pre-commit FAILED: bin/test-$name.sh"
+        exit 1
+    fi
+done
+
 echo "pre-commit: OK"
 exit 0

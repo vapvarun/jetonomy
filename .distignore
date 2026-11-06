@@ -28,3 +28,4 @@ includes/qa
 test-results
 playwright-report
 .wbcom-i18n-glossary.json
+.core-first-allow

@@ -87,9 +87,16 @@ fi
 step "Pre-flight"
 if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q tests-cli && ! curl -sSf -o /dev/null http://localhost:8889; then
     warn "wp-env tests environment not reachable; starting it"
-    npx wp-env start 2>&1 | tail -3 || { fail "wp-env start failed"; exit 1; }
+    if ! npx wp-env start >/dev/null 2>&1; then
+        # Everything else still runs; the summary stays red so nobody reads
+        # a run without PHPUnit as a pass.
+        fail "wp-env start failed (offline or Docker down): PHPUnit NOT RUN, every other gate continues"
+        DO_UNIT=0
+        DO_COMBO=0
+        FAILED_GATES+=("phpunit-not-run: wp-env unavailable")
+    fi
 fi
-ok "wp-env reachable"
+[ "$DO_UNIT" -eq 1 ] && ok "wp-env reachable"
 
 # Helper: returns 0 if PHPStan reported zero errors. Robust against the
 # "PHPStan 2.x available" promo text that appends after the result block.
@@ -224,6 +231,13 @@ fi
 
 step "Journey depth: every journey has a checklist, every stamp a complete walk (report; blocks at release)"
 bash bin/test-check-journey-depth.sh >/dev/null 2>&1 || { fail "bin/check-journey-depth.php no longer fails when its rules are broken: bash bin/test-check-journey-depth.sh"; FAILED_GATES+=("journey-depth-selftest"); }
+bash bin/test-check-runbook-fresh.sh >/dev/null 2>&1 || { fail "bin/check-runbook-fresh.php no longer behaves: bash bin/test-check-runbook-fresh.sh"; FAILED_GATES+=("runbook-fresh-selftest"); }
+# Structure (ids, roles, refusals, escapes) blocks now; only walk records wait for release.
+if ! php bin/check-journey-depth.php --structure >/dev/null 2>&1; then
+    php bin/check-journey-depth.php --structure 2>/dev/null | tail -6
+    fail "runbook structure is broken"
+    FAILED_GATES+=("journey-structure")
+fi
 if php bin/check-journey-depth.php >/dev/null 2>&1; then
     ok "every journey has checks and every stamp is backed by a walk record"
 else
@@ -332,6 +346,45 @@ if [ "$DO_BROWSER" -eq 1 ]; then
 fi
 
 # --- Summary -----------------------------------------------------------
+# The live suites against the site this checkout sits in. They need a
+# seeded site, which a Local install already is; CI runs them on a fresh one.
+SITE="$(cd "$ROOT/../../.." && pwd)"
+if command -v wp >/dev/null 2>&1 && [ -f "$SITE/wp-load.php" ] && wp core is-installed --path="$SITE" >/dev/null 2>&1; then
+    if [ -f "$SITE/.maintenance" ]; then
+        warn "$SITE/.maintenance exists: the site answers 503 and loopback checks fail; remove it if no update is running"
+    fi
+    step "Live action checks (wp jetonomy qa-actions)"
+    if QA_OUT=$(wp jetonomy qa-actions --path="$SITE" 2>&1); then
+        ok "$(echo "$QA_OUT" | tail -1)"
+    else
+        echo "$QA_OUT" | grep -E "FAIL" | head -10
+        fail "qa-actions has failures"
+        FAILED_GATES+=("qa-actions")
+    fi
+    step "Discovery checks (wp jetonomy qa)"
+    if QA_OUT=$(wp jetonomy qa --path="$SITE" 2>&1); then
+        ok "$(echo "$QA_OUT" | grep TOTAL)"
+    else
+        echo "$QA_OUT" | grep -E "FAIL" | head -10
+        fail "wp jetonomy qa has failures"
+        FAILED_GATES+=("jetonomy-qa")
+    fi
+else
+    warn "NOT RUN: live suites need wp-cli and the WordPress site this plugin sits in ($SITE)"
+fi
+
+CORE_FIRST="$HOME/.claude/skills/wp-plugin-development/scripts/core-first-check.php"
+if [ -f "$CORE_FIRST" ]; then
+    step "Core-first (free + pro)"
+    if php "$CORE_FIRST" "$ROOT" >/dev/null && { [ -z "$PRO" ] || php "$CORE_FIRST" "$PRO" >/dev/null; }; then
+        ok "core-first clean (allowlist: .core-first-allow)"
+    else
+        php "$CORE_FIRST" "$ROOT" | grep CF; [ -n "$PRO" ] && php "$CORE_FIRST" "$PRO" | grep CF
+        fail "core-first findings"
+        FAILED_GATES+=("core-first")
+    fi
+fi
+
 step "Summary"
 if [ ${#FAILED_GATES[@]} -eq 0 ]; then
     ok "All blocking gates passed. Safe to push."

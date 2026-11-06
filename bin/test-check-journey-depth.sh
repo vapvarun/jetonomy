@@ -42,6 +42,7 @@ runbook "${good[@]:0:3}" '- `c-member-vote.1` @member #web: x -> y.' "${good[4]}
 expect 1 'unknown surface'
 runbook "${good[@]:0:3}" "${good[3]}" "${good[3]}" "${good[4]}"
 expect 1 'duplicate check id'
+expect 1 '--structure still refuses a duplicate check id' --structure
 runbook "${good[@]:0:4}" '- `c-member-vote.2` @member_b #rest !refuse: x -> y.'
 expect 1 'escape card with no check'
 runbook "${good[@]}"
@@ -53,6 +54,7 @@ echo '{"free":"abc1234","checks":{"c-member-vote.1":{"result":"pass"},"c-member-
 expect 1 'stamp with an untested check'
 echo '{"free":"def5678","checks":{"c-member-vote.1":{"result":"pass"},"c-member-vote.2":{"result":"pass"}}}' > "$T/docs/qa/walks/C.member.vote.json"
 expect 1 'walk record at other commits'
+expect 0 '--structure ignores a stale walk record' --structure
 echo '{"free":"abc1234","checks":{"c-member-vote.1":{"result":"pass"},"c-member-vote.2":{"result":"pass"}},"proposed_checks":["- `c-member-vote.3` ..."]}' > "$T/docs/qa/walks/C.member.vote.json"
 expect 1 'walk proposed a check not yet in the runbook'
 echo '{"free":"abc1234","checks":{"c-member-vote.1":{"result":"pass"},"c-member-vote.2":{"result":"pass"}}}' > "$T/docs/qa/walks/C.member.vote.json"
