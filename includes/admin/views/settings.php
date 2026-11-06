@@ -619,7 +619,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							$jt_effective[ $jt_role_slug ] = \Jetonomy\Permissions\Capabilities::unmapped_caps( (string) $jt_role_slug );
 						}
 						if ( empty( $jt_role_info['capabilities']['read'] ) ) {
-							$jt_no_read[] = $jt_map_roles[ $jt_role_slug ];
+							$jt_no_read[ $jt_role_slug ]   = $jt_map_roles[ $jt_role_slug ];
+							$jt_effective[ $jt_role_slug ] = array_intersect( (array) ( $jt_effective[ $jt_role_slug ] ?? array() ), array( 'jetonomy_read' ) );
 						}
 					}
 					?>
@@ -627,7 +628,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<p class="description jt-role-no-read">
 							<?php
 							/* translators: 1: comma-separated role names. 2: member label, plural, lowercase (e.g. "members"). */
-							echo esc_html( sprintf( __( 'No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, whatever is ticked below.', 'jetonomy' ), implode( ', ', $jt_no_read ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); // jt-terms-ok: "post" is the verb here.
+							echo esc_html( sprintf( __( 'No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, so only Read can be ticked for them.', 'jetonomy' ), implode( ', ', $jt_no_read ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); // jt-terms-ok: "post" is the verb here.
 							?>
 						</p>
 					<?php endif; ?>
@@ -686,7 +687,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 											name="jetonomy_settings[role_caps][<?php echo esc_attr( $jt_role_slug ); ?>][]"
 											value="<?php echo esc_attr( $jt_cap ); ?>"
 											aria-label="<?php echo esc_attr( sprintf( /* translators: 1: capability label, 2: role name */ __( '%1$s for %2$s', 'jetonomy' ), $jt_cap_label, $jt_role_label ) ); ?>"
-											<?php checked( in_array( $jt_cap, $jt_effective[ $jt_role_slug ] ?? array(), true ) ); ?>>
+											<?php checked( in_array( $jt_cap, $jt_effective[ $jt_role_slug ] ?? array(), true ) ); ?>
+											<?php disabled( isset( $jt_no_read[ $jt_role_slug ] ) && 'jetonomy_read' !== $jt_cap ); ?>>
 									</td>
 								<?php endforeach; ?>
 							</tr>

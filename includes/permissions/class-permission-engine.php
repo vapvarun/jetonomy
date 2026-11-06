@@ -217,6 +217,13 @@ class Permission_Engine {
 			return false;
 		}
 
+		// Layer 0: every write route and wp-admin need WordPress read. A role
+		// without it, ticked boxes or not, may only read; offering more shows
+		// buttons whose request is refused.
+		if ( $user_id && 'read' !== $action && ! user_can( $user_id, 'read' ) ) {
+			return false;
+		}
+
 		// Layer 0: IP ban check.
 		$ip = \Jetonomy\client_ip();
 		if ( $ip && Restriction::is_ip_banned( $ip ) ) {
@@ -297,9 +304,6 @@ class Permission_Engine {
 			if ( null !== $space_id
 				&& in_array( $action, self::MEMBER_GRADE_ACTIONS, true )
 				&& ! Capabilities::has_explicit_role_mapping( $user_id )
-				// Every write route needs WordPress read; offering a write
-				// the route refuses is a dead button.
-				&& ( 'read' === $action || user_can( $user_id, 'read' ) )
 			) {
 				if ( 'read' === $action || SpaceMember::is_member( $space_id, $user_id ) ) {
 					// Read is decided by visibility in Layer 2, exactly as it

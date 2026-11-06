@@ -310,7 +310,7 @@ class Model_Tests {
 	 * MN1     the public members search never matches an email address (10430894693)
 	 * LV1     the leave confirm follows the join policy (10483409032)
 	 * RM1-RM3 Permissions: the reset copies Subscriber, ticking only adds, Join matches the route (10463415760)
-	 * RM4     a role without WordPress read is shown only Read ticked (10483588613)
+	 * RM4-RM5 a role without WordPress read is shown only Read, and is refused writes even when ticked (10483588613)
 	 * SI1     space and topic pages fall back to the Default share image, SEO Pro on or off (10483605549)
 	 * SX1     a new space drops the cached sitemap (10430894693)
 	 * IS1-IS2 import slugs: NFD accents fold without intl; wpForo boards never share a category (10441705185, 10441707350)
@@ -567,6 +567,19 @@ class Model_Tests {
 			\Jetonomy\Permissions\Capabilities::register();
 			$this->check( 'RM3: a role without WordPress read is not offered Join, which the join route refuses', ! SpaceMember::may_join_spaces( $pm_bare ) );
 			$this->check( 'RM4: the Permissions column for a role without WordPress read ticks only Read, the one thing it gets', array( 'jetonomy_read' ) === \Jetonomy\Permissions\Capabilities::unmapped_caps( 'jt_qa_pmx_' . $suffix ) && ! Permission_Engine::can( $pm_bare, 'create_posts', $space ) );
+			// RM5. The owner ticks Create topics for that role anyway: the engine
+			// still refuses it, as the write route does, so no New Topic is shown.
+			SpaceMember::add( $space, $pm_bare, 'member' );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array( 'jt_qa_pmx_' . $suffix => array( 'jetonomy_read', 'jetonomy_create_posts', 'jetonomy_create_replies' ) ), false );
+			\Jetonomy\Permissions\Capabilities::register();
+			clean_user_cache( $pm_bare );
+			\Jetonomy\Cache::reset_memos();
+			$rm5_ticked = user_can( $pm_bare, 'jetonomy_create_posts' );
+			$rm5_offers = Permission_Engine::can( $pm_bare, 'create_posts', $space ) || Permission_Engine::can( $pm_bare, 'create_replies', $space );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $pm_caps_was, false );
+			\Jetonomy\Permissions\Capabilities::register();
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'RM5: a role without WordPress read is refused writes the owner ticked for it, as the write routes refuse them', $rm5_ticked && ! $rm5_offers, $rm5_ticked ? '' : 'the ticked cap did not reach the role' );
 			remove_role( 'jt_qa_pm_' . $suffix );
 			remove_role( 'jt_qa_pmx_' . $suffix );
 
@@ -590,7 +603,7 @@ class Model_Tests {
 			update_option( 'jetonomy_settings', $si_was );
 			$this->check( 'SI1: space and topic pages without an image of their own share the Default share image', $si_ok, implode( '; ', $si_got ) );
 		} else {
-			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'GG1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3', 'RM4', 'SI1' ) as $id ) {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'GG1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3', 'RM4', 'RM5', 'SI1' ) as $id ) {
 				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
 			}
 		}

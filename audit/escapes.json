@@ -143,6 +143,12 @@
       "title": "Permissions ticked fallback boxes for a role without WordPress read",
       "guard": "runbook:c-admin-plugin-pages.27",
       "added": "2026-11-06"
+    },
+    {
+      "card": "10483588613",
+      "title": "A role without WordPress read was offered writes the owner ticked, which every write route refuses",
+      "guard": "qa-actions:RM5",
+      "added": "2026-11-06"
     }
   ]
 }
