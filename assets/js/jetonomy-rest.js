@@ -170,6 +170,12 @@
 					data: data
 				};
 
+				// Count successful writes, so client navigation knows the pages
+				// the router cached before this one are stale.
+				if (response.ok && method !== 'GET' && method !== 'HEAD') {
+					window.jetonomyRest.writes = (window.jetonomyRest.writes || 0) + 1;
+				}
+
 				// 403 + rest_cookie_invalid_nonce → refresh once and retry.
 				if (
 					!isRetry
@@ -205,6 +211,7 @@
 	}
 
 	window.jetonomyRest = {
-		restFetch: restFetch
+		restFetch: restFetch,
+		writes: 0
 	};
 })();

@@ -1246,6 +1246,8 @@ const _n = ( single, plural, n, domain ) => {
 // has happened, the next navigation is a full page load. Removals the router
 // makes itself are discarded right after each navigation (takeRecords).
 let regionDirty = false;
+// window.jetonomyRest.writes at the last soft navigation.
+let seenWrites = 0;
 const regionObserver = 'undefined' !== typeof MutationObserver
     ? new MutationObserver( ( records ) => {
         if ( records.some( ( r ) => r.removedNodes.length ) ) regionDirty = true;
@@ -1269,6 +1271,14 @@ const reloadRegion = async () => {
     if ( regionObserver ) regionObserver.takeRecords();
     document.dispatchEvent( new CustomEvent( 'jetonomy:navigated', { detail: { href: window.location.href } } ) );
 };
+
+// Back and Forward repaint the router's cached copy of the page. After a write
+// that copy is out of date, so fetch the page again.
+window.addEventListener( 'popstate', () => {
+    if ( ( window.jetonomyRest?.writes || 0 ) !== seenWrites && document.querySelector( '[data-wp-router-region="jetonomy/main"]' ) ) {
+        reloadRegion();
+    }
+} );
 
 const { state, actions } = store( 'jetonomy', {
     state: {
@@ -1389,7 +1399,12 @@ const { state, actions } = store( 'jetonomy', {
             event.preventDefault();
             try {
                 const router = yield import( '@wordpress/interactivity-router' );
-                yield router.actions.navigate( href );
+                // The router reuses pages it fetched before. After a write (a
+                // dismissed flag, an approved request, a read notification)
+                // those copies are out of date, so fetch this one fresh.
+                const writes = window.jetonomyRest?.writes || 0;
+                yield router.actions.navigate( href, writes !== seenWrites ? { force: true } : {} );
+                seenWrites = writes;
                 // The swap was the router's own work, not a hand edit.
                 regionDirty = false;
                 watchRegion();

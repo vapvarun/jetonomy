@@ -299,6 +299,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - Leaving a space now uses the red confirm button with Cancel focused, and the message says how to get back in: rejoin any time, request again, or wait for a new invitation.
 * Fix      - Permissions: "Give members the same access as the Subscriber role" now copies the Subscriber boxes into that role, the table shows what a custom role really holds, and ticking one more box never takes access away.
 * Fix      - A member whose role cannot use the join route is no longer shown a Join button that fails.
+* Fix      - After dismissing a flag, approving a request or any other change, moving to another community page or pressing Back shows the updated page instead of an older copy.
 * Fix      - Community addresses typed in another case, such as /COMMUNITY/, redirect to the lower-case address instead of a 404.
 * Fix      - Removing a vote takes back the reputation and notification it gave.
 * Fix      - The activity log no longer records a removed vote as a vote.
