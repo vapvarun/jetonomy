@@ -132,8 +132,9 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		$_jt_ways = $_jt_none_left ? array() : array_values( array_filter( $_jt_unmet_membership, static fn( $r ) => '' !== $r['url'] ) );
 		$_jt_one  = $_jt_unmet_membership[0];
 		if ( $_jt_none_left ) {
-			/* translators: %s: the singular space label, lowercase (e.g. space, group). */
-			$_jt_how = sprintf( __( 'This %s is not open to join right now.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+			// No owner label in these sentences: a gendered language needs an
+			// article the label slot cannot carry ("diesen Kurs", "diese Gruppe").
+			$_jt_how = __( "You can't join here right now.", 'jetonomy' );
 		} elseif ( count( $_jt_unmet_membership ) > 1 ) {
 			$_jt_how = $_jt_ways
 				? __( 'Any one of them gives you access, from the moment you have it until it ends.', 'jetonomy' )
@@ -145,11 +146,9 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 				? __( 'Your access starts as soon as your membership is active, and ends if it lapses.', 'jetonomy' )
 				: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' );
 		} elseif ( '' === $_jt_one['url'] ) {
-			/* translators: %s: what the visitor needs, lowercase (e.g. course, group). */
-			$_jt_how = sprintf( __( 'Ask a site administrator to add you to this %s.', 'jetonomy' ), \Jetonomy\mid_sentence( $_jt_one['kind'] ) );
+			$_jt_how = __( 'Ask a site administrator to add you.', 'jetonomy' );
 		} else {
-			/* translators: %s: what the visitor joins, lowercase (e.g. course, group). */
-			$_jt_how = sprintf( __( 'You get access as soon as you join this %s, and lose it if you leave it.', 'jetonomy' ), \Jetonomy\mid_sentence( $_jt_one['kind'] ) );
+			$_jt_how = __( 'You get access as soon as you join, and lose it if you leave.', 'jetonomy' );
 		}
 		// Two buttons carry their kind ("(Course)", "(Group)"): a course and a
 		// group can share a name, and two identical links help nobody.
@@ -163,9 +162,8 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 				// Nothing left to get: never name a plan that is gone (a deleted
 				// level has only its raw id, e.g. "pmpro_999").
 				'message'         => $_jt_none_left ? $_jt_how : sprintf(
-					/* translators: 1: the singular space label (e.g. space, group), 2: comma-separated plan names. */
-					__( 'This %1$s is included with %2$s.', 'jetonomy' ),
-					\Jetonomy\space_label( false, true ),
+					/* translators: %s: comma-separated plan, course or group names. */
+					__( 'Included with %s.', 'jetonomy' ),
 					implode( ', ', $_jt_tier_names )
 				),
 				'description'     => $_jt_none_left ? '' : $_jt_how,

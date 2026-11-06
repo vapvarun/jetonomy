@@ -22,7 +22,7 @@ Access rules that are harder to get wrong, a membership gate that tells visitors
 
 - **One clear sentence for paid plans.** A space sold through a membership says "Your access starts as soon as your membership is active, and ends if it lapses."
 - **A button for each way in.** When a space is included with a course and a group, each gets its own button, labelled with its kind.
-- **Honest when nothing is left.** If every plan a space is included with has been deleted or unpublished, visitors see "This space is not open to join right now", never a plan id.
+- **Honest when nothing is left.** If every plan a space is included with has been deleted or unpublished, visitors see "You can't join here right now", never a plan id.
 - **Members see why they are in.** The space header names the course or plan that gives a member access.
 
 ## Settings that never save a broken value

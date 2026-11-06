@@ -17528,3 +17528,19 @@ msgstr "7"
 #~ msgctxt "Admin menu name"
 #~ msgid "Scheduled Actions"
 #~ msgstr "Geplande acties"
+
+#, php-format
+msgid "Included with %s."
+msgstr "Inbegrepen bij %s."
+
+msgid "You can't join here right now."
+msgstr "Je kunt hier nu niet lid worden."
+
+msgid "Ask a site administrator to add you."
+msgstr "Vraag een sitebeheerder om je toe te voegen."
+
+msgid "You get access as soon as you join, and lose it if you leave."
+msgstr "Je krijgt toegang zodra je lid wordt en verliest die als je vertrekt."
+
+msgid "People you have blocked"
+msgstr "Mensen die je hebt geblokkeerd"

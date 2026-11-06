@@ -79,7 +79,7 @@ Editable fields:
 - Bio
 - Avatar - upload a JPG, PNG, GIF, or WebP. After choosing a non-GIF image, a crop dialog opens: drag to reposition, use the slider to zoom, then **Crop and upload** saves a square avatar (animated GIFs upload as-is to preserve animation). The "Remove photo" button reverts to the Gravatar.
 - Notification preferences (email and in-app toggles per type)
-- **Blocked members** (2.0.3+) - everyone you have blocked, 20 per page, each with an **Unblock** button
+- **People you have blocked** (2.0.3+) - everyone you have blocked, 20 per page, each with an **Unblock** button
 
 ![Avatar crop dialog open with the image preview, zoom slider, and Crop and upload button](../images/edit-profile-avatar-crop.webp)
 

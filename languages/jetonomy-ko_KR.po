@@ -16539,3 +16539,19 @@ msgstr "7"
 #~ msgctxt "Admin menu name"
 #~ msgid "Scheduled Actions"
 #~ msgstr "예약된 작업"
+
+#, php-format
+msgid "Included with %s."
+msgstr "%s에 포함되어 있어요."
+
+msgid "You can't join here right now."
+msgstr "지금은 여기에 참여할 수 없어요."
+
+msgid "Ask a site administrator to add you."
+msgstr "사이트 관리자에게 추가해 달라고 요청하세요."
+
+msgid "You get access as soon as you join, and lose it if you leave."
+msgstr "참여하면 바로 이용할 수 있고, 나가면 이용할 수 없어요."
+
+msgid "People you have blocked"
+msgstr "내가 차단한 사람"

@@ -52,7 +52,7 @@ if ( ! $cancel_url ) {
 	<nav class="jt-space-tabs jt-space-tabs--wrap" aria-label="<?php esc_attr_e( 'Profile sections', 'jetonomy' ); ?>">
 		<a class="jt-space-tab" href="#profile-details"><?php esc_html_e( 'Profile', 'jetonomy' ); ?></a>
 		<a class="jt-space-tab" href="#notification-preferences"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></a>
-		<a class="jt-space-tab" href="#blocked-members"><?php /* translators: %s: plural member label. */ echo esc_html( sprintf( __( 'Blocked %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></a>
+		<a class="jt-space-tab" href="#blocked-members"><?php esc_html_e( 'People you have blocked', 'jetonomy' ); ?></a>
 	</nav>
 
 	<form id="jt-edit-profile" class="jt-new-post-form"
@@ -251,7 +251,7 @@ if ( ! $cancel_url ) {
 		?>
 		<div class="jt-form-group" id="blocked-members">
 			<label class="jt-label">
-				<?php /* translators: %s: plural member label. */ echo esc_html( sprintf( __( 'Blocked %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
+				<?php esc_html_e( 'People you have blocked', 'jetonomy' ); ?>
 			</label>
 			<?php if ( ! $jt_blocked_rows ) : ?>
 				<p class="jt-form-help"><?php esc_html_e( "You haven't blocked anyone.", 'jetonomy' ); ?></p>

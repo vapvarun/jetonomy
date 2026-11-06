@@ -301,6 +301,7 @@ class Model_Tests {
 	 * SN1     a silenced member cannot start a space (10431281298)
  * AU1     off-site address settings take only full addresses (10469968650)
  * MS1     the gate sentence keeps German nouns capitalised (10469968511)
+ * GG1     the membership gate sentences need no article in German (10483361510)
  * AC1-AC4 Accept and Unaccept are offered only where they succeed: Q&A spaces, unsilenced authors (10469967795)
 	 * GP1     a private community admits no signed-out visitor at the engine (10430808705)
 	 * OR1-OR2 overlapping rules: most generous wins; an exact duplicate is refused (10435942224)
@@ -406,6 +407,18 @@ class Model_Tests {
 			$kurs = \Jetonomy\mid_sentence( 'Kurs' );
 			remove_filter( 'determine_locale', $de );
 			$this->check( 'MS1: a mid-sentence noun keeps its capital in German and is lowercased in English', 'Kurs' === $kurs && 'course' === \Jetonomy\mid_sentence( 'Course' ), "de={$kurs}" );
+
+			// GG1. The membership gate puts no owner label after "this": German
+			// needs an article the slot cannot carry. The sentences read in German.
+			$gg_src  = (string) file_get_contents( JETONOMY_DIR . 'templates/views/space.php' );
+			$gg_from = strpos( $gg_src, '$_jt_unmet_membership ) ) {' );
+			$gg_gate = false === $gg_from ? '' : substr( $gg_src, $gg_from, (int) strpos( $gg_src, "'empty-state'", $gg_from ) - $gg_from );
+			$gg_de   = switch_to_locale( 'de_DE' );
+			$gg_say  = array( __( 'You get access as soon as you join, and lose it if you leave.', 'jetonomy' ), __( 'Ask a site administrator to add you.', 'jetonomy' ), __( 'Included with %s.', 'jetonomy' ) ); // phpcs:ignore WordPress.WP.I18n.MissingTranslatorsComment -- read back, not shown.
+			if ( $gg_de ) {
+				restore_previous_locale();
+			}
+			$this->check( 'GG1: the membership gate sentences need no article in German', '' !== $gg_gate && ! preg_match( '/__\(\s*\'[^\']*\bthis %/i', $gg_gate ) && ( ! $gg_de || ( str_starts_with( $gg_say[0], 'Du erhältst' ) && 'Enthalten in %s.' === $gg_say[2] ) ), $gg_de ? 'de_DE' : 'no de_DE locale' );
 
 			// AU1. Addresses used off the site must be full addresses.
 			$this->check( 'AU1: an off-site address setting refuses a site-relative path and keeps a full one', null === \Jetonomy\absolute_url( '/terms' ) && 'https://example.com/terms' === \Jetonomy\absolute_url( 'https://example.com/terms' ) && '' === \Jetonomy\absolute_url( '' ) );
@@ -554,7 +567,7 @@ class Model_Tests {
 			remove_role( 'jt_qa_pm_' . $suffix );
 			remove_role( 'jt_qa_pmx_' . $suffix );
 		} else {
-			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3' ) as $id ) {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'GG1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3' ) as $id ) {
 				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
 			}
 		}

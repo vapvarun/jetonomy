@@ -16496,3 +16496,19 @@ msgstr "7"
 #~ msgctxt "Admin menu name"
 #~ msgid "Scheduled Actions"
 #~ msgstr "计划任务"
+
+#, php-format
+msgid "Included with %s."
+msgstr "包含在%s中。"
+
+msgid "You can't join here right now."
+msgstr "目前无法加入此处。"
+
+msgid "Ask a site administrator to add you."
+msgstr "请联系网站管理员将你添加进来。"
+
+msgid "You get access as soon as you join, and lose it if you leave."
+msgstr "加入后即可访问，退出后将失去访问权限。"
+
+msgid "People you have blocked"
+msgstr "你屏蔽的人"

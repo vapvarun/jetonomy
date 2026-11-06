@@ -17582,3 +17582,19 @@ msgstr "7"
 #~ msgctxt "Admin menu name"
 #~ msgid "Scheduled Actions"
 #~ msgstr "Azioni programmate"
+
+#, php-format
+msgid "Included with %s."
+msgstr "Incluso con %s."
+
+msgid "You can't join here right now."
+msgstr "Al momento non puoi unirti qui."
+
+msgid "Ask a site administrator to add you."
+msgstr "Chiedi a un amministratore del sito di aggiungerti."
+
+msgid "You get access as soon as you join, and lose it if you leave."
+msgstr "Ottieni l’accesso non appena ti unisci e lo perdi se esci."
+
+msgid "People you have blocked"
+msgstr "Persone che hai bloccato"

@@ -57,7 +57,7 @@ class RetiredPlanGateTest extends WP_UnitTestCase {
 	public function test_a_deleted_plan_offers_no_button_and_no_raw_id(): void {
 		$html = $this->gate_for( 'rp_999' );
 
-		$this->assertStringContainsString( 'is not open to join right now.', $html );
+		$this->assertStringContainsString( 'join here right now.', $html );
 		$this->assertStringNotContainsString( 'rp_999', $html );
 		$this->assertStringNotContainsString( 'checkout/?level=999', $html );
 	}
