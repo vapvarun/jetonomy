@@ -1823,7 +1823,7 @@ class Template_Loader {
 	 * community pages and every embed that loads the same module (the compose
 	 * block and shortcode), so an embed never falls back to English.
 	 *
-	 * @return array<string, string>
+	 * @return array<string, string|array<string, string>>
 	 */
 	public static function app_i18n(): array {
 		return array(
@@ -1847,9 +1847,17 @@ class Template_Loader {
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'leaveSpace'            => sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label() ),
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			'confirmLeaveSpace'     => sprintf( __( 'Leave this %s? You can rejoin at any time.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			'confirmLeaveSpace'     => sprintf( __( 'Leave this %s?', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			/* translators: %s: the title of the space being left. */
-			'confirmLeaveNamed'     => __( 'Leave %s? You can rejoin at any time.', 'jetonomy' ),
+			'confirmLeaveNamed'     => __( 'Leave %s?', 'jetonomy' ),
+			// The second sentence follows the space's join policy, so a member
+			// leaving an approval or invite-only space is not told they can
+			// walk back in.
+			'leaveRejoin'           => array(
+				'open'     => __( 'You can rejoin at any time.', 'jetonomy' ),
+				'approval' => __( 'To rejoin, you will need to request again.', 'jetonomy' ),
+				'invite'   => __( 'You will need a new invitation to rejoin.', 'jetonomy' ),
+			),
 			'leave'                 => __( 'Leave', 'jetonomy' ),
 			'leaveSpaceFailed'      => __( 'Could not leave. Please try again.', 'jetonomy' ),
 			'copyLink'              => __( 'Copy link', 'jetonomy' ),

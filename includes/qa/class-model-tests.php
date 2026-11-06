@@ -307,6 +307,7 @@ class Model_Tests {
 	 * LP1     a level is named and typed by its adapter's prefix, even when the catalog omits it (10436110349)
 	 * BR1     a space ban is visible to the roster in one lookup (10430978086)
 	 * MN1     the public members search never matches an email address (10430894693)
+	 * LV1     the leave confirm follows the join policy (10483409032)
 	 * SX1     a new space drops the cached sitemap (10430894693)
 	 * IS1-IS2 import slugs: NFD accents fold without intl; wpForo boards never share a category (10441705185, 10441707350)
 	 */
@@ -494,8 +495,20 @@ class Model_Tests {
 			$named = $mk( 'jt_qa_207n_' . $suffix, 'subscriber', 'QA Zephyr ' . $suffix );
 			SpaceMember::add( $space, $named, 'member' );
 			$this->check( 'MN1: the public members search matches names, never email addresses', 1 === SpaceMember::count_by_space( $space, 'Zephyr ' . $suffix, true ) && 0 === SpaceMember::count_by_space( $space, 'jt_qa_207n_' . $suffix . '@', true ) );
+
+			// LV1. The leave confirm says how a member gets back in, by join policy.
+			Space::update( $space, array( 'join_policy' => 'approval' ) );
+			\Jetonomy\Cache::reset_memos();
+			wp_set_current_user( $named );
+			ob_start();
+			\Jetonomy\Template_Loader::partial( 'space-header', array( 'space' => Space::find( $space ) ) );
+			$lv_head = (string) ob_get_clean();
+			wp_set_current_user( 0 );
+			Space::update( $space, array( 'join_policy' => 'open' ) );
+			$lv_say = \Jetonomy\Template_Loader::app_i18n()['leaveRejoin'] ?? array();
+			$this->check( 'LV1: Leave carries the join policy, and approval and invite spaces do not promise an instant rejoin', str_contains( $lv_head, 'data-join-policy="approval"' ) && 3 === count( array_unique( array_filter( array( $lv_say['open'] ?? '', $lv_say['approval'] ?? '', $lv_say['invite'] ?? '' ) ) ) ) );
 		} else {
-			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1' ) as $id ) {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1' ) as $id ) {
 				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
 			}
 		}

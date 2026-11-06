@@ -7855,14 +7855,23 @@ msgstr "%s verlaten"
 #: includes/class-template-loader.php:1848
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #, php-format
-msgid "Leave this %s? You can rejoin at any time."
-msgstr "Wil je %s verlaten? Je kunt op elk moment weer lid worden."
+msgid "Leave this %s?"
+msgstr "Wil je %s verlaten?"
 
 #: includes/class-template-loader.php:1850
 #. translators: %s: the title of the space being left.
 #, php-format
-msgid "Leave %s? You can rejoin at any time."
-msgstr "%s verlaten? Je kunt op elk moment weer lid worden."
+msgid "Leave %s?"
+msgstr "%s verlaten?"
+
+msgid "You can rejoin at any time."
+msgstr "Je kunt op elk moment weer lid worden."
+
+msgid "To rejoin, you will need to request again."
+msgstr "Om weer lid te worden, moet je opnieuw een verzoek indienen."
+
+msgid "You will need a new invitation to rejoin."
+msgstr "Je hebt een nieuwe uitnodiging nodig om weer lid te worden."
 
 #: includes/class-template-loader.php:1851
 msgid "Leave"

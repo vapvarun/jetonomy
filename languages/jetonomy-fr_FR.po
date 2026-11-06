@@ -7930,14 +7930,23 @@ msgstr "Quitter : %s"
 #: includes/class-template-loader.php:1848
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #, php-format
-msgid "Leave this %s? You can rejoin at any time."
-msgstr "Quitter : %s ? Tu pourras revenir quand tu veux."
+msgid "Leave this %s?"
+msgstr "Quitter : %s ?"
 
 #: includes/class-template-loader.php:1850
 #. translators: %s: the title of the space being left.
 #, php-format
-msgid "Leave %s? You can rejoin at any time."
-msgstr "Quitter « %s » ? Tu peux revenir à tout moment."
+msgid "Leave %s?"
+msgstr "Quitter « %s » ?"
+
+msgid "You can rejoin at any time."
+msgstr "Tu pourras revenir quand tu veux."
+
+msgid "To rejoin, you will need to request again."
+msgstr "Pour revenir, tu devras refaire une demande."
+
+msgid "You will need a new invitation to rejoin."
+msgstr "Il te faudra une nouvelle invitation pour revenir."
 
 #: includes/class-template-loader.php:1851
 msgid "Leave"

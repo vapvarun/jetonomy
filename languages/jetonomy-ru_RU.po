@@ -7890,14 +7890,23 @@ msgstr "Покинуть: %s"
 #: includes/class-template-loader.php:1848
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #, php-format
-msgid "Leave this %s? You can rejoin at any time."
-msgstr "Покинуть: %s? Вступить снова можно в любой момент."
+msgid "Leave this %s?"
+msgstr "Покинуть: %s?"
 
 #: includes/class-template-loader.php:1850
 #. translators: %s: the title of the space being left.
 #, php-format
-msgid "Leave %s? You can rejoin at any time."
-msgstr "Покинуть «%s»? Вы можете снова вступить в любое время."
+msgid "Leave %s?"
+msgstr "Покинуть «%s»?"
+
+msgid "You can rejoin at any time."
+msgstr "Вступить снова можно в любой момент."
+
+msgid "To rejoin, you will need to request again."
+msgstr "Чтобы вступить снова, нужно будет отправить запрос ещё раз."
+
+msgid "You will need a new invitation to rejoin."
+msgstr "Чтобы вступить снова, понадобится новое приглашение."
 
 #: includes/class-template-loader.php:1851
 msgid "Leave"

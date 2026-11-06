@@ -7466,14 +7466,23 @@ msgstr "%s 나가기"
 #: includes/class-template-loader.php:1848
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #, php-format
-msgid "Leave this %s? You can rejoin at any time."
-msgstr "이 %s에서 나갈까요? 언제든지 다시 참여할 수 있어요."
+msgid "Leave this %s?"
+msgstr "이 %s에서 나갈까요?"
 
 #: includes/class-template-loader.php:1850
 #. translators: %s: the title of the space being left.
 #, php-format
-msgid "Leave %s? You can rejoin at any time."
-msgstr "%s에서 나갈까요? 언제든지 다시 가입할 수 있어요."
+msgid "Leave %s?"
+msgstr "%s에서 나갈까요?"
+
+msgid "You can rejoin at any time."
+msgstr "언제든지 다시 참여할 수 있어요."
+
+msgid "To rejoin, you will need to request again."
+msgstr "다시 참여하려면 가입 요청을 다시 보내야 해요."
+
+msgid "You will need a new invitation to rejoin."
+msgstr "다시 참여하려면 새 초대가 필요해요."
 
 #: includes/class-template-loader.php:1851
 msgid "Leave"

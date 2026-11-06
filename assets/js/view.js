@@ -2548,13 +2548,19 @@ const { state, actions } = store( 'jetonomy', {
             // Name the space in the question, so the member knows exactly what
             // they are leaving (the button sits inside the "Joined" menu).
             const spaceTitle = btnEl.dataset.spaceTitle || '';
-            const question   = spaceTitle && state.i18n?.confirmLeaveNamed
+            const asked      = spaceTitle && state.i18n?.confirmLeaveNamed
                 ? state.i18n.confirmLeaveNamed.replace( '%s', spaceTitle )
-                : ( state.i18n?.confirmLeaveSpace || 'Leave this space? You can rejoin at any time.' );
+                : ( state.i18n?.confirmLeaveSpace || 'Leave this space?' );
+            // Say how they get back in: an approval or invite-only space does
+            // not let a former member simply rejoin.
+            const rejoin     = state.i18n?.leaveRejoin || {};
+            const after      = rejoin[ btnEl.dataset.joinPolicy ] || rejoin.open || '';
+            const question   = after ? asked + ' ' + after : asked;
             const confirmed = yield jetonomyConfirm( question, {
                 title: state.i18n?.leaveSpace || 'Leave space',
                 confirmLabel: state.i18n?.leave || 'Leave',
                 cancelLabel: state.i18n?.cancel || 'Cancel',
+                danger: true,
             } );
             if ( ! confirmed ) return;
 

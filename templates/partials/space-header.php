@@ -114,6 +114,7 @@ $_jt_can_edit_space = is_user_logged_in()
 								data-wp-on--click="actions.leaveSpace"
 								data-space-id="<?php echo absint( $space->id ); ?>"
 								data-space-title="<?php echo esc_attr( $space->title ); ?>"
+								data-join-policy="<?php echo esc_attr( $_jt_join_policy ); ?>"
 								data-user-id="<?php echo absint( $_jt_user_id ); ?>">
 								<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
 								<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>

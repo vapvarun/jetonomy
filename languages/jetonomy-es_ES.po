@@ -7898,14 +7898,23 @@ msgstr "Salir de este %s"
 #: includes/class-template-loader.php:1848
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #, php-format
-msgid "Leave this %s? You can rejoin at any time."
-msgstr "¿Quieres salir de este %s? Puedes volver a unirte cuando quieras."
+msgid "Leave this %s?"
+msgstr "¿Quieres salir de este %s?"
 
 #: includes/class-template-loader.php:1850
 #. translators: %s: the title of the space being left.
 #, php-format
-msgid "Leave %s? You can rejoin at any time."
-msgstr "¿Salir de %s? Puedes volver a unirte en cualquier momento."
+msgid "Leave %s?"
+msgstr "¿Salir de %s?"
+
+msgid "You can rejoin at any time."
+msgstr "Puedes volver a unirte cuando quieras."
+
+msgid "To rejoin, you will need to request again."
+msgstr "Para volver a unirte, tendrás que solicitarlo de nuevo."
+
+msgid "You will need a new invitation to rejoin."
+msgstr "Necesitarás una nueva invitación para volver a unirte."
 
 #: includes/class-template-loader.php:1851
 msgid "Leave"
