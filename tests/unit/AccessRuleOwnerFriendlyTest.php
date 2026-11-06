@@ -31,16 +31,9 @@ class AccessRuleOwnerFriendlyTest extends WP_UnitTestCase {
 		$role       = AccessRule::create( array( 'space_id' => $this->space, 'rule_type' => 'role', 'rule_value' => 'editor', 'grants' => 'read' ) );
 
 		$this->assertSame( 'participate', AccessRule::find( $membership )->grants );
-		AccessRule::update_grants( $role, 'full' );
-		$this->assertSame( 'participate', AccessRule::find( $role )->grants, 'Full on a role rule is Participate too.' );
-	}
-
-	public function test_a_legacy_full_row_resolves_as_participate(): void {
-		global $wpdb;
-		$id = AccessRule::create( array( 'space_id' => $this->space, 'rule_type' => 'logged_in', 'grants' => 'read' ) );
-		$wpdb->update( $wpdb->prefix . 'jt_access_rules', array( 'grants' => 'full' ), array( 'id' => $id ) ); // Not yet migrated.
-		AccessRule::reset_memo();
-		$this->assertSame( 'participate', AccessRule::resolve_access( self::factory()->user->create(), $this->space )['grants'] );
+		// Editing takes Read or Participate only; Full was folded into create.
+		$this->assertWPError( AccessRule::update_grants( $role, 'full' ) );
+		$this->assertSame( 'read', AccessRule::find( $role )->grants, 'a refused edit keeps the saved grant' );
 	}
 
 	public function test_upgrade_turns_every_full_rule_into_participate(): void {

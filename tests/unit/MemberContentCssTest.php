@@ -37,6 +37,9 @@ class MemberContentCssTest extends WP_UnitTestCase {
 		// Padding alone only clears the bar at the end of the page: a Post button
 		// mid-thread, reached by Tab or scrollIntoView, stopped under the tabs.
 		$this->assertMatchesRegularExpression( '/:root:has\(\.jt-mobile-tabs\) \{[^}]*scroll-padding-bottom: var\(--jt-tab-bar-clearance\)/', $css );
-		$this->assertStringContainsString( '.jt-app { padding-bottom: var(--jt-tab-bar-clearance, 0px); }', $css );
+		// On the page, not .jt-app: the theme footer sits outside .jt-app and the
+		// bar covered it (2.0.7 phone footer fix).
+		$this->assertStringContainsString( 'body:has(.jt-mobile-tabs) { padding-block-end: var(--jt-tab-bar-clearance, 0px); }', $css );
+		$this->assertStringNotContainsString( '.jt-app { padding-bottom: var(--jt-tab-bar-clearance', $css );
 	}
 }

@@ -74,7 +74,8 @@ class AccessRuleGrantsEditTest extends WP_UnitTestCase {
 	public function test_patch_is_refused_to_a_subscriber_and_rejects_bad_input(): void {
 		$id  = AccessRule::create( array( 'space_id' => $this->space_id, 'rule_type' => 'logged_in', 'grants' => 'read' ) );
 		$sub = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-		$this->assertSame( 403, $this->rest( 'PATCH', "/access-rules/{$id}", array( 'grants' => 'full' ), $sub )->get_status() );
+		// A valid grant, so the refusal is the permission check, not argument validation.
+		$this->assertSame( 403, $this->rest( 'PATCH', "/access-rules/{$id}", array( 'grants' => 'participate' ), $sub )->get_status() );
 		$this->assertSame( 'read', AccessRule::find( $id )->grants );
 
 		$admin = $this->admin();

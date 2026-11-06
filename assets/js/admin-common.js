@@ -32,8 +32,7 @@
 			purgeTypeToConfirm:   sprintf( /* translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase. */ __( 'This destroys every %2$s, %3$s and attachment in %1$s, including content written by other %4$s. It cannot be undone. Type the %5$s name to confirm.', 'jetonomy' ), '%s', TOPIC, REPLY, MEMBERS, SPACE ),
 			purgeConfirmLabel:    __( 'Delete permanently', 'jetonomy' ),
 			// %1$s stays a literal %s, filled with the category name at click time.
-			/* translators: 1: the category name. 2: category label, lowercase. */
-			confirmDeleteCategory: sprintf( __( 'Delete the %2$s "%1$s"? This cannot be undone.', 'jetonomy' ), '%s', lbl( 'category', 'one_lower', 'category' ) ),
+			confirmDeleteCategory: sprintf( /* translators: 1: the category name. 2: category label, lowercase. */ __( 'Delete the %2$s "%1$s"? This cannot be undone.', 'jetonomy' ), '%s', lbl( 'category', 'one_lower', 'category' ) ),
 			confirmSpam:          __( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
 			confirmTrash:         __( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
 			saving:               __( 'Saving…', 'jetonomy' ),

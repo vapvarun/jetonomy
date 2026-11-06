@@ -3,6 +3,7 @@ namespace Jetonomy\Tests\Unit\CLI\Journeys;
 
 use Jetonomy\CLI\Journey_Result;
 use Jetonomy\CLI\Journeys\Config_Journey;
+use Jetonomy\Notifications\Notifier;
 use Jetonomy\Permissions\Rate_Limiter;
 use Jetonomy\Trust\Trust_Levels;
 use WP_UnitTestCase;
@@ -80,7 +81,7 @@ class ConfigJourneyTest extends WP_UnitTestCase {
 		$expected                          = $this->seed;
 		$expected['trust_thresholds']      = $this->seed['trust_thresholds'] + Trust_Levels::defaults();
 		$expected['rate_limits']           = $this->seed['rate_limits'] + Rate_Limiter::defaults();
-		$expected['notification_defaults'] = $this->seed['notification_defaults'] + Config_Journey::notification_defaults();
+		$expected['notification_defaults'] = $this->seed['notification_defaults'] + Notifier::defaults();
 
 		$this->assertSame( $expected, $result->data['value'] );
 	}
@@ -230,7 +231,7 @@ class ConfigJourneyTest extends WP_UnitTestCase {
 		$stored = get_option( 'jetonomy_settings' );
 		$this->assertSame( Trust_Levels::defaults(), $stored['trust_thresholds'] );
 		$this->assertSame( Rate_Limiter::defaults(), $stored['rate_limits'] );
-		$this->assertSame( Config_Journey::notification_defaults(), $stored['notification_defaults'] );
+		$this->assertSame( Notifier::defaults(), $stored['notification_defaults'] );
 
 		// Unrelated key survives.
 		$this->assertSame( 'Varun', $stored['email_from_name'] );

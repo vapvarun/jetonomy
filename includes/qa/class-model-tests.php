@@ -414,9 +414,11 @@ class Model_Tests {
 			// VR1. Removing a vote fires jetonomy_after_vote with 0; it must not log a vote.
 			$voted = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . table( 'activity_log' ) . " WHERE user_id = %d AND action = 'voted'", $voter ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 			$v0    = $voted();
-			do_action( 'jetonomy_after_vote', 'post', 1, $voter, 0 );
+			// A type no notifier or counter acts on, so only the activity log
+			// listener reacts and no notification row is left behind.
+			do_action( 'jetonomy_after_vote', 'qa_probe', 0, $voter, 0 );
 			$v1 = $voted();
-			do_action( 'jetonomy_after_vote', 'post', 1, $voter, 1 );
+			do_action( 'jetonomy_after_vote', 'qa_probe', 0, $voter, 1 );
 			$v2 = $voted();
 			$this->check( 'VR1: a removed vote logs no vote activity, a cast vote does', $v0 === $v1 && $v2 === $v1 + 1, "before=$v0 removed=$v1 cast=$v2" );
 			$wpdb->delete( table( 'activity_log' ), array( 'user_id' => $voter, 'action' => 'voted' ) );

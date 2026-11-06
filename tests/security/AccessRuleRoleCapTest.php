@@ -54,9 +54,11 @@ class AccessRuleRoleCapTest extends WP_UnitTestCase {
 			'read cannot mint an admin'          => array( 'read', 'admin', 'viewer' ),
 			'read cannot mint a moderator'       => array( 'read', 'moderator', 'viewer' ),
 			'participate cannot mint an admin'   => array( 'participate', 'admin', 'member' ),
-			'full tops out at member'            => array( 'full', 'admin', 'member' ),
-			'full cannot mint a moderator'       => array( 'full', 'moderator', 'member' ),
-			'a lower role is left alone'         => array( 'full', 'viewer', 'viewer' ),
+			// 2.0.7 migrates every stored 'full' to participate, so the cap no
+			// longer knows it: an unknown grant falls to the lowest ceiling.
+			'an unknown grant tops out at viewer' => array( 'full', 'admin', 'viewer' ),
+			'an unknown grant cannot mint a mod'  => array( 'full', 'moderator', 'viewer' ),
+			'a lower role is left alone'         => array( 'participate', 'viewer', 'viewer' ),
 			'an aligned role is left alone'      => array( 'participate', 'member', 'member' ),
 		);
 	}
@@ -79,8 +81,8 @@ class AccessRuleRoleCapTest extends WP_UnitTestCase {
 		return array(
 			'paid + read'        => array( 'read', 'admin', 'viewer' ),
 			'paid + participate' => array( 'participate', 'admin', 'member' ),
-			'paid + full'        => array( 'full', 'admin', 'member' ),
-			'paid asking mod'    => array( 'full', 'moderator', 'member' ),
+			'paid asking mod'    => array( 'participate', 'moderator', 'member' ),
+			'paid + unknown'     => array( 'full', 'admin', 'viewer' ),
 		);
 	}
 
