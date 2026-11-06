@@ -256,11 +256,16 @@ class SpaceMember extends Model {
 	/**
 	 * The owner's "Join spaces" capability. A role the owner never mapped
 	 * (another plugin's) keeps the engine's open fallback, as everywhere else.
-	 * The one check behind join(), auto-join and the Join button.
+	 * The one check behind join(), auto-join and the Join button. The join
+	 * route also needs WordPress `read`, so a role without it is never shown
+	 * a Join button the route then refuses.
 	 *
 	 * @param int $user_id User ID.
 	 */
 	public static function may_join_spaces( int $user_id ): bool {
+		if ( ! user_can( $user_id, 'read' ) ) {
+			return false;
+		}
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- registered via Capabilities::ROLE_MAP.
 		return user_can( $user_id, 'jetonomy_join_spaces' ) || ! \Jetonomy\Permissions\Capabilities::has_explicit_role_mapping( $user_id );
 	}

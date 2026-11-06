@@ -66,6 +66,46 @@ class Capabilities {
 	public const UPLOAD_CAPS = array( 'jetonomy_upload_media', 'manage_options' );
 
 	/**
+	 * What a role nobody has mapped holds through the engine's fallback: the
+	 * member-grade actions in its spaces, and joining. The Permissions table
+	 * shows these ticked for such a role, so ticking one more box adds to what
+	 * it already has instead of replacing it.
+	 *
+	 * @return string[]
+	 */
+	public static function unmapped_caps(): array {
+		$caps   = array_map( static fn( string $action ): string => 'jetonomy_' . $action, Permission_Engine::MEMBER_GRADE_ACTIONS );
+		$caps[] = 'jetonomy_join_spaces';
+		return array_values( array_intersect( self::all(), $caps ) );
+	}
+
+	/**
+	 * Whether a role runs on the fallback: not a core role, never saved on the
+	 * Permissions tab, and holding no Jetonomy capability of its own.
+	 *
+	 * @param string $role_slug Role slug.
+	 */
+	public static function is_unmapped_role( string $role_slug ): bool {
+		if ( isset( self::default_map()[ $role_slug ] ) ) {
+			return false;
+		}
+		$stored = get_option( self::ROLE_CAPS_OPTION, array() );
+		if ( is_array( $stored ) && array_key_exists( $role_slug, $stored ) ) {
+			return false;
+		}
+		$role = get_role( $role_slug );
+		if ( ! $role ) {
+			return false;
+		}
+		foreach ( self::all() as $cap ) {
+			if ( $role->has_cap( $cap ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * The default cumulative cap set per core role, from ROLE_MAP.
 	 *
 	 * @return array<string, string[]> role => caps.

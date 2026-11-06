@@ -708,24 +708,6 @@ class Admin {
 	}
 
 	/**
-	 * Whether a role currently holds any Jetonomy capability.
-	 *
-	 * @param string $role_slug Role slug.
-	 */
-	private static function role_holds_jetonomy_cap( string $role_slug ): bool {
-		$role = get_role( $role_slug );
-		if ( ! $role ) {
-			return false;
-		}
-		foreach ( \Jetonomy\Permissions\Capabilities::all() as $cap ) {
-			if ( $role->has_cap( $cap ) ) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
 	 * One address setting from the posted form: cleaned, or refused by name with
 	 * the stored value kept, so the save never shows "saved" over a broken value.
 	 *
@@ -767,7 +749,7 @@ class Admin {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				// Drop only the mapping - the rest of the Permissions tab
 				// (trust thresholds, rate limits) is still theirs to save.
-				unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'] );
+				unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'], $input['role_caps_roles'] );
 				add_settings_error(
 					'jetonomy_settings',
 					'jetonomy_role_caps_forbidden',
@@ -778,50 +760,57 @@ class Admin {
 		if ( ! empty( $input['role_caps_submitted'] ) ) {
 			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
 			$roles      = array_keys( get_editable_roles() );
-			$stored     = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
-			$stored     = is_array( $stored ) ? $stored : array();
 			$overrides  = array();
 			$posted     = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
+
+			$shown_roles = array_map( 'sanitize_key', (array) ( $input['role_caps_roles'] ?? array() ) );
 			foreach ( $roles as $role_slug ) {
 				if ( 'administrator' === $role_slug ) {
 					continue; // Admins always hold every cap - never stored.
 				}
 				$caps = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
 				$caps = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
-				// A row the owner never touched (never stored, holds no Jetonomy
-				// cap, still empty) stays unmapped so the role keeps the space
-				// membership fallback. Storing it cut Customer/Student members off
-				// on the first save of this tab. A row that
-				// was stored or held caps and is now empty is a deliberate "none".
-				if ( ! $caps && ! array_key_exists( $role_slug, $stored ) && ! self::role_holds_jetonomy_cap( $role_slug ) ) {
-					continue;
+				// A fallback role is shown with unmapped_caps() ticked. Posted back
+				// unchanged, or not shown on this form at all, it stays unmapped,
+				// so a save of this tab never cuts Customer/Student members off.
+				// Any other set, more or fewer boxes, is the owner's choice.
+				if ( \Jetonomy\Permissions\Capabilities::is_unmapped_role( $role_slug ) ) {
+					if ( ! in_array( $role_slug, $shown_roles, true ) ) {
+						continue;
+					}
+					$shown = \Jetonomy\Permissions\Capabilities::unmapped_caps();
+					sort( $shown );
+					$sorted = $caps;
+					sort( $sorted );
+					if ( $sorted === $shown ) {
+						continue;
+					}
 				}
 				$overrides[ $role_slug ] = $caps;
 			}
-			// "Give members access" on a locked third-party role: unmap it so the
-			// space-membership fallback applies again.
+			// "Give members the same access as Subscribers" on a locked
+			// third-party role: copy Subscriber's boxes into its row, so the
+			// table shows what the role holds and ticking only adds.
 			$reset = sanitize_key( $input['role_caps_reset'] ?? '' );
-			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) ) {
-				unset( $overrides[ $reset ] );
-				// The row reloads with nothing ticked, which reads as "still no
-				// access": say where the access now comes from.
-				$roles_all = wp_roles()->get_names();
+			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) && in_array( $reset, $roles, true ) ) {
+				$overrides[ $reset ] = $overrides['subscriber'] ?? \Jetonomy\Permissions\Capabilities::effective_map()['subscriber'];
+				$roles_all           = wp_roles()->get_names();
 				add_settings_error(
 					'jetonomy_settings',
 					'jetonomy_role_caps_reset',
 					sprintf(
-						/* translators: 1: member label, plural (e.g. "Members"). 2: role name. 3: space label, plural, lowercase (e.g. "spaces"). */
-						__( '%1$s with the %2$s role can now read and post in the %3$s they belong to. Nothing needs ticking for that; tick boxes only to give this role more.', 'jetonomy' ), // jt-terms-ok: "post" is the verb here.
+						/* translators: 1: member label, plural (e.g. "Members"). 2: role name. 3: the Subscriber role name. */
+						__( '%1$s with the %2$s role now have the same access as the %3$s role. Their column below shows it; tick or untick boxes to change it.', 'jetonomy' ),
 						\Jetonomy\jetonomy_label( 'member', true ),
 						isset( $roles_all[ $reset ] ) ? translate_user_role( $roles_all[ $reset ] ) : $reset,
-						\Jetonomy\jetonomy_label( 'space', true, true )
+						translate_user_role( 'Subscriber' )
 					),
 					'success'
 				);
 			}
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $overrides, false );
 			\Jetonomy\Permissions\Capabilities::register();
-			unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'] );
+			unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'], $input['role_caps_roles'] );
 		}
 
 		// ── General tab ──

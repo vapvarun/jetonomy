@@ -96,7 +96,7 @@ class Permission_Engine {
 	 * `edit_others_*` through this path. SPACE_MOD_ACTIONS above is the
 	 * separate, deliberate route for that, and it requires a real mod role.
 	 */
-	private const MEMBER_GRADE_ACTIONS = array(
+	public const MEMBER_GRADE_ACTIONS = array(
 		'read',
 		'create_posts',
 		'create_replies',
@@ -297,6 +297,9 @@ class Permission_Engine {
 			if ( null !== $space_id
 				&& in_array( $action, self::MEMBER_GRADE_ACTIONS, true )
 				&& ! Capabilities::has_explicit_role_mapping( $user_id )
+				// Every write route needs WordPress read; offering a write
+				// the route refuses is a dead button.
+				&& ( 'read' === $action || user_can( $user_id, 'read' ) )
 			) {
 				if ( 'read' === $action || SpaceMember::is_member( $space_id, $user_id ) ) {
 					// Read is decided by visibility in Layer 2, exactly as it

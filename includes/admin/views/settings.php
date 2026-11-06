@@ -612,9 +612,17 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							continue;
 						}
 						$jt_map_roles[ $jt_role_slug ] = translate_user_role( $jt_role_info['name'] );
+						// A role nobody mapped shows what the fallback gives it, so
+						// ticking one more box adds to that rather than replacing it.
+						if ( \Jetonomy\Permissions\Capabilities::is_unmapped_role( (string) $jt_role_slug ) ) {
+							$jt_effective[ $jt_role_slug ] = \Jetonomy\Permissions\Capabilities::unmapped_caps();
+						}
 					}
 					?>
 				<input type="hidden" name="jetonomy_settings[role_caps_submitted]" value="1">
+					<?php foreach ( array_keys( $jt_map_roles ) as $jt_role_slug ) : // The columns this form shows; only these can change. ?>
+						<input type="hidden" name="jetonomy_settings[role_caps_roles][]" value="<?php echo esc_attr( $jt_role_slug ); ?>">
+					<?php endforeach; ?>
 					<?php
 					// Third-party roles saved with nothing ticked are locked out of every
 					// space. 2.0.1 stored them that way on any save of this tab, so offer
@@ -634,8 +642,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								?>
 								<button type="submit" class="button button-small" name="jetonomy_settings[role_caps_reset]" value="<?php echo esc_attr( $jt_role_slug ); ?>">
 									<?php
-									/* translators: 1: role name. 2: member label, plural, lowercase (e.g. "members"). 3: space label, plural, lowercase (e.g. "spaces"). */
-									echo esc_html( sprintf( __( 'Give %1$s %2$s access to their %3$s', 'jetonomy' ), $jt_role_label, \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ) );
+									/* translators: 1: role name. 2: member label, plural, lowercase (e.g. "members"). 3: the Subscriber role name. */
+									echo esc_html( sprintf( __( 'Give %1$s %2$s the same access as the %3$s role', 'jetonomy' ), $jt_role_label, \Jetonomy\jetonomy_label( 'member', true, true ), translate_user_role( 'Subscriber' ) ) );
 									?>
 								</button>
 							</p>

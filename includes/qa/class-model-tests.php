@@ -308,6 +308,7 @@ class Model_Tests {
 	 * BR1     a space ban is visible to the roster in one lookup (10430978086)
 	 * MN1     the public members search never matches an email address (10430894693)
 	 * LV1     the leave confirm follows the join policy (10483409032)
+	 * RM1-RM3 Permissions: the reset copies Subscriber, ticking only adds, Join matches the route (10463415760)
 	 * SX1     a new space drops the cached sitemap (10430894693)
 	 * IS1-IS2 import slugs: NFD accents fold without intl; wpForo boards never share a category (10441705185, 10441707350)
 	 */
@@ -507,8 +508,53 @@ class Model_Tests {
 			Space::update( $space, array( 'join_policy' => 'open' ) );
 			$lv_say = \Jetonomy\Template_Loader::app_i18n()['leaveRejoin'] ?? array();
 			$this->check( 'LV1: Leave carries the join policy, and approval and invite spaces do not promise an instant rejoin', str_contains( $lv_head, 'data-join-policy="approval"' ) && 3 === count( array_unique( array_filter( array( $lv_say['open'] ?? '', $lv_say['approval'] ?? '', $lv_say['invite'] ?? '' ) ) ) ) );
+
+			// RM1-RM3. A custom role on the Permissions tab: the table shows what it
+			// holds, ticking only adds, and Join is offered only where it works.
+			$pm_caps_was = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+			add_role( 'jt_qa_pm_' . $suffix, 'QA PM', array( 'read' => true ) );
+			add_role( 'jt_qa_pmx_' . $suffix, 'QA PMX', array() );
+			$pm_user = $mk( 'jt_qa_pm_' . $suffix, 'jt_qa_pm_' . $suffix );
+			$pm_bare = $mk( 'jt_qa_pmx_' . $suffix, 'jt_qa_pmx_' . $suffix );
+			SpaceMember::add( $space, $pm_user, 'member' );
+			$pm_role  = 'jt_qa_pm_' . $suffix;
+			$pm_admin = new \Jetonomy\Admin\Admin();
+			$pm_save  = static function ( array $caps, string $reset = '' ) use ( $pm_admin, $pm_role ): array {
+				wp_set_current_user( 1 );
+				$pm_admin->sanitize_settings(
+					array(
+						'role_caps_submitted' => 1,
+						'role_caps'           => array( $pm_role => $caps ) + array_diff_key( \Jetonomy\Permissions\Capabilities::effective_map(), array( 'administrator' => 1 ) ),
+						'role_caps_reset'     => $reset,
+						'role_caps_roles'     => array( $pm_role ),
+					)
+				);
+				wp_set_current_user( 0 );
+				\Jetonomy\Cache::reset_memos();
+				$stored = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+				return is_array( $stored ) && array_key_exists( $pm_role, $stored ) ? (array) $stored[ $pm_role ] : array( 'unmapped' );
+			};
+			// What the table shows ticked for a role nobody mapped: the engine's
+			// member-grade fallback plus joining.
+			$pm_shown     = array( 'jetonomy_read', 'jetonomy_create_posts', 'jetonomy_create_replies', 'jetonomy_vote', 'jetonomy_flag', 'jetonomy_edit_own_posts', 'jetonomy_delete_own_posts', 'jetonomy_join_spaces' );
+			$pm_untouched = $pm_save( $pm_shown );
+			$pm_more      = $pm_save( array_merge( $pm_shown, array( 'jetonomy_upload_media' ) ) );
+			clean_user_cache( $pm_user );
+			$pm_keeps     = Permission_Engine::can( $pm_user, 'create_posts', $space ) && Permission_Engine::can( $pm_user, 'create_replies', $space ) && Permission_Engine::can( $pm_user, 'vote', $space ) && SpaceMember::may_join_spaces( $pm_user );
+			$pm_save( array() );
+			$pm_reset = $pm_save( array(), $pm_role );
+			$pm_sub   = \Jetonomy\Permissions\Capabilities::effective_map()['subscriber'];
+			sort( $pm_reset );
+			sort( $pm_sub );
+			$this->check( 'RM1: "Give members the same access as the Subscriber role" copies Subscriber\'s boxes into the role', $pm_reset === $pm_sub );
+			$this->check( 'RM2: a custom role saved untouched stays on its fallback, and one more ticked box keeps everything it had', array( 'unmapped' ) === $pm_untouched && in_array( 'jetonomy_upload_media', $pm_more, true ) && $pm_keeps );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $pm_caps_was, false );
+			\Jetonomy\Permissions\Capabilities::register();
+			$this->check( 'RM3: a role without WordPress read is not offered Join, which the join route refuses', ! SpaceMember::may_join_spaces( $pm_bare ) );
+			remove_role( 'jt_qa_pm_' . $suffix );
+			remove_role( 'jt_qa_pmx_' . $suffix );
 		} else {
-			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1' ) as $id ) {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3' ) as $id ) {
 				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
 			}
 		}
