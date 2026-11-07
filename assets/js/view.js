@@ -2142,6 +2142,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+                lock: btnEl.parentElement,
             } );
         },
 
@@ -2195,6 +2196,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+                lock: btnEl.parentElement,
             } );
         },
 
@@ -2250,6 +2252,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+                lock: btnEl.parentElement,
             } );
         },
 
@@ -2311,6 +2314,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+                lock: btnEl.parentElement,
             } );
         },
 

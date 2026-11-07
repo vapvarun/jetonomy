@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-06T11:54:34+00:00\n"
+"POT-Creation-Date: 2026-11-07T20:30:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -881,7 +881,7 @@ msgstr ""
 #: includes/integrations/class-buddypress.php:1019
 #: includes/integrations/class-buddypress.php:1052
 #: includes/integrations/class-buddypress.php:1083
-#: templates/partials/feed-card.php:67
+#: templates/partials/feed-card.php:73
 #: templates/partials/moderation/flag-card.php:118
 #: templates/partials/post-card.php:168
 #: templates/partials/reply-card.php:157
@@ -920,7 +920,7 @@ msgstr ""
 #: includes/integrations/class-buddypress.php:892
 #: includes/notifications/class-notifier.php:1308
 #: templates/partials/avatar.php:17
-#: templates/partials/feed-card.php:31
+#: templates/partials/feed-card.php:37
 #: templates/partials/post-card.php:126
 #: templates/partials/reply-card.php:127
 #: templates/partials/reply-card.php:269
@@ -994,8 +994,7 @@ msgstr ""
 msgid "In %s"
 msgstr ""
 
-#. translators: %s: topic title.
-#. translators: %s: singular topic label.
+#. translators: %s: a topic title, or the singular topic label.
 #: includes/admin/class-activity-list-table.php:513
 #: templates/emails/reply-to-post.php:62
 #, php-format
@@ -4661,7 +4660,7 @@ msgstr ""
 #: includes/admin/views/spaces.php:86
 #: includes/functions.php:1758
 #: jetonomy.php:617
-#: templates/partials/feed-card.php:124
+#: templates/partials/feed-card.php:130
 msgid "Open"
 msgstr ""
 
@@ -4760,7 +4759,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:326
 #: includes/class-template-loader.php:445
 #: jetonomy.php:759
-#: templates/partials/feed-card.php:50
+#: templates/partials/feed-card.php:56
 #: templates/partials/managed-by-card.php:23
 #: templates/partials/post-card.php:137
 #: templates/partials/reply-card.php:139
@@ -5772,7 +5771,6 @@ msgid "Thread not found."
 msgstr ""
 
 #. translators: %d: number of votes.
-#. translators: %d: vote score.
 #: includes/api/class-oembed-controller.php:248
 #: jetonomy.php:543
 #: templates/partials/sidebar.php:290
@@ -6299,7 +6297,6 @@ msgid "Open the community home"
 msgstr ""
 
 #. translators: %s: the plural space label the site owner configured (e.g. spaces, groups).
-#. translators: %s: plural space label the site owner configured (e.g. spaces).
 #: includes/class-admin-bar.php:71
 #: templates/partials/empty-state.php:60
 #: templates/views/my-spaces.php:82
@@ -8155,8 +8152,7 @@ msgstr ""
 msgid "No forum %s yet."
 msgstr ""
 
-#. translators: %s: singular reply label.
-#. translators: %s: the singular space label, lowercase (e.g. space, group).
+#. translators: %s: a singular label, lowercase (space, group or reply).
 #: includes/integrations/class-buddypress.php:1046
 #: includes/models/class-space.php:1078
 #: templates/partials/composer.php:96
@@ -9600,7 +9596,7 @@ msgstr ""
 #. translators: %s: the topic or reply label, singular or plural.
 #: includes/notifications/class-notifier.php:1885
 #: includes/notifications/class-notifier.php:1889
-#: templates/partials/feed-card.php:115
+#: templates/partials/feed-card.php:121
 #, php-format
 msgid "View %s"
 msgstr ""
@@ -10358,7 +10354,7 @@ msgstr ""
 msgid "Not found"
 msgstr ""
 
-#: templates/partials/feed-card.php:51
+#: templates/partials/feed-card.php:57
 #: templates/partials/managed-by-card.php:24
 #: templates/partials/post-card.php:138
 #: templates/partials/reply-card.php:140
@@ -10367,14 +10363,14 @@ msgid "Mod"
 msgstr ""
 
 #. translators: %s: plural reply label.
-#: templates/partials/feed-card.php:119
+#: templates/partials/feed-card.php:125
 #: templates/partials/post-card.php:120
 #, php-format
 msgid "You have unread %s"
 msgstr ""
 
 #. translators: %s: plural reply label.
-#: templates/partials/feed-card.php:119
+#: templates/partials/feed-card.php:125
 #: templates/partials/post-card.php:121
 msgid "New"
 msgstr ""
@@ -11162,8 +11158,7 @@ msgstr ""
 msgid "You are already a %1$s of %2$s."
 msgstr ""
 
-#. translators: %s: the owner-configured singular space label.
-#. translators: %s: space title.
+#. translators: %s: a space title, or the singular space label.
 #: templates/views/invite.php:112
 #: templates/views/space-members.php:46
 #: templates/views/space-roadmap.php:53
@@ -13326,7 +13321,7 @@ msgstr ""
 msgid "That does not match the name, so nothing was deleted."
 msgstr ""
 
-#: assets/js/lib/optimistic.js:36
+#: assets/js/lib/optimistic.js:38
 msgid "Something went wrong"
 msgstr ""
 
@@ -13375,7 +13370,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: number of new replies.
-#: assets/js/view.js:4852
+#: assets/js/view.js:4856
 #, js-format
 msgid "%s new reply. Click to refresh."
 msgid_plural "%s new replies. Click to refresh."

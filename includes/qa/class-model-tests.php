@@ -2281,11 +2281,12 @@ class Model_Tests {
 			count( $orphans ) . ' orphan profile(s)'
 		);
 
-		// LB2: the total counts the same population the page lists.
+		// LB2: the total counts the same population the page lists. The page
+		// holds at most 100 rows, so on a bigger community it must be full.
 		$total = UserProfile::count_for_leaderboard( 'all' );
 		$this->check(
 			'LB2: count_for_leaderboard matches the listed population',
-			$total === count( $rows ),
+			min( $total, 100 ) === count( $rows ),
 			"count={$total}, rows=" . count( $rows )
 		);
 
@@ -2541,10 +2542,12 @@ class Model_Tests {
 
 		// BB3: the headline total is the sum of the parts the owner is shown -
 		// they drifted apart before because each was computed independently.
+		// The total also counts the profiles phase: one per distinct author.
+		$authors = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT post_author) FROM {$wpdb->posts} WHERE post_type IN ('topic','reply') AND post_status IN ('publish','closed') AND post_author > 0" );
 		$this->check(
-			'BB3: total agrees with the per-type estimates',
-			$importer->get_total_count() === array_sum( $stats ),
-			$importer->get_total_count() . ' vs ' . array_sum( $stats )
+			'BB3: total agrees with the per-type estimates plus one profile per author',
+			$importer->get_total_count() === array_sum( $stats ) + $authors,
+			$importer->get_total_count() . ' vs ' . array_sum( $stats ) . ' + ' . $authors
 		);
 	}
 
