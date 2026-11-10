@@ -1560,9 +1560,9 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** On a BuddyPress site, a Fluent Community site, and under BuddyX or Reign themes, community pages pick up the theme's colours and fonts, the layout settings (width, sidebar) set by the admin apply, and the BuddyPress profile tab shows the member's Jetonomy activity. Nothing breaks when the host plugin is absent. Check 1440 and 390 widths, light and dark mode.
 
 **Checks:**
-- `c-site-host-integrations.1` @member #ui: on the Reign theme open /community/ -> fonts and colours follow the theme, and the layout width and sidebar chosen in Settings apply.
+- `c-site-host-integrations.1` @member #ui: on the Reign theme open /community/ -> fonts and colours follow the theme, and the container width set in Settings > Appearance applies.
 - `c-site-host-integrations.2` @member #ui: repeat on BuddyX and Twenty Twenty-Five -> same settings apply, no double headings, no theme sidebar clashing with the community sidebar.
-- `c-site-host-integrations.3` @admin #admin: change layout width and sidebar position in Settings and save -> the community page changes on reload and a cached page is not stale.
+- `c-site-host-integrations.3` @admin #admin: change Container Width and Layout Density in Settings > Appearance and save -> the community page changes on reload and a cached page is not stale.
 - `c-site-host-integrations.4` @member #ui: with BuddyPress active open bob's BuddyPress profile -> a Jetonomy tab shows his topics, replies and reputation, matching his /community/u/bob/ profile.
 - `c-site-host-integrations.5` @member #ui +empty: open a new member's BuddyPress Jetonomy tab -> an empty message, no PHP notice.
 - `c-site-host-integrations.6` @admin #admin: with BuddyPress Groups active open Settings -> an "Integrations" tab appears with two checked checkboxes, and it is absent when BuddyPress is off.
@@ -1571,13 +1571,13 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-site-host-integrations.9` @member #ui: with Fluent Community active open the community -> it picks up Fluent's colours and its space joins reconcile with Jetonomy membership.
 - `c-site-host-integrations.10` @member #ui +settings-off: deactivate BuddyPress and Fluent Community -> the community loads with no PHP error and no empty tab.
 - `c-site-host-integrations.11` @member #ui +dark: toggle the theme's dark mode on Reign and BuddyX -> community cards, tints and borders adopt the host dark palette and space titles keep 4.5:1 contrast.
-- `c-site-host-integrations.12` @member #ui +390: open /community/ and a topic at 390px on each theme -> no horizontal scroll, 40px tap targets.
+- `c-site-host-integrations.12` @member #ui +390: open /community/ and a topic at 390px on each theme -> no horizontal scroll; every Jetonomy button, input and primary control is at least 40px; inline links and tag chips are at least 24px (WCAG 2.5.8); the theme's own header controls are out of scope.
 - `c-site-host-integrations.13` @member #ui +long: open Grace's 159-character topic on the boxed Reign theme -> the title wraps in the header and the 100-character URL does not break the box.
 - `c-site-host-integrations.14` @member #ui +rtl: switch the site to Arabic on Reign -> the community mirrors and the sidebar swaps sides.
 - `c-site-host-integrations.15` @guest #ui !refuse: view the community while the site is in maintenance mode -> the maintenance page shows and Jetonomy pages do not leak.
 - `c-site-host-integrations.16` @admin #ui: set "Community as homepage" -> the root `/` shows the community and still obeys the maintenance gate.
 - `c-site-host-integrations.18` @guest #ui: on the Divi theme with a Theme Builder global header and footer, open /community/ and a topic -> the Divi header and footer render with their module styles, and debug.log has no warning from an empty Divi menu.
-- `c-site-host-integrations.17` @admin #admin: set Settings > Appearance > Sidebar to 'Hide on community pages' on a theme that shows a sidebar (BuddyX) -> the theme sidebar goes and the Jetonomy sidebar stays, or the option says which one it hides.
+- `c-site-host-integrations.17` @admin #admin: open Settings > Appearance on a theme that shows a sidebar (BuddyX) -> the Layout card offers Container Width, Page Padding and Layout Density (there is no sidebar setting), and the community pages show the Jetonomy sidebar, not the theme's.
 
 ### C.integration.abilities-api
 **Covers:** includes/class-abilities.php
@@ -1605,6 +1605,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-integration-abilities-api.18` @member_b #rest !refuse: run jetonomy/flag-content on your own reply, on a reply you cannot read (Customer Advisory Board) and on content you already reported -> the same refusals as POST /flags.
 - `c-integration-abilities-api.20` @admin #rest: run jetonomy/list-flags -> every flag carries the reporter's user id (`user_id`), not 0.
 - `c-integration-abilities-api.21` @guest #rest !refuse +private card:10430601579: run jetonomy/search with filter=tags and a query matching a tag used only in a private space -> that tag is not in the result, and a tag used in a public space still is, with its public count.
+- `c-integration-abilities-api.22` @member #rest: page through a space with jetonomy/list-posts (limit 5), passing after = previous after + items returned -> each page continues where the last stopped, no topic repeats or is skipped, and has_more is false on the last page; the input schema describes `after` as an offset (same for list-replies).
 **Depth note:** no viewport applies; the surface is REST only.
 
 ### C.admin.uninstall
@@ -1933,7 +1934,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-private-messaging.11` @admin #rest: admin `POST /conversations` to the same stranger -> 201, the shared-space rule is bypassed for admins and global moderators only.
 - `e-private-messaging.12` @member #ui: from a conversation, open the "More actions" menu and choose "Block user" -> the control flips to "Unblock user"; as the blocked member, sending in that thread returns 403 `jetonomy_blocked` "You can no longer send messages in this conversation." and the blocker receives no notification.
 - `e-private-messaging.13` @member_b #rest !refuse: alice blocked bob site-wide from a profile, then bob `POST /conversations` to alice and `POST /conversations/{existing}/messages` -> both 403 (`jetonomy_messaging_blocked` "You cannot start a conversation with this person." / `jetonomy_blocked`), the old thread is not reopened.
-- `e-private-messaging.14` @member #ui: choose "Mute notifications" then send a message from alice -> bob gets no bell item and no email for that thread; the menu now shows "Unmute notifications"; unmute and the next message notifies again.
+- `e-private-messaging.14` @member #ui: choose "Mute notifications" then send a message from alice -> bob gets no bell item and no email for that thread; the menu now shows "Unmute notifications"; unmute, open the thread so it is read, and alice's next message notifies again (one notice per unread burst: a message that arrived while muted and is still unread keeps later messages quiet until bob reads the thread).
 - `e-private-messaging.15` @member #ui: "Archive conversation" -> the thread leaves Active and appears under Archived; an empty Archived tab reads "No archived conversations."; a new message from alice returns it to Active or keeps it archived consistently with the REST `archive` flag.
 - `e-private-messaging.16` @member #ui +many: create a group conversation with maya and alice, then "Leave conversation" as bob -> bob's list no longer shows it, the others see "Bob left the conversation.", and opening the thread URL as bob now answers "You are not a participant in this conversation." on the page (REST answers 404 "Conversation not found.", the same as a missing id).
 - `e-private-messaging.17` @member #rest !refuse: `POST /conversations/{direct id}/leave` on a one-to-one thread -> 400 "Only group conversations can be left."; `POST .../block` on a group -> 400 "Only direct conversations can be blocked. To leave a group, use the leave action.".
@@ -1965,7 +1966,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-polls.2` @member #ui !refuse: in the composer enter a question and only one option, press "Post Topic" -> the post is blocked with "Question and at least 2 options required.", the page stays on the new-topic form and no topic is created.
 - `e-polls.3` @member #rest !refuse: `POST /posts/{id}/poll` with 2 options where one is blank -> 400 "A poll requires at least 2 non-empty options."; question over 500 characters -> 400 "Poll question must be 500 characters or fewer."; an option over 255 characters -> 400 "Poll option must be 255 characters or fewer."; bad `closes_at` -> 400 "Invalid close date format.".
 - `e-polls.4` @member #rest !refuse: `POST /posts/{id}/poll` on a post that already has a poll -> 409 `jetonomy_duplicate` "This topic already has a poll."; the topic page still shows exactly one poll.
-- `e-polls.5` @member_b #ui: alice votes for "Thursday 09:00 UTC" -> that option's count goes to 1 and its bar updates, "total voters" shows 1, and alice's choice is marked as hers.
+- `e-polls.5` @member_b #ui: alice votes for "Thursday 09:00 UTC" -> that option shows 100% with a full bar (counts are shown as percentages), "total voters" reads "1 voter", and alice's choice is marked as hers.
 - `e-polls.6` @member_b #ui: alice clicks a different option on a single-choice poll -> her vote moves (old option -1, new option +1), total voters stays 1, never 2.
 - `e-polls.7` @member_b #rest: `DELETE /polls/{id}/vote` then again -> first returns success and counts drop; the second returns 404 "No vote found to remove.".
 - `e-polls.8` @member_c #ui: on a Multiple choice poll maya ticks two options and submits, then unticks all and submits -> counts rise by one each, then return to zero; vote_count never goes below 0.
@@ -1975,12 +1976,12 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-polls.12` @member #rest: `PATCH /polls/{id}` by the topic author with `closes_at` in the past, then cleared -> the response's read-only `closed` flag flips both ways and the page reflects it without a cache delay. `closed` itself is derived and not writable; a body that sends only `closed` changes nothing.
 - `e-polls.13` @member_b #rest !refuse: alice `POST /posts/{bob's post}/poll` and `PATCH /polls/{id}` on bob's poll -> 403 "You do not have permission to create a poll on this topic." / "You do not have permission to modify this poll."; moderator and space_admin succeed.
 - `e-polls.14` @guest #ui !refuse: logged out, the poll results -> are visible on a public topic but the vote control asks the guest to log in; `POST /polls/{id}/vote` returns 401.
-- `e-polls.15` @member #rest !refuse +private: bob votes on, and `GET /polls/{id}` for, a poll in Customer Advisory Board (bob not a member) -> 404 with the same code and message as a poll id that does not exist, and the same for the guest, so the answer reveals nothing.
+- `e-polls.15` @member #rest !refuse +private: bob votes on (POST /polls/{id}/vote), and reads (GET /posts/{id}/poll), a poll in Customer Advisory Board (bob not a member) -> 404 "Poll not found." / "No poll found for this topic.", the same as for an id that does not exist, and the same for the guest, so the answer reveals nothing.
 - `e-polls.16` @silenced #rest !refuse +silenced: finn `POST /polls/{id}/vote` -> must be refused with the silenced reason; record what actually happens.
 - `e-polls.17` @space_banned #rest !refuse +banned: omar votes on a poll inside Off-Topic Lounge -> refused, count unchanged.
 - `e-polls.18` @member #ui +long: a poll with a 480-character question and a 250-character option -> wraps inside the card at 390px on Reign with no overflow; an Arabic question with Arabic options is right-aligned (+rtl).
 - `e-polls.19` @admin #admin: wp-admin Polls -> list shows the topic title (not "Post #id") for each poll, with paging when there are more than a page; a poll whose topic was deleted shows a clear placeholder instead of a blank or fatal.
-- `e-polls.20` @member #ui +settings-off: the "hide results until vote" mode is switched on -> before voting no counts or percentages show to a non-voter; after voting they appear; a setting that does not exist must be raised (see report).
+- `e-polls.20` @member #ui +settings-off: a non-voter (a member and the guest) opens a poll -> results show as percentages before voting (there is no "hide results until vote" mode yet); after voting the member's choice is marked.
 - `e-polls.21` @member #ui: vote on a single-choice poll -> its count rises by exactly one and the total by one; change the vote -> one count moves from the old option to the new and the total is unchanged.
 **Depth note:** the runbook names a "hide results until vote" mode; the extension code read for this checklist exposes no such setting, so check 20 is a contract question for the owner, not a walk step that can pass.
 
@@ -2029,7 +2030,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-analytics.5` @admin #rest: `GET /analytics/overview?range=custom&start=..&end=..` inside the seeded data -> numbers match the sum of the daily rows; without `range=custom` the start/end are ignored (30d); an end before start is refused by REST.
 - `e-analytics.6` @admin #admin: export CSV -> file jetonomy-analytics-YYYY-MM-DD.csv downloads with header Date, Topics, Replies, New Users, ...; row count equals the days in range; values equal the dashboard totals.
 - `e-analytics.7` @admin #cli: `wp jetonomy-pro analytics export --format=csv` -> prints the same CSV to stdout without PHP warnings.
-- `e-analytics.8` @admin #admin: top spaces and top contributors -> lists are capped at the ranked-list limit, Grace's long name wraps inside its row without breaking the table or page at 1440 and 390 (tables scroll inside their wrapper), and the Local Chapters appear only when active in range (needs several chapters active in range, else mark that part untested).
+- `e-analytics.8` @admin #admin: top spaces and top contributors -> lists are capped at the ranked-list limit, and Grace's long name wraps inside its row without breaking the table or page at 1440 and 390 (tables scroll inside their wrapper).
 - `e-analytics.9` @admin #admin +empty: on a fresh site or an empty period (the dashboard offers only 7/30/90 days; a custom range is REST-only and returns zeroes) -> each widget shows "No data for this period." instead of blank charts or NaN%.
 - `e-analytics.10` @admin #admin +offline: block the analytics request -> the panel shows "Could not reach the server. Check your connection and reload."; a 500 shows "Could not load analytics. Try refreshing the page.".
 - `e-analytics.11` @admin #admin: at 1881px `getComputedStyle(document.querySelector('.jtp-analytics')).maxWidth` -> is `none` and the container's right edge is within ~20px of the wrap edge; no `#jtp-diff-panel` or "Verify dual-path" toggle appears (card 9941705191).
@@ -2049,7 +2050,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **Checks:**
 - `e-custom-badges.1` @admin #admin: Badge Builder: create "Conversationalist" with a Lucide icon, a description, criteria posts >= 25 and replies >= 50, press "Save Badge" -> notice "Badge saved." and the badge appears in the admin list with its criteria summary.
 - `e-custom-badges.2` @admin #admin: create a badge with no criteria -> the list shows "Manual award only".
-- `e-custom-badges.3` @admin #admin: open Badges on a site with no custom badges -> the list shows the nine seeded default badges (they are re-created whenever the table is empty), so the "No badges yet" empty state is not reachable from the UI.
+- `e-custom-badges.3` @admin #admin: open Badges -> the list shows the eleven seeded default badges (seeded on extension activation only); delete every badge -> the "No badges yet" empty state shows.
 - `e-custom-badges.4` @admin #admin: Award Badge dialog: search "Maya", pick her, press Award Badge (picking the user and pressing the button is the confirmation, there is no second confirm) -> alert "Badge awarded." and after OK the page reloads with the recipient count on the badge up by one.
 - `e-custom-badges.5` @member_c #ui: maya opens her profile -> the badge shows under Badges with name and tier chip, and GET /badges lists it for a guest; there is no public badge list page and post cards show no author badges.
 - `e-custom-badges.6` @member_b #ui: alice's profile does NOT -> show maya's badge and her badge count is unchanged (negative case).
@@ -2063,7 +2064,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-custom-badges.14` @member #ui: bob reaches the threshold (post count) -> the badge is awarded automatically by the scheduled check (every 6 hours) exactly once, a notification is sent once, and no duplicate row appears after the job runs again.
 - `e-custom-badges.15` @member #ui +old-data: open the profile of a member who held duplicate awards before the repair -> one badge is shown and the "Earned by" count equals distinct members.
 - `e-custom-badges.16` @admin #admin +long: a badge named "Community Champion of the Year for Outstanding Helpfulness" with a 300-character description -> wraps inside the card and the profile badge strip on Reign at 390px.
-- `e-custom-badges.17` @admin #admin +offline: save the Badge Builder with the request blocked -> the save is a native form POST, so the browser's own network error shows (no in-page timeout message), the page stays on the form and the typed values remain.
+- `e-custom-badges.17` @admin #admin +offline: save the Badge Builder with the request blocked -> the builder saves through REST, so it stays on the form, keeps the typed values and shows "Save failed: the request did not reach the server...".
 - `e-custom-badges.18` @member #ui +390 +dark: profile badge strip at 390px -> wraps without overflow and uses token colours in dark mode.
 - `e-custom-badges.19` @member_c #email: the award notifies maya once in the bell, and an email only if her notification preferences allow it; revoke -> sends nothing.
 - `e-custom-badges.20` @admin #admin: create a badge with the manual-only criterion -> it saves, appears in the list, and no activity ever auto-awards it; only Award on a profile gives it.
@@ -2080,13 +2081,13 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-white-label.4` @admin #admin: a footer text containing `&` and an apostrophe ("Bob's Q&A") -> renders once-escaped, not as `&amp;amp;`.
 - `e-white-label.5` @admin #admin: the Settings sidebar, Data card and trust-level hint -> use the brand name (card 10415335395).
 - `e-white-label.6` @guest #ui: /community/ -> renders UNCHANGED with the rebrand on (no brand name, colour or logo change on the frontend, in emails or in page titles).
-- `e-white-label.7` @admin #email: send a test notification email -> the From name, subject and footer still use the site's own email settings, not the white-label name.
+- `e-white-label.7` @admin #email: send a test notification email from Settings > Email -> the From name stays the site's own email setting (the subject and body of this admin-facing test name the white-label community name); a real member notification keeps the site name in its subject, From and footer and carries no white-label branding.
 - `e-white-label.8` @admin #rest: `GET /jetonomy/v1/settings/white-label` -> returns the four fields; `PATCH` with `community_name: "<b>Hearth</b>"` stores plain text (tags stripped).
 - `e-white-label.9` @moderator #rest !refuse: test_moderator and bob `GET` and `PATCH /settings/white-label` -> 403; guest -> 401.
 - `e-white-label.10` @admin #admin +long: a 120-character community name -> does not push the admin menu, header or banner into overflow at 1440 and 390.
 - `e-white-label.11` @admin #admin +settings-off: clear all four fields and save -> every admin surface returns to "Jetonomy" (no empty menu label or blank icon).
-- `e-white-label.12` @admin #cli: `wp jetonomy-pro white-label get` -> the values match the admin page and GET /settings/white-label, and `white-label update` changes all three.
-- `e-white-label.13` @admin #admin: an `admin_icon` that -> is a full image URL renders as an image in the menu; an invalid icon string falls back to a default icon.
+- `e-white-label.12` @admin #cli: `wp jetonomy-pro white-label get` -> the four values (community name, admin label, footer text, admin icon) match the admin page and GET /settings/white-label, and `white-label update --community-name --admin-label --footer-text --admin-icon` changes them.
+- `e-white-label.13` @admin #admin: an `admin_icon` that -> is a full image URL renders as an image in the menu; an invalid icon string is rejected (admin notice "Admin menu icon was not changed...", REST 400) and the existing or default icon is kept.
 
 ### E.advanced-moderation
 **Covers:** includes/moderation/class-moderation-service.php, includes/api/class-base-controller.php, pro:includes/extensions/advanced-moderation/*.php, pro:assets/js/moderation-admin.js
@@ -2111,7 +2112,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-advanced-moderation.15` @admin #rest: `GET /moderation/rules/{id}/stats` after three matching posts -> `hit_count` 3; deactivating the rule stops the count.
 - `e-advanced-moderation.16` @admin #admin: delete a rule -> one confirm "Permanently delete this rule?" (not two), toast "Rule deleted.", the rule stops firing; `DELETE` on a nonexistent id returns an error, not success.
 - `e-advanced-moderation.17` @moderator #rest: test_moderator can list and create rules (`jetonomy_moderate`) while bob and a guest get 403/401.
-- `e-advanced-moderation.18` @admin #admin +many: with 200 rules the -> list paginates, filters by type/action, and loads within a second.
+- `e-advanced-moderation.18` @admin #admin +many: with 200 rules the -> list pages at 50 with a pager and loads within a second.
 - `e-advanced-moderation.19` @admin #admin: exempt behaviour - posts by admins and by test_moderator -> are not held by a keyword rule (or the owner is shown they are), and edits to an existing post re-run the rules.
 - `e-advanced-moderation.20` @admin #admin +old-data: replies and topics edited after the rule was created -> are re-checked; the debug.log stays empty (no PHP 8.1 null-key deprecation per post).
 - `e-advanced-moderation.21` @admin #admin +390: the rules table and the Add Rule form at 390px -> scroll inside their wrapper and the type-dependent pattern fields switch correctly.
@@ -2125,7 +2126,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 **Checks:**
 - `e-ai.1` @admin #admin: Settings > AI Integration: enter a real provider key (OpenAI, Anthropic, Ollama or Custom), tick Activate this provider, save -> the key is stored masked ("Leave blank to keep" style placeholder), and ticking "clear api key" removes it.
-- `e-ai.2` @member #ui: bob posts an obvious spam topic ("Make $5000 a week from home, click here, limited slots") with AI spam detection on -> the post is held or marked spam per the thresholds (default hold 0.5, spam 0.8) and appears in the mod queue with the AI reason "Flagged by AI review: ...".
+- `e-ai.2` @member #ui: grace (trust level below 3; trust 3+ and staff are never sent to the model) posts an obvious spam topic ("Make $5000 a week from home, click here, limited slots") with AI spam detection on -> the 5-minute AI review batch after publish holds it (confidence at or above hold 0.5) under Moderation > Pending, or marks it spam (at or above 0.8); a content-moderation flag verdict adds a flag with the reason "Flagged by AI review: ...".
 - `e-ai.3` @member #ui: bob posts a genuine long question (a real Help Desk issue about SMTP settings) -> published normally; no false positive.
 - `e-ai.4` @admin #admin: set Auto-spam Threshold below the hold threshold or above 1 -> the form rejects or clamps with a visible message.
 - `e-ai.5` @admin #rest: `GET /jetonomy/v1/ai/usage` and `/ai/usage/summary` after several calls -> request and token counts add up to the daily rows, and the cost respects the configured cost-per-1k values.
@@ -2141,7 +2142,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-ai.15` @admin #admin: provider order and per-feature override: set default Anthropic, order "anthropic, openai", override spam detection to openai -> a spam test goes through openai; when the first provider is down the next in order is used.
 - `e-ai.16` @guest #ui +private: request the AI summary/suggestion of a post in a private space the requester cannot read -> no AI call is made, nothing is shown, and a summary generated for a private post is not shown to guests.
 - `e-ai.17` @member #ui +rtl +long: summarise and moderate an Arabic topic and the 159-character General Discussion topic -> output renders in the right direction and the card wraps at 390px.
-- `e-ai.18` @admin #cli: `wp jetonomy-pro ai` subcommands (usage/test) -> respond with plain output and no PHP notices, including with no provider.
+- `e-ai.18` @admin #cli: `wp jetonomy-pro ai` subcommands (status, list-providers, provider-status, test-provider, spam-check --content, summarize --content, batch-review-status) -> respond with plain output and no PHP notices, including with no provider.
 - `e-ai.19` @admin #admin: batch review scheduler -> flags past content, retries failed items next cycle and honours the daily budget.
 - `e-ai.20` @admin #admin: AI usage and daily-budget day buckets follow the site timezone, not UTC.
 - `e-ai.21` @admin #admin: saving AI settings with a threshold that gets kept shows one outcome notice, not both the threshold-kept notice and "AI settings saved."
@@ -2159,18 +2160,18 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-custom-fields.2` @admin #rest: `POST /jetonomy/v1/fields` with name, field_type and context (no slug) -> 201 with a generated slug, no fatal; missing context -> 400 "Missing parameter(s): context"; missing name -> 400 `rest_missing_callback_param` "Missing parameter(s): name"; unknown `field_type` -> 400 `rest_invalid_param` "field_type is not one of ..." (the param is `field_type`).
 - `e-custom-fields.3` @admin #admin: create one field per type (text, textarea, number, email, url, select, checkbox, radio, date) -> each renders the right control in the composer and on the topic.
 - `e-custom-fields.4` @member #ui: bob starts a Help Desk topic with Operating system = Linux -> the topic shows "Additional Fields" with Linux; reload keeps it.
-- `e-custom-fields.5` @member #ui !refuse: submit the composer with the required field empty -> blocked with "Operating system is required." (REST 400 `jetonomy_field_required`) and no topic created.
+- `e-custom-fields.5` @member #ui !refuse: submit the composer with the required field empty -> the browser's own required-field message blocks it and no topic is created; over REST the same submit answers 400 `jetonomy_field_required` "Operating system is required.".
 - `e-custom-fields.6` @member #ui: edit the topic inline -> the field is pre-populated, can be changed to macOS, and the change persists after update; clearing an optional field removes it from the display.
 - `e-custom-fields.7` @member_b #rest !refuse: alice `PATCH /posts/{bob's id}` with `custom_fields` -> 403 with the standard permission message; a missing post id -> 404; for a post in a space alice cannot read the answer must equal the missing-post 404. (`/posts/{id}/fields` is GET only.)
 - `e-custom-fields.8` @member #rest: `PATCH /posts/{id}` with `custom_fields` holding a number field "abc", an email field "not-an-email", a url field "javascript:alert(1)" and a select value outside the options -> the post saves (an optional field never blocks a post), each invalid value is skipped and the stored values are unchanged; the composer's own controls cannot submit those values.
-- `e-custom-fields.9` @moderator #rest: test_moderator and space_admin (edit others' posts in their space) -> may update fields on a topic in that space; test_moderator outside Moderators' Room/Bug Reports may not.
+- `e-custom-fields.9` @moderator #rest: space_admin of a space (edit others' posts in that space, no site-wide moderate capability) -> may update fields on a topic in that space; a plain member may not (403); test_moderator holds the site-wide moderate capability, so may update fields in any space.
 - `e-custom-fields.10` @member #ui +390 +long: a url field holding a 100-character unbroken URL -> wraps inside its container (`scrollWidth === clientWidth`) at 390px on Reign, on the topic and on the profile.
 - `e-custom-fields.11` @member #ui: Edit Profile shows profile-context fields under "More about you"; bob saves "Timezone/Location: Lagos, Nigeria" -> other members see it on his profile under "Profile Details"; a member who left it blank shows no empty row.
-- `e-custom-fields.12` @member_b #ui: alice views bob's profile -> sees his field values; fields marked private/hidden to others do not show to alice or the guest.
+- `e-custom-fields.12` @member_b #ui: alice views bob's profile -> sees his field values, and so does the guest (every profile field is public; there is no per-field visibility setting yet).
 - `e-custom-fields.13` @member #rest !refuse: `PATCH /users/me/fields` with an unknown slug only -> 400 "No known profile field matched the request. Send a flat { field_slug: value } object."; with an array body -> 400 "Request body must be a JSON object of field_slug: value pairs.".
 - `e-custom-fields.14` @admin #admin: Space-context field -> renders and saves on space create, edit and display (card 9947496606/9942068436); a space-scoped field does not appear on topics in other spaces.
 - `e-custom-fields.15` @admin #admin: deactivate a field -> message "Field deactivated."; existing values are kept in the data, hidden from display and the composer, and not required any more; reactivating restores them.
-- `e-custom-fields.16` @admin #admin: edit a searchable field -> notice "Field updated. Existing content is being re-indexed in the background so this field becomes searchable everywhere, not only in new posts."; searching the value finds an old topic after the job runs.
+- `e-custom-fields.16` @admin #admin: edit a searchable field -> notice "Field updated. Existing content is being re-indexed in the background so this field becomes searchable everywhere, not only in new topics."; searching the value finds an old topic after the job runs.
 - `e-custom-fields.17` @guest #rest: `GET /fields` public -> 200 with active fields only; `GET /posts/{id}/fields` of a hidden-space topic -> 404; `POST /fields` as bob -> 403.
 - `e-custom-fields.18` @admin #admin +empty: with no fields the admin page -> shows "No custom fields yet" with a hint; the composer shows no empty "Additional Fields" heading.
 - `e-custom-fields.19` @member #ui +rtl: an Arabic text value -> displays right-to-left in the field list and in the edit input.
@@ -2183,13 +2184,13 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **What to verify:** users subscribed to the digest actually receive one at the configured cadence; a manual test-send from admin dispatches within 30s; the stats endpoint reports sends without error. When the digest's own sender is blank it uses the sender from Settings > Emails.
 
 **Checks:**
-- `e-email-digest.1` @admin #admin: Settings > Email Digest: set default frequency Weekly and send time, save -> settings persist; the sender is blank -> digests use the sender from Settings > Emails.
+- `e-email-digest.1` @admin #admin: Settings > Email Digest: set Default Frequency Weekly, save -> settings persist; with From name and From email blank, digests use the sender from Settings > Emails.
 - `e-email-digest.2` @admin #rest: `POST /admin/digest/test` with frequency daily -> 200 `success: true` "Test digest sent to <admin email>." and the message is in Mailpit within 30 seconds with subject for a test digest.
 - `e-email-digest.3` @admin #email: open the test digest -> the header reads "Community Digest: <date>" and the sections that have content for the recipient and period render (Trending, top topics, New in Spaces You Follow, replies to you, badges earned, poll engagement, stats), listing real activity from that period; empty sections are left out; no broken images, no `&amp;` in titles, and the plain-text part has no HTML.
 - `e-email-digest.4` @member #rest: `PATCH /users/me/digest-preferences` frequency none, daily, weekly -> each saves and `GET` returns it; "monthly" -> 400 `rest_invalid_param` "frequency is not one of none, daily, and weekly.".
 - `e-email-digest.5` @member #cli: `wp cron event run` (or the digest command) for daily as bob with frequency daily and activity since the last digest -> one email arrives, and running it again immediately sends nothing (since-date moves forward).
 - `e-email-digest.6` @member #email +empty: a member with no activity in range -> gets no digest at all (not an empty shell).
-- `e-email-digest.7` @member #email +private: bob's digest -> never lists topics from Customer Advisory Board, Moderators' Room or Insiders / Beta, nor from spaces he follows but was removed from; a Partner Program member's digest does include it.
+- `e-email-digest.7` @member #email +private: test_subscriber's digest (a member of neither Insiders / Beta nor Partner Program) -> never lists topics from Customer Advisory Board, Moderators' Room or Insiders / Beta, nor from spaces they follow but were removed from; a Partner Program member's digest does include it.
 - `e-email-digest.8` @member #email: the footer link "unsubscribe" -> works logged out: visiting it sets frequency to none and shows "You have been unsubscribed from community digest emails. You can re-enable them anytime from your profile settings."; the next run sends nothing to bob.
 - `e-email-digest.9` @guest #ui !refuse: an unsubscribe link with a wrong token -> "Invalid or expired unsubscribe link." (403); with no token -> "Invalid unsubscribe link." (400); frequency unchanged.
 - `e-email-digest.10` @member #email: a member with "Pause all email notifications" on -> receives no digest.
@@ -2197,7 +2198,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-email-digest.12` @member #email +blocked: run the digest for bob after he blocked an author -> that author's topics do not appear in his digest.
 - `e-email-digest.13` @member_b #email +many: 3,000 subscribers: the -> send is batched through Action Scheduler pages, each user gets one email, and a transient SMTP failure does not lose the buffered event signal (retried next run).
 - `e-email-digest.14` @admin #rest: `GET /admin/digest/stats` -> returns counts of none/daily/weekly users and sends without error; non-admin gets 403; `POST /admin/digest/test` as bob 403.
-- `e-email-digest.15` @member #email +rtl +long: a digest containing the Arabic topic and the 159-character topic title -> renders right-to-left in that block and wraps in a 390px mail client without horizontal scroll; dark-mode clients keep readable text.
+- `e-email-digest.15` @member #email +rtl +long: a digest containing the Arabic topic and the 159-character topic title -> the Arabic title and excerpt render right-to-left (`dir="auto"`) and wrap in a 390px mail client without horizontal scroll; the template sets explicit light background and text colours, so text stays readable in dark-mode clients.
 - `e-email-digest.16` @admin #email +settings-off: with the extension disabled, no digest cron -> runs and the unsubscribe URL of an old email still lands on a clear page instead of a 404 fatal.
 - `e-email-digest.17` @admin #email: with PMPro active, the digest's text/plain part is real plain text (no HTML tags) for an admin recipient as well as a member.
 - `e-email-digest.18` @member #email card:10469970853: a member follows a space where they and a second member both posted -> the digest lists the other member's topic and leaves out their own (qa-actions ED8).
