@@ -233,4 +233,16 @@ class ReactionsTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '<button', $html );
 		$this->assertStringNotContainsString( 'jt-reaction-picker', $html );
 	}
+
+	/**
+	 * A trashed topic answers 409 (not live), the same as a vote, not the 404 a
+	 * reader gets for something they may not see. Nothing is stored.
+	 */
+	public function test_trashed_target_is_refused_as_not_live(): void {
+		Post::update( $this->post_id, [ 'status' => 'trash' ] );
+		$response = $this->toggle( 'thumbsup', $this->user_id );
+		$this->assertSame( 409, $response->get_status() );
+		global $wpdb;
+		$this->assertSame( 0, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_pro_reactions WHERE object_id = %d", $this->post_id ) ) );
+	}
 }
