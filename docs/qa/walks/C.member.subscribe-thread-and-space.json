@@ -1,109 +1,114 @@
 {
   "journey": "C.member.subscribe-thread-and-space",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:28:07Z",
-  "walker": "lane A3",
+  "free": "0217e21d",
+  "pro": "1bb3e93",
+  "checks": {
+    "c-member-subscribe-thread-and-space.1": {
+      "result": "pass",
+      "evidence": "bob (removed his old test follows first) clicked Follow on 'Dark mode toggle in user preferences' (Feature Requests, by aisha): button Follow -> Following; /community/subscriptions/ then lists it first with 'Web + Email' and an Unfollow button.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/subs-list.png"
+    },
+    "c-member-subscribe-thread-and-space.2": {
+      "result": "pass",
+      "evidence": "alice replied in that thread (REST) -> bob got exactly one bell notification (reply_to_post, reply 1376) and one email 'Alice Chen replied in Dark mode toggle in user preferences' (not 'replied to your topic'; aisha, the author, got 'replied to your topic'). The subject prefix is the site title '[Northwind Makers Community]', not '[forums]'."
+    },
+    "c-member-subscribe-thread-and-space.3": {
+      "result": "pass",
+      "evidence": "bob clicked Following -> Follow; subscription row gone; alice replied again -> no new notification for bob and no email to bob (only aisha mailed)."
+    },
+    "c-member-subscribe-thread-and-space.4": {
+      "result": "pass",
+      "evidence": "bob clicked Follow on Help Desk (Follow -> Following); alice created a new topic there -> exactly one notification for bob (new_post_in_sub, post 19773). No email: the default for new-post-in-space email is off."
+    },
+    "c-member-subscribe-thread-and-space.5": {
+      "result": "pass",
+      "evidence": "REST as bob: POST /subscriptions {post 17722} -> 201 id 294, POST {post 17723} -> 201 id 295; DELETE /subscriptions/294 -> 200 {deleted:true}; GET shows 295 (the newer one) still there; DELETE 295 -> 200."
+    },
+    "c-member-subscribe-thread-and-space.6": {
+      "result": "pass",
+      "evidence": "bob followed Help Desk and then one of its topics (19773); test_moderator replied in the topic -> bob received one notification (reply_to_post 1378) and one email, not two."
+    },
+    "c-member-subscribe-thread-and-space.7": {
+      "result": "pass",
+      "evidence": "Allowed role subscriber in frontend_space_creation_roles (before that /community/new-space/ showed 'Creating spaces is reserved for community administrators.'); bob filled the New space form (Pottery Corner) in the UI -> /community/s/pottery-corner/; jt_subscriptions has bob following space 96 (notify_via both) at creation."
+    },
+    "c-member-subscribe-thread-and-space.8": {
+      "result": "pass",
+      "evidence": "bob followed topic 19773; alice (its author) posted a private reply (is_private true) -> no notification row for bob and Mailpit received 0 emails."
+    },
+    "c-member-subscribe-thread-and-space.9": {
+      "result": "pass",
+      "evidence": "bob POST /subscriptions for Moderators' Room topic 241 -> 404 jetonomy_not_found 'Topic not found.'; for space 43 -> 404 jetonomy_not_found 'Space not found.'"
+    },
+    "c-member-subscribe-thread-and-space.10": {
+      "result": "pass",
+      "evidence": "bob (admin of Partner Program) followed space 41; admin posted a topic -> bob's bell showed it (notification 449). Removed bob from the space -> GET /notifications no longer lists 449, GET /subscriptions no longer lists space 41, and a further admin post produced no notification and 0 emails."
+    },
+    "c-member-subscribe-thread-and-space.11": {
+      "result": "pass",
+      "evidence": "Guest: GET /community/subscriptions/ -> 302 to wp-login.php?redirect_to=.../community/subscriptions/; POST /subscriptions -> 401 rest_not_logged_in; logged-out topic page renders no Follow control (verified in the reply-quote journey view)."
+    },
+    "c-member-subscribe-thread-and-space.12": {
+      "result": "pass",
+      "evidence": "Playwright setOffline(true), click Follow on a topic -> button stays 'Follow' (rolled back), toast 'Failed to save.', no subscription row.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/subs-offline.png"
+    },
+    "c-member-subscribe-thread-and-space.13": {
+      "result": "pass",
+      "evidence": "dblclick on Follow for topic 17723 -> ends on Following with exactly one jt_subscriptions row."
+    },
+    "c-member-subscribe-thread-and-space.14": {
+      "result": "pass",
+      "evidence": "dana_new (no follows) on /community/subscriptions/: 'You are not following anything yet. Follow any topic or space and it will show up here.'",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/subs-empty.png"
+    },
+    "c-member-subscribe-thread-and-space.15": {
+      "result": "pass",
+      "evidence": "With 70 subscriptions for bob: page 1 shows 50 rows with a Next link (?pg=2), page 2 shows 20 rows with Previous; REST meta total 70 = 50 + 20.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/subs-many.png"
+    },
+    "c-member-subscribe-thread-and-space.16": {
+      "result": "pass",
+      "evidence": "On the archived 2025 Hackathon the button reads Follow (no Join); click -> Following, subscription saved; no notification appeared (nothing can post)."
+    },
+    "c-member-subscribe-thread-and-space.17": {
+      "result": "pass",
+      "evidence": "Admin deleted (trashed) topic 17723 that bob followed -> the row stays on /community/subscriptions/ as 'No longer available' with an Unfollow button (5 such rows now, 4 older + this one)."
+    },
+    "c-member-subscribe-thread-and-space.18": {
+      "result": "pass",
+      "evidence": "390px with Reign dark (localStorage bx-color-mode=dark): /community/subscriptions/ scrollWidth 390, no row past the viewport, heading 12:1 on the dark background (subscriptions-390-dark.png).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/subscriptions-390-dark.png"
+    },
+    "c-member-subscribe-thread-and-space.19": {
+      "result": "pass",
+      "evidence": "Roster removal: after bob left Partner Program his follow of space 41 vanished from GET /subscriptions. Rule admission: with a 'role: subscriber' access rule on Partner Program (no roster row), bob followed space 41 and bookmarked topic 19774 and both showed in GET /subscriptions and /bookmarks; deleting the rule hid both again. A trashed followed topic reads 'No longer available' (see .17)."
+    }
+  },
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T04:30:43.292270Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
   "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
+    "locale": "en_US",
     "viewports": [
       1440,
       390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (Reign)"
     ]
   },
-  "checks": {
-    "c-member-subscribe-thread-and-space.1": {
-      "result": "pass",
-      "evidence": "bob clicked Follow on topic 16651 (UI): button became Following and /community/subscriptions/ listed it."
-    },
-    "c-member-subscribe-thread-and-space.2": {
-      "result": "pass",
-      "evidence": "bob follows 9030, alice replies: bob gets one reply_to_post bell row and one Mailpit email \"[forums] Alice Chen replied in QA-WALK-A vote fixture topic\"",
-      "carried_forward": true
-    },
-    "c-member-subscribe-thread-and-space.3": {
-      "result": "pass",
-      "evidence": "bob clicked Following (UI): button reverted to Follow and GET /subscriptions no longer holds the topic."
-    },
-    "c-member-subscribe-thread-and-space.4": {
-      "result": "pass",
-      "evidence": "bob follows Help Desk space; alice new topic 9033-range: bob gets one new_post_in_sub notification",
-      "carried_forward": true
-    },
-    "c-member-subscribe-thread-and-space.5": {
-      "result": "pass",
-      "evidence": "POST /subscriptions 201 twice (topics 5874, 5870), DELETE older = 200, newer subscription kept, older gone."
-    },
-    "c-member-subscribe-thread-and-space.6": {
-      "result": "pass",
-      "evidence": "bob follows space 3004 and thread 9032: alice reply gives bob exactly one reply_to_post notification",
-      "carried_forward": true
-    },
-    "c-member-subscribe-thread-and-space.7": {
-      "result": "pass",
-      "evidence": "admin created space 4956 via POST /spaces (201) and has subscription 31036 to it. bob (Member) gets 403 jetonomy_forbidden on create, so only a permitted creator was tested.",
-      "carried_forward": true
-    },
-    "c-member-subscribe-thread-and-space.8": {
-      "result": "pass",
-      "evidence": "alice private reply on a thread bob follows: zero notification rows for bob",
-      "carried_forward": true
-    },
-    "c-member-subscribe-thread-and-space.9": {
-      "result": "pass",
-      "evidence": "bob subscribe to Moderators Room topic 8956 = 404 jetonomy_not_found and space 39 = 404 \"Space not found.\"",
-      "carried_forward": true
-    },
-    "c-member-subscribe-thread-and-space.10": {
-      "result": "pass",
-      "evidence": "Own private space 5785 (invite policy, QA-WALK-A3): bob joined by invite, followed the space and a topic in it, got a reply notification; admin removed bob: his subscriptions to it went 2 to 0, notifications about it 1 to 0, no new notification for a later reply, topic GET 404. Mail not separately checked."
-    },
-    "c-member-subscribe-thread-and-space.11": {
-      "result": "pass",
-      "evidence": "guest /community/subscriptions/ redirects to wp-login.php?redirect_to=...; guest POST /subscriptions = 401."
-    },
-    "c-member-subscribe-thread-and-space.12": {
-      "result": "pass",
-      "evidence": "offline Follow: button rolled back to \"Follow\" and toast \"Failed to save.\"",
-      "screenshot": "c-member-subscribe-thread-and-space.12.png",
-      "carried_forward": true
-    },
-    "c-member-subscribe-thread-and-space.13": {
-      "result": "pass",
-      "evidence": "double-click on Follow sends POST 201 then DELETE 200 (two clicks = follow then unfollow), never two rows. Once, with a stale button, the UI said Following while the server had no row and a later toast read \"Subscription not found.\" - race with the optimistic id.",
-      "carried_forward": true
-    },
-    "c-member-subscribe-thread-and-space.14": {
-      "result": "pass",
-      "evidence": "david (no follows): 'You are not following anything yet.' empty state, 0 rows."
-    },
-    "c-member-subscribe-thread-and-space.15": {
-      "result": "pass",
-      "evidence": "bob with 55 follows: page 1 = 50 rows with Next, ?pg=2 = 5 rows with Previous, REST x-wp-total 55 (30 temp follows removed after). Page size 50."
-    },
-    "c-member-subscribe-thread-and-space.16": {
-      "result": "pass",
-      "evidence": "bob followed topic 16651, author trashed it: bob still has the row (exists:false) and the page shows 'No longer available' with an Unfollow button; the 2.0.4 kept-trashed-follow fix works."
-    },
-    "c-member-subscribe-thread-and-space.17": {
-      "result": "pass",
-      "evidence": "Same fixture: trashed followed topic shows a 'No longer available' row with Unfollow; UI Unfollow + Confirm removed it (rows 26 to 25)."
-    },
-    "c-member-subscribe-thread-and-space.18": {
-      "result": "pass",
-      "evidence": "390px dark: scrollWidth 390 = viewport 390, every row right edge within viewport.",
-      "screenshot": "sub-390-dark.png"
-    }
-  },
-  "proposed_checks": [
+  "runbook_fixes": [
     {
-      "id": "c-member-subscribe-thread-and-space.19",
-      "text": "@member #rest +private: after bob loses access to a followed space, GET /subscriptions and /bookmarks and the member pages hide that target, but a member admitted only by a rule (no roster row) still sees their follows and bookmarks there; trash a followed topic -> its row reads \"No longer available\" (2.0.4)."
+      "check": "c-member-subscribe-thread-and-space.2",
+      "now": "the email subject is '[<site title>] Alice Chen replied in <topic>' (site title, not 'forums')"
     }
-  ],
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  ]
 }

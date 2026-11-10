@@ -1,11 +1,14 @@
 {
   "journey": "C.admin.invite-links",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T11:50:15Z",
-  "walker": "lane B2",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:02:08Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
+    "mode": "free stack (Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
@@ -13,94 +16,91 @@
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-admin-invite-links.1": {
       "result": "pass",
-      "evidence": "Fixture private space 5775 (Customer Advisory Board not used so the real invites stay untouched): space edit > Members, limit 2 + expiry 2026-10-22 -> toasts 'Invite link generated.' and 'Invite link copied to clipboard.'; list row 'http://forums.local/community/invite/<token>/ 0 / 2 October 22, 2026' with Copy/Revoke.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/invite-list.png"
+      "evidence": "wp-admin Spaces > Customer Advisory Board > Members > Invite Links: Max uses 2, Expires 2026-11-08 (tomorrow), Generate invite link -> toast 'Invite link generated.' (+ 'Invite link copied to clipboard.'); list row shows 0 / 2 and 'November 8, 2026' (site date_format F j, Y); screenshot invite-minted.png."
     },
     "c-admin-invite-links.2": {
       "result": "pass",
-      "evidence": "Logged out: card \"You've been invited to join QA-WALK-B2 Advisory Circle\" with its description and 'Log in to accept invite' -> wp-login.php?redirect_to=<invite url>; space_members still only the owner."
+      "evidence": "Guest invite card names Customer Advisory Board with its description and 'Log in to accept invite' (redirect_to the invite); no membership created (C.anon.invite-landing .1/.2)"
     },
     "c-admin-invite-links.3": {
       "result": "pass",
-      "evidence": "bob clicked Join Space on the invite -> member of space 5775 with source=invite; the link's use_count reached 2/2 after bob and maya joined (no stray extra rows)."
+      "evidence": "bob clicked Join Space: landed in the space; invite use_count 0 -> 1, members 4 -> 5 (C.anon.invite-landing .3)"
     },
     "c-admin-invite-links.4": {
       "result": "pass",
-      "evidence": "bob opened the link as a logged-in member and did not click: card shows 'Join Space', no space_members row for him, use_count 0."
+      "evidence": "Visiting (GET/HEAD) the invite as bob created no membership (C.anon.invite-landing .5)"
     },
     "c-admin-invite-links.5": {
       "result": "pass",
-      "evidence": "At 2/2 uses alice and priya open the link -> 'This invite link has expired or reached its usage limit.', no Join button, neither is in space_members."
+      "evidence": "hana opening a limit-reached link: HTTP 410 'This invite link has expired or reached its usage limit.', not added"
     },
     "c-admin-invite-links.6": {
       "result": "pass",
-      "evidence": "With 1 use left alice and maya clicked Join at the same moment from two isolated contexts -> exactly one added (maya), alice stays out; use_count 2/2, not 3."
+      "evidence": "Two isolated members clicked Join on a one-use invite: alice added, david got the limit message"
     },
     "c-admin-invite-links.7": {
       "result": "pass",
-      "evidence": "Admin UI past date 2020-01-01 -> toast 'Choose an expiry date in the future.' and no new row; REST past date, 'not a date' and yesterday -> 400 jetonomy_invalid_expiry with the same message; invite count unchanged."
+      "evidence": "Past date 2026-11-06 in the form -> 'Choose an expiry date in the future.', no row added (6 rows before and after). Posting unreadable values ('not a date') to the jetonomy_generate_invite AJAX with a valid nonce -> {success:false,data:'Choose an expiry date in the future.'}, nothing saved."
     },
     "c-admin-invite-links.8": {
       "result": "pass",
-      "evidence": "REST expiry = today stores 2026-10-21 23:59:59 (end of site day, site tz UTC); a non-member opened it at ~11:50 UTC and saw Join Space. Simulated next morning by setting expires_at to 2026-10-20 23:59:59: link then says 'expired or reached its usage limit.' with no Join button. Evening-site-time not run live."
+      "evidence": "Site timezone set to Pacific/Auckland (site date 2026-11-08 08:23 NZDT, UTC 2026-11-07 19:23): minted a link expiring 2026-11-08 -> expires_at stored 2026-11-08 10:59:59 UTC (= 23:59:59 NZDT, end of the site day). As test_subscriber the link opens the invite page with Join Space. With expires_at moved to one minute ago (the next-morning state) it returns 410 'This invite link has expired or reached its usage limit.'. Timezone restored to UTC; test data removed."
     },
     "c-admin-invite-links.9": {
       "result": "pass",
-      "evidence": "Admin Members tab Revoke -> confirm modal -> toast 'Invite link revoked.'; opening the revoked link as a guest returns 404 with 'Invalid invite link.'."
+      "evidence": "Revoke on a fresh link -> toast 'Invite link revoked.'; the revoked link as guest returns 404 'Invalid invite link.' (a link revoked earlier the same way gives the same page)."
     },
     "c-admin-invite-links.10": {
       "result": "pass",
-      "evidence": "bob (admin of Partner Program 37): POST /spaces/37/invite -> 201 and GET /spaces/37/invites -> 200 listing his link (revoked afterwards); test_editor GET /spaces/37/invites -> 403 jetonomy_forbidden."
+      "evidence": "admin minted a Partner Program invite via REST (201). bob (space admin of Partner Program) GET /spaces/41/invites -> 200 with that link; test_editor GET /spaces/41/invites -> 403 jetonomy_forbidden."
     },
     "c-admin-invite-links.11": {
       "result": "pass",
-      "evidence": "bob POST /spaces/38/invite (Customer Advisory Board, not a member) -> 403 jetonomy_forbidden; invite row count for space 38 unchanged (1 before, 1 after)."
+      "evidence": "carlos (not a CAB member) POST /spaces/42/invite -> 403 jetonomy_forbidden; bob (plain CAB member) POST /spaces/42/invite -> 403 jetonomy_forbidden; no invite row created. Note: after the reseed bob is a member of CAB, so the persona carlos was used for the non-member case."
     },
     "c-admin-invite-links.12": {
       "result": "pass",
-      "evidence": "Fixture space 5778: 60 invite links and 40 pending join requests. Front-end Members tab shows 'Invite links 60' with 20 rows and Next, and 'Pending join requests 40'; wp-admin Members tab '60 invite links. Load more'; wp-admin Join Requests tab pages '1-20 of 40' and '21-40 of 40' via jrpg=1/2.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/invite-many-fe.png"
+      "evidence": "Seeded 60 invite links and 40 pending join requests on Insiders / Beta: the front-end Members tab shows 'Invite links 60' (total) and lists them 20 at a time with a Next link, 'join requests 41' with Approve/Deny; wp-admin Join Requests tab shows 'Pending Join Requests (41)' paged '1-20 of 41  1 2 3 Next'."
     },
     "c-admin-invite-links.13": {
       "result": "pass",
-      "evidence": "grace POST /spaces/5778/members (approval space) -> 202 pending, request row created and 6 join_request notifications for staff; DELETE /spaces/5778/join-requests/mine -> withdrawn, her request row gone and the 6 staff notifications gone. (Insiders / Beta and bob not used; bob is already a member of a seeded space.)"
+      "evidence": "test_subscriber (not a member; alice, bob and david already are) clicked Request to join on Insiders / Beta: join request id 6 and join_request notifications for staff were created ('Your request to join Insiders / Beta is awaiting approval.' with Withdraw request). After Withdraw request the button returns to Request to join, the request row is gone, the join_request notifications are gone (admin GET /notifications shows none) and the admin Join Requests tab is back to the one seeded request (carlos)."
     },
     "c-admin-invite-links.14": {
       "result": "pass",
-      "evidence": "Deleted fixture space 5778 (60 invites + 40 join requests) via admin purge, then opened one of its invite links as bob -> HTTP 404 page 'Invalid invite link.', no PHP error text, invite/join-request/member rows for the space all 0."
+      "evidence": "Created space 'Photography Walks Lisbon' (by test_author), minted an invite link and added a join request, then deleted the space in wp-admin Spaces > Delete permanently (typed the space name). Opening the old invite link logged out returns 404 'Invalid invite link.' with no PHP error text; debug.log gained no Jetonomy line."
     },
     "c-admin-invite-links.15": {
       "result": "pass",
-      "evidence": "390px as carlos (non-member, logged in): Join Space button 328x41 (>=40px), description paragraph wraps (53px block), scrollWidth 390 = clientWidth 390.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/invite-member-390.png"
+      "evidence": "390px invite page: Join/Log in button 328px wide of 390 (>=40px tall by layout), description wraps, no horizontal scroll (invite-390.png)"
     },
     "c-admin-invite-links.16": {
       "result": "pass",
-      "evidence": "Logged out: card names the space, shows its description, link text 'Log in to accept invite' leading to wp-login.php?redirect_to=<invite>, heading says \"You've been invited to join\"."
+      "evidence": "Guest invite page shows space name, description and 'Log in to accept invite'"
     },
     "c-admin-invite-links.17": {
       "result": "pass",
-      "evidence": "bob POST /spaces/39/invite (hidden Moderators' Room) and POST /spaces/99999999/invite -> identical 404 jetonomy_not_found 'Space not found.'; listed private CAB answers 403 (.11)."
+      "evidence": "carlos (non-member) POST /spaces/43/invite (hidden Moderators' Room) and POST /spaces/99999/invite (missing) both answer 404 jetonomy_not_found 'Space not found.' with the same body, no row created; the listed private space 42 answers 403 (see .11)."
     },
     "c-admin-invite-links.18": {
       "result": "pass",
-      "evidence": "Admin purge of fixture 5778: jt_invite_links, jt_join_requests, jt_space_members rows for it = 0 afterwards."
+      "evidence": "Same deletion as .14: after the space was removed wp_jt_invite_links, wp_jt_join_requests, wp_jt_space_members and space subscriptions have 0 rows for the deleted space id (no orphans)."
     },
     "c-admin-invite-links.19": {
       "result": "pass",
-      "evidence": "wp-admin space edit has a Join Requests tab 'Join Requests (40)' with Approve/Deny buttons and a '1-20 of 40' total; front end /community/s/<space>/members/ shows 'Pending join requests 40' with Approve/Deny.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/invite-joinreq-admin.png"
+      "evidence": "wp-admin Spaces > Insiders / Beta has a 'Join Requests (1)' tab ('Pending Join Requests (1)': Carlos Mendes, message, date, Approve and Deny); the front-end /community/s/insiders-beta/members/ shows 'join requests 1' with Carlos Mendes and Approve / Deny."
     },
     "c-admin-invite-links.20": {
       "result": "pass",
-      "evidence": "390px logged out: invite card x=31 width 328 (full width minus gutters, centred), no horizontal scroll, Log in button 328x41 reachable.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/invite-guest-390.png"
+      "evidence": "390px guest invite: card full width, Log in button reachable (328px)"
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": []
 }

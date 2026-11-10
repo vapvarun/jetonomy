@@ -540,10 +540,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 												$jt_unlocks[] = $jt_ability_labels[ $jt_ab ];
 											}
 										}
-										echo $jt_unlocks ? esc_html( implode( ', ', $jt_unlocks ) ) : esc_html__( 'None', 'jetonomy' );
+										// One unlock per line: Level 3's seven abilities ran together as one comma-joined sentence.
+										if ( $jt_unlocks ) {
+											echo '<ul class="jt-unlock-list"><li>' . implode( '</li><li>', array_map( 'esc_html', $jt_unlocks ) ) . '</li></ul>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each item escaped.
+										} else {
+											esc_html_e( 'None', 'jetonomy' );
+										}
 										if ( $jt_unlocks && 3 === $level ) {
 											// The trust floor only matters for a role already ticked for these caps above.
-											echo '<br>' . esc_html__( 'Only for roles that already have these permissions.', 'jetonomy' );
+											echo '<p class="jt-unlock-note">' . esc_html__( 'Only for roles that already have these permissions.', 'jetonomy' ) . '</p>';
 										}
 										?>
 									</td>
@@ -602,14 +607,35 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					$jt_cap_labels = \Jetonomy\Permissions\Capabilities::labels();
 					$jt_effective  = \Jetonomy\Permissions\Capabilities::effective_map();
 					$jt_map_roles  = array();
+					$jt_no_read    = array();
 					foreach ( get_editable_roles() as $jt_role_slug => $jt_role_info ) {
 						if ( 'administrator' === $jt_role_slug ) {
 							continue;
 						}
 						$jt_map_roles[ $jt_role_slug ] = translate_user_role( $jt_role_info['name'] );
+						// A role nobody mapped shows what the fallback gives it, so
+						// ticking one more box adds to that rather than replacing it.
+						if ( \Jetonomy\Permissions\Capabilities::is_unmapped_role( (string) $jt_role_slug ) ) {
+							$jt_effective[ $jt_role_slug ] = \Jetonomy\Permissions\Capabilities::unmapped_caps( (string) $jt_role_slug );
+						}
+						if ( empty( $jt_role_info['capabilities']['read'] ) ) {
+							$jt_no_read[ $jt_role_slug ]   = $jt_map_roles[ $jt_role_slug ];
+							$jt_effective[ $jt_role_slug ] = array_intersect( (array) ( $jt_effective[ $jt_role_slug ] ?? array() ), array( 'jetonomy_read' ) );
+						}
 					}
 					?>
+					<?php if ( $jt_no_read ) : ?>
+						<p class="description jt-role-no-read">
+							<?php
+							/* translators: 1: comma-separated role names. 2: member label, plural, lowercase (e.g. "members"). */
+							echo esc_html( sprintf( __( 'No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, so only Read can be ticked for them.', 'jetonomy' ), implode( ', ', $jt_no_read ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); // jt-terms-ok: "post" is the verb here.
+							?>
+						</p>
+					<?php endif; ?>
 				<input type="hidden" name="jetonomy_settings[role_caps_submitted]" value="1">
+					<?php foreach ( array_keys( $jt_map_roles ) as $jt_role_slug ) : // The columns this form shows; only these can change. ?>
+						<input type="hidden" name="jetonomy_settings[role_caps_roles][]" value="<?php echo esc_attr( $jt_role_slug ); ?>">
+					<?php endforeach; ?>
 					<?php
 					// Third-party roles saved with nothing ticked are locked out of every
 					// space. 2.0.1 stored them that way on any save of this tab, so offer
@@ -629,8 +655,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								?>
 								<button type="submit" class="button button-small" name="jetonomy_settings[role_caps_reset]" value="<?php echo esc_attr( $jt_role_slug ); ?>">
 									<?php
-									/* translators: 1: role name. 2: member label, plural, lowercase (e.g. "members"). 3: space label, plural, lowercase (e.g. "spaces"). */
-									echo esc_html( sprintf( __( 'Give %1$s %2$s access to their %3$s', 'jetonomy' ), $jt_role_label, \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ) );
+									/* translators: 1: role name. 2: member label, plural, lowercase (e.g. "members"). 3: the Subscriber role name. */
+									echo esc_html( sprintf( __( 'Give %1$s %2$s the same access as the %3$s role', 'jetonomy' ), $jt_role_label, \Jetonomy\jetonomy_label( 'member', true, true ), translate_user_role( 'Subscriber' ) ) );
 									?>
 								</button>
 							</p>
@@ -653,14 +679,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tbody>
 						<?php foreach ( $jt_cap_labels as $jt_cap => $jt_cap_label ) : ?>
 							<tr>
-								<th scope="row"><strong><?php echo esc_html( $jt_cap_label ); ?></strong><br><code style="font-size:11px;color:var(--jt-admin-text-wp-2, #646970);"><?php echo esc_html( $jt_cap ); ?></code></th>
+								<?php // The capability key is for developers: a tooltip on the label, not a second line under every row. ?>
+								<th scope="row"><strong title="<?php echo esc_attr( $jt_cap ); ?>"><?php echo esc_html( $jt_cap_label ); ?></strong></th>
 								<?php foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) : ?>
 									<td data-colname="<?php echo esc_attr( $jt_role_label ); ?>">
 										<input type="checkbox"
 											name="jetonomy_settings[role_caps][<?php echo esc_attr( $jt_role_slug ); ?>][]"
 											value="<?php echo esc_attr( $jt_cap ); ?>"
 											aria-label="<?php echo esc_attr( sprintf( /* translators: 1: capability label, 2: role name */ __( '%1$s for %2$s', 'jetonomy' ), $jt_cap_label, $jt_role_label ) ); ?>"
-											<?php checked( in_array( $jt_cap, $jt_effective[ $jt_role_slug ] ?? array(), true ) ); ?>>
+											<?php checked( in_array( $jt_cap, $jt_effective[ $jt_role_slug ] ?? array(), true ) ); ?>
+											<?php disabled( isset( $jt_no_read[ $jt_role_slug ] ) && 'jetonomy_read' !== $jt_cap ); ?>>
 									</td>
 								<?php endforeach; ?>
 							</tr>
@@ -1658,6 +1686,21 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		} elseif ( $jt_ext_html ) {
 			echo $jt_ext_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension
 		}
+
+		// A typed or stale tab (an extension since turned off, License without
+		// Pro, Free vs Pro with Pro) would otherwise leave an empty page.
+		$jt_has_pro = defined( 'JETONOMY_PRO_VERSION' );
+		if ( '' === $jt_ext_html && ! in_array( $active_tab, array( 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam', 'integrations' ), true )
+			&& ! ( 'license' === $active_tab && $jt_has_pro ) && ! ( 'free-vs-pro' === $active_tab && ! $jt_has_pro ) ) :
+			?>
+			<div class="notice notice-warning inline">
+				<p>
+					<?php esc_html_e( 'This settings tab is not available. It may belong to an extension that is turned off.', 'jetonomy' ); ?>
+					<a href="<?php echo esc_url( $settings_url ); ?>"><?php esc_html_e( 'Go to General settings', 'jetonomy' ); ?></a>
+				</p>
+			</div>
+			<?php
+		endif;
 		?>
 
 				</div><!-- /.jt-settings-cards -->

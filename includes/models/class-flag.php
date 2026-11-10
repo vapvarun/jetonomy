@@ -16,6 +16,22 @@ class Flag extends Model {
 	/** Reasons a report can carry: the jt_flags.reason enum. */
 	public const REASONS = array( 'spam', 'offensive', 'off_topic', 'harassment', 'other' );
 
+	/**
+	 * Translated label per reason, in display order. The one list the web report
+	 * dialog and GET /app/config both read.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function reason_labels(): array {
+		return array(
+			'spam'       => __( 'Spam', 'jetonomy' ),
+			'offensive'  => __( 'Offensive', 'jetonomy' ),
+			'off_topic'  => __( 'Off-topic', 'jetonomy' ), // jt-terms-ok: report reason idiom, not the noun.
+			'harassment' => __( 'Harassment', 'jetonomy' ),
+			'other'      => __( 'Other', 'jetonomy' ),
+		);
+	}
+
 	/** Longest report note in characters. The column is TEXT, so a longer one failed with a 500. */
 	public const DESCRIPTION_MAX = 2000;
 

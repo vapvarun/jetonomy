@@ -1,0 +1,39 @@
+{
+  "journey": "A2",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:19:13.288345Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
+  "env": {
+    "mode": "free-only",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP"
+  },
+  "checks": {
+    "a2.1": {
+      "result": "pass",
+      "evidence": "SHOW TABLES LIKE '%jt\\_%' = 23 tables; schema class defines 23 CREATE TABLE (jt_categories..jt_import_map)"
+    },
+    "a2.2": {
+      "result": "pass",
+      "evidence": "option jetonomy_db_version=2.0.7, JETONOMY_DB_VERSION=2.0.7"
+    },
+    "a2.3": {
+      "result": "pass",
+      "evidence": "SHOW INDEX: posts has space_sticky_reply, space_votes, author_created, status_created...; replies post_created/post_parent/post_votes; votes user_object/object_created; subscriptions user_object; flags status_created/object/reporter"
+    },
+    "a2.4": {
+      "result": "pass",
+      "evidence": "set jetonomy_db_version=2.0.6, requested /community/ with autologin as admin; option returned to 2.0.7, 23 tables, debug.log gained no line"
+    },
+    "a2.5": {
+      "result": "pass",
+      "evidence": "Schema::create_tables() run twice via wp eval; counts spaces/posts/replies and table count unchanged"
+    },
+    "a2.6": {
+      "result": "pass",
+      "evidence": "Dashboard (admin.php?page=jetonomy) SYSTEM INFO panel shows Plugin Version 2.0.7 / DB Version 2.0.7; no update-required notice (no .notice elements). No separate Tools page exists."
+    }
+  },
+  "proposed_checks": []
+}

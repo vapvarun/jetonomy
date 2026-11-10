@@ -208,60 +208,7 @@ final class Jetonomy {
 		$changed  = false;
 
 		if ( empty( $settings['notification_defaults'] ) ) {
-			$settings['notification_defaults'] = array(
-				'reply_to_post'       => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'reply_to_reply'      => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'mention'             => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'accepted_answer'     => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'idea_status_changed' => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'new_post_in_sub'     => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'badge_earned'        => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'vote_on_post'        => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'reaction'            => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'moderation'          => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'flag_resolved'       => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'join_request'        => array(
-					'web'   => true,
-					'email' => true,
-				),
-				'join_request_result' => array(
-					'web'   => true,
-					'email' => true,
-				),
-			);
+			$settings['notification_defaults'] = \Jetonomy\Notifications\Notifier::defaults();
 			$changed                           = true;
 		}
 
@@ -674,6 +621,18 @@ final class Jetonomy {
 		// and dark-scheme toggle into Jetonomy's CSS tokens.
 		new Integrations\Theme_Integration();
 		new Integrations\Layout_CSS();
+		// Divi Theme Builder: global header/footer on community pages. Built
+		// only where Divi runs: the Divi Builder plugin defines ET_BUILDER_VERSION
+		// on init, and the Divi and Extra themes define ET_BUILDER_THEME before it.
+		add_action(
+			'init',
+			static function () {
+				if ( defined( 'ET_BUILDER_THEME' ) || defined( 'ET_BUILDER_VERSION' ) ) {
+					new Integrations\Divi_Theme_Builder();
+				}
+			},
+			PHP_INT_MAX
+		);
 
 		// App-connect wiring (Wbcom App Auth standard): joins BuddyNext's
 		// bridge-scheme allowlist and resolves which connect bridge this

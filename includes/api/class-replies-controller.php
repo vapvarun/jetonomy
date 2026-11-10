@@ -254,7 +254,7 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
-		if ( empty( $content ) ) {
+		if ( jetonomy_content_is_blank( $content ) ) {
 			return $this->validation_error( sprintf( /* translators: %s: the singular Reply label. */ __( '%s content is required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) );
 		}
 
@@ -460,7 +460,7 @@ class Replies_Controller extends Base_Controller {
 		$raw_content = $request->get_param( 'content' );
 		if ( null !== $raw_content ) {
 			$content = jetonomy_sanitize_editor_content( (string) $raw_content );
-			if ( empty( $content ) ) {
+			if ( jetonomy_content_is_blank( $content ) ) {
 				return $this->validation_error( sprintf( /* translators: %s: the singular Reply label. */ __( '%s content is required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) );
 			}
 
@@ -904,11 +904,15 @@ class Replies_Controller extends Base_Controller {
 		 * client re-deriving it. Clients that predate this field fall back to
 		 * their old behaviour, so the flag is additive, never required.
 		 */
-		$data['can_block_author'] = $uid > 0
+		$data['can_block_author']  = $uid > 0
 			&& $real_author_id > 0
 			&& $real_author_id !== $uid
 			&& ! user_can( $real_author_id, 'manage_options' )
 			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
+		$reply_post                = \Jetonomy\Models\Post::find( (int) $reply->post_id );
+		$reply_space_id            = (int) ( $reply_post->space_id ?? 0 );
+		$data                     += $this->viewer_content_caps( $uid, $real_author_id, $reply_space_id );
+		$data['viewer_can_accept'] = $reply_post && Reply::viewer_can_accept( $uid, $reply_post );
 		// See the identical note in prepare_post().
 		$data['viewer_flagged'] = isset( $reply->viewer_flagged )
 			? (bool) $reply->viewer_flagged

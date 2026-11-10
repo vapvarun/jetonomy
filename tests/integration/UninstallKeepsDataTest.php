@@ -35,11 +35,19 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Opting in removes the plugin's own WP-Cron jobs (named as the plugin
-	 * schedules them today), the licence check and the widgets' saved settings.
+	 * Opting in removes every jt_ table, every jetonomy_ capability, the
+	 * plugin's own WP-Cron jobs (named as the plugin schedules them today), its
+	 * Action Scheduler rows, the licence check and the widgets' saved settings.
 	 */
 	public function test_opt_in_removes_cron_jobs_and_widget_settings(): void {
+		global $wpdb;
 		$snapshot = $this->snapshot_options();
+		$as_table = $wpdb->prefix . 'actionscheduler_actions';
+		$has_as   = function_exists( 'as_schedule_single_action' ) && $as_table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $as_table ) );
+		if ( $has_as ) {
+			as_schedule_single_action( time() + HOUR_IN_SECONDS, 'jetonomy_uninstall_probe' );
+			as_schedule_single_action( time() + HOUR_IN_SECONDS, 'jetonomy_pro_uninstall_probe' );
+		}
 		update_option( 'jetonomy_settings', array( 'remove_data_on_uninstall' => 1 ) );
 		update_option( 'widget_jetonomy_leaderboard', array( '_multiwidget' => 1 ) );
 		wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'jetonomy_trust_evaluation' );
@@ -49,14 +57,45 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			define( 'WP_UNINSTALL_PLUGIN', 'jetonomy/jetonomy.php' );
 		}
+		// The test case turns DROP TABLE into DROP TEMPORARY TABLE so the suite's
+		// shared tables survive; record the statements uninstall issues instead.
+		$drops  = array();
+		$record = static function ( $query ) use ( &$drops ) {
+			if ( preg_match( '/^\s*DROP TABLE/i', (string) $query ) ) {
+				$drops[] = (string) $query;
+			}
+			return $query;
+		};
+		add_filter( 'query', $record, 1 );
 		try {
 			include JETONOMY_DIR . 'uninstall.php';
+			remove_filter( 'query', $record, 1 );
 
 			$this->assertFalse( wp_next_scheduled( 'jetonomy_trust_evaluation' ), 'plugin cron job cleared' );
 			$this->assertFalse( wp_next_scheduled( 'edd_sl_sdk_weekly_license_check_jetonomy' ), 'licence check cleared' );
 			$this->assertFalse( get_option( 'widget_jetonomy_leaderboard' ), 'widget settings removed' );
 			$this->assertNotFalse( wp_next_scheduled( 'jetonomy_pro_digest_daily' ), "Pro's jobs are left to Pro's uninstall" );
+
+			$dropped = implode( "\n", $drops );
+			foreach ( \Jetonomy\DB\Schema::get_table_names() as $table ) {
+				$this->assertMatchesRegularExpression( '/\b' . preg_quote( $wpdb->prefix . $table, '/' ) . '\b/', $dropped, "{$table} dropped" );
+			}
+			foreach ( wp_roles()->roles as $slug => $role ) {
+				$left = array_filter( array_keys( (array) ( $role['capabilities'] ?? array() ) ), static fn( $cap ) => str_starts_with( (string) $cap, 'jetonomy_' ) );
+				$this->assertSame( array(), array_values( $left ), "no jetonomy_ capability left on {$slug}" );
+			}
+			if ( $has_as ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				$hooks = $wpdb->get_col( $wpdb->prepare( "SELECT hook FROM {$as_table} WHERE hook IN (%s, %s)", 'jetonomy_uninstall_probe', 'jetonomy_pro_uninstall_probe' ) );
+				$this->assertNotContains( 'jetonomy_uninstall_probe', $hooks, "Jetonomy's Action Scheduler rows removed" );
+				$this->assertContains( 'jetonomy_pro_uninstall_probe', $hooks, "Pro's Action Scheduler rows left to Pro's uninstall" );
+			}
 		} finally {
+			remove_filter( 'query', $record, 1 );
+			if ( $has_as ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				$wpdb->query( $wpdb->prepare( "DELETE FROM {$as_table} WHERE hook IN (%s, %s)", 'jetonomy_uninstall_probe', 'jetonomy_pro_uninstall_probe' ) );
+			}
 			wp_clear_scheduled_hook( 'jetonomy_pro_digest_daily' );
 			// DROP TABLE commits the test transaction, so the stripped roles and
 			// deleted options would outlive the rollback and break later tests

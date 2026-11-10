@@ -185,6 +185,7 @@ $stat_cards = array(
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				<p class="jt-dashboard-card__more"><a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-activity' ) ); ?>"><?php esc_html_e( 'View the full activity log', 'jetonomy' ); ?></a></p>
 			<?php endif; ?>
 		</div>
 
@@ -202,15 +203,19 @@ $stat_cards = array(
 						<span class="dashicons dashicons-external"></span>
 						<?php esc_html_e( 'View Community', 'jetonomy' ); ?>
 					</a>
-					<button type="button" class="button" id="jetonomy-flush-rules">
-						<span class="dashicons dashicons-update"></span>
-						<?php esc_html_e( 'Flush Rules', 'jetonomy' ); ?>
+					<?php // Maintenance tools say what they fix, in plain words, under each button. ?>
+					<button type="button" class="button" id="jetonomy-flush-rules" aria-describedby="jt-flush-rules-help">
+						<span class="dashicons dashicons-update" aria-hidden="true"></span>
+						<?php esc_html_e( 'Repair community links', 'jetonomy' ); ?>
 					</button>
+					<p class="description jt-quick-action-help" id="jt-flush-rules-help"><?php esc_html_e( 'Use this if community pages show "Page not found".', 'jetonomy' ); ?></p>
 					<?php if ( current_user_can( 'manage_options' ) ) : // Same cap as POST /admin/recount. ?>
-						<button type="button" class="button" id="jetonomy-recount">
-							<span class="dashicons dashicons-chart-bar"></span>
-							<?php esc_html_e( 'Recount counters', 'jetonomy' ); ?>
+						<button type="button" class="button" id="jetonomy-recount" aria-describedby="jt-recount-help">
+							<span class="dashicons dashicons-chart-bar" aria-hidden="true"></span>
+							<?php esc_html_e( 'Recount totals', 'jetonomy' ); ?>
 						</button>
+						<?php /* translators: 1: topic label, plural lowercase. 2: reply label, plural lowercase. 3: member label, plural lowercase. */ ?>
+						<p class="description jt-quick-action-help" id="jt-recount-help"><?php echo esc_html( sprintf( __( 'Use this if %1$s, %2$s or %3$s counts look wrong.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 					<?php endif; ?>
 				</div>
 			</div>

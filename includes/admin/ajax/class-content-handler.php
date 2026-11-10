@@ -81,6 +81,10 @@ class Content_Handler {
 		$data = array();
 		if ( isset( $_POST['title'] ) ) {
 			$data['title'] = sanitize_text_field( wp_unslash( $_POST['title'] ) );
+			$title_error   = Post::title_length_error( $data['title'] );
+			if ( $title_error ) {
+				wp_send_json_error( $title_error->get_error_message(), 400 );
+			}
 		}
 		if ( isset( $_POST['content'] ) ) {
 			$data['content']       = wp_kses_post( wp_unslash( $_POST['content'] ) );

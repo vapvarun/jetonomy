@@ -1,51 +1,61 @@
 {
- "journey": "C.gating.full-is-not-moderation",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T08:43:16Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "c-gating-full-is-not-moderation.1": {
-   "result": "pass",
-   "evidence": "Logged In + Full rule on 4861 -> toast \"Access rule added.\"; preview \"People who match this rule can read, post, reply, vote, report, and - if their WordPress role already allows m\""
+  "journey": "C.gating.full-is-not-moderation",
+  "free": "8478fd19",
+  "pro": "81befa5",
+  "walked_at": "2026-11-10T08:19:27Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "env": {
+    "mode": "Free + Pro, all 17 Pro extensions on",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
-  "c-gating-full-is-not-moderation.7": {
-   "result": "pass",
-   "evidence": "Access Rules tab help text: \"Full Participate, plus edit other people's content, close and pin topics - but only for people whose WordPress role already allows moderation. For an ordinary member this behaves exactly like Participate.\"; rule row: [\"Logged in \u2014 Full Member Delete\"]"
+  "checks": {
+    "c-gating-full-is-not-moderation.1": {
+      "result": "pass",
+      "evidence": "admin Access Rules tab on Founders Circle: add form Grants select = Read / Participate; the row's grants select = Read / Participate*; the 'How access rules work' grants table lists only Read and Participate, no Full row.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-admin.png"
+    },
+    "c-gating-full-is-not-moderation.2": {
+      "result": "pass",
+      "evidence": "admin POST /spaces/342/access-rules {rule_type:role,rule_value:subscriber,grants:full} -> 201 'Access rule added.', stored grants participate, space_role member."
+    },
+    "c-gating-full-is-not-moderation.3": {
+      "result": "pass",
+      "evidence": "ingrid_s (subscriber) under that rule in the browser: posted 'How do you handle investor updates?', replied on admin's topic, voted (button became 'Remove your upvote'), reported (toast 'Reported. Thank you.'), edited her topic (saved) and deleted it (confirm, redirected to space).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-member.png"
+    },
+    "c-gating-full-is-not-moderation.4": {
+      "result": "pass",
+      "evidence": "ingrid on admin's 'Welcome to the Founders Circle': the only More options menu on the page is on her own reply; no Edit/Delete/Close/Pin control on the topic.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-member.png"
+    },
+    "c-gating-full-is-not-moderation.5": {
+      "result": "pass",
+      "evidence": "ingrid REST: PATCH /posts/13837, DELETE /posts/13837, POST /posts/13837/close, POST /posts/13837/pin -> 403 jetonomy_forbidden each; topic still publish, not closed, original title."
+    },
+    "c-gating-full-is-not-moderation.6": {
+      "result": "pass",
+      "evidence": "ingrid opened /community/s/founders-circle/mod/ -> HTTP 403 page 'You do not have permission to moderate this space.', no queue; POST /moderation/trash/post/13837 -> 403 jetonomy_forbidden.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-mod.png"
+    },
+    "c-gating-full-is-not-moderation.7": {
+      "result": "pass",
+      "evidence": "set rule 49 to grants=full, space_role=moderator directly in jt_access_rules (REST GET then showed full/moderator), ran (new Jetonomy\\DB\\Migrations\\Migration_2_0_7())->up() via wp eval -> row reads participate/member and the admin rules list shows Participate selected."
+    },
+    "c-gating-full-is-not-moderation.8": {
+      "result": "pass",
+      "evidence": "test_moderator (site Moderate capability, added to the roster as Member) opened the topic: More options lists Edit, Make Private, Pin to space, Close topic, Move, Delete; REST POST /moderation/trash/post/{id} -> 200 trashed. The rule gives him nothing extra (it matches subscribers only). Fixture restored afterwards."
+    }
   },
-  "c-gating-full-is-not-moderation.2": {
-   "result": "pass",
-   "evidence": "sub5 under Full rule: post 201, reply 201, vote 200, report 201, edit own 200, delete own 200"
-  },
-  "c-gating-full-is-not-moderation.3": {
-   "result": "pass",
-   "evidence": "sub5 on alice topic 8739: topic-level Edit/Delete/Close/Pin controls = []"
-  },
-  "c-gating-full-is-not-moderation.4": {
-   "result": "pass",
-   "evidence": "PATCH 403 jetonomy_forbidden, DELETE 403 jetonomy_forbidden, close 403 jetonomy_forbidden, pin 403 jetonomy_forbidden"
-  },
-  "c-gating-full-is-not-moderation.5": {
-   "result": "pass",
-   "evidence": "sub5 GET /mod/ HTTP 403 text \"A A+ A++ You do not have permission to moderate this space.\""
-  },
-  "c-gating-full-is-not-moderation.6": {
-   "result": "pass",
-   "evidence": "POST /moderation/trash/post/8739 as sub5 -> 403 jetonomy_forbidden"
-  },
-  "c-gating-full-is-not-moderation.8": {
-   "result": "pass",
-   "evidence": "test_moderator (site Editor): close topic 8739 200 then reopen 200; /mod/ page HTTP 200 text \"Moderation 82 A A+ A++ Home / Community / QA-WALK-C Private Lab / Moderation QA-WALK-C Private Lab 1 pending flag 1 pend\" - moderation comes from WP role (rule only Full/Member)"
-  }
- }
+  "proposed_checks": []
 }

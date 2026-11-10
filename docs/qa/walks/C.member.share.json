@@ -1,75 +1,78 @@
 {
   "journey": "C.member.share",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:31:54Z",
-  "walker": "lane A3",
+  "free": "74528ddd",
+  "pro": "69d28a8",
+  "walked_at": "2026-11-10T11:50:13.900717Z",
+  "walker": "release 2.0.7 free walk wave 11 (Sonnet)",
   "env": {
+    "mode": "free stack, Pro inactive",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
       390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US (ar for RTL checks)"
   },
   "checks": {
     "c-member-share.1": {
       "result": "pass",
-      "evidence": "Share on topic 16656 opens a dropdown with Copy link, Twitter / X, Facebook, LinkedIn."
+      "evidence": "bob on /community/s/feature-requests/t/dark-mode-for-the-community-on-phones/ clicked Share (aria-expanded true) -> .jt-share-dropdown directly above the button (dropdown bottom 832 vs button top 837, x 340-527 over button 435-527) listing Copy link, Twitter / X, Facebook, LinkedIn.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh1-open.png"
     },
     "c-member-share.2": {
       "result": "pass",
-      "evidence": "Copy link calls navigator.clipboard.writeText with the topic URL (spied; real paste not possible in this harness) and shows toast \"Link copied\"",
-      "carried_forward": true
+      "evidence": "Copy link -> navigator.clipboard.readText() returned the exact topic URL and the status toast 'Link copied' showed (clipboard read in Playwright; address-bar paste is the same string).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh2-copied.png"
     },
     "c-member-share.3": {
       "result": "pass",
-      "evidence": "Twitter/X, Facebook, LinkedIn call window.open(_blank, 600x400) with twitter.com/intent/tweet?url=<enc>&text=<enc title>, facebook sharer u=<enc>, linkedin share-offsite url=<enc>",
-      "carried_forward": true
+      "evidence": "Each item opened a new tab: x.com intent/tweet?url=<encoded topic URL>&text=Dark+mode+for+the+community+on+phones (via login redirect), facebook.com/sharer/sharer.php?u=<encoded URL>, linkedin shareArticle?url=<encoded URL> (via login redirect). Tabs closed after."
     },
     "c-member-share.4": {
       "result": "pass",
-      "evidence": "Dropdown closes on page scroll and on a click outside."
+      "evidence": "Open -> mouse wheel scroll closed it; reopened -> click on empty page area closed it."
     },
     "c-member-share.5": {
       "result": "pass",
-      "evidence": "Escape closes the dropdown, also after Tab into it, and focus returns to the Share button (aria-label Share)."
+      "evidence": "Open -> Escape closed it, aria-expanded=false and document.activeElement is the .jt-share-btn."
     },
     "c-member-share.6": {
       "result": "pass",
-      "evidence": "guest sees the same four items on a public topic",
-      "carried_forward": true
+      "evidence": "Guest (cookies cleared, isLoggedIn empty) on the same public topic: Share opens the same four items; Copy link wrote the topic URL and showed 'Link copied'; Facebook opened sharer with the topic URL.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh6-guest.png"
     },
     "c-member-share.7": {
       "result": "pass",
-      "evidence": "Partner Program and CAB topics return 404 to guests on page and oEmbed so Share never exposes a body; for a member the link is the same private URL. Member-side share control on a Partner topic not separately screenshotted.",
-      "carried_forward": true
+      "evidence": "bob (member) on the private Partner Program topic /community/s/partner-program/t/referral-fees-for-2026-what-changed/: Share offers the same private URL. A guest opening that URL gets 404 with no topic text, and GET /oembed for it is 404 jetonomy_oembed_not_found, so the body is never exposed.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh7-partner.png"
     },
     "c-member-share.8": {
       "result": "pass",
-      "evidence": "GET /oembed?url=<public topic> = 200 with title and author (Sofia Romano); CAB and Partner topic URLs = 404 jetonomy_oembed_not_found",
-      "carried_forward": true
+      "evidence": "Guest GET /wp-json/jetonomy/v1/oembed?url=<public topic> -> 200 with title 'Dark mode for the community on phones' and author_name Sofia Romano; the private Partner Program topic, the hidden Moderators' Room topic and a non-existent slug each -> 404 jetonomy_oembed_not_found."
     },
     "c-member-share.9": {
       "result": "pass",
-      "evidence": "Grace 159-char title: dropdown inside viewport, X link text param is the full encoded 159-char title",
-      "carried_forward": true
+      "evidence": "bob on Grace's 159-char title topic (247): dropdown fully in view (x 340-527, y 488-638 in 1440x900); X link carries the full title as text= and LinkedIn the encoded URL, both well-formed.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh9-long.png"
     },
     "c-member-share.10": {
       "result": "pass",
-      "evidence": "390px with html dir=rtl: dropdown spans x 40 to 227 of 390, inside the viewport; Escape closes it.",
-      "screenshot": "share-390-rtl.png"
+      "evidence": "Site language ar (dir=rtl) at 390x844: dropdown x 8-195 inside the viewport with no horizontal scroll (docSW 390). Stress test pinning the button to the left edge (x 8-195) and to the right edge (x 195-382): the dropdown stays inside 0-390 both times.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh10-edge.png"
     },
     "c-member-share.11": {
       "result": "pass",
-      "evidence": "clipboard rejected: toast \"Could not copy the link. Copy it from the address bar.\"",
-      "screenshot": "c-member-share.11.png",
-      "carried_forward": true
+      "evidence": "Clipboard writeText rejected (NotAllowedError), execCommand false, context offline: Copy link -> status message 'Could not copy the link. Copy it from the address bar.' instead of a silent failure.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh11-denied.png"
     }
   },
-  "proposed_checks": [],
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": []
 }

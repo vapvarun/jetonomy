@@ -124,4 +124,33 @@ class AnalyticsTest extends WP_UnitTestCase {
 		$this->assertEquals( 403, $response->get_status(),
 			'Subscriber without the analytics capability must receive 403.' );
 	}
+
+	/**
+	 * With nothing in the previous period there is no percentage to show: the
+	 * change is null (the card reads "New"), never a made-up +100%.
+	 */
+	public function test_change_is_null_when_previous_period_is_empty(): void {
+		$data = $this->get_overview( $this->admin_id )->get_data();
+		$data = $data['data'] ?? $data;
+
+		foreach ( array( 'post_change', 'reply_change', 'vote_change' ) as $key ) {
+			$this->assertArrayHasKey( $key, $data );
+			$this->assertNull( $data[ $key ], "{$key} must be null when the previous period had nothing." );
+		}
+	}
+
+	/**
+	 * The trend has one bucket per day of the range: 7 for 7d, 30 for 30d.
+	 */
+	public function test_trend_has_one_bucket_per_day(): void {
+		foreach ( array( '7d' => 7, '30d' => 30 ) as $range => $days ) {
+			wp_set_current_user( $this->admin_id );
+			$request = new WP_REST_Request( 'GET', '/jetonomy/v1/analytics/overview' );
+			$request->set_param( 'range', $range );
+			$data = $this->server->dispatch( $request )->get_data();
+			$data = $data['data'] ?? $data;
+			$this->assertSame( 'day', $data['trend']['unit'] );
+			$this->assertCount( $days, $data['trend']['buckets'], "{$range} must give {$days} buckets." );
+		}
+	}
 }

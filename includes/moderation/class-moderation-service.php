@@ -593,6 +593,7 @@ class Moderation_Service {
 		// could 201 a flag against a nonexistent id or self-report to farm the
 		// reporter-reputation path.
 		$target_author = null;
+		$space_id      = null; // A member report is not scoped to a space.
 		// Content must also be live and readable by the reporter. A topic in a
 		// private space you cannot open, or a trashed reply, answers exactly like a
 		// missing one: otherwise any member could flag (and dock reputation from)
@@ -602,6 +603,7 @@ class Moderation_Service {
 			$readable      = $target && 'publish' === $target->status
 				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $reporter_id, $target );
 			$target_author = $readable ? (int) $target->author_id : null;
+			$space_id      = $readable ? (int) $target->space_id : null;
 		} elseif ( 'reply' === $object_type ) {
 			$target        = Reply::find( $object_id );
 			$parent        = $target ? Post::find( (int) $target->post_id ) : null;
@@ -609,6 +611,7 @@ class Moderation_Service {
 				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $reporter_id, $parent )
 				&& \Jetonomy\Permissions\Permission_Engine::can_read_reply( $reporter_id, $target, $parent );
 			$target_author = $readable ? (int) $target->author_id : null;
+			$space_id      = $readable ? (int) $parent->space_id : null;
 		} elseif ( 'user' === $object_type ) {
 			$target        = get_userdata( $object_id );
 			$target_author = $target ? (int) $target->ID : null;
@@ -619,6 +622,11 @@ class Moderation_Service {
 				__( 'The reported content no longer exists.', 'jetonomy' ),
 				array( 'status' => 404 )
 			);
+		}
+		// The Report buttons ask the same question, so a role the owner took
+		// Report from sees no button instead of a form that fails.
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can( $reporter_id, 'flag', $space_id ) ) {
+			return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to perform this action.', 'jetonomy' ), array( 'status' => 403 ) );
 		}
 		if ( $target_author === $reporter_id ) {
 			return new WP_Error(

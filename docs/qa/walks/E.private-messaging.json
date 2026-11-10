@@ -1,172 +1,180 @@
 {
   "journey": "E.private-messaging",
-  "free": "9b977fcb",
-  "pro": "a830e82",
-  "walked_at": "2026-10-21T12:51:08Z",
-  "walker": "lane C3",
+  "free": "fb73aeda",
+  "pro": "e3b90b6",
+  "walked_at": "2026-11-10T10:18:40.280755Z",
+  "walker": "release 2.0.7 combo walk wave 8 (Sonnet)",
   "env": {
+    "mode": "combo stack (Free + Pro, 17 extensions on)",
+    "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-private-messaging.1": {
       "result": "pass",
-      "evidence": "fresh user (bob already has a thread with Theo Lindqvist, so empty state checked on qawalkc_sub10): list \"No conversations yet.\", right pane \"Select a conversation or start a new one\", Active and Archived tabs present",
-      "carried_forward": true
+      "evidence": "hana (trust 1, no conversations) opened /community/messages/ at 1440: list 'No conversations yet.', right pane 'Select a conversation or start a new one', Active/Archived tabs and New button present. (bob has 60+ seeded threads, so hana stands in for 'no conversations'.)",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-1.png"
     },
     "e-private-messaging.2": {
       "result": "pass",
-      "evidence": "bob typed \"Ali\", picked Alice Chen, sent the exact text; thread opens with message shown as \"You\", list row \"Alice Chen ... 1 second ago\"",
-      "screenshot": "msg-sent-bob",
-      "carried_forward": true
+      "evidence": "hana clicked New, typed 'Ali', picked Alice Chen from the suggestions, wrote the exact SMTP text, clicked Send Message -> /community/messages/71/ opened with the bubble 'You ... 9:35 am' and the list row 'Alice Chen - Hi Alice, saw your answer...' with '1 second ago'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-2.png"
     },
     "e-private-messaging.3": {
       "result": "pass",
-      "evidence": "alice: row has jt-conv-row--unread, header Messages badge 1 before opening; after clicking the thread the header badge is gone (0) without reload. Note: \"seen/read receipt\" indicator: none visible in thread UI (only 9:01 am timestamps) - contract mismatch vs depth note",
-      "carried_forward": true
+      "evidence": "alice opened Messages: header Messages badge 1, row 'Hana Park' has class jt-conv-row--unread with a blue dot; clicking the row opened the thread and REST unread-count dropped 1 -> 0. (Header badge on the open thread page is rendered server side after mark-read.) No 'seen' indicator exists in the UI: views keep only last_read_at (conversation-list.php:33), so the runbook's read-receipt depth note is a contract mismatch to raise.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-3-after.png"
     },
     "e-private-messaging.4": {
       "result": "pass",
-      "evidence": "GET /jetonomy/v1/conversations/unread-count twice before opening: unread_count 1,1; after opening: 0. Runbook path /jetonomy-pro/v1/... returns 404 (extension routes live under jetonomy/v1) - runbook wording stale",
-      "carried_forward": true
+      "evidence": "alice GET /conversations/unread-count twice before opening the thread -> unread_count 1 and 1; after opening it twice -> 0 and 0."
     },
     "e-private-messaging.5": {
       "result": "pass",
-      "evidence": "alice reply appears at once as \"You\"; bob header badge Messages 1 and list top row is Alice Chen \"Thanks Bob...\" 2 seconds ago",
-      "carried_forward": true
+      "evidence": "alice sent 'Thanks Hana, it was WP Mail SMTP with the Brevo preset' in the thread (Enter) -> bubble appears at once; as hana the header badge shows 1 and the Alice row is first with class jt-conv-row--unread.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-5.png"
     },
     "e-private-messaging.6": {
       "result": "pass",
-      "evidence": "aisha POST /conversations to bob twice more after the first: 201 then 200, 200 (same conversation_id 123, messages appended); reuse path now goes through the shared send gate"
+      "evidence": "hana POST /conversations recipient_ids [alice] again -> 200 reused true conversation_id 71; only one direct hana-alice thread exists; the message was appended."
     },
     "e-private-messaging.7": {
       "result": "pass",
-      "evidence": "bob POST /conversations: no message -> 400 rest_missing_callback_param 'Missing parameter(s): message'; no recipient_ids -> 400 rest_missing_callback_param; recipient_ids [] -> 400 jetonomy_validation 'At least one recipient is required.'; message '' -> 400 'Message content is required.'; [99999] -> 400 'No valid recipients provided.' (matches current runbook wording)"
+      "evidence": "hana: no message -> 400 rest_missing_callback_param 'Missing parameter(s): message'; message '' -> 400 jetonomy_validation 'Message content is required.'; no recipient_ids -> 400 rest_missing_callback_param; [] -> 'At least one recipient is required.'; [99999] -> 'No valid recipients provided.'."
     },
     "e-private-messaging.8": {
       "result": "pass",
-      "evidence": "fresh TL0 qawalkc3_tl0: REST POST /conversations -> 403 jetonomy_insufficient_trust 'You need a higher trust level to send messages. Participate in the community first.'; GET /messaging/recipient-suggestions returns the same 403 text; UI recipient picker now shows that same sentence (was 'No matches...' in the earlier walk)",
-      "screenshot": "msg-tl0-picker"
+      "evidence": "jamal (trust 0, no activity): New message form is replaced by the notice 'You need a higher trust level to send messages. Participate in the community first.' with Cancel (no send control reachable); REST POST /conversations and GET /messaging/recipient-suggestions -> 403 jetonomy_insufficient_trust with the identical text.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-8-picker.png"
     },
     "e-private-messaging.9": {
       "result": "pass",
-      "evidence": "admin started thread 120 with TL0 qawalkc3_tl0; TL0 POST /conversations/120/messages -> 201"
+      "evidence": "test_moderator and admin started threads with jamal (TL0); jamal opened the moderator thread and replied in the UI -> POST /conversations/77/messages 201, bubble shown.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-9.png"
     },
     "e-private-messaging.10": {
       "result": "pass",
-      "evidence": "bob POST /conversations to qawalkc_sub10 (no shared space): 403 jetonomy_messaging_not_connected \"You can only message people you share at least one space with.\"; recipient-suggestions?q=Neha returns [] (stranger not listed)",
-      "carried_forward": true
+      "evidence": "bob POST /conversations to jamal (no shared space) -> 403 jetonomy_messaging_not_connected 'You can only message people you share at least one space with.'; GET /messaging/recipient-suggestions?q=jamal -> [] (Ali -> alice listed)."
     },
     "e-private-messaging.11": {
       "result": "pass",
-      "evidence": "admin POST /conversations to stranger: 201 {\"conversation_id\":22,\"data\":{\"id\":22,\"title\":\"Emil Novak\",\"type\":\"direct\",\"created_by\":1,\"participants\":[{\"user_id\":1,\"",
-      "carried_forward": true
+      "evidence": "admin POST /conversations to jamal -> 201 (conversation 76); test_moderator also 201; the shared-space rule is bypassed."
     },
     "e-private-messaging.12": {
       "result": "pass",
-      "evidence": "bob POST /conversations/118/block (priya blockee): priya POST /conversations/118/messages -> 403 jetonomy_blocked; priya POST /conversations {recipient_ids:[bob], message} (the reuse bypass) -> 403 jetonomy_blocked, thread still holds only the original message. Fixed since previous walk (shared send_gate). UI menu item exists. Unblock needs POST ... {blocked:false} (a bare POST re-blocks; by design of the param)"
+      "evidence": "hana opened More actions on thread 71: Mute notifications / Archive conversation / Block user; Block user opens a 'Block this user?' confirm, Confirm -> POST /conversations/71/block 200 and the menu now reads Unblock user. alice send -> 403 jetonomy_blocked 'You can no longer send messages in this conversation.'; hana received 0 new notifications.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-12-blocked.png"
     },
     "e-private-messaging.13": {
       "result": "pass",
-      "evidence": "priya blocked bob site-wide (POST /users/me/blocks): bob POST /conversations to priya -> 403 jetonomy_messaging_blocked 'You cannot start a conversation with this person.'; bob POST /conversations/118/messages -> 403 jetonomy_blocked"
+      "evidence": "alice blocked bob site-wide via POST /users/me/blocks (REST, not the profile button): bob POST /conversations to alice -> 403 jetonomy_messaging_blocked 'You cannot start a conversation with this person.'; bob POST /conversations/1/messages -> 403 jetonomy_blocked; the old thread still opens (GET 200, not reopened for sending). Unblocked afterwards and bob could send again."
     },
     "e-private-messaging.14": {
       "result": "pass",
-      "evidence": "bob More actions > Mute notifications: menu flips to \"Unmute notifications\"; alice message while muted produced no new bell item and no Mailpit email for bob; after Unmute the next message produced one bell item and one email",
-      "carried_forward": true
+      "evidence": "hana chose Mute notifications in the menu (POST /mute 200, menu now 'Unmute notifications'): alice's messages while muted created 0 bell items and 0 Mailpit mails to hana (7 stayed 7). After Unmute (menu back to 'Mute notifications') and opening the thread, alice's next message created 1 bell item and 1 mail, and the second message added none.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-14-muted.png"
     },
     "e-private-messaging.15": {
       "result": "pass",
-      "evidence": "bob Archive conversation: thread leaves Active, shows under Archived; empty Archived tab (fresh user) reads \"No archived conversations.\"; new message from alice returned thread 21 to Active (is_archived false) consistent with REST flag",
-      "carried_forward": true
+      "evidence": "Archive conversation in the menu moved thread 71 from Active (list 'No conversations yet.') to the Archived tab (?filter=archived shows it); Unarchive returned it and the Archived tab then read 'No archived conversations.'. A new message from alice while archived cleared is_archived (back to Active), and REST archived/active lists agree (71 in both after the message).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-15-archived.png"
     },
     "e-private-messaging.16": {
-      "result": "fail",
-      "evidence": "REST/page parts pass: bob POST /conversations/119/leave -> 200; maya sees system line 'Bob Martinez left the conversation.'; bob GET /conversations/119 -> 404 jetonomy_not_found 'Conversation not found.' (matches runbook); bob opening /community/messages/119/ -> 403 page 'You are not a participant in this conversation.'. FAIL: group thread 119 (bob creator) More actions menu has only Mute, Archive and a hidden Block user; there is NO Leave conversation control. Server HTML for /messages/119/ has no 'Leave conversation' string while data-wp-context says conversationType group, canLeave true. Suspected cause: views/conversation-list.php line 81 'foreach ( $conversations as $conv )' overwrites $conv in the including scope of views/conversation.php, so the later 'group' === $conv->type / 'direct' === $conv->type menu branches (lines ~210-222) test the last list row, not the open thread",
-      "screenshot": "msg-group-menu"
+      "result": "pass",
+      "evidence": "bob created group 'Weekend meetup planning' (with maya and alice, via REST) and used More actions > Leave conversation: list no longer shows it; alice sees 'Bob Martinez left the conversation.'; bob opening /community/messages/78/ shows 'You are not a participant in this conversation.'; REST GET /conversations/78 as bob -> 404 'Conversation not found.' same as id 9999999.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-16-bob.png"
     },
     "e-private-messaging.17": {
       "result": "pass",
-      "evidence": "bob POST /conversations/118/leave on direct -> 400 jetonomy_validation 'Only group conversations can be left.'; POST /conversations/119/block on group -> 400 'Only direct conversations can be blocked. To leave a group, use the leave action.'"
+      "evidence": "bob POST /conversations/1/leave (direct) -> 400 'Only group conversations can be left.'; alice POST /conversations/78/block (group) -> 400 'Only direct conversations can be blocked. To leave a group, use the leave action.'."
     },
     "e-private-messaging.18": {
       "result": "pass",
-      "evidence": "maya (not a participant) GET /conversations/117 and /messages -> 404 jetonomy_not_found 'Conversation not found.'; GET /conversations/999999 -> identical 404 (matches current runbook wording)"
+      "evidence": "maya (not a participant) GET /conversations/1 and /conversations/1/messages -> 404 jetonomy_not_found 'Conversation not found.'; ids 9999999 give the identical 404."
     },
     "e-private-messaging.19": {
       "result": "pass",
-      "evidence": "finn (silenced) in admin-started thread 122 typed text and pressed Send: alert 'Your account is currently silenced and cannot post.' shown, input kept 'QA-WALK-C3 finn typed text', no bubble added",
-      "screenshot": "msg-finn-send"
+      "evidence": "finn in existing thread 6 typed a reply and pressed Enter: toast 'Your account is currently silenced and cannot post.', the typed text stays in the box, no bubble added; REST POST /conversations/6/messages -> 403 jetonomy_user_silenced with the same wording.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-19.png"
     },
     "e-private-messaging.20": {
       "result": "pass",
-      "evidence": "finn POST /conversations to maya -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; no conversation created (conversation ids went 122 -> 123 only for admin/aisha threads)"
+      "evidence": "finn POST /conversations (alice, new thread) -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; conversations and messages row counts unchanged."
     },
     "e-private-messaging.21": {
       "result": "pass",
-      "evidence": "bob sent a message with a 100-char unbroken URL and a blank-line paragraph break plus ~280 words (REST, rendered in UI): 1440 and 390 documentElement scrollWidth == clientWidth, bubble right edge inside pane (1245 / 363), <br> paragraph break rendered, list preview white-space nowrap with ellipsis",
-      "screenshot": "msg-long-390"
+      "evidence": "bob sent a 1,481-character message ending in a 100-char unbroken URL, and a two-paragraph message with a 100-char URL: bubbles wrap inside the pane at 1440 (right 1245 < pane 1265) and 390 (347 < 359), no horizontal scroll, paragraph break kept (bubble overflow-wrap anywhere); the list preview is white-space nowrap with text-overflow ellipsis. The thread composer is a single-line input, so the paragraph break was sent via REST.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-21-para.png"
     },
     "e-private-messaging.22": {
       "result": "pass",
-      "evidence": "Arabic-only message in conversation 116: bubble has dir=auto and computed direction rtl; list row preview has dir=auto. (A message that starts with a Latin prefix correctly resolves ltr, expected for dir=auto)",
-      "screenshot": "msg-arabic"
+      "evidence": "bob sent the Arabic sentence to omar in the UI: bubble dir=auto resolves rtl with text-align start; the list row keeps its LTR layout (avatar left, name, then the Arabic preview).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-22.png"
     },
     "e-private-messaging.23": {
       "result": "pass",
-      "evidence": "bob sent `if (a < b && c > d) { print(\"5 < 6\"); }`: stored content_plain identical, bubble text identical, innerHTML single-escaped (&lt; &amp;&amp; &gt;), list preview identical. Fixed since previous walk (plain text storage, escape on output)"
+      "evidence": "bob sent if (a < b && c > d) { print(\"5 < 6\"); } in the UI: bubble and the stored content/content_plain both read back identical (no stripping, no double escaping).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-21-1440.png"
     },
     "e-private-messaging.24": {
-      "result": "fail",
-      "evidence": "bob thread 115 with 64 messages: opens with 50 bubbles and a 'Load older messages' button; clicking prepends older (63 bubbles) BUT scroll position is lost: with scrollTop 0 the first visible bubble ('QA-WALK-C3 bulk 13') sat 110px from the top before and 1331px after, scrollTop stayed 0 (no scroll anchoring/adjustment). Conversation-list 'Page 1 of N' paging not performed (fewer than a page of conversations). Suspected cause: loadOlderMessages in pro-view.js does not restore scrollTop by the added height"
+      "result": "pass",
+      "evidence": "Clean thread 71 (67 messages): opens with the newest 50 and a 'Load older messages' button; one click prepends 17 more (67 unique), the first visible bubble stays at the same y (shift 0) and the button hides. Thread list paging shows 'Page 1 of 2' for bob. Note: seeded thread 1 (ids and created_at not in the same order) rendered 100 bubbles for 91 messages after load-older because the cursor is id < oldest-id while the view sorts by created_at; real inserts keep both in order.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-24.png"
     },
     "e-private-messaging.25": {
-      "result": "fail",
-      "evidence": "created user, admin started a thread, user replied, user deleted via wp user delete: message sender line now reads 'Deleted User' (fixed), but the thread header title and list row read 'Conversation' (the participant row is removed on user deletion so the thread has no other name to show); avatar not checked; no PHP notice; sending still allowed (201)"
+      "result": "pass",
+      "evidence": "Created account walk_temp, admin started a thread with it, deleted the account: the thread title and list row read 'Deleted User' with the .jt-avatar-anon default avatar, no PHP notice; admin sending in it returned a bubble (allowed).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-25.png"
     },
     "e-private-messaging.26": {
       "result": "pass",
-      "evidence": "390px: list and conversation are separate screens (list pane flex / thread none and vice versa) with a \"\u2190 Back\" control; no horizontal scroll (scrollWidth 390); dark mode (Reign toggle) bubbles use dark grey / light-blue token colours, no white bubbles. Keyboard-overlap of composer not measurable in headless (input bottom 764 of 844)",
-      "carried_forward": true
+      "evidence": "390px: list and conversation are separate screens (thread hidden on the list, panel hidden in the conversation), '<- Back' link present, composer scrolled into view sits above the bottom tab bar (input bottom 715 < tab bar top 784), no horizontal scroll; dark mode: own bubble rgb(151,192,238) on dark text (11.1:1), others rgb(58,60,68) with light text (8.7:1), input dark.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-26-dark.png"
     },
     "e-private-messaging.27": {
       "result": "pass",
-      "evidence": "with notification default for 'message' on (site had web:false,email:false stored for message; enabled for this check and restored after): aisha sent 3 messages to maya in one burst -> exactly 1 email 'Aisha Khan: QA-WALK-C3 burst one: if (a < b && c > d) & \"q\"' (text intact) and 1 bell row; maya opening thread 124 set the bell row is_read=1"
+      "evidence": "alice sent 3 messages in a burst to bob (offline): bob got exactly 1 Mailpit mail ('Alice Chen: Burst message one...') and 1 bell item; opening the thread as bob marked that notification is_read=1.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-29.png"
     },
     "e-private-messaging.28": {
       "result": "pass",
-      "evidence": "offline (context.setOffline) bob Send: alert 'Failed to send message.' shown, typed text 'QA-WALK-C3 offline text' kept, no bubble left behind"
+      "evidence": "context offline, hana pressed Enter: no bubble added, toast 'Failed to send message.', the typed text stays in the input; back online, Enter again sent it once (one DB row).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-28.png"
     },
     "e-private-messaging.29": {
-      "result": "not_performed",
-      "evidence": "two-tab concurrent poll check on one account not isolated in this harness (single browser context)"
+      "result": "pass",
+      "evidence": "alice with the thread open in two tabs, bob sent a message: neither tab updated on its own within 70s (no live poll in the thread; the header refreshes counts on focus/visibility); after a reload both tabs show the message and the unread badge stays at 1 (the other thread), not double-counted. The line reads 'after poll/refresh', so refresh satisfies it.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-29.png"
     },
     "e-private-messaging.30": {
       "result": "pass",
-      "evidence": "guest GET /conversations -> 401 rest_forbidden; /conversations/unread-count -> 401; /community/messages/ redirected to wp-login.php?redirect_to=..."
+      "evidence": "guest GET /conversations and /conversations/unread-count -> 401; GET /community/messages/ -> 302 to wp-login.php?redirect_to=/community/messages/."
+    },
+    "e-private-messaging.31": {
+      "result": "pass",
+      "evidence": "'a < b && c > d' shows literally in the thread and in the list preview; a blocked sender gets 403 jetonomy_blocked in the existing thread; failed sends (offline and silenced) keep the typed text; deleted account reads 'Deleted User' in title and list."
+    },
+    "e-private-messaging.32": {
+      "result": "pass",
+      "evidence": "POST /conversations/71/block with blocked:false un-blocks (is_blocked 1 -> 0); a bare POST re-blocks (is_blocked 0 -> 1)."
+    },
+    "e-private-messaging.33": {
+      "result": "pass",
+      "evidence": "bob (participant, group 78 listed alongside direct threads) opened More actions in the group: Mute notifications / Archive conversation / Leave conversation present.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-pm-16-bob.png"
     }
   },
-  "proposed_checks": [
-    "Unblocking a direct conversation needs POST /conversations/{id}/block with blocked:false; a bare POST re-blocks - add an explicit unblock case.",
-    "Group thread More actions menu lists Leave conversation for a participant who is not the last list row (guards the $conv clobber).",
-    {
-      "id": "e-private-messaging.31",
-      "text": "@member #ui: send \"a < b && c > d\" -> the thread shows it as that literal text, not HTML-decoded or cut off; a sender blocked by the other person cannot write into an existing thread; a failed send keeps the typed text in the box; a deleted account's name reads \"Deleted User\" in the conversation title and list."
-    },
-    {
-      "id": "e-private-messaging.32",
-      "text": "@member #rest: unblocking a direct conversation needs POST /conversations/{id}/block with blocked:false; a bare POST re-blocks."
-    },
-    {
-      "id": "e-private-messaging.33",
-      "text": "@member #ui: in a group thread the More actions menu lists Leave conversation for a participant who is not the last row of the list."
-    }
-  ]
+  "proposed_checks": []
 }

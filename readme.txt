@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.1
-Stable tag: 2.0.6
+Stable tag: 2.0.7
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -125,9 +125,9 @@ The trust level system is your best spam defense. New accounts can post, but the
 - FULLTEXT indexes for instant search
 
 **Developer Tools**
-- 84 REST routes (114 method-endpoints) at `/wp-json/jetonomy/v1/`
+- 84 REST routes (115 method-endpoints) at `/wp-json/jetonomy/v1/`
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
-- 256 action hooks and filters for customization (115 actions, 141 filters)
+- 259 action hooks and filters for customization (116 actions, 143 filters)
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
 - RTL stylesheet included
@@ -256,13 +256,98 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 84 REST routes / 114 method-endpoints (143 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 256 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 84 REST routes / 115 method-endpoints (143 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 259 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 2.0.7 - November 2026 =
+
+Clearer access rules and membership gates, safer address fields, Divi Theme Builder support and redone translations.
+
+* New      - Change an access rule's grant in place from the rules list or the REST API.
+* New      - The space header tells a member which course or plan gives them access.
+* New      - Divi Theme Builder global headers and footers, with their styles, show on community pages.
+* New      - Members suspended or blocked in BuddyNext are read-only or blocked in the forum too, through the new jetonomy_user_is_silenced and jetonomy_blocked_user_ids filters.
+* Improve  - The Access Rules form starts on who the rule lets in, asks before opening a private space to everyone, and keeps the help below the form.
+* Improve  - Access rules grant Read or Participate; the old Full level never gave more than Participate, so saved Full rules become Participate on upgrade.
+* Improve  - The membership gate has one sentence for every paid plan, a button for each way in, and says a space is not open to join when nothing it includes can still be had.
+* Improve  - A rule on a deleted course, product or membership plan is flagged "no longer available" in the admin and never shows its raw id to visitors.
+* Improve  - The Access Rules picker searches the server, so courses and plans past the first 500 can be chosen.
+* Improve  - The ban dialog explains what Global Ban and Silence do.
+* Improve  - Edit Profile links jump to each section and wrap on phones.
+* Improve  - Admin text meets WCAG AA contrast on every Jetonomy screen.
+* Improve  - All 10 translations redone with consistent wording, checked to 99%+ in every language.
+* Improve  - German and Luxembourgish keep the capital letter on product labels mid-sentence; the jetonomy_label_lowercase filter decides for other languages.
+* Improve  - Menus open and move with the keyboard: arrow keys, Home and End, and Escape returns focus to the button.
+* Improve  - Screen readers hear the current breadcrumb, the editor toolbar buttons and which item each moderation action acts on.
+* Improve  - The community menu keeps every label on one line and switches to icons when the theme's column is narrow.
+* Improve  - Space pages open with a compact header, and members get one Joined menu (Leave asks first) with a separate Follow bell.
+* Improve  - On phones the topic starts sooner, a Reply button stays in reach, composer toolbars keep to one row and tab strips show the active tab.
+* Improve  - Screen readers hear vote scores, headings run in order, and composer errors are tied to their field and take focus.
+* Improve  - Vote buttons are at least 40px on phones, and text in the theme's accent colour meets WCAG AA contrast.
+* Improve  - Private, invite-only and not-found pages have a heading, a way back and the next step, and guests log in without leaving the community.
+* Improve  - The leaderboard keeps names readable on phones, gold, silver and bronze differ, and every member count uses one definition.
+* Improve  - Admin lists fit their cards, Users sort by reputation, joined and last seen, space members page, and the Activity Log shows names instead of ids.
+* Improve  - Every destructive admin action asks first and names what it removes.
+* Improve  - After "Give members access" on the Permissions tab, a notice explains that the role now gets access through its spaces with nothing ticked.
+* Improve  - The text size buttons tell screen readers which size is on, and the Hide replies button is easier to tap on phones.
+* Improve  - Pages with many authors run fewer database queries when checking for Gravatar images.
+* Fix      - Address fields (terms, privacy, support, logos, share image, space cover, avatar) refuse a value that is not an address by name and keep the saved one.
+* Fix      - Terms, privacy and support links, the app logo, the email logo and the default share image saved as a site path like /terms are no longer sent to the mobile app, emails or social shares, which cannot open them.
+* Fix      - Leaving a space now uses the red confirm button with Cancel focused, and the message says how to get back in: rejoin any time, request again, or wait for a new invitation.
+* Fix      - Permissions: "Give members the same access as the Subscriber role" now copies the Subscriber boxes into that role, the table shows what a custom role really holds, and ticking one more box never takes access away.
+* Fix      - A member whose role cannot use the join route is no longer shown a Join button that fails.
+* Fix      - Report follows the Report content permission: a role that cannot report sees no Report button, and a custom role allowed to report can.
+* Fix      - Permissions: a role without the WordPress read capability can only be given Read, and its members are never shown New Topic, Reply or Join buttons that the request would refuse.
+* Fix      - After dismissing a flag, approving a request or any other change, moving to another community page or pressing Back shows the updated page instead of an older copy.
+* Fix      - Gate messages on spaces sold with a course, group or plan read correctly in German and other languages whose nouns take an article: "Included with ...", "You get access as soon as you join", "Ask a site administrator to add you". Edit Profile now says "People you have blocked".
+* Fix      - Community addresses typed in another case, such as /COMMUNITY/, redirect to the lower-case address instead of a 404.
+* Fix      - Removing a vote takes back the reputation and notification it gave.
+* Fix      - The activity log no longer records a removed vote as a vote.
+* Fix      - When two access rules match, the most generous one wins, and exact duplicate rules are refused.
+* Fix      - Accept and Unaccept answer buttons show only where they work: in Q&A spaces, for the topic author or a moderator, never for a silenced or banned member or on a closed topic, on the web and in the app.
+* Fix      - Space feeds drop control characters pasted from Word or a PDF, so feed readers accept them.
+* Fix      - Silenced and banned members cannot start a space, including BuddyPress group forums.
+* Fix      - Ban, silence and lift show the server's reason when they fail.
+* Fix      - Every not-found page links back to the community.
+* Fix      - The sitemap refreshes when a space is created or a topic is published.
+* Fix      - Importers fold accented letters and keep wpForo category slugs unique.
+* Fix      - An empty Divi header menu no longer prints a warning on community pages.
+* Fix      - Long member names wrap on profiles and member lists instead of widening the page on phones.
+* Fix      - A malformed invite link says "Invalid invite link." instead of showing the theme's 404 page.
+* Fix      - A reply's vote score always matches its votes, even after fast repeated clicks.
+* Fix      - The space topics REST endpoint honours per_page.
+* Fix      - The notice after adding an access rule shows in full in every language.
+* Fix      - Members a rule admits to a private space see that space's notifications, as they already see its follows and bookmarks.
+* Fix      - A member's profile no longer lists their replies under a deleted topic.
+* Fix      - The access rule grant picker keeps its arrow inside the box.
+* Fix      - Changing a member's role, banning, silencing, lifting a restriction, denying a join request, revoking an invite link and leaving a space always ask first, on every page.
+* Fix      - After a flag is resolved, the next flag in the moderation queue keeps working buttons.
+* Fix      - Removing a reported post asks first, and the next report card's buttons work without a reload.
+* Fix      - Moderation cards wrap long links and show right-to-left text in its own direction.
+* Fix      - On right-to-left sites, empty search, topic title and editor fields start on the right side, then follow the language you type.
+* Fix      - A topic title over 255 characters is refused with a clear message instead of an error.
+* Fix      - A space whose plans were all deleted offers no button to a checkout that no longer exists.
+* Fix      - Removing the demo community no longer deletes a real member whose username matches a demo name, or rewrites their bio.
+* Fix      - On phones, the theme footer is no longer hidden behind the community tab bar.
+* Fix      - Right-to-left sites load the right-to-left stylesheets, so the notification panel opens on the correct side.
+* Fix      - Back, next and reply arrows point the right way on right-to-left sites, and breadcrumb labels follow their own text direction.
+* Fix      - A Read access rule lets members report content, while posting, replying and voting stay closed.
+* Fix      - A topic's score on space and feed cards updates as you vote.
+* Fix      - Reactivating Jetonomy re-arms the publisher for scheduled topics.
+* Fix      - A topic or reply with no text, only empty formatting, is refused on create and edit.
+* Fix      - Deleting Jetonomy with its data also removes its scheduled background jobs.
+* Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.
+* Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
+* Security - Guests never see a private space's name on its members or roadmap page.
+* Security - Erasing a member's personal data also removes them as the uploader of their attachments.
+* Dev      - The list-posts and list-replies abilities describe the after parameter as the offset it is.
+* Compat   - Aligned with Jetonomy Pro 2.0.7. Install both updates together.
+* Compat   - BuddyNext suspensions and blocks carry into the forum with BuddyNext 1.2.8 or later.
 
 = 2.0.6 - October 2026 =
 
@@ -273,6 +358,7 @@ Updates and licence checks now use a dedicated update server, plus fixes for spa
 * Fix      - Space RSS feeds are valid XML again when a topic excerpt is shortened, so Mailchimp and other feed readers import them.
 * Fix      - Members whose username is an email address or contains a space can be found for messages and profile cards.
 * Fix      - Join dates on profiles and space member lists show in the site timezone.
+* Fix      - A settings address for a tab that is not available, such as one from a turned-off extension, now says so instead of showing an empty page.
 * Dev      - Updated the bundled licensing library; when several plugins bundle it, the newest copy runs.
 * Dev      - The test suite never contacts the live store.
 * Compat   - Aligned with Jetonomy Pro 2.0.6. Install both updates together.
@@ -318,6 +404,7 @@ Blocking now stops direct contact, importers resume cleanly, and a round of acce
 * Fix      - Divi 5 pages show the community header with full styling.
 * Fix      - The emoji picker fits its container on touch screens.
 * Fix      - Join respects the Join spaces capability, and the Silence and Ban IP actions show only on members without a restriction.
+* Fix      - Resetting notification defaults from WP-CLI restores every notification type, including roadmap idea updates, reactions and report reviews.
 * Security - Private communities refuse guests on every read ability, matching the website and REST API.
 * Security - Link previews and web push connect only to the address that was checked, and link previews are rate limited.
 * Security - Replies posted through the Abilities API follow the same rate limits and rules as the website.

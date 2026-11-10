@@ -18,6 +18,8 @@
  *     onFinally,     // (snapshot) => void                           (optional)
  *     toastOnError,  // boolean, default true
  *     errorFallback, // string, optional
+ *     lock,          // Element, optional: clicks on it are ignored while a
+ *                    // request is in flight (toggles must not race)
  *   }
  */
 ( function ( window ) {
@@ -60,11 +62,19 @@
 	 */
 	async function run( opts ) {
 		opts = opts || {};
+		var lock = opts.lock;
+		if ( lock ) {
+			// A toggle sent twice before the first answer lands flips back
+			// and forth out of order; one request at a time per control.
+			if ( lock.hasAttribute( 'aria-busy' ) ) return;
+			lock.setAttribute( 'aria-busy', 'true' );
+		}
 		var snapshot;
 		try {
 			snapshot = opts.apply ? opts.apply() : null;
 		} catch ( e ) {
 			if ( window.console && console.error ) console.error( '[jetonomyOptimistic] apply threw', e );
+			if ( lock ) lock.removeAttribute( 'aria-busy' );
 			return;
 		}
 
@@ -96,6 +106,7 @@
 			callSafe( opts.onError, err, snapshot );
 			maybeToast( opts, null, err );
 		} finally {
+			if ( lock ) lock.removeAttribute( 'aria-busy' );
 			callSafe( opts.onFinally, snapshot );
 		}
 	}

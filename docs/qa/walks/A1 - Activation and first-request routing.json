@@ -1,0 +1,71 @@
+{
+  "journey": "A1 - Activation and first-request routing",
+  "free": "0991f3be",
+  "pro": "f684443",
+  "walked_at": "2026-11-10T09:07:50.515612Z",
+  "walker": "release 2.0.7 free walk wave 7 (Sonnet)",
+  "env": {
+    "mode": "free stack (Free; Pro as noted)",
+    "site": "http://localhost:8912",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
+  },
+  "checks": {
+    "a1.1": {
+      "result": "pass",
+      "evidence": "Deactivated Jetonomy, deleted the rewrite_rules option (/community/ was a 404 while inactive), 'wp plugin activate jetonomy', then the very first requests: /community/ 200, /community/leaderboard/ 200, /community/s/feature-requests/ 200 with no visit to Settings > Permalinks."
+    },
+    "a1.2": {
+      "result": "pass",
+      "evidence": "wp option get rewrite_rules right after activation holds 27 jetonomy_route rules incl. ^community/?$, ^community/s/([^/]+)/?$, ^community/s/([^/]+)/t/([^/]+)/?$, ^community/u/([^/]+)/?$, category, members, roadmap, mod, new, sitemap."
+    },
+    "a1.3": {
+      "result": "pass",
+      "evidence": "Guest, 1440px, straight after activation: /community/ 200, title 'Community - Northwind Makers Community', theme header present, community nav present, 32 space cards, 5.5k characters of content (no blank page, no theme 404).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-a1-home.png"
+    },
+    "a1.4": {
+      "result": "pass",
+      "evidence": "Messages is a Pro extension: with Pro active and Private Messaging off, admin opening /community/messages/ gets HTTP 404 with the community 'Page not available' page: site header, community nav, 'Not found - This page is not available. The link may be out of date, or this feature is turned off on this community.' with Browse spaces / Search buttons, .jt-app 1170px wide, no aside/sidebar. (With Pro inactive the route is not registered and the theme's own 404 shows instead.)",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-a1-messages.png"
+    },
+    "a1.5": {
+      "result": "pass",
+      "evidence": "GET /wp-json/jetonomy/v1/messages as guest (and as admin) with Messages off or Pro inactive -> 404 {code: rest_no_route}; the body is clean JSON with no PHP notice."
+    },
+    "a1.6": {
+      "result": "pass",
+      "evidence": "Permalinks set to Plain: Jetonomy > Dashboard, Spaces, Settings and Moderation each show the error notice 'Jetonomy: your community cannot be reached while permalinks are set to Plain. Visitors see the homepage instead.' with a 'Choose a permalink structure' link to options-permalink.php.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-a1-plain-notice.png"
+    },
+    "a1.7": {
+      "result": "pass",
+      "evidence": "With Plain: WP Dashboard, Plugins and Users show the same notice and link, Settings > Permalinks does not; no fatal. Choosing Post name in the UI and saving: the notice is gone, /community/ 200, and /community/s/zzz-nope/ answers 404 with the community 'Space not found.' page (header + community nav)."
+    },
+    "a1.8": {
+      "result": "pass",
+      "evidence": "After switching back to Post name: 'wp jetonomy qa-actions' -> 500/500 (REST 187, Model 253, Journey 47, Refusal 13; 1 skipped BB1 bbPress), zero FAIL lines; wp-content/debug.log did not grow (206693 bytes before and after activation, routed requests and the smoke). Over the whole walk the only debug.log lines were WP core update checks (no internet) and errors from my own fixture inserts/eval."
+    },
+    "a1.9": {
+      "result": "pass",
+      "evidence": "Guest, 390px touch context, /community/: scrollWidth 390 = viewport; the 'Open navigation menu' button opens the menu and Home/Community links become visible.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-a1-390.png"
+    },
+    "a1.10": {
+      "result": "pass",
+      "evidence": "Seeded community: deactivate then activate -> 43 jt_ tables before and after with an identical table-name checksum, categories 7 (7 distinct slugs), spaces 45, topics 281 unchanged; /community/ 200 with 383 space-card markers and /community/s/feature-requests/ 200."
+    }
+  },
+  "proposed_checks": []
+}

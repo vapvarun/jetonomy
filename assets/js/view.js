@@ -12,6 +12,13 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
  */
 const jtModalI18n = () => ( ( typeof window !== 'undefined' && window.jetonomyData && window.jetonomyData.i18n ) || {} );
 
+// Ask the question a button carries in data-confirm. Resolves true when the
+// button carries none (the action needs no confirmation).
+function confirmButton( btn, opts = {} ) {
+	const message = btn.getAttribute( 'data-confirm' );
+	return message ? jetonomyConfirm( message, opts ) : Promise.resolve( true );
+}
+
 // opts.danger: red confirm button and initial focus on Cancel, so Enter backs
 // out of a destructive action. Delegates to the shared toolkit
 // (jetonomy-modals.js, which also handles Esc and focus trapping) wherever it
@@ -34,11 +41,11 @@ function jetonomyConfirm( message, opts = {} ) {
 		actions.className = 'jt-modal-actions';
 		const cancelBtn = document.createElement( 'button' );
 		cancelBtn.className = 'jt-btn jt-btn-ghost';
-		cancelBtn.textContent = t.modalCancel || 'Cancel';
+		cancelBtn.textContent = opts.cancelLabel || t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( false ); } );
 		const okBtn = document.createElement( 'button' );
 		okBtn.className = 'jt-btn ' + ( opts.danger ? 'jt-btn-danger' : 'jt-btn-fill' );
-		okBtn.textContent = t.modalConfirm || 'Confirm';
+		okBtn.textContent = opts.confirmLabel || t.modalConfirm || 'Confirm';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( true ); } );
 		actions.appendChild( cancelBtn );
 		actions.appendChild( okBtn );
@@ -808,6 +815,25 @@ async function appendNewReply( newId ) {
     }
 }
 
+// Ban, silence and lift all end here: a failure says why and keeps the page;
+// a success reloads (the server re-renders badge + controls) and confirms it.
+function moderationDone( btn, res, okMsg, failMsg ) {
+    if ( ! res.ok ) {
+        btn.disabled = false;
+        const msg = ( res.data && res.data.message ) || failMsg || 'Something went wrong. Please try again.';
+        if ( window.bnToast ) {
+            window.bnToast( msg, 'error' );
+        }
+        return;
+    }
+    try {
+        window.sessionStorage.setItem( 'jetonomyToast', okMsg );
+    } catch ( e ) {
+        // Storage blocked: the reload still shows the new state, just without the toast.
+    }
+    window.location.reload();
+}
+
 /**
  * URL of the page a new top-level reply lands on, anchored to it.
  *
@@ -884,10 +910,9 @@ function notifSetTabCounts( counts ) {
  */
 window.jtReloadNotifList = async function () {
     if ( ! document.querySelector( '[data-jt-notif-list], .jt-notif-tabs' ) ) return;
-    // Ticks are position-based in the DOM; re-apply them by id so a new row on top cannot shift them onto other notifications.
-    const ticked = new Set( [ ...document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ) ].map( ( cb ) => cb.value ) );
+    // Rows carry data-wp-key, so the router keeps each row's node (and its
+    // tick) by notification id; a new row on top gets a node of its own.
     await reloadRegion();
-    document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb' ).forEach( ( cb ) => { cb.checked = ticked.has( cb.value ); } );
     notifUpdateBulkbar();
 };
 
@@ -1124,6 +1149,60 @@ function jetonomyVoteToast( data ) {
     setTimeout( () => { if ( window._jetonomyVoteToasted === msg ) window._jetonomyVoteToasted = false; }, 2000 );
 }
 
+let jtFieldErrorSeq = 0;
+
+/**
+ * Tie a validation message to the field it is about. The field gets
+ * aria-invalid and aria-describedby pointing at the message (the field's own
+ * describedby ids are kept), and focus, so a screen-reader user lands on the
+ * field and hears what is wrong. The first edit to the field undoes both and
+ * runs onFix, which clears the message.
+ *
+ * @param {Element|null} field  The input, textarea, select or contenteditable.
+ * @param {Element|null} errEl  The element that shows the message.
+ * @param {Function}     [onFix] Clears the message.
+ */
+function jtFlagField( field, errEl, onFix ) {
+    if ( ! field || ! errEl ) return;
+    if ( ! errEl.id ) errEl.id = `jt-field-error-${ ++jtFieldErrorSeq }`;
+    const own = ( field.getAttribute( 'aria-describedby' ) || '' ).split( /\s+/ ).filter( ( id ) => id && id !== errEl.id );
+    field.setAttribute( 'aria-describedby', [ ...own, errEl.id ].join( ' ' ) );
+    field.setAttribute( 'aria-invalid', 'true' );
+    // After the message renders, so the field is read with its description.
+    requestAnimationFrame( () => field.focus() );
+    const clear = () => {
+        field.removeEventListener( 'input', clear );
+        field.removeEventListener( 'change', clear );
+        field.removeAttribute( 'aria-invalid' );
+        if ( own.length ) field.setAttribute( 'aria-describedby', own.join( ' ' ) );
+        else field.removeAttribute( 'aria-describedby' );
+        if ( onFix ) onFix();
+    };
+    field.addEventListener( 'input', clear );
+    field.addEventListener( 'change', clear );
+}
+// Pro's composers (the poll builder) flag their fields the same way.
+window.jetonomyFlagField = jtFlagField;
+
+/**
+ * Show an empty-body error under an inline editor (topic or reply edit in place),
+ * tied to the editable. Reuses one message element per editor.
+ *
+ * @param {Element} editable The contenteditable.
+ */
+function jtInlineEditorEmpty( editable ) {
+    let errEl = editable.parentNode.querySelector( ':scope > .jt-inline-edit-error' );
+    if ( ! errEl ) {
+        errEl = document.createElement( 'p' );
+        errEl.className = 'jt-form-error jt-inline-edit-error';
+        errEl.setAttribute( 'role', 'alert' );
+        editable.after( errEl );
+    }
+    errEl.hidden = false;
+    errEl.textContent = state.i18n?.editEmpty || 'Add some text before saving.';
+    jtFlagField( editable, errEl, () => { errEl.hidden = true; errEl.textContent = ''; } );
+}
+
 function jetonomySetVoted( el, on ) {
     if ( ! el ) return;
     el.classList.toggle( 'voted', !! on );
@@ -1169,6 +1248,8 @@ const _n = ( single, plural, n, domain ) => {
 // has happened, the next navigation is a full page load. Removals the router
 // makes itself are discarded right after each navigation (takeRecords).
 let regionDirty = false;
+// window.jetonomyRest.writes at the last soft navigation.
+let seenWrites = 0;
 const regionObserver = 'undefined' !== typeof MutationObserver
     ? new MutationObserver( ( records ) => {
         if ( records.some( ( r ) => r.removedNodes.length ) ) regionDirty = true;
@@ -1193,8 +1274,13 @@ const reloadRegion = async () => {
     document.dispatchEvent( new CustomEvent( 'jetonomy:navigated', { detail: { href: window.location.href } } ) );
 };
 
-// initProfileTabsActive() binds its resize listener once per page load.
-let profileTabsResizeBound = false;
+// Back and Forward repaint the router's cached copy of the page. After a write
+// that copy is out of date, so fetch the page again.
+window.addEventListener( 'popstate', () => {
+    if ( ( window.jetonomyRest?.writes || 0 ) !== seenWrites && document.querySelector( '[data-wp-router-region="jetonomy/main"]' ) ) {
+        reloadRegion();
+    }
+} );
 
 const { state, actions } = store( 'jetonomy', {
     state: {
@@ -1315,7 +1401,12 @@ const { state, actions } = store( 'jetonomy', {
             event.preventDefault();
             try {
                 const router = yield import( '@wordpress/interactivity-router' );
-                yield router.actions.navigate( href );
+                // The router reuses pages it fetched before. After a write (a
+                // dismissed flag, an approved request, a read notification)
+                // those copies are out of date, so fetch this one fresh.
+                const writes = window.jetonomyRest?.writes || 0;
+                yield router.actions.navigate( href, writes !== seenWrites ? { force: true } : {} );
+                seenWrites = writes;
                 // The swap was the router's own work, not a hand edit.
                 regionDirty = false;
                 watchRegion();
@@ -1392,13 +1483,11 @@ const { state, actions } = store( 'jetonomy', {
                 .replace( '%name%', name || i18n.thisMember || 'this member' )
                 .replace( '%from%', labels[ prev ] || prev )
                 .replace( '%to%', labels[ role ] || role );
-            const confirmed = 'function' === typeof window.jetonomyConfirm
-                ? yield window.jetonomyConfirm( confirmBody, {
-                    title: i18n.confirmRoleChangeTitle || 'Change role',
-                    confirmLabel: i18n.confirmLabel || 'Change role',
-                    cancelLabel: i18n.cancelLabel || 'Cancel',
-                } )
-                : true;
+            const confirmed = yield jetonomyConfirm( confirmBody, {
+                title: i18n.confirmRoleChangeTitle || 'Change role',
+                confirmLabel: i18n.confirmLabel || 'Change role',
+                cancelLabel: i18n.cancelLabel || 'Cancel',
+            } );
             if ( ! confirmed ) { select.value = prev; return; }
 
             const oldErr = row && row.querySelector( '.jt-member-role-error' );
@@ -1444,11 +1533,11 @@ const { state, actions } = store( 'jetonomy', {
             const spaceId = btn.getAttribute( 'data-space-id' );
             const userId  = btn.getAttribute( 'data-user-id' );
             const name    = btn.getAttribute( 'data-user-name' );
-            if ( ! spaceId || ! userId || 'function' !== typeof window.jetonomyConfirm ) return;
+            if ( ! spaceId || ! userId ) return;
 
             const i18n    = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const banBody = ( i18n.banConfirmFormat || 'Ban %s from this space? They will lose access to its posts and replies until you lift the ban.' ).replace( '%s', name || '' );
-            const ok = yield window.jetonomyConfirm( banBody, {
+            const ok = yield jetonomyConfirm( banBody, {
                 title: i18n.banMemberTitle || 'Ban member',
                 confirmLabel: i18n.banLabel || 'Ban',
                 danger: true,
@@ -1460,16 +1549,8 @@ const { state, actions } = store( 'jetonomy', {
                 method: 'POST',
                 body: { user_id: parseInt( userId, 10 ), space_id: parseInt( spaceId, 10 ), type: 'space_ban' },
             } );
-            if ( ! res.ok ) { btn.disabled = false; return; }
-            const row = btn.closest( '.jt-member-item' );
-            if ( row ) {
-                row.style.opacity = '0.5';
-                const note = document.createElement( 'span' );
-                note.className = 'jt-member-banned-note';
-                note.textContent = i18n.memberBanned || 'Banned';
-                row.appendChild( note );
-            }
-            btn.remove();
+            // Reload so the row re-renders server-side: Banned badge + Lift ban.
+            moderationDone( btn, res, ( i18n.bannedFormat || '%s has been banned.' ).replace( '%s', name || '' ), i18n.banFailed );
         },
 
         // ── Member moderation from a profile (frontend; site moderators) ──
@@ -1482,14 +1563,14 @@ const { state, actions } = store( 'jetonomy', {
             const userId = btn.getAttribute( 'data-user-id' );
             const name   = btn.getAttribute( 'data-user-name' );
             const type   = btn.getAttribute( 'data-restrict-type' ) || 'global_ban';
-            if ( ! userId || 'function' !== typeof window.jetonomyConfirm ) return;
+            if ( ! userId ) return;
 
             const i18n      = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const isSilence = 'silence' === type;
             const bodyTpl   = isSilence
                 ? ( i18n.silenceConfirmFormat || 'Silence %s? They stay in the community but cannot post, reply, or file reports until you lift it.' )
                 : ( i18n.banSiteConfirmFormat || 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.' );
-            const ok = yield window.jetonomyConfirm( bodyTpl.replace( '%s', name || '' ), {
+            const ok = yield jetonomyConfirm( bodyTpl.replace( '%s', name || '' ), {
                 title: isSilence ? ( i18n.silenceTitle || 'Silence member' ) : ( i18n.banSiteTitle || 'Ban member' ),
                 confirmLabel: isSilence ? ( i18n.silenceLabel || 'Silence' ) : ( i18n.banLabel || 'Ban' ),
                 danger: true,
@@ -1501,18 +1582,17 @@ const { state, actions } = store( 'jetonomy', {
                 method: 'POST',
                 body: { user_id: parseInt( userId, 10 ), type },
             } );
-            if ( ! res.ok ) { btn.disabled = false; return; }
             // Reload so the profile re-renders the badge + Lift control server-side.
-            window.location.reload();
+            moderationDone( btn, res, ( isSilence ? ( i18n.silencedFormat || '%s has been silenced.' ) : ( i18n.bannedFormat || '%s has been banned.' ) ).replace( '%s', name || '' ), i18n.banFailed );
         },
         *liftRestriction() {
             const btn = getElement().ref;
             const rid  = btn.getAttribute( 'data-restriction-id' );
             const name = btn.getAttribute( 'data-user-name' );
-            if ( ! rid || 'function' !== typeof window.jetonomyConfirm ) return;
+            if ( ! rid ) return;
 
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
-            const ok = yield window.jetonomyConfirm(
+            const ok = yield jetonomyConfirm(
                 ( i18n.liftConfirmFormat || 'Lift the restriction on %s? They regain full access right away.' ).replace( '%s', name || '' ),
                 { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift restriction' }
             );
@@ -1520,8 +1600,7 @@ const { state, actions } = store( 'jetonomy', {
 
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/moderation/ban/' + parseInt( rid, 10 ), { method: 'DELETE' } );
-            if ( ! res.ok ) { btn.disabled = false; return; }
-            window.location.reload();
+            moderationDone( btn, res, ( i18n.liftedFormat || 'The restriction on %s has been lifted.' ).replace( '%s', name || '' ), i18n.liftFailed );
         },
 
         // ── My Subscriptions page ──
@@ -1530,10 +1609,7 @@ const { state, actions } = store( 'jetonomy', {
             const sid = btn.getAttribute( 'data-subscription-id' );
             if ( ! sid ) return;
 
-            if ( 'function' === typeof window.jetonomyConfirm ) {
-                const ok = yield window.jetonomyConfirm( btn.getAttribute( 'data-confirm' ) || 'Unfollow?' );
-                if ( ! ok ) return;
-            }
+            if ( ! ( yield jetonomyConfirm( btn.getAttribute( 'data-confirm' ) || 'Unfollow?' ) ) ) return;
 
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/subscriptions/' + parseInt( sid, 10 ), { method: 'DELETE' } );
@@ -1569,13 +1645,11 @@ const { state, actions } = store( 'jetonomy', {
         *denyJoinRequest() {
             const btn  = getElement().ref;
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
-            if ( 'function' === typeof window.jetonomyConfirm ) {
-                const ok = yield window.jetonomyConfirm(
-                    i18n.denyJoinBody || 'Deny this join request? The member can request again later.',
-                    { title: i18n.denyJoinTitle || 'Deny request', confirmLabel: i18n.denyLabel || 'Deny', danger: true }
-                );
-                if ( ! ok ) return;
-            }
+            const ok = yield jetonomyConfirm(
+                i18n.denyJoinBody || 'Deny this join request? The member can request again later.',
+                { title: i18n.denyJoinTitle || 'Deny request', confirmLabel: i18n.denyLabel || 'Deny', danger: true }
+            );
+            if ( ! ok ) return;
             yield jtModerateJoinRequest( btn, 'deny' );
         },
 
@@ -1656,17 +1730,15 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! spaceId || ! inviteId ) return;
 
             // Destructive and irreversible — the row is DELETEd, not flagged.
-            if ( 'function' === typeof window.jetonomyConfirm ) {
-                const confirmed = yield window.jetonomyConfirm(
-                    panel.dataset.jtRevokeBody || 'Revoke this invite link?',
-                    {
-                        title: panel.dataset.jtRevokeTitle || 'Revoke invite link',
-                        confirmLabel: panel.dataset.jtRevokeLabel || 'Revoke',
-                        danger: true,
-                    }
-                );
-                if ( ! confirmed ) return;
-            }
+            const confirmed = yield jetonomyConfirm(
+                panel.dataset.jtRevokeBody || 'Revoke this invite link?',
+                {
+                    title: panel.dataset.jtRevokeTitle || 'Revoke invite link',
+                    confirmLabel: panel.dataset.jtRevokeLabel || 'Revoke',
+                    danger: true,
+                }
+            );
+            if ( ! confirmed ) return;
 
             jtInviteError( panel, '' );
             row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = true; } );
@@ -1880,7 +1952,6 @@ const { state, actions } = store( 'jetonomy', {
             const menu = trigger.closest( '[data-jt-notif-menu]' );
             const panel = menu && menu.querySelector( '.jt-notif-item__menu-list' );
             if ( ! panel ) return;
-            panel.removeAttribute( 'hidden' );
             if ( ! trigger._jtDropdown ) {
                 trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {
                     placement: 'bottom-end',
@@ -1975,8 +2046,7 @@ const { state, actions } = store( 'jetonomy', {
             const form = btn && btn.closest( '.jt-reschedule' );
             const id = form && parseInt( form.getAttribute( 'data-post-id' ), 10 );
             if ( ! id ) return;
-            const confirmMsg = btn.getAttribute( 'data-confirm' );
-            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg ) ) ) return;
+            if ( ! ( yield confirmButton( btn ) ) ) return;
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { published_at: '' } } );
             if ( res.ok ) {
@@ -2074,6 +2144,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+                lock: btnEl.parentElement,
             } );
         },
 
@@ -2127,6 +2198,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+                lock: btnEl.parentElement,
             } );
         },
 
@@ -2182,6 +2254,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+                lock: btnEl.parentElement,
             } );
         },
 
@@ -2243,6 +2316,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+                lock: btnEl.parentElement,
             } );
         },
 
@@ -2314,7 +2388,10 @@ const { state, actions } = store( 'jetonomy', {
                 const content     = editable.innerHTML.trim();
                 const plainCheck  = ( editable.textContent || '' ).trim();
                 const hasMediaTag = /<(?:img|video|audio|iframe|embed)\b/i.test( content );
-                if ( ! plainCheck && ! hasMediaTag ) return;
+                if ( ! plainCheck && ! hasMediaTag ) {
+                    jtInlineEditorEmpty( editable );
+                    return;
+                }
 
                 saveBtn.disabled = true;
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
@@ -2418,15 +2495,19 @@ const { state, actions } = store( 'jetonomy', {
             const wasFollowing = btnEl.dataset.following === '1';
             if ( ! spaceId ) return;
 
+            // The space header's toggle carries a bell icon beside its text, so
+            // write the label span when there is one instead of wiping the icon.
+            const labelEl = btnEl.querySelector( '.jt-follow-label' ) || btnEl;
             const applyFollowingUI = ( following ) => {
+                btnEl.setAttribute( 'aria-pressed', following ? 'true' : 'false' );
                 if ( following ) {
                     btnEl.dataset.following = '1';
-                    btnEl.textContent = state.i18n?.following || 'Following';
+                    labelEl.textContent = state.i18n?.following || 'Following';
                     btnEl.classList.remove( 'jt-btn-ghost' );
                     btnEl.classList.add( 'jt-btn-fill', 'jt-following' );
                 } else {
                     btnEl.dataset.following = '0';
-                    btnEl.textContent = state.i18n?.follow || 'Follow';
+                    labelEl.textContent = state.i18n?.follow || 'Follow';
                     btnEl.classList.remove( 'jt-btn-fill', 'jt-following' );
                     btnEl.classList.add( 'jt-btn-ghost' );
                 }
@@ -2485,16 +2566,23 @@ const { state, actions } = store( 'jetonomy', {
             const userId  = btnEl.dataset.userId;
             if ( ! spaceId || ! userId ) return;
 
-            const confirmed = 'function' === typeof window.jetonomyConfirm
-                ? yield window.jetonomyConfirm(
-                    state.i18n?.confirmLeaveSpace || 'Leave this space? You can rejoin at any time.',
-                    {
-                        title: state.i18n?.leaveSpace || 'Leave space',
-                        confirmLabel: state.i18n?.leave || 'Leave',
-                        cancelLabel: state.i18n?.cancel || 'Cancel',
-                    }
-                )
-                : true;
+            // Name the space in the question, so the member knows exactly what
+            // they are leaving (the button sits inside the "Joined" menu).
+            const spaceTitle = btnEl.dataset.spaceTitle || '';
+            const asked      = spaceTitle && state.i18n?.confirmLeaveNamed
+                ? state.i18n.confirmLeaveNamed.replace( '%s', spaceTitle )
+                : ( state.i18n?.confirmLeaveSpace || 'Leave this space?' );
+            // Say how they get back in: an approval or invite-only space does
+            // not let a former member simply rejoin.
+            const rejoin     = state.i18n?.leaveRejoin || {};
+            const after      = rejoin[ btnEl.dataset.joinPolicy ] || rejoin.open || '';
+            const question   = after ? asked + ' ' + after : asked;
+            const confirmed = yield jetonomyConfirm( question, {
+                title: state.i18n?.leaveSpace || 'Leave space',
+                confirmLabel: state.i18n?.leave || 'Leave',
+                cancelLabel: state.i18n?.cancel || 'Cancel',
+                danger: true,
+            } );
             if ( ! confirmed ) return;
 
             btnEl.disabled = true;
@@ -2652,6 +2740,7 @@ const { state, actions } = store( 'jetonomy', {
             // pattern on Twitter / Reddit / GitHub: dismiss on scroll rather
             // than reposition-tracking. Click-outside still applies.
             const cleanup = () => {
+                el.ref.setAttribute( 'aria-expanded', 'false' );
                 dropdown.remove();
                 document.removeEventListener( 'click', closeHandler );
                 document.removeEventListener( 'keydown', keyHandler );
@@ -2659,11 +2748,13 @@ const { state, actions } = store( 'jetonomy', {
                 window.removeEventListener( 'resize', scrollHandler );
             };
             dropdown.jtClose = cleanup;
-            // Escape closes and hands focus back to the Share button.
+            // Escape closes and hands focus back to the Share button; arrows move between items.
             const keyHandler = ( e ) => {
                 if ( 'Escape' === e.key ) {
                     cleanup();
                     el.ref.focus();
+                } else if ( dropdown.contains( document.activeElement ) ) {
+                    window.jetonomySmartDropdown.menuKeys( dropdown, e );
                 }
             };
             const closeHandler = ( e ) => {
@@ -2681,6 +2772,8 @@ const { state, actions } = store( 'jetonomy', {
             window.addEventListener( 'scroll', scrollHandler, { passive: true, capture: true } );
             window.addEventListener( 'resize', scrollHandler, { passive: true } );
             document.addEventListener( 'keydown', keyHandler );
+            el.ref.setAttribute( 'aria-expanded', 'true' );
+            window.jetonomySmartDropdown.items( dropdown )[0]?.focus( { preventScroll: true } );
             // Click-outside is the only listener that needs the next-tick
             // defer — the click that opened the dropdown is still bubbling
             // when we register, and we don't want it to instantly trigger
@@ -2834,10 +2927,6 @@ const { state, actions } = store( 'jetonomy', {
             const panel = menu.querySelector( '.jt-more-dropdown' );
             if ( ! panel ) return;
 
-            // SSR markup ships `hidden` on the panel; the smart-dropdown
-            // primitive flips display/position inline once it takes over,
-            // so we drop the attribute on first activation.
-            panel.removeAttribute( 'hidden' );
 
             if ( ! trigger._jtDropdown ) {
                 trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {
@@ -2953,7 +3042,10 @@ const { state, actions } = store( 'jetonomy', {
                 const content     = editable.innerHTML.trim();
                 const plainCheck  = ( editable.textContent || '' ).trim();
                 const hasMediaTag = /<(?:img|video|audio|iframe|embed)\b/i.test( content );
-                if ( ! plainCheck && ! hasMediaTag ) return;
+                if ( ! plainCheck && ! hasMediaTag ) {
+                    jtInlineEditorEmpty( editable );
+                    return;
+                }
 
                 saveBtn.disabled = true;
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
@@ -3259,8 +3351,7 @@ const { state, actions } = store( 'jetonomy', {
             const path = btn.getAttribute( 'data-rest-path' );
             if ( ! path ) return;
 
-            const confirmMsg = btn.getAttribute( 'data-confirm' );
-            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg, { danger: true } ) ) ) return;
+            if ( ! ( yield confirmButton( btn, { danger: true } ) ) ) return;
 
             btn.disabled = true;
             try {
@@ -3666,6 +3757,10 @@ const { state, actions } = store( 'jetonomy', {
             const endpoint   = card.getAttribute( 'data-resolve-endpoint' );
             if ( ! flagId || ! resolution || ! endpoint ) return;
 
+            // Remove trashes the content, so its button carries data-confirm
+            // (as Reject on an approval card does). Dismiss changes nothing.
+            if ( ! ( yield confirmButton( btn, { danger: true } ) ) ) return;
+
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const base = ( ( window.jetonomyData && window.jetonomyData.restBase ) || '' ).replace( /\/+$/, '' );
             let path = endpoint + flagId + '/resolve';
@@ -3731,10 +3826,8 @@ const { state, actions } = store( 'jetonomy', {
                 // stays disabled) but re-check anyway: the dialog is
                 // convenience, never the control.
                 confirmed = null !== typed && String( typed ).trim() === title;
-            } else if ( 'function' === typeof window.jetonomyConfirm ) {
-                confirmed = yield window.jetonomyConfirm( message );
             } else {
-                confirmed = false;
+                confirmed = yield jetonomyConfirm( message );
             }
             if ( ! confirmed ) return;
 
@@ -3851,11 +3944,7 @@ const { state, actions } = store( 'jetonomy', {
 
             // Reject is destructive, so its button carries data-confirm.
             // Approve does not — it is the outcome the author already asked for.
-            const confirmMsg = btn.getAttribute( 'data-confirm' );
-            if ( confirmMsg && 'function' === typeof window.jetonomyConfirm ) {
-                const ok = yield window.jetonomyConfirm( confirmMsg, { danger: true } );
-                if ( ! ok ) return;
-            }
+            if ( ! ( yield confirmButton( btn, { danger: true } ) ) ) return;
 
             const base = ( ( window.jetonomyData && window.jetonomyData.restBase ) || '' ).replace( /\/+$/, '' );
             let path = endpoint + action + '/' + kind + '/' + objectId;
@@ -3942,6 +4031,7 @@ const { state, actions } = store( 'jetonomy', {
             // missing instead of silently refusing.
             if ( ! ( body.textContent || '' ).trim() && ! body.querySelector( 'img, video, iframe, audio, hr, table, blockquote, pre' ) ) {
                 ctx.error = ctx.emptyError || state.i18n?.failedSave || 'Failed to save.';
+                jtFlagField( body, editorWrap?.querySelector( '.jt-editor-error' ), () => { ctx.error = ''; } );
                 body.focus();
                 return;
             }
@@ -4044,7 +4134,6 @@ const { state, actions } = store( 'jetonomy', {
             const menu = trigger.closest( '.jt-publish-mode' );
             const panel = menu?.querySelector( '.jt-publish-mode__menu' );
             if ( ! panel ) return;
-            panel.removeAttribute( 'hidden' );
 
             if ( ! trigger._jtDropdown ) {
                 trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {
@@ -4203,11 +4292,21 @@ const { state, actions } = store( 'jetonomy', {
             // don't block submit on emptiness. The server is the source of
             // truth on "must this space have a title" — sending '' for a feed
             // space is a valid request.
+            // The message box the error lands in: the embed keeps one per
+            // instance inside its form, the page composer one bound to state.
+            const errEl = 'context' === o.errorSink
+                ? form.querySelector( '.jt-compose-topic-error' )
+                : document.querySelector( '[data-wp-text="state.submitError"]' );
+            const fieldError = ( field, msg ) => {
+                writeError( msg );
+                jtFlagField( field, errEl, () => writeError( '' ) );
+                setIdle();
+            };
+
             const titleInput = form.querySelector( '[name="title"]' );
             const title      = titleInput ? ( titleInput.value || '' ).trim() : '';
             if ( false !== o.requireTitle && ! title ) {
-                writeError( state.i18n?.titleRequired || 'Please enter a title for your topic.' );
-                setIdle();
+                fieldError( titleInput, state.i18n?.titleRequired || 'Please enter a title for your topic.' );
                 return;
             }
 
@@ -4220,18 +4319,18 @@ const { state, actions } = store( 'jetonomy', {
             // `textarea` mode reads .value directly.
             let content      = '';
             let contentPlain = '';
+            const bodyField  = 'textarea' === o.bodySource
+                ? form.querySelector( 'textarea[name="content"], .jt-compose-topic-body' )
+                : form.querySelector( '[contenteditable]' );
             if ( 'textarea' === o.bodySource ) {
-                const ta = form.querySelector( 'textarea[name="content"], .jt-compose-topic-body' );
-                content      = ta ? ( ta.value || '' ).trim() : '';
+                content      = bodyField ? ( bodyField.value || '' ).trim() : '';
                 contentPlain = content;
             } else {
-                const bodyEl = form.querySelector( '[contenteditable]' );
-                content      = bodyEl ? ( bodyEl.innerHTML || '' ).trim() : '';
-                contentPlain = bodyEl ? ( bodyEl.textContent || '' ).trim() : '';
+                content      = bodyField ? ( bodyField.innerHTML || '' ).trim() : '';
+                contentPlain = bodyField ? ( bodyField.textContent || '' ).trim() : '';
             }
             if ( ! contentPlain ) {
-                writeError( state.i18n?.bodyRequired || 'Please add some details before posting.' );
-                setIdle();
+                fieldError( bodyField, state.i18n?.bodyRequired || 'Please add some details before posting.' );
                 return;
             }
 
@@ -4256,8 +4355,11 @@ const { state, actions } = store( 'jetonomy', {
                 publishedAt = jtScheduleValue( form );
             }
             if ( o.collectSchedule && 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
-                writeError( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
-                setIdle();
+                // Point at the first of date / hour / minute still empty.
+                const missing = [ 'published_date', 'published_hour', 'published_minute' ]
+                    .map( ( n ) => form.querySelector( `[name="${ n }"]` ) )
+                    .find( ( f ) => f && ! ( f.value || '' ).trim() );
+                fieldError( missing || null, state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
                 return;
             }
 
@@ -4354,12 +4456,13 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
 
-            // Draft or scheduled: leave the form for the saved item, the same
-            // as a published topic. Staying put with the fields still filled
-            // (and the button reset to "Post Topic") made the natural next
-            // click queue a second copy. The item's page says whether it is a
-            // draft or when it is scheduled to publish.
-            if ( 'draft' === status && slug && spaceSlug && state.communityBase ) {
+            // Draft, scheduled or held for approval: leave the form for the
+            // saved item, the same as a published topic. Staying put with the
+            // fields still filled (and the button reset to "Post Topic") made
+            // the natural next click queue a second copy. The item's page says
+            // whether it is a draft, scheduled, or pending review (its author
+            // may open it).
+            if ( ( 'draft' === status || 'pending' === status ) && slug && spaceSlug && state.communityBase ) {
                 window.location.href = `${ state.communityBase }/s/${ spaceSlug }/t/${ slug }/`;
                 return;
             }
@@ -4682,6 +4785,8 @@ const { state, actions } = store( 'jetonomy', {
             // Picker mode demands a chosen space before anything else.
             if ( ! ctx.spaceId ) {
                 ctx.error = state.i18n?.chooseSpace || 'Choose the space first.';
+                const embed = getElement()?.ref?.closest( '.jt-compose-topic-embed' );
+                jtFlagField( embed?.querySelector( '.jt-compose-topic-space' ), embed?.querySelector( '.jt-compose-topic-error' ), () => { ctx.error = ''; } );
                 return;
             }
 
@@ -4706,33 +4811,6 @@ const { state, actions } = store( 'jetonomy', {
 
     callbacks: {
         // (Notification polling lives in header.js.)
-
-        // On mobile, the profile tabs row is horizontally scrollable to fit
-        // all five tabs. When the viewer lands on a sub-page whose tab sits
-        // off-screen (e.g. /drafts/ at 390px), they can't see the active
-        // underline without scrolling the tab row manually. Scroll the
-        // active tab into view once on load so the indicator is visible.
-        // Re-run on a debounced resize (rotation, a desktop window narrowed
-        // past the tab row), bound once per page so client navigation does not
-        // stack listeners; it re-queries the row, so a page without one is a no-op.
-        initProfileTabsActive() {
-            const reveal = () => {
-                const container = document.querySelector( '.jt-profile-tabs' );
-                if ( ! container ) return;
-                if ( container.scrollWidth <= container.clientWidth ) return;
-                const active = container.querySelector( '.jt-profile-tab.active' );
-                if ( ! active ) return;
-                active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
-            };
-            reveal();
-            if ( profileTabsResizeBound ) return;
-            profileTabsResizeBound = true;
-            let timer = null;
-            window.addEventListener( 'resize', () => {
-                clearTimeout( timer );
-                timer = setTimeout( reveal, 150 );
-            }, { passive: true } );
-        },
 
         // Poll for new replies and show a sticky banner. Adaptive + visibility-
         // aware: pauses entirely while the tab is hidden, and backs the interval

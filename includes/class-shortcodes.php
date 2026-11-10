@@ -465,7 +465,7 @@ class Shortcodes {
 		self::enqueue_styles();
 
 		$user    = get_userdata( $user_id );
-		$profile = Models\UserProfile::find_by_user( $user_id );
+		$profile = Models\UserProfile::find_public( $user_id );
 		if ( ! $user ) {
 			return self::config_notice(
 				sprintf(

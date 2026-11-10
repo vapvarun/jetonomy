@@ -331,11 +331,15 @@ class Posts_Controller extends Base_Controller {
 		// Resolve limit: explicit query-param from client → Space::get_posts_per_page()
 		// (space → global → 20). Use raw query params, NOT get_param(), because route
 		// schemas auto-fill defaults and would mask the "not provided" case.
-		$raw_limit = $request->get_query_params()['limit'] ?? null;
-		$has_limit = null !== $raw_limit && '' !== $raw_limit;
-		$limit     = $has_limit
-			? max( 1, min( 100, (int) $pagination['limit'] ) )
-			: Space::get_posts_per_page( $space_id );
+		// `per_page` (core's name) counts as asking, as get_pagination() reads it.
+		$query     = $request->get_query_params();
+		$has_limit = '' !== (string) ( $query['limit'] ?? '' ) || '' !== (string) ( $query['per_page'] ?? '' );
+		$limit     = $has_limit ? $pagination['limit'] : Space::get_posts_per_page( $space_id );
+		// get_pagination() turned ?page=N into an offset with its default 20;
+		// with the space's own page size, page N starts at (N-1) x that size.
+		if ( ! $has_limit && empty( $query['after'] ) && empty( $query['offset'] ) ) {
+			$pagination['offset'] = ( max( 1, (int) ( $query['page'] ?? 1 ) ) - 1 ) * $limit;
+		}
 
 		$posts = Post::list_by_space_visible(
 			$space_id,
@@ -485,9 +489,13 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Security check failed. Please refresh the page and try again.', 'jetonomy' ) );
 		}
 
-		$title   = sanitize_text_field( (string) $request->get_param( 'title' ) );
+		$title       = sanitize_text_field( (string) $request->get_param( 'title' ) );
+		$title_error = Post::title_length_error( $title );
+		if ( $title_error ) {
+			return $title_error;
+		}
 		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
-		if ( empty( $content ) ) {
+		if ( jetonomy_content_is_blank( $content ) ) {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
 		}
 
@@ -745,10 +753,17 @@ class Posts_Controller extends Base_Controller {
 
 		if ( null !== $request->get_param( 'title' ) ) {
 			$update_data['title'] = sanitize_text_field( $request->get_param( 'title' ) );
+			$title_error          = Post::title_length_error( $update_data['title'] );
+			if ( $title_error ) {
+				return $title_error;
+			}
 		}
 
 		if ( null !== $request->get_param( 'content' ) ) {
-			$content                      = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
+			$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
+			if ( jetonomy_content_is_blank( $content ) ) {
+				return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
+			}
 			$update_data['content']       = $content;
 			$update_data['content_plain'] = jetonomy_content_to_plain( $content );
 		}

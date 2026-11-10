@@ -24,7 +24,7 @@ class Activity_Tracker {
 		add_action( 'jetonomy_after_create_reply', array( $this, 'on_reply_created' ), 5, 2 );
 
 		// Vote events.
-		add_action( 'jetonomy_after_vote', array( $this, 'on_vote' ), 5, 3 );
+		add_action( 'jetonomy_after_vote', array( $this, 'on_vote' ), 5, 4 );
 
 		// Trust level changes.
 		add_action( 'jetonomy_trust_level_changed', array( $this, 'on_trust_change' ), 5, 3 );
@@ -88,7 +88,10 @@ class Activity_Tracker {
 		);
 	}
 
-	public function on_vote( string $object_type, int $object_id, int $voter_id ): void {
+	public function on_vote( string $object_type, int $object_id, int $voter_id, int $value = 1 ): void {
+		if ( 0 === $value ) {
+			return; // A removed vote is not a vote.
+		}
 		ActivityLog::log( $voter_id, 'voted', $object_type, $object_id );
 	}
 

@@ -11,6 +11,156 @@
       "title": "Post poll listed held replies and the search ability listed private-space tags",
       "guard": "phpunit:PollAndTagSearchVisibilityTest",
       "added": "2026-10-22"
+    },
+    {
+      "card": "10462503018",
+      "title": "Profile Badges heading was an h4 under the h1, and an unavailable settings tab showed an empty page",
+      "guard": "runbook:f-a11y.12,c-admin-plugin-pages.24",
+      "added": "2026-10-31"
+    },
+    {
+      "card": "10478659544",
+      "title": "Demo cleanup deleted a real member whose login matched a demo name",
+      "guard": "qa-actions:DS1-DS4",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469777893",
+      "title": "Phone tab bar covered the theme footer at 390",
+      "guard": "runbook:c-member-profile-mobile-tabs.10",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10462612523",
+      "title": "A first WooCommerce Memberships purchase or free trial did not open the gated space",
+      "guard": "phpunit:WooMembershipFirstPurchaseTest",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10430748231",
+      "title": "The WooCommerce adapter had two definitions of an active membership",
+      "guard": "qa-actions:WC2",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469967641",
+      "title": "Web Push switched itself on after upgrading a site that never enabled it",
+      "guard": "qa-actions:EB1-EB5",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469968511",
+      "title": "The German gate sentence lowercased the course kind and a kind-less level read wrong",
+      "guard": "qa-actions:MS1",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469967914",
+      "title": "Access Rules Grants select overflowed its cell at 1024 and a resize moved the page scroll",
+      "guard": "phpunit:AccessRuleAdminAjaxTest",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469968030",
+      "title": "Notification toggles shared one name, More options had no menu roles, Review in queue links were not described",
+      "guard": "runbook:f-a11y.16,f-a11y.17",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469968283",
+      "title": "Arabic content and empty fields did not follow the page direction under left-aligned themes",
+      "guard": "runbook:f-rtl.9",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10463415760",
+      "title": "Give members access left a custom role with nothing and ticking one box replaced its access; Join shown where the route refused",
+      "guard": "qa-actions:RM1-RM3",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469967795",
+      "title": "Accept and Unaccept were offered to a silenced author",
+      "guard": "qa-actions:AC1-AC4",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469968650",
+      "title": "Site-path addresses saved before 2.0.7 reached the app, emails and social shares",
+      "guard": "qa-actions:AU1-AU2",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469968838",
+      "title": "The digest CLI refused the documented --frequency=off",
+      "guard": "qa-actions:CLI1",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10469970853",
+      "title": "Searchable field changes did not reindex topics and the digest listed the member own topics",
+      "guard": "qa-actions:CF5,ED8",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483409032",
+      "title": "The leave confirm promised an instant rejoin in approval and invite spaces and was not styled as destructive",
+      "guard": "qa-actions:LV1",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483409192",
+      "title": "The moderation overview showed resolved flags after client-side navigation",
+      "guard": "runbook:c-mod-flag-resolution.21",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483361510",
+      "title": "German membership gate sentences were missing articles",
+      "guard": "qa-actions:GG1",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483605549",
+      "title": "With SEO Pro on, space and topic pages printed no og:image when the page had no image of its own",
+      "guard": "qa-actions:SI1",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483605549",
+      "title": "With SEO Pro on, space and topic pages printed no og:image when the page had no image of its own",
+      "guard": "runbook:e-seo-pro.16",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483588613",
+      "title": "Permissions ticked fallback boxes for a role without WordPress read",
+      "guard": "qa-actions:RM4",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483588613",
+      "title": "Permissions ticked fallback boxes for a role without WordPress read",
+      "guard": "runbook:c-admin-plugin-pages.27",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483588613",
+      "title": "A role without WordPress read was offered writes the owner ticked, which every write route refuses",
+      "guard": "qa-actions:RM5",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483720093",
+      "title": "The Report button showed for a role the owner took Report from, then failed with 403",
+      "guard": "qa-actions:RT1",
+      "added": "2026-11-06"
+    },
+    {
+      "card": "10483720093",
+      "title": "The Report button showed for a role the owner took Report from, then failed with 403",
+      "guard": "runbook:c-mod-flag-resolution.22",
+      "added": "2026-11-06"
     }
   ]
 }

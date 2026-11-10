@@ -27,7 +27,7 @@ This is the standard Access Rules flow that every membership and LMS integration
 2. Click the **Access Rules** tab.
 3. In the first dropdown, choose **MemberPress**. The dropdown lists the type of rule (Everyone, Logged In, WP Role, Capability, Trust Level) and one entry for each active membership plugin.
 4. A search box appears next to it. Type to search and pick your membership level there.
-5. In the last dropdown, choose what the rule grants: **Read**, **Participate**, or **Full** (see below). **Participate** is preselected and is the right answer for most paid spaces.
+5. In the last dropdown, choose what the rule grants: **Read** or **Participate** (see below). **Participate** is preselected and is the right answer for most paid spaces.
 6. Click **Add Rule**. The rule appears in the **Access Rules** table below the form, and the form reads your rule back to you in plain English before you save it.
 
 Members who hold the selected level gain access to this space at the level you chose.
@@ -44,9 +44,8 @@ An Access Rule has **one** setting that decides what a matching member can do:
 |---|---|
 | Read | View and report topics and replies, but not post or reply |
 | Participate | Read, post topics, and reply (the usual choice for a course or paid space) |
-| Full | Participate, plus the moderator actions the member's own WordPress capabilities already permit |
 
-> **Full does not hand out moderation by itself.** Closing and pinning topics and editing other people's posts still require the matching WordPress capability, which an ordinary member does not have - so for most paid members Full and Participate come to the same thing in practice. A rule can open a space to someone; it cannot give them a power their role does not carry. Appoint moderators on the space's **Members** tab.
+> **A rule never makes someone a moderator.** A rule can open a space to someone; it cannot give them a power their role does not carry. Appoint moderators on the space's **Members** tab. (Before 2.0.7 there was a third level, Full. It never gave more than Participate, so it was removed and saved Full rules became Participate.)
 
 The space role a matching member is recorded as is **derived from the access level**, not chosen separately, and it is the same for every rule type (membership, role, capability, trust level):
 

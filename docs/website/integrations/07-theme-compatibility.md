@@ -70,6 +70,12 @@ Starting in 1.5.0, Jetonomy extends automatic brand-color adoption to four widel
 
 For the full technical specification of the `var()` chain, the complete verified token map, and the checklist for adding a new theme, see `docs/standards/host-theme-color-adoption.md` in the plugin repo.
 
+## Divi Theme Builder (2.0.7+)
+
+If you build your site header and footer in **Divi > Theme Builder**, community pages use them too, with their full Divi design. This works with the Divi theme and with the Divi Builder plugin on another theme, such as Reign.
+
+Community pages use the **Default Website** template's header and footer. To check it, open **/community/**: you should see the same header as your home page, not the theme's own header.
+
 ## Using Other Themes
 
 Jetonomy works with any well-built WordPress theme. Compatibility level depends on how fully the theme uses theme.json:

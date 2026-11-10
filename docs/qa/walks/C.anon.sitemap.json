@@ -1,82 +1,76 @@
 {
   "journey": "C.anon.sitemap",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:36:32Z",
-  "walker": "lane A3",
-  "env": {
-    "themes": [
-      "reign"
-    ],
-    "viewports": [
-      1440,
-      390
-    ],
-    "schemes": [
-      "light"
-    ]
-  },
+  "free": "11e21b47",
+  "pro": "05e4a11",
   "checks": {
     "c-anon-sitemap.1": {
       "result": "pass",
-      "evidence": "GET /community-sitemap.xml: 200 application/xml, <sitemapindex> listing community-sitemap-spaces-1.xml and community-sitemap-posts-1.xml (58 ms)."
+      "evidence": "curl as guest GET /community-sitemap.xml -> 200, application/xml; <sitemapindex> with community-sitemap-spaces-1.xml and community-sitemap-posts-1.xml (each with lastmod)."
     },
     "c-anon-sitemap.2": {
       "result": "pass",
-      "evidence": "spaces-1: 50 <url> with loc, lastmod, changefreq, priority; posts-1: 302 <url> in 36 ms; three sampled locs return 200."
+      "evidence": "spaces-1 and posts-1 are <urlset>; every <url> has loc, lastmod, changefreq, priority (spaces 0.7, topics 0.5). Fetched all 278 locs (39 spaces + 239 topics): every one returned 200, no duplicates."
     },
     "c-anon-sitemap.3": {
       "result": "pass",
-      "evidence": "No customer-advisory, moderators-room, insiders, partner-program or qa-walk-c2-private slug appears in either child sitemap."
+      "evidence": "grep of both child sitemaps for customer-advisory-board, moderators-room, insiders-beta, partner-program, release-planning -> 0 hits (those are private/hidden spaces); none of their topics listed. 239 listed topics = exactly the 239 published topics in the 40 public spaces."
     },
     "c-anon-sitemap.4": {
       "result": "pass",
-      "evidence": "/community-sitemap-posts-99.xml = 404."
+      "evidence": "GET /community-sitemap-posts-99.xml, spaces-99, posts-0 -> 404 each (not an empty 200)."
     },
     "c-anon-sitemap.5": {
-      "result": "not_performed",
-      "evidence": "Seeding 12,000 public topics on the shared site is not safe; the public posts sitemap holds 302 URLs on one page, so the three-page split was not exercised."
+      "result": "pass",
+      "evidence": "Seeded 13,240 public published topics (12,000 bulk-inserted into General Discussion + existing 1,240) by SQL. After clearing sitemap transients: index lists posts-1..3; posts-1=5000 urls, posts-2=5000, posts-3=3240, posts-4 -> 404; union of 13,240 locs has 0 duplicates. Seed rows removed afterwards."
     },
     "c-anon-sitemap.6": {
       "result": "pass",
-      "evidence": "seo_sitemap on (restored after): /community-sitemap.xml 0.05s and posts-1 page 1,451 URLs in 0.07s on a 1,513-topic site. 2000+ not reached",
-      "carried_forward": true
+      "evidence": "With 13,240 topics: cold index request 0.034s, warm 0.021s; page 1 (5000 urls) 0.098s cold. All under 1s."
     },
     "c-anon-sitemap.7": {
       "result": "pass",
-      "evidence": "Archived 2025 Hackathon: neither the space nor its topics are listed (archived spaces are left out of the sitemap by policy), so the 'lastmod is the last activity date' part cannot be observed",
-      "carried_forward": true
+      "evidence": "Archived 2025 Hackathon is absent from the spaces sitemap and (it has no topics). Archived Release Notes (set status=archived temporarily, caches cleared) -> space and its 11 topics both left the sitemaps; restored -> 11 topics back. Policy: archived spaces are not listed. lastmod for spaces is last_activity_at (e.g. 2026-11-06T14:54:10+00:00 for jt-qa-qna matches its last_activity_at)."
     },
     "c-anon-sitemap.8": {
       "result": "pass",
-      "evidence": "Two fixture topics: trashing one dropped it at once and the other (still published) was listed; trashing the second removed it from posts-1 on the very next request (Sitemap_Emitter::flush on trash, no TTL wait)."
+      "evidence": "Created a public topic (omar, REST, Arabic title) -> it was in the posts sitemap after cache clear; deleted it via REST DELETE /posts/{id} as admin -> it left the sitemap immediately with no manual cache flush (delete invalidates the sitemap transients)."
     },
     "c-anon-sitemap.9": {
       "result": "pass",
-      "evidence": "Set seo_sitemap off: /community-sitemap.xml and posts-1 -> 404 and robots.txt lost the community Sitemap line (the wp-sitemap.xml line stays); settings restored from backup, sitemap 200 and the line is back",
-      "carried_forward": true
+      "evidence": "Set seo_sitemap=false in jetonomy_settings -> /community-sitemap.xml and /community-sitemap-posts-1.xml 404; robots.txt dropped the community Sitemap line (only wp-sitemap.xml remained). Set back true -> 200 and the line returned."
     },
     "c-anon-sitemap.10": {
       "result": "pass",
-      "evidence": "/robots.txt has 'Sitemap: http://forums.local/community-sitemap.xml'."
+      "evidence": "/robots.txt contains 'Sitemap: http://localhost:8912/community-sitemap.xml' when enabled."
     },
     "c-anon-sitemap.11": {
-      "result": "not_performed",
-      "evidence": "Yoast SEO is not installed on forums.local, so the with-Yoast arm cannot be produced."
+      "result": "pass",
+      "evidence": "Installed + activated wordpress-seo (Yoast): /community-sitemap.xml 200 application/xml, /sitemap_index.xml 200 (Yoast index with post-sitemap, page-sitemap, category-sitemap...), community-sitemap-posts-1.xml 200; robots.txt lists both. Yoast deactivated afterwards."
     },
     "c-anon-sitemap.12": {
       "result": "pass",
-      "evidence": "Three listed pages (london-chapter space, qa-rft-poll-topic, the Arabic topic) at 1440 and 390: status 200 and scrollWidth equals clientWidth for all six",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/sitemap-ar-390.png",
-      "carried_forward": true
+      "evidence": "Logged-out Chromium: /community/s/jt-qa-qna/, a topic page and /community/s/announcements/ at 1440 and 390 -> all 200, scrollWidth == clientWidth (no horizontal overflow). Screenshot of 390 view: /Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/sitemap-topic-390.png",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/sitemap-topic-390.png"
     },
     "c-anon-sitemap.13": {
       "result": "pass",
-      "evidence": "X-Robots-Tag: noindex, follow on the sitemap index."
+      "evidence": "Response headers on the index include 'X-Robots-Tag: noindex, follow'."
     },
     "c-anon-sitemap.14": {
       "result": "pass",
-      "evidence": "Arabic topic URLs in posts-1 are percent-encoded (%d8...) with no raw Arabic characters."
+      "evidence": "The seeded Arabic topic and a new Arabic one (omar, 'كيف أبدأ مع المجتمع؟') appear as percent-encoded locs (e.g. .../t/%d9%83%d9%8a%d9%81-...%9f/); posts-1.xml parses as valid XML (python minidom) and the encoded URL returns 200."
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T04:08:16.702438Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme"
+    ],
+    "locale": "en_US"
+  }
 }

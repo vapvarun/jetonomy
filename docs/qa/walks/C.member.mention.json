@@ -1,98 +1,118 @@
 {
   "journey": "C.member.mention",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T09:48:25Z",
-  "walker": "lane A",
+  "free": "0991f3be",
+  "pro": "f684443",
+  "walked_at": "2026-11-10T08:29:41.611196Z",
+  "walker": "release 2.0.7 free walk wave 7 (Sonnet)",
   "env": {
+    "mode": "free stack (Free; Pro as noted)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
       390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-mention.1": {
       "result": "pass",
-      "evidence": "reply 16418-range check: bob reply \"@alice thanks, that fixed it for me\" renders <a class=\"jt-mention\" href=/community/u/alice/>@alice</a> on the topic page (guest HTML)"
+      "evidence": "bob on 'Show and tell: my community onboarding checklist' (alice is OP) typed @ali, picked Alice Chen with Enter, added 'thanks, that fixed it for me', Post Reply -> reply 1433 renders @alice as <a class=jt-mention href=/community/u/alice/>.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-mention-compose.png"
     },
     "c-member-mention.2": {
       "result": "pass",
-      "evidence": "alice has exactly one notifications row type=mention for the reply (DB). Bell link target not clicked."
+      "evidence": "alice > /community/notifications/: exactly one 'Bob Martinez mentioned you in ...' row for that reply, linking to #reply-1433 (DB: one mention row, id 742).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-mention-bell.png"
     },
     "c-member-mention.3": {
       "result": "pass",
-      "evidence": "Mailpit: \"[forums] You were mentioned by Bob Martinez\" to alice, one email; body uses Settings > Emails default (template not customised on this site)"
+      "evidence": "Mailpit: subject '[Northwind Makers Community] You were mentioned by Bob Martinez' (actor name present), body from the Settings > Emails default: 'Hi Alice Chen, Bob Martinez mentioned you in \"...\" Open the discussion to respond.' with View Topic link to #reply-1433. The site name here is Northwind Makers Community, not forums."
     },
     "c-member-mention.4": {
       "result": "pass",
-      "evidence": "bob replies to 5719 mentioning @alice (OP): alice gets one mention notification row and one email (\"replied to your topic\"); no second notice"
+      "evidence": "alice is OP of that topic: reply 1433 mentioning her created one notification (type mention, no reply_to_post) and one email."
     },
     "c-member-mention.5": {
       "result": "pass",
-      "evidence": "maya follows 5719; bob mentions @maya: maya gets one mention notification row and one mention email, no extra reply_to_post row"
+      "evidence": "maya follows the topic: bob's reply 1434 with @maya -> maya gets a single mention notification (no reply_to_post) and one 'You were mentioned' email; alice (OP) got the reply notice only."
     },
     "c-member-mention.6": {
       "result": "pass",
-      "evidence": "two @alice in one reply: two links in markup, still one notification row"
+      "evidence": "'@carlos could you review? Also @carlos please confirm the dates.' (reply 1435) -> two <a class=jt-mention> links, one mention notification for carlos."
     },
     "c-member-mention.7": {
       "result": "pass",
-      "evidence": "new topic body \"Hello @alice in a post body\": content saved with raw @alice, alice got one mention notification"
+      "evidence": "bob's new topic 'Planning a Q1 meetup - looking for ideas' with 'Hey @alice and the group' -> body shows a mention link and alice got exactly one mention notification."
     },
     "c-member-mention.8": {
       "result": "pass",
-      "evidence": "POST reply with @alice = 201, content keeps raw @alice, no *_html field, page render adds the link, alice notification exists"
+      "evidence": "POST /posts/377/replies '<p>@alice REST check for mentions.</p>' as bob -> 201, content keeps raw @alice (no content_html field), page render links it, GET /notifications as alice lists type mention."
     },
     "c-member-mention.9": {
       "result": "pass",
-      "evidence": "@nobodyhere stays plain text in markup (<p>QA-WALK-A @nobodyhere stays plain</p>), 201, no error"
+      "evidence": "'@nobodyhere are you around?' -> 201, rendered as plain text with no link and no error."
     },
     "c-member-mention.10": {
       "result": "pass",
-      "evidence": "bob private reply mentioning @theo (cannot read it): zero notification rows"
+      "evidence": "bob private reply mentioning @alice on bob's own topic (alice may not read it): reply 1438 -> no notification, no email. Same on alice's topic where she may read it (1439): exactly one mention notification and one email."
     },
     "c-member-mention.11": {
       "result": "pass",
-      "evidence": "maya (CAB member) mention of @alice (not a CAB member) in CAB topic 8955 and of @bob (not a member) in Moderators Room topic 8956: no mention notification rows for them"
+      "evidence": "In this seed alice and bob are both members of Customer Advisory Board, so I removed alice's membership row temporarily: bob's topic mentioning @alice there -> no notification. Moderators' Room (hidden, neither is a member): bob POST -> 404 'Space not found'; test_moderator's topic mentioning @alice -> alice gets no notification. Membership row and test posts restored/removed."
     },
     "c-member-mention.12": {
       "result": "pass",
-      "evidence": "finn mention reply = 403 jetonomy_user_silenced, no notification created"
+      "evidence": "finn (silenced): REST POST reply with @bob -> 403 jetonomy_user_silenced, no reply and no notification created."
     },
     "c-member-mention.13": {
       "result": "pass",
-      "evidence": "alice PATCH notification_preferences mention web/email off: bob mention created no notification row and no Mailpit email. Settings restored to original []."
+      "evidence": "alice unticked Mention web+email on /community/u/alice/edit/ and saved (persisted false/false): bob's reply mentioning @alice created no notification and Mailpit received 0 mails. Ticked both back afterwards."
     },
     "c-member-mention.14": {
       "result": "pass",
-      "evidence": "autocomplete row shows full \"Grace Oluwaseun Adeyemi-Whitfield\" and @grace; saved link href /community/u/grace/",
-      "screenshot": "c-member-mention.14.png"
+      "evidence": "@gra autocomplete row shows 'Grace Oluwaseun Adeyemi-Whitfield' in full (199px, no truncation) with @grace; Enter inserts it and the saved reply links to /community/u/grace/.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-mention-grace.png"
     },
     "c-member-mention.15": {
       "result": "pass",
-      "evidence": "bob mentioning @bob: no notification row"
+      "evidence": "bob mentioning @bob in his own topic thread (reply on 378) -> no notification row for bob."
     },
     "c-member-mention.16": {
       "result": "pass",
-      "evidence": "Arabic sentence with @omar: omar got mention notification and email; link rendered as <a dir=\"ltr\"> inside the sentence. Not visually screenshotted."
+      "evidence": "Arabic site language: bob wrote Arabic text with @omar from the autocomplete (Omar Haddad) and the link renders as an isolated ltr token inside the rtl paragraph, fully inside it, href /community/u/omar/. Language restored to en_US.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-mention-rtl.png"
     },
     "c-member-mention.17": {
       "result": "pass",
-      "evidence": "removing the mention in an edit leaves the old notification (stays per contract); editing other text and re-adding the mention created no second notification"
+      "evidence": "bob edited reply 1442 (mentioned @grace) to remove the mention via Edit/Save: old notification for grace stays and no second notification was created by the edit."
     },
     "c-member-mention.18": {
       "result": "pass",
-      "evidence": "Enter on autocomplete inserts \"@grace \" and typing continues \"@grace could you look\"; saved reply links to /community/u/grace/"
+      "evidence": "Typed @ali, Enter on Alice Chen, kept typing -> editor shows '@alice thanks, that fixed it for me' (space after the handle) and the saved reply links to her profile."
     },
     "c-member-mention.19": {
       "result": "pass",
-      "evidence": "member without avatar shows initials \"GR\" (no img); name not clipped (scrollWidth 199 = clientWidth 199, wraps)"
+      "evidence": "The autocomplete row for grace (no avatar) shows an initials avatar 'GR' (SPAN), no img element, and the long name has text-overflow clip without truncation (scrollWidth == clientWidth).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-mention-grace.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-member-mention.3",
+      "now": "subject is \"[<site name>] You were mentioned by Bob Martinez\" (the site title, e.g. [Northwind Makers Community] on this stack)"
+    },
+    {
+      "check": "c-member-mention.11",
+      "now": "seed has alice and bob both in Customer Advisory Board: remove alice's membership first, or use a space where only bob is a member; Moderators' Room is hidden so bob cannot post there (404)"
+    }
+  ]
 }

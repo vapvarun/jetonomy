@@ -38,12 +38,16 @@ class AccessRule extends Model {
 			),
 			$data
 		);
-		// The stored role is what the rules table shows and what a sync would
-		// write, so it is capped on the way in for every writer (REST, wp-admin,
-		// Pro provisioners), not only on the way out.
-		if ( isset( $data['space_role'] ) ) {
-			$data['space_role'] = self::cap_space_role( (string) ( $data['grants'] ?? 'read' ), (string) $data['space_role'] );
-		}
+		// "Full" was removed in 2.0.7: it never gave a member more than
+		// Participate, so an old API client creating a rule with "full" gets
+		// Participate. Migration_2_0_7 rewrote stored rows, so readers never see
+		// "full", and edits (new in 2.0.7) refuse it.
+		// The roster role is derived from the grant, never chosen, for every
+		// writer (REST, wp-admin, Pro provisioners): read is Viewer, participate
+		// is Member.
+		$grants             = (string) ( $data['grants'] ?? 'read' );
+		$data['grants']     = 'full' === $grants ? 'participate' : $grants;
+		$data['space_role'] = self::role_for_grants( $data['grants'] );
 
 		$id = static::insert( $data );
 
@@ -112,6 +116,45 @@ class AccessRule extends Model {
 	}
 
 	/**
+	 * The roster role a grant records: Viewer for read, Member for participate.
+	 *
+	 * @param string $grants read | participate.
+	 */
+	public static function role_for_grants( string $grants ): string {
+		return self::cap_space_role( $grants, 'admin' );
+	}
+
+	/**
+	 * Change what an existing rule grants, keeping its type and value.
+	 *
+	 * Editing in place keeps the rule's members on the roster; delete and
+	 * re-add would sweep them off and make the owner press Sync again. A tier
+	 * member's role needs no rewrite: SpaceMember caps it by the live grant.
+	 *
+	 * @param int    $id     Rule row ID.
+	 * @param string $grants read | participate.
+	 * @return bool|\WP_Error True on success.
+	 */
+	public static function update_grants( int $id, string $grants ): bool|\WP_Error {
+		$rule = static::find( $id );
+		if ( ! $rule ) {
+			return new \WP_Error( 'jetonomy_rule_not_found', __( 'Access rule not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+		if ( ! in_array( $grants, array( 'read', 'participate' ), true ) ) {
+			return new \WP_Error( 'jetonomy_invalid_grants', __( 'Invalid grants value.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+		$saved = parent::update(
+			$id,
+			array(
+				'grants'     => $grants,
+				'space_role' => self::role_for_grants( $grants ),
+			)
+		);
+		self::reset_memo();
+		return $saved ? true : new \WP_Error( 'jetonomy_rule_update_failed', __( 'Failed to update access rule.', 'jetonomy' ), array( 'status' => 500 ) );
+	}
+
+	/**
 	 * Delete a rule and clear the per-request rule-list memo.
 	 *
 	 * @param int $id Rule row ID.
@@ -137,7 +180,11 @@ class AccessRule extends Model {
 	 * live so third-party entitlements granted mid-request (a checkout
 	 * completing) are never frozen.
 	 *
-	 * @var array<int, object[]>
+	 * Also holds 'admitted:{user}' => space ids from admitted_space_ids(). Those
+	 * are Permission_Engine::can() verdicts, already memoized per request, so
+	 * this adds no staleness: Permission_Engine::reset_memo() empties both.
+	 *
+	 * @var array<int|string, array<int, object|int>>
 	 */
 	private static array $memo = array();
 
@@ -177,7 +224,7 @@ class AccessRule extends Model {
 		if ( ! array_key_exists( $space_id, self::$memo ) ) {
 			self::$memo[ $space_id ] = static::db()->get_results(
 				static::db()->prepare(
-					'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY priority DESC',
+					'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY priority DESC, id ASC',
 					$space_id
 				)
 			) ?: array();
@@ -386,10 +433,10 @@ class AccessRule extends Model {
 	 * rule advertises.
 	 *
 	 * No rule ever records anyone above `member`, whatever its type or grants
-	 * (owner decision 2026-10-17): Full is full participation, never moderation.
+	 * (owner decision 2026-10-17): a rule grants participation, never moderation.
 	 * Moderators and admins are appointed per person on the Members tab.
 	 *
-	 * @param string $grants     read | participate | full.
+	 * @param string $grants     read | participate (legacy full = participate).
 	 * @param string $space_role Requested roster role.
 	 * @param string $rule_type  Rule type. Unused since every type shares one
 	 *                           ladder; kept because adapters pass it.
@@ -406,7 +453,6 @@ class AccessRule extends Model {
 		$ceiling = array(
 			'read'        => 'viewer',
 			'participate' => 'member',
-			'full'        => 'member',
 		);
 
 		$max  = $ceiling[ $grants ] ?? 'viewer';
@@ -458,8 +504,14 @@ class AccessRule extends Model {
 		if ( $user_id <= 0 ) {
 			return array();
 		}
-		$ids = static::db()->get_col( 'SELECT DISTINCT space_id FROM ' . static::table() ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table name, no input.
-		return array_values( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'read', $id ) ) );
+		// Notifications, follows and search each ask several times per request;
+		// the memo is emptied with the permission memo and on every rule write.
+		$key = 'admitted:' . $user_id;
+		if ( ! isset( self::$memo[ $key ] ) ) {
+			$ids                = static::db()->get_col( 'SELECT DISTINCT space_id FROM ' . static::table() ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table name, no input.
+			self::$memo[ $key ] = array_values( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'read', $id ) ) );
+		}
+		return self::$memo[ $key ];
 	}
 
 	/**
@@ -490,7 +542,19 @@ class AccessRule extends Model {
 
 		$wp_user = $user_id > 0 ? get_userdata( $user_id ) : null;
 
+		// Among the matching rules with the highest priority, the most
+		// permissive grant wins; equal grants fall to the oldest rule.
+		$rank = array(
+			'read'        => 1,
+			'participate' => 2,
+		);
+		$best = null;
+
 		foreach ( $rules as $rule ) {
+			if ( $best && (int) $rule->priority < (int) $best->priority ) {
+				break;
+			}
+
 			$matched = false;
 
 			switch ( $rule->rule_type ) {
@@ -538,12 +602,41 @@ class AccessRule extends Model {
 					break;
 			}
 
-			if ( $matched ) {
-				return array(
-					'grants'     => $rule->grants,     // 'read', 'participate', or 'full'
-					'space_role' => $rule->space_role,
-					'rule_id'    => (int) $rule->id,
-					'rule_type'  => $rule->rule_type,
+			if ( $matched && ( ! $best || ( $rank[ $rule->grants ] ?? 0 ) > ( $rank[ $best->grants ] ?? 0 ) ) ) {
+				$best = $rule;
+			}
+		}
+
+		if ( ! $best ) {
+			return null;
+		}
+
+		return array(
+			'grants'     => $best->grants, // 'read' or 'participate'
+			'space_role' => $best->space_role,
+			'rule_id'    => (int) $best->id,
+			'rule_type'  => $best->rule_type,
+		);
+	}
+
+	/**
+	 * Why this rule would duplicate one the space already has, or null.
+	 *
+	 * Two rules on the same type and value cannot both mean something: one
+	 * always outranks the other. Change the existing rule's access instead.
+	 *
+	 * @param int    $space_id   Space.
+	 * @param string $rule_type  Rule type.
+	 * @param string $rule_value Rule value (sanitized).
+	 */
+	public static function duplicate_error( int $space_id, string $rule_type, string $rule_value ): ?\WP_Error {
+		foreach ( static::list_for_space( $space_id ) as $rule ) {
+			if ( $rule->rule_type === $rule_type && (string) $rule->rule_value === $rule_value ) {
+				return new \WP_Error(
+					'jetonomy_duplicate_rule',
+					/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+					sprintf( __( 'This %s already has a rule for that. Change what the existing rule grants instead.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					array( 'status' => 409 )
 				);
 			}
 		}
@@ -566,7 +659,7 @@ class AccessRule extends Model {
 	 *
 	 * @param int $user_id  Viewer ID (0 = guest).
 	 * @param int $space_id Space ID.
-	 * @return array<int, array{level_id:string, type:string, label:string, url:string}>
+	 * @return array<int, array{level_id:string, name:string, type:string, kind:string, label:string, url:string}>
 	 */
 	public static function unmet_membership_requirements( int $user_id, int $space_id ): array {
 		if ( $space_id <= 0 ) {
@@ -591,16 +684,51 @@ class AccessRule extends Model {
 				continue;
 			}
 
-			$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
-
-			$unmet[ (string) $rule->rule_value ] = array(
-				'level_id' => (string) $rule->rule_value,
-				'type'     => $described['type'],
-				'label'    => $described['value'],
-				'url'      => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( (string) $rule->rule_value ),
-			);
+			$unmet[ (string) $rule->rule_value ] = self::describe_requirement( (string) $rule->rule_value );
 		}
 
 		return array_values( $unmet );
+	}
+
+	/**
+	 * The membership level that lets this viewer in, when a membership rule is
+	 * what admits them, so the space can say "You have access through Course X".
+	 *
+	 * @param int $user_id  Viewer ID.
+	 * @param int $space_id Space ID.
+	 * @return array{level_id:string, name:string, type:string, kind:string, label:string, url:string}|null
+	 */
+	public static function admitting_membership( int $user_id, int $space_id ): ?array {
+		$access = $user_id > 0 ? self::resolve_access( $user_id, $space_id ) : null;
+		if ( ! $access || 'membership' !== $access['rule_type'] ) {
+			return null;
+		}
+		$rule = static::find( $access['rule_id'] );
+		return $rule && '' !== (string) $rule->rule_value ? self::describe_requirement( (string) $rule->rule_value ) : null;
+	}
+
+	/**
+	 * One membership level as the gate and the space header show it.
+	 *
+	 * @param string $level_id Stored rule_value.
+	 * @return array{level_id:string, name:string, type:string, kind:string, label:string, url:string}
+	 */
+	private static function describe_requirement( string $level_id ): array {
+		$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( $level_id );
+		$purchase  = \Jetonomy\Adapters\Adapter_Registry::membership_level_is_purchase( $level_id );
+		return array(
+			'level_id'  => $level_id,
+			'name'      => $described['value'],
+			'type'      => $described['type'],
+			'kind'      => $described['kind'],
+			// "Gold (Level)" is noise; "(Course)" / "(Group)" tells two ways in apart.
+			'label'     => '' !== $described['kind'] && ! $purchase
+				/* translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group). */
+				? sprintf( __( '%1$s (%2$s)', 'jetonomy' ), $described['value'], $described['kind'] )
+				: $described['value'],
+			'url'       => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( $level_id ),
+			'purchase'  => $purchase,
+			'available' => \Jetonomy\Adapters\Adapter_Registry::membership_level_available( $level_id ),
+		);
 	}
 }

@@ -32,7 +32,7 @@ class ActivityFormatterTest extends WP_UnitTestCase {
 		$row = $this->row( 'reputation_changed', 'post', 1, array( 'delta' => -10, 'reason' => 'post_upvoted_revoked' ) );
 
 		$this->assertSame( 'Lost 10 reputation points', Activity_List_Table::action_text( $row ) );
-		$this->assertSame( 'Their topic was upvoted, then undone', Activity_List_Table::details_text( $row ) );
+		$this->assertSame( 'Their topic was upvoted, then undone', Activity_List_Table::details_text( $row, Activity_List_Table::prime( array( $row ) ) ) );
 		$this->assertSame( 'Gained 15 reputation points', Activity_List_Table::action_text( $this->row( 'reputation_changed', 'reply', 1, array( 'delta' => 15, 'reason' => 'reply_accepted' ) ) ) );
 	}
 
@@ -43,7 +43,7 @@ class ActivityFormatterTest extends WP_UnitTestCase {
 			$this->row( 'idea_status_changed', 'post', 1, array( 'old' => 'in_progress', 'new' => 'shipped' ) ),
 			$this->row( 'addon_event', 'post', 1, array( 'space_id' => 235 ) ),
 		) as $row ) {
-			$text = Activity_List_Table::details_text( $row );
+			$text = Activity_List_Table::details_text( $row, Activity_List_Table::prime( array( $row ) ) );
 			$this->assertStringNotContainsString( '=', $text );
 			$this->assertStringNotContainsString( '_', $text, $text );
 		}

@@ -28,6 +28,12 @@ $time_ago     = human_time_diff( strtotime( $post->created_at ), time() );
 $viewer_id    = get_current_user_id();
 $viewer_vote  = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
 
+// Seed the score into the Interactivity store so the vote button's data-wp-text
+// binding updates live on click, as post-card.php does.
+if ( function_exists( 'wp_interactivity_state' ) ) {
+	wp_interactivity_state( 'jetonomy', array( 'postScores' => array( (int) $post->id => (int) $post->vote_score ) ) );
+}
+
 $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' );
 ?>
 <article class="jt-feed-card" data-jt-key="post-<?php echo absint( $post->id ); ?>" data-wp-interactive="jetonomy">
@@ -78,6 +84,8 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 		<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 			<?php // "may actually vote here", not just "allows voting": a Read-grant admits without granting the vote, and the server 403s it. ?>
 			<?php $jt_own_post = $viewer_id && (int) $post->author_id === $viewer_id; // Your own post takes no vote. ?>
+			<?php $jt_vote_gid = wp_unique_id( 'jt-votes-post-' . absint( $post->id ) . '-' ); ?>
+		<span class="jt-feed-votes"<?php echo jetonomy_vote_group_attrs( $jt_vote_gid ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 			<?php if ( ! $jt_own_post && jetonomy_viewer_can_vote( $space ) ) : ?>
 		<button type="button"
 			class="jt-feed-act <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
@@ -86,7 +94,7 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 			data-post-id="<?php echo absint( $post->id ); ?>"
 				<?php echo jetonomy_vote_attrs( 'up', 1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 				<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-			<span class="n jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+			<span class="n jt-feed-act-n" id="<?php echo esc_attr( $jt_vote_gid ); ?>-n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 		</button>
 				<?php // Downvote — keep both directions available (respect negative voices). ?>
 		<button type="button"
@@ -98,14 +106,15 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 				<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 		</button>
 			<?php elseif ( is_user_logged_in() ) : ?>
-				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16, $space, $jt_own_post ); ?>
+				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16, $space, $jt_own_post, $jt_vote_gid . '-n' ); ?>
 			<?php else : ?>
-				<?php // Guest: inert score, no clickable control the server would refuse. ?>
-		<span class="jt-feed-act" aria-hidden="true">
-				<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-			<span class="n jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+				<?php // Guest: inert score, no clickable control the server would refuse. The group names the score. ?>
+		<span class="jt-feed-act">
+			<span aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 16 ); ?></span>
+			<span class="n jt-feed-act-n" id="<?php echo esc_attr( $jt_vote_gid ); ?>-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 		</span>
 			<?php endif; ?>
+		</span>
 		<?php endif; ?>
 
 		<a class="jt-feed-act" href="<?php echo esc_url( $post_url . '#replies' ); ?>"

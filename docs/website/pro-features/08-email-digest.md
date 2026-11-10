@@ -2,7 +2,7 @@
 
 Send a curated summary of community activity to members' inboxes - daily or weekly - so they never feel out of the loop.
 
-![Email Digest settings with the enable switch, default frequency, sender name and address, and subscription statistics](../images/pro-email-digest-settings.webp)
+![Email Digest settings with the default frequency, sender name and address, and subscription statistics](../images/pro-email-digest-settings.webp)
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
@@ -22,20 +22,17 @@ Most community members are not daily visitors. They join, participate a few time
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
 2. Find **Email Digest** and switch its toggle on.
-3. Go to **Jetonomy → Settings → Email Digest** to configure sending times and content rules.
+3. Go to **Jetonomy → Settings → Email Digest** to choose the default frequency and, if you want, a sender name and address.
+
+The Extensions toggle is the only switch. While it is on, digests go out; switch it off to stop them.
 
 ## Configuring the Digest
 
 ### Send Schedule
 
-Set when the digests go out:
+Daily digests go out once every 24 hours and weekly digests once every 7 days, counted from when Email Digest was first switched on. The **Next Digests** box on the Email Digest tab shows when the next of each will go.
 
-| Digest type | Default send time |
-|-------------|------------------|
-| **Daily** | 8:00 AM (site timezone) |
-| **Weekly** | Monday, 8:00 AM (site timezone) |
-
-The unsubscribe link in a digest works for the right member, and a plain-text digest is not replaced by a membership plugin's template (2.0.4). You can change both send times in the Email Digest settings. Times use the timezone set in **Settings → General → Timezone** in WordPress.
+The unsubscribe link in a digest works for the right member, and a plain-text digest is not replaced by a membership plugin's template (2.0.4).
 
 ### Digest Content
 
@@ -48,11 +45,7 @@ The digest compiles:
 - 🏆 **Badges earned** *(new in 1.4.1)* - every badge the member earned during the digest window
 - 🗳️ **Polls voted on** *(new in 1.4.1)* - every poll the member participated in during the window
 
-You can toggle each content section on or off in the digest settings. At least one section must remain on.
-
 > **How the new sections work:** badges and polls are tracked in a per-user buffer that's capped at 100 events with a 30-day TTL. The buffer is cleared only after a successful send, so opted-out members never accumulate state, and a missed send doesn't lose the activity.
-
-> **Tip:** Keeping "Replies to your topics" on is the single most effective setting. Members always care more about activity on their own posts than about the broader community.
 
 ## Member Notification Preferences
 

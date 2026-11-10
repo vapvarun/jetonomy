@@ -1,12 +1,14 @@
 {
   "journey": "C.member.post-create",
-  "free": "dcdb0750",
-  "pro": "404b0af",
-  "walked_at": "2026-10-21T09:22:04Z",
-  "walker": "lane A",
+  "free": "e06d58be",
+  "pro": "69d28a8",
+  "walked_at": "2026-11-10T11:37:02.478774Z",
+  "walker": "release 2.0.7 combo walk wave 10 (Sonnet)",
   "env": {
+    "mode": "combo (Free+Pro, 17 extensions)",
+    "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
@@ -15,139 +17,147 @@
     "schemes": [
       "light",
       "dark"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-post-create.1": {
       "result": "pass",
-      "evidence": "bob in Help Desk New Topic: title \"How do I reset my membership password?\" with two paragraphs; POST 201, landed on /t/how-do-i-reset-my-membership-password-1/ with both paragraphs; first row in Help Desk listing.",
-      "screenshot": "c-member-post-create.1c.png"
+      "evidence": "bob, Help Desk New Topic: title 'How do I reset my membership password?' + two paragraphs + the required global 'Operating system' select (macOS); clicked 'Post Question' -> landed on /community/s/help-desk/t/how-do-i-reset-my-membership-password-2/ (id 15884); /community/s/help-desk/ lists it first (REST GET /spaces/20/posts also first).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc1-listing.png"
     },
     "c-member-post-create.2": {
       "result": "pass",
-      "evidence": "POST /spaces/3004/posts as bob -> 201 status publish (id 8962); GET /spaces/3004/posts?limit=3 lists it first."
+      "evidence": "bob POST /spaces/20/posts without custom_fields -> 400 jetonomy_field_required 'Operating system is required.'; with custom_fields {'operating-system':'Linux'} -> 201 id 15885; GET /spaces/20/posts?per_page=5 lists 15885 first."
     },
     "c-member-post-create.3": {
       "result": "pass",
-      "evidence": "Empty title: native \"Please fill in this field.\" and no request sent; empty body: \"Please add some details before posting.\"; neither topic exists in the DB.",
-      "screenshot": "c-member-post-create.3b.png"
+      "evidence": "Empty title (body filled): browser required bubble 'Please fill in this field.', focus on #jt-post-title, no request. Empty body (title filled): inline error 'Please add some details before posting.'. Help Desk listing top unchanged, nothing created.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc3-nobody.png"
     },
     "c-member-post-create.4": {
       "result": "pass",
-      "evidence": "300-char title typed: input stops at maxlength 255 with always-visible hint \"Titles can be up to 255 characters.\" (no live counter).",
-      "screenshot": "c-member-post-create.4.png"
+      "evidence": "Typed 300 chars into Title: a counter '54 characters left' (at 201), '14 characters left' (at 241) is visible, then at 255 the field stops (maxlength 255) and the hint reads 'Titles can be up to 255 characters.'.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc4-long.png"
     },
     "c-member-post-create.5": {
       "result": "pass",
-      "evidence": "Tags qa-walk-a-one,qa-walk-a-two, Private checkbox and a schedule 2 days ahead: saved as draft with published_at 2026-10-23 09:05, is_private 1, both tags; author sees \"Scheduled to publish on October 23, 2026 9:05 am\" and the tags and Private marker; guest gets 404.",
-      "screenshot": "c-member-post-create.5b.png"
+      "evidence": "Show & Tell, bob: tags 'photography, meetup', Private checkbox ('Private: only you and moderators can see this topic'), Schedule 2026-11-20 10:30 via the Schedule menu -> saved topic shows 'Scheduled to publish on November 20, 2026 10:30 am. It is hidden from the community until then.', a Private badge and tags #meetup #photography. (Scheduled test topic deleted afterwards.)",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc5-saved.png"
     },
     "c-member-post-create.6": {
       "result": "pass",
-      "evidence": "alice space-follow gets web only (new_post_in_sub email default is off in her prefs), so a fixture member qa_walk_a_new with email on followed Help Desk: bob post gave exactly 1 notification and 1 Mailpit email \"[forums] New topic in Help Desk\" (the default saved subject template; the owner has no override saved)."
+      "evidence": "alice already followed Help Desk; I ticked her own 'New topic in followed space' email preference (profile edit; default was off). bob posted 15887 in Help Desk -> exactly 1 bell notification (new_post_in_sub, id 4041) and exactly 1 Mailpit email to alice.demo@jetonomy.local, subject '[Northwind Makers Community] New topic in Help Desk'. No owner-saved custom subject exists on this stack (jetonomy_email_templates holds only verification_reminder), so the default subject is what was seen. Earlier posts 15884/15885 (pref off) sent her no email, correct. Pref restored to off afterwards."
     },
     "c-member-post-create.7": {
-      "result": "fail",
-      "evidence": "After bob posted in Help Desk: space page 24 -> 25 topics, space API 24 -> 25, bob profile/API 35 -> 36; home community pulse stayed \"268 topics\" because it is a 1-hour transient (includes/helpers.php:191-211, flushed by Cache::flush only). There is no recent-topics feed on the home page."
+      "result": "pass",
+      "evidence": "bob posted a topic in General Discussion via the UI: space page '60 topics' -> '61 topics', bob profile '66 TOPICS' -> '67 TOPICS'; the topic is listed in the space. Home card checked in .28."
     },
     "c-member-post-create.8": {
       "result": "pass",
-      "evidence": "bob (Upload media) set a PNG on the composer file input: POST /jetonomy/v1/media 200 and the image shows inline in the editor from /wp-content/uploads/jetonomy/.... Drag-drop not exercised.",
-      "screenshot": "c-member-post-create.8.png"
+      "evidence": "bob (Upload media held), Show & Tell composer: Upload image button opened the file chooser and harbour-dusk.png (64px) uploaded and showed inline; a paste event with an image file and a drop event with an image file each uploaded and inserted an inline <img> (pasted-shot.png, dropped-shot.png). Paste/drop were synthetic events with a File.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc8-images.png"
     },
     "c-member-post-create.9": {
       "result": "pass",
-      "evidence": "Used a fixture member with a per-user jetonomy_upload_media deny (role not edited, to avoid hitting other walkers): toolbar has no image button and no file input; pasting an image shows toast \"You do not have permission to upload images.\"",
-      "screenshot": "c-member-post-create.9b.png"
+      "evidence": "Admin Settings > Permissions: unticked Upload media for Subscriber (Member), saved. bob composer: no Upload image button (count 0); a paste of an image showed toast 'You do not have permission to upload images.' and no image was inserted. Re-ticked and saved afterwards (verified in the form and option jetonomy_role_caps).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc9-noupload.png"
     },
     "c-member-post-create.10": {
       "result": "pass",
-      "evidence": "POST /media as that fixture member -> 403 jetonomy_forbidden; no new attachment row created."
+      "evidence": "With Upload media removed from Member: bob POST /jetonomy/v1/media (multipart png) -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'. Permission restored."
     },
     "c-member-post-create.11": {
       "result": "pass",
-      "evidence": "bob on /s/2025-hackathon/new/: \"This space is archived or locked and no longer accepts new content.\" with \"Back to 2025 Hackathon\", no form.",
-      "screenshot": "c-member-post-create.11.png"
+      "evidence": "bob /community/s/2025-hackathon/new/ -> 'This space is archived or locked and no longer accepts new content.' with 'Back to 2025 Hackathon' and no form. A space locked (status locked on Release Notes, set with wp db query rather than the wp-admin edit screen, then restored to active) shows the same notice with 'Back to Release Notes' and no form.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc11-archived.png"
     },
     "c-member-post-create.12": {
       "result": "pass",
-      "evidence": "POST /spaces/36/posts as bob -> 403 jetonomy_space_restricted with the archived/locked message; wp jetonomy post create --space=36 -> same error; nothing stored."
+      "evidence": "bob POST /spaces/40/posts with custom_fields -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.'; wp jetonomy post create --space=40 --author=10 -> '[jetonomy_space_restricted] This space is archived or locked...'. DB: nothing stored. Observation: without custom_fields the same request returns 400 jetonomy_field_required first (the required-field check runs before the archived/locked check), so the refusal reason a client sees depends on field order; low severity."
     },
     "c-member-post-create.13": {
       "result": "pass",
-      "evidence": "finn opens Help Desk composer: page shows \"Your account is currently silenced and cannot post.\" with no form (refused at open, not on submit)."
+      "evidence": "finn /community/s/general-discussion/new/ -> page shows 'Your account is currently silenced and cannot post.' with 'Back to Space' and no form to submit; nothing created.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc13-finn.png"
     },
     "c-member-post-create.14": {
       "result": "pass",
-      "evidence": "POST /spaces/3004/posts as finn -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; no row stored."
+      "evidence": "finn POST /spaces/15/posts (with custom_fields) -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'."
     },
     "c-member-post-create.15": {
       "result": "pass",
-      "evidence": "omar on /s/off-topic-lounge/new/: \"You have been banned from this space and cannot take part in it.\" and no form; REST 403 jetonomy_user_space_banned; General Discussion composer opens for him.",
-      "screenshot": "c-member-post-create.15.png"
+      "evidence": "omar /community/s/off-topic-lounge/new/ -> 'You have been banned from this space and cannot take part in it.' and no form; REST POST /spaces/17/posts -> 403 jetonomy_user_space_banned. In General Discussion omar posted via the UI -> published (/t/back-from-the-break-with-a-question-about-moderation-tools/).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc15-omar.png"
     },
     "c-member-post-create.16": {
       "result": "pass",
-      "evidence": "bob on /s/customer-advisory-board/new/: \"Customer Advisory Board is invite-only. You need an invitation to join.\" no form; POST /spaces/38/posts -> 403 jetonomy_forbidden \"You cannot post in this space.\"; nothing stored.",
-      "screenshot": "c-member-post-create.16.png"
+      "evidence": "bob is not a member of Customer Advisory Board (space 42, invite-only; no membership change needed). /s/customer-advisory-board/new/ shows the gate 'Customer Advisory Board is invite-only. You need an invitation to join. ... Ask a space admin or a site administrator to invite you.' with 'Browse spaces' and no form. POST /spaces/42/posts -> 403 jetonomy_forbidden 'You cannot post in this space.'; no row stored.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc16-private.png"
     },
     "c-member-post-create.17": {
       "result": "pass",
-      "evidence": "Trust-0 fixture member: 4th topic in a day -> REST 429 jetonomy_rate_limited retry_after 86400; UI shows \"New members can post 3 topics a day. You can post again in about 24 hours.\" The runbook trailing sentence \"Please try again later.\" is not in the message.",
-      "screenshot": "c-member-post-create.17.png"
+      "evidence": "New user newcomer_noel (level 0, deleted afterwards): 3 topics via REST (201), then the 4th via the UI composer -> inline 'New members can post 3 topics a day. You can post again in about 1 day.'; REST 4th -> 429 jetonomy_rate_limited 'New members can post 3 topics a day. You can post again in about 24 hours.' (retry_after 86398). The UI says '1 day', REST says '24 hours' for the same wait; cosmetic.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc17-limit.png"
     },
     "c-member-post-create.18": {
       "result": "pass",
-      "evidence": "Offline submit: composer keeps title and body, single \"Failed to save.\" error; after reconnecting a retry saved it; one topic in the DB.",
-      "screenshot": "c-member-post-create.18.png"
+      "evidence": "bob composer, context offline, Post Topic -> composer kept title and body, one 'Failed to save.'; back online, Post Topic again -> published once (DB: exactly 1 row, id 15893).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc18-offline.png"
     },
     "c-member-post-create.19": {
       "result": "pass",
-      "evidence": "Double-click on Post Question after reconnect: exactly one topic row (id 8968) for the title."
+      "evidence": "Double-click (two real clicks) on Post Topic with an Arabic topic -> DB has exactly 1 row (id 15894)."
     },
     "c-member-post-create.20": {
       "result": "pass",
-      "evidence": "Arabic title and body saved; rendered with dir=auto on h1 and body (Latin \"QA-WALK-A\" prefix in my title makes it resolve left-to-right; pure Arabic seeded topic 5873 resolves rtl on an LTR site).",
-      "screenshot": "c-member-post-create.20.png"
+      "evidence": "Arabic title and body as bob on the en_US site: while typing the title/editor compute direction rtl; saved topic h1 and body are dir=auto, computed rtl, text-align start (right).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc20-arabic.png"
     },
     "c-member-post-create.21": {
       "result": "pass",
-      "evidence": "Fixture space with require_approval: bob's topic status pending, guest cannot see it, bob sees \"This topic is pending review and not yet publicly visible.\"; test_moderator sees it in /moderation/queue; approve -> alice (follower) got exactly 1 new_post_in_sub notification after approval and 0 before; second approve -> 409 already handled."
+      "evidence": "Show & Tell set to 'New topics and replies require moderator approval' in admin Space > Settings (restored to the original NULL settings afterwards); alice followed it (email pref on). bob posted -> within ~300 ms a dark toast at the bottom of the viewport reads 'Your topic is awaiting moderation and will appear once approved.' (button went 'Posting...' -> 'Post Topic'); the toast is visible at 1 s (screenshot), then gone by the 2 s sample. The page stays on /new/ and the form STAYS FILLED (title, body, Operating system all kept, Post Topic enabled), so a second click would submit it again; no redirect and no persistent inline message. DB: topic 15895 status pending. alice: /community listing does not show it, GET /posts/15895 -> 404, direct URL -> 404. test_moderator: wp-admin Jetonomy > Moderation queue lists it with Approve/Spam/Trash. Before approval: no notification (max id unchanged) and no email. After Approve: status publish, exactly 1 new_post_in_sub notification to alice (4043) and exactly 1 Mailpit email 'New topic in Show & Tell' at the same second (plus the moderation notice to bob).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc21-toast-1s.png"
     },
     "c-member-post-create.22": {
       "result": "pass",
-      "evidence": "POST /spaces/3004/posts as guest -> 401 rest_not_logged_in."
+      "evidence": "Logged out POST /spaces/20/posts -> 401 rest_not_logged_in 'You must be logged in to perform this action.'."
     },
     "c-member-post-create.23": {
       "result": "pass",
-      "evidence": "Composer at 390: toolbar (jt-editor-bar) wraps inside viewport (right edge 358), no horizontal scroll, Post button reachable.",
-      "screenshot": "c-member-post-create.23-24.png"
+      "evidence": "390px viewport as bob: .jt-editor-bar is one row (all 8 buttons share one top), overflow-x auto, nowrap, fade mask on the right edge, scrollWidth 368 > clientWidth 326; after scrolling right the last button 'Insert emoji' sits at x 294-334 and is hittable; page scrollWidth 390; Post Topic reachable (bottom 764 of 844). Viewport resize only, not a touch context.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc23-390-scrolled.png"
     },
     "c-member-post-create.24": {
       "result": "pass",
-      "evidence": "390 dark: editor text rgb(229,229,229), toolbar icons rgb(229,229,229) on dark bar, readable.",
-      "screenshot": "c-member-post-create.23-24.png"
+      "evidence": "Reign dark toggle, 1440: editor text rgb(229,229,229) on dark surface contrast 16.7:1, toolbar icons 16.6:1, title input 16.7:1. Toggle switched back to light afterwards.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc24-dark.png"
     },
     "c-member-post-create.25": {
       "result": "pass",
-      "evidence": "Same as .4: a visible limit message \"Titles can be up to 255 characters.\" is shown before the field stops accepting input."
+      "evidence": "Same typing as .4: the title shows a visible 'N characters left' counter from about 200 chars and 'Titles can be up to 255 characters.' at the limit, before and when the field stops accepting input.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc4-long.png"
     },
     "c-member-post-create.26": {
       "result": "pass",
-      "evidence": "Offline submit shows one \"Failed to save.\" message (one visible alert; a second empty alert node is present but has no text)."
+      "evidence": "Offline submit shows exactly one 'Failed to save.' (counted in page text).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc18-offline.png"
     },
     "c-member-post-create.27": {
       "result": "pass",
-      "evidence": "dir=\"auto\" present on the saved topic title and body."
+      "evidence": "On the LTR en_US site the empty new-topic title and editor have dir=auto and compute ltr; the saved Arabic topic title and body are dir=auto and compute rtl/start (right aligned).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc20-arabic.png"
     },
     "c-member-post-create.28": {
-      "result": "fail",
-      "evidence": "Open contract question, no home recent-topics feed exists to count; home shows only a cached pulse and category sections. Needs an owner decision on what \"home feed\" means; not a code defect."
+      "result": "pass",
+      "evidence": "alice posted in General Discussion: the /community/ space card went 68 -> 69 topics, matching the space page (69) and the new topic listed first.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc28-home.png"
     },
     "c-member-post-create.29": {
       "result": "pass",
-      "evidence": "390px: Post Topic and Post Reply (topic 5874) scrollIntoView(block:end) -> button bottom 720 vs tab bar top 740, elementFromPoint at centre and bottom edge is the button. A transient gamification toast covered it once and cleared. Keyboard Tab and 1440 gap not run.",
-      "screenshot": "c-member-post-create.29b.png"
+      "evidence": "390px: New Topic Post Topic after scrollIntoView({block:'end'}): bottom 764, bottom tab bar (.jt-mobile-tabs) top 784; elementFromPoint at centre and at bottom edge-1 is the button; Tab to it: same (bottom 764, centre/edge ok). Post Reply on /s/show-and-tell/t/launched-my-paid-newsletter-community-on-jetonomy-s16t1/ (20 replies): bottom 764, tab bar top 784, centre and edge hit the button; Tab to Post Reply: bottom 677, centre/edge ok. 1440: tab bar display none, document ends at the footer, no extra bottom gap.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc29-newtopic.png"
     }
   },
   "proposed_checks": []

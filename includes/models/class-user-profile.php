@@ -244,6 +244,76 @@ class UserProfile extends Model {
 	}
 
 	/**
+	 * Profile rows with the topic and reply counts members are allowed to see.
+	 *
+	 * The stored post_count / reply_count include anonymous items on purpose:
+	 * trust levels, badges and spam checks read them and anonymous work is real
+	 * activity. Any count SHOWN next to a name must not, or "3 topics" beside a
+	 * stream of 2 tells everyone the member wrote the anonymous one. Every
+	 * display surface (profile header, REST users, leaderboard, profile card,
+	 * BuddyPress stats, abilities) routes through here, so none can leak.
+	 *
+	 * Two grouped queries for the whole set (KEY author_created), no N+1.
+	 *
+	 * @param object[] $rows Rows carrying user_id, post_count and reply_count.
+	 * @return object[] Same order and keys; changed rows are clones.
+	 */
+	public static function with_public_counts( array $rows ): array {
+		$ids = array();
+		foreach ( $rows as $row ) {
+			if ( ! empty( $row->user_id ) ) {
+				$ids[] = (int) $row->user_id;
+			}
+		}
+		$ids = array_values( array_unique( $ids ) );
+		if ( ! $ids ) {
+			return $rows;
+		}
+
+		$in      = implode( ',', $ids ); // Integers only, cast above.
+		$posts   = \Jetonomy\table( 'posts' );
+		$replies = \Jetonomy\table( 'replies' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$anon_posts = static::db()->get_results(
+			"SELECT author_id, COUNT(*) AS n FROM {$posts} WHERE author_id IN ({$in}) AND status = 'publish' AND is_anonymous = 1 GROUP BY author_id",
+			OBJECT_K
+		);
+		// Same scope as the stored reply_count (Recount): published replies in published topics.
+		$anon_replies = static::db()->get_results(
+			"SELECT r.author_id, COUNT(*) AS n FROM {$replies} r INNER JOIN {$posts} p ON p.id = r.post_id WHERE r.author_id IN ({$in}) AND r.status = 'publish' AND p.status = 'publish' AND r.is_anonymous = 1 GROUP BY r.author_id",
+			OBJECT_K
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( ! $anon_posts && ! $anon_replies ) {
+			return $rows;
+		}
+
+		foreach ( $rows as $key => $row ) {
+			$uid = (int) ( $row->user_id ?? 0 );
+			$dp  = isset( $anon_posts[ $uid ] ) ? (int) $anon_posts[ $uid ]->n : 0;
+			$dr  = isset( $anon_replies[ $uid ] ) ? (int) $anon_replies[ $uid ]->n : 0;
+			if ( $dp || $dr ) {
+				$row              = clone $row;
+				$row->post_count  = max( 0, (int) ( $row->post_count ?? 0 ) - $dp );
+				$row->reply_count = max( 0, (int) ( $row->reply_count ?? 0 ) - $dr );
+				$rows[ $key ]     = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * One member's profile with showable counts (see with_public_counts()).
+	 *
+	 * @param int $user_id User ID.
+	 * @return object|null
+	 */
+	public static function find_public( int $user_id ): ?object {
+		$row = static::find_by_user( $user_id );
+		return $row ? static::with_public_counts( array( $row ) )[0] : null;
+	}
+
+	/**
 	 * Update the last_seen_at timestamp for a user.
 	 *
 	 * Uses a transient to rate-limit updates to once per minute,
@@ -356,6 +426,30 @@ class UserProfile extends Model {
 	}
 
 	/**
+	 * Who counts as a community member: a profile whose WP user still exists
+	 * and who is not banned site-wide. One definition for every "N members"
+	 * figure (the home pulse, "Your rank #N of M") and the base of the
+	 * leaderboard population, so the numbers never disagree.
+	 *
+	 * @return string SQL condition on this table's user_id (no leading WHERE).
+	 */
+	protected static function member_sql(): string {
+		global $wpdb;
+		return "EXISTS (SELECT 1 FROM {$wpdb->users} u WHERE u.ID = user_id)" . Restriction::not_banned_sql( 'user_id', 0 );
+	}
+
+	/**
+	 * Number of community members (see member_sql()).
+	 *
+	 * @return int
+	 */
+	public static function count_members(): int {
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) static::db()->get_var( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE ' . static::member_sql() );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	/**
 	 * Build the recent-activity WHERE clause for leaderboard queries.
 	 *
 	 * Centralises the period window shared by the server-rendered leaderboard
@@ -366,8 +460,6 @@ class UserProfile extends Model {
 	 * @return string SQL fragment beginning with ' WHERE '.
 	 */
 	protected static function leaderboard_period_where( string $period ): string {
-		global $wpdb;
-
 		/*
 		 * A profile whose WP user is gone is not a member, and must not occupy a rank:
 		 * the view cannot render it (no user to name or link), so dropping it after its
@@ -384,7 +476,7 @@ class UserProfile extends Model {
 		 * EXISTS over IN: a semi-join against the users PK, so this stays an
 		 * index lookup per row instead of materialising the user table.
 		 */
-		$is_member = "EXISTS (SELECT 1 FROM {$wpdb->users} u WHERE u.ID = user_id)";
+		$is_member = static::member_sql();
 
 		/*
 		 * A rank is earned. Reputation 0 is the "has not participated yet"
@@ -397,11 +489,9 @@ class UserProfile extends Model {
 		 * [jetonomy_leaderboard], the block and classic widget that render it,
 		 * GET /leaderboards) reads list_for_leaderboard(), so none can drift.
 		 */
+		// A member banned site-wide holds no rank either: member_sql() leaves
+		// them out (one anti-join on the restrictions (user_id, type) index).
 		$eligible = "{$is_member} AND reputation > 0";
-
-		// A member banned site-wide holds no rank either; same population rule,
-		// one anti-join on the restrictions (user_id, type) index.
-		$eligible .= Restriction::not_banned_sql( 'user_id', 0 );
 
 		if ( 'week' === $period ) {
 			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)";
@@ -464,7 +554,7 @@ class UserProfile extends Model {
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $rows ? $rows : array();
+		return $rows ? static::with_public_counts( $rows ) : array();
 	}
 
 	/**
@@ -551,25 +641,43 @@ class UserProfile extends Model {
 
 
 	/**
+	 * Sortable columns of the wp-admin Users screen, each an indexed column of
+	 * this table: reputation (reputation_user), last seen (seen_reputation) and
+	 * joined as account order (the primary key; user ids grow with registration,
+	 * and wp_users.user_registered carries no index).
+	 */
+	public const ADMIN_SORTS = array(
+		'reputation' => 'p.reputation',
+		'last_seen'  => 'p.last_seen_at',
+		'joined'     => 'p.user_id',
+	);
+
+	/**
 	 * The wp-admin Users screen: profiles joined to their account, by
 	 * reputation, filtered by trust level and a login/name/email search.
 	 *
 	 * @param string $trust  Trust level, or '' for any.
 	 * @param string $search Text to match.
-	 * @param int    $limit  Max rows.
-	 * @param int    $offset Offset.
+	 * @param int    $limit   Max rows.
+	 * @param int    $offset  Offset.
+	 * @param string $orderby One of the ADMIN_SORTS keys; anything else falls back to reputation.
+	 * @param string $order   ASC or DESC.
 	 * @return object[] Profile rows plus user_login, wp_display_name, user_email, user_registered.
 	 */
-	public static function list_for_admin( string $trust, string $search, int $limit, int $offset ): array {
+	public static function list_for_admin( string $trust, string $search, int $limit, int $offset, string $orderby = 'reputation', string $order = 'DESC' ): array {
 		global $wpdb;
 		[ $where, $args ] = self::admin_where( $trust, $search );
+		$column           = self::ADMIN_SORTS[ $orderby ] ?? self::ADMIN_SORTS['reputation'];
+		$dir              = 'ASC' === strtoupper( $order ) ? 'ASC' : 'DESC';
+		// user_id breaks ties so paging never repeats or skips a row.
+		$order_sql = 'p.user_id' === $column ? "p.user_id {$dir}" : "{$column} {$dir}, p.user_id {$dir}";
 		return static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				'SELECT p.*, u.user_login, u.display_name as wp_display_name, u.user_email, u.user_registered FROM ' . static::table() . " p
 				 INNER JOIN {$wpdb->users} u ON u.ID = p.user_id
 				 WHERE {$where}
-				 ORDER BY p.reputation DESC
+				 ORDER BY {$order_sql}
 				 LIMIT %d OFFSET %d",
 				...array_merge( $args, array( $limit, $offset ) )
 			)

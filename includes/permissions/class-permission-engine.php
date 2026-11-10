@@ -56,6 +56,8 @@ class Permission_Engine {
 	 */
 	public static function reset_memo(): void {
 		self::$memo = array();
+		// Rule-admitted space lists are built from these verdicts.
+		\Jetonomy\Models\AccessRule::reset_memo();
 	}
 
 	/**
@@ -94,7 +96,7 @@ class Permission_Engine {
 	 * `edit_others_*` through this path. SPACE_MOD_ACTIONS above is the
 	 * separate, deliberate route for that, and it requires a real mod role.
 	 */
-	private const MEMBER_GRADE_ACTIONS = array(
+	public const MEMBER_GRADE_ACTIONS = array(
 		'read',
 		'create_posts',
 		'create_replies',
@@ -110,7 +112,8 @@ class Permission_Engine {
 	 * Each higher role includes all actions of the roles below it.
 	 */
 	private const SPACE_ROLE_PERMS = array(
-		'viewer'    => array( 'read' ),
+		// Read rules promise "read and report" (space-edit.php, admin-common.js).
+		'viewer'    => array( 'read', 'flag' ),
 		'member'    => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' ),
 		'moderator' => array(
 			'read',
@@ -171,7 +174,7 @@ class Permission_Engine {
 	}
 
 	/** Actions a silenced member loses; reading continues. Every space-mod action is included, so a new one cannot escape the silence. */
-	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', ...self::SPACE_MOD_ACTIONS );
+	private const SILENCED_WRITE_ACTIONS = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'create_space', ...self::SPACE_MOD_ACTIONS );
 
 	/**
 	 * The account restriction that refuses this action, as the error to show the
@@ -208,6 +211,20 @@ class Permission_Engine {
 	 * Internal uncached resolution — called by can().
 	 */
 	private static function resolve( int $user_id, string $action, ?int $space_id ): bool {
+		// Layer 0: a private community admits no signed-out visitor to anything.
+		// Routes that check this themselves were safe; poll, reaction and
+		// attachment reads that only asked can_read_post() were not.
+		if ( ! $user_id && 'private' === \Jetonomy\Visibility::get_mode() ) {
+			return false;
+		}
+
+		// Layer 0: every write route and wp-admin need WordPress read. A role
+		// without it, ticked boxes or not, may only read; offering more shows
+		// buttons whose request is refused.
+		if ( $user_id && 'read' !== $action && ! user_can( $user_id, 'read' ) ) {
+			return false;
+		}
+
 		// Layer 0: IP ban check.
 		$ip = \Jetonomy\client_ip();
 		if ( $ip && Restriction::is_ip_banned( $ip ) ) {
@@ -359,10 +376,11 @@ class Permission_Engine {
 		}
 		if ( $access ) {
 			// Access rule grants access — check if sufficient for the action.
+			// Member-grade only: moderation comes from a real space mod role.
+			// Read promises "read and report", the same as a roster viewer.
 			$grants_map      = array(
-				'read'        => array( 'read' ),
-				'participate' => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' ),
-				'full'        => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'close_posts', 'pin_posts' ),
+				'read'        => array( 'read', 'flag' ),
+				'participate' => self::MEMBER_GRADE_ACTIONS,
 			);
 			$allowed_actions = $grants_map[ $access['grants'] ] ?? array( 'read' );
 			if ( in_array( $action, $allowed_actions, true ) ) {

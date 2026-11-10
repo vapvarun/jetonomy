@@ -184,11 +184,6 @@ class Template_Loader {
 			JETONOMY_VERSION
 		);
 
-		// RTL stylesheet for right-to-left languages.
-		if ( is_rtl() ) {
-			wp_enqueue_style( 'jetonomy-rtl', JETONOMY_URL . 'assets/css/jetonomy-rtl.css', array( 'jetonomy' ), JETONOMY_VERSION );
-		}
-
 		// ── Inject dynamic CSS from settings (accent color, custom CSS, etc.) ──
 		$dynamic_css = '';
 
@@ -405,7 +400,8 @@ class Template_Loader {
 					// Join-Space failure toast (composer.js); carries the owner's space noun.
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'joinSpaceFailed'        => esc_html( sprintf( __( 'Could not join %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
-					'memberBanned'           => __( 'Banned', 'jetonomy' ),
+					/* translators: %s: the singular member label, lowercase (e.g. member). */
+					'banFailed'              => esc_html( sprintf( __( 'Could not ban this %s. Please try again.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					// Modal helpers in view.js (jetonomyConfirm / jetonomyPrompt /
 					// jetonomySpacePicker / jetonomyPostPicker). These live OUTSIDE the
 					// Interactivity store so they read window.jetonomyData.i18n, not
@@ -464,6 +460,13 @@ class Template_Loader {
 					'liftConfirmFormat'      => __( 'Lift the restriction on %s? They regain full access right away.', 'jetonomy' ),
 					'liftTitle'              => __( 'Lift restriction', 'jetonomy' ),
 					'liftLabel'              => __( 'Lift restriction', 'jetonomy' ),
+					/* translators: %s: member display name. */
+					'bannedFormat'           => __( '%s has been banned.', 'jetonomy' ),
+					/* translators: %s: member display name. */
+					'silencedFormat'         => __( '%s has been silenced.', 'jetonomy' ),
+					/* translators: %s: member display name. */
+					'liftedFormat'           => __( 'The restriction on %s has been lifted.', 'jetonomy' ),
+					'liftFailed'             => __( 'Could not lift the restriction. Please try again.', 'jetonomy' ),
 					// 1.6.1 i18n sweep - role-change + deny-join confirm dialogs (view.js reads
 					// window.jetonomyData.i18n outside the IA store; these were never injected).
 					/* translators: %name%, %from%, %to% are replaced client-side. */
@@ -1294,7 +1297,7 @@ class Template_Loader {
 							$image_alt    = $post->title;
 
 							if ( preg_match( '/<img[^>]+src=["\']([^"\']+)["\']/i', (string) $post->content, $m ) ) {
-								$image = esc_url_raw( $m[1] );
+								$image = html_entity_decode( $m[1] );
 							}
 
 							// jt_user_profiles.display_name is never written by free or
@@ -1470,31 +1473,7 @@ class Template_Loader {
 				}
 
 				$jt_seo_settings = get_option( 'jetonomy_settings', array() );
-
-				/**
-				 * og:image fallback chain — when the route-specific image is
-				 * empty, fall back through admin-configured default → site
-				 * logo → site icon so social shares always carry a card
-				 * image instead of letting the platform render a blank tile.
-				 */
-				if ( '' === $image ) {
-					$default_og = isset( $jt_seo_settings['seo_default_og_image'] ) ? (string) $jt_seo_settings['seo_default_og_image'] : '';
-					if ( '' !== $default_og ) {
-						$image = $default_og;
-					}
-				}
-				if ( '' === $image ) {
-					$logo_id = (int) get_theme_mod( 'custom_logo' );
-					if ( $logo_id > 0 ) {
-						$image = (string) wp_get_attachment_image_url( $logo_id, 'full' );
-					}
-					if ( '' === $image ) {
-						$icon_url = (string) get_site_icon_url( 512 );
-						if ( '' !== $icon_url ) {
-							$image = $icon_url;
-						}
-					}
-				}
+				$image           = \Jetonomy\share_image( $image );
 				if ( '' === $image_alt && '' !== $title ) {
 					$image_alt = $title;
 				}
@@ -1813,7 +1792,7 @@ class Template_Loader {
 	 * community pages and every embed that loads the same module (the compose
 	 * block and shortcode), so an embed never falls back to English.
 	 *
-	 * @return array<string, string>
+	 * @return array<string, string|array<string, string>>
 	 */
 	public static function app_i18n(): array {
 		return array(
@@ -1837,7 +1816,17 @@ class Template_Loader {
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'leaveSpace'            => sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label() ),
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			'confirmLeaveSpace'     => sprintf( __( 'Leave this %s? You can rejoin at any time.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			'confirmLeaveSpace'     => sprintf( __( 'Leave this %s?', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			/* translators: %s: the title of the space being left. */
+			'confirmLeaveNamed'     => __( 'Leave %s?', 'jetonomy' ),
+			// The second sentence follows the space's join policy, so a member
+			// leaving an approval or invite-only space is not told they can
+			// walk back in.
+			'leaveRejoin'           => array(
+				'open'     => __( 'You can rejoin at any time.', 'jetonomy' ),
+				'approval' => __( 'To rejoin, you will need to request again.', 'jetonomy' ),
+				'invite'   => __( 'You will need a new invitation to rejoin.', 'jetonomy' ),
+			),
 			'leave'                 => __( 'Leave', 'jetonomy' ),
 			'leaveSpaceFailed'      => __( 'Could not leave. Please try again.', 'jetonomy' ),
 			'copyLink'              => __( 'Copy link', 'jetonomy' ),
@@ -1849,13 +1838,7 @@ class Template_Loader {
 			'reportPrompt'          => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
 			// The report dialog's reasons: the moderation queue's own list.
-			'reportReasons'         => array(
-				'spam'       => __( 'Spam', 'jetonomy' ),
-				'offensive'  => __( 'Offensive', 'jetonomy' ),
-				'off_topic'  => __( 'Off-topic', 'jetonomy' ), // jt-terms-ok: report reason idiom, not the noun.
-				'harassment' => __( 'Harassment', 'jetonomy' ),
-				'other'      => __( 'Other', 'jetonomy' ),
-			),
+			'reportReasons'         => \Jetonomy\Models\Flag::reason_labels(),
 			/* translators: %s: maximum number of characters. */
 			'reportDetails'         => sprintf( __( 'Add details (optional, up to %s characters)', 'jetonomy' ), number_format_i18n( \Jetonomy\Models\Flag::DESCRIPTION_MAX ) ),
 			'reportDetailsMax'      => \Jetonomy\Models\Flag::DESCRIPTION_MAX,
@@ -1921,6 +1904,7 @@ class Template_Loader {
 			/* translators: %s: the singular topic label the site owner configured. */
 			'titleRequired'         => sprintf( __( 'Please enter a title for your %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'bodyRequired'          => __( 'Please add some details before posting.', 'jetonomy' ),
+			'editEmpty'             => __( 'Add some text before saving.', 'jetonomy' ),
 			'loginRequired'         => __( 'Please sign in to use this.', 'jetonomy' ),
 			// Pro Private Messaging composer (consumed by jetonomy-pro/assets/js/pro-view.js).
 			'messageSending'        => __( 'Sending...', 'jetonomy' ),

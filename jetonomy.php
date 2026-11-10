@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     2.0.6
+ * Version:     2.0.7
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '2.0.6' );
+define( 'JETONOMY_VERSION', '2.0.7' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -35,7 +35,7 @@ define( 'JETONOMY_VERSION', '2.0.6' );
 // upgrade block and Migration_1_9_3 never ran there. Keep this in step with
 // the newest key in Migrator::get_migrations() or the newest migration is
 // silently dead on exactly the sites that need it.
-define( 'JETONOMY_DB_VERSION', '2.0.4' );
+define( 'JETONOMY_DB_VERSION', '2.0.7' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -284,7 +284,10 @@ function jetonomy_icon( string $name, int $size = 24 ): string {
 		$svg            = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$cache[ $name ] = $svg;
 	}
-	$svg = str_replace( '<svg ', '<svg width="' . $size . '" height="' . $size . '" ', $svg );
+	// Icons that point along the reading direction carry a class the stylesheet
+	// mirrors in RTL; symmetric and vertical icons are left as drawn.
+	$dir = in_array( $name, array( 'chevron-left', 'chevron-right', 'corner-up-left' ), true ) ? 'class="jt-icon--dir" ' : '';
+	$svg = str_replace( '<svg ', '<svg ' . $dir . 'width="' . $size . '" height="' . $size . '" ', $svg );
 	return $svg;
 }
 
@@ -514,6 +517,37 @@ function jetonomy_vote_attrs( string $direction, bool $active ): string {
 }
 
 /**
+ * Attributes for the element that groups a vote control.
+ *
+ * The group is named "Votes: 12": its own aria-label ("Votes:") followed by the
+ * visible score, which carries the id "{$id}-n". Pointing aria-labelledby at the
+ * group itself pulls in that aria-label, and reading the number from the page
+ * keeps the name right after view.js changes the score, with no JS of its own.
+ * The buttons inside keep their own names and aria-pressed for the viewer's vote.
+ *
+ * @param string $id Unique id for the group; the score element takes "{$id}-n". Build it with
+ *                   wp_unique_id() over a prefix holding the item id, so rows appended by
+ *                   Load More (a separate request, counter restarted) never repeat an id.
+ * @return string Escaped attribute string, leading space included.
+ */
+function jetonomy_vote_group_attrs( string $id ): string {
+	/* translators: Start of a vote control's accessible name; the score follows, e.g. "Votes: 12". */
+	$label = __( 'Votes:', 'jetonomy' );
+	return ' role="group" id="' . esc_attr( $id ) . '" aria-label="' . esc_attr( $label ) . '" aria-labelledby="' . esc_attr( $id . ' ' . $id . '-n' ) . '"';
+}
+
+/**
+ * Print a read-only vote score for list rows ("12", read as "12 votes").
+ *
+ * @param int $score Vote score.
+ */
+function jetonomy_vote_score_static( int $score ): void {
+	/* translators: %d: number of votes. */
+	$label = sprintf( _n( '%d vote', '%d votes', $score, 'jetonomy' ), $score );
+	echo '<span class="jt-v-num" aria-hidden="true">' . esc_html( (string) $score ) . '</span><span class="jt-sr-only">' . esc_html( $label ) . '</span>';
+}
+
+/**
  * Print the vote score for a logged-in viewer who may not vote here.
  *
  * Shows the score and explains on hover, to screen readers and (via the
@@ -525,8 +559,9 @@ function jetonomy_vote_attrs( string $direction, bool $active ): string {
  * @param int         $icon_size Icon size in px.
  * @param object|null $space     Space the item is in, so a space ban is named.
  * @param bool        $own       The viewer wrote this post or reply.
+ * @param string      $score_id  Id for the score element, so the vote group can name itself from it.
  */
-function jetonomy_vote_denied_control( int $score, int $icon_size, $space = null, bool $own = false ): void {
+function jetonomy_vote_denied_control( int $score, int $icon_size, $space = null, bool $own = false, string $score_id = '' ): void {
 	$restricted = $own ? null : \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'vote', ( $space && ! empty( $space->id ) ) ? (int) $space->id : null );
 	if ( $own ) {
 		$why = \Jetonomy\Models\Vote::self_vote_error()->get_error_message();
@@ -543,7 +578,7 @@ function jetonomy_vote_denied_control( int $score, int $icon_size, $space = null
 		title="<?php echo esc_attr( $why ); ?>"
 		aria-label="<?php echo esc_attr( $label ); ?>">
 		<?php jetonomy_echo_icon( 'chevron-up', $icon_size ); ?>
-		<span class="n"><?php echo esc_html( (string) $score ); ?></span>
+		<span class="n"<?php echo '' !== $score_id ? ' id="' . esc_attr( $score_id ) . '"' : ''; ?>><?php echo esc_html( (string) $score ); ?></span>
 	</button>
 	<?php
 }
@@ -579,7 +614,13 @@ function jetonomy_idea_status_label( string $status ): string {
  * @param string $status One of Post::valid_idea_statuses(), or empty.
  */
 function jetonomy_render_idea_status_pill( string $status ): void {
-	if ( '' === $status || ! in_array( $status, \Jetonomy\Models\Post::valid_idea_statuses(), true ) ) {
+	// An idea with no roadmap stage yet is open for votes and discussion. Say
+	// so, so every idea row carries a status and the list scans like the board.
+	if ( '' === $status ) {
+		echo '<span class="jt-idea-pill jt-idea-pill-open">' . esc_html__( 'Open', 'jetonomy' ) . '</span>';
+		return;
+	}
+	if ( ! in_array( $status, \Jetonomy\Models\Post::valid_idea_statuses(), true ) ) {
 		return;
 	}
 	echo '<span class="jt-idea-pill jt-idea-pill-' . esc_attr( $status ) . '">'
@@ -1002,6 +1043,23 @@ function jetonomy_content_to_plain( string $content ): string {
 	$text = preg_replace( '/\n{3,}/', "\n\n", (string) $text );
 
 	return trim( (string) $text );
+}
+
+/**
+ * Whether sanitized body HTML has nothing a reader would see: no text once the
+ * tags are gone (spaces, &nbsp; and zero-width spaces count as nothing) and no
+ * image or embed. "<p> </p>" is blank; an image on its own is not.
+ *
+ * @since 2.0.7
+ *
+ * @param string $content Sanitized body HTML.
+ * @return bool
+ */
+function jetonomy_content_is_blank( string $content ): bool {
+	if ( preg_match( '/<(?:img|video|audio|iframe|embed|object)\b/i', $content ) ) {
+		return false;
+	}
+	return (bool) preg_match( '/^[\s\x{00A0}\x{200B}\x{FEFF}]*$/u', jetonomy_content_to_plain( $content ) );
 }
 
 /**

@@ -41,6 +41,15 @@ jobs:
       - name: Check for tracker references in source
         run: bash bin/check-comment-refs.sh
 
+      # Runbook structure on every push (ids, roles, refusals, escapes). The
+      # full check, walk records included, waits for release PRs; a duplicate
+      # check id sat unnoticed behind that in 2.0.7.
+      - name: Journey structure
+        run: php bin/check-journey-depth.php --structure
+
+      - name: Journey gates can fail
+        run: bash bin/test-check-journey-depth.sh && bash bin/test-check-runbook-fresh.sh
+
   # ── PHPUnit matrix: PHP 8.1/8.2/8.3/8.4 × WP 6.7/6.8/6.9 ─────────────
   phpunit:
     runs-on: ubuntu-latest
@@ -143,14 +152,26 @@ jobs:
           JETONOMY_TEST_SKIP_PRO: '1'
           JETONOMY_COVERAGE_OUT: /tmp/coverage/phpunit.json
         run: vendor/bin/phpunit --testsuite=unit,integration,security,error-paths,concurrency
+      # Runs even when a test failed above: a red test (already reported by the
+      # phpunit matrix) must not hide coverage drift. In 2.0.7 it hid a week of it.
       - name: Runtime coverage gate
-        run: php bin/qa-runtime-coverage.php --runtime=/tmp/coverage/phpunit.json
+        if: ${{ !cancelled() }}
+        run: |
+          test -f /tmp/coverage/phpunit.json || { echo "::error::the suite wrote no coverage record"; exit 1; }
+          php bin/qa-runtime-coverage.php --runtime=/tmp/coverage/phpunit.json
       - name: New tests must fail on the base branch
         if: github.event_name == 'pull_request'
         run: php bin/check-new-tests-fail-on-base.php "${{ github.event.pull_request.base.sha }}"
       - name: Smoke runbook verified against the release (release PRs)
         if: github.event_name == 'pull_request' && github.base_ref == 'main'
         run: php bin/check-runbook-fresh.php
+      # Every other push: a report, not a gate. Lists the journeys this branch
+      # has made stale (comment-only edits excluded) so walks happen per batch
+      # instead of all at once at release.
+      - name: Journeys due a walk (report)
+        if: ${{ !(github.event_name == 'pull_request' && github.base_ref == 'main') }}
+        continue-on-error: true
+        run: php bin/check-runbook-fresh.php | tee -a "$GITHUB_STEP_SUMMARY"
 
   # ── PHPUnit combo: Free + Pro loaded together ─────────────────────────────
   # Exercises the Pro testsuite alongside the free unit testsuite so any
@@ -536,6 +557,14 @@ jobs:
             grep -n "Fatal error" -A 12 /tmp/wp/wp-content/debug.log | head -40
             exit 1
           fi
+
+      # The discovery suite (rewrite rules, notification keys, Pro extension
+      # routes, settings). It only ever ran by hand, so in 2.0.7 six failures
+      # sat as "pre-existing" and hid a real drift between two defaults lists.
+      - name: Discovery checks (wp jetonomy qa)
+        run: |
+          wp rewrite flush --path=/tmp/wp
+          wp jetonomy qa --path=/tmp/wp
 
       # A suite reports what it RAN, not what it PROVED. Three guards shipped
       # in 1.9.5 that stayed green against the exact bug they were written for

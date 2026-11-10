@@ -1,11 +1,96 @@
 {
   "journey": "C.site.host-integrations",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "checks": {
+    "c-site-host-integrations.1": {
+      "result": "pass",
+      "evidence": "Reign, bob, /community/: .jt-app font Inter (same as the theme header), --jt-accent #1d76da = Reign's theme colour, container 1170px (Theme default). Settings > Appearance Custom 900 -> 900px (see .3)."
+    },
+    "c-site-host-integrations.2": {
+      "result": "pass",
+      "evidence": "BuddyX 5.0.2 and Twenty Twenty-Five, bob, /community/ and the 159-char topic at 1440 and 390: exactly one visible h1 (Community / topic title), the only sidebar element is .jt-sidebar (no theme sidebar), font follows the theme (Open Sans on BuddyX, Manrope on TT25), scrollWidth == viewport. Container width is the shared setting (checked in .3 on Reign)."
+    },
+    "c-site-host-integrations.3": {
+      "result": "pass",
+      "evidence": "Admin UI Settings > Appearance: Container Width Custom 900 + Save -> 'Settings saved.' and guest /community/ is 900px wide on reload (1170 back after resetting to Theme default). Layout Density compact / spacious / comfortable saved in turn: space listing .jt-app[data-jt-density] changes, .jt-row padding 8px 12px / 20px 24px / 12px 16px, base font 13.8 / 18.1 / 15.9px. Each change was visible on the next reload; no cache."
+    },
+    "c-site-host-integrations.4": {
+      "result": "pass",
+      "evidence": "BuddyPress 14.x active (groups, activity, xprofile), bob: /members/bob/forum/ shows the Forum tab with 16 TOPICS, 75 REPLIES, 784 REPUTATION, LEVEL 4 and his recent topics; /community/u/bob/ shows 784 reputation, 16 topics, 75 replies.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-bp-bob.png"
+    },
+    "c-site-host-integrations.5": {
+      "result": "pass",
+      "evidence": "New member nora_new (no content): /members/nora_new/forum/ shows 0 TOPICS / 0 REPLIES / 0 REPUTATION and 'No forum topics yet. View Full Forum Profile'; no new PHP notice from Jetonomy in debug.log (only BuddyPress's own DROP INDEX upgrade errors)."
+    },
+    "c-site-host-integrations.6": {
+      "result": "pass",
+      "evidence": "BuddyPress + Groups active: Settings > Integrations shows the BuddyPress options 'Post new Jetonomy topics to the paired BuddyPress group activity stream' and 'Mirror BuddyPress activity comments...' both checked. With BuddyPress off the Integrations tab stays (Wbcom family cards) but those two checkboxes are gone."
+    },
+    "c-site-host-integrations.7": {
+      "result": "pass",
+      "evidence": "BP group 'Feature Requests Crew' linked to Feature Requests (jetonomy_space_id=12); bob (no jt_space_members row for space 12) used the Join Group button in the UI -> button became Leave Group and a jt_space_members row (bob, 12, member) appeared. Same with group 'Hackathon Alumni' linked to the archived 2025 Hackathon (space 40): no row for bob in space 40. Note: one page load showed Leave Group for bob before he had joined (BP button state), the joined row is what was verified."
+    },
+    "c-site-host-integrations.8": {
+      "result": "pass",
+      "evidence": "omar (space_ban on space 17) in the BP group 'Lounge Regulars' linked to Off-Topic Lounge (17): group page shows Leave Group for him but jt_space_members has no row for omar/17; the restriction row (space_ban) is untouched."
+    },
+    "c-site-host-integrations.9": {
+      "result": "pass",
+      "evidence": "FluentCommunity active, space 'Makers Workshop' (fcom space 2) paired with General Discussion (jetonomy_fc_space_pairs {2:15}): nora_new clicked Join in the portal space -> wp_fcom_space_user row and a jt_space_members row (104, 15, member); the Jetonomy space page loads fluent-community.min.css and shows 'Back to Makers Workshop' / 'Open Feed'. Colours: the Jetonomy page keeps the Reign accent (#1d76da); Fluent's own palette is only inside the portal."
+    },
+    "c-site-host-integrations.10": {
+      "result": "pass",
+      "evidence": "BuddyPress and FluentCommunity both off: /community/, a space, a topic and /community/u/bob/ return no fatal/warning/notice text; debug.log gained nothing from Jetonomy; BuddyPress options and tabs absent."
+    },
+    "c-site-host-integrations.11": {
+      "result": "untested",
+      "evidence": "Reign half pass: dark toggle -> body rgb(35,38,47), card surfaces rgb(47,49,58), space title rgb(229,229,229) = 10.3:1, border tinted rgba. ENV: BuddyX 5.0.2 has no site-wide dark mode (no toggle element, Jetonomy does not react to prefers-color-scheme), so the BuddyX half cannot be walked.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-dark.png"
+    },
+    "c-site-host-integrations.12": {
+      "result": "pass",
+      "evidence": "Wave 8 (free fb73aeda, Pro inactive), fresh 390px touch context (hasTouch+isMobile, hover:none), bob, on Reign, BuddyX and Twenty Twenty-Five (theme switched with wp theme activate between runs, restored to reign-theme): /community/ and topic /community/s/general-discussion/t/whats-everyone-working-on-this-week-s15t1/. scrollWidth 390 = viewport on all 6 pages. Jetonomy buttons/inputs/selects: 0 under 40px (3 controls on home, 141 on topic). Inline links incl. breadcrumb, author, permalinks, tag chips measured as larger of link box and its ::after hit area: 0 of 67 (home) and 0 of 126 (topic) under 24px on every theme. Screenshot qa-artifacts/w8-free/host12-reign-topic-390.png."
+    },
+    "c-site-host-integrations.13": {
+      "result": "pass",
+      "evidence": "Reign with reign_site_layout=boxed (restored to full_width): 159-char title wraps to 4 lines at 1440 (x199-849) and 5 at 390 (x48-342) with h1 scrollWidth<=clientWidth; the 100-character URL paragraph stays inside its box (scrollWidth<=clientWidth); documentElement.scrollWidth 390.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-long-390.png"
+    },
+    "c-site-host-integrations.14": {
+      "result": "pass",
+      "evidence": "Site language ar on Reign: html dir=rtl lang=ar, .jt-app direction rtl; sidebar x174-454 (it is 986-1266 in LTR) on home and topic, nav tabs, chips and cards mirror, no overlaps, scrollWidth 1440.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-rtl.png"
+    },
+    "c-site-host-integrations.15": {
+      "result": "pass",
+      "evidence": "wp maintenance-mode activate: guest GET /, /community/, /community/s/announcements/, /community-sitemap.xml and /wp-json/jetonomy/v1/spaces all 503 'Briefly unavailable for scheduled maintenance. Check back in a minute.' with no #jetonomy-app. Deactivated afterwards."
+    },
+    "c-site-host-integrations.16": {
+      "result": "pass",
+      "evidence": "Admin Settings > General 'Community as homepage' (front_page) ticked and saved in the UI: guest / shows the community home (#jetonomy-app, HTTP 200); with maintenance mode on / returns 503 maintenance page. Unticked and saved afterwards: / no longer renders the community."
+    },
+    "c-site-host-integrations.17": {
+      "result": "pass",
+      "evidence": "BuddyX active, admin Settings > Appearance: Layout card has Container Width (Theme default / Full width / Custom), Page Padding and Layout Density only, no sidebar option; BuddyX community pages show only the Jetonomy sidebar (.jt-sidebar).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-appearance-buddyx.png"
+    },
+    "c-site-host-integrations.18": {
+      "result": "untested",
+      "evidence": "ENV: the Divi theme and Divi Theme Builder are paid and not installed; needs Divi with a global header and footer."
+    }
+  },
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T09:23:35Z",
+  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
   "env": {
+    "mode": "free stack, Pro inactive",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme",
+      "buddyx",
+      "twentytwentyfive"
     ],
     "viewports": [
       1440,
@@ -14,76 +99,16 @@
     "schemes": [
       "light",
       "dark"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US, ar for .14"
   },
-  "checks": {
-    "c-site-host-integrations.1": {
-      "result": "pass",
-      "evidence": "Reign /community/: Inter = body font, text rgb(64,72,85), primary #1d76da, container 1140 (theme width), one h1, no h-scroll 1440/390; shot host-reign-*.png. Sidebar setting does not exist (see 17)."
-    },
-    "c-site-host-integrations.2": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyX/TT5 would need a site-wide theme switch that disrupts lanes A and C"
-    },
-    "c-site-host-integrations.3": {
-      "result": "pass",
-      "evidence": "Appearance: container_width=custom 900 saved; /community/ .jt-app width 1440 viewport = 900px on reload; restored to theme (verified). No sidebar-position setting exists. host-width900.png"
-    },
-    "c-site-host-integrations.4": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
-    },
-    "c-site-host-integrations.5": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
-    },
-    "c-site-host-integrations.6": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
-    },
-    "c-site-host-integrations.7": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
-    },
-    "c-site-host-integrations.8": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
-    },
-    "c-site-host-integrations.9": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyPress / Fluent Community not installed on this site"
-    },
-    "c-site-host-integrations.10": {
-      "result": "pass",
-      "evidence": "Community loads with no BuddyPress/Fluent present (200, no PHP error on /community/ with WP_DEBUG on, no empty tab)"
-    },
-    "c-site-host-integrations.11": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED for BuddyX; Reign dark verified only (bg rgb(35,38,47), text rgb(229,229,229)) - runbook needs both themes"
-    },
-    "c-site-host-integrations.12": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED for BuddyX/TT5; Reign only: no h-scroll at 390 on /community/ and topic"
-    },
-    "c-site-host-integrations.13": {
-      "result": "pass",
-      "evidence": "Topic 5872 (159 chars) on Reign: h1 wraps (650px wide x128 at 1440; 294x159 at 390), scrollWidth==viewport, no page overflow. 100-char URL not separately probed. host-grace-*.png"
-    },
-    "c-site-host-integrations.14": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: no Arabic language pack installed"
-    },
-    "c-site-host-integrations.15": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: maintenance mode would take the shared site down for lanes A and C"
-    },
-    "c-site-host-integrations.16": {
-      "result": "pass",
-      "evidence": "front_page on: / returned 200 with .jt-app community; off: / shows no jt-app. Restored false. Maintenance gate half not performed (see 15)."
-    },
-    "c-site-host-integrations.17": {
-      "result": "fail",
-      "evidence": "No Sidebar setting exists in Settings > Appearance (grep: sidebar_visibility only a stray saved option value, no code or field); BuddyX also not tested. Runbook check has no corresponding feature"
+  "runbook_fixes": [
+    {
+      "check": "c-site-host-integrations.6",
+      "now": "with BuddyPress off the BuddyPress options on the Integrations tab are absent (the tab itself stays)"
     }
-  }
+  ],
+  "wave7_walked_at": "2026-11-10T08:55:14Z",
+  "wave7_note": "NONPASS journey: only the checks that were not pass were walked in wave 7 (.12 now fail; .11 BuddyX half and .18 Divi stay ENV untested)"
 }

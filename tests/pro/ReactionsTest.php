@@ -233,4 +233,30 @@ class ReactionsTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '<button', $html );
 		$this->assertStringNotContainsString( 'jt-reaction-picker', $html );
 	}
+
+	/**
+	 * A trashed topic answers 409 (not live), the same as a vote, not the 404 a
+	 * reader gets for something they may not see. Nothing is stored.
+	 */
+	public function test_trashed_target_is_refused_as_not_live(): void {
+		Post::update( $this->post_id, [ 'status' => 'trash' ] );
+		$response = $this->toggle( 'thumbsup', $this->user_id );
+		$this->assertSame( 409, $response->get_status() );
+		global $wpdb;
+		$this->assertSame( 0, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_pro_reactions WHERE object_id = %d", $this->post_id ) ) );
+	}
+
+	/**
+	 * Reacting is vote-grade: a member a Read access rule admits to a private
+	 * space can read and report, but not react, the same as /vote refuses them.
+	 */
+	public function test_read_rule_viewer_cannot_react(): void {
+		$space = (int) Space::create( [ 'title' => 'Advisors', 'slug' => 'adv-' . uniqid(), 'visibility' => 'private' ] );
+		\Jetonomy\Models\AccessRule::create( [ 'space_id' => $space, 'rule_type' => 'role', 'rule_value' => 'subscriber', 'grants' => 'read' ] );
+		$post = (int) Post::create( [ 'space_id' => $space, 'title' => 'Roadmap notes', 'slug' => 'rm-' . uniqid(), 'content' => '<p>Notes.</p>', 'status' => 'publish' ] );
+		wp_set_current_user( $this->user_id );
+		$request = new WP_REST_Request( 'POST', "/jetonomy/v1/posts/{$post}/reactions" );
+		$request->set_body_params( [ 'emoji' => 'thumbsup' ] );
+		$this->assertSame( 403, $this->server->dispatch( $request )->get_status() );
+	}
 }

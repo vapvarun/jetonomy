@@ -75,7 +75,7 @@ class App_Config_Controller extends Base_Controller {
 			// ('' = not configured) so the app can do a simple truthiness check.
 			'terms_url'    => $this->terms_url( $settings ),
 			'privacy_url'  => $this->privacy_url( $settings ),
-			'support_url'  => esc_url_raw( (string) ( $settings['support_url'] ?? '' ) ),
+			'support_url'  => \Jetonomy\absolute_url( (string) ( $settings['support_url'] ?? '' ) ) ?? '',
 			// Dark mode follows the device/OS theme in the app — phantom dark_mode_default removed (no admin producer).
 			'pro_active'   => $pro_active,
 			// Pro-only gate. The Jetonomy mobile app is a Pro benefit, so this
@@ -86,6 +86,15 @@ class App_Config_Controller extends Base_Controller {
 			// free-only (or unlicensed) install. Fail closed.
 			'app_enabled'  => false,
 			'features'     => $features,
+			// The report dialog's reasons and note limit, from the same list web uses.
+			'flag_reasons' => array_map(
+				static fn ( string $value, string $label ): array => array(
+					'value' => $value,
+					'label' => $label,
+				),
+				array_keys( \Jetonomy\Models\Flag::reason_labels() ),
+				array_values( \Jetonomy\Models\Flag::reason_labels() )
+			),
 			// The attachments{} object is ALWAYS present so the app has one
 			// consistent shape whether or not the feature is active. Free ships
 			// the defaults with enabled reflecting the flag; the Pro attachments
@@ -139,7 +148,7 @@ class App_Config_Controller extends Base_Controller {
 	 */
 	private function branding( array $settings ): array {
 		$accent   = (string) ( $settings['accent_color'] ?? '#0073aa' );
-		$logo     = (string) ( $settings['logo_url'] ?? '' );
+		$logo     = \Jetonomy\absolute_url( (string) ( $settings['logo_url'] ?? '' ) ) ?? '';
 		$login_bg = '';
 
 		return array(
@@ -157,7 +166,7 @@ class App_Config_Controller extends Base_Controller {
 	 * @return string Always a string; '' means not configured.
 	 */
 	private function terms_url( array $settings ): string {
-		return esc_url_raw( (string) ( $settings['terms_url'] ?? '' ) );
+		return \Jetonomy\absolute_url( (string) ( $settings['terms_url'] ?? '' ) ) ?? '';
 	}
 
 	/**
@@ -186,7 +195,7 @@ class App_Config_Controller extends Base_Controller {
 	 * @return string Always a string; '' means not configured.
 	 */
 	private function privacy_url( array $settings ): string {
-		$url = (string) ( $settings['privacy_url'] ?? '' );
+		$url = \Jetonomy\absolute_url( (string) ( $settings['privacy_url'] ?? '' ) ) ?? '';
 		if ( '' === $url ) {
 			$url = (string) get_privacy_policy_url();
 		}

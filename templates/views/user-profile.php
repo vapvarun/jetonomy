@@ -24,7 +24,7 @@ if ( ! $user ) {
 	return;
 }
 
-$profile         = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
+$profile         = \Jetonomy\Models\UserProfile::find_public( (int) $user->ID ); // Counts exclude anonymous items.
 $trust           = $profile ? (int) $profile->trust_level : 0;
 $rep             = $profile ? (int) $profile->reputation : 0;
 $p_count         = $profile ? (int) $profile->post_count : 0;
@@ -189,20 +189,22 @@ $crumbs = array(
 							$jt_name = \Jetonomy\user_display_name( $user );
 							?>
 							<div class="jt-more-menu jt-flex-shrink-0">
-								<button class="jt-btn jt-btn-ghost jt-more-trigger" type="button"
+								<button class="jt-btn jt-btn-ghost jt-more-trigger" type="button" aria-expanded="false"
 									aria-haspopup="menu"
 									aria-label="<?php /* translators: %s: member display name. */ echo esc_attr( sprintf( __( 'More actions for %s', 'jetonomy' ), $jt_name ) ); ?>"
 									data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
-								<div class="jt-more-dropdown" hidden>
-									<button class="jt-more-item" type="button"
+								<div class="jt-more-dropdown" role="menu" hidden>
+									<?php if ( \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'flag' ) ) : // The same answer POST /flags gives. ?>
+									<button role="menuitem" class="jt-more-item" type="button"
 										data-wp-on--click="actions.flagUser"
 										data-user-id="<?php echo absint( $profile_user_id ); ?>"><?php jetonomy_echo_icon( 'flag', 14 ); ?> <?php esc_html_e( 'Report', 'jetonomy' ); ?></button>
+									<?php endif; ?>
 									<?php if ( $jt_blocked ) : ?>
-										<button class="jt-more-item" type="button"
+										<button role="menuitem" class="jt-more-item" type="button"
 											data-wp-on--click="actions.unblockUser"
 											data-user-id="<?php echo absint( $profile_user_id ); ?>"><?php jetonomy_echo_icon( 'user-check', 14 ); ?> <?php /* translators: %s: member display name. */ echo esc_html( sprintf( __( 'Unblock %s', 'jetonomy' ), $jt_name ) ); ?></button>
 									<?php elseif ( $jt_blockable ) : ?>
-										<button class="jt-more-item jt-more-item--danger" type="button"
+										<button role="menuitem" class="jt-more-item jt-more-item--danger" type="button"
 											data-wp-on--click="actions.blockMember"
 											data-user-id="<?php echo absint( $profile_user_id ); ?>"
 											data-confirm-title="<?php /* translators: %s: member display name. */ echo esc_attr( sprintf( __( 'Block %s?', 'jetonomy' ), $jt_name ) ); ?>"
@@ -363,7 +365,7 @@ $crumbs = array(
 			 */
 			$jt_profile_tabs = apply_filters( 'jetonomy_profile_tabs', $jt_profile_tabs, $user, $is_own );
 			?>
-			<div class="jt-profile-tabs" data-wp-interactive="jetonomy" data-wp-init--active-tab="callbacks.initProfileTabsActive">
+			<div class="jt-profile-tabs">
 				<?php
 				foreach ( (array) $jt_profile_tabs as $jt_tab_slug => $jt_tab ) :
 					if ( empty( $jt_tab['label'] ) || ! isset( $jt_tab['url'] ) ) {
@@ -402,12 +404,12 @@ $crumbs = array(
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $ur_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $ur_space ) ) : ?>
 									<div class="jt-votes">
-										<span class="jt-v-num"><?php echo esc_html( (int) $ur->vote_score ); ?></span>
+										<?php jetonomy_vote_score_static( (int) $ur->vote_score ); ?>
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
 									<?php if ( ! empty( $ur->is_private_hidden ) ) : ?>
-										<div class="jt-row-title jt-row-title--private"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo esc_html( sprintf( /* translators: %s: singular reply label. */ __( 'Private %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?></div>
+										<div class="jt-row-title jt-row-title--private"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo esc_html( sprintf( /* translators: %s: a singular label, lowercase (space, group or reply). */ __( 'Private %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?></div>
 									<?php else : ?>
 										<div class="jt-row-title" dir="auto"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
 									<?php endif; ?>
@@ -467,7 +469,7 @@ $crumbs = array(
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $uv_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $uv_space ) ) : ?>
 									<div class="jt-votes">
-										<span class="jt-v-num"><?php echo esc_html( (int) $uv->vote_score ); ?></span>
+										<?php jetonomy_vote_score_static( (int) $uv->vote_score ); ?>
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
@@ -618,7 +620,7 @@ $crumbs = array(
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $bk_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $bk_space ) ) : ?>
 									<div class="jt-votes">
-										<span class="jt-v-num"><?php echo esc_html( (int) $bk_post->vote_score ); ?></span>
+										<?php jetonomy_vote_score_static( (int) $bk_post->vote_score ); ?>
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
@@ -666,7 +668,7 @@ $crumbs = array(
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $post_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $r_space ) ) : ?>
 									<div class="jt-votes">
-										<span class="jt-v-num"><?php echo esc_html( (int) $r_post->vote_score ); ?></span>
+										<?php jetonomy_vote_score_static( (int) $r_post->vote_score ); ?>
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">

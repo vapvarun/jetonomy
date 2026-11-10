@@ -1,11 +1,14 @@
 {
   "journey": "C.anon.search",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:35:43Z",
-  "walker": "lane A3",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:02:36Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
+    "mode": "free stack (Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
@@ -13,80 +16,83 @@
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-anon-search.1": {
       "result": "pass",
-      "evidence": "guest /community/search/?q=dark mode: exact-phrase titles first (Dark mode toggle in user preferences, New: dark mode is now available, Dark mode toggle resets..., Dark mode for the community on phones), hyphenated 'dark-mode' titles after them; 8 results.",
-      "screenshot": "search-results.png"
+      "evidence": "Guest search 'dark mode': 6 results; titles with the exact phrase first (Dark mode toggle in user preferences, New: dark mode is now available..., Dark mode toggle resets..., Dark mode for the community on phones), hyphenated 'dark-mode' titles last"
     },
     "c-anon-search.2": {
       "result": "pass",
-      "evidence": "qzxvbnm: 'No results for \"qzxvbnm\"' with browse links, no raw error."
+      "evidence": "'qzxvbnm' -> '0 results / No results for \"qzxvbnm\" Try different or fewer keywords, or browse the community.' with Browse all spaces"
     },
     "c-anon-search.3": {
       "result": "pass",
-      "evidence": "guest UI search 'Referral fees' (Partner Program) = 0 results."
+      "evidence": "Guest searches 'self-promotion wave' (Moderators' Room), 'roadmap draft for review' (CAB), 'Referral fees' (Partner Program): 0 results each"
     },
     "c-anon-search.4": {
       "result": "pass",
-      "evidence": "guest GET /search for 'Referral fees', 'Q1 roadmap draft', 'self-promotion wave': 200 with empty data and meta.total 0 each."
+      "evidence": "Guest REST /search?q=self-promotion wave and roadmap draft for review: 200 {data:[],meta.total:0}"
     },
     "c-anon-search.5": {
       "result": "pass",
-      "evidence": "Private reply 16300 in a public topic: GET /search?type=reply&q=sentence -> guest 0, alice/bob/admin 1; topic-type search for the same text returns nothing (topics do not match through replies).",
-      "carried_forward": true
+      "evidence": "Guest search of the text only in a private reply ('shop I bought mine from privately', topic 243): 0 results"
     },
     "c-anon-search.6": {
       "result": "pass",
-      "evidence": "'Referral fees': bob (member) 1 result in API and UI; guest 0; maya (not a member) 0. maya (CAB member / Mod Room moderator) sees 'Q1 roadmap draft' and 'self-promotion wave' (1 each), bob 0."
+      "evidence": "'Referral fees': bob (Partner Program admin) 1 result, hana (non-member) 0 results"
     },
     "c-anon-search.7": {
       "result": "pass",
-      "evidence": "Guest pressed / on /community/: the Jetonomy search overlay opened; typing 'dark mode' dropped down 6 suggestions plus 'See all results'.",
-      "screenshot": "search-overlay.png"
+      "evidence": "Pressed / on /community/: overlay input opened; typing 'dark mode' showed 6 suggestions + 'See all results'; Enter opened /community/search/?q=dark%20mode"
     },
     "c-anon-search.8": {
       "result": "pass",
-      "evidence": "Search \"phpBB\" finds Grace 159-char topic (2 results); title wraps, 3 <mark> highlights, no horizontal scroll at 1440.",
-      "screenshot": "c-anon-search.8.png",
-      "carried_forward": true
+      "evidence": "Search 'phpBB' (Grace-style 159-char topic): result wraps, 3 highlighted marks, no horizontal scroll at 1440 or 390",
+      "screenshot": "walk-207/free/search-390.png"
     },
     "c-anon-search.9": {
       "result": "pass",
-      "evidence": "Arabic phrase 'إعادة تعيين كلمة المرور' finds 1 topic (guest)."
+      "evidence": "Arabic site language, guest search /community/search/?q=تجربتي: 1 result (Omar's topic 'تجربتي مع مجموعات التصوير المحلية'), body direction rtl, match highlighted, title and excerpt right-aligned; screenshot walk-207/free/rtl-search.png."
     },
     "c-anon-search.10": {
       "result": "pass",
-      "evidence": "bob created 'QA-WALK-A3 zebrafinch okapi' (ziggurat quokka): found immediately by guest search (1); no stale index."
+      "evidence": "bob created 'Walking the Zephyrwick plugin export tool on a shared host' via REST (201, id 253); search 'Zephyrwick' as bob found it immediately (no OPTIMIZE needed). Topic later deleted."
     },
     "c-anon-search.11": {
       "result": "pass",
-      "evidence": "GET /search?q=a and ?q= both 400 jetonomy_validation."
+      "evidence": "Guest REST /search?q=a and ?q= -> 400 jetonomy_validation 'Search query must be at least 2 characters.' (browser console shows the two 400s from these probes)"
     },
     "c-anon-search.12": {
       "result": "pass",
-      "evidence": "The same topic deleted by bob: guest search returns 0 afterwards."
+      "evidence": "Deleted topic 253 (REST DELETE 200); guest search 'Zephyrwick' -> 0 results"
     },
     "c-anon-search.13": {
       "result": "pass",
-      "evidence": "/community/search/?q=dark mode at 390: scrollWidth 390 = viewport.",
-      "screenshot": "search-390.png"
+      "evidence": "390px /search?q=phpBB: no horizontal scroll, 2 result cards fit",
+      "screenshot": "walk-207/free/search-390.png"
     },
     "c-anon-search.14": {
       "result": "pass",
-      "evidence": "Typing 'dark mode' in the overlay and pressing Enter opened /community/search/?q=dark%20mode."
+      "evidence": "Typed 2+ chars in the overlay and pressed Enter: URL became /community/search/?q=dark%20mode with the results page"
     },
     "c-anon-search.15": {
       "result": "pass",
-      "evidence": "Overlay suggestions and results page list the same first five in the same order (Dark mode toggle in user preferences, New: dark mode..., Dark mode toggle resets..., QA-WALK-B2 Which phone browsers..., Dark mode for the community on phones)."
+      "evidence": "Overlay suggestions order = results page order: Dark mode toggle in user preferences, New: dark mode..., Dark mode toggle resets..., Dark mode for the community on phones, ... same on both (query 'dark mode'); the exact-title query not separately run"
     },
     "c-anon-search.16": {
       "result": "pass",
-      "evidence": "maya (not in Partner Program) gets 0 for 'Referral fees', bob (member) 1."
+      "evidence": "hana (not a Partner Program member) searching for a Partner Program topic phrase gets 0 results (verified in wave 1); the line names maya, who is a space admin there so she correctly sees it - only the persona in the line is stale. Behaviour: private-space topics are hidden from non-members in search."
     }
   },
   "proposed_checks": [],
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "runbook_fixes": [
+    {
+      "check": "c-anon-search.16",
+      "now": "replace 'member_b who is not a member' with a user who really is not a member of Partner Program - hana (maya is a Partner Program space admin; alice and bob are members after the reseed)"
+    }
+  ]
 }

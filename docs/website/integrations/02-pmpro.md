@@ -30,7 +30,7 @@ Jetonomy detects PMPro automatically when the plugin is active. The PMPro adapte
 
 Members who hold the selected PMPro level gain access to the space immediately. You can stack multiple rules - access is granted if the member matches any rule.
 
-> **Tip:** For a full explanation of the **Access level** (Read / Participate / Full) choices, see [Access level](01-memberpress.md#access-level) in the MemberPress guide - they work the same for every integration.
+> **Tip:** For a full explanation of the **Access level** (Read / Participate) choices, see [Access level](01-memberpress.md#access-level) in the MemberPress guide - they work the same for every integration.
 
 ## Access Follows the Subscription
 

@@ -256,11 +256,16 @@ class SpaceMember extends Model {
 	/**
 	 * The owner's "Join spaces" capability. A role the owner never mapped
 	 * (another plugin's) keeps the engine's open fallback, as everywhere else.
-	 * The one check behind join(), auto-join and the Join button.
+	 * The one check behind join(), auto-join and the Join button. The join
+	 * route also needs WordPress `read`, so a role without it is never shown
+	 * a Join button the route then refuses.
 	 *
 	 * @param int $user_id User ID.
 	 */
 	public static function may_join_spaces( int $user_id ): bool {
+		if ( ! user_can( $user_id, 'read' ) ) {
+			return false;
+		}
 		// phpcs:ignore WordPress.WP.Capabilities.Unknown -- registered via Capabilities::ROLE_MAP.
 		return user_can( $user_id, 'jetonomy_join_spaces' ) || ! \Jetonomy\Permissions\Capabilities::has_explicit_role_mapping( $user_id );
 	}
@@ -671,11 +676,13 @@ class SpaceMember extends Model {
 	 *                         preserves pre-1.4.3 behaviour for every caller
 	 *                         that did not opt in to pagination).
 	 * @param int    $offset   Row offset. Ignored when $limit = 0.
-	 * @param string $search   Optional name, login or email fragment.
+	 * @param string $search     Optional name, login or email fragment.
+	 * @param bool   $names_only Match the display name only (public roster: a
+	 *                           login can be an email address).
 	 * @return object[]
 	 */
-	public static function list_by_space( int $space_id, int $limit = 0, int $offset = 0, string $search = '' ): array {
-		[ $where, $args ] = self::space_where( $space_id, $search );
+	public static function list_by_space( int $space_id, int $limit = 0, int $offset = 0, string $search = '', bool $names_only = false ): array {
+		[ $where, $args ] = self::space_where( $space_id, $search, $names_only );
 		$base             = 'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY role DESC, joined_at ASC";
 		if ( $limit > 0 ) {
 			$base  .= ' LIMIT %d OFFSET %d';
@@ -692,11 +699,12 @@ class SpaceMember extends Model {
 	 * materialising every row.
 	 *
 	 * @param int    $space_id
-	 * @param string $search   Same filter as list_by_space().
+	 * @param string $search     Same filter as list_by_space().
+	 * @param bool   $names_only Same as list_by_space().
 	 * @return int
 	 */
-	public static function count_by_space( int $space_id, string $search = '' ): int {
-		[ $where, $args ] = self::space_where( $space_id, $search );
+	public static function count_by_space( int $space_id, string $search = '', bool $names_only = false ): int {
+		[ $where, $args ] = self::space_where( $space_id, $search, $names_only );
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $where holds only placeholders.
 		return (int) static::db()->get_var( static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE {$where}", ...$args ) );
 	}
@@ -707,12 +715,18 @@ class SpaceMember extends Model {
 	 *
 	 * @return array{0:string,1:array}
 	 */
-	private static function space_where( int $space_id, string $search ): array {
+	private static function space_where( int $space_id, string $search, bool $names_only = false ): array {
 		if ( '' === $search ) {
 			return array( 'space_id = %d', array( $space_id ) );
 		}
 		$users = static::db()->users;
 		$like  = '%' . static::db()->esc_like( $search ) . '%';
+		if ( $names_only ) {
+			return array(
+				"space_id = %d AND user_id IN ( SELECT ID FROM {$users} WHERE display_name LIKE %s )",
+				array( $space_id, $like ),
+			);
+		}
 		return array(
 			"space_id = %d AND user_id IN ( SELECT ID FROM {$users} WHERE display_name LIKE %s OR user_login LIKE %s OR user_email LIKE %s )",
 			array( $space_id, $like, $like, $like ),

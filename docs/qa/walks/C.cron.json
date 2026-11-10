@@ -1,85 +1,76 @@
 {
   "journey": "C.cron",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:11:51Z",
-  "walker": "lane B2",
-  "env": {
-    "themes": [
-      "reign"
-    ],
-    "viewports": [
-      1440,
-      390
-    ],
-    "schemes": [
-      "light"
-    ]
-  },
+  "free": "9af111d9",
+  "pro": "ba34f60",
   "checks": {
     "c-cron.1": {
       "result": "pass",
-      "evidence": "wp action-scheduler action list --group=jetonomy --status=pending --per_page=200 shows pending trust_evaluation, cleanup_expired, prune_activity, cleanup_notifications, verification_reminder, reconcile_rosters, cleanup_media (the CLI default page of 5 rows hides most; needs --per_page)",
-      "carried_forward": true
+      "evidence": "Pro+Free active: wp action-scheduler action list --status=pending shows exactly one pending action for each of jetonomy_trust_evaluation, jetonomy_cleanup_expired, jetonomy_prune_activity, jetonomy_cleanup_notifications, jetonomy_verification_reminder, jetonomy_reconcile_rosters, jetonomy_cleanup_media (group jetonomy), plus jetonomy_publish_scheduled while a scheduled topic exists."
     },
     "c-cron.2": {
       "result": "pass",
-      "evidence": "Pro active: pro_send_daily_digest, pro_send_weekly_digest, pro_evaluate_badges, pro_license_check (+edd_sl weekly cron for both) each pending exactly once; pro_ai_batch_review not pending (AI off); after a second activation still one each",
-      "carried_forward": true
+      "evidence": "Pro active: pending jetonomy_pro_send_daily_digest, jetonomy_pro_send_weekly_digest, jetonomy_pro_evaluate_badges, jetonomy_pro_license_check, jetonomy_pro_prune_webhook_deliveries, each exactly once; no AI batch review job (AI review feature off). After deactivating and reactivating both plugins the counts are still 1 each (no duplicates). wp cron event list shows only the EDD SDK weekly licence checks for jetonomy and jetonomy-pro."
     },
     "c-cron.3": {
       "result": "pass",
-      "evidence": "Deactivated jetonomy-pro then jetonomy: 0 pending jetonomy_* actions remain, only edd_sl cron events, no fatal in debug.log",
-      "carried_forward": true
+      "evidence": "wp plugin deactivate jetonomy-pro jetonomy: no pending action with a jetonomy hook remains (DB query; 0 pending, 267 complete / 12 canceled), no fatal, site 200, debug.log unchanged (54632 bytes). Note: the wp action-scheduler command itself is unavailable while the plugins are off, and wp cron still lists edd_sl_sdk_weekly_license_check_jetonomy and _jetonomy-pro (licence SDK events, not Jetonomy jobs)."
     },
     "c-cron.4": {
       "result": "pass",
-      "evidence": "Ran the 7 free recurring hooks plus pro_prune_webhook_deliveries and pro_evaluate_badges via action-scheduler action run: each 'Executed 1 action' and status complete; no new debug.log error. Pro daily/weekly digest and license check not run (would mass-mail / call licence server)",
-      "carried_forward": true
+      "evidence": "wp action-scheduler action run for every recurring hook (trust_evaluation, cleanup_expired, prune_activity, cleanup_notifications, verification_reminder, reconcile_rosters, cleanup_media, pro evaluate_badges, prune_webhook_deliveries, daily and weekly digest): each 'Executed 1 action', rows status complete (and the spawned jetonomy_trust_evaluation_batch / jetonomy_pro_badges_batch complete), zero failed rows, debug.log gained nothing."
     },
     "c-cron.5": {
       "result": "pass",
-      "evidence": "deactivate then activate jetonomy+pro in sequence: all 7 free and 4 pro recurring events rescheduled once each, /community/messages/ answers 302 (login redirect), /community/ 200. Side effect: a pending jetonomy_pro_rbe_imap_poll and badges_eval_user were dropped by the deactivate and not re-armed",
-      "carried_forward": true
+      "evidence": "With rewrite_rules deleted, wp plugin deactivate jetonomy-pro jetonomy then activate in one command: every recurring event re-scheduled once; /community/ 200 and /community/messages/ answers (302 to login for a guest, i.e. the Pro route exists) without a permalink flush."
     },
     "c-cron.6": {
       "result": "pass",
-      "evidence": "Fixture expired global_ban (user n1) and expired invite: after jetonomy_cleanup_expired the ban row is gone; invite row 574 kept and /community/invite/<token>/ says 'expired or reached its usage limit' (unknown token says 'Invalid invite link.'). Fixtures removed",
-      "carried_forward": true
+      "evidence": "Inserted an expired global_ban (expires 1h ago) for david and an expired invite link (expires 2h ago) on Customer Advisory Board; ran jetonomy_cleanup_expired: restriction rows for david 0, invite row still present, and /community/invite/<token>/ answers HTTP 410 'This invite link has expired or reached its usage limit' (expired, not invalid). Posting as david after the ban was not exercised."
     },
     "c-cron.7": {
       "result": "pass",
-      "evidence": "tier roster row in private space 4955 with no rule: jetonomy_reconcile_rosters removed it; manual row for admin kept",
-      "carried_forward": true
+      "evidence": "Roster rows on Customer Advisory Board: user 12 source=tier (no rule grants access) and user 14 source=manual; after jetonomy_reconcile_rosters the tier row is gone and the manual row stays."
     },
     "c-cron.8": {
       "result": "pass",
-      "evidence": "On a full clone of the site DB (not forums.local) seeded with 5,000 extra profiles (5,047 with trust_level<4): Cron::evaluate_trust_batch ran 11 times, cursor jetonomy_trust_eval_cursor advanced 900452, 900952 ... 904952 in 500-row slices and was deleted after the last partial slice; slowest run 0.03s. No promotions occurred with the seeded stats, so the promotion write path was not exercised on this run"
+      "evidence": "Wave 7 (free 0991f3be). Seeded 5,000 real community profiles (5,000 wp_users + jt_user_profiles rows, trust_level 0, 40 days old; 5,027 profiles in total) and ran the trust sweep: the dispatcher reset jetonomy_trust_eval_cursor to 0 and queued jetonomy_trust_evaluation_batch; Action Scheduler completed 11 batch actions (500 rows each, 5,027 / 500 = 11) in 0.49 s total; driving the worker one batch at a time showed the cursor advancing 781 -> 1281 -> 1781 -> ... -> 5281 and being deleted by the 11th (empty/partial) run, 1-10 ms per batch. Fixture users/profiles removed afterwards (profiles back to 27)."
     },
     "c-cron.9": {
       "result": "pass",
-      "evidence": "bob scheduled a topic for 10:04:20 UTC (draft): hook run at 10:02:40 left it draft and re-armed; run at 10:04:24 published it at 10:04:25; subscribed follower alice got one new_post_in_sub notice",
-      "carried_forward": true
+      "evidence": "bob scheduled 'Quarterly feedback round: what should we improve first?' for 09:05 (site time = UTC) through the composer at 08:56 (UI: Schedule..., date, hour 09, minute 05; notice 'Scheduled to publish on November 10, 2026 9:05 am'); alice and maya follow the space. Running 'wp action-scheduler run --hooks=jetonomy_publish_scheduled' at 08:56 and 09:03 left it a draft; at 09:05:27 Action Scheduler published it by itself (status publish, guest URL 200) and each follower got exactly one new_post_in_sub notification (2 rows, 1 per follower)."
     },
     "c-cron.10": {
-      "result": "not_performed",
-      "evidence": "Action Scheduler cannot be made missing on this site: Jetonomy bundles its own copy (libs/action-scheduler) and woocommerce, lifterlms, sensei, pmpro and wpmediaverse ship others, so as_enqueue_async_action stays defined with every other copy skipped. Code read: Queue::has_as() falls back to WP-Cron silently, and a grep of includes/ finds no admin notice for a missing Action Scheduler, so the 'shows a notice' half of the check has no implementation"
+      "result": "pass",
+      "evidence": "The plugin folder is a read-only mount, so the check ran on a copy of Free without libs/action-scheduler (jetonomy-copy style 'jetonomy-noas', real Free deactivated): function as_enqueue_async_action absent; wp-admin Plugins screen shows 'Jetonomy: the bundled Action Scheduler library is missing from libs/action-scheduler/. Background jobs (...) are paused until the plugin files are restored...' (notice-error); front page, /community/ and /community/s/feature-requests/ answer 200, REST /spaces 200, no WSOD. Copy removed and real Free reactivated afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-cron-noas-notice.png"
     },
     "c-cron.11": {
       "result": "pass",
-      "evidence": "Pro deactivate/reactivate: failed rows unchanged (attachments_gc 5, daily 5, weekly 3, evaluate_badges 4, prune_webhook 3); no new 'no callbacks are registered' failures",
-      "carried_forward": true
+      "evidence": "After the deactivate/reactivate cycles of Pro: SELECT ... FROM actionscheduler_actions WHERE status='failed' returns 0 rows overall and 0 for jetonomy_pro_* hooks."
     },
     "c-cron.12": {
       "result": "pass",
-      "evidence": "Expired invite rows are kept by design (see .6): after cleanup_expired the row stayed and the link says expired",
-      "carried_forward": true
+      "evidence": "Same run as .6: jetonomy_cleanup_expired keeps the expired jt_invite_links row (token walk-expired-token-6a present) and deletes only the restriction."
+    },
+    "c-cron.13": {
+      "result": "pass",
+      "evidence": "Scheduled topic 371 (REST, draft + published_at +25 min, jetonomy_publish_scheduled action 324 pending). rewrite_rules deleted, then deactivate and activate Free and Pro in one command: the scheduled-publish action is re-armed (new pending id 332 for 07:48:12), /community/messages/ answers without a manual flush, and the topic published when its action ran after its time."
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
-  "proposed_checks": [
-    {
-      "id": "c-cron.13",
-      "text": "Reword .10: Jetonomy bundles Action Scheduler, so the missing-AS case needs a build without libs/action-scheduler; decide whether a notice should exist at all."
-    }
-  ]
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T07:29:23.526464+00:00",
+  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
+  "env": {
+    "mode": "free stack with Pro active (all 17 extensions)",
+    "site": "http://localhost:8912",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [],
+    "schemes": [],
+    "browser": "WP-CLI + Chromium",
+    "locale": "en_US"
+  },
+  "wave7_walked_at": "2026-11-10T09:05:44Z",
+  "wave7_note": "NONPASS journey: only .8, .9, .10 were walked in wave 7; the rest keeps the wave 6 record at free 9af111d9 / pro ba34f60 (cron record was not a FULL re-walk)"
 }

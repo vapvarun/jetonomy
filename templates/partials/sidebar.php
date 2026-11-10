@@ -108,7 +108,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
-				<h4><?php esc_html_e( 'About', 'jetonomy' ); ?></h4>
+				<h2 class="jt-card-title"><?php esc_html_e( 'About', 'jetonomy' ); ?></h2>
 			<?php else : ?>
 				<?php esc_html_e( 'About', 'jetonomy' ); ?>
 			<?php endif; ?>
@@ -265,7 +265,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
-				<h4><?php esc_html_e( 'Trending', 'jetonomy' ); ?></h4>
+				<h2 class="jt-card-title"><?php esc_html_e( 'Trending', 'jetonomy' ); ?></h2>
 			<?php else : ?>
 				<?php esc_html_e( 'Trending', 'jetonomy' ); ?>
 			<?php endif; ?>
@@ -337,7 +337,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
-				<h4><?php printf( /* translators: %s: plural member label. */ esc_html__( 'Top %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></h4>
+				<h2 class="jt-card-title"><?php printf( /* translators: %s: plural member label. */ esc_html__( 'Top %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></h2>
 			<?php else : ?>
 				<?php printf( /* translators: %s: plural member label. */ esc_html__( 'Top %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
 			<?php endif; ?>
@@ -415,7 +415,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
-				<h4><?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?></h4>
+				<h2 class="jt-card-title"><?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?></h2>
 			<?php else : ?>
 				<?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?>
 			<?php endif; ?>

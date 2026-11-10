@@ -318,14 +318,10 @@ class Spaces_Controller extends Base_Controller {
 						),
 						'rule_value' => array( 'type' => 'string' ),
 						'grants'     => array(
-							'type'    => 'string',
-							'default' => 'read',
-							'enum'    => array( 'read', 'participate', 'full' ),
-						),
-						'space_role' => array(
-							'type'    => 'string',
-							'default' => 'viewer',
-							'enum'    => array( 'viewer', 'member', 'moderator', 'admin' ),
+							'type'        => 'string',
+							'default'     => 'read',
+							'description' => 'read or participate. "full" (removed in 2.0.7) is still accepted and saved as participate.',
+							'enum'        => array( 'read', 'participate', 'full' ),
 						),
 						'priority'   => array(
 							'type'    => 'integer',
@@ -340,9 +336,24 @@ class Spaces_Controller extends Base_Controller {
 			$ns,
 			'/access-rules/(?P<rule_id>\d+)',
 			array(
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'delete_access_rule' ),
-				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
+				array(
+					'methods'             => 'PATCH',
+					'callback'            => array( $this, 'update_access_rule' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
+					'args'                => array(
+						'grants' => array(
+							'type'        => 'string',
+							'required'    => true,
+							'description' => 'read or participate.',
+							'enum'        => array( 'read', 'participate' ),
+						),
+					),
+				),
+				array(
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_access_rule' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces', $rules_refusal ),
+				),
 			)
 		);
 	}
@@ -377,7 +388,7 @@ class Spaces_Controller extends Base_Controller {
 
 		$rule_type  = (string) $request->get_param( 'rule_type' );
 		$rule_value = sanitize_text_field( (string) $request->get_param( 'rule_value' ) );
-		$invalid    = AccessRule::value_error( $rule_type, $rule_value );
+		$invalid    = AccessRule::value_error( $rule_type, $rule_value ) ?? AccessRule::duplicate_error( $space_id, $rule_type, $rule_value );
 		if ( $invalid ) {
 			return $invalid;
 		}
@@ -388,7 +399,6 @@ class Spaces_Controller extends Base_Controller {
 				'rule_type'  => $rule_type,
 				'rule_value' => '' !== $rule_value ? $rule_value : null,
 				'grants'     => (string) $request->get_param( 'grants' ),
-				'space_role' => (string) $request->get_param( 'space_role' ),
 				'priority'   => (int) $request->get_param( 'priority' ),
 			)
 		);
@@ -406,6 +416,25 @@ class Spaces_Controller extends Base_Controller {
 				'message'      => AccessRule::added_message( $space_id, $made_private ),
 			),
 			201
+		);
+	}
+
+	/**
+	 * PATCH /access-rules/{rule_id} - change what the rule grants.
+	 */
+	public function update_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$rule_id = (int) $request->get_param( 'rule_id' );
+		$result  = AccessRule::update_grants( $rule_id, (string) $request->get_param( 'grants' ) );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'data'    => AccessRule::find( $rule_id ),
+				'message' => __( 'Access rule updated.', 'jetonomy' ),
+			),
+			200
 		);
 	}
 
@@ -450,6 +479,10 @@ class Spaces_Controller extends Base_Controller {
 				__( 'You must be logged in.', 'jetonomy' ),
 				array( 'status' => 401 )
 			);
+		}
+		$restricted = \Jetonomy\Permissions\Permission_Engine::restriction_error( get_current_user_id(), 'create_space' );
+		if ( $restricted ) {
+			return $restricted;
 		}
 		if ( ! \Jetonomy\Permissions\Capabilities::can_create_space_frontend() ) {
 			return $this->permission_error();
@@ -663,7 +696,10 @@ class Spaces_Controller extends Base_Controller {
 			return $combo;
 		}
 
-		$cover = esc_url_raw( (string) $request->get_param( 'cover_image' ) );
+		$cover = \Jetonomy\http_url( (string) $request->get_param( 'cover_image' ) );
+		if ( null === $cover ) {
+			return \Jetonomy\invalid_url_error( 'cover_image' );
+		}
 		if ( ! \Jetonomy\Permissions\Capabilities::can_set_image( $cover, '', get_current_user_id() ) ) {
 			return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to upload images.', 'jetonomy' ), array( 'status' => 403 ) );
 		}
@@ -840,7 +876,10 @@ class Spaces_Controller extends Base_Controller {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );
 		}
 		if ( null !== $request->get_param( 'cover_image' ) ) {
-			$data['cover_image'] = esc_url_raw( (string) $request->get_param( 'cover_image' ) );
+			$data['cover_image'] = \Jetonomy\http_url( (string) $request->get_param( 'cover_image' ) );
+			if ( null === $data['cover_image'] ) {
+				return \Jetonomy\invalid_url_error( 'cover_image' );
+			}
 			if ( ! \Jetonomy\Permissions\Capabilities::can_set_image( $data['cover_image'], (string) ( $space->cover_image ?? '' ), get_current_user_id() ) ) {
 				return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to upload images.', 'jetonomy' ), array( 'status' => 403 ) );
 			}
@@ -1713,7 +1752,8 @@ class Spaces_Controller extends Base_Controller {
 			'cover_image' => array(
 				'type'     => 'string',
 				'required' => false,
-				'format'   => 'uri',
+				// No 'format' => 'uri': WordPress would esc_url_raw() it first, turning
+				// javascript:/data: into '' (= clear). The handler validates the raw input.
 			),
 			'sort_order'  => array(
 				'type'     => 'integer',

@@ -152,12 +152,11 @@ class Cron {
 			as_schedule_recurring_action( $start, $interval, $hook, array(), Queue::GROUP );
 		}
 
-		// One-time move off the hourly recurring publisher (2.0.1): drop it
-		// and arm the single action for whatever is already scheduled.
-		if ( ! get_option( 'jetonomy_publish_single_armed' ) ) {
-			update_option( 'jetonomy_publish_single_armed', 1, false );
-			self::arm_scheduled_publish();
-		}
+		// Deactivation cancels the scheduled-topic publisher, so every
+		// activation arms it again for whatever is already scheduled
+		// (idempotent: it replaces what is queued).
+		delete_option( 'jetonomy_publish_single_armed' ); // Retired 2.0.1 one-time flag.
+		self::arm_scheduled_publish();
 	}
 
 	/**

@@ -92,6 +92,27 @@ class MemberPress_Adapter implements Membership_Adapter {
 		return $product ? $product->post_title : $level_id;
 	}
 
+	/**
+	 * A MemberPress membership is bought at checkout and can lapse (optional
+	 * across the adapter interface; it picks the sentence on a gated space).
+	 *
+	 * @param string $level_id Stored rule value.
+	 */
+	public function level_is_purchase( string $level_id ): bool {
+		return true;
+	}
+
+	/**
+	 * Level id prefixes this adapter owns, with the kind each one is.
+	 *
+	 * @return array<string, string>
+	 */
+	public function level_prefixes(): array {
+		return array(
+			'mepr_' => __( 'Membership', 'jetonomy' ),
+		);
+	}
+
 	public function register_hooks(): void {
 		if ( ! $this->is_active() ) {
 			return;

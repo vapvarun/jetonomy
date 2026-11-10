@@ -1,0 +1,2 @@
+# Core-first findings kept on purpose (bin/local-ci.sh runs the check).
+CF5 includes/class-cache.php  # Cache::flush() fallback: a persistent drop-in without flush_group gets a full flush; one-shot admin/CLI/import callers only (see its docblock).

@@ -24,8 +24,8 @@
 		return ( L[ noun ] && L[ noun ][ form ] ) || fallback;
 	};
 	var i18n = {
-		/* translators: 1: category label, plural lowercase. 2: space label, plural lowercase. 3: reply label, plural lowercase. */
-		removeConfirm: wp.i18n.sprintf( wp.i18n.__( 'Delete all sample %1$s, %2$s, posts, and %3$s? Your own content is not affected.', 'jetonomy' ), lbl( 'category', 'many_lower', 'categories' ), lbl( 'space', 'many_lower', 'spaces' ), lbl( 'reply', 'many_lower', 'replies' ) ),
+		/* translators: 1: category label, plural lowercase. 2: space label, plural lowercase. 3: topic label, plural lowercase. 4: reply label, plural lowercase. 5: member label, plural lowercase. */
+		removeConfirm: wp.i18n.sprintf( wp.i18n.__( 'Delete all sample %1$s, %2$s, %3$s, %4$s and sample %5$s? This cannot be undone. Your own content is not affected.', 'jetonomy' ), lbl( 'category', 'many_lower', 'categories' ), lbl( 'space', 'many_lower', 'spaces' ), lbl( 'topic', 'many_lower', 'topics' ), lbl( 'reply', 'many_lower', 'replies' ), lbl( 'member', 'many_lower', 'members' ) ),
 		/* translators: 1: member label, plural lowercase. 2: category label, plural lowercase. 3: space label, plural lowercase. 4: topic label, plural lowercase. */
 		importConfirm: wp.i18n.sprintf( wp.i18n.__( 'Add sample %1$s, %2$s, %3$s and %4$s to this community? You can remove them again in one click.', 'jetonomy' ), lbl( 'member', 'many_lower', 'members' ), lbl( 'category', 'many_lower', 'categories' ), lbl( 'space', 'many_lower', 'spaces' ), lbl( 'topic', 'many_lower', 'topics' ) ),
 		removing:      wp.i18n.__( 'Removing…', 'jetonomy' ),

@@ -29,8 +29,10 @@ Jetonomy Pro ships seventeen extensions. None of them do anything until you swit
 
 1. Go to **Jetonomy → Extensions** (the `jetonomy-extensions` page).
 2. Each extension shows a card with its name, description, and a toggle.
-3. Switch on the toggle for each extension you want. The toggle persists the choice to the `jetonomy_pro_extensions` option (an array of extension IDs).
-4. Enabling an extension runs any one-time setup it needs (for example, creating its database tables) and registers its hooks, REST routes, and admin screens immediately.
+3. Switch on the toggle for each extension you want. It works straight away; the toggle is the only switch.
+4. Once an extension is on, its card shows where to set it up: a **Settings** link, its own page (for example **Manage badges**), **Turn on per space** for features you choose space by space, or a short note when there is nothing to set up. A message at the top of the page also names the next step right after you switch one on.
+
+Developer note: the toggle stores the choice in the `jetonomy_pro_extensions` option (an array of extension IDs). Switching one on runs its one-time setup (for example, creating its database tables) and registers its hooks, REST routes and admin screens.
 
 Disable an extension at any time from the same page. Disabling stops the feature and unregisters its hooks; it does not delete the data the extension already stored.
 

@@ -67,8 +67,9 @@ wp_head();
 	<!-- Header -->
 	<div class="jt-setup-header">
 		<div class="jt-setup-logo">
-			<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-				<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+			<?php // The Jetonomy members mark, the same glyph as the admin menu icon (Admin::add_menu()). ?>
+			<svg viewBox="96 96 320 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+				<circle cx="324" cy="206" r="44"/><path d="M268 330a56 60 0 0 1 112 0v2a6 6 0 0 1-6 6H274a6 6 0 0 1-6-6z"/><circle cx="206" cy="220" r="60"/><path d="M124 366a82 86 0 0 1 164 0v4a10 10 0 0 1-10 10H134a10 10 0 0 1-10-10z"/>
 			</svg>
 		</div>
 		<h1 class="jt-setup-title"><?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( '%s Setup', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></h1>

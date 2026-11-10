@@ -717,8 +717,9 @@ class Space extends Model {
 			Cache::delete( 'space:slug:' . (string) $data['slug'] );
 		}
 
-		// A new space must appear in the cached category tree.
+		// A new space must appear in the cached category tree, and in the sitemap now.
 		self::bump_tree_generation();
+		\Jetonomy\SEO\Sitemap_Emitter::flush();
 
 		// Counted as update() counts: only active spaces (a space created
 		// archived or locked is not in its category's count).
@@ -1061,6 +1062,22 @@ class Space extends Model {
 			return true;
 		}
 		return ! $user_id && 'private' === ( $space->visibility ?? '' ) && ! self::guest_teasers_on();
+	}
+
+	/**
+	 * The name a gate page (403 / ban / join prompt) may show this viewer:
+	 * the title, or "Private space" for a hidden space or a withheld name.
+	 * Every gate's breadcrumb and button read this, so none can leak the title.
+	 *
+	 * @param object   $space   Space row.
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 */
+	public static function gate_name( object $space, ?int $user_id ): string {
+		if ( 'hidden' === ( $space->visibility ?? '' ) || self::name_withheld_from_viewer( $space, $user_id ) ) {
+			/* translators: %s: a singular label, lowercase (space, group or reply). */
+			return sprintf( __( 'Private %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		}
+		return (string) $space->title;
 	}
 
 	/**

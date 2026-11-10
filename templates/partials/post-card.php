@@ -56,7 +56,8 @@ if ( $prefix_name && $space ) {
 	data-jt-key="post-<?php echo absint( $post->id ); ?>"
 	data-wp-interactive="jetonomy">
 	<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
-		<div class="jt-votes" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Vote on this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
+		<?php $jt_vote_gid = wp_unique_id( 'jt-votes-post-' . absint( $post->id ) . '-' ); ?>
+		<div class="jt-votes"<?php echo jetonomy_vote_group_attrs( $jt_vote_gid ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 			<?php // Not "is logged in" - "may actually vote here". A Read-grant rule admits without granting the vote, and your own topic takes no vote. ?>
 			<?php $jt_own_post = $viewer_id && (int) $post->author_id === $viewer_id; ?>
 			<?php if ( ! $jt_own_post && jetonomy_viewer_can_vote( $space ) ) : ?>
@@ -65,7 +66,7 @@ if ( $prefix_name && $space ) {
 					data-wp-on--click="actions.voteUp"
 					data-post-id="<?php echo absint( $post->id ); ?>"
 					<?php echo jetonomy_vote_attrs( 'up', 1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></button>
-				<span class="jt-v-num" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo (int) $post->vote_score; ?></span>
+				<span class="jt-v-num" id="<?php echo esc_attr( $jt_vote_gid ); ?>-n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo (int) $post->vote_score; ?></span>
 				<button type="button" class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
 					aria-pressed="<?php echo -1 === $viewer_vote ? 'true' : 'false'; ?>"
 					data-wp-on--click="actions.voteDown"
@@ -73,10 +74,10 @@ if ( $prefix_name && $space ) {
 					<?php echo jetonomy_vote_attrs( 'down', -1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 			<?php elseif ( is_user_logged_in() ) : ?>
 				<?php // Logged in but not allowed to vote here: say why, same as the single topic page. ?>
-				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 14, $space, $jt_own_post ); ?>
+				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 14, $space, $jt_own_post, $jt_vote_gid . '-n' ); ?>
 			<?php else : ?>
 				<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
-				<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
+				<span class="jt-v-num" id="<?php echo esc_attr( $jt_vote_gid ); ?>-n"><?php echo (int) $post->vote_score; ?></span>
 				<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
 			<?php endif; ?>
 		</div>

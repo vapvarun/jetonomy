@@ -1,113 +1,111 @@
 {
   "journey": "E.reactions",
-  "free": "9b977fcb",
-  "pro": "a830e82",
-  "walked_at": "2026-10-21T12:51:08Z",
-  "walker": "lane C3",
+  "free": "74528ddd",
+  "pro": "69d28a8",
+  "walked_at": "2026-11-10T11:59:12Z",
+  "walker": "release 2.0.7 combo walk wave 11 (Sonnet)",
   "env": {
+    "mode": "combo (Free+Pro, 17 extensions)",
+    "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-reactions.1": {
       "result": "pass",
-      "evidence": "bob on alice reply 13393 (Feature Requests topic): picker Like -> chip \"👍 1\" is-mine/aria-pressed true. Note seed already had a Like from bob, first click removed it, second added it back; persistence after reload confirmed via GET /replies/13393/reactions",
-      "screenshot": "react-liked",
-      "carried_forward": true
+      "evidence": "bob on reply 1195 (alice): React -> picker listed 8 reactions, picked Like -> chip 'Like 1' is-mine aria-pressed true; reload keeps it.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/e1.png"
     },
     "e-reactions.2": {
       "result": "pass",
-      "evidence": "clicking the just-added chip without reload removed it (chips list empty), re-picking Like added it back - the JS-built chip undoes",
-      "carried_forward": true
+      "evidence": "Without reload: clicked the chip -> removed; picked Like again (JS-built chip) -> clicked it -> removed; added again -> back. In-app notification rows show a new first-reaction each time."
     },
     "e-reactions.3": {
       "result": "pass",
-      "evidence": "bob had Like, picked Celebrate: chips show only \"🎉 1\" (Like gone), GET /replies/13393/reactions counts {hooray:1}",
-      "carried_forward": true
+      "evidence": "Like then picked Celebrate on same reply -> only 'hooray 1 mine' remains (Like gone)."
     },
     "e-reactions.4": {
       "result": "pass",
-      "evidence": "alice POST 200, maya POST 200; REST counts {\"counts\":{\"thumbsup\":2},\"user_reactions\":[\"thumbsup\"]}; UI chip [\"👍\\n2|Like\"]. REST GET returns counts + user_reactions only (no reactors names list)",
-      "carried_forward": true
+      "evidence": "alice then maya picked Like on bob's reply 1196: chip 1 then 2; tooltip 'Like: Maya Okafor and Alice Chen'; GET /replies/1196/reactions?emoji=thumbsup -> counts thumbsup 2, reactors label identical."
     },
     "e-reactions.5": {
       "result": "pass",
-      "evidence": "real mouse hover on bob's Like chip on reply 13393: tooltip 'Like: Bob Martinez' visible (display block, 141px wide, inside viewport); Escape hides it; keyboard focus on the chip shows it again. The 13-reactor 'and 3 others' and touch long-press cases were not run (no such reply seeded)",
-      "screenshot": "react-tip"
+      "evidence": "Reply 1178 with 13 reactors: mouse hover and Tab focus show 'Like: <10 names> and 3 others'; 2 reactors (1196) 'Like: Maya Okafor and Alice Chen'; Escape closes it; touch context long-press (CDP touchStart held 1s) shows the tooltip with no toggle (count stays 13), a quick tap toggles (13->12 and back), no tooltip on tap. bob's 13th reaction removed afterwards.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/e5.png"
     },
     "e-reactions.6": {
       "result": "pass",
-      "evidence": "removed the chip, re-added Like via the picker without reload, hovered the new chip: tooltip names 'Like: Bob Martinez' (list refreshed to include me)"
+      "evidence": "After adding Rocket on 1195 without reload (JS-built chip) hover shows 'Rocket: Bob Martinez' (includes the reactor); also holds for the 13th Like on 1178."
     },
     "e-reactions.7": {
       "result": "pass",
-      "evidence": "bob POST /replies/13394/reactions {emoji:\"like\"} and \"not-real\" -> 400 jetonomy_invalid_emoji \"Invalid or disabled emoji.\" (valid slug is thumbsup)",
-      "carried_forward": true
+      "evidence": "bob POST /posts/249/reactions emoji 'not-real' -> 400 jetonomy_invalid_emoji 'Invalid or disabled emoji.'; with Celebrate unticked in settings, POST /posts/11/reactions emoji hooray -> the same 400."
     },
     "e-reactions.8": {
       "result": "pass",
-      "evidence": "bob on CAB topic 5865: POST 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Content not found.\",\"data\":{\"status\":404}} | GET 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Content not found.\",\"data\":{\"status\":404}} | nonexistent POST 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Content not found.\",\"data\":{\"status\":404}} | GET 404 {\"code\":\"jetonomy_not_found\",\"message\":\"Content not found.\",\"data\":{\"status\":404}}",
-      "carried_forward": true
+      "evidence": "bob POST+GET on CAB topics 5347 and 3262 and on id 9999999 -> 404 jetonomy_not_found (POST 'Topic not found.', GET 'Content not found.'), never 403; GET /replies/3821/reactions (CAB reply) -> 404 'Content not found.'. Private and nonexistent ids answer identically."
     },
     "e-reactions.9": {
       "result": "pass",
-      "evidence": "GET /replies/13393/reactions has no reactors key; adding ?emoji=thumbsup returns reactors {label:'Like: Bob Martinez', total:1, names:[...]} (matches current runbook); guest POST 401 / public GET 200 / hidden-space GET 404 carried from earlier live run"
+      "evidence": "Guest POST -> 401; guest GET /posts/249/reactions -> 200 {counts:{thumbsup:15}} with no reactors; with ?emoji=thumbsup adds reactors label; GET /posts/241/reactions (hidden space) -> 404."
     },
     "e-reactions.10": {
       "result": "pass",
-      "evidence": "reply 16305 created then DELETEd (as author): alice react -> 409 {\"code\":\"jetonomy_already_trashed\",\"message\":\"This item is already in the trash. A moderator can restore it or delete it permanently.\",\"data\":{\"status\":409}} (runbook expects 409 target not live; 404 also hides it)",
-      "carried_forward": true
+      "evidence": "bob POST /replies/4152/reactions (trashed) -> 409 jetonomy_already_trashed; POST /posts/13828 (spam) and 13829 (pending) -> 409 jetonomy_not_published; DB shows 0 rows for those targets."
     },
     "e-reactions.11": {
       "result": "pass",
-      "evidence": "finn POST reaction: 403 {\"code\":\"jetonomy_user_silenced\",\"message\":\"Your account is currently silenced and cannot post.\",\"data\":{\"status\":403}}",
-      "carried_forward": true
+      "evidence": "finn: silenced banner shown; reply 1195's reactions render as static SPAN chips with no React trigger; REST POST /replies/1195/reactions -> 403 jetonomy_user_silenced. After bob reacted to finn's -4 topic, finn's page shows score -4 and the 'thumbsup 1' chip correctly.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/e11b.png"
     },
     "e-reactions.12": {
       "result": "pass",
-      "evidence": "alice then maya reacted to bob reply 13394: bob has exactly one reaction bell item (\"Someone reacted to your reply\") and no second item or email in Mailpit. Emoji swap / self-reaction cases not exercised",
-      "carried_forward": true
+      "evidence": "wp_jt_notifications: bob's first Like on alice's reply 1195 notified alice; each remove+re-add (0->1) notified again; swap Like->Celebrate sent none; alice's Like on bob's reply 1196 notified bob once and maya's Like added no second; bob's own reaction on reply 1177 created none. The reaction notification's email channel is off by default (notification_defaults.reaction.email=false) and Mailpit holds no reaction email, so the check is verified on the in-app channel."
     },
     "e-reactions.13": {
       "result": "pass",
-      "evidence": "Settings > Reactions with all 8 emoji unticked + Save -> notice \"No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.\" plus \"Reaction settings saved.\"; normal save shows \"Reaction settings saved.\"",
-      "carried_forward": true
+      "evidence": "Settings > Reactions with all 8 unticked, Save -> notice 'No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.' (alongside 'Reaction settings saved.'); Like left ticked. Normal save -> 'Reaction settings saved.' All 8 restored.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/e13.png"
     },
     "e-reactions.14": {
       "result": "pass",
-      "evidence": "Celebrate disabled after bob had used it: his existing Celebrate chip on reply 13393 still renders as a normal chip (🎉 1, aria-label Celebrate, no breakage); bob POST hooray -> 400 jetonomy_invalid_emoji",
-      "screenshot": "react-celebrate-off",
-      "carried_forward": true
+      "evidence": "Celebrate unticked after use: topic 11 still renders the Celebrate chip (3, 32px high, normal) and the picker lists 7 without Celebrate; REST add hooray -> 400. Setting restored to all 8.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/e14.png"
     },
     "e-reactions.15": {
-      "result": "not_performed",
-      "evidence": "no reply with 40 reactions across 6 emoji exists and seeding 40 accounts was not done"
+      "result": "pass",
+      "evidence": "390px touch: reply 1180 (38 reactions, 6 emoji): chips wrap onto 2 rows inside the card (card 31-359, rightmost chip 311), no horizontal page scroll; names tooltip 280px wide at x 8-288 inside the 390 viewport.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/e15.png"
     },
     "e-reactions.16": {
-      "result": "not_performed",
-      "evidence": "dark scheme emulation does not switch the Reign theme here; tooltip/chip dark contrast not assessable"
+      "result": "pass",
+      "evidence": "Reign dark mode at 390: highlighted chip dark slate fill with light-blue text and border rgb(151,192,238); tooltip light panel rgb(229,229,229) with dark text (contrast about 10).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/e16.png"
     },
     "e-reactions.17": {
       "result": "pass",
-      "evidence": "setOffline then click Like chip: chip stays (count 1, is-mine kept, no stuck optimistic state) and the alert 'Could not save reaction.' is shown"
+      "evidence": "setOffline(true), clicked the Rocket chip on 1195 -> chip stays 'rocket 1 mine' (rolled back), toast 'Could not save reaction.'; server unchanged.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/e17.png"
     },
     "e-reactions.18": {
-      "result": "not_performed",
-      "evidence": "two accounts reacting at the same instant needs two browser sessions; single context harness"
+      "result": "pass",
+      "evidence": "bob and alice (two contexts) clicked Rocket on reply 1198 in the same Promise.all: both UIs show rocket 2, both reloads show 2; cleaned up afterwards."
     },
     "e-reactions.19": {
       "result": "pass",
-      "evidence": "Feature Requests topic ?page=2: 31 reaction triggers bound; picked Love on the last reply -> chip 'Love 1' appears, click removes it again"
+      "evidence": "Feature Requests topic 249 after Load More (60 replies): reply 1214 add, undo, re-add, hover tooltip 'Rocket: Bob Martinez' all work; the post bar works too (Like 15 -> Love replaces it 14/1 -> removed -> Like restored 15)."
     }
   },
-  "proposed_checks": [
-    "Reaction chip tooltip uses role=tooltip with display toggled by hover/focus; add Escape and touch long-press as separate checks."
-  ]
+  "proposed_checks": []
 }

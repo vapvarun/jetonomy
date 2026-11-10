@@ -164,7 +164,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-nav-space > a:hover,
 .jt-nav-space > a:focus-visible {
 	background: var(--jt-bg-hover);
-	color: var(--jt-accent);
+	color: var(--jt-accent-strong);
 	text-decoration: none;
 }
 .jt-nav-space > a:focus-visible {
@@ -264,6 +264,17 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-user-panel.jt-app .jt-userpanel-title {
 	margin: 0 0 2px; /* name/handle lockup - meta line is part of the title group */
+}
+/* Both are h2s (they head the community sidebar, right under the page h1),
+   kept at the h3 size they rendered at before. */
+.jt-login-block.jt-app .jt-login-title,
+.jt-user-panel.jt-app .jt-userpanel-title {
+	font-size: var(--jt-text-lg);
+	line-height: 1.35;
+}
+@media (max-width: 640px) {
+	.jt-login-block.jt-app .jt-login-title,
+	.jt-user-panel.jt-app .jt-userpanel-title { font-size: var(--jt-text-base); }
 }
 .jt-feed-block.jt-app .jt-feed-title {
 	margin: 0; /* spacing owned by .jt-feed-header padding + border */
@@ -449,6 +460,14 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	border-radius: var(--jt-radius-sm, 4px);
 }
 
+/* Registration closed: how to get an account. */
+.jt-login-note {
+	margin: 12px 0 0;
+	font-size: 0.875rem;
+	color: var(--jt-text-secondary);
+	line-height: 1.45;
+}
+
 .jt-login-forgot-intro {
 	margin: 0 0 4px;
 	font-size: 0.875rem;
@@ -563,7 +582,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-userpanel-link:hover,
 .jt-userpanel-link:focus-visible {
 	background: var(--jt-bg-hover);
-	color: var(--jt-accent);
+	color: var(--jt-accent-strong);
 	text-decoration: none;
 	outline: 2px solid var(--jt-accent);
 	outline-offset: -2px;
@@ -639,7 +658,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	flex: 0 0 auto;
 	font-size: 0.8125rem;
 	font-weight: 600;
-	color: var(--jt-accent);
+	color: var(--jt-accent-strong);
 	text-decoration: none;
 	transition: color 0.15s ease;
 }
@@ -705,7 +724,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-shortcode-post-title:hover,
 .jt-shortcode-post-title:focus-visible {
-	color: var(--jt-accent);
+	color: var(--jt-accent-strong);
 	text-decoration: none;
 }
 .jt-shortcode-post-title:focus-visible {
@@ -842,7 +861,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: none;
 	font-weight: 500;
 }
-.jt-shortcode-leaderboard a:hover { color: var(--jt-accent); }
+.jt-shortcode-leaderboard a:hover { color: var(--jt-accent-strong); }
 .jt-shortcode-rep {
 	font-size: 0.8125rem;
 	color: var(--jt-text-tertiary);
@@ -866,7 +885,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	color: var(--jt-text);
 	text-decoration: none;
 }
-.jt-shortcode-profile-card a:hover { color: var(--jt-accent); }
+.jt-shortcode-profile-card a:hover { color: var(--jt-accent-strong); }
 .jt-shortcode-profile-card p {
 	margin: 0;
 	font-size: 0.875rem;
@@ -902,7 +921,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: none;
 	font-weight: 500;
 }
-.jt-shortcode-member a:hover { color: var(--jt-accent); }
+.jt-shortcode-member a:hover { color: var(--jt-accent-strong); }
 
 /* Inside a theme widget area the theme already draws the box (title,
    border, padding). Card-styled shortcode output there became a card inside
@@ -1108,7 +1127,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 .jt-compose-topic-login-secondary {
 	font-size: 0.875rem;
-	color: var(--jt-accent, #3b82f6);
+	color: var(--jt-accent-strong, var(--jt-accent, #3b82f6));
 	text-decoration: none;
 	border-bottom: 1px dashed currentColor;
 	padding-bottom: 1px;
@@ -1327,7 +1346,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-signed-in .jt-login-signed-in-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); margin-block-start: var(--jt-space-3); }
 .jt-login-signed-in .jt-login-submit { margin-top: 0; text-decoration: none; }
 .jt-login-secondary { display: inline-flex; align-items: center; padding: 0.5625rem 0.9375rem; border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius-full); color: var(--jt-text); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }
-.jt-login-secondary:hover, .jt-login-secondary:focus-visible { border-color: var(--jt-accent); color: var(--jt-accent); }
+.jt-login-secondary:hover, .jt-login-secondary:focus-visible { border-color: var(--jt-accent); color: var(--jt-accent-strong); }
 .jt-login-secondary:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
 
 /* Trust level name pill (profile card shortcode). jetonomy.css is not loaded

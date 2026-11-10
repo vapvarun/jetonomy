@@ -18,6 +18,9 @@
  *   !refuse   the action must be refused, with the reason shown
  *   card:<id> the Basecamp bug this check exists to catch again
  *
+ * Usage: php bin/check-journey-depth.php [--list] [--structure]
+ *   --structure checks rules 1-3 only; pre-commit and every CI push run it.
+ *
  * Rules (exit 1 on any breach):
  *   1. Every journey has checks; every check has an id, a role and a surface;
  *      ids are unique.
@@ -47,6 +50,10 @@
 $jd_root = dirname( __DIR__ );
 chdir( $jd_root );
 $jd_list  = in_array( '--list', $argv, true );
+// --structure: rules 1-3 only (ids, roles, refusals, escapes). Walk records
+// are a release question; structure breaks on any commit, so pre-commit and
+// every push run this mode and a broken check is never hidden behind them.
+$jd_struct = in_array( '--structure', $argv, true );
 $jd_ready = '--ready' === ( $argv[1] ?? '' ) ? array( (string) ( $argv[2] ?? '' ), (string) ( $argv[3] ?? '' ), (string) ( $argv[4] ?? '' ) ) : null;
 $jd_md   = (string) file_get_contents( 'docs/qa/AGENT_SMOKE_RUNBOOK.md' );
 $jd_cfg  = json_decode( (string) file_get_contents( 'docs/qa/qa-config.json' ), true );
@@ -167,7 +174,9 @@ foreach ( $jd_parts as $jd_part ) {
 
 require_once __DIR__ . '/release-exception.php';
 $jd_exception = jetonomy_release_exception( $jd_root );
-if ( $jd_waivable && $jd_exception ) {
+if ( $jd_struct ) {
+	$jd_waivable = array();
+} elseif ( $jd_waivable && $jd_exception ) {
 	printf( "journey-depth: %d walk-record problem(s) WAIVED for %s by owner exception (%s, %s)\n", count( $jd_waivable ), $jd_exception['version'], $jd_exception['by'], $jd_exception['approved'] );
 } else {
 	array_push( $jd_problems, ...$jd_waivable );
@@ -192,5 +201,5 @@ if ( $jd_problems ) {
 	printf( "\njourney-depth: %d problem(s) across %d journeys and %d checks.\n", count( $jd_problems ), count( $jd_parts ), $jd_total );
 	exit( 1 );
 }
-printf( "journey-depth: %d journeys, %d checks, %s\n", count( $jd_parts ), $jd_total, $jd_waivable ? 'structure complete; walk records waived (see above)' : 'every stamp backed by a complete walk record' );
+printf( "journey-depth: %d journeys, %d checks, %s\n", count( $jd_parts ), $jd_total, $jd_struct ? 'structure complete (walk records not checked: --structure)' : ( $jd_waivable ? 'structure complete; walk records waived (see above)' : 'every stamp backed by a complete walk record' ) );
 exit( 0 );

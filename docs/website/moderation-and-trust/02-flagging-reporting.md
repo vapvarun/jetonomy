@@ -56,7 +56,7 @@ If the blocked member's reply has other replies nested underneath it, only their
 
 | Surface | Block a member | Unblock a member |
 |---|---|---|
-| Web (2.0.3+) | The **⋯** menu on their profile | The same menu, or **Blocked members** in Edit Profile |
+| Web (2.0.3+) | The **⋯** menu on their profile | The same menu, or **People you have blocked** in Edit Profile |
 | Mobile app | Yes | Yes |
 | REST API | `POST /jetonomy/v1/users/me/blocks` with `user_id` | `DELETE /jetonomy/v1/users/me/blocks/{user_id}` |
 
@@ -68,7 +68,7 @@ Elsewhere in the community, a blocked member's content is replaced by a placehol
 
 ### Your blocked members list (2.0.3+)
 
-Everyone you have blocked is listed under **Blocked members** at the bottom of your Edit Profile page (`/community/u/your-username/edit/`), 20 per page, each with an **Unblock** button. If you have not blocked anyone, the section says so.
+Everyone you have blocked is listed under **People you have blocked** at the bottom of your Edit Profile page (`/community/u/your-username/edit/`), 20 per page, each with an **Unblock** button. If you have not blocked anyone, the section says so.
 
 ### Blocking someone vs blocking a conversation
 

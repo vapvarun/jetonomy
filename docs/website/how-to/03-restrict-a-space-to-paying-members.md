@@ -61,7 +61,6 @@ A sentence under the form reads your rule back in plain English. The rule then a
 |---|---|
 | **Read** | Read and report |
 | **Participate** | Read, post, reply, vote and report |
-| **Full** | Same as Participate for ordinary members |
 
 A rule can never make someone a moderator. To appoint one, use the **Members** tab. For the details, see [Access level](../integrations/01-memberpress.md#access-level).
 
@@ -78,7 +77,7 @@ If you want plan holders on the Members list, click **Sync Members** next to the
 ## Check that it works
 
 1. As a guest, open the space address. You see "<Space name> is private. Log in to request access." (or the invite-only wording) with the space's description and a **Log In** button.
-2. Sign in as the test account **without** the plan. You see "This space is included with" followed by the plan name. A **Get** button for that plan appears when your plugin has a sales page for it. If it has none, the message says to ask a site administrator.
+2. Sign in as the test account **without** the plan. You see "Included with" followed by the plan name. A **Get** button for that plan appears when your plugin has a sales page for it. If it has none, the message says to ask a site administrator.
 3. Sign in as the test account **with** the plan. The space opens and **+ New Topic** works.
 4. Cancel or expire that test plan in your membership plugin and reload the space. The lock returns on the next page load. Earlier posts stay in place.
 

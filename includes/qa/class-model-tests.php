@@ -273,6 +273,7 @@ class Model_Tests {
 		$this->test_app_strings_defined();
 		$this->test_import_map();
 		$this->test_recount_backfill();
+		$this->test_demo_users();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -285,11 +286,403 @@ class Model_Tests {
 		$this->check_split_leaves_a_trace();
 		$this->check_follow_visibility();
 		$this->check_reparent_on_delete();
+		$this->check_2_0_7_fixes();
 
 		wp_set_current_user( 0 );
 		wp_delete_user( $this->qa_admin );
 
 		return array( 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped );
+	}
+
+	/**
+	 * 2.0.7 QA fixes. Each check failed on 2.0.6.
+	 *
+	 * VD1-VD2 removing a vote through DELETE takes back reputation and the notification (10430806939)
+	 * SN1     a silenced member cannot start a space (10431281298)
+ * AU1     off-site address settings take only full addresses (10469968650)
+ * MS1     the gate sentence keeps German nouns capitalised (10469968511)
+ * GG1     the membership gate sentences need no article in German (10483361510)
+ * AC1-AC4 Accept and Unaccept are offered only where they succeed: Q&A spaces, unsilenced authors (10469967795)
+	 * GP1     a private community admits no signed-out visitor at the engine (10430808705)
+	 * OR1-OR2 overlapping rules: most generous wins; an exact duplicate is refused (10435942224)
+	 * LP1     a level is named and typed by its adapter's prefix, even when the catalog omits it (10436110349)
+	 * BR1     a space ban is visible to the roster in one lookup (10430978086)
+	 * MN1     the public members search never matches an email address (10430894693)
+	 * LV1     the leave confirm follows the join policy (10483409032)
+	 * RM1-RM3 Permissions: the reset copies Subscriber, ticking only adds, Join matches the route (10463415760)
+	 * RM4-RM5 a role without WordPress read is shown only Read, and is refused writes even when ticked (10483588613)
+	 * SI1     space and topic pages fall back to the Default share image, SEO Pro on or off (10483605549)
+	 * RT1-RT2 Report follows Permission_Engine::can( flag ) on the route and the buttons (10483720093)
+	 * SX1     a new space drops the cached sitemap (10430894693)
+	 * IS1-IS2 import slugs: NFD accents fold without intl; wpForo boards never share a category (10441705185, 10441707350)
+	 */
+	private function check_2_0_7_fixes(): void {
+		global $wpdb;
+		$suffix = uniqid( '', false );
+		$users  = array();
+		$mk     = static function ( string $login, string $role = 'subscriber', string $name = '' ) use ( &$users ): int {
+			$id = (int) wp_insert_user( array( 'user_login' => $login, 'user_pass' => wp_generate_password(), 'user_email' => $login . '@example.test', 'role' => $role, 'display_name' => $name ?: $login ) );
+			if ( $id > 0 ) {
+				$users[] = $id;
+			}
+			return $id;
+		};
+		$author = $mk( 'jt_qa_207a_' . $suffix );
+		$voter  = $mk( 'jt_qa_207v_' . $suffix );
+		$space  = (int) Space::create( array( 'title' => 'QA 207 ' . $suffix, 'slug' => 'qa-207-' . $suffix, 'type' => 'forum', 'visibility' => 'public', 'join_policy' => 'open' ) );
+
+		if ( $space > 0 && $author > 0 && $voter > 0 ) {
+			// VD1-VD2.
+			$topic = \Jetonomy\Models\Post::create( array( 'space_id' => $space, 'author_id' => $author, 'title' => 'QA 207 vote ' . $suffix, 'slug' => 'qa-207-vote-' . $suffix, 'content' => 'x', 'status' => 'publish' ) );
+			$topic = is_int( $topic ) ? $topic : 0;
+			$rep   = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT reputation FROM ' . table( 'user_profiles' ) . ' WHERE user_id = %d', $author ) );
+			$notes = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . table( 'notifications' ) . ' WHERE user_id = %d', $author ) );
+			UserProfile::find_or_create( $author );
+			$rep0  = $rep();
+			$note0 = $notes();
+			wp_set_current_user( $voter );
+			$up = new \WP_REST_Request( 'POST', "/jetonomy/v1/posts/{$topic}/vote" );
+			$up->set_body_params( array( 'value' => 1 ) );
+			rest_do_request( $up );
+			$rep1 = $rep();
+			rest_do_request( new \WP_REST_Request( 'DELETE', "/jetonomy/v1/posts/{$topic}/vote" ) );
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'VD1: removing a vote through DELETE takes back the reputation it gave', $topic > 0 && $rep1 > $rep0 && $rep() === $rep0, "before={$rep0} voted={$rep1} after=" . $rep() );
+			$this->check( 'VD2: removing a vote through DELETE takes back its notification', $notes() === $note0, "before={$note0} after=" . $notes() );
+			wp_set_current_user( 0 );
+
+			// SN1.
+			$grant = static fn(): bool => true;
+			add_filter( 'jetonomy_can_create_space_frontend', $grant );
+			$sil = Restriction::ban( $voter, 'silence', $this->qa_admin, null, 'QA 207' );
+			Restriction::reset_memo();
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'SN1: a silenced member cannot start a space, even with the right role', ! \Jetonomy\Permissions\Capabilities::can_create_space_frontend( $voter ) );
+			remove_filter( 'jetonomy_can_create_space_frontend', $grant );
+			if ( $sil > 0 ) {
+				Restriction::remove_ban( $sil );
+			}
+
+			// AC1-AC3. The Accept offer matches what accepting would do.
+			$topic_row = \Jetonomy\Models\Post::find( $topic );
+			$this->check( 'AC1: outside a Q&A space the topic author is not offered Accept', $topic_row && ! \Jetonomy\Models\Reply::viewer_can_accept( $author, $topic_row ) );
+			Space::update( $space, array( 'type' => 'qa' ) );
+			\Jetonomy\Cache::reset_memos();
+			$qa_row = Space::find( $space );
+			$this->check( 'AC2: in a Q&A space the topic author is offered Accept, another member is not', $topic_row && \Jetonomy\Models\Reply::viewer_can_accept( $author, $topic_row, $qa_row ) && ! \Jetonomy\Models\Reply::viewer_can_accept( $voter, $topic_row, $qa_row ) );
+			$sil = Restriction::ban( $author, 'silence', $this->qa_admin, null, 'QA 207' );
+			Restriction::reset_memo();
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'AC3: a silenced topic author is not offered Accept', $topic_row && ! \Jetonomy\Models\Reply::viewer_can_accept( $author, $topic_row, $qa_row ) );
+
+			// AC4. Unaccept follows the same rule on the accepted reply's card.
+			$ac_reply = (int) \Jetonomy\Models\Reply::create( array( 'post_id' => $topic, 'author_id' => $voter, 'content' => '<p>QA AC4</p>', 'status' => 'publish' ) );
+			\Jetonomy\Models\Reply::accept_as_answer( $ac_reply, 0 );
+			$ac_card = static function () use ( $ac_reply, $topic, $space ): string {
+				\Jetonomy\Cache::reset_memos();
+				ob_start();
+				\Jetonomy\Template_Loader::partial(
+					'reply-card',
+					array(
+						'reply' => \Jetonomy\Models\Reply::find( $ac_reply ),
+						'post'  => \Jetonomy\Models\Post::find( $topic ),
+						'space' => Space::find( $space ),
+					)
+				);
+				return (string) ob_get_clean();
+			};
+			wp_set_current_user( $author );
+			$ac_silenced = $ac_card();
+			if ( $sil > 0 ) {
+				Restriction::remove_ban( $sil );
+			}
+			Restriction::reset_memo();
+			$ac_live = $ac_card();
+			wp_set_current_user( 0 );
+			$this->check( 'AC4: a silenced topic author is not offered Unaccept; once unsilenced they are', ! str_contains( $ac_silenced, 'actions.unacceptReply' ) && str_contains( $ac_live, 'actions.unacceptReply' ) );
+			Restriction::reset_memo();
+			Space::update( $space, array( 'type' => 'forum' ) );
+			\Jetonomy\Cache::reset_memos();
+
+			// MS1. A mid-sentence noun keeps its capital where every noun has one.
+			$de = static fn(): string => 'de_DE';
+			add_filter( 'determine_locale', $de );
+			$kurs = \Jetonomy\mid_sentence( 'Kurs' );
+			remove_filter( 'determine_locale', $de );
+			$this->check( 'MS1: a mid-sentence noun keeps its capital in German and is lowercased in English', 'Kurs' === $kurs && 'course' === \Jetonomy\mid_sentence( 'Course' ), "de={$kurs}" );
+
+			// GG1. The membership gate puts no owner label after "this": German
+			// needs an article the slot cannot carry. The sentences read in German.
+			$gg_src  = (string) file_get_contents( JETONOMY_DIR . 'templates/views/space.php' );
+			$gg_from = strpos( $gg_src, '$_jt_unmet_membership ) ) {' );
+			$gg_gate = false === $gg_from ? '' : substr( $gg_src, $gg_from, (int) strpos( $gg_src, "'empty-state'", $gg_from ) - $gg_from );
+			$gg_de   = switch_to_locale( 'de_DE' );
+			$gg_say  = array( __( 'You get access as soon as you join, and lose it if you leave.', 'jetonomy' ), __( 'Ask a site administrator to add you.', 'jetonomy' ), __( 'Included with %s.', 'jetonomy' ) ); // phpcs:ignore WordPress.WP.I18n.MissingTranslatorsComment -- read back, not shown.
+			if ( $gg_de ) {
+				restore_previous_locale();
+			}
+			$this->check( 'GG1: the membership gate sentences need no article in German', '' !== $gg_gate && ! preg_match( '/__\(\s*\'[^\']*\bthis %/i', $gg_gate ) && ( ! $gg_de || ( str_starts_with( $gg_say[0], 'Du erhältst' ) && 'Enthalten in %s.' === $gg_say[2] ) ), $gg_de ? 'de_DE' : 'no de_DE locale' );
+
+			// AU1. Addresses used off the site must be full addresses.
+			$this->check( 'AU1: an off-site address setting refuses a site-relative path and keeps a full one', null === \Jetonomy\absolute_url( '/terms' ) && 'https://example.com/terms' === \Jetonomy\absolute_url( 'https://example.com/terms' ) && '' === \Jetonomy\absolute_url( '' ) );
+
+			// AU2. Relative values saved before 2.0.7 never leave the site: the app
+			// config sends '' and the email header falls back to text.
+			$au_old = static function ( $o ) {
+				return array_merge(
+					(array) $o,
+					array(
+						'terms_url'      => '/terms',
+						'support_url'    => '/support',
+						'logo_url'       => '/wp-content/uploads/logo.png',
+						'email_logo_url' => '/wp-content/uploads/mail.png',
+					)
+				);
+			};
+			add_filter( 'option_jetonomy_settings', $au_old );
+			$au_cfg  = rest_do_request( new \WP_REST_Request( 'GET', '/jetonomy/v1/app/config' ) )->get_data();
+			$au_cfg  = (array) ( $au_cfg['data'] ?? $au_cfg );
+			$au_mail = \Jetonomy\Notifications\Notifier::render_email_template( 'mention', 'AU2', wp_get_current_user() );
+			remove_filter( 'option_jetonomy_settings', $au_old );
+			$au_sent = array_intersect_key( $au_cfg, array_flip( array( 'terms_url', 'support_url', 'logo_url' ) ) );
+			$this->check( 'AU2: relative addresses saved before 2.0.7 reach neither the app config nor the email header', array( '' ) === array_values( array_unique( $au_sent ) ) && 3 === count( $au_sent ) && ! str_contains( $au_mail, 'uploads/mail.png' ), wp_json_encode( $au_sent ) );
+
+			// GP1.
+			$private = static function ( $o ) {
+				$o               = (array) $o;
+				$o['guest_read'] = false;
+				return $o;
+			};
+			add_filter( 'option_jetonomy_settings', $private );
+			\Jetonomy\Cache::reset_memos();
+			$guest_reads = Permission_Engine::can( 0, 'read', $space );
+			remove_filter( 'option_jetonomy_settings', $private );
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'GP1: on a private community a signed-out visitor cannot read even a public space', ! $guest_reads && Permission_Engine::can( 0, 'read', $space ) );
+
+			// OR1-OR2.
+			Space::update( $space, array( 'visibility' => 'private', 'join_policy' => 'approval' ) );
+			// Read first: 2.0.6 returned the first match, so this order fails there.
+			AccessRule::create( array( 'space_id' => $space, 'rule_type' => 'role', 'rule_value' => 'subscriber', 'grants' => 'read', 'priority' => 0 ) );
+			AccessRule::create( array( 'space_id' => $space, 'rule_type' => 'logged_in', 'rule_value' => '1', 'grants' => 'participate', 'priority' => 0 ) );
+			AccessRule::reset_memo();
+			$won = AccessRule::resolve_access( $voter, $space );
+			$this->check( 'OR1: when two rules match, the most generous grant wins', 'participate' === ( $won['grants'] ?? '' ), 'got ' . ( $won['grants'] ?? 'none' ) );
+			$dup = AccessRule::duplicate_error( $space, 'role', 'subscriber' );
+			$this->check( 'OR2: a second rule with the same type and value is refused', is_wp_error( $dup ) && null === AccessRule::duplicate_error( $space, 'role', 'editor' ) );
+			$wpdb->delete( table( 'access_rules' ), array( 'space_id' => $space ) );
+			AccessRule::reset_memo();
+
+			// VR1. Removing a vote fires jetonomy_after_vote with 0; it must not log a vote.
+			$voted = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . table( 'activity_log' ) . " WHERE user_id = %d AND action = 'voted'", $voter ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$v0    = $voted();
+			// A type no notifier or counter acts on, so only the activity log
+			// listener reacts and no notification row is left behind.
+			do_action( 'jetonomy_after_vote', 'qa_probe', 0, $voter, 0 );
+			$v1 = $voted();
+			do_action( 'jetonomy_after_vote', 'qa_probe', 0, $voter, 1 );
+			$v2 = $voted();
+			$this->check( 'VR1: a removed vote logs no vote activity, a cast vote does', $v0 === $v1 && $v2 === $v1 + 1, "before=$v0 removed=$v1 cast=$v2" );
+			$wpdb->delete( table( 'activity_log' ), array( 'user_id' => $voter, 'action' => 'voted' ) );
+
+			// AM1. The rule-admitted list is memoized per request, so it must
+			// follow a rule write and a ban made in the same request.
+			$admitted = static fn(): bool => in_array( (int) $space, AccessRule::admitted_space_ids( $voter ), true );
+			$no_rule  = $admitted();
+			$rule_id  = AccessRule::create( array( 'space_id' => $space, 'rule_type' => 'logged_in', 'rule_value' => '1', 'grants' => 'read', 'priority' => 0 ) );
+			$by_rule  = $admitted();
+			$am_ban   = Restriction::ban( $voter, 'space_ban', $this->qa_admin, $space, 'QA AM1' );
+			$banned   = $admitted();
+			if ( $am_ban > 0 ) {
+				Restriction::remove_ban( $am_ban );
+			}
+			$this->check( 'AM1: the rule-admitted space list follows a new rule and a ban in the same request', ! $no_rule && $rule_id && $by_rule && ! $banned, "no_rule=$no_rule by_rule=$by_rule banned=$banned" );
+			$wpdb->delete( table( 'access_rules' ), array( 'space_id' => $space ) );
+			AccessRule::reset_memo();
+
+			// BR1.
+			$ban  = Restriction::ban( $voter, 'space_ban', $this->qa_admin, $space, 'QA 207' );
+			$bans = Restriction::active_rows_for_users( array( $voter, $author ), $space );
+			$this->check( 'BR1: the roster sees who is banned from this space, and only them', $ban > 0 && isset( $bans[ $voter ] ) && (int) $bans[ $voter ]->id === $ban && ! isset( $bans[ $author ] ) );
+			if ( $ban > 0 ) {
+				Restriction::remove_ban( $ban );
+			}
+
+			// MN1.
+			$named = $mk( 'jt_qa_207n_' . $suffix, 'subscriber', 'QA Zephyr ' . $suffix );
+			SpaceMember::add( $space, $named, 'member' );
+			$this->check( 'MN1: the public members search matches names, never email addresses', 1 === SpaceMember::count_by_space( $space, 'Zephyr ' . $suffix, true ) && 0 === SpaceMember::count_by_space( $space, 'jt_qa_207n_' . $suffix . '@', true ) );
+
+			// LV1. The leave confirm says how a member gets back in, by join policy.
+			Space::update( $space, array( 'join_policy' => 'approval' ) );
+			\Jetonomy\Cache::reset_memos();
+			wp_set_current_user( $named );
+			ob_start();
+			\Jetonomy\Template_Loader::partial( 'space-header', array( 'space' => Space::find( $space ) ) );
+			$lv_head = (string) ob_get_clean();
+			wp_set_current_user( 0 );
+			Space::update( $space, array( 'join_policy' => 'open' ) );
+			$lv_say = \Jetonomy\Template_Loader::app_i18n()['leaveRejoin'] ?? array();
+			$this->check( 'LV1: Leave carries the join policy, and approval and invite spaces do not promise an instant rejoin', str_contains( $lv_head, 'data-join-policy="approval"' ) && 3 === count( array_unique( array_filter( array( $lv_say['open'] ?? '', $lv_say['approval'] ?? '', $lv_say['invite'] ?? '' ) ) ) ) );
+
+			// RM1-RM3. A custom role on the Permissions tab: the table shows what it
+			// holds, ticking only adds, and Join is offered only where it works.
+			$pm_caps_was = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+			add_role( 'jt_qa_pm_' . $suffix, 'QA PM', array( 'read' => true ) );
+			add_role( 'jt_qa_pmx_' . $suffix, 'QA PMX', array() );
+			$pm_user = $mk( 'jt_qa_pm_' . $suffix, 'jt_qa_pm_' . $suffix );
+			$pm_bare = $mk( 'jt_qa_pmx_' . $suffix, 'jt_qa_pmx_' . $suffix );
+			SpaceMember::add( $space, $pm_user, 'member' );
+			$pm_role  = 'jt_qa_pm_' . $suffix;
+			$pm_admin = new \Jetonomy\Admin\Admin();
+			$pm_save  = static function ( array $caps, string $reset = '' ) use ( $pm_admin, $pm_role ): array {
+				wp_set_current_user( 1 );
+				$pm_admin->sanitize_settings(
+					array(
+						'role_caps_submitted' => 1,
+						'role_caps'           => array( $pm_role => $caps ) + array_diff_key( \Jetonomy\Permissions\Capabilities::effective_map(), array( 'administrator' => 1 ) ),
+						'role_caps_reset'     => $reset,
+						'role_caps_roles'     => array( $pm_role ),
+					)
+				);
+				wp_set_current_user( 0 );
+				\Jetonomy\Cache::reset_memos();
+				$stored = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+				return is_array( $stored ) && array_key_exists( $pm_role, $stored ) ? (array) $stored[ $pm_role ] : array( 'unmapped' );
+			};
+			// What the table shows ticked for a role nobody mapped: the engine's
+			// member-grade fallback plus joining.
+			$pm_shown     = array( 'jetonomy_read', 'jetonomy_create_posts', 'jetonomy_create_replies', 'jetonomy_vote', 'jetonomy_flag', 'jetonomy_edit_own_posts', 'jetonomy_delete_own_posts', 'jetonomy_join_spaces' );
+			$pm_untouched = $pm_save( $pm_shown );
+			$pm_more      = $pm_save( array_merge( $pm_shown, array( 'jetonomy_upload_media' ) ) );
+			clean_user_cache( $pm_user );
+			$pm_keeps     = Permission_Engine::can( $pm_user, 'create_posts', $space ) && Permission_Engine::can( $pm_user, 'create_replies', $space ) && Permission_Engine::can( $pm_user, 'vote', $space ) && SpaceMember::may_join_spaces( $pm_user );
+			$pm_save( array() );
+			$pm_reset = $pm_save( array(), $pm_role );
+			$pm_sub   = \Jetonomy\Permissions\Capabilities::effective_map()['subscriber'];
+			sort( $pm_reset );
+			sort( $pm_sub );
+			$this->check( 'RM1: "Give members the same access as the Subscriber role" copies Subscriber\'s boxes into the role', $pm_reset === $pm_sub );
+			$this->check( 'RM2: a custom role saved untouched stays on its fallback, and one more ticked box keeps everything it had', array( 'unmapped' ) === $pm_untouched && in_array( 'jetonomy_upload_media', $pm_more, true ) && $pm_keeps );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $pm_caps_was, false );
+			\Jetonomy\Permissions\Capabilities::register();
+			$this->check( 'RM3: a role without WordPress read is not offered Join, which the join route refuses', ! SpaceMember::may_join_spaces( $pm_bare ) );
+			$this->check( 'RM4: the Permissions column for a role without WordPress read ticks only Read, the one thing it gets', array( 'jetonomy_read' ) === \Jetonomy\Permissions\Capabilities::unmapped_caps( 'jt_qa_pmx_' . $suffix ) && ! Permission_Engine::can( $pm_bare, 'create_posts', $space ) );
+			// RM5. The owner ticks Create topics for that role anyway: the engine
+			// still refuses it, as the write route does, so no New Topic is shown.
+			SpaceMember::add( $space, $pm_bare, 'member' );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array( 'jt_qa_pmx_' . $suffix => array( 'jetonomy_read', 'jetonomy_create_posts', 'jetonomy_create_replies' ) ), false );
+			\Jetonomy\Permissions\Capabilities::register();
+			clean_user_cache( $pm_bare );
+			\Jetonomy\Cache::reset_memos();
+			$rm5_ticked = user_can( $pm_bare, 'jetonomy_create_posts' );
+			$rm5_offers = Permission_Engine::can( $pm_bare, 'create_posts', $space ) || Permission_Engine::can( $pm_bare, 'create_replies', $space );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $pm_caps_was, false );
+			\Jetonomy\Permissions\Capabilities::register();
+			\Jetonomy\Cache::reset_memos();
+			$this->check( 'RM5: a role without WordPress read is refused writes the owner ticked for it, as the write routes refuse them', $rm5_ticked && ! $rm5_offers, $rm5_ticked ? '' : 'the ticked cap did not reach the role' );
+			remove_role( 'jt_qa_pm_' . $suffix );
+			remove_role( 'jt_qa_pmx_' . $suffix );
+
+			// SI1. A space with no cover or SEO image, and a topic in it with no
+			// inline image, still share the Default share image, with SEO Pro on or off.
+			Space::update( $space, array( 'visibility' => 'public' ) ); // GP1 above left it private, which prints no share meta.
+			$si_was                         = get_option( 'jetonomy_settings', array() );
+			$si_set                         = is_array( $si_was ) ? $si_was : array();
+			$si_set['seo_default_og_image'] = 'https://example.com/qa-share-' . $suffix . '.png';
+			update_option( 'jetonomy_settings', $si_set );
+			$si_slug = (string) Space::find( $space )->slug;
+			$si_tag  = '<meta property="og:image" content="' . $si_set['seo_default_og_image'] . '"';
+			$si_ok   = true;
+			$si_got  = array();
+			foreach ( array( \Jetonomy\route_url( 'space', $si_slug ), \Jetonomy\route_url( 'post', $si_slug, (string) \Jetonomy\Models\Post::find( (int) $topic )->slug ) ) as $si_url ) {
+				$si_res   = wp_remote_get( $si_url, array( 'timeout' => 20 ) );
+				$si_body  = wp_remote_retrieve_body( $si_res );
+				$si_ok    = $si_ok && str_contains( $si_body, $si_tag );
+				$si_got[] = wp_remote_retrieve_response_code( $si_res ) . ( preg_match( '/<meta property="og:image" content="([^"]*)"/', $si_body, $si_m ) ? ' ' . $si_m[1] : ' no og:image' );
+			}
+			update_option( 'jetonomy_settings', $si_was );
+			$this->check( 'SI1: space and topic pages without an image of their own share the Default share image', $si_ok, implode( '; ', $si_got ) );
+
+			// RT1-RT2. Report follows the engine: with Report off for a role the
+			// route refuses and the button is hidden (same can()); a Subscriber
+			// and an unmapped role with read may report.
+			$fl_was = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+			add_role( 'jt_qa_fl_' . $suffix, 'QA FL', array( 'read' => true ) );
+			add_role( 'jt_qa_flu_' . $suffix, 'QA FLU', array( 'read' => true ) );
+			$fl_off = $mk( 'jt_qa_fl_' . $suffix, 'jt_qa_fl_' . $suffix );
+			$fl_unm = $mk( 'jt_qa_flu_' . $suffix, 'jt_qa_flu_' . $suffix );
+			SpaceMember::add( $space, $fl_off, 'member' );
+			SpaceMember::add( $space, $fl_unm, 'member' );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array( 'jt_qa_fl_' . $suffix => array( 'jetonomy_read', 'jetonomy_create_replies' ) ) + ( is_array( $fl_was ) ? $fl_was : array() ), false );
+			\Jetonomy\Permissions\Capabilities::register();
+			clean_user_cache( $fl_off );
+			\Jetonomy\Cache::reset_memos();
+			$fl_refused = \Jetonomy\Moderation\Moderation_Service::check_flag( $fl_off, 'post', (int) $topic );
+			$fl_hidden  = ! Permission_Engine::can( $fl_off, 'flag', $space );
+			$fl_sub     = \Jetonomy\Moderation\Moderation_Service::check_flag( $voter, 'post', (int) $topic );
+			$fl_unmok   = \Jetonomy\Moderation\Moderation_Service::check_flag( $fl_unm, 'post', (int) $topic );
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $fl_was, false );
+			\Jetonomy\Permissions\Capabilities::register();
+			\Jetonomy\Cache::reset_memos();
+			remove_role( 'jt_qa_fl_' . $suffix );
+			remove_role( 'jt_qa_flu_' . $suffix );
+			$this->check( 'RT1: with Report off for a role, POST /flags refuses (403) and the Report button is hidden', is_wp_error( $fl_refused ) && 403 === ( $fl_refused->get_error_data()['status'] ?? 0 ) && $fl_hidden );
+			$this->check( 'RT2: a Subscriber and a custom role on the fallback may report a topic they can read', true === $fl_sub && true === $fl_unmok, is_wp_error( $fl_sub ) ? $fl_sub->get_error_code() : ( is_wp_error( $fl_unmok ) ? 'fallback: ' . $fl_unmok->get_error_code() : '' ) );
+		} else {
+			foreach ( array( 'VD1', 'VD2', 'SN1', 'AC1', 'AC2', 'AC3', 'AC4', 'MS1', 'GG1', 'AU1', 'GP1', 'OR1', 'OR2', 'BR1', 'MN1', 'LV1', 'RM1', 'RM2', 'RM3', 'RM4', 'RM5', 'SI1', 'RT1', 'RT2' ) as $id ) {
+				$this->skip( "{$id}: 2.0.7 fixture", 'fixture insert failed' );
+			}
+		}
+
+		// LP1: the adapter returns nothing from its catalog, as for a trashed course.
+		$probe = new class() implements \Jetonomy\Adapters\Membership_Adapter {
+			public function is_active(): bool { return true; } // phpcs:ignore
+			public function get_user_levels( int $user_id ): array { return array(); } // phpcs:ignore
+			public function user_has_level( int $user_id, string $level_id ): bool { return false; } // phpcs:ignore
+			public function get_all_levels(): array { return array(); } // phpcs:ignore
+			public function get_level_label( string $level_id ): string { return 'Probe course'; } // phpcs:ignore
+			public function register_hooks(): void {} // phpcs:ignore
+			public function level_prefixes(): array { return array( 'qa207_course_' => 'Course' ); } // phpcs:ignore
+		};
+		\Jetonomy\Adapters\Adapter_Registry::register_membership( 'qa207', $probe );
+		$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( 'qa207_course_9' );
+		$this->check( 'LP1: a level is named and typed by its adapter prefix, even when the catalog omits it', 'Probe course' === $described['value'] && 'Course' === $described['kind'], wp_json_encode( $described ) );
+		// The registry has no unregister (production never needs one); drop the
+		// probe so later checks in this run see only the real adapters.
+		$jt_reg = new \ReflectionProperty( \Jetonomy\Adapters\Adapter_Registry::class, 'membership' );
+		$jt_reg->setValue( null, array_diff_key( $jt_reg->getValue(), array( 'qa207' => true ) ) );
+		( new \ReflectionProperty( \Jetonomy\Adapters\Adapter_Registry::class, 'level_owners' ) )->setValue( null, null );
+
+		// SX1.
+		set_transient( 'jt_sitemap_cursors_spaces', array( 'cursors' => array( 1 ) ), HOUR_IN_SECONDS );
+		$sm = (int) Space::create( array( 'title' => 'QA 207 sitemap ' . $suffix, 'slug' => 'qa-207-sm-' . $suffix, 'type' => 'forum' ) );
+		$this->check( 'SX1: a new space drops the cached sitemap so it is listed now', $sm > 0 && false === get_transient( 'jt_sitemap_cursors_spaces' ) );
+
+		// IS1-IS2.
+		$clean = new \ReflectionMethod( \Jetonomy\Import\Importer::class, 'clean_slug' );
+		$clean->setAccessible( true );
+		$this->check( 'IS1: decomposed (NFD) accents fold to plain letters in an imported slug', 'naive-uber' === $clean->invoke( null, "nai\u{0308}ve u\u{0308}ber" ) );
+		if ( method_exists( \Jetonomy\Import\WPForo_Importer::class, 'board_category_slug' ) ) {
+			$board = new \ReflectionMethod( \Jetonomy\Import\WPForo_Importer::class, 'board_category_slug' );
+			$board->setAccessible( true );
+			$taken = array();
+			$a     = $board->invokeArgs( null, array( 'Café', 2, &$taken ) );
+			$b     = $board->invokeArgs( null, array( 'Cafe!', 3, &$taken ) );
+			$c     = $board->invokeArgs( null, array( '???', 4, &$taken ) );
+			$this->check( 'IS2: wpForo boards whose titles clean alike still get their own category', $a !== $b && 'imported-wpforo-board-4' === $c, "{$a} | {$b} | {$c}" );
+		} else {
+			$this->check( 'IS2: wpForo boards whose titles clean alike still get their own category', false, 'no per-board slug helper' );
+		}
+
+		foreach ( array( $sm, $space ) as $id ) {
+			if ( $id > 0 && Space::find( $id ) ) {
+				Space::delete( $id );
+			}
+		}
+		foreach ( $users as $uid ) {
+			wp_delete_user( $uid );
+		}
 	}
 
 	/**
@@ -1888,11 +2281,12 @@ class Model_Tests {
 			count( $orphans ) . ' orphan profile(s)'
 		);
 
-		// LB2: the total counts the same population the page lists.
+		// LB2: the total counts the same population the page lists. The page
+		// holds at most 100 rows, so on a bigger community it must be full.
 		$total = UserProfile::count_for_leaderboard( 'all' );
 		$this->check(
 			'LB2: count_for_leaderboard matches the listed population',
-			$total === count( $rows ),
+			min( $total, 100 ) === count( $rows ),
 			"count={$total}, rows=" . count( $rows )
 		);
 
@@ -2148,10 +2542,12 @@ class Model_Tests {
 
 		// BB3: the headline total is the sum of the parts the owner is shown -
 		// they drifted apart before because each was computed independently.
+		// The total also counts the profiles phase: one per distinct author.
+		$authors = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT post_author) FROM {$wpdb->posts} WHERE post_type IN ('topic','reply') AND post_status IN ('publish','closed') AND post_author > 0" );
 		$this->check(
-			'BB3: total agrees with the per-type estimates',
-			$importer->get_total_count() === array_sum( $stats ),
-			$importer->get_total_count() . ' vs ' . array_sum( $stats )
+			'BB3: total agrees with the per-type estimates plus one profile per author',
+			$importer->get_total_count() === array_sum( $stats ) + $authors,
+			$importer->get_total_count() . ' vs ' . array_sum( $stats ) . ' + ' . $authors
 		);
 	}
 
@@ -3196,6 +3592,71 @@ class Model_Tests {
 	 * its own span, or the cursor stops meaning anything and a resumed job
 	 * would silently skip whatever the dead batch had not yet committed.
 	 */
+	/**
+	 * DS1-DS4 (10478659544): the demo seeder never adopts a real user whose
+	 * login matches a demo name, and cleanup deletes only users it created.
+	 * Runs in a transaction that is rolled back, so a site's own demo seed and
+	 * members are left as they were.
+	 */
+	private function test_demo_users(): void {
+		global $wpdb;
+		\WP_CLI::log( '  Demo users' );
+		$seeder = \Jetonomy\Admin\Ajax\Demo_Seeder::class;
+		$def    = \Jetonomy\Admin\Ajax\Demo_Content::users()[0];
+		$create = new \ReflectionMethod( $seeder, 'create_users' );
+		$delete = new \ReflectionMethod( $seeder, 'delete_demo_users' );
+		$create->setAccessible( true );
+		$delete->setAccessible( true );
+
+		$real  = 0;
+		$post  = 0;
+		$users = array();
+		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		try {
+			// A real member holding the first demo login, with their own email and bio.
+			$real = (int) username_exists( $def['login'] );
+			if ( $real ) {
+				$wpdb->update( $wpdb->users, array( 'user_email' => 'qa-real-' . $real . '@example.test' ), array( 'ID' => $real ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				delete_user_meta( $real, 'jetonomy_demo_user' );
+				clean_user_cache( $real );
+			} else {
+				$real = (int) wp_insert_user( array( 'user_login' => $def['login'], 'user_pass' => wp_generate_password(), 'user_email' => 'qa-real-' . wp_generate_password( 6, false ) . '@example.test', 'role' => 'editor' ) );
+			}
+			update_user_meta( $real, 'description', 'QA real bio' );
+			$post = (int) wp_insert_post( array( 'post_title' => 'QA real post', 'post_status' => 'publish', 'post_author' => $real ) );
+
+			$users = $create->invoke( null, current_time( 'mysql', true ) );
+			$demo  = (int) ( $users[ $def['login'] ] ?? 0 );
+			$this->check( 'DS1: a login clash creates a separate demo user and leaves the real bio alone', $demo && $demo !== $real && 'QA real bio' === get_user_meta( $real, 'description', true ), "demo=$demo real=$real" );
+			$this->check( 'DS2: the demo user carries the seeder marker', (bool) get_user_meta( $demo, 'jetonomy_demo_user', true ) );
+
+			// A manifest that lists the real member (as a 2.0.6 seed wrote it).
+			$delete->invoke( null, array( $real, $demo ) );
+			clean_user_cache( $real );
+			clean_user_cache( $demo );
+			$this->check( 'DS3: cleanup keeps the real member and their post, deletes the demo user', get_userdata( $real ) && get_post( $post ) && ! get_userdata( $demo ) );
+
+			// A demo user from a seed made before the marker is still cleaned by its demo email.
+			$old = (int) ( $users[ \Jetonomy\Admin\Ajax\Demo_Content::users()[1]['login'] ] ?? 0 );
+			delete_user_meta( $old, 'jetonomy_demo_user' );
+			$delete->invoke( null, array( $old ) );
+			clean_user_cache( $old );
+			$this->check( 'DS4: a demo user without the marker is cleaned by its demo email', $old && ! get_userdata( $old ) );
+		} finally {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			// Drop only what the rolled-back writes cached, not the whole site cache.
+			foreach ( array_unique( array_merge( array( $real ), array_map( 'intval', array_values( $users ) ) ) ) as $uid ) {
+				if ( $uid ) {
+					clean_user_cache( $uid );
+				}
+			}
+			if ( $post ) {
+				clean_post_cache( $post );
+			}
+			\Jetonomy\Cache::flush();
+		}
+	}
+
 	private function test_recount_backfill(): void {
 		global $wpdb;
 

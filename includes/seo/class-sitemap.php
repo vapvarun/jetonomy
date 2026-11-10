@@ -20,6 +20,17 @@ class Sitemap {
 		add_filter( 'robots_txt', array( $this, 'add_sitemap_line' ), 10, 2 );
 		// A purged space's URLs leave the sitemap at once (Sitemap_Emitter::flush()).
 		add_action( 'jetonomy_space_purged', array( Sitemap_Emitter::class, 'flush' ), 10, 0 );
+		// A topic that becomes public joins it at once too (leaving is flushed by Post::update()).
+		add_action(
+			'jetonomy_post_publish_transition',
+			static function ( $post_id, $delta ): void {
+				if ( (int) $delta > 0 ) {
+					Sitemap_Emitter::flush();
+				}
+			},
+			10,
+			2
+		);
 	}
 
 	/**

@@ -688,7 +688,7 @@ class Blocks {
 			<div class="jt-userpanel-head">
 				<?php echo $avatar; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — get_avatar returns sanitized HTML. ?>
 				<div class="jt-userpanel-heading">
-					<h3 class="jt-userpanel-title"><?php echo esc_html( $title ); ?></h3>
+					<h2 class="jt-userpanel-title"><?php echo esc_html( $title ); ?></h2>
 					<div class="jt-userpanel-meta">
 						<span class="jt-userpanel-username">@<?php echo esc_html( $user->user_login ); ?></span>
 						<?php if ( $trust_level > 0 ) : ?>
@@ -826,8 +826,14 @@ class Blocks {
 		ob_start();
 		?>
 		<div class="wp-block-jetonomy-login jt-login-block jt-app"
+			<?php
+			// The sidebar card is the community's own login surface: "Log in"
+			// links on the page (data-jt-login) bring the visitor here instead
+			// of sending them off to wp-login.php (header.js).
+			echo ( $attributes['context'] ?? '' ) === 'sidebar' ? ' id="jt-login"' : '';
+			?>
 			data-rest-url="<?php echo esc_attr( $rest_url ); ?>">
-			<h3 class="jt-login-title"><?php echo esc_html( $title ); ?></h3>
+			<h2 class="jt-login-title"><?php echo esc_html( $title ); ?></h2>
 
 			<?php if ( $show_register_tab ) : ?>
 				<div class="jt-login-tabs" role="tablist">
@@ -901,6 +907,11 @@ class Blocks {
 						<?php esc_html_e( 'Create account', 'jetonomy' ); ?>
 					</button>
 				</form>
+			<?php endif; ?>
+
+			<?php if ( ! $wp_can_register ) : ?>
+				<?php // Registration is closed: say how to get an account instead of leaving a dead end. ?>
+				<p class="jt-login-note"><?php esc_html_e( 'No account yet? Ask an administrator for one.', 'jetonomy' ); ?></p>
 			<?php endif; ?>
 
 			<form class="jt-login-form" data-jt-panel="forgot" novalidate>

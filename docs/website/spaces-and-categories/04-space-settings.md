@@ -93,7 +93,7 @@ This means you can configure a sensible default globally and only override the s
 
 **An access rule lets people in. It never keeps anyone out.** What holds people back is the space's visibility and its join policy; a rule is the door you open in that wall for a group you name - an active membership, a WordPress role, a trust level. A space with no rules is not "unrestricted", and adding a second rule never narrows the first. They apply to Private and Hidden spaces, where non-members cannot already reach the content and the rule decides who among them gets in.
 
-Go to the **Access Rules** tab on the space edit screen to add rules.
+Go to the **Access Rules** tab on the space edit screen to add rules. The form starts on **Choose who this rule lets in**, and **Add Rule** stays off until you pick one, so a click never opens a space by accident. Choosing **Everyone** or **Logged In** on a Private space asks you to confirm, and a message then says what the rule does, for example "Rule added: Everyone can read, post, reply, vote and report." The rules list follows the form; **How access rules work** opens the full explanation.
 
 > **Adding a rule that names a group converts a Public space to Private automatically.** A Public space is readable by everyone, so a membership, role, capability, or trust-level rule attached to it would silently do nothing - the content stays open. To stop that "configured but still accessible" trap, Jetonomy switches the space to Private the moment you save such a rule, so the rule can actually gate access. The admin screen tells you it happened. If you did not intend to make the space Private, remove the rule and the space stays Public.
 
@@ -103,7 +103,7 @@ Each rule has three parts:
 
 | Type | What it checks |
 |------|---------------|
-| Everyone | Matches every visitor, including logged-out users |
+| Everyone | Matches everyone. A visitor who is not signed in is still asked to log in first, so on a Private space this works like Logged In |
 | Logged In | User is authenticated |
 | WordPress Role | User has a specific WP role (e.g. Editor) |
 | Capability | User has a specific WP capability |
@@ -116,9 +116,10 @@ Each rule has three parts:
 |-------|--------|
 | Read | Can view and report posts and replies, cannot post, reply or vote |
 | Participate | Can read, post, and reply |
-| Full | Everything Participate allows, plus the moderator actions the person's own WordPress capabilities already permit |
 
-> **Full does not hand out moderation by itself.** A rule can open a space to someone; it cannot give them a power their WordPress role does not carry. For an ordinary member matched by a Full rule, Full and Participate come to the same thing in practice - closing and pinning topics and editing other people's posts still require the matching capability. Grant moderation deliberately, by setting the person's role on the space's **Members** tab.
+> **A rule never hands out moderation.** A rule can open a space to someone; it cannot give them a power their WordPress role does not carry. Grant moderation deliberately, by setting the person's role on the space's **Members** tab. Jetonomy 2.0.7 removed the old Full level: it never gave more than Participate, and saved Full rules became Participate.
+
+> **When rules overlap, the most generous one wins.** If someone matches two rules, for example a Logged In rule set to Read and a membership rule set to Participate, they get Participate. Jetonomy refuses a second rule with the same type and value as an existing one, because only one of them could ever apply.
 
 **Recorded space role** - not a separate choice. The role a matching member is recorded as follows from the access grant above, the same for every rule type, and never goes above Member:
 
@@ -133,6 +134,14 @@ Each rule has three parts:
 > To appoint a moderator, set that person's role on the space's **Members** tab. It is a per-person decision, not something a plan should confer.
 
 Multiple rules can be stacked. Jetonomy grants the highest matching permission level.
+
+**When a course, product or plan is gone.** If the course, product or plan a rule points to is trashed, deleted or unpublished, the rules list flags it, for example "Course no longer available", because nobody can get it. Publish it again or delete the rule. Visitors are only offered the ways in that still exist.
+
+**What a visitor without access sees.** The space says what it is included with and gives a **Get** button for each way in (up to two). With two buttons each names its kind, for example **Get Poetry Masterclass (Course)** and **Get Poetry Masterclass (Group)**. A course or group reads "You get access as soon as you join, and lose it if you leave." Every paid plan (PMPro, MemberPress, WooCommerce, Restrict Content Pro, SureMembers and others) reads "Your access starts as soon as your membership is active, and ends if it lapses." If nothing the space is included with can still be had, it reads "You can't join here right now."
+
+**What a member sees.** Someone a membership rule lets in sees "You have access through Community Writing Basics (Course)." under the space description, linked to the course or plan, so they know what keeps them in. People who joined, were invited, or are site staff do not see it.
+
+**Changing a rule.** Pick a new grant in the rule's **Grants** dropdown in the rules list. It saves at once, and the Space Role column updates to match. Members the rule already admitted keep their place. To gate by a different course, plan or role instead, add a rule for it and delete the old one.
 
 > **Note:** MemberPress and Paid Memberships Pro adapters are available in Jetonomy free. WooCommerce Memberships, Restrict Content Pro, LearnDash, and [Learnomy](../integrations/14-learnomy.md) adapters require Jetonomy Pro. The Learnomy adapter gates a space by either a Learnomy course or a Learnomy membership plan.
 

@@ -76,7 +76,9 @@ class Adapter_Registry {
 	 *
 	 * `wp-roles` is skipped: its ids are bare role slugs with no prefix, it is
 	 * excluded from the membership picker, and a `membership` rule should never
-	 * resolve to a WP role.
+	 * resolve to a WP role. Adapters that declare `level_prefixes()` are skipped
+	 * too: level_owner() resolves them by prefix, so their full catalog (every
+	 * product or course) is never listed just to name one rule.
 	 *
 	 * @return array<string, string> Level id => adapter id.
 	 */
@@ -87,7 +89,7 @@ class Adapter_Registry {
 
 		$owners = array();
 		foreach ( self::$membership as $adapter_id => $adapter ) {
-			if ( 'wp-roles' === $adapter_id || ! $adapter->is_active() ) {
+			if ( 'wp-roles' === $adapter_id || method_exists( $adapter, 'level_prefixes' ) || ! $adapter->is_active() ) {
 				continue;
 			}
 			foreach ( $adapter->get_all_levels() as $level ) {
@@ -111,25 +113,17 @@ class Adapter_Registry {
 	 * showing the stored value beats showing nothing.
 	 *
 	 * @param string $level_id Stored `rule_value`, e.g. `wpfusion_102`.
-	 * @return array{type: string, value: string}
+	 * @return array{type: string, value: string, kind: string}
 	 */
 	public static function describe_membership_level( string $level_id ): array {
 		$fallback = array(
 			'type'  => __( 'Membership', 'jetonomy' ),
 			'value' => $level_id,
+			'kind'  => '',
 		);
 
-		if ( '' === $level_id ) {
-			return $fallback;
-		}
-
-		$owners     = self::membership_level_owners();
-		$adapter_id = $owners[ $level_id ] ?? '';
-		if ( '' === $adapter_id ) {
-			return $fallback;
-		}
-
-		$adapter = self::get_membership( $adapter_id );
+		$owner   = self::level_owner( $level_id );
+		$adapter = self::$membership[ $owner['adapter'] ] ?? null;
 		if ( ! $adapter ) {
 			return $fallback;
 		}
@@ -138,9 +132,105 @@ class Adapter_Registry {
 		$label  = $adapter->get_level_label( $level_id );
 
 		return array(
-			'type'  => $labels[ $adapter_id ] ?? ucfirst( $adapter_id ),
+			'type'  => $labels[ $owner['adapter'] ] ?? ucfirst( $owner['adapter'] ),
 			'value' => '' !== $label ? $label : $level_id,
+			'kind'  => $owner['kind'],
 		);
+	}
+
+	/**
+	 * The active adapter that owns one level id, and what kind of level it is.
+	 *
+	 * Adapters that declare `level_prefixes()` (prefix => kind label, optional
+	 * like `get_level_url()`) are matched by prefix: no catalog scan, and a
+	 * course that was trashed or unpublished still resolves to its adapter.
+	 * Adapters without it fall back to the membership_level_owners() scan.
+	 *
+	 * @param string $level_id Stored `rule_value`, e.g. `ld_group_12`.
+	 * @return array{adapter: string, kind: string} Empty strings when no adapter claims it.
+	 */
+	public static function level_owner( string $level_id ): array {
+		foreach ( self::$membership as $adapter_id => $adapter ) {
+			/** @var Membership_Adapter $adapter */
+			if ( ! method_exists( $adapter, 'level_prefixes' ) || ! $adapter->is_active() ) {
+				continue;
+			}
+			foreach ( (array) $adapter->level_prefixes() as $prefix => $kind ) {
+				if ( str_starts_with( $level_id, (string) $prefix ) ) {
+					return array(
+						'adapter' => $adapter_id,
+						'kind'    => (string) $kind,
+					);
+				}
+			}
+		}
+
+		return array(
+			'adapter' => self::membership_level_owners()[ $level_id ] ?? '',
+			'kind'    => '',
+		);
+	}
+
+	/**
+	 * Up to $limit levels of one adapter whose label matches $query.
+	 *
+	 * Adapters whose catalog is capped for the picker preload (LearnDash,
+	 * WooCommerce) declare an optional `search_levels( $query, $limit )` that
+	 * queries the database, so level 501 and beyond stay selectable. Others
+	 * have their full list preloaded and are filtered in the browser.
+	 *
+	 * @param string $adapter_id Membership adapter id.
+	 * @param string $query      Search text.
+	 * @param int    $limit      Max rows.
+	 * @return array<int, array{id: string, label: string}>
+	 */
+	public static function search_levels( string $adapter_id, string $query, int $limit = 20 ): array {
+		$adapter = self::$membership[ $adapter_id ] ?? null;
+		if ( ! $adapter || ! $adapter->is_active() || '' === $query || ! method_exists( $adapter, 'search_levels' ) ) {
+			return array();
+		}
+		return array_slice( array_values( (array) $adapter->search_levels( $query, $limit ) ), 0, $limit );
+	}
+
+	/**
+	 * Whether a level is bought (a subscription or plan that can lapse) rather
+	 * than joined (a course or group). Adapters opt in with an optional
+	 * `level_is_purchase( string $level_id ): bool`; a level with no kind
+	 * (a plain plan) counts as bought, any other as joined.
+	 *
+	 * @param string $level_id Stored rule value.
+	 * @return bool
+	 */
+	public static function membership_level_is_purchase( string $level_id ): bool {
+		if ( '' === $level_id ) {
+			return true;
+		}
+		$owner   = self::level_owner( $level_id );
+		$adapter = self::$membership[ $owner['adapter'] ] ?? null;
+		if ( $adapter && method_exists( $adapter, 'level_is_purchase' ) ) {
+			return (bool) $adapter->level_is_purchase( $level_id );
+		}
+		return '' === $owner['kind'];
+	}
+
+	/**
+	 * Whether a membership level can still be bought or joined: false for a
+	 * trashed, unpublished or deleted course, product or plan. Adapters may
+	 * implement an optional `level_available( string $level_id ): bool`; without
+	 * it, a level the adapter cannot name (get_level_label() falls back to the
+	 * raw id, e.g. a deleted PMPro level "pmpro_999") counts as gone. With no
+	 * adapter registered the level counts as available.
+	 *
+	 * @param string $level_id Stored rule value.
+	 * @return bool
+	 */
+	public static function membership_level_available( string $level_id ): bool {
+		$adapter_id = '' !== $level_id ? self::level_owner( $level_id )['adapter'] : '';
+		$adapter    = self::$membership[ $adapter_id ] ?? null;
+		if ( ! $adapter ) {
+			return true;
+		}
+		return method_exists( $adapter, 'level_available' ) ? (bool) $adapter->level_available( $level_id ) : $adapter->get_level_label( $level_id ) !== $level_id;
 	}
 
 	/**
@@ -166,9 +256,8 @@ class Adapter_Registry {
 		$url = '';
 
 		if ( '' !== $level_id ) {
-			$owners     = self::membership_level_owners();
-			$adapter_id = $owners[ $level_id ] ?? '';
-			$adapter    = '' !== $adapter_id ? self::get_membership( $adapter_id ) : null;
+			$adapter_id = self::level_owner( $level_id )['adapter'];
+			$adapter    = self::$membership[ $adapter_id ] ?? null;
 
 			if ( $adapter && method_exists( $adapter, 'get_level_url' ) ) {
 				$url = (string) $adapter->get_level_url( $level_id );

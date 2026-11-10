@@ -1,12 +1,14 @@
 {
   "journey": "C.anon.single-post",
-  "free": "dcdb0750",
-  "pro": "404b0af",
-  "walked_at": "2026-10-21T08:59:00Z",
-  "walker": "lane A",
+  "free": "fb73aeda",
+  "pro": "e3b90b6",
+  "walked_at": "2026-11-10T09:28:35.658548Z",
+  "walker": "release 2.0.7 combo walk wave 8 (Sonnet)",
   "env": {
+    "mode": "combo stack (Free + Pro, 17 extensions on)",
+    "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
@@ -15,128 +17,144 @@
     "schemes": [
       "light",
       "dark"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-anon-single-post.1": {
       "result": "pass",
-      "evidence": "Guest on topic 5874: title, author, vote controls, 30 replies, \"45 replies\" count render.",
-      "screenshot": "c-anon-single-post.1.png"
+      "evidence": "Guest, 1440, /community/s/feature-requests/t/dark-mode-for-the-community-on-phones/: h1 'Open Dark mode for the community on phones', body, author, vote clusters and 30 replies render.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-1.png"
     },
     "c-anon-single-post.2": {
       "result": "pass",
-      "evidence": "Guest vote/reply controls are anchors to wp-login.php?redirect_to=<topic URL> (\"Log in to vote\", \"Log in to reply\"); click lands on login with redirect_to; logging in returns to topic. Guests get no Subscribe control (nothing to fail silently). Not run: full browser credential login (autologin used)."
+      "evidence": "Guest clicked the vote control (a.jt-act-login): focus moved to the 'Join the conversation' login form input (#login), form in view; its link is wp-login.php?redirect_to=<topic URL encoded>; no Subscribe control for guests (0 matches); no 403 toast. Reply control is 'Log in to reply' button.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-2.png"
     },
     "c-anon-single-post.3": {
       "result": "pass",
-      "evidence": "POST /posts/5874/replies and /vote unauthenticated -> 401 rest_not_logged_in (core code, not jetonomy_login_required; runbook allows equivalent)."
+      "evidence": "curl POST /posts/249/replies and /posts/249/vote without auth -> 401 rest_not_logged_in both."
     },
     "c-anon-single-post.4": {
       "result": "pass",
-      "evidence": "Fixture reply edited 2h after post (created -3h, edited_at -1h): shows \"edited 1 hour ago\" (relative to now), title attr exact time \"October 21, 2026 7:53 am\". Fixture edited_at set via SQL, so wording is 1h not 2h.",
-      "screenshot": "c-anon-single-post.4.png"
+      "evidence": "Topic 243 reply 1167 (created 2026-11-06 10:15, edited 12:15) shows 'edited 4 days ago' (seed is 4 days old; relative time as designed) and the span title shows 'November 6, 2026 12:15 pm'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-4-6-17.png"
     },
     "c-anon-single-post.5": {
       "result": "pass",
-      "evidence": "Reply edited 30s after posting (edited_at=created+30s) and unedited reply show no edited mark; only reply-16297 has \"edited\"."
+      "evidence": "Created reply 4152 as bob on topic 249, edited it 37 s later (PATCH /replies/4152): guest view shows 'Bob Martinez 1 minute ago' with no edited mark; unedited reply 4154 shows no mark either. Test replies trashed afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-5.png"
     },
     "c-anon-single-post.6": {
       "result": "pass",
-      "evidence": "Nested reply 16299 shows \"in reply to Alice Chen\"."
+      "evidence": "Topic 243 reply 1220 shows 'in reply to Yuki Tanaka' as a.jt-in-reply-to href=#reply-1167 (the parent).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-4-6-17.png"
     },
     "c-anon-single-post.7": {
       "result": "pass",
-      "evidence": "Fixture topic with zero replies: guest sees \"No replies yet.\" and not \"Be the first to reply!\"; bob saw \"Be the first to reply!\" at creation."
+      "evidence": "Topic 402 (zero replies): guest sees 'No replies yet.' only; bob on the same topic sees 'No replies yet. Be the first to reply!' with the composer.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-7-bob.png"
     },
     "c-anon-single-post.8": {
       "result": "pass",
-      "evidence": "Closed topic 5877 (0 replies, Announcements; \"Scheduled maintenance on Saturday\" topic 5875 has 1 reply so the zero-reply closed one used): Closed shown, no composer, \"No replies yet.\" shown.",
-      "screenshot": "c-anon-single-post.8.png"
+      "evidence": "Guest on /announcements/t/community-guidelines-updated-for-2026/: Closed badge, no composer, empty line 'No replies yet.'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-8.png"
     },
     "c-anon-single-post.9": {
       "result": "pass",
-      "evidence": "test_moderator on closed 0-reply 5877: composer present, \"Be the first to reply!\" shown.",
-      "screenshot": "c-anon-single-post.9.png"
+      "evidence": "test_moderator on the same closed topic: composer present, empty line 'No replies yet. Be the first to reply!'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-9-mod.png"
     },
     "c-anon-single-post.10": {
       "result": "pass",
-      "evidence": "Guest on Partner Program topic URL: title \"Page not available\", \"Topic not found.\" identical to missing topic."
+      "evidence": "Guest on partner-program topic 239: HTTP 404, page title 'Page not available', h1 'Topic not found.', breadcrumb 'Home / Not found', no body; identical to a missing slug.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-10.png"
     },
     "c-anon-single-post.11": {
       "result": "pass",
-      "evidence": "Guest on Moderators Room topic URL: same \"Page not available\" / \"Topic not found.\" as missing slug; no space or topic name in text or title.",
-      "screenshot": "c-anon-single-post.11.png"
+      "evidence": "Guest on moderators-room topic 241: 404, same title/text as a missing topic; neither the title nor the page text names the space or topic.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-11.png"
     },
     "c-anon-single-post.12": {
       "result": "pass",
-      "evidence": "GET /replies/13381 (Moderators Room) as guest -> 404 jetonomy_not_found \"Reply not found.\", identical to /replies/9999999."
+      "evidence": "curl GET /replies/1164 (Moderators' Room) -> 404 jetonomy_not_found 'Reply not found.', body byte-identical to GET /replies/9999999."
     },
     "c-anon-single-post.13": {
       "result": "pass",
-      "evidence": "GET /replies/13380, 13623 (CAB) and 13378 (Partner Program) as guest -> 404 jetonomy_not_found, same body as missing id."
+      "evidence": "curl GET /replies/1163 (Customer Advisory Board) -> 404 jetonomy_not_found, same body as the missing id."
     },
     "c-anon-single-post.14": {
       "result": "pass",
-      "evidence": "GET /updates?scope=post&id=5866 (hidden) and 5864 (private) -> 404 jetonomy_not_found \"Topic not found.\", same as id 9999999."
+      "evidence": "curl GET /updates?scope=post&id=241&since=<now> -> 404 jetonomy_not_found 'Topic not found.', same as id=9999999."
     },
     "c-anon-single-post.15": {
       "result": "pass",
-      "evidence": "GET /updates?scope=post&id=5874&since=-5min as guest -> 200 {data:[],meta}."
+      "evidence": "GET /updates?scope=post&id=249&since=<5 min ago> -> 200 with a data id list (not 401); with a fresh reply in window the list was [4154]."
     },
     "c-anon-single-post.16": {
       "result": "pass",
-      "evidence": "GET /updates?scope=global and scope=space&id=2999 as guest -> 401 jetonomy_unauthorized."
+      "evidence": "curl GET /updates?scope=global and ?scope=space&id=12 as guest -> 401 jetonomy_unauthorized."
     },
     "c-anon-single-post.17": {
       "result": "pass",
-      "evidence": "Guest sees tombstone \"Private reply, visible to the topic author and moderators.\" for reply 16300; admin, reply author and topic author bob get the text via REST. test_moderator (mod only in other spaces) correctly sees empty content, so a space-moderator view was not performed."
+      "evidence": "Guest on topic 243: reply 1221 renders .jt-reply-private-hidden tombstone 'Private reply, visible to the topic author and moderators.' with no text. test_moderator (site moderator, not on the roster, not the author) also sees the tombstone; admin sees the text 'Sending you the shop I bought mine from privately...'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-17-admin.png"
     },
     "c-anon-single-post.18": {
-      "result": "fail",
-      "evidence": "Guest GET /replies/16300 and /replies/13438 (private replies in public topics) -> 404 jetonomy_not_found, not tombstone content. Body never leaks (list endpoint returns content \"\" with is_private true), so behaviour is stricter than the runbook wording; likely runbook wording drift."
+      "result": "pass",
+      "evidence": "GET /replies/1221 as guest -> 404 jetonomy_not_found; GET /posts/243/replies lists 1221 with is_private true and content ''; the text never appears."
     },
     "c-anon-single-post.19": {
       "result": "pass",
-      "evidence": "Grace 159-char topic: 1440 and 390 no horizontal scroll (scrollWidth==innerWidth); pre overflow-x auto (390: scrollWidth 496 in 292 box, scrolls inside); URL wraps; breadcrumb truncates with ellipsis. Reign only.",
-      "screenshot": "c-anon-single-post.19-390.png"
+      "evidence": "Grace's topic 247 (127-char URL, list, blockquote, code, long title): at 1440 and 390 document scrollWidth == innerWidth; at 390 the pre scrolls inside itself (scrollWidth 495 > clientWidth 292, overflow-x auto); the 127-char URL wraps (overflow-wrap anywhere) at 293px within a 294px parent.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-19-390.png"
     },
     "c-anon-single-post.20": {
       "result": "pass",
-      "evidence": "Omar Arabic topic with RTL emulation (dir=rtl, -rtl.css swap; real site locale not changed): title, body, replies right-aligned, vote column and avatar mirrored, no horizontal scroll.",
-      "screenshot": "c-anon-single-post.20.png"
+      "evidence": "Omar's Arabic topic 248 with the site in Arabic (html dir=rtl, lang=ar): title/body right-aligned, sidebar on the left, post vote cluster at the end side, breadcrumb mirrored, no horizontal scroll. Locale restored to en_US.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-20-rtl.png"
     },
     "c-anon-single-post.21": {
       "result": "pass",
-      "evidence": "Topic 5874: 30 replies on load, Load More brings total to 45, count reads \"45 replies\"."
+      "evidence": "Topic 249: first view 30 .jt-reply, Load More -> 60, Load More -> 66 (68 while my 2 test replies were live, then trashed); heading 'Replies 66'."
     },
     "c-anon-single-post.22": {
       "result": "pass",
-      "evidence": "Fixture reply by a deleted account (user deleted, author_id becomes 0): shows \"[deleted]\" with jt-avatar-anon default avatar, no notice.",
-      "screenshot": "c-anon-single-post.22.png"
+      "evidence": "Topic 243 reply 1168 (author_id 0): author '[deleted]' with span.jt-avatar-anon silhouette; no notice/blank.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-4-6-17.png"
     },
     "c-anon-single-post.23": {
       "result": "pass",
-      "evidence": "Grace reply fixture at 390: initials avatar GR, name 284px wide inside reply, vote controls below the header, no overlap, no h-scroll.",
-      "screenshot": "c-anon-single-post.23.png"
+      "evidence": "Grace reply 724 on off-topic-lounge topic at 390px: .jt-reply-author__name nowrap, overflow hidden, text-overflow ellipsis (scrollWidth 284 > clientWidth 256), one line (22px), initials avatar 'GR', no overlap with the vote cluster.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-23.png"
     },
     "c-anon-single-post.24": {
       "result": "pass",
-      "evidence": "Dark mode (bx-color-mode) on Grace topic: blockquote, link and code readable at 1440 and 390. Reign only.",
-      "screenshot": "c-anon-single-post.24.png"
+      "evidence": "Topic 247 in Reign dark mode (toggle clicked): blockquote on a dark slate panel with light text, body text contrast about 12:1; readable.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-24-26-dark.png"
     },
     "c-anon-single-post.25": {
       "result": "pass",
-      "evidence": "Breadcrumb Home > Community > General Discussion links /community/, /community/category/community/, /community/s/general-discussion/ (topic is current, text only)."
+      "evidence": "Breadcrumb Home / Product & Engineering / Feature Requests: all three links return 200; clicking 'Feature Requests' landed on /community/s/feature-requests/ with h1 Feature Requests."
     },
     "c-anon-single-post.26": {
       "result": "pass",
-      "evidence": "Code block bg rgb(30,30,30) in light and dark (dark token panel, not white).",
-      "screenshot": "c-anon-single-post.26-390.png"
+      "evidence": "Dark mode: code block pre is rgb(30,30,30) with rgb(212,212,212) text (contrast 11.2), not a white panel.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-26-dark.png"
     },
     "c-anon-single-post.27": {
       "result": "pass",
-      "evidence": "Fixture topic linking to http://unreachable-qa-walk-a.invalid: plain underlined link, no card, no console errors over 2.5s.",
-      "screenshot": "c-anon-single-post.27.png"
+      "evidence": "Topic 402 links to old-forum-notes.invalid: both anchors render as plain links, no preview card/embed element, 0 console errors and 0 failed requests.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-anon-single-post-27.png"
+    },
+    "c-anon-single-post.28": {
+      "result": "pass",
+      "evidence": "Keyword rule 'payoutwatch' holds the reply: bob POST reply 4153 -> status pending; reply 4154 -> publish. Guest GET /updates?scope=post&id=249&since=<5s ago> -> [4154]; 4153 not listed. Replies trashed afterwards."
+    },
+    "c-anon-single-post.29": {
+      "result": "pass",
+      "evidence": "Topic 243 (private reply 1221): GET /updates?scope=post&id=243&since=2020 -> [1167,1168,1220,1221]; GET /posts/243/replies lists the same 4 ids, 1221 as a tombstone (content '', author [deleted]); no text in either."
     }
   },
   "proposed_checks": []

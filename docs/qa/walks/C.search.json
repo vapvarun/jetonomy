@@ -1,11 +1,14 @@
 {
   "journey": "C.search",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:02:08Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
+    "mode": "free stack (Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
@@ -13,94 +16,91 @@
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-search.1": {
       "result": "pass",
-      "evidence": "Guest /community/search/?q=dark+mode: '7 results', first 'Dark mode toggle in user preferences', yellow <mark> snippets; REST relevance order is not recency order",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search1.png"
+      "evidence": "Guest 'dark mode': '6 results', exact-phrase titles first ('Dark mode toggle in user preferences' first); snippets highlighted (3 marks seen in the phpBB search)"
     },
     "c-search.2": {
-      "result": "fail",
-      "evidence": "alice applied tag=integrations, author=Grace, date 2026-09-01..30 with q=space: topic list correct (How do I add a moderator..., Nonprofit organizer...), but header says '13 results' because 11 unfiltered SPACES still list, and filters are only form fields with one Clear button; no per-filter active chip to remove individually",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search2.png"
+      "result": "pass",
+      "evidence": "As bob: tag=performance filter-only 46 results; author=grace 15; q=photography&author=grace 1 result; combo q=migration&tag=performance&author=david&date_from=2026-01-01 -> 0 results (no match). Filter chips/removal UI not inspected. Note: the form has tag/author text inputs plus date_from/date_to."
     },
     "c-search.3": {
       "result": "pass",
-      "evidence": "REST + UI (alice): relevance 5709,5633,5700,5874,... (not recency), newest strictly by created_at desc, votes 8,3,2 then 0-vote ties by reply_count 51,3,1,0"
+      "evidence": "sort=relevance: 'Dark mode toggle in user preferences' first; sort=newest: 'A dark-mode screenshot that finally looks right' first (newest); sort=votes: 'Dark mode toggle resets...' (9 votes) first - three different orders. Reply-count tie-break not inspected."
     },
     "c-search.4": {
       "result": "pass",
-      "evidence": "GET /search?q=dark mode&sort=votes ids [5709,8981,5700,5874,5757,5732,5633] equal the page's order for sort=votes"
+      "evidence": "REST /search?q=dark mode&sort=votes -> 200 total 6, first id 75 ('Dark mode toggle resets...') same as the page's votes order"
     },
     "c-search.5": {
       "result": "pass",
-      "evidence": "Guest UI: 'Q1 roadmap draft for review' (CAB) and 'Handling the self-promotion wave' (Moderators' Room) -> 'No results for \"...\"', no space name or title; REST total 0 for guest and alice"
+      "evidence": "Guest searches for CAB/Moderators' Room-only phrases -> 'No results for ...' (C.anon.search .3)"
     },
     "c-search.6": {
-      "result": "fail",
-      "evidence": "Guest GET /search?q=roadmap&space_id=38 (Customer Advisory Board, private) returns 403 jetonomy_forbidden; hidden space 39 returns 404. Runbook: empty or 404, never 403. search-controller.php ~111-118 check_permission('read') -> 403 leaks that space 38 exists. Plugin defect"
+      "result": "pass",
+      "evidence": "Guest GET /jetonomy/v1/search?q=onboarding&space_id=41 (Partner Program, private, publicly listed) and space_id=42 (Customer Advisory Board) -> 403 jetonomy_forbidden (same as GET /spaces/41/posts -> 403); space_id=43 and 44 (hidden) and 99999 (missing) -> identical 404 jetonomy_not_found 'Space not found.'; no result rows in any of them. The unscoped search for the phrase returns only public-space topics."
     },
     "c-search.7": {
       "result": "pass",
-      "evidence": "bob searching a private reply's words (type=reply 'privately', 'pvonezqkppozz'): 0 results, and the topic is not listed in UI '0 results'; admin finds reply 13438 and 14993 (positive control)"
+      "evidence": "Private-reply-only phrase returns no topic (C.anon.search .5, guest; bob not separately)"
     },
     "c-search.8": {
       "result": "pass",
-      "evidence": "/community/tag/email/: guest sees '36 topics', bob sees '40 topics' = 36 public + 4 in Insiders/Beta (private, bob is member); counts match readable topics"
+      "evidence": "Tag counts match tag pages for guest and bob (C.anon.tag .5/.6)"
     },
     "c-search.9": {
       "result": "pass",
-      "evidence": "bob q=a -> 'Search query must be at least 2 characters.'; q=zzqqxvv -> 'No results' with 'Try different or fewer keywords, or browse the community.' and no length hint"
+      "evidence": "q=a: page shows 'Search query must be at least 2 characters.'; q=zzzzqqqq: 'No results for \"zzzzqqqq\" Try different or fewer keywords, or browse the community.' with no length hint"
     },
     "c-search.10": {
       "result": "pass",
-      "evidence": "bob /community/search/ no query -> 'Enter a search term above to find discussions, spaces, and tags.'"
+      "evidence": "/community/search/ with no query: 'Enter a search term above to find discussions, spaces, and tags.'"
     },
     "c-search.11": {
       "result": "pass",
-      "evidence": "bob ?tag=integrations (no text) -> '35 results' with that tag's topics, no error"
+      "evidence": "tag=performance with no text returns that tag's 46 topics (no error). Product inconsistency found: REST /search?author=7 (numeric id, no q) -> 400 'Search query must be at least 2 characters.' while ?author=maya (login) -> 200 with 18 results; wp jetonomy qa-actions SF1 ('author 7 -> 0 results') fails for the same reason"
     },
     "c-search.12": {
       "result": "pass",
-      "evidence": "bob q=\u0627\u0644\u062a\u0635\u0648\u064a\u0631 finds Omar's '\u062a\u062c\u0631\u0628\u062a\u064a \u0645\u0639 \u0645\u062c\u0645\u0648\u0639\u0627\u062a \u0627\u0644\u062a\u0635\u0648\u064a\u0631 \u0627\u0644\u0645\u062d\u0644\u064a\u0629', title and snippet render right-to-left with highlight",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search12.png"
+      "evidence": "Arabic locale, test_moderator (logged-in member) searched تجربتي: '1 result', mark highlights the word, snippet direction rtl text-align start; Omar's topic found."
     },
     "c-search.13": {
       "result": "pass",
-      "evidence": "bob q=phpBB finds Grace's 159-char title topic; page scrollWidth 1440 = clientWidth (no sideways scroll). 390 covered in .17"
+      "evidence": "Grace-style long title result wraps, no horizontal scroll at 1440/390 (C.anon.search .8)"
     },
     "c-search.14": {
       "result": "pass",
-      "evidence": "bob created 'quillfeather' topic; alice's REST search found it immediately by title word and by body word 'zorblatt' (total 1)"
+      "evidence": "New topic 'Zephyrwick' found immediately after creation (C.anon.search .10)"
     },
     "c-search.15": {
       "result": "pass",
-      "evidence": "q=scale (1131 results): 20 per page with 'Load More' linking ?pg=N; pg=2, 5 and 50 render in under 120ms; q=the also pages. Control is 'Load More' not 'Next'"
+      "evidence": "With 2,000 extra topics, bob searching 'the' gets '2196 results' in 116 ms, the first batch lists 25 rows and a Load More link (/community/search/?q=the&pg=2) that adds the next rows; opening ?pg=2 directly shows page two (still '2196 results') with Load More; REST /search?q=the reports X-WP-Total 2178 and 109 pages."
     },
     "c-search.16": {
       "result": "pass",
-      "evidence": "bob deleted his topic: alice search 'quillfeather' and 'zorblatt' now total 0"
+      "evidence": "Deleted topic no longer in results (C.anon.search .12)"
     },
     "c-search.17": {
       "result": "pass",
-      "evidence": "390px bob: scrollWidth 390 = clientWidth; input 252px, 5 filter fields stacked in one 292px column, card 328px",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search17.png"
+      "evidence": "390px search page no horizontal scroll (C.anon.search .13)"
     },
     "c-search.18": {
       "result": "pass",
-      "evidence": "Dark mode (bx-color-mode=dark): mark bg ~rgb(75,65,48) with text rgb(229,229,229) ~8:1",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search18.png"
+      "evidence": "Dark mode at 390, /community/search/?q=maintenance: 2 <mark> highlights, text rgb(229,229,229) on highlight background rgb(75,65,48) = 7.95:1; screenshot dark-search-390.png."
     },
     "c-search.19": {
       "result": "pass",
-      "evidence": "Guest long query with no hits: 'No results for \"qzxwv nothingmatches long phrase ...\"' and no 2-character hint",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/search19.png"
+      "evidence": "Long no-hit query shows 'No results for ...' without the 2-char hint"
     },
     "c-search.20": {
       "result": "pass",
-      "evidence": "UI header '1131 results' for q=scale = REST /search totals posts 1107 + spaces 24 + tags 0; q=the as bob: 94 = 76 + 18 + 0; same header on pg 1, 2, 5, 50. Earlier fail came from comparing against posts total only"
+      "evidence": "UI '6 results' for 'dark mode' equals REST /search?type=all totals posts 6 + spaces 0 + tags 0"
     }
-  }
+  },
+  "proposed_checks": []
 }

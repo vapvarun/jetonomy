@@ -108,7 +108,7 @@ if ( 'already_member' === $result['status'] ) {
 		<?php /* translators: 1: the singular member label, lowercase; 2: space title. */ ?>
 		<p><?php printf( esc_html__( 'You are already a %1$s of %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', false, true ) ), '<strong dir="auto">' . esc_html( (string) $result['space']->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></p>
 		<div class="jt-invite-actions">
-			<?php /* translators: %s: the owner-configured singular space label. */ ?>
+			<?php /* translators: %s: a space title, or the singular space label. */ ?>
 			<a href="<?php echo esc_url( $space_url ); ?>" class="jt-btn jt-btn-fill"><?php echo esc_html( sprintf( __( 'Go to %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></a>
 		</div>
 	</div>

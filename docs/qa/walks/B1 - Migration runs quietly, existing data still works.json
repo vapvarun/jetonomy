@@ -1,0 +1,73 @@
+{
+  "journey": "B1",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T18:52:41Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
+  "env": {
+    "mode": "free stack (Pro inactive)",
+    "site": "http://localhost:8912",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [
+      1280
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
+  },
+  "checks": {
+    "b1.1": {
+      "result": "pass",
+      "evidence": "No 2.0.6 build/snapshot exists, so the prior state was reproduced on the stack: fixtures (legacy Open+Private space, community-bio-only member, bookmark) written, then jetonomy_db_version set to 2.0.0 (earlier than 2.0.1/2.0.1.1/2.0.2/2.0.4/2.0.7 migrations). One HTTP GET of /wp-admin/ as admin (200) -> jetonomy_db_version became 2.0.7 in that request; debug.log byte offset 6910 before and after (no new line). Caveat: simulated old state, not a restored 2.0.6 dump."
+    },
+    "b1.2": {
+      "result": "pass",
+      "evidence": "Counts before (fixtures in place, db_version 2.0.0) vs after the HTTP migration request: spaces 45/45, posts 259/259, replies 1301/1301, votes 1215/1215, subscriptions 12/12, bookmarks 2/2 (identical). Same caveat: simulated pre-state."
+    },
+    "b1.3": {
+      "result": "pass",
+      "evidence": "SQL: spaces whose post_count <> COUNT(published) = 0; posts whose reply_count <> COUNT(published replies) = 0 (statuses are 'publish'); Feature Requests shows 13 topics in UI and REST X-WP-Total=13"
+    },
+    "b1.4": {
+      "result": "pass",
+      "evidence": "Guest curl: /community/, /community/s/feature-requests/, and topic 'Dark mode for the community on phones' all HTTP 200; seeded topic title/body/author render (checked in browser as admin earlier)"
+    },
+    "b1.5": {
+      "result": "pass",
+      "evidence": "Set space 45 (Mentorship Circle) to visibility=private, join_policy=open before migration; after the admin request wp eval shows private/approval. As hana (non-member) /community/s/mentorship-circle/ reads 'Mentorship Circle is private. Request to join and an admin will review it.' Screenshot qa-artifacts/walk-207/free/b1-5.png."
+    },
+    "b1.6": {
+      "result": "pass",
+      "evidence": "As bob on Customer Advisory Board (private, invite-only, not a member): gate 'Customer Advisory Board is invite-only. You need an invitation to join.' with description and 'Browse spaces', no topics. (bob belongs to Partner Program and Insiders so no approval-policy non-member space exists for him; hana sees the Request to join gate on Partner Program.)"
+    },
+    "b1.7": {
+      "result": "pass",
+      "evidence": "hana (id 24): description meta deleted, jt_user_profiles.bio='Legacy community bio for Hana only.'; after migration `wp user meta get 24 description` = 'Legacy community bio for Hana only.'. bob (id 10) had description 'Full-stack developer...' and a different profile bio 'Bob old community bio...'; after migration `wp user meta get 10 description` is unchanged."
+    },
+    "b1.8": {
+      "result": "pass",
+      "evidence": "Admin Settings > Permissions: 'Upload media' row ticked for Editor, Author, Contributor and Subscriber; CLI shows subscriber role has jetonomy_upload_media"
+    },
+    "b1.9": {
+      "result": "pass",
+      "evidence": "SELECT COUNT(*) FROM wp_jt_restrictions WHERE type=ban AND (space_id IS NULL OR 0) = 0; space bans (space_id>0) present as seeded"
+    },
+    "b1.10": {
+      "result": "pass",
+      "evidence": "Set jetonomy_db_version back to 2.0.1, loaded /wp-admin/ (autologin): version back to 2.0.7, md5 of every jt_* table row count unchanged, no new debug.log line"
+    },
+    "b1.11": {
+      "result": "pass",
+      "evidence": "As alice on /community/s/announcements/t/scheduled-maintenance-this-saturday-0200-0300-utc-s5t3/ (post 9) after migration: upvote button 'Remove your upvote' class 'jt-act voted' aria-pressed=true; bookmark button 'Remove bookmark' class 'bookmarked' aria-pressed=true; GET /bookmarks lists post 9 (bookmark row seeded pre-migration for alice)."
+    },
+    "b1.12": {
+      "result": "pass",
+      "evidence": "As admin REST GET /jetonomy/v1/spaces X-WP-Total=45 = DB count 45; GET /spaces/12/posts X-WP-Total=13 = Feature Requests post_count 13"
+    }
+  },
+  "proposed_checks": []
+}

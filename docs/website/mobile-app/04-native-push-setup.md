@@ -28,12 +28,11 @@ When the Web Push extension is active, the app's config endpoint (`GET /wp-json/
 
 ## Turn on push and set the message
 
-1. Go to **Jetonomy -> Settings** and open the **Web Push** tab
-2. Tick **Enable Web Push**
-3. **VAPID Public Key** - this is generated automatically the first time the extension runs and shown here read-only. You do not need to create or paste a key. (If it reports it could not be generated, your server needs OpenSSL with EC support.)
-4. **Default Notification Title** - the title shown on push notifications. Defaults to your site name; change it to your community's name if you prefer.
-5. **Notification Icon URL** - the small icon shown with the notification. Recommended: a 192x192 PNG. Leave it blank to fall back to the site favicon.
-6. Click **Save Web Push Settings**
+1. Turn on **Web Push Notifications** under **Jetonomy -> Extensions** (that toggle is the only switch), then open the **Web Push** tab under **Jetonomy -> Settings**
+2. **VAPID Public Key** - this is generated automatically the first time the extension runs and shown here read-only. You do not need to create or paste a key. (If it reports it could not be generated, your server needs OpenSSL with EC support.)
+3. **Default Notification Title** - the title shown on push notifications. Defaults to your site name; change it to your community's name if you prefer.
+4. **Notification Icon URL** - the small icon shown with the notification. Recommended: a 192x192 PNG. Leave it blank to fall back to the site favicon.
+5. Click **Save Web Push Settings**
 
 These same settings drive both browser push and native app push - there is no separate native-push screen to configure.
 

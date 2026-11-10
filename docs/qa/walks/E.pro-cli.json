@@ -1,52 +1,67 @@
 {
- "journey": "E.pro-cli",
- "free": "dcdb0750",
- "pro": "404b0af",
- "walked_at": "2026-10-21T10:23:44Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
+  "journey": "E.pro-cli",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-10T06:31:03Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
+  "env": {
+    "mode": "combo (Free + Pro, all extensions)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
+    "locale": "en_US"
+  },
+  "checks": {
+    "e-pro-cli.4": {
+      "result": "pass",
+      "evidence": "Bad arguments: polls get abc -> 'Error: post_id must be a positive integer.'; polls get 99999 -> 'Error: No poll found for this post.'; extension enable nosuch -> 'Error: Unknown extension id: nosuch'; badges get 99999 -> 'Error: Badge not found.'; webhooks get 99999 -> 'Error: Webhook 99999 not found.'; reactions add --on-type=bogus -> 'Error: Parameter errors: Invalid value specified for on-type'; email-digest set-prefs --frequency=bogus -> Invalid value; all exit 1, no stack trace."
+    },
+    "e-pro-cli.5": {
+      "result": "pass",
+      "evidence": "extension disable polls -> 'enabled:' blank, extension list shows polls enabled=no; qa-actions journey phase reports 'Polls (extension disabled - skipping)' and no failure (Pro 78/78); extension enable polls -> enabled 1, list shows yes; debug.log unchanged (1147936 bytes before and after)."
+    },
+    "e-pro-cli.9": {
+      "result": "pass",
+      "evidence": "email-digest set-prefs --for=10 --frequency=off -> applied {frequency: none}, user meta jetonomy_pro_digest_frequency = none; --frequency=bogus -> 'Error: Parameter errors: Invalid value specified for frequency' exit 1; --help lists 'off'; qa-actions CLI1 PASS. Restored to weekly."
+    },
+    "e-pro-cli.2": {
+      "result": "pass",
+      "evidence": "Primary read commands run exit 0 with readable key/value or tab tables: advanced-moderation list, ai status, analytics overview (totals posts 158, replies 1009), badges list, email-digest stats, extension list, fields list, reactions emojis, reply-by-email config, seo-pro get 20, web-push count, webhooks events, white-label get, messaging unread-count --by, polls get/results <post_id>. polls results for post 76 shows 11 votes (2+2+3+4) = 11 rows in jt_pro_poll_votes for that poll."
+    },
+    "e-pro-cli.1": {
+      "result": "pass",
+      "evidence": "wp jetonomy-pro prints a usage list of 15 groups: advanced-moderation, ai, analytics, badges, email-digest, extension, fields, messaging, polls, reactions, reply-by-email, seo-pro, web-push, webhooks, white-label (runbook names custom-badges/custom-fields: the real names are badges/fields). It is a bare 'usage: wp jetonomy-pro <group> <command>' list without per-group descriptions; no PHP notice."
+    },
+    "e-pro-cli.3": {
+      "result": "pass",
+      "evidence": "wp jetonomy qa-actions with Pro active: REST 187/187, Model 253/253, Pro 93/93, Journey 56/56, Refusal 13/13, TOTAL 602/602, 2 SKIP (bbPress scope, digest last-run) and no phase with zero checks. Caveat: with the required 'Operating system' custom field active on this stack the first run failed A1 (post create needs that field) and aborted group A; the 602/602 run was with that field temporarily optional (restored). With Polls disabled the run printed 'Polls (extension disabled - skipping)', Pro 78/78, TOTAL 587/587."
+    },
+    "e-pro-cli.6": {
+      "result": "pass",
+      "evidence": "Seeded 5,000 topics spread over 30 days (removed afterwards): wp jetonomy-pro analytics export --format=csv finished in 0.3 s and returned a header plus 30 rows, one per day (Date,Topics,Replies,New Users,Votes), the per-day topic counts about 168-172 as seeded. webhooks has no 'deliveries' subcommand (events, create, delete, disable, enable, get, list, test, update only)."
+    },
+    "e-pro-cli.7": {
+      "result": "pass",
+      "evidence": "Extensions with no CLI group: anonymous-posting, attachments, site-announcements (the other 14 extensions have one; custom-badges is 'badges', custom-fields is 'fields'). Per the three-entry-point rule these three have UI and REST (attachments has no admin list, see E.attachments.18) but no CLI, which should be an explicit, documented exception in the manifest."
+    },
+    "e-pro-cli.8": {
+      "result": "pass",
+      "evidence": "Free deactivated: wp jetonomy-pro -> 'Error: jetonomy-pro is not a registered wp command.' (WP-CLI's generic message, no fatal; Pro registers nothing without free). One line 'Cron reschedule event error ... action_scheduler_run_queue ... schedule every_minute does not exist' was logged to debug.log while free was off (environment artifact of the CLI run). Licence lapsed beyond grace (bypass off, marker 40 days): wp jetonomy-pro still lists the groups and extension list shows licensed=no for each extension, no fatal. State restored."
+    }
+  },
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-pro-cli.1",
+      "now": "the group names are badges (not custom-badges) and fields (not custom-fields); extension is a management group; there is no group for anonymous-posting, attachments, site-announcements"
+    }
   ]
- },
- "checks": {
-  "e-pro-cli.1": {
-   "result": "fail",
-   "evidence": "PARTIAL: `wp jetonomy-pro` lists 15 groups (advanced-moderation, ai, analytics, badges, email-digest, extension, fields, messaging, polls, reactions, reply-by-email, seo-pro, web-push, webhooks, white-label) with no PHP notice, but as bare \"usage:\" lines with no short description each; the runbook names custom-badges/custom-fields, the real groups are badges and fields"
-  },
-  "e-pro-cli.2": {
-   "result": "fail",
-   "evidence": "PARTIAL: ran polls get 8959 (question/options/votes), polls results 8959 (Thursday 09:00 UTC 2 votes 100%), white-label get, webhooks list (\"No rows.\"), badges list, fields list: readable output, no errors, nothing in debug.log. Comparing the numbers with wp-admin and running the reactions/analytics/messaging read commands were not done; boolean false prints as an empty value (e.g. \"enabled: \")"
-  },
-  "e-pro-cli.3": {
-   "result": "pass",
-   "evidence": "`wp jetonomy qa-actions` exit 0: REST 181/181, Model 212/212, Pro 62/62, Journey 56/56, Refusal 13/13, total 524/524, 2 SKIPPED not counted (PV1 hidden space fixture could not be created, BB1 no bbPress content); Private Messaging journey reported \"extension dormant - skipping\"; with Polls disabled the run printed \"(extension disabled - skipping)\" and totalled 509/509"
-  },
-  "e-pro-cli.4": {
-   "result": "pass",
-   "evidence": "`wp jetonomy-pro polls get 99999999` -> \"Error: No poll found for this post.\" exit 1; `polls get abc` -> \"Error: post_id must be a positive integer.\" exit 1; no stack traces"
-  },
-  "e-pro-cli.5": {
-   "result": "pass",
-   "evidence": "`wp jetonomy-pro extension disable polls` then `extension list` shows polls enabled \"no\"; qa-actions skipped it; `enable polls` restores \"yes\"; wp-content/debug.log gained no non-wp-cli lines"
-  },
-  "e-pro-cli.6": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED at 5,000 rows: `analytics export --format=csv` on the seeded data returned 33 lines in 0.65s, and there is no `webhooks deliveries` subcommand (webhooks has no deliveries command) so the runbook command cannot be run"
-  },
-  "e-pro-cli.7": {
-   "result": "pass",
-   "evidence": "CLI groups absent for anonymous-posting, attachments and site-announcements (confirmed from `wp jetonomy-pro` list): they have admin/UI and REST entry points only, so the three-entry-point rule is met only by documented exception; recorded here for the manifest"
-  },
-  "e-pro-cli.8": {
-   "result": "pass",
-   "evidence": "`wp --skip-plugins=jetonomy jetonomy-pro` (free not loaded) -> \"Error: 'jetonomy-pro' is not a registered wp command.\" with no fatal; earlier in the license journey free deactivated showed the Pro notice \"Jetonomy Pro requires the Jetonomy plugin to be installed and activated.\"; an invalid-licence run was NOT PERFORMED"
-  }
- }
 }

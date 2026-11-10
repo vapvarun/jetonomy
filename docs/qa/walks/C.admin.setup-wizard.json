@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.setup-wizard",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T13:10:00Z",
-  "walker": "lane B3",
+  "free": "11e21b47",
+  "walked_at": "2026-11-07T20:25:17Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
     "themes": [
       "reign"
@@ -13,101 +13,95 @@
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "mode": "free stack (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP"
   },
   "checks": {
     "c-admin-setup-wizard.1": {
       "result": "pass",
-      "evidence": "Wizard shows Welcome to Jetonomy, slug field with URL preview, Forum/Q&A/Ideas/Feed types and Next (re-walk at 7bbd544b)",
-      "carried_forward": true
+      "evidence": "wp-admin/admin.php?page=jetonomy-setup (stack not a fresh install, wizard still opens): 'Welcome to Jetonomy' with Community URL Slug field (community), Default Community Type radios Forum (checked), Q&A, Ideas, Feed and button 'Next: First Space'; screenshot wizard-1.png."
     },
     "c-admin-setup-wizard.2": {
       "result": "pass",
-      "evidence": "Cleared the prefilled names and submitted -> 'Please fill in the category and space name.'; category/space counts unchanged",
-      "carried_forward": true
+      "evidence": "Step 2 (Category Name and Space Name are prefilled with General / Community Discussion): clearing the category name and clicking Create Space shows 'Please fill in the category and space name.', the wizard stays on 'Create Your First Space', categories 8 and spaces 46 unchanged."
     },
     "c-admin-setup-wizard.3": {
       "result": "pass",
-      "evidence": "'QA-WALK-B2 Wizard Product Questions' + 'Getting Started' -> 'Your community is ready!' with Visit Community and Go to Dashboard",
-      "carried_forward": true
+      "evidence": "Category 'Product Questions' + space 'Getting Started' (with a description) -> 'Your community is ready!' with 'Visit Community' (/community/) and 'Go to Dashboard' (admin.php?page=jetonomy); DB has category 32 and space 98 getting-started-1."
     },
     "c-admin-setup-wizard.4": {
       "result": "pass",
-      "evidence": "Visit Community /community/ and guest home list the new category and space",
-      "carried_forward": true
+      "evidence": "Visit Community opens /community/ in a new tab: the member view lists 'Product Questions' and 'Getting Started'; a separate logged-out context lists 'Product Questions > Getting Started - Forum - Start here if you are new... 0 topics 1 member'."
     },
     "c-admin-setup-wizard.5": {
-      "result": "not_performed",
-      "evidence": "Demo import adds shared-site demo content; runbook depth note limits demo import/remove to the disposable Docker site, not available here"
+      "result": "pass",
+      "evidence": "Wizard step 2 > 'Import the demo community instead': after about a second the screen shows 'Your community is ready!' (no toast on the wizard itself); the same import from the Dashboard 'Import Demo Data' card (confirm dialog 'Add sample members, categories, spaces and topics...') shows the toast 'Demo data imported.' and a separate logged-out context moves from '5,010 members 1 topic' to '5,029 members 210 topics' on the next load. The demo members (19, e.g. sofia) have WP bios ('Developer advocate. I write the docs you wish you had read first.') and render with initials avatars (no photo URLs) - a fully empty avatar_url."
     },
     "c-admin-setup-wizard.6": {
-      "result": "not_performed",
-      "evidence": "Remove demo data wipes the shared community; needs the disposable Docker site (runbook depth note)"
+      "result": "pass",
+      "evidence": "Dashboard 'Remove All Demo Data' (confirm 'Delete all sample categories, spaces, topics, replies and sample members? ... Your own content is not affected.') -> notice 'All demo data has been removed.'; against the saved manifest 0 of the 220 demo topics, 1120 replies, 20 spaces, 19 members and their post_tags remain, votes went 1216 -> 0, bookmarks 0, subscriptions unchanged (3 real), notifications 16 -> 9."
     },
     "c-admin-setup-wizard.7": {
-      "result": "not_performed",
-      "evidence": "Same as .6; needs the disposable Docker site"
+      "result": "pass",
+      "evidence": "Site with real content (a real member's topic, 1,032 imported replies, 5,000 real members, real spaces): demo import then Remove All Demo Data (twice): real rows are unchanged - published topics 221 -> 1 (only the real one left), replies 2196 -> 1032 (the 1032 real replies untouched), users 5030 -> 5011 (the 19 demo members), spaces 57 -> 37 (the 20 demo spaces)."
     },
     "c-admin-setup-wizard.8": {
       "result": "pass",
-      "evidence": "bob POST jetonomy_setup_save / jetonomy_setup_create_sample -> 403 -1; wizard page 403; nothing created",
-      "carried_forward": true
+      "evidence": "bob POST admin-ajax jetonomy_setup_save and jetonomy_setup_create_sample -> 403 '-1' each, nothing created (base_slug unchanged); bob opening admin.php?page=jetonomy-setup -> 'Sorry, you are not allowed to access this page.' (403)."
     },
     "c-admin-setup-wizard.9": {
       "result": "pass",
-      "evidence": "guest POST jetonomy_setup_save -> 0/400; nothing written",
-      "carried_forward": true
+      "evidence": "Logged out POST jetonomy_setup_save and jetonomy_setup_create_sample -> admin-ajax returns 400 '0', nothing changed."
     },
     "c-admin-setup-wizard.10": {
       "result": "pass",
-      "evidence": "admin POST with bad nonce -> 403 -1; nothing saved",
-      "carried_forward": true
+      "evidence": "admin POST jetonomy_setup_save with a bad nonce -> 403 '-1'; base_slug option unchanged."
     },
     "c-admin-setup-wizard.11": {
       "result": "pass",
-      "evidence": "390px: scrollWidth 390 = clientWidth on steps 1,2 and final; buttons 44px (demo 61px); steps stack",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-390-s2-end.png",
-      "carried_forward": true
+      "evidence": "390x844: steps 1 and 2: scrollWidth 390 = viewport; 'Next: First Space' 44px tall, 'Back' 44px, 'Create Space' 44px, 'Import the demo community instead' 61px; screenshots wizard-390-1.png, wizard-390-2.png."
     },
     "c-admin-setup-wizard.12": {
       "result": "pass",
-      "evidence": "150-char category name and 288-char space description saved in full (DB char_length 150 and 288) at 390px; final screen no overflow",
-      "carried_forward": true
+      "evidence": "150-character category name ('Plan for onboarding new members ... and beyond') saved with char_length 150, and a 288-character space description saved with char_length 288 (a trailing space in an earlier 127-char try was trimmed); final screen has no horizontal overflow (scrollWidth 1440)."
     },
     "c-admin-setup-wizard.13": {
       "result": "pass",
-      "evidence": "Offline on create: 'Network error. Please try again.', Create re-enabled, still step 2; back online one retry reached 'Your community is ready!' and created one category/space",
-      "carried_forward": true
+      "evidence": "Context offline, Create Space: dialog 'Network error. Please try again.', Create Space button re-enabled, still on step 2; after going online one click created the category 'Release Planning Questions' and space 'Ask The Team' exactly once (count 1 each)."
     },
     "c-admin-setup-wizard.14": {
       "result": "pass",
-      "evidence": "Arabic admin (user locale ar): html dir=rtl, progress steps run 1,2,3 right to left, card text right-aligned",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-rtl.png",
-      "carried_forward": true
+      "evidence": "Arabic site language (Jetonomy has no ar translation, strings stay English): wizard body direction rtl, progress steps run right to left (1 Basics at the right, 2 First Space, 3 Done at the left), cards mirrored; screenshot rtl-wizard.png."
     },
     "c-admin-setup-wizard.15": {
       "result": "pass",
-      "evidence": "Dark colour scheme: wizard stays light (body rgb(240,244,255), white card, text rgb(30,41,59)); primary button now white on rgb(37,99,235) = 5.2:1; all text readable. No dark treatment exists, but contrast holds",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-dark.png",
-      "carried_forward": true
+      "evidence": "prefers-color-scheme dark emulated: wp-admin has no dark scheme and the wizard stays on its light page; all 13 distinct text styles on step 2 keep contrast >= 5.17:1 (labels, inputs, buttons); screenshot wizard-dark.png."
     },
     "c-admin-setup-wizard.16": {
       "result": "pass",
-      "evidence": "Arabic admin: URL preview span dir=ltr reads http://forums.local/community/ with slash at the end",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-rtl.png",
-      "carried_forward": true
+      "evidence": "Arabic admin: the URL preview under the slug field reads 'http://localhost:8912/community/' left to right with the slash at the end (screenshot rtl-wizard.png)."
     },
     "c-admin-setup-wizard.17": {
       "result": "pass",
-      "evidence": "Second run with same names reuses the existing category/space; no duplicate",
-      "carried_forward": true
+      "evidence": "Ran the wizard a second time with 'Product Questions' / 'Getting Started': it reaches 'Your community is ready!' without error and does not add a duplicate: still exactly one category 'Product Questions' (id 32) and the two Getting Started spaces (seeded id 8 and id 98), no getting-started-2."
     },
     "c-admin-setup-wizard.18": {
       "result": "pass",
-      "evidence": "390px at viewport heights 844 and 667, scrolled to the end of steps 1 and 2: only fixed element is the theme scroll-up arrow; overlap area with Next/Back/Create = 0 px2 (the Messages floating button does not render in wp-admin)",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/wizard-390-s2-end.png",
-      "carried_forward": true
+      "evidence": "Free build: no floating Messages button exists (Messages is Pro) - no position:fixed element on the wizard at 390, Create Space / Next are fully clickable."
+    },
+    "c-admin-setup-wizard.19": {
+      "result": "pass",
+      "evidence": "Created real member carol_real with a bio and a published topic and a legacy demo-email user without the marker. Demo import, then marker removed from the demo user yuki.demo@jetonomy.local and the real member's ID added to the saved manifest (as a 2.0.6 seed wrote it), then Remove All Demo Data: carol_real, her bio ('Operations lead who moderates a regional makers group.') and her topic are kept; the unmarked demo-email user yuki is deleted (users 5030 -> 5011). A bystander demo-email user that was never in the manifest was left alone."
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "pro": "05e4a11",
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-admin-setup-wizard.5",
+      "now": "the wizard's 'Import the demo community instead' goes straight to 'Your community is ready!'; the toast 'Demo data imported.' appears when demo data is loaded from the Dashboard 'Import Demo Data' card"
+    }
+  ]
 }

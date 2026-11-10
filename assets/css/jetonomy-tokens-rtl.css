@@ -125,9 +125,12 @@
     --jt-tl5: #fbbf24;
 
     /* Badge tiers */
-    --jt-badge-bronze: #cd7f32;
+    /* Three clearly different metals: gold reads yellow, bronze reads brown
+       (the old #cd7f32 bronze and #f59e0b gold were both orange). The rank
+       number sits beside each medal too, so colour is never the only cue. */
+    --jt-badge-bronze: #a8662b;
     --jt-badge-silver: #9ca3af;
-    --jt-badge-gold: #f59e0b;
+    --jt-badge-gold: #eab308;
 
     /* Radius — BuddyNext first, then WP custom, then hardcoded.
        ONE system, four steps plus circles. Pick by ROLE, never a literal:

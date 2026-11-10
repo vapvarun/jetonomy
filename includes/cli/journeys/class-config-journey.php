@@ -8,6 +8,7 @@
 namespace Jetonomy\CLI\Journeys;
 
 use Jetonomy\CLI\Journey_Result;
+use Jetonomy\Notifications\Notifier;
 use Jetonomy\Permissions\Rate_Limiter;
 use Jetonomy\Trust\Trust_Levels;
 
@@ -413,58 +414,10 @@ final class Config_Journey {
 			case 'rate_limits':
 				return Rate_Limiter::defaults();
 			case 'notification_defaults':
-				return self::notification_defaults();
+				return Notifier::defaults();
 			default:
 				return array();
 		}
-	}
-
-	/**
-	 * Notification defaults literal — mirrors the seed block in
-	 * {@see \Jetonomy\Jetonomy::activate()}. Extracted here so both the
-	 * activation bootstrap and the CLI reset path can share a single source.
-	 *
-	 * @return array<string,array<string,bool>>
-	 */
-	public static function notification_defaults(): array {
-		return array(
-			'reply_to_post'   => array(
-				'web'   => true,
-				'email' => true,
-			),
-			'reply_to_reply'  => array(
-				'web'   => true,
-				'email' => false,
-			),
-			'mention'         => array(
-				'web'   => true,
-				'email' => true,
-			),
-			'accepted_answer' => array(
-				'web'   => true,
-				'email' => true,
-			),
-			'new_post_in_sub' => array(
-				'web'   => true,
-				'email' => false,
-			),
-			'badge_earned'    => array(
-				'web'   => true,
-				'email' => false,
-			),
-			'vote_on_post'    => array(
-				'web'   => true,
-				'email' => false,
-			),
-			'moderation'      => array(
-				'web'   => true,
-				'email' => true,
-			),
-			'join_request'    => array(
-				'web'   => true,
-				'email' => true,
-			),
-		);
 	}
 
 	/**

@@ -134,8 +134,10 @@ class ProAdminRoutesTest extends WP_UnitTestCase {
 		);
 	}
 
-	private function evaluate( string $content, string $title = '' ): ?string {
-		return $this->moderation->evaluate_content( null, array( 'content' => $content, 'title' => $title ), 1, $this->admin_id );
+	// Members, not staff: staff content is exempt from hold rules.
+	private function evaluate( string $content, string $title = '', int $user_id = 0 ): ?string {
+		$user_id = $user_id ?: self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		return $this->moderation->evaluate_content( null, array( 'content' => $content, 'title' => $title ), 1, $user_id );
 	}
 
 	public function test_keyword_rule_does_not_match_inside_a_longer_word(): void {
@@ -152,6 +154,7 @@ class ProAdminRoutesTest extends WP_UnitTestCase {
 		$this->assertSame( 'hold', $this->evaluate( 'body', 'Spam offer inside' ) );
 		$this->assertSame( 'hold', $this->evaluate( 'Meet at the Café today' ) );
 		$this->assertNull( $this->evaluate( 'cafés are closed' ) );
+		$this->assertNull( $this->evaluate( 'What an ASS.', '', $this->admin_id ), 'staff are never held' );
 	}
 
 	public function test_deleting_a_missing_rule_is_a_404(): void {

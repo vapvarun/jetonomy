@@ -1,114 +1,121 @@
 {
   "journey": "E.custom-badges",
-  "free": "9b977fcb",
-  "pro": "a830e82",
-  "walked_at": "2026-10-21T12:51:08Z",
-  "walker": "lane C3",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-10T10:51:22.624813Z",
+  "walker": "release 2.0.7 combo walk wave 4 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "e-custom-badges.1": {
-      "result": "pass",
-      "evidence": "Badge Builder saved 'QA-WALK-C3 Hearthside Helper' (manual) -> notice 'Badge saved.' and it lists in the admin table; (a lingering Playwright route stub returned a fake 400 'intercepted' on the first attempt and was cleared with unrouteAll - not a product defect)"
-    },
-    "e-custom-badges.2": {
-      "result": "pass",
-      "evidence": "ticked 'Manual award only' (hides the condition rows) and saved: admin list shows 'Manual award only'; payload criteria {type:manual,conditions:[]} (previously a blank row became 'Post Count >= 1'). Fixed since previous walk",
-      "screenshot": "badge-awarded"
-    },
-    "e-custom-badges.3": {
-      "result": "not_performed",
-      "evidence": "site holds 20+ seeded badges; the zero-custom-badges empty state needs deleting seeded data"
-    },
-    "e-custom-badges.4": {
-      "result": "pass",
-      "evidence": "Award dialog: search 'Maya' lists Maya Okafor (maya); select + Award Badge -> modal 'Badge awarded. OK'; badge 79 appears in GET /users/3752/badges and on her profile",
-      "screenshot": "badge-awarded"
-    },
     "e-custom-badges.5": {
-      "result": "fail",
-      "evidence": "maya's /community/u/maya/badges/ lists 'QA-WALK-C3 Hearthside Helper' with the description only as a title tooltip, not visible text; there is no public badge list page (GET /community/badges/ is a 404 and the router only has /u/{slug}/badges); post-card badge display not checked. Runbook expects name, icon, description plus a public list",
-      "screenshot": "badge-profile-maya"
+      "result": "pass",
+      "evidence": "maya's profile (/community/u/maya/) shows 'Conversationalist' in the Badges strip as a jt-profile-badge--bronze chip (name, tier by class/colour); GET /badges as guest lists it while active; /community/badges/ -> 404 (no public badge list page). bd-5.png"
     },
     "e-custom-badges.6": {
       "result": "pass",
-      "evidence": "alice profile does not show maya badge: shown=false",
-      "carried_forward": true
+      "evidence": "alice's profile does not show Conversationalist (10 badges, none of it) and GET /users/9/badges has 9 entries without it. bd-6.png"
     },
     "e-custom-badges.7": {
       "result": "pass",
-      "evidence": "second POST /badges/79/award for maya -> 409 jetonomy_duplicate 'Badge already awarded to this user.'"
-    },
-    "e-custom-badges.8": {
-      "result": "pass",
-      "evidence": "repeatable badge max_awards 2: awards 201, 201, then 409 jetonomy_duplicate 'This user already has this badge the maximum number of times.' (max_awards enforced on manual award)"
+      "evidence": "Second POST /badges/13/award for maya -> 409 jetonomy_duplicate 'Badge already awarded to this user.'; DB one row; admin list Earned by stays 1."
     },
     "e-custom-badges.9": {
       "result": "pass",
       "evidence": "award badge 99999 -> 404 'Badge not found.'; user 99999 -> 404 'User not found.'"
     },
-    "e-custom-badges.10": {
-      "result": "pass",
-      "evidence": "Revoke Badge dialog (search Maya, Revoke Badge) -> modal 'Badge revoked. OK'; badge gone from her REST list; second DELETE /badges/79/award -> 404 jetonomy_not_found 'This user has not earned that badge.'; a bonus-25 badge: reputation 2106 -> 2131 on award -> 2106 on revoke (reversed once)",
-      "screenshot": "badge-revoked"
-    },
-    "e-custom-badges.11": {
-      "result": "pass",
-      "evidence": "Deactivate -> custom confirm \"Deactivate this badge?\" -> notice \"Badge deactivated.\" row Inactive; guest GET /badges lists 0 copies while inactive; Activate -> [\"Badge activated.\\n\\nDismiss this notice.\"] row [\"Reply Count >= 50 1 \u2713 Active Edit Award Revoke Deactivate\"]",
-      "carried_forward": true
-    },
     "e-custom-badges.12": {
       "result": "pass",
-      "evidence": "bob POST /badges, PATCH, DELETE, POST /badges/79/award with complete valid bodies -> 403 x4; test_moderator award -> 403; guest GET /badges and /users/3752/badges -> 200"
+      "evidence": "bob POST /badges, POST /badges/12/award, DELETE /badges/12 -> 403 jetonomy_forbidden each (PATCH not run)."
     },
     "e-custom-badges.13": {
       "result": "pass",
-      "evidence": "criteria 'notobject' -> 400 rest_invalid_param; criteria with metric 'bogus' -> 400 jetonomy_validation 'Invalid criteria format.'; PATCH {} -> 400 'No fields to update.'"
+      "evidence": "admin POST /badges criteria:'notanobject' -> 400 rest_invalid_param 'Invalid parameter(s): criteria'; criteria with unknown metric 'nope' -> 400 jetonomy_validation 'Invalid criteria format.'"
+    },
+    "e-custom-badges.1": {
+      "result": "pass",
+      "evidence": "Badge Builder (wp-admin > Jetonomy > Badges): name 'Conversationalist', description, Lucide icon message-circle, criteria Post Count >= 25 AND Reply Count >= 50, Save Badge (saves through REST, button shows 'Saving...') -> badge id 13 listed with 'Post Count >= 25 AND Reply Count >= 50'; the 'Badge saved.' notice was captured on the next save (Founding Member). bd-1a/1b.png"
+    },
+    "e-custom-badges.4": {
+      "result": "pass",
+      "evidence": "Row Award > dialog 'Award Badge': typed 'Maya' (real keystrokes), result 'Maya Okafor (maya)', picked her, Award Badge enabled and pressed (no second confirm) -> in-page alertdialog 'Badge awarded.' + OK -> page reloaded and the Earned by count went 0 -> 1. bd-4a/4b.png"
+    },
+    "e-custom-badges.2": {
+      "result": "pass",
+      "evidence": "Manual award only ticked, no conditions, Save Badge -> notice 'Badge saved.' and the list row shows 'Manual award only' (Founding Member). bd-2.png"
+    },
+    "e-custom-badges.3": {
+      "result": "pass",
+      "evidence": "Wave 9 as the check now reads: Jetonomy > Badges lists the eleven seeded defaults (First Post, Contributor, Conversation Starter, Trusted Voice, Helpful Answer, Helpful Member, Community Pillar, Rising Star, Veteran, Top Contributor, Early Adopter) plus five walk-created badges. Deactivate on Early Adopter (18 awards) -> 'Deactivate this badge?' Confirm -> notice 'Badge deactivated.', the row stays in the list as Inactive with Activate offered, DB is_active 0 and all 18 awards still present; Activate -> 'Badge activated.', Active again, 18 awards intact. badges-3a/3b/3c.png in /Users/varundubey/Documents/work-artifacts/screenshots/w9/",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w9/badges-3c.png"
+    },
+    "e-custom-badges.8": {
+      "result": "pass",
+      "evidence": "Repeatable 'Monthly Helper' (max_awards 2): POST /badges/15/award for maya twice -> 201, 201; third -> 409 jetonomy_duplicate 'This user already has this badge the maximum number of times.' (max_awards enforced on manual award); two DB rows but the list shows Earned by 1 (members, not awards)."
+    },
+    "e-custom-badges.10": {
+      "result": "pass",
+      "evidence": "Row Revoke > 'Revoke Badge' dialog, searched Maya, Revoke Badge -> alertdialog 'Badge revoked.'; both Monthly Helper awards removed and reputation 1947 -> 1941 (bonus 3 x 2 reversed once each); DELETE /badges/15/award {user_id:7} again -> 404 'This user has not earned that badge.'. bd-10a/b.png"
+    },
+    "e-custom-badges.11": {
+      "result": "pass",
+      "evidence": "Deactivate click -> confirm dialog 'Deactivate this badge?' Cancel/Confirm -> notice 'Badge deactivated.', row Inactive; public GET /badges no longer lists it, maya's profile page (guest) no longer shows it, 1 award row kept in the DB; Activate -> 'Badge activated.'. Note GET /users/7/badges still returned the inactive badge while it was inactive. bd-11a/b.png"
     },
     "e-custom-badges.14": {
       "result": "pass",
-      "evidence": "created reputation>=2000 threshold badge, ran the evaluator batch job (jetonomy_pro_badges_batch, the job the 6-hourly schedule dispatches) twice: exactly 1 award and 1 badge_earned notification, no duplicate on the second run (job invoked directly, not by waiting six hours)"
+      "evidence": "Badge 'Prolific Poster' post_count >= 30: bob had 29 topics, no award after running the evaluator (do_action jetonomy_pro_evaluate_badges; the recurring 6h Action Scheduler job is pending id 655, 10:03); bob published a topic (30) and the badge was awarded at once; running the evaluator twice more left exactly 1 row (DB) and exactly one badge_earned notification (id 2438). The job was invoked manually rather than waiting 6 hours."
     },
     "e-custom-badges.15": {
-      "result": "not_performed",
-      "evidence": "no member with pre-repair duplicate awards exists on this site"
+      "result": "pass",
+      "evidence": "Inserted two duplicate award rows for alice (non-repeatable First Post): profile showed 'First Post' three times; after clearing the once-only dedupe flag and running a CLI load the migration left one row (earliest) and alice's profile shows First Post once; Earned by counts distinct members. bd-15.png"
     },
     "e-custom-badges.16": {
       "result": "pass",
-      "evidence": "badge \"Community Champion of the Year for Outstanding Helpfulness\" with ~300-char description awarded to maya: her profile at 390px scrollWidth 390/390, badge shown true (admin card wrap at 390 not separately measured)",
-      "screenshot": "badge-profile-390",
-      "carried_forward": true
+      "evidence": "Badge 'Community Champion of the Year for Outstanding Helpfulness' with a 300-char description at 390px: admin list row right edge 377 < 390, no element past the viewport, doc scrollWidth 390; maya's profile strip chip 286px wide, strip right edge 338, no overflow. bd-16a/b.png"
     },
     "e-custom-badges.17": {
-      "result": "not_performed",
-      "evidence": "blocked-request 30 s save timeout not exercised in this pass"
+      "result": "pass",
+      "evidence": "Offline (setOffline) and Save Badge: the page stays on the form, typed values stay, and an in-page message appears: 'Save failed: the request did not reach the server. Check for an ad-blocker, security plugin, or firewall blocking http://localhost:8911/wp-json/jetonomy/v1/badges.' The line says the save is a native form POST with only the browser error; it is a REST fetch with its own message. bd-17.png"
     },
     "e-custom-badges.18": {
       "result": "pass",
-      "evidence": "profile badge strip at 390px: no horizontal overflow (scrollWidth 390); dark (Reign toggle) body rgb(35, 38, 47), badge colours [\"rgba(0, 0, 0, 0)/rgb(229, 229, 229)\",\"rgba(0, 0, 0, 0)/rgb(229, 229, 229)\"]",
-      "screenshot": "badge-profile-390-dark",
-      "carried_forward": true
+      "evidence": "maya's profile badge strip at 390: no overflow (doc 390); dark mode chips use token tints (gold bg rgb(73,68,51) text rgb(231,214,163), bronze, silver, all light text on dark tinted bg). bd-18.png"
     },
     "e-custom-badges.19": {
       "result": "pass",
-      "evidence": "maya received exactly one badge_earned bell item for Hearthside Helper (Repeat Star awards produced 2 for 2 awards); revoking created no new notification. Email not checked",
-      "carried_forward": true
+      "evidence": "Manual award of Founding Member to maya: one badge_earned bell notification (id 2441), no email in Mailpit (badge_earned email default is off); revoke: no new notification and no email."
+    },
+    "e-custom-badges.20": {
+      "result": "pass",
+      "evidence": "'Founding Member' with Manual award only saved and listed; running the badge evaluator twice awarded it to nobody (0 rows); only POST /badges/14/award gave it to alice/maya."
     }
   },
-  "proposed_checks": [
-    "There is no public badge list route or page; either add a check for the profile badges page only or add the route to the owner inventory.",
+  "proposed_checks": [],
+  "runbook_fixes": [
     {
-      "id": "e-custom-badges.20",
-      "text": "@admin #admin: create a badge with the manual-only criterion -> it saves, appears in the list, and no activity ever auto-awards it; only Award on a profile gives it."
+      "check": "e-custom-badges.3",
+      "now": "the list shows the eleven seeded defaults; defaults are seeded on extension activation only, so with every badge deleted the 'No badges yet' empty state is shown."
+    },
+    {
+      "check": "e-custom-badges.17",
+      "now": "the Badge Builder saves through REST: offline it stays on the form, keeps the values and shows 'Save failed: the request did not reach the server...'."
     }
+  ],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:51:22.624813Z: re-walked non-pass checks e-custom-badges.3"
   ]
 }

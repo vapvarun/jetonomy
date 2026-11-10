@@ -1,92 +1,118 @@
 {
   "journey": "C.member.connect-app",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T11:38:09Z",
-  "walker": "lane B",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-10T04:47:16.552019Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
   "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
       390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ]
   },
   "checks": {
     "c-member-connect-app.1": {
       "result": "pass",
-      "evidence": "bob opened /community/connect-app/?scheme=jetonomyapp&app_name=QA-WALK-B+Jetonomy+app&...: heading 'Connect QA-WALK-B Jetonomy app to your account?' and 'You are signed in as Bob Martinez (bob).' The line shows display name and login, not an email as the runbook suggests; the scheme must be jetonomyapp (class-app-connect.php:36), the runbook's scheme=jetonomy shows the not-valid page",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/connect-1440.png"
+      "evidence": "bob opened /community/connect-app?scheme=jetonomyapp&app_name=Jetonomy%20app&...: 'Connect Jetonomy app to your account?' and 'You are signed in as Bob Martinez (bob). The app gets its own access key...' (login in parentheses, not an email). Buttons: 'Yes, connect the app', Cancel, 'Not you? Sign in as someone else'. Screenshot w3-connect-1440.png"
     },
     "c-member-connect-app.2": {
       "result": "pass",
-      "evidence": "Clicking 'Yes, connect the app': POST /auth/app-connect 200 with site_url, user_login bob, uuid and deep_link jetonomyapp://auth?site_url=...&user_login=bob&password=...&state=...; page shows 'Connected. Opening the app...' and an Open the app link"
+      "evidence": "Clicked 'Yes, connect the app': POST /auth/app-connect {scheme,bridge_token,app_name,app_id,state} -> 200 {site_url:'http://localhost:8912', user_login:'bob', uuid, deep_link:'jetonomyapp://auth?site_url=...&user_login=bob&password=...&state=...'}; the page switched to 'Connected. Opening the app...' with an 'Open the app' link carrying the deep link. Screenshot w3-connect-done.png"
     },
     "c-member-connect-app.3": {
       "result": "pass",
-      "evidence": "Guest GET /app/config returns app_name, space_label, labels, accent_color, logo_url, terms_url, privacy_url, support_url, pro_active, features, attachments and auth{connect_url, connect_schemes}; nothing member-specific. There is no separate base-URL key, only auth.connect_url"
+      "evidence": "Logged out GET /jetonomy/v1/app/config -> 200 with app_name, space_label and labels, accent_color, logo_url, login_bg_url, terms_url, privacy_url, support_url, pro_active, app_enabled, features, flag_reasons, attachments, auth {connect_url, connect_schemes, register, ...}; nothing member-specific (the body is identical for a signed-in member). There is no separate 'base URL' key."
     },
     "c-member-connect-app.4": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED in full: GET /app/config with bob's app credential works (Basic auth 200) and features match (messaging, reactions, polls, badges, custom_fields true; web_push, native_push, anonymous, attachments false; blocking true; pro_active true), but attachments is {enabled:false,max_files:0,max_size_bytes:0} because the Pro attachments extension is off, so the 5 files / 10 MB values were not shown; enabling the extension on the shared site was not done. pro_active false case not tested (Pro is active)"
+      "result": "pass",
+      "evidence": "GET /app/config with bob's freshly minted app password (Basic auth) -> 200; features all false except blocking (Pro off), pro_active false, attachments {enabled:false,max_files:5,max_size_bytes:10485760,...}; the same credential reads /users/me (200)."
     },
     "c-member-connect-app.5": {
       "result": "pass",
-      "evidence": "Revoked the credential with DELETE /wp/v2/users/me/application-passwords/{uuid} as bob (200); the same Basic credential then returns 401 incorrect_password 'The provided password is an invalid application password.' Used the REST list, not the wp-admin profile screen"
+      "evidence": "On wp-admin/profile.php > Application Passwords the 'Jetonomy app' row was revoked with the Revoke button (confirm accepted); the credential then returned 401 on /users/me (before: 200) and wp user application-password list shows none."
     },
     "c-member-connect-app.6": {
       "result": "pass",
-      "evidence": "Guest GET connect-app -> wp-login.php?redirect_to=<full connect URL with query>; logging in as qawalkb_new returns to /community/connect-app/?scheme=...&state=s3 and shows the connect heading"
+      "evidence": "Logged out GET /community/connect-app/?scheme=jetonomyapp... redirected to wp-login.php?redirect_to=<same URL>; after logging in as bob the browser landed on the connect page ('Connect Jetonomy app to your account?')."
     },
     "c-member-connect-app.7": {
       "result": "pass",
-      "evidence": "bob with scheme=evilscheme: page 'This connection link is not valid', no bridge token or Connect button rendered; REST POST with that scheme -> 400 jetonomy_app_bad_scheme and no credential minted"
+      "evidence": "bob opened the page with scheme=jetonomy (not allowed; the allowlist is jetonomyapp): 'This connection link is not valid' + 'Back to the community'; no application password was created for bob (list empty). Also POST /auth/app-connect with scheme evilapp -> 400 jetonomy_app_bad_scheme. Screenshot w3-connect-invalid.png"
     },
     "c-member-connect-app.8": {
       "result": "pass",
-      "evidence": "POST /auth/app-connect with a made-up bridge token -> 410 jetonomy_app_bridge_expired 'This connection screen has expired. Go back to the app and try connecting again.'; a real token reused a second time also 410"
+      "evidence": "POST /auth/app-connect with a well-formed but unknown bridge_token -> 410 jetonomy_app_bridge_expired 'This connection screen has expired. Go back to the app and try connecting again.'."
     },
     "c-member-connect-app.9": {
       "result": "pass",
-      "evidence": "Repeated valid mints by bob: 200,200,200,200 then 429 jetonomy_rate_limited 'Too many connection attempts. Please wait a while and try again.' The cap is 5 per hour per member (class-auth-controller.php, transient jt_app_connect_<id>), not 15 per minute as the runbook says; I cleared the transient afterwards"
+      "evidence": "alice connected 7 times (fresh bridge token each): 200 x5, then 429 jetonomy_rate_limited 'Too many connection attempts. Please wait a while and try again.' from the 6th, also shown in the page's alert. The cap is 5 per hour per member, not 15 per minute."
     },
     "c-member-connect-app.10": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: disabling Application Passwords needs a wp_is_application_passwords_available filter or a code change, which I do not make on the shared site; code at class-auth-controller.php mint_app_password returns 403 jetonomy_app_passwords_unavailable with 'Application passwords are not available on this site.'"
+      "result": "pass",
+      "evidence": "Application passwords made unavailable (wp_is_application_passwords_available false via a temporary mu-plugin, removed afterwards): POST -> 403 jetonomy_app_passwords_unavailable 'Application passwords are not available on this site.', shown in the page alert, button re-enabled. Screenshot w3-connect-nopw.png"
     },
     "c-member-connect-app.11": {
       "result": "pass",
-      "evidence": "finn (silenced) connected the app (200), read GET /users/me/blocks 200 with the credential, POST /spaces/2996/posts with it -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+      "evidence": "finn (silenced) connected (200, credential minted). With it: GET /spaces and /users/me 200 (read), POST /posts/212/replies and POST /spaces/17/posts -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'."
     },
     "c-member-connect-app.12": {
       "result": "pass",
-      "evidence": "Grace connect page: 'You are signed in as Grace Oluwaseun Adeyemi-Whitfield (grace)...' wraps inside the card, no horizontal scroll",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/connect-1440l_grace.png"
+      "evidence": "grace at 390: 'You are signed in as Grace Oluwaseun Adeyemi-Whitfield (grace)...' wraps inside the card (scrollWidth 328/328, page 390). Screenshot w3-connect-grace-390.png"
     },
     "c-member-connect-app.13": {
       "result": "pass",
-      "evidence": "bob at 390: Connect and Cancel 41px tall, 'Not you?' link 40px, scrollWidth 390 = clientWidth",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/connect-390l_bob.png"
+      "evidence": "390px: 'Yes, connect the app' 41px, Cancel 41px, 'Not you? Sign in as someone else' link 40px, no sideways scroll (scrollWidth 390). There is a Cancel button (the line's 'no Cancel' is stale)."
     },
     "c-member-connect-app.14": {
       "result": "pass",
-      "evidence": "Dark mode: text rgb(229,229,229) on card rgb(35,38,47), about 11:1",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/connect-390d_bob.png"
+      "evidence": "Reign dark at 390: body text rgb(229,229,229) on rgb(35,38,47) = 12.0:1 (light 8.9:1). Screenshot w3-connect-grace-390-dark.png"
     },
     "c-member-connect-app.15": {
       "result": "pass",
-      "evidence": "Offline click on Connect: role=alert 'Something went wrong. Please try again.' and the button is enabled again"
+      "evidence": "Offline, click connect: alert 'Something went wrong. Please try again.', button back to 'Yes, connect the app' and enabled."
     },
     "c-member-connect-app.16": {
-      "result": "fail",
-      "evidence": "NOT PERFORMED: BuddyNext is not active on forums.local, so the forward to BuddyNext's connect URL could not be exercised; code at templates/views/connect-app.php:37-47 does the redirect with the query intact"
+      "result": "pass",
+      "evidence": "BuddyNext 1.2.7 activated (BuddyPress/Fluent off). bob signed in, GET /community/connect-app/?app_name=Jetonomy App&app_id=<uuid>&scheme=jetonomyapp&state=abc123 -> 302 to http://localhost:8912/login/connect-app/ with the same app_name, app_id, scheme and state, ending on BuddyNext's 'Connect Jetonomy App to your account?' screen (jetonomyapp is the scheme Jetonomy registers with BuddyNext's allowlist; with scheme=jetonomy BuddyNext shows 'This connection link is not valid'). Guest: 302 to /login/?redirect_to=<the same connect-app URL>. Only the four connect parameters are forwarded (an extra foo=bar is dropped). BuddyNext deactivated afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/connect-app-buddynext.png"
     },
     "c-member-connect-app.17": {
       "result": "pass",
-      "evidence": "At 390 the page has a Cancel button (41px) and 'Not you? Sign in as someone else' link 40px tall"
+      "evidence": "Connect page has Cancel (links to /community/) and the 'Not you? Sign in as someone else' link is 40px tall at 390px."
     }
-  }
+  },
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-member-connect-app.1",
+      "now": "open /community/connect-app?scheme=jetonomyapp&app_name=Jetonomy%20app with a valid app link as bob -> 'Connect Jetonomy app to your account?' and 'You are signed in as Bob Martinez (bob)' (login in parentheses, button 'Yes, connect the app')."
+    },
+    {
+      "check": "c-member-connect-app.3",
+      "now": "GET /app/config logged out -> app_name, labels, features, accent_color, logo_url, terms_url, privacy_url, support_url, pro_active, flag_reasons, attachments and auth{connect_url,connect_schemes}; there is no base-URL key."
+    },
+    {
+      "check": "c-member-connect-app.7",
+      "now": "scheme must be 'jetonomyapp'; use any other scheme (for example scheme=jetonomy) for the refusal."
+    },
+    {
+      "check": "c-member-connect-app.9",
+      "now": "POST /auth/app-connect (a fresh bridge token each) 6 times -> 429 from the 6th (cap is 5 per hour per member)."
+    },
+    {
+      "check": "c-member-connect-app.16",
+      "now": "the forward carries app_name, app_id, scheme and state only; use scheme=jetonomyapp"
+    }
+  ]
 }

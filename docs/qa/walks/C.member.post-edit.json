@@ -1,98 +1,101 @@
 {
   "journey": "C.member.post-edit",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T09:27:22Z",
-  "walker": "lane A",
+  "free": "0991f3be",
+  "pro": "f684443",
+  "walked_at": "2026-11-10T08:21:26.494362Z",
+  "walker": "release 2.0.7 free walk wave 7 (Sonnet)",
   "env": {
+    "mode": "free stack (Free; Pro as noted)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-post-edit.1": {
       "result": "pass",
-      "evidence": "bob edited his topic through the inline editor: new text shows on the topic after save and reload, GET /spaces/3004/posts and /feed (offset 200) carry the new excerpt, search \"zebrafinch edited\" finds it. Listing rows show titles only.",
-      "screenshot": "c-member-post-edit.1b.png"
+      "evidence": "bob created topic 373 'Which board games work for a mixed group of five?' (Off-Topic Lounge), More options > Edit, appended text, Save -> body shows the new text after reload; GET /feed?sort=new returns it and GET /search?q=Codenames returns the topic."
     },
     "c-member-post-edit.2": {
       "result": "pass",
-      "evidence": "PATCH /posts/8979 {title} as bob -> 200 and GET returns the new title."
+      "evidence": "PATCH /posts/373 {title} as bob -> 200 and GET shows 'Which board games work for a mixed group of five or six?'."
     },
     "c-member-post-edit.3": {
       "result": "pass",
-      "evidence": "Topic created 3h earlier (backdated) and edited now: shows \"edited 12 seconds ago\" with title \"October 21, 2026 9:22 am\". Relative wording is time since the edit, not since posting."
+      "evidence": "Second edit made more than a minute after posting -> 'edited 2 seconds ago' appears next to the topic, time title='November 10, 2026 8:17 am' (exact time on hover).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-edit-mark.png"
     },
     "c-member-post-edit.4": {
       "result": "pass",
-      "evidence": "Topic edited within a minute of posting (8980): page text has no \"edited\" mark; the edited_at is stored but hidden."
+      "evidence": "Edit 46s after posting (created 08:16:23, edited 08:17:09) saved the new text and showed no edited mark; a never-edited topic (373 before any edit, and seed topics) has no mark."
     },
     "c-member-post-edit.5": {
       "result": "pass",
-      "evidence": "alice on bob's topic: action buttons are Follow, Vote, Share, Bookmark, Report (no Edit/Delete); /t/<slug>/edit/ is not a route and returns the theme 404 for everyone, including bob (see .17).",
-      "screenshot": "c-member-post-edit.alice.png"
+      "evidence": "alice on bob's topic: no More options/Edit menu at all; /edit/ appended -> 404 Page not found."
     },
     "c-member-post-edit.6": {
       "result": "pass",
-      "evidence": "PATCH /posts/8979 as alice -> 403 jetonomy_forbidden."
+      "evidence": "PATCH /posts/373 as alice -> 403 jetonomy_forbidden; title unchanged."
     },
     "c-member-post-edit.7": {
       "result": "pass",
-      "evidence": "test_moderator menu on Bug Reports topic: Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete (WP editor role gets the same in Show & Tell).",
-      "screenshot": "c-member-post-edit.mod_bug.png"
+      "evidence": "test_moderator on a Bug Reports topic: Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete. (test_moderator is a WP editor so the same set shows on a Show & Tell topic, see .16.)"
     },
     "c-member-post-edit.8": {
       "result": "pass",
-      "evidence": "Per-user deny of jetonomy_edit_own_posts on a fixture member (Member role untouched): menu shows only Delete, PATCH -> 403 jetonomy_forbidden.",
-      "screenshot": "c-member-post-edit.8.png"
+      "evidence": "Admin > Jetonomy > Settings > Permissions: unticked Edit own and Delete own for Subscriber (Member) and saved -> bob's topic page has no More options menu and PATCH /posts/373 returns 403 jetonomy_forbidden. Restored: option jetonomy_role_caps put back byte-identical and Capabilities::register() re-synced the WP role caps (updating the option alone did not re-grant the caps on the WP role).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-edit-settingsoff.png"
     },
     "c-member-post-edit.9": {
       "result": "pass",
-      "evidence": "Closed topic 8980: bob menu still offers Edit, Make Private, Delete and PATCH -> 200, so menu and REST agree (authors may edit closed topics).",
-      "screenshot": "c-member-post-edit.9.png"
+      "evidence": "Closed topic 373: bob's menu still offers Edit/Delete and PATCH returns 200 (is_closed stays true): allowed by contract and the menu matches REST."
     },
     "c-member-post-edit.10": {
       "result": "pass",
-      "evidence": "PATCH /posts/5871 as finn -> 403 jetonomy_silenced \"Your account is currently silenced and cannot post.\"; in the UI finn gets no More-options menu on that post, so there is no Edit to click (the notice is only reachable via REST).",
-      "screenshot": "c-member-post-edit.10.png"
+      "evidence": "finn on his -4 topic (General Discussion, 'Check out my SEO service'): banner 'Your account is currently silenced and cannot post.', no Edit/Delete menu; PATCH /posts/89 as finn -> 403 jetonomy_user_silenced.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-edit-silenced.png"
     },
     "c-member-post-edit.11": {
       "result": "pass",
-      "evidence": "List, blockquote and code block saved through the editor survive save and reload (ul, blockquote, pre present on topic and in REST content). Nesting looked odd because of my execCommand typing."
+      "evidence": "Saved a body with paragraph, ul list, blockquote, pre/code and a 100-char URL; after reload all survive (verified in DB content and rendered page), no horizontal overflow.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-edit-long.png"
     },
     "c-member-post-edit.12": {
       "result": "pass",
-      "evidence": "Two pages open on the same edit token: tab two saved (PATCH 200), tab one then got 409 jetonomy_edit_conflict; nothing silently overwritten and a revision row was kept for each save (5 revisions for 8979).",
-      "screenshot": "c-member-post-edit.15.png"
+      "evidence": "Two tabs on the same topic: tab 1 saved, tab 2 save was not applied silently: 'This topic was changed by someone else. Reload to see their changes.' DB keeps tab 1 text; revisions kept (9 rows).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-edit-conflict.png"
     },
     "c-member-post-edit.13": {
       "result": "pass",
-      "evidence": "Offline save: editor stays open with the text, toast \"Failed to save.\"; after reconnecting Save works and the text is stored.",
-      "screenshot": "c-member-post-edit.13.png"
+      "evidence": "Context offline, Save -> editor stays open with the typed text and the message 'Failed to save.'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-edit-offline.png"
     },
     "c-member-post-edit.14": {
       "result": "pass",
-      "evidence": "wp-admin Jetonomy > Revisions for post 8979: \"5 revisions recorded\" with editors, current version and View diff links.",
-      "screenshot": "c-member-post-edit.14.png"
+      "evidence": "Admin > Jetonomy > Revisions lists 'Which board games...' with 4 revisions; the detail page shows Current version plus older rows each with View diff.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-edit-revisions.png"
     },
     "c-member-post-edit.15": {
       "result": "pass",
-      "evidence": "Tab one save after tab two saved: toast \"This topic was changed by someone else. Reload to see their changes.\" (409), editor kept open with its text.",
-      "screenshot": "c-member-post-edit.15.png"
+      "evidence": "Same run as .12: tab 2 got the conflict notice instead of a silent overwrite."
     },
     "c-member-post-edit.16": {
       "result": "pass",
-      "evidence": "Fixture member (WP Subscriber) who moderates only Bug Reports: Bug Reports topic menu shows the full set; Show & Tell topic shows no actions.",
-      "screenshot": "c-member-post-edit.modm_st.png"
+      "evidence": "bugmod (WP subscriber, moderator of Bug Reports only): Bug Reports topic menu shows Edit, Make Private, Pin, Close, Move, Merge, Delete; on a Show & Tell topic there is no menu at all."
     },
     "c-member-post-edit.17": {
-      "result": "fail",
-      "evidence": "Open contract question. /community/s/help-desk/t/<slug>/edit/ returns the theme 404 for non-author, author and guest alike; there is no refusal page. Needs an owner decision (refusal page vs plain 404)."
+      "result": "pass",
+      "evidence": "alice opening <topic>/edit/ gets the plain 404 'Page not found' (the contract stated today)."
     }
   },
   "proposed_checks": []

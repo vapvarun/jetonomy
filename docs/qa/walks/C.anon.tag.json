@@ -1,11 +1,14 @@
 {
   "journey": "C.anon.tag",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T09:03:21Z",
-  "walker": "lane A",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:28:57.509863Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
   "env": {
+    "mode": "free-only",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
@@ -13,50 +16,50 @@
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-anon-tag.1": {
       "result": "pass",
-      "evidence": "Guest /community/tag/email/: header \"36 topics\"; 30 rows on page 1 plus 6 on pg=2 = 36 unique, matches the count.",
-      "screenshot": "c-anon-tag.1.png"
+      "evidence": "Guest /community/tag/performance/ HTTP 200 header '45 topics'; 30 on page 1 + 15 on ?pg=2 = 45 listed"
     },
     "c-anon-tag.2": {
       "result": "pass",
-      "evidence": "No CAB-only tag exists in the data, so partner-pricing (used only in a Partner Program topic) is the proxy: guest page \"0 topics\", \"No topics with this tag yet.\", no title leak; guest /tags omits it. A CAB-specific tag was not created (tag PATCH needs other fields)."
+      "evidence": "Guest /community/tag/partner-pricing/ (tag only on a Partner Program topic; the seed has no CAB-only tag): '0 topics', 'No topics with this tag yet.', no title or count from the private topic"
     },
     "c-anon-tag.3": {
       "result": "pass",
-      "evidence": "Guest /tags returns 13 tags with post_count (email 36 vs stored 40, mobile 31 vs 35 ...), excluding private-space topics; partner-pricing absent for guest, present (1) for bob and admin."
+      "evidence": "Guest REST /tags: performance 45, email 31, roadmap 33 ... all lower than the all-rows counts (46, 35, 34); partner-pricing absent"
     },
     "c-anon-tag.4": {
       "result": "pass",
-      "evidence": "/community/tag/no-such-tag/ -> 404 \"Tag not found.\" inside theme chrome, no PHP error."
+      "evidence": "/community/tag/no-such-tag/ HTTP 404 'Tag not found.' with Browse spaces link, no PHP error"
     },
     "c-anon-tag.5": {
       "result": "pass",
-      "evidence": "Sidebar Popular Tags counts for guest (email 36, migration 39, integrations 33, search 36, mobile 31, billing 31, roadmap 29 ...) equal the tag page counts and the /tags counts."
+      "evidence": "Guest sidebar POPULAR TAGS (performance 45, email 31, roadmap 33, webhooks 31...) equals REST counts and tag page header counts"
     },
     "c-anon-tag.6": {
       "result": "pass",
-      "evidence": "bob on email: 40 topics (30 + 10 across pg=1,2, 40 unique) vs guest 36; bob sees partner-pricing page listing \"Referral fees for 2026: what changed\", guest sees 0."
+      "evidence": "bob: /tag/partner-pricing/ shows '1 topic' with 'Referral fees for 2026: what changed'; guest sees 0. bob REST performance 46 vs guest 45."
     },
     "c-anon-tag.7": {
       "result": "pass",
-      "evidence": "Same as .4: 404 status, \"Tag not found.\", no PHP error."
+      "evidence": "Same as tag.4: HTTP 404, title 'Page not available', no PHP error text"
     },
     "c-anon-tag.8": {
       "result": "pass",
-      "evidence": "email (36 topics): Next goes to ?sort=latest&pg=2 (6 rows), 36 unique rows, no duplicates across pages. (Pager href is HTML-escaped &#038;; followed correctly in browser.)"
+      "evidence": "performance (45) paginates: page 1 has 30, ?sort=latest&pg=2 has 15, no duplicates between pages (only the 5 sidebar Trending links repeat)"
     },
     "c-anon-tag.9": {
       "result": "pass",
-      "evidence": "Tag email at 390: rows 326px wide, scrollWidth 390, no horizontal scroll. Light mode only.",
-      "screenshot": "c-anon-tag.9.png"
+      "evidence": "390px /tag/performance/: no horizontal scroll"
     },
     "c-anon-tag.10": {
       "result": "pass",
-      "evidence": "For all 13 guest-visible tags the /tags post_count equals the topic count on its tag page for a guest (checked 13/13)."
+      "evidence": "Guest REST tag counts equal tag page counts (performance 45 both)"
     }
   },
   "proposed_checks": []

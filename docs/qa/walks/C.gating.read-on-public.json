@@ -1,47 +1,55 @@
 {
- "journey": "C.gating.read-on-public",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T08:39:15Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "c-gating-read-on-public.1": {
-   "result": "pass",
-   "evidence": "Admin: Logged In + Read rule on public open space 4860 -> toast \"Access rule added.\""
+  "journey": "C.gating.read-on-public",
+  "free": "8478fd19",
+  "pro": "81befa5",
+  "walked_at": "2026-11-10T08:12:18Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "env": {
+    "mode": "Free + Pro, all 17 Pro extensions on",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
-  "c-gating-read-on-public.2": {
-   "result": "pass",
-   "evidence": "sub2 (Rohan Mehta) via composer UI /new/: \"What is the best phone for testing?\" published at /community/s/qa-walk-c-public-studio/t/what-is-the-best-phone-for-testing-1/"
+  "checks": {
+    "c-gating-read-on-public.1": {
+      "result": "pass",
+      "evidence": "admin Access Rules tab on Gadget Testing Lab (public, open): selected Logged In + Read; live preview 'Logged In can read and report posts and replies. They are recorded as Viewer.'; toast read 'Rule added: Logged In can read and report posts and replies. They are recorded as Viewer.'; row listed. REST: POST rule everyone/read as admin -> 201 'Access rule added.' (rule id 46), GET lists both.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpublic-add.png"
+    },
+    "c-gating-read-on-public.2": {
+      "result": "pass",
+      "evidence": "priyanka_n (subscriber, not on roster) opened /community/s/gadget-testing-lab/new/, filled title 'What is the best phone for testing?', body, required Operating system select (global required Pro custom field), clicked Post Topic -> redirected to /t/what-is-the-best-phone-for-testing/ published (DB status publish)."
+    },
+    "c-gating-read-on-public.3": {
+      "result": "pass",
+      "evidence": "same subscriber replied on Tomas's topic via composer (reply shows on page, DB reply 4134 publish) and clicked Vote up (DB jt_votes row 1327 post 13835 value 1).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpublic-member.png"
+    },
+    "c-gating-read-on-public.4": {
+      "result": "pass",
+      "evidence": "tomas_w (roster member) in a second browser context replied 'I would pick the Galaxy Tab S9...' and voted up on the admin topic through the UI; vote row 1328 stored."
+    },
+    "c-gating-read-on-public.5": {
+      "result": "pass",
+      "evidence": "guest GET /spaces/341/posts -> 200 list; guest POST /posts/13835/replies -> 401 rest_not_logged_in."
+    },
+    "c-gating-read-on-public.6": {
+      "result": "pass",
+      "evidence": "admin pressed Delete on each rule in the Access Rules tab, confirm modal 'Are you sure? This cannot be undone.' Confirm -> toast 'Access rule deleted.' (both rules); rules list empty. Subscriber then POSTed a topic -> 201 (id 13841)."
+    },
+    "c-gating-read-on-public.7": {
+      "result": "pass",
+      "evidence": "priyanka_n POST /spaces/341/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; GET rules shows none stored."
+    }
   },
-  "c-gating-read-on-public.3": {
-   "result": "pass",
-   "evidence": "with Read rule: reply 201,16277 vote 200,"
-  },
-  "c-gating-read-on-public.4": {
-   "result": "pass",
-   "evidence": "alice roster: post 201,8867 reply 201,16278"
-  },
-  "c-gating-read-on-public.5": {
-   "result": "pass",
-   "evidence": "guest GET /spaces/4860/posts 200; guest POST reply 401 rest_not_logged_in"
-  },
-  "c-gating-read-on-public.7": {
-   "result": "pass",
-   "evidence": "subscriber POST /spaces/4860/access-rules (everyone/full) -> 403 jetonomy_forbidden; after the admin deleted the Read rule, jt_access_rules has 0 rows for the space, so the refused POST stored nothing"
-  },
-  "c-gating-read-on-public.6": {
-   "result": "pass",
-   "evidence": "Admin deleted Read rule -> toast \"Access rule deleted.\"; subscriber then POST topic 201,8928 reply 201,16279"
-  }
- }
+  "proposed_checks": []
 }

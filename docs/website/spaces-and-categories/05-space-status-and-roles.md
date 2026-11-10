@@ -26,7 +26,15 @@ The Status dropdown offers three values.
 
 Use Archived when a space has finished its life: a completed project, a closed beta, a season that has ended. Use Locked when you are pausing a space you intend to reopen - a temporary freeze during a moderation incident, or a category being reorganised.
 
-> **In this version the two behave identically.** The distinction is one of intent, not enforcement: both block posting and both leave content readable. Pick whichever label communicates the right thing to your team, and do not rely on Locked and Archived differing in any functional way.
+Both block posting the same way. They differ in a few places:
+
+| | Archived | Locked |
+|---|---|---|
+| Who can set it | A site admin in wp-admin, or the space owner from the front end with **Archive and hand over** | A site admin in wp-admin only |
+| Reopen from the front end | Yes: **Unarchive** in the space's Danger zone (site admin, or the member who received the space by hand-over) | No: set it back to Active in wp-admin |
+| Deleting its category | Does not block the delete; the space becomes uncategorised | Blocks the delete until the space is moved |
+| Banner members see | "This space is archived. New topics and replies are no longer accepted." | "This space is locked. New topics and replies are not allowed." |
+| Owner's account erased with nobody to take over | The space is handed to a site admin and archived | - |
 
 Changing status back to Active restores posting immediately. Nothing is lost in either direction.
 

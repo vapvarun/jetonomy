@@ -1,120 +1,115 @@
 {
   "journey": "C.integration.abilities-api",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T13:10:00Z",
-  "walker": "lane B3",
-  "env": {
-    "themes": [
-      "reign"
-    ],
-    "viewports": [
-      1440,
-      390
-    ],
-    "schemes": [
-      "light"
-    ]
-  },
+  "free": "7470786c",
+  "pro": "1bb3e93",
   "checks": {
     "c-integration-abilities-api.1": {
       "result": "pass",
-      "evidence": "GET /wp-abilities/v1/abilities as admin (WP 7.1.3) lists 22 jetonomy/* abilities incl create-post, create-reply, vote, search, list-spaces, get-space, join-space, flag-content, moderate-content, list-flags",
-      "carried_forward": true
+      "evidence": "WordPress 7.1.4, admin (application password) GET /wp-json/wp-abilities/v1/abilities?per_page=100 -> 22 abilities, 19 of them jetonomy/*: create-post, get-post, list-posts, create-reply, list-replies, vote, list-spaces, get-space, join-space, list-space-members, create-space, get-user-profile, list-notifications, mark-notifications-read, get-activity, flag-content, moderate-content, list-flags, search."
     },
     "c-integration-abilities-api.2": {
       "result": "pass",
-      "evidence": "bob jetonomy/create-post into Feature Requests -> 200 id 9898, topic readable via REST /posts/9898 with same title/content",
-      "carried_forward": true
+      "evidence": "bob ran jetonomy/create-post into Feature Requests (space 12) -> 200 {id 2446, title, is_private, url}; bob's POST /spaces/12/posts gave the same stored shape (status publish, type idea from the space default, author 10, score 0); the ability topic is 200 for a guest and listed on /community/s/feature-requests/. Note: the ability's type enum is topic, question, discussion, announcement ('idea' is rejected with 400 ability_invalid_input), so omit type in an Ideas space."
     },
     "c-integration-abilities-api.3": {
       "result": "pass",
-      "evidence": "bob create-reply 9898 -> reply 17235 stored; alice vote +1 -> vote_score 0->1; REST /posts/9898 agrees",
-      "carried_forward": true
+      "evidence": "alice ran jetonomy/create-reply on 2446 -> reply 3763 stored; jetonomy/vote object_type post value 1 -> vote_score 1 user_vote 1; GET /posts/2446 shows vote_score 1, reply_count 1."
     },
     "c-integration-abilities-api.4": {
       "result": "pass",
-      "evidence": "jetonomy/search 'dark mode' as bob returned ids [5709,5633,5700,9898,9259,5874,9379,8981,5757,5732], identical order to GET /search?q=dark+mode",
-      "carried_forward": true
+      "evidence": "bob jetonomy/search query 'dark mode' returns post ids [84, 8, 75, 315, 249, 132, 107]; GET /jetonomy/v1/search?q=dark mode returns the same ids in the same order."
     },
     "c-integration-abilities-api.5": {
       "result": "pass",
-      "evidence": "alice flag-content on bob reply 17235 -> flag 841 created once; repeat -> 409 jetonomy_already_flagged (same as POST /flags)",
-      "carried_forward": true
+      "evidence": "alice (member_b) jetonomy/flag-content on bob's reply 1296 (reason spam) -> flag_id 26; repeating it -> 409 jetonomy_already_flagged 'You have already reported this content.'"
     },
     "c-integration-abilities-api.6": {
       "result": "pass",
-      "evidence": "test_moderator list-flags (GET) 200 and moderate-content (DELETE method) trash->publish round trip on Bug Reports topic 9956 worked. NOTE defect: list-flags returns user_id 0 for every flag (class-abilities.php:1722 reads $f->user_id, column is reporter_id)",
-      "carried_forward": true
+      "evidence": "test_moderator (moderator of Bug Reports, space 11): alice flagged a Bug Reports topic (flag 27); jetonomy/list-flags status pending -> 200, 13 flags including 27; jetonomy/moderate-content action trash over DELETE (input as query string) -> 200 {success:true,new_status:trash}, topic status trash."
     },
     "c-integration-abilities-api.7": {
       "result": "pass",
-      "evidence": "guest create-post -> 401 rest_ability_cannot_execute, no topic created (DB count 0)",
-      "carried_forward": true
+      "evidence": "Guest jetonomy/create-post -> 401 rest_ability_cannot_execute; no topic row with that title exists afterwards."
     },
     "c-integration-abilities-api.8": {
       "result": "pass",
-      "evidence": "bob DELETE /wp-abilities/v1/abilities/jetonomy/moderate-content/run and GET .../list-flags/run -> 403 rest_ability_cannot_execute; POST to moderate-content -> 405 rest_ability_invalid_method (destructive ability needs DELETE), matching the current wording",
-      "carried_forward": true
+      "evidence": "bob: moderate-content over DELETE -> 403 rest_ability_cannot_execute (target topic still publish); over POST -> 405 rest_ability_invalid_method 'Abilities that perform destructive actions require DELETE method.'; list-flags status=pending -> 403 rest_ability_cannot_execute."
     },
     "c-integration-abilities-api.9": {
       "result": "pass",
-      "evidence": "finn jetonomy/create-post and jetonomy/vote -> 403 rest_ability_cannot_execute (generic Abilities permission refusal); no topic created",
-      "carried_forward": true
+      "evidence": "finn (silenced): jetonomy/create-post -> 403 rest_ability_cannot_execute; jetonomy/vote -> 403 rest_ability_cannot_execute; nothing created. The route POST /spaces/12/posts as finn gives 403 jetonomy_user_silenced."
     },
     "c-integration-abilities-api.10": {
       "result": "pass",
-      "evidence": "bob create-reply on closed Announcements topic 5875 -> 403 jetonomy_post_closed; test_moderator succeeded (reply 17399, to clean up)",
-      "carried_forward": true
+      "evidence": "Closed Announcements topic 252: bob create-reply -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'; test_moderator create-reply -> reply 3764 stored."
     },
     "c-integration-abilities-api.11": {
       "result": "pass",
-      "evidence": "bob create-post into archived 2025 Hackathon (36) -> 403 jetonomy_space_restricted",
-      "carried_forward": true
+      "evidence": "bob create-post into the archived 2025 Hackathon (space 40) -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.'"
     },
     "c-integration-abilities-api.12": {
       "result": "pass",
-      "evidence": "bob get-space and list-posts on Customer Advisory Board (38) -> 403 rest_ability_cannot_execute, identical to get-space on nonexistent id 999999 (403), so nothing leaks",
-      "carried_forward": true
+      "evidence": "Customer Advisory Board (42): bob IS a member in the seed (get-space and list-posts answer 200 for him, which is correct); grace (non-member) get-space 42 and list-posts 42 -> 403 rest_ability_cannot_execute, byte-identical to a nonexistent space id 99999 (403, same body). Nothing leaks."
     },
     "c-integration-abilities-api.13": {
       "result": "pass",
-      "evidence": "Fresh fixture member: join-space on Feature Requests (open) -> {status: joined}; on Insiders / Beta and on Partner Program (both approval) -> {status: pending_approval}. Fixture user deleted, no requests or memberships left",
-      "carried_forward": true
+      "evidence": "grace jetonomy/join-space Feature Requests (12, open) -> {status: joined}; Insiders / Beta (24) and Partner Program (41) -> {status: pending_approval}; repeating the open join stays joined."
     },
     "c-integration-abilities-api.14": {
-      "result": "not_performed",
-      "evidence": "Site runs WordPress 7.1.3; no WordPress below 6.9 install is available to activate the plugin on"
+      "result": "pass",
+      "evidence": "Disposable WordPress 6.8.3 (core downloaded into a scratch dir, own database wp68 on the free stack's db container, dropped afterwards; the walk site was not touched), Jetonomy 2.0.7 mounted read-only, WP_DEBUG and WP_DEBUG_LOG on: plugin activated ('Plugin jetonomy activated'), wp_register_ability does not exist, GET /wp-abilities/v1/abilities -> 404 rest_no_route (no abilities registered), Jetonomy's own REST /jetonomy/v1/spaces -> 200, wp jetonomy works, debug.log empty (0 lines, 0 Jetonomy lines) after activation and requests."
     },
     "c-integration-abilities-api.15": {
-      "result": "fail",
-      "evidence": "jetonomy/list-posts input schema allows limit 1-50: limit=100 -> 400 ability_invalid_input ('must be between 1 and 50'), so the runbook's limit=100 cannot pass. limit=50 on a 2,003-topic space returns 50 posts with total 2003 and has_more true in about 0.09s (carried forward: includes/class-abilities.php is unchanged since that walk.)",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Space 96 padded to 2,100 published topics. limit=100 is refused by the input schema: 400 ability_invalid_input 'input[limit] must be between 1 (inclusive) and 50 (inclusive)' (schema maximum is 50), so measured limit=50 as bob: 200, 50 posts, total 2100, has_more true, 0.024 s and 0.023 s on two calls. The line's 100 is out of date: the maximum page is 50."
     },
     "c-integration-abilities-api.16": {
       "result": "pass",
-      "evidence": "bob vote +1 and -1 on own topic via ability -> 400 jetonomy_self_vote, same as POST /posts/9898/vote; score unchanged",
-      "carried_forward": true
+      "evidence": "bob on his own topic 2446, value 1 and -1, through jetonomy/vote and through POST /posts/2446/vote: all four 400 jetonomy_self_vote 'You cannot vote on your own content.'; score unchanged at 1."
     },
     "c-integration-abilities-api.17": {
       "result": "pass",
-      "evidence": "alice flag-content reason off-topic on post -> flag 842 stored as off_topic; maya reason inappropriate -> flag 843 stored as offensive; moderator REST queue /spaces/2996/moderation/flags lists both with reporter Alice Chen / Maya Okafor",
-      "carried_forward": true
+      "evidence": "alice jetonomy/flag-content reason 'off-topic' -> flag 28 stored as off_topic; reason 'inappropriate' -> flag 29 stored as offensive; /community/mod/ as admin lists 'OFF-TOPIC REPLY ... Reported by Alice Chen' and 'OFFENSIVE REPLY ... Reported by Alice Chen'.",
+      "screenshot": "abilities-flag-queue.png"
     },
     "c-integration-abilities-api.18": {
       "result": "pass",
-      "evidence": "bob flag own reply -> 400 jetonomy_flag_self; repeat report -> 409 jetonomy_already_flagged; CAB reply 13380 as bob -> 404 jetonomy_flag_target_missing; all identical to POST /flags",
-      "carried_forward": true
+      "evidence": "Ability and POST /flags answer identically: alice flagging her own reply 3763 -> 400 jetonomy_flag_self; grace flagging Customer Advisory Board reply 1226 she cannot read -> 404 jetonomy_flag_target_missing; alice re-flagging 1296 -> 409 jetonomy_already_flagged."
+    },
+    "c-integration-abilities-api.20": {
+      "result": "pass",
+      "evidence": "admin jetonomy/list-flags status pending, limit 50 -> 16 flags, each with user_id (distinct reporters 8, 9, 10, 20, 22, 24), none 0."
+    },
+    "c-integration-abilities-api.21": {
+      "result": "pass",
+      "evidence": "Guest jetonomy/search filter=tags: query 'partner-pricing' (tag only on a private-space topic) -> tags [], total 0; query 'webhooks' (public tag also used in private spaces: 35 uses total, 31 public) -> tag returned with post_count 31."
+    },
+    "c-integration-abilities-api.22": {
+      "result": "pass",
+      "evidence": "Both input schemas describe after as an offset ('Offset: how many posts/replies to skip. For the next page pass the previous after plus the number of items returned...'). bob paged list-posts of Feature Requests (17 topics) with limit 5, after = previous after + items returned: pages of 5, 5, 5, 2 (after 0, 5, 10, 15), has_more true, true, true, false; 17 unique ids and the concatenation equals the single limit=50 list in the same order. list-replies of topic 84 (29 replies): 6 pages 5,5,5,5,5,4, has_more false on the last, 29 unique ids equal to the single-page list."
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
-  "proposed_checks": [
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T05:16:50.843904Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free via application passwords + disposable WP 6.8.3",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme"
+    ],
+    "locale": "en_US",
+    "viewports": []
+  },
+  "runbook_fixes": [
     {
-      "id": "c-integration-abilities-api.19",
-      "text": "Reword .15 to limit=50 (schema maximum) and keep the 2000-topic timing; wording for .8/.9/.12 now matches behaviour."
+      "check": "c-integration-abilities-api.12",
+      "now": "as a non-member (for example grace); bob is a Customer Advisory Board member in the seed"
     },
     {
-      "id": "c-integration-abilities-api.20",
-      "text": "jetonomy/list-flags returns the reporter's user id: today every flag shows user_id 0 because includes/class-abilities.php:1722 reads $f->user_id while the column is reporter_id (still present at 7bbd544b)."
+      "check": "c-integration-abilities-api.15",
+      "now": "limit=50 (the input schema maximum) on a 2000-topic space"
     }
   ]
 }

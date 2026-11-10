@@ -1,0 +1,49 @@
+{
+  "journey": "F.firefox-desktop and F.safari-ios",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "checks": {
+    "f-firefox-desktop-and-f-safari-ios.1": {
+      "result": "untested",
+      "evidence": "ENV: Firefox is not available (Chromium only). Not walked in Chromium either as a substitute; the scheduled-post picker itself is walked in C.member.scheduled-post.14 on Chromium 390 and 1440."
+    },
+    "f-firefox-desktop-and-f-safari-ios.2": {
+      "result": "untested",
+      "evidence": "ENV: real Safari iOS/WebKit not available. Chromium iPhone-style emulation (390x844, touch, mobile): tapping Share on a topic opened the menu (Copy link, Twitter / X, Facebook, LinkedIn) fully inside the viewport, page scrollWidth 390 == 390. Outside-tap close and WebKit tap behaviour need a real iPhone.",
+      "screenshot": "ff-share-390.png"
+    },
+    "f-firefox-desktop-and-f-safari-ios.3": {
+      "result": "untested",
+      "evidence": "ENV: real Safari iOS not available. Chromium 390 emulation: /community/u/bob/ .jt-profile-tabs has overflow-x:auto, scrollWidth 456 > clientWidth 328 (scrolls inside the row) and the page itself does not overflow (390 == 390). Smooth swipe and active-tab scroll on WebKit need a real iPhone.",
+      "screenshot": "ff-profile-390.png"
+    },
+    "f-firefox-desktop-and-f-safari-ios.4": {
+      "result": "untested",
+      "evidence": "ENV: needs Safari iOS plus Pro Messages; Pro is inactive on the Free stack and WebKit is unavailable."
+    },
+    "f-firefox-desktop-and-f-safari-ios.5": {
+      "result": "untested",
+      "evidence": "ENV: needs Safari iOS plus Pro Reactions; Pro is inactive on the Free stack and WebKit is unavailable."
+    },
+    "f-firefox-desktop-and-f-safari-ios.6": {
+      "result": "untested",
+      "evidence": "ENV: Firefox focus rendering cannot be observed in Chromium; Chromium focus rings are walked in F.a11y.2."
+    },
+    "f-firefox-desktop-and-f-safari-ios.7": {
+      "result": "untested",
+      "evidence": "ENV: comparing native controls (date input, select, file picker) in Firefox and Safari needs those engines; only Chromium exists."
+    }
+  },
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T04:52:45.560800Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme"
+    ],
+    "locale": "en_US"
+  }
+}

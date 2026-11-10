@@ -69,6 +69,7 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | GET | `/spaces/{id}/privileged-members` | Public | List admins and moderators of a space |
 | GET | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | List the membership access rules gating a space. Added 1.9.4. |
 | POST | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | Add an access rule (membership level / role / tag that grants access). Added 1.9.4. |
+| PATCH | `/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Change what a rule grants (`grants`: read or participate); its recorded role follows. Added 2.0.7. |
 | DELETE | `/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Remove an access rule. Note the path is top-level, not nested under `/spaces/{id}` - the rule id is globally unique. Added 1.9.4. |
 | GET | `/spaces/{id}/join-requests` | Space admin | List pending requests to join this space. When a `PATCH /spaces/{id}` (or the admin screen, or `wp jetonomy space update`) changes `join_policy` / `visibility` so the space no longer takes requests, the pending ones are settled at once: approved and added as members if the space is now open, denied if it is now invite-only. Each requester gets the usual approved / not-approved notification. |
 | DELETE | `/spaces/{id}/join-requests/mine` | Logged in | Withdraw your own pending request to join this space; the staff notices about it are removed. 404 when you have none. |
@@ -678,6 +679,8 @@ All analytics endpoints require the `jetonomy_view_analytics` capability.
 | GET | `/analytics/engagement` | Engagement rate, avg reply time, unanswered % |
 | GET | `/analytics/moderation` | Flags, bans, spam actions |
 | GET | `/analytics/export` | CSV download |
+
+The overview's `post_change`, `reply_change`, `user_change`, `active_change` and `vote_change` are `null` when the previous period had no activity (a rise from zero has no percentage). Draw charts from `trend`; `daily_posts`, `daily_replies` and `daily_active` are deprecated since 2.0.7 and still returned for older clients.
 
 **Analytics parameters (all endpoints)**
 

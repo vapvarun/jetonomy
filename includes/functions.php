@@ -228,6 +228,12 @@ function asset_version( string $file, string $version ): string {
  * so a stale build can never hide a change. Script translations still match:
  * WordPress strips ".min" when it maps a script to its JSON file.
  *
+ * On RTL sites a stylesheet with a foo-rtl.css sibling (the whole sheet,
+ * mirrored by `grunt rtlcss`) is served instead of foo.css, then minified the
+ * same way. It replaces the LTR sheet: loaded on top, every physical rule
+ * applied on both sides (right:0 and left:0 together put the notification
+ * panel off-screen).
+ *
  * @param string $base_url Plugin URL (trailing slash).
  * @param string $base_dir Plugin directory (trailing slash).
  * @param string $version  Plugin version passed to the enqueues.
@@ -243,6 +249,11 @@ function version_assets_by_mtime( string $base_url, string $base_dir, string $ve
 			return $src;
 		}
 		$path = strtok( substr( $src, strlen( $base_url ) ), '?' );
+		if ( is_rtl() && preg_match( '/(?<!-rtl)(?<!\.min)\.css$/', $path ) && is_readable( $base_dir . substr( $path, 0, -4 ) . '-rtl.css' ) ) {
+			$rtl  = substr( $path, 0, -4 ) . '-rtl.css';
+			$src  = $base_url . $rtl . substr( $src, strlen( $base_url ) + strlen( $path ) );
+			$path = $rtl;
+		}
 		if ( ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) && preg_match( '/(?<!\.min)\.(css|js)$/', $path ) ) {
 			$min = preg_replace( '/\.(css|js)$/', '.min.$1', $path );
 			if ( is_readable( $base_dir . $min ) && filemtime( $base_dir . $min ) >= ( is_readable( $base_dir . $path ) ? filemtime( $base_dir . $path ) : 0 ) ) {
@@ -368,7 +379,29 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 		$label = (string) apply_filters( 'jetonomy_space_label', $label, $plural, $lower );
 	}
 
-	return $lower ? mb_strtolower( $label ) : $label;
+	return $lower ? mid_sentence( $label ) : $label;
+}
+
+/**
+ * A noun as it reads mid-sentence: lowercased, except in locales that
+ * capitalise every noun.
+ *
+ * @param string $noun Noun as written ("Course", "Kurs").
+ */
+function mid_sentence( string $noun ): string {
+	/**
+	 * Whether a mid-sentence label is lowercased. German and Luxembourgish
+	 * capitalise every noun ("Mitglieder", never "mitglieder"), so they keep the
+	 * label as written; add any other such locale here.
+	 *
+	 * @param bool   $lowercase True to lowercase.
+	 * @param string $locale    The locale the label renders in.
+	 */
+	$locale = determine_locale();
+	if ( ! apply_filters( 'jetonomy_label_lowercase', ! in_array( strtok( $locale, '_' ), array( 'de', 'lb' ), true ), $locale ) ) {
+		return $noun;
+	}
+	return mb_strtolower( $noun );
 }
 
 /**
@@ -1474,7 +1507,9 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 	$name_html = $show_name ? ' <span class="jt-user-name">' . esc_html( $name ) . '</span>' : '';
 
 	if ( $url ) {
-		return '<a href="' . esc_url( $url ) . '" class="jt-user-link">' . $avatar_html . $name_html . '</a>';
+		// Avatar-only links would otherwise be announced as the initials.
+		$label = $show_name ? '' : ' aria-label="' . esc_attr( $name ) . '"';
+		return '<a href="' . esc_url( $url ) . '" class="jt-user-link"' . $label . '>' . $avatar_html . $name_html . '</a>';
 	}
 
 	return $avatar_html . $name_html;
@@ -1739,4 +1774,89 @@ function space_join_policy_label( string $policy ): string {
 		default:
 			return ucfirst( $policy );
 	}
+}
+
+/**
+ * A web address typed into a setting, checked as typed.
+ *
+ * On its own, esc_url_raw() turns "not a url" into a plausible http://not%20a%20url,
+ * so a save that relied on it said "saved" over a broken value. Accepts an
+ * http(s) address with a real host name (localhost included) or a
+ * site-relative path.
+ *
+ * @param string $raw Value as typed.
+ * @return string|null The cleaned address, '' for empty, or null when it is not an address.
+ */
+function http_url( string $raw ): ?string {
+	$raw = trim( $raw );
+	if ( '' === $raw ) {
+		return '';
+	}
+	if ( '/' === $raw[0] && ! str_starts_with( $raw, '//' ) ) {
+		return esc_url_raw( $raw );
+	}
+	$parts = wp_parse_url( $raw );
+	$host  = (string) ( $parts['host'] ?? '' );
+	// Browsers take HTTPS:// and Unicode domain names (bücher.de); check the
+	// host in its ASCII form, or with letters standing in when intl is missing.
+	$ascii = $host;
+	if ( preg_match( '/[^\x00-\x7F]/', $host ) ) {
+		$ascii = function_exists( 'idn_to_ascii' ) ? (string) idn_to_ascii( $host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46 ) : (string) preg_replace( '/[^\x00-\x7F]/u', 'a', $host );
+	}
+	$scheme = strtolower( (string) ( $parts['scheme'] ?? '' ) );
+	if ( in_array( $scheme, array( 'http', 'https' ), true ) && '' !== $ascii && false !== filter_var( $ascii, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME ) ) {
+		return esc_url_raw( $raw, array( 'http', 'https' ) );
+	}
+	return null;
+}
+
+/**
+ * A full web address typed into a setting, or null. For addresses used off the
+ * site, where a relative path cannot resolve: the app's links and logo, email
+ * images, share images, canonicals and API endpoints.
+ *
+ * @param string $raw Value as typed.
+ * @return string|null '' for empty, the cleaned address, or null.
+ */
+function absolute_url( string $raw ): ?string {
+	$url = http_url( $raw );
+	return null === $url || str_starts_with( $url, '/' ) ? null : $url;
+}
+
+/**
+ * The image a share card shows: the page's own image when it resolves to a
+ * full address, else the Default share image, the site logo, then the site icon.
+ * One chain for Free's head and Pro's SEO extension, so the two cannot drift.
+ *
+ * @param string $route_image The page's own image (space cover, SEO image, first inline image), may be site-relative.
+ * @return string A full address, or '' when the site has no image at all.
+ */
+function share_image( string $route_image = '' ): string {
+	if ( str_starts_with( $route_image, '/' ) && ! str_starts_with( $route_image, '//' ) ) {
+		$route_image = home_url( $route_image );
+	}
+	$image = absolute_url( $route_image ) ?? '';
+	if ( '' === $image ) {
+		$image = absolute_url( (string) ( get_option( 'jetonomy_settings', array() )['seo_default_og_image'] ?? '' ) ) ?? '';
+	}
+	if ( '' === $image ) {
+		$logo_id = (int) get_theme_mod( 'custom_logo' );
+		$image   = $logo_id > 0 ? (string) wp_get_attachment_image_url( $logo_id, 'full' ) : '';
+	}
+	return '' !== $image ? $image : (string) get_site_icon_url( 512 );
+}
+
+/**
+ * The refusal for an address field that is not a web address, worded once.
+ *
+ * @param string $label What the owner or member calls the field, e.g. "Cover image".
+ * @return \WP_Error 400 jetonomy_invalid_url.
+ */
+function invalid_url_error( string $label ): \WP_Error {
+	return new \WP_Error(
+		'jetonomy_invalid_url',
+		/* translators: %s: field label, e.g. "Cover image". */
+		sprintf( __( '%s must be a full address starting with http:// or https://.', 'jetonomy' ), $label ),
+		array( 'status' => 400 )
+	);
 }

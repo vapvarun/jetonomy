@@ -277,7 +277,7 @@ class GatingFixesTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( get_userdata( $this->member )->user_email, $to, 'no email about a space the person can no longer read' );
 	}
 
-	// 2: Full is Member for every rule type: stored, listed and explained.
+	// 2: Full sent on create is stored as Participate (Member) for every rule type, listed and explained.
 	public function test_full_rule_is_member_for_every_rule_type(): void {
 		$this->set_adapters( array( 'fake' => $this->fake_adapter() ) );
 		$space = $this->space();
@@ -305,14 +305,15 @@ class GatingFixesTest extends WP_UnitTestCase {
 		$this->assertSame( 'member', $created->get_data()['data']->space_role, 'a rule never stores more than Member' );
 
 		foreach ( array( 'membership', 'role', 'capability', 'trust_level', 'logged_in' ) as $type ) {
-			$this->assertSame( 'member', AccessRule::cap_space_role( 'full', 'admin', $type ), "{$type}: Full is Member" );
+			$this->assertSame( 'member', AccessRule::cap_space_role( 'participate', 'admin', $type ), "{$type}: Participate tops out at Member" );
 		}
 
 		$html = $this->access_tab( $space );
 		$row  = substr( $html, (int) strpos( $html, 'id="jetonomy-rules-table"' ) );
 		$this->assertStringNotContainsString( 'Moderator', strip_tags( $row ), 'no rule row says Moderator' );
 		$this->assertStringNotContainsString( 'Admin', strip_tags( $row ) );
-		$this->assertStringContainsString( 'Participate and Full as Member.', $html );
+		$this->assertStringContainsString( 'Participate as Member.', $html );
+		$this->assertStringNotContainsString( 'value="full"', $html, 'Full is no longer offered' );
 	}
 
 	// 3: the Membership type is offered, disabled with a reason, when no membership plugin runs.

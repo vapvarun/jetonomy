@@ -355,9 +355,9 @@ $crumbs = array(
 						<div class="jt-mod-flag-row-head">
 							<span class="jt-badge jt-badge-danger"><?php echo esc_html( $jt_ban_label ); ?></span>
 							<?php if ( $jt_is_ip_ban ) : // An IP ban blocks an address, not the member it was issued from. ?>
-								<code class="jt-mod-flag-space"><?php echo esc_html( (string) $jt_ban->reason ); ?></code>
+								<code class="jt-mod-flag-space" id="<?php echo esc_attr( 'jt-ban-' . absint( $jt_ban->id ) . '-who' ); ?>"><?php echo esc_html( (string) $jt_ban->reason ); ?></code>
 							<?php else : ?>
-							<a class="jt-mod-flag-space" href="<?php echo esc_url( $jt_banned_user ? \Jetonomy\get_profile_url( (int) $jt_banned_user->ID ) : '' ); ?>">
+							<a class="jt-mod-flag-space" id="<?php echo esc_attr( 'jt-ban-' . absint( $jt_ban->id ) . '-who' ); ?>" href="<?php echo esc_url( $jt_banned_user ? \Jetonomy\get_profile_url( (int) $jt_banned_user->ID ) : '' ); ?>">
 								<?php echo esc_html( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : __( '[deleted]', 'jetonomy' ) ); ?>
 							</a>
 							<?php endif; ?>
@@ -372,13 +372,14 @@ $crumbs = array(
 							</span>
 						</div>
 						<?php if ( ! empty( $jt_ban->reason ) && ! $jt_is_ip_ban ) : ?>
-							<div class="jt-mod-flag-excerpt"><?php echo esc_html( (string) $jt_ban->reason ); ?></div>
+							<div class="jt-mod-flag-excerpt" dir="auto"><?php echo esc_html( (string) $jt_ban->reason ); ?></div>
 						<?php endif; ?>
 						<div class="jt-mod-flag-foot">
 							<?php if ( null === Moderation_Permissions::lift_error( $user_id, $jt_ban ) ) : // Lifting needs the authority that issued it. ?>
 							<button type="button"
 								class="jt-btn jt-btn-ghost jt-btn-sm jt-flex-shrink-0"
 								data-wp-on--click="actions.liftRestriction"
+								aria-describedby="<?php echo esc_attr( 'jt-ban-' . absint( $jt_ban->id ) . '-who' ); ?>"
 								data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
 								data-user-name="<?php echo esc_attr( $jt_is_ip_ban ? (string) $jt_ban->reason : ( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : '' ) ); ?>">
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
@@ -581,6 +582,8 @@ $crumbs = array(
 					)
 				);
 				$queue_url    = \Jetonomy\route_url( 'space-moderation', $space->slug );
+				$jt_flag_ref  = 'jt-mod-flag-' . absint( $flag->id );
+				$jt_has_title = ! $is_reply && ! empty( $obj->title );
 				?>
 				<li class="jt-mod-flag-row">
 					<div class="jt-mod-flag-row-head">
@@ -600,10 +603,10 @@ $crumbs = array(
 							?>
 						</span>
 					</div>
-					<?php if ( ! $is_reply && ! empty( $obj->title ) ) : ?>
-						<div class="jt-mod-flag-title" dir="auto"><?php echo esc_html( (string) $obj->title ); ?></div>
+					<?php if ( $jt_has_title ) : ?>
+						<div class="jt-mod-flag-title" id="<?php echo esc_attr( $jt_flag_ref . '-title' ); ?>" dir="auto"><?php echo esc_html( (string) $obj->title ); ?></div>
 					<?php endif; ?>
-					<div class="jt-mod-flag-excerpt" dir="auto">
+					<div class="jt-mod-flag-excerpt" id="<?php echo esc_attr( $jt_flag_ref . '-excerpt' ); ?>" dir="auto">
 						<?php echo esc_html( $excerpt ); ?>
 					</div>
 					<?php if ( ! empty( $jt_ctx->removed ) ) : ?>
@@ -627,7 +630,8 @@ $crumbs = array(
 								<?php esc_html_e( 'Note', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
-						<a class="jt-mod-flag-action" href="<?php echo esc_url( $queue_url ); ?>">
+						<a class="jt-mod-flag-action" href="<?php echo esc_url( $queue_url ); ?>"
+							aria-describedby="<?php echo esc_attr( ( $jt_has_title ? $jt_flag_ref . '-title ' : '' ) . $jt_flag_ref . '-excerpt' ); ?>">
 							<?php esc_html_e( 'Review in queue', 'jetonomy' ); ?>
 							<?php jetonomy_echo_icon( 'arrow-right', 14 ); ?>
 						</a>

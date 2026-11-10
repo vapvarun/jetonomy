@@ -1,32 +1,41 @@
 {
- "journey": "F.chromium",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T10:33:50Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "f-chromium.1": {
-   "result": "pass",
-   "evidence": "Guest, Chromium: /community/, Help Desk space, a topic and /community/u/alice/ at 1440, 1024 and 390: all 200, 0 console errors, 0 page errors, 0 failed or 4xx/5xx requests, no horizontal overflow (12 loads)."
+  "journey": "F.chromium",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "checks": {
+    "f-chromium.1": {
+      "result": "pass",
+      "evidence": "Guest, cookies cleared: /community/, /community/s/general-discussion/, topic whats-everyone-working-on-this-week-s15t1, /community/u/alice/ at 1440/1024/390: all HTTP 200, 0 console errors, 0 failed/4xx requests, no horizontal overflow (scrollWidth==clientWidth)."
+    },
+    "f-chromium.2": {
+      "result": "pass",
+      "evidence": "bob in Chromium with Pro on: composer (new topic 369 created 201 and a poll topic), vote (post 243 on/off, score and aria state updated, kept after reload), reaction (React > Like on a topic: POST /posts/117/reactions 200, chip 'Like 1' appears pressed) and reply submit (POST /replies 201) all worked; 0 pageerror and 0 console errors."
+    },
+    "f-chromium.3": {
+      "result": "pass",
+      "evidence": "Reign toggle: light->dark set data-bx-mode=dark, label became Dark mode, stayed dark after reload (localStorage bx-color-mode=dark); toggled back to light and persisted after reload. Screenshot chromium-dark1.png shows Jetonomy topic page dark.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/chromium-dark1.png"
+    }
   },
-  "f-chromium.2": {
-   "result": "pass",
-   "evidence": "bob on Feature Requests topic: reply vote POST 200, reaction Like added and removed, reply posted (\"Chromium reply check\" appeared); zero pageerror/console error events captured."
-  },
-  "f-chromium.3": {
-   "result": "pass",
-   "evidence": "Theme toggle .bx-color-mode-toggle__btn: body bg rgb(250,251,253) -> rgb(35,38,47), jt controls recolour; same dark bg after reload. Toggle reset to light afterwards. Note: it is the Reign theme toggle, not a Jetonomy control.",
-   "screenshot": "f-chromium-dark"
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T07:22:02.844386+00:00",
+  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
+  "env": {
+    "mode": "free stack Pro inactive (phase 1) then Pro active (f-chromium.2 reaction)",
+    "site": "http://localhost:8912",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [
+      1440,
+      1024,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   }
- }
 }

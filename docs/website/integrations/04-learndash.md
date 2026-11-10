@@ -25,7 +25,7 @@ Jetonomy Pro detects LearnDash automatically when both plugins are active. A **L
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LearnDash Course** from the rule type dropdown.
-3. Start typing the course name - a searchable dropdown shows all published LearnDash courses.
+3. Start typing the course name - the dropdown searches every published LearnDash course, however many the site has.
 4. Select the course, set the **Access level** to **Participate**.
 5. Click **Add Rule**.
 
@@ -74,6 +74,9 @@ Anyone who can manage Jetonomy settings can change and save this tab: administra
 | Student un-enrolls or is removed | Removed from linked spaces |
 | User added to group | Added to linked spaces as Member |
 | User removed from group | Removed from linked spaces |
+| Course moved to trash or unpublished | Space access granted by that course ends, as LearnDash itself no longer lets the student in |
+
+Access flows one way, from LearnDash into Jetonomy: adding someone to a space never enrols them in a LearnDash course or group.
 
 Content (posts and replies) remains in the space - only access is revoked.
 

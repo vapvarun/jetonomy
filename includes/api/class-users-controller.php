@@ -372,6 +372,8 @@ class Users_Controller extends Base_Controller {
 					// the cap); this only tells the client what to render.
 					'is_admin'             => user_can( $user_id, 'manage_options' ),
 					'capabilities'         => \Jetonomy\Permissions\Capabilities::map_for_user( $user_id ),
+					// Same gate POST /spaces enforces (admin-saved creation roles), so clients render the control from the answer.
+					'can_create_spaces'    => \Jetonomy\Permissions\Capabilities::can_create_space_frontend( (int) $user_id ),
 				)
 			),
 			200
@@ -394,7 +396,7 @@ class Users_Controller extends Base_Controller {
 			return $this->not_found( 'User' );
 		}
 
-		$profile     = UserProfile::find_by_user( $id );
+		$profile     = UserProfile::find_public( $id ); // Counts exclude anonymous items.
 		$trust_level = (int) ( $profile->trust_level ?? 0 );
 
 		$data = array(
@@ -470,7 +472,7 @@ class Users_Controller extends Base_Controller {
 		}
 
 		$id          = (int) $wp_user->ID;
-		$profile     = UserProfile::find_by_user( $id );
+		$profile     = UserProfile::find_public( $id ); // Counts exclude anonymous items.
 		$trust_level = (int) ( $profile->trust_level ?? 0 );
 
 		$data = array(
@@ -567,8 +569,11 @@ class Users_Controller extends Base_Controller {
 		}
 
 		if ( null !== $request->get_param( 'avatar_url' ) ) {
-			$avatar_url = esc_url_raw( (string) $request->get_param( 'avatar_url' ) );
-			$current    = UserProfile::find_by_user( $user_id );
+			$avatar_url = \Jetonomy\http_url( (string) $request->get_param( 'avatar_url' ) );
+			if ( null === $avatar_url ) {
+				return \Jetonomy\invalid_url_error( 'avatar_url' );
+			}
+			$current = UserProfile::find_by_user( $user_id );
 			if ( ! \Jetonomy\Permissions\Capabilities::can_set_image( $avatar_url, (string) ( $current->avatar_url ?? '' ), $user_id ) ) {
 				return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to upload a profile picture.', 'jetonomy' ), array( 'status' => 403 ) );
 			}
@@ -1036,7 +1041,8 @@ class Users_Controller extends Base_Controller {
 			'avatar_url'    => array(
 				'type'     => 'string',
 				'required' => false,
-				'format'   => 'uri',
+				// No 'format' => 'uri': WordPress would esc_url_raw() it first, turning
+				// javascript:/data: into '' (= clear). The handler validates the raw input.
 			),
 			'email_opt_out' => array(
 				'type'     => 'boolean',

@@ -264,7 +264,7 @@ class Abilities {
 						),
 						'after'    => array(
 							'type'        => 'integer',
-							'description' => 'Cursor: post ID to start after (for pagination).',
+							'description' => 'Offset: how many posts to skip. For the next page pass the previous after plus the number of items returned (sorts by votes and activity cannot page by id).',
 							'default'     => 0,
 						),
 						'sort'     => array(
@@ -396,7 +396,7 @@ class Abilities {
 						),
 						'after'   => array(
 							'type'        => 'integer',
-							'description' => 'Cursor: reply ID to start after.',
+							'description' => 'Offset: how many replies to skip. For the next page pass the previous after plus the number of items returned.',
 							'default'     => 0,
 						),
 						'sort'    => array(
@@ -1009,9 +1009,10 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'execute_flag_content' ),
-				// The capability POST /flags requires; the rest is Moderation_Service::create_flag().
+				// As POST /flags: signed in with read; whether this member may report
+				// the target is Moderation_Service::check_flag(), the engine's answer.
 				'permission_callback' => function () {
-					return current_user_can( 'jetonomy_flag' );
+					return is_user_logged_in() && current_user_can( 'read' );
 				},
 				'meta'                => array(
 					'annotations'  => array(
@@ -1404,7 +1405,7 @@ class Abilities {
 			}
 		}
 
-		$result = Vote::cast( $user_id, $object_type, $object_id, $value );
+		$result = Vote::record( $user_id, $object_type, $object_id, $value );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -1420,19 +1421,6 @@ class Abilities {
 		}
 
 		$user_vote = Vote::get_user_vote( $user_id, $object_type, $object_id );
-
-		// 4th arg = the resulting vote value so the Notifier can skip downvotes.
-		/**
-		 * Fires after a vote is cast or changed.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param string $object_type Voted object type: 'post' or 'reply'.
-		 * @param int    $object_id   Voted object ID.
-		 * @param int    $user_id     Voting user ID.
-		 * @param int    $value       Vote value: 1, -1 or 0 when cleared.
-		 */
-		do_action( 'jetonomy_after_vote', $object_type, $object_id, $user_id, (int) $user_vote );
 
 		return array(
 			'vote_score' => $score,
@@ -1599,7 +1587,7 @@ class Abilities {
 		if ( ! $user ) {
 			return new WP_Error( 'jetonomy_not_found', __( 'User not found.', 'jetonomy' ) );
 		}
-		$profile = UserProfile::find_by_user( $user_id );
+		$profile = UserProfile::find_public( $user_id );
 		return array(
 			'user_id'      => $user_id,
 			'display_name' => \Jetonomy\user_display_name( $user ),

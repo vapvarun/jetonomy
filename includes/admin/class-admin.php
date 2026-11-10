@@ -708,21 +708,27 @@ class Admin {
 	}
 
 	/**
-	 * Whether a role currently holds any Jetonomy capability.
+	 * One address setting from the posted form: cleaned, or refused by name with
+	 * the stored value kept, so the save never shows "saved" over a broken value.
 	 *
-	 * @param string $role_slug Role slug.
+	 * @param array  $input Posted settings.
+	 * @param array  $clean Settings being built (holds the stored values).
+	 * @param string $key   Setting key.
+	 * @param string $label What the owner sees the field called.
+	 * @return string
 	 */
-	private static function role_holds_jetonomy_cap( string $role_slug ): bool {
-		$role = get_role( $role_slug );
-		if ( ! $role ) {
-			return false;
+	private function url_setting( array $input, array $clean, string $key, string $label ): string {
+		$url = \Jetonomy\absolute_url( (string) ( $input[ $key ] ?? '' ) );
+		if ( null !== $url ) {
+			return $url;
 		}
-		foreach ( \Jetonomy\Permissions\Capabilities::all() as $cap ) {
-			if ( $role->has_cap( $cap ) ) {
-				return true;
-			}
-		}
-		return false;
+		add_settings_error(
+			'jetonomy_settings',
+			'jetonomy_invalid_' . $key,
+			/* translators: %s: settings field label. */
+			sprintf( __( '%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept.', 'jetonomy' ), $label )
+		);
+		return (string) ( $clean[ $key ] ?? '' );
 	}
 
 	public function sanitize_settings( $input ): array {
@@ -743,7 +749,7 @@ class Admin {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				// Drop only the mapping - the rest of the Permissions tab
 				// (trust thresholds, rate limits) is still theirs to save.
-				unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'] );
+				unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'], $input['role_caps_roles'] );
 				add_settings_error(
 					'jetonomy_settings',
 					'jetonomy_role_caps_forbidden',
@@ -754,35 +760,57 @@ class Admin {
 		if ( ! empty( $input['role_caps_submitted'] ) ) {
 			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
 			$roles      = array_keys( get_editable_roles() );
-			$stored     = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
-			$stored     = is_array( $stored ) ? $stored : array();
 			$overrides  = array();
 			$posted     = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
+
+			$shown_roles = array_map( 'sanitize_key', (array) ( $input['role_caps_roles'] ?? array() ) );
 			foreach ( $roles as $role_slug ) {
 				if ( 'administrator' === $role_slug ) {
 					continue; // Admins always hold every cap - never stored.
 				}
 				$caps = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
 				$caps = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
-				// A row the owner never touched (never stored, holds no Jetonomy
-				// cap, still empty) stays unmapped so the role keeps the space
-				// membership fallback. Storing it cut Customer/Student members off
-				// on the first save of this tab. A row that
-				// was stored or held caps and is now empty is a deliberate "none".
-				if ( ! $caps && ! array_key_exists( $role_slug, $stored ) && ! self::role_holds_jetonomy_cap( $role_slug ) ) {
-					continue;
+				// A fallback role is shown with unmapped_caps() ticked. Posted back
+				// unchanged, or not shown on this form at all, it stays unmapped,
+				// so a save of this tab never cuts Customer/Student members off.
+				// Any other set, more or fewer boxes, is the owner's choice.
+				if ( \Jetonomy\Permissions\Capabilities::is_unmapped_role( $role_slug ) ) {
+					if ( ! in_array( $role_slug, $shown_roles, true ) ) {
+						continue;
+					}
+					$shown = \Jetonomy\Permissions\Capabilities::unmapped_caps( $role_slug );
+					sort( $shown );
+					$sorted = $caps;
+					sort( $sorted );
+					if ( $sorted === $shown ) {
+						continue;
+					}
 				}
 				$overrides[ $role_slug ] = $caps;
 			}
-			// "Give members access" on a locked third-party role: unmap it so the
-			// space-membership fallback applies again.
+			// "Give members the same access as Subscribers" on a locked
+			// third-party role: copy Subscriber's boxes into its row, so the
+			// table shows what the role holds and ticking only adds.
 			$reset = sanitize_key( $input['role_caps_reset'] ?? '' );
-			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) ) {
-				unset( $overrides[ $reset ] );
+			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) && in_array( $reset, $roles, true ) ) {
+				$overrides[ $reset ] = $overrides['subscriber'] ?? \Jetonomy\Permissions\Capabilities::effective_map()['subscriber'];
+				$roles_all           = wp_roles()->get_names();
+				add_settings_error(
+					'jetonomy_settings',
+					'jetonomy_role_caps_reset',
+					sprintf(
+						/* translators: 1: member label, plural (e.g. "Members"). 2: role name. 3: the Subscriber role name. */
+						__( '%1$s with the %2$s role now have the same access as the %3$s role. Their column below shows it; tick or untick boxes to change it.', 'jetonomy' ),
+						\Jetonomy\jetonomy_label( 'member', true ),
+						isset( $roles_all[ $reset ] ) ? translate_user_role( $roles_all[ $reset ] ) : $reset,
+						translate_user_role( 'Subscriber' )
+					),
+					'success'
+				);
 			}
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $overrides, false );
 			\Jetonomy\Permissions\Capabilities::register();
-			unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'] );
+			unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'], $input['role_caps_roles'] );
 		}
 
 		// ── General tab ──
@@ -806,9 +834,9 @@ class Admin {
 			$clean['base_slug']       = $new_slug;
 			$clean['community_title'] = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
 			// Mobile app EULA screen (Apple Guideline 1.2) reads these via /app/config.
-			$clean['terms_url']   = esc_url_raw( $input['terms_url'] ?? '' );
-			$clean['privacy_url'] = esc_url_raw( $input['privacy_url'] ?? '' );
-			$clean['support_url'] = esc_url_raw( $input['support_url'] ?? '' );
+			$clean['terms_url']   = $this->url_setting( $input, $clean, 'terms_url', __( 'Terms of Service URL', 'jetonomy' ) );
+			$clean['privacy_url'] = $this->url_setting( $input, $clean, 'privacy_url', __( 'Privacy Policy URL', 'jetonomy' ) );
+			$clean['support_url'] = $this->url_setting( $input, $clean, 'support_url', __( 'Support URL', 'jetonomy' ) );
 			// Product-noun label overrides (singular / plural). Empty = keep the
 			// default. One loop over every renamable noun so the save side cannot
 			// drift from the Terminology settings block that renders them.
@@ -958,7 +986,7 @@ class Admin {
 		if ( isset( $input['email_from_name'] ) ) {
 			$clean['email_from_name']   = sanitize_text_field( $input['email_from_name'] ?? '' );
 			$clean['email_from_email']  = sanitize_email( $input['email_from_email'] ?? '' );
-			$clean['email_logo_url']    = esc_url_raw( $input['email_logo_url'] ?? '' );
+			$clean['email_logo_url']    = $this->url_setting( $input, $clean, 'email_logo_url', __( 'Email Logo', 'jetonomy' ) );
 			$clean['email_footer_text'] = sanitize_text_field( $input['email_footer_text'] ?? '' );
 
 			// Verification-reminder cadence (hours). 0 = disabled; clamp to a
@@ -984,7 +1012,7 @@ class Admin {
 		// Only process if accent_color is present (Appearance tab was submitted).
 		if ( isset( $input['accent_color'] ) ) {
 			$clean['accent_color'] = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
-			$clean['logo_url']     = esc_url_raw( $input['logo_url'] ?? '' );
+			$clean['logo_url']     = $this->url_setting( $input, $clean, 'logo_url', __( 'Logo URL', 'jetonomy' ) );
 			// Color palette — empty string means "no override, keep the default".
 			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {
 				$clean[ $palette_key ] = sanitize_hex_color( (string) ( $input[ $palette_key ] ?? '' ) ) ?: '';
@@ -1030,7 +1058,7 @@ class Admin {
 
 			// Default share image URL (D.6) — falls back into the og:image
 			// chain (route image → admin default → custom logo → site icon).
-			$clean['seo_default_og_image'] = esc_url_raw( $input['seo_default_og_image'] ?? '' );
+			$clean['seo_default_og_image'] = $this->url_setting( $input, $clean, 'seo_default_og_image', __( 'Default share image', 'jetonomy' ) );
 
 			// Social embeds — Meta developer app credentials for Instagram/Facebook oEmbed.
 			// App IDs are numeric; secrets are 32-char hex strings. Strip whitespace only.
@@ -1249,10 +1277,13 @@ class Admin {
 
 		// Not "admin.js": `wp i18n make-json` strips /.min.js$/ unescaped, which
 		// turns admin.js into a.js, so its translation JSON would never load.
+		// Shared custom-field collector, so the admin space forms send Pro's
+		// space-context fields exactly as the front-end forms do.
+		wp_register_script( 'jetonomy-custom-fields', JETONOMY_URL . 'assets/js/lib/custom-fields.min.js', array(), JETONOMY_VERSION, true );
 		wp_enqueue_script(
 			'jetonomy-admin',
 			JETONOMY_URL . 'assets/js/admin-common.js',
-			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'jetonomy-modals', 'wp-i18n' ),
+			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'jetonomy-modals', 'wp-i18n', 'jetonomy-custom-fields' ),
 			JETONOMY_VERSION,
 			true
 		);
@@ -1299,8 +1330,11 @@ class Admin {
 		// can never disagree about what an adapter is called.
 		$adapter_labels = \Jetonomy\Adapters\Adapter_Registry::membership_labels();
 
+		// Only a space's Access Rules tab has the picker: no catalog queries elsewhere.
 		$membership_adapters = array();
-		$all_adapters        = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
+		$all_adapters        = 'jetonomy-spaces' === $page && 'access' === sanitize_text_field( wp_unslash( $_GET['tab'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
+			? \Jetonomy\Adapters\Adapter_Registry::get_all_membership()
+			: array();
 		foreach ( $all_adapters as $adapter_id => $adapter ) {
 			if ( $adapter->is_active() && 'wp-roles' !== $adapter_id ) {
 				$levels = array();
@@ -1322,9 +1356,11 @@ class Admin {
 					$levels[] = $row;
 				}
 				$membership_adapters[] = array(
-					'id'     => $adapter_id,
-					'label'  => $adapter_labels[ $adapter_id ] ?? ucfirst( $adapter_id ),
-					'levels' => $levels,
+					'id'         => $adapter_id,
+					'label'      => $adapter_labels[ $adapter_id ] ?? ucfirst( $adapter_id ),
+					'levels'     => $levels,
+					// Typed searches go to the server (the preload is capped).
+					'searchable' => method_exists( $adapter, 'search_levels' ),
 				);
 			}
 		}
@@ -1394,7 +1430,7 @@ class Admin {
 			'total_posts'   => Post::count( array( 'status' => 'publish' ) ),
 			'total_replies' => Reply::count( array( 'status' => 'publish' ) ),
 			'active_spaces' => Space::count( array( 'status' => 'active' ) ),
-			'users'         => UserProfile::count(),
+			'users'         => UserProfile::count_members(),
 			'pending_flags' => Flag::count_pending( \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() ) ),
 			'posts_today'   => Post::count_published_since( $today . ' 00:00:00' ),
 		);
@@ -1546,7 +1582,7 @@ class Admin {
 			$categories      = Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );
 			$member_search   = sanitize_text_field( wp_unslash( $_GET['ms'] ?? '' ) );
 			$member_total    = SpaceMember::count_by_space( $space_id, $member_search );
-			$member_per_page = 50;
+			$member_per_page = 25;
 			$member_pages    = max( 1, (int) ceil( $member_total / $member_per_page ) );
 			$member_paged    = min( $member_pages, max( 1, absint( $_GET['mpg'] ?? 1 ) ) );
 			$members         = SpaceMember::list_by_space( $space_id, $member_per_page, ( $member_paged - 1 ) * $member_per_page, $member_search );
@@ -1849,8 +1885,12 @@ class Admin {
 		$per_page     = 20;
 		$offset       = ( $paged - 1 ) * $per_page;
 
+		$orderby = sanitize_key( $_GET['orderby'] ?? 'reputation' );
+		$orderby = isset( UserProfile::ADMIN_SORTS[ $orderby ] ) ? $orderby : 'reputation';
+		$order   = 'ASC' === strtoupper( sanitize_key( $_GET['order'] ?? 'DESC' ) ) ? 'ASC' : 'DESC';
+
 		$total       = UserProfile::count_for_admin( $filter_trust, $search );
-		$users       = UserProfile::list_for_admin( $filter_trust, $search, $per_page, $offset );
+		$users       = UserProfile::list_for_admin( $filter_trust, $search, $per_page, $offset, $orderby, $order );
 		$total_pages = ceil( $total / $per_page );
 		// One query for the whole page, so each row can name its active restriction.
 		$restrictions = Restriction::active_rows_for_users( array_map( static fn( $u ) => (int) $u->user_id, $users ) );

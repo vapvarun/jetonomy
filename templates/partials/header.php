@@ -116,7 +116,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 				?>
 				<?php // jt-nav-dup: the phone tab bar's Alerts tab is the same destination. ?>
 				<div class="jt-notif-dropdown-wrap jt-nav-dup">
-					<button type="button" class="jt-community-nav-notif" data-jt-unread-host="jt-community-nav-badge" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>">
+					<button type="button" class="jt-community-nav-notif" data-jt-unread-host="jt-community-nav-badge" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>" aria-expanded="false">
 						<?php jetonomy_echo_icon( 'bell', 16 ); ?>
 						<?php if ( $unread > 0 ) : ?>
 							<span class="jt-community-nav-badge"><?php echo (int) $unread; ?></span>
@@ -127,6 +127,15 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 							<strong><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></strong>
 							<button type="button" class="jt-notif-mark-read"><?php esc_html_e( 'Mark all read', 'jetonomy' ); ?></button>
 						</div>
+						<?php
+						/**
+						 * A prompt above the notification list (Pro's "Get notified on this device").
+						 *
+						 * @since 2.0.7
+						 * @param string $context 'panel' here, 'page' on the Notifications page.
+						 */
+						do_action( 'jetonomy_notifications_prompt', 'panel' );
+						?>
 						<div class="jt-notif-panel-body">
 							<div class="jt-notif-panel-loading"><?php esc_html_e( 'Loading...', 'jetonomy' ); ?></div>
 						</div>
@@ -139,9 +148,9 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 
 			<?php if ( ! did_action( 'buddynext_loaded' ) ) : ?>
 			<div class="jt-font-scale" role="group" aria-label="<?php esc_attr_e( 'Font size', 'jetonomy' ); ?>">
-				<button class="jt-font-scale__btn active" type="button" data-scale="100" aria-label="<?php esc_attr_e( 'Default font size', 'jetonomy' ); ?>">A</button>
-				<button class="jt-font-scale__btn" type="button" data-scale="110" aria-label="<?php esc_attr_e( 'Large font size', 'jetonomy' ); ?>">A+</button>
-				<button class="jt-font-scale__btn" type="button" data-scale="120" aria-label="<?php esc_attr_e( 'Extra large font size', 'jetonomy' ); ?>">A++</button>
+				<button class="jt-font-scale__btn active" type="button" dir="ltr" aria-pressed="true" data-scale="100" aria-label="<?php esc_attr_e( 'Default font size', 'jetonomy' ); ?>">A</button>
+				<button class="jt-font-scale__btn" type="button" dir="ltr" aria-pressed="false" data-scale="110" aria-label="<?php esc_attr_e( 'Large font size', 'jetonomy' ); ?>">A+</button>
+				<button class="jt-font-scale__btn" type="button" dir="ltr" aria-pressed="false" data-scale="120" aria-label="<?php esc_attr_e( 'Extra large font size', 'jetonomy' ); ?>">A++</button>
 			</div>
 			<?php endif; ?>
 		</div>
@@ -160,24 +169,29 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 	</a>
 	<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>" class="jt-mobile-tab <?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 		<?php jetonomy_echo_icon( 'award', 20 ); ?>
-		<span><?php esc_html_e( 'Ranks', 'jetonomy' ); ?></span>
+		<span><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span>
 	</a>
 	<?php if ( $user_id ) : ?>
 		<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" data-jt-unread-host="jt-mobile-tab-badge" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 			<?php jetonomy_echo_icon( 'bell', 20 ); ?>
-			<span><?php esc_html_e( 'Alerts', 'jetonomy' ); ?></span>
+			<span><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></span>
 			<?php if ( $unread > 0 ) : ?>
 				<span class="jt-mobile-tab-badge"><?php echo (int) $unread; ?></span>
 			<?php endif; ?>
 		</a>
-		<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" class="jt-mobile-tab <?php echo 'profile' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-			<?php jetonomy_echo_icon( 'users', 20 ); ?>
-			<span><?php esc_html_e( 'Profile', 'jetonomy' ); ?></span>
+		<?php
+		// header.js turns this tab into a small menu when the top nav holds
+		// links the tab bar has no tab for (Moderation, Pro's Messages), so
+		// phones can drop that second nav row and still reach them.
+		?>
+		<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" data-jt-tab="profile" class="jt-mobile-tab <?php echo in_array( $current_route, array( 'profile', 'moderation', 'space-moderation', 'messages' ), true ) ? esc_attr( 'active' ) : ''; ?>">
+			<?php jetonomy_echo_icon( 'user', 20 ); ?>
+			<span><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
 		</a>
 	<?php else : ?>
-		<a href="<?php echo esc_url( wp_login_url( $base . '/' ) ); ?>" class="jt-mobile-tab">
+		<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>" class="jt-mobile-tab" data-jt-login>
 			<?php jetonomy_echo_icon( 'users', 20 ); ?>
-			<span><?php esc_html_e( 'Login', 'jetonomy' ); ?></span>
+			<span><?php esc_html_e( 'Log in', 'jetonomy' ); ?></span>
 		</a>
 	<?php endif; ?>
 </nav>

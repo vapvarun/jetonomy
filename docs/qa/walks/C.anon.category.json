@@ -1,87 +1,88 @@
 {
   "journey": "C.anon.category",
-  "free": "dcdb0750",
-  "walked_at": "2026-10-21T08:46:38Z",
-  "walker": "lane A",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "checks": {
+    "c-anon-category.1": {
+      "result": "pass",
+      "evidence": "Guest /community/category/local-chapters/: 14 city cards, each a link to /community/s/<slug>/."
+    },
+    "c-anon-category.2": {
+      "result": "pass",
+      "evidence": "Teasers on, guest, /category/product-engineering/: Partner Program card shows 'Private' and 'Approval required' with the description 'Request to join and the partner team reviews it'."
+    },
+    "c-anon-category.3": {
+      "result": "pass",
+      "evidence": "Guest, /category/community/: Customer Advisory Board card shows 'Private' and 'Invite only'; no Join control inside or beside the card."
+    },
+    "c-anon-category.4": {
+      "result": "pass",
+      "evidence": "Guest /community/category/staff/ (only hidden Release Planning): HTTP 404 'Page not available', 'Home / Not found - Category not found. Browse spaces'; no Staff/Release Planning text. Same page as /category/does-not-exist/."
+    },
+    "c-anon-category.5": {
+      "result": "pass",
+      "evidence": "Guest GET /categories/7 -> 404 jetonomy_not_found 'Category not found.'; GET /categories?per_page=100 lists ids 3,4,2,1 only (no 7) with space_count 7,5,6,5."
+    },
+    "c-anon-category.6": {
+      "result": "pass",
+      "evidence": "Guest /category/help-support/ (contains hidden Moderators' Room): 5 cards (Help Desk, Troubleshooting, Billing & Accounts, Knowledge Base, Insiders / Beta) and REST space_count 5, not 6."
+    },
+    "c-anon-category.7": {
+      "result": "pass",
+      "evidence": "local-chapters page: the last five city cards read '0 topics', no error text."
+    },
+    "c-anon-category.8": {
+      "result": "pass",
+      "evidence": "/community/category/does-not-exist/ -> HTTP 404, 'Category not found.' with Browse spaces / Search links back to the community."
+    },
+    "c-anon-category.9": {
+      "result": "pass",
+      "evidence": "Labs category: 2025 Hackathon card carries 'Archived'; the space opens with 'This space is archived. New topics and replies are no longer accepted.', no composer, no Join."
+    },
+    "c-anon-category.10": {
+      "result": "pass",
+      "evidence": "390px local-chapters: scrollWidth 390, one card per row (left 31)."
+    },
+    "c-anon-category.11": {
+      "result": "pass",
+      "evidence": "390px help-support: Help Desk card 31-359, description box 100-342 clamped to 2 lines (39px), no overflow."
+    },
+    "c-anon-category.12": {
+      "result": "pass",
+      "evidence": "Dark: Private, Archived, Invite only badges 6.84:1 and Approval required 5.38:1 against their backgrounds (computed), all visible.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/cat-dark.png"
+    },
+    "c-anon-category.13": {
+      "result": "pass",
+      "evidence": "bob (Partner Program admin) category card links to /community/s/partner-program/ and shows role marker 'Admin'; hana (not a member) sees 'Approval required' on the same card (request path, opens the locked space)."
+    },
+    "c-anon-category.14": {
+      "result": "pass",
+      "evidence": "maya on /category/help-support/: Moderators' Room card listed ('Hidden Forum Admin'); bob on the same category: no Moderators' Room card."
+    },
+    "c-anon-category.15": {
+      "result": "pass",
+      "evidence": "As a member of Partner Program bob's card shows a role marker ('Admin'); other joined spaces show 'Member'; 'Request to join' wording absent."
+    }
+  },
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T06:57:24.808808+00:00",
+  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
   "env": {
+    "mode": "free stack, Pro inactive",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
       390
     ],
     "schemes": [
-      "light"
-    ]
-  },
-  "checks": {
-    "c-anon-category.1": {
-      "result": "pass",
-      "evidence": "/community/category/local-chapters/ lists the 14 city space cards each linking to /community/s/<city>-chapter/ (all 200).",
-      "screenshot": "qa-artifacts/walk-A/c-anon-home.4-category.png"
-    },
-    "c-anon-category.2": {
-      "result": "pass",
-      "evidence": "Teasers on: Partner Program card in Product & Engineering reads \"Private Forum Approval required ... Request to join and the partner team reviews it\".",
-      "screenshot": "qa-artifacts/walk-A/c-anon-category.1-community.png"
-    },
-    "c-anon-category.3": {
-      "result": "pass",
-      "evidence": "Customer Advisory Board card (Community category) reads \"Private Forum Invite only\"; the card has no Join button (no button/join element inside it).",
-      "screenshot": "qa-artifacts/walk-A/c-anon-category.1-community.png"
-    },
-    "c-anon-category.4": {
-      "result": "pass",
-      "evidence": "The runbook category does not exist as such: Moderators' Room sits in Help & Support with visible spaces. The only hidden-only category is Staff (Release Planning, hidden): guest /community/category/staff/ -> 404 \"Category not found.\" titled \"Page not available\", identical to /category/does-not-exist/, no breadcrumb or name."
-    },
-    "c-anon-category.5": {
-      "result": "pass",
-      "evidence": "GET /categories/1553 (Staff) -> 404 jetonomy_not_found \"Category not found.\", identical to /categories/9999999; /categories?per_page=100 returns only 1549-1552 and omits Staff."
-    },
-    "c-anon-category.6": {
-      "result": "pass",
-      "evidence": "REST space_count for Help & Support is 4 for guests (teasers off; Insiders Beta private and Moderators Room hidden excluded) vs 5/6 in the DB; Community 7, Product & Engineering 6, no hidden counts."
-    },
-    "c-anon-category.7": {
-      "result": "pass",
-      "evidence": "Local Chapters category: five empty city spaces show \"0 topics\", no error."
-    },
-    "c-anon-category.8": {
-      "result": "pass",
-      "evidence": "/community/category/does-not-exist/ -> HTTP 404, \"Category not found.\" inside the community shell; the only way back is the community nav (Community/Search/Leaderboard) and header, there is no dedicated \"back to community\" link in the body."
-    },
-    "c-anon-category.9": {
-      "result": "pass",
-      "evidence": "Home and Product & Engineering show 2025 Hackathon with an \"Archived\" marker; /community/s/2025-hackathon/ opens with \"This space is archived. New topics and replies are no longer accepted.\""
-    },
-    "c-anon-category.10": {
-      "result": "pass",
-      "evidence": "Local Chapters and Help & Support at 390px: scrollWidth 390, cards in one column (left 31px). (Reign only; BuddyX and Twenty Twenty-Five not walked, switching the shared site theme would disturb the other walkers)",
-      "screenshot": "qa-artifacts/walk-A/c-anon-category.10-390.png"
-    },
-    "c-anon-category.11": {
-      "result": "pass",
-      "evidence": "Help Desk card at 390: 328px wide, scrollWidth 326, description wraps inside the card. (Reign only; BuddyX and Twenty Twenty-Five not walked, switching the shared site theme would disturb the other walkers)"
-    },
-    "c-anon-category.12": {
-      "result": "pass",
-      "evidence": "Dark mode on Product & Engineering: Forum/Q&A badges render light-blue text (0.76,0.85,0.96) on a dark chip (0.23,0.26,0.31), legible.",
-      "screenshot": "qa-artifacts/walk-A/c-anon-category.12-dark.png"
-    },
-    "c-anon-category.13": {
-      "result": "pass",
-      "evidence": "Product & Engineering: bob (admin of Partner Program) sees the card marked \"Admin\"; hana (non-member) sees \"Approval required\" (the card itself carries no Request to join button; the request form is on the space page, see b1.5).",
-      "screenshot": "qa-artifacts/walk-A/c-anon-category.13-bob.png"
-    },
-    "c-anon-category.14": {
-      "result": "pass",
-      "evidence": "maya sees Moderators' Room in Help & Support with a Hidden badge and Moderator role; bob/test_moderator get 404 \"Category not found.\" for /category/staff/ while maya (member of Release Planning) gets 200 listing it."
-    },
-    "c-anon-category.15": {
-      "result": "pass",
-      "evidence": "bob (a member of Partner Program as admin) sees a role marker \"Admin\" in place of \"Approval required\"; a plain-member marker was not separately walked."
-    }
-  },
-  "proposed_checks": []
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
+  }
 }

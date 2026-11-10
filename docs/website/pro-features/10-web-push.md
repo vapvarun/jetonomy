@@ -6,7 +6,7 @@ Reach members with browser push notifications - even when they have closed your 
 
 ## What You Will Learn
 
-- How to generate VAPID keys and enable Web Push
+- How to turn on Web Push
 - How members subscribe to push notifications
 - Which events trigger a push notification
 - Which browsers are supported
@@ -17,14 +17,10 @@ Email notifications have open rates around 20-30%. Browser push notifications ha
 
 ## Enabling Web Push
 
-Web Push requires a VAPID key pair to authenticate your server with browsers.
+1. Go to **Jetonomy → Extensions** and switch **Web Push Notifications** on. That toggle is the only switch: members see the opt-in straight away.
+2. Optional: open **Jetonomy → Settings → Web Push** to set the notification title and icon, then click **Save Web Push Settings**.
 
-1. Go to **Jetonomy → Settings → Web Push**.
-2. Click **Generate VAPID Keys**. Jetonomy creates a public/private key pair and stores them in your WordPress options table.
-3. Toggle **Enable Web Push** to on.
-4. Click **Save**.
-
-> **Important:** VAPID keys are generated once. If you regenerate them, all existing push subscriptions are invalidated and members must subscribe again. Only regenerate if you believe your private key has been compromised.
+Web Push authenticates your server with browsers using a VAPID key pair. Jetonomy creates it automatically the first time the extension runs and shows the public key on the Web Push tab. There is nothing to generate. If it reports that the key could not be generated, your server needs OpenSSL with EC support.
 
 ![Web Push settings page with VAPID key fields and enable toggle](../images/pro-web-push.webp)
 ## Service Worker Registration
@@ -43,7 +39,7 @@ Looking for push on a native iOS or Android app instead of the browser? The same
 
 ## Member Subscription
 
-The first time a logged-in member visits any community page after you enable Web Push, a **Enable push notifications** prompt appears at the top of the page. Clicking **Enable** triggers the browser's native permission dialog.
+After you enable Web Push, logged-in members see an **Enable push notifications** prompt inside the notifications bell panel and at the top of their Notifications page. Clicking **Enable** triggers the browser's native permission dialog. **Not now** hides the prompt in that browser for 30 days. If the browser refuses permission, the prompt says notifications are blocked in the browser's settings. Members who have already blocked notifications for the site don't see the prompt.
 
 Members who grant permission are subscribed automatically. Their subscription is stored in the Jetonomy database and associated with their account.
 

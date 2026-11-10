@@ -122,6 +122,25 @@ class ProHiddenTargetTest extends WP_UnitTestCase {
 		$this->assertSame( $missing->get_data()['message'], $hidden->get_data()['message'] );
 	}
 
+	/** The walk's case: custom_fields sent on the topic PATCH itself, not the /fields route. */
+	public function test_topic_patch_with_custom_fields_on_unreadable_post_reads_like_missing(): void {
+		$body    = array( 'custom_fields' => array( 'x' => 'y' ) );
+		$hidden  = $this->dispatch( 'PATCH', "/jetonomy/v1/posts/{$this->private_post_id}", $body, $this->outsider_id, true );
+		$missing = $this->dispatch( 'PATCH', '/jetonomy/v1/posts/999999', $body, $this->outsider_id, true );
+
+		$this->assertSame( 404, $hidden->get_status() );
+		$this->assertSame( $missing->get_data()['code'], $hidden->get_data()['code'] );
+		$this->assertSame( $missing->get_data()['message'], $hidden->get_data()['message'] );
+	}
+
+	/** A member of the private space can read the topic, so a refused edit is an honest 403. */
+	public function test_topic_patch_by_member_who_can_read_but_not_edit_is_403(): void {
+		$member = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		SpaceMember::add( (int) Post::find( $this->private_post_id )->space_id, $member, 'member' );
+		$res = $this->dispatch( 'PATCH', "/jetonomy/v1/posts/{$this->private_post_id}", array( 'custom_fields' => array( 'x' => 'y' ) ), $member, true );
+		$this->assertSame( 403, $res->get_status() );
+	}
+
 	/** @covers-existing Readable but not editable keeps the 403. */
 	public function test_update_fields_on_readable_post_of_another_member_is_403(): void {
 		$res = $this->dispatch( 'PATCH', "/jetonomy/v1/posts/{$this->public_post_id}/fields", array( 'x' => 'y' ), $this->outsider_id, true );

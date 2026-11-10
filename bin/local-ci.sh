@@ -7,7 +7,7 @@
 #
 # Usage:
 #   bin/local-ci.sh                    # default: stan + cs + unit tests (fast, ~30s after wp-env warm)
-#   bin/local-ci.sh --combo            # add free+pro integration suite (slower, ~5 min)
+#   bin/local-ci.sh --no-combo         # skip the free+pro integration suite (on by default when ../jetonomy-pro exists)
 #   bin/local-ci.sh --no-stan          # skip phpstan (it's the slowest)
 #   bin/local-ci.sh --bootstrap        # one-time: composer install + npm install + wp-env start
 #   bin/local-ci.sh --browser          # add Playwright smoke (requires MCP playwright)
@@ -17,7 +17,7 @@
 #   2. PHPStan free + pro (level 5/6, baselines honoured)
 #   3. WPCS free + pro (staged or full)
 #   4. PHPUnit unit suite (must be 100% green)
-#   5. PHPUnit combo (free+pro) — flagged but not blocking until rot is cleared
+#   5. PHPUnit combo (free+pro) — on by default; it went unrun and red from 2.0.5 to 2.0.7 while opt-in
 #   6. (optional) Playwright browser smoke
 #
 # Why not just run composer test? composer test runs PHPUnit only. This wraps
@@ -35,12 +35,13 @@ cd "$ROOT"
 DO_STAN=1
 DO_CS=1
 DO_UNIT=1
-DO_COMBO=0
+DO_COMBO=$([ -n "$PRO" ] && echo 1 || echo 0)
 DO_BOOTSTRAP=0
 DO_BROWSER=0
 for arg in "$@"; do
     case "$arg" in
         --combo)     DO_COMBO=1 ;;
+        --no-combo)  DO_COMBO=0 ;;
         --no-stan)   DO_STAN=0 ;;
         --no-cs)     DO_CS=0 ;;
         --no-unit)   DO_UNIT=0 ;;
@@ -86,9 +87,16 @@ fi
 step "Pre-flight"
 if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q tests-cli && ! curl -sSf -o /dev/null http://localhost:8889; then
     warn "wp-env tests environment not reachable; starting it"
-    npx wp-env start 2>&1 | tail -3 || { fail "wp-env start failed"; exit 1; }
+    if ! npx wp-env start >/dev/null 2>&1; then
+        # Everything else still runs; the summary stays red so nobody reads
+        # a run without PHPUnit as a pass.
+        fail "wp-env start failed (offline or Docker down): PHPUnit NOT RUN, every other gate continues"
+        DO_UNIT=0
+        DO_COMBO=0
+        FAILED_GATES+=("phpunit-not-run: wp-env unavailable")
+    fi
 fi
-ok "wp-env reachable"
+[ "$DO_UNIT" -eq 1 ] && ok "wp-env reachable"
 
 # Helper: returns 0 if PHPStan reported zero errors. Robust against the
 # "PHPStan 2.x available" promo text that appends after the result block.
@@ -223,6 +231,13 @@ fi
 
 step "Journey depth: every journey has a checklist, every stamp a complete walk (report; blocks at release)"
 bash bin/test-check-journey-depth.sh >/dev/null 2>&1 || { fail "bin/check-journey-depth.php no longer fails when its rules are broken: bash bin/test-check-journey-depth.sh"; FAILED_GATES+=("journey-depth-selftest"); }
+bash bin/test-check-runbook-fresh.sh >/dev/null 2>&1 || { fail "bin/check-runbook-fresh.php no longer behaves: bash bin/test-check-runbook-fresh.sh"; FAILED_GATES+=("runbook-fresh-selftest"); }
+# Structure (ids, roles, refusals, escapes) blocks now; only walk records wait for release.
+if ! php bin/check-journey-depth.php --structure >/dev/null 2>&1; then
+    php bin/check-journey-depth.php --structure 2>/dev/null | tail -6
+    fail "runbook structure is broken"
+    FAILED_GATES+=("journey-structure")
+fi
 if php bin/check-journey-depth.php >/dev/null 2>&1; then
     ok "every journey has checks and every stamp is backed by a walk record"
 else
@@ -280,7 +295,13 @@ if [ "$DO_COMBO" -eq 1 ]; then
     COMBO=$(echo "$COMBO_OUT" | grep -E "^Tests: " | tail -1)
     # PHPUnit elides "Failures:" from the summary line when failures = 0, so
     # the presence of "FAILURES!" in the output is the canonical fail marker.
-    if echo "$COMBO_OUT" | grep -q "^FAILURES!"; then
+    if [ -z "$COMBO" ]; then
+        # No "Tests:" line means the run never finished (killed, OOM, boot
+        # fatal). That is a failure, never a pass with nothing to show.
+        FAILED_GATES+=("phpunit-combo: no result line (run did not finish)")
+        fail "PHPUnit combo did not finish"
+        echo "$COMBO_OUT" | tail -5
+    elif echo "$COMBO_OUT" | grep -q "^FAILURES!"; then
         FAIL_LINE=$(echo "$COMBO" | grep -oE 'Failures: [0-9]+')
         FAILED_GATES+=("phpunit-combo: ${FAIL_LINE:-failures detected}")
         warn "PHPUnit combo failed — $COMBO"
@@ -325,6 +346,45 @@ if [ "$DO_BROWSER" -eq 1 ]; then
 fi
 
 # --- Summary -----------------------------------------------------------
+# The live suites against the site this checkout sits in. They need a
+# seeded site, which a Local install already is; CI runs them on a fresh one.
+SITE="$(cd "$ROOT/../../.." && pwd)"
+if command -v wp >/dev/null 2>&1 && [ -f "$SITE/wp-load.php" ] && wp core is-installed --path="$SITE" >/dev/null 2>&1; then
+    if [ -f "$SITE/.maintenance" ]; then
+        warn "$SITE/.maintenance exists: the site answers 503 and loopback checks fail; remove it if no update is running"
+    fi
+    step "Live action checks (wp jetonomy qa-actions)"
+    if QA_OUT=$(wp jetonomy qa-actions --path="$SITE" 2>&1); then
+        ok "$(echo "$QA_OUT" | tail -1)"
+    else
+        echo "$QA_OUT" | grep -E "FAIL" | head -10
+        fail "qa-actions has failures"
+        FAILED_GATES+=("qa-actions")
+    fi
+    step "Discovery checks (wp jetonomy qa)"
+    if QA_OUT=$(wp jetonomy qa --path="$SITE" 2>&1); then
+        ok "$(echo "$QA_OUT" | grep TOTAL)"
+    else
+        echo "$QA_OUT" | grep -E "FAIL" | head -10
+        fail "wp jetonomy qa has failures"
+        FAILED_GATES+=("jetonomy-qa")
+    fi
+else
+    warn "NOT RUN: live suites need wp-cli and the WordPress site this plugin sits in ($SITE)"
+fi
+
+CORE_FIRST="$HOME/.claude/skills/wp-plugin-development/scripts/core-first-check.php"
+if [ -f "$CORE_FIRST" ]; then
+    step "Core-first (free + pro)"
+    if php "$CORE_FIRST" "$ROOT" >/dev/null && { [ -z "$PRO" ] || php "$CORE_FIRST" "$PRO" >/dev/null; }; then
+        ok "core-first clean (allowlist: .core-first-allow)"
+    else
+        php "$CORE_FIRST" "$ROOT" | grep CF; [ -n "$PRO" ] && php "$CORE_FIRST" "$PRO" | grep CF
+        fail "core-first findings"
+        FAILED_GATES+=("core-first")
+    fi
+fi
+
 step "Summary"
 if [ ${#FAILED_GATES[@]} -eq 0 ]; then
     ok "All blocking gates passed. Safe to push."

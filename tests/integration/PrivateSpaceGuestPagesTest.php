@@ -88,4 +88,26 @@ class PrivateSpaceGuestPagesTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'Partner Program is private.', $html );
 		$this->assertStringContainsString( 'Where agency partners plan launches.', $html );
 	}
+
+	/**
+	 * The members and roadmap gates read Space::gate_name() like the space gate:
+	 * neither the breadcrumb nor the "Go to" button names a withheld space.
+	 *
+	 * @dataProvider gated_subpages
+	 */
+	public function test_a_guest_subpage_gate_withholds_the_name( string $view ): void {
+		$html = $this->render( $view, $this->space->slug );
+
+		$this->assertSame( 403, http_response_code() );
+		$this->assertStringContainsString( 'Private space', $html );
+		$this->assertStringNotContainsString( 'Partner Program', $html );
+		$this->assertSame( 'Private space', Space::gate_name( $this->space, 0 ) );
+	}
+
+	public static function gated_subpages(): array {
+		return array(
+			'members' => array( 'space-members' ),
+			'roadmap' => array( 'space-roadmap' ),
+		);
+	}
 }

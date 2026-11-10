@@ -16,8 +16,8 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Integrations\Companion_Registry;
 
-$jt_companions  = Companion_Registry::all();
-$jt_logo_base   = JETONOMY_URL . 'assets/img/companions/';
+$jt_companions = Companion_Registry::all();
+$jt_logo_base  = JETONOMY_URL . 'assets/img/companions/';
 
 // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only redirect-back status flags, no state change.
 $jt_install_state = isset( $_GET['jt_install'] ) ? sanitize_key( wp_unslash( $_GET['jt_install'] ) ) : '';
@@ -101,12 +101,8 @@ $jt_install_msg   = isset( $_GET['jt_msg'] ) ? sanitize_text_field( wp_unslash( 
 			<?php endif; ?>
 
 			<div class="jt-companion-card__actions">
-				<?php if ( 'active' === $jt_status ) : ?>
-					<span class="button jt-companion-btn--connected" aria-disabled="true">
-						<span class="dashicons dashicons-yes" aria-hidden="true"></span>
-						<?php esc_html_e( 'Connected', 'jetonomy' ); ?>
-					</span>
-				<?php elseif ( current_user_can( 'install_plugins' ) ) : ?>
+				<?php // A connected product has nothing to do here: the Connected badge above says so. ?>
+				<?php if ( 'active' !== $jt_status && current_user_can( 'install_plugins' ) ) : ?>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 						<input type="hidden" name="action" value="jetonomy_install_companion">
 						<input type="hidden" name="companion" value="<?php echo esc_attr( $jt_slug ); ?>">

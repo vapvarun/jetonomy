@@ -31,6 +31,8 @@
 			// %1$s stays a literal %s, filled with the space name at click time.
 			purgeTypeToConfirm:   sprintf( /* translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase. */ __( 'This destroys every %2$s, %3$s and attachment in %1$s, including content written by other %4$s. It cannot be undone. Type the %5$s name to confirm.', 'jetonomy' ), '%s', TOPIC, REPLY, MEMBERS, SPACE ),
 			purgeConfirmLabel:    __( 'Delete permanently', 'jetonomy' ),
+			// %1$s stays a literal %s, filled with the category name at click time.
+			confirmDeleteCategory: sprintf( /* translators: 1: the category name. 2: category label, lowercase. */ __( 'Delete the %2$s "%1$s"? This cannot be undone.', 'jetonomy' ), '%s', lbl( 'category', 'one_lower', 'category' ) ),
 			confirmSpam:          __( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
 			confirmTrash:         __( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
 			saving:               __( 'Saving…', 'jetonomy' ),
@@ -80,6 +82,12 @@
 			// Access-rule composer preview: the sentence and its "who matches" notes.
 			rulePreview: {
 				whoFallback: __( 'People who match this rule', 'jetonomy' ),
+				chooseType:  __( 'Choose who this rule lets in. Nothing changes until you add the rule.', 'jetonomy' ),
+				/* translators: 1: who the rule matches (e.g. "Everyone"), 2: space label, lowercase. */
+				confirmOpen: __( '%1$s will be let in to this private %2$s and can take part right away. Continue?', 'jetonomy' ),
+				confirmOpenLabel: __( 'Add rule', 'jetonomy' ),
+				/* translators: %s: the rule in plain words, e.g. "Everyone can read, post, reply, vote and report." */
+				added:       __( 'Rule added: %s', 'jetonomy' ),
 				/* translators: 1: who the rule matches, 2: what they may do, 3: the space role they are recorded as. */
 				sentence: __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
 				// A rule admits; it does not restrict, so no "but not take part".
@@ -87,11 +95,11 @@
 					/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
 					read:        sprintf( __( 'read and report posts and %s', 'jetonomy' ), REPLIES ),
 					participate: __( 'read, post, reply, vote and report', 'jetonomy' ), // jt-terms-ok: "reply" is the verb here, not the noun.
-					full:        sprintf( /* translators: %s: topic label, plural lowercase (e.g. "topics"). */ __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s %s', 'jetonomy' ), TOPICS ), // jt-terms-ok: "reply" is the verb; the noun is the placeholder.
 				},
 				// The consequence of each rule type, not its definition.
 				typeNotes: {
-					everyone:    __( 'Matches every visitor, signed in or not. Nobody is asked to log in first.', 'jetonomy' ),
+					/* translators: %s: space label, singular lowercase (e.g. "space"). */
+					everyone:    sprintf( __( 'Matches everyone. A visitor who is not signed in is still asked to log in first, so on a Private %s this works like Logged In.', 'jetonomy' ), SPACE ),
 					logged_in:   __( 'Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.', 'jetonomy' ),
 					/* translators: %s: member label, plural lowercase (e.g. "members"). */
 					role:        sprintf( __( 'Matches anyone holding this WordPress role. Most %s hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ), MEMBERS ),
@@ -119,6 +127,7 @@
 
 		init: function() {
 			this.showPendingToast();
+			this.revealActiveTab();
 			this.bindDashboard();
 			this.bindCategoryActions();
 			this.bindSpaceActions();
@@ -316,6 +325,18 @@
 		//  Dashboard
 		// ═══════════════════════════════════════════════════════════
 
+		// Tab rows scroll sideways on phones; bring the current tab into view
+		// so it is never the one hidden off the edge.
+		revealActiveTab: function() {
+			$('.jetonomy-admin .nav-tab-wrapper').each(function() {
+				var active = this.querySelector('.nav-tab-active');
+				if (active && this.scrollWidth > this.clientWidth) {
+					var a = active.getBoundingClientRect(), w = this.getBoundingClientRect();
+					this.scrollLeft += a.left - w.left - (w.width - a.width) / 2;
+				}
+			});
+		},
+
 		bindDashboard: function() {
 			var self = this;
 
@@ -453,8 +474,10 @@
 				e.preventDefault();
 				var $row = $(this).closest('tr');
 				var id = $row.data('id');
+				var name = $(this).data('name');
+				var msg = name ? self.i18n.confirmDeleteCategory.replace('%s', name) : self.i18n.confirmDelete;
 
-				self.confirmAsync(self.i18n.confirmDelete, { danger: true }).then(function(ok) {
+				self.confirmAsync(msg, { danger: true }).then(function(ok) {
 					if (!ok) return;
 					self.ajax('jetonomy_delete_category', { id: id }).done(function(res) {
 						if (res.success) {
@@ -639,7 +662,8 @@
 					join_policy: $('#space-join-policy').val(),
 					status: $('#space-status').val(),
 					icon: ($('input[name="icon"]:checked').val() || ''),
-					cover_image: $('#space-cover-image').val()
+					cover_image: $('#space-cover-image').val(),
+					custom_fields: window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields($form[0]) : {}
 				}).done(function(res) {
 					if (res.success) {
 						self.reloadWithToast(res.data.message, 'admin.php?page=jetonomy-spaces&action=edit&space_id=' + res.data.id);
@@ -677,7 +701,8 @@
 					status: $('#space-status').val(),
 					sort_order: $('#space-sort-order').val(),
 					icon: ($('input[name="icon"]:checked').val() || ''),
-					cover_image: $('#space-cover-image').val()
+					cover_image: $('#space-cover-image').val(),
+					custom_fields: window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields($form[0]) : {}
 				}).done(function(res) {
 					if (res.success) {
 						// The form stays open, so its next save is checked against what was just saved.
@@ -988,7 +1013,7 @@
 				// Inject adapter-specific options into the rule type dropdown.
 				for (var i = 0; i < adapters.length; i++) {
 					var a = adapters[i];
-					adapterMap[a.id] = a.levels;
+					adapterMap[a.id] = a;
 					$ruleType.append('<option value="membership:' + a.id + '">' + a.label + '</option>');
 				}
 
@@ -997,12 +1022,18 @@
 				var $hidden = $('#rule-value-membership');
 				var $results = $('#rule-value-membership-results');
 				var activeLevels = [];
+				var activeAdapter = null;
+				var searchTimer = null;
+				var searchSeq = 0;
 
-				function renderResults(query) {
+				// remote: rows the server returned for a typed search (adapters whose
+				// preload is capped), so levels past the cap stay selectable.
+				function renderResults(query, remote) {
 					$results.empty();
-					if (!query || query.length < 1) { $results.hide(); return; }
-					var q = query.toLowerCase();
-					var matches = activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; });
+					// An empty query lists the first levels, so an owner can
+					// see what is on offer before knowing what to type.
+					var q = (query || '').toLowerCase();
+					var matches = (q && !remote) ? activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; }) : (remote || activeLevels);
 
 					if (!matches.length) {
 						$results.append($('<div class="jetonomy-ac-empty"/>').text(__('No matches', 'jetonomy')));
@@ -1072,6 +1103,29 @@
 
 				$input.on('input', function() {
 					$hidden.val('');
+					var q = $(this).val();
+					clearTimeout(searchTimer);
+					// Filter the preload at once; a searchable adapter then swaps in
+					// the server's answer, which also covers levels past the cap.
+					renderResults(q);
+					var seq = ++searchSeq;
+					if (!q || !activeAdapter || !activeAdapter.searchable) {
+						return;
+					}
+					searchTimer = setTimeout(function() {
+						self.ajax('jetonomy_search_membership_levels', { adapter: activeAdapter.id, q: q }).done(function(res) {
+							// Drop answers to an older keystroke.
+							if (seq === searchSeq && res && res.success) {
+								renderResults(q, res.data || []);
+							}
+						}).fail(function() {
+							if (seq === searchSeq) {
+								renderResults(q);
+							}
+						});
+					}, 250);
+				});
+				$input.on('focus click', function() {
 					renderResults($(this).val());
 				});
 
@@ -1098,7 +1152,7 @@
 					// AccessRule ignores rule_value for both, and the handler
 					// stores null. Showing a value box for them invited an
 					// owner to type something that was silently discarded.
-					var takesValue = !isAdapter && val !== 'everyone' && val !== 'logged_in';
+					var takesValue = '' !== val && !isAdapter && val !== 'everyone' && val !== 'logged_in';
 
 					$('#rule-value').toggle(takesValue).val('');
 					if (takesValue) {
@@ -1112,7 +1166,8 @@
 
 					if (isAdapter) {
 						var adapterId = val.replace('membership:', '');
-						activeLevels = adapterMap[adapterId] || [];
+						activeAdapter = adapterMap[adapterId] || null;
+						activeLevels = activeAdapter ? activeAdapter.levels : [];
 						$input.attr('placeholder', adapters.filter(function(a) { return a.id === adapterId; })[0].label + '...');
 					}
 					renderRulePreview();
@@ -1134,17 +1189,23 @@
 					if (!$out.length) { return; }
 
 					var i18n     = (self.i18n && self.i18n.rulePreview) || {};
+					var ruleTypeId = $('#rule-type').val();
+					syncAddButton();
+					if (!ruleTypeId) {
+						$out.text(i18n.chooseType || '');
+						return;
+					}
 					var typeSel  = $('#rule-type option:selected').text();
 					var grants   = $('#rule-grants').val();
-					var role     = $('#rule-space-role').val();
-					// Roster role is derived now, so its label comes from the
-					// dictionary rather than a select the owner can see.
+					// Roster role is derived from the grant (AccessRule::role_for_grants()).
+					var role     = 'read' === grants ? 'viewer' : 'member';
 					var roleTxt  = (i18n.roles && i18n.roles[role]) || role;
 					var grantTxt = (i18n.grants && i18n.grants[grants]) || grants;
 
 					var who = i18n.whoFallback;
 					var val = $('#rule-value').is(':visible') ? $('#rule-value').val() : $('#rule-value-membership-search').val();
-					if (val) { who = typeSel + ': ' + val; }
+					if ('everyone' === ruleTypeId || 'logged_in' === ruleTypeId) { who = typeSel; }
+					else if (val) { who = typeSel + ': ' + val; }
 
 					var sentence = (i18n.sentence)
 						.replace('%1$s', who)
@@ -1160,7 +1221,6 @@
 					// the generic membership note below rather than showing a
 					// built-in type's sentence.
 					var typeNotes  = i18n.typeNotes || {};
-					var ruleTypeId = $('#rule-type').val();
 					var note       = typeNotes[ruleTypeId] || '';
 					if (!note && ruleTypeId && ruleTypeId.indexOf('membership:') === 0 && i18n.membershipNote) {
 						var adapterId2 = ruleTypeId.replace('membership:', '');
@@ -1179,25 +1239,19 @@
 					}
 				}
 
-				// Roster role is derived, never chosen: read -> viewer,
-				// participate and full -> member (a rule never makes a
-				// moderator). Matches AccessRule::cap_space_role() on the
-				// server, which is the authority - this only keeps the hidden
-				// field and the preview honest.
-				function syncDerivedRole() {
-					var map = { read: 'viewer', participate: 'member', full: 'member' };
-					$('#rule-space-role').val(map[$('#rule-grants').val()] || 'viewer');
+				// Add Rule stays off until the rule says who it is for.
+				function syncAddButton() {
+					var type  = $('#rule-type').val() || '';
+					var ready = 'everyone' === type || 'logged_in' === type ||
+						(0 === type.indexOf('membership:') ? '' !== $('#rule-value-membership').val() : '' !== type && '' !== $.trim($('#rule-value').val()));
+					$('#jetonomy-add-rule').prop('disabled', !ready);
 				}
 
-				$(document).on('change', '#rule-grants', syncDerivedRole);
-				syncDerivedRole();
-
-				$(document).on('change', '#rule-grants, #rule-space-role', renderRulePreview);
+				$(document).on('change', '#rule-grants', renderRulePreview);
 				$(document).on('input', '#rule-value, #rule-value-membership-search', renderRulePreview);
 				// Apply the type rules to whatever is selected on load, not just
-				// on the first change. The form opens on 'Everyone', which takes
-				// no value, so without this the owner is shown an empty value box
-				// for a rule that ignores it.
+				// on the first change: the form opens on the "Choose" prompt,
+				// which takes no value box and keeps Add Rule off.
 				$ruleType.trigger('change');
 				renderRulePreview();
 			})();
@@ -1210,26 +1264,38 @@
 				var isAdapter = ruleTypeVal.indexOf('membership:') === 0;
 				var ruleType = isAdapter ? 'membership' : ruleTypeVal;
 				var ruleValue = isAdapter ? $('#rule-value-membership').val() : $('#rule-value').val();
+				var i18n      = (self.i18n && self.i18n.rulePreview) || {};
+				// The rule in plain words, as the preview showed it.
+				var summary   = $.trim($('[data-jt-rule-preview] > span').first().text());
+				var opensAll  = ('everyone' === ruleType || 'logged_in' === ruleType) && '1' === String($btn.data('private'));
+				var asked     = opensAll
+					? self.confirmAsync(
+						(i18n.confirmOpen || '').replace('%1$s', $('#rule-type option:selected').text()).replace('%2$s', SPACE),
+						{ confirmLabel: i18n.confirmOpenLabel }
+					)
+					: Promise.resolve(true);
 
-				$btn.prop('disabled', true);
-
-				self.ajax('jetonomy_add_access_rule', {
-					space_id: spaceId,
-					rule_type: ruleType,
-					rule_value: ruleValue,
-					grants: $('#rule-grants').val(),
-					space_role: $('#rule-space-role').val(),
-					priority: $('#rule-priority').val()
-				}).done(function(res) {
-					if (res.success) {
-						self.reloadWithToast(res.data.message);
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
-					}
-				}).fail(function() {
-					self.toast(self.i18n.error, 'error');
-				}).always(function() {
-					$btn.prop('disabled', false);
+				asked.then(function(ok) {
+					if (!ok) { return; }
+					$btn.prop('disabled', true);
+					self.ajax('jetonomy_add_access_rule', {
+						space_id: spaceId,
+						rule_type: ruleType,
+						rule_value: ruleValue,
+						grants: $('#rule-grants').val(),
+						priority: $('#rule-priority').val()
+					}).done(function(res) {
+						if (res.success) {
+							// A space switched to Private gets the server's explanation instead.
+							self.reloadWithToast(res.data.made_private ? res.data.message : (i18n.added || '%s').replace('%s', summary));
+						} else {
+							self.toast(res.data || self.i18n.error, 'error');
+							$btn.prop('disabled', false);
+						}
+					}).fail(function() {
+						self.toast(self.i18n.error, 'error');
+						$btn.prop('disabled', false);
+					});
 				});
 			});
 
@@ -1257,6 +1323,30 @@
 					$btn.text(self.i18n.sync);
 				}).always(function() {
 					$btn.prop('disabled', false);
+				});
+			});
+
+			// Change what a rule grants. A refused change snaps the select back.
+			$(document).on('focus', '.jetonomy-rule-grants', function() {
+				$(this).data('saved', $(this).val());
+			});
+			$(document).on('change', '.jetonomy-rule-grants', function() {
+				var $select = $(this);
+				self.ajax('jetonomy_update_access_rule', {
+					id: $select.data('id'),
+					grants: $select.val()
+				}).done(function(res) {
+					if (res.success) {
+						$select.data('saved', $select.val());
+						$select.closest('tr').find('.jetonomy-rule-role').text(res.data.role);
+						self.toast(res.data.message);
+					} else {
+						$select.val($select.data('saved'));
+						self.toast(res.data || self.i18n.error, 'error');
+					}
+				}).fail(function() {
+					$select.val($select.data('saved'));
+					self.toast(self.i18n.error, 'error');
 				});
 			});
 
@@ -2155,6 +2245,12 @@
 		var opener = active.opener;
 		active = null;
 		document.removeEventListener( 'keydown', onKey, true );
+		// The observer runs after the caller's own code: when that code has
+		// already opened the next dialog (the "Badge awarded." alert), focus is
+		// in it and must stay there, or the message is never announced.
+		var now = document.activeElement;
+		var other = now && now.closest ? now.closest( '[aria-modal="true"]' ) : null;
+		if ( other && ! el.contains( other ) ) { return; }
 		if ( opener && opener.focus ) { opener.focus(); }
 	}
 

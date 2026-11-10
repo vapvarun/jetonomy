@@ -1,57 +1,63 @@
 {
- "journey": "F.rtl",
- "free": "dcdb0750",
- "pro": "404b0af",
- "walked_at": "2026-10-21T10:36:14Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440
-  ],
-  "schemes": [
-   "light"
-  ]
- },
- "checks": {
-  "f-rtl.1": {
-   "result": "pass",
-   "evidence": "Real ar locale (WPLANG=ar briefly set site-wide, restored): /community/, Help Desk space, a topic, /community/u/bob/ as bob at 1440 and 390: html dir=rtl lang=ar, body direction rtl, scrollWidth-clientWidth = 0 on all 8 loads, 0 page errors.",
-   "screenshot": "rtl-1440-uploadtest"
+  "journey": "F.rtl",
+  "free": "e0208e24",
+  "pro": "44fcc6e",
+  "walked_at": "2026-11-10T13:20:00Z",
+  "walker": "release 2.0.7 free walk wave 13 (Sonnet)",
+  "env": {
+    "mode": "free stack with Pro active (all 17 extensions)",
+    "site": "http://localhost:8912",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP (touch context hasTouch+isMobile for 390 tap targets)",
+    "locale": "ar (back to en_US)"
   },
-  "f-rtl.2": {
-   "result": "fail",
-   "evidence": "Omar Arabic topic at 1440 (bob): title, author row, avatar and vote/reaction column sit on the right, reply cards mirrored, body dir=auto. Not confirmed: the topic has no list/quote/code block, so bullets, quote border and LTR code block were NOT PERFORMED; pre/code elements on the page compute direction rtl, runbook expects LTR for code.",
-   "screenshot": "rtl-omar-topic"
+  "checks": {
+    "f-rtl.1": {
+      "result": "pass",
+      "evidence": "Site language ar, bob: /community/, /community/s/general-discussion/, Arabic topic, /community/u/bob/ at 1440 (html dir=rtl, body direction rtl, community wrapper rtl, scrollWidth 1440 = clientWidth) and at 390 touch (dir rtl, scrollWidth 390 = clientWidth on all four)."
+    },
+    "f-rtl.2": {
+      "result": "fail",
+      "evidence": "Arabic topic by Omar renders mirrored: author/avatar and vote column on the right, reply cards start at the right, quote border is on the right (border-right 3px, left 0), list bullets sit at the right (padding-inline-start 24px, outside markers). FAIL: the code block does not stay left-to-right. Posted a fixture reply with <pre><code>const a = 1;\\nfoo(a);</code></pre>: computed direction rtl, unicode-bidi isolate, text-align left, and the code renders as ';const a = 1' / ';foo(a)' (trailing semicolons jump to the start). No direction:ltr rule exists for .jt-post-body pre / .jt-reply-body pre in jetonomy-rtl.css. Product bug. Screenshot rtl-list-code.png. Fixture reply deleted."
+    },
+    "f-rtl.3": {
+      "result": "pass",
+      "evidence": "Direction glyphs carry .jt-icon--dir ([dir=rtl] transform scaleX(-1)): reply arrow computed matrix(-1,0,0,1) and visibly mirrored; tag page pagination 'Next' sits left of 'Page 1' with its chevron mirrored (matrix(-1...)). Breadcrumb separator is a plain '/' text (not a chevron) and Home is rightmost, correct reading order. Search glass (nav and header) transform none, no checkmarks or brand logos mirrored; numbers unmirrored. Back/prev arrows: none exist on the surfaces reachable here (space pagination is a 'Load More' button)."
+    },
+    "f-rtl.4": {
+      "result": "fail",
+      "evidence": "Composer toolbar follows RTL (Bold rightmost at x=1223, Emoji leftmost 985), editor dir=auto computed rtl, text-align start; a URL inside an Arabic sentence ('انظر الرابط https://example.com/path?q=1 ثم عد ... (مهم!)') renders without scrambled punctuation. FAIL: the @mention popup (.jt-mention-dropdown) shows the handle '.jt-mention-login' as 'alice@' instead of '@alice': the span has no dir/unicode-bidi isolation so the leading @ jumps to the end in the RTL list. Product bug (minor). Screenshot rtl-mention.png. Attachment chips not exercised (no upload)."
+    },
+    "f-rtl.5": {
+      "result": "pass",
+      "evidence": "RTL light and dark (body rgb(35,38,47)), 1440: Share menu right edge aligned to its trigger (818-1005 vs trigger 913-1005), notification panel 306-646 opens inward from the left-edge bell, More options menu 970-1190, all inside the viewport, dark menus use the dark surface (color(srgb 0.183 ...)). 390 touch: More menu 136-356, Share menu 8-195, notifications tab opens the /community/notifications/ page; scrollWidth stays 390. Dark mode toggle works the same in RTL (Reign toggle flips body bg and community surfaces)."
+    },
+    "f-rtl.6": {
+      "result": "pass",
+      "evidence": "390 touch, ar: Grace's profile h1 'Grace Oluwaseun Adeyemi-Whitfield' wraps in two lines inside 52-338 (h1 scrollWidth = clientWidth, docSW 390); the 163-char topic title wraps in six lines inside 48-342 with no overflow (docSW 390). Screenshots rtl-grace-390.png, rtl-longtitle-390.png."
+    },
+    "f-rtl.7": {
+      "result": "pass",
+      "evidence": "Vote column on the right of the post, reaction chips run from the right (1 rocket, 2 love), tag-page pagination Next/Page mirrored, poll option bars fill from the right (bar 247px at gapR 1 / gapL 496, 495px at gapR 1 / gapL 248; zero bar parked at the right edge), Messages pane: conversation list on the right (945-1265), thread on the left (175-945). Poll votes and counts restored afterwards. Screenshots rtl-poll.png, rtl-messages.png."
+    },
+    "f-rtl.8": {
+      "result": "pass",
+      "evidence": "admin, ar, 1440: Analytics, Badges, Settings, Dashboard all html dir=rtl, scrollWidth 1440, wrap 20-1258 right-aligned, no element outside the viewport, every table inside its container (cut=false), headings and fields right aligned. Screenshots rtl-admin-*.png. Minor: Analytics delta '+216.2%' renders '216.2%+' (LTR run not isolated)."
+    },
+    "f-rtl.9": {
+      "result": "pass",
+      "evidence": "ar, bob: New Topic Title (dir=auto), Tags, Content editor, reply editor all empty and computed direction rtl; same fields on the en_US page compute ltr. Saved Arabic topic body (Omar) direction rtl, text-align start, starts at the right edge."
+    }
   },
-  "f-rtl.3": {
-   "result": "fail",
-   "evidence": "No back/next/prev/reply-arrow icons with a mirroring transform exist on the walked pages (0 transformed SVGs); breadcrumb uses plain \"/\" separators so nothing mirrors. Pagination and back arrows NOT PERFORMED (no multi-page listing walked in RTL)."
-  },
-  "f-rtl.4": {
-   "result": "fail",
-   "evidence": "Composer: .jt-editor-body dir=auto, direction rtl, mixed Arabic + URL + @alice sentence typed and kept in order in the editor (text intact). NOT PERFORMED: toolbar mirroring measurement (no toolbar element found by selector), @mention popup (did not appear), attachment chips in RTL; untranslated English UI strings render with misplaced punctuation, e.g. empty state shows \"!No replies yet. Be the first to reply\".",
-   "screenshot": "rtl-composer"
-  },
-  "f-rtl.5": {
-   "result": "fail",
-   "evidence": "Share menu opened at 1440 in RTL but its panel could not be isolated by selector, so side and viewport containment were not measured; user menu / notification dropdowns and dark mirror in RTL NOT PERFORMED.",
-   "screenshot": "rtl-share"
-  },
-  "f-rtl.6": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: Grace long name and the 159-char topic title (topic 5872) were not opened in RTL at 390px."
-  },
-  "f-rtl.7": {
-   "result": "fail",
-   "evidence": "NOT PERFORMED: pagination, poll bars (polls not seeded in an RTL view) and Messages pane (dormant) not walked in RTL; vote buttons and reaction chips were seen on the right-side of the post in the Arabic topic screenshot but not measured per runbook."
-  },
-  "f-rtl.8": {
-   "result": "pass",
-   "evidence": "Admin with ar user locale: Jetonomy Settings, Spaces, Pro Analytics and Pro Badges pages all dir=rtl, no horizontal overflow, 0 tables clipped outside the viewport at 1440.",
-   "screenshot": "rtl-admin-adminphppagejetonomyp"
-  }
- }
+  "proposed_checks": []
 }

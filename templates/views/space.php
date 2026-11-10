@@ -55,6 +55,9 @@ $_jt_unmet_membership = $_jt_user_id
 	? \Jetonomy\Models\AccessRule::unmet_membership_requirements( $_jt_user_id, (int) $space->id )
 	: array();
 
+// Gate pages name the space in their breadcrumb unless its name is withheld.
+$_jt_gate_crumb = \Jetonomy\Models\Space::gate_name( $space, (int) $_jt_user_id );
+
 // A member banned from this space cannot read its topics (Permission_Engine
 // refuses every action there), so the space shows the ban, not a list of
 // topics that would each answer 404.
@@ -62,6 +65,7 @@ if ( $_jt_user_id && ! $_jt_is_admin && \Jetonomy\Models\Restriction::is_space_b
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		array(
+			'crumb'     => $_jt_gate_crumb,
 			'icon'      => 'lock',
 			'message'   => \Jetonomy\Permissions\Permission_Engine::restriction_error( $_jt_user_id, 'read', (int) $space->id )->get_error_message(),
 			/* translators: %s: plural space label the site owner configured (e.g. spaces). */
@@ -95,6 +99,7 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(
+				'crumb'           => $_jt_gate_crumb,
 				'icon'            => 'lock',
 				'message'         => $gate_message,
 				'description'     => $_jt_gate_about,
@@ -112,34 +117,61 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		// purpose: telling a would-be subscriber "you need an invitation"
 		// when the space is actually sold as part of a plan sends them to ask
 		// a human for something they could have bought in one click.
-		$_jt_tier_names = wp_list_pluck( $_jt_unmet_membership, 'label' );
-		$_jt_first_url  = '';
-		foreach ( $_jt_unmet_membership as $_jt_req ) {
-			if ( '' !== $_jt_req['url'] ) {
-				$_jt_first_url = $_jt_req['url'];
-				break;
-			}
+		// A trashed or unpublished course is no way in: name only what a visitor
+		// can still get, unless nothing is left (then the admin hint below applies).
+		$_jt_live = array_values( array_filter( $_jt_unmet_membership, static fn( $r ) => ! empty( $r['available'] ) ) );
+		if ( $_jt_live ) {
+			$_jt_unmet_membership = $_jt_live;
 		}
+		$_jt_none_left  = ! $_jt_live;
+		$_jt_tier_names = wp_list_pluck( $_jt_unmet_membership, 'label' );
+		// Every way in that can still be bought or joined gets its own button
+		// (the partial has room for two), not only the first course.
+		// A plan that no longer exists has no way in, even when its plugin can
+		// still build a checkout link from the id alone (PMPro, RCP).
+		$_jt_ways = $_jt_none_left ? array() : array_values( array_filter( $_jt_unmet_membership, static fn( $r ) => '' !== $r['url'] ) );
+		$_jt_one  = $_jt_unmet_membership[0];
+		if ( $_jt_none_left ) {
+			// No owner label in these sentences: a gendered language needs an
+			// article the label slot cannot carry ("diesen Kurs", "diese Gruppe").
+			$_jt_how = __( "You can't join here right now.", 'jetonomy' );
+		} elseif ( count( $_jt_unmet_membership ) > 1 ) {
+			$_jt_how = $_jt_ways
+				? __( 'Any one of them gives you access, from the moment you have it until it ends.', 'jetonomy' )
+				: __( 'Ask a site administrator how to get one of them.', 'jetonomy' );
+		} elseif ( ! empty( $_jt_one['purchase'] ) || '' === (string) $_jt_one['kind'] ) {
+			// One sentence for every paid plan, whatever the plugin calls it,
+			// and for any level with no kind to name.
+			$_jt_how = '' !== $_jt_one['url']
+				? __( 'Your access starts as soon as your membership is active, and ends if it lapses.', 'jetonomy' )
+				: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' );
+		} elseif ( '' === $_jt_one['url'] ) {
+			$_jt_how = __( 'Ask a site administrator to add you.', 'jetonomy' );
+		} else {
+			$_jt_how = __( 'You get access as soon as you join, and lose it if you leave.', 'jetonomy' );
+		}
+		// Two buttons carry their kind ("(Course)", "(Group)"): a course and a
+		// group can share a name, and two identical links help nobody.
+		$_jt_btn = static fn( array $way ): string => sprintf( /* translators: %s: plan, course or group name. */ __( 'Get %s', 'jetonomy' ), count( $_jt_ways ) > 1 ? $way['label'] : $way['name'] );
 
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(
-				'icon'        => 'lock',
-				'message'     => sprintf(
-					/* translators: 1: the singular space label (e.g. space, group), 2: comma-separated plan names. */
-					__( 'This %1$s is included with %2$s.', 'jetonomy' ),
-					\Jetonomy\space_label( false, true ),
+				'crumb'           => $_jt_gate_crumb,
+				'icon'            => 'lock',
+				// Nothing left to get: never name a plan that is gone (a deleted
+				// level has only its raw id, e.g. "pmpro_999").
+				'message'         => $_jt_none_left ? $_jt_how : sprintf(
+					/* translators: %s: comma-separated plan, course or group names. */
+					__( 'Included with %s.', 'jetonomy' ),
 					implode( ', ', $_jt_tier_names )
 				),
-				'description' => '' !== $_jt_first_url
-					? __( 'Your access starts as soon as the plan is active, and ends if it lapses.', 'jetonomy' )
-					: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' ),
-				'cta_label'   => '' !== $_jt_first_url
-					/* translators: %s: plan name. */
-					? sprintf( __( 'Get %s', 'jetonomy' ), (string) reset( $_jt_tier_names ) )
-					: '',
-				'cta_url'     => $_jt_first_url,
-				'tone'        => 'forbidden',
+				'description'     => $_jt_none_left ? '' : $_jt_how,
+				'cta_label'       => isset( $_jt_ways[0] ) ? $_jt_btn( $_jt_ways[0] ) : '',
+				'cta_url'         => $_jt_ways[0]['url'] ?? '',
+				'secondary_label' => isset( $_jt_ways[1] ) ? $_jt_btn( $_jt_ways[1] ) : '',
+				'secondary_url'   => $_jt_ways[1]['url'] ?? '',
+				'tone'            => 'forbidden',
 			)
 		);
 		return;
@@ -155,9 +187,12 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(
+				'crumb'       => $_jt_gate_crumb,
 				'icon'        => 'lock',
 				'message'     => $invite_message,
 				'description' => $_jt_is_hidden ? '' : $_jt_gate_about,
+				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+				'hint'        => sprintf( __( 'Ask a %s admin or a site administrator to invite you.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'tone'        => 'forbidden',
 			)
 		);
@@ -169,6 +204,7 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				array(
+					'crumb'       => $_jt_gate_crumb,
 					'icon'        => 'check-circle',
 					/* translators: %s: space title. */
 					'message'     => sprintf( __( 'Your request to join %s is awaiting approval.', 'jetonomy' ), $space->title ),
@@ -186,6 +222,7 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(
+				'crumb'       => $_jt_gate_crumb,
 				'icon'        => 'lock',
 				/* translators: %s: space title. */
 				'message'     => sprintf( __( '%s is private. Request to join and an admin will review it.', 'jetonomy' ), $space->title ),
@@ -336,7 +373,7 @@ $crumbs[] = array(
 						<?php foreach ( $jt_sub_spaces as $jt_sub ) : ?>
 							<li class="jt-subspaces__item">
 								<a class="jt-subspaces__link" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $jt_sub->slug ) ); ?>">
-									<?php jetonomy_render_space_icon( $jt_sub->icon ?? '', 20, 'jt-space-emoji' ); ?>
+									<?php jetonomy_render_space_icon( $jt_sub->icon ?? '', 16, 'jt-space-emoji', (string) ( $jt_sub->type ?? '' ) ); ?>
 									<span class="jt-subspaces__name"><?php echo esc_html( $jt_sub->title ); ?></span>
 									<span class="jt-subspaces__count">
 										<?php
@@ -412,7 +449,7 @@ $crumbs[] = array(
 					// Use the filled button so "Log in to post" has the same
 					// visual weight as the New Post action it stands in for.
 					?>
-					<a href="<?php echo esc_url( wp_login_url( $space_url ) ); ?>" class="jt-btn jt-btn-fill">
+					<a href="<?php echo esc_url( wp_login_url( $space_url ) ); ?>" class="jt-btn jt-btn-fill" data-jt-login>
 						<?php esc_html_e( 'Log in to post', 'jetonomy' ); ?>
 					</a>
 				<?php endif; ?>
@@ -427,7 +464,84 @@ $crumbs[] = array(
 				<p class="jt-notice jt-notice-warning"><?php echo esc_html( $_jt_restriction->get_error_message() ); ?></p>
 			<?php endif; ?>
 
-			<?php if ( empty( $posts ) ) : ?>
+			<?php
+			// Site-wide announcements (Pro, via jetonomy_post_list_results_for_space)
+			// are injected into $posts from other spaces. They render at the top, but
+			// they are not this space's topics: the empty state still shows below
+			// them when the space has none of its own. They get their own labelled group above the list, so they never
+			// read as this space's topics (whose count the header shows).
+			$_jt_post_groups = array(
+				'site' => array(),
+				'own'  => array(),
+			);
+			foreach ( $posts as $_jt_row ) {
+				$_jt_post_groups[ (int) ( $_jt_row->space_id ?? 0 ) === (int) $space->id ? 'own' : 'site' ][] = $_jt_row;
+			}
+			$_jt_has_own_posts = ! empty( $_jt_post_groups['own'] );
+			?>
+			<?php if ( ! empty( $posts ) ) : ?>
+				<?php
+				// One batch load for every card on the page (roles, profiles,
+				// tags, the viewer's votes and last-read ids).
+				$jt_read_map = \Jetonomy\prime_post_cards( $posts );
+				$jt_viewer   = get_current_user_id();
+				?>
+				<?php
+				// Feed spaces render the post body inline as a social-feed
+				// card; every other space type uses the topic-card list with
+				// title + excerpt + click-through.
+				$jt_card_partial = ( 'feed' === ( $space->type ?? '' ) ) ? 'feed-card' : 'post-card';
+				$jt_topics_class = ( 'feed' === ( $space->type ?? '' ) ) ? 'jt-topics jt-feed' : 'jt-topics';
+				?>
+				<?php foreach ( array_filter( $_jt_post_groups ) as $_jt_group => $_jt_group_posts ) : ?>
+					<?php if ( 'site' === $_jt_group ) : ?>
+					<section class="jt-site-announcements" aria-labelledby="jt-site-announcements-title">
+						<h2 class="jt-site-announcements__title" id="jt-site-announcements-title"><?php jetonomy_echo_icon( 'megaphone', 14 ); ?> <?php esc_html_e( 'Community announcements', 'jetonomy' ); ?></h2>
+					<?php endif; ?>
+				<div class="<?php echo esc_attr( $jt_topics_class . ( 'site' === $_jt_group ? ' jt-topics--site' : '' ) ); ?>">
+					<?php foreach ( $_jt_group_posts as $post ) : ?>
+						<?php
+						// Boolean signal: does the viewer have unread replies on
+						// this thread? An ID-arithmetic count would be misleading
+						// because reply IDs aren't contiguous per post — only the
+						// "newer than last_read" comparison is reliable.
+						$jt_has_unread = false;
+						if ( $jt_viewer > 0 ) {
+							$jt_last_reply = (int) ( $post->last_reply_id ?? 0 );
+							$jt_last_read  = $jt_read_map[ (int) $post->id ] ?? 0;
+							$jt_has_unread = $jt_last_reply > $jt_last_read && (int) $post->author_id !== $jt_viewer;
+						}
+						?>
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							$jt_card_partial,
+							array(
+								'post'       => $post,
+								'has_unread' => $jt_has_unread,
+							)
+						);
+						?>
+					<?php endforeach; ?>
+				</div>
+					<?php if ( 'site' === $_jt_group ) : ?>
+					</section>
+					<?php endif; ?>
+				<?php endforeach; ?>
+
+				<?php
+				// Load More appends to this space's own list, never the
+				// announcements group that sits above it on page one.
+				\Jetonomy\Template_Loader::partial(
+					'pagination',
+					array(
+						'has_more' => $_jt_has_more,
+						'target'   => '.jt-topics:not(.jt-topics--site)',
+					)
+				);
+				?>
+			<?php endif; ?>
+
+			<?php if ( ! $_jt_has_own_posts ) : ?>
 				<?php
 				// Empty copy + CTA speak the space's own language: a Q&A space
 				// invites a question, a feed invites an update, an ideas space
@@ -488,47 +602,6 @@ $crumbs[] = array(
 					)
 				);
 				?>
-			<?php else : ?>
-				<?php
-				// One batch load for every card on the page (roles, profiles,
-				// tags, the viewer's votes and last-read ids).
-				$jt_read_map = \Jetonomy\prime_post_cards( $posts );
-				$jt_viewer   = get_current_user_id();
-				?>
-				<?php
-				// Feed spaces render the post body inline as a social-feed
-				// card; every other space type uses the topic-card list with
-				// title + excerpt + click-through.
-				$jt_card_partial = ( 'feed' === ( $space->type ?? '' ) ) ? 'feed-card' : 'post-card';
-				$jt_topics_class = ( 'feed' === ( $space->type ?? '' ) ) ? 'jt-topics jt-feed' : 'jt-topics';
-				?>
-				<div class="<?php echo esc_attr( $jt_topics_class ); ?>">
-					<?php foreach ( $posts as $post ) : ?>
-						<?php
-						// Boolean signal: does the viewer have unread replies on
-						// this thread? An ID-arithmetic count would be misleading
-						// because reply IDs aren't contiguous per post — only the
-						// "newer than last_read" comparison is reliable.
-						$jt_has_unread = false;
-						if ( $jt_viewer > 0 ) {
-							$jt_last_reply = (int) ( $post->last_reply_id ?? 0 );
-							$jt_last_read  = $jt_read_map[ (int) $post->id ] ?? 0;
-							$jt_has_unread = $jt_last_reply > $jt_last_read && (int) $post->author_id !== $jt_viewer;
-						}
-						?>
-						<?php
-						\Jetonomy\Template_Loader::partial(
-							$jt_card_partial,
-							array(
-								'post'       => $post,
-								'has_unread' => $jt_has_unread,
-							)
-						);
-						?>
-					<?php endforeach; ?>
-				</div>
-
-				<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => $_jt_has_more ) ); ?>
 			<?php endif; ?>
 		</main>
 

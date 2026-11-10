@@ -48,11 +48,18 @@ if ( ! $cancel_url ) {
 <div class="jt-narrower">
 	<h1 class="jt-post-create-title"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></h1>
 
+	<?php // One long form; these jump to its sections (same look as the space tabs). ?>
+	<nav class="jt-space-tabs jt-space-tabs--wrap" aria-label="<?php esc_attr_e( 'Profile sections', 'jetonomy' ); ?>">
+		<a class="jt-space-tab" href="#profile-details"><?php esc_html_e( 'Profile', 'jetonomy' ); ?></a>
+		<a class="jt-space-tab" href="#notification-preferences"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></a>
+		<a class="jt-space-tab" href="#blocked-members"><?php esc_html_e( 'People you have blocked', 'jetonomy' ); ?></a>
+	</nav>
+
 	<form id="jt-edit-profile" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="actions.saveProfile"
 			data-wp-context="<?php echo esc_attr( (string) wp_json_encode( array( 'profileUrl' => $profile_url ) ) ); ?>">
-		<div class="jt-form-group">
+		<div class="jt-form-group" id="profile-details">
 			<label class="jt-label" for="jt-first-name"><?php esc_html_e( 'First Name', 'jetonomy' ); ?></label>
 			<input type="text" id="jt-first-name" name="first_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'first_name', true ) ); ?>">
 		</div>
@@ -136,7 +143,7 @@ if ( ! $cancel_url ) {
 			</div>
 
 			<dialog id="jt-avatar-crop" class="jt-crop-dialog" aria-labelledby="jt-crop-title">
-				<h3 id="jt-crop-title" class="jt-crop-dialog__title"><?php esc_html_e( 'Crop your photo', 'jetonomy' ); ?></h3>
+				<h2 id="jt-crop-title" class="jt-crop-dialog__title"><?php esc_html_e( 'Crop your photo', 'jetonomy' ); ?></h2>
 				<p class="jt-crop-dialog__hint"><?php esc_html_e( 'Drag to reposition. Use the slider to zoom.', 'jetonomy' ); ?></p>
 				<div class="jt-crop-viewport" id="jt-crop-viewport">
 					<img id="jt-crop-image" src="" alt="" draggable="false">
@@ -187,8 +194,8 @@ if ( ! $cancel_url ) {
 			<div class="jt-notif-prefs">
 				<div class="jt-notif-row jt-notif-header">
 					<span></span>
-					<span><?php esc_html_e( 'Web', 'jetonomy' ); ?></span>
-					<span><?php esc_html_e( 'Email', 'jetonomy' ); ?></span>
+					<span id="jt-np-col-web"><?php esc_html_e( 'Web', 'jetonomy' ); ?></span>
+					<span id="jt-np-col-email"><?php esc_html_e( 'Email', 'jetonomy' ); ?></span>
 				</div>
 				<?php
 				foreach ( $notif_types as $key => $label ) :
@@ -196,13 +203,14 @@ if ( ! $cancel_url ) {
 					$email_on = isset( $notif_prefs[ $key ]['email'] ) ? ! empty( $notif_prefs[ $key ]['email'] ) : \Jetonomy\Notifications\Notifier::default_email( $key, (array) $global_defs );
 					?>
 					<div class="jt-notif-row">
-						<span><?php echo esc_html( $label ); ?></span>
+						<span id="jt-np-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></span>
 						<label class="jt-toggle">
-							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][web]" value="1" <?php checked( $web_on ); ?>>
+							<?php // Named "<row>, Web" / "<row>, Email": the label holds only the slider. ?>
+							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][web]" value="1" aria-labelledby="jt-np-<?php echo esc_attr( $key ); ?> jt-np-col-web" <?php checked( $web_on ); ?>>
 							<span class="jt-toggle-slider"></span>
 						</label>
 						<label class="jt-toggle">
-							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][email]" value="1" <?php checked( $email_on ); ?>>
+							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][email]" value="1" aria-labelledby="jt-np-<?php echo esc_attr( $key ); ?> jt-np-col-email" <?php checked( $email_on ); ?>>
 							<span class="jt-toggle-slider"></span>
 						</label>
 					</div>
@@ -243,7 +251,7 @@ if ( ! $cancel_url ) {
 		?>
 		<div class="jt-form-group" id="blocked-members">
 			<label class="jt-label">
-				<?php /* translators: %s: plural member label. */ echo esc_html( sprintf( __( 'Blocked %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
+				<?php esc_html_e( 'People you have blocked', 'jetonomy' ); ?>
 			</label>
 			<?php if ( ! $jt_blocked_rows ) : ?>
 				<p class="jt-form-help"><?php esc_html_e( "You haven't blocked anyone.", 'jetonomy' ); ?></p>

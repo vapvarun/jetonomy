@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.import",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T11:44:01Z",
-  "walker": "lane B2",
+  "free": "11e21b47",
+  "walked_at": "2026-11-07T20:02:08Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
     "themes": [
       "reign"
@@ -13,106 +13,101 @@
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "mode": "free stack (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US + ar",
+    "method": "bbPress 2.6 installed from wordpress.org and seeded by script: 3 forums (1 private), 120 topics with 0-4 replies each, a closed topic, an Arabic topic+reply, a title stored as Q&amp;A; wpForo installed and seeded with 2 topics (1 unapproved)"
   },
   "checks": {
     "c-admin-import.1": {
       "result": "pass",
-      "evidence": "Import screen lists bbPress, wpForo and Asgaros, each 'Not detected' with a disabled Import button when no source data exists",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/import1.png",
-      "carried_forward": true
+      "evidence": "With data present the screen lists only the detected source ('bbPress Available - 3 FORUMS 122 TOPICS 241 REPLIES', or wpForo Available). With no source data and no history it shows 'No Forum Data Detected - Jetonomy can import from bbPress, wpForo, and Asgaros...' with bbPress, wpForo and Asgaros each 'Not detected' and their Import buttons disabled; screenshot import-empty.png."
     },
     "c-admin-import.2": {
       "result": "pass",
-      "evidence": "Tiny bbPress fixture (2 forums, 3 topics, 4 replies as wp_posts rows; real 120-topic forum not seeded): steps Forums, Members, Topics, Replies, Profiles, Finalize light up in order, bar 0% -> 15.4% -> 38.5% -> 100%, ends on 'Import complete!'",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/import3.png",
-      "carried_forward": true
+      "evidence": "bbPress with 3 forums / 122 topics / 241 replies: Import from bbPress -> the step strip Forums, Members, Topics, Replies, Profiles, Finalize highlights each step in turn (Forums done, Members active ... ), the bar fill moves 0.8% -> 33.6% -> 97.9% -> 100%, messages 'Adding members to private and group spaces...', 'Importing topics...', 'Importing replies...', 'Creating user profiles...', 'Recounting statistics...' and ends 'Import complete!' (captured per AJAX response; the run takes about 2 seconds)."
     },
     "c-admin-import.3": {
       "result": "pass",
-      "evidence": "After import: +1 category 'Imported from bbPress', +2 spaces, +3 topics, +4 replies = source 2/3/4; guest home shows 'QA-WALK-B bbPress Public Forum' with 2 topics at once (private forum hidden)",
-      "carried_forward": true
+      "evidence": "Source 3 forums / 122 topics / 241 replies -> Jetonomy category 'Imported from bbPress' with 3 spaces, 122 topics and 241 replies (SQL counts equal); logged-out home pulse moved to '396 topics' immediately after the import (no wait)."
     },
     "c-admin-import.4": {
       "result": "pass",
-      "evidence": "Guest opened the 2 public imported threads and the closed one: topics, replies (2 and 1) and authors (Bob Martinez, Omar Haddad) show, closed topic shows 'Closed' badge; source order not testable (fixtures share one timestamp)",
-      "carried_forward": true
+      "evidence": "Logged out: /community/s/product-support-lounge/ (120 topics, 20 per page), three imported threads open with their topic, replies and original authors (Alice Chen/Bob Martinez/Priya Nair/David Kim...), reply counts 4/3/2 match the source; topic 'How do I handle scenario 4...' (closed in bbPress) shows 'Closed' and no composer. Seeded source dates are identical, so date ordering could only be checked as equal."
     },
     "c-admin-import.5": {
       "result": "pass",
-      "evidence": "Re-import (Confirm): 'Last imported ... 0 records imported - 10 already imported, skipped'; category/space/topic/reply counts unchanged (1/2/3/4), import map 10",
-      "carried_forward": true
+      "evidence": "Re-Import (confirm dialog 'Re-import? Only content added since the last import is brought over; anything already imported is skipped.') -> 'Import complete!' with '367 items were already imported and were skipped', 0 imported; spaces/topics/replies counts unchanged (122/241)."
     },
     "c-admin-import.6": {
       "result": "pass",
-      "evidence": "Private bbPress forum arrived as private space with join_policy approval; its topic author and repliers (alice, bob) were added as members, admin as admin",
-      "carried_forward": true
+      "evidence": "The private bbPress forum 'Staff Planning Room' arrives as a private space (join policy approval); the member who posted there (alice) was added as a member and sees its topic; bob (non-member) sees 'Staff Planning Room is private. Request to join and an admin will review it.' with a Request to join button and no topics."
     },
     "c-admin-import.7": {
       "result": "pass",
-      "evidence": "bob POST jetonomy_import_batch (with an admin nonce, with none) -> 403 '-1'; guest -> 400 '0'; nothing imported",
-      "carried_forward": true
+      "evidence": "bob POST admin-ajax jetonomy_import_batch -> 403 '-1'."
     },
     "c-admin-import.8": {
       "result": "pass",
-      "evidence": "admin POST jetonomy_import_batch source=bogus with the right nonce -> {success:false,data:'Unknown import source.'}; import map and posts unchanged",
-      "carried_forward": true
+      "evidence": "admin POST jetonomy_import_batch with source=bogus and a valid nonce -> {success:false,data:'Unknown import source.'}; nothing written."
     },
     "c-admin-import.9": {
-      "result": "not_performed",
-      "evidence": "Needs a 2000-topic bbPress source; no source data set of that size exists on this site."
+      "result": "pass",
+      "evidence": "Seeded 2,000 bbPress topics (+750 replies) and ran Import from bbPress: 10 AJAX batches of 500, none longer than 448 ms (total about 4 s), the bar moves 0 -> 18.2% -> 36.3% -> 54.4% -> 72.5% -> 100% with no stall, ends 'Import complete!'; Jetonomy has 2000 topics and 750 replies in the new space and 0 topics whose reply_count differs from the real reply rows."
     },
     "c-admin-import.10": {
-      "result": "not_performed",
-      "evidence": "wpForo is not installed and no wpForo data exists to import."
+      "result": "pass",
+      "evidence": "Installed wpForo, seeded two topics (status 0 approved, status 1 held): the screen says '1 unapproved reply will be imported as Pending, not published.'; after Import from wpForo, 'Held question awaiting moderation' is wp_jt_posts.status pending (Awaiting approval) and 'Approved question about backups' is publish."
     },
     "c-admin-import.11": {
       "result": "pass",
-      "evidence": "Aborted the 3rd batch request mid-run: screen says 'Connection lost. You can resume this import later.'; after reload 'Import was interrupted at phase: members (offset: 0)' with a Resume Import button; resuming finished with 10 records and no duplicate category, space, topic or reply",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/import-resume.png",
-      "carried_forward": true
+      "evidence": "Aborted every phase=replies AJAX request (internetdisconnected) mid-run: the strip stalls at Replies active, 33.6%; after reload the screen says 'Import was interrupted at phase: topics (offset: 0). Started: ...'. Re-Import resumed and finished ('18 records imported - 368 already imported'): showcase gallery has 7 topics / 13 replies, no duplicate titles, import map 386."
     },
     "c-admin-import.12": {
       "result": "pass",
-      "evidence": "Import screen at 1440 and 390: scrollWidth equals clientWidth, source cards fill the width, buttons 40px tall",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/import-390.png",
-      "carried_forward": true
+      "evidence": "1440 and 390: idle and during a run the Import screen has scrollWidth = viewport; the Re-Import button is 40px tall; at 390 the step strip wraps onto two lines (Forums, Members, Topics / Replies, Profiles, Finalize) and the progress bar and message stay inside the card; screenshots import-390-run.png, import-1440-run.png."
     },
     "c-admin-import.13": {
       "result": "pass",
-      "evidence": "Arabic imported topic: guest page paragraph direction rtl with dir=auto on the post body",
-      "carried_forward": true
+      "evidence": "Arabic site language: the imported Arabic topic in Showcase Gallery renders with html dir=rtl, post paragraph direction rtl, text-align start, equal 24px gaps; screenshot import-arabic-rtl.png."
     },
     "c-admin-import.14": {
       "result": "pass",
-      "evidence": "No imported or existing space, category or topic title contains an entity such as &amp; or &#038; (fixture title 'Tips &amp; tricks' imported as 'Tips & tricks')",
-      "carried_forward": true
+      "evidence": "A bbPress topic stored as 'Tips for Q&amp;A and FAQ pages' imports as 'Tips for Q&A and FAQ pages'; no jt_spaces/jt_categories/jt_posts row has '&amp;' (0/0/0)."
     },
     "c-admin-import.15": {
       "result": "pass",
-      "evidence": "bbPress fixture (public forum, private forum, 2 topics, 1 reply as wp_posts rows) imported from Import screen: step list reads 'Forums -> Members -> Topics -> Replies -> Profiles -> Finalize' (Members before Topics), ends 'Import complete! 100%'; private forum became a private/approval space. Fixture, imported spaces, category and import map removed afterwards.",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B2/import-run.png"
+      "evidence": "During the run with the private forum the strip is Forums, Members, Topics, Replies, Profiles, Finalize and the Members step ('Adding members to private and group spaces...') is active between Forums and Topics."
     },
     "c-admin-import.16": {
       "result": "pass",
-      "evidence": "After re-import 'This source has been imported before (10 items)' = 'Last imported ... 10 already imported, skipped'",
-      "carried_forward": true
+      "evidence": "After re-imports the card says 'This source has been imported before (368 items)', the run result '368 already imported, skipped' and 'Last imported: November 7, 2026 7:54 pm - 0 records imported - 368 already imported, skipped' - all 368; after adding 6 topics later it showed '1 records imported - 367 already imported' consistent with the map."
     },
     "c-admin-import.17": {
       "result": "pass",
-      "evidence": "Imported Arabic topic body is dir=auto, resolves to rtl, text-align start (right-aligned) on the LTR site",
-      "carried_forward": true
+      "evidence": "On the LTR (en_US) site the imported Arabic topic body and reply have dir=auto (computed rtl, text-align start) and sit right-aligned in their block; screenshot import-arabic-ltr.png."
     },
     "c-admin-import.18": {
       "result": "pass",
-      "evidence": "Imported category slug is 'imported-bbpress' and its name 'Imported from bbPress' (no timestamp)",
-      "carried_forward": true
+      "evidence": "Category name 'Imported from bbPress', slug imported-bbpress (readable, no timestamp)."
     },
     "c-admin-import.19": {
       "result": "pass",
-      "evidence": "Space::delete of the imported spaces removes their topics and replies (0 posts, 0 replies left for them); one jt_import_map row for the category stayed until I cleared the map",
-      "carried_forward": true
+      "evidence": "`wp jetonomy space delete <id>` defaults to --mode=transfer (archives and keeps content); with --mode=purge --yes on the imported 'Product Support Lounge': removed 240 replies, 121 topics, 10 members, 10 activity rows and the space; 0 topics and 0 orphan replies remain; the wp-admin Delete permanently button (typed name) behaves the same."
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "pro": "05e4a11",
+  "runbook_fixes": [
+    {
+      "check": "c-admin-import.2",
+      "now": "the step list reads Forums, Members, Topics, Replies, Profiles, Finalize; the progress message goes Adding members to private and group spaces... / Importing topics... / Importing replies... / Creating user profiles... / Recounting statistics... / Import complete!"
+    },
+    {
+      "check": "c-admin-import.18",
+      "now": "the imported category is 'Imported from bbPress' with the readable slug imported-bbpress (no timestamp)"
+    }
+  ],
+  "proposed_checks": []
 }

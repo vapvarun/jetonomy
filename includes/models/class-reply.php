@@ -534,6 +534,29 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Whether accepting an answer on this topic would succeed for the viewer:
+	 * the topic author or anyone who can close posts in the space (the REST
+	 * gate in Replies_Controller::accept_reply()), not silenced or banned, in a
+	 * Q&A space (accept_as_answer()'s guards). One rule for the REST
+	 * viewer_can_accept flag and the Accept button, so neither offers an
+	 * accept that fails.
+	 *
+	 * @param int         $user_id Viewer.
+	 * @param object      $post    Topic row.
+	 * @param object|null $space   The topic's space when the caller has it.
+	 */
+	public static function viewer_can_accept( int $user_id, object $post, ?object $space = null ): bool {
+		if ( $user_id <= 0 ) {
+			return false;
+		}
+		$space = $space ?? Space::find( (int) $post->space_id );
+		return $space && 'qa' === ( $space->type ?? '' )
+			&& ( (int) $post->author_id === $user_id
+				|| \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'close_posts', (int) $post->space_id ) )
+			&& ! \Jetonomy\Permissions\Permission_Engine::restriction_error( $user_id, 'close_posts', (int) $post->space_id );
+	}
+
+	/**
 	 * Accept a reply as its post's answer - the one "accept" transaction.
 	 *
 	 * Writes both sides (reply is_accepted + post accepted_reply_id /
@@ -1419,6 +1442,8 @@ class Reply extends Model {
 		$posts_tbl   = \Jetonomy\table( 'posts' );
 		$spaces_tbl  = \Jetonomy\table( 'spaces' );
 
+		// The parent topic must be published too: trashing a topic leaves its
+		// replies 'publish', and they must not stay readable here.
 		// Space-visibility + per-post is_private gate on the PARENT post: a
 		// reply in a private/hidden space (or under a private post) must not
 		// surface to non-member / non-author viewers of this user's profile.
@@ -1453,7 +1478,7 @@ class Reply extends Model {
 				 FROM {$replies_tbl} r
 				 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-				 WHERE r.author_id = %d AND r.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
+				 WHERE r.author_id = %d AND r.status = 'publish' AND p.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
 				 ORDER BY r.created_at DESC, r.id DESC
 				 LIMIT %d OFFSET %d",
 				$user_id,

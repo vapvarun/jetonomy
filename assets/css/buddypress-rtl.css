@@ -110,7 +110,7 @@
 	color: var(--jt-text, #1e293b);
 	font-size: 0.9375rem;
 }
-.jt-bp-topics td a:hover { color: var(--jt-accent, #3b82f6); }
+.jt-bp-topics td a:hover { color: var(--jt-accent-strong, var(--jt-accent, #3b82f6)); }
 
 .jt-bp-topics td small {
 	display: block;
@@ -140,7 +140,7 @@
 .jt-bp-view-all a {
 	font-weight: 600;
 	text-decoration: none;
-	color: var(--jt-accent, #3b82f6);
+	color: var(--jt-accent-strong, var(--jt-accent, #3b82f6));
 }
 .jt-bp-view-all a:hover { text-decoration: underline; }
 
@@ -228,7 +228,7 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.jt-bp-recent a:hover { color: var(--jt-accent, #3b82f6); }
+.jt-bp-recent a:hover { color: var(--jt-accent-strong, var(--jt-accent, #3b82f6)); }
 .jt-bp-time {
 	color: var(--jt-text-tertiary, #94a3b8);
 	font-size: 0.8125rem;
@@ -256,7 +256,7 @@
 	color: var(--jt-text-secondary, #64748b);
 }
 .jt-bp-back-banner a:hover {
-	color: var(--jt-accent, #3b82f6);
+	color: var(--jt-accent-strong, var(--jt-accent, #3b82f6));
 }
 
 /* ── Profile Link ── */

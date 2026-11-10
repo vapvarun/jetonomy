@@ -59,8 +59,10 @@ class Spaces_Handler {
 		add_action( 'wp_ajax_jetonomy_change_member_role', array( $this, 'ajax_change_member_role' ) );
 		// Access Rules AJAX
 		add_action( 'wp_ajax_jetonomy_add_access_rule', array( $this, 'ajax_add_access_rule' ) );
+		add_action( 'wp_ajax_jetonomy_update_access_rule', array( $this, 'ajax_update_access_rule' ) );
 		add_action( 'wp_ajax_jetonomy_delete_access_rule', array( $this, 'ajax_delete_access_rule' ) );
 		add_action( 'wp_ajax_jetonomy_sync_access_rule', array( $this, 'ajax_sync_access_rule' ) );
+		add_action( 'wp_ajax_jetonomy_search_membership_levels', array( $this, 'ajax_search_membership_levels' ) );
 		// Join Requests AJAX
 		add_action( 'wp_ajax_jetonomy_approve_join_request', array( $this, 'ajax_approve_join_request' ) );
 		add_action( 'wp_ajax_jetonomy_deny_join_request', array( $this, 'ajax_deny_join_request' ) );
@@ -78,6 +80,20 @@ class Spaces_Handler {
 		return \Jetonomy\route_url( 'invite', $token );
 	}
 
+	/**
+	 * The admin form's extension data as the REST request the space save hooks
+	 * hand listeners, so an extension saves admin and front-end edits through
+	 * one listener. Only `custom_fields` is carried; listeners validate it.
+	 * Callers have already checked the nonce and capability.
+	 */
+	private static function extension_request(): \WP_REST_Request {
+		$request = new \WP_REST_Request( 'POST' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce checked by the caller; values are validated and sanitized per field type by the listener.
+		$fields = isset( $_POST['custom_fields'] ) && is_array( $_POST['custom_fields'] ) ? wp_unslash( $_POST['custom_fields'] ) : array();
+		$request->set_param( 'custom_fields', $fields );
+		return $request;
+	}
+
 	public function ajax_create_space(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
 		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
@@ -92,11 +108,14 @@ class Spaces_Handler {
 		$visibility  = sanitize_text_field( wp_unslash( $_POST['visibility'] ?? 'public' ) );
 		$join_policy = sanitize_text_field( wp_unslash( $_POST['join_policy'] ?? 'open' ) );
 		$icon        = sanitize_text_field( wp_unslash( $_POST['icon'] ?? '' ) );
-		$cover_image = esc_url_raw( wp_unslash( $_POST['cover_image'] ?? '' ) );
+		$cover_image = \Jetonomy\http_url( (string) wp_unslash( $_POST['cover_image'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- http_url() validates and cleans it.
 		$status      = sanitize_text_field( wp_unslash( $_POST['status'] ?? 'active' ) );
 
 		if ( empty( $title ) ) {
 			wp_send_json_error( __( 'Title is required.', 'jetonomy' ) );
+		}
+		if ( null === $cover_image ) {
+			wp_send_json_error( \Jetonomy\invalid_url_error( __( 'Cover image', 'jetonomy' ) )->get_error_message() );
 		}
 
 		// An unknown type is refused by Space::create() below, not swapped.
@@ -141,6 +160,9 @@ class Spaces_Handler {
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
+
+		/** This action is documented in includes/api/class-spaces-controller.php */
+		do_action( 'jetonomy_after_create_space', (int) $id, self::extension_request() );
 
 		wp_send_json_success(
 			array(
@@ -244,7 +266,11 @@ class Spaces_Handler {
 			$data['sort_order'] = absint( wp_unslash( $_POST['sort_order'] ) );
 		}
 		if ( isset( $_POST['cover_image'] ) ) {
-			$data['cover_image'] = esc_url_raw( wp_unslash( $_POST['cover_image'] ) ) ?: null;
+			$cover = \Jetonomy\http_url( (string) wp_unslash( $_POST['cover_image'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- http_url() validates and cleans it.
+			if ( null === $cover ) {
+				wp_send_json_error( \Jetonomy\invalid_url_error( __( 'Cover image', 'jetonomy' ) )->get_error_message() );
+			}
+			$data['cover_image'] = '' !== $cover ? $cover : null;
 		}
 		if ( isset( $_POST['settings'] ) ) {
 			$settings_raw = $_POST['settings'];
@@ -289,6 +315,17 @@ class Spaces_Handler {
 		}
 
 		$saved = Space::find( $id );
+
+		/** This action is documented in includes/api/class-spaces-controller.php */
+		do_action(
+			'jetonomy_after_update_space',
+			$saved,
+			array(
+				'user_id' => get_current_user_id(),
+				'request' => self::extension_request(),
+			)
+		);
+
 		wp_send_json_success(
 			array(
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
@@ -528,7 +565,6 @@ class Spaces_Handler {
 		$rule_type  = sanitize_text_field( wp_unslash( $_POST['rule_type'] ?? '' ) );
 		$rule_value = sanitize_text_field( wp_unslash( $_POST['rule_value'] ?? '' ) );
 		$grants     = sanitize_text_field( wp_unslash( $_POST['grants'] ?? 'read' ) );
-		$space_role = sanitize_text_field( wp_unslash( $_POST['space_role'] ?? 'viewer' ) );
 		$priority   = absint( $_POST['priority'] ?? 0 );
 
 		if ( ! $space_id ) {
@@ -540,17 +576,13 @@ class Spaces_Handler {
 		if ( ! in_array( $rule_type, $valid_types, true ) ) {
 			wp_send_json_error( __( 'Invalid rule type.', 'jetonomy' ) );
 		}
-		$invalid = AccessRule::value_error( $rule_type, $rule_value );
+		$invalid = AccessRule::value_error( $rule_type, $rule_value ) ?? AccessRule::duplicate_error( $space_id, $rule_type, $rule_value );
 		if ( $invalid ) {
 			wp_send_json_error( $invalid->get_error_message() );
 		}
 
-		if ( ! in_array( $grants, array( 'read', 'participate', 'full' ), true ) ) {
+		if ( ! in_array( $grants, array( 'read', 'participate' ), true ) ) {
 			$grants = 'read';
-		}
-
-		if ( ! in_array( $space_role, array( 'viewer', 'member', 'moderator', 'admin' ), true ) ) {
-			$space_role = 'viewer';
 		}
 
 		$id = AccessRule::create(
@@ -559,7 +591,6 @@ class Spaces_Handler {
 				'rule_type'  => $rule_type,
 				'rule_value' => $rule_value ?: null,
 				'grants'     => $grants,
-				'space_role' => $space_role,
 				'priority'   => $priority,
 			)
 		);
@@ -608,6 +639,42 @@ class Spaces_Handler {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Access rule deleted.', 'jetonomy' ) ) );
+	}
+
+	/**
+	 * Change what an access rule grants, from the Grants select on its row.
+	 */
+	public function ajax_update_access_rule(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$grants = sanitize_key( wp_unslash( $_POST['grants'] ?? '' ) );
+		$result = AccessRule::update_grants( absint( $_POST['id'] ?? 0 ), $grants );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'Access rule updated.', 'jetonomy' ),
+				'role'    => ucfirst( AccessRule::role_for_grants( $grants ) ),
+			)
+		);
+	}
+
+	/**
+	 * Search one membership adapter's levels for the Access Rules picker.
+	 */
+	public function ajax_search_membership_levels(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+		$adapter = sanitize_key( wp_unslash( $_POST['adapter'] ?? '' ) );
+		$query   = sanitize_text_field( wp_unslash( $_POST['q'] ?? '' ) );
+		wp_send_json_success( \Jetonomy\Adapters\Adapter_Registry::search_levels( $adapter, $query ) );
 	}
 
 	/**

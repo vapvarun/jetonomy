@@ -87,7 +87,11 @@ If a custom role should behave like a full community member everywhere rather th
 
 ## Common changes
 
-**Roles from other plugins.** Roles such as Customer or Student start with nothing ticked. Leaving them that way is safe: their members can still read and take part in the spaces they belong to. Tick boxes only when you want that role to have site-wide abilities. If a role from another plugin was saved with nothing ticked, its members cannot read or post anywhere and this screen shows a warning with a **Give members access to their spaces** button. Click it to return the role to space-membership access; leave it if blocking that role was your intention.
+**Roles from other plugins.** Roles such as Customer or Student that you have never saved here show the boxes their members get through the fallback: reading, posting, replying, voting, reporting, editing and deleting their own posts, and joining, in the spaces they belong to. Ticking one more box adds to that. If a role from another plugin was saved with nothing ticked, its members cannot read or post anywhere and this screen shows a warning with a **Give [role] members the same access as the Subscriber role** button. Click it to copy the Subscriber role's boxes into that role; leave it if blocking that role was your intention.
+
+**Roles without WordPress read.** Every way of posting, replying, voting, reporting and joining needs the WordPress `read` capability. A role without it is named in a note above the grid, and only **Read the community** can be ticked for it: its members can read the spaces open to them and do nothing else. Give the role `read` (with a role editor plugin) if its members should take part.
+
+**Reporting.** The Report button on topics, replies and member profiles shows only to members who may report there, and reports from anyone else are refused. Untick `jetonomy_flag` for a role to take reporting away from it.
 
 **Read-only community.** Untick `jetonomy_create_posts` and `jetonomy_create_replies` for Subscriber. Members can read and vote but not post. Useful for an announcement-style community.
 

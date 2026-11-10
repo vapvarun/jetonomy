@@ -18,7 +18,6 @@ defined( 'ABSPATH' ) || exit;
 		'icon_size'   => 48,
 		'message'     => __( 'This page is not available.', 'jetonomy' ),
 		'description' => __( 'The link may be out of date, or this feature is turned off on this community.', 'jetonomy' ),
-		'cta_label'   => __( 'Back to the community', 'jetonomy' ),
-		'cta_url'     => \Jetonomy\base_url(),
+		// The page state adds the breadcrumb home, "Browse spaces" and a search box.
 	)
 );

@@ -1,95 +1,95 @@
 {
   "journey": "C.member.reply-quote",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T12:31:54Z",
-  "walker": "lane A3",
+  "free": "74528ddd",
+  "pro": "69d28a8",
+  "walked_at": "2026-11-10T11:47:26.722936Z",
+  "walker": "release 2.0.7 free walk wave 11 (Sonnet)",
   "env": {
+    "mode": "free stack, Pro inactive",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
       390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US (ar for RTL checks)"
   },
   "checks": {
     "c-member-reply-quote.1": {
       "result": "pass",
-      "evidence": "bob clicked Quote on Omar's Arabic reply in knowledge-base: composer prefilled with <blockquote class=jt-quote dir=auto> naming Omar Haddad; the posted reply 20749 renders the quote as a blockquote.",
-      "screenshot": "quote-ar-rendered.png"
+      "evidence": "bob on a Show & Tell topic clicked the icon-only Quote (aria-label Quote) on alice's reply 1478 -> composer prefilled with <blockquote class=jt-quote><cite>Alice Chen</cite> + her text; typed a line and Post Reply -> reply 1559 renders the blockquote (3px inline-start bar, padding 16px) with Alice Chen attribution.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq1-posted.png"
     },
     "c-member-reply-quote.2": {
       "result": "pass",
-      "evidence": "Reply on alice reply: chip \"Replying to Alice Chen\" + excerpt; posted reply 16414 parent_id 16410 shows \"in reply to Alice Chen\" linking #reply-16410",
-      "screenshot": "c-member-reply-quote.2.png",
-      "carried_forward": true
+      "evidence": "Clicked Reply on 1478 -> chip 'Replying to / Alice Chen / quoted first line / x'; posted -> reply 1561 shows 'in reply to Alice Chen' linking to #reply-1478 (DB parent_id=1478).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq2-chip.png"
     },
     "c-member-reply-quote.3": {
       "result": "pass",
-      "evidence": "jt-replying-to-cancel removed the chip; composer back to plain reply (no \"Replying to\" text)",
-      "carried_forward": true
+      "evidence": "Clicked the chip's cancel -> chip gone; posted -> reply 1560 has no 'in reply to' and DB parent_id is NULL."
     },
     "c-member-reply-quote.4": {
       "result": "pass",
-      "evidence": "quote of reply with list, pre/code and 100-char URL keeps all structure; blockquote scrollWidth 727 = clientWidth 727, no overflow",
-      "screenshot": "c-member-reply-quote.1.png",
-      "carried_forward": true
+      "evidence": "Seeded bob reply 1562 (ul of 3 items, pre/code block, 130-char URL); Quote -> editor keeps ul, pre and linked URL; posted reply 1563 keeps all three inside the blockquote. 1440: docSW 1440, no overflow (overflow-wrap anywhere). 390: docSW 390 and the pre scrolls inside itself (overflow-x auto), nothing spills.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq4-390.png"
     },
     "c-member-reply-quote.5": {
       "result": "pass",
-      "evidence": "bob on closed Announcements topic: no composer, no Reply/Quote buttons",
-      "carried_forward": true
+      "evidence": "bob on closed /announcements/t/scheduled-maintenance-on-saturday-what-to-expect/: reply buttons are only Vote up / Vote down / Report, no Quote, no Reply, no composer; Closed pill shown.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq5-closed.png"
     },
     "c-member-reply-quote.6": {
       "result": "pass",
-      "evidence": "guest page of help-desk topic has no Reply/Quote buttons (hidden)",
-      "carried_forward": true
+      "evidence": "Guest on reply 1478: only the Log in to vote control, no Quote or Reply buttons rendered.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq6-guest.png"
     },
     "c-member-reply-quote.7": {
       "result": "pass",
-      "evidence": "reply 10190 (author_id 0, deleted account) renders as \"[deleted]\"",
-      "screenshot": "c-member-reply-quote.7.png",
-      "carried_forward": true
+      "evidence": "Created a real member, replied, then wp_delete_user -> reply 1564 author_id 0. Card shows '[deleted]' as author; Quote prefilled <cite>[deleted]</cite> with the text, not blank.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq7-deleted.png"
     },
     "c-member-reply-quote.8": {
       "result": "pass",
-      "evidence": "bob's own private reply 20748 on topic 16656: the reply row has no Quote button (non-private replies 20740-20742 do), so private text cannot be republished through Quote."
+      "evidence": "bob made private reply 1565 on his topic. bob sees it with Private badge and no Quote; alice (member_b) sees only 'Private reply, visible to the topic author and moderators.' with no buttons, and the private text is absent from her page HTML and from GET /posts/390/replies.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq8-alice.png"
     },
     "c-member-reply-quote.9": {
       "result": "pass",
-      "evidence": "Arabic quote posted (reply 20749): blockquote dir=auto computes direction rtl, 3px bar on the right (border-right 3px, left 0); the Latin cite 'Omar Haddad' stays ltr by dir=auto.",
-      "screenshot": "quote-ar-rendered.png"
+      "evidence": "Site language ar (html dir=rtl). Quoted aisha's Arabic reply 1236 and posted 1567 -> blockquote direction rtl, border bar on the right (3px right, 0 left), Arabic text right-aligned.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq9-rtl.png"
     },
     "c-member-reply-quote.10": {
       "result": "pass",
-      "evidence": "dark mode: quote text rgb approx .80 on bg approx .20 (contrast about 7.5:1), bar and cite about 6:1",
-      "screenshot": "c-member-reply-quote.10.png",
-      "carried_forward": true
+      "evidence": "Reign dark toggle on: blockquote bg rgb(52,55,63) on page rgb(35,38,47); text contrast 7.4:1, cite 6.13:1, bar vs quote 6.13:1 and vs page 7.78:1.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq10-dark.png"
     },
     "c-member-reply-quote.11": {
-      "result": "not_performed",
-      "evidence": "Open owner decision, not a testable pass: Quote still saves the reply with parent_id set ('in reply to Bob Martinez' shows on the posted quote 20749), same as Reply; no owner choice recorded between plain top-level and threaded."
+      "result": "pass",
+      "evidence": "Decision observed: Quote posts a threaded reply, DB parent_id=1478 for reply 1559, and it renders 'in reply to Alice Chen' like Reply. Behaviour matches the line's 'today parent_id is set'."
     },
     "c-member-reply-quote.12": {
       "result": "pass",
-      "evidence": "dark quote bar contrast about 6:1 (computed from color(srgb) values 0.726 on 0.204)",
-      "screenshot": "c-member-reply-quote.10.png",
-      "carried_forward": true
+      "evidence": "Dark quote bar rgb(185,186,188) measured 6.13:1 vs the quote background and 7.78:1 vs the page (>=3:1 UI border).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq10-dark.png"
     },
     "c-member-reply-quote.13": {
       "result": "pass",
-      "evidence": "deleted-account reply 10190 shows no OP badge",
-      "carried_forward": true
+      "evidence": "Guest on reply 1564 (deleted account) shows '[deleted]' with no OP badge; the same topic's author replies show OP.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq6-guest.png"
+    },
+    "c-member-reply-quote.14": {
+      "result": "pass",
+      "evidence": "Private reply 1565 (bob's own) and private reply 1566 (alice's, readable by topic author bob): bob's buttons are Reply / More options / Edit / Make Public / Delete and Vote up / Vote down / Reply / Report respectively - no Quote on either.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/rq14-bob.png"
     }
   },
-  "proposed_checks": [
-    {
-      "id": "c-member-reply-quote.14",
-      "text": "@member #ui !refuse: a private reply the viewer may read shows no Quote button."
-    }
-  ],
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091"
+  "proposed_checks": []
 }

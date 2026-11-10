@@ -1,123 +1,124 @@
 {
   "journey": "E.ai",
-  "free": "9b977fcb",
-  "pro": "a830e82",
-  "walked_at": "2026-10-21T12:51:08Z",
-  "walker": "lane C3",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "walked_at": "2026-11-10T10:26:59.066921Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
+    "mode": "combo (Free+Pro, 17 extensions)",
+    "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
-    ]
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-ai.1": {
       "result": "pass",
-      "evidence": "Custom provider key entered and saved with Activate ticked -> field shows \"***encrypted***\" not the key; ticking \"Remove the stored key on save\" and saving -> api_key empty in option. Fake key used (no real provider key available)",
-      "carried_forward": true
+      "evidence": "Settings > AI Integration (admin): OpenAI key typed and saved -> field returns '***encrypted***' (key stored encrypted), a 'clear api key' checkbox appears; ticking it and saving removed the key (list-providers api_key_set no). Ollama provider pointed at the walkstub URL, model walkstub.",
+      "screenshot": "qa-artifacts/walk-207/combo/ai1.png"
     },
     "e-ai.2": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: no real AI provider key; with an unreachable stub provider the spam-looking topic published (fails open), so no AI hold/spam or \"Flagged by AI review\" reason could be observed",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "grace (trust 1) posted 'Make $5000 a week from home...' (published); after the batch review run (hook jetonomy_pro_ai_batch_review, stub verdict spam 0.95 >= auto-spam 0.8) it became status spam; a second grace topic at confidence 0.6 (>= hold 0.5, < 0.8) became pending (held)."
     },
     "e-ai.3": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: needs a working AI provider to prove no false positive (with no provider the topic simply publishes)",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "bob's genuine SMTP certificate question stayed published after the batch (stub verdict not spam)."
     },
     "e-ai.4": {
       "result": "pass",
-      "evidence": "Settings > AI Integration: Auto-spam Threshold 0.2 (below Hold 0.5) submitted -> notice 'Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept.' and the stored values stay 0.8/0.5 (a second 'AI settings saved.' notice also shows)"
+      "evidence": "Auto-spam Threshold 0.3 (below Hold 0.5): 'Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept.' and the old 0.8 stays; 1.5 is clamped to 1 with only the generic 'AI settings saved.' (no specific clamp message)."
     },
     "e-ai.5": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: no successful AI calls, so request/token/cost sums could not be checked; GET /ai/usage and /ai/usage/summary return 200 with empty rows and zero totals for admin",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "GET /ai/usage -> 200 rows per day/provider/feature (ollama spam_detection 9 requests today); /ai/usage/summary -> totals (66 requests, 26,000 prompt / 13,000 completion tokens, cost 0.08) and by_provider rows; bob GET /ai/usage -> 403. Rows also include earlier walks' data, so exact add-up was not re-derived."
     },
     "e-ai.6": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: daily budget enforcement needs billable provider calls",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "daily_budget 0.01 (already exceeded by recorded cost): a grace spam-looking topic was published unchecked, an admin suggest-reply call fails with 502 'AI request failed. Please try again later.' and wp-admin shows 'Jetonomy AI is not reaching any provider. Last failure ... AI moderation and spam detection are letting content through unchecked until a provider...'. Budget reset to 0 afterwards."
     },
     "e-ai.7": {
       "result": "pass",
-      "evidence": "no provider (settings restored to original): bob spam-looking topic -> 201 in 64ms, status publish; usage requests 0; debug.log has no new AI entries (only phar deprecations). Composer AI buttons not visually inspected",
-      "carried_forward": true
+      "evidence": "no provider configured: bob's composer has no AI button, POST topic 201 publish in 146 ms, nothing in debug.log; CLI list-providers 'No rows.', spam-check/summarize 'No AI provider configured...' as plain errors."
     },
     "e-ai.8": {
-      "result": "not_performed",
-      "evidence": "PARTIAL: with unreachable provider topic 9018 still published (fails open) and the non-dismissible notice \"Jetonomy AI is not reaching any provider. Last failure 27 seconds ago (suggestion)...\" showed on the Jetonomy dashboard and AI settings tab; disappearance after a provider answers NOT PERFORMED (no working provider)",
-      "screenshot": "ai-outage-notice",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Ollama base URL pointed at a dead path: suggest-reply 502, notice 'Jetonomy AI is not reaching any provider. Last failure 1 second ago (suggestion)...' in wp-admin, bob's new topic still 201 publish; after restoring the URL a successful suggest-reply made the notice disappear."
     },
     "e-ai.9": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: needs a working provider to produce suggested answers",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Q&A topic in Help Desk, after the suggestion job ran (jetonomy_pro_ai_generate_suggestions): 'AI Suggested Answers' block with a 'Use as reply' button; clicking it put the suggestion text into the composer and posted nothing.",
+      "screenshot": "qa-artifacts/walk-207/combo/ai9.png"
     },
     "e-ai.10": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: needs a working provider to produce TL;DR summaries",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Configured Ollama provider (walkstub URL) + thread summaries in Settings > AI Integration (min words field enforces >=100). As bob on Feature Requests topic 249 (66 replies) the AI Summary card (.jt-ai-summary: heading, AI badge, text, 3 key points) rendered after the queued generation ran; posting a new reply (4155) deleted the cached summary row and the card was gone on reload; short topic 402 shows no card.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-ai-10-card.png"
     },
     "e-ai.11": {
       "result": "pass",
-      "evidence": "earlier live run this lane (stub provider): nonexistent post and a CAB post both -> identical 404 'Topic not found.' which matches the current runbook wording; not re-run now because with no provider configured the route answers 503 'No AI provider is configured.' before the lookup"
+      "evidence": "bob POST /ai/suggest-reply post_id 99999999 and post 403 (Customer Advisory Board) -> both 404 'Topic not found.'."
     },
     "e-ai.12": {
-      "result": "not_performed",
-      "evidence": "runbook requires a working provider (only successful calls count); without one suggest-reply answers 503 'No AI provider is configured.' (6 consecutive calls, no 429)"
+      "result": "pass",
+      "evidence": "bob's 1st-5th successful suggest-reply 200, 6th -> 429 'You have reached the hourly limit for AI requests. Please try again later.'; admin 7 calls in a row all 200."
     },
     "e-ai.13": {
-      "result": "not_performed",
-      "evidence": "min trust gate sits behind the provider check: with min trust 5 and no provider priya gets 503 'No AI provider is configured.'; earlier stub-provider run gave 403 'You need trust level 3 or higher to use AI features.'; UI button hiding not observable without a provider"
+      "result": "pass",
+      "evidence": "min trust level 3: grace (TL1) POST /ai/suggest-reply -> 403 'You need trust level 3 or higher to use AI features.'; no AI button in her composer or topic page. Reset to 0."
     },
     "e-ai.14": {
       "result": "pass",
-      "evidence": "guest POST /ai/suggest-reply -> 401 rest_not_logged_in; guest GET /ai/usage -> 401; bob GET /ai/usage -> 403 jetonomy_forbidden",
-      "carried_forward": true
+      "evidence": "guest POST /ai/suggest-reply and GET /ai/usage -> 401; bob GET /ai/usage -> 403."
     },
     "e-ai.15": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: needs two working providers",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Only an Ollama-shaped stub can answer, so the second provider was a dead Custom endpoint instead of OpenAI/Anthropic: default Custom with order 'custom, ollama' -> spam-check went to ollama after custom logged error_count 1 (next provider in order used); then per-feature override spam_detection=ollama with default Custom -> the call went straight to ollama and custom's error count stayed at 1 (override honoured). Provider names differ from the line, the routing behaviour is as described."
     },
     "e-ai.16": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: needs a working provider; guest POST /ai/suggest-reply gives 401 before any lookup",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Insiders Beta (private) topic 216 with a cached summary: guest page 404 'Page not available' with no .jt-ai-summary element or summary text; guest REST GET /posts/216 and /replies 404; test_subscriber and bob POST /ai/suggest-reply on private/missing topics -> 404 'Topic not found.' and the stub call log did not grow (4 -> 4)."
     },
     "e-ai.17": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: needs a working provider to produce AI output",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Arabic topic (omar, 180 words, 3 replies) summarised: AI Summary card paragraph and key points dir=auto resolve rtl, wrap inside the card at 1440 (right 961) and 390 (right 358 of 390), no horizontal scroll; the moderation flag 'Flagged by AI review: <Arabic reason>' shows in Moderation > Flags (starts Latin so it reads LTR with the Arabic run embedded). The 159-char General Discussion topic summary card wraps at 390 (right 358, no scroll).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-ai-17-ar-390.png"
     },
     "e-ai.18": {
       "result": "pass",
-      "evidence": "wp jetonomy-pro ai status/list-providers/spam-check/summarize/batch-review-status/provider-status run with no provider: plain output (provider_count: 0), no PHP notices"
+      "evidence": "wp jetonomy-pro ai status, list-providers, provider-status ollama, test-provider ollama, spam-check --content, summarize --content, batch-review-status all answer in plain output with and without a provider (without: 'Unknown provider id' / 'No AI provider configured' errors); no jetonomy notices in debug.log."
     },
     "e-ai.19": {
-      "result": "not_performed",
-      "evidence": "NOT PERFORMED: batch scheduler needs a working provider",
-      "carried_forward": true
+      "result": "pass",
+      "evidence": "Batch reviewer (hook jetonomy_pro_ai_batch_review, reply shape {items:[{key,spam,confidence,action}]}): flagged a past post (watermark reset) with a pending flag; with the stub returning 500 the run published content unchanged and kept the watermark at 15856, after clearing the 500 the next cycle marked post 15857 spam and advanced to 15857; with a  daily budget and  spent no model call was made (calls 11 -> 11), the new post stayed published and the log reads 'Batch review failed, will retry next cycle: Daily AI budget exceeded'."
+    },
+    "e-ai.20": {
+      "result": "pass",
+      "evidence": "Set the site timezone to Pacific/Kiritimati (UTC+14, site date 2026-11-11 while UTC date 2026-11-10): an AI call wrote the usage row under date 2026-11-11, and yesterday's $5 row no longer counted against the budget (batch review ran). Timezone and budget restored afterwards."
+    },
+    "e-ai.21": {
+      "result": "pass",
+      "evidence": "saving with a rejected threshold shows 'Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept.' followed by 'Your other changes were saved.' (not 'AI settings saved.')."
     }
   },
-  "proposed_checks": [
-    "With no provider, suggest-reply answers 503 \"No AI provider is configured.\" before the post lookup or trust gate, so e-ai.11 and .13 are only reachable with a provider (or a stub) - state it.",
-    "Settings save shows both the threshold-kept notice and \"AI settings saved.\" - add a check that only one outcome notice shows.",
+  "proposed_checks": [],
+  "runbook_fixes": [
     {
-      "id": "e-ai.20",
-      "text": "@admin #admin: AI usage and daily-budget day buckets follow the site timezone, not UTC."
-    },
-    {
-      "id": "e-ai.21",
-      "text": "@admin #admin: saving AI settings with a threshold that gets kept shows one outcome notice, not both the threshold-kept notice and \"AI settings saved.\""
+      "check": "e-ai.21",
+      "now": "the threshold-kept notice is followed by Your other changes were saved. instead of AI settings saved."
     }
+  ],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:26:59.066921Z: re-walked non-pass checks e-ai.10,e-ai.15,e-ai.16,e-ai.17,e-ai.19,e-ai.20"
   ]
 }

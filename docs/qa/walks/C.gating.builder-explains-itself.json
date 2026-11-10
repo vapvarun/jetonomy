@@ -1,76 +1,79 @@
 {
- "journey": "C.gating.builder-explains-itself",
- "free": "dcdb0750",
- "walked_at": "2026-10-21T08:55:12Z",
- "walker": "lane C",
- "env": {
-  "themes": [
-   "reign"
-  ],
-  "viewports": [
-   1440,
-   390
-  ],
-  "schemes": [
-   "light",
-   "dark"
-  ]
- },
- "checks": {
-  "c-gating-builder-explains-itself.1": {
-   "result": "pass",
-   "evidence": "Intro: \"A rule lets more people in to this space: ... Who else gets in is set by the space's visibility and join policy.\"; empty state \"No access rules - Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.\""
+  "journey": "C.gating.builder-explains-itself",
+  "free": "af10b788",
+  "pro": "69d28a8",
+  "walked_at": "2026-11-10T12:22:35Z",
+  "walker": "release 2.0.7 combo walk w12 (Sonnet)",
+  "env": {
+    "mode": "combo (Free+Pro, 17 extensions)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark (midnight admin scheme)"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US, ar"
   },
-  "c-gating-builder-explains-itself.2": {
-   "result": "pass",
-   "evidence": "Stepped Everyone, Logged In, WP Role, Capability, Trust Level, PMPro: each preview carries a second sentence (\"Matches every visitor...\", \"Matches anyone with an account...\", \"Matches anyone holding this WordPress role...\", \"...whose WordPress role carries this capability...\", \"...at or above this trust level, 1 to 5...\", \"Matches members who hold the PMPro level you pick below.\"); value-box examples: role \"subscriber\", capability \"edit_posts\", trust level \"2\"; PMPro uses a picker with placehold"
+  "checks": {
+    "c-gating-builder-explains-itself.1": {
+      "result": "pass",
+      "evidence": "Admin Access Rules tab on space 15: empty state reads \"Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.\"; the 'How access rules work' panel opens with 'A rule lets more people in to this space ... Who else gets in is set by the space's visibility and join policy.'"
+    },
+    "c-gating-builder-explains-itself.2": {
+      "result": "pass",
+      "evidence": "Stepped through every Rule type. Each shows a second sentence under the live preview: Everyone 'Matches everyone. A visitor who is not signed in is still asked to log in first...'; Logged In 'Matches anyone with an account on this site...'; Role 'Matches anyone holding this WordPress role...' (placeholder 'subscriber'); Capability 'Matches anyone whose WordPress role carries this capability...' (placeholder 'edit_posts'); Trust Level 'Matches members at or above this trust level, 1 to 5...' (placeholder '2'); Membership (PMPro activated temporarily, option 'membership:pmpro / PMPro') 'Matches members who hold the PMPro level you pick below.' with a level search box (placeholder 'PMPro...'). Membership option is disabled with no membership plugin active. Note: membership box has a search placeholder, not a worked example. w12/c2-membership.png"
+    },
+    "c-gating-builder-explains-itself.3": {
+      "result": "pass",
+      "evidence": "Everyone and Logged In: #rule-value is not visible (offsetParent null); only the type, grants and Add Rule controls show."
+    },
+    "c-gating-builder-explains-itself.4": {
+      "result": "pass",
+      "evidence": "UI: Trust Level 0 and 9 typed and Add Rule clicked -> toast 'Choose a trust level from 1 to 5.' (admin-ajax success:false), no rule created (w12/c2-ui-tl-0.png, c2-ui-tl-9.png). With the level empty the Add Rule button is disabled client-side so it cannot be clicked; the same refusal text for an empty level came from posting jetonomy_add_access_rule directly: 'Choose a trust level from 1 to 5.' and REST 400 (see 7)."
+    },
+    "c-gating-builder-explains-itself.5": {
+      "result": "pass",
+      "evidence": "UI: Role 'ghost_role' + Add Rule -> toast 'Choose a role that exists on this site.' and no rule created (w12/c2-ui-ghost.png)."
+    },
+    "c-gating-builder-explains-itself.6": {
+      "result": "pass",
+      "evidence": "Empty Capability and empty Membership: Add Rule button is disabled in the UI (cannot be clicked); direct admin-ajax jetonomy_add_access_rule with empty value returned 'Enter a value for this rule.' for both, and REST returned the same; no rule was created. The refusal message is therefore only observable server-side, the UI blocks earlier."
+    },
+    "c-gating-builder-explains-itself.7": {
+      "result": "pass",
+      "evidence": "Admin REST POST /spaces/15/access-rules: trust_level ''/0/9 -> 400 jetonomy_invalid_rule_value 'Choose a trust level from 1 to 5.'; role ghost_role -> 400 'Choose a role that exists on this site.'; capability '' and membership '' -> 400 'Enter a value for this rule.'. GET /spaces/15/access-rules afterwards -> {\"data\":[]}."
+    },
+    "c-gating-builder-explains-itself.8": {
+      "result": "pass",
+      "evidence": "test_editor opened wp-admin Access Rules tab for Help Desk (space 20): page titled 'Access Rules' shows 'Only site administrators can manage access rules for this space.' and 'Back to Help Desk' link to /community/s/help-desk/; no builder. w12/c1-editor-access.png"
+    },
+    "c-gating-builder-explains-itself.9": {
+      "result": "pass",
+      "evidence": "Subscriber walkrule2 POST /spaces/15/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; no rule created."
+    },
+    "c-gating-builder-explains-itself.10": {
+      "result": "pass",
+      "evidence": "390x844: dropdown, value box, grants select, preview and sentence stack vertically; Add Rule button 94x40; no horizontal overflow (scrollWidth 390). w12/c2-390.png"
+    },
+    "c-gating-builder-explains-itself.11": {
+      "result": "pass",
+      "evidence": "WordPress Midnight admin colour scheme (admin-color-midnight) and prefers-color-scheme: dark emulation: builder text readable (computed contrast ~10:1 or higher, dark text on white card). Jetonomy admin.css has no dark mode of its own and does not follow prefers-color-scheme. w12/c2-dark-midnight.png, c2-dark.png. Admin colour restored to modern."
+    },
+    "c-gating-builder-explains-itself.12": {
+      "result": "pass",
+      "evidence": "Site language Arabic (ar) activated: html dir=rtl, body.rtl, builder lays out right to left, value input direction rtl (placeholder 'subscriber'). Strings remain English as untranslated. w12/c2-rtl.png. Language restored to en_US (WPLANG empty)."
+    },
+    "c-gating-builder-explains-itself.13": {
+      "result": "pass",
+      "evidence": "Previews for Logged In, Role, Capability, Trust Level, Everyone and PMPro membership with Participate all say 'They are recorded as Member.'. After REST POST rule_type logged_in grants=full space_role=admin -> 201 stored grants participate, space_role member; the admin table row shows Logged in / Participate / Member."
+    }
   },
-  "c-gating-builder-explains-itself.3": {
-   "result": "pass",
-   "evidence": "Everyone and Logged In: #rule-value hidden (offsetParent null) and membership box hidden"
-  },
-  "c-gating-builder-explains-itself.4": {
-   "result": "pass",
-   "evidence": "Trust Level empty / 0 / 9 -> toast \"Choose a trust level from 1 to 5.\" each; no rule created (0 rules listed)"
-  },
-  "c-gating-builder-explains-itself.5": {
-   "result": "pass",
-   "evidence": "Role \"ghost_role\" -> toast \"Choose a role that exists on this site.\""
-  },
-  "c-gating-builder-explains-itself.6": {
-   "result": "pass",
-   "evidence": "Empty Capability -> \"Enter a value for this rule.\"; empty PMPro membership value -> \"Enter a value for this rule.\"; rules table still 0 rows"
-  },
-  "c-gating-builder-explains-itself.7": {
-   "result": "pass",
-   "evidence": "REST bad values: trust_level/ => 400 Choose a trust level from 1 to 5. ; trust_level/0 => 400 Choose a trust level from 1 to 5. ; trust_level/9 => 400 Choose a trust level from 1 to 5. ; role/ghost_role => 400 Choose a role that exists on this site. ; capability/ => 400 Enter a value for this rule. ; membership/ => 400 Enter a value for this rule. ; GET lists 0 rules"
-  },
-  "c-gating-builder-explains-itself.9": {
-   "result": "pass",
-   "evidence": "subscriber POST access-rules -> 403 jetonomy_forbidden"
-  },
-  "c-gating-builder-explains-itself.8": {
-   "result": "pass",
-   "evidence": "test_editor on Help Desk Access Rules tab: sentence shown, links [\"Back to Help Desk\"], builder forms=0"
-  },
-  "c-gating-builder-explains-itself.13": {
-   "result": "pass",
-   "evidence": "Full preview \"They are recorded as Member.\" for logged_in/role/capability/trust_level (see no-rule-hands-out-moderation.9); admin table row \"Full Member\"; POST grants=full space_role=admin -> 201 stored space_role=member"
-  },
-  "c-gating-builder-explains-itself.10": {
-   "result": "pass",
-   "evidence": "390px role rule: controls [[\"rule-type\",36,1399,101,42],[\"rule-value\",36,1449,318,40],[\"rule-grants\",36,1497,118,42],[\"jetonomy-add-rule\",35,1547,94,40],[\"P\",35,1601,318,121]] ; Add button height 40 ; scrollWidth 390/390",
-   "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-C/builder-390.png"
-  },
-  "c-gating-builder-explains-itself.11": {
-   "result": "pass",
-   "evidence": "prefers-color-scheme dark + bx-color-mode=dark in wp-admin: contrast {\"preview\":{\"fg\":\"rgb(100, 116, 139)\",\"bg\":\"rgb(255, 255, 255)\",\"ratio\":4.76},\"value\":{\"fg\":\"rgb(30, 30, 30)\",\"bg\":\"rgb(255, 255, 255)\",\"ratio\":16.67},\"type\":{\"fg\":\"rgb(30, 30, 30)\",\"bg\":\"rgb(255, 255, 255)\",\"ratio\":16.67},\"intro\":{\"fg\":\"rgb(60, 67, 74)\",\"bg\":\"rgb(255, 255, 255)\",\"ratio\":10.03}} (wp-admin itself has no dark scheme, so the builder keeps its light styling)",
-   "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-C/builder-dark.png"
-  },
-  "c-gating-builder-explains-itself.12": {
-   "result": "pass",
-   "evidence": "test_admin locale=ar (restored after): html dir=rtl lang=ar, value input direction rtl text-align start, preview direction rtl/start, rule-type select inline offsets left 1141 / right 208, Add button left 566 / right 781, placeholder \"subscriber\" (Jetonomy has no ar strings; layout flips)",
-   "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-C/builder-rtl.png"
-  }
- }
+  "proposed_checks": []
 }

@@ -212,6 +212,11 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					</td>
 				</tr>
 			</table>
+			<?php
+			// Same hook as the front-end edit form: Pro custom fields (context =
+			// space) render here pre-filled; admin-common.js sends them as `custom_fields`.
+			do_action( 'jetonomy_space_edit_fields', $space );
+			?>
 			<p class="submit">
 				<?php /* translators: %s: the label of the item being saved (the configured noun). */ ?>
 				<button type="submit" class="button button-primary"><?php echo esc_html( sprintf( __( 'Update %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></button>
@@ -452,62 +457,6 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				}
 			}
 			?>
-			<div class="jt-settings-card jt-access-help">
-				<div class="jt-settings-card__head">
-					<p class="jt-settings-card__title"><?php esc_html_e( 'How access rules work', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc">
-						<?php
-						/* translators: 1: the singular space label, lowercase (e.g. space, group). 2: member label, plural, lowercase (e.g. "members"). */
-						echo esc_html( sprintf( __( 'A rule lets more people in to this %1$s: anyone who matches it gets what it grants, without being added to the %2$s list. Who else gets in is set by the %1$s\'s visibility and join policy. Adding a role, capability, trust level or membership rule to a Public %1$s switches it to Private, so that the rule is what decides who gets in.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ) );
-						?>
-					</p>
-				</div>
-				<table class="widefat striped jt-access-help-table"><!-- jetonomy-audit-table-ok: static reference copy, stacks below 782px via .jt-access-help-table -->
-					<thead>
-						<tr>
-							<th scope="col"><?php esc_html_e( 'Grants', 'jetonomy' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'What the person can do', 'jetonomy' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Lets matching people in to read and report. It takes nothing away from people who already get in another way, such as %s on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></td>
-						</tr>
-						<tr>
-							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* jt-terms-ok: "reply" is the verb here. */ esc_html_e( 'Read, plus post, reply, vote and report. The usual choice for a paid plan.', 'jetonomy' ); ?></td>
-						</tr>
-						<tr>
-							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Full', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Participate, plus edit other people\'s content, close and pin %1$s - but only for people whose WordPress role already allows moderation. For an ordinary %2$s this behaves exactly like Participate.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></td>
-						</tr>
-					</tbody>
-				</table>
-				<p class="description">
-					<?php /* jt-terms-ok: Viewer / Member / Moderator are space role names. */ /* translators: 1: member label (e.g. "Member"). 2: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%1$s lists show a matching role - Read is listed as Viewer, Participate and Full as Member. To give one person a different role, change it on the %2$s tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
-				</p>
-				<p class="description">
-					<strong><?php esc_html_e( 'A rule can never hand out moderation.', 'jetonomy' ); ?></strong>
-					<?php
-					printf(
-						/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: the singular space label the site owner configured, lowercase (e.g. space, group). 3: product name shown in wp-admin (default "Jetonomy"). */
-						esc_html__( 'Editing, closing or pinning other people\'s %1$s comes from the person\'s WordPress role - set those under %3$s - Settings - Permissions. Ordinary taking part is different: being admitted to any %2$s, by a rule or by the roster, carries reading, posting, replying, voting and reporting on its own. That holds for roles %3$s does not map, such as the ones a course or membership plugin creates for its own members.', 'jetonomy' ), // jt-terms-ok: "members" here is a membership plugin's own word.
-						esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-						esc_html( \Jetonomy\space_label( false, true ) ),
-						esc_html( \Jetonomy\Admin\Admin::brand_name() )
-					);
-					?>
-				</p>
-				<p class="description">
-					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>
-					<?php esc_html_e( 'Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand.', 'jetonomy' ); ?>
-					<?php if ( $jt_has_membership ) : ?>
-						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'The "Sync %s" button on a membership rule below is only for listing those people on the roster as well.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
-					<?php endif; ?>
-				</p>
-			</div>
-
 			<?php if ( $jt_has_membership && ( $jt_rule_public || $jt_rule_open_join ) ) : ?>
 				<div class="notice notice-warning inline jt-access-warning">
 					<p>
@@ -535,7 +484,9 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			<div class="jetonomy-inline-form" id="jetonomy-add-rule-form">
 				<div class="jetonomy-form-row">
 					<label class="screen-reader-text" for="rule-type"><?php esc_html_e( 'Rule type', 'jetonomy' ); ?></label>
+					<?php // No preselected type: one click on Add Rule must never open a space by accident. ?>
 					<select id="rule-type">
+						<option value="" selected><?php esc_html_e( 'Choose who this rule lets in', 'jetonomy' ); ?></option>
 						<option value="everyone"><?php esc_html_e( 'Everyone', 'jetonomy' ); ?></option>
 						<option value="logged_in"><?php esc_html_e( 'Logged In', 'jetonomy' ); ?></option>
 						<option value="role"><?php esc_html_e( 'WP Role', 'jetonomy' ); ?></option>
@@ -572,17 +523,15 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<select id="rule-grants">
 						<option value="read"><?php esc_html_e( 'Read', 'jetonomy' ); ?></option>
 						<option value="participate" selected><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
-						<option value="full"><?php esc_html_e( 'Full', 'jetonomy' ); ?></option>
 					</select>
 					<?php
-					// Space Role is derived from the access level and submitted as a hidden field. It
+					// Space Role is derived from the access level on save (AccessRule::role_for_grants()). It
 					// never affects access (Permission_Engine reads only `grants`), and a free choice
 					// would let "Sync Members" deposit space admins from a rule labelled "Read". To
 					// give one person a different role, use the Members tab, where roster roles belong.
 					?>
-					<input type="hidden" id="rule-space-role" value="viewer">
 					<input type="hidden" id="rule-priority" value="0">
-					<button type="button" class="button button-primary" id="jetonomy-add-rule" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Add Rule', 'jetonomy' ); ?></button>
+					<button type="button" class="button button-primary" id="jetonomy-add-rule" data-space-id="<?php echo absint( $space->id ); ?>" data-private="<?php echo $jt_rule_public ? '0' : '1'; ?>" disabled><?php esc_html_e( 'Add Rule', 'jetonomy' ); ?></button>
 				</div>
 				<?php
 				// Reads back the rule being composed in plain English, right
@@ -607,7 +556,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						'value'   => array( 'label' => __( 'Value', 'jetonomy' ) ),
 						'grants'  => array(
 							'label' => __( 'Grants', 'jetonomy' ),
-							'width' => 's',
+							'width' => 'm',
 						),
 						'role'    => array(
 							/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
@@ -637,7 +586,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						$display_value = ! empty( $rule->rule_value ) ? $rule->rule_value : '—';
 						if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
 							$described     = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
-							$display_type  = $described['type'];
+							$display_type  = '' !== $described['kind']
+								/* translators: 1: membership plugin (e.g. LearnDash), 2: what kind of level it is (e.g. Course, Group). */
+								? sprintf( __( '%1$s %2$s', 'jetonomy' ), $described['type'], $described['kind'] )
+								: $described['type'];
 							$display_value = $described['value'];
 						}
 
@@ -647,14 +599,29 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								break;
 							case 'value':
 								echo esc_html( $display_value );
+								if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) && ! \Jetonomy\Adapters\Adapter_Registry::membership_level_available( (string) $rule->rule_value ) ) {
+									$jt_kind = (string) ( $described['kind'] ?? '' );
+									echo ' <span class="jt-rule-unavailable">' . esc_html(
+										'' !== $jt_kind
+											/* translators: %s: what kind of level it is (e.g. Course, Product). */
+											? sprintf( __( '%s no longer available', 'jetonomy' ), $jt_kind )
+											: __( 'No longer available', 'jetonomy' )
+									) . '</span>';
+									echo '<span class="description jt-rule-unavailable__why">' . esc_html__( 'It was deleted, trashed or unpublished, so nobody can get it and this rule lets nobody in. Publish it again or delete this rule.', 'jetonomy' ) . '</span>';
+								}
 								break;
 							case 'grants':
-								echo '<span class="jetonomy-badge jetonomy-badge--' . esc_attr( $rule->grants ) . '">' . esc_html( ucfirst( $rule->grants ) ) . '</span>';
+								?>
+								<select class="jetonomy-rule-grants" data-id="<?php echo absint( $rule->id ); ?>" aria-label="<?php esc_attr_e( 'What this rule grants', 'jetonomy' ); ?>">
+									<option value="read" <?php selected( $rule->grants, 'read' ); ?>><?php esc_html_e( 'Read', 'jetonomy' ); ?></option>
+									<option value="participate" <?php selected( $rule->grants, 'participate' ); ?>><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
+								</select>
+								<?php
 								break;
 							case 'role':
 								// The role a sync would actually store, not the raw column
 								// of a rule saved before rules were capped at Member.
-								echo esc_html( ucfirst( \Jetonomy\Models\AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type ) ) );
+								echo '<span class="jetonomy-rule-role">' . esc_html( ucfirst( \Jetonomy\Models\AccessRule::role_for_grants( (string) $rule->grants ) ) ) . '</span>';
 								break;
 							case 'actions':
 								echo '<div class="jetonomy-rule-actions">';
@@ -673,6 +640,60 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				)
 			);
 		?>
+			<?php // Reference, not a step: closed below the form and list so the rules are on the first screen. ?>
+			<details class="jt-settings-card jt-settings-card--disclosure jt-access-help">
+				<summary class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'How access rules work', 'jetonomy' ); ?></p>
+				</summary>
+				<div class="jt-access-help__body">
+					<p class="jt-settings-card__desc jt-access-help__lead">
+						<?php
+						/* translators: 1: the singular space label, lowercase (e.g. space, group). 2: member label, plural, lowercase (e.g. "members"). */
+						echo esc_html( sprintf( __( 'A rule lets more people in to this %1$s: anyone who matches it gets what it grants, without being added to the %2$s list. Who else gets in is set by the %1$s\'s visibility and join policy. Adding a role, capability, trust level or membership rule to a Public %1$s switches it to Private, so that the rule is what decides who gets in.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ) );
+						?>
+					</p>
+				</div>
+				<table class="widefat striped jt-access-help-table"><!-- jetonomy-audit-table-ok: static reference copy, stacks below 782px via .jt-access-help-table -->
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'Grants', 'jetonomy' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'What the person can do', 'jetonomy' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Lets matching people in to read and report. It takes nothing away from people who already get in another way, such as %s on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></td>
+						</tr>
+						<tr>
+							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* jt-terms-ok: "reply" is the verb here. */ esc_html_e( 'Read, plus post, reply, vote and report. The usual choice for a paid plan.', 'jetonomy' ); ?></td>
+						</tr>
+					</tbody>
+				</table>
+				<p class="description">
+					<?php /* jt-terms-ok: Viewer / Member / Moderator are space role names. */ /* translators: 1: member label (e.g. "Member"). 2: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( '%1$s lists show a matching role - Read is listed as Viewer, Participate as Member. To give one person a different role, change it on the %2$s tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
+				</p>
+				<p class="description">
+					<strong><?php esc_html_e( 'A rule can never hand out moderation.', 'jetonomy' ); ?></strong>
+					<?php
+					printf(
+						/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: the singular space label the site owner configured, lowercase (e.g. space, group). 3: product name shown in wp-admin (default "Jetonomy"). */
+						esc_html__( 'Editing, closing or pinning other people\'s %1$s comes from the person\'s WordPress role - set those under %3$s - Settings - Permissions. Ordinary taking part is different: being admitted to any %2$s, by a rule or by the roster, carries reading, posting, replying, voting and reporting on its own. That holds for roles %3$s does not map, such as the ones a course or membership plugin creates for its own members.', 'jetonomy' ), // jt-terms-ok: "members" here is a membership plugin's own word.
+						esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+						esc_html( \Jetonomy\space_label( false, true ) ),
+						esc_html( \Jetonomy\Admin\Admin::brand_name() )
+					);
+					?>
+				</p>
+				<p class="description">
+					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>
+					<?php esc_html_e( 'Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand.', 'jetonomy' ); ?>
+					<?php if ( $jt_has_membership ) : ?>
+						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'The "Sync %s" button on a membership rule below is only for listing those people on the roster as well.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
+					<?php endif; ?>
+				</p>
+			</details>
 		</div>
 
 	<?php elseif ( 'settings' === $active_tab ) : ?>
