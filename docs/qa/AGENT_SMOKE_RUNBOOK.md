@@ -2047,7 +2047,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.custom-badges
 **Covers:** templates/views/user-profile.php, templates/partials/post-badges.php, pro:includes/extensions/custom-badges/*.php, pro:assets/js/badges-admin.js
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** an admin can create a badge (name, icon, description, criteria), award it manually to a user, and that badge appears on the recipient's profile AND in the public badge list. Badges are once-only: a member never holds a duplicate (existing duplicates are repaired), and "Earned by" counts members.
 
 **Checks:**
@@ -2281,8 +2281,8 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.webhooks
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-post.php, pro:includes/extensions/webhooks/*.php
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
-**What to verify:** an admin can create a webhook bound to one or more events; triggering one of those events actually fires a request to the configured URL; `POST /jetonomy/v1/webhooks/{id}/test` delivers a payload the receiver can parse (there is no test button in the admin list).
+**Verified:** 266166b1 pro:69d28a8
+**What to verify:** an admin can create a webhook bound to one or more events; triggering one of those events actually fires a request to the configured URL; `POST /jetonomy/v1/webhooks/{id}/test` delivers a payload the receiver can parse (each row in the admin list has a Send test button that calls it).
 
 ---
 

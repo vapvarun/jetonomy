@@ -59,9 +59,9 @@
       "evidence": "Manual award only ticked, no conditions, Save Badge -> notice 'Badge saved.' and the list row shows 'Manual award only' (Founding Member). bd-2.png"
     },
     "e-custom-badges.3": {
-      "result": "fail",
-      "evidence": "Badges list shows 16 rows (the 11 seeded defaults plus Conversationalist, Founding Member, Monthly Helper, Prolific Poster, Community Champion added by earlier walks). 'Delete every badge' cannot be done: each row only offers Edit/Award/Revoke/Deactivate; Deactivate ('Deactivate this badge?' -> 'Badge deactivated.') and REST DELETE /badges/{id} are a soft delete (is_active=0, row and awards kept), so after deactivating all 16 the list still shows 16 inactive rows with Activate buttons and the 'No badges yet' empty state is never reached from the UI/REST (only an emptied table shows it). Restored from a table backup (16 active, 149 awards).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-badges-3-empty.png"
+      "result": "pass",
+      "evidence": "Wave 9 as the check now reads: Jetonomy > Badges lists the eleven seeded defaults (First Post, Contributor, Conversation Starter, Trusted Voice, Helpful Answer, Helpful Member, Community Pillar, Rising Star, Veteran, Top Contributor, Early Adopter) plus five walk-created badges. Deactivate on Early Adopter (18 awards) -> 'Deactivate this badge?' Confirm -> notice 'Badge deactivated.', the row stays in the list as Inactive with Activate offered, DB is_active 0 and all 18 awards still present; Activate -> 'Badge activated.', Active again, 18 awards intact. badges-3a/3b/3c.png in /Users/varundubey/Documents/work-artifacts/screenshots/w9/",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w9/badges-3c.png"
     },
     "e-custom-badges.8": {
       "result": "pass",
