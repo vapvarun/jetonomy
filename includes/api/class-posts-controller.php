@@ -495,7 +495,7 @@ class Posts_Controller extends Base_Controller {
 			return $title_error;
 		}
 		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
-		if ( empty( $content ) ) {
+		if ( jetonomy_content_is_blank( $content ) ) {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
 		}
 
@@ -760,7 +760,10 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		if ( null !== $request->get_param( 'content' ) ) {
-			$content                      = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
+			$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
+			if ( jetonomy_content_is_blank( $content ) ) {
+				return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
+			}
 			$update_data['content']       = $content;
 			$update_data['content_plain'] = jetonomy_content_to_plain( $content );
 		}

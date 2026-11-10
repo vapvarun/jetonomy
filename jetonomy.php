@@ -1046,6 +1046,23 @@ function jetonomy_content_to_plain( string $content ): string {
 }
 
 /**
+ * Whether sanitized body HTML has nothing a reader would see: no text once the
+ * tags are gone (spaces, &nbsp; and zero-width spaces count as nothing) and no
+ * image or embed. "<p> </p>" is blank; an image on its own is not.
+ *
+ * @since 2.0.7
+ *
+ * @param string $content Sanitized body HTML.
+ * @return bool
+ */
+function jetonomy_content_is_blank( string $content ): bool {
+	if ( preg_match( '/<(?:img|video|audio|iframe|embed|object)\b/i', $content ) ) {
+		return false;
+	}
+	return (bool) preg_match( '/^[\s\x{00A0}\x{200B}\x{FEFF}]*$/u', jetonomy_content_to_plain( $content ) );
+}
+
+/**
  * The first paragraph of a content blob, as plain text.
  *
  * The feed-space derived title used to strip the WHOLE body and take the

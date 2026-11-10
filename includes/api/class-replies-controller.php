@@ -254,7 +254,7 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
-		if ( empty( $content ) ) {
+		if ( jetonomy_content_is_blank( $content ) ) {
 			return $this->validation_error( sprintf( /* translators: %s: the singular Reply label. */ __( '%s content is required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) );
 		}
 
@@ -460,7 +460,7 @@ class Replies_Controller extends Base_Controller {
 		$raw_content = $request->get_param( 'content' );
 		if ( null !== $raw_content ) {
 			$content = jetonomy_sanitize_editor_content( (string) $raw_content );
-			if ( empty( $content ) ) {
+			if ( jetonomy_content_is_blank( $content ) ) {
 				return $this->validation_error( sprintf( /* translators: %s: the singular Reply label. */ __( '%s content is required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) );
 			}
 
