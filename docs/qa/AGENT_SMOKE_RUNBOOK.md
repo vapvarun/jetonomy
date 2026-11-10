@@ -596,7 +596,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.reply-quote
 **Covers:** templates/partials/reply-card.php, assets/js/view.js, assets/js/composer.js
-**Verified:** 0991f3be pro:f684443
+**Verified:** 74528ddd pro:69d28a8
 **What to verify:** a member can quote an existing reply and the quoted content is visually preserved as a blockquote in the new reply. Choosing Reply on a reply shows "Replying to <name>" with the first line of that reply quoted and linking back to it.
 
 **Checks:**
@@ -643,7 +643,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.vote
 **Covers:** includes/api/class-votes-controller.php, includes/models/class-vote.php, assets/js/view.js, templates/views/single-post.php, templates/partials/reply-card.php, assets/js/lib/optimistic.js, assets/js/jetonomy-rest.js, includes/api/class-rest-auth.php, includes/permissions/class-rate-limiter.php, templates/partials/feed-card.php, pro:includes/extensions/reactions/*.php, pro:assets/js/pro-view.js
-**Verified:** fb73aeda pro:e3b90b6
+**Verified:** 74528ddd pro:69d28a8
 **What to verify:** a member can vote up/down on posts and replies, the score updates on screen, the vote persists across page reloads, and re-clicking the same vote toggles it off. The active vote button reads "Remove your upvote" / "Remove your downvote", and every vote on a topic or reply shows one toast, "Vote added" or "Vote removed" (never two). A member at the daily vote limit can still take a vote back. A logged-in member who may not vote sees the score as a disabled control that explains why on hover or click, not a button that does nothing. Taking back a vote removes the author's grouped "X people voted" notification once no votes remain; it never shows "0 people voted".
 
 **Checks:**
@@ -801,7 +801,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.share
 **Covers:** templates/views/single-post.php, assets/js/view.js, assets/js/lib/smart-dropdown.js, includes/api/class-oembed-controller.php
-**Verified:** 0991f3be pro:f684443
+**Verified:** 74528ddd pro:69d28a8
 **What to verify:** the Share control on a topic opens a dropdown anchored to the button, offers Copy Link + X + Facebook + LinkedIn, Copy Link actually writes the URL to the clipboard, external links open on the right platform, and the dropdown closes when the user scrolls or clicks outside.
 
 **Checks:**
@@ -1990,7 +1990,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.reactions
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, assets/js/view.js, pro:includes/extensions/reactions/*.php, pro:assets/js/pro-view.js
-**Verified:** fb73aeda pro:e3b90b6
+**Verified:** 74528ddd pro:69d28a8
 **What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; hovering, focusing (Tab) or long-pressing a reaction shows who chose it ("Like: Maya, Bob and 3 others", up to 10 names), Escape closes it, a quick tap still toggles, and the list refreshes after you react. Removing must work on a reaction you just added, *without reloading the page* - that chip is built in JS and is exactly the one a person is most likely to click again to undo.
 
 **Checks:**
