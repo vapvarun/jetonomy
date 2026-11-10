@@ -1,11 +1,11 @@
 {
   "journey": "C.member.share",
-  "free": "0991f3be",
-  "pro": "f684443",
-  "walked_at": "2026-11-10T08:12:13.428570Z",
-  "walker": "release 2.0.7 free walk wave 7 (Sonnet)",
+  "free": "74528ddd",
+  "pro": "69d28a8",
+  "walked_at": "2026-11-10T11:50:13.900717Z",
+  "walker": "release 2.0.7 free walk wave 11 (Sonnet)",
   "env": {
-    "mode": "free stack (Free; Pro as noted)",
+    "mode": "free stack, Pro inactive",
     "site": "http://localhost:8912",
     "themes": [
       "reign-theme"
@@ -19,58 +19,59 @@
       "dark"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
+    "locale": "en_US (ar for RTL checks)"
   },
   "checks": {
     "c-member-share.1": {
       "result": "pass",
-      "evidence": "bob on /community/s/feature-requests/t/let-members-schedule-posts/ clicked Share (aria-expanded true) -> .jt-share-dropdown anchored directly above the button (x 341-527 vs button 435-527) with Copy link, Twitter / X, Facebook, LinkedIn.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-share-open.png"
+      "evidence": "bob on /community/s/feature-requests/t/dark-mode-for-the-community-on-phones/ clicked Share (aria-expanded true) -> .jt-share-dropdown directly above the button (dropdown bottom 832 vs button top 837, x 340-527 over button 435-527) listing Copy link, Twitter / X, Facebook, LinkedIn.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh1-open.png"
     },
     "c-member-share.2": {
       "result": "pass",
-      "evidence": "Copy link -> navigator.clipboard.readText() returned the exact topic URL and the status toast 'Link copied' appeared (dropdown closes).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-share-copied.png"
+      "evidence": "Copy link -> navigator.clipboard.readText() returned the exact topic URL and the status toast 'Link copied' showed (clipboard read in Playwright; address-bar paste is the same string).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh2-copied.png"
     },
     "c-member-share.3": {
       "result": "pass",
-      "evidence": "Each social item opened a new tab: x.com intent/tweet?url=<encoded topic URL>&text=Let+members+schedule+posts, facebook.com/sharer?u=<topic URL>, linkedin shareArticle?url=<encoded topic URL> (X and LinkedIn bounce through their login redirect which keeps the encoded intent)."
+      "evidence": "Each item opened a new tab: x.com intent/tweet?url=<encoded topic URL>&text=Dark+mode+for+the+community+on+phones (via login redirect), facebook.com/sharer/sharer.php?u=<encoded URL>, linkedin shareArticle?url=<encoded URL> (via login redirect). Tabs closed after."
     },
     "c-member-share.4": {
       "result": "pass",
-      "evidence": "Dropdown closed on click outside (1200,300) and on mouse-wheel scroll of 200px."
+      "evidence": "Open -> mouse wheel scroll closed it; reopened -> click on empty page area closed it."
     },
     "c-member-share.5": {
       "result": "pass",
-      "evidence": "Escape closed it; aria-expanded false and document.activeElement is the .jt-share-btn."
+      "evidence": "Open -> Escape closed it, aria-expanded=false and document.activeElement is the .jt-share-btn."
     },
     "c-member-share.6": {
       "result": "pass",
-      "evidence": "Guest on the public topic: same four items, Copy link puts the URL on the clipboard and shows 'Link copied'."
+      "evidence": "Guest (cookies cleared, isLoggedIn empty) on the same public topic: Share opens the same four items; Copy link wrote the topic URL and showed 'Link copied'; Facebook opened sharer with the topic URL.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh6-guest.png"
     },
     "c-member-share.7": {
       "result": "pass",
-      "evidence": "bob on a Partner Program topic: same dropdown, link is the private URL; as guest that URL returns 404 'Page not available' with no topic text, so Share never exposes the body.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-share-private.png"
+      "evidence": "bob (member) on the private Partner Program topic /community/s/partner-program/t/referral-fees-for-2026-what-changed/: Share offers the same private URL. A guest opening that URL gets 404 with no topic text, and GET /oembed for it is 404 jetonomy_oembed_not_found, so the body is never exposed.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh7-partner.png"
     },
     "c-member-share.8": {
       "result": "pass",
-      "evidence": "GET /oembed?url=<public topic> as guest -> 200 with title and author_name; Partner Program topic -> 404 jetonomy_oembed_not_found; Moderators' Room (hidden) topic -> 404 jetonomy_oembed_not_found."
+      "evidence": "Guest GET /wp-json/jetonomy/v1/oembed?url=<public topic> -> 200 with title 'Dark mode for the community on phones' and author_name Sofia Romano; the private Partner Program topic, the hidden Moderators' Room topic and a non-existent slug each -> 404 jetonomy_oembed_not_found."
     },
     "c-member-share.9": {
       "result": "pass",
-      "evidence": "Grace-style 159-character title (topic 247): dropdown fully in view (340-527 x 488-638 of 1440x900); X intent carries the full encoded title in text=, Facebook and LinkedIn carry the URL.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-share-long.png"
+      "evidence": "bob on Grace's 159-char title topic (247): dropdown fully in view (x 340-527, y 488-638 in 1440x900); X link carries the full title as text= and LinkedIn the encoded URL, both well-formed.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh9-long.png"
     },
     "c-member-share.10": {
       "result": "pass",
-      "evidence": "390px, html dir=rtl (Arabic): dropdown rect left 8 right 195 top 429 bottom 580 inside 390x844 viewport; the button is 70x40.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-share-390-rtl.png"
+      "evidence": "Site language ar (dir=rtl) at 390x844: dropdown x 8-195 inside the viewport with no horizontal scroll (docSW 390). Stress test pinning the button to the left edge (x 8-195) and to the right edge (x 195-382): the dropdown stays inside 0-390 both times.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh10-edge.png"
     },
     "c-member-share.11": {
       "result": "pass",
-      "evidence": "navigator.clipboard.writeText forced to reject (NotAllowedError) and execCommand off: Copy link shows 'Could not copy the link. Copy it from the address bar.' instead of failing silently.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-share-denied.png"
+      "evidence": "Clipboard writeText rejected (NotAllowedError), execCommand false, context offline: Copy link -> status message 'Could not copy the link. Copy it from the address bar.' instead of a silent failure.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/sh11-denied.png"
     }
   },
   "proposed_checks": []

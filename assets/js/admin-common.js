@@ -2245,6 +2245,12 @@
 		var opener = active.opener;
 		active = null;
 		document.removeEventListener( 'keydown', onKey, true );
+		// The observer runs after the caller's own code: when that code has
+		// already opened the next dialog (the "Badge awarded." alert), focus is
+		// in it and must stay there, or the message is never announced.
+		var now = document.activeElement;
+		var other = now && now.closest ? now.closest( '[aria-modal="true"]' ) : null;
+		if ( other && ! el.contains( other ) ) { return; }
 		if ( opener && opener.focus ) { opener.focus(); }
 	}
 
