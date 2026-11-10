@@ -32,6 +32,7 @@ class NotFoundBackLinkTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( esc_url( \Jetonomy\base_url() ), $this->render() );
 	}
 
+	/** @covers-existing Ordinary empty states never had a back link; this pins that only 404s gain one. */
 	public function test_an_ordinary_empty_state_gets_no_link(): void {
 		status_header( 200 );
 		$this->assertStringNotContainsString( 'Back to the community', $this->render() );

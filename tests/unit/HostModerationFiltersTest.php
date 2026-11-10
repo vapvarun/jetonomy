@@ -53,6 +53,7 @@ class HostModerationFiltersTest extends WP_UnitTestCase {
 		$this->assertTrue( BlockedUser::is_blocked_between( $blocked, $blocker ), 'Either direction closes a conversation.' );
 	}
 
+	/** @covers-existing Jetonomy's own blocks already counted; this pins them beside the new host filter. */
 	public function test_own_blocks_still_count(): void {
 		$blocker = self::factory()->user->create();
 		$blocked = self::factory()->user->create();

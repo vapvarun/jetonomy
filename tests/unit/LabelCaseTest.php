@@ -19,6 +19,7 @@ class LabelCaseTest extends WP_UnitTestCase {
 		add_filter( 'locale', static fn() => $locale );
 	}
 
+	/** @covers-existing English already lowercased labels mid-sentence; this pins it beside the new German rule. */
 	public function test_english_lowercases_mid_sentence(): void {
 		$this->assertSame( 'members', \Jetonomy\jetonomy_label( 'member', true, true ) );
 	}

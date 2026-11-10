@@ -57,6 +57,7 @@ class AccessRuleGrantsEditTest extends WP_UnitTestCase {
 		$this->assertSame( 'member', AccessRule::find( (int) $res->get_data()['data']->id )->space_role );
 	}
 
+	/** @covers-existing A requested role was already capped by the grant; this pins it while grants become editable. */
 	public function test_a_requested_role_never_outranks_the_grant(): void {
 		$id = AccessRule::create( array( 'space_id' => $this->space_id, 'rule_type' => 'logged_in', 'grants' => 'read', 'space_role' => 'admin' ) );
 		$this->assertSame( 'viewer', AccessRule::find( $id )->space_role );
