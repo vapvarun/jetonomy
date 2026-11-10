@@ -264,7 +264,7 @@ class Abilities {
 						),
 						'after'    => array(
 							'type'        => 'integer',
-							'description' => 'Cursor: post ID to start after (for pagination).',
+							'description' => 'Offset: how many posts to skip. For the next page pass the previous after plus the number of items returned (sorts by votes and activity cannot page by id).',
 							'default'     => 0,
 						),
 						'sort'     => array(
@@ -396,7 +396,7 @@ class Abilities {
 						),
 						'after'   => array(
 							'type'        => 'integer',
-							'description' => 'Cursor: reply ID to start after.',
+							'description' => 'Offset: how many replies to skip. For the next page pass the previous after plus the number of items returned.',
 							'default'     => 0,
 						),
 						'sort'    => array(
