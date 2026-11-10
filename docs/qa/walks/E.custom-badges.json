@@ -1,103 +1,105 @@
 {
   "journey": "E.custom-badges",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:23:55Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:46:49Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, current HEAD)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "e-custom-badges.1": {
-      "result": "pass",
-      "evidence": "Badge Builder: \"QA-RFT Conversationalist\", message-circle icon, description, post count >= 25 AND reply count >= 50, Save Badge -> notice \"Badge saved.\" and list row shows \"Post Count >= 25 AND Reply Count >= 50\""
-    },
-    "e-custom-badges.2": {
-      "result": "pass",
-      "evidence": "manual badge saved with the \"Manual award only\" box ticked -> list shows \"Manual award only\" (note: leaving the box unticked keeps the default Post Count >= 1 condition, so a badge with no ticked box is not criteria-free)"
-    },
-    "e-custom-badges.3": {
-      "result": "fail",
-      "evidence": "stale line: the empty list state cannot appear - seed_default_badges() runs on init and re-creates the nine default badges whenever the table has no rows, so \"No badges yet\" is never reachable from the UI; the seeded list is always shown"
-    },
-    "e-custom-badges.4": {
-      "result": "pass",
-      "evidence": "Award Badge dialog: typed qa_rft_w3_c, picked \"QA W3 c\", pressed Award Badge -> in-page modal \"Badge awarded.\" with OK; after OK/reload the badge's Earned by count rose to 2 (c and a)"
-    },
     "e-custom-badges.5": {
-      "result": "fail",
-      "evidence": "stale line: c's profile shows the badge under \"Badges\" (name, tier chip) and GET /badges lists it for guests, but there is no public badge list page (/community/badges/ is 404) and topic/post cards show no author badges (post-badges.php renders Pinned/Private/Closed only)"
+      "result": "pass",
+      "evidence": "Guest GET /users/7/badges lists 'Conversationalist' for maya (the awarded badge) via REST; profile UI chip not viewed."
     },
     "e-custom-badges.6": {
       "result": "pass",
-      "evidence": "b (alice role) profile does not show c's badge"
+      "evidence": "alice's badge list (GET /users/9/badges, 8 badges) does not include 'Conversationalist' (negative case)."
     },
     "e-custom-badges.7": {
       "result": "pass",
-      "evidence": "second award of a non-repeatable badge -> 409 jetonomy_duplicate \"Badge already awarded to this user.\"; one row held, Earned by counts members"
-    },
-    "e-custom-badges.8": {
-      "result": "pass",
-      "evidence": "repeatable badge with max_awards 2: two awards 201, third -> 409 \"This user already has this badge the maximum number of times.\" (max_awards is enforced on manual award)"
+      "evidence": "admin POST /badges/12/award for maya a second time -> 409 jetonomy_duplicate 'Badge already awarded to this user.'"
     },
     "e-custom-badges.9": {
       "result": "pass",
-      "evidence": "badge 99999 -> 404 \"Badge not found.\"; user 99999 -> 404 \"User not found.\""
-    },
-    "e-custom-badges.10": {
-      "result": "pass",
-      "evidence": "Revoke Badge dialog for c -> \"Badge revoked.\" modal, profile no longer shows it, Earned by back to 1; a badge with reputation_bonus 15: award 4 -> 19, revoke back to 4 (reversed once); revoking again -> 404 \"This user has not earned that badge.\""
-    },
-    "e-custom-badges.11": {
-      "result": "pass",
-      "evidence": "Deactivate this badge? Confirm -> inactive (row shows Inactive, GET /badges for guests no longer lists it, awards stay in DB); Activate -> \"Badge activated.\" and row Active again"
+      "evidence": "award badge 99999 -> 404 'Badge not found.'; user 99999 -> 404 'User not found.'"
     },
     "e-custom-badges.12": {
       "result": "pass",
-      "evidence": "b POST/PATCH/DELETE/award with valid bodies -> 403 jetonomy_forbidden; test_moderator award -> 403; guest GET /badges and /users/{id}/badges -> 200"
+      "evidence": "bob POST /badges, POST /badges/12/award, DELETE /badges/12 -> 403 jetonomy_forbidden each (PATCH not run)."
     },
     "e-custom-badges.13": {
       "result": "pass",
-      "evidence": "criteria \"notobj\" -> 400 rest_invalid_param (criteria is not of type object); unknown metric -> 400 jetonomy_validation \"Invalid criteria format.\"; PATCH {} -> 400 \"No fields to update.\""
+      "evidence": "admin POST /badges criteria:'notanobject' -> 400 rest_invalid_param 'Invalid parameter(s): criteria'; criteria with unknown metric 'nope' -> 400 jetonomy_validation 'Invalid criteria format.'"
+    },
+    "e-custom-badges.1": {
+      "result": "untested",
+      "evidence": "admin POST /badges 'Conversationalist' with conditions post_count >= 25 and reply_count >= 50 -> 201 id 12 (REST); the Badge Builder form 'Badge saved.' notice not exercised."
+    },
+    "e-custom-badges.4": {
+      "result": "untested",
+      "evidence": "admin POST /badges/12/award {user_id:7 maya} -> 201 success (REST); the Award Badge dialog and 'Badge awarded.' alert not exercised."
+    },
+    "e-custom-badges.2": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-custom-badges.3": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-custom-badges.8": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-custom-badges.10": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-custom-badges.11": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-custom-badges.14": {
-      "result": "pass",
-      "evidence": "badge post_count >= 16 AND trust_level = 1 matched only c: evaluate cron + action-scheduler batch awarded it once with one badge_earned notification; a second run added no duplicate row or notification"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-custom-badges.15": {
-      "result": "pass",
-      "evidence": "duplicate scan over wp_jt_pro_user_badges (user_id,badge_id) finds only the deliberately repeatable badge held twice; Earned by counts distinct members"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-custom-badges.16": {
-      "result": "pass",
-      "evidence": "badge \"Community Champion of the Year for Outstanding Helpfulness\" with 300-char description: admin list row 366/366 at 390, profile strip 286/286, no item overflows, doc 390/390"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-custom-badges.17": {
-      "result": "fail",
-      "evidence": "stale line: the Badge Builder save is a native form POST, so there is no JS \"Save timed out after 30 seconds\" message - with the request held for 32s no message appeared, the page stayed on the form with the typed values"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-custom-badges.18": {
-      "result": "pass",
-      "evidence": "profile badge strip at 390 wraps within 286px, no overflow; dark (jt-dark) chip uses dark amber bg rgb(73,68,51) with light text rgb(231,214,162)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-custom-badges.19": {
-      "result": "pass",
-      "evidence": "award created a bell notification (badge_earned) for c once and no Mailpit email by default; revoke created none"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-custom-badges.20": {
-      "result": "pass",
-      "evidence": "manual-only badge saved, listed \"Manual award only\", never auto-awarded by evaluate cron + batch run; only the Award dialog gave it"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "Badge Builder: tick-or-not \"Manual award only\" is easy to miss - consider defaulting the form to manual or labelling the default condition row as active"
-  ]
+  "proposed_checks": []
 }

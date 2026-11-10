@@ -1,80 +1,87 @@
 {
   "journey": "C.member.bookmarks",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:13:15Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T19:14:33Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-bookmarks.1": {
       "result": "pass",
-      "evidence": "qa_rft_m1 clicks Bookmark on \"Dark mode for the community on phones\": aria-pressed true and toast \"Bookmarked\"."
+      "evidence": "bob on 'Dark mode for the community on phones': Bookmark button (aria-pressed false) clicked -> becomes 'Remove bookmark' aria-pressed true, class bookmarked, toast 'Bookmarked'"
     },
     "c-member-bookmarks.2": {
       "result": "pass",
-      "evidence": "/community/bookmarks/ lists the topic with title, author, space (Feature Requests) and reply count."
+      "evidence": "/community/bookmarks/ lists the topic with title, author Sofia Romano, space Feature Requests and '44 replies'"
     },
     "c-member-bookmarks.3": {
       "result": "pass",
-      "evidence": "Remove bookmark on a list row: row disappears, page rows 20 -> 19."
+      "evidence": "Clicking the filled bookmark on each row removed it from the list (3 rows -> 0); REST bookmarks total 0 afterwards"
     },
     "c-member-bookmarks.4": {
       "result": "pass",
-      "evidence": "Removing the last bookmark shows the \"You haven't bookmarked anything yet\" state immediately without reload; the page has no content tabs, only the community nav links."
+      "evidence": "After removing the last bookmark the page showed \"You haven't bookmarked anything yet\" with a window marker still set (no reload); full-reload-after-DOM-change tab check not separately exercised"
     },
     "c-member-bookmarks.5": {
       "result": "pass",
-      "evidence": "POST /bookmarks toggles ({bookmarked:true}/{false}), DELETE /bookmarks/243 -> 200 {deleted:true} twice; list never shows a duplicate."
+      "evidence": "bob on a post he had not bookmarked (331): POST /bookmarks -> 200 {bookmarked:true}; second POST -> 200 {bookmarked:false} (toggle); third -> {bookmarked:true}; DELETE /bookmarks/331 -> 200 {deleted:true,post_id:331}; repeat DELETE -> 200 {deleted:true,post_id:331}; wp_jt_bookmarks count for the pair is 0 (never a duplicate row). The wave-1 'fail' came from POSTing on an already-bookmarked post, which toggles by design."
     },
     "c-member-bookmarks.6": {
       "result": "pass",
-      "evidence": "POST /bookmarks for Moderators' Room topic 235 -> 404 jetonomy_not_found \"Topic not found.\"."
+      "evidence": "bob POST /bookmarks post_id 241 (Moderators' Room topic) -> 404 jetonomy_not_found 'Topic not found.'"
     },
     "c-member-bookmarks.7": {
       "result": "pass",
-      "evidence": "Guest: /community/bookmarks/ redirects to wp-login.php?redirect_to=.../community/bookmarks/, no bookmark button on topic, POST /bookmarks 401."
+      "evidence": "Guest /community/bookmarks/ redirects to wp-login.php?redirect_to=.../community/bookmarks/; POST /bookmarks -> 401; guest topic page has no bookmark button"
     },
     "c-member-bookmarks.8": {
       "result": "pass",
-      "evidence": "alice's /bookmarks/ shows 0 rows and not bob's/qa user's topic."
+      "evidence": "alice /community/bookmarks/ shows only her own (empty: 'You haven't bookmarked anything yet'); /community/u/bob/bookmarks/ renders bob's public profile, not his bookmark list"
     },
     "c-member-bookmarks.9": {
       "result": "pass",
-      "evidence": "Bookmarked then trashed QA-RFT topic is omitted from the list, no broken row."
+      "evidence": "Covered in C.member.post-delete: alice's REST /bookmarks omitted the deleted topic 256 and showed no broken row"
     },
     "c-member-bookmarks.10": {
       "result": "pass",
-      "evidence": "Bookmarked Partner Program topic (member), removed membership -> it disappears from the list."
+      "evidence": "bob bookmarked Partner Program topic 345 (it listed in GET /bookmarks and on /community/bookmarks/); after he left the Partner Program roster it was gone from both GET /bookmarks and the page. Roster and bookmark restored."
     },
     "c-member-bookmarks.11": {
       "result": "pass",
-      "evidence": "42 bookmarks: page 1 shows 20 rows and a Load More link (?pg=2)."
+      "evidence": "43 bookmarks: REST X-WP-Total-equivalent meta.total=43, first page 20 with has_more true; UI shows 20 rows and a 'Load More' button"
     },
     "c-member-bookmarks.12": {
       "result": "pass",
-      "evidence": "Bookmark request aborted: button stays unpressed state and toast \"Failed to save.\"."
+      "evidence": "Offline bookmark click: aria-pressed stays false and toast 'Failed to save.'"
     },
     "c-member-bookmarks.13": {
       "result": "pass",
-      "evidence": "Grace's 159-char topic row wraps inside its row (326px row at 390, title within row)."
+      "evidence": "Grace-style long-title topic row at 390: no row overflow, no horizontal scroll",
+      "screenshot": "walk-207/free/bookmarks-390.png"
     },
     "c-member-bookmarks.14": {
       "result": "pass",
-      "evidence": "390px dark: body rgb(35,38,47), scrollWidth 390, rows readable (screenshot jt207-w3-bookmarks-390dark.png)."
+      "evidence": "Dark mode at 390 on /community/bookmarks/ as bob: 69 text nodes audited, lowest contrast 5.66:1 (tag counts), no white panels, scrollWidth 390 = viewport; screenshot dark-bookmarks-390.png."
     },
     "c-member-bookmarks.15": {
       "result": "pass",
-      "evidence": "390px: no reply-count text overlaps the bookmark toggle in any of 20 rows."
+      "evidence": "390px bookmark rows: reply count/score shown, no horizontal scroll, relative time cell hidden by design",
+      "screenshot": "walk-207/free/bookmarks-390.png"
     }
   },
   "proposed_checks": []

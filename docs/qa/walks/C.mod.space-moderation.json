@@ -1,148 +1,149 @@
 {
   "journey": "C.mod.space-moderation",
-  "free": "7bbd544be994d1c528a5f9c62ba86087ec74d315",
-  "walked_at": "2026-10-21T13:10:00Z",
-  "walker": "lane B3",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:56:31Z",
+  "walker": "release 2.0.7 free wave-3 walk (Sonnet)",
   "env": {
+    "mode": "free stack (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
       390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ]
   },
   "checks": {
     "c-mod-space-moderation.1": {
       "result": "pass",
-      "evidence": "test_moderator on /community/s/bug-reports/mod/: 5 pending flags, 5 awaiting approval, only Bug Reports items (DB: all 5 flags are on posts in space 2995), each card shows topic title and the start of the flagged text with reporter and reason",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/spacemod-1440.png",
-      "carried_forward": true
+      "evidence": "test_moderator on /community/s/bug-reports/mod/ (with 6 fresh flags in Bug Reports plus pending flags in Help Desk, Announcements-class spaces elsewhere): only Bug Reports' 6 topic flags, each with the topic title and the start of the flagged text, reporter and reason; no Help Desk items. Screenshot w3-spacemod-1440.png"
     },
     "c-mod-space-moderation.2": {
       "result": "pass",
-      "evidence": "Remove (flag 869) and Dismiss (flag 872) from the space queue -> POST /spaces/2995/moderation/flags/{id}/resolve 200 each, cards leave. Reporter notification once carried from the earlier walk."
+      "evidence": "Remove (modal 'Remove the topic ...? It moves to trash and its author is notified.' > Confirm) -> POST /spaces/11/moderation/flags/30/resolve 200 and the card left; Dismiss x5 -> POST .../resolve {status:dismissed} 200 each. Reporters got exactly one 'flag_resolved' notification per flag (alice 320, 319; bob 315-318), the topic author got a 'removed by a moderator' notice."
     },
     "c-mod-space-moderation.3": {
-      "result": "fail",
-      "evidence": "Reproduced at 7bbd544b: on a fresh /s/bug-reports/mod/ load Flags -> Trash -> Awaiting approval -> Flags stay soft (window marker survives), but after Dismiss (and earlier after Remove) the next tab click is a full page load (marker lost); Trash then shows the removed topic with Restore. Suspected cause: resolveFlag() in assets/js/view.js (around line 3686-3735) mutates server-rendered region nodes (removes card/tab count, replaces container) and the tab navigation then falls back to a full load."
+      "result": "pass",
+      "evidence": "Removed a flagged topic then clicked the Trash tab without reloading: URL ?view=trash, 'Dark mode toggle resets after a full page reload' listed 'In trash' with View / Restore / Delete permanently. Flags -> Awaiting approval -> Trash -> Flags tab switches kept a window marker set before navigation (window.__softmark stayed 1), i.e. soft navigation."
     },
     "c-mod-space-moderation.4": {
       "result": "pass",
-      "evidence": "Dismissed one by one: subtitle 4 -> 3 -> 2 -> '1 pending flag' -> '0 pending flags', tab 'Flags 4/3/2/1' then plain 'Flags' (count gone), Dismiss buttons 4,3,2,1,0",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/spacemod-zero.png",
-      "carried_forward": true
+      "evidence": "Dismissing flags one by one: '5 pending flags / Flags 5' -> 4 -> 3 -> 2 -> '1 pending flag / Flags 1' -> '0 pending flags' with the tab reading 'Flags' (count gone) and 'No pending flags. The community is clean!'. Subtitle, red badge and tab count fell together at each step. Screenshot w3-spacemod-empty.png"
     },
     "c-mod-space-moderation.5": {
       "result": "pass",
-      "evidence": "45 flagged topics seeded in Bug Reports: subtitle '45 pending flags', page 1 has 25 cards with Next -> ?pg=2, page 2 has 20 and a Previous link; 390px no sideways scroll, Dismiss button 40px",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/spacemod-p2-1440.png",
-      "carried_forward": true
+      "evidence": "Seeded 45 flagged replies plus 4 flagged topics in Bug Reports (the queue shows one card per flagged item): '49 pending flags', page 1 shows 25 cards with a Next link to ?pg=2, page 2 shows the remaining 24 with Previous. Screenshot w3-spacemod-page2.png"
     },
     "c-mod-space-moderation.6": {
       "result": "pass",
-      "evidence": "Controls on the space /mod/ page are View, Remove, Dismiss only; no restrict, silence, ban or mute control anywhere in the page",
-      "carried_forward": true
+      "evidence": "Queue page controls are only View / Remove / Dismiss and the three tabs; no ban, silence or restrict control anywhere on the page."
     },
     "c-mod-space-moderation.7": {
       "result": "pass",
-      "evidence": "test_editor (Help Desk space admin) opens /community/s/help-desk/mod/: queue shows with Remove/Dismiss; the /members/ screen carries Ban, Mute, Silence and restrict controls, the /mod/ page has none",
-      "carried_forward": true
+      "evidence": "test_editor (Help Desk space admin, WP role subscriber) opened /community/s/help-desk/mod/: 2 pending flags listed, no restriction controls there; /community/s/help-desk/members/ carries 'Ban from space' controls."
     },
     "c-mod-space-moderation.8": {
       "result": "pass",
-      "evidence": "alice (space-only moderator of Bug Reports) opened /community/s/help-desk/mod/ -> 403 page 'You do not have permission to moderate this space.', no items listed."
+      "evidence": "bugmod (WP role subscriber, moderator row only in Bug Reports; the runbook's alice example works the same) opened /community/s/help-desk/mod/: 'You do not have permission to moderate this space.' and no item; his own Bug Reports /mod/ page loads the queue."
     },
     "c-mod-space-moderation.9": {
       "result": "pass",
-      "evidence": "alice POST /spaces/3004/moderation/trash/post/9376 (Help Desk) -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'; no change made."
+      "evidence": "bugmod POST /spaces/20/moderation/trash/post/242 (Help Desk) -> 403 jetonomy_forbidden; post 242 still publish."
     },
     "c-mod-space-moderation.10": {
       "result": "pass",
-      "evidence": "bob GET /spaces/39/moderation/flags -> 404 jetonomy_not_found 'Space not found.'",
-      "carried_forward": true
+      "evidence": "bob GET /spaces/43/moderation/flags (hidden Moderators' Room) -> 404 jetonomy_not_found 'Space not found.'."
     },
     "c-mod-space-moderation.11": {
       "result": "pass",
-      "evidence": "bob GET /community/s/bug-reports/mod/ -> 403 page 'You do not have permission to moderate this space.', no queue or buttons",
-      "carried_forward": true
+      "evidence": "bob opened /community/s/bug-reports/mod/: 'You do not have permission to moderate this space.', no queue."
     },
     "c-mod-space-moderation.12": {
       "result": "pass",
-      "evidence": "Guest GET /community/s/bug-reports/mod/ -> 302 to wp-login.php?redirect_to=.../community/s/bug-reports/mod/",
-      "carried_forward": true
+      "evidence": "Logged out /community/s/bug-reports/mod/ redirected to wp-login.php?redirect_to=.../mod/."
     },
     "c-mod-space-moderation.13": {
       "result": "pass",
-      "evidence": "finn (silenced, not a moderator) POST trash -> 403 jetonomy_forbidden; finn given a temporary moderator row in Bug Reports -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.', topic still published (row restored to member)",
-      "carried_forward": true
+      "evidence": "finn (silenced, moderator of nothing) POST /spaces/11/moderation/trash/post/316 and /spaces/20/.../242 -> 403 jetonomy_forbidden, both posts unchanged. bugmod (a real moderator) silenced via Restriction::ban: POST trash and flag resolve in Bug Reports -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'. Silence lifted afterwards."
     },
     "c-mod-space-moderation.14": {
       "result": "pass",
-      "evidence": "bob on the closed Announcements topic: 'Closed' badge, notice 'This topic is closed and cannot receive new replies.', no .jt-editor rendered."
+      "evidence": "bob on the closed 'Scheduled maintenance on Saturday: what to expect' (Announcements): 'Closed' badge, notice 'This topic is closed and cannot receive new replies.', 0 editor/composer elements. Screenshot w3-closed-bob.png"
     },
     "c-mod-space-moderation.15": {
       "result": "pass",
-      "evidence": "bob POST /posts/5875/replies -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'; 0 replies stored",
-      "carried_forward": true
+      "evidence": "bob POST /posts/250/replies -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'; 0 replies by bob stored."
     },
     "c-mod-space-moderation.16": {
       "result": "pass",
-      "evidence": "bob upvote on closed topic 5875 in the UI: aria-pressed false -> true, score 0 -> 1, POST /posts/5875/vote 200, still pressed/1 after reload; second click toggled back to 0."
+      "evidence": "bob POST /posts/250/vote {value:1} -> 200 {action:created,score:1}; DB vote_score 0 -> 1; after reload the up-vote button reads 'Remove your upvote' (aria-pressed true) and score 1."
     },
     "c-mod-space-moderation.17": {
       "result": "pass",
-      "evidence": "bob Bookmark on the closed topic: POST /bookmarks 200, button aria-pressed true, still true after reload, topic listed on /community/bookmarks/; toggled off afterwards."
+      "evidence": "bob clicked Bookmark in the UI: POST /bookmarks {post_id:250} 200, button aria-pressed true, still pressed after reload, and the topic is listed (with Closed badge) on /community/bookmarks/. (REST body key is post_id.)"
     },
     "c-mod-space-moderation.18": {
       "result": "pass",
-      "evidence": "alice Share on the closed topic: dropdown Copy link / Twitter X / Facebook / LinkedIn; Escape closes it and returns focus to Share; scrolling closes it; Copy link closes it."
+      "evidence": "alice, Share on the closed topic: dropdown shows Copy link, Twitter / X, Facebook, LinkedIn; Copy link -> toast 'Link copied' and the clipboard holds the topic URL; scrolling removes the dropdown. Screenshot w3-share-closed.png"
     },
     "c-mod-space-moderation.19": {
       "result": "pass",
-      "evidence": "priya Report -> modal 'Why are you reporting this topic?' Spam -> toast 'Reported. Thank you.', POST /flags 201; a second reporter's flag shows in GET /spaces/2989/moderation/flags for the moderator",
-      "carried_forward": true
+      "evidence": "alice, Report (icon button) > modal reasons Spam / Offensive / Off-topic / Harassment / Other > Spam > Report: toast 'Reported. Thank you.', POST /flags 201; test_moderator's Announcements /mod/ then showed '1 pending flag' for that topic, reported by Alice Chen."
     },
     "c-mod-space-moderation.20": {
       "result": "pass",
-      "evidence": "test_moderator on closed topic: notice 'This topic is closed.' + 'As a moderator, you can still take part.', .jt-editor composer present, POST reply -> 201, topic still is_closed 1",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/closed-mod-composer.png",
-      "carried_forward": true
+      "evidence": "test_moderator on the closed topic: composer present with 'This topic is closed. As a moderator, you can still take part.'; Post Reply -> POST /posts/250/replies 201; after reload the Closed badge is still there."
     },
     "c-mod-space-moderation.21": {
       "result": "pass",
-      "evidence": "test_editor on Help Desk topic: Close topic -> Closed badge and 'Reopen topic' appear (POST /close 200), Reopen topic -> badge gone and 'Close topic' back; bob reply while closed 403 jetonomy_post_closed, after reopen 201",
-      "screenshot": "/Users/vapvarun/Local Sites/forums/app/qa-artifacts/walk-B/close-reopen.png",
-      "carried_forward": true
+      "evidence": "test_editor (Help Desk admin): More options > Close topic -> Closed badge appears, menu now reads Reopen topic, bob sees the badge and no composer; Reopen topic -> badge gone and bob's reply composer is back."
     },
     "c-mod-space-moderation.90": {
       "result": "pass",
-      "evidence": "UI, two contexts (test_moderator, admin) on the same open topic: first Close, stale tab (still showing 'Close topic') Close -> both POST /close 200, topic stays closed ('Reopen topic' after reload). Same for Pin: stale Pin 200, still pinned ('Unpin from space'). Topic restored."
+      "evidence": "admin and test_moderator held topic 242 open; admin Close, then the stale tab (still labelled 'Close topic') Close: both POST /posts/242/close {closed:true} 200, DB is_closed stays 1. Same for Pin to space: both POST /pin {pinned:true} 200, is_sticky stays 1. Two direct REST close {closed:true} calls both 200 with the topic closed. (Fixture reset afterwards.)"
     },
     "c-mod-space-moderation.91": {
       "result": "pass",
-      "evidence": "Space-only moderator (subscriber qawalkb_new, moderator row in Bug Reports): POST trash in Help Desk 403 jetonomy_forbidden, GET Help Desk flags 403, Help Desk /mod/ page 403 'You do not have permission to moderate this space.', own space /mod/ 200",
-      "carried_forward": true
+      "evidence": "bugmod (WP role Subscriber, moderator only in Bug Reports) POST /spaces/20/moderation/spam/post/242 -> 403 jetonomy_forbidden; his Help Desk /mod/ page says 'You do not have permission to moderate this space.'."
     },
     "c-mod-space-moderation.92": {
       "result": "pass",
-      "evidence": "bob GET /spaces/39/moderation/flags (hidden) and /spaces/99999/moderation/flags -> identical 404 status and body",
-      "carried_forward": true
+      "evidence": "bob GET /spaces/43/moderation/flags (hidden) and /spaces/99999/moderation/flags both -> 404 {code:jetonomy_not_found,message:'Space not found.'}, identical body."
     },
     "c-mod-space-moderation.93": {
       "result": "pass",
-      "evidence": "finn as a moderator row in Bug Reports (silenced): POST trash -> 403 jetonomy_user_silenced, topic 9379 unchanged (published)",
-      "carried_forward": true
+      "evidence": "Silenced bugmod POST /spaces/11/moderation/trash/post/316 -> 403 jetonomy_user_silenced; post 316 still publish."
+    },
+    "c-mod-space-moderation.94": {
+      "result": "pass",
+      "evidence": "After a Dismiss resolve in the queue, Awaiting approval / Trash / Flags tabs switched with the URL changing (?view=approvals, ?view=trash, /mod/) and a window marker set before navigation surviving, so no full page load."
     }
   },
-  "pro": "a830e827e9e8bfc2ad170665fad9724699f28091",
-  "proposed_checks": [
+  "proposed_checks": [],
+  "runbook_fixes": [
     {
-      "id": "c-mod-space-moderation.94",
-      "text": "After resolving a flag from the space queue, the Flags/Awaiting approval/Trash tabs keep soft navigation (check .3 currently fails)."
+      "check": "c-mod-space-moderation.8",
+      "now": "bugmod (WP role Subscriber, moderator row in Bug Reports only) opens /community/s/help-desk/mod/. (The seed has no persona 'alice as moderator'; bugmod is that persona.)"
+    },
+    {
+      "check": "c-mod-space-moderation.9",
+      "now": "same persona (bugmod) POSTs /spaces/20/moderation/trash/post/<id>; the seed's space-only moderator is bugmod."
+    },
+    {
+      "check": "c-mod-space-moderation.91",
+      "now": "use bugmod (Subscriber with a moderator row in Bug Reports) for the cross-space refusal."
+    },
+    {
+      "check": "c-mod-space-moderation.17",
+      "now": "POST /bookmarks takes {post_id}, not {object_type, object_id}."
     }
   ]
 }

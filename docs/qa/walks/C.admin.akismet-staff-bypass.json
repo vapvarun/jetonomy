@@ -1,64 +1,65 @@
 {
   "journey": "C.admin.akismet-staff-bypass",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:15:55Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T19:41:08Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "walked_before_change": false,
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
     "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "browser": "Chromium via Playwright MCP",
+    "akismet_method": "Akismet 5.7.2 activated; no real API key is available, so wordpress_api_key was set to a fake value and a walk-only mu-plugin answered rest.akismet.com requests locally (and logged each call); removed afterwards"
   },
   "checks": {
     "c-admin-akismet-staff-bypass.1": {
       "result": "pass",
-      "evidence": "with Akismet active and a (fake) key so Akismet::is_available is true: admin posting the spam test string -> 201 publish in 0.05s, versus 0.8s for the member (no outbound check for staff); a live Akismet verdict needs a real key"
+      "evidence": "Akismet active + (fake) key so Akismet::is_available() is true; admin POST /spaces/15/posts with body containing 'akismet-guaranteed-spam@example.com' -> 201 status publish (topic 412) and the stub's call log shows no comment-check for it."
     },
     "c-admin-akismet-staff-bypass.2": {
       "result": "pass",
-      "evidence": "test_editor (space admin of Help Desk) reply -> 201 publish instantly with the key set"
+      "evidence": "test_editor (space admin of Help Desk on this seed; WP role subscriber) replied in Help Desk topic 176 -> 201 publish (reply 1485), no Akismet call logged."
     },
     "c-admin-akismet-staff-bypass.3": {
       "result": "pass",
-      "evidence": "test_moderator POST reply in Bug Reports -> 201 publish"
+      "evidence": "test_moderator POST /posts/341/replies (Bug Reports) -> 201 publish (reply 1486), no Akismet call logged."
     },
     "c-admin-akismet-staff-bypass.4": {
       "result": "pass",
-      "evidence": "test_moderator topic in General Discussion -> 201 publish in 0.04s"
+      "evidence": "test_moderator (WP editor holding the site Moderate capability, not a General Discussion space moderator) POST /spaces/15/posts -> 201 publish (topic 413) instantly, no Akismet call."
     },
     "c-admin-akismet-staff-bypass.5": {
       "result": "untested",
-      "evidence": "needs a real Akismet API key (third-party service): with a fake key the API is unreachable so the spam test string cannot be classified; qa_rft_b posting it published (fail-open)"
+      "evidence": "ENV: needs a live Akismet API key so Akismet can classify the test string. With the local stub answering 'true' for it, bob's topic is saved with status 'spam' (topic 414, not public) - that shows Jetonomy's handling, not Akismet's classification."
     },
     "c-admin-akismet-staff-bypass.6": {
       "result": "pass",
-      "evidence": "member normal topic published; took 0.78s (an outbound Akismet call was attempted) against 0.05s for staff"
+      "evidence": "alice posts a normal reply on topic 176 -> 201 publish (1488) and the call log has exactly one comment-check for her."
     },
     "c-admin-akismet-staff-bypass.7": {
       "result": "pass",
-      "evidence": "test_moderator posted the spam test string in Help Desk, not a space moderator there -> 201 publish in 0.05s, no Akismet call"
+      "evidence": "test_moderator (editor with Moderate capability, not a Help Desk space moderator) posted the spam test string as a reply in Help Desk -> 201 publish (1487) instantly, no Akismet call logged."
     },
     "c-admin-akismet-staff-bypass.8": {
       "result": "pass",
-      "evidence": "Akismet deactivated: qa_rft_b topic -> 201 publish in the normal time, no error or notice"
+      "evidence": "Akismet deactivated: bob POST /spaces/15/posts -> 201 publish (416), no error; page loads without notice."
     },
     "c-admin-akismet-staff-bypass.9": {
       "result": "pass",
-      "evidence": "Akismet key set but API unreachable from the container: member topic still publishes 201 (fail-open), no fatal"
+      "evidence": "Stub made rest.akismet.com requests fail with 'cURL error 28: Operation timed out': bob's topic POST -> 201 publish (415), fails open, no fatal; no Jetonomy line in debug.log (only PMPro cron-schedule notices from the earlier PMPro activation)."
     },
     "c-admin-akismet-staff-bypass.10": {
       "result": "pass",
-      "evidence": "`wp option get wordpress_api_key` was empty on this site (option absent); key set only for the check and removed after; Akismet plugin re-deactivated as found"
+      "evidence": "`wp option get wordpress_api_key` was empty at the start: wp-admin Anti-Spam showed the no-key state (see .11). A fake non-empty key was then set to exercise the bypass path (a live key is not available; .5 stays ENV)."
     },
     "c-admin-akismet-staff-bypass.11": {
       "result": "pass",
-      "evidence": "Settings > Anti-Spam with Akismet active and no key: 'Akismet is active but has no API key, so new topics and replies are not checked for spam.' with an 'Add an Akismet API key' link"
+      "evidence": "wp-admin Jetonomy Settings > Anti-Spam with Akismet active and no key: 'Akismet is active but has no API key, so new topics and replies are not checked for spam. Add an Akismet API key'; screenshot akismet-nokey.png."
     }
   },
   "proposed_checks": []

@@ -1,76 +1,73 @@
 {
   "journey": "E.lms-course-spaces-and-automator",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:02:49Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:53:54Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-lms-course-spaces-and-automator.1": {
-      "result": "pass",
-      "evidence": "Integrations tab: ticked 'When a new Tutor LMS course is published, create its own space' (saved), then published a draft Tutor course 'QA-RFT W4 Introduction to WordPress Plugin Development Auto' (status transition draft->publish, same hook as the editor Publish) -> exactly one space 304 (type qa from the Default Space Type setting, visibility private, join_policy invite) with one membership access rule tutor_course_<id>, role member; setting restored afterwards"
+      "result": "untested",
+      "evidence": "Needs an LMS (LearnDash/Tutor, both installed inactive) activated and a course published plus Uncanny Automator (not installed); not done in this pass."
     },
     "e-lms-course-spaces-and-automator.2": {
-      "result": "pass",
-      "evidence": "Same course set to draft and published again (twice) -> still 1 space and 1 access rule (SELECT count = 1 each time)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.3": {
-      "result": "pass",
-      "evidence": "Browser, enrolled qa_rft_w4_a: course page shows 'Course discussion' link to the space, /community home and /community/my-spaces/ list the space, the space opens with the topic list ('You have access through <course> (Course)')"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.4": {
-      "result": "fail",
-      "evidence": "stale line: the space is private (listed) so a non-enrolled member (qa_rft_w4_b) sees its card on /community and a 'Spaces' hit in search (title + '0 topics'); the space page shows only the locked teaser 'This space is included with <course>... Get <course>' and never the topic list; REST /spaces?per_page=100 and /community/my-spaces/ do not list it. Product lists private spaces by design (hidden would conceal)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.5": {
-      "result": "pass",
-      "evidence": "Tutor enrolment cancelled for w4 a -> GET /spaces/304/posts 403 jetonomy_forbidden at once; re-enrolled -> 200 again; their topic 606 remained (post count 1 throughout)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.6": {
-      "result": "fail",
-      "evidence": "stale line: Tutor courses cannot be trashed ('do not support being sent to trash'), so tested unpublish (draft) and force-delete. Unpublish: the space stays active/private and the access rule is kept (not archived/hidden, not dropped); the rules list flags it 'Course no longer available ... this rule lets nobody in' (2.0.7 notes) and republish reuses the same space (1 space). Question for owner: an already-enrolled member keeps read access while the course is unpublished (member row source=tier stays; GET /spaces/304/posts still 200) - docs for LearnDash say access ends"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.7": {
-      "result": "pass",
-      "evidence": "No bulk 'create spaces for existing courses' action is offered (Integrations tab says to use each course's own Discussion switch for existing courses), so nothing to run twice"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.8": {
-      "result": "pass",
-      "evidence": "Learnomy inactive: admin POST /learnomy/course-discussion -> 400 'Learnomy is not active.'. Learnomy temporarily activated with a QA-RFT course owned by test_author: qa_rft_w4_b -> 403 jetonomy_pro_forbidden_course 'You can only change courses you own.'; admin with unknown course 999999 -> 404 'That course could not be found.'; guest 401. Course removed and Learnomy deactivated again"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.9": {
-      "result": "fail",
-      "evidence": "Product bug with current Uncanny Automator Free 7.7.1 (installed for this check, removed afterwards): recipe trigger 'A user logs in' + action 'Add the user to space' -> recipe log row created but action never runs; wp_uap_error_log 'execution_failed: The plugin for this action is not active.' (integration JETONOMY missing from Set_Up_Automator active list; Pro registers only automator_add_integration, no uncanny_automator_maybe_add_integration filter). User was not added to the space. Same for remove/set-role (same registration)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.10": {
-      "result": "fail",
-      "evidence": "Product bug: Pro Automator_Integration::on_role_changed calls Automator()->process->user->trigger_matches(), which does not exist in Automator 7.7.1; PATCH /spaces/306/members/201 role change fires jetonomy_space_member_role_changed and debug.log gets 'Automator trigger-queue: Call to undefined method Automator_Recipe_Process_User::trigger_matches()'; no recipe log row is written. The trigger also cannot be added via the Automator PHP API (integration null)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.11": {
-      "result": "fail",
-      "evidence": "Cannot be shown working: recipe with the action pointed at a nonexistent space (custom value 99999) logs the generic 'The plugin for this action is not active.' like every other Jetonomy action (see .9); the Automator dropdown itself only offers existing spaces. Nothing changed but not for the reason the check describes"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-lms-course-spaces-and-automator.12": {
-      "result": "pass",
-      "evidence": "390 light and dark (reign toggle) with a 93-character course title: space page heading wraps to 128px inside 96-346px, only the clipped breadcrumb overflows its overflow:hidden crumb, scrollWidth 390; course page 'Course discussion' link ends at 329px; /community/my-spaces/ no overflow; dark bg rgb(35,38,47)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "Course trash/unpublish: runbook line should state the actual behaviour (space stays, rule flagged, republish reuses) and whether enrolled members keep access.",
-    "Automator integration needs the uncanny_automator_maybe_add_integration filter and a supported trigger-matching call, plus a smoke that installs Automator and runs a recipe."
-  ]
+  "proposed_checks": []
 }

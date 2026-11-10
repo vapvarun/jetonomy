@@ -1,72 +1,76 @@
 {
   "journey": "C.gating.roster-role-is-a-per-person-decision",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:58:36Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:21:09.399356Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "c-gating-roster-role-is-a-per-person-decision.1": {
-      "result": "pass",
-      "evidence": "PMPro membership rule (pmpro_1) participate on private space, three subscribers on the plan: Sync Members toast \"Synced 3 existing members.\" and they appear on Members tab"
-    },
-    "c-gating-roster-role-is-a-per-person-decision.2": {
-      "result": "pass",
-      "evidence": "all three listed as Member (Viewer for Read), none Moderator or Admin"
-    },
-    "c-gating-roster-role-is-a-per-person-decision.3": {
-      "result": "pass",
-      "evidence": "Members tab role select to Moderator toasts \"Role updated.\"; re-running Sync Members (0 synced) left him Moderator"
-    },
-    "c-gating-roster-role-is-a-per-person-decision.4": {
-      "result": "pass",
-      "evidence": "REST GET /spaces/212/members roles equal Members tab (admin Admin, others Member)"
-    },
-    "c-gating-roster-role-is-a-per-person-decision.5": {
-      "result": "pass",
-      "evidence": "space admin (qa_rft_w2_f made admin of QA-RFT W2 Pub) changed a member role there 200; in another space PATCH 403 jetonomy_forbidden \"You do not have permission to perform this action.\""
-    },
     "c-gating-roster-role-is-a-per-person-decision.6": {
       "result": "pass",
-      "evidence": "member PATCHes own role to admin: 403 jetonomy_forbidden, roster unchanged"
-    },
-    "c-gating-roster-role-is-a-per-person-decision.7": {
-      "result": "pass",
-      "evidence": "admin demoting own last-admin role: 400 jetonomy_cannot_self_demote"
-    },
-    "c-gating-roster-role-is-a-per-person-decision.8": {
-      "result": "pass",
-      "evidence": "space with 301 members: Members tab pages (1-25 of 301, Next) and search \"Grace\" finds the person on a later page"
-    },
-    "c-gating-roster-role-is-a-per-person-decision.9": {
-      "result": "pass",
-      "evidence": "50-word long display name row wraps in the Members tab (row 60px high at 1440)"
-    },
-    "c-gating-roster-role-is-a-per-person-decision.10": {
-      "result": "pass",
-      "evidence": "Members tab at 390px: rows become block layout, no horizontal overflow"
+      "evidence": "Plain member PATCH /spaces/20/members/10 {role:admin} -> 403 jetonomy_forbidden; roster unchanged."
     },
     "c-gating-roster-role-is-a-per-person-decision.11": {
       "result": "pass",
-      "evidence": "admin POST /spaces/212/members with another user's id 201 (added); repeat 409 jetonomy_already_member; for a rule-admitted person 409 jetonomy_already_member"
-    },
-    "c-gating-roster-role-is-a-per-person-decision.12": {
-      "result": "fail",
-      "evidence": "stale line: Members tab pages at 25 rows (1-25 of 301), not 50; search finds later-page members"
+      "evidence": "admin POST /spaces/34/members {user_id:30} -> 201 {status:joined, role:member}; repeating -> 409 jetonomy_already_member."
     },
     "c-gating-roster-role-is-a-per-person-decision.13": {
       "result": "pass",
-      "evidence": "staff POST with user_id 201, repeat 409, subscriber POST 403"
+      "evidence": "Staff POST /spaces/34/members user_id=30 -> 201 (on roster as member); same call as a subscriber -> 403 jetonomy_forbidden; repeat for same user -> 409 jetonomy_already_member."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.1": {
+      "result": "pass",
+      "evidence": "PMPro 3.2.2 activated for the walk (plugin deactivated afterwards): a PMPro level 'Walk Plan' held by gate_sub1/2/3, a PMPro membership rule (Participate) on the new private space 'Gate Plan Lab' (184). Before Sync the Members tab lists only admin; Sync Members -> toast 'Synced 3 existing members.' and all three are listed (screenshots gt-members-before-sync.png, gt-members-after-sync.png)."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.2": {
+      "result": "pass",
+      "evidence": "The three synced people show Member (DB source 'tier'); nobody is Moderator or Admin except admin (manual)."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.3": {
+      "result": "pass",
+      "evidence": "Changed gate_sub1 to Moderator on the Members tab -> toast 'Role updated.'; pressed Sync Members again ('Synced 0 existing members.') and he is still Moderator."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.4": {
+      "result": "pass",
+      "evidence": "GET /spaces/184/members as admin -> 200 with 1:admin, 380:moderator, 381:member, 382:member, matching the Members tab."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.5": {
+      "result": "pass",
+      "evidence": "bob made admin of Partner Program (admin PATCH): bob PATCH /spaces/41/members/9 role=moderator and back to member -> 200 updated. In Gate Plan Lab and Gate Private Lab (not his) PATCH /spaces/{id}/members/{uid} -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'. Note: POST /spaces/41/members with role=admin joined bob as 'member' (the role field is ignored on add; a separate PATCH set admin)."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.7": {
+      "result": "pass",
+      "evidence": "Gate Plan Lab Members tab: demoting the only admin to Member -> 'This space must keep at least one admin. Promote someone else first.'"
+    },
+    "c-gating-roster-role-is-a-per-person-decision.8": {
+      "result": "pass",
+      "evidence": "Added members until Gate Plan Lab has 320 roster rows: the Members tab shows '1-25 of 320' with numbered page links and Next (at 240 rows it read '1 2 3 ... 10 Next'), 25 rows per page; page 2 shows '26-50 of 320'; searching 'Grace' (name, username or email box) lists Grace Oluwaseun Adeyemi-Whitfield. Screenshot gt-members-300.png."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.9": {
+      "result": "pass",
+      "evidence": "Grace's full name 'Grace Oluwaseun Adeyemi-Whitfield (grace)' fits one line in the 1440 Members table (row 56px, table 1236px) and wraps onto two lines at 390 without overflow."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.10": {
+      "result": "pass",
+      "evidence": "At 390x844 the Members tab collapses to a one-column list (user name with a caret to open role/joined/actions), search box and Add Member stack, document scrollWidth 390. Screenshot gt-members-grace-390.png."
+    },
+    "c-gating-roster-role-is-a-per-person-decision.12": {
+      "result": "pass",
+      "evidence": "320-person roster: '1-25 of 320'; 'User 319' (not on page 1) is found by the search box (single row returned)."
     }
   },
   "proposed_checks": []

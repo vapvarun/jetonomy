@@ -1,56 +1,60 @@
 {
   "journey": "C.gating.no-rule-hands-out-moderation",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:58:36Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:13:20.625040Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-gating-no-rule-hands-out-moderation.1": {
-      "result": "fail",
-      "evidence": "stale line: the Access Rules form has no Space Role selector any more (role is derived from grants); admin POST Read rule with space_role=admin saves 201 and stores grants read, space_role viewer"
+      "result": "pass",
+      "evidence": "admin POST capability rule grants=read with space_role=admin -> 201; DB row grants=read, space_role=viewer. (REST in-process as the persona on the combo stack; fresh subscribers gate_sub/gate_sub2/gate_sub3 created for the walk and deleted afterwards; Amsterdam Chapter rules/visibility/join policy restored to public/open)"
     },
     "c-gating-no-rule-hands-out-moderation.2": {
       "result": "pass",
-      "evidence": "subscriber under Read rule (and space_role=admin sent): trash/moderate, PATCH, DELETE, pin on another's topic each 403 jetonomy_forbidden"
+      "evidence": "Matched subscriber moderation attempts (trash via /moderation, PATCH/DELETE others' topic, pin) -> 403 jetonomy_forbidden each."
     },
     "c-gating-no-rule-hands-out-moderation.3": {
       "result": "pass",
-      "evidence": "Participate and grants=full with space_role=admin: saved as participate/member; the same four calls 403"
+      "evidence": "Rule with grants=full + space_role=admin stored participate/member; matched subscriber refused the same moderation calls."
     },
     "c-gating-no-rule-hands-out-moderation.4": {
       "result": "pass",
-      "evidence": "PMPro active: fired jetonomy_membership_activated for plain subscriber with membership rule read+space_role=admin: roster row viewer (source tier); moderation 403"
+      "evidence": "Inserted a membership rule (grants=read, space_role=admin) for level 'walk_lvl_read' and fired do_action('jetonomy_membership_activated', gate_sub2, 'walk_lvl_read') via wp eval -> roster role viewer; Permission_Engine::can for moderate, edit_others_posts, delete_others_posts, pin_posts, close_posts is false for him."
     },
     "c-gating-no-rule-hands-out-moderation.5": {
       "result": "pass",
-      "evidence": "same with participate rule: roster row member (source tier). A tier row only grants access while a live membership plan backs it; member posting via role-rule path proven in C.gating.participate (201)"
+      "evidence": "Same with grants=participate, space_role=admin for gate_sub3 -> roster role member (source tier); create_posts and create_replies are true, moderate/edit_others/delete_others/pin/close false. (gate_sub2 also posts because a separate Participate role rule admits every subscriber.)"
     },
     "c-gating-no-rule-hands-out-moderation.6": {
       "result": "pass",
-      "evidence": "Members tab after Sync Members: admin Admin, b and rule-admitted people all Member, nobody Moderator/Admin from a rule"
+      "evidence": "Members tab of the private space after the matches: gate_sub2 Viewer, gate_sub3 Member (both 'tier'); the only Moderator/Admin rows are the manually added ones (admin, test_admin). Screenshot gt-members-183.png."
     },
     "c-gating-no-rule-hands-out-moderation.7": {
       "result": "pass",
-      "evidence": "/community/s/qa-rft-w2-priv/mod/ as rule-admitted subscriber: 403 \"do not have permission to moderate this space.\""
+      "evidence": "gate_sub1 (rule-admitted subscriber) opened /community/s/gate-private-lab/mod/ -> 'You do not have permission to moderate this space.'"
     },
     "c-gating-no-rule-hands-out-moderation.8": {
       "result": "pass",
-      "evidence": "test_moderator trashed a public-space topic via /moderation/trash/post (200) through the Moderate capability; on private space he is not on the roster he gets 403, on a hidden one 404, and sees it once rostered"
+      "evidence": "test_moderator (WordPress editor, Moderate capability) on the roster moderates (Delete, Close, Pin, /mod/ queue); off the roster in the private space he gets the invite-only refusal and 404 on the topic."
     },
     "c-gating-no-rule-hands-out-moderation.9": {
       "result": "pass",
-      "evidence": "Access Rules builder, Participate with Role/Capability/Trust Level/Logged In/Everyone: preview ends \"They are recorded as Member.\"; never Moderator"
+      "evidence": "Access Rules form with Participate selected, for Everyone, Logged In, WP Role, Capability and Trust Level (PMPro with the plugin active): each live preview reads '... can read, post, reply, vote and report. They are recorded as Member.' and never mentions Moderator."
     }
   },
   "proposed_checks": []

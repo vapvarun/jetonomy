@@ -1,134 +1,147 @@
 {
   "journey": "C.notifications",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:48:32.233232Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-notifications.1": {
       "result": "pass",
-      "evidence": "alice POST reply on bob's topic 'Webhook retries: how many attempts are made?' -> bob unread-count 9 -> 10 and /notifications lists 'Alice Chen replied to your topic \"Webhook retries...\"' (REST; bell UI not viewed)"
+      "evidence": "alice POST reply on bob's topic 254 -> bob unread-count 4 -> 5 and notifications list top item: type reply_to_post 'Alice Chen replied to your topic \"Can members change their username after signing\u2026\"'. (bell number and /community/notifications/ page not viewed in the browser)"
     },
     "c-notifications.2": {
       "result": "pass",
-      "evidence": "maya @bob reply -> bob gets exactly one new notification type mention 'Maya Okafor mentioned you in \"Webhook retries...\"' (unread 10 -> 11)"
-    },
-    "c-notifications.3": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "maya POST reply with '@bob ...' -> bob got a mention notification 'Maya Okafor mentioned you in \"Can members change their username after signing\u2026\"' (REST; Mentions filter UI not opened)."
     },
     "c-notifications.4": {
-      "result": "untested",
-      "evidence": "REST POST /notifications/mark-all-read -> {success:true} and unread-count 0; the bell/host bar/tab badge drop without reload in the UI not walked"
+      "result": "pass",
+      "evidence": "As sofia (11 unread, not 3): bell and 'Unread 11' tab dropped to empty/0 and every row lost the unread state without a reload after clicking 'Mark all as read'; GET /notifications/unread-count returned {\"count\":0}. Screenshots cn-markall-before/after.png."
     },
     "c-notifications.5": {
       "result": "pass",
-      "evidence": "bob PATCH /notifications/{id} read=true on one item -> unread-count 11 -> 10 (exactly 1)"
-    },
-    "c-notifications.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.7": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.12": {
-      "result": "pass",
-      "evidence": "test_moderator trash on alice's reply -> alice unread 1 -> 2 with 'Your reply was removed by a moderator' (one notification)"
-    },
-    "c-notifications.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.14": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.15": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.16": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.17": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.18": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.19": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.20": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "bob PATCH /notifications/92 {is_read:true} -> 200; unread-count 0 afterwards (bulk with ids not run)."
     },
     "c-notifications.21": {
       "result": "pass",
-      "evidence": "guest GET /notifications and /notifications/unread-count -> 401"
+      "evidence": "Guest GET /notifications and /notifications/unread-count -> 401 jetonomy_unauthorized each."
     },
     "c-notifications.22": {
       "result": "pass",
-      "evidence": "alice PATCH bob's notification id -> 404 jetonomy_not_found; bob's item stays as before"
-    },
-    "c-notifications.23": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.24": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.25": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.26": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
-    },
-    "c-notifications.27": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "evidence": "alice PATCH /notifications/92 (bob's, unread) -> 404 jetonomy_not_found 'Notification not found.'; bob's row stayed is_read=0 until he PATCHed it himself."
     },
     "c-notifications.28": {
       "result": "pass",
-      "evidence": "alice PATCH someone else's id and PATCH id 999999 -> both 404 jetonomy_not_found"
+      "evidence": "alice PATCH bob's existing id 92 and a nonexistent id 99999999 -> identical 404 jetonomy_not_found 'Notification not found.' bodies (no 403)."
+    },
+    "c-notifications.3": {
+      "result": "pass",
+      "evidence": "Bob replied (REST) as reply 3777 to sofia's 'Dark mode for the community on phones' topic (now 49 replies). As sofia I clicked the notification 'Bob Martinez replied to your topic ...' -> landed on .../dark-mode-for-the-community-on-phones/?rpg=2#reply-3777 (page 2), the reply anchored in view (top 287px), and back on /notifications/ the row had lost its unread class and Unread dropped 12 -> 11. The topic now has 49 replies (the line says 45). Screenshot /Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/cn-sofia-landed.png."
+    },
+    "c-notifications.6": {
+      "result": "pass",
+      "evidence": "kai_brennan (no notifications): All shows 'No notifications yet' + 'When members reply to your topics or mention you, those updates land here.'; Unread filter shows \"You're all caught up! Nothing new since you last checked. Switch to All to see your history.\" Screenshots cn-empty-all.png, cn-empty-unread.png."
+    },
+    "c-notifications.7": {
+      "result": "pass",
+      "evidence": "Gave hana 80 extra notifications (SQL, 86 total). Page 1 shows 20 rows with a 'Load More' control (40 after one click). Ticking one row reveals the bulk bar; 'Select all on page' selected exactly the 40 loaded rows, not all 86; Delete removed them -> 20 rows left, DB count 86 -> 46. Screenshots cn-80*.png."
+    },
+    "c-notifications.8": {
+      "result": "pass",
+      "evidence": "Alice reported reply 3777 (REST POST /flags), test_moderator opened Moderation > Flags > Review in queue and pressed Dismiss; alice's notifications show exactly one 'Your report was reviewed. Thanks for helping keep the community healthy.' (DB: one flag_resolved row). The #email half is covered in C.notifications.email."
+    },
+    "c-notifications.9": {
+      "result": "pass",
+      "evidence": "carlos had a stale seeded pending request; withdrew it, then requested again from /community/s/insiders-beta/ -> admin (space admin) got 'Carlos Mendes requested to join Insiders / Beta' in the bell list; carlos clicked Withdraw request -> the admin's notice for it was gone."
+    },
+    "c-notifications.10": {
+      "result": "pass",
+      "evidence": "Carlos requested again; admin opened space Join Requests tab and pressed Approve -> carlos got 'Your request to join Insiders / Beta was approved'. Removed him from the roster (confirm dialog), requested again, pressed Deny ('Join request denied.') -> carlos got 'Your request to join Insiders / Beta was not approved'. Screenshot cn-join-result.png."
+    },
+    "c-notifications.11": {
+      "result": "pass",
+      "evidence": "test_editor posted a first topic; after the Action Scheduler run (jetonomy_pro_badges_eval_user) she received exactly one 'Congratulations! You earned the First Post badge' (DB one badge_earned row). Trust promotion not triggered (trust-evaluate promoted 0). Screenshot cn-badge.png."
+    },
+    "c-notifications.12": {
+      "result": "pass",
+      "evidence": "alice replied (spam-like text) to bob's topic; test_moderator deleted the reply from the topic page (confirm dialog) -> alice has one 'Your reply was removed by a moderator'. Owner-terminology not exercised beyond the default 'reply' label."
+    },
+    "c-notifications.13": {
+      "result": "pass",
+      "evidence": "Bob (admin of Partner Program, topic author of 239) got 'Alice Chen replied to your topic Referral fees for 2026...' (bell 26). Removed bob from the space roster (admin UI): the item disappeared from his list and the bell fell to 25; a second alice reply created no new row for bob (DB still holds the old row, hidden by the target-visibility filter). Bob is not restored to the roster."
+    },
+    "c-notifications.14": {
+      "result": "pass",
+      "evidence": "maya (admin of Customer Advisory Board) replied to topic 240 with '@bob'; bob (not a member) got no notification (DB: no new row, bell unchanged at 25, no list item naming the topic). Screenshot cn-mention-private.png."
+    },
+    "c-notifications.15": {
+      "result": "pass",
+      "evidence": "grace deleted her own notifying reply 3778 from bob's topic; bob's list no longer shows that notification and his bell dropped 25 -> 24; no broken link left."
+    },
+    "c-notifications.16": {
+      "result": "pass",
+      "evidence": "Settings > Name display now has Display name / Handle only / Both (no 'username' or 'full name' option). With Handle only, alice's reply produced '@alice replied to your topic ...'; back on Display name it produced 'Alice Chen replied to your topic ...'. Existing rows keep the name they were written with. Setting restored to Display name."
+    },
+    "c-notifications.17": {
+      "result": "pass",
+      "evidence": "Enabled Allow anonymous posts on General Discussion (Pro Anonymous tab); maya posted an anonymous reply (author_id 0) to bob's topic -> bob's notification reads 'Anonymous replied to your topic ...' with no sign of maya. Setting left enabled (restore list). Screenshot cn-anon.png."
+    },
+    "c-notifications.18": {
+      "result": "pass",
+      "evidence": "At 390x844: grace's notice 'Grace Oluwaseun Adeyemi-Whitfield replied to your topic ...' wraps over four lines inside the row, row spans 32-358 of 390, document scrollWidth 390 (no horizontal overflow). Screenshot cn-long-name-390.png."
+    },
+    "c-notifications.19": {
+      "result": "pass",
+      "evidence": "Two tabs as sofia on /notifications/ (both 11 unread). 'Mark all as read' in tab A emptied the bell and tab; tab B, once brought to front with focus/visibilitychange fired, updated its bell and Unread tab to 0 with no reload. Focus/visibility events were synthesised with Playwright (bringToFront + dispatched events)."
+    },
+    "c-notifications.20": {
+      "result": "pass",
+      "evidence": "Subscribed 211 users to a topic (210 generated members + bob), alice replied -> Action Scheduler ran jetonomy_fanout_reply_subscribers in 3 batches (100+100+11); DB shows 211 reply_to_post rows for 211 distinct users, no user with more than one, none of the subscribers missing."
+    },
+    "c-notifications.23": {
+      "result": "fail",
+      "evidence": "No admin-announcement notification exists. Grep of Free and Pro finds no such notification type (notifications.php has no label for it). The nearest feature, Pro Site Announcements ('Pin to community' on a topic, as admin), pins the topic but creates no notification: max notification id stayed 1281 before and after, so no member's bell increments. Product bug or the check describes an unbuilt feature; I read it as a stale check line. Unpinned afterwards."
+    },
+    "c-notifications.24": {
+      "result": "pass",
+      "evidence": "Reign dark toggle on /notifications/ as bob: unread row background rgb(59,67,80) (average 69, under 100), link text rgb(229,229,229) on body rgb(35,38,47); readable. Toggled back to light. Screenshot cn-dark.png."
+    },
+    "c-notifications.25": {
+      "result": "pass",
+      "evidence": "Playwright setOffline(true), click 'Mark all as read' -> bell and Unread tab stayed at 11 and an error 'Could not mark notifications as read. Check your connection and try again.' showed; online again -> mark all worked. Screenshot cn-markall-offline.png."
+    },
+    "c-notifications.26": {
+      "result": "pass",
+      "evidence": "Created a 150-character topic title; the notice reads 'Grace ... replied to your topic \"What is the most reliable way to configure the\u2026\"' - cut after a whole word with an ellipsis inside the closing quote. Screenshot cn-long-title-1440.png."
+    },
+    "c-notifications.27": {
+      "result": "pass",
+      "evidence": "Same two-tab run as .19: the second tab's bell and Alerts/Unread tab picked up the mark-all done in the first tab when it became visible/focused (events synthesised)."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-notifications.16",
+      "now": "Settings > Name display options are 'Display name only', 'Handle only' and 'Both'; set Handle only and the notice names '@alice', set Display name only and it names 'Alice Chen'."
+    },
+    {
+      "check": "c-notifications.3",
+      "now": "The Dark mode topic now has 49 replies (the line says 45); the notice opens ?rpg=2#reply-<id>."
+    }
+  ]
 }

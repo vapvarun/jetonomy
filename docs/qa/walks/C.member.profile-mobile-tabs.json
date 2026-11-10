@@ -1,56 +1,72 @@
 {
   "journey": "C.member.profile-mobile-tabs",
-  "free": "206e1d6f",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:42:01Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:02:36Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme",
+      "buddyx",
+      "twentytwentyfive"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      390,
+      1024
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-profile-mobile-tabs.1": {
       "result": "pass",
-      "evidence": "bob's own profile at 390: tab strip (.jt-profile-tabs, overflow auto, 432px content in 328px) shows Topics active at the left edge; Bookmarks and Drafts are to the right and scrollable."
+      "evidence": "390px /community/u/bob/: tab strip (overflow-x auto, scrollWidth 456 > clientWidth 328) with Topics, Replies, Votes, Bookmarks, Drafts; active Topics at x 31-112 inside the viewport",
+      "screenshot": "walk-207/free/profile-tabs-390.png"
     },
     "c-member-profile-mobile-tabs.2": {
       "result": "pass",
-      "evidence": "Every tab (Topics, Replies, Votes, Bookmarks, Drafts) exists in a horizontally scrollable strip (scrollWidth 432 > clientWidth 328, overflow-x auto); swipe/tap not simulated."
+      "evidence": "Programmatic horizontal scroll of the strip to the end brought Drafts (last tab) fully inside the viewport (scrollLeft 128); a real touch swipe was not performed"
     },
     "c-member-profile-mobile-tabs.3": {
       "result": "pass",
-      "evidence": "/community/u/bob/drafts/ at 390: strip scrolled to scrollLeft 104 so Drafts (x 282-359) is the visible active tab."
+      "evidence": "/community/u/bob/drafts/ at 390: Drafts is the active tab and sits at x 258-335 (visible); the strip auto-scrolled to scrollLeft 128"
     },
     "c-member-profile-mobile-tabs.4": {
       "result": "pass",
-      "evidence": "Guest at 390 sees only Topics, Replies, Votes (no owner tabs), all visible without scrolling."
+      "evidence": "Guest at 390 on /u/bob/: 3 public tabs (Topics, Replies, Votes) fit the strip (scrollWidth = clientWidth), no horizontal page scroll"
     },
     "c-member-profile-mobile-tabs.5": {
       "result": "pass",
-      "evidence": "hana viewing bob: only Topics, Replies, Votes; /u/bob/drafts/ renders bob's public profile, not his drafts."
+      "evidence": "alice viewing bob at 390: only Topics, Replies, Votes (no Drafts/Bookmarks/Settings)"
     },
     "c-member-profile-mobile-tabs.6": {
-      "result": "untested",
-      "evidence": "Arabic locale not enabled (site-wide setting)."
+      "result": "pass",
+      "evidence": "Arabic site language at 390x844 on /community/u/bob/: the .jt-profile-tabs strip (Topics, Replies, Votes, Bookmarks, Drafts; scrollWidth 456 > clientWidth 328) has direction rtl and starts at the right: the first tab Topics sits at x 278-359 with the strip's right edge at 359; the active tab (Topics) is fully visible inside the strip; document scrollWidth 390 = viewport; screenshot rtl-profile-tabs-390.png. (The earlier reading in this record measured the bottom bar by mistake.)"
     },
     "c-member-profile-mobile-tabs.7": {
       "result": "pass",
-      "evidence": "Grace's 'Grace Oluwaseun Adeyemi-Whitfield' header at 390: name wraps inside the viewport (right edge 338), page scrollWidth 390, tab bar stays one row."
+      "evidence": "Grace 'Grace Oluwaseun Adeyemi-Whitfield' at 390: name wraps in the header (height 82px with the Member badge), 3 tabs on one row, no horizontal page scroll"
     },
     "c-member-profile-mobile-tabs.8": {
-      "result": "untested",
-      "evidence": "Dark-mode active underline contrast not measured."
+      "result": "pass",
+      "evidence": "Dark mode (Reign data-bx-mode=dark, body.jt-dark) at 390 on /community/u/bob/: .jt-profile-tabs active tab 'Topics' text rgb(193,217,245) on rgb(35,38,47) = 10.44:1, 2px solid underline rgb(151,192,238) = 7.98:1 vs bg, inactive tabs 12:1; screenshot dark-profile-tabs-390.png."
     },
     "c-member-profile-mobile-tabs.9": {
-      "result": "untested",
-      "evidence": "Rotate 390 -> 1024 -> 390 not stepped through with the tab measurement."
+      "result": "pass",
+      "evidence": "390 -> 1024 -> 390 resize on a profile: layout recalculated with no page scroll jump (see .11)"
+    },
+    "c-member-profile-mobile-tabs.10": {
+      "result": "pass",
+      "evidence": "Themes switched with wp theme activate (Reign restored after). At 390x844 as bob, scrolled to the bottom of /community/, /community/s/general-discussion/ and a topic: BuddyX: fixed .jt-mobile-tabs at y 785-844, theme footer bottom y 764 (fully above the bar); Twenty Twenty-Five: bar 785-844, footer bottom 764 (above). At 1440 the bar is display:none and the footer bottom equals the viewport bottom (nothing changes). Caveat: BuddyX Pro itself is not installed here, the free BuddyX theme was used; screenshots buddyx-footer-390.png, tt25-footer-390.png."
+    },
+    "c-member-profile-mobile-tabs.11": {
+      "result": "pass",
+      "evidence": "Scrolled to y=200, resized 1024 then back to 390: scrollY still 200"
     }
   },
   "proposed_checks": []

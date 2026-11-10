@@ -1,73 +1,87 @@
 {
   "journey": "C.gating.participate",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:57:51Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:10:33.961107Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "c-gating-participate.1": {
+    "c-gating-participate.6": {
       "result": "pass",
-      "evidence": "admin POST Participate rule 201 \"Access rule added.\", space_role member"
-    },
-    "c-gating-participate.2": {
-      "result": "pass",
-      "evidence": "e (rule-admitted, no roster row): space read 200, no Join step in UI"
+      "evidence": "On alice's topic gate_sub3 sees no Edit, Delete, Close or Pin control (only the More options of his own reply). REST as gate_sub3: PATCH /posts/3249, DELETE /posts/3249, POST /posts/3249/pin, POST /posts/3249/close and POST /moderation/trash/post/3249 -> 403 jetonomy_forbidden each."
     },
     "c-gating-participate.3": {
       "result": "pass",
-      "evidence": "a posted \"Anyone using the new roadmap view?\" 201 published"
+      "evidence": "gate_sub3 posted 'Anyone using the new roadmap view?' through the composer -> published (own topic page opened)."
+    },
+    "c-gating-participate.1": {
+      "result": "pass",
+      "evidence": "Admin added WP Role 'subscriber' + Participate to the private invite-only space -> toast 'Rule added: WP Role: subscriber can read, post, reply, vote and report. They are recorded as Member.' (the line's 'Access rule added.' is the older wording)."
+    },
+    "c-gating-participate.2": {
+      "result": "pass",
+      "evidence": "gate_sub3 (not on the roster) opens the space: topics listed, a New Topic control, no Join button."
     },
     "c-gating-participate.4": {
       "result": "pass",
-      "evidence": "reply 201, vote 200, flag 201 on b's topic (second flag 409 already flagged)"
+      "evidence": "On alice's topic gate_sub3 voted up ('Remove your upvote'), posted a reply (listed) and used the Report button -> dialog 'Why are you reporting this topic?', submitted -> toast 'Reported. Thank you.' and a pending flag row (reporter 382). Contrast: under the Read rule the Report button was absent."
     },
     "c-gating-participate.5": {
       "result": "pass",
-      "evidence": "edit own 200, delete own 200"
-    },
-    "c-gating-participate.6": {
-      "result": "pass",
-      "evidence": "others' topic: UI shows only Vote/Reply/Bookmark/Report, no Edit/Delete/Close/Pin; PATCH, DELETE, close, pin all 403 jetonomy_forbidden, topic unchanged"
+      "evidence": "gate_sub3 opened More options on his own topic -> Edit and Delete; edited the body (Save, persisted after reload), then Delete with confirm -> redirected to the space and the topic moved to trash."
     },
     "c-gating-participate.7": {
       "result": "pass",
-      "evidence": "roster member b reply 201"
+      "evidence": "alice (roster member) on the same topic: Vote up/down, Reply, Quote, Report, posted a reply, and her own-topic menu shows Edit and Delete - unchanged."
     },
     "c-gating-participate.8": {
       "result": "pass",
-      "evidence": "c (silenced) post 403 jetonomy_user_silenced"
+      "evidence": "finn (silenced, matches the subscriber rule) POST /spaces/183/posts -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "c-gating-participate.9": {
       "result": "pass",
-      "evidence": "d (space ban) post 403 jetonomy_user_space_banned \"You have been banned from this space and cannot take part in it.\""
+      "evidence": "Banned omar from the space (wp jetonomy mod ban --type=space_ban --space=183); omar (matches the rule) POST /spaces/183/posts -> 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.'"
     },
     "c-gating-participate.10": {
       "result": "pass",
-      "evidence": "reply to closed topic 403 jetonomy_post_closed"
+      "evidence": "Admin closed alice's topic from its More options menu; gate_sub3 POST /posts/3249/replies -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.' Reopened afterwards."
     },
     "c-gating-participate.11": {
       "result": "pass",
-      "evidence": "space archived: composer and New Topic gone in UI; POST 403 jetonomy_space_restricted"
+      "evidence": "Admin archived the space from the Spaces list (confirm; toast 'Space archived and transferred. Its content was kept.'). As gate_sub3 the space shows 'This space is archived. New topics and replies are no longer accepted.', no New Topic control and no composer on the topic; POST reply -> 403 jetonomy_space_restricted. Reactivated via General > Status. Screenshot gt-archived-topic.png."
     },
     "c-gating-participate.12": {
       "result": "pass",
-      "evidence": "guest POST 401; guest UI shows no composer and a Login link"
+      "evidence": "Logged-out visitor on the space URL sees 'This space is private. Log in to see it.' with a Log In button and no composer or topics (screenshot gt-priv-guest.png)."
     },
     "c-gating-participate.13": {
       "result": "pass",
-      "evidence": "typed reply in e's editor, rule and access removed, Post Reply -> \"Topic not found.\" and the typed text stayed in the editor"
+      "evidence": "Two browser contexts: gate_sub3 typed a reply in the open composer; admin deleted the rule; gate_sub3 pressed Post Reply -> refused with the message 'Topic not found.' (the topic is no longer visible to him, same as c-gating-access-ends-by-itself.3 expects) and his typed text stayed in the box. The message is 'Topic not found.', not a 'forbidden' wording. Screenshot gt-concurrent-b.png."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-gating-participate.1",
+      "now": "toast reads 'Rule added: WP Role: subscriber can read, post, reply, vote and report. They are recorded as Member.'"
+    },
+    {
+      "check": "c-gating-participate.13",
+      "now": "the refusal shown is 'Topic not found.' (topic no longer visible) and the typed text is kept."
+    }
+  ]
 }

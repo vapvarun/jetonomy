@@ -1,81 +1,99 @@
 {
   "journey": "C.cli.qa-actions",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:05:05Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:03:48Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-cli-qa-actions.1": {
-      "result": "fail",
-      "evidence": "wp jetonomy qa-actions in the container: 469/477 pass, 1 skip (BB1), 8 FAIL. Six are loopback HTTP 0 (E32 x4 feeds, SM1 sitemap, SF1) and confirm from the host: /community-sitemap.xml 200 sitemapindex, space feed 200 application/rss+xml, private space feed 404, /community/search/?author_id=1 52 results and an unknown author 0 results. AX1 and PV2 (anonymous topic page SEO/JSON-LD, private accepted answer in guest page) also need loopback pages built from fixtures the command creates and could not be re-created on the host, so they are unconfirmed"
+      "result": "pass",
+      "evidence": "`wp jetonomy qa-actions` on the free stack with loopback working: REST 187/187, Model 253/253, Pro 0/0, Journey 47/47, Refusal 13/13, TOTAL 500/500, 1 SKIPPED, 0 FAIL lines, exit code 0 ('Success: All 500 action tests passed'); the 14 refusal fixtures were reversed. Output in scratch qa-actions-free.txt."
+    },
+    "c-cli-qa-actions.2": {
+      "result": "pass",
+      "evidence": "Copied the plugin to a scratch folder inside the free container (jetonomy-scratch, tests/docs excluded), changed Phase 4 in its includes/class-cli.php so the Journey phase ran zero checks, deactivated the real plugin and activated the scratch copy: `wp jetonomy qa-actions` printed 'Warning: Journey phase ran no checks.', 'Journey Tests: 0/0' and 'Error: ... ACTION TESTS FAILED', exit code 1 - a loud failure naming the phase, not a silent PASS. Scratch copy removed and the real plugin reactivated."
+    },
+    "c-cli-qa-actions.3": {
+      "result": "pass",
+      "evidence": "wp jetonomy scenario run multi-user-voting-thread --cleanup printed each step/data (space_id 95, post_id 314, reply_ids, user_ids, vote_count 10) and 'Success'; afterwards spaces=45, users=28 unchanged (cleanup removed the data). Without --cleanup not run."
+    },
+    "c-cli-qa-actions.4": {
+      "result": "pass",
+      "evidence": "`wp jetonomy scenario run <name> --cleanup` for space-with-pending-join-request, post-with-flags-for-moderation, multi-user-voting-thread, full-membership-approval-flow and notification-delivery-sweep: each prints its step table and 'Success: Scenario ... completed', and the cleanup steps run (delete-user, delete-space, delete-category; the space count is 50 before and after every run, so spaces are deleted not archived)."
     },
     "c-cli-qa-actions.5": {
       "result": "pass",
-      "evidence": "wp jetonomy space list --category=3 matches the spaces under that category on /community/"
-    },
-    "c-cli-qa-actions.2": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
-    },
-    "c-cli-qa-actions.3": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
-    },
-    "c-cli-qa-actions.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "evidence": "wp jetonomy space list --category=5 lists London/Berlin/Toronto Chapter... with post_count 2 each; matches the home/category page spaces"
     },
     "c-cli-qa-actions.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "post get 338 (same title/content as the topic page), member list-members --space=24 (7 members = Members tab 7), mod flags (pending flags 25,20,19,16,10... = the 13 shown in Moderation > Flags), tag popular (performance 46, migration 42 ...), category list (the categories shown in wp-admin), privacy scan ('No orphaned user data'), notification list --to=10 (rows match /community/notifications/), user get-profile 10 (trust 4, reputation 810, post_count 25, reply_count 81 = profile counts). `config get` works with a key path and no extra arg."
     },
     "c-cli-qa-actions.7": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "`wp jetonomy notification unread-count --to=10` = 46 before and 47 after alice's reply to bob's topic; bob's bell badge and GET /notifications/unread-count both read 47."
     },
     "c-cli-qa-actions.8": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "Per the ruling: `mod ban --target=1 --issuer=5` (moderator test_moderator banning the admin) -> 'Error: Administrators cannot be restricted.'; `--target=5 --issuer=5` -> 'You cannot restrict your own account.'; admin issuing a ban on himself (`--target=1 --issuer=1`) -> same self refusal; an admin silencing another admin (target 6, issuer 1) is accepted by design and was removed."
     },
     "c-cli-qa-actions.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "wp jetonomy post create --space=40 (archived 2025 Hackathon) -> 'Error: [jetonomy_space_restricted] This space is archived or locked and no longer accepts new content.'; posts count unchanged"
     },
     "c-cli-qa-actions.10": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "CLI-created topic 'Show a live preview while writing a reply' opened logged out at 1440 and 390: renders, scrollWidth equals the viewport at both widths; screenshot cli-post-390.png."
     },
     "c-cli-qa-actions.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "With 2,422 published topics (then 4,422 after the bbPress scale import and 5,028 members): `wp jetonomy post get 1500` 0.28 s and `wp jetonomy recount` 0.26 s wall (incl. container exec); after the recount SUM(space post_count) = COUNT of published topics (2422) and the Overview reads '2,422 TOTAL TOPICS'. Side finding: on this scale dataset `wp jetonomy qa-actions` itself fails two Model tests (LB2 'count_for_leaderboard matches the listed population - count=4896, rows=100' and BB3 'total agrees with the per-type estimates - 2759 vs 2751', 501/503), both of which pass on the normal seed (500/500) - they look dataset-size sensitive."
     },
     "c-cli-qa-actions.12": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "wp jetonomy recount prints rows per counter ('reply_vote_scores: 0 rows', 'user_post_counts: 0 rows' ... 'Success: Recount complete.')"
     },
     "c-cli-qa-actions.13": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "wp jetonomy post create as silenced finn -> '[jetonomy_user_silenced] Your account is currently silenced and cannot post.'; reply create as finn same code; archived-space post refused with jetonomy_space_restricted (closed-topic reply not run)"
     },
     "c-cli-qa-actions.14": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "`wp jetonomy reply create --post=338 --author=9` (alice on bob's topic): bob gets a reply_to_post notification (id 816) that shows in /community/notifications/ as 'Alice Chen replied to your topic ...' and a Mailpit mail 'Alice Chen replied to your topic', same as a browser reply."
     },
     "c-cli-qa-actions.15": {
-      "result": "untested",
-      "evidence": "not walked in this pass (out of room, or needs a scratch copy / 2000-topic seed)"
+      "result": "pass",
+      "evidence": "Guest home pulse reads 268 topics; SUM(post_count) of public spaces = 268 = COUNT of published topics in public spaces; the 16 topics in private spaces and 1 in hidden spaces are left out (total across all spaces 285)."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-cli-qa-actions.7",
+      "now": "`wp jetonomy notification unread-count --to=<user_id>` (the flag is --to, not --user)"
+    },
+    {
+      "check": "c-cli-qa-actions.8",
+      "now": "`wp jetonomy mod ban --target=<id> --issuer=<id>`: a moderator (non-admin) restricting an administrator is refused 'Administrators cannot be restricted.'; anyone restricting themselves is refused 'You cannot restrict your own account.'; an administrator restricting another administrator is allowed by design"
+    },
+    {
+      "check": "c-cli-qa-actions.6",
+      "now": "read commands: `post get <id>`, `member list-members --space=<id>`, `mod flags`, `tag popular`, `category list`, `privacy scan`, `notification list --to=<id>`, `config get` (no extra positional arg), `user get-profile <id>`"
+    }
+  ]
 }

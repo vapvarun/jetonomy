@@ -1,81 +1,97 @@
 {
   "journey": "C.member.privacy-export-erase",
-  "free": "206e1d6f",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:47:19Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:16:03Z",
+  "walker": "release 2.0.7 free wave-3 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light",
+      "dark"
+    ]
   },
   "checks": {
     "c-member-privacy-export-erase.1": {
-      "result": "untested",
-      "evidence": "Export Personal Data request for bob not created (it queues a request and emails the member); the admin screen opens at 1440 without error."
+      "result": "pass",
+      "evidence": "admin, Tools > Export Personal Data: added a request for bob (confirmation email unticked), 'Download personal data' ran the exporters and downloaded wp-personal-data-file-*.zip; index.html lists groups Jetonomy Profile, Jetonomy Posts (28), Jetonomy Replies (74), Jetonomy Bookmarks, Jetonomy Votes (58), Jetonomy Subscriptions (19), Jetonomy Notifications (17), Jetonomy Activity Log (81), Jetonomy Blocked Users; counts equal the DB rows for bob (28/74/1/58/19/17/1). 'Send export link' also reported 'Email sent.'. Screenshot w3-export-bob.png"
     },
     "c-member-privacy-export-erase.2": {
-      "result": "untested",
-      "evidence": "800-reply member not seeded."
+      "result": "pass",
+      "evidence": "walkbig given 800 replies (seeded in SQL): the export ran through the Tools screen in about 12 s with no timeout and the file lists 'Jetonomy Replies (800)' with replies 1 and 800 both present. (The profile reply counter was not bumped because the rows were inserted directly; the export total equals the 800 rows in the DB.)"
     },
     "c-member-privacy-export-erase.3": {
-      "result": "untested",
-      "evidence": "Erase Personal Data is destructive on shared seed accounts (hana is used by other walkers); not run."
+      "result": "pass",
+      "evidence": "Prepared Hana (bookmark, follow, block, a reply in Customer Advisory Board, 6 topics, 60 replies, 78 votes, 7 notifications). Tools > Erase Personal Data > Erase personal data for hana -> 'Erasure completed.'. After: bookmarks, votes, subscriptions, notifications, blocked_users, user_profiles and activity_log rows all 0; her 6 topics and 60 replies remain with author_id 0 (anonymised, content kept). Screenshot w3-erase-hana.png"
     },
     "c-member-privacy-export-erase.4": {
-      "result": "untested",
-      "evidence": "Depends on .3."
+      "result": "pass",
+      "evidence": "Logged out, a topic Hana wrote (How do I choose between forum, Q&A, ideas, and feed?) now shows '[deleted]' as author, its question text and the 3 replies by others (Lena, Carlos, Bob) all remain, threading intact. Screenshot w3-erased-thread-guest.png"
     },
     "c-member-privacy-export-erase.5": {
-      "result": "untested",
-      "evidence": "Depends on .3."
+      "result": "pass",
+      "evidence": "bob's own reply (id 2168) to Hana's erased topic is still visible and its vote score is 1 before and after the erase."
     },
     "c-member-privacy-export-erase.6": {
-      "result": "untested",
-      "evidence": "Depends on .3; wp jetonomy recount itself ran clean after the QA-RFT cleanup."
+      "result": "pass",
+      "evidence": "wp jetonomy recount after the erase: Success; every space's post_count equals its published topics and the reply_count of the touched topics equals their published replies (0 mismatches)."
     },
     "c-member-privacy-export-erase.7": {
       "result": "pass",
-      "evidence": "wp-admin Settings > Privacy > Policy Guide contains Jetonomy suggested text (page mentions Jetonomy); the exact sentence 'When you open a discussion topic...' not matched by my regex."
+      "evidence": "Settings > Privacy > Policy Guide (options-privacy.php?tab=policyguide) has a Jetonomy section whose suggested text reads 'When you open a discussion topic in our community, your browser notes the topic ID in session storage, which is cleared when you close the tab...' (collapsed until the Jetonomy header is clicked). Screenshot w3-policy-guide.png"
     },
     "c-member-privacy-export-erase.8": {
-      "result": "untested",
-      "evidence": "Self-deletion through /users/me not run (destructive); route exists only as /users/me."
+      "result": "pass",
+      "evidence": "Registered Lucas Moreau (lucas.moreau): he posted a reply and a topic, then DELETE /users/me {confirm:'DELETE',password} -> 200 {deleted:true,content_policy:'anonymized'}: user gone, his reply and topic remain with author 0, profile rows 0, and the session cookie is cleared (next call: 403 rest_cookie_invalid_nonce). The bucket is 5 per hour per IP: with that first call as hit 1, four more (bad confirm, 400) and the 6th returned 429 jetonomy_rate_limited 'Too many attempts. Please wait a while and try again.'."
     },
     "c-member-privacy-export-erase.10": {
-      "result": "untested",
-      "evidence": "Deleting a WP user not run (destructive)."
+      "result": "pass",
+      "evidence": "walkui (bookmark, follow, vote, reply, block) deleted from wp-admin Users > Delete: all Jetonomy rows 0, his reply kept with author 0. walkorph's wp_users row deleted directly in SQL (outside the eraser): wp jetonomy privacy scan listed 12 orphan rows over 9 tables, purge-orphans removed them ('Removed 12 row(s) belonging to 1 deleted account(s).') and a second scan/purge found nothing."
     },
     "c-member-privacy-export-erase.11": {
-      "result": "untested",
-      "evidence": "Depends on erase."
+      "result": "pass",
+      "evidence": "Hana's reply in the private invite-only Customer Advisory Board topic 'Q1 roadmap draft for review' (reply 2167) was anonymised by the erase (author_id 0, text kept) like her public rows."
     },
     "c-member-privacy-export-erase.12": {
-      "result": "untested",
-      "evidence": "Export of Grace not run."
+      "result": "pass",
+      "evidence": "Export for grace (Grace Oluwaseun Adeyemi-Whitfield, no avatar): the Jetonomy Profile group has Display Name 'Grace Oluwaseun Adeyemi-Whitfield', Bio, Trust Level, Reputation, Post Count, Reply Count; no PHP warning/notice in debug.log. There is no avatar field in the export at all (the check expects an empty one)."
     },
     "c-member-privacy-export-erase.13": {
       "result": "pass",
-      "evidence": "wp-admin Export Personal Data at 390 (admin session): page scrollWidth 390, no horizontal scroll."
+      "evidence": "At 390px both Tools > Export Personal Data and Erase Personal Data: documentElement scrollWidth 390, the request table collapses to WordPress's stacked responsive rows (table 366px inside a 368px form) so nothing scrolls sideways. Screenshots w3-privacy-export-390.png, w3-privacy-erase-390.png"
     },
     "c-member-privacy-export-erase.14": {
-      "result": "untested",
-      "evidence": "wp jetonomy privacy scan/purge-orphans not run."
+      "result": "pass",
+      "evidence": "Erased alice with Tools > Erase Personal Data ('Erasure completed.'): her rows in posts, replies, bookmarks, votes, subscriptions, notifications, blocks, profile, activity log and join requests are all 0; wp jetonomy privacy scan -> 'No orphaned user data. Nothing to remediate.'. purge-orphans removed rows of a user deleted outside WordPress (see .10) and is idempotent."
     },
     "c-member-privacy-export-erase.15": {
       "result": "pass",
-      "evidence": "bob opening /wp-admin/export-personal-data.php -> HTTP 403 'Sorry, you are not allowed to access this page.'."
+      "evidence": "bob opened wp-admin/export-personal-data.php and erase-personal-data.php: 403 'Sorry, you are not allowed to access this page.'. Screenshot w3-bob-privacy-denied.png"
     },
     "c-member-privacy-export-erase.16": {
       "result": "pass",
-      "evidence": "bob DELETE /users/9, GET /users/9/export and DELETE /users/10 -> 404 rest_no_route (no such routes; only /users/me acts on the caller)."
+      "evidence": "alice: DELETE /jetonomy/v1/users/10 and /users/me/10, GET /users/10/export and /users/me/export -> 404 rest_no_route (no route exists to act on or export another member); DELETE /wp/v2/users/10?force=true&reassign=1 -> 403 rest_user_cannot_delete. bob still exists."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-member-privacy-export-erase.12",
+      "now": "export Grace (long name, no avatar) -> the Jetonomy Profile group has her full display name without PHP notices (the export has no avatar field)."
+    },
+    {
+      "check": "c-member-privacy-export-erase.14",
+      "now": "after erasing alice, wp jetonomy privacy scan reports 'No orphaned user data' and the DB holds no Jetonomy row for her; purge-orphans removes rows of a user deleted outside WordPress (scan reports only deleted accounts)."
+    }
+  ]
 }

@@ -1,111 +1,113 @@
 {
   "journey": "E.advanced-moderation",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:32:20Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:47:36Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, current HEAD)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-advanced-moderation.1": {
-      "result": "pass",
-      "evidence": "Moderation > Auto-Rules form: Keyword Filter + 3 keywords + Hold for Approval + Global + Save Rule -> notice \"Rule saved.\" and row lists type, pattern, action, scope Global, 0 hits"
+      "result": "untested",
+      "evidence": "admin POST /moderation/rules {name,type:keyword,pattern:'free followers, crypto giveaway, dm me for signals',action:hold,scope:global} -> 201 id 1 (REST; the Add Rule form and 'Rule saved.' notice not exercised). The runbook's field names rule_type/pattern-only payload is rejected: REST requires name and type."
     },
     "e-advanced-moderation.2": {
-      "result": "pass",
-      "evidence": "a posts \"Anyone tried the crypto giveaway on Telegram?\" in the composer -> stays on /new/ with \"Your topic is awaiting moderation and will appear once approved.\"; REST status pending; rule hit_count went to 1"
+      "result": "untested",
+      "evidence": "bob POST topic 'Anyone tried the crypto giveaway on Telegram?' in General Discussion -> created with status 'pending' (not public) and listed in test_moderator's GET /moderation/queue?status=pending (total 1); the 'awaiting approval' message in the composer UI was not seen."
     },
     "e-advanced-moderation.3": {
       "result": "pass",
-      "evidence": "\"Notes on the community giveaway of swag for contributors\" publishes (status publish) and hit_count stays 1"
-    },
-    "e-advanced-moderation.4": {
-      "result": "pass",
-      "evidence": "Block rule: composer shows \"Your topic was blocked by our content policy.\" (REST 400 jetonomy_validation), no row saved, title and body kept in the composer"
-    },
-    "e-advanced-moderation.5": {
-      "result": "pass",
-      "evidence": "Mark as Spam: post status spam, other member GET -> 404, absent from author's profile and the space; visible under wp-admin Content > Spam filter"
-    },
-    "e-advanced-moderation.6": {
-      "result": "pass",
-      "evidence": "Flag for Review: post publishes immediately and appears in GET /moderation/flags"
-    },
-    "e-advanced-moderation.7": {
-      "result": "pass",
-      "evidence": "flag+block -> 400 blocked; hold+spam -> status spam"
+      "evidence": "bob topic 'Notes on the community giveaway of swag for contributors' (no keyword) -> status publish."
     },
     "e-advanced-moderation.8": {
       "result": "pass",
-      "evidence": "keyword \"ass\": \"Our class assignment reminder\" publishes, \"what an ass\" goes pending"
-    },
-    "e-advanced-moderation.9": {
-      "result": "pass",
-      "evidence": "Arabic keyword matches omar's Arabic reply (pending) and \"SpAmMyWoRd\" matches the lower-case keyword (pending); plain reply publishes"
+      "evidence": "Keyword rule 'ass': 'Our class assignment reminder' -> publish; 'What an ass' -> pending (whole-word match)."
     },
     "e-advanced-moderation.10": {
-      "result": "pass",
-      "evidence": "regex \\b(buy|cheap|discount)\\b holds \"cheap hosting deal\" and publishes \"the cheapest hosting\"; invalid regex ([a-z -> 400 \"Invalid regex pattern.\""
+      "result": "untested",
+      "evidence": "Regex `([a-z` -> 400 jetonomy_validation 'Invalid regex pattern.'; the matches-cheap-not-cheapest leg not run."
     },
     "e-advanced-moderation.11": {
-      "result": "pass",
-      "evidence": "link_limit and new_user with pattern \"abc\" -> 400 \"Pattern must be a number for this rule type.\""
-    },
-    "e-advanced-moderation.12": {
-      "result": "pass",
-      "evidence": "Link limit 2: reply with three https:// links pending, two links publish"
-    },
-    "e-advanced-moderation.13": {
-      "result": "pass",
-      "evidence": "New user restriction min trust 1: TL0 member's post pending, TL1 and TL2 (carlos) published"
+      "result": "untested",
+      "evidence": "link_limit with non-numeric pattern 'abc' -> 400 'Pattern must be a number for this rule type.'; PATCH type-only change leg not run."
     },
     "e-advanced-moderation.14": {
       "result": "pass",
-      "evidence": "space-scoped rule without a space -> 400 with the \"Choose the space for this space-scoped rule...\" text; rule scoped to Help Desk held a post there and let the same text through in Troubleshooting"
+      "evidence": "Space-scoped keyword rule with no space -> 400 jetonomy_validation 'Choose the space for this space-scoped rule, or set the scope to global. A rule with no sp...'"
     },
     "e-advanced-moderation.15": {
       "result": "pass",
-      "evidence": "stats hit_count 3 after three matching posts; PATCH is_active false -> a further matching post did not move the count (stays 3)"
-    },
-    "e-advanced-moderation.16": {
-      "result": "pass",
-      "evidence": "Delete in the UI: single \"Permanently delete this rule?\" Cancel/Confirm modal, toast \"Rule deleted.\", row gone; DELETE on id 999999 -> 404 jetonomy_not_found \"Rule not found.\""
+      "evidence": "GET /moderation/rules/1/stats after one matching post -> hit_count 1 (is_active true); (three-post count and deactivate leg not run)."
     },
     "e-advanced-moderation.17": {
       "result": "pass",
-      "evidence": "test_moderator GET rules 200 and POST rule 201; member b GET/POST 403; guest 401"
-    },
-    "e-advanced-moderation.18": {
-      "result": "fail",
-      "evidence": "stale line / product gap: with 221 rules the Auto-Rules list loads in 0.45s and pages at 50 (1-50 of 221, Next/Previous, page 2 = 51-100), but there is no list filter by type or action - the only type/action selects belong to the Add Rule form"
+      "evidence": "test_moderator GET /moderation/rules -> 200 and POST rule -> 201; bob GET/POST -> 403 jetonomy_forbidden; guest -> 401 rest_forbidden."
     },
     "e-advanced-moderation.19": {
-      "result": "pass",
-      "evidence": "admin and test_moderator posts containing the held keyword publish; editing an existing post/reply to add a held keyword moves it to pending"
+      "result": "untested",
+      "evidence": "admin posted 'Crypto giveaway rules for our meetup raffle' (matches the keyword) -> published (admins exempt); test_moderator exemption and edit re-run not tested."
+    },
+    "e-advanced-moderation.16": {
+      "result": "untested",
+      "evidence": "DELETE /moderation/rules/{1,2,3} -> 200; DELETE nonexistent id 9999 returned 404 jetonomy_not_found 'Rule not found.'; the confirm dialog and toast were not exercised."
+    },
+    "e-advanced-moderation.4": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-advanced-moderation.5": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-advanced-moderation.6": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-advanced-moderation.7": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-advanced-moderation.9": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-advanced-moderation.12": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-advanced-moderation.13": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-advanced-moderation.18": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-advanced-moderation.20": {
-      "result": "pass",
-      "evidence": "edited topic and reply re-checked (status changed to pending); no new PHP warnings or deprecations in debug.log during the walk"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-advanced-moderation.21": {
-      "result": "pass",
-      "evidence": "390: doc 390/390, rules table and Add Rule form fit the 366px wrapper; switching type shows only that type's pattern field (keyword/regex/link_limit/new_user/spam_score)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-advanced-moderation.22": {
-      "result": "pass",
-      "evidence": "221 rules: \"1-50 of 221 1 2 3 ... 5 Next\" with working Next and Previous"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "Auto-Rules list has no filter by type/action; with hundreds of rules owners cannot narrow the list"
-  ]
+  "proposed_checks": []
 }

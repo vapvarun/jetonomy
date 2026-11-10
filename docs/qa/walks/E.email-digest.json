@@ -1,90 +1,97 @@
 {
   "journey": "E.email-digest",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:34:48Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:48:33Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, current HEAD)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
-    "theme": "reign",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-email-digest.2": {
       "result": "pass",
-      "evidence": "admin POST /admin/digest/test frequency daily -> 200 success \"Test digest sent to admin@example.com.\"; \"[TEST] Northwind Community: Your Daily Community Digest\" in Mailpit within 5s"
+      "evidence": "admin POST /admin/digest/test {frequency:daily} -> 200 success:true 'Test digest sent to admin@example.test.'; Mailpit received '[TEST] Northwind Makers Community: Your Daily Community Digest' within seconds."
     },
     "e-email-digest.3": {
-      "result": "fail",
-      "evidence": "stale line / data: the test digest has \"Community Digest: October 31, 2026\" header, Trending, \"You earned a new badge\", poll, stats and no `&amp;amp;`, no images, plain text has no HTML, but it lists only today's activity (QA-RFT topics), not the seeded titles \"Dark mode for the community on phones\" / \"Scheduled maintenance on Saturday\"; no \"New in Spaces You Follow\" or \"Replies to you\" block for admin"
+      "result": "untested",
+      "evidence": "Test digest text contains 'Community Digest: November 6, 2026' and Trending / top topics sections; per-section content for a recipient not walked."
     },
     "e-email-digest.4": {
       "result": "pass",
-      "evidence": "member b PATCH digest-preferences none, daily, weekly each saved and GET returned it; \"monthly\" -> 400 rest_invalid_param \"frequency is not one of none, daily, and weekly.\""
+      "evidence": "bob PATCH /users/me/digest-preferences weekly -> 200 success; 'monthly' -> 400 rest_invalid_param 'Invalid parameter(s): frequency'; none -> 200."
+    },
+    "e-email-digest.8": {
+      "result": "pass",
+      "evidence": "Digest unsubscribe link from the test mail logged out -> 200 'You have been unsubscribed from community digest emails. You can re-enable them anytime from your profile settings.' (admin uid=1; the next-digest-not-sent leg not run)."
     },
     "e-email-digest.9": {
       "result": "pass",
-      "evidence": "unsubscribe link (?jetonomy_digest_unsub=1&uid=..&token=..) with a wrong token -> 403 \"Invalid or expired unsubscribe link.\"; with no token -> 400 \"Invalid unsubscribe link.\"; a valid token logged out -> 200 \"You have been unsubscribed from community digest emails. You can re-enable them anytime from your profile settings.\" and frequency became none"
+      "evidence": "?jetonomy_digest_unsub=1&uid=1&token=WRONG -> HTTP 403 'Invalid or expired unsubscribe link.'; without token -> 400 'Invalid unsubscribe link.'"
     },
     "e-email-digest.14": {
       "result": "pass",
-      "evidence": "GET /admin/digest/stats as admin -> {daily:1, weekly:1, none:0, no_preference:88, total:90}; member b GET stats and POST test -> 403"
+      "evidence": "admin GET /admin/digest/stats -> 200; bob GET stats -> 403; bob POST /admin/digest/test -> 403 jetonomy_forbidden."
     },
     "e-email-digest.1": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.5": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.6": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.7": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
-    },
-    "e-email-digest.8": {
-      "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.10": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.11": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.12": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.13": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.15": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.16": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-email-digest.17": {
       "result": "untested",
-      "evidence": "not reached: the walk stopped for room before this check; needs a walk"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-email-digest.18": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "Check 8 and 9 use a link shaped ?jetonomy_digest_unsub=1&uid=&token= (not jetonomy_unsubscribe); update the check text"
-  ]
+  "proposed_checks": []
 }

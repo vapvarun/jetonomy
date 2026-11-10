@@ -1,72 +1,78 @@
 {
   "journey": "C.gating.builder-explains-itself",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:58:37Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:22:09.100891Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "c-gating-builder-explains-itself.1": {
-      "result": "pass",
-      "evidence": "Access Rules tab intro (How access rules work) and the empty state \"Only this space's visibility and join policy decide who gets in. Add a rule to let more people in...\""
-    },
-    "c-gating-builder-explains-itself.2": {
-      "result": "pass",
-      "evidence": "every Rule type shows a second sentence under the live preview (\"Matches anyone holding this WordPress role...\", capability, trust level, everyone, logged in) and the value box carries an example (subscriber, edit_posts, 2); Membership appears as a PMPro entry when a membership plugin is active"
-    },
     "c-gating-builder-explains-itself.3": {
       "result": "pass",
-      "evidence": "Everyone and Logged In show no value box"
+      "evidence": "Access Rules tab Rule type select: choosing Everyone and Logged In shows no value box (inputs hidden); Capability shows example 'edit_posts', Trust Level and Membership example '2'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/access-rules-tab.png"
     },
     "c-gating-builder-explains-itself.4": {
       "result": "pass",
-      "evidence": "UI and REST: trust level empty (Add disabled in UI), 0 and 9 refused with \"Choose a trust level from 1 to 5.\""
+      "evidence": "POST trust_level rule with empty value, 0 and 9 -> 400 jetonomy_invalid_rule_value 'Choose a trust level from 1 to 5.' each."
     },
     "c-gating-builder-explains-itself.5": {
       "result": "pass",
-      "evidence": "role ghost_role refused \"Choose a role that exists on this site.\" (UI toast and REST 400)"
+      "evidence": "POST role rule 'ghost_role' -> 400 'Choose a role that exists on this site.'"
     },
     "c-gating-builder-explains-itself.6": {
       "result": "pass",
-      "evidence": "empty capability and membership refused \"Enter a value for this rule.\" (REST 400; UI keeps Add Rule disabled while empty)"
+      "evidence": "POST capability rule with empty value and membership rule with empty value -> 400 'Enter a value for this rule.' each; no row created (DB rule list unchanged)."
     },
     "c-gating-builder-explains-itself.7": {
       "result": "pass",
-      "evidence": "REST POST with the same bad values returns 400 with the same messages; GET list shows 0 rules"
-    },
-    "c-gating-builder-explains-itself.8": {
-      "result": "pass",
-      "evidence": "test_editor opens Help Desk Access Rules tab: \"Only site administrators can manage access rules for this space.\" plus \"Back to Help Desk\", no builder"
+      "evidence": "Same bad values over REST -> 400 with the same messages; the rules table afterwards contains none of them."
     },
     "c-gating-builder-explains-itself.9": {
       "result": "pass",
-      "evidence": "subscriber POST rule 403 jetonomy_forbidden"
+      "evidence": "Subscriber POST /spaces/34/access-rules -> 403 jetonomy_forbidden."
     },
     "c-gating-builder-explains-itself.10": {
       "result": "pass",
-      "evidence": "390px builder stacks (type, value, Add Rule in one column), Add Rule 40px high, no overflow"
-    },
-    "c-gating-builder-explains-itself.11": {
-      "result": "pass",
-      "evidence": "wp-admin has no dark scheme by owner decision; skipped per walk rules (admin 1440 only)"
-    },
-    "c-gating-builder-explains-itself.12": {
-      "result": "pass",
-      "evidence": "he_IL admin (RTL) builder: direction rtl on page and value box, text-align start, preview sentences render"
+      "evidence": "Builder at 390: scrollWidth 390, Add Rule button 40px high.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/access-rules-tab-390.png"
     },
     "c-gating-builder-explains-itself.13": {
       "result": "pass",
-      "evidence": "Participate with Logged In, Role, Capability, Trust Level: preview says \"They are recorded as Member.\"; Space Role column shows Member; POST grants=full space_role=admin stores participate/member"
+      "evidence": "Preview text for every rule type reads 'They are recorded as Member.'; POST role rule grants=full space_role=admin stored participate/member."
+    },
+    "c-gating-builder-explains-itself.2": {
+      "result": "pass",
+      "evidence": "Stepped through Everyone, Logged In, WP Role, Capability, Trust Level and (with PMPro active) PMPro Level: each shows a second sentence under the live preview saying who it catches (e.g. 'Matches anyone holding this WordPress role. Most members hold Subscriber...', 'Matches anyone whose WordPress role carries this capability...', 'Matches members at or above this trust level, 1 to 5...', 'Matches members who hold the PMPro level you pick below.') and the value box carries an example (placeholders subscriber, edit_posts, 2, 'PMPro...'); Everyone and Logged In show no value box. Without a membership plugin the Membership entry is disabled ('needs a membership plugin such as MemberPress or Paid Memberships Pro'). Screenshot gt-builder-membership.png."
+    },
+    "c-gating-builder-explains-itself.1": {
+      "result": "pass",
+      "evidence": "Access Rules tab: the form helper reads 'Choose who this rule lets in. Nothing changes until you add the rule.'; the empty state says 'Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.'; the open 'How access rules work' panel says 'A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy.' Screenshot gt-access-182.png."
+    },
+    "c-gating-builder-explains-itself.8": {
+      "result": "pass",
+      "evidence": "test_editor opened .../admin.php?page=jetonomy-spaces&action=edit&space_id=20&tab=access (Help Desk) -> HTTP 403 page 'Only site administrators can manage access rules for this space.' with a 'Back to Help Desk' link and no builder. Screenshot gt-editor-rules.png."
+    },
+    "c-gating-builder-explains-itself.11": {
+      "result": "pass",
+      "evidence": "WordPress admin has no dark scheme, so I emulated prefers-color-scheme: dark: the builder stays a light card and every text stays readable - live preview 6.4:1, selects and value box 16.7:1, table header 7.2:1, panel summary 9.6:1 (measured). Screenshot gt-builder-dark.png."
+    },
+    "c-gating-builder-explains-itself.12": {
+      "result": "pass",
+      "evidence": "Site language Arabic (restored to en_US afterwards): the admin is dir=rtl, the builder sits on the right edge, and the value input and live preview are direction rtl with start alignment; the placeholder example 'subscriber' sits at the right of the box. The plugin strings themselves have no Arabic translation, so the sentences stay English inside the RTL layout. Screenshot gt-builder-rtl.png."
     }
   },
   "proposed_checks": []

@@ -1,84 +1,92 @@
 {
   "journey": "C.member.accept-answer",
-  "free": "206e1d6f",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:37:17Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T19:12:38Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-accept-answer.1": {
       "result": "pass",
-      "evidence": "bob (OP of his QA-RFT question in Help Desk, Q&A) clicked 'Accept as best answer' on hana's reply: after reload exactly that reply is accepted (.accepted) and the question reads Resolved. Callout-above-replies case (other page) not exercised."
+      "evidence": "alice (OP of Q&A topic 258 in Help Desk) accepted bob's reply 1300 (POST /replies/1300/accept 200): page shows reply-1301/1300 state with 'Resolved' text; accepted reply carries the accepted marker and the other reply offers 'Accept as best answer'. Pinned-callout-on-other-page variant not exercised."
     },
     "c-member-accept-answer.2": {
       "result": "pass",
-      "evidence": "POST /replies/1357/accept as bob -> 200 and GET /posts/388 carries accepted_reply_id 1357."
+      "evidence": "POST /replies/1300/accept -> 200 and GET /posts/258 accepted_reply_id=1300"
     },
     "c-member-accept-answer.3": {
       "result": "pass",
-      "evidence": "Accepting carlos' reply after hana's: only the new reply is accepted (accepted_reply_id 1358); the first loses its state."
+      "evidence": "alice accepted a second reply (1301): accepted_reply_id changed 1300 -> 1301; UI shows only reply-1301 accepted, and the other reply offers 'Accept as best answer'"
     },
     "c-member-accept-answer.4": {
       "result": "pass",
-      "evidence": "'Remove accepted answer' button clears it: accepted_reply_id null."
+      "evidence": "bob on his Q&A topic 340 (Help Desk): accepted reply 1376 shows button 'Remove accepted answer' and class 'jt-reply accepted'; clicking it -> class drops 'accepted', button becomes 'Accept as best answer', GET /posts/340 accepted_reply_id null; clicking Accept again restores accepted_reply_id 1376."
     },
     "c-member-accept-answer.5": {
       "result": "pass",
-      "evidence": "hana (not OP) sees no Accept control on the question; POST accept -> 403 jetonomy_forbidden."
+      "evidence": "hana (not OP) POST accept -> 403 jetonomy_forbidden; alice's page offers Accept only to the OP"
     },
     "c-member-accept-answer.6": {
       "result": "pass",
-      "evidence": "test_moderator POST /replies/<id>/accept on a Bug Reports question (bob OP) -> 200; allowed for moderators. The answer author's notice not read (accepted_answer rows exist for carlos)."
+      "evidence": "Seeded Q&A topic 341 in Bug Reports (bob's question, 35+ replies via CLI). test_moderator (not the OP) clicked Accept on alice's reply 1411 on page 2: GET /posts/341 accepted_reply_id 1411; alice got one accepted_answer notification (id 465) and Mailpit mail 'Your answer was accepted'."
     },
     "c-member-accept-answer.7": {
       "result": "pass",
-      "evidence": "Answer authors get one accepted_answer bell row and one email 'Your answer was accepted' each time (hana, carlos). Reputation not read."
+      "evidence": "bob accepted alice's reply 1376: alice got one accepted_answer notification (id 428) and one email 'Your answer was accepted' (Mailpit), reputation 950 -> 966. Unaccept then re-accept added a second notification (429) but no second reputation award (stayed 966)."
     },
     "c-member-accept-answer.8": {
       "result": "pass",
-      "evidence": "On a forum-type space topic (General Discussion) there is no Accept control in the UI. REST on a forum topic reply not called."
+      "evidence": "bob (OP) on his topic 338 in General Discussion (a forum space) with reply 1413: reply card shows only Vote up/down, Reply, Quote, Report (no Accept control); POST /replies/1413/accept as the OP -> 400 jetonomy_not_qa_space 'Accepted answers only apply to Q&A spaces.' (so the refusal is the space type, not authorship)."
     },
     "c-member-accept-answer.9": {
       "result": "pass",
-      "evidence": "Guest on the Q&A topic sees no Accept/Remove controls."
+      "evidence": "Guest on the Q&A topic: the accepted reply is marked, 0 accept/unaccept buttons"
     },
     "c-member-accept-answer.10": {
       "result": "pass",
-      "evidence": "Accepting carlos' private reply (OP may read it): guest sees only the 'Private reply' tombstone, never the text."
+      "evidence": "Accepted private reply 1414 (is_private=1, text 'vendor contact code is HARBOR-5530') on topic 341 via REST as OP: bob (topic author, may read) sees it; guest and carlos (no access) get a page whose DOM/HTML does not contain the string and no accepted callout is shown."
     },
     "c-member-accept-answer.11": {
-      "result": "untested",
-      "evidence": "Merge/split of Q&A topics not run (moderation UI action, not the member surface)."
+      "result": "pass",
+      "evidence": "Moderator test_moderator merged Q&A topic 342 (accepted reply 1417) into 341 (accepted 1414) through More options > Merge > pick topic > Confirm: 342 trashed, 341 has exactly one is_accepted reply (1414), 1417 cleared. Split: Split to Topic on accepted reply 1414 (first refused 400 jetonomy_split_private while the topic had a private reply; made it public) -> new topic 343, 1414 left 341 and is no longer accepted anywhere; re-accepted 1412 and split non-accepted reply 1401 out (topic 344): 341 still has exactly one accepted reply (1412). Counts always match the accepted_reply_id pointer."
     },
     "c-member-accept-answer.12": {
       "result": "pass",
-      "evidence": "Closed question: bob still sees Accept controls (2) and POST accept -> 200; UI and REST agree (accept allowed on a closed topic)."
+      "evidence": "Closed topic 341 (is_closed=1, 'Closed' badge, no composer): UI still shows Accept/Remove accepted answer controls to the OP and POST /replies/1400/accept as OP returns 200 - UI and REST agree (closing blocks replies, not accepting); reopened afterwards."
     },
     "c-member-accept-answer.13": {
       "result": "pass",
-      "evidence": "carlos deleted the accepted reply: accepted_reply_id null and is_resolved false (topic back to unanswered)."
+      "evidence": "bob deleted the accepted reply 1301 (DELETE 200): GET /posts/258 accepted_reply_id becomes null (topic reverts to unanswered)"
     },
     "c-member-accept-answer.14": {
-      "result": "untested",
-      "evidence": "Accepted answer with a long code block at 390 not set up; the page itself has no overflow at 390."
+      "result": "pass",
+      "evidence": "Accepted a reply with a ~600 character one-line code block (1412, on page 2); viewed page 1 at 390: .jt-accepted-callout x 31-359, inner <pre> overflow-x auto (scrollWidth 2856 in 238px) scrolls inside the callout, document scrollWidth 390 = viewport; screenshot accepted-callout-390.png."
     },
     "c-member-accept-answer.15": {
       "result": "pass",
-      "evidence": "Offline accept: 'Failed to save.' toast and no reply is marked accepted."
+      "evidence": "Playwright context offline, click Accept on reply 1400: toast 'Failed to save.', the accepted highlight stays on 1412 and the button on 1400 still reads 'Accept as best answer' (rolled back); after going online GET /posts/341 accepted_reply_id still 1412; screenshot accept-offline.png."
     },
     "c-member-accept-answer.16": {
-      "result": "untested",
-      "evidence": "Needs the accepted reply on a later reply page than the one viewed; not set up."
+      "result": "pass",
+      "evidence": "Topic 341 has 30 replies per page; accepted reply 1411 is on page 2. As bob on page 1: a .jt-accepted-callout ('ACCEPTED ANSWER Alice Chen ... Final answer from my side...') sits above the first reply (document order checked). With the accepted reply on page 1 (1398) there is no callout and the reply card itself has class 'accepted'; screenshot accepted-callout.png."
+    },
+    "c-member-accept-answer.17": {
+      "result": "pass",
+      "evidence": "Q&A topic 342 in Help Desk authored by silenced finn (author set in DB, accepted reply 1417): as finn the reply cards show no Accept/Remove accepted answer buttons; after the silence expiry was moved to the past, the same page shows 'Remove accepted answer' and 'Accept as best answer'. Silence row restored to its original expiry."
     }
   },
   "proposed_checks": []

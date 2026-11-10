@@ -1,71 +1,74 @@
 {
   "journey": "C.member.online-indicator",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:25:07Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:16:45Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-online-indicator.1": {
       "result": "pass",
-      "evidence": "bob (active, used instead of alice): .jt-avatar-wrap.is-online with a green dot (rgb 22,163,74) on the topic author avatar, every reply card and his profile header. Home feed has no avatars to check."
+      "evidence": "alice active (REST last_seen_at current): .jt-avatar-wrap.is-online on her avatars on the topic page / reply cards (8 of 36 avatars online) and on her profile header (::after dot, 10px, absolute top 1px right -5px). The community home has no topic feed avatars to check, so 'home feed' was not observed."
     },
     "c-member-online-indicator.2": {
       "result": "pass",
-      "evidence": "Carlos and Omar (last seen more than 300s ago) have no is-online class on reply cards, and carlos' profile header has none."
+      "evidence": "carlos (last_seen_at null): profile header avatar has no is-online class and no dot; grace and finn (also null) the same"
     },
     "c-member-online-indicator.3": {
       "result": "pass",
-      "evidence": "Dot ::after is absolute top -2px, 10px wide, at left 24px on a 36px avatar and left 18px on a 30px avatar: top-right corner at both sizes. Large size (profile header) not measured."
+      "evidence": "Measured the .jt-avatar-wrap.is-online::after dot (10px, green) against each avatar: sm 30px avatar -> dot centre 7px in from the right edge and 3px below the top; md 36px -> 7px / 3px; 64px profile avatar -> 4px / 6px (top 1px, left 55px): top-right corner on every size, on the topic page, profile, leaderboard and home."
     },
     "c-member-online-indicator.4": {
       "result": "pass",
-      "evidence": "he_IL RTL (cookie-scoped locale): the dot stays attached to the avatar corner (left:55px of a 64px avatar, same corner as LTR, 2px ring), no drift; note it is not mirrored to the left corner."
+      "evidence": "Arabic locale (rtl stylesheet loaded): bob's online avatar (.jt-avatar-wrap.is-online, 30px) dot ::after 10px, top -2px, sits at the avatar's top-left corner (x 1197-1207 on avatar 1195-1225), i.e. mirrored from the LTR top-right, attached not drifting; also visible mirrored on the 390 profile avatar (rtl-profile-390.png) and in rtl-quote-mention.png."
     },
     "c-member-online-indicator.5": {
       "result": "pass",
-      "evidence": "Grace (initials avatar, GR) made active: her profile shows an online dot on the initials avatar."
+      "evidence": "Set grace's last_seen_at to now (fixture, reset afterwards): her 64px profile avatar is the 'GR' initials avatar (no img) and carries .is-online with the green 10px dot at top 1px / left 55px; screenshot online-grace.png."
     },
     "c-member-online-indicator.6": {
       "result": "pass",
-      "evidence": "As a member GET /users/9 (alice, online) -> last_seen_at \"2026-10-30 21:24:34\"; GET /users/16 (carlos, offline) -> null; no is_online field."
+      "evidence": "bob GET /users/9 (alice) last_seen_at '2026-11-06 14:47:21' = dot shown; /users/16 (carlos) last_seen_at null = no dot; no is_online field (only last_seen_at matches /online|seen/)"
     },
     "c-member-online-indicator.7": {
-      "result": "untested",
-      "evidence": "No online-status setting and no member privacy toggle exists in this build (nothing in includes/ defines one), so the \"switch off\" arm cannot be run; the check line describes a control that is not shipped."
+      "result": "pass",
+      "evidence": "Re-walked on the rewritten line. bob's own profile shows the online dot (.jt-avatar-wrap.is-online on both header avatars) and on a topic page; /community/u/bob/edit/ has tabs Profile, Notifications, People you have blocked with labels First/Last name, Nickname, Display name, Bio, Avatar, Notification Preferences: nothing about online, presence or last seen. Admin Settings tabs general, permissions, email, appearance, seo, antispam, integrations: no online/presence/last-seen option (only the word 'online' in a Learnomy description). So there is no setting to hide the dot; an active member shows it everywhere. Screenshot walk-207/free/w3-online-settings.png"
     },
     "c-member-online-indicator.8": {
       "result": "pass",
-      "evidence": "Guest sees 6 online dots on a topic page, consistent with member view; guest REST last_seen_at is the current server time (moves 21:24:00 -> 21:24:04), never a stored time."
+      "evidence": "Guest sees the same is-online contract via REST: alice last_seen_at = request time, carlos null (see .12)"
     },
     "c-member-online-indicator.9": {
       "result": "pass",
-      "evidence": "omar (space-banned) and finn (silenced) made active show a normal dot on their profiles."
+      "evidence": "omar (space-banned) shows the online dot on his profile after activity; finn (silenced, inactive) shows none because he is offline, not because of the silence (not separately driven while active)"
     },
     "c-member-online-indicator.10": {
       "result": "pass",
-      "evidence": "390px dark: dot has a 2px ring in the dark surface colour, overflow visible, scrollWidth 390 (screenshot jt207-w3-online-390dark.png)."
+      "evidence": "Dark mode at 390 on bob's profile: online dot is the ::after of .jt-avatar-wrap (green rgb(22,163,74), 10px) with a 2px solid ring in the card background colour (rgb 47,49,58) separating it from the photo; wrapper overflow visible (only the inner .jt-avatar clips), dot fully round and unclipped in dark-profile-390.png."
     },
     "c-member-online-indicator.11": {
       "result": "pass",
-      "evidence": "Reply by deleted account on \"Favourite lens for street photography?\": 0 online dots and the .jt-avatar-anon silhouette, no error."
+      "evidence": "Reply 1364 by a deleted account on topic 117 ('[deleted]'): wrapper class 'jt-avatar-wrap ' with no is-online, no ::after dot, generic avatar, page renders without any PHP notice text; debug.log shows no new Jetonomy entry."
     },
     "c-member-online-indicator.12": {
       "result": "pass",
-      "evidence": "Logged-out GET /users/9 returns the current server time (21:24:00 then 21:24:04, tracking now) for an online member and null for an offline one (user 15); the stored value is never exposed to guests."
+      "evidence": "Guest GET /users/9 (online member) -> last_seen_at equals the current server time ('2026-11-06 14:47:22'), /users/16 (offline) -> null; bob (a member) saw the same shape. Exact-time-for-staff variant not compared."
     }
   },
-  "proposed_checks": [
-    "`c-member-online-indicator.13` @guest #rest !refuse: GET /users/<id> as a guest for an online member -> response has no last_seen_at field (today it returns the exact timestamp while the member is online)."
-  ]
+  "proposed_checks": []
 }

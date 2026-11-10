@@ -1,61 +1,71 @@
 {
   "journey": "C.gating.read-on-private",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:57:51Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:07:38.485856Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "c-gating-read-on-private.1": {
+    "c-gating-read-on-private.5": {
       "result": "pass",
-      "evidence": "e (not in space, no rule): space GET 403, posts 403, topic 404; UI shows invite-only message, no topics"
+      "evidence": "gate_sub2 (read-only via the Logged In read rule on the private-switched space): POST topic -> 403 jetonomy_forbidden 'You cannot post in this space.'; POST reply -> 403 'You cannot post in this space.'; no rows stored. (REST in-process as the persona on the combo stack; fresh subscribers gate_sub/gate_sub2/gate_sub3 created for the walk and deleted afterwards; Amsterdam Chapter rules/visibility/join policy restored to public/open)"
     },
-    "c-gating-read-on-private.2": {
-      "result": "pass",
-      "evidence": "admin POST Read rule 201 \"Access rule added.\""
+    "c-gating-read-on-private.6": {
+      "result": "fail",
+      "evidence": "REST as gate_sub2 (Read-rule member): POST /posts/3249/vote -> 403 jetonomy_forbidden as expected; POST /flags {object_type:post,object_id:3249} -> 403 jetonomy_forbidden 'You do not have permission to perform this action.' instead of 201. The same member flags a topic in a public space with 201, so the denial is the Viewer role: Permission_Engine role map gives 'viewer' only 'read' (includes/permissions/class-permission-engine.php line 115) and Moderation_Service::check_flag asks can(user,'flag',space). Product bug versus the promise 'Read is read and report'."
     },
     "c-gating-read-on-private.3": {
       "result": "pass",
-      "evidence": "e reads space and topics: REST 200; UI lists 8 topics"
+      "evidence": "gate_sub2 now sees the space (2 topics, 3 members) and its topic cards, and opens 'Roadmap review notes for the beta group' with its body. Screenshots gt-priv-read.png, gt-priv-topic.png."
+    },
+    "c-gating-read-on-private.1": {
+      "result": "pass",
+      "evidence": "gate_sub2 (subscriber, not on the roster) opened the invite-only Gate Private Lab with no rule -> 'Gate Private Lab is invite-only. You need an invitation to join. ... Ask a space admin or a site administrator to invite you.' with no topics; the topic URL returns the 404 'Topic not found'. Screenshot /Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gt-priv-locked.png."
+    },
+    "c-gating-read-on-private.2": {
+      "result": "pass",
+      "evidence": "Admin added WP Role 'subscriber' + Read to the private space -> toast 'Rule added: WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.' (the line's 'Access rule added.' is the older wording)."
     },
     "c-gating-read-on-private.4": {
       "result": "fail",
-      "evidence": "stale line: for a Read-only member the UI renders no composer and no vote buttons at all (only Report), not a vote message; REST vote 403"
-    },
-    "c-gating-read-on-private.5": {
-      "result": "pass",
-      "evidence": "post, reply 403 jetonomy_forbidden \"You cannot post in this space.\"; vote 403 jetonomy_forbidden \"You do not have permission to perform this action.\"; no row stored"
-    },
-    "c-gating-read-on-private.6": {
-      "result": "pass",
-      "evidence": "Read-rule member vote 403; POST /flags on the topic 201 (stored)"
+      "evidence": "As gate_sub2 under the Read rule: no New Topic/Join control and no reply composer (0 contenteditable), the vote control reads 'Score 0. Voting is not available to you here.', and direct REST POST /posts/3249/vote -> 403 jetonomy_forbidden - all as expected. But there is NO Report button on the topic (buttons shown: Follow, Share, Bookmark, React). The check and the Grants help text ('Read - Lets matching people in to read and report') promise Report remains. Screenshot gt-priv-topic.png."
     },
     "c-gating-read-on-private.7": {
       "result": "pass",
-      "evidence": "guest: space posts 403, topic 404; rule does not apply to guests"
+      "evidence": "Logged-out visitor on the private space: 'This space is private. Log in to see it.' with Log In / Browse spaces; the HTML contains neither the space name nor the topic title; the topic URL is the 404 'Topic not found'. Screenshot gt-priv-guest.png."
     },
     "c-gating-read-on-private.8": {
       "result": "pass",
-      "evidence": "rule removed: next read 403 jetonomy_forbidden"
+      "evidence": "Admin deleted the rule (confirm, toast 'Access rule deleted.'); gate_sub2's next load of the space is the invite-only refusal again."
     },
     "c-gating-read-on-private.9": {
       "result": "pass",
-      "evidence": "159-char title topic at 1440 and 390: h1 wraps (294px wide at 390), no overflow"
+      "evidence": "alice posted a 159-character title ('After moving our 12-year-old photography forum from phpBB...') in the private space; gate_sub2 sees it wrapped in the list (link box 470px wide, 71px tall) and in the h1 (651px x 127px), no horizontal overflow at 1440 or 390 (scrollWidth equals viewport)."
     },
     "c-gating-read-on-private.10": {
       "result": "pass",
-      "evidence": "390px space page: no horizontal overflow, topics list stacks"
+      "evidence": "At 390x844 the space header, follow button and tabs stack in one column; document scrollWidth 390; topic row spans 32-358. Screenshot gt-priv-list-390.png."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-gating-read-on-private.2",
+      "now": "toast reads 'Rule added: WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.' (rule-type label and 'Rule added:' prefix)."
+    }
+  ]
 }

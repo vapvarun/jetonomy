@@ -1,88 +1,88 @@
 {
   "journey": "E.reply-by-email",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:24:13Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:51:33Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "e-reply-by-email.1": {
-      "result": "pass",
-      "evidence": "Settings > Reply by Email has no Enable box (2.0.7); with IMAP method and no host the page says \"Not set up yet. Fill in IMAP Host, IMAP Username, IMAP Password, or choose the webhook method. Until then no reply address is added to emails.\" Saved domain mail.example.test + Inbound webhook -> \"Reply by Email settings saved.\"; the page shows the inbound URL and the read-only signing secret (no secret field to type). The IMAP \"Leave blank to keep\" placeholder was empty because no password is stored. A bad domain \"not a domain!!\" -> \"Email Domain was not changed: it must be a domain such as reply.example.com. The previous value was kept. Your other changes were saved.\" and the stored domain stayed localhost"
-    },
-    "e-reply-by-email.2": {
-      "result": "untested",
-      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
-    },
     "e-reply-by-email.3": {
       "result": "pass",
-      "evidence": "Mailgun-style signed POST /reply-by-email/inbound with bob's token (generated with Extension::generate_token) and body \"QA-RFT Thanks, restarting the queue worker fixed it for me.\" -> 200 {\"success\":true}; the new reply on the topic has author_id 10 (bob), status publish"
+      "evidence": "Signed (HMAC-SHA256 of timestamp+token with the saved secret) POST /reply-by-email/inbound with a CLI-generated reply token for bob/post 249 and body 'Thanks, restarting the queue worker fixed it for me.' -> 200 {success:true}; reply stored with author bob. (Reply by Email was set to webhook mode with domain reply.example.test for this walk and restored to its original options afterwards.)"
     },
     "e-reply-by-email.4": {
       "result": "pass",
-      "evidence": "inbound body with a \"> quoted\" block and a \"-- \" signature -> stored reply \"QA-RFT new text here\\n\\nsecond para\" (quote and signature removed, paragraph break kept)"
+      "evidence": "Same inbound with a '> On Tuesday, Alice wrote:' quoted block and '-- ' signature -> stored reply content_plain is only 'Thanks, restarting the queue worker fixed it for me.' (reply deleted afterwards)."
     },
     "e-reply-by-email.5": {
       "result": "pass",
-      "evidence": "token \"garbage\" and a token with a suffix -> 400 jetonomy_reply_token_invalid \"Invalid token structure.\"; the expired (older than 7 days) case not built"
-    },
-    "e-reply-by-email.6": {
-      "result": "untested",
-      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+      "evidence": "Inbound with To reply+garbage@... -> 400 jetonomy_reply_token_invalid 'Invalid token structure.'; a token with a tampered body -> 400 'Malformed token.'"
     },
     "e-reply-by-email.7": {
       "result": "pass",
-      "evidence": "unsigned -> 403 jetonomy_webhook_missing_signature \"Webhook request is not signed.\"; bad signature -> 403 jetonomy_webhook_signature_invalid \"Webhook signature mismatch.\"; timestamp two hours old -> 403 \"Webhook timestamp is outside the accepted window.\""
-    },
-    "e-reply-by-email.8": {
-      "result": "pass",
-      "evidence": "Re-read line (earlier fail was about the error code name, not the line): extension off -> inbound route is not registered (404 rest_no_route); extension on with IMAP chosen and the webhook called -> 503 'Reply by Email is not set up yet.'"
+      "evidence": "Unsigned inbound -> 403 jetonomy_webhook_missing_signature 'Webhook request is not signed.'; wrong signature -> 403 jetonomy_webhook_signature_invalid 'Webhook signature mismatch.'"
     },
     "e-reply-by-email.9": {
       "result": "pass",
-      "evidence": "no To -> 400 jetonomy_inbound_recipient_missing \"No To address found in payload.\"; To without a token -> 400 jetonomy_reply_token_missing \"No reply token found in To address.\"; empty body -> 400 jetonomy_reply_empty \"Email body is empty.\""
+      "evidence": "Signed payload without To -> 400 'No To address found in payload.'; To without a reply token -> 400 'No reply token found in To address.'"
+    },
+    "e-reply-by-email.8": {
+      "result": "untested",
+      "evidence": "Before configuring, POST inbound answered 503 jetonomy_extension_disabled 'Reply by Email is not set up yet.' (provider imap, not ready); the extension-off -> rest_no_route leg was not run."
+    },
+    "e-reply-by-email.6": {
+      "result": "untested",
+      "evidence": "Replay against another post id was not done properly (I mutated the token text, which gave 'Malformed token.'); a genuine cross-post replay of a valid token was not tested."
+    },
+    "e-reply-by-email.1": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-reply-by-email.2": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reply-by-email.10": {
-      "result": "pass",
-      "evidence": "11 inbound replies in a row for bob (10 counted including earlier checks): after the limit -> 429 jetonomy_rate_limited \"Rate limit exceeded or content empty.\" (3 of the last 11 requests); other members were not tried against the same transient"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reply-by-email.11": {
-      "result": "pass",
-      "evidence": "valid token for finn (silenced) -> HTTP 200 {\"success\":true} but no reply row was created (silently dropped, no bounce), as the check records"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reply-by-email.12": {
-      "result": "pass",
-      "evidence": "valid token for omar on a topic in Off-Topic Lounge -> 200 success but no reply row created; closed-topic and archived-space cases not tried"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reply-by-email.13": {
       "result": "untested",
-      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reply-by-email.14": {
       "result": "untested",
-      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reply-by-email.15": {
       "result": "untested",
-      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reply-by-email.16": {
       "result": "untested",
-      "evidence": "Reply by Email is on its default unconfigured IMAP method here (reply notifications to admin and bob carry no Reply-To), so inbound token handling was not set up; not reached in this browser pass"
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
   "proposed_checks": []

@@ -1,80 +1,87 @@
 {
   "journey": "C.anon.category",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:44:40Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:27:32.232775Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free-only",
     "site": "http://localhost:8912",
-    "theme": "reign",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-anon-category.1": {
       "result": "pass",
-      "evidence": "Local Chapters category lists 14 city cards, each linking to its space (links 200)."
+      "evidence": "Guest /community/category/local-chapters/ HTTP 200: 14 cards each linking to its space (London Chapter opens 200)"
     },
     "c-anon-category.2": {
       "result": "pass",
-      "evidence": "/community/category/product-engineering/ guest: Partner Program card has Private badge + \"Approval required\"."
+      "evidence": "Teasers on: Partner Program card in Product & Engineering shows 'Private' badge and 'Approval required' + 'Request to join and the partner team reviews it'; no Join button"
     },
     "c-anon-category.3": {
       "result": "pass",
-      "evidence": "Customer Advisory Board card shows Private + \"Invite only\" and no Join/Request button (0 buttons in card)."
+      "evidence": "Customer Advisory Board card: 'Private', 'Invite only', no Join/Request control"
     },
     "c-anon-category.4": {
-      "result": "fail",
-      "evidence": "stale line: the only all-hidden category is Staff (Release Planning): guest gets 404 \"Category not found. Browse spaces\" with no breadcrumb/name/count - correct. Moderators' Room sits in the mixed Help & Support category, which is visible; the line names the wrong category."
+      "result": "pass",
+      "evidence": "Guest /community/category/staff/ (only Release Planning, hidden) -> HTTP 404 'Category not found.' same page as /category/does-not-exist/, title 'Page not available', no breadcrumb/name/count"
     },
     "c-anon-category.5": {
       "result": "pass",
-      "evidence": "Guest GET /categories/7 (Staff) -> 404 jetonomy_not_found; /categories?per_page=100 lists 4 top-level cats, Staff and its space_count absent."
+      "evidence": "Guest REST /categories/7 -> 404 jetonomy_not_found 'Category not found.' identical to /categories/9999; /categories list omits staff (community:7, help-support:5, product-engineering:6, start-here:5)"
     },
     "c-anon-category.6": {
       "result": "pass",
-      "evidence": "Help & Support reports space_count 5 while DB has 6 spaces (Moderators' Room hidden): guest page shows 5 cards, no Moderators text."
+      "evidence": "Help & Support space_count=5 for guest (6 spaces incl. hidden Moderators' Room); category page does not list Moderators' Room"
     },
     "c-anon-category.7": {
       "result": "pass",
-      "evidence": "Local Chapters: last five city cards show \"0 topics\", no error."
+      "evidence": "Local Chapters page: the 5 empty city spaces show '0 topics', no error"
     },
     "c-anon-category.8": {
       "result": "pass",
-      "evidence": "/community/category/does-not-exist/ -> HTTP 404 \"Category not found. Browse spaces\" with link back to community."
+      "evidence": "/community/category/does-not-exist/ HTTP 404 'Category not found.' with Browse spaces link"
     },
     "c-anon-category.9": {
       "result": "pass",
-      "evidence": "Labs category: 2025 Hackathon card carries Archived marker; opens its space."
+      "evidence": "Labs category: 2025 Hackathon card shows 'Archived' badge, 'Read-only.'"
     },
     "c-anon-category.10": {
       "result": "pass",
-      "evidence": "390px Local Chapters category: scrollWidth 390, cards single column."
+      "evidence": "390px Local Chapters: 1 column, no horizontal scroll"
     },
     "c-anon-category.11": {
       "result": "pass",
-      "evidence": "390px Help Desk card with 288-char description: scrollWidth<=clientWidth, no page overflow; wraps inside card."
+      "evidence": "Help Desk card with 288-char description is clamped with ellipsis inside card at 1440; no overflow"
     },
     "c-anon-category.12": {
       "result": "pass",
-      "evidence": "Dark mode (Reign): Private, Invite only and Forum badges legible on dark cards (w1-cat-dark.png); Archived badge viewed on Labs."
+      "evidence": "Dark toggle: badges light text (rgb 191,217,245) on dark chips (rgb 59,67,80); Archived legible",
+      "screenshot": "walk-207/free/category-dark.png"
     },
     "c-anon-category.13": {
       "result": "pass",
-      "evidence": "bob (Partner Program member/admin) sees the card marked with his role and it opens the space; hana (non-member) card reads \"Approval required\" (request path)."
+      "evidence": "bob (Partner Program admin) sees the card marked 'Admin' (his role); hana (non-member) sees 'Approval required'. Note bob is an admin, so the marker is 'Admin' not 'Member'."
     },
     "c-anon-category.14": {
       "result": "pass",
-      "evidence": "maya sees Moderators' Room (Hidden badge) listed in Help & Support and 200 on Staff category; bob does not see the card (list empty) and gets 404 on the hidden-only Staff category."
+      "evidence": "maya sees Moderators' Room card (Hidden badge, 'Admin') in Help & Support and /category/staff/ is 200 for her; bob gets no Moderators' Room card and staff category 404"
     },
     "c-anon-category.15": {
       "result": "pass",
-      "evidence": "bob's Partner Program card shows a role marker (\"Admin\") instead of \"Approval required/Request to join\" wording."
+      "evidence": "Member of Partner Program: card carries a role marker ('Admin' for bob), not 'Approval required'/'Request to join' wording. A plain member (Insiders / Beta, bob role member) not separately checked."
     }
   },
   "proposed_checks": []

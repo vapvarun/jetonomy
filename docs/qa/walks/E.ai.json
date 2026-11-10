@@ -1,112 +1,108 @@
 {
   "journey": "E.ai",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:20:08Z",
-  "walker": "agent:sonnet release walk 2026-10-31 (browser pass)",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:48:33Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "e-ai.1": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
-    },
-    "e-ai.2": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
-    },
-    "e-ai.3": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
-    },
-    "e-ai.4": {
-      "result": "pass",
-      "evidence": "Settings > AI Integration: saving Auto-spam Threshold 0.3 with Hold 0.6 -> \"Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept. Your other changes were saved.\"; a value of 1.7 saved with \"AI settings saved.\" and no visible message (clamping not confirmed). Settings restored to 0.8 / 0.5"
-    },
     "e-ai.5": {
-      "result": "not_performed",
-      "evidence": "no AI calls can be made, so the usage rows stay empty: GET /ai/usage -> {\"rows\":[]} (carried over, not re-walked)"
-    },
-    "e-ai.6": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
+      "result": "untested",
+      "evidence": "admin GET /ai/usage and /ai/usage/summary -> 200 with rows/totals structure (no provider calls were made so there is nothing to add up)."
     },
     "e-ai.7": {
       "result": "pass",
-      "evidence": "no provider configured: bob POST /ai/suggest-reply -> 403 \"AI reply suggestions are not enabled.\"; no fatal, topic creation unaffected in the other walks, debug.log unchanged at 4547 bytes"
-    },
-    "e-ai.8": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
-    },
-    "e-ai.9": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
-    },
-    "e-ai.10": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
-    },
-    "e-ai.11": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
-    },
-    "e-ai.12": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
-    },
-    "e-ai.13": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
+      "evidence": "With no provider configured, bob POST topic in Help Desk -> 201 published, no hold, no PHP error in debug.log."
     },
     "e-ai.14": {
       "result": "pass",
-      "evidence": "guest POST /ai/suggest-reply -> 401 rest_not_logged_in; guest GET /ai/usage -> 401 rest_forbidden; bob GET /ai/usage -> 403 jetonomy_forbidden"
+      "evidence": "Guest POST /ai/suggest-reply and GET /ai/usage -> 401; bob GET /ai/usage -> 403 jetonomy_forbidden."
     },
-    "e-ai.15": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
-    },
-    "e-ai.16": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made; the private-post no-call refusal needs a working provider to prove no call is made"
-    },
-    "e-ai.17": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
+    "e-ai.11": {
+      "result": "untested",
+      "evidence": "bob POST /ai/suggest-reply for post 9999999 and for a CAB post -> both 403 'AI reply suggestions are not enabled.' because the feature is off with no provider; the 404/permission contract cannot be exercised without enabling it."
     },
     "e-ai.18": {
-      "result": "pass",
-      "evidence": "wp jetonomy-pro ai status prints enabled 1, licensed 1, provider_count 0; list-providers prints a plain table; batch-review-status prints hook jetonomy_pro_ai_batch_review with has_listener and scheduled blank; spam-check with no provider -> \"Error: No AI provider configured. Run `wp jetonomy-pro ai list-providers` to see status.\"; no PHP notices"
+      "result": "untested",
+      "evidence": "`wp jetonomy-pro ai usage` and `ai test` are not registered subcommands (the runbook names them); `wp jetonomy-pro ai` registers other subcommands - not enumerated. No PHP notice printed."
+    },
+    "e-ai.1": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.2": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.3": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.4": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.6": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.8": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.9": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.10": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.12": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.13": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.15": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.16": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-ai.17": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-ai.19": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-ai.20": {
-      "result": "not_performed",
-      "evidence": "no AI provider key is available on this stack (paid third-party service), so no provider call can be made"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-ai.21": {
-      "result": "pass",
-      "evidence": "a kept-threshold save showed \"Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept. Your other changes were saved.\" (one outcome notice, not also \"AI settings saved.\"); a normal save showed only \"AI settings saved.\""
-    },
-    "e-ai.new1": {
-      "result": "pass",
-      "evidence": "2.0.7: Custom provider URL \"not a url\" -> \"Custom provider URL was not changed: it must be a full address starting with http:// or https://. The previous value was kept. Your other changes were saved.\""
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
   "proposed_checks": []

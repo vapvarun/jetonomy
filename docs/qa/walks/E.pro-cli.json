@@ -1,59 +1,61 @@
 {
   "journey": "E.pro-cli",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:44:44Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:52:58Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "e-pro-cli.1": {
-      "result": "pass",
-      "evidence": "wp jetonomy-pro lists 15 groups: advanced-moderation, ai, analytics, badges (custom-badges), email-digest, extension, fields (custom-fields), messaging, polls, reactions, reply-by-email, seo-pro, web-push, webhooks, white-label - all the Pro repo's command classes; no PHP notice. The usage list has no per-group descriptions (each group's help does)"
-    },
-    "e-pro-cli.2": {
-      "result": "pass",
-      "evidence": "Ran the read command of every group: extension list, analytics overview/top-spaces, polls get/results 644 (takes the post id), white-label get, webhooks list, reactions count --on-type=post --on-id=614, reactions emojis, badges list, fields list, messaging unread-count --by=1, email-digest stats, seo-pro defaults, ai status, advanced-moderation list, reply-by-email config, web-push count/vapid-key -> readable output, exit 0. analytics overview (30d) totals posts 112 / replies 942 / active 34 / votes 1226 and +51.4% / +224.8% equal the wp-admin Analytics cards"
-    },
-    "e-pro-cli.3": {
-      "result": "pass",
-      "evidence": "`wp jetonomy qa-actions` with Pro active: Pro phase Pro Tests 49/49 and Journey Tests 56/56 (each extension journey passes), no phase with zero checks; with Polls disabled the run prints \"(extension disabled - skipping)\" for the poll tests instead of failing. The overall command still ends ACTION TESTS FAILED (REST 61/79, Model 228/230) because of site leftovers: the required QA-RFT custom fields make topic creation 400 in group A and the feed/sitemap/page probes get HTTP 0 from inside the container - not Pro"
-    },
     "e-pro-cli.4": {
       "result": "pass",
-      "evidence": "wp jetonomy-pro polls get 99999999 -> 'Error: No poll found for this post.' rc 1; reactions add --on-type=bogus -> 'Error: Parameter errors: Invalid value specified for on-type', rc 1; webhooks get abc -> 'Error: id must be a positive integer.' rc 1; no stack traces"
+      "evidence": "`wp jetonomy-pro polls get 99999` -> 'Error: No poll found for this post.'; `webhooks get abc` -> 'Error: id must be a positive integer.'; plain Error lines, no stack trace."
     },
     "e-pro-cli.5": {
       "result": "pass",
-      "evidence": "wp jetonomy-pro extension disable polls -> was_enabled 1 and list shows polls no; qa-actions skips the poll tests (\"extension disabled - skipping\"); extension enable polls restores it (list shows yes); debug.log gained no Jetonomy lines"
+      "evidence": "`wp jetonomy-pro extension disable polls` -> /polls/.. route 404 rest_no_route; `enable polls` -> route registered; list shows all 17 enabled again; debug.log gained no jetonomy line."
+    },
+    "e-pro-cli.9": {
+      "result": "pass",
+      "evidence": "`wp jetonomy-pro email-digest set-prefs --for=10 --frequency=off` -> applied {\"frequency\":\"none\"}; `--frequency=bogus` -> 'Parameter errors: Invalid value specified for frequency'. (Restored bob to weekly.)"
+    },
+    "e-pro-cli.2": {
+      "result": "untested",
+      "evidence": "Primary subcommands run: `white-label get` (prints the four fields), `analytics export --format=csv`, `web-push vapid-key/count/subscriptions`, `reply-by-email config/generate-token`, `extension list/enable/disable`; the rest of the groups were not each exercised."
+    },
+    "e-pro-cli.1": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-pro-cli.3": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-pro-cli.6": {
-      "result": "fail",
-      "evidence": "stale line: `wp jetonomy-pro webhooks deliveries` does not exist ('deliveries' is not a registered subcommand; webhooks has create/delete/disable/enable/events/get/list/test/update). analytics export --format=csv finishes in under a second and returns 30 daily rows; the 5,000-row case was not exercised through a CLI delivery list that does not exist"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-pro-cli.7": {
-      "result": "pass",
-      "evidence": "Extensions with no CLI group: anonymous-posting, attachments, site-announcements (the other 14 map to a group: custom-badges=badges, custom-fields=fields, private-messaging=messaging). Three entry points: anonymous-posting has UI toggle + space admin tab + /anonymous/reveal REST; attachments has composer UI + settings/Community Media admin + /attachments REST; site-announcements has Pin to community UI + REST (see that record for admin)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-pro-cli.8": {
-      "result": "pass",
-      "evidence": "With Free skipped (wp --skip-plugins=jetonomy jetonomy-pro) -> 'Error: jetonomy-pro is not a registered wp command' - a clean error, no fatal, no stack trace (it is WP-CLI's generic message, not a Pro-specific notice)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "pro-cli: refresh line 2 (polls takes the post id), line 6 (no webhooks deliveries command) and the unread-count flag (--by)."
-  ]
+  "proposed_checks": []
 }

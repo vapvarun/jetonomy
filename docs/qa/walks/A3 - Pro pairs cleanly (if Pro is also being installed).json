@@ -1,0 +1,53 @@
+{
+  "journey": "A3",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:22:34.851004Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
+  "env": {
+    "mode": "free stack, Pro activated only for this journey then deactivated",
+    "site": "http://localhost:8912",
+    "themes": [
+      "reign-theme"
+    ],
+    "viewports": [
+      1280
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
+  },
+  "checks": {
+    "a3.1": {
+      "result": "pass",
+      "evidence": "wp plugin activate jetonomy-pro on top of Free: exit 0, 'Activated 1 of 1 plugins', debug.log gained no line"
+    },
+    "a3.2": {
+      "result": "pass",
+      "evidence": "wp_jt_* tables 23 -> 43: 20 jt_pro_* tables added (ai_*, badges, conversations, messages, polls, reactions, webhooks, push...), none removed; jt_posts SHOW CREATE TABLE md5 identical before/after"
+    },
+    "a3.3": {
+      "result": "pass",
+      "evidence": "JETONOMY_VERSION=2.0.7 and JETONOMY_PRO_VERSION=2.0.7; Plugins screen lists Jetonomy 2.0.7 and Jetonomy Pro 2.0.7 with no 'requires Jetonomy' notice"
+    },
+    "a3.4": {
+      "result": "pass",
+      "evidence": "Deactivated Free with Pro active: wp-admin dashboard shows notice 'Jetonomy Pro requires the Jetonomy plugin to be installed and activated.'; front end / and /community/ answered HTTP 200, no fatal. Free reactivated afterwards."
+    },
+    "a3.5": {
+      "result": "pass",
+      "evidence": "Jetonomy > Extensions lists 17 Pro extensions each with an 'Enable or disable <name>' toggle (all off on fresh pairing; Reactions toggled on via UI and took effect). Settings > Integrations lists 6 Wbcom companions all 'Not installed' (accurate, none installed) and membership adapters 'Not detected'. Polls/Webhooks/Custom Badges/Reactions cards present."
+    },
+    "a3.6": {
+      "result": "pass",
+      "evidence": "As admin after enabling Reactions: /community/s/feature-requests/t/dark-mode-for-the-community-on-phones/ renders title, 30 replies, 620 reaction-class elements, no horizontal scroll. Same page rendered with Pro inactive earlier (title, 30 replies). Verified logged in as admin, not as guest (session persisted)."
+    },
+    "a3.7": {
+      "result": "pass",
+      "evidence": "Topic 'Dark mode for the community on phones' reply count 45 in DB before and after Pro activation; page shows '45 replies' and 30 on page 1; Pro tables created with no debug.log entry."
+    }
+  },
+  "proposed_checks": []
+}

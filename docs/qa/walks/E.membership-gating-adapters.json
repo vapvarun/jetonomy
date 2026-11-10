@@ -1,75 +1,89 @@
 {
   "journey": "E.membership-gating-adapters",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:50:37Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:53:54Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-membership-gating-adapters.1": {
-      "result": "pass",
-      "evidence": "Browser, admin 1440, Access Rules tab of QA-RFT W4 Gated Space: Rule type lists Everyone, Logged In, WP Role, Capability, Trust Level, Tutor LMS, LifterLMS only; WooCommerce (no Memberships/Subscriptions active), LearnDash, MemberPress, PMPro, Sensei not listed; no fatal"
+      "result": "untested",
+      "evidence": "Needs WooCommerce Memberships / paid-memberships-pro / LearnDash flows configured with plans and purchases; not set up in this pass (plugins are available but inactive)."
     },
     "e-membership-gating-adapters.2": {
-      "result": "pass",
-      "evidence": "Browser: Tutor LMS + type-ahead 'QA-RFT' + course 'QA-RFT W4 Introduction...' + Participate -> toast 'Rule added: Tutor LMS: QA-RFT Tutor Course (Tutor Course) can read, post, reply, vote and report. They are recorded as Member.'; row shows Tutor LMS Course, level name, Participate, Member"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.3": {
-      "result": "pass",
-      "evidence": "Browser, qa_rft_w4_a enrolled in the Tutor course: private space opens ('You have access through ...(Course)'), topic posted via REST with the rule, and w4 a is listed in the members roster (space_members source=tier, role member)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.4": {
-      "result": "pass",
-      "evidence": "Browser, qa_rft_w4_b not enrolled: 'This space is included with <course>, <course>. Any one of them gives you access' with 'Get <course>' links; both return 200 with Enroll; the same course page returns 200 to a guest. A guest opening the private space itself sees only 'This space is private. Log in to see it.' (no buy link by design)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.5": {
-      "result": "pass",
-      "evidence": "Guest curl: GET /spaces/302 and /spaces/302/posts -> 403 jetonomy_forbidden; hidden space 303 (same URLs) -> 404 jetonomy_not_found 'Space not found.' identical to unknown id 99999; guest page shows only 'This space is private. Log in to see it.'"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.6": {
-      "result": "pass",
-      "evidence": "Tutor enrolment cancelled for w4 a -> next request shows the locked teaser, space_members row gone (roster = admin only), earlier topic 605 still exists"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.7": {
-      "result": "pass",
-      "evidence": "w4 a open on the teaser page, enrolled via Tutor do_enroll, plain reload -> space opens ('You have access through'), no cache clear or re-login"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.8": {
-      "result": "pass",
-      "evidence": "w4 a via rule as Member: POST /posts/605/pin, /close, /spaces/302/moderation/trash/post/605 and GET /moderation/queue all 403 jetonomy_forbidden; user role stays subscriber after the rule (no site role raised)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.9": {
-      "result": "not_performed",
-      "evidence": "WP Fusion and SureMembers are paid third-party plugins not installed on this stack, so their per-space tabs do not exist"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.10": {
-      "result": "pass",
-      "evidence": "Course 112 (rule on hidden space 303) force-deleted -> Access Rules row 'tutor_course_112 Course no longer available ... this rule lets nobody in. Publish it again or delete this rule.'; w4 b gets 'Space not found.'; no fatal"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.11": {
-      "result": "fail",
-      "evidence": "Seeded 502 Tutor courses (then deleted): admin Access Rules page embeds all 502 levels in jetonomyAdmin data (Tutor and LifterLMS adapters report searchable:false, no search_levels; get_all_levels uses numberposts -1); the picker only filters that preloaded list client side (11 shown for 'Bulk Course 49'). Page loads in 0.7s at 502 but grows linearly. Woo and LearnDash adapters have server search_levels. Product gap for Tutor/LifterLMS (and any adapter without search_levels)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-membership-gating-adapters.12": {
-      "result": "pass",
-      "evidence": "390 + dark (reign toggle): teaser has no overflow (scrollWidth 390), long 'Get <course>' buttons wrap (85px tall, 52-338px) with token colours on dark bg rgb(35,38,47); admin Access Rules at 390: no overflow, Add Rule button 40px"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-membership-gating-adapters.13": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-membership-gating-adapters.14": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-membership-gating-adapters.15": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-membership-gating-adapters.16": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "Tutor and LifterLMS adapters should implement search_levels so the picker does not embed every course on sites with hundreds of courses."
-  ]
+  "proposed_checks": []
 }

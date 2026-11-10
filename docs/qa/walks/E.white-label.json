@@ -1,75 +1,78 @@
 {
   "journey": "E.white-label",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:27:28Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:46:16Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, current HEAD)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-white-label.1": {
-      "result": "pass",
-      "evidence": "Settings > Branding (4 text fields): Hearthside Community / Hearthside / dashicons-groups / \"Built with care by the Hearthside team\" -> \"Branding settings saved.\" and all four values kept"
+      "result": "untested",
+      "evidence": "Saved the four fields via PATCH /settings/white-label (community 'Hearthside Community', label 'Hearthside', icon dashicons-groups, footer text) -> success; the Branding tab form/notice was not used."
     },
     "e-white-label.2": {
       "result": "pass",
-      "evidence": "sidebar label \"Hearthside\" with dashicons-groups icon class; headings \"Hearthside Community Settings\", \"Hearthside Community\"; Plugins page row reads \"Hearthside Community\""
+      "evidence": "After saving: admin sidebar label 'Hearthside' with dashicons-groups icon, Dashboard h1 'Hearthside Community Dashboard', 0 occurrences of 'Jetonomy' in the Jetonomy dashboard body.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/whitelabel-admin.png"
     },
     "e-white-label.3": {
       "result": "pass",
-      "evidence": "custom footer text shown on Jetonomy screen; footer blank + name set -> \"Thank you for building your community with Hearthside Community.\"; both blank -> default \"Thank you for building your community with Jetonomy.\" returns"
+      "evidence": "Admin footer on the Jetonomy screen reads the custom footer text."
     },
     "e-white-label.4": {
       "result": "pass",
-      "evidence": "footer \"Bob's Q&A\" renders once-escaped as Bob's Q&A (no &amp;amp;)"
-    },
-    "e-white-label.5": {
-      "result": "pass",
-      "evidence": "every Settings tab except Integrations shows 0 \"Jetonomy\" and the brand name instead (sidebar text, Data card \"Remove all community data when Hearthside Community is deleted\", hints); only Integrations marketing copy keeps the product name 3 times"
+      "evidence": "Footer text 'Built with care by the Hearthside team & Bob's Q&A' rendered once-escaped as 'Bob's Q&A' (no &amp;amp;)."
     },
     "e-white-label.6": {
       "result": "pass",
-      "evidence": "guest /community/ title \"Community – Northwind Community\" and HTML had no \"Hearthside\" before and while the rebrand was on"
-    },
-    "e-white-label.7": {
-      "result": "pass",
-      "evidence": "with community_name \"Hearthside Community\" set, a DM notification mail has From \"Northwind Community\", subject \"[Northwind Community] QA W3 b: ...\" and a Northwind footer; no white-label name"
+      "evidence": "Frontend /community/ unchanged with the rebrand on: title 'Community \u2013 Northwind Makers Community' and no 'Hearthside' text."
     },
     "e-white-label.8": {
       "result": "pass",
-      "evidence": "GET /settings/white-label returns the four fields; PATCH community_name \"<b>Hearth</b>\" stored \"Hearth\""
+      "evidence": "admin GET /settings/white-label returns community_name, footer_text, admin_label, admin_icon; PATCH community_name '<b>Hearth</b>' stored 'Hearth' (tags stripped)."
     },
     "e-white-label.9": {
       "result": "pass",
-      "evidence": "test_moderator and member GET/PATCH -> 403 jetonomy_forbidden; guest -> 401"
-    },
-    "e-white-label.10": {
-      "result": "pass",
-      "evidence": "120-char community name: doc scrollWidth equals viewport at 1440 and 390, admin menu and header do not overflow"
-    },
-    "e-white-label.11": {
-      "result": "pass",
-      "evidence": "all four fields cleared and saved -> menu label \"Jetonomy\" with the default svg icon, footer default text back"
+      "evidence": "bob GET and test_moderator PATCH /settings/white-label -> 403 jetonomy_forbidden; guest GET -> 401 rest_forbidden."
     },
     "e-white-label.12": {
-      "result": "pass",
-      "evidence": "wp jetonomy-pro white-label get matches the admin page and GET; update with community-name, footer-text, admin-label, admin-icon changed all four"
+      "result": "untested",
+      "evidence": "`wp jetonomy-pro white-label get` printed the same four fields; `update` and the admin-page comparison were not run."
+    },
+    "e-white-label.5": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-white-label.7": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-white-label.10": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-white-label.11": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-white-label.13": {
-      "result": "pass",
-      "evidence": "admin_icon \"https://example.com/icon.png\" renders as an img in the menu; an invalid string via CLI renders the default svg icon (note: saving the invalid string through the Branding form kept the previous icon instead)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "Branding form: saving an invalid icon string keeps the previous icon while the CLI stores the raw string and shows the default - make both paths sanitise the same way"
-  ]
+  "proposed_checks": []
 }

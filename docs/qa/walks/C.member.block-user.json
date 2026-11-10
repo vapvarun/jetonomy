@@ -1,88 +1,94 @@
 {
   "journey": "C.member.block-user",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:18:13Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:59:59Z",
+  "walker": "release 2.0.7 free wave-3 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light",
+      "dark"
+    ]
   },
   "checks": {
     "c-member-block-user.1": {
       "result": "pass",
-      "evidence": "qa_rft_m1 on alice's profile: More actions > \"Block Alice Chen\" shows modal \"Block Alice Chen? Their topics and replies will be hidden from you...\"; after Block her 12 replies in a topic show \"Content hidden because you blocked this user.\" with Unblock (4 buttons)."
+      "evidence": "bob on /community/u/alice/: More actions for Alice Chen > 'Block Alice Chen' > modal 'Block Alice Chen? Their topics and replies will be hidden from you... They are not told.' > Block (POST /users/me/blocks {user_id:9} 200). On /community/s/feature-requests/t/dark-mode-for-the-community-on-phones/ her reply became 'Content hidden because you blocked this user.' with an Unblock button (.jt-reply-blocked); her topic deep link shows the tombstone 'Unblock this user'. Observation: another member's reply that quotes her text (Bob's own 'in reply to Alice Chen' quote card) still shows her quoted words. Screenshots w3-block-tombstone.png, w3-tombstone-390-dark.png"
     },
     "c-member-block-user.2": {
       "result": "pass",
-      "evidence": "Unblock on the tombstone then reload: no tombstones, all 27 replies show."
+      "evidence": "Clicked Unblock on the tombstone: DELETE /users/me/blocks/9 200, tombstone gone, and after reload Alice's replies show again."
     },
     "c-member-block-user.3": {
       "result": "pass",
-      "evidence": "POST /users/me/blocks 200 {blocked:true}; GET lists alice; DELETE /users/me/blocks/20 -> 200 {deleted:true} and list no longer has grace."
+      "evidence": "REST as bob: POST /users/me/blocks {user_id:9} -> 200 {blocked:true}; GET lists alice; DELETE /users/me/blocks/9 -> 200 {deleted:true}; GET list empty."
     },
     "c-member-block-user.4": {
       "result": "pass",
-      "evidence": "Blocking alice twice returns 200 both times; list holds one row."
+      "evidence": "Blocking alice twice returned 200 {blocked:true} both times; GET /users/me/blocks listed her once (count 1) and the table held a single row."
     },
     "c-member-block-user.5": {
       "result": "pass",
-      "evidence": "alice views the same thread: 27 replies, no blocked text or sign."
+      "evidence": "alice (blocked by bob) opened bob's topic in Knowledge Base: bob's content shows normally, 0 tombstones, no mention of a block. Observation: if she tries to reply to bob's content the REST answer is 403 jetonomy_cannot_interact 'You cannot interact with this member.' (neutral wording, by design in Content_Gate::blocked_contact, but it is a tell)."
     },
     "c-member-block-user.6": {
       "result": "pass",
-      "evidence": "Blocking self -> 400 jetonomy_cannot_block_self \"You cannot block yourself.\"."
+      "evidence": "bob POST /users/me/blocks {user_id:10} -> 400 jetonomy_cannot_block_self 'You cannot block yourself.'."
     },
     "c-member-block-user.7": {
       "result": "pass",
-      "evidence": "Blocking test_moderator (id 5) -> 403 jetonomy_cannot_block_moderator."
+      "evidence": "bob blocks test_moderator (id 5) -> 403 jetonomy_cannot_block_moderator 'You cannot block a moderator.'; the moderator's content stays visible."
     },
     "c-member-block-user.8": {
       "result": "pass",
-      "evidence": "Block user 999999 -> 404 jetonomy_not_found \"User not found.\"."
+      "evidence": "POST /users/me/blocks {user_id:999999} -> 404 jetonomy_not_found 'User not found.'."
     },
     "c-member-block-user.9": {
       "result": "pass",
-      "evidence": "Guest POST /users/me/blocks -> 401."
+      "evidence": "Logged out (credentials omitted) POST /users/me/blocks -> 401 rest_not_logged_in."
     },
     "c-member-block-user.10": {
       "result": "pass",
-      "evidence": "Blocked a throwaway user then deleted the account with wp user delete: no PHP notice, 0 rows left in jt_blocked_users for it."
+      "evidence": "bob blocked walkdel (who had replied in bob's topic), then the user was deleted (wp user delete): jt_blocked_users row count 1 -> 0, GET /users/me/blocks no longer lists the member, the reply stays as '[deleted]' (author 0) and the page rendered with no PHP notice (debug.log clean for jetonomy)."
     },
     "c-member-block-user.11": {
       "result": "pass",
-      "evidence": "Blocked alice's topic is absent from search (\"0 results\"), absent from the space list, and a deep link shows the tombstone \"hidden because you blocked\"."
+      "evidence": "With alice blocked: search for her topic ('headlamp Welsh rain') -> 0 results for bob while alice sees it; tag page /community/tag/rainproofgear/ -> 'No topics with this tag yet.' for bob, alice sees the topic; bob's notification for her reply (id 450) is absent from /community/notifications/; a deep link to her topic shows 'Content hidden because you blocked this user.' tombstone."
     },
     "c-member-block-user.12": {
       "result": "pass",
-      "evidence": "Block Grace: tombstone and Blocked members list show her full name \"Grace Oluwaseun Adeyemi-Whitfield\" wrapping (white-space normal, 53px tall at 390)."
+      "evidence": "Blocked Grace (Grace Oluwaseun Adeyemi-Whitfield): the Blocked members list (edit profile) shows the full name wrapped over two lines (h53, overflow-wrap anywhere, no clipping). The tombstone itself carries no name text. Screenshot w3-blocked-list-390.png"
     },
     "c-member-block-user.13": {
       "result": "pass",
-      "evidence": "390px tombstone: Unblock button 40px tall x 80 wide, text wraps, scrollWidth 390 (screenshot jt207-w3-block-tomb-390dark.png)."
+      "evidence": "Tombstone at 390: text wraps (scrollWidth 326/326), Unblock button 40px tall, no sideways scroll (page 390). Screenshot w3-tombstone-390.png"
     },
     "c-member-block-user.14": {
       "result": "pass",
-      "evidence": "Dark tombstone text rgb(185,186,188) on rgb(35,38,47), readable."
+      "evidence": "Reign dark: tombstone text rgb(185,186,188) on card rgb(35,38,47) = 7.78:1; dashed border is a decorative 12% line, text and the Unblock button read clearly. Screenshot w3-tombstone-390-dark.png"
     },
     "c-member-block-user.15": {
       "result": "pass",
-      "evidence": "Block with the request aborted: toast \"Failed to save.\", no Unblock tombstone, content not collapsed."
+      "evidence": "Offline, confirmed Block Alice Chen: toast 'Failed to save.', modal closed, GET blocks afterwards lists no alice and her replies are not collapsed."
     },
     "c-member-block-user.16": {
       "result": "pass",
-      "evidence": "m1 blocked alice; alice's reply to m1's QA-RFT topic is refused 403 jetonomy_cannot_interact \"You cannot interact with this member.\"; m1's notifications stay empty and no email. (Note: the refusal tells the blocked author they are blocked.)"
+      "evidence": "alice replied to bob's topic before the block: notification 450 + email 'Alice Chen replied to your topic' (Mailpit). With the block in place the follow-up reply is refused (403 jetonomy_cannot_interact), so no further notification (latest bob notification stays 450 -> hidden) and no email arrived. Note the literal setup 'blocked person's reply' cannot be created."
     },
     "c-member-block-user.17": {
       "result": "pass",
-      "evidence": "Blocked members list on /community/u/qa_rft_m1/edit/ at 390 wraps Grace's full name, clip overflow but normal white-space (screenshot jt207-w3-blocked-list-390.png)."
+      "evidence": "/community/u/bob/edit/ > People you have blocked at 390: 'Grace Oluwaseun Adeyemi-Whitfield' wraps to two lines (clientWidth 161, height 53), text-overflow clip but no truncation, no page overflow (390)."
     }
   },
   "proposed_checks": []

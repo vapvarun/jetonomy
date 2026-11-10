@@ -1,104 +1,112 @@
 {
   "journey": "C.member.flag",
-  "free": "206e1d6f",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:34:38Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T18:56:38Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-flag.1": {
       "result": "pass",
-      "evidence": "bob > Report on a reply opens a dialog 'Why are you reporting this reply?' with radios Spam, Offensive, Off-topic, Harassment, Other and a details textarea ('Add details (optional, up to 2,000 characters)'); topic menu variant not clicked."
+      "evidence": "bob on a reply in 'Dark mode for the community on phones' pressed the Report icon (aria-label Report): dialog 'Why are you reporting this reply?' with radios Spam, Offensive, Off-topic, Harassment, Other, optional details textarea ('Add details (optional, up to 2,000 characters)'), Cancel/Report",
+      "screenshot": "walk-207/free/flag-dialog.png"
     },
     "c-member-flag.2": {
       "result": "pass",
-      "evidence": "Submit with no reason keeps the dialog open and shows 'Choose a reason.'; nothing sent."
+      "evidence": "Report with no reason: hint 'Choose a reason.' shown, dialog stays open, nothing sent"
     },
     "c-member-flag.3": {
       "result": "pass",
-      "evidence": "Spam + details submitted -> toast 'Reported. Thank you.' and the dialog closes."
+      "evidence": "Spam + details submitted: toast 'Reported. Thank you.' and dialog closed (flag created, id 6)"
     },
     "c-member-flag.4": {
       "result": "pass",
-      "evidence": "test_moderator's /community/mod/ queue lists 'REPLY Help Desk ... QA-RFT public reply by carlos' with 'SPAM (2), OFFENSIVE' and 'Reported by Omar Haddad and 2 others' (reporter names shown). Flag rows removed afterwards."
+      "evidence": "test_moderator /community/mod/ Flags tab lists cards with reason chips (SPAM, OFFENSIVE, OFF-TOPIC), type (REPLY/TOPIC/MEMBER), space, text and 'Reported by Hana Park and 2 others' / 'Reported by Alice Chen'"
     },
     "c-member-flag.5": {
       "result": "pass",
-      "evidence": "Reporting the same reply again via the UI -> toast 'You have already reported this content.'; the queue holds one card."
+      "evidence": "bob reports the same reply again via UI: toast 'You have already reported this content.'; REST 409 jetonomy_already_flagged; no second row"
     },
     "c-member-flag.6": {
       "result": "pass",
-      "evidence": "Route is POST /jetonomy/v1/flags with object_type/object_id/reason (the runbook's /moderation/flags with target does not exist - stale check line): valid -> 201 {created:true}, invalid reason -> 400 rest_invalid_param."
+      "evidence": "bob POST /flags {object_type:reply,object_id,reason} -> 201; reason 'nonsense' -> 400 rest_invalid_param"
     },
     "c-member-flag.7": {
       "result": "pass",
-      "evidence": "Reply, topic and member (user) reports all reach the queue as REPLY, TOPIC and MEMBER cards with the right target type."
+      "evidence": "bob reported a reply (flag 9) and a member profile (user 9, harassment, flag 8): queue shows 'REPLY ...' and 'MEMBER HARASSMENT ... Alice Chen ... View profile Uphold Dismiss'"
     },
     "c-member-flag.8": {
       "result": "pass",
-      "evidence": "bob reporting his own reply -> 400 jetonomy_flag_self 'You cannot report your own content.'."
+      "evidence": "bob POST /flags on his own reply 1240 -> 400 jetonomy_flag_self 'You cannot report your own content.'"
     },
     "c-member-flag.9": {
       "result": "pass",
-      "evidence": "bob reporting a Customer Advisory Board reply (1140) -> 404 jetonomy_flag_target_missing, identical to a missing id (9999999)."
+      "evidence": "bob (not a member) POST /flags on reply 1227 in Moderators' Room -> 404 jetonomy_flag_target_missing, identical to reply 9999999. Note: reply 1226 in Customer Advisory Board answered 201 because bob became a CAB member through the invite walk earlier, not a product defect."
     },
     "c-member-flag.10": {
       "result": "pass",
-      "evidence": "bob reporting private reply 1198 -> the same 404 jetonomy_flag_target_missing; GET /replies/1198 -> 404 jetonomy_not_found."
+      "evidence": "POST /flags on private reply 1284 (not readable by bob) -> 404 jetonomy_flag_target_missing, same as a missing id"
     },
     "c-member-flag.11": {
       "result": "pass",
-      "evidence": "Guest POST /flags -> 401."
+      "evidence": "Guest POST /flags -> 401 rest_not_logged_in"
     },
     "c-member-flag.12": {
       "result": "pass",
-      "evidence": "finn POST /flags -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'."
+      "evidence": "finn POST /flags -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.' (REST; UI path not separately driven)"
     },
     "c-member-flag.13": {
       "result": "pass",
-      "evidence": "Report on id 9999999 -> 404 jetonomy_flag_target_missing 'The reported content no longer exists.'."
+      "evidence": "POST /flags reply 9999999 -> 404 jetonomy_flag_target_missing 'The reported content no longer exists.'"
     },
     "c-member-flag.14": {
-      "result": "untested",
-      "evidence": "Offline report submit not run."
+      "result": "pass",
+      "evidence": "Offline Report: message 'Network error. Please try again.', dialog stays open; online retry then showed 'Reported. Thank you.'"
     },
     "c-member-flag.15": {
       "result": "pass",
-      "evidence": "bob, hana and omar reported the same reply: one queue card with merged count (see .21), not three rows."
+      "evidence": "bob, alice and hana reported reply 1238: ONE queue card 'SPAM, OFFENSIVE, OFF-TOPIC ... Reported by Hana Park and 2 others' (card says 'and 2 others', not literally 'count 2')"
     },
     "c-member-flag.16": {
       "result": "pass",
-      "evidence": "Details textarea has maxlength 2000 (2500 chars typed stays 2000); no 500."
+      "evidence": "Textarea maxlength=2000 (2,500 typed chars cut to 2000) and placeholder states the limit; REST 100000-char description -> 400 jetonomy_validation 'Report details can be up to 2,000 characters.'"
     },
     "c-member-flag.17": {
-      "result": "untested",
-      "evidence": "Dialog at 390 in dark mode not opened."
+      "result": "pass",
+      "evidence": "390px dark: dialog x 8..382 of 390, y 188..612 of 800, both buttons inside the viewport, dark background (rgb 47,49,58) with light text; no horizontal scroll",
+      "screenshot": "walk-207/free/flag-390-dark.png"
     },
     "c-member-flag.18": {
-      "result": "untested",
-      "evidence": "RTL dialog not walked (needs Arabic locale)."
+      "result": "pass",
+      "evidence": "Arabic locale, bob opened Report on Omar's Arabic topic 248: .jt-modal-box dialog computed direction rtl, textarea align start, document dir rtl; screenshot rtl-flag-dialog.png. Submitted as Offensive."
     },
     "c-member-flag.19": {
       "result": "pass",
-      "evidence": "GET /replies/1198 (private reply bob may not read) -> 404 jetonomy_not_found."
+      "evidence": "bob GET /replies/1284 (private) -> 404 jetonomy_not_found 'Reply not found.'"
     },
     "c-member-flag.20": {
       "result": "pass",
-      "evidence": "POST /flags with a 100000-char description -> 400 jetonomy_validation 'Report details can be up to 2,000 characters.'; textarea placeholder states 'up to 2,000 characters'."
+      "evidence": "POST /flags with 100000-char description -> 400 'Report details can be up to 2,000 characters.'; textarea placeholder 'Add details (optional, up to 2,000 characters)'"
     },
     "c-member-flag.21": {
       "result": "pass",
-      "evidence": "Three members reporting one reply -> one card with 'SPAM (2), OFFENSIVE' and 'Reported by Omar Haddad and 2 others'. Resolving and reporter notices left to the flag-resolution walk."
+      "evidence": "Three reporters on reply 1238: moderator queue shows one card with all three reasons; test_moderator dismissed it once (POST /moderation/flags/9/resolve 200) and flags 9, 11, 12 all became dismissed; bob, alice and hana each have exactly one 'Your report was reviewed' notification; a second resolve returns 409 jetonomy_already_handled. Card text is 'Reported by Hana Park and 2 others' rather than '3 reports'."
     }
   },
   "proposed_checks": []

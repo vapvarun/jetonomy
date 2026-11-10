@@ -1,92 +1,99 @@
 {
   "journey": "C.anon.invite-landing",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:01:35Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:32:41.554556Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free-only",
     "site": "http://localhost:8912",
-    "theme": "reign",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-anon-invite-landing.1": {
       "result": "pass",
-      "evidence": "Valid QA-RFT invite (Mentorship Circle): page names the space, offers \"Log in to accept invite\" and, with users_can_register=1, \"Create free account\" (restored to 0); nobody added."
+      "evidence": "Guest /community/invite/<CAB token>/ (invite created via REST POST /spaces/42/invite): 'You've been invited to join Customer Advisory Board', 'Log in to accept invite'; with users_can_register=1 the page also shows 'Create free account' (curl); wp_jt_space_members unchanged (4)"
     },
     "c-anon-invite-landing.2": {
       "result": "pass",
-      "evidence": "Guest login link carries redirect_to=the invite URL; after login as qa_rft_m1 the invite page shows Join Space, member count unchanged."
+      "evidence": "Log in link = wp-login.php?redirect_to=<invite URL>; after autologin as bob the invite page shows 'Join Space' and bob has 0 member rows (not joined)"
     },
     "c-anon-invite-landing.3": {
       "result": "pass",
-      "evidence": "qa_rft_m1 clicks \"Join Space\" (nonce POST) -> lands on /community/s/mentorship-circle/, member count 1 -> 2."
+      "evidence": "bob clicked 'Join Space' (form POST with jt_invite_nonce) -> landed on /community/s/customer-advisory-board/ showing 5 members, 'Joined'; DB members 4 -> 5, invite use_count 1"
     },
     "c-anon-invite-landing.4": {
       "result": "pass",
-      "evidence": "Already-member qa_rft_m1 sees \"You are already a member of Mentorship Circle. Go to Space\"; one membership row only."
+      "evidence": "bob reopened the same invite: 'You are already a member of Customer Advisory Board. Go to Space' with link; still one member row for bob"
     },
     "c-anon-invite-landing.5": {
       "result": "pass",
-      "evidence": "GET twice and HEAD on the invite -> member_count unchanged (1 -> 1), no membership row."
+      "evidence": "As bob (not yet joined) fetch GET, GET, HEAD of the invite URL: 200,200,200 and DB member count unchanged (4, 0 rows for bob)"
     },
     "c-anon-invite-landing.6": {
       "result": "pass",
-      "evidence": "POST to invite page without jt_invite_nonce -> page renders again (200 with Join form), count unchanged."
+      "evidence": "POST without jt_invite_nonce: 200 and the invite page re-rendered; bob not added (0 rows)"
     },
     "c-anon-invite-landing.7": {
       "result": "pass",
-      "evidence": "users_can_register=0: guest invite page offers only \"Log in to accept invite\" (0 \"Create free account\")."
+      "evidence": "With users_can_register=0 the guest page shows only 'Log in to accept invite' (no Create free account); restored to 0"
     },
     "c-anon-invite-landing.8": {
       "result": "pass",
-      "evidence": "/community/invite/does-not-exist/ -> 404 \"Invalid invite link. Back to the community\"."
+      "evidence": "/invite/does-not-exist/ HTTP 404 'Invalid invite link.' with Browse spaces"
     },
     "c-anon-invite-landing.9": {
       "result": "pass",
-      "evidence": "Expired QA-RFT invite -> HTTP 410 \"This invite link has expired or reached its usage limit.\", no Join button."
+      "evidence": "Expired token (expires_at 2026-10-01, inserted via DB): HTTP 410 'This invite link has expired or reached its usage limit.' no Join button (as guest and as hana)"
     },
     "c-anon-invite-landing.10": {
       "result": "pass",
-      "evidence": "Used-up (1/1) invite as member -> 410 same message, no Join button."
+      "evidence": "Token with max_uses=1, use_count=1 opened by hana: HTTP 410 same message, no Join button"
     },
     "c-anon-invite-landing.11": {
       "result": "pass",
-      "evidence": "Invite to archived 2025 Hackathon -> \"This space is archived or locked and is not taking new members.\", no Join button."
+      "evidence": "Invite for 2025 Hackathon (archived) as hana: 'This space is archived or locked and is not taking new members.', no Join button"
     },
     "c-anon-invite-landing.12": {
       "result": "pass",
-      "evidence": "omar (space-banned) opens Off-Topic Lounge invite -> \"You have been banned from this space and cannot take part in it.\"; forced POST /invite/<token> -> 403 jetonomy_user_space_banned."
+      "evidence": "omar opening an Off-Topic Lounge invite: 'You have been banned from this space and cannot take part in it.', no Join button; a POST (no nonce) returned the page and omar's member row count stayed 1"
     },
     "c-anon-invite-landing.13": {
       "result": "pass",
-      "evidence": "qa_rft_m2 and qa_rft_m3 click Join on a one-use invite simultaneously: m2 added and redirected to the space, m3 shown the limit message; use_count 1."
+      "evidence": "One-use invite opened in two isolated contexts (alice, david), both Join clicked simultaneously: alice landed in the space, david got 'This invite link has expired or reached its usage limit.'"
     },
     "c-anon-invite-landing.14": {
       "result": "pass",
-      "evidence": "390px dark: scrollWidth 390, \"Log in to accept invite\" button 328x41 full width (screenshot jt207-w3-invite-390dark.png)."
+      "evidence": "390px, dark: 'Log in to accept invite' button 328px wide of 390 (full container width), dark text on light blue, no horizontal scroll",
+      "screenshot": "walk-207/free/invite-390-dark.png"
     },
     "c-anon-invite-landing.15": {
       "result": "pass",
-      "evidence": "Guest on a Moderators' Room invite sees the space name and description (invite holder), no members or topics; QA-RFT token only."
+      "evidence": "Guest invite to Moderators' Room (hidden) names the space and shows its description only; no members, no topics"
     },
     "c-anon-invite-landing.16": {
       "result": "pass",
-      "evidence": "Well-formed unknown token /invite/abcdef0123456789abcdef0123456789/ -> \"Invalid invite link.\" with HTTP 404."
+      "evidence": "/invite/ZZZZunknownwellformedtoken123456/ -> HTTP 404 'Invalid invite link.' (not a soft 200)"
     },
     "c-anon-invite-landing.17": {
       "result": "pass",
-      "evidence": "omar (member row exists in Off-Topic Lounge) opening its invite sees the banned message, no silent redirect."
+      "evidence": "omar (member row retained, banned) sees the banned message instead of a silent redirect"
     },
     "c-anon-invite-landing.18": {
       "result": "pass",
-      "evidence": "Existing member on invite to his space sees the visible \"already a member ... Go to Space\" page, matching check 4."
+      "evidence": "Existing member sees the visible 'You are already a member of ... Go to Space' page (matches check 4); the silent-redirect wording is outdated"
     }
   },
   "proposed_checks": []

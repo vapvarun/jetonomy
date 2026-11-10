@@ -1,52 +1,56 @@
 {
   "journey": "C.gating.full-is-not-moderation",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:57:51Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:13:20.602900Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "c-gating-full-is-not-moderation.1": {
-      "result": "pass",
-      "evidence": "Access Rules tab add form and each grant select offer Read and Participate only; How-it-works table has no Full row"
-    },
     "c-gating-full-is-not-moderation.2": {
       "result": "pass",
-      "evidence": "POST grants=full on a role rule 201, stored grants participate, space_role member"
-    },
-    "c-gating-full-is-not-moderation.3": {
-      "result": "pass",
-      "evidence": "under that rule e posts, replies, votes, reports and edits/deletes own (REST 2xx), as in participate journey"
-    },
-    "c-gating-full-is-not-moderation.4": {
-      "result": "pass",
-      "evidence": "UI on another member's topic shows no Edit, Delete, Close or Pin"
+      "evidence": "admin POST /spaces/34/access-rules {role, subscriber, grants:full, space_role:admin} -> 201; DB row: grants=participate, space_role=member. (REST in-process as the persona on the combo stack; fresh subscribers gate_sub/gate_sub2/gate_sub3 created for the walk and deleted afterwards; Amsterdam Chapter rules/visibility/join policy restored to public/open)"
     },
     "c-gating-full-is-not-moderation.5": {
       "result": "pass",
-      "evidence": "PATCH, DELETE, close, pin on another's topic each 403 jetonomy_forbidden, topic still published and open"
+      "evidence": "Matched subscriber PATCH and DELETE another member's topic, POST /posts/{id}/pin and /close -> 403 jetonomy_forbidden each; POST /moderation/trash/post/{id} -> 403. (REST in-process as the persona on the combo stack; fresh subscribers gate_sub/gate_sub2/gate_sub3 created for the walk and deleted afterwards; Amsterdam Chapter rules/visibility/join policy restored to public/open)"
+    },
+    "c-gating-full-is-not-moderation.1": {
+      "result": "pass",
+      "evidence": "Private space Access Rules tab: the add form grant select offers Read and Participate only, each listed rule's grant select offers Read/Participate, and the 'How access rules work' help panel has no Full entry (text search for 'Full' is false)."
+    },
+    "c-gating-full-is-not-moderation.3": {
+      "result": "pass",
+      "evidence": "Rule created over REST with grants=full (stored as participate/Member). As fresh subscriber gate_sub1 in the browser: posted a topic, edited it (Save), deleted it (confirm), voted and replied on alice's topic and the Report button is present - all worked. (A first attempt as gate_sub3 hit the new-member limit 'New members can post 3 topics a day', so gate_sub1 was used.)"
+    },
+    "c-gating-full-is-not-moderation.4": {
+      "result": "pass",
+      "evidence": "gate_sub1 on alice's topic: no Edit, Delete, Close, Pin or Move control anywhere on the page."
     },
     "c-gating-full-is-not-moderation.6": {
       "result": "pass",
-      "evidence": "/community/s/<slug>/mod/ as e: HTTP 403 \"do not have permission to moderate this space.\"; POST /moderation/trash/post and /reply 403"
+      "evidence": "gate_sub1 opened /community/s/gate-private-lab/mod/ -> 'You do not have permission to moderate this space.' with no queue (screenshot gt-mod-denied.png); POST /moderation/trash/post/3249 as the same kind of member -> 403 jetonomy_forbidden (seen in participate.6)."
     },
     "c-gating-full-is-not-moderation.7": {
       "result": "pass",
-      "evidence": "row set to grants=full in DB, Migration_2_0_7::up() run: row reads participate and REST rules list shows participate"
+      "evidence": "Set the rule row to grants='full' directly in the database (an enum value that still exists), ran Migration_2_0_7->up() through wp eval -> the row reads grants=participate, space_role=member, and the Access Rules list shows Participate (screenshot gt-full-migrated.png)."
     },
     "c-gating-full-is-not-moderation.8": {
       "result": "pass",
-      "evidence": "test_moderator (site Moderate cap, editor role) reads a public space and a space he is rostered in via his WordPress role; he gets 403 on a private space he is not in (answer comes from role, never the rule)"
+      "evidence": "With test_moderator on the roster as a plain Member, alice's topic menu offers Edit, Pin to space, Close topic, Move, Delete and /mod/ opens the queue with a pending flag - his Moderate capability from the WordPress editor role, not from any rule. Removed from the roster again, the space is the invite-only refusal and the topic URL a 404 (a site moderator does not reach a private space he cannot read). Screenshot gt-moderator-menu.png."
     }
   },
   "proposed_checks": []

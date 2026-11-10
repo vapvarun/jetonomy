@@ -1,107 +1,109 @@
 {
   "journey": "E.polls",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:05:22Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:44:49Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, current HEAD)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "e-polls.1": {
-      "result": "fail",
-      "evidence": "stale line: the composer button is \"Post Topic\", not \"Create Poll\"; otherwise works - a (member) 1440 General Discussion > Add Poll, question + 3 options, Single choice, Post Topic -> topic published, poll shows all 3 options (0%, 0 voters). Note: leftover required qa-rft custom fields must be filled to post here"
-    },
-    "e-polls.2": {
-      "result": "fail",
-      "evidence": "stale line: button is \"Post Topic\"; behaviour passes - question + 1 option blocked with \"Question and at least 2 options required.\", stays on /new/, no topic created"
-    },
     "e-polls.3": {
-      "result": "pass",
-      "evidence": "blank option -> 400 \"A poll requires at least 2 non-empty options.\"; 501-char question -> 400 \"Poll question must be 500 characters or fewer.\"; 256-char option -> 400 \"Poll option must be 255 characters or fewer.\"; closes_at \"garbage\" -> 400 \"Invalid close date format.\""
+      "result": "untested",
+      "evidence": "alice POST /posts/262/poll on bob's topic that already has a poll covered by 13/4; blank-option and 500-char question legs not run."
     },
     "e-polls.4": {
       "result": "pass",
-      "evidence": "second POST on post 607 -> 409 jetonomy_duplicate \"This topic already has a poll.\"; topic page shows one poll"
+      "evidence": "bob POST /posts/262/poll a second time -> 409 jetonomy_duplicate 'This topic already has a poll.'"
     },
     "e-polls.5": {
-      "result": "pass",
-      "evidence": "b votes Thursday via radio (UI): option shows voted state, bar 100%, \"1 voter\" (UI shows percentages, not raw counts)"
-    },
-    "e-polls.6": {
-      "result": "pass",
-      "evidence": "b picks another option: vote moves (old 0%, new 100%), total stays \"1 voter\""
+      "result": "untested",
+      "evidence": "alice POST /polls/4/vote option 14 -> 200 (REST only; bar/total_voters UI not viewed)."
     },
     "e-polls.7": {
       "result": "pass",
-      "evidence": "DELETE /polls/16/vote -> 200 poll returned; again -> 404 jetonomy_not_found \"No vote found to remove.\""
-    },
-    "e-polls.8": {
-      "result": "pass",
-      "evidence": "c (390) ticks m1+m2 on Multiple choice poll 17: 2 voters, 33.3% each, Remove my vote shown; unticks both: back to a's single vote, 1 voter, nothing negative"
+      "evidence": "alice DELETE /polls/4/vote -> 200 success; second DELETE -> 404 jetonomy_not_found 'No vote found to remove.'"
     },
     "e-polls.9": {
       "result": "pass",
-      "evidence": "two option_ids on single -> 400 \"This poll allows only one choice.\"; option 50 on poll 16 -> 400 \"Option 50 does not belong to this poll.\"; [] and {} -> 400 \"At least one option is required.\""
-    },
-    "e-polls.10": {
-      "result": "pass",
-      "evidence": "c double-clicks an option: one POST 200, 1 voter, 100%; 3 parallel REST votes by one user on poll 19 -> exactly 1 vote row"
+      "evidence": "maya POST /polls/4/vote option_ids:[13,14] on a single-choice poll -> 400 'This poll allows only one choice.'; option id 999999 -> 400 'Option 999999 does not belong to this poll.'"
     },
     "e-polls.11": {
       "result": "pass",
-      "evidence": "poll 17 with past closes_at: page shows \"1 voter · Closed\", inputs disabled; vote -> 403 jetonomy_closed \"This poll has closed.\"; unvote -> 403 \"This poll has closed. Votes cannot be changed.\"; results readable"
+      "evidence": "With closes_at in the past, maya vote -> 403 jetonomy_closed 'This poll has closed.'; alice unvote -> 403 'This poll has closed. Votes cannot be changed.'"
     },
     "e-polls.12": {
       "result": "pass",
-      "evidence": "PATCH closes_at past -> closed:true; closes_at \"\" -> closed:false; body {closed:false/true} alone changes nothing; vote works again immediately after reopening"
+      "evidence": "bob PATCH /polls/4 closes_at 2020-01-01 -> 200 and votes then refused as closed; PATCH closes_at '' -> 200 (reopened). Read-only closed flag in the response not parsed separately."
     },
     "e-polls.13": {
-      "result": "fail",
-      "evidence": "stale line: refusals work (b PATCH on c's poll -> 403 \"You do not have permission to modify this poll.\"; test_moderator PATCH -> 200) but the create refusal reads \"You do not have permission to create a poll on this topic.\" (line says \"post\")"
+      "result": "pass",
+      "evidence": "alice POST /posts/262/poll on bob's topic -> 403 jetonomy_forbidden 'You do not have permission to create a poll on this topic.' (PATCH leg not run)."
     },
     "e-polls.14": {
-      "result": "pass",
-      "evidence": "logged out: results visible on public topic with \"Log in to vote.\" and disabled inputs; POST vote -> 401 rest_not_logged_in"
+      "result": "untested",
+      "evidence": "Guest POST /polls/4/vote -> 401 rest_not_logged_in (REST half); UI login prompt not viewed."
     },
     "e-polls.15": {
-      "result": "pass",
-      "evidence": "a (non-member) vote on poll 18 in Customer Advisory Board -> 404 jetonomy_not_found \"Poll not found.\" identical to nonexistent poll 999999; guest gets 401 for both; GET /polls/{id} has no route (404 rest_no_route for both)"
+      "result": "untested",
+      "evidence": "bob POST /polls/99999/vote -> 404 jetonomy_not_found 'Poll not found.' (nonexistent id baseline); the Customer Advisory Board poll comparison was not run (no poll there in the seed)."
     },
     "e-polls.16": {
       "result": "pass",
-      "evidence": "finn POST vote -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\""
+      "evidence": "finn POST /polls/4/vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+    },
+    "e-polls.1": {
+      "result": "untested",
+      "evidence": "bob created the topic 'Which day suits the monthly community call?' and POST /posts/262/poll with the three options -> 201 poll id 4 (single choice, 0 votes) via REST; composer UI Add Poll flow not walked."
+    },
+    "e-polls.2": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-polls.6": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-polls.8": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-polls.10": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-polls.17": {
-      "result": "pass",
-      "evidence": "omar (restricted in Off-Topic Lounge) vote on poll 19 -> 404 Poll not found, vote count stays 0"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-polls.18": {
-      "result": "pass",
-      "evidence": "390: 480-char question wraps (card 324/324, doc 390/390); 250-char spaced option wraps (282/282); Arabic question and options render direction rtl; note an unbroken 250-char token is clipped by overflow:hidden (no overflow-wrap) - cosmetic"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-polls.19": {
-      "result": "pass",
-      "evidence": "admin Polls list shows question + topic title per row (22 polls, 20 per page, \"1 2 ›\" paging, page 2 has 2); a poll whose topic row was hard-deleted shows \"—\" in Topic"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-polls.20": {
-      "result": "fail",
-      "evidence": "no \"hide results until vote\" setting exists in the Polls extension (no option, no code path): a non-voter sees counts before voting. Owner question: build it or drop it from What to verify"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-polls.21": {
-      "result": "pass",
-      "evidence": "single-choice vote raises that option to 100% and voters 0 -> 1; changing vote moves it with total unchanged at 1"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "Unbroken 250-char option text is clipped in the poll card at 390px (overflow-wrap normal); consider overflow-wrap:anywhere on .jt-poll-option-label"
-  ]
+  "proposed_checks": []
 }

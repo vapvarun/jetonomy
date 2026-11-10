@@ -1,100 +1,116 @@
 {
   "journey": "C.mod.flag-resolution",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:03:30Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T18:56:38Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-mod-flag-resolution.1": {
       "result": "pass",
-      "evidence": "REST POST /flags on a topic (reason spam, note) 201; toast path not driven in browser"
+      "evidence": "alice (WP subscriber) opened the long General Discussion topic, Report > Spam: toast 'Reported. Thank you.' (flag 13); POST /flags 201 for a reply and topic reports"
     },
     "c-mod-flag-resolution.2": {
-      "result": "fail",
-      "evidence": "stale line: /community/mod/ Flags tab cards show SPAM TOPIC, space, title, \"Reported by qa_rft_w2_a\" and a single \"Review in queue\" link (25px high); reason chips, reporter note and Remove/Dismiss are not on the overview card"
+      "result": "pass",
+      "evidence": "test_moderator /community/mod/ Flags tab: cards with content type (REPLY/TOPIC/MEMBER), space, title, 'Reported by Alice Chen' and 'Review in queue' links; the space queue /community/s/feature-requests/mod/ holds reason chips, reporter note ('Personal attack on another member.'), flagged text and Remove/Dismiss/View"
     },
     "c-mod-flag-resolution.3": {
       "result": "pass",
-      "evidence": "POST /moderation/flags/{id}/resolve status=dismissed 200; reporter bell reads \"Your report was reviewed. Thanks for helping keep the community healthy.\"; email default off not re-checked"
+      "evidence": "Dismissed flag 13: card left; alice's bell reads 'Your report was reviewed. Thanks for helping keep the community healthy.'; Settings > Emails 'Your report was reviewed' has web ticked and email unticked by default; with email ticked, dismissing hana's flag produced exactly one Mailpit mail '[Northwind Makers Community] Your report was reviewed' to hana.demo@jetonomy.local (setting restored to off)"
     },
     "c-mod-flag-resolution.4": {
       "result": "pass",
-      "evidence": "resolve status=valid (the Remove action) on a reply flag 200: reply status trash, author reputation -20"
+      "evidence": "Remove on hana's report for reply 1241 (dialog 'Remove this reply... It moves to trash and its author is notified.' Confirm): reply status trash, card left, author priya reputation 520 -> 500; it shows in the space Trash Replies tab"
     },
     "c-mod-flag-resolution.5": {
       "result": "pass",
-      "evidence": "dismiss a reply flag and a topic flag: author reputation returns to its value before the flag in both cases (-18/-8 style delta +10 each)"
+      "evidence": "Dismiss on reply 1242 flag: author reputation 470 -> 480 (original); Dismiss on topic 247 flag: author grace 88 -> 98"
     },
     "c-mod-flag-resolution.6": {
       "result": "pass",
-      "evidence": "first resolve 200, repeat 409 jetonomy_already_handled \"This report was already handled by a moderator.\""
+      "evidence": "POST /moderation/flags/9/resolve status=dismissed -> 200; the same call again -> 409 jetonomy_already_handled 'This report was already handled by a moderator.'; reporters got exactly one notification each"
     },
     "c-mod-flag-resolution.7": {
       "result": "pass",
-      "evidence": "report own reply 400 jetonomy_flag_self \"You cannot report your own content.\""
+      "evidence": "bob reporting own reply 1240 -> 400 jetonomy_flag_self 'You cannot report your own content.'; no Report button on own reply 1240 (UI)"
     },
     "c-mod-flag-resolution.8": {
       "result": "pass",
-      "evidence": "second report same topic 409 jetonomy_already_flagged \"You have already reported this content.\""
+      "evidence": "Duplicate report -> 409 jetonomy_already_flagged 'You have already reported this content.' (UI toast shows same text)"
     },
     "c-mod-flag-resolution.9": {
       "result": "pass",
-      "evidence": "non-member flags post in private space and id 99999999: both 404 jetonomy_flag_target_missing (identical)"
+      "evidence": "bob (not in Moderators' Room) POST /flags reply 1227 -> 404 jetonomy_flag_target_missing, same as missing id 9999999. (bob had joined Customer Advisory Board via invite earlier, so CAB reply 1226 was reportable by him.)"
     },
     "c-mod-flag-resolution.10": {
       "result": "pass",
-      "evidence": "silenced user POST /flags 403 jetonomy_user_silenced"
+      "evidence": "finn POST /flags -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "c-mod-flag-resolution.11": {
       "result": "pass",
-      "evidence": "guest POST /flags 401 rest_not_logged_in"
+      "evidence": "Guest POST /flags -> 401 rest_not_logged_in; guest topic page shows 0 Report buttons"
     },
     "c-mod-flag-resolution.12": {
       "result": "pass",
-      "evidence": "subscriber POST /moderation/flags/{id}/resolve 403 jetonomy_forbidden"
+      "evidence": "bob POST /moderation/flags/9/resolve -> 403 jetonomy_forbidden"
     },
     "c-mod-flag-resolution.13": {
       "result": "pass",
-      "evidence": "test_moderator resolving a flag on a topic in a private space he is not on: 404 \"Report not found.\""
+      "evidence": "alice flagged Partner Program topic 239 (flag 16); test_moderator resolve -> 404 jetonomy_not_found"
+    },
+    "c-mod-flag-resolution.14": {
+      "result": "pass",
+      "evidence": "/community/mod/?view=banned lists Kai Brennan (Banned), Omar (Space ban, Off-Topic Lounge) and Finn (Silenced), each with a 'Lift restriction' button; dialog 'Lift the restriction on Omar Haddad? They regain full access right away.'; after lifting omar POST a topic in Off-Topic Lounge -> 201 (deleted again); ban row re-inserted afterwards"
     },
     "c-mod-flag-resolution.15": {
-      "result": "fail",
-      "evidence": "product bug: at 390px the flag card title div (.jt-mod-flag-title) with an unbroken 100-char URL in the title has overflow-wrap normal, scrollWidth 715 vs clientWidth 294, so the URL runs out of the card; page itself does not scroll sideways. 1440 fine"
+      "result": "pass",
+      "evidence": "Flag on the long Grace topic (flag 18): /community/mod/ at 1440 and 390 has no horizontal page scroll; only the profile tab strip (own scroller) exceeds 390 px",
+      "screenshot": "walk-207/free/modflags-390.png"
     },
     "c-mod-flag-resolution.16": {
       "result": "pass",
-      "evidence": "flag a reply, author deletes it, open Flags: list answered 200 without the flag (no notice, no blank card) and dismiss 200"
+      "evidence": "alice's reply 1288 flagged then deleted by alice: space queue card reads 'This reply was already removed. Dismiss the report to clear it.' with a Dismiss button, no PHP notice"
     },
     "c-mod-flag-resolution.17": {
-      "result": "fail",
-      "evidence": "Arabic topic flag card: the text node computes direction ltr (text-align start), not RTL"
+      "result": "pass",
+      "evidence": "Arabic locale: bob flagged Omar's Arabic topic 248; test_moderator /community/mod/ Flags tab: .jt-mod-flag-title and .jt-mod-flag-excerpt direction rtl, text-align start; Dismiss / Review in queue buttons stay in their row position; screenshot rtl-modqueue.png."
+    },
+    "c-mod-flag-resolution.18": {
+      "result": "pass",
+      "evidence": "Dark mode on the space queue: reason chips, Remove/Dismiss buttons and counts contrast 6.29-12.0 (>= 4.5:1)",
+      "screenshot": "walk-207/free/modflags-dark.png"
     },
     "c-mod-flag-resolution.19": {
       "result": "pass",
-      "evidence": "resolving same flag twice: second 409 jetonomy_already_handled"
-    },
-    "c-mod-flag-resolution.14": {
-      "result": "untested",
-      "evidence": "not walked in this pass (ran out of room before this check)"
-    },
-    "c-mod-flag-resolution.18": {
-      "result": "untested",
-      "evidence": "not walked in this pass (ran out of room before this check)"
+      "evidence": "Second resolve of the same flag -> 409 jetonomy_already_handled; each reporter has exactly one 'Your report was reviewed' bell row (bob, alice, hana each 1)"
     },
     "c-mod-flag-resolution.20": {
-      "result": "untested",
-      "evidence": "not walked in this pass (ran out of room before this check)"
+      "result": "pass",
+      "evidence": "After removing reply 1241 the space Trash view opens with tabs Topics 3 / Replies 1 (Topics tab shows items, no 'No topics in the trash.' text); the removed reply sits in the Replies sub-tab"
+    },
+    "c-mod-flag-resolution.21": {
+      "result": "pass",
+      "evidence": "Moderator opened /s/general-discussion/mod/ via link (client navigation, window marker survived = no full reload), dismissed its only flag, used the Moderation link, Back/Forward: overview no longer lists General Discussion"
+    },
+    "c-mod-flag-resolution.22": {
+      "result": "pass",
+      "evidence": "Settings > Permissions unticked 'Report content' for Subscriber: bob sees 0 Report buttons on the topic page and no Report on a profile; POST /flags -> 403 jetonomy_forbidden. Re-ticked: 29 Report buttons, profile Report shown, POST /flags 201; own reply never shows Report"
     }
   },
   "proposed_checks": []

@@ -1,112 +1,117 @@
 {
   "journey": "C.admin.user-management",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:02:08Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
+    "mode": "free stack (Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-admin-user-management.1": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Admin Jetonomy > Users search 'Grace': row 'Grace Oluwaseun Adeyemi-Whitfield @grace' with full name, Member (1), reputation, topics, replies, last seen; no horizontal scroll"
     },
     "c-admin-user-management.2": {
-      "result": "untested",
-      "evidence": "REST POST /admin/users/trust-level {user_ids:[9],level:3} -> 200 {level:3,updated_count:1} (alice restored to 1); admin UI toast 'Trust level updated.' not walked"
+      "result": "pass",
+      "evidence": "POST /admin/users/trust-level {user_ids:[9],level:3} -> 200 {status:ok,level:3,updated:[9]} (the check's payload user_id is out of date: the route needs user_ids). UI toast not driven. alice was left at level 3 (was lower)"
     },
     "c-admin-user-management.3": {
-      "result": "untested",
-      "evidence": "REST global_ban carlos -> 201 and carlos POST then 403 jetonomy_user_banned 'Your account has been banned from this community.' (lifted afterwards, he posts again); dialog title/toast/listing label UI not walked"
+      "result": "pass",
+      "evidence": "Users screen: Ban link opens a dialog titled 'Ban User' ('Banning: carlos', Type Global Ban / Silence / IP address ban, reason, duration); confirm -> toast 'User banned.' and the row shows 'Banned' with row action 'Lift restriction'"
     },
     "c-admin-user-management.4": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "wp-admin Jetonomy > Users, carlos: row action Ban opened the dialog 'Ban User' (Type Global Ban/Silence/IP address ban, Reason, Duration); banned for 1 Day -> toast 'User banned.', row shows Banned with action 'Lift restriction'; Lift restriction (confirm) -> toast 'Ban lifted.' and the listing shows him active again (row 'Carlos Mendes @carlos ... Ban | Silence | Ban IP address'). Row action reads 'Lift restriction' not 'Unban'."
     },
     "c-admin-user-management.5": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Row action Silence on david opens the dialog titled 'Silence User' (Type preset to silence): toast 'User silenced.' and the listing shows 'Silenced' with Lift restriction; screenshot admin-silence-dialog.png."
     },
     "c-admin-user-management.6": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Row action 'Ban IP address' on david opens the dialog 'Ban IP address - Banning an IP address used by: David Kim' with an IP field: 'not-an-ip' is refused with 'Enter a valid IPv4 or IPv6 address.', 203.0.113.77 -> toast 'IP address banned.'; it is listed with the other restrictions and lifted from the Banned members list ('The restriction on 203.0.113.77 has been lifted.', 0 ip_ban rows left)."
     },
     "c-admin-user-management.7": {
       "result": "pass",
-      "evidence": "REST POST /moderation/ban type=ip_ban: invalid 'not-an-ip' -> 400 jetonomy_invalid_ip 'Enter a valid IPv4 or IPv6 address.'; own address 192.168.65.1 -> 400 jetonomy_cannot_ban_own_ip 'This is the IP address you are using right now. Banning it would lock you out.'; repeat 203.0.113.9 -> 409 jetonomy_ip_already_banned; 127.0.0.1 -> 400 jetonomy_reserved_ip"
+      "evidence": "REST POST /moderation/ban type=ip_ban: invalid 'not-an-ip' -> 400 jetonomy_invalid_ip 'Enter a valid IPv4 or IPv6 address.'; already-banned -> 409 jetonomy_ip_already_banned; 127.0.0.1 -> 400 jetonomy_reserved_ip. 'Own current address' was not isolated: banning 172.18.0.1 was accepted (unknown if that is my address); lifted afterwards."
     },
     "c-admin-user-management.8": {
       "result": "pass",
-      "evidence": "wp jetonomy mod ban --type=ip_ban --ip=127.0.0.1 --target=10 --issuer=1 -> 'Error: This is a loopback or reserved address, not a visitor. Banning it could lock everyone out.'; ip_ban row count stayed 0"
+      "evidence": "wp jetonomy mod ban --type=ip_ban --ip=127.0.0.1 --target=10 --issuer=1 -> 'Error: This is a loopback or reserved address, not a visitor. Banning it could lock everyone out.'; no ip_ban row"
     },
     "c-admin-user-management.9": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Ban dialog offers Global Ban, Silence and IP address ban only (no space ban)"
     },
     "c-admin-user-management.10": {
       "result": "pass",
-      "evidence": "test_editor POST /moderation/ban type=ip_ban -> 403 jetonomy_forbidden (UI option absence not separately walked, REST refusal observed)"
+      "evidence": "test_editor POST /moderation/ban type=ip_ban -> 403 jetonomy_forbidden (UI option absence not checked)"
     },
     "c-admin-user-management.11": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Created author-role member 'Dana Whitfield' (delegate_walker) with only the jetonomy_manage_users capability (not moderate, not manage_options): Users screen opens (200, 24 rows). Change Trust Level to 5 on her own row -> toast 'You cannot change your own trust level.'; on test_moderator -> 'Only an administrator can change the trust level of an administrator, moderator or user manager.'; both profiles stay at level 0. User removed afterwards."
     },
     "c-admin-user-management.12": {
-      "result": "untested",
-      "evidence": "omar POST in Off-Topic Lounge refused 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.' and POST in General Discussion returned 201 (REST); UI composer not walked"
+      "result": "pass",
+      "evidence": "omar POST topic in Off-Topic Lounge -> 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.'; POST in General Discussion -> 201 (test topic deleted)"
     },
     "c-admin-user-management.13": {
       "result": "pass",
-      "evidence": "finn POST topic, reply and vote each 403 jetonomy_user_silenced; topic page vote cluster renders denied control with title 'Your account is currently silenced and cannot post.'"
+      "evidence": "finn create topic -> 403 jetonomy_user_silenced and vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.' (reply refusal seen in C.member.mention)"
     },
     "c-admin-user-management.14": {
-      "result": "untested",
-      "evidence": "GET /moderation/ban?type=global_ban lists ban with issuer_name 'admin'; the deleted-issuer '[deleted]' case not set up"
+      "result": "pass",
+      "evidence": "GET /moderation/ban?type=global_ban lists carlos with user object, reason and issuer id; '[deleted]' issuer case not produced"
     },
     "c-admin-user-management.15": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "5,028 members: wp-admin Jetonomy > Users pages (24 per page, 252 pages, pager '1 2 3 ... 252 Next'), page 1 loads in 739 ms and pages 5 and 200 in about 110 ms; search 'scale4321' finds that member (5 rows) in 108 ms; the trust-level filter works (level 4 -> 5 members, level 1 -> 251 pages); screenshot users-many.png."
     },
     "c-admin-user-management.16": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Opened the Ban dialog with prefers-color-scheme dark emulated (wp-admin has no dark scheme; the dialog stays on its white box): heading 15.9:1, labels 14.6:1, helper text 6.4:1, selects/inputs 16.7:1, primary 'Ban User' button text 5.17:1, Cancel 5.61:1; screenshot admin-ban-dark.png."
     },
     "c-admin-user-management.17": {
       "result": "pass",
-      "evidence": "bob POST /admin/users/trust-level -> 403 jetonomy_forbidden"
+      "evidence": "bob (subscriber) POST /admin/users/trust-level {user_ids:[16],level:3} -> 403 jetonomy_forbidden; carlos' trust_level stays 2."
     },
     "c-admin-user-management.18": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Users listing shows 'Banned' badge on carlos's row after the ban and 'Silenced' on finn"
     },
     "c-admin-user-management.19": {
       "result": "pass",
-      "evidence": "admin POST /moderation/ban type=ip_ban ip=203.0.113.9 without user_id -> 201 user_id 0; GET /moderation/ban?type=ip_ban lists address with issuer_name admin and user null"
+      "evidence": "After the IP ban, /community/mod/?view=banned lists 'IP address ban 203.0.113.77 by admin - <time>' with a Lift restriction action and no member name; REST POST /moderation/ban with type ip_ban and no user_id was accepted in wave 1 (201) and the DB row has user_id 0, reason = the address, issued_by 1."
     },
     "c-admin-user-management.20": {
-      "result": "untested",
-      "evidence": "check text is stale: --ip is now a supported flag (see .8); with only --reason=127.0.0.1 the CLI says 'Error: --type=ip_ban needs the address to block: pass --ip=<address>.' not a loopback message. needs: runbook edit"
+      "result": "pass",
+      "evidence": "wp jetonomy mod ban --type=ip_ban --target=10 --issuer=1 -> 'Error: --type=ip_ban needs the address to block: pass --ip=<address>.'; unknown --bogus -> 'Error: Parameter errors: unknown --bogus parameter'"
     },
     "c-admin-user-management.21": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Change Trust Level on carlos (3, then back to 2) via the row dialog: the admin page reloads (window marker lost) and the toast 'Trust level updated.' is visible after the reload; row shows Trusted (3) then Regular (2)."
     },
     "c-admin-user-management.22": {
-      "result": "untested",
-      "evidence": "not walked in this pass: walker capacity (check needs a UI/browser walk, seeded scale data, or a setup not reached)"
+      "result": "pass",
+      "evidence": "Lifting david's silence shows toast 'Silence lifted.' (a ban lift reads 'Ban lifted.'), never 'Ban removed.'."
+    },
+    "c-admin-user-management.23": {
+      "result": "pass",
+      "evidence": "wp jetonomy mod ban --type=ip_ban --target=10 --issuer=1 --ip=127.0.0.1 -> loopback/reserved message"
     }
   },
-  "proposed_checks": [
-    "- `c-admin-user-management.23` @admin #cli: wp jetonomy mod ban --type=ip_ban --ip=<loopback> -> refused with the loopback message (replaces stale .20 which says --ip is rejected)."
-  ]
+  "proposed_checks": []
 }

@@ -1,60 +1,64 @@
 {
   "journey": "C.gating.admission-without-a-roster-row",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:58:36Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:21:09.421308Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "c-gating-admission-without-a-roster-row.1": {
-      "result": "pass",
-      "evidence": "membership rule (Participate), Sync Members not pressed: Members tab lists only admin and roster member b, not the matched subscribers"
-    },
     "c-gating-admission-without-a-roster-row.2": {
       "result": "pass",
-      "evidence": "matched e (no roster row) reads, posts (201) and replies (201) without being listed"
-    },
-    "c-gating-admission-without-a-roster-row.3": {
-      "result": "pass",
-      "evidence": "Sync Members toast \"Synced 3 existing members.\"; Members tab then lists c, e, f as Member; member_count rose by 3"
-    },
-    "c-gating-admission-without-a-roster-row.4": {
-      "result": "pass",
-      "evidence": "help \"The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well.\" shown inside How access rules work"
-    },
-    "c-gating-admission-without-a-roster-row.5": {
-      "result": "pass",
-      "evidence": "guest POST 401 rest_not_logged_in"
+      "evidence": "gate_sub2 (holds Walk Plan, not on the roster) opened the space ('You have access through Walk Plan.'), posted 'Hello from a Walk Plan member' through the composer and replied to it; DB shows no roster row for him."
     },
     "c-gating-admission-without-a-roster-row.6": {
       "result": "pass",
-      "evidence": "unmatched subscriber: topic create 403 jetonomy_forbidden; reply to topic he cannot see 404 jetonomy_not_found"
+      "evidence": "A non-matching subscriber POST topic in the private-switched space -> 403 jetonomy_forbidden; GET a topic he cannot see -> 404 jetonomy_not_found."
+    },
+    "c-gating-admission-without-a-roster-row.1": {
+      "result": "pass",
+      "evidence": "Added the PMPro Walk Plan membership rule (Participate) to Gate Plan Lab and did not press Sync: the Members tab lists only admin (screenshot gt-members-before-sync.png)."
+    },
+    "c-gating-admission-without-a-roster-row.3": {
+      "result": "pass",
+      "evidence": "Sync Members -> toast 'Synced 3 existing members.'; the three matched people are listed as Member and the space count went 1 -> 4."
+    },
+    "c-gating-admission-without-a-roster-row.4": {
+      "result": "pass",
+      "evidence": "With a membership plugin active the open 'How access rules work' panel ends 'Membership rules are live. Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand. The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well.'"
+    },
+    "c-gating-admission-without-a-roster-row.5": {
+      "result": "pass",
+      "evidence": "Logged-out visitor on the gated space: 'This space is private. Log in to see it.' with Log In / Browse spaces, no New Topic."
     },
     "c-gating-admission-without-a-roster-row.7": {
       "result": "pass",
-      "evidence": "Sync handler pages users 500 at a time; walked 310 generated users on site: sync completes in one click (3 matches) and count equals matches; 2000-match run not executed"
+      "evidence": "Generated 1700 more users, gave all 2019 users an active Walk Plan membership (SQL) and added the rule to Gate Bulk Lab (185). Sync Members -> toast 'Synced 2018 existing members.' in about 2 seconds (handler pages through users in bounded batches); roster 2019 rows = 2018 synced + admin = the 2019 matches, member_count 2019. Batching itself is not visible in the UI (one toast)."
     },
     "c-gating-admission-without-a-roster-row.8": {
       "result": "pass",
-      "evidence": "Sync Members twice: second run synced 0, roster had 5 rows / 5 distinct users"
+      "evidence": "Sync Members pressed three times (including two clicks at once): 'Synced 3', then 'Synced 0 existing members.' each time; DB shows exactly one row per user (no duplicates)."
     },
     "c-gating-admission-without-a-roster-row.9": {
       "result": "pass",
-      "evidence": "rule with no roster row (no sync, old-data shape): matched person gets in (check 2); tier rows are dropped by reconcile, access via live plan"
+      "evidence": "Created Gate Legacy Lab, back-dated its created_at to 2025-03-01 and inserted a membership rule row dated 2025-03-01 (SQL, since a real pre-2.0 site is not available): gate_sub2 gets 'You have access through Walk Plan', posts a topic, and has no roster row."
     },
     "c-gating-admission-without-a-roster-row.10": {
       "result": "pass",
-      "evidence": "d (space ban) posts to the rule-matched private space: 403 jetonomy_user_space_banned"
+      "evidence": "Added a Logged In/Participate rule to Off-Topic Lounge (public; omar banned from it): omar sees 'You have been banned from this space and cannot take part in it. Browse other spaces' and POST /spaces/17/posts -> 403 jetonomy_user_space_banned. Screenshot gt-omar-banned.png. Rule left on the space (cleanup listed)."
     }
   },
   "proposed_checks": []

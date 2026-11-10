@@ -1,59 +1,65 @@
 {
   "journey": "C.anon.tag",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:49:36Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:28:57.509863Z",
+  "walker": "release 2.0.7 free walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free-only",
     "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-anon-tag.1": {
       "result": "pass",
-      "evidence": "/community/tag/qa-rft-w1tag/ (36 QA-RFT topics) shows \"36 topics\" and 35 topic links on the first page; REST /tags post_count agrees."
+      "evidence": "Guest /community/tag/performance/ HTTP 200 header '45 topics'; 30 on page 1 + 15 on ?pg=2 = 45 listed"
+    },
+    "c-anon-tag.2": {
+      "result": "pass",
+      "evidence": "Guest /community/tag/partner-pricing/ (tag only on a Partner Program topic; the seed has no CAB-only tag): '0 topics', 'No topics with this tag yet.', no title or count from the private topic"
     },
     "c-anon-tag.3": {
       "result": "pass",
-      "evidence": "Guest GET /tags 200 returns tags with post_count (public-only counts; verified for QA-RFT tag and no private-space leakage in sampled tags)."
+      "evidence": "Guest REST /tags: performance 45, email 31, roadmap 33 ... all lower than the all-rows counts (46, 35, 34); partner-pricing absent"
     },
     "c-anon-tag.4": {
       "result": "pass",
-      "evidence": "/community/tag/no-such-tag/ -> 404 page, no PHP error."
+      "evidence": "/community/tag/no-such-tag/ HTTP 404 'Tag not found.' with Browse spaces link, no PHP error"
+    },
+    "c-anon-tag.5": {
+      "result": "pass",
+      "evidence": "Guest sidebar POPULAR TAGS (performance 45, email 31, roadmap 33, webhooks 31...) equals REST counts and tag page header counts"
+    },
+    "c-anon-tag.6": {
+      "result": "pass",
+      "evidence": "bob: /tag/partner-pricing/ shows '1 topic' with 'Referral fees for 2026: what changed'; guest sees 0. bob REST performance 46 vs guest 45."
     },
     "c-anon-tag.7": {
       "result": "pass",
-      "evidence": "Same as 4: 404 status and not-found page."
+      "evidence": "Same as tag.4: HTTP 404, title 'Page not available', no PHP error text"
     },
     "c-anon-tag.8": {
       "result": "pass",
-      "evidence": "Tag with 36 topics paginates (35 on first page, remainder on next)."
-    },
-    "c-anon-tag.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
-    },
-    "c-anon-tag.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
-    },
-    "c-anon-tag.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
+      "evidence": "performance (45) paginates: page 1 has 30, ?sort=latest&pg=2 has 15, no duplicates between pages (only the 5 sidebar Trending links repeat)"
     },
     "c-anon-tag.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
+      "result": "pass",
+      "evidence": "390px /tag/performance/: no horizontal scroll"
     },
     "c-anon-tag.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (private-space tag, member view and sidebar count comparison ran out of room)."
+      "result": "pass",
+      "evidence": "Guest REST tag counts equal tag page counts (performance 45 both)"
     }
   },
   "proposed_checks": []

@@ -1,95 +1,93 @@
 {
   "journey": "E.webhooks",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:26:22Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:51:33Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "e-webhooks.1": {
-      "result": "pass",
-      "evidence": "Browser, admin 1440: Settings > Webhooks > Add Webhook with URL https://example.com/jetonomy-qa-rft (the line's hooks.example.test does not resolve) and events post.created + reply.created -> 'Webhook saved.'; list row shows URL, event labels, Active, last triggered and failures; the signing secret is shown on the Edit screen (not in the list or the API list). The row URL was then pointed at a loopback address so no real delivery could leave the site"
-    },
-    "e-webhooks.2": {
-      "result": "pass",
-      "evidence": "Browser: malformed URL 'not a url' -> 'Enter a valid webhook URL. The webhook was not saved.'; valid URL with no events ticked -> 'Choose at least one event. A webhook with no events would never fire, so it was not saved.'"
-    },
     "e-webhooks.3": {
-      "result": "pass",
-      "evidence": "admin POST /webhooks: ftp://x -> 400 jetonomy_webhook_url_invalid 'Invalid webhook URL.'; events [\"bogus\"] on a valid host -> 400 jetonomy_webhook_events_invalid 'At least one valid event is required.'; http://127.0.0.1 and http://10.0.0.5 refused at create with 400 'Invalid webhook URL.'; a row that already holds a loopback URL (inserted for the walk) is not fetched at delivery: the delivery is logged status 0 'A valid URL was not provided.'"
-    },
-    "e-webhooks.4": {
-      "result": "not_performed",
-      "evidence": "POST /webhooks/{id}/test on a loopback row returns success:false status_code 0 'A valid URL was not provided.' without fetching; the signed payload and a 200/500 receiver need a public request catcher, which this stack does not have (creating one on a third-party service was refused by the permission system)"
-    },
-    "e-webhooks.5": {
-      "result": "not_performed",
-      "evidence": "Event firing observed: qa_rft_w4_d published a General Discussion topic -> one queued jetonomy_pro_dispatch_webhook job with event post.created and payload {id,title,author_id=253,space_id,created_at}; the X-Jetonomy-Signature / X-Jetonomy-Event headers reaching a receiver need a public request catcher (not available here)"
-    },
-    "e-webhooks.6": {
-      "result": "pass",
-      "evidence": "Queue observation: edit -> exactly one post.updated job, delete -> one post.deleted {id,space_id,user_id}, reply -> one reply.created; no duplicates per action (webhook subscribed to the events). Delivery to a receiver itself not observed"
-    },
-    "e-webhooks.7": {
-      "result": "pass",
-      "evidence": "Space with require_approval: topic by d is held pending and no job is queued; after the admin approves it exactly one post.created job appears; a draft topic queues nothing"
-    },
-    "e-webhooks.8": {
-      "result": "pass",
-      "evidence": "is_private topic -> no job. Recorded: an admin topic in Customer Advisory Board (private space) DOES queue post.created with its title, so private-space titles leave the site to the configured URL"
-    },
-    "e-webhooks.9": {
-      "result": "pass",
-      "evidence": "Anonymous topic (anonymity-on space, author qa_rft_w4_e) -> queued post.created payload author_id 0"
-    },
-    "e-webhooks.10": {
-      "result": "not_performed",
-      "evidence": "Failure half observed: with deliveries failing (status 0) fail_count climbed to 16 and the webhook went is_active 0 after 5; admin list shows 'Disabled', '1 minute ago (0)' (last status code) and Failures 16. The 'one later success resets fail_count to 0' half needs a receiver that answers 200 - not available"
-    },
-    "e-webhooks.11": {
-      "result": "not_performed",
-      "evidence": "GET /webhooks/{id}/deliveries returns event, status_code, response, created_at, 20 per page (100 with a limit parameter); the daily prune hook deleted a 40-day-old row. The 500-character cap on the stored response needs a receiver that returns a large body (code truncates with mb_substr 500, not observed)"
+      "result": "untested",
+      "evidence": "admin POST /webhooks url ftp://x -> 400 jetonomy_webhook_url_invalid 'Invalid webhook URL.'; events:['bogus'] on a private-host URL also returned the URL error first; the 'At least one valid event' message was not reached."
     },
     "e-webhooks.12": {
       "result": "pass",
-      "evidence": "PATCH /webhooks/99999 -> 404 jetonomy_webhook_not_found 'Webhook not found.'; DELETE removes the row and a later topic queues no job"
+      "evidence": "admin PATCH /webhooks/99999 -> 404 jetonomy_webhook_not_found 'Webhook not found.'"
     },
     "e-webhooks.13": {
       "result": "pass",
-      "evidence": "qa_rft_w4_a (member) and test_moderator: GET, POST, /test all 403 jetonomy_forbidden; guest 401 rest_not_logged_in; admin list responses carry no secret field"
+      "evidence": "bob GET /webhooks and test_moderator POST /webhooks -> 403 jetonomy_forbidden; guest GET -> 401."
+    },
+    "e-webhooks.1": {
+      "result": "untested",
+      "evidence": "Delivery checks (1, 4-9, 11, 14) need an external request catcher: the webhook URL validator rejects private/loopback hosts (http://host.docker.internal:9099 -> 400 Invalid webhook URL, correct SSRF behaviour) and an outbound call to a public catcher was blocked in this environment. Needs a public receiver such as a request-bin URL."
+    },
+    "e-webhooks.2": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-webhooks.4": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-webhooks.5": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-webhooks.6": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-webhooks.7": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-webhooks.8": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-webhooks.9": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-webhooks.10": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-webhooks.11": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-webhooks.14": {
-      "result": "pass",
-      "evidence": "Queued payloads observed: user.registered {id,login,email,registered}, user.trust_level_changed {user_id,old_level 0,new_level 2} (admin trust-level endpoint), space.member_joined {space_id,user_id,role}, space.member_left {space_id,user_id}"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-webhooks.15": {
-      "result": "pass",
-      "evidence": "With 20 webhooks and 5,016 delivery rows the Webhooks tab loads in 0.34 s (all 20 rows, no pager - the hook list is not paginated); deliveries REST paginates (20 default). 'Last triggered' is a relative time ('1 minute ago'), so no absolute site-timezone date to check (site timezone flipped to Asia/Kolkata and back to confirm nothing else changes)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-webhooks.16": {
-      "result": "not_performed",
-      "evidence": "A receiver slower than 15 s needs a real slow endpoint; the dispatch is an async Action Scheduler job (the member's post returned immediately in every test above), but the 15 s timeout and status 0 with the error need a reachable receiver"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-webhooks.17": {
-      "result": "pass",
-      "evidence": "Browser 390: form and list stay inside the viewport (scrollWidth 390, tables 366 px in 366 px wrappers, list wrapper overflow-x auto); events checkboxes at x 31-56; no secret on the list"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "Webhooks: user.registered payload carries the member's email address to the external URL; decide whether that is intended."
-  ]
+  "proposed_checks": []
 }

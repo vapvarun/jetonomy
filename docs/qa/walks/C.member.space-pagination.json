@@ -1,81 +1,91 @@
 {
   "journey": "C.member.space-pagination",
-  "free": "206e1d6f",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:32:28Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T19:00:06Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-space-pagination.1": {
       "result": "pass",
-      "evidence": "No 'jt-qa-paging' space; created temp QA-RFT Paging with per-space posts_per_page=3 and 8 topics (deleted afterwards): bob sees exactly 3 topics and a Load More link."
+      "evidence": "jt-qa-paging (its own per-space posts_per_page=1 per its description; the global option was not what drove it) shows exactly 1 topic and a Load More link"
     },
     "c-member-space-pagination.2": {
       "result": "pass",
-      "evidence": "One click on Load More adds 3 more (6 total), no duplicate links."
+      "evidence": "One click on Load More: 1 -> 2 topics, no duplicates"
     },
     "c-member-space-pagination.3": {
       "result": "pass",
-      "evidence": "Scrolling to the bottom with the wheel does not load anything (3 stay)."
+      "evidence": "Wheel-scrolling 3000px without clicking: topic count stayed 1"
     },
     "c-member-space-pagination.4": {
       "result": "pass",
-      "evidence": "Third click reaches 8 topics and the Load More link disappears."
+      "evidence": "Second click: 3 topics (all), 0 duplicates, Load More link gone"
     },
     "c-member-space-pagination.5": {
-      "result": "untested",
-      "evidence": "Feature Requests has 13 topics on this seed (no 30+ topic space); not walkable at 30 per page."
+      "result": "pass",
+      "evidence": "Seeded 22 believable feature-request topics (wp jetonomy post create) so Feature Requests holds 35. As bob on /community/s/feature-requests/ the first batch is 20 rows (default posts_per_page 20; REST /spaces/12/posts returns 20 and X-WP-Total 35), Load More (a.jt-load-more-trigger, href ?pg=2) adds 15 -> 35 rows, no duplicate hrefs, button gone; 35 = X-WP-Total. Behaviour holds; only the 30 in the check line is stale (default is 20)."
     },
     "c-member-space-pagination.6": {
       "result": "pass",
-      "evidence": "GET /spaces/145/posts?per_page=3&offset=3 returns the next 3 ids, offset=99 returns an empty list, ?page=2 returns the same slice as offset=3 (X-WP-Total 8)."
+      "evidence": "bob GET /spaces/12/posts?per_page=5&offset=5 returns the next 5 (85,87,91,88,92 vs 249,245,84,93,86), offset=500 returns an empty list, ?page=2&per_page=1 returns a different topic (245) than page 1 (249)"
     },
     "c-member-space-pagination.7": {
       "result": "pass",
-      "evidence": "Spaces with fewer posts than one page (e.g. General Discussion 17 of 20, Amsterdam Chapter 0) show no Load More."
+      "evidence": "jt-qa-qna (1 topic): 1 row, no Load More"
     },
     "c-member-space-pagination.8": {
       "result": "pass",
-      "evidence": "Topic 9 added while page 1 was open: Load More appended 5, 4 (offset shifted, one repeat skipped client-side); no duplicate row and no gap among the original topics."
+      "evidence": "Page 1 open (20 rows), then a new topic 'Show a live preview while writing a reply' was created by another member through the CLI, then Load More clicked: list became 35 rows with no duplicate href and no previously-listed topic skipped; the new topic is not injected until reload."
     },
     "c-member-space-pagination.9": {
       "result": "pass",
-      "evidence": "Offline Load More: link stays, 'Could not load more' shown; after reconnect the retry works and the list completes."
+      "evidence": "Offline Load More: message 'Could not load more. Check your connection and try again.', button stays, rows unchanged; online retry then loaded the next topic"
     },
     "c-member-space-pagination.10": {
       "result": "pass",
-      "evidence": "The per-space posts_per_page setting (3) drives the first batch size. The global Settings value was not changed."
+      "evidence": "Global Settings posts_per_page=5 (option, restored to unset): /community/s/feature-requests/ first batch 5 rows; unset: all 13 rows. jt-qa-paging keeps its own per-space size of 1 (its description says so), so the global value does not apply there. Note .1 used that per-space value, not the global setting."
     },
     "c-member-space-pagination.11": {
       "result": "pass",
-      "evidence": "Guest on Partner Program: login prompt, no topics, no Load More."
+      "evidence": "Guest /community/s/partner-program/: 0 topic rows, no Load More (login prompt)"
     },
     "c-member-space-pagination.12": {
       "result": "pass",
-      "evidence": "At 390 the Load More link is 328px wide inside the 390 viewport (full container width). Dark-mode pairing and keyboard focus movement not separately checked."
+      "evidence": "Dark mode, 390x844: Load More button is 328px wide = its container (full width), high contrast (text rgb 203,204,205 on rgb 47,49,58), no horizontal scroll; keyboard: focus gives a solid 3px outline, Enter loads the next batch (rows 20 -> 36) and focus lands on a control inside the list; screenshot dark-loadmore-390.png."
     },
     "c-member-space-pagination.13": {
       "result": "pass",
-      "evidence": "Same as .8: Load More after a new topic shows no duplicate row."
+      "evidence": "Same run as .8: Load More after a new topic was posted showed no duplicate row (0 duplicate hrefs among 35 rows)."
     },
     "c-member-space-pagination.14": {
       "result": "pass",
-      "evidence": "Offline Load More shows the error 'Could not load more' and keeps the button."
+      "evidence": "Offline Load More shows the error message and keeps the link (see .9)"
     },
     "c-member-space-pagination.15": {
       "result": "pass",
-      "evidence": "?page=2&per_page=1 returns the second slice: /spaces -> id 1 (page 1 gave 35), /posts/83/replies -> 411 vs 415. /subscriptions and /bookmarks page 2 return an empty list because bob has only 1 and 0 rows."
+      "evidence": "per_page=1&page=1 vs page=2 return different slices on /spaces/12/posts (249 vs 245), /spaces (39 vs 5), /posts/249/replies (1237 vs 1238), /subscriptions (4 vs 3), /notifications (39 vs 17); /bookmarks had 0 rows for bob so only the total (0) could be read"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-member-space-pagination.5",
+      "now": "Feature Requests with 21+ topics at the default 20 per page (posts_per_page setting, default 20, not 30): first batch 20, Load More adds the next batch, total equals X-WP-Total"
+    }
+  ]
 }

@@ -1,92 +1,96 @@
 {
   "journey": "C.member.scheduled-post",
-  "free": "206e1d6f",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:41:31Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T19:41:28Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "walked_before_change": false,
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
     "theme": "reign",
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "browser": "Chromium via Playwright MCP",
+    "schemes": [
+      "light",
+      "dark"
+    ]
   },
   "checks": {
     "c-member-scheduled-post.1": {
       "result": "pass",
-      "evidence": "bob in General Discussion: More publishing options > Schedule..., date 2026-11-01, hour 14, minute 35 (minute list 00..55 in 5s), submit -> lands on the topic with 'Scheduled to publish on November 1, 2026 2:35 pm'; stored as draft with published_at 2026-11-01 14:35:00."
+      "evidence": "bob on /community/s/general-discussion/new/ filled title 'Meetup recap - planning the March community call', More publishing options > Schedule..., picked tomorrow (2026-11-08) with Hour 14 and Minute 35 selects (minute options 00..55 step 5), Schedule -> topic page says 'Scheduled to publish on November 8, 2026 2:35 pm. It is hidden from the community until then.' with Change the publish time / Save time / Cancel schedule; DB id 406 status draft published_at 2026-11-08 14:35:00; screenshot sched-picker.png."
     },
     "c-member-scheduled-post.2": {
       "result": "pass",
-      "evidence": "POST /spaces/11/posts status=draft published_at '2026-11-06 09:00:00' -> 201 (id 392); published_at is stored as given (site timezone is UTC, so zone conversion not distinguishable)."
+      "evidence": "POST /spaces/15/posts status=draft published_at '2026-11-09 09:00:00' as bob -> 201 (id 407). With the site timezone set to America/New_York a POST of '2026-11-12 09:00:00' came back and was stored as 2026-11-12 14:00:00 (UTC), i.e. interpreted in the site timezone; timezone restored to UTC."
     },
     "c-member-scheduled-post.3": {
       "result": "pass",
-      "evidence": "Guest: the scheduled topic URL -> 404, absent from the General Discussion list and from search."
+      "evidence": "Logged out: topic URL 406 -> 404, space listing does not contain it, search for its title -> '0 results', GET /posts/406 -> 404 and /search has no row for it."
     },
     "c-member-scheduled-post.4": {
       "result": "pass",
-      "evidence": "bob's /community/u/bob/drafts/ lists 'QA-RFT Meetup recap scheduled - Scheduled: November 1, 2026 2:35 pm - General Discussion' with a Publish now button."
+      "evidence": "/community/u/bob/drafts/ lists 'Meetup recap - planning the March community call - Scheduled: November 8, 2026 2:35 pm - General Discussion' and the second scheduled topic ('Scheduled: November 9, 2026 9:00 am') each with a Publish now button."
     },
     "c-member-scheduled-post.5": {
       "result": "pass",
-      "evidence": "With published_at moved into the past in the DB and do_action('jetonomy_publish_scheduled') run, topic 392 turned status publish. Its published_at was cleared and created_at is the creation time, so the scheduled time as list date and the subscriber notification were not verified."
+      "evidence": "Followed General Discussion as alice, moved the topic's published_at (and the AS action) into the past and ran `wp action-scheduler run --hooks=jetonomy_publish_scheduled` (the plugin schedules through Action Scheduler): topic 406 status publish, published_at cleared, its date (created_at) = the moment it went live (19:37:12), and alice got exactly one new_post_in_sub notification (id 817). Not published earlier (see .3)."
     },
     "c-member-scheduled-post.6": {
       "result": "pass",
-      "evidence": "published_at '2026-11-05' (date only) -> 400 jetonomy_schedule_time_required 'Choose a time as well as a date to schedule this.'."
+      "evidence": "POST status=draft with date-only published_at '2026-11-09' -> 400 jetonomy_schedule_time_required 'Choose a time as well as a date to schedule this.'"
     },
     "c-member-scheduled-post.7": {
       "result": "pass",
-      "evidence": "published_at in 2025 -> 400 jetonomy_schedule_in_past 'The scheduled time has already passed.'."
+      "evidence": "POST status=draft published_at '2026-11-01 09:00:00' (past) -> 400 jetonomy_schedule_in_past 'The scheduled time has already passed. Choose a time in the future, or pu...'."
     },
     "c-member-scheduled-post.8": {
       "result": "pass",
-      "evidence": "The same title/time posted twice -> second is 409 jetonomy_duplicate_scheduled 'You already scheduled this for the same time.'."
+      "evidence": "Submitting the same scheduled post twice (same title/body/time) -> second answer 409 jetonomy_duplicate_scheduled 'You already scheduled this for the same time. Find it in your profile...'."
     },
     "c-member-scheduled-post.9": {
       "result": "pass",
-      "evidence": "On the scheduled topic page, picking hour 16 minute 10 and Save time stores published_at 2026-11-01 16:10:00."
+      "evidence": "On the scheduled topic page bob changed HH 14 / MM 35 to 15 / 40 and clicked Save time: the page now says 'Scheduled to publish on November 8, 2026 3:40 pm' (also after reload), DB published_at 2026-11-08 15:40:00 and the Action Scheduler publish job moved to that time (the old one was cancelled)."
     },
     "c-member-scheduled-post.10": {
       "result": "pass",
-      "evidence": "Deleting the scheduled drafts (cleanup) leaves nothing public; the cancelled schedule topic stayed a draft until removed."
+      "evidence": "bob created a scheduled topic, deleted it from the topic page (More options > Delete > Confirm; status trash). With its published_at forced into the past and do_action('jetonomy_publish_scheduled') run, it stays trash and never appears."
     },
     "c-member-scheduled-post.11": {
       "result": "pass",
-      "evidence": "alice opening bob's scheduled topic URL -> 404; alice PATCH published_at -> 403 jetonomy_forbidden."
+      "evidence": "alice opens bob's scheduled topic URL -> 404; GET /posts/406 as alice -> 404."
     },
     "c-member-scheduled-post.12": {
-      "result": "untested",
-      "evidence": "Needs a require-approval space setting; not changed."
+      "result": "pass",
+      "evidence": "Space 15 set to require approval (space settings require_approval true): a scheduled topic by bob (411) whose time arrived (publish hook run) became status 'pending' (awaiting approval), not publish. Setting restored."
     },
     "c-member-scheduled-post.13": {
       "result": "pass",
-      "evidence": "finn POST draft with a future time -> 403 jetonomy_user_silenced."
+      "evidence": "finn (silenced) POST /spaces/15/posts with status=draft and a future published_at -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "c-member-scheduled-post.14": {
       "result": "untested",
-      "evidence": "Only Chromium available (playwright-iso); Firefox and Safari not run - manual_required."
+      "evidence": "ENV: only Chromium is available (no Firefox or WebKit/Safari iOS); the date input plus hour and minute selects worked in Chromium 390 and 1440."
     },
     "c-member-scheduled-post.15": {
-      "result": "untested",
-      "evidence": "Schedule picker at 390 dark not opened (menu only, see .16)."
+      "result": "pass",
+      "evidence": "Dark mode at 390: the schedule picker (date input x 48-342, hour select, minute select x 201-342, each 42px tall, contrast 10.28:1 with color-scheme dark) and the 41px 'Schedule' button are usable; screenshot dark-schedule-390.png."
     },
     "c-member-scheduled-post.16": {
       "result": "pass",
-      "evidence": "390px: the three menu items (Publish now, Save as draft, Schedule...) are 40px tall at y 451-570, above the fixed mobile tab bar at y 740; no horizontal overflow."
+      "evidence": "390x844: More publishing options menu items Publish now (y 575-615), Save as draft (615-654), Schedule... (654-694) are 40px tall and end at y 694, above the fixed mobile tab bar that starts at y 784; screenshot sched-menu-390.png."
     },
     "c-member-scheduled-post.17": {
       "result": "pass",
-      "evidence": "Release time can be changed from the topic page (hour/minute selects + Save time)."
+      "evidence": "The author changes the release time from the scheduled topic's own page (Change the publish time HH:MM + Save time), see .9."
     },
     "c-member-scheduled-post.18": {
       "result": "pass",
-      "evidence": "Save time moved the time to 16:10; Cancel schedule (confirm) cleared published_at (null) and the topic stays a draft; alice PATCH published_at -> 403."
+      "evidence": "Save time moves the publish job (14:35 -> 15:40 pending, old one cancelled); Cancel schedule on a second scheduled topic (confirm 'Cancel the schedule? The topic stays a draft until you publish it.') leaves it a draft with published_at NULL and no job; PATCH /posts/406 published_at as alice -> 403 jetonomy_forbidden."
     }
   },
   "proposed_checks": []

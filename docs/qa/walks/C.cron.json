@@ -1,69 +1,83 @@
 {
   "journey": "C.cron",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:05:05Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:31:31.140652Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-cron.1": {
       "result": "pass",
-      "evidence": "wp action-scheduler action list --group=jetonomy --status=pending: pending actions exist for trust_evaluation, cleanup_expired, prune_activity, cleanup_notifications, verification_reminder, reconcile_rosters, cleanup_media (all 7 found and run)"
+      "evidence": "`wp action-scheduler action list --group=jetonomy --status=pending --per_page=50`: jetonomy_verification_reminder, cleanup_expired, reconcile_rosters, trust_evaluation, prune_activity, cleanup_media and cleanup_notifications are all pending (7). The wave-1 'fail' counted only the default 5 rows; per-hook lists also show each one pending."
     },
     "c-cron.2": {
-      "result": "untested",
-      "evidence": "combo read-only: only jetonomy_pro_license_check and jetonomy_pro_prune_webhook_deliveries pending, once each; digest and badge jobs are absent because those Pro extensions are off there and may not be switched on; needs a combo run with them on"
+      "result": "pass",
+      "evidence": "Combo stack (Free + Pro): wp action-scheduler action list --status=pending groups to exactly one pending action each for Free's jetonomy_cleanup_expired, _cleanup_media, _cleanup_notifications, _prune_activity, _reconcile_rosters, _trust_evaluation, _verification_reminder and Pro's jetonomy_pro_evaluate_badges, _license_check, _prune_webhook_deliveries, _send_daily_digest, _send_weekly_digest (no AI batch review because no AI review feature is on). wp cron event list shows only edd_sl_sdk_weekly_license_check_jetonomy and ..._jetonomy-pro. After deactivating and reactivating both plugins the same counts hold (still one each, none duplicated). combo stack."
+    },
+    "c-cron.3": {
+      "result": "pass",
+      "evidence": "`wp plugin deactivate jetonomy`: no jetonomy_* action is pending in wp_actionscheduler_actions (including jetonomy_pro_*; Pro is inactive on this stack), /community/ still 200, debug.log has no new line (no class-not-found fatal); reactivation puts all 7 back."
     },
     "c-cron.4": {
       "result": "pass",
-      "evidence": "ran each of the 7 recurring jetonomy actions with wp action-scheduler action run: all \"Executed 1 action\"; no failed rows afterwards (debug.log shows only a third-party PMPro textdomain notice from the plugin I had enabled for the membership checks)"
+      "evidence": "Moved the 7 pending recurring actions into the past and ran `wp action-scheduler run --hooks=<hook>` for each of the 7 hooks: wp_actionscheduler_logs shows 'action complete via WP CLI' for every one and a fresh pending action is queued for each; debug.log byte count unchanged (9105). (The CLI's own summary prints '0 scheduled tasks completed'.)"
+    },
+    "c-cron.5": {
+      "result": "fail",
+      "evidence": "combo stack: one command (wp plugin deactivate jetonomy-pro && deactivate jetonomy && activate jetonomy && activate jetonomy-pro) rescheduled all 7 Free and 5 Pro recurring jobs exactly once, no failed rows. But with Pro active /community/messages/ answered 404 'Page not found' afterwards (WPMediaVerse inactive, Pro Private Messaging extension on): the rewrite option held 121 rules and none for messages; after wp rewrite flush the rules ^community/messages/?$ and ^community/messages/(\\d+)/?$ were back and the page loads (200, conversation list). The permalinks-flushed flags for 2.0.7 are already set, so activation does not flush again. Also: the one-shot publisher for scheduled topics (jetonomy_publish_scheduled, topic 405 due 2026-11-09 09:00) was cancelled by the deactivate and not re-armed by the reactivate (option jetonomy_publish_single_armed stays 1); I re-armed it with Cron::arm_scheduled_publish() afterwards. Product bug: Pro routes 404 and scheduled topics stop publishing after a deactivate/reactivate until someone flushes permalinks or edits a schedule. combo stack."
     },
     "c-cron.6": {
       "result": "pass",
-      "evidence": "expired temporary global ban + expired invite, ran jetonomy_cleanup_expired: ban row removed (lifted), invite row kept"
+      "evidence": "Expired silence for david (restrictions row, expires 1 hour ago) and the seeded expired invite Expired1AbcdEfgh: after jetonomy_cleanup_expired ran via `wp action-scheduler run` the restriction row is gone (count 0) and david can POST /spaces/15/posts (201); the invite row id 5 is untouched and its link returns 410 'This invite link has expired or reached its usage limit.' while a bogus token returns 404 'Invalid invite link'."
     },
     "c-cron.7": {
       "result": "pass",
-      "evidence": "membership plan cancelled for a synced member, ran jetonomy_reconcile_rosters: tier roster rows with no live grant removed"
-    },
-    "c-cron.11": {
-      "result": "pass",
-      "evidence": "no failed Jetonomy actions in Action Scheduler on the Free site after the runs"
-    },
-    "c-cron.12": {
-      "result": "fail",
-      "evidence": "stale line: jetonomy_cleanup_expired keeps the expired invite row (so its link can say expired, as c-cron.6 says); the \"or removed\" alternative contradicts .6 - one of the two lines should go"
-    },
-    "c-cron.3": {
-      "result": "untested",
-      "evidence": "not walked: needs deactivating Jetonomy / a disposable install or 5000-user seed; shared Free site not touched. Walk at the release Docker install step"
-    },
-    "c-cron.5": {
-      "result": "untested",
-      "evidence": "not walked: needs deactivating Jetonomy / a disposable install or 5000-user seed; shared Free site not touched. Walk at the release Docker install step"
+      "evidence": "Activated paid-memberships-pro, created level 1 and a membership access rule (pmpro_1, participate) on Mentorship Circle, put carlos on the level: roster row created (source tier). Set his membership to expired without the deactivation hook, ran jetonomy_reconcile_rosters: the wp_jt_space_members row for him is removed (count 1 -> 0). PMPro deactivated and rule removed afterwards."
     },
     "c-cron.8": {
-      "result": "untested",
-      "evidence": "not walked: needs deactivating Jetonomy / a disposable install or 5000-user seed; shared Free site not touched. Walk at the release Docker install step"
+      "result": "pass",
+      "evidence": "Seeded 5000 members (wp_users + jt_user_profiles, 5028 total) by SQL; ran the trust evaluation sweep (do_action jetonomy_trust_evaluation then jetonomy_trust_evaluation_batch repeatedly): it works in slices of 500 and jetonomy_trust_eval_cursor moves 0 -> 588 -> 1088 -> 1588 ... -> 5088 and is deleted at the end (11 runs); every slice takes about 3 ms (well under the time limit)."
     },
     "c-cron.9": {
-      "result": "untested",
-      "evidence": "not walked: needs deactivating Jetonomy / a disposable install or 5000-user seed; shared Free site not touched. Walk at the release Docker install step"
+      "result": "pass",
+      "evidence": "bob scheduled a topic for 5 minutes ahead (2026-11-07 19:42:00, REST status=draft). Running the publish hook at 19:38 (not due) left it a draft; it went live at 19:42:41 via the Action Scheduler async runner, not early; alice (follower of the space) got exactly one new_post_in_sub notification (id 827)."
     },
     "c-cron.10": {
       "result": "untested",
-      "evidence": "not walked: needs deactivating Jetonomy / a disposable install or 5000-user seed; shared Free site not touched. Walk at the release Docker install step"
+      "evidence": "ENV: removing the bundled Action Scheduler library needs a plugin-code edit, but the plugin repo is mounted read-only and frozen for the walk."
+    },
+    "c-cron.11": {
+      "result": "pass",
+      "evidence": "combo stack: failed-action count before the Pro deactivate/reactivate was 0 and after it is 0 (wp action-scheduler action list --status=failed, also --group=jetonomy), so no 'no callbacks are registered' rows for jetonomy_pro_* hooks; canceled rows do not appear either. combo stack."
+    },
+    "c-cron.12": {
+      "result": "pass",
+      "evidence": "Same run as .6: the expired jt_invite_links row (id 5, expires 2026-10-01) is still in the table after jetonomy_cleanup_expired; only the restriction was deleted."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-cron.1",
+      "now": "run `wp action-scheduler action list --group=jetonomy --status=pending --per_page=50` (the subcommand is `action list`; without --per_page it shows only 5 rows) -> all 7 recurring hooks are pending"
+    },
+    {
+      "check": "c-cron.5",
+      "now": "the /community/messages/ half only holds with Pro active (the route is registered only when JETONOMY_PRO_VERSION is defined); on a Free-only stack it is 404 by design"
+    }
+  ]
 }

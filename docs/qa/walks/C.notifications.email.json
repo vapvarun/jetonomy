@@ -1,109 +1,123 @@
 {
   "journey": "C.notifications.email",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:22:53Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T20:59:43.593842Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-notifications-email.1": {
       "result": "pass",
-      "evidence": "qa_rft_a replied to qa_rft_b's topic with default prefs -> Mailpit: one mail to b '[Northwind Community] qa_rft_a replied to your topic' with a 'View Topic' button"
-    },
-    "c-notifications-email.2": {
-      "result": "pass",
-      "evidence": "b with email_opt_out (the Pause all email notifications preference) set: reply arrived, Mailpit got no mail for it and the bell row was still created; preference restored"
-    },
-    "c-notifications-email.3": {
-      "result": "untested",
-      "evidence": "digest frequency (daily/weekly) is the Pro email-digest extension; combo is read-only for this pass (a digest run would mass-mail)"
-    },
-    "c-notifications-email.4": {
-      "result": "untested",
-      "evidence": "digest unsubscribe is the Pro email-digest extension; combo read-only"
-    },
-    "c-notifications-email.5": {
-      "result": "pass",
-      "evidence": "admin approved a join request -> '[Northwind Community] Your space join request was answered', heading 'Your join request was answered', text 'Your request to join QA-RFT Appr3 was approved.' (never 'Join Request Result')"
-    },
-    "c-notifications-email.6": {
-      "result": "pass",
-      "evidence": "declined -> same subject and heading, text '...was not approved.'"
+      "evidence": "alice reply on bob's topic -> Mailpit: one '[Northwind Makers Community] Alice Chen replied to your topic' to bob.demo@jetonomy.local (reply_to_post email on by default). Body button not opened for this message."
     },
     "c-notifications-email.7": {
       "result": "pass",
-      "evidence": "saved a custom mention template (subject '[{site}] QA-RFT custom mention from {actor_display_name}', body 'Custom body: {actor_display_name} pinged you.'): mail used it with the name filled as qa_rft_a; template option restored"
+      "evidence": "Saved a custom mention template in Settings > Email (subject '{actor_display_name} pinged you on {site}', body 'Hello {user}, {actor_display_name} mentioned you. Join the conversation when you have a minute.'). maya mentioned bob -> email subject 'Maya Okafor pinged you on Northwind Makers Community', body 'Hello Bob Martinez, Maya Okafor mentioned you. ...' with the View Topic button. Template cleared afterwards."
+    },
+    "c-notifications-email.2": {
+      "result": "pass",
+      "evidence": "bob ticked 'Pause all email notifications' on /community/u/bob/edit/ and saved (persisted). alice replied to his topic -> bell notice 'Alice Chen replied to your topic' appeared, Mailpit had no email to bob. Control: with pause off and digest 'No digest' the next alice reply (with @bob) did produce an email to bob."
+    },
+    "c-notifications-email.3": {
+      "result": "pass",
+      "evidence": "bob set Daily digest on his profile edit page and followed a topic of alice's plus the Show & Tell space. alice replied to bob's topic and maya posted a new topic in Show & Tell -> no instant email to bob; maya replied in the followed topic -> bob got an instant 'Maya Okafor replied in ...' email. Firing the daily digest hook gave bob 'Your Daily Community Digest' containing 'New in Spaces You Follow' (the new topic) and 'Replies to Your Topics'. alice (site default, no preference) got the instant reply email AND the weekly digest."
+    },
+    "c-notifications-email.4": {
+      "result": "pass",
+      "evidence": "Opened the digest unsubscribe link from bob's digest (?jetonomy_digest_unsub=1&uid=10&token=...) logged out -> page 'Unsubscribed: You have been unsubscribed from community digest emails. You can re-enable them anytime from your profile settings.' with 'Open your notification settings' and 'Return to community' links; bob's digest meta became none and the next daily and weekly digest run sent nothing to bob. Screenshot ne-unsub.png."
+    },
+    "c-notifications-email.5": {
+      "result": "pass",
+      "evidence": "carlos approved for Insiders / Beta -> email to carlos.demo@jetonomy.local headed 'Your join request was answered', text 'Your request to join Insiders / Beta was approved.', button 'Open the Community'; never 'Join Request Result'. The email subject is '[Northwind Makers Community] Your space join request was answered' (it carries the owner's space label)."
+    },
+    "c-notifications-email.6": {
+      "result": "pass",
+      "evidence": "Declined request -> same email heading 'Your join request was answered' and text 'Your request to join Insiders / Beta was not approved.' (subject '... Your space join request was answered')."
     },
     "c-notifications-email.8": {
       "result": "pass",
-      "evidence": "moderator trashed b's topic -> mail body 'Your topic was removed by a moderator' with button 'Open the Community'; no 'Review in Mod Queue'"
+      "evidence": "bob created a topic, test_moderator deleted it from the topic page -> email 'Hi Bob Martinez, Your topic was removed by a moderator ...' with the button 'Open the Community'; no 'Review in Mod Queue'. Subject is 'A moderator reviewed your content'."
     },
     "c-notifications-email.9": {
       "result": "pass",
-      "evidence": "flag on a topic -> staff mail 'New report needs review' with 'Review in Mod Queue' to test_moderator, test_admin, admin and the QA admin only; no regular member mailed"
+      "evidence": "alice flagged topic 3245 -> 'New report needs review' emails went to test_moderator, test_admin and admin only (3 mails, no member), body 'Open the moderation queue to review it.' with the 'Review in Mod Queue' button (seen on the earlier flag email)."
     },
     "c-notifications-email.10": {
       "result": "pass",
-      "evidence": "registration with email verification on (setting enabled for the check, then removed): 'Confirm your email to finish signing up' with a Confirm email link; clicking it returned /community/?verified=1 and cleared the pending flag. users_can_register put back to 0"
+      "evidence": "With 'Require new members to confirm their email' on and a saved verification template (subject 'Almost there: confirm your email for {site}', body 'Hi {user}, welcome to {site}. One click below confirms your email and activates your account.'), a guest registered dana_walker through the Login block -> 'Account created. Check d***@example.com for a confirmation link'; the email used the saved subject and intro with a 'Confirm email' link and 'This link expires in 24 hours.'. Logging in before confirming was refused ('Confirm your email to finish signing up'); opening the link logged her in at /community/?verified=1. Settings, template and user removed afterwards."
     },
     "c-notifications-email.11": {
       "result": "pass",
-      "evidence": "reply that is both a reply to a followed topic and a mention -> exactly one mail to b (the mention mail)"
+      "evidence": "alice replied to bob's own topic (bob follows it) with '@bob' in the text -> exactly one email to bob (the mention email), Mailpit shows no second email for that reply."
     },
     "c-notifications-email.12": {
       "result": "pass",
-      "evidence": "reply in QA-RFT Priv mentioning non-member qa_rft_a -> no mail to a"
+      "evidence": "maya (admin of Customer Advisory Board) replied twice with '@bob' (bob is not a member) -> Mailpit had no email to bob and bob has no notification."
     },
     "c-notifications-email.13": {
       "result": "pass",
-      "evidence": "Arabic reply notifies b: mail HTML contains the Arabic text intact; footer links readable (no dir attribute set on the mail body, text left aligned)"
+      "evidence": "omar replied in Arabic ('\u0623\u0642\u062a\u0631\u062d \u062a\u0642\u0648\u064a\u0645\u0627\u064b \u0645\u0634\u062a\u0631\u0643\u0627\u064b \u0644\u0643\u0644 \u0645\u062f\u064a\u0646\u0629...') to bob's topic -> the email body shows the Arabic quote intact (UTF-8, two lines) and the footer/preferences/unsubscribe links are readable in Mailpit."
     },
     "c-notifications-email.14": {
       "result": "untested",
-      "evidence": "Learnomy is not installed on this stack, so the distinct-sender case cannot run; needs Learnomy plugin"
+      "evidence": "ENV: Learnomy is not installed on the combo stack, so the 'Learnomy active' combination cannot be built. Partial: with Settings > Email From name/email set to 'Northwind Community Team <community@northwind-makers.test>', reply notifications from a web request arrived with that From. A same-request plain wp_mail() could not be triggered from the browser (the wp-login lost-password mail did not reach Mailpit), and CLI wp_mail does not reach Mailpit. Needs Learnomy plus a way to fire wp_mail in a request."
     },
     "c-notifications-email.15": {
       "result": "pass",
-      "evidence": "159-character topic title: subject stays short (52 chars, no title) and the body shows the title with an ellipsis, layout intact"
+      "evidence": "alice replied to grace's 159-character topic -> email to grace: intro cuts the title ('After moving our 12-year-old photography forum...') and the 'On topic' block shows the whole 159-character title; layout intact."
     },
     "c-notifications-email.16": {
       "result": "pass",
-      "evidence": "silenced qa_rft_c replying with a mention -> 403 jetonomy_user_silenced, no content created, no mail to the mentioned user"
+      "evidence": "finn (silenced) posted a reply containing '@bob' -> REST 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; no content and no email."
     },
     "c-notifications-email.17": {
       "result": "pass",
-      "evidence": "Settings > Emails: all 19 preview types (user_welcome ... reply_by_email_refused) open a rendered preview with subject; 'Send Test Email' delivered 'Jetonomy Test Email' to Mailpit"
+      "evidence": "Settings > Email: all 20 template Preview buttons opened a rendered iframe preview with the right subject (user_welcome ... message); the 20 per-type 'Send test' buttons and the 'Send Test Email' button each showed 'Preview (<type>) sent to admin@example.test.' and 21 messages arrived in Mailpit."
     },
     "c-notifications-email.18": {
       "result": "pass",
-      "evidence": "mail HTML uses explicit inline colours (white on #0073aa button about 5:1, body text #374151/#111827 on white); no prefers-color-scheme rules, so a dark client that inverts keeps explicit contrast"
+      "evidence": "The emails ship a fixed light card (no dark-mode CSS, no prefers-color-scheme). Rendered a reply email with prefers-color-scheme: dark emulated: button text rgb(255,255,255) on rgb(0,115,170) = contrast 5.21, body text 10.3 and headings 17.7 on white. A real inverting mail client was not available (Mailpit view only). Screenshot ne-email-dark.png."
     },
     "c-notifications-email.19": {
-      "result": "untested",
-      "evidence": "digest re-enable on profile edit is the Pro email-digest extension; combo read-only"
+      "result": "pass",
+      "evidence": "After the unsubscribe link, bob's profile edit page shows the digest choice again (No digest selected, Daily digest, Weekly digest) so he can pick a frequency."
     },
     "c-notifications-email.20": {
       "result": "pass",
-      "evidence": "staff alert subject 'New report needs review'; body 'New content flag requires review ... Review in Mod Queue', no 'A moderator reviewed your content'"
+      "evidence": "alice flagged a topic -> staff email subject '[Northwind Makers Community] New report needs review', body 'New content flag requires review Open the moderation queue to review it.'; it does not say 'A moderator reviewed your content' nor tell staff to reply to a moderator."
     },
     "c-notifications-email.21": {
       "result": "pass",
-      "evidence": "reply to a topic with a title over 50 characters: intro 'mentioned you in \\\"QA-RFT A very long email topic title that is...\\\"' - ellipsis after a whole word"
+      "evidence": "Replies to topics with titles over 50 characters (bob's 156-char and grace's 159-char topics): the intro names the title cut at a word boundary with an ellipsis ('...configure the\u2026', '...forum\u2026'), never mid-word."
     },
     "c-notifications-email.22": {
       "result": "pass",
-      "evidence": "after access ended no mail for a reply in the private space (Mailpit, see C.gating.access-ends .8); digest part of the line is Pro and not walked"
+      "evidence": "bob was removed from Partner Program; alice then replied to topic 239 there -> no email to bob. bob's weekly digest and every digest sent in the run contained none of the private topic titles (Referral fees..., advisory board call, Q1 roadmap draft, Escalation checklist)."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-notifications-email.5",
+      "now": "The email heading is 'Your join request was answered'; the subject line is '[Site] Your space join request was answered' (owner's space label)."
+    },
+    {
+      "check": "c-notifications-email.6",
+      "now": "Same heading 'Your join request was answered' with 'was not approved' text; subject '... Your space join request was answered'."
+    }
+  ]
 }

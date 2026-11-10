@@ -1,68 +1,73 @@
 {
   "journey": "C.gating.rule-never-locks-out",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:57:51Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:06:17.684418Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "c-gating-rule-never-locks-out.1": {
-      "result": "pass",
-      "evidence": "fresh subscriber qa_rft_w2_a in QA-RFT W2 Pub (public/open): read 200, post 201, reply 201, vote 200 (REST) and New Topic present in UI"
-    },
-    "c-gating-rule-never-locks-out.2": {
-      "result": "fail",
-      "evidence": "stale line: admin UI add of Logged In on a public space toasts \"Rule added: Logged In can read and report posts and replies. They are recorded as Viewer.\" (not \"Access rule added.\"); the row is listed. On a private space a confirm modal \"Logged In will be let in to this private space and can take part right away. Continue?\" comes first"
-    },
-    "c-gating-rule-never-locks-out.3": {
-      "result": "pass",
-      "evidence": "same subscriber after the Logged In rule: read 200, post 201, reply 201, vote 200"
-    },
     "c-gating-rule-never-locks-out.4": {
       "result": "pass",
-      "evidence": "guest GET posts of the space after the Logged In rule 200"
-    },
-    "c-gating-rule-never-locks-out.5": {
-      "result": "fail",
-      "evidence": "stale line: Role rule on public space switched it to Private and approval; message is \"Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.\" (adds the join-policy clause)"
+      "evidence": "Guest GET /spaces/34/posts after adding a Logged In rule -> 200, still readable."
     },
     "c-gating-rule-never-locks-out.6": {
       "result": "pass",
-      "evidence": "unmatched, unrostered qa_rft_w2_e after the switch: read 403 jetonomy_forbidden, post 403 \"You cannot post in this space.\"; space private/approval"
+      "evidence": "After a Role rule switched Amsterdam Chapter to Private (response made_private:true, message 'Access rule added. This space was switched to Private...'), gate_sub2 (not on roster, matched only by the Logged In read rule) could read (200) but POST topic -> 403 jetonomy_forbidden 'You cannot post in this space.' (REST in-process as the persona on the combo stack; fresh subscribers gate_sub/gate_sub2/gate_sub3 created for the walk and deleted afterwards; Amsterdam Chapter rules/visibility/join policy restored to public/open)"
     },
     "c-gating-rule-never-locks-out.7": {
       "result": "pass",
-      "evidence": "roster member qa_rft_w2_b keeps posting after rules added (201)"
-    },
-    "c-gating-rule-never-locks-out.8": {
-      "result": "pass",
-      "evidence": "Access Rules tab: \"A rule lets more people in to this space: ... Who else gets in is set by the space's visibility and join policy\" inside How access rules work; empty state says only visibility and join policy decide"
+      "evidence": "carlos (existing roster member) replied (201) after both rules were added. (REST in-process as the persona on the combo stack; fresh subscribers gate_sub/gate_sub2/gate_sub3 created for the walk and deleted afterwards; Amsterdam Chapter rules/visibility/join policy restored to public/open)"
     },
     "c-gating-rule-never-locks-out.9": {
       "result": "pass",
-      "evidence": "subscriber POST /spaces/211/access-rules 403 jetonomy_forbidden, rule count unchanged"
+      "evidence": "Subscriber POST /spaces/34/access-rules -> 403 jetonomy_forbidden; rule count unchanged."
     },
     "c-gating-rule-never-locks-out.10": {
       "result": "pass",
-      "evidence": "test_editor GET and POST access-rules 403 \"Only site administrators can manage access rules for this space.\"; wp-admin tab URL for Help Desk shows that sentence with \"Back to Help Desk\" (HTTP 403)"
+      "evidence": "test_editor GET and POST /spaces/20/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.' (wp-admin tab URL sentence not opened)."
     },
     "c-gating-rule-never-locks-out.11": {
       "result": "pass",
-      "evidence": "390px: type select, value box and Add Rule stack in one column, Add Rule height 40px, no horizontal overflow"
+      "evidence": "Access Rules tab at 390: scrollWidth 390, Add Rule button height 40px.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/access-rules-tab-390.png"
+    },
+    "c-gating-rule-never-locks-out.1": {
+      "result": "pass",
+      "evidence": "Fixture: new public open space 'Gate Public Lab' (182) and invite-only private 'Gate Private Lab' (183); fresh subscriber gate_sub1 (not on either roster). In the browser: read the topic list, posted 'Best way to capture screenshots on a phone?' through the composer, replied to alice's topic (Post Reply) and pressed Vote up (button turned 'Remove your upvote'). DB confirms the reply and the vote. Posting auto-added him to the roster."
+    },
+    "c-gating-rule-never-locks-out.2": {
+      "result": "pass",
+      "evidence": "Admin, Access Rules tab of the public space, Logged In + Read -> toast 'Rule added: Logged In can read and report posts and replies. They are recorded as Viewer.' and the rule is listed after reload. On the private space Logged In + Participate first shows a confirm 'Logged In will be let in to this private space and can take part right away. Continue?' (Cancel / Add rule), then the toast 'Rule added: Logged In can read, post, reply, vote and report. They are recorded as Member.'. Rule later removed (toast 'Access rule deleted.')."
+    },
+    "c-gating-rule-never-locks-out.5": {
+      "result": "pass",
+      "evidence": "Public open space, Access Rules > WP Role 'editor' + Participate -> toast 'Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.'. Screenshot gt-role-rule-toast.png. (Capability, Trust Level and Membership share the same switch; Role was exercised.)"
+    },
+    "c-gating-rule-never-locks-out.3": {
+      "result": "pass",
+      "evidence": "With the Logged In (Read) rule on the public space, fresh subscriber gate_sub2 (never on the roster) read the space, posted 'Does anyone test on a foldable phone?' through the composer, voted up on alice's topic and posted a reply -> all four worked in the UI."
+    },
+    "c-gating-rule-never-locks-out.8": {
+      "result": "pass",
+      "evidence": "Access Rules tab: the open 'How access rules work' panel says 'A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy.' and the empty state says 'Only this space's visibility and join policy decide who gets in. Add a rule to let more people in...'. Screenshot gt-access-182.png."
     },
     "c-gating-rule-never-locks-out.12": {
       "result": "pass",
-      "evidence": "Role rule on public open space: REST message and General tab show join policy moved to Requires Approval (space read back private/approval)"
+      "evidence": "Same Role-rule add: before the space was public/open, after the toast the General tab shows Visibility Private and Join policy Approval with the note 'This space has an access rule, so it is Private and its join policy is Requires Approval. A rule cannot gate a public space.'. Screenshot gt-general-after-role.png."
     }
   },
   "proposed_checks": []

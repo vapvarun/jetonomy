@@ -1,15 +1,14 @@
 {
   "journey": "C.member.share",
-  "free": "e20af89a",
-  "pro": "373c1a0",
-  "walked_at": "2026-10-30T20:39:01Z",
-  "walker": "agent:sonnet scoped re-walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T19:15:22Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free 2.0.7 active, Pro inactive)",
-    "site": "http://localhost:8912 (Docker)",
+    "mode": "free stack (Pro inactive)",
+    "site": "http://localhost:8912",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
       1440,
@@ -18,55 +17,53 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for the 390 RTL check (restored)"
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-share.1": {
       "result": "pass",
-      "evidence": "bob on a topic: Share opens a 187px dropdown directly under the button (menu x191-378, y488; button bottom y484) with Copy link, Twitter / X, Facebook, LinkedIn.",
-      "screenshot": "rft-share-open-1440.png"
+      "evidence": "bob clicked Share on the topic: .jt-share-dropdown opens fixed under the button (right edges aligned 527/527, inside viewport) with items 'Copy link', 'Twitter / X', 'Facebook', 'LinkedIn' (label is 'Copy link', lower-case l)"
     },
     "c-member-share.2": {
       "result": "pass",
-      "evidence": "Copy link wrote the exact topic URL to the clipboard (readText equals the page URL) and showed the toast 'Link copied'."
+      "evidence": "Copy link: clipboard.readText() = the topic URL, toast 'Link copied', dropdown closes"
     },
     "c-member-share.3": {
       "result": "pass",
-      "evidence": "Each item opens a new tab: X intent/tweet with url and text=<title>, Facebook sharer.php?u=<url>, LinkedIn shareArticle?url=<url> (X and LinkedIn bounce through their login redirects, the target URL is preserved)."
+      "evidence": "Each social item opened a new window: x.com intent/tweet?url=<encoded topic URL> (redirected to X login), facebook.com/sharer/sharer.php?u=<topic URL>, linkedin share-offsite url=<topic URL> (login redirect); title is passed for X"
     },
     "c-member-share.4": {
       "result": "pass",
-      "evidence": "With the dropdown open, a wheel scroll closes it (aria-expanded false); a click outside closes it."
+      "evidence": "With the dropdown open, clicking outside closed it; opening again and wheel-scrolling 700px also closed it"
     },
     "c-member-share.5": {
       "result": "pass",
-      "evidence": "Escape closes the dropdown, aria-expanded returns to false and focus returns to the Share button; Enter and Space open it, ArrowDown/ArrowUp/Home/End move between the four items."
+      "evidence": "Escape closes the dropdown and focus is back on the Share button (jt-share-btn)"
     },
     "c-member-share.6": {
       "result": "pass",
-      "evidence": "Guest on a public topic: the Share button opens its dropdown (aria-expanded true, 187x150px, anchored). Nit: a click in the first ~1.2s after load is ignored until the interactive store hydrates (works from ~1.6s)."
+      "evidence": "Guest sees the same four items on the public topic"
     },
     "c-member-share.7": {
       "result": "pass",
-      "evidence": "alice (member) on a Partner Program topic: Share offers the same four items with the same private URL; the oEmbed endpoint returns 404 for that topic, so nothing from the body is exposed through sharing."
+      "evidence": "Partner Program topic 345 (private space): maya (space admin) opens Share -> Copy link / Twitter / Facebook / LinkedIn, the link is the same private URL. The shared URL opened by guest or by hana (not a member) returns 404 'Page not available' with no topic text in the HTML (no '15:00 UTC'), no og tags; /wp-json/oembed/1.0/embed for it returns 404 oembed_invalid_url."
     },
     "c-member-share.8": {
       "result": "pass",
-      "evidence": "Guest GET /oembed?url=<public topic> -> 200 with title and author_name (Grace...); partner-program topic and a moderators-room URL -> 404 jetonomy_oembed_not_found."
+      "evidence": "Guest GET /jetonomy/v1/oembed?url=<public topic> -> 200 {type:rich,title:'Dark mode for the community on phones',author_name:'Sofia Romano'...}; private CAB topic URL -> 404 jetonomy_oembed_not_found 'Thread not found.'"
     },
     "c-member-share.9": {
       "result": "pass",
-      "evidence": "Grace's 159-char title: the X link carries the title in text=, the heading wraps (159px tall) at 390, the dropdown stays inside the viewport."
+      "evidence": "Grace's 159-character topic (247): Share button data-post-url is the full encoded URL; Twitter item opens https://twitter.com/intent/tweet?url=<percent-encoded url>&text=<percent-encoded 159-char title>; the decoded target URL returns 200. Dropdown rect 340-527 x 488-638 at 1440 and 118-305 x 429-580 at 390, inside the viewport, scrollWidth = viewport. (First click can race hydration; a second click opened it.)"
     },
     "c-member-share.10": {
       "result": "pass",
-      "evidence": "390px with site language ar (RTL, restored): dropdown x40-227 of 390, opening toward the inline end and fully inside the viewport.",
-      "screenshot": "rft-share-390-rtl.png"
+      "evidence": "Arabic locale, 390x844, topic /s/general-discussion/t/whats-everyone-working-on-this-week-s15t1/: Share dropdown .jt-share-dropdown rect x 8-195, y 429-579 inside the viewport (390x844); screenshot rtl-share-390.png."
     },
     "c-member-share.11": {
       "result": "pass",
-      "evidence": "With navigator.clipboard.writeText rejecting and execCommand('copy') false, Copy link shows 'Could not copy the link. Copy it from the address bar.'"
+      "evidence": "Clipboard write rejected and execCommand disabled: toast 'Could not copy the link. Copy it from the address bar.'"
     }
   },
   "proposed_checks": []

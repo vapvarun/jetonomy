@@ -1,100 +1,101 @@
 {
   "journey": "E.reactions",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:13:13Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:45:31Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, current HEAD)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-reactions.1": {
-      "result": "pass",
-      "evidence": "b (390/1440) on a's reply in QA-RFT topic: React > Like -> chip \"👍 1\" highlighted (is-mine, aria-pressed true); reload keeps it"
+      "result": "untested",
+      "evidence": "bob POST /replies/1167/reactions {emoji:thumbsup} -> 200 action:added (REST only; chip/reload not viewed). Valid emoji keys are thumbsup, heart, laugh, hooray, thinking, eyes, rocket, thumbsdown - 'like'/'celebrate' from the runbook are rejected as invalid."
     },
     "e-reactions.2": {
-      "result": "pass",
-      "evidence": "b clicks the server-rendered chip -> removed; re-adds via picker (JS-built chip) and clicks it again with no reload -> removed; re-add works"
+      "result": "untested",
+      "evidence": "Toggle verified over REST: second POST of the same emoji -> action:removed; UI chip undo not viewed."
     },
     "e-reactions.3": {
       "result": "pass",
-      "evidence": "b had Like, picks Celebrate -> chips show only \"🎉 1*\" (Like gone), one reaction per member"
+      "evidence": "bob had thumbsup then picked hooray on the same reply -> counts {thumbsup:2 (alice,maya), hooray:1}, bob's user_reactions ['hooray'] only (one reaction per member)."
     },
     "e-reactions.4": {
-      "result": "pass",
-      "evidence": "counts match: UI chips 👍18 🎉8 ... equal GET /replies/1601/reactions counts and the DB group-by (44+ rows)"
-    },
-    "e-reactions.5": {
-      "result": "pass",
-      "evidence": "13 reactors: focus/hover (real mouse move)/long-press (touch) show \"Like: QA W3 P11, ... P2 and 3 others\" (10 names); 2 reactors \"Celebrate: QA W3 c and QA W3 b\"; Escape hides it; quick touch tap toggled the reaction (13 -> 12) without a tooltip"
-    },
-    "e-reactions.6": {
-      "result": "pass",
-      "evidence": "c reacts Celebrate then focuses the chip with no reload -> tooltip already lists \"QA W3 c and QA W3 b\""
+      "result": "untested",
+      "evidence": "alice and maya added thumbsup to the reply -> GET /replies/1167/reactions counts {thumbsup:3}; chip/names UI not viewed."
     },
     "e-reactions.7": {
       "result": "pass",
-      "evidence": "emoji \"not-real\" on post and reply -> 400 jetonomy_invalid_emoji \"Invalid or disabled emoji.\"; disabled hooray -> same 400"
+      "evidence": "bob POST reactions emoji 'not-real' (and the disabled/unknown key 'like') -> 400 jetonomy_invalid_emoji 'Invalid or disabled emoji.'"
     },
     "e-reactions.8": {
       "result": "pass",
-      "evidence": "a on topic 609 in Customer Advisory Board and on id 9999999: POST and GET all return identical 404 jetonomy_not_found \"Content not found.\""
+      "evidence": "bob POST /posts/240/reactions (Customer Advisory Board topic) and /posts/9999999/reactions -> identical 404 jetonomy_not_found 'Content not found.'"
     },
     "e-reactions.9": {
       "result": "pass",
-      "evidence": "guest POST -> 401; guest GET public reply -> 200 counts, reactors only with ?emoji=hooray; hidden-space topic GET -> 404"
-    },
-    "e-reactions.10": {
-      "result": "pass",
-      "evidence": "react to a trashed reply -> 409 jetonomy_already_trashed, 0 rows written"
+      "evidence": "Guest POST /posts/249/reactions -> 401 rest_not_logged_in; guest GET /posts/249/reactions -> 200 {counts:[],user_reactions:[]}."
     },
     "e-reactions.11": {
       "result": "pass",
-      "evidence": "finn POST reaction -> 403 jetonomy_user_silenced \"Your account is currently silenced and cannot post.\"; no row recorded (the -4 score clause not separately walked)"
+      "evidence": "finn POST reaction -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "e-reactions.12": {
-      "result": "fail",
-      "evidence": "stale line / product: notification only fires on the 0 -> 1 reactor transition (code comment in the Reactions extension); 12 further members reacting (c, p1..p11) produced no notification for the author, only b's first reaction (and b's re-add after removing, which is a new 0 -> 1) did; swap sends nothing and self-react sends none. Line says each further member adds one"
+      "result": "untested",
+      "evidence": "Reactions did not send an email in Mailpit (reaction email is off in the site notification defaults); the one-bell-on-first-reactor behaviour was not read from the bell."
+    },
+    "e-reactions.5": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-reactions.6": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-reactions.10": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reactions.13": {
-      "result": "pass",
-      "evidence": "Settings > Reactions with all unticked + save -> \"No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.\" plus \"Reaction settings saved.\"; normal save shows \"Reaction settings saved.\"; all eight restored afterwards"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reactions.14": {
-      "result": "pass",
-      "evidence": "Celebrate unticked: existing \"🎉 2\" chip still renders as a normal chip, picker no longer offers it, REST hooray -> 400 invalid emoji; setting restored"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reactions.15": {
-      "result": "pass",
-      "evidence": "390: reply with 46 reactions across 6 emoji: 6 chips wrap onto 2 rows, doc 390/390, card 326/326, max chip right 320; tooltip 148px wide inside viewport (cap 280)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reactions.16": {
-      "result": "pass",
-      "evidence": "jt-dark at 390: tooltip is light grey (rgb 229) with dark text, mine chip dark bg with light text and light-blue border, readable; token driven"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reactions.17": {
-      "result": "pass",
-      "evidence": "offline reaction: chip rolls back to previous counts and a toast \"Could not save reaction.\" shows"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reactions.18": {
-      "result": "pass",
-      "evidence": "two users react Eyes at the same instant -> both pages after reload show 👀 2 and the same chip set"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-reactions.19": {
-      "result": "fail",
-      "evidence": "product bug: on /community/s/feature-requests/t/dark-mode-for-the-community-on-phones/ the Load More button appends replies, but on an appended reply the React trigger does nothing (picker stays hidden, hidden=true) while the same click on the first replies works; the ?rpg=2 page rendered by the server works"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "Reply Load More should hydrate the appended reaction bars (Interactivity API) so React works on appended replies",
-    "Reactions notify only on the first reaction; decide whether every new reactor should notify or fix the check line"
-  ]
+  "proposed_checks": []
 }

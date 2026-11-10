@@ -1,48 +1,52 @@
 {
   "journey": "C.gating.read-on-public",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:57:51Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:06:17.706220Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "c-gating-read-on-public.1": {
-      "result": "pass",
-      "evidence": "admin REST POST Everyone/read rule on public open space 201 \"Access rule added.\"; UI toast on public space is \"Rule added: Everyone can read and report...\" (wording only)"
-    },
-    "c-gating-read-on-public.2": {
-      "result": "pass",
-      "evidence": "subscriber posted \"What is the best phone for testing?\" with the Read rule: 201"
-    },
-    "c-gating-read-on-public.3": {
-      "result": "pass",
-      "evidence": "same subscriber replied 201 and voted 200"
-    },
-    "c-gating-read-on-public.4": {
-      "result": "pass",
-      "evidence": "roster member b keeps abilities (reply 201)"
-    },
     "c-gating-read-on-public.5": {
       "result": "pass",
-      "evidence": "guest GET posts 200; guest POST reply 401 rest_not_logged_in"
-    },
-    "c-gating-read-on-public.6": {
-      "result": "pass",
-      "evidence": "admin DELETE rule 200, UI toast \"Access rule deleted.\"; subscriber still posts 201"
+      "evidence": "Guest GET /spaces/34/posts -> 200; guest POST reply -> 401 rest_not_logged_in."
     },
     "c-gating-read-on-public.7": {
       "result": "pass",
-      "evidence": "subscriber POST access-rules 403 jetonomy_forbidden, count unchanged"
+      "evidence": "Subscriber POST /spaces/34/access-rules -> 403 jetonomy_forbidden; no rule stored."
+    },
+    "c-gating-read-on-public.1": {
+      "result": "pass",
+      "evidence": "Admin added Logged In + Read to the public open space -> toast 'Rule added: Logged In can read and report posts and replies. They are recorded as Viewer.'; the rule lists after reload (the REST 201 'Access rule added.' was seen earlier in the walk)."
+    },
+    "c-gating-read-on-public.2": {
+      "result": "pass",
+      "evidence": "gate_sub3 (not on the roster) opened Gate Public Lab and posted 'What is the best phone for testing?' through the composer -> published at /t/what-is-the-best-phone-for-testing/."
+    },
+    "c-gating-read-on-public.3": {
+      "result": "pass",
+      "evidence": "gate_sub3 voted up and replied on 'Does anyone test on a foldable phone?' in the UI -> both worked ('Remove your upvote', reply listed)."
+    },
+    "c-gating-read-on-public.4": {
+      "result": "pass",
+      "evidence": "alice (roster member) posted a topic, voted up and replied in the same space with the Read rule in place; all worked and no extra controls appeared."
+    },
+    "c-gating-read-on-public.6": {
+      "result": "pass",
+      "evidence": "Deleted the Read rule from the Access Rules tab (confirm, then toast 'Access rule deleted.'); gate_sub3 then posted 'Follow-up: phones for kids apps testing' -> published."
     }
   },
   "proposed_checks": []

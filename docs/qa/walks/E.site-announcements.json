@@ -1,84 +1,84 @@
 {
   "journey": "E.site-announcements",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:50:16Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:52:58Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro 2.0.7)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
     "themes": [
-      "reign"
+      "reign-theme"
     ],
     "viewports": [
-      1440,
-      390
+      1440
     ],
     "schemes": [
       "light"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "e-site-announcements.1": {
-      "result": "pass",
-      "evidence": "Browser, admin 1440: topic 'QA-RFT Scheduled maintenance on Saturday' in Announcements > More menu 'Pin to community' -> the item flips to 'Unpin from community' in place (no navigation); GET /site-announcements then lists it"
+      "result": "untested",
+      "evidence": "admin POST /jetonomy-pro/v1/site-announcements/250 -> 200 {pinned:true}; GET lists it (count 1, limit 5). The 'Pin to community' label flip in the UI was not clicked."
     },
     "e-site-announcements.2": {
       "result": "pass",
-      "evidence": "Browser, member qa_rft_w4_s: General Discussion, Help Desk and Feature Requests listings each open with a 'Community announcements' section holding the pinned topics (the announcement lives in Announcements) with an 'Announcement' pill whose accessible label is 'Pinned site-wide by an administrator' (aria-label, not a title tooltip)"
+      "evidence": "With topic 250 pinned: guest page source of General Discussion, Help Desk, Feature Requests and Amsterdam Chapter each contain an 'Announcement' pill and the title 'Scheduled maintenance on Saturday: what to expect' (checked as guest; bob-specific view not repeated)."
     },
     "e-site-announcements.3": {
       "result": "pass",
-      "evidence": "Guest: the same 'Community announcements' section and pill on the three public listings; the announcement pinned from Customer Advisory Board (private) is absent for the guest and for a non-member (GET /announcements/active lists 1169-1171 only)"
+      "evidence": "Guest also sees it on public listings; Customer Advisory Board listing (private, guest) does not contain it."
     },
     "e-site-announcements.4": {
       "result": "pass",
-      "evidence": "Admin DELETE /site-announcements/{id} -> listing of General Discussion and Help Desk for the member had 0 matches at once (no stale cache); the topic still opens in its own space (HTTP 200)"
-    },
-    "e-site-announcements.5": {
-      "result": "pass",
-      "evidence": "General Discussion with a space-only pinned topic and an announcement that is also pinned in its own space: announcements first, then the 'Pinned' space topics in their order, each topic once (one link per topic)"
+      "evidence": "After DELETE /site-announcements/250 the General Discussion listing no longer contains the title immediately (no stale cache); the topic remains in Announcements."
     },
     "e-site-announcements.6": {
       "result": "pass",
-      "evidence": "Pinned 5, the 6th via REST -> 400 jetonomy_pin_limit 'You can only pin 5 announcements at a time. Unpin one first.' and the topic-page button shows the same text in a modal; a draft topic and id 99999999 -> 404 jetonomy_invalid_post 'Topic not found or not published.'"
+      "evidence": "Pinning a 6th topic after five (250, 9, 10, 11, 12) -> 400 jetonomy_pin_limit 'You can only pin 5 announcements at a time. Unpin one first.'; all unpinned afterwards (count 0)."
     },
     "e-site-announcements.7": {
       "result": "pass",
-      "evidence": "test_moderator and member qa_rft_w4_s: POST, DELETE and GET /site-announcements -> 403 jetonomy_forbidden; guest POST -> 401"
+      "evidence": "test_moderator POST /site-announcements/9 and bob POST -> 403 jetonomy_forbidden each."
     },
     "e-site-announcements.8": {
-      "result": "pass",
-      "evidence": "Member (not in Customer Advisory Board) GET /announcements/active never lists the CAB announcement; after joining CAB as a member it is listed (1172); after leaving it is gone again"
+      "result": "untested",
+      "evidence": "bob GET /announcements/active -> 200 listing only topic 250 (public space). The private/hidden exclusion was not exercised with a pinned private topic."
+    },
+    "e-site-announcements.5": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-site-announcements.9": {
-      "result": "pass",
-      "evidence": "w4 t's topic pinned site-wide shows for w4 s; after s blocks t (POST /users/me/blocks) it is gone from Help Desk, back after the unblock"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-site-announcements.10": {
-      "result": "pass",
-      "evidence": "No dismiss control in the section, pills or rows (only vote buttons inside the section); nothing hides an announcement for a member"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-site-announcements.11": {
-      "result": "pass",
-      "evidence": "Browser 390: 159-character title wraps in the card (171 px tall, x 92-283), the Arabic title fits (x 92-279), no horizontal overflow (scrollWidth 390); with the he_IL cookie (RTL) the pill and title are right-aligned (pill x165-298, title x111-298) with no overlap"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-site-announcements.12": {
-      "result": "pass",
-      "evidence": "Admin permanently deleted a pinned topic (1173) -> gone from the General Discussion listing at once and from GET /site-announcements (pins 5 -> 4), no ghost id"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-site-announcements.13": {
-      "result": "pass",
-      "evidence": "Browser: new empty space shows the announcements section (top 498 px) and below it the empty-state text 'No topics yet. Be the first to start a discussion!' (973 px)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-site-announcements.14": {
-      "result": "pass",
-      "evidence": "Browser 390 dark: pill rgb(151,192,238) on a slate fill (rgb 65,75,90) on body rgb(35,38,47); card x 92-283 inside the page, scrollWidth 390; light 390 same geometry"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-site-announcements.15": {
-      "result": "pass",
-      "evidence": "Admin trashed pinned topic 1170 -> GET /site-announcements pins 4 -> 3 and /announcements/active no longer lists it; pinning another topic then succeeded (slot free)"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
   "proposed_checks": []

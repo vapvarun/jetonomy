@@ -1,88 +1,96 @@
 {
   "journey": "C.gating.surfaces-agree",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:58:37Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:26:02.574993Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-gating-surfaces-agree.1": {
       "result": "pass",
-      "evidence": "e (not on roster) space page: invite-only message with the space title, no topics; hidden space gives the same \"Page not available\" 404 as a missing space"
-    },
-    "c-gating-surfaces-agree.2": {
-      "result": "pass",
-      "evidence": "topic URL in the private space gives the 404 \"Page not available\" page, same as /t/nope-nope/; title does not reveal it"
+      "evidence": "bob on Customer Advisory Board: invite-only message with the space title and description, no topics; Moderators' Room: 404 'Space not found.' same as a missing space."
     },
     "c-gating-surfaces-agree.3": {
       "result": "pass",
-      "evidence": "search for a unique word as e: \"No results for ...\""
-    },
-    "c-gating-surfaces-agree.4": {
-      "result": "pass",
-      "evidence": "tag page for the tag used there: \"0 topics\"; e's tag list does not include the tag, b's shows count 1"
-    },
-    "c-gating-surfaces-agree.5": {
-      "result": "pass",
-      "evidence": "home and sidebar HTML as e contain no topic or space name from the private/hidden spaces"
+      "evidence": "gate_sub3 (non-member) GET /search?q=referral, q=roadmap+draft, q=self-promotion+wave -> 200 with 0 results each (words from Partner Program / CAB / Moderators' Room topics)."
     },
     "c-gating-surfaces-agree.6": {
       "result": "pass",
-      "evidence": "guest sitemap lacks the private/hidden space and topic; GET /updates?scope=global as guest 401"
+      "evidence": "Guest /community-sitemap.xml -> 200 and contains none of the private/hidden topic slugs; guest /updates?scope=global -> 401."
     },
     "c-gating-surfaces-agree.7": {
       "result": "pass",
-      "evidence": "e: GET post and replies in private space 404 jetonomy_not_found; space and space posts 403 jetonomy_forbidden; search with space_id 403; hidden space and id 99999 answer 404 with identical body"
+      "evidence": "Non-member gate_sub3: GET /posts/239 and /posts/239/replies (Partner Program) -> 404; GET /spaces/41 -> 403 jetonomy_forbidden; /spaces/41/posts -> 403; /search?space_id=41 -> 403; hidden space 43 and id 99999 -> 404 jetonomy_not_found 'Space not found.' identical."
     },
     "c-gating-surfaces-agree.8": {
       "result": "pass",
-      "evidence": "guest /updates?scope=post for a private post 404 jetonomy_not_found; public topic 200"
-    },
-    "c-gating-surfaces-agree.9": {
-      "result": "pass",
-      "evidence": "locked preview setting off: guest sees \"This space is private. Log in to see it.\" with no space name"
-    },
-    "c-gating-surfaces-agree.10": {
-      "result": "pass",
-      "evidence": "setting on (value it had on this site): guest card shows space name and \"private and invite-only. Log in if you have an invitation.\" with no topics; setting restored to its prior value"
-    },
-    "c-gating-surfaces-agree.11": {
-      "result": "pass",
-      "evidence": "roster member b sees the topic on space page, search (1 result), tag count 1 and REST 200"
-    },
-    "c-gating-surfaces-agree.12": {
-      "result": "pass",
-      "evidence": "test_moderator rostered in the hidden space sees its topic by REST/search; unrostered he and e see nothing (404)"
-    },
-    "c-gating-surfaces-agree.13": {
-      "result": "pass",
-      "evidence": "removing a member from the roster: next load drops the topic from REST, search and space page at once (observed with rule removal)"
-    },
-    "c-gating-surfaces-agree.14": {
-      "result": "pass",
-      "evidence": "topic created in a public space, space flipped to private: e gets post 404, search 0, space posts 403, feed no leak"
-    },
-    "c-gating-surfaces-agree.15": {
-      "result": "pass",
-      "evidence": "310-user, 301-member space on the site: home and lists load, no leak on page 2 of private-space lists; 2000-topic seed not run"
+      "evidence": "Guest GET /updates?scope=post&id=241 (hidden topic) -> 404 jetonomy_not_found; id=249 public topic -> 200."
     },
     "c-gating-surfaces-agree.16": {
       "result": "pass",
-      "evidence": "guest private space URL (preview off): document title \"Community - site name\", never the space name"
+      "evidence": "Guest on /community/s/partner-program/: document title 'Community \u2013 Northwind Makers Community' (site name only, no space name)."
     },
     "c-gating-surfaces-agree.17": {
       "result": "pass",
-      "evidence": "guest private space (preview off): only \"This space is private. Log in to see it.\"; markup has no space name or slug"
+      "evidence": "Logged out on a private space URL with the locked preview off: 'This space is private. Log in to see it.' only; the page HTML contains neither the space name ('Partner Program' / 'Gate Private Lab') nor its description nor any topic title (string search false); page title is the site title only."
+    },
+    "c-gating-surfaces-agree.2": {
+      "result": "pass",
+      "evidence": "bob (not on Customer Advisory Board) opened the CAB topic URL -> 404 with the identical 'Page not available' title and body as a made-up topic URL in the same space (body text identical), so the title does not reveal it exists."
+    },
+    "c-gating-surfaces-agree.4": {
+      "result": "pass",
+      "evidence": "Tagged a CAB topic 'advisory-walk' and 'council-priorities', a public topic and a Partner Program topic 'advisory-walk'. bob's /community/tag/advisory-walk/ lists '2 topics' (the public one and Partner Program, where he was then a member) and not the CAB topic; /tag/council-priorities/ (CAB only) shows '0 topics / No topics with this tag yet' although the stored tag count is higher. Screenshot sa-tag.png."
+    },
+    "c-gating-surfaces-agree.5": {
+      "result": "fail",
+      "evidence": "bob's home spaces grid shows a card 'Customer Advisory Board' (badges Private, Forum, Invite only; its description; '3 topics 4 members') although he is not a member. No topic title from there appears on home, in Trending or in the sidebar, in search (web and REST) or in REST posts. So topics are consistent but the space name, description and the topic count (which includes topics he cannot open) are visible for a private (not Hidden) space. My read: probably the out-of-date wording of the check, because private non-hidden spaces are deliberately listed for logged-in members and the runbook says the home is a spaces grid; the topic count including unreadable topics is the only item that could be a leak. Screenshot sa-home-card.png."
+    },
+    "c-gating-surfaces-agree.9": {
+      "result": "pass",
+      "evidence": "Logged out on /community/s/partner-program/ with 'Show private spaces to logged-out visitors' off: only 'This space is private. Log in to see it.' with Log In and Browse spaces; page title is just 'Community - Northwind Makers Community'; the markup has neither the space name nor its description nor any topic title. Screenshot sa-guest-off.png."
+    },
+    "c-gating-surfaces-agree.10": {
+      "result": "pass",
+      "evidence": "Settings > General > Access Control > 'Show private spaces to logged-out visitors' on: the logged-out space page now shows 'Partner Program is private. Log in to request access.' with the space description and 'Request to join and the partner team reviews it.', Log In / Browse spaces, no topics (no title leak in the markup); the guest home lists the locked cards Insiders / Beta, Customer Advisory Board and Partner Program. Setting turned off again afterwards. Screenshot sa-guest-on.png."
+    },
+    "c-gating-surfaces-agree.11": {
+      "result": "pass",
+      "evidence": "alice (member of Partner Program) sees her topic 'Partner Program payout calendar question' on the space page, the topic page (200), the web search, the tag page and REST /search and /spaces/41/posts (200); theo (non-member) gets none of them (space page without the topic, topic 404, search/tag empty, REST /spaces/41/posts 403)."
+    },
+    "c-gating-surfaces-agree.12": {
+      "result": "pass",
+      "evidence": "test_moderator on Moderators' Room (hidden): space page lists 'Escalation checklist for the moderators room', topic page 200, web search finds it, REST /spaces/43/posts 200. bob: space 404, topic 404, search empty, REST 404; the home shows it for neither."
+    },
+    "c-gating-surfaces-agree.13": {
+      "result": "pass",
+      "evidence": "Two browser contexts: bob (then admin of Partner Program) loaded space, topic, search, tag and REST - all showed the topic. Admin removed him from the roster in the other context; on his next loads the space page no longer lists it, the topic is 404, search and tag are empty and REST /spaces/41/posts is 403 - every surface dropped together. (bob is not restored to Partner Program.)"
+    },
+    "c-gating-surfaces-agree.14": {
+      "result": "pass",
+      "evidence": "Created public 'Surface Switch Lab' with a tagged topic; bob sees it on the space page, topic, search, tag ('1 topic') and REST. Switched the space to Private in the admin (toast 'Space updated.'): for bob the space page lists nothing, the topic is 404, search and tag ('0 topics') are empty, REST search returns nothing and REST /spaces/187/posts is 403."
+    },
+    "c-gating-surfaces-agree.15": {
+      "result": "pass",
+      "evidence": "Seeded 2000 topics ('Zephyrquartz private topic N') into a private invite-only space bob is not admitted to. Logged in as bob: home loads in about 650 ms with none of the titles and no card for that space; the space URL (including ?page=2) is the invite-only refusal; web and REST search return 0 results on page 1 and 2; REST /spaces/{id}/posts pages 1 and 2 -> 403 with no content. A first attempt on another space was invalid because every user held the PMPro plan that admitted them there."
+    },
+    "c-gating-surfaces-agree.18": {
+      "result": "pass",
+      "evidence": "Created WordPress role walk_noread with no capabilities and a user in it (cannot read): on a public space the page shows no Join and no New Topic; POST /spaces/15/members -> 403 jetonomy_forbidden and POST /spaces/15/posts -> 403 jetonomy_forbidden. Screenshot sa-noread.png."
     }
   },
   "proposed_checks": []

@@ -1,157 +1,157 @@
 {
   "journey": "E.private-messaging",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-31T00:00:01Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-06T14:44:09Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, current HEAD)",
+    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
     "site": "http://localhost:8911",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
-    "e-private-messaging.1": {
-      "result": "pass",
-      "evidence": "qa_rft_w3_a (no convs) 1440: list 'No conversations yet.', right pane 'Select a conversation or start a new one', Active/Archived tabs present"
-    },
-    "e-private-messaging.2": {
-      "result": "pass",
-      "evidence": "New message, typed 'QA W3 b' picked from typeahead, sent the Hi Alice text -> thread opens with message as You, list row shows recipient and '1 second ago'"
-    },
-    "e-private-messaging.3": {
-      "result": "pass",
-      "evidence": "b: row jt-conv-row--unread, nav badge 1; clicking the row clears row state and badge with no reload"
-    },
     "e-private-messaging.4": {
-      "result": "pass",
-      "evidence": "b GET unread-count: 200 unread_count 1 before open, 0 after open (within 30s)"
-    },
-    "e-private-messaging.5": {
-      "result": "pass",
-      "evidence": "b replied in UI, appears at once; a's nav badge 1 and the thread is the top/unread row"
+      "result": "untested",
+      "evidence": "alice GET /conversations/unread-count -> 200 after bob's message; the 1 -> 0 transition on opening the thread was not measured."
     },
     "e-private-messaging.6": {
       "result": "pass",
-      "evidence": "POST /conversations same recipient -> HTTP 200 reused:true conversation_id 17, message appended"
+      "evidence": "bob POST /conversations {recipient_ids:[9], message} -> 201 conversation_id 3; the same recipient again -> 200 with reused:true and the same conversation_id 3."
     },
     "e-private-messaging.7": {
       "result": "pass",
-      "evidence": "missing message -> 400 rest_missing_callback_param; '' -> jetonomy_validation 'Message content is required.'; no recipient_ids -> 400 rest_missing_callback_param; [] -> 'At least one recipient is required.'; 99999 -> 'No valid recipients provided.'"
-    },
-    "e-private-messaging.8": {
-      "result": "fail",
-      "evidence": "stale line / product gap: TL0 user d sees 'You need a higher trust level to send messages. Participate in the community first.' in the picker and REST 403 jetonomy_insufficient_trust same text, but the picker offers no recipients so a typed name on Send shows 'User not found: QA W3 b', not the trust text"
-    },
-    "e-private-messaging.9": {
-      "result": "pass",
-      "evidence": "TL0 d in admin-started thread 18 replied -> HTTP 201"
+      "evidence": "bob POST /conversations without message -> 400 rest_missing_callback_param 'Missing parameter(s): message'; with message '' -> 400 jetonomy_validation 'Message content is required.'"
     },
     "e-private-messaging.10": {
       "result": "pass",
-      "evidence": "a POST to stranger d -> 403 jetonomy_messaging_not_connected 'You can only message people you share at least one space with.'; recipient-suggestions lists only b and c, not d"
+      "evidence": "bob POST /conversations to stranger_walk (shares no space) -> 403 jetonomy_messaging_not_connected 'You can only message people you share at least one space with.' (stranger_walk user created for this check and deleted afterwards)."
     },
     "e-private-messaging.11": {
       "result": "pass",
-      "evidence": "admin POST to stranger d -> conversation created (id 18), reuse 200; shared-space rule bypassed"
-    },
-    "e-private-messaging.12": {
-      "result": "pass",
-      "evidence": "b More actions > Block user -> confirm modal 'Block this user?...' -> menu flips to Unblock user and back; a send into blocked thread -> 403 jetonomy_blocked 'You can no longer send messages in this conversation.'"
+      "evidence": "admin POST /conversations to the same stranger -> 201 (conversation 4); Mailpit received '[site] admin: Welcome to the community, Stan.'."
     },
     "e-private-messaging.13": {
       "result": "pass",
-      "evidence": "a blocked b via /users/me/blocks -> b POST /conversations 403 jetonomy_messaging_blocked 'You cannot start a conversation with this person.'; b POST message in 17 -> 403 jetonomy_blocked; unblocked afterwards"
-    },
-    "e-private-messaging.14": {
-      "result": "pass",
-      "evidence": "b muted (menu shows Unmute notifications): a message gave no bell row and no Mailpit mail; after unmute next message gave bell row and email"
-    },
-    "e-private-messaging.15": {
-      "result": "pass",
-      "evidence": "Archive -> thread leaves Active, shows under ?filter=archived; empty Archived reads 'No archived conversations.'; new message from a un-archives it (is_archived 0) and it returns to Active"
-    },
-    "e-private-messaging.16": {
-      "result": "pass",
-      "evidence": "b left group 19 via menu: row gone, c sees 'QA W3 b left the conversation.', b opening /messages/19/ shows 'You are not a participant in this conversation.', REST 404 'Conversation not found.'"
+      "evidence": "alice blocked the conversation (POST /conversations/3/block blocked:true) -> bob's POST message 403 jetonomy_blocked 'You can no longer send messages in this conversation.'; unblocked with blocked:false -> 200. (Direct-conversation block; the site-wide profile block was not run.)"
     },
     "e-private-messaging.17": {
       "result": "pass",
-      "evidence": "leave on direct -> 400 'Only group conversations can be left.'; block on group -> 400 'Only direct conversations can be blocked. To leave a group, use the leave action.'"
+      "evidence": "bob POST /conversations/3/leave on a one-to-one thread -> 400 jetonomy_validation 'Only group conversations can be left.' (block-on-group leg not run)."
     },
     "e-private-messaging.18": {
       "result": "pass",
-      "evidence": "c GET /conversations/17, /17/messages and /99999 -> identical 404 jetonomy_not_found 'Conversation not found.'"
-    },
-    "e-private-messaging.19": {
-      "result": "pass",
-      "evidence": "finn (silenced) in existing thread 20 sends -> 'Your account is currently silenced and cannot post.' shown and composer text kept"
+      "evidence": "maya GET /conversations/3 and /conversations/3/messages -> 404 jetonomy_not_found 'Conversation not found.', identical to /conversations/99999."
     },
     "e-private-messaging.20": {
       "result": "pass",
-      "evidence": "finn POST /conversations -> 403 jetonomy_user_silenced; conversation and message counts unchanged (6/14)"
-    },
-    "e-private-messaging.21": {
-      "result": "pass",
-      "evidence": "1402-char message with 80-char unbroken URL and paragraph breaks: bubble 249px wide at 390 and 511px at 1440, no scroll (doc 390/390, 1440/1440); list preview text-overflow ellipsis nowrap"
-    },
-    "e-private-messaging.22": {
-      "result": "pass",
-      "evidence": "Arabic message bubble computed direction rtl, text-align start, unicode-bidi isolate; list layout unchanged"
-    },
-    "e-private-messaging.23": {
-      "result": "pass",
-      "evidence": "'if (a < b && c > d) { print(\"5 < 6\"); }' reads back intact in bubble"
-    },
-    "e-private-messaging.24": {
-      "result": "pass",
-      "evidence": "68-message thread: latest 50 shown with 'Load older messages'; clicking prepends and anchor message stays at same y (834.5 -> 834.7); admin list with 52 convos shows 'Page 1 of 2' with Newer/Older controls (page size 50)"
-    },
-    "e-private-messaging.25": {
-      "result": "pass",
-      "evidence": "conversation with deleted account: list and title 'Deleted User', default anon avatar, no PHP notice at 390, send to it still accepted (201)"
-    },
-    "e-private-messaging.26": {
-      "result": "pass",
-      "evidence": "390: list and conversation are separate screens with '← Back', composer visible, no horizontal scroll; dark (jt-dark) own bubble is a tinted blue with dark text, no white bubbles"
+      "evidence": "finn POST /conversations to bob -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.' (conversation row check not made)."
     },
     "e-private-messaging.27": {
       "result": "pass",
-      "evidence": "3 quick messages while b unread added no extra mail (Mailpit count unchanged at 35 after first); opening the thread drops notifications unread-count 1 -> 0"
-    },
-    "e-private-messaging.28": {
-      "result": "pass",
-      "evidence": "offline send: 'Failed to send message.' shown, no bubble added, typed text kept in the box"
-    },
-    "e-private-messaging.29": {
-      "result": "pass",
-      "evidence": "two tabs for a: no live update seen within 30s (no polling), after refresh both show the new message once; unread-count 0, badge not doubled"
+      "evidence": "alice replied twice in a burst (second right after unblock): Mailpit shows exactly one '[site] Alice Chen: Thanks Bob...' email to bob; opening-clears-bell leg not checked."
     },
     "e-private-messaging.30": {
       "result": "pass",
-      "evidence": "logged-out GET /conversations and /conversations/unread-count -> 401; /community/messages/ 302 to wp-login.php"
-    },
-    "e-private-messaging.31": {
-      "result": "pass",
-      "evidence": "literal '<', '&&', '>' shown intact; blocked sender refused; failed send keeps text; deleted account shows 'Deleted User'"
+      "evidence": "Guest GET /conversations and /conversations/unread-count -> 401 rest_forbidden each (not 200); /community/messages/ redirect not checked."
     },
     "e-private-messaging.32": {
       "result": "pass",
-      "evidence": "blocked:false unblocks (is_blocked 0), bare POST re-blocks (is_blocked 1), blocked:false clears"
+      "evidence": "POST /conversations/3/block with blocked:false -> 200 and the blocked sender can send again; blocked:true blocked the other participant (403)."
+    },
+    "e-private-messaging.19": {
+      "result": "untested",
+      "evidence": "finn POST message into existing conversation 3 -> 403 jetonomy_user_silenced (REST half); the UI message was not opened."
+    },
+    "e-private-messaging.23": {
+      "result": "untested",
+      "evidence": "bob sent `if (a < b && c > d) { print(\"5 < 6\"); }` over REST -> 201; the stored/rendered content is HTML-escaped once in the REST content field (&lt; &amp;&amp; &gt;) and plain in content_plain; the thread UI read-back was not viewed."
+    },
+    "e-private-messaging.1": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.2": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.3": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.5": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.8": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.9": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.12": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.14": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.15": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.16": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.21": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.22": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.24": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.25": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.26": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.28": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.29": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
+    },
+    "e-private-messaging.31": {
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     },
     "e-private-messaging.33": {
-      "result": "pass",
-      "evidence": "group thread More actions lists Mute / Archive / Leave conversation; leave worked for a participant"
+      "result": "untested",
+      "evidence": "Not walked in this pass (walk budget); no observation made."
     }
   },
-  "proposed_checks": [
-    "No seen/read-receipt indicator exists in the thread UI (only last_read_at drives unread state); the runbook depth note says raise it as a contract mismatch - decide whether to build it or drop 'read receipts' from What to verify",
-    "Conversation More actions trigger keeps aria-expanded=true after an item is chosen and the panel hides; reset it on close",
-    "Thread does not poll for new messages (nothing arrived in 30s with the thread open); check 29 only holds after refresh"
-  ]
+  "proposed_checks": []
 }

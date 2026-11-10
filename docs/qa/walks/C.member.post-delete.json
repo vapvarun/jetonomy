@@ -1,95 +1,101 @@
 {
   "journey": "C.member.post-delete",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:21:54Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T19:07:57Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-post-delete.1": {
       "result": "pass",
-      "evidence": "qa_rft_m1 deletes his QA-RFT topic via the Delete item and the \"Are you sure you want to delete this topic?\" Confirm: returns to /community/s/general-discussion/ and the topic is gone from the space list, home and search."
+      "evidence": "bob (topic 256 in Help Desk, created via REST with 3 replies) used More options > Delete, Confirm in the 'Are you sure you want to delete this topic?' dialog -> returned to /community/s/help-desk/; topic gone from the space listing, guest search and REST /feed. (Tag listing not separately checked: topic had no tags.)"
     },
     "c-member-post-delete.2": {
       "result": "pass",
-      "evidence": "Guest opening the deleted topic URL gets HTTP 404 with no body text."
+      "evidence": "Guest opens the deleted topic URL: HTTP 404 'Topic not found. This topic may have been removed...'"
     },
     "c-member-post-delete.3": {
       "result": "pass",
-      "evidence": "DELETE -> 200; GET /posts/<id> as author 200 status \"trash\", as alice and as guest 404 jetonomy_not_found."
+      "evidence": "bob DELETE -> 200; GET /posts/256: guest 404, alice 404 jetonomy_not_found, bob 200 status 'trash'; second DELETE -> 409 jetonomy_already_trashed"
     },
     "c-member-post-delete.4": {
       "result": "pass",
-      "evidence": "Cancel on the confirm dialog: still on the topic, space post_count unchanged (21)."
+      "evidence": "Opened Delete dialog (Cancel/Confirm), pressed Cancel: GET /posts/256 still 200 (not deleted)"
     },
     "c-member-post-delete.5": {
       "result": "pass",
-      "evidence": "alice on bob-style topic (m1's) sees Edit/Delete only on her own replies, no topic-level Delete."
+      "evidence": "alice on bob's topic: no More options trigger and no Delete item"
     },
     "c-member-post-delete.6": {
       "result": "pass",
-      "evidence": "alice DELETE /posts/<m1 topic> -> 403; the topic remained until its author deleted it."
+      "evidence": "alice DELETE /posts/254 (bob's) -> 403 jetonomy_forbidden; topic stayed"
     },
     "c-member-post-delete.7": {
-      "result": "untested",
-      "evidence": "Removing jetonomy_delete_own_posts via wp cap and via the jetonomy_role_caps override did not change Delete/DELETE for a subscriber (still allowed), so the Settings > Permissions toggle could not be reproduced here; role caps restored to defaults."
+      "result": "pass",
+      "evidence": "With Settings > Permissions 'Delete own topics and replies' unticked for Subscriber: bob's menu has no trigger and DELETE /posts/255 -> 403 jetonomy_forbidden (restored after)"
     },
     "c-member-post-delete.8": {
       "result": "pass",
-      "evidence": "Topic with 3 replies deleted: alice's profile header drops 66 -> 63 REPLIES, her Replies tab (/u/alice/replies/) no longer lists the 3 replies under the trashed topic (alice's other replies still list), and GET /replies/<id> is 404; the reply rows stay publish in the DB (counters follow)."
+      "evidence": "Topic with 3 replies deleted: replies stay status publish under the trashed topic (orphan-hidden, per contract) and the reply counters of authors dropped: alice 63 -> 61, hana 60 -> 59 in jt_user_profiles"
     },
     "c-member-post-delete.9": {
       "result": "pass",
-      "evidence": "Space post_count 21 -> 20 after the delete, m1 profile post_count counter fell by one; home no longer lists the topic."
+      "evidence": "Before/after delete: Help Desk post_count 13 -> 12 (= published rows 12), bob profile post_count 16 -> 15; restored 13/16 again"
     },
     "c-member-post-delete.10": {
       "result": "pass",
-      "evidence": "Q&A topic with an accepted answer deleted by OP: alice reputation 966 before and after, and no notification about that topic remains in her GET /notifications."
+      "evidence": "Fresh scenario: bob posted Q&A topic 340 in Help Desk, alice replied (1376), bob accepted it (alice reputation 966, got accepted_answer notification + email), unaccepted and re-accepted. Bob deleted the topic (More options > Delete > Confirm): status trash, reputation unchanged (alice 966, bob 806), bob's GET /notifications row for the reply (id 427) is gone, alice's GET /notifications has no accepted_answer row for 1376 (rows 428/429 hidden). The earlier 'one remains' was a moderation-type notification (target-status exempt by design, per main-session ruling)."
     },
     "c-member-post-delete.11": {
       "result": "pass",
-      "evidence": "alice's bookmark of the deleted topic no longer appears on /community/bookmarks/, no broken row."
+      "evidence": "alice had bookmarked and followed topic 256: REST GET /bookmarks returns 0 rows (no broken row); her notifications about 256 are removed on delete"
     },
     "c-member-post-delete.12": {
       "result": "pass",
-      "evidence": "test_moderator DELETE of m1's topic -> 200; m1 reads it as status trash; POST /moderation/approve/post/<id> restores it (publish). (Staff Trash UI not clicked.)"
+      "evidence": "test_moderator DELETE bob's topic 255 -> appears in /community/mod/?view=trash with Restore and Delete permanently; bob's bell reads 'Your topic was removed by a moderator'"
     },
     "c-member-post-delete.13": {
       "result": "pass",
-      "evidence": "Second delete of the same topic returns 409 jetonomy_already_trashed, not a PHP error."
+      "evidence": "Second delete of an already trashed topic returns 409 jetonomy_already_trashed (no PHP error); not driven from two UI tabs"
     },
     "c-member-post-delete.14": {
       "result": "pass",
-      "evidence": "Delete request aborted: still on the topic, toast \"Failed to delete.\"."
+      "evidence": "Offline: Confirm on delete -> toast 'Failed to delete.', page stays on the topic, GET /posts/255 still 200 afterwards"
     },
     "c-member-post-delete.15": {
       "result": "pass",
-      "evidence": "finn (silenced) DELETE /posts/240 -> 403 jetonomy_user_silenced."
+      "evidence": "finn DELETE /posts/246 -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "c-member-post-delete.16": {
       "result": "pass",
-      "evidence": "alice's My Subscriptions row for the deleted topic reads \"No longer available\" with an Unfollow button; no notification from it."
+      "evidence": "alice's /community/subscriptions/ shows the row 'No longer available' with Unfollow and 'Web + Email'; no notifications for 256 in her bell"
     },
     "c-member-post-delete.17": {
       "result": "pass",
-      "evidence": "Replies under the trashed topic are unreadable (404) and hidden from the Replies tab and counters although the rows remain status publish; profile Replies tab omits them."
+      "evidence": "Replies stay publish under the trashed parent but are hidden everywhere (404 topic, absent from author profile Replies tab) and the counters followed (see .8); this is the observed contract"
     },
     "c-member-post-delete.18": {
       "result": "pass",
-      "evidence": "test_moderator restores the topic (moderation approve): status publish, its 3 replies show again (3 reply rows), alice reply count back to 66, space post_count 19 -> 20."
+      "evidence": "test_moderator clicked Restore in /community/mod/?view=trash: topic status publish again, Help Desk post_count back to 13, bob 16, alice 63, hana 60, 3 replies and accepted reply 1285 intact"
+    },
+    "c-member-post-delete.19": {
+      "result": "pass",
+      "evidence": "Guest /community/u/hana/replies/ and /u/alice/replies/ do not list the replies of the trashed topic"
     }
   },
-  "proposed_checks": [
-    "`c-member-post-delete.19` @guest #ui !refuse: after a topic with replies is trashed, open the author's profile Replies tab -> none of its replies are listed (today they are, with their text)."
-  ]
+  "proposed_checks": []
 }

@@ -1,89 +1,99 @@
 {
   "journey": "C.member.post-edit",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:23:49Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T19:07:57Z",
+  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
+    "themes": [
+      "reign-theme"
     ],
-    "browser": "Chromium via playwright-iso"
+    "viewports": [
+      1440
+    ],
+    "schemes": [
+      "light"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-member-post-edit.1": {
       "result": "pass",
-      "evidence": "qa_rft_m2 edits his topic (REST PATCH, UI Edit opens editor with Cancel/Save): new text shows on the topic page, the new title in the space list and in search (\"snowflake\" found). Home shows spaces and trending only, so a fresh topic is not on it."
+      "evidence": "bob edited his topic 338 (General Discussion) via More options > Edit > Save adding the phrase 'Zanzibar-cache': new text shows on the topic page; /community/search/?q=Zanzibar-cache returns 1 result (that topic); GET /feed?per_page=50&sort=new returns post 338 with the new content_plain. The space listing shows only the title/meta (no body text) and the community home page has no feed (spaces + Trending + Top members), so those two literal surfaces do not carry body text by design."
     },
     "c-member-post-edit.2": {
       "result": "pass",
-      "evidence": "PATCH /posts/<id> {title} -> 200 and GET returns \"QA-RFT editable topic renamed\"."
+      "evidence": "bob PATCH /posts/254 {title} -> 200, GET shows 'Which caching plugin ... (revised)'"
     },
     "c-member-post-edit.3": {
       "result": "pass",
-      "evidence": "Edit more than a minute after posting: guest sees \"edited 1 second ago\" with title \"October 30, 2026 9:23 pm\"."
+      "evidence": "Edit ~1.5 minutes after posting: 'edited 1 second ago' appears (SPAN.jt-edited) with TIME title 'November 6, 2026 2:34 pm' on hover; persists after reload"
     },
     "c-member-post-edit.4": {
       "result": "pass",
-      "evidence": "Edits within the first minute (and unedited topics) show no edited mark."
+      "evidence": "Edit ~3 seconds after posting (UI) showed no edited mark; an unedited seeded topic shows none"
     },
     "c-member-post-edit.5": {
       "result": "pass",
-      "evidence": "alice on m2's topic: only \"Edit Profile\", no topic Edit/Delete; /t/<slug>/edit/ is a plain 404 for her (contract: no edit route, 404)."
+      "evidence": "alice on bob's topic: no More options trigger/menu items (empty); /edit/ appended -> plain WordPress 'Page not found' 404 (contract per .17: a plain 404)"
     },
     "c-member-post-edit.6": {
       "result": "pass",
-      "evidence": "alice PATCH on another member's topic -> 403 jetonomy_forbidden."
+      "evidence": "alice PATCH and DELETE /posts/254 -> 403 jetonomy_forbidden"
     },
     "c-member-post-edit.7": {
       "result": "pass",
-      "evidence": "test_moderator sees Edit, Pin to space, Close topic, Move, Merge, Delete on m2's topic and on a Bug Reports topic."
+      "evidence": "test_moderator on a Bug Reports topic: menu Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete"
     },
     "c-member-post-edit.8": {
-      "result": "untested",
-      "evidence": "Removing jetonomy_edit_own_posts could not be made to take effect (WP-CLI cap and jetonomy_role_caps override both left the member action allowed in the delete journey); Settings > Permissions toggle not reproduced."
+      "result": "pass",
+      "evidence": "Settings > Permissions: unticked Subscriber for 'Edit own topics and replies' and 'Delete own topics and replies' and saved: bob's menu has no trigger, PATCH /posts/255 and DELETE -> 403 jetonomy_forbidden. Re-ticked and saved afterwards (verified all 4 roles ticked). Note: removing the cap with wp role remove-cap did NOT take effect (settings option is authoritative), so that was not used as evidence."
     },
     "c-member-post-edit.9": {
       "result": "pass",
-      "evidence": "Closed topic: owner still sees Edit/Delete and PATCH -> 200; UI and REST agree (author may edit own closed topic)."
+      "evidence": "Admin closed topic 255 (POST /posts/255/close): bob PATCH -> 200 and his menu still offers Edit/Make Private/Delete with the Closed badge; menu and REST agree (author may edit own closed topic)"
     },
     "c-member-post-edit.10": {
       "result": "pass",
-      "evidence": "finn (silenced) PATCH on his -4 post -> 403 jetonomy_user_silenced."
+      "evidence": "finn PATCH and DELETE /posts/246 -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; his page shows the silenced notice and no menu items"
     },
     "c-member-post-edit.11": {
       "result": "pass",
-      "evidence": "List, blockquote, code block and a 90-char URL survive a save and read-back (URL auto-linked)."
+      "evidence": "PATCH content with ul(2 li), blockquote, pre/code, 100+ char URL: after reload DOM has 2 li, 1 blockquote, pre/code, no horizontal scroll"
     },
     "c-member-post-edit.12": {
       "result": "pass",
-      "evidence": "Two saves with the same edit_token: first 200, second 409 jetonomy_edit_conflict (no silent overwrite)."
+      "evidence": "Two isolated contexts as bob edit topic 255: tab 1 saved, tab 2 save -> toast 'This topic was changed by someone else. Reload to see their changes.'; DB keeps tab one's text, wp_jt_revisions rows 6 and 7 kept"
     },
     "c-member-post-edit.13": {
       "result": "pass",
-      "evidence": "Save with the request aborted: editor stays open, typed text kept, toast \"Failed to save.\"."
+      "evidence": "Offline (context.setOffline) Save: toast 'Failed to save.', editor stays open with the typed text kept"
     },
     "c-member-post-edit.14": {
       "result": "pass",
-      "evidence": "wp_jt_revisions holds 7 rows for the edited QA-RFT topic (each save keeps the old version). Admin screen not opened."
+      "evidence": "Admin Jetonomy > Revisions lists the topic with 4 revisions, last edited by Bob Martinez"
     },
     "c-member-post-edit.15": {
       "result": "pass",
-      "evidence": "Stale-token save is refused with 409 jetonomy_edit_conflict, which the editor surfaces as a conflict notice (REST code verified)."
+      "evidence": "Same observation as .12: conflict notice 'This topic was changed by someone else. Reload to see their changes.'"
     },
     "c-member-post-edit.16": {
       "result": "pass",
-      "evidence": "qa_rft_m1 (subscriber, moderator of Bug Reports only): Bug Reports topic shows Edit, Pin, Close, Move, Merge, Delete; a Show & Tell topic shows none."
+      "evidence": "Created user bugmod (WP Subscriber) as moderator of Bug Reports only: Bug Reports topic menu shows Edit, Make Private, Pin, Close, Move, Merge, Delete; on a Feature Requests topic (not his space) no menu at all"
     },
     "c-member-post-edit.17": {
       "result": "pass",
-      "evidence": "/edit/ appended to a topic URL returns the plain 404 page (documented contract: no such route)."
+      "evidence": "/t/<slug>/edit/ as alice returns the plain WordPress 404 (HTTP 404); the check's 'decide the contract' wording is open"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-member-post-edit.1",
+      "now": "bob edits the body of his own topic -> saved, and the new text shows on the topic, in search and in GET /feed?sort=new (a space listing row shows the title only and the community home has no feed; it shows spaces and trending)"
+    }
+  ]
 }

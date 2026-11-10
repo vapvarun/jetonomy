@@ -1,88 +1,94 @@
 {
   "journey": "C.member.link-preview",
-  "free": "206e1d6f",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T20:47:19Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:10:16Z",
+  "walker": "release 2.0.7 free wave-3 walk (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
+    "mode": "free stack (Pro inactive)",
     "site": "http://localhost:8912",
-    "theme": "reign",
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440,
       390
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light",
+      "dark"
+    ]
   },
   "checks": {
     "c-member-link-preview.1": {
-      "result": "untested",
-      "evidence": "Composer paste-to-card flow not run in the browser; REST preview of https://wordpress.org/news/ works (see .2)."
+      "result": "pass",
+      "evidence": "bob typed https://wordpress.org/news/ into a new topic 'Release notes worth reading' (Off-Topic Lounge) and posted: the published topic shows a card with the site name 'WORDPRESS NEWS', title 'WordPress News', description and the og image. Screenshot w3-lp-published.png"
     },
     "c-member-link-preview.2": {
       "result": "pass",
-      "evidence": "bob GET /link-preview?url=https://wordpress.org/news/ -> 200 with title 'WordPress News', description, image fields, site_name/domain, favicon, type, provider."
+      "evidence": "GET /jetonomy/v1/link-preview?url=https://wordpress.org/news/ as bob -> 200 {url, original_url, title:'WordPress News', description, image (s.w.org og image), site_name, domain, favicon, type, provider:'generic', ...}."
     },
     "c-member-link-preview.3": {
-      "result": "untested",
-      "evidence": "YouTube/X oEmbed cards not run."
+      "result": "pass",
+      "evidence": "One topic with a YouTube URL, an X post URL (x.com/jack/status/20) and a wordpress.org post: YouTube renders as the oEmbed player iframe (youtube.com/embed/...), the X post renders as the Twitter embed iframe (550px), the post link as a card. Screenshot w3-lp-three.png"
     },
     "c-member-link-preview.4": {
-      "result": "untested",
-      "evidence": "Needs a published topic with a card."
+      "result": "pass",
+      "evidence": "Logged out, the same topics show the same cards: wordpress.org card (title, description, same og image + favicon) and both embeds (YouTube + X iframes) as for bob. Screenshot w3-lp-guest.png"
     },
     "c-member-link-preview.5": {
       "result": "pass",
-      "evidence": "http://localhost/, http://127.0.0.1/, http://169.254.169.254/latest/meta-data/, http://10.0.0.1/ and a non-URL all return 200 with empty title, description, image and site_name; file:///etc/passwd returns an empty url too."
+      "evidence": "bob GET /link-preview for http://localhost/, http://127.0.0.1/, http://169.254.169.254/latest/meta-data/, http://10.0.0.5/, http://[::1]/, http://192.168.1.1/ and file:///etc/passwd: every one 200 with an empty title, description, image and embed_html, answered in 18-52 ms (no fetch was made). (file:/// comes back with url and domain empty as well, the others echo the url and host.)"
     },
     "c-member-link-preview.6": {
-      "result": "untested",
-      "evidence": "Hostname resolving to a private address and a redirect to 127.0.0.1 not set up."
+      "result": "pass",
+      "evidence": "http://localtest.me/ (public DNS name resolving to 127.0.0.1) -> 200 empty preview in 312 ms; a public https://httpbin.org/redirect-to?url=http://127.0.0.1/ and ...?url=http://169.254.169.254/latest/meta-data/ -> 200 empty preview. Same empty answer in all cases, no message is exposed."
     },
     "c-member-link-preview.7": {
-      "result": "untested",
-      "evidence": "Slow-server case not set up."
+      "result": "pass",
+      "evidence": "https://httpbin.org/delay/10 via REST: 200 empty preview after 6.05 s (gives up at the 6 s timeout). Posted through the composer with that URL: POST /spaces/17/posts took ~5.1 s, then the topic page took another ~5.2 s to render the first time; the topic published with a plain link (<a href=...>) and no card. Note: a hanging link stalls publish and the first view by about 5-6 s each (bounded, not indefinite)."
     },
     "c-member-link-preview.8": {
-      "result": "untested",
-      "evidence": "HTTP 500 target not set up."
+      "result": "pass",
+      "evidence": "https://httpbin.org/status/500: 200 with an empty preview (no PHP error, nothing in debug.log); the second call 10 s later returned in 57 ms vs 865 ms for the first, i.e. the negative cache is used."
     },
     "c-member-link-preview.9": {
       "result": "pass",
-      "evidence": "Second request for the same good URL returns the same data in 31 ms (served from cache)."
+      "evidence": "Same good URL twice (wordpress.org/news/2026/11/wordpress-7-2-beta-4/): first 1620 ms, second 40 ms with identical data (title 'WordPress 7.2 Beta 4')."
     },
     "c-member-link-preview.10": {
-      "result": "untested",
-      "evidence": "Redirect-loop and 6-hop targets not set up."
+      "result": "fail",
+      "evidence": "Redirect chain of 6 hops (https://httpbin.org/redirect/6) via REST as bob returns 200 with an EMPTY preview, not 400 'Too many redirects.'; a 3-hop chain resolves normally (final url httpbin.org/get). Html_Fetcher builds the WP_Errors 'Redirect loop or invalid redirect.' and 'Too many redirects.' (400) but Preview_Service swallows them into the empty negative-cached preview, so the messages never reach the client. A true A->B->A loop could not be built (no public redirect-loop host, private hosts are blocked). Read: the check line is out of date with the design (quiet failure, same as .8), unless a 400 is wanted."
     },
     "c-member-link-preview.11": {
       "result": "pass",
-      "evidence": "Guest GET /link-preview for http://127.0.0.1/ -> 200 with an empty preview (blocked-URL answer), no fetch of the private host."
+      "evidence": "Logged out GET /link-preview?url=http://127.0.0.1/ -> 200 with the same empty preview as for a member, answered in 27 ms (never fetched)."
     },
     "c-member-link-preview.12": {
-      "result": "untested",
-      "evidence": "Long-URL card not rendered."
+      "result": "pass",
+      "evidence": "139-character unbroken URL (utm query) in a topic: link text wraps (overflow-wrap anywhere), card 558px inside the 738px post column, documentElement scrollWidth 1440 (no widening). Screenshot w3-lp-long-1440.png"
     },
     "c-member-link-preview.13": {
-      "result": "untested",
-      "evidence": "Card at 390 not rendered."
+      "result": "pass",
+      "evidence": "390px: card 294px wide inside the column, image scales to 292px, title and description wrap, whole card is the link (367px tall), page scrollWidth 390. Screenshot w3-lp-long-390.png"
     },
     "c-member-link-preview.14": {
-      "result": "untested",
-      "evidence": "Dark card not rendered."
+      "result": "pass",
+      "evidence": "Reign dark mode: card background rgb(47,49,58), title rgb(229,229,229) = 10.25:1. Screenshot w3-lp-dark-390.png"
     },
     "c-member-link-preview.15": {
-      "result": "untested",
-      "evidence": "Arabic target page not available."
+      "result": "pass",
+      "evidence": "Link to an Arabic page (aljazeera.net; ar.wikipedia.org returned an empty preview): title and description carry dir=auto and compute direction rtl, also with the site in Arabic (document dir rtl, card start/end gaps equal, no overflow). Screenshots w3-lp-arabic.png, w3-lp-arabic-rtl-site.png. Locale restored to en_US."
     },
     "c-member-link-preview.16": {
       "result": "fail",
-      "evidence": "Guest GET /link-preview?url=https://wordpress.org/news/ -> 200 with the full fetched preview (title, description). Expected 401 or a rate-limited answer; the endpoint is an open server-side fetch for logged-out visitors (the check line itself notes this)."
+      "evidence": "Logged out GET /link-preview?url=https://wordpress.org/news/ -> 200 with the full preview (title, image, ...), and 40 distinct uncached public URLs in parallel as a guest all returned 200 (no 401, no 429): the endpoint is an open, unthrottled server-side fetch for anonymous callers. Expected 401 or a rate-limited answer. Product bug (an open fetch proxy, known as 'today' in the line)."
     },
     "c-member-link-preview.17": {
-      "result": "untested",
-      "evidence": "Standalone wordpress.org post link card not rendered in a published topic."
+      "result": "pass",
+      "evidence": "A standalone wordpress.org post link (https://wordpress.org/news/2026/10/wordpress-7-1-4/) in a topic renders a card with site name 'WORDPRESS NEWS', title 'WordPress 7.1.4', description, og image and date (not just a quote box). Screenshot w3-lp-three.png"
     }
   },
   "proposed_checks": []

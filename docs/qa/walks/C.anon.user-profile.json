@@ -1,96 +1,109 @@
 {
   "journey": "C.anon.user-profile",
-  "free": "3de49dfb",
-  "pro": "fd16507",
-  "walked_at": "2026-10-30T23:49:36Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
+  "free": "11e21b47",
+  "pro": "05e4a11",
+  "walked_at": "2026-11-07T21:31:19.650976Z",
+  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
   "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
+    "mode": "combo (Free+Pro)",
+    "site": "http://localhost:8911",
+    "themes": [
+      "reign-theme"
+    ],
     "viewports": [
       1440
     ],
-    "browser": "Chromium via playwright-iso"
+    "schemes": [
+      "light",
+      "dark (Reign)"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US, ar for RTL"
   },
   "checks": {
     "c-anon-user-profile.1": {
       "result": "pass",
-      "evidence": "Guest /community/u/bob/ 200 with profile content."
+      "evidence": "Guest on /community/u/bob/: avatar/name, bio 'Full-stack developer...', reputation 940, 14 topics, 63 replies, trust 'Leader', 8 badges, Topics/Replies/Votes tabs."
     },
     "c-anon-user-profile.2": {
       "result": "pass",
-      "evidence": "Guest profile HTML has no @example.com address and no Drafts tab text."
+      "evidence": "Guest bob profile: no @-address anywhere in the page HTML, no settings or drafts tab (tabs: Topics, Replies, Votes)."
     },
     "c-anon-user-profile.3": {
       "result": "pass",
-      "evidence": "Guest GET /users/4 (bob) 200; body has no user_email/notification_settings/email field."
+      "evidence": "Guest GET /users/10 and /users/25: keys avatar_display, avatar_url, bio, can_ban, created_at, display_name, id, is_blocked, last_seen_at, post_count, reply_count, reputation, restriction, trust_*; no email or notification fields."
+    },
+    "c-anon-user-profile.7": {
+      "result": "pass",
+      "evidence": "Guest /community/u/lucia-romeroexample-com/ (login lucia.romero@example.com) -> 200; page HTML does not contain the email; meta description 'Community profile for @lucia-romeroexample-com on Northwind Makers Community.'"
+    },
+    "c-anon-user-profile.8": {
+      "result": "pass",
+      "evidence": "Guest /community/u/lucia.romero@example.com/ (old login) -> 200 and renders Lucia Romero."
     },
     "c-anon-user-profile.9": {
       "result": "pass",
-      "evidence": "/community/u/no-such-person/ -> 404."
+      "evidence": "Guest /community/u/no-such-person/ -> HTTP 404, 'User not found.' not-found page."
+    },
+    "c-anon-user-profile.12": {
+      "result": "pass",
+      "evidence": "Grace (Grace Oluwaseun Adeyemi-Whitfield, no avatar) profile at 390: full name in header, initials avatar 'GR', no overflow (scrollWidth 390).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/grace-390.png"
     },
     "c-anon-user-profile.14": {
       "result": "pass",
-      "evidence": "Guest /community/u/finn/ opens normally with no silenced/restricted/banned wording."
-    },
-    "c-anon-user-profile.4": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.7": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.13": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
-    },
-    "c-anon-user-profile.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
+      "evidence": "Guest /community/u/finn/ -> 200 normal profile; shows a post at -4 votes; no restriction notice."
     },
     "c-anon-user-profile.17": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
+      "result": "pass",
+      "evidence": "Guest GET /users/25 (finn, silenced): restriction is null."
+    },
+    "c-anon-user-profile.4": {
+      "result": "pass",
+      "evidence": "Guest on maya's profile (trust level 5): badge reads 'Veteran'. Admin renamed level 5 to 'Elder' in Settings > Permissions (saved 'Settings saved.'): profile then read 'Elder'. Cleared the field and saved: back to 'Veteran'."
+    },
+    "c-anon-user-profile.5": {
+      "result": "pass",
+      "evidence": "bob has topics in Partner Program (239), Insiders / Beta (224); added bob to Customer Advisory Board and Moderators' Room and posted 403 and 404 there. Guest on /community/u/bob/ and /u/bob/posts/: none of the four titles listed."
+    },
+    "c-anon-user-profile.6": {
+      "result": "pass",
+      "evidence": "bob's private reply 1349 (bug-reports): guest on /community/u/bob/replies/ sees a 'Private reply' row and the text 'details by DM please' is absent."
+    },
+    "c-anon-user-profile.10": {
+      "result": "pass",
+      "evidence": "Combo (Pro Private Messaging on): bob on alice's profile sees 'Message' -> /community/messages/?to=alice; guest sees no Message button."
+    },
+    "c-anon-user-profile.11": {
+      "result": "pass",
+      "evidence": "Removed private-messaging from jetonomy_pro_extensions (restored after): bob on alice's profile has no Message button and no Messages nav link; guest none. The jetonomy_member_message_url filter path was not exercised (needs code)."
+    },
+    "c-anon-user-profile.13": {
+      "result": "pass",
+      "evidence": "lucia.romero (no posts, no bio): Topics tab 'No topics yet.', Replies tab 'No replies yet.', Votes tab 'No votes yet.' (profile-empty.png). Old login URL /u/lucia.romero@example.com/ opens (200) and the meta description names @lucia-romeroexample-com, not the email."
+    },
+    "c-anon-user-profile.15": {
+      "result": "pass",
+      "evidence": "Site language ar: omar's profile: dir rtl, name and bio right-aligned, tab bar order mirrored, sidebar on the left (rtl-profile.png)."
+    },
+    "c-anon-user-profile.16": {
+      "result": "pass",
+      "evidence": "Reign dark toggle on maya's profile: lowest text/background contrast across 210 visible text nodes is 4.62:1 (the Log in button); badges and stats readable (profile-dark.png)."
     },
     "c-anon-user-profile.18": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
+      "result": "pass",
+      "evidence": "combo stack, WPMediaVerse 2.6.0 activated (deactivated afterwards). As bob on /community/u/alice/: the WPMediaVerse chat bubble (bottom right) and a 'Message' button next to 'More actions for Alice Chen' show; clicking Message opens the WPMediaVerse chat panel titled 'Alice Chen' with 'No messages yet. Say hello to start the conversation.' Screenshots mv-profile.png, mv-message-opened.png."
     },
     "c-anon-user-profile.19": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (needs member sessions, trust-level rename, messaging toggles or seed shapes not built; ran out of room)."
+      "result": "pass",
+      "evidence": "Same state: WPMediaVerse active, Pro private messaging dormant (Conversations admin page says so). On alice's profile as bob the Message button shows and opens a WPMediaVerse conversation, so the first alternative of the line holds (the line's 'today neither: only Report and Block' is out of date). /community/messages/ answers 'Page not available' while dormant."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-anon-user-profile.19",
+      "now": "with WPMediaVerse active and Pro messaging dormant, alice's profile shows a Message button that opens a WPMediaVerse chat conversation."
+    }
+  ]
 }
