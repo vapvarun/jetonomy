@@ -264,7 +264,7 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
-= 2.0.7 - October 2026 =
+= 2.0.7 - November 2026 =
 
 Clearer access rules and membership gates, safer address fields, Divi Theme Builder support and redone translations.
 
@@ -294,6 +294,8 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Improve  - Admin lists fit their cards, Users sort by reputation, joined and last seen, space members page, and the Activity Log shows names instead of ids.
 * Improve  - Every destructive admin action asks first and names what it removes.
 * Improve  - After "Give members access" on the Permissions tab, a notice explains that the role now gets access through its spaces with nothing ticked.
+* Improve  - The text size buttons tell screen readers which size is on, and the Hide replies button is easier to tap on phones.
+* Improve  - Pages with many authors run fewer database queries when checking for Gravatar images.
 * Fix      - Address fields (terms, privacy, support, logos, share image, space cover, avatar) refuse a value that is not an address by name and keep the saved one.
 * Fix      - Terms, privacy and support links, the app logo, the email logo and the default share image saved as a site path like /terms are no longer sent to the mobile app, emails or social shares, which cannot open them.
 * Fix      - Leaving a space now uses the red confirm button with Cancel focused, and the message says how to get back in: rejoin any time, request again, or wait for a new invitation.
@@ -332,10 +334,18 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - A space whose plans were all deleted offers no button to a checkout that no longer exists.
 * Fix      - Removing the demo community no longer deletes a real member whose username matches a demo name, or rewrites their bio.
 * Fix      - On phones, the theme footer is no longer hidden behind the community tab bar.
+* Fix      - Right-to-left sites load the right-to-left stylesheets, so the notification panel opens on the correct side.
+* Fix      - Back, next and reply arrows point the right way on right-to-left sites, and breadcrumb labels follow their own text direction.
+* Fix      - A Read access rule lets members report content, while posting, replying and voting stay closed.
+* Fix      - A topic's score on space and feed cards updates as you vote.
+* Fix      - Reactivating Jetonomy re-arms the publisher for scheduled topics.
+* Fix      - A topic or reply with no text, only empty formatting, is refused on create and edit.
+* Fix      - Deleting Jetonomy with its data also removes its scheduled background jobs.
 * Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.
 * Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
 * Security - Guests never see a private space's name on its members or roadmap page.
 * Security - Erasing a member's personal data also removes them as the uploader of their attachments.
+* Dev      - The list-posts and list-replies abilities describe the after parameter as the offset it is.
 * Compat   - Aligned with Jetonomy Pro 2.0.7. Install both updates together.
 * Compat   - BuddyNext suspensions and blocks carry into the forum with BuddyNext 1.2.8 or later.
 
