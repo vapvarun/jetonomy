@@ -57,8 +57,13 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			define( 'WP_UNINSTALL_PLUGIN', 'jetonomy/jetonomy.php' );
 		}
+		// The test case turns DROP TABLE into DROP TEMPORARY TABLE, which would
+		// leave the real tables in place; let uninstall drop them for real (the
+		// finally block creates them again).
+		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
 		try {
 			include JETONOMY_DIR . 'uninstall.php';
+			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
 
 			$this->assertFalse( wp_next_scheduled( 'jetonomy_trust_evaluation' ), 'plugin cron job cleared' );
 			$this->assertFalse( wp_next_scheduled( 'edd_sl_sdk_weekly_license_check_jetonomy' ), 'licence check cleared' );
@@ -75,11 +80,14 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 			if ( $has_as ) {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 				$hooks = $wpdb->get_col( $wpdb->prepare( "SELECT hook FROM {$as_table} WHERE hook IN (%s, %s)", 'jetonomy_uninstall_probe', 'jetonomy_pro_uninstall_probe' ) );
-				$this->assertSame( array( 'jetonomy_pro_uninstall_probe' ), $hooks, "Jetonomy's Action Scheduler rows removed, Pro's left to Pro" );
+				$this->assertNotContains( 'jetonomy_uninstall_probe', $hooks, "Jetonomy's Action Scheduler rows removed" );
+				$this->assertContains( 'jetonomy_pro_uninstall_probe', $hooks, "Pro's Action Scheduler rows left to Pro's uninstall" );
 			}
 		} finally {
+			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
 			if ( $has_as ) {
-				as_unschedule_all_actions( 'jetonomy_pro_uninstall_probe' );
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				$wpdb->query( $wpdb->prepare( "DELETE FROM {$as_table} WHERE hook IN (%s, %s)", 'jetonomy_uninstall_probe', 'jetonomy_pro_uninstall_probe' ) );
 			}
 			wp_clear_scheduled_hook( 'jetonomy_pro_digest_daily' );
 			// DROP TABLE commits the test transaction, so the stripped roles and
