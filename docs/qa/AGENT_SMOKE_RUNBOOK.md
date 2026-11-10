@@ -363,6 +363,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-single-post.26` @guest #ui +dark: view a topic with a code block in dark mode -> the code block uses dark tokens, not a bright white panel.
 - `c-anon-single-post.27` @guest #ui: open a topic whose body links to an unreachable site -> no console error and the link shows as a plain link.
 - `c-anon-single-post.28` @guest #rest !refuse card:10430601579: a member replies to the topic and the reply is held for approval, then GET /updates?scope=post&id=<topic id>&since=<before the reply> -> the held reply id is not listed, the approved one is.
+- `c-anon-single-post.29` @guest #rest +private: a public topic with a private reply -> GET /updates?scope=post&id=<topic> lists that reply id exactly as GET /posts/<topic>/replies does (a tombstone: empty content, no author), never its text.
 
 ### C.anon.user-profile
 **Covers:** templates/views/user-profile.php, includes/models/class-user-profile.php, includes/class-author.php, includes/class-avatar.php, templates/partials/avatar.php, pro:includes/extensions/custom-badges/*.php, pro:includes/extensions/custom-fields/*.php
@@ -1161,7 +1162,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-notifications.20` @member #ui: a reply is posted to a big thread (200 followers) -> every follower gets exactly one notification, delivered in batches, no duplicates.
 - `c-notifications.21` @guest #rest !refuse: GET /notifications and /notifications/unread-count logged out -> 401.
 - `c-notifications.22` @member_b #rest !refuse: PATCH bob's notification id as alice -> 404 not found (not 403) and bob's item stays unread.
-- `c-notifications.23` @admin #admin: pin a Site Announcement as admin -> it shows pinned on the community home and in its space for every member (no bell notice is sent today; an announcement notification is a 2.0.8 feature).
+- `c-notifications.23` @admin #admin: pin a Site Announcement as admin -> it shows pinned with an Announcement badge at the top of every space's topic list (its own space and others), for members and guests (no bell notice is sent today; an announcement notification is a 2.0.8 feature).
 - `c-notifications.24` @member #ui +dark: open the page in dark mode -> the unread row tint is dark (average channel under 100) and text stays readable.
 - `c-notifications.25` @member #ui +offline: click "Mark all as read" while offline -> the badge rolls back to its old count and an error shows.
 - `c-notifications.26` @member #ui +long: a notice about a topic with a long title cuts the title at a word boundary with an ellipsis, not mid-word with a closing quote ("...the route br").
@@ -1572,7 +1573,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-site-host-integrations.9` @member #ui: with Fluent Community active open the community -> it picks up Fluent's colours and its space joins reconcile with Jetonomy membership.
 - `c-site-host-integrations.10` @member #ui +settings-off: deactivate BuddyPress and Fluent Community -> the community loads with no PHP error and no empty tab.
 - `c-site-host-integrations.11` @member #ui +dark: toggle the theme's dark mode on Reign and BuddyX -> community cards, tints and borders adopt the host dark palette and space titles keep 4.5:1 contrast.
-- `c-site-host-integrations.12` @member #ui +390: open /community/ and a topic at 390px on each theme -> no horizontal scroll; every Jetonomy button, input and primary control is at least 40px; inline links and tag chips are at least 24px (WCAG 2.5.8); the theme's own header controls are out of scope.
+- `c-site-host-integrations.12` @member #ui +390: open /community/ and a topic at 390px on each theme -> no horizontal scroll; every Jetonomy button, input and primary control is at least 40px; inline links and tag chips have a tap area of at least 24px, measured as the link's box or its invisible `::after` hit area, whichever is larger (WCAG 2.5.8); the theme's own header controls are out of scope.
 - `c-site-host-integrations.13` @member #ui +long: open Grace's 159-character topic on the boxed Reign theme -> the title wraps in the header and the 100-character URL does not break the box.
 - `c-site-host-integrations.14` @member #ui +rtl: switch the site to Arabic on Reign -> the community mirrors and the sidebar swaps sides.
 - `c-site-host-integrations.15` @guest #ui !refuse: view the community while the site is in maintenance mode -> the maintenance page shows and Jetonomy pages do not leak.
@@ -1688,6 +1689,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-read-on-private.8` @admin #admin: remove the rule -> the next load by the subscriber is a refusal again.
 - `c-gating-read-on-private.9` @member #ui +long: read a topic with the 159-character title in it -> the title wraps and no link is clipped.
 - `c-gating-read-on-private.10` @member #ui +390: read the space at 390px -> layout stacks.
+- `c-gating-read-on-private.11` @member #rest #ui !refuse: a member the Read rule admits (Pro Reactions on) -> sees reaction counts but no React button, and POST /posts/{id}/reactions answers 403 with nothing stored, as /vote does.
 
 ### C.gating.participate
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/adapters/class-adapter-registry.php, includes/adapters/interface-membership-adapter.php
@@ -2617,7 +2619,7 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 - `f-a11y.8` @member #ui: the share dropdown and the notification panel -> open with Enter/Space, arrow keys move within, Escape closes and returns focus to the trigger (the site's user menu belongs to the theme and is out of scope).
 - `f-a11y.9` @member #ui +dark: text and control contrast -> meets WCAG AA 4.5:1 (3:1 for large text and UI borders) on cards, badges, pills (Announcement), pinned/closed labels, the "Content hidden because you blocked this user." line and placeholders in light and dark.
 - `f-a11y.10` @member #ui +390: zoom text to 200% and tap the controls at 390px -> no horizontal scrolling and tap targets are at least 40px; at desktop width the header font-size control (hidden on phones, where browser zoom does the job) scales all community text and leaves the theme's own header alone.
-- `f-a11y.11` @member #ui: status messages (toast "Badge awarded.", "Reaction settings saved.", form errors such as "Question and at least 2 options required.") -> are announced through an `aria-live` region and linked to their field with `aria-describedby`.
+- `f-a11y.11` @member #ui: status messages (toast "Badge awarded.", the admin notice "Reaction settings saved.", form errors such as "Question and at least 2 options required.") -> messages that appear without a page load (toasts, form errors) are announced through an `aria-live` or `role=alert` region and form errors are linked to their field with `aria-describedby`; a wp-admin notice shown after a settings save reloads the page, so it is ordinary page content in WordPress's own notice markup (not a live region).
 - `f-a11y.15` @member #ui card:10462503018: list the headings on a profile with badges and custom-field values, on Edit Profile, and on New topic with the poll builder open (Pro on) -> the order never skips a level (h1 then h2, h3 only under an h2); Badges, Profile Details, More about you and Poll are h2.
 - `f-a11y.12` @silenced #ui +silenced: the refusal message for a silenced or banned member -> is exposed to assistive tech (not only a coloured banner) and the disabled composer explains why.
 - `f-a11y.13` @member #ui: breadcrumbs -> are a labelled `nav` with the current page marked `aria-current="page"`; headings follow a single `h1` per page with no skipped levels on topic and profile pages.

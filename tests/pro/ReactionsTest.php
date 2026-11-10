@@ -245,4 +245,18 @@ class ReactionsTest extends WP_UnitTestCase {
 		global $wpdb;
 		$this->assertSame( 0, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_pro_reactions WHERE object_id = %d", $this->post_id ) ) );
 	}
+
+	/**
+	 * Reacting is vote-grade: a member a Read access rule admits to a private
+	 * space can read and report, but not react, the same as /vote refuses them.
+	 */
+	public function test_read_rule_viewer_cannot_react(): void {
+		$space = (int) Space::create( [ 'title' => 'Advisors', 'slug' => 'adv-' . uniqid(), 'visibility' => 'private' ] );
+		\Jetonomy\Models\AccessRule::create( [ 'space_id' => $space, 'rule_type' => 'role', 'rule_value' => 'subscriber', 'grants' => 'read' ] );
+		$post = (int) Post::create( [ 'space_id' => $space, 'title' => 'Roadmap notes', 'slug' => 'rm-' . uniqid(), 'content' => '<p>Notes.</p>', 'status' => 'publish' ] );
+		wp_set_current_user( $this->user_id );
+		$request = new WP_REST_Request( 'POST', "/jetonomy/v1/posts/{$post}/reactions" );
+		$request->set_body_params( [ 'emoji' => 'thumbsup' ] );
+		$this->assertSame( 403, $this->server->dispatch( $request )->get_status() );
+	}
 }

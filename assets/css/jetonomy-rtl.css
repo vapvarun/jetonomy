@@ -3917,7 +3917,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
       centred ::after - the tap lands on the control, nothing reflows.
    ═══════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
-  .jt-app :is(.jt-pill, .jt-act, .jt-reaction-trigger, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button, .jt-member-role-select, .jt-mod-flag-actions .jt-btn, .jt-btn, .jt-managed-by-link, .jt-mod-flag-action) {
+  .jt-app :is(.jt-pill, .jt-act, .jt-reaction-trigger, .jt-reaction-chip, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button, .jt-member-role-select, .jt-mod-flag-actions .jt-btn, .jt-btn, .jt-managed-by-link, .jt-mod-flag-action) {
     min-block-size: var(--jt-tap);
   }
   .jt-app :is(.jt-act, .jt-reaction-trigger, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button) {
