@@ -1,9 +1,9 @@
 {
   "journey": "F.a11y",
-  "free": "74528ddd",
-  "pro": "69d28a8",
-  "walked_at": "2026-11-10T12:10:09.655123Z",
-  "walker": "release 2.0.7 free walk wave 11 (Sonnet)",
+  "free": "e0208e24",
+  "pro": "44fcc6e",
+  "walked_at": "2026-11-10T13:20:00Z",
+  "walker": "release 2.0.7 free walk wave 13 (Sonnet)",
   "env": {
     "mode": "free stack with Pro active (all 17 extensions)",
     "site": "http://localhost:8912",
@@ -18,93 +18,81 @@
       "light",
       "dark"
     ],
-    "browser": "Chromium via Playwright MCP",
-    "locale": "en_US (ar for RTL checks)"
+    "browser": "Chromium via Playwright MCP (touch context hasTouch+isMobile for 390 tap targets)",
+    "locale": "en_US (ar for f-a11y.14)"
   },
   "checks": {
     "f-a11y.1": {
       "result": "pass",
-      "evidence": "Guest fresh load of /community/: the first Tab lands on 'Skip to content' (href #content, visible at top-left); Enter -> hash #content and the next Tab lands on the first link inside #content.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a1-skip.png"
+      "evidence": "Guest, /community/ fresh load: Tab 1 = 'Skip to content' (href #content, visible), Tab 2/3 = site title / Home. Enter on it -> hash #content (main#content); next Tab lands on the first link inside main."
     },
     "f-a11y.2": {
       "result": "pass",
-      "evidence": "bob on /community/, /community/s/feature-requests/ and the topic page: tabbed 200 stops on the topic page (and 90 on each of the others) and measured the outline after a 190ms settle. Light: 166 stops 2px solid, 29 theme-menu links 1px dotted rgb(21,48,69), 3 other styled rings; the only stop with no ring is the WP admin-bar search INPUT (core, not ours). Dark (Reign toggle, bg rgb(35,38,47)): 0 stops without a ring (194 x 2px solid rgb(151,192,238), 4 x 1px dotted white). Tab order runs admin bar, skip link, header, menu, content top to bottom. Only Reign was walked in this wave.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a2-dark-focus.png"
+      "evidence": "bob on a topic (160 stops) and a space listing (120 stops) in light, then topic (150 stops) in dark (body rgb(35,38,47)); outline read after a 190ms settle: 0 stops without outline or box-shadow ring (WP admin bar excluded). Tab order runs skip link, header, community nav, notifications, font control, then content in reading order."
     },
     "f-a11y.3": {
       "result": "pass",
-      "evidence": "No button/role=button on the topic page lacks a name (0 unnamed of 519). Verified labels and states: Reign dark toggle 'Dark mode (click to switch to light)' aria-pressed; font-size A/A+/A++ labelled with aria-pressed; Vote up/down aria-pressed; Bookmark aria-pressed; Share aria-expanded; notifications bell 'Notifications' aria-expanded; More options aria-expanded + aria-haspopup=menu; composer Bold, Italic, Code, Code block (aria-pressed), Link, Blockquote (aria-pressed), Upload image, Insert emoji (aria-expanded); with Pro Anonymous Posting on (space 15 allow_anonymous set temporarily) the toggle is a native checkbox named by its label 'Post anonymously'.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a3-composer.png"
+      "evidence": "Topic page, bob: theme toggle 'Light mode (click to switch to dark)' aria-pressed; Font size A/A+/A++ named, aria-pressed; Notifications aria-expanded; Share aria-expanded; Bookmark aria-pressed; Vote up/down aria-pressed; Report, Quote, More options (aria-haspopup=menu, aria-expanded); composer Link, Upload Image, Insert emoji (aria-expanded), Attach files; New Topic toolbar Bold, Italic, Code, Code block (aria-pressed), Link, Blockquote, Upload image, Insert emoji, Attach files all named. With Anonymous Posting on for the space: reply toolbar 'Reply anonymously' aria-pressed false -> true -> false, New Topic shows labelled 'Post anonymously' checkbox. Space setting restored."
     },
     "f-a11y.4": {
       "result": "pass",
-      "evidence": "Topic editor: role=textbox, aria-multiline, aria-labelledby=jt-post-body-label ('Content'); title input has <label> 'Title'; reply editor role=textbox aria-label 'Reply editor'; poll builder (Pro): getByRole textbox 'Question', 'Option 1', 'Option 2' each resolve (name from the visible placeholder, no aria-label/label element)",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a4-poll.png"
+      "evidence": "Reply editor: role=textbox, name 'Reply editor'. New Topic: textbox 'Title', textbox 'Content', with Add Poll open textboxes 'Question', 'Option 1', 'Option 2' all resolve by accessible name."
     },
     "f-a11y.5": {
       "result": "pass",
-      "evidence": "Vote cluster is role=group aria-labelledby 'Votes:' + the score element ('Votes: 0'); the Vote up button toggles aria-pressed and its label 'Vote up' <-> 'Remove your upvote' and the score 0 -> 1 -> 0. Reaction chip (Pro): reacted as bob with Love -> chip 'Love ❤️ 1' aria-pressed=true on the live chip and the same name/state on the reloaded server-rendered chip (getByRole button name /Love/ pressed matched). Reaction removed afterwards.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a5-chip-live.png"
+      "evidence": "Vote cluster role=group aria-labelledby id + score node, name 'Votes: 0' -> after Vote up 'Votes: 1', button aria-pressed true, label 'Remove your upvote', back to 'Vote up' on removal. Server-rendered chips resolve as button 'Love 2' (aria-pressed false) and 'Rocket 1' (pressed true); chip created live by reacting Haha resolves as button 'Haha 1' pressed=true; toggled off afterwards."
     },
     "f-a11y.6": {
       "result": "pass",
-      "evidence": "Keyboard Enter on a reply's Report: [role=dialog] aria-modal aria-labelledby 'Why are you reporting this reply?', content is a role=radiogroup labelled by the title, focus lands on the first radio (spam), 14 Tabs stay inside, Escape closes and focus returns to the Report button.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a6-report.png"
+      "evidence": "bob, Enter on a REPLY's Report: role=dialog aria-modal, labelled 'Why are you reporting this reply?', contains role=radiogroup with the same label, focus on first radio (spam), 25 Tabs never leave the dialog, Escape closes it and focus returns to that Report button (same on the topic Report)."
     },
     "f-a11y.7": {
       "result": "pass",
-      "evidence": "test_moderator: queue buttons Approve / Spam / Reject / Remove / Dismiss each carry aria-describedby naming the target (e.g. 'Evening harbour shots: schedul...' or 'Dark mode for the community on...'); Remove reached with the keyboard opens a real role=dialog aria-modal 'Remove this reply on ...? It moves to trash...' with Cancel/Confirm (no native alert; 0 native dialogs), Escape closes and returns focus to Remove. Close topic / Delete / Pin / Move / Merge are role=menuitem in More options. Accessible NAME is the verb and the target is its description via aria-describedby, as the check at f-a11y.17 describes.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a7-confirm.png"
+      "evidence": "test_moderator: approvals Approve/Spam/Reject each aria-describedby the topic title ('Evening harbour shots...'); banned list 'Lift restriction' describedby the member name (Kai Brennan, Omar Haddad, Finn O'Brien); space queue Remove/Dismiss describedby the content title; dashboard 'Review in queue' links each aria-describedby ids (title and excerpt) that all exist. Remove opened by keyboard Enter is a role=dialog aria-modal ('Remove this reply on ...?'), focus on Cancel, Escape closes and focus returns to Remove, 0 native alert/confirm dialogs. Topic More options (Enter): role=menu with menuitems."
     },
     "f-a11y.8": {
       "result": "pass",
-      "evidence": "Share dropdown and notification panel open with both Enter and Space (aria-expanded true), focus moves to the first item (Copy link / Mark all read), ArrowDown/ArrowUp move within, Escape closes (aria-expanded false) and focus returns to the trigger."
+      "evidence": "Share and notification panel, Enter and Space both open (aria-expanded true) and move focus to first item (Copy link / Mark all read); ArrowDown -> Twitter / X, first notification link; ArrowUp back; Escape closes (aria-expanded false) and focus returns to the trigger."
     },
     "f-a11y.9": {
       "result": "pass",
-      "evidence": "Scanned every text node in #content on the Announcements listing, the topic page and a space listing: 719 elements in light and 719 in dark (Reign toggle, bg rgb(35,38,47)), 0 below 4.5:1 (3:1 for large). The 'Content hidden because you blocked this user.' line (alice blocked via POST /users/me/blocks, then unblocked) measures 6.32:1 light and 7.78:1 dark; placeholders measure 7.3:1 light and 7.72-8.05:1 dark (title, tags, poll, editor).",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a9-blocked-dark.png"
+      "evidence": "Contrast computed over every text node in #content (206 / 193 / 202 nodes on space, topic, Announcements space), fixtures: announced topic, pinned topic, closed topic, blocked author (Content hidden because you blocked this user.). Light (body rgb(250,251,253)): 0 failures; Announcement pill now 7.64:1 (was 3.71), Pinned 7.64, Closed 5.95, blocked line 6.32, placeholders 18.88. Dark (rgb(35,38,47)): 0 failures on the same three pages, pills present. Fixtures restored."
     },
     "f-a11y.10": {
-      "result": "pass",
-      "evidence": "Touch context 390x844: of 213 buttons/inputs only the 13px 'Private reply' checkbox is under 40px and its label is 301x65; docSW 390. Root font 200% -> docSW 390, and a 195px-wide viewport (browser zoom 200%) -> docSW 195, no horizontal scroll. Desktop: A++ takes reply text 17px -> 19.2px and the title 25.5 -> 28.8px while the Reign header (17px) and menu (16px) stay put; Default restores.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a10-textzoom.png"
+      "result": "fail",
+      "evidence": "Touch context 390x844 hasTouch+isMobile ((hover: none) true). PASS parts: docSW 390 on topic, space, composer, home, profile; root font 200% -> docSW 390 on topic and New Topic; desktop A++ takes reply text 15.94 -> 18px and h1 25.5 -> 28.8 while theme title 36px and menu 16px stay unchanged and the font control is hidden at 390; '.jt-in-reply-to' now measures 40px (strict elementFromPoint span, ::after 40px) and breadcrumb Home 40px. FAIL: Pro poll builder on New Topic at 390 touch: 'Remove poll' (92x20) and '+ Add option' (97x20) have no ::after hit area (vertical span 20px, elementFromPoint 30px above returns .jt-compose-extras / INPUT). Also sidebar 'Top Members' name links are 17px tall with a 23px vertical hit span (the row div is hit above/below, 40px ::after is not reaching), Popular Tags chips reach only ~33px (neighbouring chips overlap their 40px areas), Trending titles are two-line inline links (centre of the box is the gap between lines). Product bug: poll builder links are the clear sub-40 controls; sidebar widgets are lower severity. Screenshots: topic-390.png, sidebar-390.png."
     },
     "f-a11y.11": {
-      "result": "fail",
-      "evidence": "Form errors pass: the poll builder error 'Question and at least 2 options required.' appears as role=alert + role=status (aria-live polite) and the invalid option input has aria-invalid=true with aria-describedby -> that message; the copy-link toast is role=status. But the Pro badge result 'Badge awarded.' (and 'Badge revoked.' / 'Badge already awarded to this user.') on wp-admin Jetonomy > Badges is a role=dialog aria-modal box with no live region or role=alert, and keyboard focus is NOT moved into it: document.activeElement stays on the Award/Revoke button behind the overlay until the first Tab (first Tab lands on OK; Escape closes). So a screen reader user is not told the badge was awarded. Seen on /wp-admin/admin.php?page=jetonomy-pro-badges as admin. Probably the result alert opens while the previous prompt modal is closing and the focus restore wins. Product bug (a11y); line wording says toast but the surface is a modal.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a11-revoked-dialog.png"
-    },
-    "f-a11y.15": {
       "result": "pass",
-      "evidence": "Created a Camera body profile field and a value for priya as a fixture (removed afterwards). Profile /community/u/priya/: H1, H2 Badges, H2 Profile Details, then sidebar H2s - no skip. Edit Profile: H1, H2 Crop your photo, H2 More about you - no skip. New topic with Add Poll open: H1 New Topic, H2 Poll - no skip.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a15-profile.png"
+      "evidence": "Admin Badges, keyboard: Award then confirm -> 'Badge awarded.' role=dialog with OK, focus on OK; Revoke -> 'Badge revoked.' same, focus on OK. New Topic poll with question but no options: role=alert and role=status 'Question and at least 2 options required.', focus on empty Option 1, aria-invalid=true, aria-describedby jt-field-error-1 -> that text. Settings > Reactions Save: 'Reaction settings saved.' is div.notice.notice-success.settings-error is-dismissible ordinary page content after reload (no role/aria-live on it). Badge revoked after awarding (net zero)."
     },
     "f-a11y.12": {
       "result": "pass",
-      "evidence": "finn (silenced): /general-discussion/new/ and the topic page render no editor (0 contenteditable) and show the plain text 'Your account is currently silenced and cannot post.' in the page content (in the accessibility tree, not only a coloured banner); POST a reply -> 403 jetonomy_user_silenced.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a12-finn-topic.png"
+      "evidence": "finn (silenced): /feature-requests/new/ and a topic page render 0 editors (no contenteditable, no textarea, no submit button) and plain visible text 'Your account is currently silenced and cannot post.' (p.jt-notice.jt-notice-warning on the topic, div.jt-empty-text on New Topic), in the accessibility tree, not only a coloured banner. Screenshot silenced.png."
     },
     "f-a11y.13": {
       "result": "pass",
-      "evidence": "Topic, profile and space pages each: nav aria-label='Breadcrumb' with the last item <span aria-current=page> (topic title / Bob Martinez / Feature Requests); exactly one h1 and no skipped heading levels."
+      "evidence": "Topic, profile, Edit Profile: nav aria-label='Breadcrumb', last item span aria-current=page (topic title / Bob Martinez / Edit Profile); exactly one h1 each and no skipped heading levels (topic h1,h2 Replies,h3 Your Reply,h2 ...; profile h1,h2 Badges,h2 Profile Details,h2 ...)."
     },
     "f-a11y.14": {
       "result": "pass",
-      "evidence": "Site language ar (dir=rtl), bob keyboard only: typed title and body in the New Topic form, Tabbed to Post Topic (6 Tabs) and pressed Enter -> topic created; replied from the keyboard (editor -> Tab to Post Reply -> Enter) -> reply posted; Enter on a reply's Vote up toggled its state (Vote removed message); Enter on Report, ArrowDown to a reason, Tab to Report, Enter -> 'Reported. Thank you.' (test flag deleted afterwards). Controls were focused programmatically in places; their Tab reachability is covered by f-a11y.2.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a14-created.png"
+      "evidence": "Site language ar (html dir=rtl lang=ar), bob keyboard only: 68 Tabs from page top to Title, typed Arabic title, 10 Tabs to editor, typed body, 6 Tabs to Submit Idea, Enter -> topic created. On another topic: 53 Tabs to Vote up, Enter toggled pressed true / 'Remove your upvote', Enter again removed; 99 Tabs to Reply editor, typed, 2 Tabs to Post Reply, Enter -> reply posted; 71 Tabs to a reply's Report, Enter -> dialog focus on first radio (spam), ArrowDown -> offensive, Tab to Report, Enter -> 'Reported. Thank you.' and focus back on Report. Fixtures (2 topics, 2 replies, 1 flag) deleted, recount run, locale restored to en_US."
+    },
+    "f-a11y.15": {
+      "result": "pass",
+      "evidence": "Fixture profile field 'Camera body' (bob value) created and removed afterwards. /community/u/bob/: H1, H2 Badges, H2 Profile Details, then sidebar H2s - no skipped level. Edit Profile: H1, H2 More about you, sidebar H2s - no skip. New Topic with Add Poll open: H1 Share an Idea, H2 Poll - no skip."
     },
     "f-a11y.16": {
       "result": "pass",
-      "evidence": "bob /community/u/bob/edit/#notification-preferences: 21 checkboxes, 21 unique accessible names, each naming type and channel (e.g. 'Reply to my topic Web', 'Reply to my topic Email', '@Mention Web', 'Vote on my topic Email').",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a16-notifprefs.png"
+      "evidence": "bob /community/u/bob/edit/ notification preferences: 21 checkboxes, 21 unique accessible names, each naming type and channel ('Reply to my topic Web', 'Reply to my topic Email', '@Mention Web' ...), 0 empty."
     },
     "f-a11y.17": {
       "result": "pass",
-      "evidence": "test_moderator: topic More options trigger opened with Enter has aria-haspopup=menu, the list is role=menu with role=menuitem children only (Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete), focus lands on Edit, Escape closes (aria-expanded false) and focus returns to the trigger. On /community/mod/ all 8 'Review in queue' links have aria-describedby ids that resolve to the flagged title/excerpt text.",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w11/a17-menu.png"
+      "evidence": "test_moderator: dashboard 'Review in queue' links (8) each have aria-describedby (single id for replies, 'title excerpt' id pair for topics); every id exists in the same row. Topic More options opened with Enter: aria-haspopup=menu, list role=menu with 7 menuitem children (Edit, Make Private, Pin to space, Close topic, Move, Merge, Delete), focus on Edit, Escape closes (aria-expanded false), focus returns to the trigger."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "extra_findings": [
+    "Admin Badges Award/Revoke dialog (Pro, wp-admin jetonomy-pro-badges): the user search results are plain divs (.award-user-option, no tabindex/role); Tab from the search field goes to Cancel, Enter in the field selects nothing, Confirm stays disabled, so a keyboard-only admin cannot pick the user. Mouse click works."
+  ]
 }

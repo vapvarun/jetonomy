@@ -2,7 +2,7 @@
   "version": "2.0.7",
   "approved": "2026-11-10",
   "by": "Varun Dubey (owner)",
-  "reason": "83 of 95 journeys pass in full and are stamped (final code Free 266166b1 / Pro 69d28a8). The 12 below were walked in the browser; every check passed except these, which this setup cannot run or the owner moved to 2.0.8. ENV (cannot run here): c-admin-akismet-staff-bypass.5 (live Akismet key); c-site-host-integrations.11 (BuddyX has no site dark mode) and .18 (Divi not installed); F.firefox-desktop and F.safari-ios (non-Chromium engines); e-web-push.3/.6/.7 (real push delivery over HTTPS); e-pro-license-and-lockstep.5 (live licence server); e-membership-gating-adapters.9/.13/.14 (WP Fusion, SureMembers, WooCommerce Memberships not installed); e-email-digest.13 (3,000-subscriber scale); e-analytics.16 (wp-admin has no dark scheme; Pro admin cards use raw colours); e-lms-course-spaces-and-automator.9/.10/.11 (Uncanny Automator recipes) and .12 (Learnomy student dashboard). Owner decided for 2.0.8: c-member-reply-create.3 (topic author notified after Unfollow); e-extensions-manager.12 (concurrent toggles lose an update); e-membership-gating-adapters.11 (PMPro picker embeds every level); e-attachments.18 (no admin list for attachments).",
+  "reason": "80 of 95 journeys pass in full and are stamped at their walk commits (final code Free a531ef5d / Pro 44fcc6e). The 15 below were walked in the browser; every check passed except these, which this setup cannot run or the owner moved to 2.0.8. ENV (cannot run here): c-admin-akismet-staff-bypass.5 (live Akismet key); c-site-host-integrations.11 (BuddyX has no site dark mode) and .18 (Divi not installed); F.firefox-desktop and F.safari-ios and c-member-scheduled-post.14 (non-Chromium engines); e-web-push.3/.6/.7 (real push delivery over HTTPS); e-pro-license-and-lockstep.5 (live licence server); e-membership-gating-adapters.9/.13/.14 (WP Fusion, SureMembers, WooCommerce Memberships not installed); e-email-digest.13 (3,000-subscriber scale); e-analytics.16 (wp-admin has no dark scheme; Pro admin cards use raw colours); e-lms-course-spaces-and-automator.9/.10/.11 (Uncanny Automator recipes) and .12 (Learnomy student dashboard). Owner decided for 2.0.8: c-member-reply-create.3 (topic author notified after Unfollow); e-extensions-manager.12 (concurrent toggles lose an update); e-membership-gating-adapters.11 (PMPro picker embeds every level); e-attachments.18 (no admin list for attachments); f-a11y.10 (Pro poll builder Remove poll / Add option links and sidebar Top Members names and tag chips under the 40px touch size); f-rtl.2 (code blocks render right-to-left in Arabic topics); f-rtl.4 (the @mention popup shows the login as alice@ in RTL).",
   "walked": [
     "C.member.reply-create",
     "C.admin.akismet-staff-bypass",
@@ -15,6 +15,9 @@
     "E.membership-gating-adapters",
     "E.lms-course-spaces-and-automator",
     "E.attachments",
-    "F.firefox-desktop and F.safari-ios"
+    "F.firefox-desktop and F.safari-ios",
+    "C.member.scheduled-post",
+    "F.a11y",
+    "F.rtl"
   ]
 }
