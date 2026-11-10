@@ -71,6 +71,6 @@ class TopicBreadcrumbCategoryTest extends WP_UnitTestCase {
 		include JETONOMY_DIR . 'templates/views/single-post.php';
 		$html = (string) ob_get_clean();
 
-		$this->assertStringContainsString( '<a href="' . esc_url( \Jetonomy\route_url( 'category', $category->slug ) ) . '">Outdoors</a>', $html );
+		$this->assertStringContainsString( '<a href="' . esc_url( \Jetonomy\route_url( 'category', $category->slug ) ) . '" dir="auto">Outdoors</a>', $html );
 	}
 }

@@ -57,21 +57,28 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			define( 'WP_UNINSTALL_PLUGIN', 'jetonomy/jetonomy.php' );
 		}
-		// The test case turns DROP TABLE into DROP TEMPORARY TABLE, which would
-		// leave the real tables in place; let uninstall drop them for real (the
-		// finally block creates them again).
-		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+		// The test case turns DROP TABLE into DROP TEMPORARY TABLE so the suite's
+		// shared tables survive; record the statements uninstall issues instead.
+		$drops  = array();
+		$record = static function ( $query ) use ( &$drops ) {
+			if ( preg_match( '/^\s*DROP TABLE/i', (string) $query ) ) {
+				$drops[] = (string) $query;
+			}
+			return $query;
+		};
+		add_filter( 'query', $record, 1 );
 		try {
 			include JETONOMY_DIR . 'uninstall.php';
-			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+			remove_filter( 'query', $record, 1 );
 
 			$this->assertFalse( wp_next_scheduled( 'jetonomy_trust_evaluation' ), 'plugin cron job cleared' );
 			$this->assertFalse( wp_next_scheduled( 'edd_sl_sdk_weekly_license_check_jetonomy' ), 'licence check cleared' );
 			$this->assertFalse( get_option( 'widget_jetonomy_leaderboard' ), 'widget settings removed' );
 			$this->assertNotFalse( wp_next_scheduled( 'jetonomy_pro_digest_daily' ), "Pro's jobs are left to Pro's uninstall" );
 
+			$dropped = implode( "\n", $drops );
 			foreach ( \Jetonomy\DB\Schema::get_table_names() as $table ) {
-				$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . $table ) ), "{$table} dropped" );
+				$this->assertMatchesRegularExpression( '/\b' . preg_quote( $wpdb->prefix . $table, '/' ) . '\b/', $dropped, "{$table} dropped" );
 			}
 			foreach ( wp_roles()->roles as $slug => $role ) {
 				$left = array_filter( array_keys( (array) ( $role['capabilities'] ?? array() ) ), static fn( $cap ) => str_starts_with( (string) $cap, 'jetonomy_' ) );
@@ -84,7 +91,7 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 				$this->assertContains( 'jetonomy_pro_uninstall_probe', $hooks, "Pro's Action Scheduler rows left to Pro's uninstall" );
 			}
 		} finally {
-			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+			remove_filter( 'query', $record, 1 );
 			if ( $has_as ) {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 				$wpdb->query( $wpdb->prepare( "DELETE FROM {$as_table} WHERE hook IN (%s, %s)", 'jetonomy_uninstall_probe', 'jetonomy_pro_uninstall_probe' ) );
