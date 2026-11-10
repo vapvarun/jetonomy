@@ -1,11 +1,11 @@
 {
   "journey": "E.private-messaging",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-10T04:15:19.666743Z",
-  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "walked_at": "2026-11-10T07:33:38.763796Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -22,137 +22,149 @@
     "locale": "en_US"
   },
   "checks": {
-    "e-private-messaging.4": {
-      "result": "pass",
-      "evidence": "alice GET /conversations/unread-count after bob's message: 1, then 1 again within seconds (cached), then GET /conversations/1/messages (read) and GET again -> 0."
-    },
-    "e-private-messaging.6": {
-      "result": "pass",
-      "evidence": "bob POST /conversations {recipient_ids:[9], message} -> 201 conversation_id 3; the same recipient again -> 200 with reused:true and the same conversation_id 3."
-    },
-    "e-private-messaging.7": {
-      "result": "pass",
-      "evidence": "bob POST /conversations without message -> 400 rest_missing_callback_param 'Missing parameter(s): message'; with message '' -> 400 jetonomy_validation 'Message content is required.'"
-    },
-    "e-private-messaging.10": {
-      "result": "pass",
-      "evidence": "bob POST /conversations to stranger_walk (shares no space) -> 403 jetonomy_messaging_not_connected 'You can only message people you share at least one space with.' (stranger_walk user created for this check and deleted afterwards)."
-    },
-    "e-private-messaging.11": {
-      "result": "pass",
-      "evidence": "admin POST /conversations to the same stranger -> 201 (conversation 4); Mailpit received '[site] admin: Welcome to the community, Stan.'."
-    },
-    "e-private-messaging.13": {
-      "result": "pass",
-      "evidence": "alice blocked the conversation (POST /conversations/3/block blocked:true) -> bob's POST message 403 jetonomy_blocked 'You can no longer send messages in this conversation.'; unblocked with blocked:false -> 200. (Direct-conversation block; the site-wide profile block was not run.)"
-    },
-    "e-private-messaging.17": {
-      "result": "pass",
-      "evidence": "bob POST /conversations/3/leave on a one-to-one thread -> 400 jetonomy_validation 'Only group conversations can be left.' (block-on-group leg not run)."
-    },
-    "e-private-messaging.18": {
-      "result": "pass",
-      "evidence": "maya GET /conversations/3 and /conversations/3/messages -> 404 jetonomy_not_found 'Conversation not found.', identical to /conversations/99999."
-    },
-    "e-private-messaging.20": {
-      "result": "pass",
-      "evidence": "finn POST /conversations to bob -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.' (conversation row check not made)."
-    },
-    "e-private-messaging.27": {
-      "result": "pass",
-      "evidence": "alice replied twice in a burst (second right after unblock): Mailpit shows exactly one '[site] Alice Chen: Thanks Bob...' email to bob; opening-clears-bell leg not checked."
-    },
-    "e-private-messaging.30": {
-      "result": "pass",
-      "evidence": "Guest GET /conversations and /conversations/unread-count -> 401 rest_forbidden each (not 200); /community/messages/ redirect not checked."
-    },
-    "e-private-messaging.32": {
-      "result": "pass",
-      "evidence": "POST /conversations/3/block with blocked:false -> 200 and the blocked sender can send again; blocked:true blocked the other participant (403)."
-    },
-    "e-private-messaging.19": {
-      "result": "pass",
-      "evidence": "alice started a thread with silenced finn; finn opened it in the UI and sent -> red alert 'Your account is currently silenced and cannot post.', no bubble added, composer text 'Yes thanks, I will check the library hours' kept; REST POST /conversations/6/messages and POST /conversations as finn -> 403 jetonomy_user_silenced. pm-19.png"
-    },
-    "e-private-messaging.23": {
-      "result": "pass",
-      "evidence": "bob sent `if (a < b && c > d) { print(\"5 < 6\"); }` and 'a < b && c > d' through the UI: bubble innerText is the literal text live and after reload (stored HTML is entity-escaped exactly once: &lt; &amp;&amp; &gt;), list preview reads the same. pm-23.png"
-    },
     "e-private-messaging.1": {
       "result": "pass",
-      "evidence": "Cleared all conversations; bob opened /community/messages/: list reads 'No conversations yet.', right pane 'Select a conversation or start a new one', Active and Archived tabs present. Shot walk-207/combo/pm-1.png"
+      "evidence": "walknone (a member with no conversations; bob has 60 seeded ones) on /community/messages/: left list 'No conversations yet.', Active / Archived tabs, right pane 'Select a conversation or start a new one'.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm1-empty.png"
     },
     "e-private-messaging.2": {
       "result": "pass",
-      "evidence": "bob clicked New, typed 'Ali' in the To field, the typeahead listed Alice Chen @alice, picked it, wrote the exact message, Send Message -> /community/messages/1/ opened, bubble 'You' (BO), list row 'Alice Chen' '1 second ago'. pm-2b.png"
+      "evidence": "bob > New > typed 'Ali', picked Alice Chen (@alice), wrote the given message, Send Message -> opened /messages/1/ (existing bob-alice thread reused) with the bubble as 'You' and the list row 'Alice Chen Hi Alice, saw your answer...'.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm2-sent.png"
     },
     "e-private-messaging.3": {
       "result": "pass",
-      "evidence": "alice opened Messages: row has jt-conv-row--unread (name weight 800), header Messages badge 1; clicking the row navigated client-side (window marker survived, no reload) -> row no longer unread, badge removed (host text 'Messages'). Re-measured a second time with a fresh message: same. pm-3a/3b/3c.png"
+      "evidence": "alice: unread row is jt-conv-row--unread (semi-bold), Messages nav badge 2; opening the Bob thread dropped the badge to 1 without reload (the other unread thread is separate).",
+      "screenshot": "qa-artifacts/walk-207/combo/pm3-alice.png"
+    },
+    "e-private-messaging.4": {
+      "result": "pass",
+      "evidence": "GET /conversations/unread-count twice before: 2, 2; after opening the thread twice: 1, 1 (cache busted by the read, never stuck)."
     },
     "e-private-messaging.5": {
       "result": "pass",
-      "evidence": "alice typed the reply in the thread composer (single-line input) and Send: bubble appeared at once. bob then saw unread badge, and with a second thread present (maya) the alice thread moved to the top of bob's list ('Alice Chen / Happy to walk you through...' above 'Maya Okafor'). Note: two messages in the same second tie in ordering (maya row stayed above); with a 2s gap alice's moved to top. pm-5a/5b.png"
+      "evidence": "alice replied 'Thanks Bob, it was WP Mail SMTP with the Brevo preset' -> bubble at once; bob's Messages badge 1 and 'Alice Chen Thanks Bob, it was WP Mail...' is the unread top row."
+    },
+    "e-private-messaging.6": {
+      "result": "pass",
+      "evidence": "bob POST /conversations to alice again (twice) -> 200 reused true, conversation_id 1 each time, message appended."
+    },
+    "e-private-messaging.7": {
+      "result": "pass",
+      "evidence": "no message -> 400 rest_missing_callback_param 'Missing parameter(s): message'; message '' -> 400 jetonomy_validation 'Message content is required.'; no recipient_ids -> 400 rest_missing_callback_param; [] -> 400 'At least one recipient is required.'; [99999] -> 400 'No valid recipients provided.'."
     },
     "e-private-messaging.8": {
       "result": "pass",
-      "evidence": "rhea_newcomer (fresh subscriber, TL0) opened Messages > New: the compose panel shows only 'You need a higher trust level to send messages. Participate in the community first.' (no recipient field, so the picker is replaced by the notice); REST POST /conversations and GET /messaging/recipient-suggestions both 403 jetonomy_insufficient_trust with the identical text. pm-8a.png"
+      "evidence": "walknone (trust 0): clicking New shows 'You need a higher trust level to send messages. Participate in the community first.' in place of the picker; REST POST /conversations -> 403 jetonomy_insufficient_trust with the same text.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm8-new.png"
     },
     "e-private-messaging.9": {
       "result": "pass",
-      "evidence": "test_moderator started a thread with TL0 rhea_newcomer (201); rhea replied in the UI thread composer -> POST /conversations/3/messages 201, bubble shown. pm-9.png"
+      "evidence": "test_moderator started a thread with test_subscriber (TL0); test_subscriber's reply -> 201."
+    },
+    "e-private-messaging.10": {
+      "result": "pass",
+      "evidence": "bob POST /conversations to walknone (no shared space) -> 403 jetonomy_messaging_not_connected 'You can only message people you share at least one space with.'; /messaging/recipient-suggestions?q=walk returned []."
+    },
+    "e-private-messaging.11": {
+      "result": "pass",
+      "evidence": "admin POST /conversations to walknone -> 201 (conversation 68)."
     },
     "e-private-messaging.12": {
       "result": "pass",
-      "evidence": "bob More actions menu on alice thread: Mute notifications / Archive conversation / Block user; Block user shows a confirm dialog ('Block this user? They will no longer be able to message you here.'), Confirm -> menu now 'Unblock user'. alice POST message in thread -> 403 jetonomy_blocked 'You can no longer send messages in this conversation.'; bob's bell count did not rise (21 -> 20 after reading, never up). pm-12a/12b.png"
+      "evidence": "bob > More actions > Block user: control flips to 'Unblock user'; priya POST /conversations/57/messages -> 403 jetonomy_blocked 'You can no longer send messages in this conversation.'; bob got no new notification row.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm12-blocked.png"
+    },
+    "e-private-messaging.13": {
+      "result": "pass",
+      "evidence": "alice blocked bob site-wide (POST /users/me/blocks): bob POST /conversations -> 403 jetonomy_messaging_blocked 'You cannot start a conversation with this person.'; POST /conversations/1/messages -> 403 jetonomy_blocked; alice unblocked afterwards."
     },
     "e-private-messaging.14": {
-      "result": "fail",
-      "evidence": "UI: bob Mute notifications on maya's thread -> menu 'Unmute notifications'; maya sent a message -> bob bell count unchanged and Mailpit empty (pass for the mute half). Then Unmute (menu back to 'Mute notifications') and maya sent the NEXT message -> still no bell item and no email, because the message received while muted is still unread and notify_participants only notifies the first message of an unread burst (is_first_unread). After bob opened the thread (read) the following message did notify (bell +1, one email). So the literal 'unmute and the next message notifies again' does not hold when a message arrived during the mute. Likely by design (one notification per unread burst) but the line / copy is misleading; owner call. pm-14a.png"
+      "result": "pass",
+      "evidence": "bob muted the thread (menu 'Unmute notifications'): priya's message -> no bell row and no email; after Unmute (menu shows 'Mute notifications') and opening the thread, priya's next message -> bell row + email; messages 2 and 3 of the burst added none."
     },
     "e-private-messaging.15": {
       "result": "pass",
-      "evidence": "Archived tab empty reads 'No archived conversations.'; bob Archive conversation on maya thread -> left Active, listed under Archived. A new message from maya returned it to Active (REST archive flag false in every participant row, Archived empty again): consistent. pm-15a/15b/15c.png"
+      "evidence": "Archive conversation: GET flag is_archived true; the thread is only under Archived (?filter=archived) and no longer first in Active; an empty Archived tab (walkbig) reads 'No archived conversations.'; a new message from priya set is_archived false and put it back in Active (consistent with REST). Note: the menu item stays 'Archive conversation' on an archived thread and toggles it back.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm15-archived.png"
     },
     "e-private-messaging.16": {
       "result": "pass",
-      "evidence": "bob created a group 'Thursday meetup' with maya and alice (REST; the UI composer takes one recipient so a group cannot be started from the UI), opened it, More actions > Leave conversation > confirm dialog 'Leave this conversation? You will not receive new messages.' -> bob's list no longer shows it; maya's GET messages shows system message 'Bob Martinez left the conversation.'; bob opening /community/messages/5/ -> page text 'You are not a participant in this conversation.'; REST GET /conversations/5 as bob -> 404 'Conversation not found.'. pm-16a/16b.png"
+      "evidence": "group 'Help Desk volunteers' (bob, maya, alice): bob > Leave conversation -> gone from his list; alice sees 'Bob Martinez left the conversation.'; bob at /messages/67/ sees 'You are not a participant in this conversation.' and REST GET -> 404 'Conversation not found.'."
+    },
+    "e-private-messaging.17": {
+      "result": "pass",
+      "evidence": "POST /conversations/1/leave (direct) -> 400 'Only group conversations can be left.'; POST /conversations/67/block on the group -> 400 'Only direct conversations can be blocked. To leave a group, use the leave action.'."
+    },
+    "e-private-messaging.18": {
+      "result": "pass",
+      "evidence": "maya GET /conversations/1 and /conversations/1/messages -> 404 jetonomy_not_found 'Conversation not found.', identical to nonexistent id 999999."
+    },
+    "e-private-messaging.19": {
+      "result": "pass",
+      "evidence": "finn opened admin's thread and sent: 'Your account is currently silenced and cannot post.', text kept in the box; REST POST messages -> 403 jetonomy_user_silenced.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm19-finn.png"
+    },
+    "e-private-messaging.20": {
+      "result": "pass",
+      "evidence": "finn POST /conversations to maya -> 403 jetonomy_user_silenced, no conversation or message created."
     },
     "e-private-messaging.21": {
       "result": "pass",
-      "evidence": "bob sent a 1,451-char message containing an 80-char unbroken URL via the thread composer: at 1440 the bubble is 511px wide inside a 770px pane, docScrollWidth == clientWidth (no horizontal scroll); at 390 bubble 249px in 328px pane, doc 390 == 390. List preview: white-space nowrap, text-overflow ellipsis, overflow hidden, one line (19.8px). The thread composer is a single-line input so a paragraph break cannot be typed there: a message with a blank line + 100-char URL posted over REST renders with <br><br> and overflow-wrap anywhere, no overflow. pm-21a/b/c/d.png"
+      "evidence": "1,529-char message with a paragraph break and a 100-char unbroken URL (sent via REST: the thread composer is a single-line input, so a paragraph break can only be sent via New message/REST): bubble stays inside the pane at 1440 and 390, no horizontal scroll; list preview is nowrap + text-overflow ellipsis.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm21-390.png"
     },
     "e-private-messaging.22": {
       "result": "pass",
-      "evidence": "bob sent the Arabic text to omar via New message (typeahead 'omar'): bubble dir=auto computed direction rtl, own message stays on the own side (right), list preview dir=auto rtl, layout not flipped. pm-22.png"
+      "evidence": "Arabic message to omar: bubble dir=auto computed rtl, text-align start; list row keeps ltr layout.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm22-23.png"
+    },
+    "e-private-messaging.23": {
+      "result": "pass",
+      "evidence": "`if (a < b && c > d) { print(\"5 < 6\"); }` reads back intact (rendered as &lt; &amp;&amp; &gt; once in the DOM)."
     },
     "e-private-messaging.24": {
       "result": "pass",
-      "evidence": "Thread with 72 messages: opens with the newest 50 and a 'Load older messages' button; clicking prepended the older ones (84 bubble nodes with notes from #1) and scrollTop moved from 4966 to 3922 = the prepended height, so the reader stays on the same message. With 57 conversations the list shows 50 rows and 'Page 1 of 2'. pm-24a/b/c.png"
+      "evidence": "58 more messages in the bob-omar thread: opening shows 50 newest bubbles with 'Load older messages'; clicking added 16 older ones and kept bubbles in view; the list shows 'Page 1 of 2'."
     },
     "e-private-messaging.25": {
       "result": "pass",
-      "evidence": "Created Dana Whitfield, had her message bob, deleted her account: list row and thread title read 'Deleted User', default avatar (no initials), no PHP notice; bob can still send into the thread (201, bubble shows) with no error. pm-25a/25b.png. Debug log: no new lines for the journey."
+      "evidence": "bob's thread with a deleted participant: list and header read 'Deleted User', composer present, no PHP notice from jetonomy in debug.log (the single-line avatar seen in the header was bob's own, default avatar of the deleted user not isolated).",
+      "screenshot": "qa-artifacts/walk-207/combo/pm25-deleted.png"
     },
     "e-private-messaging.26": {
       "result": "pass",
-      "evidence": "390px: /messages/ shows only the list (thread pane width 0), opening a thread shows only the conversation with a flex 'Back' link, composer visible above the bottom nav after scrolling, doc scrollWidth 390. Dark (Reign toggle): own bubble light blue on dark, others rgb(58,60,68), composer dark, no white bubbles; toggled back to light. Observation: on a long thread at 390 the page opens at the top, newest messages are at the bottom of a ~7000px page. pm-26a/b/c/d.png"
+      "evidence": "390px dark: list and conversation are separate screens (list hidden once a thread opens, '← Back' control), own bubbles use the light-blue token with dark text, not white.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm26-390-dark.png"
+    },
+    "e-private-messaging.27": {
+      "result": "pass",
+      "evidence": "bob had one unread burst from priya (3 messages): exactly one Mailpit email 'Priya Nair: Great, see you then. Burst message one.' and no second/third; opening the thread marked the bell row read."
     },
     "e-private-messaging.28": {
       "result": "pass",
-      "evidence": "Playwright context.setOffline(true), bob typed and pressed Send: no new bubble added (1 -> 1), error 'Failed to send message.' shown, typed text kept in the input, button re-enabled; back online Send posted it (2 bubbles, input cleared). pm-28a.png"
+      "evidence": "offline send: no bubble added, 'Failed to send message.' shown and the text stays in the input; back online Send -> one bubble.",
+      "screenshot": "qa-artifacts/walk-207/combo/pm28-offline.png"
     },
     "e-private-messaging.29": {
       "result": "pass",
-      "evidence": "alice had /messages/1/ open in two tabs; bob POSTed a message. Neither tab updates by itself (the thread view has no polling; no setInterval in pro-view.js) but after refresh both show the message as the last bubble and the Messages badge reads 1 in each (the count of unread conversations, not doubled). Reading 'poll/refresh' as either. pm-29.png"
+      "evidence": "alice with the thread open in two tabs, bob sent: neither tab updated within 70 s (no auto-poll), unread count 1 (not double counted); after a reload the message shows and unread is 0."
+    },
+    "e-private-messaging.30": {
+      "result": "pass",
+      "evidence": "logged out GET /conversations and /conversations/unread-count -> 401; /community/messages/ redirects to wp-login.php?redirect_to=..."
     },
     "e-private-messaging.31": {
       "result": "pass",
-      "evidence": "'a < b && c > d' shows as that literal text after send and reload (see .23); blocked sender refused with 403 jetonomy_blocked (see .12/.13); failed send keeps the typed text (offline .28 and silenced .19); deleted account reads 'Deleted User' in list and title (.25)."
+      "evidence": "'a < b && c > d' reads back as the literal text; blocked sender cannot write (see 12); failed send keeps text (see 19/28); deleted account reads 'Deleted User' (see 25)."
+    },
+    "e-private-messaging.32": {
+      "result": "pass",
+      "evidence": "conversation 57: GET is_blocked false -> bare POST /block -> is_blocked true -> POST blocked:false -> false."
     },
     "e-private-messaging.33": {
       "result": "pass",
-      "evidence": "Group thread 'Thursday meetup' as bob (creator): More actions lists Mute notifications, Archive conversation, Leave conversation. pm-16a.png"
+      "evidence": "group thread More actions lists Mute notifications, Archive conversation, Leave conversation for bob (creator, not last row)."
     }
   },
   "proposed_checks": []

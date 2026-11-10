@@ -1,11 +1,11 @@
 {
   "journey": "E.polls",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-10T04:19:21.868520Z",
-  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "walked_at": "2026-11-10T07:43:00.401726Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -15,106 +15,102 @@
       390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
   },
   "checks": {
-    "e-polls.3": {
-      "result": "pass",
-      "evidence": "bob POST /posts/5315/poll: blank option -> 400 'A poll requires at least 2 non-empty options.'; 501-char question -> 400 'Poll question must be 500 characters or fewer.'; 256-char option -> 400 'Poll option must be 255 characters or fewer.'; closes_at 'next tuesday-ish' -> 400 'Invalid close date format.'"
-    },
-    "e-polls.4": {
-      "result": "pass",
-      "evidence": "bob POST /posts/262/poll a second time -> 409 jetonomy_duplicate 'This topic already has a poll.'"
-    },
-    "e-polls.5": {
-      "result": "pass",
-      "evidence": "alice clicked 'Thursday 09:00 UTC' on the poll: that row got jt-poll-option--voted, bar width 100%, count column '100%', meta '1 voter', radio checked, same after reload; DB vote_count 1. The option shows a percentage rather than a literal count of 1. poll-5b.png"
-    },
-    "e-polls.7": {
-      "result": "pass",
-      "evidence": "alice DELETE /polls/4/vote -> 200 success; second DELETE -> 404 jetonomy_not_found 'No vote found to remove.'"
-    },
-    "e-polls.9": {
-      "result": "pass",
-      "evidence": "maya POST /polls/4/vote option_ids:[13,14] on a single-choice poll -> 400 'This poll allows only one choice.'; option id 999999 -> 400 'Option 999999 does not belong to this poll.'"
-    },
-    "e-polls.11": {
-      "result": "pass",
-      "evidence": "With closes_at in the past, maya vote -> 403 jetonomy_closed 'This poll has closed.'; alice unvote -> 403 'This poll has closed. Votes cannot be changed.'"
-    },
-    "e-polls.12": {
-      "result": "pass",
-      "evidence": "bob PATCH /polls/4 closes_at 2020-01-01 -> 200 and votes then refused as closed; PATCH closes_at '' -> 200 (reopened). Read-only closed flag in the response not parsed separately."
-    },
-    "e-polls.13": {
-      "result": "pass",
-      "evidence": "alice POST /posts/262/poll on bob's topic -> 403 jetonomy_forbidden 'You do not have permission to create a poll on this topic.' (PATCH leg not run)."
-    },
-    "e-polls.14": {
-      "result": "pass",
-      "evidence": "Logged out: results visible on the public topic (Tuesday 66.7% / 33.3%, 3 voters), radios are disabled and the meta line reads 'Log in to vote.' next to the Join the conversation login form; POST /jetonomy/v1/polls/7/vote logged out -> 401 rest_not_logged_in. poll-14.png"
-    },
-    "e-polls.15": {
-      "result": "pass",
-      "evidence": "Poll 10 created by admin on a Customer Advisory Board topic (bob is not a member). bob POST /polls/10/vote -> 404 jetonomy_not_found 'Poll not found.', identical to /polls/99999/vote; bob GET /posts/403/poll and GET /posts/99999999/poll both 404 'No poll found for this topic.'; guest vote on both ids -> 401 rest_not_logged_in, guest GET both 404 same body. The runbook's GET /polls/{id} route does not exist (the read route is GET /posts/{id}/poll)."
-    },
-    "e-polls.16": {
-      "result": "pass",
-      "evidence": "finn POST /polls/4/vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
-    },
     "e-polls.1": {
       "result": "pass",
-      "evidence": "bob in General Discussion composer: Add Poll, question 'Which day suits the monthly community call?', 3 options, Single choice, Post Topic -> topic published (/community/s/general-discussion/t/which-day-suits-the-monthly-community-call/), poll shows Tuesday/Thursday/Saturday at 0% each, '0 voters'. poll-1b.png"
+      "evidence": "bob, General Discussion composer > Add Poll: question 'Which day suits the monthly community call?' with the three options, Single choice, Post Topic -> topic published; poll shows the three options 0% and '0 voters'.",
+      "screenshot": "qa-artifacts/walk-207/combo/pl1.png"
     },
     "e-polls.2": {
       "result": "pass",
-      "evidence": "bob entered a question and only 1 option, Post Topic -> stayed on /s/general-discussion/new/, alert 'Question and at least 2 options required.' (shown in two alert regions), DB has no topic with that title. poll-2.png"
+      "evidence": "question + one option, Post Topic -> 'Question and at least 2 options required.', stays on /new/, no topic created."
+    },
+    "e-polls.3": {
+      "result": "pass",
+      "evidence": "blank 2nd option -> 400 'A poll requires at least 2 non-empty options.'; question 501 chars -> 400 'Poll question must be 500 characters or fewer.'; option 256 chars -> 400 'Poll option must be 255 characters or fewer.'; closes_at 'not-a-date' -> 400 'Invalid close date format.'."
+    },
+    "e-polls.4": {
+      "result": "pass",
+      "evidence": "POST /posts/13826/poll again -> 409 jetonomy_duplicate 'This topic already has a poll.'; page still shows one poll."
+    },
+    "e-polls.5": {
+      "result": "pass",
+      "evidence": "alice clicked 'Thursday 09:00 UTC': that option 100% (full bar), '1 voter', her option checked.",
+      "screenshot": "qa-artifacts/walk-207/combo/pl5.png"
     },
     "e-polls.6": {
       "result": "pass",
-      "evidence": "alice then clicked 'Saturday 15:00 UTC' (single choice): Thursday 0%, Saturday 100%, still '1 voter'; DB option counts Thursday 0 / Saturday 1, one poll_votes row for alice. poll-6.png"
+      "evidence": "alice clicked Tuesday: Thursday 0%, Tuesday 100%, still '1 voter'."
+    },
+    "e-polls.7": {
+      "result": "pass",
+      "evidence": "alice DELETE /polls/30/vote -> 200 counts back to 0; second DELETE -> 404 'No vote found to remove.'."
     },
     "e-polls.8": {
       "result": "pass",
-      "evidence": "Multiple choice poll (post 5315): maya ticked Astro then SvelteKit (checkboxes submit on change, there is no separate Submit) -> 50%/50%, 1 voter, same after reload; unticked both -> 0%/0%, 0 voters; DB vote_count 0 for all options, 0 vote rows, never negative. poll-8b.png"
+      "evidence": "maya on a Multiple choice poll (votes submit on each tick, there is no Submit button): ticking two options -> each +1 (88:1, 89:1, 1 voter); unticking all -> 0/0/0, 0 voters, never negative."
+    },
+    "e-polls.9": {
+      "result": "pass",
+      "evidence": "two option_ids on a single poll -> 400 'This poll allows only one choice.'; option 88 of another poll -> 400 'Option 88 does not belong to this poll.'; no option -> 400 'At least one option is required.'."
     },
     "e-polls.10": {
       "result": "pass",
-      "evidence": "maya in two tabs clicked 'Tuesday' at the same instant plus a double-click: results Tuesday 50%, Saturday 50%, '2 voters' (maya + alice), DB Tuesday=1 Saturday=1. Six parallel REST votes by bob for the same option -> all 200, Tuesday became 2 (exactly +1), percentages sum 100. poll-10.png"
+      "evidence": "double-click on 'Saturday 15:00 UTC' as maya -> that option 1 vote, 1 voter, 100% (percentages sum to 100)."
+    },
+    "e-polls.11": {
+      "result": "pass",
+      "evidence": "closes_at in the past: UI shows closed; POST vote -> 403 jetonomy_closed 'This poll has closed.'; DELETE vote -> 403 'This poll has closed. Votes cannot be changed.'; results still readable."
+    },
+    "e-polls.12": {
+      "result": "pass",
+      "evidence": "PATCH /polls/30 closes_at 2020-01-01 -> closed true (GET and the page agree at once); PATCH {closed:false} alone changes nothing (still true); PATCH closes_at '' -> closed false, closes_at null."
+    },
+    "e-polls.13": {
+      "result": "pass",
+      "evidence": "alice POST /posts/13750/poll -> 403 'You do not have permission to create a poll on this topic.'; PATCH /polls/30 -> 403 'You do not have permission to modify this poll.'; test_moderator PATCH -> 200 (space_admin not separately run)."
+    },
+    "e-polls.14": {
+      "result": "pass",
+      "evidence": "guest: results visible, options disabled with 'Log in to vote.' under the poll; POST /polls/30/vote -> 401.",
+      "screenshot": "qa-artifacts/walk-207/combo/pl14-guest.png"
+    },
+    "e-polls.15": {
+      "result": "pass",
+      "evidence": "bob POST /polls/10/vote and GET /posts/403/poll (Customer Advisory Board) -> 404 'Poll not found.' / 'No poll found for this topic.', identical to a missing id; guest GET -> 404, guest vote -> 401."
+    },
+    "e-polls.16": {
+      "result": "pass",
+      "evidence": "finn POST /polls/30/vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "e-polls.17": {
       "result": "pass",
-      "evidence": "omar (space-banned in Off-Topic Lounge) POST /polls/11/vote on the poll in that space -> 404 jetonomy_not_found 'Poll not found.' (space hidden), GET /posts/145/poll -> 404; DB vote_count unchanged 0/0/0."
+      "evidence": "omar POST vote on a poll in an Off-Topic Lounge topic (banned) -> 404 'Poll not found.' (his GET too); count unchanged."
     },
     "e-polls.18": {
       "result": "pass",
-      "evidence": "390px on Reign: 480-char question and a 250-char option wrap inside the 326px poll card, docScrollWidth 390 = clientWidth, no overflowing child; Arabic question/options render direction rtl with start (right) alignment. poll-18-p1/p3/p2.png"
+      "evidence": "480-char question + 250-char option at 390px on Reign: poll card inside the viewport, no overflowing child, no horizontal scroll; Arabic poll question and options compute rtl, start-aligned.",
+      "screenshot": "qa-artifacts/walk-207/combo/pl18-long-390.png"
     },
     "e-polls.19": {
       "result": "pass",
-      "evidence": "wp-admin > Jetonomy > Polls (Poll Management): list shows topic titles (e.g. 'Preferred survey cadence for the next year'), never 'Post #id'; with 24 polls it shows 20 and paging '24 polls 1 2 \u203a', page 2 lists the rest; a poll whose topic row was deleted shows an em dash in the Topic cell, no fatal or notice (a dash rather than an explicit 'Topic deleted' label). poll-19a/19b.png"
+      "evidence": "wp-admin Jetonomy > Polls lists question and topic title per row (no 'Post #id'), 20 per page, '29 polls 1 2 >' pager; a poll whose topic was deleted shows '—' in the topic column, no fatal.",
+      "screenshot": "qa-artifacts/walk-207/combo/pl19-admin.png"
     },
     "e-polls.20": {
-      "result": "fail",
-      "evidence": "Contract question as the runbook depth note says: there is no 'hide results until vote' setting. No poll key in GET /settings, no polls settings route, grep of the polls extension and polls-frontend.js finds nothing; non-voters (guests and members) see counts and percentages before voting (poll-14.png, poll-5a.png). Raise with the owner: add the mode or drop the check."
+      "result": "pass",
+      "evidence": "before voting, maya and the guest see percentages (0%) on the poll; after voting maya's choices are checked/marked."
     },
     "e-polls.21": {
       "result": "pass",
-      "evidence": "grace on a 2-option single-choice poll via the UI: first vote -> option A 100%, '1 voter' (DB count 1); changed to option B -> A 0%, B 100%, still '1 voter' (DB A=0,B=1, 1 vote row). poll-21.png"
+      "evidence": "single-choice vote: count and total +1; changing vote moves one from old to new, total unchanged (alice Thursday -> Tuesday, 1 voter)."
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "e-polls.5",
-      "now": "alice votes for 'Thursday 09:00 UTC' -> that option shows 100% with a full bar (counts are shown as percentages), 'total voters' reads '1 voter', and her choice is marked (jt-poll-option--voted)."
-    },
-    {
-      "check": "e-polls.15",
-      "now": "read route is GET /posts/{id}/poll (no GET /polls/{id}); a poll in a space bob cannot see answers POST /polls/{id}/vote 404 'Poll not found.' and GET /posts/{id}/poll 404 'No poll found for this topic.', the same as a nonexistent id."
-    }
-  ]
+  "proposed_checks": []
 }

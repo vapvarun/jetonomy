@@ -902,7 +902,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.mod.queue-and-actions
 **Covers:** templates/views/moderation.php, templates/partials/moderation/*.php, includes/api/class-moderation-controller.php, includes/moderation/class-moderation-service.php, assets/js/jetonomy-modals.js, includes/models/class-restriction.php, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php, templates/partials/pagination-nav.php, templates/partials/empty-state.php, pro:includes/extensions/advanced-moderation/*.php, pro:assets/js/moderation-admin.js, pro:includes/extensions/ai/*.php
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** 9af111d9 pro:ba34f60
 **What to verify:** a user with moderator capability sees the moderation queue, can filter by type (post/reply) and status (pending/spam/trash/resolved-flag), and can approve / trash / mark-spam from the queue. Every action updates the underlying record, disappears from its source tab, and appears in the destination tab. Silenced users cannot post until unsilenced. A site moderator (not a site admin) sees queues, report lists and counts only for spaces they can read, and cannot act on content in private spaces they cannot read. Space pages link to their own moderation queue with a count for space admins and site moderators; the header "Moderation queue" button opens the Approvals tab when only held content is pending, so it never lands on "0 pending flags". Per-space flag cards show the topic title (or an excerpt for an untitled feed post) and the flagged text. Site-wide bans listed there include IP address bans. Moving content to Trash counts as removal for reputation, the same as Spam, and approving it restores only what was taken.
 
 **Checks:**
@@ -1170,7 +1170,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.notifications.email
 **Covers:** includes/adapters/class-wp-mail-adapter.php, templates/emails/*.php, includes/notifications/class-notifier.php, includes/notifications/class-verification-reminder.php, pro:includes/extensions/email-digest/*.php, pro:includes/extensions/reply-by-email/*.php, pro:includes/extensions/email-digest/class-extension.php
-**Verified:** 64212bb5 pro:4d9b361
+**Verified:** 9af111d9 pro:ba34f60
 **What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work. A member is emailed the answer to a join request (approved or declined), headed "Your join request was answered" (the Settings > Emails name), never "Join Request Result". Mention emails use the owner's saved subject and body. When a moderator removes or approves a member's content, the member's email names it with the owner's terminology ("Your topic was removed by a moderator") and its button reads "Open the Community", never "Review in Mod Queue" (staff flag emails keep that button). The confirmation email's subject and intro follow Settings > Emails, with the link always added.
 
 **Checks:**
@@ -1918,7 +1918,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.private-messaging
 **Covers:** includes/class-router.php, templates/partials/header.php, pro:includes/extensions/private-messaging/*.php, pro:includes/extensions/private-messaging/views/*.php, pro:assets/js/pro-view.js
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** 9af111d9 pro:ba34f60
 **What to verify:** a user can start a DM with another user, send a message, receive a reply, see read receipts, and block/mute. A TL0 user in an existing conversation can still reply. Unread count endpoint tracks correctly.
 
 **Checks:**
@@ -1959,7 +1959,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.polls
 **Covers:** templates/partials/compose-fields.php, templates/views/single-post.php, pro:includes/extensions/polls/*.php, pro:assets/js/polls-frontend.js, pro:assets/js/pro-view.js
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** 9af111d9 pro:ba34f60
 **What to verify:** an author can attach a poll to a new topic, multiple options render on the topic page, a member can vote once, vote counts update, results display honors the "hide results until vote" mode if set. A composer poll with a question but fewer than two options blocks the post with "Question and at least 2 options required.". The Polls admin list shows topic titles.
 
 **Checks:**
@@ -2151,7 +2151,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.custom-fields
 **Covers:** assets/js/lib/custom-fields.js, templates/views/edit-profile.php, templates/views/user-profile.php, pro:includes/extensions/custom-fields/*.php, pro:includes/extensions/custom-fields/views/*.php, pro:assets/js/admin-custom-fields.js
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** an admin can define a custom field (text / select / url / etc.), a user can set a value in their profile, and the value shows on their profile to other members. Creating a field via REST must not fatal when optional params (like `slug`) are omitted.
 
 **Custom fields lifecycle (1.4.5 regression guards, Basecamp 9947496606 / 9942068436).** **What to verify:** a post created from the frontend composer with a custom field value persists that value; the inline post editor pre-populates and can change it after update; at 390px a long URL value wraps inside its container (`scrollWidth === clientWidth`, no horizontal overflow). Space-context fields render and save on space create, edit, and display.

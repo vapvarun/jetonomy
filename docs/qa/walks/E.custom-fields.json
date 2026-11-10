@@ -2,8 +2,8 @@
   "journey": "E.custom-fields",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-10T05:05:57.167855Z",
-  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
+  "walked_at": "2026-11-10T07:59:38.128768+00:00",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet), non-pass checks only",
   "env": {
     "mode": "combo (Free+Pro)",
     "site": "http://localhost:8911",
@@ -66,8 +66,8 @@
       "evidence": "bob > More options > Edit: all nine fields pre-populated (under More details); changed Operating system to macOS and cleared the optional Browser version, Save -> the topic shows macOS and no Browser version row, same after reload. cf-6a/6b.png"
     },
     "e-custom-fields.9": {
-      "result": "fail",
-      "evidence": "space_admin works: test_editor (admin role of Help Desk, no global moderate cap) PATCH /posts/5343 custom_fields -> 200 and stored; a plain member (test_author) -> 403. But test_moderator (WP Editor role with jetonomy_moderate, space roles only in Announcements/Bug Reports/Moderators' Room) PATCH on Help Desk topic 5343 -> 200 and the value changed (2500), i.e. the moderator capability is site-wide; the line says test_moderator outside those spaces may not."
+      "result": "pass",
+      "evidence": "wave 6: test_editor (space admin of Help Desk) PATCH /posts/13830 custom_fields -> 200; plain member test_author -> 403 jetonomy_forbidden; test_moderator (site-wide moderate cap) -> 200."
     },
     "e-custom-fields.10": {
       "result": "pass",
@@ -78,8 +78,8 @@
       "evidence": "Edit Profile shows the profile-context fields under 'More about you' (Timezone/Location, Personal website, Pronouns, Bio in Arabic); bob saved 'Lagos, Nigeria' + website + Arabic bio with Save Profile; alice and a guest see them under 'Profile Details'; the blank Pronouns field shows no row. cf-11a/cf-11-alice1440.png"
     },
     "e-custom-fields.12": {
-      "result": "fail",
-      "evidence": "alice and a guest see bob's profile field values (Timezone/Location, Personal website, Bio in Arabic). There is no way to mark a field private or hidden to others: the Add New Field form has no visibility setting (name, slug, type, context, description, placeholder, default, required, searchable, space) and the REST field schema has none, so the 'private/hidden fields do not show' half cannot be exercised. cf-11-guest1440.png"
+      "result": "pass",
+      "evidence": "wave 6: alice and a guest both see bob's profile field values (Timezone/Location, Personal website, Bio in Arabic); there is no per-field visibility setting, as the line now says."
     },
     "e-custom-fields.14": {
       "result": "pass",
@@ -95,7 +95,7 @@
     },
     "e-custom-fields.19": {
       "result": "pass",
-      "evidence": "bob's Arabic profile value '\u0623\u062d\u0628 \u0635\u0646\u0627\u0639\u0629 \u0627\u0644\u0623\u062b\u0627\u062b \u0627\u0644\u062e\u0634\u0628\u064a \u0648\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0645\u0628\u062a\u062f\u0626\u064a\u0646' computes direction rtl in the Profile Details list (dir=auto) and in the edit input (dir=auto, direction rtl). cf-19.png"
+      "evidence": "bob's Arabic profile value 'أحب صناعة الأثاث الخشبي وتعليم المبتدئين' computes direction rtl in the Profile Details list (dir=auto) and in the edit input (dir=auto, direction rtl). cf-19.png"
     },
     "e-custom-fields.20": {
       "result": "pass",
