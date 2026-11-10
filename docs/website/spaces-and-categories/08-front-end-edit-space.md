@@ -98,9 +98,20 @@ Use it when:
 - A seasonal event ends and you want last year's discussion to remain readable
 - You are stepping away and someone else should own the space
 
-> **Note:** This is not reversible from the front end. There is no Unarchive
-> button in the space editor - a site administrator can reopen the space from
-> **wp-admin → Jetonomy → Spaces**.
+### Unarchive
+
+An archived space shows **This space is archived** in the Danger zone, naming
+its owner, with an **Unarchive** button. Unarchiving sets the space back to
+Active, so members can post and reply again.
+
+The button shows to:
+
+- a site administrator, for any archived space;
+- the member who received the space through **Archive and hand over**, until
+  someone next saves the space's settings.
+
+Anyone else, or a space archived another way, is reopened from
+**wp-admin → Jetonomy → Spaces** by setting its status back to Active.
 
 ### Delete permanently
 
