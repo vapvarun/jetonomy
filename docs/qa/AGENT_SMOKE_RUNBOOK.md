@@ -188,7 +188,7 @@ At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<r
 
 ### A2 - Database schema is in place
 **Covers:** includes/db/class-schema.php, includes/db/class-migrator.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** all expected custom tables exist and the stored db-version option matches the constant.
 **Acceptance:** `wp_jt_*` tables count matches the schema class; `jetonomy_db_version` option equals `JETONOMY_DB_VERSION`.
 
@@ -203,7 +203,7 @@ At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<r
 
 ### A3 - Pro pairs cleanly (if Pro is also being installed)
 **Covers:** includes/class-jetonomy.php, includes/integrations/class-companion-registry.php, includes/integrations/class-companion-installer.php, includes/integrations/views/companion-cards.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** activating Pro on top of free does not fatal, adds Pro-only tables, and both version constants agree.
 
 ---
@@ -222,7 +222,7 @@ At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<r
 
 ### B1 - Migration runs quietly, existing data still works
 **Covers:** includes/db/class-migrator.php, includes/db/migrations/class-migration_2_0_2.php, includes/db/migrations/*.php, includes/class-content-backfill.php, includes/class-privacy-backfill.php, includes/class-space-backfill.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** bumping from the prior stable version to this build completes with no debug.log entries during the activation HTTP request; pre-existing posts, spaces, users, and settings still render and function; denormalized counters remain in sync. The 2.0.2 migration also leaves these true: private spaces stored as Open now take join requests (Private + Approval), community bios are copied into the member's WordPress Biographical Info, roles that can post keep uploading (they gain the Upload media capability), and space bans that were stored without a space are gone.
 
 ---
@@ -392,7 +392,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.tag
 **Covers:** templates/views/tag.php, includes/models/class-tag.php, includes/api/class-tags-controller.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** the tag page lists topics carrying that tag, or shows a clean empty state; no fatal on unknown tag slug. The topic count and the list include only topics the visitor can read, so a tag used only in private topics shows nothing to a guest. Popular tags in the sidebar count the same way.
 
 **Checks:**
@@ -428,7 +428,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.search
 **Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/api/class-search-controller.php, includes/adapters/interface-search-adapter.php, includes/adapters/interface-search-query-adapter.php, templates/partials/empty-state.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** searching for a known-present term returns matching topics with relevance that actually looks relevant (share ≥ 1 meaningful token with the query). Searching for gibberish returns a clean empty state. Results never include private replies or content in spaces the searcher cannot read.
 **Why it matters:** this is how customers find existing answers; a broken search drives support tickets.
 
@@ -452,7 +452,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.invite-landing
 **Covers:** templates/views/invite.php, includes/models/class-invite-link.php, includes/api/class-spaces-controller.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** an invite link lands on a page that names the space being offered and does NOT join anyone by itself. Logged out: it offers "Create free account" (when registration is open) and "Log in to accept invite", and returns to the invite after login. Logged in: it shows a "Join" button; the member is added only when they click it (a POST with a nonce), then land in the space. Opening the link, a link preview or a prefetch never adds anyone. Invalid codes, expired links and links at their usage limit get a clean error, not a fatal. An archived or locked space, or a member banned from the space, cannot be joined by invite.
 
 **Checks:**
@@ -513,7 +513,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.post-edit
 **Covers:** templates/views/single-post.php, templates/partials/edited-mark.php, includes/api/class-posts-controller.php, includes/models/class-post.php, includes/models/class-revision.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** a post author can edit their own post (this needs the Edit own posts permission, which Member and Participate grants include); changes persist and are reflected everywhere the post is referenced (home feed, space list, search). The "edited ... ago" marker appears when the edit came more than a minute after posting. The topic menu offers only the actions the viewer's permissions allow.
 
 **Checks:**
@@ -537,7 +537,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.post-delete
 **Covers:** templates/views/single-post.php, includes/api/class-posts-controller.php, includes/models/class-post.php, assets/js/jetonomy-modals.js
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** a post author can delete their own post (this needs the Delete own posts permission); it disappears from all listings and its single-post URL no longer serves the body (either 404 or "trashed" state per plugin contract); replies are handled consistently (cascaded or orphaned per contract).
 
 **Checks:**
@@ -594,7 +594,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.reply-quote
 **Covers:** templates/partials/reply-card.php, assets/js/view.js, assets/js/composer.js
-**Verified:** 64212bb5
+**Verified:** 0217e21d pro:1bb3e93
 **What to verify:** a member can quote an existing reply and the quoted content is visually preserved as a blockquote in the new reply. Choosing Reply on a reply shows "Replying to <name>" with the first line of that reply quoted and linking back to it.
 
 **Checks:**
@@ -615,7 +615,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.mention
 **Covers:** includes/class-mentions.php, includes/notifications/class-notifier.php, includes/api/class-posts-controller.php, includes/api/class-replies-controller.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** using `@username` in a post or reply produces a notification for that user AND renders as a link to their profile in the saved content. Mentioning someone in a private reply notifies them only if they may read it. The mention email uses the owner's saved Mention subject and body (Settings > Emails), like every other email.
 
 **Checks:**
@@ -673,7 +673,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.flag
 **Covers:** includes/api/class-moderation-controller.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php, assets/js/jetonomy-modals.js, assets/js/jetonomy-rest.js, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** a member can report a topic, reply or member; a dialog asks for a required reason (Spam, Offensive, Off-topic, Harassment, Other) plus optional details, and submitting with no reason shows "Choose a reason.". The report reaches moderation (a moderator sees it in the queue with that reason). The reporting member gets the toast "Reported. Thank you.", not a silent submit. Content the member cannot read (a private space, a private reply) cannot be reported, and the error does not reveal whether it exists.
 
 **Checks:**
@@ -701,7 +701,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.subscribe-thread-and-space
 **Covers:** includes/api/class-subscriptions-controller.php, includes/models/class-subscription.php, includes/notifications/class-notifier.php, templates/views/subscriptions.php, assets/js/lib/optimistic.js
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** 0217e21d pro:1bb3e93
 **What to verify:** a member can subscribe to a thread and to a space; a subsequent reply (thread) or new post (space) produces a notification; unsubscribing stops new notifications. A member who creates a space from the front end follows it automatically. Thread subscribers are not notified about private replies.
 
 **Checks:**
@@ -727,7 +727,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.accept-answer
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/api/class-replies-controller.php, includes/models/class-reply.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** on Q&A-typed spaces, the OP can mark a reply as the accepted answer, the reply is visibly promoted, and a second acceptance replaces the first per contract. A private reply is never shown in the accepted-answer callout to people who may not read it, and merging or splitting topics keeps exactly one accepted answer.
 
 **Checks:**
@@ -777,7 +777,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.bookmarks
 **Covers:** templates/views/bookmarks.php, includes/api/class-bookmarks-controller.php, includes/models/class-bookmark.php, assets/js/lib/optimistic.js, templates/partials/empty-state.php
-**Verified:** 64212bb5
+**Verified:** 0217e21d pro:1bb3e93
 **What to verify:** a member can bookmark a post, find it in their bookmarks view, and unbookmark it; count reflects the change. Removing the last bookmark shows the empty state immediately, without a reload, and the next tab you open shows its full content (after a hand-made DOM change the next navigation is a full page load).
 
 **Checks:**
@@ -799,7 +799,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.share
 **Covers:** templates/views/single-post.php, assets/js/view.js, assets/js/lib/smart-dropdown.js, includes/api/class-oembed-controller.php
-**Verified:** 64212bb5
+**Verified:** 0217e21d pro:1bb3e93
 **What to verify:** the Share control on a topic opens a dropdown anchored to the button, offers Copy Link + X + Facebook + LinkedIn, Copy Link actually writes the URL to the clipboard, external links open on the right platform, and the dropdown closes when the user scrolls or clicks outside.
 
 **Checks:**
@@ -842,7 +842,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.space-pagination
 **Covers:** templates/views/space.php, templates/partials/pagination.php, assets/js/pagination-frontend.js, assets/js/pagination-hydrator.js, templates/partials/feed-card.php
-**Verified:** 64212bb5
+**Verified:** 0217e21d pro:1bb3e93
 **What to verify:** on a space page, `posts_per_page` controls how many topics load initially; each click on Load More adds exactly one more batch with no duplicates; nothing loads on scroll alone (loading is click-only by design, see the header of `assets/js/pagination-frontend.js`); the button disappears after the last page.
 
 **Checks:**
@@ -864,7 +864,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.profile-mobile-tabs
 **Covers:** templates/views/user-profile.php, templates/views/drafts.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** on mobile (390px), the profile tabs bar is fully usable - no tab falls unreachable off-screen, the active tab is visible on load.
 
 **Checks:**
@@ -882,7 +882,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.online-indicator
 **Covers:** templates/partials/reply-card.php, templates/views/user-profile.php, templates/partials/sidebar.php, includes/models/class-user-profile.php, templates/partials/avatar.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** a user who is active within the threshold shows an online dot on every avatar context (topic page, profile header, home feed). The dot is visually attached to the avatar's top-right corner across all avatar sizes.
 
 **Checks:**
@@ -935,7 +935,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.mod.flag-resolution
 **Covers:** templates/partials/moderation/flag-card.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** a moderator sees flagged content with the flagging user's reason, can resolve the flag from its card (Remove or Dismiss), and the resolution is recorded and reflected on the reporter's side (the reporter's notification reads "Your report was reviewed. Thanks for helping keep the community healthy.", and the email subject is "[site] Your report was reviewed"). Dismissing a report on a reply restores the author's reputation, as it does for topics. Anonymous authors stay anonymous on approval cards. The restriction-lifting button reads "Lift restriction". The per-space flag card shows the linked topic title and the start of the flagged text, so a moderator need not open each item.
 
 **Checks:**
@@ -1034,7 +1034,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.user-management
 **Covers:** includes/admin/ajax/class-users-handler.php, includes/admin/views/users.php, includes/trust/class-trust-levels.php, includes/permissions/class-capabilities.php, includes/trust/class-trust-evaluator.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** an admin can search users, promote trust level, ban / unban, and see the correct state in the listing; bans prevent access to gated actions as expected. The dialog title follows the action (Ban User, Silence User, Ban IP address) and offers site-wide actions only (a space ban is made from that space's Members screen). "Ban IP address" exists only for site administrators: an IPv4 or IPv6 address is typed in (an invalid one, your own current address or one already banned is refused), and the ban is listed and liftable with the other restrictions (REST POST /moderation/ban with type=ip_ban and ip; WP-CLI --ip). Staff with only delegated user management cannot raise their own or another staff member's trust level; the Users screen opens with the Manage community users permission. Trust levels show their owner-set names.
 
 **Checks:**
@@ -1064,7 +1064,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.invite-links
 **Covers:** includes/models/class-invite-link.php, templates/views/invite.php, includes/api/class-spaces-controller.php, templates/views/space-edit.php, templates/partials/space-header.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** an admin can mint an invite link for a space (optionally with a use limit and an expiry date), copy it, and the link works through the full accept flow: opening it shows the space with a Join button, and the member is added only when they click Join (sign up or log in first if needed), landing in the space with correct membership. An expiry date means the link works until the end of that day in the site's timezone; an unreadable or past date is refused, and the invite list shows the date in the site's format. A link past its limit or date is refused, and two people using the last use at the same moment cannot exceed the limit. The invite and join-request lists are paginated. A request the member withdrew leaves the list.
 
 **Checks:**
@@ -1091,7 +1091,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.recount
 **Covers:** includes/class-recount.php, includes/class-recount-backfill.php, includes/admin/ajax/class-settings-handler.php, includes/api/class-admin-controller.php, includes/class-cache.php, assets/js/admin-settings.js
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** running the manual recount tool fixes any drift in denormalized counters (member_count, reply_count, vote_score); a deliberately corrupted counter is restored to the correct value.
 
 **Checks:**
@@ -1198,7 +1198,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.search
 **Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/search/class-search-indexer.php, includes/api/class-search-controller.php, includes/adapters/interface-search-adapter.php, includes/adapters/interface-search-query-adapter.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** the full search page handles query, tag filter, date filter, author filter, and sort (relevance / newest / votes) without breakage; relevance sort actually ranks by relevance, not just recency, and votes sort breaks ties by reply count. Private replies and unreadable spaces never appear in results, and tag results count only readable topics.
 
 **Checks:**
@@ -1248,7 +1248,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.cli.qa-actions
 **Covers:** includes/cli/**, includes/class-cli.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** Site owner/QA runs `wp jetonomy qa-actions` and expects every phase (including Phase 4 journeys and Phase 5 refusal paths RF1-RF10) to report only PASS, with a phase that ran zero checks failing loudly. Then run `wp jetonomy scenario run` for each scenario (voting thread, pending join request, flags for moderation, notification sweep, membership approval) and check the scenario result lists each step and cleans up. Spot-check one subject command per root (space, post, reply, vote, flag, member, mod, tag, category, privacy, notification, config, user) and confirm it returns the same data the member and moderator screens show. CLI has no viewport, so check 1440 and 390 only on a page the command created (for example a seeded post).
 
 **Checks:**
@@ -1271,7 +1271,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.setup-wizard
 **Covers:** includes/admin/ajax/class-setup-handler.php, includes/admin/ajax/class-demo-content.php, includes/admin/ajax/class-demo-seeder.php, assets/js/setup-wizard.js, assets/css/setup-wizard.css
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** A site admin on a fresh install walks the setup wizard end to end: pick the community base, create the first category and space, optionally seed demo content, and finish on a working /community/ page. A non-admin cannot reach the wizard or its AJAX handlers. Demo content can be removed again without leaving orphans. Check the wizard at 1440 and 390 widths (steps stack, buttons reachable, no horizontal scroll).
 
 **Depth note:** remove-demo-data checks (c-admin-setup-wizard.6, .7) wipe the shared community, so they run on the disposable Docker site, never on the shared walk site.
@@ -1299,7 +1299,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.import
 **Covers:** includes/import/*.php, includes/admin/ajax/class-import-handler.php, includes/models/class-import-map.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** Site admin imports a seeded bbPress, Asgaros or wpForo forum from the Import admin screen, sees progress, and finds categories, spaces, topics, replies and authors on the front end with correct counts. Re-running the import must not duplicate rows (import map), and a non-admin cannot start it. Check the import screen at 1440 and 390 and a few imported threads as a guest and a member.
 
 **Checks:**
@@ -1352,7 +1352,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.quick-login-and-captcha
 **Covers:** includes/api/class-auth-controller.php, includes/captcha/*.php, assets/js/login-block.js
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** A guest uses the Login block to sign in and (if enabled) register without leaving the page; wrong password and duplicate email show clear errors and no account is revealed beyond the standard message. With reCAPTCHA or Turnstile configured, the challenge appears on register and on topic/reply submission, a failed challenge blocks the submit, and with captcha off nothing extra shows. Check 1440 and 390 widths.
 
 **Checks:**
@@ -1380,7 +1380,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.space-create-and-join
 **Covers:** templates/views/new-space.php, templates/views/my-spaces.php, templates/partials/icon-picker.php, assets/js/jetonomy-icon-picker.js, includes/models/class-join-request.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** A member (where space creation is allowed) creates a space with an icon, sees it under My Spaces, and a second member requests to join a private space; the space admin sees the request and approves or declines it, and the requester sees the outcome. A member without the capability cannot reach new-space; a guest is sent to login. Check 1440 and 390 widths.
 
 **Checks:**
@@ -1407,7 +1407,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.mod.space-moderation
 **Covers:** templates/views/space-moderation.php, includes/api/class-space-moderation-controller.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** A space moderator opens /community/s/{slug}/mod/, sees only that space's flags and pending items, can resolve flags and page through a long queue, and cannot see or act on another space. Space moderators handle content only: the page offers no way to restrict a member (space admins do that from the space's Members screen). A plain member and a guest get no access, and a silenced member cannot moderate. Check 1440 and 390 widths.
 
 **Checks:**
@@ -1440,7 +1440,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.block-user
 **Covers:** includes/api/class-blocks-controller.php, includes/models/class-blocked-user.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** A member blocks another member from a post or profile; that author's content collapses to a tombstone for the blocker only, and unblocking from the tombstone restores it after reload. The blocked member sees no change and cannot tell, and a member cannot block themselves or a moderator-level account in a way that hides moderation. Check 1440 and 390 widths.
 
 **Checks:**
@@ -1464,7 +1464,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.connect-app
 **Covers:** templates/views/connect-app.php, assets/js/connect-app.js, includes/integrations/class-app-connect.php, includes/api/class-app-config-controller.php, includes/api/class-rest-auth.php
-**Verified:** 64212bb5
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** A signed-in member opens /community/connect-app, generates an app credential, and the mobile app config endpoint returns the right base URL and features for that member; revoking the credential makes the app lose access. A guest is redirected to login and cannot read member-only config. Check 1440 and 390 widths.
 
 **Checks:**
@@ -1488,7 +1488,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.link-preview
 **Covers:** includes/services/links/*.php, includes/services/links/providers/*.php
-**Verified:** 64212bb5
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** A member pastes a URL into a topic or reply and the published post shows a preview card (title, image, site) for normal pages, oEmbed providers and X posts. Internal or private-network URLs (localhost, 169.254.x, file:) must never be fetched, a slow or broken site must not block posting, and the card is the same for guests. Check 1440 and 390 widths.
 
 **Checks:**
@@ -1512,7 +1512,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.privacy-export-erase
 **Covers:** includes/class-privacy.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** Site admin runs Tools > Export Personal Data and Erase Personal Data for a seeded member and expects the export to list their posts, replies, votes, bookmarks and profile, and erase to remove or anonymise them without breaking threads other people replied in. The privacy policy suggested text appears in the Policy Guide. Check the admin screens at 1440 and 390.
 
 **Checks:**
@@ -1534,7 +1534,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.sitemap
 **Covers:** includes/seo/class-sitemap.php, includes/seo/class-sitemap-emitter.php
-**Verified:** pending - new journey, not walked yet
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** A guest or crawler opens the sitemap index and finds the Jetonomy sitemap listing public spaces and public topics with correct URLs and lastmod, paginated for large forums; private and hidden spaces and their topics never appear. Check that the sitemap loads fast with 2000+ topics. Browser width is irrelevant for XML; check the linked pages at 1440 and 390.
 
 **Checks:**
@@ -1581,7 +1581,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.integration.abilities-api
 **Covers:** includes/class-abilities.php
-**Verified:** 64212bb5
+**Verified:** 7470786c pro:1bb3e93
 **What to verify:** On WordPress 6.9+ the abilities list includes the Jetonomy abilities, an authorised user or agent can run each (create post, reply, vote, search) and gets the same result as the UI, and a guest or under-privileged caller is refused. On older WordPress the plugin loads without errors. Verify through the abilities REST endpoint; no viewport needed.
 
 **Checks:**
@@ -1746,7 +1746,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.roster-role-is-a-per-person-decision
 **Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-space-member.php, templates/views/space-members.php
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** after anyone is admitted by a rule - including via an LMS or membership plugin enrolment if one is installed - open the space **Members** tab. Nobody added by a rule is listed as Moderator or Admin. Full is recorded as Member for every rule type, never Moderator.
 **Promise:** "To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule."
 
@@ -1806,7 +1806,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.builder-explains-itself
 **Covers:** includes/admin/views/space-edit.php, includes/admin/views/spaces.php, includes/models/class-access-rule.php, includes/admin/class-admin.php, includes/api/class-rest-auth.php, assets/js/admin-common.js, assets/css/admin.css
-**Verified:** 11e21b47
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** on the Access Rules tab, step through every entry in the Rule type dropdown. The tab intro and empty state say a rule only lets more people in; visibility and join policy decide who else gets in. Each type shows a second sentence under the live preview saying **who** the rule catches, and the value box carries an example for that type. **Everyone** and **Logged In** show no value box at all. A rule needs a value that can work: a trust level rule with no level (or outside 1-5), a role that does not exist, or an empty capability or membership value is refused with a message, so it can never admit every member.
 **Why it matters:** picking the wrong rule is silent - it saves, the space looks configured, and the mistake only surfaces when the wrong people are in the room.
 
@@ -2206,7 +2206,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.reply-by-email
 **Covers:** templates/emails/reply-to-post.php, includes/models/class-reply.php, pro:includes/extensions/reply-by-email/*.php, pro:assets/js/admin-reply-by-email.js
-**Verified:** 64212bb5 pro:4d9b361
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** an inbound email matching a reply token produces a new reply on the correct post with the correct author; an inbound email without a valid token is rejected cleanly.
 
 **Checks:**
@@ -2363,7 +2363,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 
 ### E.pro-privacy-and-abilities
 **Covers:** pro:includes/class-privacy.php, pro:includes/class-abilities.php
-**Verified:** pending - new journey, not walked yet
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** As admin, run Tools > Export Personal Data for a member who has DMs, reactions, poll votes, badges, custom field values and a push subscription, and confirm each appears. Run Erase Personal Data and confirm those Pro rows are removed or anonymised and other members' data is untouched. On WP 6.9+, the Pro abilities list only for enabled and licensed extensions, and an ability call respects the caller's capabilities. Check admin screens at 1440 and 390 widths.
 
 **Checks:**
@@ -2427,7 +2427,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 
 ### E.site-announcements
 **Covers:** pro:includes/extensions/site-announcements/*.php, pro:assets/js/announcements-frontend.js
-**Verified:** pending - new journey, not walked yet
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** As admin or moderator, mark a topic as a site announcement and confirm it is pinned at the top of every space listing, not only its own, for member and guest views. Unmarking removes it everywhere, and dismissing (if offered) persists for that member. Normal per-space pinned topics are unchanged. Walk 1440 and 390 widths.
 
 **Checks:**
@@ -2449,7 +2449,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 
 ### E.anonymous-posting
 **Covers:** pro:includes/extensions/anonymous-posting/**
-**Verified:** pending - new journey, not walked yet
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** As site admin, enable anonymous posting in a space's settings (wp-admin space edit). As a member, post a topic and a reply anonymously, and confirm other members, guests and the profile page show no author identity, avatar or link, including in REST output, search and notifications. A site admin (manage_options) can reveal the real author, and that action is audited; moderators cannot. A space with the setting off shows no anonymous toggle in the composer. Check the composer and space setting at 1440 and 390 widths.
 
 **Anonymous Posting (1.7.0).** Extension id `anonymous-posting` (`includes/extensions/anonymous-posting/`). Each row is a contract: verify the UI behavior AND the server-side effect.
@@ -2533,7 +2533,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 
 ### E.pro-cli
 **Covers:** pro:includes/cli/**
-**Verified:** 64212bb5 pro:4d9b361
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** On the dev site run `wp jetonomy-pro` for each command group (extension, polls, reactions, messaging, webhooks, and the rest), then `wp jetonomy-pro journeys` (or the equivalent qa subcommand) for all extension journeys. Confirm every journey passes, output names roles and extensions plainly, a disabled extension is skipped rather than failing, and debug.log stays empty. Any failure blocks the Pro walk.
 
 **Checks:**
