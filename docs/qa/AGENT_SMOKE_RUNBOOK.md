@@ -591,6 +591,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-reply-create.22` @member #ui +long: reply on a topic with more replies than one page -> the new reply is visible straight away (scrolled to or loaded) instead of only the count changing.
 - `c-member-reply-create.23` @space_banned #ui !refuse +banned: omar opens a topic in Off-Topic Lounge -> a banned message, not 'Topic not found'; POST /replies returns jetonomy_user_space_banned.
 - `c-member-reply-create.24` @member #ui +empty: submit an empty reply -> an inline 'Write your reply before posting.' under the editor, announced to screen readers, nothing posted; POST /replies with empty content returns 400 'Reply content is required.'.
+- `c-member-reply-create.25` @member #rest !refuse +empty: POST /posts/<id>/replies with content `<p> </p>` or `<p>&nbsp;</p>` (markup but no text), and PATCH an existing reply or topic to the same -> 400 "Reply content is required." / "Post content is required.", nothing stored or changed; a reply that is only an image is accepted.
 
 ### C.member.reply-quote
 **Covers:** templates/partials/reply-card.php, assets/js/view.js, assets/js/composer.js
