@@ -3925,10 +3925,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
     min-inline-size: var(--jt-tap);
     justify-content: center;
   }
-  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-notif-item__select) {
+  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-notif-item__select, .jt-in-reply-to) {
     position: relative;
   }
-  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-notif-item__select)::after {
+  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-notif-item__select, .jt-in-reply-to)::after {
     content: "";
     position: absolute;
     inset-block: min(0px, calc((100% - var(--jt-tap)) / 2));
