@@ -2,10 +2,10 @@
   "journey": "C.member.connect-app",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-07T21:04:16Z",
-  "walker": "release 2.0.7 free wave-3 walk (Sonnet)",
+  "walked_at": "2026-11-10T04:47:16.552019Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
   "env": {
-    "mode": "free stack (Pro inactive)",
+    "mode": "free (Pro inactive)",
     "site": "http://localhost:8912",
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US",
@@ -83,8 +83,9 @@
       "evidence": "Offline, click connect: alert 'Something went wrong. Please try again.', button back to 'Yes, connect the app' and enabled."
     },
     "c-member-connect-app.16": {
-      "result": "untested",
-      "evidence": "ENV: BuddyNext is not installed on this stack (500 MB plugin, not mounted). Jetonomy's forwarding path was observed with a temporary stub class BuddyNext\\App\\AppConnectService (mu-plugin, removed): GET /community/connect-app/?scheme=jetonomyapp&app_name=..&app_id=x&state=abc -> 302 to <connect_url>/?app_name=Jetonomy%20app&app_id=x&scheme=jetonomyapp&state=abc, same query. Needs the real BuddyNext plugin active to pass."
+      "result": "pass",
+      "evidence": "BuddyNext 1.2.7 activated (BuddyPress/Fluent off). bob signed in, GET /community/connect-app/?app_name=Jetonomy App&app_id=<uuid>&scheme=jetonomyapp&state=abc123 -> 302 to http://localhost:8912/login/connect-app/ with the same app_name, app_id, scheme and state, ending on BuddyNext's 'Connect Jetonomy App to your account?' screen (jetonomyapp is the scheme Jetonomy registers with BuddyNext's allowlist; with scheme=jetonomy BuddyNext shows 'This connection link is not valid'). Guest: 302 to /login/?redirect_to=<the same connect-app URL>. Only the four connect parameters are forwarded (an extra foo=bar is dropped). BuddyNext deactivated afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/connect-app-buddynext.png"
     },
     "c-member-connect-app.17": {
       "result": "pass",
@@ -108,6 +109,10 @@
     {
       "check": "c-member-connect-app.9",
       "now": "POST /auth/app-connect (a fresh bridge token each) 6 times -> 429 from the 6th (cap is 5 per hour per member)."
+    },
+    {
+      "check": "c-member-connect-app.16",
+      "now": "the forward carries app_name, app_id, scheme and state only; use scheme=jetonomyapp"
     }
   ]
 }

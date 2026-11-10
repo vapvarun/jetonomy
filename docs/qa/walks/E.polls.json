@@ -2,16 +2,17 @@
   "journey": "E.polls",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:44:49Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T04:19:21.868520Z",
+  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free+Pro)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -21,16 +22,16 @@
   },
   "checks": {
     "e-polls.3": {
-      "result": "untested",
-      "evidence": "alice POST /posts/262/poll on bob's topic that already has a poll covered by 13/4; blank-option and 500-char question legs not run."
+      "result": "pass",
+      "evidence": "bob POST /posts/5315/poll: blank option -> 400 'A poll requires at least 2 non-empty options.'; 501-char question -> 400 'Poll question must be 500 characters or fewer.'; 256-char option -> 400 'Poll option must be 255 characters or fewer.'; closes_at 'next tuesday-ish' -> 400 'Invalid close date format.'"
     },
     "e-polls.4": {
       "result": "pass",
       "evidence": "bob POST /posts/262/poll a second time -> 409 jetonomy_duplicate 'This topic already has a poll.'"
     },
     "e-polls.5": {
-      "result": "untested",
-      "evidence": "alice POST /polls/4/vote option 14 -> 200 (REST only; bar/total_voters UI not viewed)."
+      "result": "pass",
+      "evidence": "alice clicked 'Thursday 09:00 UTC' on the poll: that row got jt-poll-option--voted, bar width 100%, count column '100%', meta '1 voter', radio checked, same after reload; DB vote_count 1. The option shows a percentage rather than a literal count of 1. poll-5b.png"
     },
     "e-polls.7": {
       "result": "pass",
@@ -53,57 +54,67 @@
       "evidence": "alice POST /posts/262/poll on bob's topic -> 403 jetonomy_forbidden 'You do not have permission to create a poll on this topic.' (PATCH leg not run)."
     },
     "e-polls.14": {
-      "result": "untested",
-      "evidence": "Guest POST /polls/4/vote -> 401 rest_not_logged_in (REST half); UI login prompt not viewed."
+      "result": "pass",
+      "evidence": "Logged out: results visible on the public topic (Tuesday 66.7% / 33.3%, 3 voters), radios are disabled and the meta line reads 'Log in to vote.' next to the Join the conversation login form; POST /jetonomy/v1/polls/7/vote logged out -> 401 rest_not_logged_in. poll-14.png"
     },
     "e-polls.15": {
-      "result": "untested",
-      "evidence": "bob POST /polls/99999/vote -> 404 jetonomy_not_found 'Poll not found.' (nonexistent id baseline); the Customer Advisory Board poll comparison was not run (no poll there in the seed)."
+      "result": "pass",
+      "evidence": "Poll 10 created by admin on a Customer Advisory Board topic (bob is not a member). bob POST /polls/10/vote -> 404 jetonomy_not_found 'Poll not found.', identical to /polls/99999/vote; bob GET /posts/403/poll and GET /posts/99999999/poll both 404 'No poll found for this topic.'; guest vote on both ids -> 401 rest_not_logged_in, guest GET both 404 same body. The runbook's GET /polls/{id} route does not exist (the read route is GET /posts/{id}/poll)."
     },
     "e-polls.16": {
       "result": "pass",
       "evidence": "finn POST /polls/4/vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "e-polls.1": {
-      "result": "untested",
-      "evidence": "bob created the topic 'Which day suits the monthly community call?' and POST /posts/262/poll with the three options -> 201 poll id 4 (single choice, 0 votes) via REST; composer UI Add Poll flow not walked."
+      "result": "pass",
+      "evidence": "bob in General Discussion composer: Add Poll, question 'Which day suits the monthly community call?', 3 options, Single choice, Post Topic -> topic published (/community/s/general-discussion/t/which-day-suits-the-monthly-community-call/), poll shows Tuesday/Thursday/Saturday at 0% each, '0 voters'. poll-1b.png"
     },
     "e-polls.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob entered a question and only 1 option, Post Topic -> stayed on /s/general-discussion/new/, alert 'Question and at least 2 options required.' (shown in two alert regions), DB has no topic with that title. poll-2.png"
     },
     "e-polls.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice then clicked 'Saturday 15:00 UTC' (single choice): Thursday 0%, Saturday 100%, still '1 voter'; DB option counts Thursday 0 / Saturday 1, one poll_votes row for alice. poll-6.png"
     },
     "e-polls.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Multiple choice poll (post 5315): maya ticked Astro then SvelteKit (checkboxes submit on change, there is no separate Submit) -> 50%/50%, 1 voter, same after reload; unticked both -> 0%/0%, 0 voters; DB vote_count 0 for all options, 0 vote rows, never negative. poll-8b.png"
     },
     "e-polls.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "maya in two tabs clicked 'Tuesday' at the same instant plus a double-click: results Tuesday 50%, Saturday 50%, '2 voters' (maya + alice), DB Tuesday=1 Saturday=1. Six parallel REST votes by bob for the same option -> all 200, Tuesday became 2 (exactly +1), percentages sum 100. poll-10.png"
     },
     "e-polls.17": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "omar (space-banned in Off-Topic Lounge) POST /polls/11/vote on the poll in that space -> 404 jetonomy_not_found 'Poll not found.' (space hidden), GET /posts/145/poll -> 404; DB vote_count unchanged 0/0/0."
     },
     "e-polls.18": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "390px on Reign: 480-char question and a 250-char option wrap inside the 326px poll card, docScrollWidth 390 = clientWidth, no overflowing child; Arabic question/options render direction rtl with start (right) alignment. poll-18-p1/p3/p2.png"
     },
     "e-polls.19": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "wp-admin > Jetonomy > Polls (Poll Management): list shows topic titles (e.g. 'Preferred survey cadence for the next year'), never 'Post #id'; with 24 polls it shows 20 and paging '24 polls 1 2 \u203a', page 2 lists the rest; a poll whose topic row was deleted shows an em dash in the Topic cell, no fatal or notice (a dash rather than an explicit 'Topic deleted' label). poll-19a/19b.png"
     },
     "e-polls.20": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "Contract question as the runbook depth note says: there is no 'hide results until vote' setting. No poll key in GET /settings, no polls settings route, grep of the polls extension and polls-frontend.js finds nothing; non-voters (guests and members) see counts and percentages before voting (poll-14.png, poll-5a.png). Raise with the owner: add the mode or drop the check."
     },
     "e-polls.21": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "grace on a 2-option single-choice poll via the UI: first vote -> option A 100%, '1 voter' (DB count 1); changed to option B -> A 0%, B 100%, still '1 voter' (DB A=0,B=1, 1 vote row). poll-21.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-polls.5",
+      "now": "alice votes for 'Thursday 09:00 UTC' -> that option shows 100% with a full bar (counts are shown as percentages), 'total voters' reads '1 voter', and her choice is marked (jt-poll-option--voted)."
+    },
+    {
+      "check": "e-polls.15",
+      "now": "read route is GET /posts/{id}/poll (no GET /polls/{id}); a poll in a space bob cannot see answers POST /polls/{id}/vote 404 'Poll not found.' and GET /posts/{id}/poll 404 'No poll found for this topic.', the same as a nonexistent id."
+    }
+  ]
 }

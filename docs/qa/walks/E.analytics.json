@@ -2,19 +2,22 @@
   "journey": "E.analytics",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:45:50Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T04:30:05.820244Z",
+  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free+Pro)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1881,
+      1440,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "WP admin Midnight"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
@@ -41,57 +44,63 @@
       "evidence": "bob GET /analytics/diff-report -> 403; admin -> 200."
     },
     "e-analytics.1": {
-      "result": "untested",
-      "evidence": "The admin Analytics page renders ('Community Analytics', no notices); the REST overview returns non-zero posts 28, replies 419, active_users 26, votes 1230 and change percentages for the 7d range (active_change/vote_change null); the card text was not read in the browser."
+      "result": "pass",
+      "evidence": "admin.php?page=jetonomy-pro-analytics at 1440 (30 Days active): Topics 118 (+55.3%), Replies 909 (+216.7%), Active users 26 (New), Votes 1,227 (New); cards show a percentage or 'New' when the previous period is empty. an-1.png"
     },
     "e-analytics.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "REST: topics 7d 41 <= 30d 118 <= 90d 270 (total published 280); replies 323 <= 909 <= 1270. Renamed Topic->Thread and Reply->Comment in Settings (topic_label_*/reply_label_*): cards THREADS/COMMENTS, table columns THREADS/COMMENTS, 'Unanswered Threads', 'Median time to first comment', 'Threads answered within 24h', '7.7 comments/thread'. Health row: median first reply 2d 0h, answered within 24h 24.6%. Labels restored to blank afterwards. an-2.png"
     },
     "e-analytics.3": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Clicked 7 Days, 30 Days, 90 Days in quick succession with the 7d and 30d responses artificially delayed (they resolved after the 90d one): after the last click the cards show 90d numbers (Topics 270) and only '90 Days' is active; the late 7d/30d responses did not overwrite. an-3.png"
     },
     "e-analytics.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "GET /analytics/overview?range=custom&start=2026-11-03&end=2026-11-09 -> posts 39, replies 361 = sum of daily_posts (39) and daily_replies (361); range=30d with start/end -> start/end ignored (since 2026-10-12, 118 topics); range=custom with end before start -> 400 rest_invalid_param (Invalid parameter(s): range); custom with only start -> 400."
     },
     "e-analytics.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Clicked Export CSV: download jetonomy-analytics-2026-11-10.csv (Content-Disposition attachment, text/csv), header Date,Topics,Replies,\"New Users\",Votes, 30 data rows for 2026-10-12..2026-11-10 (30 days), column sums 118 / 909 / 13 / 1227 = dashboard totals."
     },
     "e-analytics.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Top Spaces and Top Contributors each show exactly 10 rows (limit=10). With bob's display name set to 'Grace Oluwaseun Adeyemi-Whitfield-Okonkwo-Fernandez-Montgomery' (restored) the name wraps over 4-5 lines inside its cell at 1440 (cell 134px) and 390, no horizontal page scroll (docScrollWidth = clientWidth), tables fit inside their wrapper. The 'Local Chapters' part: the analytics page has no Local Chapters widget (the string does not exist in either plugin), so that sentence in the line is stale. an-8-1440.png an-8-390.png an-8-390b.png"
     },
     "e-analytics.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "Empty period (an unreachable window e.g. 2027-01-01..07, served by the real endpoints because the dashboard has no empty range): the trend chart and Top Contributors show 'No data for this period.', cards show 0 with '\u2013', no NaN/undefined, but the Top Spaces widget lists 10 spaces with 0 topics / 0 replies instead of 'No data for this period.' (the endpoint returns zero-activity spaces). Not a blank chart or NaN, but the literal 'each widget shows No data' is not met for Top Spaces. an-9.png"
     },
     "e-analytics.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Aborting the analytics requests: panel shows 'Could not reach the server. Check your connection and reload.'; a 500 response: 'Could not load analytics. Try refreshing the page. (500)'. Observation: cards show '--' and the trend stays 'Loading...' while the two ranked lists read 'No data for this period.' during the error. an-10a/b.png"
     },
     "e-analytics.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "At 1881px: .jtp-analytics max-width 'none', container right edge 1861 = wrap right edge 1861 (left 182), no #jtp-diff-panel and no 'Verify dual-path' text. an-11.png"
     },
     "e-analytics.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "390px: the four cards stack in one column (left 10, width 368), 7/30/90 Days and Export CSV (40px high, left 10) stay on screen and are tappable, tables sit inside their wrapper (338 of 368px), document scrollWidth 390, no element wider than the viewport. an-15a/15b.png"
     },
     "e-analytics.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "WordPress core has no dark admin; with the dark admin scheme Midnight (restored to modern) the analytics content stays on light panels: tile values rgb(29,35,39) on white (15.9:1), chart axis labels rgb(100,105,112) on white (5.5:1), emulated prefers-color-scheme dark changes nothing. Readable; the page has no dark variant of its own. an-16-midnight.png"
     },
     "e-analytics.17": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "The aggregate table wp_jt_pro_analytics_aggregate has 0 rows on this stack (truncated copy kept and removed after); the dashboard and REST still report 118 topics / 909 replies for 30d, i.e. counts come from the live tables. an-17.png"
     },
     "e-analytics.18": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Site timezone America/Los_Angeles (restored to UTC): a topic stored at 2026-11-09 07:30 UTC (23:30 on 8 Nov local) appears under 2026-11-08 in daily_posts (UTC run: counted on 2026-11-09), and the 'View as table' trend lists '8 Nov 1 topic'. an-18.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-analytics.8",
+      "now": "drop the 'Local Chapters appear only when active in range' clause: no Local Chapters widget exists; the ranked lists are Top Spaces and Top Contributors only."
+    }
+  ]
 }

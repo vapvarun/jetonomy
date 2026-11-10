@@ -2,10 +2,10 @@
   "journey": "E.anonymous-posting",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:52:58Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T06:22:54Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,25 +16,25 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
     "e-anonymous-posting.1": {
-      "result": "untested",
-      "evidence": "admin PATCH /spaces/20 settings {allow_anonymous:true} -> stored settings {\"allow_anonymous\":true}; done as admin over REST rather than test_editor on the Anonymous tab. Reset to {} (its original) afterwards."
+      "result": "pass",
+      "evidence": "Walked as site admin: test_editor gets 403 on /wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=20&tab=anonymous (a space admin cannot reach wp-admin; see runbook_fix). Help Desk > Anonymous tab: ticked 'Allow anonymous posts in this space' + save -> 'Anonymous posting settings saved.', settings JSON {\"allow_anonymous\":true}. With extra keys {keepme, seo:{...}} in the JSON, unticking + save -> {\"allow_anonymous\":false,\"keepme\":\"yes\",\"seo\":{...}}: merged, other keys survive, false (not removed). Screenshot anon-tab.png."
     },
     "e-anonymous-posting.3": {
-      "result": "untested",
-      "evidence": "bob POST topic 'Is it normal for my first plugin review to take three weeks?' with is_anonymous:1 in Help Desk (allowed) -> 201 with author_id 0 stored; the card/topic byline UI was not viewed."
+      "result": "pass",
+      "evidence": "bob posted 'Is it normal for my first plugin review to take three weeks?' with the checkbox ticked (UI, Post Question). As a guest: topic page has 0 occurrences of 'Bob Martinez', '/u/bob/' and 'bob.demo', byline 'Anonymous'; Help Desk listing card for it has no name, no /u/ link, no avatar image (window around the title). Screenshot anon-topic.png."
     },
     "e-anonymous-posting.6": {
       "result": "pass",
-      "evidence": "Guest page /community/u/bob/ does not contain the anonymous topic title."
+      "evidence": "Guest view of /community/u/bob/, /replies/ and /posts/: neither the anonymous topic nor the anonymous reply appears; the profile header shows 41 topics and 140 replies (non-anonymous counts; the stored counters are 43 and 141, so the anonymous ones are not revealed)."
     },
     "e-anonymous-posting.7": {
-      "result": "untested",
-      "evidence": "Guest GET /posts/338 -> author_id 0, no real id in the payload; alice's response parse failed (truncated), so the `author` object shape was not verified."
+      "result": "pass",
+      "evidence": "alice and guest GET /posts/5420 and /posts/5345/replies: author_id 0, author_name 'Anonymous', author_avatar '', author_login '', profile_url '', trust_level 0, reputation 0; no 'Bob' anywhere in the payload. The shape is flat fields, not an author object (runbook_fix). Observation: can_block_author is true on an anonymous post."
     },
     "e-anonymous-posting.10": {
       "result": "pass",
@@ -45,57 +45,71 @@
       "evidence": "Guest POST /spaces/20/posts with is_anonymous -> 401 rest_not_logged_in."
     },
     "e-anonymous-posting.12": {
-      "result": "untested",
-      "evidence": "finn POST anonymous topic in Help Desk -> 403 jetonomy_user_silenced (REST half); omar leg and UI not run."
+      "result": "pass",
+      "evidence": "finn (silenced) POST anonymous topic in Help Desk and anonymous reply -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; omar (banned) anonymous topic in Off-Topic Lounge (allow_anonymous on temporarily) -> 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.'; omar's control anonymous topic in Help Desk -> 201. Walked over REST, not the composer UI."
     },
     "e-anonymous-posting.13": {
-      "result": "untested",
-      "evidence": "admin POST /anonymous/reveal {object_type:post, object_id} -> 200 {success:true, author:{...}}; the on-page 'Reveal author' button and request-scoped display were not exercised."
+      "result": "pass",
+      "evidence": "Admin on the anonymous topic page: 'Reveal author' button (.jt-anon-reveal) -> POST /anonymous/reveal 200, page text 'Revealed: Bob Martinez'; activity log row anonymous_author_revealed user_id 1 metadata {\"real_author\":10}. Also revealed a reply (200, author id 10). Reload: bob's name is masked again. Screenshot anon-reveal.png."
     },
     "e-anonymous-posting.14": {
       "result": "pass",
       "evidence": "test_moderator and bob POST /anonymous/reveal -> 403 jetonomy_forbidden each; guest -> 400/401 param error (object_type, object_id required) before auth - guest answered 400 rest_missing_callback_param, not 401."
     },
     "e-anonymous-posting.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob in Help Desk (allowed): new-topic composer has the 'Post anonymously' checkbox (.jt-anon-toggle); on a topic page the reply toolbar has the icon button 'Reply anonymously' with aria-pressed false, true after click. General Discussion (off): new-topic composer and topic page have neither control in the DOM."
     },
     "e-anonymous-posting.4": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob replied anonymously (reply toolbar toggle) to 'Question without the retired OS field': DB reply row is_anonymous=1 with real author_id 10; guest view of the reply card shows 'Anonymous', no avatar, no /u/ link, no 'Bob Martinez' next to it."
     },
     "e-anonymous-posting.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Guest and alice: single topic, reply, space listing and search (REST /search q=plugin review and HTML /search?q=three+weeks) show Anonymous with no name, link or avatar; the space RSS /community/s/help-desk/feed/ item for it has <author>/dc:creator 'Anonymous'. Home feed: the new topic did not appear in the first 150 REST feed items or on /community/, so masking on the home feed was not observed."
     },
     "e-anonymous-posting.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice replied to bob's anonymous topic: bob got 'Alice Chen replied to your topic ...' normally. bob replied anonymously to alice's topic 5421: GET /notifications as alice -> type reply_to_post, actor_id null, actor_name 'Anonymous', message 'Anonymous replied to your topic ...'; DB row actor_id 10, actor_anonymous 1; Mailpit email 'Anonymous replied to your topic' contains no 'Bob'."
     },
     "e-anonymous-posting.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice replied with parent_id (reply-to) on bob's anonymous reply: guest HTML of that thread has no 'Bob Martinez' or /u/bob/ near it; the anonymous topic's head has no article:author meta and JSON-LD author is {\"name\":\"Anonymous\"}; no 'Bob' anywhere in its HTML."
     },
     "e-anonymous-posting.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "After the admin reveal, reloading as admin (and viewing as guest/alice) shows 'Anonymous' again: reveal is page-view scoped."
     },
     "e-anonymous-posting.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob PATCH edit of his anonymous topic: still author_name Anonymous, is_anonymous 1. Admin move to General Discussion (anonymity off) via POST /posts/{id}/move {target_space_id}: stays anonymous (is_anonymous 1, shown as Anonymous, real author_id kept); the move response and notifications carry no real name. Rule observed: moving keeps it masked. Moved back."
     },
     "e-anonymous-posting.17": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice reported the anonymous topic (POST /flags): test_moderator's GET /moderation/flags entry shows only reporter alice, no author fields and no 'Bob'; the 'New report needs review' email to moderators has no 'Bob'. The admin flags payload carried no author either (the real author is available through the Reveal action, which is how an admin resolves identity). Flag dismissed afterwards."
     },
     "e-anonymous-posting.18": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "With the Anonymous Posting extension switched off: existing anonymous topic still masked for alice and for guests (author_name Anonymous, empty avatar/profile_url, 0 occurrences of Bob Martinez in HTML); bob's Help Desk composer has no toggle and no reply icon button. Re-enabled afterwards."
     },
     "e-anonymous-posting.19": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "390px with the Reign dark mode on: new-topic 'Post anonymously' label 172x44 px, reply icon button 40x40, byline 'Anonymous' text rgb(204,204,205) on rgb(35,38,47) (high contrast); no overflow. Light mode screenshot was taken with dark already persisted from the browser, so only dark contrast was measured numerically. Screenshots anon-composer-390-light.png, anon-composer-390-dark.png."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-anonymous-posting.7",
+      "now": "REST shape is flat: author_id 0, author_name \"Anonymous\", author_avatar \"\", author_login \"\", profile_url \"\", trust_level 0, reputation 0 (no author object)"
+    },
+    {
+      "check": "e-anonymous-posting.14",
+      "now": "only manage_options can reveal: moderator, space admin, member, guest get 403/401 (runbook prose says moderator or admin)"
+    },
+    {
+      "check": "e-anonymous-posting.1",
+      "now": "the Anonymous tab is wp-admin only: test_editor (space admin of another space) gets 403 on the space edit screen; walked as site admin"
+    }
+  ]
 }

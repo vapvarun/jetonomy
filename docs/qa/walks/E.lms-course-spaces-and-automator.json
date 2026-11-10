@@ -2,10 +2,10 @@
   "journey": "E.lms-course-spaces-and-automator",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:53:54Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T06:15:37Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,58 +16,64 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
     "e-lms-course-spaces-and-automator.1": {
-      "result": "untested",
-      "evidence": "Needs an LMS (LearnDash/Tutor, both installed inactive) activated and a course published plus Uncanny Automator (not installed); not done in this pass."
+      "result": "pass",
+      "evidence": "LearnDash activated; Settings > Integrations: 'auto create space' for LearnDash ticked, type Forum, Save Settings (persists). Published course 'Introduction to WordPress Plugin Development' (WP-CLI post create, sfwd-courses) -> exactly one space (id 238) titled like the course, type forum, visibility private, plus access rule membership ld_course_65 grants participate, role member. Visibility is not a setting on that tab (always private)."
     },
     "e-lms-course-spaces-and-automator.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Course set to draft, then republished, content edited, title re-saved: still exactly 1 space and 1 access rule for ld_course_65."
     },
     "e-lms-course-spaces-and-automator.3": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice enrolled (ld_update_course_access): space opens (REST 200, 'You have access through <course>', 2 members), she posted a topic; the LearnDash course page /courses/introduction-to-wordpress-plugin-development/ shows a 'Course discussion' link to /community/s/introduction-to-wordpress-plugin-development/. Screenshot lms-course-alice.png."
     },
     "e-lms-course-spaces-and-automator.4": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "bob (not enrolled): search /community/search/?q=Introduction... lists the space card; opening /community/s/<slug>/ shows only the locked teaser 'Included with Introduction to WordPress Plugin Development (Course). You get access as soon as you join...' with a 'Get <course>' link and no topics (PASS parts). REST GET /spaces?per_page=100 as bob DOES list space 238 (is_member:false, visibility private); the check says REST /spaces does not list it. The wave-3 ruling ('private spaces are listed to members as locked previews') suggests the check line is out of date. The /community/spaces/ directory URL used here did not contain it (the page may paginate); My Spaces link not located. Guests do not get it in REST."
     },
     "e-lms-course-spaces-and-automator.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice posted a topic in the course space, then ld_update_course_access(remove): GET /spaces/238 -> 403 at once, her membership row gone, her topic still there (1); re-enrol: 200 member and the topic is listed again."
     },
     "e-lms-course-spaces-and-automator.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Course to draft: space 238 stays active and private, the rule is kept and the Access Rules screen flags it 'Course no longer available - It was deleted, trashed or unpublished, so nobody can get it and this rule lets nobody in. Publish it again or delete this rule.'; alice gets 403. Republish: still 1 space and 1 rule. Force-deleting the course also left the space active with its rule. (A brand-new course with the same title is a different level and gets its own space, as expected.)"
     },
     "e-lms-course-spaces-and-automator.7": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "No bulk 'create spaces for existing courses' action exists in Settings > Integrations or the Pro CLI (searched), so there is nothing to run twice; idempotence of provisioning itself was shown in check 2. Recorded as not offered."
     },
     "e-lms-course-spaces-and-automator.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Learnomy inactive, admin POST /learnomy/course-discussion -> 400 'Learnomy is not active.'. With Learnomy 1.8.0 active and a course row owned by test_author: test_editor on that course -> 403 jetonomy_pro_forbidden_course 'You can only change courses you own.'; admin on course 999999 -> 404 'That course could not be found.'; guest 401. BUT the real owner (test_author) enabling the discussion on their own published course -> 500 critical error: PHP Fatal 'Undefined constant Learnomy\\Models\\Course::HIDDEN_VISIBILITIES' in jetonomy-pro class-learnomy-integration.php:1309 (space_visibility, called from create_space_for_course). Product bug: Pro 2.0.7 is incompatible with Learnomy 1.8.0 on this path. Learnomy deactivated afterwards."
     },
     "e-lms-course-spaces-and-automator.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Uncanny Automator (free) active; built a recipe through its own REST builder (trigger: 'A user's role in any space changes', actions added with item/action/add). Recipe live; promoting/demoting test_editor in Troubleshooting fired it: 'Add the user to Off-Topic Lounge' -> test_editor became a member of space 17, recipe log completed; 'Change the user's role in Off-Topic Lounge to Moderator' -> role moderator; 'Remove the user from Off-Topic Lounge' -> row removed; each recipe-log row completed=1. (Automator needed all other heavy plugins off: activating it with LearnDash and PMPro hit the 128M PHP memory limit; environment.)"
     },
     "e-lms-course-spaces-and-automator.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "The 'role changed' trigger: 4 consecutive role changes of test_editor in Troubleshooting (member, admin, member, admin) each produced exactly +1 recipe-log row. Observation: one change made right after I edited the recipe produced 2 log rows with the same timestamp (IDs 2 and 3) and was not reproducible in 6 further changes."
     },
     "e-lms-course-spaces-and-automator.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Action 'Change role' with role superadmin -> recipe log 'completed with errors' (completed=2), Automator error log: 'Invalid role. Allowed: viewer, member, moderator, admin.', role unchanged. Action 'Add the user to space 99999' -> completed with errors, error log 'That space no longer exists.', no row created. Note: 'Remove the user from space 99999' is logged as plain Completed (nothing to remove). A role above the rule's role cannot be expressed in the recipe UI, so only the invalid-role case was run."
     },
     "e-lms-course-spaces-and-automator.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Course with a 96-character title: the space page at 390px has no horizontal overflow (scrollWidth 390) and the title wraps within the 96-346px column (screenshot lms-space-390-light.png). Dark mode via the Reign toggle was verified on the locked-teaser component of the same course/space family (dark cards and tokens), not repeated for this exact enrolled header."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-lms-course-spaces-and-automator.4",
+      "now": "REST /spaces lists the private course space to a signed-in non-enrolled member (is_member false, a locked preview); it is not listed to guests"
+    }
+  ]
 }

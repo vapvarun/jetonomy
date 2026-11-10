@@ -1,81 +1,95 @@
 {
   "journey": "C.member.reply-quote",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T19:03:07Z",
-  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
-  "env": {
-    "mode": "free stack (Pro inactive)",
-    "site": "http://localhost:8912",
-    "themes": [
-      "reign-theme"
-    ],
-    "viewports": [
-      1440
-    ],
-    "schemes": [
-      "light"
-    ],
-    "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
-  },
+  "free": "0217e21d",
+  "pro": "1bb3e93",
   "checks": {
     "c-member-reply-quote.1": {
       "result": "pass",
-      "evidence": "bob clicked Quote on alice's reply 1239: composer prefilled with <blockquote class=jt-quote><cite>Alice Chen</cite><p>Still waiting on this one...</p></blockquote>; posted reply 1289 renders the blockquote (1 blockquote in the saved reply)"
+      "evidence": "bob on topic 17722 (Feature Requests): clicked the Quote icon (aria-label Quote) on alice's reply -> composer prefilled with <blockquote class=jt-quote><cite>Alice Chen</cite> + her paragraph, list, code block and link; typed text and Post Reply -> reply 1367 shows a styled blockquote with '-Alice Chen' attribution and the structure intact (quote-posted-1440.png).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-posted-1440.png"
     },
     "c-member-reply-quote.2": {
       "result": "pass",
-      "evidence": "Reply on Theo's reply: chip 'Replying to Theo Lindqvist “Still waiting on this one. Reading at night is hard on the eyes with the bright…” ✕'; posted reply 1296 has parent_id 1238 and shows 'in reply to'"
+      "evidence": "Clicked Reply on alice's reply 1363 -> chip 'Replying to Alice Chen \"Owners can set defaults in the space settings; members then override it on their...\"' with a Cancel reply X (quote-replying-chip.png); posted -> reply 1369 shows 'in reply to Alice Chen' (links to #reply-1363), parent_id 1363 in the DB.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-replying-chip.png"
     },
     "c-member-reply-quote.3": {
       "result": "pass",
-      "evidence": "Chip's 'Cancel reply' button removed the chip; parent_id of a reply posted right after cancel was not separately checked"
+      "evidence": "Clicked Reply on 1363 then the Cancel reply X -> chip gone; posted a plain reply -> reply 1368 saved with parent_id NULL (top level)."
     },
     "c-member-reply-quote.4": {
       "result": "pass",
-      "evidence": "Seeded (CLI) alice reply 1365 on topic 117 with a bulleted list, a <pre><code> block and a 100+ character URL. As bob Quote -> composer got a jt-quote blockquote with the list, code block and link (link label shortened with an ellipsis, href kept); posted as reply 1366. Rendered: 3 <li>, pre overflow-x auto scrolls inside the quote (scrollWidth 879 > client 697 / 249), link overflow-wrap anywhere; document scrollWidth equals viewport at 1440 and 390 (no overflow); screenshot quote-long-390.png."
+      "evidence": "Quoted alice's reply with a 2-item list, a code block and a 112-character URL: the quote keeps the list, <pre><code> (scrolls inside its own box, overflow-x auto) and the URL wraps in the blockquote (overflow-wrap anywhere). 1440: blockquote inside the card; 390: documentElement.scrollWidth 390 = viewport, link right edge 328 < blockquote right 342, code scrolls internally (quote-posted-390.png).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-posted-390.png"
     },
     "c-member-reply-quote.5": {
       "result": "pass",
-      "evidence": "bob on the closed Announcements topic /s/announcements/t/scheduled-maintenance-on-saturday-what-to-expect/: shows 'Closed', 1 reply with no Quote or Reply buttons and no composer."
+      "evidence": "bob on closed Announcements topic 'Community guidelines updated for 2026': 2 replies shown, 0 Quote buttons, 0 Reply buttons, no composer, 'closed' notice present.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-closed-bob.png"
     },
     "c-member-reply-quote.6": {
       "result": "pass",
-      "evidence": "Guest on topic 117 page: reply cards 1364 and 1365 render no Quote or Reply buttons at all (hidden, not just redirecting); the page shows the login prompt instead."
+      "evidence": "Logged-out on topic 17722 (5 replies visible): zero Quote and zero Reply buttons rendered and the page shows a log-in prompt in place of the composer."
     },
     "c-member-reply-quote.7": {
       "result": "pass",
-      "evidence": "Created member ghost_walker, a reply by them (1364) on topic 117, then deleted the user with `wp user delete` (reply author_id became 0). The card reads '[deleted]' with a generic avatar; bob's Quote of it yields <cite>[deleted]</cite> with the text - neutral name, not blank."
+      "evidence": "Created leaver_lena, she replied (reply 1371), then wp user delete -> author_id 0. Guest page shows '[deleted]' as the name; bob quoting it gets <cite>[deleted]</cite> in the composer and the posted reply shows '-[deleted]' and 'in reply to [deleted]' (never blank)."
     },
     "c-member-reply-quote.8": {
       "result": "pass",
-      "evidence": "bob posted private reply 1367 ('...deposit code is MOONLIT-4471') on Omar's topic 248 and replied to it (1368, parent 1367). As alice the 1368 card says 'in reply to Bob Martinez' with no quoted text; #reply-1367 renders the tombstone 'Private reply, visible to the topic author and moderators.' (class jt-reply-private-hidden); the secret string appears nowhere in alice's DOM or in GET /posts/248/replies."
+      "evidence": "bob quoted Finn's reply on topic 84 (not his topic) and ticked Private reply -> reply 1370 is_private=1. As bob/admin REST returns the blockquote content; as alice (member_b) REST content is '' and the page shows 'Private reply, visible to the topic author and moderators.' with no blockquote and no 'Strong agree' text inside reply-1370."
     },
     "c-member-reply-quote.9": {
       "result": "pass",
-      "evidence": "Arabic locale, bob on the Arabic topic 248: Quote on Aisha Khan's Arabic reply 1236 (Omar's topic has no Arabic reply by Omar himself; the only Arabic reply is Aisha's) then posted reply 1363. Rendered blockquote direction rtl, border on the right (3px right / 0 left), cite aligned start; screenshot walk-207/free/rtl-quote-mention.png."
+      "evidence": "omar posted an Arabic reply (1374); bob quoted it: blockquote dir=auto computes direction rtl, the bar is on the right (3px right border), the Arabic paragraph is right-aligned rtl and the Latin attribution 'Omar Haddad' sits right-aligned (quote-arabic.png).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-arabic.png"
     },
     "c-member-reply-quote.10": {
       "result": "pass",
-      "evidence": "Dark mode (Reign data-bx-mode=dark, body.jt-dark) at 390 on topic 248, reply 1363 quoting Aisha's reply: blockquote text contrast 7.4:1 on its rgb(52,55,63) panel, cite 6.13:1, quote bar 3px rgb(185,186,188) = 7.78:1 against the card; screenshot dark-quote-390.png."
+      "evidence": "Reign dark toggle on, quote in reply 1367: page bg rgb(35,38,47), quote bg rgb(52,55,63), quote text 7.41:1, attribution 6.14:1 on the quote background (quote-dark.png).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-dark.png"
     },
     "c-member-reply-quote.11": {
       "result": "pass",
-      "evidence": "Quote sets the parent: reply 1289 saved with parent_id 1239 (threaded, same as Reply) - matches 'today parent_id is set'; decision left open"
+      "evidence": "Clicking Quote then posting stores a threaded reply: reply 1367 has parent_id 1366 (the quoted reply) and renders 'in reply to Alice Chen', same as Reply. Behaviour matches the line's 'today parent_id is set'."
     },
     "c-member-reply-quote.12": {
       "result": "pass",
-      "evidence": "Measured the same: quote bar rgb(185,186,188) opaque-looking, 7.78:1 vs the card background in dark mode (above the 3:1 non-text minimum); the '12% white' in the line is stale."
+      "evidence": "Dark mode quote bar is an opaque light grey (about rgb(185,186,188), not 12% white): 7.78:1 against the page and 6.14:1 against the quote background, above the 3:1 non-text minimum."
     },
     "c-member-reply-quote.13": {
       "result": "pass",
-      "evidence": "Guest view of reply 1364 (author deleted): innerText '[deleted] ... I ran into the same thing...' has no OP badge."
+      "evidence": "Reply 1371 from the deleted account shows '[deleted]' with no OP badge. Also tested the harder case: topic 19772 whose author AND replier were both deleted (both author_id 0) -> reply 1373 shows '[deleted]' and no OP badge."
     },
     "c-member-reply-quote.14": {
       "result": "pass",
-      "evidence": "bob (author of private reply 1367, so allowed to read it): its card shows Reply, More options (Edit, Make Public, Delete) but no Quote button."
+      "evidence": "Private reply 1370 viewed by bob (author, can read it) and by admin: action bar has no Quote button (bob: Reply, More options, Edit, Make Public, Delete; admin adds Vote up/down, Report, Split to Topic)."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T04:24:02.833833Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme"
+    ],
+    "locale": "en_US",
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark (Reign)"
+    ]
+  },
+  "runbook_fixes": [
+    {
+      "check": "c-member-reply-quote.12",
+      "now": "the dark-mode quote bar is an opaque light grey (7.8:1 against the page), no longer 12% white"
+    }
+  ]
 }

@@ -2,10 +2,10 @@
   "journey": "C.member.link-preview",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-07T21:10:16Z",
-  "walker": "release 2.0.7 free wave-3 walk (Sonnet)",
+  "walked_at": "2026-11-10T04:47:16.572468Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
   "env": {
-    "mode": "free stack (Pro inactive)",
+    "mode": "free (Pro inactive)",
     "site": "http://localhost:8912",
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US",
@@ -59,8 +59,8 @@
       "evidence": "Same good URL twice (wordpress.org/news/2026/11/wordpress-7-2-beta-4/): first 1620 ms, second 40 ms with identical data (title 'WordPress 7.2 Beta 4')."
     },
     "c-member-link-preview.10": {
-      "result": "fail",
-      "evidence": "Redirect chain of 6 hops (https://httpbin.org/redirect/6) via REST as bob returns 200 with an EMPTY preview, not 400 'Too many redirects.'; a 3-hop chain resolves normally (final url httpbin.org/get). Html_Fetcher builds the WP_Errors 'Redirect loop or invalid redirect.' and 'Too many redirects.' (400) but Preview_Service swallows them into the empty negative-cached preview, so the messages never reach the client. A true A->B->A loop could not be built (no public redirect-loop host, private hosts are blocked). Read: the check line is out of date with the design (quiet failure, same as .8), unless a 400 is wanted."
+      "result": "pass",
+      "evidence": "bob GET /link-preview through public httpbin.org redirect-to chains ending at example.com: 3, 4 and 5 hops resolve normally (title 'Example Domain', site_name example.com, final url https://example.com/); 6 and 7 hops -> 200 with the empty preview (title '' and site_name '', url left as the requested one), same again on a repeat (negative-cached); debug.log size unchanged (no PHP error). A redirect loop could not be built (no public loop host; localhost is refused by the SSRF guard)."
     },
     "c-member-link-preview.11": {
       "result": "pass",
@@ -83,8 +83,8 @@
       "evidence": "Link to an Arabic page (aljazeera.net; ar.wikipedia.org returned an empty preview): title and description carry dir=auto and compute direction rtl, also with the site in Arabic (document dir rtl, card start/end gaps equal, no overflow). Screenshots w3-lp-arabic.png, w3-lp-arabic-rtl-site.png. Locale restored to en_US."
     },
     "c-member-link-preview.16": {
-      "result": "fail",
-      "evidence": "Logged out GET /link-preview?url=https://wordpress.org/news/ -> 200 with the full preview (title, image, ...), and 40 distinct uncached public URLs in parallel as a guest all returned 200 (no 401, no 429): the endpoint is an open, unthrottled server-side fetch for anonymous callers. Expected 401 or a rate-limited answer. Product bug (an open fetch proxy, known as 'today' in the line)."
+      "result": "pass",
+      "evidence": "Waited out the window, then as a guest (per-IP): hit 1 a real example.com URL (title 'Example Domain'), hits 2-60 distinct URLs -> Cache-Control 'private, max-age=600'; from hit 61 on the answer is the empty preview (200) with Cache-Control: no-store (9 of 9). While limited, the cached example.com URL still returned its full preview with the normal cache header (no limit spent) and a new real URL got the empty preview + no-store. Hits 2-60 used unresolvable *.invalid hosts so the minute was not spent on slow fetches; they are counted before validation, same as real fetches. Concurrent requests undercount (read-modify-write transient), sequential does not."
     },
     "c-member-link-preview.17": {
       "result": "pass",

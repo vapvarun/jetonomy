@@ -1,94 +1,140 @@
 {
   "journey": "C.site.host-integrations",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:04:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
-  "walked_before_change": true,
-  "env": {
-    "themes": [
-      "reign"
-    ],
-    "viewports": [
-      1440
-    ],
-    "schemes": [
-      "light"
-    ]
-  },
+  "free": "11e21b47",
+  "pro": "05e4a11",
   "checks": {
     "c-site-host-integrations.1": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "Reign active, bob and admin on /community/ at 1440: inherits Reign's Inter font and accent #1d76da; Settings > Appearance > Container Width: Theme default = #jetonomy-app 1170px wide, saved Custom width 900 -> the page is 900px wide after reload (screenshots host-reign-home-default.png / host-reign-home-900.png). Note: Free has no sidebar-position setting (only Container Width, Page Padding, Layout Density); the community sidebar stays on the right.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-reign-home-900.png"
     },
     "c-site-host-integrations.2": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "BuddyX 5.0.2 and Twenty Twenty-Five, bob, /community/ and Grace's long topic at 1440 and 390: one visible h1 per page (Community / topic title), only the Jetonomy sidebar (.jt-sidebar) shows, no theme sidebar and no duplicate heading; BuddyX uses Open Sans and its red accent, TT5 uses Manrope (screens host-buddyx-home-1440.png, host-tt5-home-1440.png). The tall header menu is the seeded 23 QA pages, not Jetonomy.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-buddyx-home-1440.png"
     },
     "c-site-host-integrations.3": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "As admin in Settings > Appearance picked Custom width 900 and saved; guest-visible /community/ reload shows 900px instead of 1170px, no stale page (no page cache on the stack). Reset to Theme default afterwards. No sidebar-position setting exists to change.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-reign-home-900.png"
     },
     "c-site-host-integrations.4": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "BuddyPress 14.5.2 active (groups, activity, xprofile on): /members/bob/forum/ shows tab 'Forum' with 14 TOPICS, 73 REPLIES, 778 REPUTATION, LEVEL 4 and bob's recent topics; /community/u/bob/ shows 778 reputation, 14 topics, 73 replies, Leader trust level 4 - identical. Tab is named Forum (not 'Jetonomy').",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-bp-bob-forum.png"
     },
     "c-site-host-integrations.5": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "New member dana_new: /members/dana_new/forum/ shows 0 TOPICS / 0 REPLIES / 0 REPUTATION and 'No forum topics yet.'; debug.log gained no PHP notice from this view.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-bp-newbie-forum.png"
     },
     "c-site-host-integrations.6": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "With BuddyPress + Groups active, admin Settings > Integrations has a BuddyPress card with two checked boxes (Broadcast topics to group activity, Round-trip activity comments). With BuddyPress off the Integrations tab still exists (it also carries the Wbcom companion cards) but the BuddyPress card and form are gone (#jetonomy-integrations-form absent). The tab itself is not hidden, the BuddyPress settings are.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-integrations-tab-bp-on.png"
     },
     "c-site-host-integrations.7": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "Linked BP group 'Feature Requests Crew' to Feature Requests (space 12), removed bob from the space, then bob clicked Join Group in the UI -> button became Leave Group and jt_space_members got bob in space 12. Same click on a group linked to the archived 2025 Hackathon -> joined the group, NOT added to space 40; debug.log: '[Jetonomy] BP member join sync: You cannot join this space.' Locked-space variant not separately run (same add_unless_blocked gate)."
     },
     "c-site-host-integrations.8": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "omar (space_ban on Off-Topic Lounge, member row removed first) joined BP group 'Lounge Regulars' linked to space 17 in the UI -> group join succeeded, no row in jt_space_members for omar/17.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-omar-group.png"
     },
     "c-site-host-integrations.9": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "Installed + activated FluentCommunity 2.13.0, paired FC space 'Makers Workshop' with General Discussion (jetonomy_fc_space_pairs). dana_new clicked Join in the FC portal space -> wp_fcom_space_user row and a jt_space_members row for General Discussion appeared at the same second. /community/s/general-discussion/ shows '<- Back to Makers Workshop' banner linking to /portal/space/makers-workshop and fluent-community.css loads. The community keeps the host theme's (Reign) fonts and colours; Fluent contributes the banner/links, not a colour palette.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-fluent-space-banner.png"
     },
     "c-site-host-integrations.10": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "With BuddyPress and FluentCommunity both deactivated: /community/, a space, a topic and /community/u/bob/ all 200 with no fatal/warning/notice text; no PHP error in debug.log; the BuddyPress settings card is gone (see .6)."
     },
     "c-site-host-integrations.11": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "Reign dark toggle on /community/: body rgb(35,38,47); space titles rgb(229,229,229) on rgb(35,38,47) = 12.0:1; cards/borders adopt the dark palette (host-reign-dark.png). BuddyX 5.0.2 has no site-wide dark mode (only a LearnDash dark toggle) and ignores prefers-color-scheme, so there is nothing to adopt there; the community stays light and readable (17.7:1).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-reign-dark.png"
     },
     "c-site-host-integrations.12": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "fail",
+      "evidence": "390px on Reign, BuddyX, Twenty Twenty-Five, /community/ and the long topic: scrollWidth = 390 everywhere (no horizontal scroll) and every Jetonomy button/input is >= 40px (3-29 controls per page). BUT tag chips (.jt-tag, 112-151 x 28px) on /community/, and the Reign colour-mode toggle (32x32) and header user link (30x30), are under 40px tall; sidebar text links are 17-22px. The no-overflow half holds; the blanket 40px tap-target claim does not for tag chips. Read: minor product gap or a line that should say 'primary controls'."
     },
     "c-site-host-integrations.13": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "Grace's 159-character topic on Reign (also with reign_site_layout=boxed theme-mod set, restored after): title wraps to 4 lines at 1440 and 5 at 390 with no overflow (h1 scrollWidth <= clientWidth, documentElement.scrollWidth 390); breadcrumb carrying the long title wraps; the topic URL slug (158 chars) never appears as an unbroken string. The boxed mod did not visibly change Reign's container here.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-reign-boxed-long-1440.png"
     },
     "c-site-host-integrations.14": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "Site language Arabic on Reign: html dir=rtl lang=ar; sidebar moves from the right (x 986-1266 in LTR) to the left (x 174-454), nav tabs, cards and the title mirror (host-reign-rtl.png). Restored to en_US.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-reign-rtl.png"
     },
     "c-site-host-integrations.15": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "wp maintenance-mode activate: guest GET / and /community/s/announcements/ in Chromium -> 503 'Briefly unavailable for scheduled maintenance. Check back in a minute.', no #jetonomy-app; curl of /community/, /community-sitemap.xml and /wp-json/jetonomy/v1/spaces also 503 (nothing leaks). Deactivated afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-maintenance.png"
     },
     "c-site-host-integrations.16": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "result": "pass",
+      "evidence": "Settings > General 'Community as Homepage' ticked and saved in the UI: guest / renders the community home (#jetonomy-app present, title unchanged); with maintenance mode on, / returns the 503 maintenance page (see .15). Unticked afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/host-front-page-guest.png"
+    },
+    "c-site-host-integrations.17": {
+      "result": "fail",
+      "evidence": "Settings > Appearance (Theme Integration, Logo, Color Palette, Layout, Custom CSS) has no Sidebar option at all, and grep of includes/ and assets/ finds no hide-sidebar setting; the Layout card only has Container Width, Page Padding, Layout Density. On BuddyX /community/ shows only the Jetonomy sidebar anyway (no theme sidebar). The setting this line describes does not exist at 0217e21d. Read: out-of-date check line (or a removed feature)."
     },
     "c-site-host-integrations.18": {
       "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
-    },
-    "c-site-host-integrations.17": {
-      "result": "untested",
-      "evidence": "env: needs theme switching/plugins not walked"
+      "evidence": "ENV: the Divi theme and Divi Theme Builder are paid and not installed on this stack; needs Divi installed with a global header/footer."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T04:17:17.339766Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme",
+      "buddyx",
+      "twentytwentyfive"
+    ],
+    "locale": "en_US + ar (RTL)",
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark (Reign)"
+    ]
+  },
+  "runbook_fixes": [
+    {
+      "check": "c-site-host-integrations.1",
+      "now": "only Container Width, Page Padding and Layout Density exist in Free (no sidebar-position setting); drop 'and sidebar'"
+    },
+    {
+      "check": "c-site-host-integrations.3",
+      "now": "change Container Width in Settings > Appearance; there is no sidebar position"
+    },
+    {
+      "check": "c-site-host-integrations.4",
+      "now": "the BuddyPress profile tab is named 'Forum' (/members/<user>/forum/)"
+    },
+    {
+      "check": "c-site-host-integrations.6",
+      "now": "the Integrations tab is always present (companion cards); with BuddyPress active it adds a BuddyPress card with the two checked checkboxes, which is absent when BuddyPress is off"
+    },
+    {
+      "check": "c-site-host-integrations.9",
+      "now": "Fluent Community adds a back-to-space banner, profile link and join sync; colours still come from the host theme, not Fluent"
+    },
+    {
+      "check": "c-site-host-integrations.11",
+      "now": "Reign only: BuddyX 5.0.2 has no site-wide dark mode"
+    }
+  ]
 }

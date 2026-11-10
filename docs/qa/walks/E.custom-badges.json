@@ -2,19 +2,21 @@
   "journey": "E.custom-badges",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:46:49Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T04:35:11.143860Z",
+  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free+Pro)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
@@ -22,15 +24,15 @@
   "checks": {
     "e-custom-badges.5": {
       "result": "pass",
-      "evidence": "Guest GET /users/7/badges lists 'Conversationalist' for maya (the awarded badge) via REST; profile UI chip not viewed."
+      "evidence": "maya's profile (/community/u/maya/) shows 'Conversationalist' in the Badges strip as a jt-profile-badge--bronze chip (name, tier by class/colour); GET /badges as guest lists it while active; /community/badges/ -> 404 (no public badge list page). bd-5.png"
     },
     "e-custom-badges.6": {
       "result": "pass",
-      "evidence": "alice's badge list (GET /users/9/badges, 8 badges) does not include 'Conversationalist' (negative case)."
+      "evidence": "alice's profile does not show Conversationalist (10 badges, none of it) and GET /users/9/badges has 9 entries without it. bd-6.png"
     },
     "e-custom-badges.7": {
       "result": "pass",
-      "evidence": "admin POST /badges/12/award for maya a second time -> 409 jetonomy_duplicate 'Badge already awarded to this user.'"
+      "evidence": "Second POST /badges/13/award for maya -> 409 jetonomy_duplicate 'Badge already awarded to this user.'; DB one row; admin list Earned by stays 1."
     },
     "e-custom-badges.9": {
       "result": "pass",
@@ -45,61 +47,71 @@
       "evidence": "admin POST /badges criteria:'notanobject' -> 400 rest_invalid_param 'Invalid parameter(s): criteria'; criteria with unknown metric 'nope' -> 400 jetonomy_validation 'Invalid criteria format.'"
     },
     "e-custom-badges.1": {
-      "result": "untested",
-      "evidence": "admin POST /badges 'Conversationalist' with conditions post_count >= 25 and reply_count >= 50 -> 201 id 12 (REST); the Badge Builder form 'Badge saved.' notice not exercised."
+      "result": "pass",
+      "evidence": "Badge Builder (wp-admin > Jetonomy > Badges): name 'Conversationalist', description, Lucide icon message-circle, criteria Post Count >= 25 AND Reply Count >= 50, Save Badge (saves through REST, button shows 'Saving...') -> badge id 13 listed with 'Post Count >= 25 AND Reply Count >= 50'; the 'Badge saved.' notice was captured on the next save (Founding Member). bd-1a/1b.png"
     },
     "e-custom-badges.4": {
-      "result": "untested",
-      "evidence": "admin POST /badges/12/award {user_id:7 maya} -> 201 success (REST); the Award Badge dialog and 'Badge awarded.' alert not exercised."
+      "result": "pass",
+      "evidence": "Row Award > dialog 'Award Badge': typed 'Maya' (real keystrokes), result 'Maya Okafor (maya)', picked her, Award Badge enabled and pressed (no second confirm) -> in-page alertdialog 'Badge awarded.' + OK -> page reloaded and the Earned by count went 0 -> 1. bd-4a/4b.png"
     },
     "e-custom-badges.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Manual award only ticked, no conditions, Save Badge -> notice 'Badge saved.' and the list row shows 'Manual award only' (Founding Member). bd-2.png"
     },
     "e-custom-badges.3": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "The line is out of step with the code in two ways. The admin list on this stack shows eleven seeded defaults (Contributor, First Post, Helpful Member, Veteran, Conversation Starter, Early Adopter, Helpful Answer, Rising Star, Community Pillar, Top Contributor, Trusted Voice), not nine. And the defaults are NOT re-created whenever the table is empty: with the badges table emptied the page shows the 'No badges yet' empty state (bd-3.png); seed_default_badges() only runs on extension activation. So the 'No badges yet' state is reachable (delete all badges). Tables restored from a backup afterwards."
     },
     "e-custom-badges.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Repeatable 'Monthly Helper' (max_awards 2): POST /badges/15/award for maya twice -> 201, 201; third -> 409 jetonomy_duplicate 'This user already has this badge the maximum number of times.' (max_awards enforced on manual award); two DB rows but the list shows Earned by 1 (members, not awards)."
     },
     "e-custom-badges.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Row Revoke > 'Revoke Badge' dialog, searched Maya, Revoke Badge -> alertdialog 'Badge revoked.'; both Monthly Helper awards removed and reputation 1947 -> 1941 (bonus 3 x 2 reversed once each); DELETE /badges/15/award {user_id:7} again -> 404 'This user has not earned that badge.'. bd-10a/b.png"
     },
     "e-custom-badges.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Deactivate click -> confirm dialog 'Deactivate this badge?' Cancel/Confirm -> notice 'Badge deactivated.', row Inactive; public GET /badges no longer lists it, maya's profile page (guest) no longer shows it, 1 award row kept in the DB; Activate -> 'Badge activated.'. Note GET /users/7/badges still returned the inactive badge while it was inactive. bd-11a/b.png"
     },
     "e-custom-badges.14": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Badge 'Prolific Poster' post_count >= 30: bob had 29 topics, no award after running the evaluator (do_action jetonomy_pro_evaluate_badges; the recurring 6h Action Scheduler job is pending id 655, 10:03); bob published a topic (30) and the badge was awarded at once; running the evaluator twice more left exactly 1 row (DB) and exactly one badge_earned notification (id 2438). The job was invoked manually rather than waiting 6 hours."
     },
     "e-custom-badges.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Inserted two duplicate award rows for alice (non-repeatable First Post): profile showed 'First Post' three times; after clearing the once-only dedupe flag and running a CLI load the migration left one row (earliest) and alice's profile shows First Post once; Earned by counts distinct members. bd-15.png"
     },
     "e-custom-badges.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Badge 'Community Champion of the Year for Outstanding Helpfulness' with a 300-char description at 390px: admin list row right edge 377 < 390, no element past the viewport, doc scrollWidth 390; maya's profile strip chip 286px wide, strip right edge 338, no overflow. bd-16a/b.png"
     },
     "e-custom-badges.17": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Offline (setOffline) and Save Badge: the page stays on the form, typed values stay, and an in-page message appears: 'Save failed: the request did not reach the server. Check for an ad-blocker, security plugin, or firewall blocking http://localhost:8911/wp-json/jetonomy/v1/badges.' The line says the save is a native form POST with only the browser error; it is a REST fetch with its own message. bd-17.png"
     },
     "e-custom-badges.18": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "maya's profile badge strip at 390: no overflow (doc 390); dark mode chips use token tints (gold bg rgb(73,68,51) text rgb(231,214,163), bronze, silver, all light text on dark tinted bg). bd-18.png"
     },
     "e-custom-badges.19": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Manual award of Founding Member to maya: one badge_earned bell notification (id 2441), no email in Mailpit (badge_earned email default is off); revoke: no new notification and no email."
     },
     "e-custom-badges.20": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "'Founding Member' with Manual award only saved and listed; running the badge evaluator twice awarded it to nobody (0 rows); only POST /badges/14/award gave it to alice/maya."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-custom-badges.3",
+      "now": "the list shows the eleven seeded defaults; defaults are seeded on extension activation only, so with every badge deleted the 'No badges yet' empty state is shown."
+    },
+    {
+      "check": "e-custom-badges.17",
+      "now": "the Badge Builder saves through REST: offline it stays on the form, keeps the values and shows 'Save failed: the request did not reach the server...'."
+    }
+  ]
 }

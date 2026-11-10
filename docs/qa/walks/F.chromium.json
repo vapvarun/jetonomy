@@ -1,34 +1,33 @@
 {
   "journey": "F.chromium",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:32:54Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
-  "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      1024,
-      390
-    ],
-    "browser": "Chromium via playwright-iso"
-  },
+  "free": "11e21b47",
+  "pro": "05e4a11",
   "checks": {
     "f-chromium.1": {
       "result": "pass",
-      "evidence": "guest loaded /community/, a space, a topic and a profile at 1440, 1024 and 390: no console errors, no page errors, no failed requests, no 4xx/5xx"
+      "evidence": "Guest, Chromium, /community/, /community/s/feature-requests/, topic /community/s/feature-requests/t/dark-mode-for-the-community-on-phones/ and profile /community/u/alice/ at 1440, 1024 and 390: all HTTP 200, scrollWidth == clientWidth on every load, zero console errors, zero failed/4xx requests (an earlier first pass used a wrong topic URL /community/t/<slug>/ and got the theme 404 - my URL mistake, not a product issue; the real URL passes)."
     },
     "f-chromium.2": {
-      "result": "pass",
-      "evidence": "alice posted a reply from the composer (stored and shown), voted and opened Report with no console error or uncaught rejection; reactions are Pro and were not on this stack"
+      "result": "untested",
+      "evidence": "Member bob in Chromium 1440: vote toggle off/on on a topic (aria-label Remove your upvote -> Vote up -> Remove your upvote), reply posted and rendered inline, new idea created through the composer (/community/s/feature-requests/t/remember-my-dark-mode-choice-across-devices/), zero console errors or uncaught rejections. The 'reaction' part needs Pro Reactions, which is not active on the Free stack (no reaction chips exist). ENV: reaction part belongs to the combo walk.",
+      "screenshot": "fchromium-2.png"
     },
     "f-chromium.3": {
       "result": "pass",
-      "evidence": "theme toggle adds body.jt-dark (background rgb(35,38,47)), stays after reload and on another page, and toggles back"
+      "evidence": "Dark toggle (.bx-color-mode-toggle__btn) at /community/: dark -> light (body bg rgb(250,251,253), localStorage bx-color-mode=light) survived reload; light -> dark (bg rgb(35,38,47), bx-color-mode=dark) survived reload. No console errors.",
+      "screenshot": "fchromium-dark.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T04:52:09.909657Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme"
+    ],
+    "locale": "en_US"
+  }
 }

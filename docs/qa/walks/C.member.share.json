@@ -1,70 +1,76 @@
 {
   "journey": "C.member.share",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T19:15:22Z",
-  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
-  "env": {
-    "mode": "free stack (Pro inactive)",
-    "site": "http://localhost:8912",
-    "themes": [
-      "reign-theme"
-    ],
-    "viewports": [
-      1440,
-      390
-    ],
-    "schemes": [
-      "light"
-    ],
-    "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
-  },
+  "free": "0217e21d",
+  "pro": "1bb3e93",
   "checks": {
     "c-member-share.1": {
       "result": "pass",
-      "evidence": "bob clicked Share on the topic: .jt-share-dropdown opens fixed under the button (right edges aligned 527/527, inside viewport) with items 'Copy link', 'Twitter / X', 'Facebook', 'LinkedIn' (label is 'Copy link', lower-case l)"
+      "evidence": "bob on a topic: Share click opens a dropdown anchored under the button (div.jt-share-dropdown, button aria-expanded true) with Copy link, Twitter / X, Facebook, LinkedIn.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/share-open.png"
     },
     "c-member-share.2": {
       "result": "pass",
-      "evidence": "Copy link: clipboard.readText() = the topic URL, toast 'Link copied', dropdown closes"
+      "evidence": "Copy link -> navigator.clipboard.readText() returns the exact topic URL (http://localhost:8912/community/s/feature-requests/t/dark-mode-toggle-in-user-preferences-s12t1/) and a toast 'Link copied' shows. Read the clipboard through the Clipboard API instead of pasting into the address bar."
     },
     "c-member-share.3": {
       "result": "pass",
-      "evidence": "Each social item opened a new window: x.com intent/tweet?url=<encoded topic URL> (redirected to X login), facebook.com/sharer/sharer.php?u=<topic URL>, linkedin share-offsite url=<topic URL> (login redirect); title is passed for X"
+      "evidence": "Each item opens a new tab: Twitter / X -> x.com intent/tweet?url=<encoded topic URL>&text=<encoded title> (via the X login redirect), Facebook -> facebook.com/sharer/sharer.php?u=<encoded URL>, LinkedIn -> linkedin.com shareArticle?url=<encoded URL> (via its login redirect)."
     },
     "c-member-share.4": {
       "result": "pass",
-      "evidence": "With the dropdown open, clicking outside closed it; opening again and wheel-scrolling 700px also closed it"
+      "evidence": "With the dropdown open, scrolling the page closed it; reopened, a click outside closed it."
     },
     "c-member-share.5": {
       "result": "pass",
-      "evidence": "Escape closes the dropdown and focus is back on the Share button (jt-share-btn)"
+      "evidence": "Escape with the dropdown open -> closes, aria-expanded false and document.activeElement is the Share button."
     },
     "c-member-share.6": {
       "result": "pass",
-      "evidence": "Guest sees the same four items on the public topic"
+      "evidence": "Logged-out on a public topic: same four items, Copy link writes the topic URL with 'Link copied', Facebook opens the sharer with the encoded URL."
     },
     "c-member-share.7": {
       "result": "pass",
-      "evidence": "Partner Program topic 345 (private space): maya (space admin) opens Share -> Copy link / Twitter / Facebook / LinkedIn, the link is the same private URL. The shared URL opened by guest or by hana (not a member) returns 404 'Page not available' with no topic text in the HTML (no '15:00 UTC'), no og tags; /wp-json/oembed/1.0/embed for it returns 404 oembed_invalid_url."
+      "evidence": "alice (Partner Program member) on a Partner Program topic: Share offers the same four items and Copy link copies the same private URL (no body in it); a guest GET of that URL returns 404 with no body text (0 hits for the topic text)."
     },
     "c-member-share.8": {
       "result": "pass",
-      "evidence": "Guest GET /jetonomy/v1/oembed?url=<public topic> -> 200 {type:rich,title:'Dark mode for the community on phones',author_name:'Sofia Romano'...}; private CAB topic URL -> 404 jetonomy_oembed_not_found 'Thread not found.'"
+      "evidence": "GET /jetonomy/v1/oembed?url=<public topic> as guest -> 200 rich JSON with title 'Dark mode toggle in user preferences', author_name Aisha Khan, author_url, provider; the Partner Program topic URL and a Moderators' Room topic URL -> 404 jetonomy_oembed_not_found 'Thread not found.'"
     },
     "c-member-share.9": {
       "result": "pass",
-      "evidence": "Grace's 159-character topic (247): Share button data-post-url is the full encoded URL; Twitter item opens https://twitter.com/intent/tweet?url=<percent-encoded url>&text=<percent-encoded 159-char title>; the decoded target URL returns 200. Dropdown rect 340-527 x 488-638 at 1440 and 118-305 x 429-580 at 390, inside the viewport, scrollWidth = viewport. (First click can race hydration; a second click opened it.)"
+      "evidence": "Grace's 159-character topic: dropdown rect [340,488,527,638] inside the 1440x900 viewport; the X link carries the topic URL and the full title encoded (text=After+moving+our+12-year-old+...+search+for%3F)."
     },
     "c-member-share.10": {
       "result": "pass",
-      "evidence": "Arabic locale, 390x844, topic /s/general-discussion/t/whats-everyone-working-on-this-week-s15t1/: Share dropdown .jt-share-dropdown rect x 8-195, y 429-579 inside the viewport (390x844); screenshot rtl-share-390.png."
+      "evidence": "Site in Arabic (dir=rtl), 390x844: dropdown rect [8,429,195,580] is fully inside the viewport (8px from the edge), next to the Share button [85-155]. Language restored to en_US.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/share-390-rtl.png"
     },
     "c-member-share.11": {
       "result": "pass",
-      "evidence": "Clipboard write rejected and execCommand disabled: toast 'Could not copy the link. Copy it from the address bar.'"
+      "evidence": "With navigator.clipboard.writeText rejecting and execCommand returning false: Copy link shows the toast 'Could not copy the link. Copy it from the address bar.' instead of failing silently.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/share-clipboard-denied.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T04:36:37.328283Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme"
+    ],
+    "locale": "en_US + ar (RTL)",
+    "viewports": [
+      1440,
+      390
+    ]
+  },
+  "runbook_fixes": [
+    {
+      "check": "c-member-share.2",
+      "now": "the confirmation toast reads 'Link copied'; verify the clipboard with the Clipboard API"
+    }
+  ]
 }

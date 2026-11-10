@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.blocks-shortcodes-widgets",
   "free": "11e21b47",
-  "walked_at": "2026-11-07T20:02:08Z",
-  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
+  "walked_at": "2026-11-10T04:58:22.791030Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
   "env": {
     "themes": [
       "reign-theme"
@@ -15,9 +15,10 @@
       "light",
       "dark"
     ],
-    "mode": "free stack (Pro inactive)",
+    "mode": "free (Pro inactive)",
     "site": "http://localhost:8912",
-    "browser": "Chromium via Playwright MCP"
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
   "checks": {
     "c-admin-blocks-shortcodes-widgets.1": {
@@ -37,8 +38,9 @@
       "evidence": "Logged out: Space List, Forum Feed, [jetonomy_spaces], [jetonomy_recent_posts] and the Navigation block contain no 'Customer Advisory Board', 'Moderators Room', 'Partner Program' or topic from them; with count=60 the guest list has 90 topic-count entries and no private/hidden space."
     },
     "c-admin-blocks-shortcodes-widgets.5": {
-      "result": "fail",
-      "evidence": "Temporary page with [jetonomy_spaces count=60] and the space-list block (count 60): david (member of Partner Program, not of Customer Advisory Board) sees BOTH 'Partner Program' and 'Customer Advisory Board' (private, invite-only); bob (member of both after the reseed) sees both; admin also sees Moderators' Room and Release Planning; guest sees neither. GET /spaces as david also lists CAB (visibility private, is_member false, join_policy invite), so blocks and REST agree: private spaces are listed to every logged-in member as locked previews. Expected by the line: CAB not shown to a non-member. Product/policy decision or an out-of-date check line."
+      "result": "pass",
+      "evidence": "bob on a temporary page with the Space List block at count 60 (block default is 6, which hides everything past the first 6): 44 spaces listed = GET /spaces as bob (total 44). His own private spaces Insiders / Beta and Customer Advisory Board open normally ('Joined', Follow); Partner Program (he is not on its roster) is listed and opens as a locked preview ('Partner Program is private. Request to join and an admin will review it.'); the hidden Moderators' Room and Release Planning are absent from both the block and GET /spaces and /community/s/moderators-room/ is 404. The block cards carry no lock marker themselves; the locked state shows on the space page. Temporary page deleted.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/blocks-pp-locked-bob.png"
     },
     "c-admin-blocks-shortcodes-widgets.6": {
       "result": "pass",
@@ -82,7 +84,8 @@
     },
     "c-admin-blocks-shortcodes-widgets.16": {
       "result": "fail",
-      "evidence": "With 2,422 topics: [jetonomy_recent_posts count=50] renders in about 10-15 ms (page /walk-recent/ TTFB ~45 ms) so the time part holds, but it is NOT one query pass: a cold render of 50 rows runs 48 queries - 1 post query plus single batched queries for users, usermeta, profiles and blocked users, and 42 separate wp_options reads of the _transient_jt_gravatar... check, one per distinct author (50 different authors). A per-author lookup that could be batch-primed. Same for the forum-feed block (48 queries cold, 1 warm). Product perf finding or an over-strict line - main session decides."
+      "evidence": "Site seeded to 2,054 published topics (seed-scale + 700 copied rows), 79 distinct authors; Forum feed block (jetonomy/forum-feed count=50) as member bob on /walk-recent-50/. Times hold: browser load 136 ms first, 72 ms second, curl TTFB ~38 ms, PHP render 10 ms; 50 topic rows shown. Query shape does NOT hold on the stock install (no persistent object cache, wp_using_ext_object_cache() false): each page request, cold or warm, runs 56 queries = 1 batched post query, batched users/usermeta/profiles/blocked-users, and 50 separate single-row wp_options reads of _transient_jt_grav_chk_<author id> (one per distinct author), repeated identically on 3 consecutive fresh requests. Inside one PHP request the second render is 1 query, because the transient reads are then cached in memory. So 'warm render = one batched query pass, no per-row queries' fails across requests: a per-author lookup that could be primed with one wp_options IN() read. The [jetonomy_recent_posts count=50] shortcode renders 1 query warm. Product perf finding or an over-strict line: main session decides.",
+      "screenshot": "blocks16-recent50.png"
     },
     "c-admin-blocks-shortcodes-widgets.17": {
       "result": "pass",
@@ -111,6 +114,10 @@
     {
       "check": "c-admin-blocks-shortcodes-widgets.5",
       "now": "(if the product keeps the current listing) logged-in members see private spaces they are not members of as locked previews, the same list as GET /spaces; the check should name a space hidden from the viewer instead"
+    },
+    {
+      "check": "c-admin-blocks-shortcodes-widgets.5",
+      "now": "the Space List block shows 6 spaces by default; set count higher to compare with GET /spaces; Customer Advisory Board is open for bob (he is a member), use Partner Program for the locked preview"
     }
   ]
 }

@@ -1,73 +1,64 @@
 {
-  "journey": "A1",
-  "free": "497bb6d0",
-  "pro": "9285e63",
-  "walked_at": "2026-10-30T07:35:47Z",
-  "walker": "release 2.0.7 free walk (Sonnet)",
-  "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "themes": [
-      "reign (all checks)",
-      "buddyx and twentytwentyfive (layout/overflow sweep only: home, Help Desk, General Discussion, long topic, search, short topic at 1440/1024/390)"
-    ],
-    "viewports": [
-      1440,
-      1024,
-      390
-    ],
-    "schemes": [
-      "light",
-      "dark (Reign only)"
-    ],
-    "browser": "Chromium via playwright-iso",
-    "locale": "en_US, ar for RTL checks (restored)"
-  },
+  "journey": "A1 - Activation and first-request routing",
+  "free": "11e21b47",
+  "pro": "05e4a11",
   "checks": {
     "a1.1": {
       "result": "pass",
-      "evidence": "Deactivate+activate on the stack (not a clean install; no other fresh stack available): first requests /community/ 200, /community/leaderboard/ 200, /community/s/general-discussion/ 200 via curl, no Permalinks visit."
+      "evidence": "True clean install: after the uninstall walk (remove-data on, every Free table, option and cap gone, spaces=0) ran wp plugin activate jetonomy, then as the very first requests: /community/ 200, /community/leaderboard/ 200, /community/search/ 200 with no visit to Settings > Permalinks; a space created afterwards (Clean Install Check) answers /community/s/clean-install-check/ 200 on its first request (/community/s/general-discussion/ was 404 only because no such space existed yet).",
+      "screenshot": "a1-clean-home-1440.png"
     },
     "a1.2": {
       "result": "pass",
-      "evidence": "wp option get rewrite_rules holds community patterns: ^community/?$, ^community/s/([^/]+)/?$, category, sitemap, connect-app, invite, u/ routes (27 community-matching entries)."
+      "evidence": "After the clean activation wp option get rewrite_rules holds 27 ^community patterns including ^community/?$, ^community/s/([^/]+)/?$, ^community/s/([^/]+)/t/([^/]+)/?$, ^community/u/([^/]+)/?$, members/roadmap/mod/new, category, sitemap and connect-app routes."
     },
     "a1.3": {
       "result": "pass",
-      "evidence": "Guest /community/ HTTP 200 inside Reign: header, tab nav, welcome card (\"25 members 232 topics\"), space cards, login panel."
+      "evidence": "Guest /community/ right after the clean activation: HTTP 200 inside Reign with site header, community nav (Community, Search, Leaderboard, font size), 'Welcome to Community / Ask questions, share what you build...' and '0 members 0 topics'; no blank page or theme 404.",
+      "screenshot": "a1-clean-home-1440.png"
     },
     "a1.4": {
       "result": "untested",
-      "evidence": "Messages is a Pro module; no Messages setting in Free and the route is not registered in Free (guest/admin /community/messages/ gives the theme 404 \"Page not found\", not a community page). Needs Pro active - covered by combo walk."
+      "evidence": "Messages is a Pro module (no Messages setting or route in Free; Pro inactive on this stack). Observed on Free: /community/messages/ answers 404 with the THEME 404 page ('Page not found / GO BACK'), not a community 'page not available' page; the Messages-off case needs Pro active: covered by the combo walk.",
+      "screenshot": "a1-messages-route.png"
     },
     "a1.5": {
       "result": "pass",
-      "evidence": "GET /wp-json/jetonomy/v1/messages in Free -> 404 {\"code\":\"rest_no_route\"}; no data, no PHP notice in body."
+      "evidence": "Guest GET /wp-json/jetonomy/v1/messages with Messages absent -> 404 {\"code\":\"rest_no_route\"}; no data, no PHP notice in the body."
     },
     "a1.6": {
       "result": "pass",
-      "evidence": "With permalink_structure empty (Plain), Jetonomy Dashboard, Spaces, Settings and Moderation each show a .notice.notice-error \"your community cannot be reached while permalinks are set to Plain\" linking to options-permalink.php."
+      "evidence": "With Settings > Permalinks on Plain, as admin: Jetonomy Dashboard, Spaces, Settings and Moderation each show a notice-error 'Jetonomy: your community cannot be reached while permalinks are set to Plain. Visitors see the homepage instead.' with a 'Choose a permalink structure' link to options-permalink.php.",
+      "screenshot": "a1-plain-notice.png"
     },
     "a1.7": {
-      "result": "fail",
-      "evidence": "Plain permalinks: /?pagename=community -> HTTP 404 but the THEME 404 (\"Page not found\", Go Back button), not a community not-found page; /community/s/zzz-nope/ -> HTTP 200 serving the site homepage (the admin notice says visitors see the homepage); only /?jetonomy_route=space&jetonomy_slug=zzz-nope gives the community \"Page not available\" 404 with a Community link. Check text and behaviour disagree.",
-      "screenshot": "qa-artifacts/jt207-free/a1-7-plain-pagename.png"
+      "result": "pass",
+      "evidence": "Plain permalinks: every wp-admin screen visited (Dashboard, Posts, Plugins, Settings > General, the four Jetonomy screens) shows that same error notice with the 'Choose a permalink structure' link and no fatal; Settings > Permalinks itself shows none. Switching back to Post name through Settings > Permalinks (Save Changes; wp rewrite flush from the CLI cannot rewrite .htaccess, which the plain period had emptied) makes /community/ answer 200 again and /community/s/zzz-nope/ answer HTTP 404 with the community 'Page not available' / 'Space not found' page inside #jetonomy-app."
     },
     "a1.8": {
       "result": "pass",
-      "evidence": "wp jetonomy qa-actions run with Permalinks restored; wp-content/debug.log does not exist (zero new lines). Note: qa-actions itself reported 469/477 (8 fails: E32 x3, SM1, AX1, PV2 are HTTP 0 loopback from the wpcli container = env; SF1 'author filter ... author 23 -> 0 results' unexplained)."
+      "evidence": "After permalinks were restored and on the clean install, wp jetonomy qa-actions ran and wp-content/debug.log gained zero bytes (no Fatal, Warning, Notice or Deprecated from activation to the first routed request). qa-actions scored 483/487: the 4 fails (LB5, LB6, RC0 'no post available', MD6 'avatar') are test assumptions on an empty community with no seed. On the seeded stack with 2,100-topic padding it was 496/500 with RC1-RC4 failing because the test replies to the newest published post, which in that fixture was a copied row whose reply_count did not match its replies. The lines in the log before this window were my own wp eval probes. After the DB snapshot was restored (seeded community), qa-actions is 500/500 and the log stayed clean."
     },
     "a1.9": {
       "result": "pass",
-      "evidence": "390px /community/ scrollWidth 390 = clientWidth 390; tapping the Reign menu toggler adds body.mobile-panel-open."
+      "evidence": "Guest 390x844 /community/ on the freshly activated clean install and on the seeded stack: scrollWidth 390 == clientWidth 390; the Reign 'Open navigation menu' button adds body.mobile-panel-open and the panel opens full width.",
+      "screenshot": "a1-clean-390-menu.png"
     },
     "a1.10": {
       "result": "pass",
-      "evidence": "Deactivate then activate on seeded community: 23 jt tables (same as schema), 7 categories no duplicates, 41 spaces, 246 posts, 1198 replies unchanged; /community/ 200 and lists seeded spaces."
+      "evidence": "Seeded community (43 jt tables incl. Pro's 20, 8 categories no duplicate slugs, 69 spaces, 3,569 topics, 3,703 replies): wp plugin deactivate then activate -> identical counts, no duplicate tables or categories, /community/, /community/s/feature-requests/ and /community/leaderboard/ answer 200 and /community/ lists the spaces."
     }
   },
-  "proposed_checks": [
-    "- `a1.11` @admin #cli +plain: with Plain permalinks request /community/s/zzz-nope/ and /?pagename=community -> decide the contract (today the first returns the site homepage with 200 and the second the theme 404); the check a1.7 expects a community not-found page."
-  ],
-  "walked_before_change": true
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T05:23:31.317995Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme"
+    ],
+    "locale": "en_US"
+  }
 }

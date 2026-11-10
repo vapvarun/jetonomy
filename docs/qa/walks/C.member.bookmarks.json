@@ -1,88 +1,92 @@
 {
   "journey": "C.member.bookmarks",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T19:14:33Z",
-  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
+  "free": "0217e21d",
+  "pro": "1bb3e93",
+  "checks": {
+    "c-member-bookmarks.1": {
+      "result": "pass",
+      "evidence": "bob opened 'Dark mode for the community on phones' and clicked the bookmark icon: aria-label Bookmark -> Remove bookmark, aria-pressed true, icon filled, toast 'Bookmarked'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/bm-toast.png"
+    },
+    "c-member-bookmarks.2": {
+      "result": "pass",
+      "evidence": "/community/bookmarks/ lists the topic with title, 'Open' badge, author Sofia Romano, space Feature Requests, reply count 51, age and a filled bookmark button.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/bm-list.png"
+    },
+    "c-member-bookmarks.3": {
+      "result": "pass",
+      "evidence": "With 2 bookmarks, clicking the filled bookmark on a row removed that row at once (rows 2 -> 1) and REST total fell 2 -> 1. The page prints no separate bookmark count; the count is the list/REST total."
+    },
+    "c-member-bookmarks.4": {
+      "result": "pass",
+      "evidence": "Set window.__marker, removed the last bookmark: the 'You haven't bookmarked anything yet.' empty state appeared immediately and the marker survived (no reload); clicking the Leaderboard tab then did a full page load (marker gone) showing the complete Top members list.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/bm-empty.png"
+    },
+    "c-member-bookmarks.5": {
+      "result": "pass",
+      "evidence": "REST as bob: POST {post_id 17722} -> 200 {bookmarked:true}; POST again -> {bookmarked:false}; POST -> true; DELETE /bookmarks/17722 -> 200 {deleted:true}; repeat DELETE -> 200 {deleted:true}; jt_bookmarks has 0 rows for it, never a duplicate. (The id in the path is the topic id.)"
+    },
+    "c-member-bookmarks.6": {
+      "result": "pass",
+      "evidence": "bob POST /bookmarks for Moderators' Room topic 241 -> 404 jetonomy_not_found 'Topic not found.'"
+    },
+    "c-member-bookmarks.7": {
+      "result": "pass",
+      "evidence": "Logged-out topic page shows no bookmark control; GET /community/bookmarks/ -> 302 to wp-login.php?redirect_to=.../community/bookmarks/; POST /bookmarks -> 401 rest_not_logged_in."
+    },
+    "c-member-bookmarks.8": {
+      "result": "pass",
+      "evidence": "alice and bob each bookmarked different topics: alice's /community/bookmarks/ and GET /bookmarks (also with user_id=10) return only her own (249); bob's profile shows alice no Bookmarks tab."
+    },
+    "c-member-bookmarks.9": {
+      "result": "pass",
+      "evidence": "alice created a topic, bob bookmarked it (list 2), admin deleted it -> bob's GET /bookmarks drops to 1 and /community/bookmarks/ shows no broken or 'unavailable' row."
+    },
+    "c-member-bookmarks.10": {
+      "result": "pass",
+      "evidence": "bob bookmarked Partner Program topic 19774 while admitted only by a role rule (no roster row) and saw it in /bookmarks; removing the rule (access lost) hid it again, total 0. Same hiding happened for his follow when he was removed from the roster."
+    },
+    "c-member-bookmarks.11": {
+      "result": "pass",
+      "evidence": "46 bookmarks for bob: /community/bookmarks/ shows 20 + 'Load More' (?pg=2), page 2 shows 20 + Load More, page 3 shows 6 and no pager; 20+20+6 = 46 = REST total."
+    },
+    "c-member-bookmarks.12": {
+      "result": "pass",
+      "evidence": "Offline (setOffline) click on the bookmark button of Grace's topic -> aria-pressed returns to false, toast 'Failed to save.', no row saved.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/bm-offline.png"
+    },
+    "c-member-bookmarks.13": {
+      "result": "pass",
+      "evidence": "Grace's 159-character topic in the list: title wraps to 4 lines at 1440 and stays inside the row (row right 961, no overflow, documentElement.scrollWidth = 1440)."
+    },
+    "c-member-bookmarks.14": {
+      "result": "pass",
+      "evidence": "390px with Reign dark: /community/bookmarks/ body rgb(35,38,47), title and rows readable, scrollWidth 390, empty-state and list both fit (bm-390dark.png).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/bm-390dark.png"
+    },
+    "c-member-bookmarks.15": {
+      "result": "pass",
+      "evidence": "At 390 the bookmark row shows '2 replies' next to the bookmark button without overlapping it (rect check: no overlap) and the relative time is hidden (width 0), by design; the long title wraps to 10 lines in the narrow column."
+    }
+  },
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T04:34:10.844494Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
   "env": {
-    "mode": "free stack (Pro inactive)",
+    "mode": "free (Pro inactive)",
     "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
     "themes": [
       "reign-theme"
     ],
+    "locale": "en_US",
     "viewports": [
       1440,
       390
     ],
     "schemes": [
-      "light"
-    ],
-    "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
-  },
-  "checks": {
-    "c-member-bookmarks.1": {
-      "result": "pass",
-      "evidence": "bob on 'Dark mode for the community on phones': Bookmark button (aria-pressed false) clicked -> becomes 'Remove bookmark' aria-pressed true, class bookmarked, toast 'Bookmarked'"
-    },
-    "c-member-bookmarks.2": {
-      "result": "pass",
-      "evidence": "/community/bookmarks/ lists the topic with title, author Sofia Romano, space Feature Requests and '44 replies'"
-    },
-    "c-member-bookmarks.3": {
-      "result": "pass",
-      "evidence": "Clicking the filled bookmark on each row removed it from the list (3 rows -> 0); REST bookmarks total 0 afterwards"
-    },
-    "c-member-bookmarks.4": {
-      "result": "pass",
-      "evidence": "After removing the last bookmark the page showed \"You haven't bookmarked anything yet\" with a window marker still set (no reload); full-reload-after-DOM-change tab check not separately exercised"
-    },
-    "c-member-bookmarks.5": {
-      "result": "pass",
-      "evidence": "bob on a post he had not bookmarked (331): POST /bookmarks -> 200 {bookmarked:true}; second POST -> 200 {bookmarked:false} (toggle); third -> {bookmarked:true}; DELETE /bookmarks/331 -> 200 {deleted:true,post_id:331}; repeat DELETE -> 200 {deleted:true,post_id:331}; wp_jt_bookmarks count for the pair is 0 (never a duplicate row). The wave-1 'fail' came from POSTing on an already-bookmarked post, which toggles by design."
-    },
-    "c-member-bookmarks.6": {
-      "result": "pass",
-      "evidence": "bob POST /bookmarks post_id 241 (Moderators' Room topic) -> 404 jetonomy_not_found 'Topic not found.'"
-    },
-    "c-member-bookmarks.7": {
-      "result": "pass",
-      "evidence": "Guest /community/bookmarks/ redirects to wp-login.php?redirect_to=.../community/bookmarks/; POST /bookmarks -> 401; guest topic page has no bookmark button"
-    },
-    "c-member-bookmarks.8": {
-      "result": "pass",
-      "evidence": "alice /community/bookmarks/ shows only her own (empty: 'You haven't bookmarked anything yet'); /community/u/bob/bookmarks/ renders bob's public profile, not his bookmark list"
-    },
-    "c-member-bookmarks.9": {
-      "result": "pass",
-      "evidence": "Covered in C.member.post-delete: alice's REST /bookmarks omitted the deleted topic 256 and showed no broken row"
-    },
-    "c-member-bookmarks.10": {
-      "result": "pass",
-      "evidence": "bob bookmarked Partner Program topic 345 (it listed in GET /bookmarks and on /community/bookmarks/); after he left the Partner Program roster it was gone from both GET /bookmarks and the page. Roster and bookmark restored."
-    },
-    "c-member-bookmarks.11": {
-      "result": "pass",
-      "evidence": "43 bookmarks: REST X-WP-Total-equivalent meta.total=43, first page 20 with has_more true; UI shows 20 rows and a 'Load More' button"
-    },
-    "c-member-bookmarks.12": {
-      "result": "pass",
-      "evidence": "Offline bookmark click: aria-pressed stays false and toast 'Failed to save.'"
-    },
-    "c-member-bookmarks.13": {
-      "result": "pass",
-      "evidence": "Grace-style long-title topic row at 390: no row overflow, no horizontal scroll",
-      "screenshot": "walk-207/free/bookmarks-390.png"
-    },
-    "c-member-bookmarks.14": {
-      "result": "pass",
-      "evidence": "Dark mode at 390 on /community/bookmarks/ as bob: 69 text nodes audited, lowest contrast 5.66:1 (tag counts), no white panels, scrollWidth 390 = viewport; screenshot dark-bookmarks-390.png."
-    },
-    "c-member-bookmarks.15": {
-      "result": "pass",
-      "evidence": "390px bookmark rows: reply count/score shown, no horizontal scroll, relative time cell hidden by design",
-      "screenshot": "walk-207/free/bookmarks-390.png"
-    }
-  },
-  "proposed_checks": []
+      "light",
+      "dark (Reign)"
+    ]
+  }
 }

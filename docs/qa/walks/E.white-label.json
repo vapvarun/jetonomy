@@ -2,16 +2,17 @@
   "journey": "E.white-label",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:46:16Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T04:37:12.834476Z",
+  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free+Pro)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -21,8 +22,8 @@
   },
   "checks": {
     "e-white-label.1": {
-      "result": "untested",
-      "evidence": "Saved the four fields via PATCH /settings/white-label (community 'Hearthside Community', label 'Hearthside', icon dashicons-groups, footer text) -> success; the Branding tab form/notice was not used."
+      "result": "pass",
+      "evidence": "Settings > Branding: community name 'Hearthside Community', admin label 'Hearthside', icon dashicons-groups, footer 'Built with care by the Hearthside team', Save Branding Settings -> notice 'Branding settings saved.' and all four fields keep their values; sidebar menu 'Hearthside' with dashicons-groups. wl-1.png"
     },
     "e-white-label.2": {
       "result": "pass",
@@ -50,29 +51,39 @@
       "evidence": "bob GET and test_moderator PATCH /settings/white-label -> 403 jetonomy_forbidden; guest GET -> 401 rest_forbidden."
     },
     "e-white-label.12": {
-      "result": "untested",
-      "evidence": "`wp jetonomy-pro white-label get` printed the same four fields; `update` and the admin-page comparison were not run."
+      "result": "pass",
+      "evidence": "wp jetonomy-pro white-label get printed the same four values as GET /settings/white-label and the Branding form (checked after a 120-char save and after an update); update --community-name --admin-label --footer-text --admin-icon changed all four and updated_keys listed them (flags are hyphenated; the line says 'all three'). Reset restores defaults."
     },
     "e-white-label.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "With the brand on, Dashboard/Settings/Extensions h1 read 'Hearthside Community ...'; General, Permissions, Email, Appearance and License settings tabs (Settings sidebar, Data card, trust-level hint) contain 0 occurrences of 'Jetonomy' and several 'Hearthside'; Plugins page lists 'Hearthside Community'. Remaining 'Jetonomy' text: Integrations tab product copy (3 mentions: 'Jetonomy is part of the Wbcom community stack', 'With Jetonomy Pro', 'Jetonomy detects each one'), the Branding tab's own help, and the Extensions card description 'Rename the Jetonomy admin menu...'. wl-2plugins.png"
     },
     "e-white-label.7": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "Settings > Email > Send Test Email (admin@example.test): the email's subject is '<white-label community name> Test Email' and the body 'This is a test email from your <white-label name> forum plugin...' (the white-label name, here the 120-char one), while the From name stays the site's 'Northwind Makers Community'. A real notification (bob's reply to sofia's topic) keeps the site name in subject '[Northwind Makers Community] ...', From and footer and carries no branding. So only the admin test email leaks the brand into subject and body; the line says subject and footer use the site's own settings."
     },
     "e-white-label.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "120-char community name and admin label: menu label wraps over 198px inside the 160px sidebar (no overflow), h1 wraps (73px high at 1440, 162px at 390), document scrollWidth equals viewport at 1440 and 390, no element past the right edge. wl-10-1440.png wl-10-390.png"
     },
     "e-white-label.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Cleared all four fields and saved (and wp jetonomy-pro white-label reset): menu label 'Jetonomy' with the default SVG icon, h1 'Jetonomy Dashboard', footer 'Thank you for building your community with Jetonomy.'. Also seen: footer blank + name set -> 'Thank you for building your community with Hearthside Community.'; footer \"Bob's Q&A\" renders as Bob's Q&amp;A once in the HTML. wl-11.png wl-3a.png"
     },
     "e-white-label.13": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "admin_icon set to a full image URL -> menu icon renders as an <img src=...> (36px wrapper); an invalid string 'not a valid icon!!' is refused with notice 'Admin menu icon was not changed: it must be a full address starting with http:// or https://, a Dashicon class (dashicons-...) ...' and REST PATCH returns 400 rest_invalid_param, so the previously valid icon stays (default when none) rather than the invalid value falling back. wl-13a/b.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-white-label.12",
+      "now": "update takes --community-name, --admin-label, --footer-text and --admin-icon (four fields, hyphenated flags)."
+    },
+    {
+      "check": "e-white-label.13",
+      "now": "an invalid admin_icon is rejected (admin notice 'Admin menu icon was not changed...', REST 400) and the existing or default icon is kept."
+    }
+  ]
 }

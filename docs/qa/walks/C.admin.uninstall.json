@@ -1,69 +1,72 @@
 {
   "journey": "C.admin.uninstall",
-  "free": "43d92637",
-  "pro": "5dd6f92",
-  "walked_at": "2026-10-30T21:16:24Z",
-  "walker": "agent:sonnet release walk 2026-10-31",
-  "walked_before_change": false,
-  "env": {
-    "mode": "free (Jetonomy Free active, Pro inactive)",
-    "site": "http://localhost:8912",
-    "theme": "reign",
-    "viewports": [
-      1440,
-      390
-    ],
-    "browser": "Chromium via playwright-iso"
-  },
+  "free": "11e21b47",
+  "pro": "05e4a11",
   "checks": {
-    "c-admin-uninstall.9": {
-      "result": "pass",
-      "evidence": "bob GET /wp-admin/plugins.php -> HTTP 403 'Sorry, you are not allowed to access this page.'; no uninstall can be started"
-    },
-    "c-admin-uninstall.11": {
-      "result": "untested",
-      "evidence": "Plugins screen at 1440 and 390: Jetonomy row 'Deactivate' action reachable (15px and 28px high links, no horizontal overflow); the Delete confirmation was not opened because deleting would destroy the shared site - needs a disposable install"
-    },
     "c-admin-uninstall.1": {
-      "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "result": "pass",
+      "evidence": "Setting off (default). On the Plugins screen as admin: Deactivate (row action) then deleted through the bulk-delete route: 'Could not fully remove the plugin jetonomy/jetonomy.php' (the plugin folder is a read-only bind mount in this stack, so files stay), but uninstall.php ran and kept everything: 43 jt tables, 69 spaces, 3,569 topics, 3,703 replies, all jetonomy_* options. wp plugin activate restored the forum: same counts, /community/ 200 and the seeded topics listed. Caveat: the row's Delete is shown as plain text 'You cannot delete this plugin as other plugins require it.' because Jetonomy Pro (installed, inactive) requires it (WordPress's Requires Plugins rule), so the link itself could not be clicked; the bulk-delete URL was used.",
+      "screenshot": "uninstall-plugins-1440.png"
     },
     "c-admin-uninstall.2": {
-      "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "result": "pass",
+      "evidence": "Setting on (ticked in Settings > General > Data 'Remove all community data when Jetonomy is deleted', saved) with 3,559 topics, 3,700 replies and 532 members: deleted from the Plugins screen route -> all 23 Free jt_ tables gone (SHOW TABLES LIKE '%jt_%' returns 20, all jt_pro_*: Pro's tables from earlier Pro use on this database, which Free's uninstall leaves to Pro by design). Tables recreated cleanly on the later reactivation.",
+      "screenshot": "uninstall-setting.png"
     },
     "c-admin-uninstall.3": {
-      "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "result": "pass",
+      "evidence": "wp option list --search=jetonomy*: every Free option is gone (jetonomy_settings, jetonomy_db_version, jetonomy_setup_complete, jetonomy_demo_data, jetonomy_license, jetonomy_license_key, jetonomy_email_templates, role map, widget_jetonomy_*; 31 before). Remaining: 9 jetonomy_pro_* options (Pro's, left to Pro by design in uninstall.php) plus two WordPress core plugin-dependency transients that contain the word jetonomy."
     },
     "c-admin-uninstall.4": {
-      "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "result": "pass",
+      "evidence": "Before: 65 jetonomy_* capabilities across the roles; after the delete: 0 on every role (wp_roles scan)."
     },
     "c-admin-uninstall.5": {
-      "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "result": "fail",
+      "evidence": "wp cron event list shows no Jetonomy hook (only Pro's edd_sl_sdk_weekly_license_check_jetonomy-pro). Action Scheduler: pending jetonomy_ actions went from 8 to 0 (the 8 were canceled), but 291 rows with jetonomy_ hooks remain in wp_actionscheduler_actions (283 complete, 8 canceled: jetonomy_cleanup_expired, jetonomy_gravatar_check, jetonomy_reconcile_rosters, jetonomy_verification_reminder, jetonomy_trust_evaluation* and others, one jetonomy_pro_license_check), so a listing of Action Scheduler still shows jetonomy_ hooks as history. Also two 'Cron reschedule event error for hook: action_scheduler_run_queue ... Event schedule does not exist' lines reached debug.log (05:19 and 05:21) once the plugin was deactivated/deleted. Judgement for the main session: harmless history, or leftover data an owner who ticked 'remove all community data' would not expect."
     },
     "c-admin-uninstall.6": {
-      "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "result": "pass",
+      "evidence": "After the delete as admin: / 200 (Northwind Makers Community), /wp-admin/ 200 (Dashboard), Plugins screen 200 (Jetonomy row shows Activate), /community/ and /community/s/feature-requests/ answer a normal theme 404 'Page not found', /wp-admin/admin.php?page=jetonomy-settings 403 (page gone); no fatal anywhere.",
+      "screenshot": "uninstall-community-404.png"
     },
     "c-admin-uninstall.7": {
       "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "evidence": "ENV: needs Pro active; the task keeps Pro inactive on the Free stack. Note jetonomy-pro declares Requires Plugins: jetonomy, so the Plugins screen will not offer Delete on Free while Pro is installed. Needs the combo walk (or a CLI delete) to observe 'Pro does not fatal'."
     },
     "c-admin-uninstall.8": {
       "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "evidence": "ENV: needs Pro active with its own remove-data setting; Pro is inactive on the Free stack. Observation only: after Free's delete, Pro's 20 jt_pro_* tables, 9 jetonomy_pro_* options and its licence cron were left untouched."
+    },
+    "c-admin-uninstall.9": {
+      "result": "pass",
+      "evidence": "bob (after ?autologin=bob) GET /wp-admin/plugins.php -> HTTP 403 'Sorry, you are not allowed to access this page.'; the delete URL plugins.php?action=delete-selected&checked[0]=jetonomy/jetonomy.php -> 403 'WordPress > Error'; no uninstall can be started.",
+      "screenshot": "uninstall-bob-403.png"
     },
     "c-admin-uninstall.10": {
-      "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "result": "pass",
+      "evidence": "Deleted with the setting on at 3,559 published topics (3,569 rows), 3,700 replies, 532 members (500 generated users with member and profile rows) and 2,100 topics in one space: the delete request completed in 4.6 s with no timeout or error, all Free tables dropped."
+    },
+    "c-admin-uninstall.11": {
+      "result": "pass",
+      "evidence": "Plugins screen at 1440: row actions Deactivate/Activate are real links (15px high, 49-65px wide); at 390: Activate is 65x28, no horizontal overflow (390 == 390). The Delete row action is not a link while Pro is installed (WordPress dependency rule, see .1), so the confirmation was opened through the bulk-delete URL: 'Delete Plugin - You are about to remove the following plugin: Jetonomy by Wbcom Designs (will also delete its data). Are you sure you want to delete these files and data?' with 'Yes, delete these files and data' and 'No, return me to the plugin list' buttons, 40px high, no overflow at 1440 or 390.",
+      "screenshot": "uninstall-confirm-390.png"
     },
     "c-admin-uninstall.12": {
-      "result": "untested",
-      "evidence": "needs a disposable install: walked at the release Docker install step (uninstall deletes the shared walk site's data)"
+      "result": "fail",
+      "evidence": "Ran UninstallKeepsDataTest in the wp-env tests-cli container (JETONOMY_TEST_SKIP_PRO=1 vendor/bin/phpunit --testdox --filter UninstallKeepsDataTest): OK, 2 tests, 6 assertions (keeps tables and settings by default; opt-in removes cron jobs, licence check and widget settings and leaves Pro's jobs). But the opt-in test does not assert that every jt_ table is dropped or that no jetonomy_ capability remains, which the line (and its 'checks 2 to 5 have an automatic proof') promises: the test file has no such assertion (it re-creates tables in finally to protect later tests). Test or runbook line is out of step: main session decides."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T05:23:31.341588Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme"
+    ],
+    "locale": "en_US"
+  }
 }

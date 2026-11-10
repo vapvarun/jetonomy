@@ -2,10 +2,10 @@
   "journey": "E.membership-gating-adapters",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:53:54Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T06:15:17Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,74 +16,84 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
     "e-membership-gating-adapters.1": {
-      "result": "untested",
-      "evidence": "Needs WooCommerce Memberships / paid-memberships-pro / LearnDash flows configured with plans and purchases; not set up in this pass (plugins are available but inactive)."
+      "result": "pass",
+      "evidence": "Activated Paid Memberships Pro (WooCommerce, LearnDash, Tutor, BuddyPress inactive). Partner Program > Access Rules: rule type dropdown lists Everyone, Logged In, WP Role, Capability, Trust Level and PMPro only; no entries for WooCommerce/LearnDash/Tutor and no fatal on the page (LearnDash type appeared when LearnDash was active, see E.lms). Screenshot mg-access.png."
     },
     "e-membership-gating-adapters.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Selected PMPro, typed 'Gol' in the level search (suggestion 'Gold Membership'), grants Participate, Add Rule -> toast 'Rule added: PMPro: Gold Membership can read, post, reply, vote and report. They are recorded as Member.'; the rule row shows 'PMPro Level Gold Membership  Read Participate  Member'. Screenshot mg-rule.png."
     },
     "e-membership-gating-adapters.3": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob given PMPro Gold (pmpro_changeMembershipLevel): his /community/s/partner-program/ page opens with 8 topic links and a New Topic control; REST GET /spaces/41 200 with viewer_role member; the rule synced him into the roster (jt_space_members role member source tier). He posted/read as a member (alice does the same in check 7). Screenshot mg-bob.png."
     },
     "e-membership-gating-adapters.4": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice (no level): REST /spaces/41 403 jetonomy_forbidden; UI shows the locked teaser 'Included with Gold Membership.' with a 'Get Gold Membership' button. With no PMPro checkout page configured the teaser says 'Ask a site administrator how to get access to this plan.' and has no link; after creating the PMPro checkout page the link appears and goes to /membership-checkout-2/?level=2, which returns 200 for alice and for a guest (curl). Screenshots mg-alice.png, mg-alice2.png."
     },
     "e-membership-gating-adapters.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Guest GET /spaces/41 and /spaces/41/posts (private space) -> 403 jetonomy_forbidden; guest GET /spaces/43 (hidden Moderators' Room) -> 404 jetonomy_not_found 'Space not found.', identical to /spaces/999999. The teaser shows only 'Included with ...' plus the buy link."
     },
     "e-membership-gating-adapters.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "pmpro_cancelMembershipLevel for bob: his GET /spaces/41 became 403 on the very next request, his row left the roster (0 rows; admin members listing has no user 10), his 2 earlier topics in the space remain."
     },
     "e-membership-gating-adapters.7": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Simulated purchase: alice on the 403 teaser, then pmpro_changeMembershipLevel(2,9) in another process -> her next GET /spaces/41 returned 200 member and she created a topic (id 5418) with no cache clear or re-login. A real payment flow was not run."
     },
     "e-membership-gating-adapters.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice (holds the level, rule role Member, WP role stays subscriber): POST moderation trash, spam, approve on her own topic, GET moderation queue, POST moderation bulk -> all 403 jetonomy_forbidden; topic status unchanged. Her WP role is still 'subscriber'."
     },
     "e-membership-gating-adapters.9": {
       "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "evidence": "ENV: WP Fusion and SureMembers are not installed on this stack, so their per-space tabs and links cannot be walked."
     },
     "e-membership-gating-adapters.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Deleted the PMPro level a rule points to: the Access Rules screen shows the row 'PMPro Level pmpro_2 - Level no longer available. It was deleted, trashed or unpublished, so nobody can get it and this rule lets nobody in. Publish it again or delete this rule.'; alice and bob (formerly holders) got 403 and nobody else gained access; no fatal (screenshot mg-deleted.png)."
     },
     "e-membership-gating-adapters.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "Seeded 500 PMPro levels (407 added to the 3 existing): the Access Rules page loads in 150 ms and the level box is a type-ahead (typing 'Bulk Plan 47' narrows to one match), BUT all levels are embedded in the page itself: the HTML contained 2,035 occurrences of 'Bulk Plan N', i.e. every level is loaded up front (about 5 times each) and filtered client-side, with no server-side search or paging request (no admin-ajax/REST call while typing). The check asks for search/pagination instead of loading all options at once. Seeded levels removed afterwards."
     },
     "e-membership-gating-adapters.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Locked teaser at 390px with a 90+ character plan name: scrollWidth 390, the 'Get <plan name>' button wraps over 3 lines inside the card (84px tall, 52-338 px); in dark mode (Reign dark toggle) the card and button use dark/light-blue tokens (button rgb(151,192,238) on dark). Access Rules admin screen at 390: no overflow, add-rule fields stack, table full width. Screenshots mg-teaser-390-dark2.png, mg-access-390.png. wp-admin itself has no dark scheme."
     },
     "e-membership-gating-adapters.13": {
       "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "evidence": "ENV: WooCommerce Memberships is not installed (WooCommerce alone is not enough). qa-actions WC1 (a new active membership activates its level) and WC4 (free-trial status counts as access) PASS on the combo stack, but that is the CLI self-test, not a purchase in the browser."
     },
     "e-membership-gating-adapters.14": {
       "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "evidence": "ENV: WooCommerce Memberships is not installed. qa-actions WC2 (an update is left to the status-change hook) passes in the CLI self-test."
     },
     "e-membership-gating-adapters.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Site language de_DE installed (wp language core install de_DE) and activated. Space gated by LearnDash course with a sales page: 'Enthalten in Introduction to WordPress Plugin Development (Kurs). Du erhältst Zugang, sobald du beitrittst, und verlierst ihn, wenn du austrittst.' with a link '... holen' to the course page. Level (PMPro) without a sales/checkout page: 'Enthalten in Gold Membership. Frag einen Website-Administrator, wie du Zugang zu diesem Tarif bekommst.' ('diesem Tarif' is grammatical; wording differs from the runbook's 'Bitte einen Website-Administrator ...'). qa-actions GG1 passes. Locale restored to en_US."
     },
     "e-membership-gating-adapters.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "German teaser for a PMPro level (no kind): the plan sentence 'Enthalten in Gold Membership. Dein Zugang beginnt, sobald deine Mitgliedschaft aktiv ist, und endet, wenn sie abläuft.'; for the LearnDash course the kind keeps its capital mid-sentence: '(Kurs)'. qa-actions MS1 passes."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-membership-gating-adapters.15",
+      "now": "German no-sales-page variant reads \"Frag einen Website-Administrator, wie du Zugang zu diesem Tarif bekommst.\" (informal du, not Bitte)"
+    },
+    {
+      "check": "e-membership-gating-adapters.1",
+      "now": "PMPro is the only installed membership adapter on this stack; the dropdown lists the PMPro type next to WP Role, Capability, Trust Level"
+    }
+  ]
 }

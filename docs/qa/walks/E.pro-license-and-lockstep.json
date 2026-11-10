@@ -1,11 +1,70 @@
 {
   "journey": "E.pro-license-and-lockstep",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:51:33Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "free": "0217e21d",
+  "pro": "1bb3e93",
+  "checks": {
+    "e-pro-license-and-lockstep.1": {
+      "result": "pass",
+      "evidence": "wp eval: free:2.0.7 pro:2.0.7 (identical)."
+    },
+    "e-pro-license-and-lockstep.2": {
+      "result": "pass",
+      "evidence": "wp plugin deactivate jetonomy with Pro active: every wp-admin page (Dashboard, Plugins, Settings) shows the notice 'Jetonomy Pro requires the Jetonomy plugin to be installed and activated.' (screenshot lic-dep-notice.png), no fatal on wp-admin or the frontend (/community/ 200, / 200); REST: jetonomy/v1 and jetonomy-pro/v1 answer 404, never 500. wp plugin activate jetonomy -> Pro back with no manual step: 144 jetonomy routes, 17 extensions, jetonomy-pro/v1 200. Notice wording differs slightly from the runbook (runbook_fix)."
+    },
+    "e-pro-license-and-lockstep.3": {
+      "result": "pass",
+      "evidence": "Both active: GET /wp-json/jetonomy/v1/ 200 with 137 routes; /wp-json/jetonomy-pro/v1/ 200 with 7 routes. Free deactivated: /wp-json/ 200, jetonomy routes 404, jetonomy-pro/v1 404 (Pro bails), never 500."
+    },
+    "e-pro-license-and-lockstep.4": {
+      "result": "pass",
+      "evidence": "php ../jetonomy/bin/audit-rest-routes.php includes/ in the Pro repo: 'audit-rest-routes: OK (no mutation routes missing REST_Auth)'."
+    },
+    "e-pro-license-and-lockstep.5": {
+      "result": "untested",
+      "evidence": "ENV: a real key cannot be activated (needs the live EDD store). SIMULATED display only: with a valid status stored (price_id 3, expires 2027-11-10) Settings > License shows Status Active, Plan Agency, Expires November 10, 2027, key masked 'WALK****************9012' (full key not in the page source), button Deactivate License; clicking it -> 'License deactivated.' and key/status removed. Re-entering a key goes to the store (invalid for a fake key), so Reactivate with a real key is not observable. Screenshots lic-valid-1440.png."
+    },
+    "e-pro-license-and-lockstep.6": {
+      "result": "fail",
+      "evidence": "Invalid key 'INVALID-KEY-0000-1111-2222' via the UI -> notice 'Invalid license key.', no fatal, no stored valid state: PASS part. Expired part FAILS: with a stored status of license=expired, expires 2026-10-01 the License screen shows the plain activation form (no 'expired' label, no date, no renew link); only the generic banner 'no active license found ... disabled in 30 days. Activate license' appears. The 'Your license has expired.' string exists only as an activation-time error from the store and carries no date or renew link. Screenshots lic-invalid.png, lic-expired.png. Read: the check line describes a screen the code does not render (product gap or out-of-date line)."
+    },
+    "e-pro-license-and-lockstep.7": {
+      "result": "pass",
+      "evidence": "Bypass option walkstub_licence_bypass_off=1, no key: Pro keeps working (144 routes, webhooks/conversations 200) and every admin page shows 'Jetonomy Pro: no active license found. Pro features ... will be disabled in 30 days ... Activate license'; grace marker created. Marker moved back 31 days: Pro REST routes drop to 85 (webhooks, conversations, push all 404 rest_no_route) and the notice turns to an error 'Pro features are disabled because no active license was found. Nothing was deleted ...' on License, Extensions and Webhooks admin pages (screenshot lic-day31.png). Stored a valid licence -> the grace marker option was deleted on the next load. Bypass restored afterwards."
+    },
+    "e-pro-license-and-lockstep.8": {
+      "result": "fail",
+      "evidence": "Out-of-date check line: there is no tier gating by design (License::can_use_extension returns features_enabled for every extension). With a valid Starter licence (price_id 1) the Extensions page shows all 17 extensions, no locked cards and no upgrade message (screenshot ext-starter-1440.png)."
+    },
+    "e-pro-license-and-lockstep.9": {
+      "result": "pass",
+      "evidence": "SIMULATED store (HTTP layer stubbed, so a real store is ENV): wp_update_plugins with a key stored made two requests to updates.wbcomdesigns.com: item_id 1660319 slug jetonomy-pro version=2.0.7 (Pro) and item_id 1660320 slug jetonomy version=2.0.7 (Free). With the stub answering 2.0.8 only for 1660319, Pro shows an update to 2.0.8 and Free shows none."
+    },
+    "e-pro-license-and-lockstep.10": {
+      "result": "pass",
+      "evidence": "SIMULATED drift (the repos are read-only): a temporary mu-plugin set JETONOMY_VERSION to 2.0.6 for requests with ?walkdrift=1: wp-admin Dashboard and Plugins show 'Jetonomy Pro needs the Jetonomy plugin version 2.0.7 or newer, but version 2.0.6 is active. Please update Jetonomy to match Jetonomy Pro.'; frontend and REST 200, no fatal. Mu-plugin removed. (Pro is prevented from booting when free is older; the admin-bar drift warning in the runbook prose was not seen, the admin notice is the mechanism.)"
+    },
+    "e-pro-license-and-lockstep.11": {
+      "result": "pass",
+      "evidence": "Converted the disposable stack to multisite (wp core multisite-convert, subdirectory), network-activated Jetonomy and Jetonomy Pro, then wp site create --slug=chapter (blog 2): the new sub-site got the full table set including wp_2_jt_pro_reactions, polls, poll_options, poll_votes, conversations, conversation_participants, messages, badges, user_badges, fields, field_values, webhooks, webhook_deliveries, mod_rules, push_subscriptions, push_devices, ai_cache/log/usage, analytics_aggregate (24 wp_2_jt_pro_* tables). The per-site licence rule was not inspected separately (dev bypass constant active). Reverted afterwards by restoring wp-config.php, .htaccess and the pre-test database dump, and dropping the multisite and wp_2_ tables; the stack is single-site again."
+    },
+    "e-pro-license-and-lockstep.12": {
+      "result": "pass",
+      "evidence": "Full DB backup taken first. Ran Pro's uninstall.php directly (the repo is read-only so the plugin could not be deleted): with settings remove_data_on_uninstall OFF nothing changed (20 Pro tables, 17 Pro options, 5 pending Pro Action Scheduler jobs; Free rows 332 posts, 48 spaces, 1380 replies, 416 notifications unchanged). With it ON: 0 Pro tables, 0 Pro options, 0 pending Pro jobs, licence-check event unscheduled, and the Free counts identical (332/48/1380/416). A grace marker set to a fixed time before running uninstall was still present afterwards (stays by design). Database restored from the backup afterwards."
+    },
+    "e-pro-license-and-lockstep.13": {
+      "result": "pass",
+      "evidence": "Settings > License (valid state) at 1440 and 390: scrollWidth equals viewport (no overflow), key chip, status, plan, buttons stack cleanly at 390 (screenshots lic-1440-light.png, lic-390-light.png). Dark: wp-admin has no dark scheme and Jetonomy admin defines none (prefers-color-scheme dark emulation changed nothing); status colour uses var(--jt-admin-success-deep, #007017) token. No dark-mode screen exists to check."
+    },
+    "e-pro-license-and-lockstep.14": {
+      "result": "pass",
+      "evidence": "As bob (subscriber): POST with action jetonomy_pro_license_action=activate to /wp-admin/admin.php?page=jetonomy-settings&tab=license, admin-post.php and admin-ajax.php -> 403 (ajax/admin-post 403 on POST); stored key unchanged. There is no licence REST route (route list has no 'licen' entry). Key text not present in any page source or REST body (bob: /app/config, /wp-json/, jetonomy-pro/v1; admin: /app/config, settings page)."
+    }
+  },
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T06:32:24Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,66 +75,21 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
-  "checks": {
-    "e-pro-license-and-lockstep.1": {
-      "result": "pass",
-      "evidence": "`wp eval` -> free:2.0.7 pro:2.0.7; JETONOMY_PRO_LICENSE_BYPASS=true (set by mu-plugin walk-env.php for this stack) and 17 extensions loaded."
+  "runbook_fixes": [
+    {
+      "check": "e-pro-license-and-lockstep.2",
+      "now": "notice reads \"Jetonomy Pro requires the Jetonomy plugin to be installed and activated.\""
     },
-    "e-pro-license-and-lockstep.3": {
-      "result": "untested",
-      "evidence": "With both active GET /wp-json/jetonomy/v1/ route index -> 200; the free-deactivated leg (destructive) was not run."
+    {
+      "check": "e-pro-license-and-lockstep.6",
+      "now": "an expired key: licence screen shows no expired state; see the fail"
     },
-    "e-pro-license-and-lockstep.4": {
-      "result": "pass",
-      "evidence": "`php ../jetonomy/bin/audit-rest-routes.php includes/` in Pro -> 'audit-rest-routes: OK (no mutation routes missing REST_Auth)'."
-    },
-    "e-pro-license-and-lockstep.8": {
-      "result": "untested",
-      "evidence": "Licence bypass is on for the whole walk, so tier locking and lapsed-licence/grace checks (5-8, 12) cannot be exercised on this stack without a real Easy Digital Downloads key."
-    },
-    "e-pro-license-and-lockstep.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
-    },
-    "e-pro-license-and-lockstep.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
-    },
-    "e-pro-license-and-lockstep.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
-    },
-    "e-pro-license-and-lockstep.7": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
-    },
-    "e-pro-license-and-lockstep.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
-    },
-    "e-pro-license-and-lockstep.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
-    },
-    "e-pro-license-and-lockstep.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
-    },
-    "e-pro-license-and-lockstep.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
-    },
-    "e-pro-license-and-lockstep.13": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
-    },
-    "e-pro-license-and-lockstep.14": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+    {
+      "check": "e-pro-license-and-lockstep.8",
+      "now": "There is no tier gating (any valid licence unlocks every extension); rewrite or retire this check"
     }
-  },
-  "proposed_checks": []
+  ]
 }

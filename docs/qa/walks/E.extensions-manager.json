@@ -2,10 +2,10 @@
   "journey": "E.extensions-manager",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:51:33Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T05:57:00Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,7 +16,7 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
@@ -25,48 +25,48 @@
       "evidence": "`wp jetonomy-pro extension disable polls` -> POST /polls/{id}/vote answers 404 rest_no_route; `extension enable polls` -> same route answers 401 rest_not_logged_in (registered again). All 17 extensions are enabled again (list shows 17 yes). Admin toggle UI and the 'Extension settings updated.' notice not clicked."
     },
     "e-extensions-manager.3": {
-      "result": "untested",
-      "evidence": "Only Polls was toggled off/on; the other 16 were not cycled. Final state: all 17 extensions enabled."
+      "result": "pass",
+      "evidence": "Every one of the 17 extension cards toggled off then on through the UI (form submit): each time notice 'Extension settings updated.', toggle state followed, no fatal on any page; debug.log gained no entries from the toggles (only my own stubs/CLI mistakes earlier). Final state 17 enabled."
     },
     "e-extensions-manager.1": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Settings: Jetonomy > Extensions as admin: 17 cards, each with name, version, category tag, description and a toggle with aria-label 'Enable or disable <name>'. Filter pills show counts (All 17, Administration 3, Intelligence 1, Privacy 1, Content 4, Engagement 3, Communication 4, Moderation 1); clicking Communication narrows to 4 cards and sets ext_cat=Communication. Screenshot ext-1440.png."
     },
     "e-extensions-manager.4": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Reactions (137 rows in wp_jt_pro_reactions) switched off: /posts/5346/reactions -> 404 rest_no_route, all 21 wp_jt_pro_* tables still present, 137 rows unchanged; switched on: 137 rows, route back (200)."
     },
     "e-extensions-manager.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "wp plugin activate wpmediaverse (redirected once to its setup wizard); Extensions page Private Messaging card shows 'WPMediaVerse is active and its messaging engine takes over all direct messages. This extension stays dormant while WPMediaVerse runs.' with a 'Dormant' badge and no toggle (card class --superseded). Messaging abilities also vanish while it runs. Plugin deactivated afterwards. Screenshot ext-wpmv.png."
     },
     "e-extensions-manager.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob and test_moderator: POST of the toggle form (fake nonce) to admin.php?page=jetonomy-extensions and admin-post.php -> 403; admin-ajax 400; GET of the page 403; enabled extensions still 17. handle_toggle checks the nonce and then current_user_can('jetonomy_manage_extensions') (admin role only); bob and test_moderator lack it."
     },
     "e-extensions-manager.7": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Analytics, Badges, Custom Fields, Polls, Conversations (Pro) and Moderation/Users (free) all render without fatal with the same WP admin look: H1 + intro, white cards (jt-settings-card or jtp analytics cards), wp-list-table widefat striped lists, matching primary/secondary buttons (screenshots pro-analytics.png, pro-polls.png, pro-users.png). Webhooks is a card inside Jetonomy Settings. No unstyled tables. (Analytics screenshot was taken before its async data loaded.)"
     },
     "e-extensions-manager.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Set topic/reply/member/space labels to Thread/Comment/Participant/Room: Analytics headers become Top Rooms, Threads, Comments, Participants, Unanswered Threads, Median time to first comment; Custom Fields admin shows Context 'Thread', 'Room', 'All Rooms (Global)'; Badge criteria 'Comment Count', polls intro 'Members add a poll when they start a thread'. Observed leftovers: badge criteria still say 'Post Count' and Polls says 'Members'. White Label: Branding tab community name 'Hivemind' -> admin menu 'Hivemind', 'Hivemind Pro Extensions', footer 'Thank you for building your community with Hivemind'. Labels and branding restored."
     },
     "e-extensions-manager.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Action Scheduler pending list shows Pro jobs: jetonomy_pro_send_daily_digest, _weekly_digest, _evaluate_badges, _prune_webhook_deliveries, _license_check; push sends and webhook dispatches are queued AS actions and ran (walked in E.web-push/E.webhooks). wp action-scheduler run completed with 0 failures and debug.log unchanged. Side finding: jetonomy_pro_rbe_imap_poll actions failed every 5 minutes ('no callbacks are registered') while Reply by Email was on the webhook method / switched around; 5 failed rows remain, the recurring job is no longer pending."
     },
     "e-extensions-manager.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "390px: Extensions page scrollWidth 390, filter pills wrap, cards stack, toggle 44x24 reachable (screenshot ext-390.png); toggling with ?ext_cat=Communication keeps the filter (URL keeps ext_cat=Communication, 4 cards still shown) with no horizontal overflow. A very long German-style description injected into a card wrapped without overflow. Observation: while the Communication filter is active the 'All 17' pill also renders in the active blue (possibly hover/focus)."
     },
     "e-extensions-manager.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "wp-admin has no dark scheme and Jetonomy admin implements none (prefers-color-scheme: dark emulation changes nothing), so there is no dark rendering to see. In CSS the card uses raw colours, not tokens: .jetonomy-pro-ext-card background #fff, border #e2e8f0, --active border #22c55e (pro-admin.css lines 160-176), so it would not follow tokens in a dark admin. Product code gap vs the check; low impact until an admin dark mode exists."
     },
     "e-extensions-manager.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "Two concurrent POSTs toggling DIFFERENT extensions off (same admin session, fired together with Promise.all, 5 pairs: polls+reactions, webhooks+analytics, custom-badges+white-label, seo-pro+web-push, attachments+site-announcements): both answered 302 but in all 5 pairs only ONE extension ended disabled (the other stayed enabled). Lost update on the jetonomy_pro_extensions option (read-modify-write in handle_toggle with no lock). Product bug."
     }
   },
   "proposed_checks": []

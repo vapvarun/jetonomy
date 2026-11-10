@@ -2,10 +2,10 @@
   "journey": "E.site-announcements",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:52:58Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T06:17:47Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,13 +16,13 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
     "e-site-announcements.1": {
-      "result": "untested",
-      "evidence": "admin POST /jetonomy-pro/v1/site-announcements/250 -> 200 {pinned:true}; GET lists it (count 1, limit 5). The 'Pin to community' label flip in the UI was not clicked."
+      "result": "pass",
+      "evidence": "Browser as admin on 'Scheduled maintenance on Saturday: what to expect' (Announcements space): menu shows 'Pin to space' and 'Pin to community'; clicking 'Pin to community' flips the label to 'Unpin from community' without a reload (no separate toast was captured). REST afterwards listed it as pinned."
     },
     "e-site-announcements.2": {
       "result": "pass",
@@ -45,40 +45,40 @@
       "evidence": "test_moderator POST /site-announcements/9 and bob POST -> 403 jetonomy_forbidden each."
     },
     "e-site-announcements.8": {
-      "result": "untested",
-      "evidence": "bob GET /announcements/active -> 200 listing only topic 250 (public space). The private/hidden exclusion was not exercised with a pinned private topic."
+      "result": "pass",
+      "evidence": "Announcements pinned from Customer Advisory Board (3262) and Moderators' Room (5348): bob (not a member) GET /announcements/active -> only the public ones (250, 5353); priya (member of Customer Advisory Board only) -> 250, 5353, 3262 (not 5348); admin -> all four. Unpinned afterwards."
     },
     "e-site-announcements.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Two topics pinned to General Discussion only (5353, 5354): bob's listing = announcement first, then the two per-space pins, then the rest. Then 5353 also pinned to community: bob sees two announcements at the top (250 and 5353) and the per-space pin 5354 stays in the pinned zone in its order; the topic that is both pinned in its space and announced appears once (1 link). Pins removed afterwards."
     },
     "e-site-announcements.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob blocked maya (POST /users/me/blocks, author of announcement 250): REST active list and bob's General Discussion listing no longer contain 'Scheduled maintenance on Saturday', while admin-authored announcement 5353 still shows. Block removed afterwards."
     },
     "e-site-announcements.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Announcement cards and pills in the Help Desk listing (6 elements with 'announce' classes) contain no dismiss/close control (checked class and aria-label)."
     },
     "e-site-announcements.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Pinned the 159-character topic (After moving our 12-year-old photography forum...) and the Arabic topic: at 390px in Help Desk the long title wraps over 7 lines, the ANNOUNCEMENT pill sits above the first line with no overlap, scrollWidth 390 (screenshot sa-390-long.png). Arabic locale (dir rtl) at 390: pill and title both right-aligned (pill 164-298, title 100-298), no overflow (sa-390-rtl.png). Observation: the pill text stays 'Announcement' in Arabic (not translated)."
     },
     "e-site-announcements.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Pinned 5317 (Arabic topic) then trashed it (DELETE /posts/5317): at once it left GET /site-announcements, GET /announcements/active (bob) and the General Discussion listing (0 matches); no ghost entry. Restored afterwards."
     },
     "e-site-announcements.13": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Lisbon Chapter (0 topics, public): at 390px the announcements (Scheduled maintenance, How do small communities..., After moving...) render above the empty state, and the empty text 'No topics yet. Be the first to start a discussion!' with the New Topic button is still present (screenshot sa-empty-390-light.png)."
     },
     "e-site-announcements.14": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "At 390px light and dark (Reign dark toggle) the listing has no overflow (scrollWidth 390); the announcement pill text colour changes with the theme (light rgb(79,87,99) to dark rgb(229,229,229)) and the page background follows the dark token (rgb(35,38,47)); screenshots sa-empty-390-dark.png."
     },
     "e-site-announcements.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "With ids [250,5353,247,5317] pinned, DELETE (trash) /posts/5317: it dropped out of GET /site-announcements and /announcements/active at once; its pin slot was free: POST /site-announcements/5313 -> pinned, ids [250,5353,247,5313]. Cleaned up."
     }
   },
   "proposed_checks": []

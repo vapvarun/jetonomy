@@ -2,10 +2,10 @@
   "journey": "E.attachments",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:54:01Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T06:29:11Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,81 +16,81 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
     "e-attachments.2": {
-      "result": "untested",
-      "evidence": "`wp option get jetonomy_pro_attachments` -> allowed_types jpg,jpeg,png,gif,webp,pdf,docx,xlsx,pptx,odt,txt,csv (no svg), max_size_bytes 10485760, max_files 5; the raw-POST-with-svg-ticked leg was not run."
+      "result": "pass",
+      "evidence": "Raw POST of the settings form with jt_attach_types[] svg, svgz, exe appended and csv removed (to prove the request was processed): option became [...txt] without csv and with no svg/svgz/exe. Observation: re-posting a type already in the form (csv twice) stored a duplicate 'csv' in allowed_types (no de-duplication); fixed by saving the form again."
     },
     "e-attachments.6": {
-      "result": "untested",
-      "evidence": "bob POST /jetonomy-pro/v1/attachments linking attachment_id 999999 (not his upload) -> 403 jetonomy_attach_forbidden 'You can only attach your own uploads.'; linking alice's real upload and the stored-path variant were not run."
+      "result": "pass",
+      "evidence": "bob POST /jetonomy-pro/v1/attachments with alice's media id -> 403 jetonomy_attach_forbidden 'You can only attach your own uploads.'; after removing txt from allowed types, linking an existing txt upload -> 400 with 'This file type is not allowed. Allowed types: ...'; on a post that already has 5 attachments a sixth -> 400 jetonomy_attach_limit 'You can attach at most 5 files.'. Settings restored."
     },
     "e-attachments.9": {
-      "result": "untested",
-      "evidence": "Guest POST /jetonomy/v1/media -> 401 rest_not_logged_in; guest POST /jetonomy-pro/v1/attachments with an empty body -> 400 rest_missing_callback_param (WordPress validates params before the permission check), so the 401 for a complete body was not observed."
+      "result": "pass",
+      "evidence": "Guest POST /jetonomy/v1/media and POST /jetonomy-pro/v1/attachments -> 401 rest_not_logged_in; the guest page for a topic with attachments has no attach button (0 data-jt-attach); guest GET /attachments/{link}/download for a public topic's links -> 200 (image/png, text/plain)."
     },
     "e-attachments.1": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Settings > Attachments (tab=attachments): all 12 types ticked, size 8 MB + files 5 saved: notice 'Maximum file size was set to 2 MB, not 8 MB: this server does...' (wp_max_upload_size is 2 MB here) and 'Attachment settings saved.'; stored max_size_bytes 2097152. Clamps: size 0 -> 1 MB, 9999 -> 2 MB (server limit); files 0 -> 1, 99 -> 20. Screenshot att-settings.png."
     },
     "e-attachments.3": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob in Help Desk composer: attached 'Dashboard layout.png' (1.2 MB) and 'Community guidelines v3.pdf' (UI, Attach files button), Post Question -> topic shows the image as a thumbnail whose link opens in a new tab (target _blank) and the PDF card 'Community-guidelines-v3.pdf - 3 pages - 1 KB - Open viewer'. Observation: the strip element has no role attribute. Screenshot att-topic.png."
     },
     "e-attachments.4": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Initial page load requested only the PDF thumbnail; no pdf-viewer.js or pdf.min.mjs. Clicking the PDF card then requested pdf-viewer.js, pdfjs/pdf.min.mjs, pdf.worker.min.mjs and the PDF; a role=dialog aria-modal=true box opened with 1 rendered canvas and focus on the box; 8 Tab presses stayed inside the dialog; Escape closed it and focus returned to the PDF card. Overlay-click close not exercised. Screenshot att-pdf-modal.png."
     },
     "e-attachments.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Composer attach: setup.exe -> modal 'That file type is not allowed. Allowed types: JPG, JPEG, PNG, GIF, WEBP, PDF, DOCX, XLSX, PPTX, ODT, TXT, and CSV.'; notes.svg -> same message; a 20 MB PDF -> 'That file is too large. The limit is 2 MB per file.' No chip was created and nothing linked (attachment link rows unchanged). Screenshot att-refuse-exe.png."
     },
     "e-attachments.7": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Created a post with inline attachment_ids=<id>: 1 row in jt_attachments; then the explicit POST /attachments for the same pair -> 200 and the count stayed 1. Linking the same pair twice via REST also returned 200 both times with one row."
     },
     "e-attachments.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Attached the PDF to a reply (id 3967) of the 52-reply topic 'Dark mode for the community on phones' in Feature Requests: on 'Load More' (page 2 of replies) a .jt-attach-strip renders on that reply with the PDF card. NOT measured: whether attachments load in a batch without one query per row (no query log access on this stack)."
     },
     "e-attachments.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Admin attached a file to the Customer Advisory Board topic 3262: bob, test_moderator and a guest GET .../attachments/7/download -> 404; priya (member of that space) -> 200 with the content; GET /posts/3262 as bob -> 404 jetonomy_not_found, for priya the post lists the attachment with a download-route URL. SECURITY NOTE: the file's direct URL returned by the upload (.../wp-content/uploads/jetonomy/<16-hex dir>/cab.txt) returns 200 to a guest, i.e. protection depends on that directory name staying secret; the PDF viewer also loads the file from that direct uploads URL. Cleaned up."
     },
     "e-attachments.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob DELETE of his post (id 5424 with a linked file) -> status trash, 1 link row and the media post remain. Admin DELETE ?force=true -> deleted permanent, link rows 0, media post still present (left for the media sweep). (?permanent=true is not the parameter; the first attempt returned 409 'moderator can restore it or delete it permanently'.)"
     },
     "e-attachments.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Seeded unlinked media: own upload tagged _jetonomy_media_origin=upload aged 48 h, own upload aged 2 h, a subscriber-authored attachment tagged only _jetonomy_media aged 48 h, plus a link row pointing at attachment 999999. Ran the jetonomy_cleanup_media action: the 48 h own upload was deleted, the 2 h one survived, the foreign-tagged one survived, the orphan link row was removed. Seeds removed."
     },
     "e-attachments.13": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "390px: 'Quarterly community engagement report - final draft v7 (reviewed by moderators).pdf' chip wraps onto 3 lines (not two) with the .pdf extension visible, scrollWidth 390, no overflow; an Arabic-named file 'تقرير المجتمع الشهري.pdf' shows the Arabic name with .pdf (the chip itself stays direction ltr with unicode-bidi isolate). Screenshot att-long-390.png."
     },
     "e-attachments.14": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Topic with 5 attachments (image, PDF, 3 text) at 390px: the strip stacks the five cards at full column width (32-358 px), scrollWidth 390, no overflow (att-five-390.png). The sixth is refused by the API with 400 jetonomy_attach_limit 'You can attach at most 5 files.' (UI refusal message for a sixth not exercised)."
     },
     "e-attachments.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Network set offline then attaching notes.txt: the compose chip becomes 'notes.txt: Upload failed  Retry  x' (class is-failed), no modal, no link row created; the composer remains usable. Screenshot att-offline.png. (Retry after reconnect and sending the post without it were not exercised.)"
     },
     "e-attachments.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "finn (silenced): POST /jetonomy/v1/media and POST /jetonomy-pro/v1/attachments -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; no attachment posts by finn were created. REST only, not the composer."
     },
     "e-attachments.17": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Topic with attachments at 390px with Reign dark mode: text colour rgb(229,229,229) on body rgb(35,38,47), chip background a dark token (rgb(52,55,63)), borders translucent light; card heights 135/102/65 px full width (well above 40 px tap size). Screenshot att-dark-390.png."
     },
     "e-attachments.18": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "There is no Attachments admin list: Settings > Attachments is only the settings form (types, size, max files). No list or search of attachments by post and no remove action exists anywhere in the admin menu (Community Media is a different page). The backend entry point for the jt_attachments data store is missing (admin removal only via the post itself)."
     }
   },
   "proposed_checks": []

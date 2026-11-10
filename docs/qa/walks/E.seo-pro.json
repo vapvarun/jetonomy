@@ -2,10 +2,10 @@
   "journey": "E.seo-pro",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:51:33Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T05:28:08Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,73 +16,73 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
     "e-seo-pro.4": {
       "result": "pass",
-      "evidence": "Guest source of /community/s/general-discussion/ (no overrides): title 'General Discussion - Northwind Makers Community', description = the space description, og:title 'General Discussion | Northwind Makers Community', canonical; no meta tag with content=\"\"."
+      "evidence": "General Discussion (no overrides): title 'General Discussion - Northwind Makers Community', og:title 'General Discussion | Northwind Makers Community', description is the space description; no meta tag with content=\"\" in the head."
     },
     "e-seo-pro.8": {
       "result": "pass",
-      "evidence": "Guest GET Customer Advisory Board topic URL -> HTTP 404 'Page not available - Northwind Makers Community' with no description/og/canonical/JSON-LD and no topic title in head."
+      "evidence": "With LEAKTITLE/LEAKDESC/og overrides set on Customer Advisory Board (42) and Moderators' Room (43) (cleared afterwards): guest GET of the private topic URLs -> 404 'Page not available' with 0 occurrences of LEAK, topic title or digest text; Moderators' Room space -> 404; Customer Advisory Board space URL -> 200 'Community' locked preview with no overrides or titles."
     },
     "e-seo-pro.13": {
       "result": "pass",
-      "evidence": "robots.txt contains '# Jetonomy Forum SEO Pro' block: Allow /community/ and /community/s/*/; Disallow /community/notifications/, /community/mod/, /community/search/?q=*; public spaces not disallowed."
+      "evidence": "/robots.txt: '# Jetonomy Forum SEO Pro' block with Allow /community/, Allow /community/s/*/, Disallow notifications, mod and search; no Disallow of public spaces; while help-desk was excluded from the sitemap no help-desk line appeared in robots.txt."
     },
     "e-seo-pro.2": {
-      "result": "untested",
-      "evidence": "Help Desk source: <title>, meta description, og:title, og:description, canonical and JSON-LD present; og:image is absent and twitter:card is 'summary' (not summary_large_image) because no space SEO image/override was set; the SEO tab was not edited so overrides were not walked."
+      "result": "pass",
+      "evidence": "Page source of /community/s/help-desk/ (fetched as a guest with no cookies, i.e. view-source): title 'Help Desk - Get answers from the community | Northwind Makers Community', meta description, og:title/description/image, twitter:card summary_large_image, twitter:image, canonical; exactly one of each (count 3 for description/og:title/canonical)."
     },
     "e-seo-pro.1": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Admin autologin, Help Desk (space 20) edit > SEO tab: meta title 'Help Desk - Get answers from the community | {site_name}', description 'Ask a question and get answers from experienced members.', og_image URL, Save -> 'SEO settings saved.'; reload shows the values; GET /spaces/20/seo returns all three. Screenshot qa-artifacts/walk-207/combo/seo1.png."
     },
     "e-seo-pro.3": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Guest source of Help Desk topic 'Billing sync stuck...': title/og:title follow the space template (no topic title because the template has no {post_title}; with '{post_title} | {space_name} | {site_name}' the topic title appears), og:type article, article:author 'Bob Martinez', published/modified ISO 8601 (+00:00), article:section 'Help Desk'. Observation: with {post_title} in the template the SPACE page title starts with ' | Help Desk | ...' (empty leading part) - template author's choice, not flagged."
     },
     "e-seo-pro.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Default (pre-override) Help Desk description is 288 chars; meta description is exactly 30 words ending '...'. 159-char topic title (topic 247) renders a complete <title> (title - space - site) and og:title with no breakage. Observation: topic meta description built from list HTML runs words together ('worry me:Old thread links ... 1234.Long-time members') because block boundaries are stripped without a space; cosmetic, not part of this check."
     },
     "e-seo-pro.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Ticked noindex+nofollow and canonical base https://canon.example.test/community/help in the SEO tab: Help Desk page and its topic show <meta name=\"robots\" content=\"noindex, nofollow\">; space canonical uses the override base, topic canonical and General Discussion unchanged. Unticked + cleared -> robots tag and override canonical gone."
     },
     "e-seo-pro.7": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Priority 1.0 + changefreq daily on Help Desk: /community-sitemap-spaces-1.xml shows help-desk priority 1.0 daily; General Discussion (defaults) 0.7. Ticked exclude_sitemap: help-desk absent from spaces and posts sitemaps immediately (0 matches); unticked -> back. Note: sitemap is /community-sitemap.xml index with spaces/posts children."
     },
     "e-seo-pro.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Anonymous topic 'Anonymous question about moderation fairness': no article:author meta; JSON-LD author is {\"@type\":\"Person\",\"name\":\"Anonymous\"}."
     },
     "e-seo-pro.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob and test_moderator GET and PATCH /spaces/20/seo -> 403 jetonomy_forbidden; guest GET -> 401; admin PATCH sitemap_priority 'high' -> stored as '' (default)."
     },
     "e-seo-pro.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Admin SEO tab: description 'Ask \"anything\" <script>alert(1)</script> & get 'answers'' -> saved; head shows content=\"Ask &quot;anything&quot;  &amp; get &#039;answers&#039;\" in description/og/twitter; script tag stripped, nothing executable."
     },
     "e-seo-pro.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "General Discussion SEO override in Arabic (title and description): Arabic topic page head shows <title>النقاش العام | Northwind Makers Community</title> and the Arabic description intact UTF-8, no numeric-entity doubling. Overrides cleared afterwards."
     },
     "e-seo-pro.14": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "noindex ticked on Help Desk, then seo-pro removed from the enabled extensions: Help Desk head has no Pro meta (og:title just 'Help Desk', og:type website), topic head has no noindex, free JSON-LD (BreadcrumbList/CollectionPage) still printed. Extension and settings restored."
     },
     "e-seo-pro.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Every SEO save (title, noindex, canonical, sitemap exclude, XSS description) was visible on the very next guest fetch of the space/sitemap, with no manual cache clear."
     },
     "e-seo-pro.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Settings > SEO > Default share image (jetonomy_settings[seo_default_og_image]) set: General Discussion (no SEO image, no cover) and its topic (no inline image) print og:image and twitter:image = default. Cleared + site icon set (attachment 47): og:image/twitter:image = uploads/.../screenshot.png (site icon). Cleared both: no og:image. Topic with site-relative <img src=\"/wp-content/uploads/...\"> prints og:image with the full http://localhost:8911/... address. Settings and site_icon restored afterwards."
     }
   },
   "proposed_checks": []

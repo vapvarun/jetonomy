@@ -2,10 +2,10 @@
   "journey": "E.reply-by-email",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:51:33Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T05:23:28Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,7 +16,7 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
@@ -41,49 +41,59 @@
       "evidence": "Signed payload without To -> 400 'No To address found in payload.'; To without a reply token -> 400 'No reply token found in To address.'"
     },
     "e-reply-by-email.8": {
-      "result": "untested",
-      "evidence": "Before configuring, POST inbound answered 503 jetonomy_extension_disabled 'Reply by Email is not set up yet.' (provider imap, not ready); the extension-off -> rest_no_route leg was not run."
+      "result": "pass",
+      "evidence": "Extension removed from jetonomy_pro_extensions -> POST inbound 404 rest_no_route; re-enabled. IMAP chosen + fully configured and webhook called -> 400 jetonomy_inbound_method_disabled 'Inbound webhook method is not enabled.' (the 503 'not set up yet' appears when IMAP is chosen but not configured: seen in wave 1). Behaviour sensible; runbook line text is stale about which code fires when IMAP is configured."
     },
     "e-reply-by-email.6": {
-      "result": "untested",
-      "evidence": "Replay against another post id was not done properly (I mutated the token text, which gave 'Malformed token.'); a genuine cross-post replay of a valid token was not tested."
+      "result": "pass",
+      "evidence": "Genuine cross-post replay: decoded bob's valid token for post 5342, rewrote p to 5343 (and re-encoded), POST inbound -> 400 jetonomy_reply_token_invalid 'Token signature mismatch.'; no reply created on 5343. Tampered expiry (e+999999) and tampered user id (u=1) -> both 400 'Token signature mismatch.'."
     },
     "e-reply-by-email.1": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Admin autologin, Settings > Reply by Email (admin.php?page=jetonomy-settings&tab=reply-by-email). Chose Inbound Webhook, domain reply.walk.test, Save -> notice 'Reply by Email settings saved.'. Signing secret is auto-generated and shown read-only on the tab (webhook URL + Secret). Then chose IMAP, host/user/password, saved, reloaded: IMAP Password placeholder 'Leave blank to keep the current password', value empty. Screenshot qa-artifacts/walk-207/combo/rbe1.png. Note: there is no editable signing-secret field; it is generated on activation."
     },
     "e-reply-by-email.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice replied to bob's topics 5346 and 5345 (bob digest freq set to off so instant email goes out; restored to weekly). Mailpit emails to bob carry Reply-To reply+<token>@reply.walk.test. Decoded tokens: u=10,p=5345 h=f5aea0.. vs u=10,p=5346 h=f5f531..; earlier mail to alice carried u=9,p=3264. Token differs per user and per post."
     },
     "e-reply-by-email.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Reset jt_rbe_rl_10, sent 12 signed inbound replies for bob: 1-10 -> 200, 11 and 12 -> 429 jetonomy_rate_limited 'Rate limit exceeded or content empty.'. alice's inbound reply in the same minute -> 200 and reply created."
     },
     "e-reply-by-email.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Valid token for finn (id 25) on topic 5346 -> REST 200 success:true, no reply row created (count unchanged). Mailpit: finn gets 'Your emailed reply was not posted' (reason: account silenced), i.e. the sender IS told, unlike the runbook line which says no bounce. Behaviour is arguably better; recorded as runbook_fix."
     },
     "e-reply-by-email.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "omar (id 23) tokens: Off-Topic Lounge topic 139, closed topic 250, archived 2025 Hackathon topic 3243 -> each 200 success:true with zero new replies and a 'not posted' email to omar. Control: omar on Help Desk topic 5346 (not banned) created a reply, so the refusals are the ban/closed/archived gates."
     },
     "e-reply-by-email.13": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob valid token on Partner Program thread 3264: control reply created. Removed bob from space 41 (restored afterwards), same token -> 200 success:true (identical to a success, no leak), zero new replies; bob's 'not posted' email says 'You cannot post in this space.' and links only to /community/ (no topic name)."
     },
     "e-reply-by-email.14": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Help Desk (space 20) require_approval=1 (reverted): emailed reply by bob -> row 3882 status=pending, present in GET /moderation/queue. Created global keyword rule action=flag (deleted after): emailed reply containing the keyword -> reply 3883 published and a jt_flags row (reporter 0, 'Flagged automatically by a moderation rule.') created; moderators got 'New report needs review' emails."
     },
     "e-reply-by-email.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice follows Help Desk space and the topic (subscription both). bob's emailed reply 'Good catch @alice ...' -> alice has exactly one notification (type mention, reply 3884) and exactly one email 'You were mentioned by Bob Martinez'; no duplicate reply_to_post notice for her. Topic author got one reply_to_post."
     },
     "e-reply-by-email.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Webhook path: Arabic body 'شكرا لكم ...' stored intact in <p> (UTF-8, no mojibake); 5001-char body stored in full (5008 chars with markup). Caveat: webhook providers deliver already-decoded body-plain; the quoted-printable/base64 decode branch lives only in the IMAP path, and the stack has no PHP imap extension (function_exists imap_open false), so that branch was not executed here."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-reply-by-email.8",
+      "now": "IMAP chosen and fully configured: webhook call -> 400 jetonomy_inbound_method_disabled \"Inbound webhook method is not enabled.\"; IMAP chosen but not configured -> 503 \"Reply by Email is not set up yet.\""
+    },
+    {
+      "check": "e-reply-by-email.11",
+      "now": "finn gets no reply but the sender IS told: a \"Your emailed reply was not posted\" email (reason: account silenced); REST still answers success:true"
+    }
+  ]
 }

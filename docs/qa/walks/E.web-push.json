@@ -2,10 +2,10 @@
   "journey": "E.web-push",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:51:33Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T05:45:41Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,7 +16,7 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
@@ -42,51 +42,51 @@
     },
     "e-web-push.3": {
       "result": "untested",
-      "evidence": "Needs a real browser push service over HTTPS; the stack is plain http://localhost so the permission prompt and registration cannot be exercised."
+      "evidence": "ENV: the permission prompt and a real browser subscription need HTTPS and a browser push service; the stack is http://localhost. REST subscribe/unsubscribe were walked in wave 1 (check 4)."
     },
     "e-web-push.1": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Admin, Settings > Web Push tab: VAPID Public Key shown read-only (BG2SYab...), 'Auto-generated'. Set Default Notification Title 'Northwind Alerts' and Notification Icon URL, Save -> 'Web Push settings saved.'; option jetonomy_pro_web_push stores both; VAPID key identical before/after the save and equal to GET /push/vapid-key. Screenshot qa-artifacts/walk-207/combo/wp1.png. (Title/icon cleared again afterwards.)"
     },
     "e-web-push.6": {
       "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "evidence": "ENV: real delivery to a browser cannot be observed. What was observed: alice replied to bob's topic with bob subscribed -> an Action Scheduler job jetonomy_pro_send_push was queued for bob's endpoint only, payload title 'Northwind Makers Community', body 'Alice Chen replied to your topic \"Billing sync stuck after plugin update\"', url .../t/billing-sync-stuck-after-plugin-update/#reply-3888. bob's reply to alice's topic (alice not subscribed) queued nothing."
     },
     "e-web-push.7": {
       "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "evidence": "ENV: delivery on reconnect within the TTL is the push service's job and cannot be observed here. Observed: the send is queued asynchronously, the REST reply returned 201 immediately, and the job ran and finished without any effect on the post even though the push service did not accept the fake endpoint (post unaffected). The request carries a TTL: 86400 header (code, not observed on the wire)."
     },
     "e-web-push.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Two bob subscriptions (walkbob1, walkbob2). do_send_push run for both via the registered jetonomy_pro_send_push hook in WP-CLI with pre_http_request faking the push service (410 for walkbob1, 201 for walkbob2; both URLs were requested): walkbob1 row deleted, walkbob2 row kept. The push service itself is faked because a real one is ENV."
     },
     "e-web-push.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Removed bob from Partner Program (private space 41, restored after); alice replied to bob's reply in that thread twice: no notification row for bob and no push job queued, so the topic title never left. Control: alice mentioning @bob in a readable Help Desk topic queued a push 'Alice Chen mentioned you in \"Question without the retired OS field\"'."
     },
     "e-web-push.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Help Desk temporarily allow_anonymous; alice replied anonymously to bob's topic: queued push body 'Anonymous replied to your topic \"Billing sync stuck after plugin update\"' - no real name. Setting restored."
     },
     "e-web-push.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice messaged bob in conversation 1 (after bob had read it, one notice per unread burst): queued push body 'New message from Alice Chen', url /community/messages/1/; the secret message text never appears. bob muted the conversation, read it, alice sent again: no notification and no push queued. Unmuted afterwards."
     },
     "e-web-push.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "finn (silenced: POST topic -> 403 'Your account is currently silenced and cannot post.') subscribed to push (201). test_moderator removed finn's reply 1350: finn got notification 2536 'Your reply was removed by a moderator' and a push job was queued for finn's endpoint with that body (Action Scheduler id 832). The check expects no push for content removed by a moderator for a silenced member. finn cannot post, so the 'finn's reply' half has nothing to test. Product behaviour vs the check line: either the push should be withheld or the check should say a removal notice is pushed to everyone (bob also receives one)."
     },
     "e-web-push.14": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob subscribed endpoint .../walkshared1 (row user 10, created:true); alice subscribed the same endpoint -> created:false and the row moved to alice (user 9) with fresh keys. Later pushes: alice's topic reply queued a push for that endpoint; alice's reply on bob's topic queued none for it. So the subscription moves and bob stops receiving on that browser; per the model docblock this is intended (pushes follow whoever subscribed last)."
     },
     "e-web-push.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Removed web-push from the enabled extensions: GET /push/service-worker.js -> 404 and /push/vapid-key -> 404 rest_no_route; bob replied on alice's topic: no push job queued; subscription rows still present (3). Re-enabled -> service worker 200 again."
     },
     "e-web-push.17": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "wp jetonomy qa-actions on the combo stack: EB1 (Web Push tab never saved -> off), EB2 (Digest on), EB3 (box ticked keeps Web Push on), EB4, EB5 all PASS. Other lines of that run are unrelated: A1 etc fail because a required 'Operating system' post field is active on the stack (see report)."
     }
   },
   "proposed_checks": []

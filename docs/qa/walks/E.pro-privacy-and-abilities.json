@@ -2,10 +2,10 @@
   "journey": "E.pro-privacy-and-abilities",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:53:54Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T06:01:57Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,58 +16,64 @@
     "schemes": [
       "light"
     ],
-    "browser": "Chromium via Playwright MCP",
+    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
     "locale": "en_US"
   },
   "checks": {
     "e-pro-privacy-and-abilities.1": {
       "result": "pass",
-      "evidence": "Core personal-data exporters for maya run with done=true and produce groups 'Jetonomy Pro: Private Messages' (2 items), 'Jetonomy Pro: Reactions' (5), 'Jetonomy Pro: Badges' (9), 'Jetonomy Pro: Poll Votes' (2) alongside Free groups; maya has no push subscription or custom-field values so those exporters returned no group (run in-process via eval, not the Tools screen)."
+      "evidence": "Seeded maya with a push subscription and two user custom-field values (she already had DMs, reactions, poll votes, badges). Tools > Export Personal Data > Download personal data (UI) ran and produced a zip; its report lists Jetonomy Pro: Private Messages (7), Reactions (10), Custom Fields (2), Badges (11), Poll Votes (3), Push Devices (Browser subscription) each with real values (e.g. Emoji=thumbsup On=Reply #3812; Badge=Early Adopter Tier=silver; Timezone/Location=Lagos, Nigeria). Screenshot priv-export.png."
     },
     "e-pro-privacy-and-abilities.9": {
-      "result": "fail",
-      "evidence": "`wp_get_abilities()` lists 42 abilities (Free 19 incl. jetonomy/moderate-content; Pro: send-message, list-conversations, get-conversation, get-analytics, export-analytics, create-poll, vote-poll, get-poll-results, list-badges, get-user-badges, award-badge, list-webhooks, create-webhook, ...). The check expects reactions and custom-fields abilities too; none with those names are registered. Likely an out-of-date check line or missing abilities - main session to decide."
+      "result": "pass",
+      "evidence": "Now re-walked: wp_get_abilities lists 39 jetonomy abilities (Free 19 + Pro 20): Pro includes send-message, list-conversations, get-conversation, get-analytics, export-analytics, create-poll, vote-poll, get-poll-results, list-badges, get-user-badges, award-badge, list-webhooks, create-webhook, delete-webhook, add-reaction, get-reactions, list-custom-fields, set-custom-field, list-moderation-rules, create-moderation-rule (the earlier fail expected reactions and custom-fields abilities: they exist). Polls off -> 0 poll abilities (39 -> 36); WPMediaVerse active -> 3 messaging abilities gone (36); licence lapsed past grace -> 0 Pro abilities. Restored."
     },
     "e-pro-privacy-and-abilities.4": {
-      "result": "untested",
-      "evidence": "Eraser callbacks 'jetonomy' and 'jetonomy-pro' are registered; an erasure of a demo member was deliberately not run (it would destroy seed data other checks depend on)."
+      "result": "pass",
+      "evidence": "Tools > Erase Personal Data for Jamal (demo member, confirmed request, UI button): final text 'All of the personal data found for this user was erased. Jetonomy: Topics and replies anonymized. Personal data deleted. Jetonomy Pro: Messages anonymized. Reactions, custom fields, badges, poll votes, and push subscriptions/devices deleted.' Afterwards Jamal has 0 reactions, 0 poll votes, 0 badges, 0 push rows, 0 field values, 0 messages as sender. Screenshot priv-erase.png."
     },
     "e-pro-privacy-and-abilities.2": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Exporter run for walknone (no Pro data): no Jetonomy Pro groups, no output, no notices. A member with 1,698 reactions: the Reactions exporter paged 100 rows per page over 17 pages (16 x 100 then 98) with done:false until the last page, no duplicates or gaps."
     },
     "e-pro-privacy-and-abilities.3": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "The Private Messages group in maya's report holds only messages she sent (7 rows, conversation id, content, date) - no other participant's content or email. Only maya.demo@jetonomy.local appears as an email in the whole export; bob's email is absent."
     },
     "e-pro-privacy-and-abilities.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "After the Jamal erasure bob's conversation 12 shows his message 'Thanks Jamal, I will take a look...' and Jamal's old messages as sender 'Deleted User' (sender_id 0); thread title 'Deleted User'; bob's reactions (15) and poll vote (1) unchanged; poll 1 total 12 -> 11 and poll 3 total 9 -> 8, i.e. exactly Jamal's one vote in each. (Check line names maya; the erased member was Jamal.)"
     },
     "e-pro-privacy-and-abilities.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Test member with a reaction x2, a poll vote, a badge, a push subscription and a user field value: wp user delete --reassign=1 -> counts 2/1/1/1/1 became 0/0/0/0/0 and orphan checks on jt_pro_reactions, poll_votes, user_badges, push_subscriptions found 0 orphan rows."
     },
     "e-pro-privacy-and-abilities.7": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Seeded 7,115 reactions (5,000+) for walkbig plus badges, field values and a push row; Tools > Erase Personal Data: the UI paged through 11 AJAX calls in about 1.2 seconds, finished with the full result text, 0 reactions/field values/push/badges left, no timeout."
     },
     "e-pro-privacy-and-abilities.8": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Anonymous topic and a named topic by one member, then erased: both rows now author_id 0 (anonymous kept is_anonymous=1), real id gone, activity-log rows for that user deleted (0). Attachment test: media 59 uploaded by an author and linked to a topic; after erasure the attachment post_author is 0 and the topic author 0, link row kept. The Pro eraser has no attachment-specific code; this relies on Free/core anonymising authorship."
     },
     "e-pro-privacy-and-abilities.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "GET /wp-abilities/v1/abilities/<name>/run (read-only abilities need GET with input[]): bob get-analytics -> 403 rest_ability_cannot_execute; bob export-analytics -> 403; guest get-analytics and list-conversations -> 401; bob get-conversation for conversation 3 he is not in -> 404 'Conversation not found.'; conversation he is in -> 200; admin get-analytics -> 200."
     },
     "e-pro-privacy-and-abilities.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "finn (silenced) POST send-message ability (recipient_ids [10]) -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.', the same code and text as POST /conversations; bob's control send via the ability -> 200 message_id 157."
     },
     "e-pro-privacy-and-abilities.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Tools > Export Personal Data and Erase Personal Data at 390px: scrollWidth 390, form, list and per-row buttons usable (screenshots priv-export-390.png, priv-erase-390.png). The Pro groups show in the downloaded report and the erase result line, not on the 390px screen itself."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-pro-privacy-and-abilities.5",
+      "now": "the check names maya; the erased member is Jamal (poll totals drop by Jamal votes)"
+    }
+  ]
 }

@@ -2,16 +2,17 @@
   "journey": "E.custom-fields",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:48:59Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T05:05:57.167855Z",
+  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free+Pro)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -26,11 +27,11 @@
     },
     "e-custom-fields.4": {
       "result": "pass",
-      "evidence": "bob created a Help Desk topic with custom_fields {operating-system: Linux} -> 201; GET /posts/{id}/fields returns value Linux (REST; composer UI not used)."
+      "evidence": "bob started a Help Desk topic from the composer with Operating system = Linux: the topic shows 'Additional Fields' with OPERATING SYSTEM Linux (plus the optional values) and the same after reload. cf-4.png"
     },
     "e-custom-fields.5": {
       "result": "pass",
-      "evidence": "With the field required (is_required true), bob POST topic without it -> 400 jetonomy_field_required 'Operating system is required.' and no topic created (REST; composer inline message not seen)."
+      "evidence": "Composer submitted with the required Operating system empty: the browser's native required validation blocks it ('Please select an item in the list.') and no topic is created (DB). The server message 'Operating system is required.' (REST 400 jetonomy_field_required) is only reached over REST; the UI shows the native message. cf-5.png"
     },
     "e-custom-fields.7": {
       "result": "pass",
@@ -38,72 +39,82 @@
     },
     "e-custom-fields.13": {
       "result": "pass",
-      "evidence": "bob PATCH /users/me/fields {nosuchslug:x} -> 400 jetonomy_no_known_fields 'No known profile field matched the request. Send a flat { field_slug: value } object.'"
+      "evidence": "bob PATCH /users/me/fields {nosuchslug:x} -> 400 jetonomy_no_known_fields 'No known profile field matched the request. Send a flat { field_slug: value } object.'; an array body [a,b] -> 400 jetonomy_validation 'Request body must be a JSON object of field_slug: value pairs.'; a valid slug saved."
     },
     "e-custom-fields.17": {
       "result": "pass",
-      "evidence": "Guest GET /fields -> 200 (active fields list); bob POST /fields -> 403 jetonomy_forbidden. Hidden-space /posts/{id}/fields leg not run."
+      "evidence": "Guest GET /fields -> 200 with the 10 active post/profile/space fields (a field deactivated via DELETE disappeared from the list, reactivated afterwards); guest GET /posts/403/fields (Customer Advisory Board) -> 404 'Topic not found.'; bob POST /fields -> 403 jetonomy_forbidden."
     },
     "e-custom-fields.8": {
-      "result": "untested",
-      "evidence": "bob PATCH custom_fields operating-system='BeOS' (not in the select options) -> HTTP 200; whether the invalid value was rejected or stored was not read back before the topic was deleted."
+      "result": "pass",
+      "evidence": "With stored macOS/2400/ops@example.com/https link, bob PATCH /posts/{id} custom_fields number 'abc', email 'not-an-email', url 'javascript:alert(1)', select 'BeOS' -> 200, DB values unchanged (2400, ops@example.com, the https URL, macOS)."
     },
     "e-custom-fields.15": {
-      "result": "untested",
-      "evidence": "DELETE /fields/1 answered {success:true, message:'Field deactivated.'} (deactivate semantics via REST delete); display/re-activation legs not run. The inactive field 'Operating system' remains in the custom-fields table."
+      "result": "pass",
+      "evidence": "Row Disable -> notice 'Field deactivated.'; the 2 stored values stay in the DB, the topic and the composer no longer show Operating system, GET /posts/{id}/fields omits it, and a topic can be posted without it although it was required; Enable -> 'Field activated.' and the value shows again on the topic. cf-15a/15c.png"
     },
     "e-custom-fields.1": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "wp-admin > Jetonomy > Custom Fields > Add New Field: name 'Operating system', type Select, options Windows/macOS/Linux added with + Add Option, context Topic (post), Required, space All Spaces (Global), Create -> notice 'Field created.' and the row lists 'operating-system' Select / Topic / required tick / Global. cf-1.png"
     },
     "e-custom-fields.3": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "One field per type created (text, textarea, number, email, url, select, checkbox, radio, date; context post, global). The Help Desk composer renders select, text, textarea, number, email, url, checkbox, three radios and a date input (required OS visible, the 8 optional fields under 'More details (8 optional fields)'); the posted topic shows every value (Linux, Firefox 128, steps text, 2400, ops@example.com, URL, Yes, Shared, December 1, 2026). cf-3a/3b/4.png"
     },
     "e-custom-fields.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob > More options > Edit: all nine fields pre-populated (under More details); changed Operating system to macOS and cleared the optional Browser version, Save -> the topic shows macOS and no Browser version row, same after reload. cf-6a/6b.png"
     },
     "e-custom-fields.9": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "space_admin works: test_editor (admin role of Help Desk, no global moderate cap) PATCH /posts/5343 custom_fields -> 200 and stored; a plain member (test_author) -> 403. But test_moderator (WP Editor role with jetonomy_moderate, space roles only in Announcements/Bug Reports/Moderators' Room) PATCH on Help Desk topic 5343 -> 200 and the value changed (2500), i.e. the moderator capability is site-wide; the line says test_moderator outside those spaces may not."
     },
     "e-custom-fields.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "390px, Reign: a 100-character unbroken URL in a field value wraps inside .jt-cf-value on the topic (scrollWidth 292 = clientWidth 292, overflow-wrap anywhere, doc scrollWidth 390) and on bob's profile Profile Details (website value 252 = 252). cf-10a.png cf-11-alice390.png"
     },
     "e-custom-fields.11": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Edit Profile shows the profile-context fields under 'More about you' (Timezone/Location, Personal website, Pronouns, Bio in Arabic); bob saved 'Lagos, Nigeria' + website + Arabic bio with Save Profile; alice and a guest see them under 'Profile Details'; the blank Pronouns field shows no row. cf-11a/cf-11-alice1440.png"
     },
     "e-custom-fields.12": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "fail",
+      "evidence": "alice and a guest see bob's profile field values (Timezone/Location, Personal website, Bio in Arabic). There is no way to mark a field private or hidden to others: the Add New Field form has no visibility setting (name, slug, type, context, description, placeholder, default, required, searchable, space) and the REST field schema has none, so the 'private/hidden fields do not show' half cannot be exercised. cf-11-guest1440.png"
     },
     "e-custom-fields.14": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Space-context field 'Meeting cadence': on Spaces > Add New it renders; created 'Woodworkers Corner' with Monthly (DB row object_type space); the Edit Space screen pre-fills Monthly, changed to Weekly and saved; the space page shows 'MEETING CADENCE Weekly'. A Help Desk-scoped topic field 'Kernel version' appears in the Help Desk composer but not in General Discussion (which shows only the global fields). cf-14a/b.png"
     },
     "e-custom-fields.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Edit 'Steps to reproduce' ticking Searchable and Update Field -> notice 'Field updated. Existing content is being re-indexed in the background so this field becomes searchable everywhere, not only in new topics.' (the line says 'new posts'; the text uses the owner label 'topics'). With a ticket value on an old topic: search for it returned 0 before, and 1 after the backfill job (jetonomy_pro_backfill_searchable_fields via Action Scheduler). cf-16a.png"
     },
     "e-custom-fields.18": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "With every field removed the admin page lists 'No custom fields yet - Add a field above to capture extra metadata on topics, replies, or member profiles.'; the Help Desk composer has no 'Additional Fields' heading. cf-18a.png"
     },
     "e-custom-fields.19": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob's Arabic profile value '\u0623\u062d\u0628 \u0635\u0646\u0627\u0639\u0629 \u0627\u0644\u0623\u062b\u0627\u062b \u0627\u0644\u062e\u0634\u0628\u064a \u0648\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0645\u0628\u062a\u062f\u0626\u064a\u0646' computes direction rtl in the Profile Details list (dir=auto) and in the edit input (dir=auto, direction rtl). cf-19.png"
     },
     "e-custom-fields.20": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "39 fields total (33 active global post fields): the composer at 390px keeps the one required field open and collapses the rest under 'More details (32 optional fields)', doc scrollWidth 390, no overflow; the admin list shows 30 rows with '39 fields 1 2 >' paging. The 24 extra fields were deleted afterwards. cf-20a/b.png"
     },
     "e-custom-fields.21": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Field 'Reference ticket' (searchable) with value TKT-ZEBRA-4417 on a topic: ON -> search 0 until the job ran then 1; OFF in the UI -> 1 until the job ran then 0; ON again then Delete (confirm 'Delete the field ... and every value saved in it?', 'Field deleted.') -> still 1 until the job ran then 0."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-custom-fields.5",
+      "now": "the composer blocks an empty required field with the browser's native message; 'Operating system is required.' is the REST message (jetonomy_field_required)."
+    },
+    {
+      "check": "e-custom-fields.16",
+      "now": "notice reads '... not only in new topics.' (owner label), not 'new posts'."
+    }
+  ]
 }

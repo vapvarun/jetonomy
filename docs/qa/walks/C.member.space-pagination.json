@@ -1,91 +1,97 @@
 {
   "journey": "C.member.space-pagination",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T19:00:06Z",
-  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
-  "env": {
-    "mode": "free stack (Pro inactive)",
-    "site": "http://localhost:8912",
-    "themes": [
-      "reign-theme"
-    ],
-    "viewports": [
-      1440
-    ],
-    "schemes": [
-      "light"
-    ],
-    "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
-  },
+  "free": "0217e21d",
+  "pro": "1bb3e93",
   "checks": {
     "c-member-space-pagination.1": {
       "result": "pass",
-      "evidence": "jt-qa-paging (its own per-space posts_per_page=1 per its description; the global option was not what drove it) shows exactly 1 topic and a Load More link"
+      "evidence": "posts_per_page set to 1 (the Settings field has min 5, so set through the option): /community/s/jt-qa-paging/ shows exactly one topic (qa-paging-fixture-post-3) and a Load More button.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/pag-1.png"
     },
     "c-member-space-pagination.2": {
       "result": "pass",
-      "evidence": "One click on Load More: 1 -> 2 topics, no duplicates"
+      "evidence": "One click on Load More adds exactly one topic (qa-paging-fixture-post-2) -> 2 distinct topics, no duplicates (feed counted inside main, not the sidebar widgets).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/pag-2.png"
     },
     "c-member-space-pagination.3": {
       "result": "pass",
-      "evidence": "Wheel-scrolling 3000px without clicking: topic count stayed 1"
+      "evidence": "Scrolled 3000px to the bottom and waited 2s: still 1 topic, button unchanged; loading only happens on click."
     },
     "c-member-space-pagination.4": {
       "result": "pass",
-      "evidence": "Second click: 3 topics (all), 0 duplicates, Load More link gone"
+      "evidence": "Clicked Load More twice more: 3 topics (all 3 of the space) and the button is gone."
     },
     "c-member-space-pagination.5": {
       "result": "pass",
-      "evidence": "Seeded 22 believable feature-request topics (wp jetonomy post create) so Feature Requests holds 35. As bob on /community/s/feature-requests/ the first batch is 20 rows (default posts_per_page 20; REST /spaces/12/posts returns 20 and X-WP-Total 35), Load More (a.jt-load-more-trigger, href ?pg=2) adds 15 -> 35 rows, no duplicate hrefs, button gone; 35 = X-WP-Total. Behaviour holds; only the 30 in the check line is stale (default is 20)."
+      "evidence": "Feature Requests with 23 topics at posts_per_page 20: first batch 20, Load More adds 3 -> 23 distinct, 0 duplicates; REST X-WP-Total 23."
     },
     "c-member-space-pagination.6": {
       "result": "pass",
-      "evidence": "bob GET /spaces/12/posts?per_page=5&offset=5 returns the next 5 (85,87,91,88,92 vs 249,245,84,93,86), offset=500 returns an empty list, ?page=2&per_page=1 returns a different topic (245) than page 1 (249)"
+      "evidence": "GET /spaces/12/posts?per_page=20&offset=20 -> the remaining 3 (meta offset 20, total 23); offset=99 -> 200 []; ?page=2 is honoured (same 3 ids as offset 20), page=1 equals the first batch, page=99 -> 200 []."
     },
     "c-member-space-pagination.7": {
       "result": "pass",
-      "evidence": "jt-qa-qna (1 topic): 1 row, no Load More"
+      "evidence": "jt-qa-qna (1 topic) and London Chapter (2) show no Load More and no pagination block; the empty Amsterdam Chapter shows its empty state with no button."
     },
     "c-member-space-pagination.8": {
       "result": "pass",
-      "evidence": "Page 1 open (20 rows), then a new topic 'Show a live preview while writing a reply' was created by another member through the CLI, then Load More clicked: list became 35 rows with no duplicate href and no previously-listed topic skipped; the new topic is not injected until reload."
+      "evidence": "Page 1 (20 topics) open; alice posted a new Feature Requests topic over REST; clicking Load More -> 23 rows, 0 duplicates, all 23 older topics present (the new topic stays out until reload); no duplicate or skipped row."
     },
     "c-member-space-pagination.9": {
       "result": "pass",
-      "evidence": "Offline Load More: message 'Could not load more. Check your connection and try again.', button stays, rows unchanged; online retry then loaded the next topic"
+      "evidence": "Offline: Load More click -> the button stays, message 'Could not load more. Check your connection and try again.', still 20 topics; back online the same button loaded the rest (24) and then disappeared.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/pag-offline.png"
     },
     "c-member-space-pagination.10": {
       "result": "pass",
-      "evidence": "Global Settings posts_per_page=5 (option, restored to unset): /community/s/feature-requests/ first batch 5 rows; unset: all 13 rows. jt-qa-paging keeps its own per-space size of 1 (its description says so), so the global value does not apply there. Note .1 used that per-space value, not the global setting."
+      "evidence": "Admin changed Settings > General 'Topics Per Page' 20 -> 10 and saved in the UI: guest/bob first batch on Feature Requests became 10 topics. Set back to 20."
     },
     "c-member-space-pagination.11": {
       "result": "pass",
-      "evidence": "Guest /community/s/partner-program/: 0 topic rows, no Load More (login prompt)"
+      "evidence": "Guest on /community/s/partner-program/: 'This space is private. Log in to see it.' with Log In, 0 topics, no Load More; GET /spaces/41/posts as guest -> 403 jetonomy_forbidden."
     },
     "c-member-space-pagination.12": {
       "result": "pass",
-      "evidence": "Dark mode, 390x844: Load More button is 328px wide = its container (full width), high contrast (text rgb 203,204,205 on rgb 47,49,58), no horizontal scroll; keyboard: focus gives a solid 3px outline, Enter loads the next batch (rows 20 -> 36) and focus lands on a control inside the list; screenshot dark-loadmore-390.png."
+      "evidence": "390px with Reign dark: Load More is 328px wide in a 328px column (full width, 41px high), light-on-dark text 6.1:1 or better; keyboard Enter on the focused button loaded the rest and focus moved to the first new topic link (not lost to the body); scrollWidth 390.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/pag-390-dark.png"
     },
     "c-member-space-pagination.13": {
       "result": "pass",
-      "evidence": "Same run as .8: Load More after a new topic was posted showed no duplicate row (0 duplicate hrefs among 35 rows)."
+      "evidence": "Same as .8: no duplicate row after a new topic was posted before Load More (23 unique of 23)."
     },
     "c-member-space-pagination.14": {
       "result": "pass",
-      "evidence": "Offline Load More shows the error message and keeps the link (see .9)"
+      "evidence": "Same as .9: offline Load More shows 'Could not load more. Check your connection and try again.' and keeps the button."
     },
     "c-member-space-pagination.15": {
       "result": "pass",
-      "evidence": "per_page=1&page=1 vs page=2 return different slices on /spaces/12/posts (249 vs 245), /spaces (39 vs 5), /posts/249/replies (1237 vs 1238), /subscriptions (4 vs 3), /notifications (39 vs 17); /bookmarks had 0 rows for bob so only the total (0) could be read"
+      "evidence": "As bob with per_page=1: page=2 returns a different row from page=1 on /spaces ([39] vs [5]), /spaces/12/posts ([19784] vs [19783]), /posts/84/replies ([424] vs [423]), /subscriptions ([405] vs [404]), /bookmarks ([247] vs [45]), /notifications ([450] vs [448]) and /search?q=the ([258] vs [74]). (There is no /posts collection route; it 404s.)"
     }
   },
   "proposed_checks": [],
+  "walked_at": "2026-11-10T04:39:04.849866Z",
+  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "env": {
+    "mode": "free (Pro inactive)",
+    "site": "http://localhost:8912",
+    "browser": "Chromium via Playwright MCP",
+    "themes": [
+      "reign-theme"
+    ],
+    "locale": "en_US",
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark (Reign)"
+    ]
+  },
   "runbook_fixes": [
     {
-      "check": "c-member-space-pagination.5",
-      "now": "Feature Requests with 21+ topics at the default 20 per page (posts_per_page setting, default 20, not 30): first batch 20, Load More adds the next batch, total equals X-WP-Total"
+      "check": "c-member-space-pagination.1",
+      "now": "the Settings > General 'Topics Per Page' input has min 5, so posts_per_page = 1 has to be set with the option (wp option / eval), not the form"
     }
   ]
 }

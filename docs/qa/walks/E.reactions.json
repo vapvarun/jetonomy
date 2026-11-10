@@ -1,100 +1,102 @@
 {
   "journey": "E.reactions",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-06T14:45:31Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "free": "0217e21d",
+  "pro": "1bb3e93",
+  "walked_at": "2026-11-10T04:24:33.272048Z",
+  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free+Pro)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
   },
   "checks": {
     "e-reactions.1": {
-      "result": "untested",
-      "evidence": "bob POST /replies/1167/reactions {emoji:thumbsup} -> 200 action:added (REST only; chip/reload not viewed). Valid emoji keys are thumbsup, heart, laugh, hooray, thinking, eyes, rocket, thumbsdown - 'like'/'celebrate' from the runbook are rejected as invalid."
+      "result": "pass",
+      "evidence": "bob on alice's reply (#reply-1176) in 'Dark mode for the community on phones': React > Like -> chip shows \ud83d\udc4d 1 with is-mine highlight (aria-pressed true); survives reload; DB row user 10 thumbsup. re-1b.png"
     },
     "e-reactions.2": {
-      "result": "untested",
-      "evidence": "Toggle verified over REST: second POST of the same emoji -> action:removed; UI chip undo not viewed."
+      "result": "pass",
+      "evidence": "Without reload (window marker kept): SSR chip click removed it ('React' only); picker Like re-added a JS-built chip \ud83d\udc4d 1; clicking that JS-built chip removed it; picker again re-added it. re-2.png"
     },
     "e-reactions.3": {
       "result": "pass",
-      "evidence": "bob had thumbsup then picked hooray on the same reply -> counts {thumbsup:2 (alice,maya), hooray:1}, bob's user_reactions ['hooray'] only (one reaction per member)."
+      "evidence": "bob has Like, picks Celebrate on the same reply -> chip list is only \ud83c\udf89 1 (Like gone), same after reload, DB has a single row (hooray) for bob. re-3.png"
     },
     "e-reactions.4": {
-      "result": "untested",
-      "evidence": "alice and maya added thumbsup to the reply -> GET /replies/1167/reactions counts {thumbsup:3}; chip/names UI not viewed."
+      "result": "pass",
+      "evidence": "alice and maya added Like to bob's reply #reply-1177 through the UI; bob sees \ud83d\udc4d 2; hover tooltip 'Like: Maya Okafor and Alice Chen'; GET /replies/1177/reactions counts {thumbsup:2} and ?emoji=thumbsup reactors names [Maya Okafor, Alice Chen]. re-4.png"
     },
     "e-reactions.7": {
       "result": "pass",
-      "evidence": "bob POST reactions emoji 'not-real' (and the disabled/unknown key 'like') -> 400 jetonomy_invalid_emoji 'Invalid or disabled emoji.'"
+      "evidence": "bob POST /posts/249/reactions emoji 'not-real' and empty emoji -> 400 jetonomy_invalid_emoji 'Invalid or disabled emoji.'; a reaction disabled in Settings (hooray) -> same 400 (see .14)."
     },
     "e-reactions.8": {
       "result": "pass",
-      "evidence": "bob POST /posts/240/reactions (Customer Advisory Board topic) and /posts/9999999/reactions -> identical 404 jetonomy_not_found 'Content not found.'"
+      "evidence": "bob POST and GET /posts/403/reactions (Customer Advisory Board topic, not a member) and POST/GET /posts/99999999/reactions -> all four 404 jetonomy_not_found 'Content not found.' (identical, never 403)."
     },
     "e-reactions.9": {
       "result": "pass",
-      "evidence": "Guest POST /posts/249/reactions -> 401 rest_not_logged_in; guest GET /posts/249/reactions -> 200 {counts:[],user_reactions:[]}."
+      "evidence": "Logged out POST /posts/249/reactions -> 401 rest_not_logged_in; GET /posts/249/reactions -> 200 counts; GET /replies/1178/reactions without ?emoji -> counts only (no reactors), with ?emoji=thumbsup -> reactors label+names included; GET /posts/403/reactions (hidden space) -> 404 'Content not found.'."
     },
     "e-reactions.11": {
       "result": "pass",
-      "evidence": "finn POST reaction -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+      "evidence": "finn (silenced) clicked React > Like on a reply in the UI: alert 'Your account is currently silenced and cannot post.', chip stays 'React', no DB row; REST POST on a reply and a post -> 403 jetonomy_user_silenced. bob reacted to finn's post scored -4 (/general-discussion/.../check-out-my-seo-service-50-off-this-week): bob's chip \ud83d\udc4d 1, score shows -4, GET counts {thumbsup:1}. re-11.png"
     },
     "e-reactions.12": {
-      "result": "untested",
-      "evidence": "Reactions did not send an email in Mailpit (reaction email is off in the site notification defaults); the one-bell-on-first-reactor behaviour was not read from the bell."
+      "result": "pass",
+      "evidence": "On a fresh bob reply: alice Like -> one bell notification (id 2427 'Someone reacted to your reply'); alice swapped to Heart, maya Like, bob's own Laugh -> no further notification; all three removed and alice re-added -> new bell item 2428 (counts as a new first reaction). Mailpit: with the shipped defaults (reaction email = off) no email; with reaction email switched on temporarily, alice+swap+maya+own produced exactly one email '[Northwind Makers Community] Someone reacted to your topic' (body says 'reacted to your reply', subject says 'topic' - wording mismatch for a reply reaction). Setting restored to off."
     },
     "e-reactions.5": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Reply with 13 Like reactors: mouse hover -> tooltip 'Like: <10 names> and 3 others' (width 280px max); keyboard focus on the chip -> same tooltip; synthetic touch long-press (pointerdown 800ms, pointer events dispatched; real touch not available) -> tooltip shown and the click swallowed (count stays 13); Escape closes (hover and focus); mouse out hides. 2 reactors -> 'Like: Maya Okafor and Alice Chen'. Quick touch tap toggled instead (13 -> 14 -> 13, no tooltip). re-5a.png"
     },
     "e-reactions.6": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "bob added Like to a reply with no reactions and, without reloading, hovered the new chip -> 'Like: Bob Martinez' (list already includes him). re-6.png"
     },
     "e-reactions.10": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "alice reply 3810 trashed by admin (status trash): bob POST /replies/3810/reactions -> 409 jetonomy_already_trashed 'This item is already in the trash...'; DB has 0 reaction rows for it."
     },
     "e-reactions.13": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Settings > Reactions: unticked all 8 and Save Reaction Settings -> notice 'No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.' (Like left ticked); the page also shows 'Reaction settings saved.' in a second notice on that save. A normal save shows only 'Reaction settings saved.'. re-13a/b/c.png"
     },
     "e-reactions.14": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Disabled Celebrate after bob used it: existing chip \ud83c\udf89 1 still renders as a normal chip (is-mine) on the reply, the picker lists 7 reactions without Celebrate, maya POST hooray -> 400 'Invalid or disabled emoji.'. Re-enabled all 8 afterwards. re-14.png"
     },
     "e-reactions.15": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Reply with 40 reactions across 6 emoji at 390px: the 6 chips wrap onto 2 rows, rightmost chip edge 311 < card edge 359, document scrollWidth 390 = clientWidth; tooltip 280px wide at left 8 .. right 288 inside the 390 viewport. re-15a/b.png"
     },
     "e-reactions.16": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Dark mode (Reign toggle): highlighted chip bg rgb(59,67,80) with light-blue text rgb(193,217,245) and light-blue border; tooltip is a light pill (bg rgb(229,229,229), dark text) readable on the dark card. Toggled back to light. re-16.png"
     },
     "e-reactions.17": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Playwright context.setOffline(true), clicked React > Like on a reply: chip rolls back to 'React' only, alert 'Could not save reaction.' shown, nothing persisted after going online and reloading. re-17.png"
     },
     "e-reactions.18": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Two separate browser contexts (bob, alice) clicked Like on reply 1182 at the same instant: both show \ud83d\udc4d 2 live and after reload; GET counts thumbsup 2, DB two rows (users 9 and 10). re-18.png"
     },
     "e-reactions.19": {
-      "result": "untested",
-      "evidence": "Not walked in this pass (walk budget); no observation made."
+      "result": "pass",
+      "evidence": "Topic with 51 replies (30 per page + Load More): after Load More the JS-appended reply 3812 accepts a reaction, shows its tooltip ('Like: Maya Okafor') and toggles; on a direct ?rpg=2 load the last reply and the post-level bar also react and undo (rocket \ud83d\ude80 1 -> removed). re-19a.png"
     }
   },
   "proposed_checks": []
