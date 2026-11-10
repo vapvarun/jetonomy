@@ -478,16 +478,16 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.post-create
 **Covers:** templates/views/new-post.php, templates/partials/composer.php, templates/partials/compose-fields.php, assets/js/composer.js, includes/api/class-posts-controller.php, includes/api/class-media-controller.php, includes/api/class-rest-auth.php, assets/js/jetonomy-rest.js, includes/class-attachments.php, includes/class-media-library.php, includes/models/class-attachment.php, includes/models/class-model.php, includes/permissions/class-rate-limiter.php, templates/partials/compose-topic-embed.php, pro:includes/extensions/polls/*.php, pro:assets/js/polls-frontend.js, pro:includes/extensions/advanced-moderation/*.php, pro:includes/extensions/ai/*.php, pro:includes/extensions/webhooks/*.php
-**Verified:** 9af111d9 pro:ba34f60
+**Verified:** fb73aeda pro:e3b90b6
 **What to verify:** a logged-in member can compose a new post with title + content, pick a visibility / schedule / tags, submit, and land on the new topic. The post is persisted, appears in the space listing, and fires any expected notifications (subscribers notified, activity log updated). The image button, paste and drop of images appear and work only for a member who holds the Upload media permission; otherwise they are hidden and a paste or drop shows "You do not have permission to upload images". An archived or locked space refuses new topics with a message, and its /s/<slug>/new/ page shows that notice with "Back to <Space>" instead of a form.
 
 **Checks:**
-- `c-member-post-create.1` @member #ui: as bob open Help Desk > New Topic, write the title "How do I reset my membership password?" with a two-paragraph body, and submit -> he lands on the new topic and it is listed first in Help Desk.
+- `c-member-post-create.1` @member #ui: as bob open Help Desk > New Topic, write the title "How do I reset my membership password?" with a two-paragraph body, and submit (the button reads "Post Question" in this Q&A space, "Post Topic" in forum spaces) -> he lands on the new topic and it is listed first in Help Desk.
 - `c-member-post-create.2` @member #rest: POST /jetonomy/v1/spaces/{id}/posts with title and content -> 201 and the same topic appears in GET /spaces/{id}/posts.
 - `c-member-post-create.3` @member #ui +empty !refuse: submit with an empty title, then with an empty body -> an inline error names the missing field and nothing is created.
 - `c-member-post-create.4` @member #ui +long: enter a 300-character title -> either the counter blocks it with a visible limit or it saves and wraps without breaking the card.
 - `c-member-post-create.5` @member #ui: pick tags, a visibility option and a schedule -> they show on the saved topic.
-- `c-member-post-create.6` @member_b #email: alice follows Help Desk; after bob posts there -> alice gets one notification and one Mailpit email with the owner's saved New topic subject, not two.
+- `c-member-post-create.6` @member_b #email: alice follows Help Desk and has her own "New topic in followed space" email preference on (the site default is off); after bob posts there -> alice gets one notification and one Mailpit email with the owner's saved New topic subject, not two.
 - `c-member-post-create.7` @member #ui: check the space listing and the space and profile post counts after posting -> each rose by exactly one (the home has no recent-topics feed; its community pulse is a one-hour cache for guests and is not checked here).
 - `c-member-post-create.8` @member #ui: click the image button, paste and drop an image as a member who holds Upload media -> the image uploads and shows inline.
 - `c-member-post-create.9` @member #ui !refuse +settings-off: remove Upload media from the Member role, reopen the composer -> the image button is hidden; pasting an image shows "You do not have permission to upload images".
@@ -643,7 +643,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.vote
 **Covers:** includes/api/class-votes-controller.php, includes/models/class-vote.php, assets/js/view.js, templates/views/single-post.php, templates/partials/reply-card.php, assets/js/lib/optimistic.js, assets/js/jetonomy-rest.js, includes/api/class-rest-auth.php, includes/permissions/class-rate-limiter.php, templates/partials/feed-card.php, pro:includes/extensions/reactions/*.php, pro:assets/js/pro-view.js
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** fb73aeda pro:e3b90b6
 **What to verify:** a member can vote up/down on posts and replies, the score updates on screen, the vote persists across page reloads, and re-clicking the same vote toggles it off. The active vote button reads "Remove your upvote" / "Remove your downvote", and every vote on a topic or reply shows one toast, "Vote added" or "Vote removed" (never two). A member at the daily vote limit can still take a vote back. A logged-in member who may not vote sees the score as a disabled control that explains why on hover or click, not a button that does nothing. Taking back a vote removes the author's grouped "X people voted" notification once no votes remain; it never shows "0 people voted".
 
 **Checks:**
@@ -1136,7 +1136,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.notifications
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php, includes/api/class-notifications-controller.php, templates/views/notifications.php, includes/notifications/class-community-notification-contract.php, includes/api/class-updates-controller.php, pro:includes/extensions/web-push/*.php, includes/functions.php, assets/js/jetonomy-rest.js
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** 0991f3be pro:f684443
 **What to verify:** every notification-triggering event (reply to subscribed thread, mention, flag resolution, badge award, admin announcement) produces a new notification for the correct recipient; the bell badge count updates; clicking through takes the user to the correct destination. Join requests and their answers, reactions and reviewed reports also produce notifications that read correctly. Withdrawing a join request removes the staff's "new join request" notices. Unread count endpoint is accurate; mark-all-read zeroes it out. Names in notifications follow the Name display setting.
 
 **Checks:**
@@ -1961,7 +1961,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.polls
 **Covers:** templates/partials/compose-fields.php, templates/views/single-post.php, pro:includes/extensions/polls/*.php, pro:assets/js/polls-frontend.js, pro:assets/js/pro-view.js
-**Verified:** 9af111d9 pro:ba34f60
+**Verified:** fb73aeda pro:e3b90b6
 **What to verify:** an author can attach a poll to a new topic, multiple options render on the topic page, a member can vote once, vote counts update, results display honors the "hide results until vote" mode if set. A composer poll with a question but fewer than two options blocks the post with "Question and at least 2 options required.". The Polls admin list shows topic titles.
 
 **Checks:**
@@ -2586,7 +2586,7 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 
 ### F.rtl
 **Covers:** assets/css/jetonomy.css, assets/css/jetonomy-tokens.css, assets/js/dark-mode-mirror.js
-**Verified:** 9af111d9 pro:ba34f60
+**Verified:** fb73aeda pro:e3b90b6
 **What to verify:** on an RTL locale (e.g. `ar`), the primary templates render right-to-left without horizontal overflow, text flows correctly, icons mirror where appropriate and stay fixed where they should not (brand logos, directional glyphs).
 
 **Checks:**
@@ -2603,7 +2603,7 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 
 ### F.a11y
 **Covers:** templates/partials/header.php, templates/partials/composer.php, templates/partials/reply-card.php, assets/js/view.js, assets/css/header.css, assets/js/header.js, assets/js/header-font-scale.js, assets/js/dark-mode-mirror.js, templates/partials/breadcrumb.php
-**Verified:** 64212bb5
+**Verified:** 0991f3be pro:f684443
 **What to verify:** the main interactive surfaces have a visible keyboard focus ring (not suppressed by theme), tab order is logical, main content is reachable within a reasonable number of tabs from the top of the page, and icon-only buttons have `aria-label`. Screen-reader critical labels are present on composers, voting controls, share controls, and moderation actions. The report dialog is a labelled radio group, focuses its first reason on open, and closes on Escape.
 
 ---

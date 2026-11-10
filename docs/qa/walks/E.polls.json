@@ -1,12 +1,11 @@
 {
   "journey": "E.polls",
-  "free": "9af111d9",
-  "pro": "ba34f60",
-  "walked_at": "2026-11-10T07:43:00.401726Z",
-  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
+  "free": "fb73aeda",
+  "pro": "e3b90b6",
+  "walker": "release 2.0.7 free walk wave 8 (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro, 17 extensions)",
-    "site": "http://localhost:8911",
+    "mode": "free stack with Pro active (all 17 extensions)",
+    "site": "http://localhost:8912",
     "themes": [
       "reign-theme"
     ],
@@ -15,8 +14,7 @@
       390
     ],
     "schemes": [
-      "light",
-      "dark"
+      "light"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
@@ -24,93 +22,89 @@
   "checks": {
     "e-polls.1": {
       "result": "pass",
-      "evidence": "bob, General Discussion composer > Add Poll: question 'Which day suits the monthly community call?' with the three options, Single choice, Post Topic -> topic published; poll shows the three options 0% and '0 voters'.",
-      "screenshot": "qa-artifacts/walk-207/combo/pl1.png"
+      "evidence": "bob, General Discussion composer: Add Poll, question 'Which day suits the monthly community call?', options Tuesday 17:00 UTC / Thursday 09:00 UTC / Saturday 15:00 UTC (+ Add option for the third), Single choice, Post Topic -> /t/when-should-we-hold-the-monthly-community-call/ published, poll shows all three options at 0% and '0 voters'. Screenshot qa-artifacts/w8-free/p1-poll.png."
     },
     "e-polls.2": {
       "result": "pass",
-      "evidence": "question + one option, Post Topic -> 'Question and at least 2 options required.', stays on /new/, no topic created."
+      "evidence": "Composer with question + one option, Post Topic -> stays on the new-topic form, role=alert 'Question and at least 2 options required.' (id jt-field-error-1), first/empty option has aria-invalid=true + aria-describedby=jt-field-error-1 and focus; DB: no topic created. Screenshot qa-artifacts/w8-free/p2-err.png."
     },
     "e-polls.3": {
       "result": "pass",
-      "evidence": "blank 2nd option -> 400 'A poll requires at least 2 non-empty options.'; question 501 chars -> 400 'Poll question must be 500 characters or fewer.'; option 256 chars -> 400 'Poll option must be 255 characters or fewer.'; closes_at 'not-a-date' -> 400 'Invalid close date format.'."
+      "evidence": "bob POST /posts/462/poll: one blank option -> 400 'A poll requires at least 2 non-empty options.'; 501-char question -> 400 'Poll question must be 500 characters or fewer.'; 256-char option -> 400 'Poll option must be 255 characters or fewer.'; closes_at 'not-a-date' -> 400 'Invalid close date format.'."
     },
     "e-polls.4": {
       "result": "pass",
-      "evidence": "POST /posts/13826/poll again -> 409 jetonomy_duplicate 'This topic already has a poll.'; page still shows one poll."
+      "evidence": "bob POST /posts/461/poll again -> 409 jetonomy_duplicate 'This topic already has a poll.'; DB has one poll row for post 461 and the topic page renders exactly one .jt-poll."
     },
     "e-polls.5": {
       "result": "pass",
-      "evidence": "alice clicked 'Thursday 09:00 UTC': that option 100% (full bar), '1 voter', her option checked.",
-      "screenshot": "qa-artifacts/walk-207/combo/pl5.png"
+      "evidence": "alice picks Thursday 09:00 UTC: it shows 100% with a full bar, 'Remove my vote' appears, 'total voters' '1 voter', her option has class jt-poll-option--voted and its radio is checked. Screenshot qa-artifacts/w8-free/p5-voted.png."
     },
     "e-polls.6": {
       "result": "pass",
-      "evidence": "alice clicked Tuesday: Thursday 0%, Tuesday 100%, still '1 voter'."
+      "evidence": "alice clicks Saturday on the single-choice poll: Thursday 100% -> 0%, Saturday 0 -> 100%, still '1 voter'; same after reload."
     },
     "e-polls.7": {
       "result": "pass",
-      "evidence": "alice DELETE /polls/30/vote -> 200 counts back to 0; second DELETE -> 404 'No vote found to remove.'."
+      "evidence": "alice DELETE /polls/1/vote -> 200 (counts drop to 0); again -> 404 jetonomy_not_found 'No vote found to remove.'."
     },
     "e-polls.8": {
       "result": "pass",
-      "evidence": "maya on a Multiple choice poll (votes submit on each tick, there is no Submit button): ticking two options -> each +1 (88:1, 89:1, 1 voter); unticking all -> 0/0/0, 0 voters, never negative."
+      "evidence": "maya on a Multiple choice poll (id 2, 'Which meetup topics should we cover?'): ticked Lighting basics and Editing workflow -> counts 1 and 1 (50% each, 1 voter, REST vote_count [1,1,0]); unticked both -> [0,0,0], 0 voters. Never negative. Screenshot qa-artifacts/w8-free/p8-multi.png."
     },
     "e-polls.9": {
       "result": "pass",
-      "evidence": "two option_ids on a single poll -> 400 'This poll allows only one choice.'; option 88 of another poll -> 400 'Option 88 does not belong to this poll.'; no option -> 400 'At least one option is required.'."
+      "evidence": "maya on the single-choice poll: POST option_ids [1,2] -> 400 'This poll allows only one choice.'; option 4 (another poll's) -> 400 'Option 4 does not belong to this poll.'; empty array -> 400 'At least one option is required.'."
     },
     "e-polls.10": {
       "result": "pass",
-      "evidence": "double-click on 'Saturday 15:00 UTC' as maya -> that option 1 vote, 1 voter, 100% (percentages sum to 100)."
+      "evidence": "carlos double-clicked Saturday: exactly one vote added (3 voters, 33.3/33.3/33.3 = 100). Two tabs both clicking Thursday: final REST vote_count [1 Tue, 2 Thu, 0 Sat], total 3, percentages 33.3 + 66.7 = 100, no double count."
     },
     "e-polls.11": {
       "result": "pass",
-      "evidence": "closes_at in the past: UI shows closed; POST vote -> 403 jetonomy_closed 'This poll has closed.'; DELETE vote -> 403 'This poll has closed. Votes cannot be changed.'; results still readable."
+      "evidence": "Poll closes_at set to the past: carlos's page shows the poll with class jt-poll-closed, all inputs disabled, results readable and '3 voters · Closed'; REST vote -> 403 jetonomy_closed 'This poll has closed.'; DELETE vote -> 403 'This poll has closed. Votes cannot be changed.'. (REST uses 403 here.) Screenshot qa-artifacts/w8-free/p11-closed.png."
     },
     "e-polls.12": {
       "result": "pass",
-      "evidence": "PATCH /polls/30 closes_at 2020-01-01 -> closed true (GET and the page agree at once); PATCH {closed:false} alone changes nothing (still true); PATCH closes_at '' -> closed false, closes_at null."
+      "evidence": "bob PATCH /polls/1 closes_at in the past -> 200 closed true; a body with only closed:false -> 200, closed stays true (changes nothing); PATCH closes_at null -> closed false and the page reflects it."
     },
     "e-polls.13": {
       "result": "pass",
-      "evidence": "alice POST /posts/13750/poll -> 403 'You do not have permission to create a poll on this topic.'; PATCH /polls/30 -> 403 'You do not have permission to modify this poll.'; test_moderator PATCH -> 200 (space_admin not separately run)."
+      "evidence": "alice POST /posts/462/poll -> 403 'You do not have permission to create a poll on this topic.'; PATCH /polls/1 -> 403 'You do not have permission to modify this poll.'. test_moderator PATCH /polls/2 -> 200 and POST /posts/373/poll -> 201. (space_admin role not separately walked; admin created a poll on a Customer Advisory Board topic -> 201.)"
     },
     "e-polls.14": {
       "result": "pass",
-      "evidence": "guest: results visible, options disabled with 'Log in to vote.' under the poll; POST /polls/30/vote -> 401.",
-      "screenshot": "qa-artifacts/walk-207/combo/pl14-guest.png"
+      "evidence": "Guest on the topic: results visible (50/50/0%, '2 voters') and the control line reads '2 voters · Log in to vote.'; POST /polls/1/vote logged out -> 401 rest_not_logged_in. Screenshot qa-artifacts/w8-free/p14-guest.png."
     },
     "e-polls.15": {
       "result": "pass",
-      "evidence": "bob POST /polls/10/vote and GET /posts/403/poll (Customer Advisory Board) -> 404 'Poll not found.' / 'No poll found for this topic.', identical to a missing id; guest GET -> 404, guest vote -> 401."
+      "evidence": "Poll on a Customer Advisory Board topic (admin created it; bob removed from the space for the check, restored after): bob GET /posts/240/poll -> 404 'No poll found for this topic.' (identical to a nonexistent post id 99999999); bob POST /polls/4/vote -> 404 'Poll not found.' (identical to a nonexistent poll id); guest GET -> the same 404; guest vote -> 401 (login required, generic)."
     },
     "e-polls.16": {
       "result": "pass",
-      "evidence": "finn POST /polls/30/vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+      "evidence": "finn POST /polls/1/vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'."
     },
     "e-polls.17": {
       "result": "pass",
-      "evidence": "omar POST vote on a poll in an Off-Topic Lounge topic (banned) -> 404 'Poll not found.' (his GET too); count unchanged."
+      "evidence": "omar POST /polls/3/vote (poll on an Off-Topic Lounge topic) -> refused 404 jetonomy_not_found 'Poll not found.' (not the ban message used by posts/replies); count unchanged."
     },
     "e-polls.18": {
       "result": "pass",
-      "evidence": "480-char question + 250-char option at 390px on Reign: poll card inside the viewport, no overflowing child, no horizontal scroll; Arabic poll question and options compute rtl, start-aligned.",
-      "screenshot": "qa-artifacts/walk-207/combo/pl18-long-390.png"
+      "evidence": "390px touch context on Reign: poll with a 480-char question and 250-char option fits the card (card 326px, no child past its right edge, page scrollWidth 390). Arabic poll on the LTR site: question and options compute direction rtl, text-align start (right-aligned). Screenshots qa-artifacts/w8-free/p18-long390.png, p18-ar390.png."
     },
     "e-polls.19": {
       "result": "pass",
-      "evidence": "wp-admin Jetonomy > Polls lists question and topic title per row (no 'Post #id'), 20 per page, '29 polls 1 2 >' pager; a poll whose topic was deleted shows '—' in the topic column, no fatal.",
-      "screenshot": "qa-artifacts/walk-207/combo/pl19-admin.png"
+      "evidence": "Admin Polls: list shows topic titles (not 'Post #id'), 20 per page with pager '22 polls 1 2 ›' after seeding 22 polls (page 2 shows the remaining 2). A poll whose topic row was deleted (SQL) still lists, with the topic column '—' (a bare dash, no explanatory text) and no fatal. Screenshots qa-artifacts/w8-free/p19-admin.png, p19-page2.png, p19-orphan.png."
     },
     "e-polls.20": {
       "result": "pass",
-      "evidence": "before voting, maya and the guest see percentages (0%) on the poll; after voting maya's choices are checked/marked."
+      "evidence": "maya (non-voter) before voting sees Tuesday 0% / Thursday 100% / Saturday 0% and '1 voter'; after voting her Tuesday is marked (checked) with 50/50/0 and '2 voters'; guest also sees percentages. (No hide-results mode exists.)"
     },
     "e-polls.21": {
       "result": "pass",
-      "evidence": "single-choice vote: count and total +1; changing vote moves one from old to new, total unchanged (alice Thursday -> Tuesday, 1 voter)."
+      "evidence": "Single-choice poll: alice's vote raised her option 0 -> 100% and voters 0 -> 1; changing it moved the count Thursday -> Saturday with total unchanged at 1 (e-polls.5/.6 evidence); carlos's added vote raised total 2 -> 3."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T09:55:54Z"
 }

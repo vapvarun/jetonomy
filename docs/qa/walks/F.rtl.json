@@ -1,56 +1,10 @@
 {
   "journey": "F.rtl",
-  "free": "9af111d9",
-  "pro": "ba34f60",
-  "checks": {
-    "f-rtl.1": {
-      "result": "pass",
-      "evidence": "Site language ar (WPLANG=ar), bob. /community/, space, topic, profile/alice at 1440 and 390: html dir=rtl lang=ar, .jt-app direction rtl, scrollWidth==clientWidth in all 8 loads, 0 pageerror/console errors."
-    },
-    "f-rtl.2": {
-      "result": "pass",
-      "evidence": "Arabic topic by Omar Haddad: author/meta row, title right-aligned rtl, action row (vote/views/reply/share/bookmark/report) mirrored, sidebar on the left (screenshot). The Arabic topic has no list/quote/code; on the long English topic (list/blockquote/pre) pre is direction ltr/text-align left, content blocks follow dir=auto (English block keeps left border 3px, correct for LTR text).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-arabic-topic.png"
-    },
-    "f-rtl.3": {
-      "result": "pass",
-      "evidence": "Directional icons .jt-icon--dir get scaleX(-1) in rtl: reply arrow, in-reply-to arrow, FAB reply (visible at 390), tag-page Next arrow (matrix(-1,..)); search glass, bell, vote chevrons, checkmark/user-check, theme logo are not transformed. Hero breadcrumb chevron renders mirrored (theme)."
-    },
-    "f-rtl.5": {
-      "result": "pass",
-      "evidence": "Dark mode (data-bx-mode=dark) + ar: notification panel opens at x306-646 of 1440 (inside viewport, anchored to the bell on the left, dir rtl); share dropdown 818-1005 (1440) and 8-195 (390) inside viewport, dir rtl; no horizontal overflow. Site header/user menu belong to Reign (out of scope).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-dark-share-390b.png"
-    },
-    "f-rtl.6": {
-      "result": "pass",
-      "evidence": "390px, dark, ar, Reign: 159-char topic title wraps in 5 lines inside viewport (left 48 right 342), Grace Oluwaseun Adeyemi-Whitfield wraps on profile and members list with overflow-wrap:anywhere, scrollWidth 390.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-long-390.png"
-    },
-    "f-rtl.9": {
-      "result": "pass",
-      "evidence": "ar page: New topic title input, editor (dir=auto, empty) compute direction rtl; en_US page: same fields compute ltr; saved Arabic topic paragraph direction rtl and sits against the right edge of its card (right 1241 vs card 1265)."
-    },
-    "f-rtl.4": {
-      "result": "pass",
-      "evidence": "ar + Pro, bob: composer toolbar mirrored (B at the right end); Arabic sentence with an inline URL stays intact and the @ali mention popup (rtl) opens beside the caret; Attach files with menu-notes.pdf: chips strip .jt-attach-compose-strip dir=rtl, chip sits at the right edge (406-1266 container) with its remove x; typed Arabic + URL after the chip without scrambling. Caveat: a bare '@ali' at the end of an Arabic sentence renders as 'ali@' (normal bidi for a neutral @ before a Latin word).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-attach-chip.png"
-    },
-    "f-rtl.7": {
-      "result": "pass",
-      "evidence": "ar + Pro, 1440: vote cluster at the right (x1195-1253 inside card 135-1305); reaction chip/picker direction rtl, icon then count; thread pagination/Load More dir=rtl; poll CSV 50% / JSON 50%: bars anchored at the right edge (bar 872-1243 inside option 500-1244), i.e. fill from the right; Messages list pane sits on the right with the empty conversation pane to its left, no overflow.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-poll.png"
-    },
-    "f-rtl.8": {
-      "result": "pass",
-      "evidence": "ar, admin: Jetonomy Dashboard, Settings, Pro Analytics and Pro Badges: html dir=rtl, wp admin menu on the right, tables right-aligned with 0 clipped tables, 0 elements outside the viewport, scrollWidth 1440 == viewport, no fatal.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-admin-jetonomy-pro-analytics.png"
-    }
-  },
-  "proposed_checks": [],
-  "walked_at": "2026-11-10T07:22:02.818740+00:00",
-  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
+  "free": "fb73aeda",
+  "pro": "e3b90b6",
+  "walker": "release 2.0.7 free walk wave 8 (Sonnet)",
   "env": {
-    "mode": "free stack with Pro active (all 17 extensions) for .4/.7/.8",
+    "mode": "free stack with Pro active (all 17 extensions)",
     "site": "http://localhost:8912",
     "themes": [
       "reign-theme"
@@ -64,6 +18,46 @@
       "dark"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "ar (restored to en_US)"
-  }
+    "locale": "ar (switched back to en_US after)"
+  },
+  "checks": {
+    "f-rtl.1": {
+      "result": "pass",
+      "evidence": "ar locale, bob, Reign: /community/, /community/s/general-discussion/, Arabic topic /community/s/general-discussion/t/<Omar's slug>/, /community/u/bob/ at 1440 and 390 (touch ctx). html dir=rtl, .jt-app computed direction rtl (no dir attr on .jt-app itself; direction inherited from html[dir=rtl]); h1 direction rtl on Arabic titles (English space title 'General Discussion' resolves ltr via dir=auto, expected); scrollWidth==clientWidth on all 8 (1440/1440, 390/390); RTL stylesheet served. Screenshots /Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-free/rtl-topic-1440.png, rtl-topic-390.png."
+    },
+    "f-rtl.2": {
+      "result": "pass",
+      "evidence": "Omar's topic 'تجربتي مع مجموعات التصوير المحلية' at 1440: author/meta row, title, body, action bar and votes mirror to the right; reply cards right-aligned; 'in reply to' arrow mirrored. Screenshot /Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-free/rtl-topic-1440.png. Code/quote blocks not present in this topic; list bullets/quote border/code not visible in this seed, judged from reply cards only."
+    },
+    "f-rtl.3": {
+      "result": "pass",
+      "evidence": "Computed transforms: reply arrow and 'in reply to' arrow (.jt-icon--dir) = matrix(-1,0,0,1,0,0) in RTL; search glass, checkmarks, bookmark/share/flag icons and brand/avatars have transform none; numbers unmirrored. Theme's own breadcrumb separator (Reign fa-angle-double-right) is theme-owned."
+    },
+    "f-rtl.4": {
+      "result": "pass",
+      "evidence": "Reply composer in ar: toolbar right-aligned (attach, emoji, image, quote, link, code, italic, bold), editor direction rtl; typed 'شكرا ... الرابط https://example.com/photo-walk?a=1 مفيد جدا (نعم). @ali' -> URL stays intact, punctuation not scrambled; @ mention dropdown rtl (avatar right, name, login) opened inside the viewport; attachment chip route-notes.pdf (Pro attach button) starts at right edge (R1265, dir rtl). Screenshots /Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-free/rtl-composer.png, rtl-attach2.png."
+    },
+    "f-rtl.5": {
+      "result": "pass",
+      "evidence": "bob, ar, dark toggle at 1440 and 390: body rgb(35,38,47), header/nav/hero follow dark, no overflow (scrollWidth==clientWidth). Theme user dropdown (click) L150-R400 inside 1440 viewport, direction rtl; Jetonomy bell panel L306-R646 inside viewport rtl; 390 uses bottom nav, no off-screen panel. Screenshots /Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-free/rtl-dark-1440.png, rtl-dark-390.png, rtl-usermenu2.png, rtl-bell-1440.png."
+    },
+    "f-rtl.6": {
+      "result": "pass",
+      "evidence": "ar, bob, Reign 390 touch: the 159-char title topic (show-and-tell) h1 spans x48-342, wraps to 186px height, no overflow, scrollWidth 390; Grace's long name 'Grace Oluwaseun Adeyemi-Whitfield' on her topic (L62-R342) and profile (L68-R308) wraps inside the viewport, no overflow. Screenshot /Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-free/rtl6-long.png."
+    },
+    "f-rtl.7": {
+      "result": "pass",
+      "evidence": "ar locale, carlos/bob 1440: poll bars fill from the right (bar right edge = option right edge 1243/1244, left edge moves left with the width: 33.3% -> 996, 66.7% -> 748, 0% -> 1243), topic page vote cluster sits at the right edge of the card (x 1165-1261) with Reply/Quote/Report/React actions flowing leftwards in order; reaction chips 'Love 2' / 'Rocket 1' on a reply render at x 821-952 inside the card in the RTL action row; the topic list has vote buttons at the right (x 1212-1238) and a centred 'Load More' button (reply pagination is also load-more/paged links with RTL time links, no separate numbered pager in this theme); /community/messages/ shows the conversation list on the right and the thread pane on the left with the New button on the left of its header. No overflow (scrollWidth 1440). Screenshots qa-artifacts/w8-free/rtl7-poll.png, rtl7-reply.png, rtl7-chips.png, rtl7-messages.png."
+    },
+    "f-rtl.8": {
+      "result": "pass",
+      "evidence": "admin, ar, 1440: wp-admin Analytics, Badges, Settings (and all other 19 Jetonomy screens): html dir=rtl, scrollWidth==clientWidth, no table wider than its container, no clipped elements on these three; headings/forms/cards sit right-aligned, chart axis flips. Screenshots /Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-free/rtl8-pro-analytics.png, rtl8-pro-badges.png."
+    },
+    "f-rtl.9": {
+      "result": "pass",
+      "evidence": "New-topic form on the ar locale: empty #jt-post-title and .jt-editor-body have dir=auto and compute direction rtl; on the en_US site the same empty fields compute ltr (pc20 run); saved Arabic topics (Omar's and bob's) start at the right edge (text-align start under rtl). Screenshots qa-artifacts/w8-free/rtl-composer.png, pc20-arabic.png."
+    }
+  },
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T09:57:01Z"
 }

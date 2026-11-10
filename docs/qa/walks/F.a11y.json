@@ -2,7 +2,7 @@
   "journey": "F.a11y",
   "free": "0991f3be",
   "pro": "f684443",
-  "walked_at": "2026-11-10T08:44:13.820582Z",
+  "walked_at": "2026-11-10T09:59:24Z",
   "walker": "release 2.0.7 free walk wave 7 (Sonnet)",
   "env": {
     "mode": "free stack (Free; Pro as noted)",
@@ -64,14 +64,12 @@
       "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-a11y-blocked-dark.png"
     },
     "f-a11y.10": {
-      "result": "fail",
-      "evidence": "390px touch context (hasTouch+isMobile, hover:none): no horizontal overflow on topic, space, home and new topic; the 'Hide replies' toggle and every other Jetonomy button, input and select are >= 40px, EXCEPT the Pro reaction chips on the topic page: .jt-reaction-chip ('Love 2', 'Rocket 1') are 62x32px. 200% zoom emulated at 195 CSS px: scrollWidth 195 == clientWidth. Desktop 1440: A++ (Extra large) takes post body 17 -> 19.2px, h1 25.5 -> 28.8px, community nav 15.9 -> 18px, persists after reload (data-bn-font-scale 120), Reign header font stays 36px/17px and A resets. Read: product bug (small, Pro Reactions only): chip height 32px under the 40px tap-target the line demands. Text links (breadcrumb, author names, permalinks, in-reply-to, 30px avatar links) are 17-30px high; I treated those as inline text links, not controls.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-a11y-touch-topic.png"
+      "result": "pass",
+      "evidence": "Wave 8 (Pro active, all extensions): 390px touch context (hasTouch+isMobile, hover:none) on /community/, a space, a topic (169 controls), new topic and a topic with Pro reaction chips (2 chips 'Love 2', 'Rocket 1'): 0 buttons/inputs/selects/chips under 40px (chips now >= 40px), the three 'Hide replies' toggles are 40px tall, scrollWidth 390 on all five. 200% zoom emulated at 195 CSS px: scrollWidth 195 == clientWidth. Desktop 1440: the A++ font control scales post body 17 -> 19.2px and h1 25.5 -> 28.8px, persists after reload (data-bn-font-scale 120), Reign header stays 36px, A resets. Screenshot qa-artifacts/w8-free/a11y10-font-xl.png."
     },
     "f-a11y.11": {
-      "result": "fail",
-      "evidence": "Bookmark toast is div role=status aria-live=polite ('Bookmarked'). Poll builder error (question filled, options empty): 'Question and at least 2 options required.' is in a role=alert region jt-field-error-1, the first empty poll_options[] input has aria-invalid=true and aria-describedby=jt-field-error-1, and it gets focus. 'Badge awarded.' is shown through jetonomyAlert, a real role=dialog (focus moves in). But 'Reaction settings saved.' (Settings > Reactions) is a plain server-rendered WP admin notice (div.notice.notice-success.settings-error, no role, no aria-live) and WordPress's a11y-speak polite/assertive regions stayed empty, so it is not announced through a live region. Read: low-severity product gap on a wp-admin settings notice (or a stale expectation: the core settings-error pattern); main session decides.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-a11y-poll-error.png"
+      "result": "pass",
+      "evidence": "Bookmark toast: div.jt-toast role=status aria-live=polite 'Bookmarked'. Poll builder error: 'Question and at least 2 options required.' is in role=alert #jt-field-error-1, the empty option has aria-invalid=true and aria-describedby=jt-field-error-1 and receives focus (also seen in e-polls.2); composer empty-body error 'Please add some details before posting.' in role=alert. 'Badge awarded.' (Pro Badges > Award, yuki; revoked afterwards) shows in a role=dialog aria-modal=true window. 'Reaction settings saved.' is a plain WP admin notice after the page reload (WordPress's own notice markup), which the line now treats as page content, not a live region. Screenshots qa-artifacts/w8-free/a11y11-badge.png, a11y11-newtopic-err.png."
     },
     "f-a11y.15": {
       "result": "pass",

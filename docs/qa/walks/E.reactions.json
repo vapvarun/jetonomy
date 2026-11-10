@@ -1,11 +1,11 @@
 {
   "journey": "E.reactions",
-  "free": "9af111d9",
-  "pro": "ba34f60",
-  "walked_at": "2026-11-10T07:47:15.817776Z",
-  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
+  "free": "fb73aeda",
+  "pro": "e3b90b6",
+  "walked_at": "2026-11-10T09:34:46.957550Z",
+  "walker": "release 2.0.7 combo walk wave 8 (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro, 17 extensions)",
+    "mode": "combo stack (Free + Pro, 17 extensions on)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -24,85 +24,98 @@
   "checks": {
     "e-reactions.1": {
       "result": "pass",
-      "evidence": "bob picks Like on alice's reply 1176 (Feature Requests thread): chip 'Like 1' highlighted as his (is-mine), reload keeps it. (The seed had him on Celebrate; picking Like replaced it.)"
+      "evidence": "bob (1440) on reply 1195 (alice) in topic 249: clicked React, picker listed Like/Love/Haha/Celebrate/Thinking/Watching/Rocket/Dislike, picked Like -> chip 'Like 1' with is-mine/aria-pressed true; after reload the chip is still there and highlighted.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-1.png"
     },
     "e-reactions.2": {
       "result": "pass",
-      "evidence": "clicking his own chip without reload removes it (no chip), React > Like adds it back, clicking the JS-built chip again removes it; works twice."
+      "evidence": "Without reload: clicked the server chip -> removed; picked Like (JS-built chip) -> clicked it again -> removed; added again -> chip back as mine. In-app notifications logged 3 first-reactions for alice, consistent with remove/re-add."
     },
     "e-reactions.3": {
       "result": "pass",
-      "evidence": "bob had Like, picked Celebrate: Like chip gone, only 'Celebrate 1' as his (one reaction per member per post).",
-      "screenshot": "qa-artifacts/walk-207/combo/rx3.png"
+      "evidence": "With Like on 1195, picked Celebrate -> only 'Celebrate 1 [mine]' remains (Like chip gone, i.e. 0); GET /replies/1195/reactions -> counts {hooray:1}."
     },
     "e-reactions.4": {
       "result": "pass",
-      "evidence": "alice and maya Like bob's reply 4093: chip 'Like 2' with names 'Like: Maya Okafor and Alice Chen'; GET /replies/4093/reactions counts {thumbsup:2}."
+      "evidence": "alice then maya clicked Like on bob's reply 1196: chips read 1 then 2 [mine]; hover tooltip 'Like: Maya Okafor and Alice Chen'; GET /replies/1196/reactions -> counts {thumbsup:2}, ?emoji=thumbsup adds reactors label 'Like: Maya Okafor and Alice Chen'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-4.png"
     },
     "e-reactions.5": {
       "result": "pass",
-      "evidence": "hover, keyboard focus and Escape on a Like chip: 2 reactors 'Like: Maya Okafor and Alice Chen'; 14 reactors on the topic 'Like: Theo Lindqvist, ... and 4 others' (first 10 names listed); touch long-press (CDP touch, 900ms) shows the same tooltip without toggling; a quick tap toggles the reaction (Like 14 -> 15).",
-      "screenshot": "qa-artifacts/walk-207/combo/rx5.png"
+      "evidence": "Reply 1178 (12 reactors): mouse hover and Tab focus both show 'Like: <10 names> and 2 others' (10 names then the remainder); 2 reactors reply 1196 reads 'Like: Maya Okafor and Alice Chen'; Escape closes it; long-press (touch pointerdown held 900ms, emulated with pointer events on the Chromium desktop context, no touch device) shows the tooltip and the release does not toggle (still 12); a quick mouse click toggled (12 -> 11), restored afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-5-hover.png"
     },
     "e-reactions.6": {
       "result": "pass",
-      "evidence": "after reacting Like and hovering the chip with no reload: 'Like: Bob Martinez'."
+      "evidence": "Right after adding Like on 1195 without reloading, hovering the chip shows 'Like: Bob Martinez' (names refreshed to include the reactor).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-6-tip.png"
     },
     "e-reactions.7": {
       "result": "pass",
-      "evidence": "bob POST /replies/4093/reactions emoji 'not-real' -> 400 jetonomy_invalid_emoji 'Invalid or disabled emoji.'; the disabled hooray gives the same error (see 14)."
+      "evidence": "bob POST /posts/249/reactions emoji 'not-real' -> 400 jetonomy_invalid_emoji 'Invalid or disabled emoji.'; with Celebrate disabled in settings, POST /replies/1195/reactions emoji hooray -> the same 400."
     },
     "e-reactions.8": {
       "result": "pass",
-      "evidence": "bob POST and GET /posts/403/reactions (Customer Advisory Board) and POST/GET /posts/99999999/reactions -> all four 404 jetonomy_not_found 'Content not found.', never 403."
+      "evidence": "bob: POST and GET on CAB topic 240 and on id 9999999 return identical 404 jetonomy_not_found pairs (never 403); POST says 'Topic not found.', GET says 'Content not found.' for both ids; GET /replies/1163/reactions (CAB reply) 404 'Content not found.'. The private/nonexistent split is indistinguishable; only the POST message text differs from the line."
     },
     "e-reactions.9": {
       "result": "pass",
-      "evidence": "guest POST /posts/249/reactions -> 401; guest GET of a public topic -> 200 counts with no 'reactors' key; guest GET /posts/403/reactions -> 404."
+      "evidence": "Guest POST -> 401; guest GET /posts/249/reactions -> 200 {counts:{thumbsup:15},user_reactions:[]} with no reactors key; with ?emoji=thumbsup -> adds reactors; GET /posts/241/reactions (hidden space) -> 404."
     },
     "e-reactions.10": {
-      "result": "fail",
-      "evidence": "bob POST /replies/3810/reactions on a trashed reply -> 404 jetonomy_not_found 'Content not found.' (line expects 409 target not live; votes on a trashed reply do return 409 jetonomy_already_trashed). No row written. Out-of-date line or inconsistent product answer; main session to decide."
+      "result": "pass",
+      "evidence": "bob POST /replies/4152/reactions (trashed) -> 409 jetonomy_already_trashed; POST /posts/13828 (spam) and 13829 (pending) -> 409 jetonomy_not_published; 0 reaction rows written for those targets."
     },
     "e-reactions.11": {
       "result": "pass",
-      "evidence": "finn reacting in the UI (Like on reply 1176): 'Your account is currently silenced and cannot post.' and no is-mine chip; REST POST -> 403 jetonomy_user_silenced."
+      "evidence": "finn (silenced): UI shows the banner 'Your account is currently silenced and cannot post.' and reply 1195's reactions render as static chips with no React trigger (nothing to click); REST POST /replies/1195/reactions -> 403 jetonomy_user_silenced, no row added (finn still has only 2 seed rows). Finn's own post 246 (score -4): vote cluster shows -4, REST vote_score -4, alice sees 'Like 1' and GET reactions counts {thumbsup:1}.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-11.png"
     },
     "e-reactions.12": {
       "result": "pass",
-      "evidence": "bob's new reply 4121: alice's first Like -> exactly one reaction notification row (id 3750, actor alice); her swap to Love, maya's Like, bob's own reaction, alice's remove and re-add added none. No reaction email is sent because Settings default email for reactions is off (bell only)."
+      "evidence": "wp_jt_notifications: bob's first Like on alice's reply 1195 created a 'reaction' notification for alice, the remove + re-add each created a new one, the swap to Celebrate created none; alice's Like on bob's reply 1196 notified bob once and maya's later Like created no second notification; bob reacting to his own reply 1177 created none (0 new rows). Reaction email is off by default (notification_defaults.reaction.email=false) so no mail was expected in Mailpit."
     },
     "e-reactions.13": {
       "result": "pass",
-      "evidence": "Settings > Reactions with all 8 emoji unticked: notice 'No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.' (Like stays ticked); a normal save shows 'Reaction settings saved.'."
+      "evidence": "Settings > Reactions with all 8 emojis unticked: notice 'No reactions were selected, so Like was kept - a reactions bar needs at least one. Disable the Reactions extension if you want none.' (Like left ticked); normal save -> 'Reaction settings saved.'. All 8 re-ticked afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-13-none.png"
     },
     "e-reactions.14": {
       "result": "pass",
-      "evidence": "Celebrate (hooray) disabled in Settings after use: reply 1180 still renders its 'Celebrate 6' chip normally, the picker no longer offers Celebrate, POST hooray -> 400 jetonomy_invalid_emoji; setting restored (8 ticked).",
-      "screenshot": "qa-artifacts/walk-207/combo/rx14.png"
+      "evidence": "With Celebrate unticked and saved: reply 1195's existing Celebrate chip still renders normally (Celebrate 1, 32px high, is-mine) and the picker lists 7 reactions without Celebrate; REST add hooray -> 400. Setting restored to all 8.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-14.png"
     },
     "e-reactions.15": {
       "result": "pass",
-      "evidence": "reply 1180 with 38 reactions across 6 emoji at 390px: chips wrap to 2 rows, none outside the reply card, no horizontal scroll; tooltip width 280 inside the viewport (left 8, right 288).",
-      "screenshot": "qa-artifacts/walk-207/combo/rx15-390.png"
+      "evidence": "Reply 1180 (38 reactions, 6 emoji) at 390: 6 chips wrap to 2 rows inside the card (card 31-359, rightmost chip 311), no horizontal page scroll; the names tooltip is 280px wide at x 8-288, inside the 390 viewport.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-15.png"
     },
     "e-reactions.16": {
       "result": "pass",
-      "evidence": "dark mode: highlighted chip is a light-blue text on a dark-blue token background with a light border; the names tooltip is a light grey box with dark text (readable).",
-      "screenshot": "qa-artifacts/walk-207/combo/rx16-dark.png"
+      "evidence": "Reign dark mode: highlighted chip uses a dark slate fill with light blue text and border (visible in screenshot); tooltip renders as an inverted light panel rgb(229,229,229) with rgb(47,49,58) text (contrast 10.3).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-16-dark-tip.png"
     },
     "e-reactions.17": {
       "result": "pass",
-      "evidence": "toggling the chip offline: the chip stays at its previous state (Like 1, mine) and 'Could not save reaction.' shows."
+      "evidence": "Playwright context.setOffline(true), clicked the Celebrate chip on 1195: chip stays 'Celebrate 1 [mine]' (rolled back), toast 'Could not save reaction.' shown; server unchanged {hooray:1}.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-17-offline.png"
     },
     "e-reactions.18": {
       "result": "pass",
-      "evidence": "bob and alice (two browser contexts) reacted Like at the same instant on reply 4122: both 200, count exactly 2, page shows 'Like 2' after reload."
+      "evidence": "bob and alice POST /replies/1214/reactions rocket fired from two processes about 5ms apart: both 200, final rows = 2 (user 9 and 10), reload as bob shows 'Rocket 2'. Cleaned up afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-18.png"
     },
     "e-reactions.19": {
       "result": "pass",
-      "evidence": "?rpg=2 of the Feature Requests thread: post chip present, reaction picker on a page-2 reply works (reply 1205 Like 1 as mine)."
+      "evidence": "After Load More, reply 1214 (page 2): chip shows 2, undo, add via picker, remove and hover tooltip all work; the post's own bar works too (Love replaces Like 15->14, removal works; bob's seed Like on topic 249 restored afterwards).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-reactions-19.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "e-reactions.8",
+      "now": "POST answers 404 jetonomy_not_found \"Topic not found.\" and GET answers \"Content not found.\"; each pair is identical for a private-space id and a nonexistent id"
+    }
+  ]
 }

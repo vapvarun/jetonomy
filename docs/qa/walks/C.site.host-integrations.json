@@ -50,9 +50,8 @@
       "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-dark.png"
     },
     "c-site-host-integrations.12": {
-      "result": "fail",
-      "evidence": "Wave 7 re-walk at free 0991f3be (Pro inactive), 390px touch context (hasTouch+isMobile), bob, /community/ and a topic on Reign, BuddyX and Twenty Twenty-Five: scrollWidth 390 = viewport on all six pages (no horizontal scroll). Every Jetonomy button, input and select is now >= 40px on all three themes (3 controls on /community/, 57 on the topic; the 'Hide replies' toggle that failed in wave 6 is fixed). Still failing the second half: links/chips below 24px high: breadcrumb links 17-18px (Home, Product & Engineering, Feature Requests), topic-title links in the home lists 17-18px, author links 'Priya Nair' 21-22px, reply permalinks 20-21px, 'in reply to' 23px and the category chip count 23px; 12-13 such links on /community/ and 34-35 on the topic on every theme. Read: product bug (small): the line asks for inline links and chips >= 24px; if the intent is WCAG 2.5.8's spacing exception for plain text links, the line is stale. Main session decides.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-host-buddyx-390.png"
+      "result": "pass",
+      "evidence": "Wave 8 (free fb73aeda, Pro inactive), fresh 390px touch context (hasTouch+isMobile, hover:none), bob, on Reign, BuddyX and Twenty Twenty-Five (theme switched with wp theme activate between runs, restored to reign-theme): /community/ and topic /community/s/general-discussion/t/whats-everyone-working-on-this-week-s15t1/. scrollWidth 390 = viewport on all 6 pages. Jetonomy buttons/inputs/selects: 0 under 40px (3 controls on home, 141 on topic). Inline links incl. breadcrumb, author, permalinks, tag chips measured as larger of link box and its ::after hit area: 0 of 67 (home) and 0 of 126 (topic) under 24px on every theme. Screenshot qa-artifacts/w8-free/host12-reign-topic-390.png."
     },
     "c-site-host-integrations.13": {
       "result": "pass",
@@ -83,7 +82,7 @@
     }
   },
   "proposed_checks": [],
-  "walked_at": "2026-11-10T07:05:37.326912+00:00",
+  "walked_at": "2026-11-10T09:23:35Z",
   "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
   "env": {
     "mode": "free stack, Pro inactive",

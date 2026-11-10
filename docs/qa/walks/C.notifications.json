@@ -2,7 +2,7 @@
   "journey": "C.notifications",
   "free": "0991f3be",
   "pro": "f684443",
-  "walked_at": "2026-11-10T08:53:20.407124Z",
+  "walked_at": "2026-11-10T09:59:24Z",
   "walker": "release 2.0.7 free walk wave 7 (Sonnet)",
   "env": {
     "mode": "free stack (Free; Pro as noted)",
@@ -116,9 +116,8 @@
       "evidence": "alice PATCH /notifications/1206 (bob's) -> 404 jetonomy_not_found; bob's item stays is_read 0; DELETE and bulk mark_read with that id as alice affect 0 rows."
     },
     "c-notifications.23": {
-      "result": "fail",
-      "evidence": "Admin: Pin to community (Pro Site Announcements) on topic 369 -> button flips to 'Unpin from community'; it is pinned first with an 'Announcement' badge in its own space (General Discussion), in another space (Feature Requests) and for a guest, GET /announcements/active returns it, and no bell notice is sent. But the /community/ home page does not show it (home lists space cards, Trending, latest topics; the topic is absent). Read: the line says 'community home'; the extension only pins into space listings ('every space'), so most likely a stale line; main session decides.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-notif-announcement.png"
+      "result": "pass",
+      "evidence": "Wave 8 re-walk (free fb73aeda / Pro e3b90b6 active, Site Announcements on; the pin needs Pro): admin on topic 369 'Meetup recap - planning the March community call' (General Discussion) clicked 'Pin to community' -> button flipped to 'Unpin from community'. It shows first with the Announcement badge at the top of its own space list (General Discussion) for bob and for a guest, and at the top of another space (Feature Requests) for a guest; GET /announcements/active returns it. The /community/ home does not list it (the line now says every space, not the home). No bell notice: no announcement-type notification was created (only new_post_in_sub rows from my own test posts). Unpinned afterwards (active list 0). Screenshot qa-artifacts/w8-free/n23-guest.png."
     },
     "c-notifications.24": {
       "result": "pass",
