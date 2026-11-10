@@ -4456,12 +4456,13 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
 
-            // Draft or scheduled: leave the form for the saved item, the same
-            // as a published topic. Staying put with the fields still filled
-            // (and the button reset to "Post Topic") made the natural next
-            // click queue a second copy. The item's page says whether it is a
-            // draft or when it is scheduled to publish.
-            if ( 'draft' === status && slug && spaceSlug && state.communityBase ) {
+            // Draft, scheduled or held for approval: leave the form for the
+            // saved item, the same as a published topic. Staying put with the
+            // fields still filled (and the button reset to "Post Topic") made
+            // the natural next click queue a second copy. The item's page says
+            // whether it is a draft, scheduled, or pending review (its author
+            // may open it).
+            if ( ( 'draft' === status || 'pending' === status ) && slug && spaceSlug && state.communityBase ) {
                 window.location.href = `${ state.communityBase }/s/${ spaceSlug }/t/${ slug }/`;
                 return;
             }

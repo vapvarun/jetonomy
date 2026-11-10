@@ -478,7 +478,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.post-create
 **Covers:** templates/views/new-post.php, templates/partials/composer.php, templates/partials/compose-fields.php, assets/js/composer.js, includes/api/class-posts-controller.php, includes/api/class-media-controller.php, includes/api/class-rest-auth.php, assets/js/jetonomy-rest.js, includes/class-attachments.php, includes/class-media-library.php, includes/models/class-attachment.php, includes/models/class-model.php, includes/permissions/class-rate-limiter.php, templates/partials/compose-topic-embed.php, pro:includes/extensions/polls/*.php, pro:assets/js/polls-frontend.js, pro:includes/extensions/advanced-moderation/*.php, pro:includes/extensions/ai/*.php, pro:includes/extensions/webhooks/*.php
-**Verified:** fb73aeda pro:e3b90b6
+**Verified:** e06d58be pro:69d28a8
 **What to verify:** a logged-in member can compose a new post with title + content, pick a visibility / schedule / tags, submit, and land on the new topic. The post is persisted, appears in the space listing, and fires any expected notifications (subscribers notified, activity log updated). The image button, paste and drop of images appear and work only for a member who holds the Upload media permission; otherwise they are hidden and a paste or drop shows "You do not have permission to upload images". An archived or locked space refuses new topics with a message, and its /s/<slug>/new/ page shows that notice with "Back to <Space>" instead of a form.
 
 **Checks:**
@@ -502,7 +502,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-post-create.18` @member #ui +offline: take the network offline and submit -> the composer keeps the text, shows an error and a retry works; no duplicate topic after reconnect.
 - `c-member-post-create.19` @member #ui +concurrent: double-click Submit -> exactly one topic is created.
 - `c-member-post-create.20` @member #ui +rtl: write an Arabic title and body -> the topic renders right-to-left.
-- `c-member-post-create.21` @member #ui +settings-off: set the space to require approval and post -> the member sees "awaiting approval", the topic is not public, a moderator sees it queued, and subscribers are notified only after approval, once.
+- `c-member-post-create.21` @member #ui +settings-off: set the space to require approval and post -> the member lands on the topic page with "This topic is pending review and not yet publicly visible." (the form is not left filled, so a second click cannot post it twice), the topic is not public, a moderator sees it queued, and subscribers are notified only after approval, once.
 - `c-member-post-create.22` @guest #rest !refuse: POST /posts logged out -> 401.
 - `c-member-post-create.23` @member #ui +390: compose at 390px -> the toolbar stays on one row that scrolls sideways with a fade at the end, every button (emoji last) is reachable by scrolling, and Post Topic is reachable without zoom.
 - `c-member-post-create.24` @member #ui +dark: compose in dark mode -> editor surface and toolbar icons readable.

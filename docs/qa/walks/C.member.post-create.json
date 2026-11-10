@@ -1,11 +1,12 @@
 {
   "journey": "C.member.post-create",
-  "free": "fb73aeda",
-  "pro": "e3b90b6",
-  "walker": "release 2.0.7 free walk wave 8 (Sonnet)",
+  "free": "e06d58be",
+  "pro": "69d28a8",
+  "walked_at": "2026-11-10T11:37:02.478774Z",
+  "walker": "release 2.0.7 combo walk wave 10 (Sonnet)",
   "env": {
-    "mode": "free stack with Pro active (all 17 extensions)",
-    "site": "http://localhost:8912",
+    "mode": "combo (Free+Pro, 17 extensions)",
+    "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
@@ -23,131 +24,141 @@
   "checks": {
     "c-member-post-create.1": {
       "result": "pass",
-      "evidence": "bob, Help Desk New Topic: title 'How do I reset my membership password?' + two paragraphs, clicked the submit button (labelled 'Post Question' in Help Desk, a Q&A space; 'Post Topic' in forum spaces) -> landed on /community/s/help-desk/t/how-do-i-reset-my-membership-password/ (2 paragraphs rendered) and it is first in Help Desk list. Screenshot qa-artifacts/w8-free/pc1-topic.png."
+      "evidence": "bob, Help Desk New Topic: title 'How do I reset my membership password?' + two paragraphs + the required global 'Operating system' select (macOS); clicked 'Post Question' -> landed on /community/s/help-desk/t/how-do-i-reset-my-membership-password-2/ (id 15884); /community/s/help-desk/ lists it first (REST GET /spaces/20/posts also first).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc1-listing.png"
     },
     "c-member-post-create.2": {
       "result": "pass",
-      "evidence": "bob, POST /jetonomy/v1/spaces/15/posts {title,content} -> 201 id 451; GET /spaces/15/posts?per_page=3 lists id 451 first."
+      "evidence": "bob POST /spaces/20/posts without custom_fields -> 400 jetonomy_field_required 'Operating system is required.'; with custom_fields {'operating-system':'Linux'} -> 201 id 15885; GET /spaces/20/posts?per_page=5 lists 15885 first."
     },
     "c-member-post-create.3": {
       "result": "pass",
-      "evidence": "Empty title (body filled): browser required-field bubble 'Please fill in this field.' on the Title field, focus on it, no request. Empty body (title filled): inline jt-form-error 'Please add some details before posting.', focus in the editor. DB: no topics created for either (checked by title)."
+      "evidence": "Empty title (body filled): browser required bubble 'Please fill in this field.', focus on #jt-post-title, no request. Empty body (title filled): inline error 'Please add some details before posting.'. Help Desk listing top unchanged, nothing created.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc3-nobody.png"
     },
     "c-member-post-create.4": {
       "result": "pass",
-      "evidence": "300 'Long ' chars typed into Title -> field stops at 255 and the visible hint 'Titles can be up to 255 characters.' is shown under it (jt-title-count). Screenshot qa-artifacts/w8-free/pc4-long.png."
+      "evidence": "Typed 300 chars into Title: a counter '54 characters left' (at 201), '14 characters left' (at 241) is visible, then at 255 the field stops (maxlength 255) and the hint reads 'Titles can be up to 255 characters.'.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc4-long.png"
     },
     "c-member-post-create.5": {
       "result": "pass",
-      "evidence": "Tags 'photography, meetup' + Schedule 2026-11-12 10:30 -> saved topic /t/weekend-photo-walk-along-the-old-harbour/ shows tags #meetup #photography and 'Scheduled to publish on November 12, 2026 10:30 am. It is hidden from the community until then.' (DB status draft, published_at 2026-11-12 10:30). Separate topic with Private checkbox + tags gear/advice -> shows a 'Private' badge and #advice #gear. Screenshots qa-artifacts/w8-free/pc5-saved.png, pc5-private.png."
+      "evidence": "Show & Tell, bob: tags 'photography, meetup', Private checkbox ('Private: only you and moderators can see this topic'), Schedule 2026-11-20 10:30 via the Schedule menu -> saved topic shows 'Scheduled to publish on November 20, 2026 10:30 am. It is hidden from the community until then.', a Private badge and tags #meetup #photography. (Scheduled test topic deleted afterwards.)",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc5-saved.png"
     },
     "c-member-post-create.6": {
       "result": "pass",
-      "evidence": "alice followed Help Desk and ticked her own 'New topic in followed space' email preference (profile Notification Preferences; site default for new_post_in_sub email is OFF, so without it no email is sent). bob posted -> exactly 1 bell notification (new_post_in_sub, id for post 450) and exactly 1 Mailpit email '[Northwind Makers Community] New topic in Help Desk' (default subject; no saved override exists). Not two."
+      "evidence": "alice already followed Help Desk; I ticked her own 'New topic in followed space' email preference (profile edit; default was off). bob posted 15887 in Help Desk -> exactly 1 bell notification (new_post_in_sub, id 4041) and exactly 1 Mailpit email to alice.demo@jetonomy.local, subject '[Northwind Makers Community] New topic in Help Desk'. No owner-saved custom subject exists on this stack (jetonomy_email_templates holds only verification_reminder), so the default subject is what was seen. Earlier posts 15884/15885 (pref off) sent her no email, correct. Pref restored to off afterwards."
     },
     "c-member-post-create.7": {
       "result": "pass",
-      "evidence": "alice posted in Show & Tell: space card on /community/ 14 -> 15 topics, space page 14 -> 15 topics, her profile 15 -> 16 TOPICS."
+      "evidence": "bob posted a topic in General Discussion via the UI: space page '60 topics' -> '61 topics', bob profile '66 TOPICS' -> '67 TOPICS'; the topic is listed in the space. Home card checked in .28."
     },
     "c-member-post-create.8": {
       "result": "pass",
-      "evidence": "bob, Show & Tell composer: Upload image button (file chooser), a synthetic paste event with an image file, and a drop event with an image file each uploaded and inserted an inline <img> (harbour-dusk.png 64px wide, pasted-shot.png, dropped-shot.png). Screenshot qa-artifacts/w8-free/pc8-images.png."
+      "evidence": "bob (Upload media held), Show & Tell composer: Upload image button opened the file chooser and harbour-dusk.png (64px) uploaded and showed inline; a paste event with an image file and a drop event with an image file each uploaded and inserted an inline <img> (pasted-shot.png, dropped-shot.png). Paste/drop were synthetic events with a File.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc8-images.png"
     },
     "c-member-post-create.9": {
       "result": "pass",
-      "evidence": "Admin Settings > Permissions: unticked Upload media for subscriber (Member) role, saved. bob composer: Upload image button not rendered (count 0); paste shows toast 'You do not have permission to upload images.' and no image inserted. Permission restored afterwards (role caps option identical to the saved original). Screenshot qa-artifacts/w8-free/pc9-noupload.png."
+      "evidence": "Admin Settings > Permissions: unticked Upload media for Subscriber (Member), saved. bob composer: no Upload image button (count 0); a paste of an image showed toast 'You do not have permission to upload images.' and no image was inserted. Re-ticked and saved afterwards (verified in the form and option jetonomy_role_caps).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc9-noupload.png"
     },
     "c-member-post-create.10": {
       "result": "pass",
-      "evidence": "With Upload media removed: bob POST /jetonomy/v1/media (multipart png) -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'; GET /media also 403."
+      "evidence": "With Upload media removed from Member: bob POST /jetonomy/v1/media (multipart png) -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'. Permission restored."
     },
     "c-member-post-create.11": {
       "result": "pass",
-      "evidence": "bob /community/s/2025-hackathon/new/ -> 'This space is archived or locked and no longer accepts new content.' with link 'Back to 2025 Hackathon' and no form. Screenshot qa-artifacts/w8-free/pc11-archived.png. (Locked-in-admin variant not separately walked; same code path.)"
+      "evidence": "bob /community/s/2025-hackathon/new/ -> 'This space is archived or locked and no longer accepts new content.' with 'Back to 2025 Hackathon' and no form. A space locked (status locked on Release Notes, set with wp db query rather than the wp-admin edit screen, then restored to active) shows the same notice with 'Back to Release Notes' and no form.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc11-archived.png"
     },
     "c-member-post-create.12": {
       "result": "pass",
-      "evidence": "bob POST /spaces/40/posts -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.'; wp jetonomy post create --space=40 --author=10 -> same error '[jetonomy_space_restricted] ...'. DB: nothing stored."
+      "evidence": "bob POST /spaces/40/posts with custom_fields -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.'; wp jetonomy post create --space=40 --author=10 -> '[jetonomy_space_restricted] This space is archived or locked...'. DB: nothing stored. Observation: without custom_fields the same request returns 400 jetonomy_field_required first (the required-field check runs before the archived/locked check), so the refusal reason a client sees depends on field order; low severity."
     },
     "c-member-post-create.13": {
       "result": "pass",
-      "evidence": "finn /community/s/general-discussion/new/ -> the page shows 'Your account is currently silenced and cannot post.' with 'Back to Space' instead of a form (so nothing to submit); nothing created. Screenshot qa-artifacts/w8-free/pc13-finn.png."
+      "evidence": "finn /community/s/general-discussion/new/ -> page shows 'Your account is currently silenced and cannot post.' with 'Back to Space' and no form to submit; nothing created.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc13-finn.png"
     },
     "c-member-post-create.14": {
       "result": "pass",
-      "evidence": "finn POST /spaces/15/posts -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+      "evidence": "finn POST /spaces/15/posts (with custom_fields) -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'."
     },
     "c-member-post-create.15": {
       "result": "pass",
-      "evidence": "omar /community/s/off-topic-lounge/new/ -> 'You have been banned from this space and cannot take part in it.' no form; REST POST /spaces/17/posts -> 403 jetonomy_user_space_banned. In General Discussion omar posted via the UI -> published (/t/back-from-the-break-anything-planned-for-december/)."
+      "evidence": "omar /community/s/off-topic-lounge/new/ -> 'You have been banned from this space and cannot take part in it.' and no form; REST POST /spaces/17/posts -> 403 jetonomy_user_space_banned. In General Discussion omar posted via the UI -> published (/t/back-from-the-break-with-a-question-about-moderation-tools/).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc15-omar.png"
     },
     "c-member-post-create.16": {
       "result": "pass",
-      "evidence": "Seed note: bob had been invited into Customer Advisory Board (space 42), so I removed that one membership row for the check and will restore it. As a non-member bob: /s/customer-advisory-board/new/ shows 'Customer Advisory Board is invite-only. You need an invitation to join.' with no form; POST /spaces/42/posts -> 403 jetonomy_forbidden 'You cannot post in this space.'; nothing stored. Screenshot qa-artifacts/w8-free/pc16-gate.png."
+      "evidence": "bob is not a member of Customer Advisory Board (space 42, invite-only; no membership change needed). /s/customer-advisory-board/new/ shows the gate 'Customer Advisory Board is invite-only. You need an invitation to join. ... Ask a space admin or a site administrator to invite you.' with 'Browse spaces' and no form. POST /spaces/42/posts -> 403 jetonomy_forbidden 'You cannot post in this space.'; no row stored.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc16-private.png"
     },
     "c-member-post-create.17": {
       "result": "pass",
-      "evidence": "New user newcomer_dana (level 0): 3 topics via REST then the UI composer -> inline 'New members can post 3 topics a day. You can post again in about 24 hours.'; REST 4th -> 429 jetonomy_rate_limited with the same message. Screenshot qa-artifacts/w8-free/pc17-limit.png."
+      "evidence": "New user newcomer_noel (level 0, deleted afterwards): 3 topics via REST (201), then the 4th via the UI composer -> inline 'New members can post 3 topics a day. You can post again in about 1 day.'; REST 4th -> 429 jetonomy_rate_limited 'New members can post 3 topics a day. You can post again in about 24 hours.' (retry_after 86398). The UI says '1 day', REST says '24 hours' for the same wait; cosmetic.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc17-limit.png"
     },
     "c-member-post-create.18": {
       "result": "pass",
-      "evidence": "bob, composer, context.setOffline(true), Post Topic -> composer stays, title/body kept, 'Failed to save.' shown; back online, Post Topic again -> published once (DB: exactly 1 topic with that title). Screenshot qa-artifacts/w8-free/pc18-offline.png."
+      "evidence": "bob composer, context offline, Post Topic -> composer kept title and body, one 'Failed to save.'; back online, Post Topic again -> published once (DB: exactly 1 row, id 15893).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc18-offline.png"
     },
     "c-member-post-create.19": {
       "result": "pass",
-      "evidence": "Double-click on Post Topic with an Arabic topic -> DB has exactly 1 row (id 457) for that title."
+      "evidence": "Double-click (two real clicks) on Post Topic with an Arabic topic -> DB has exactly 1 row (id 15894)."
     },
     "c-member-post-create.20": {
       "result": "pass",
-      "evidence": "Arabic title and body submitted as bob on the en_US site: topic renders with h1 and body direction rtl, text-align start (right). Screenshot qa-artifacts/w8-free/pc20-arabic.png."
+      "evidence": "Arabic title and body as bob on the en_US site: while typing the title/editor compute direction rtl; saved topic h1 and body are dir=auto, computed rtl, text-align start (right).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc20-arabic.png"
     },
     "c-member-post-create.21": {
       "result": "pass",
-      "evidence": "Space Show & Tell with 'New topics and replies require moderator approval' on (admin Space > Settings; turned off afterwards). alice followed it. bob posted -> composer shows 'Your topic is awaiting moderation and will appear once approved.', DB status pending, no alice notification yet. test_moderator /community/mod/?view=approvals listed it and clicked Approve -> status publish, alice got exactly 1 new_post_in_sub notification and 1 email 'New topic in Show & Tell', bob got the moderation notice."
+      "evidence": "Show & Tell set to 'New topics and replies require moderator approval' in admin Space > Settings (restored to the original NULL settings afterwards); alice followed it (email pref on). bob posted -> within ~300 ms a dark toast at the bottom of the viewport reads 'Your topic is awaiting moderation and will appear once approved.' (button went 'Posting...' -> 'Post Topic'); the toast is visible at 1 s (screenshot), then gone by the 2 s sample. The page stays on /new/ and the form STAYS FILLED (title, body, Operating system all kept, Post Topic enabled), so a second click would submit it again; no redirect and no persistent inline message. DB: topic 15895 status pending. alice: /community listing does not show it, GET /posts/15895 -> 404, direct URL -> 404. test_moderator: wp-admin Jetonomy > Moderation queue lists it with Approve/Spam/Trash. Before approval: no notification (max id unchanged) and no email. After Approve: status publish, exactly 1 new_post_in_sub notification to alice (4043) and exactly 1 Mailpit email 'New topic in Show & Tell' at the same second (plus the moderation notice to bob).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc21-toast-1s.png"
     },
     "c-member-post-create.22": {
       "result": "pass",
-      "evidence": "Logged out POST /spaces/15/posts -> 401 rest_not_logged_in."
+      "evidence": "Logged out POST /spaces/20/posts -> 401 rest_not_logged_in 'You must be logged in to perform this action.'."
     },
     "c-member-post-create.23": {
       "result": "pass",
-      "evidence": "390px touch context, bob: toolbar .jt-editor-bar is one row (overflow-x auto, nowrap, mask fade), scrollWidth 368 > clientWidth 325, last button 'Insert emoji' reachable after scrolling (x 294-334 of 390); Post Topic reachable; page scrollWidth 390. Screenshot qa-artifacts/w8-free/pc23-390.png."
+      "evidence": "390px viewport as bob: .jt-editor-bar is one row (all 8 buttons share one top), overflow-x auto, nowrap, fade mask on the right edge, scrollWidth 368 > clientWidth 326; after scrolling right the last button 'Insert emoji' sits at x 294-334 and is hittable; page scrollWidth 390; Post Topic reachable (bottom 764 of 844). Viewport resize only, not a touch context.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc23-390-scrolled.png"
     },
     "c-member-post-create.24": {
       "result": "pass",
-      "evidence": "Dark mode composer: editor text rgb(229,229,229) on dark surface, contrast 16.7:1; toolbar icons same 16.6:1. Screenshot qa-artifacts/w8-free/pc24-dark.png."
+      "evidence": "Reign dark toggle, 1440: editor text rgb(229,229,229) on dark surface contrast 16.7:1, toolbar icons 16.6:1, title input 16.7:1. Toggle switched back to light afterwards.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc24-dark.png"
     },
     "c-member-post-create.25": {
       "result": "pass",
-      "evidence": "Same as .4: typing 300 chars shows the visible limit text 'Titles can be up to 255 characters.' under the title and the field caps at 255 (maxlength 255); the hint is always visible, before the cut."
+      "evidence": "Same typing as .4: the title shows a visible 'N characters left' counter from about 200 chars and 'Titles can be up to 255 characters.' at the limit, before and when the field stops accepting input.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc4-long.png"
     },
     "c-member-post-create.26": {
       "result": "pass",
-      "evidence": "Offline submit shows exactly one 'Failed to save.' (counted in page text and in role regions)."
+      "evidence": "Offline submit shows exactly one 'Failed to save.' (counted in page text).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc18-offline.png"
     },
     "c-member-post-create.27": {
       "result": "pass",
-      "evidence": "On the LTR en_US site an empty new-topic title and editor have dir=auto and compute ltr; the saved Arabic topic title and body are dir=auto, rtl/start (right aligned)."
+      "evidence": "On the LTR en_US site the empty new-topic title and editor have dir=auto and compute ltr; the saved Arabic topic title and body are dir=auto and compute rtl/start (right aligned).",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc20-arabic.png"
     },
     "c-member-post-create.28": {
       "result": "pass",
-      "evidence": "alice posted in Show & Tell and the /community/ space card went 14 -> 15 topics, matching the space listing (15)."
+      "evidence": "alice posted in General Discussion: the /community/ space card went 68 -> 69 topics, matching the space page (69) and the new topic listed first.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc28-home.png"
     },
     "c-member-post-create.29": {
       "result": "pass",
-      "evidence": "390px touch: Post Topic and (on a long thread, /t/whats-everyone-working-on-this-week-s15t1/) Post Reply after scrollIntoView({block:'end'}): bottom 764px, bottom tab bar top 784px; elementFromPoint at centre and at bottom edge-1 is the button in both. 1440: no tab bar; button bottom 900 = viewport end, page footer follows normally, no extra gap. Tab-key focus path not separately timed."
+      "evidence": "390px: New Topic Post Topic after scrollIntoView({block:'end'}): bottom 764, bottom tab bar (.jt-mobile-tabs) top 784; elementFromPoint at centre and at bottom edge-1 is the button; Tab to it: same (bottom 764, centre/edge ok). Post Reply on /s/show-and-tell/t/launched-my-paid-newsletter-community-on-jetonomy-s16t1/ (20 replies): bottom 764, tab bar top 784, centre and edge hit the button; Tab to Post Reply: bottom 677, centre/edge ok. 1440: tab bar display none, document ends at the footer, no extra bottom gap.",
+      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/w10/pc29-newtopic.png"
     }
   },
-  "proposed_checks": [],
-  "walked_at": "2026-11-10T09:39:52Z",
-  "runbook_fixes": [
-    {
-      "check": "c-member-post-create.1",
-      "now": "the submit button in Help Desk (a Q&A space) reads 'Post Question'; forum spaces read 'Post Topic'"
-    },
-    {
-      "check": "c-member-post-create.6",
-      "now": "alice must have the New topic email preference on (site default for new_post_in_sub email is off); subject is '[site] New topic in Help Desk'"
-    }
-  ]
+  "proposed_checks": []
 }
