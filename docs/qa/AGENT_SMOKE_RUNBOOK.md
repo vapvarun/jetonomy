@@ -304,23 +304,23 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-space-listing.2` @guest #ui: sort Popular on a space where two topics tie on votes -> the topic with more replies ranks first.
 - `c-anon-space-listing.3` @guest #ui: look at Discussions, Members and Roadmap tabs of one space -> the same header (cover, description, counts, Join/Follow) appears on all three.
 - `c-anon-space-listing.4` @guest #ui: on a public space look for the "new post" invitation -> a guest sees none; a signed-in member (bob) sees the New Topic button.
-- `c-anon-space-listing.5` @member #ui: open Feature Requests as bob -> a visible New Topic button is shown.
-- `c-anon-space-listing.6` @member #ui: open the public Open-join space as bob before joining -> the header shows Join; click it -> it becomes Leave and the member count rises by one.
+- `c-anon-space-listing.5` @member #ui: open Feature Requests as bob -> a visible '+ Share an Idea' button is shown (ideas space; Q&A and feed spaces use their own label).
+- `c-anon-space-listing.6` @member #ui: open the public Open-join space as bob before joining -> the header shows Join Space; click it -> it reads Joined with a Leave space control and the member count rises by one.
 - `c-anon-space-listing.7` @member #ui: open Insiders / Beta as a member who is not in it (test_subscriber; bob is a member in the seed) -> the header shows "Request to join"; the invite-only Customer Advisory Board says it is invite only with no request form.
 - `c-anon-space-listing.8` @member #ui: on a public approval space click header "Request to join" -> a form asks for an optional message first and submitting shows "Your request to join <Space> is awaiting approval" with a Withdraw request button.
 - `c-anon-space-listing.9` @member #rest: on a public approval space send a request with the optional message, click Withdraw request, then DELETE /jetonomy/v1/spaces/<id>/join-requests/mine -> UI returns the Request to join form, REST answers 200 once and 404 on a second call (on a private approval space Request to join submits at once, with no message dialog).
 - `c-anon-space-listing.10` @moderator #ui: after the withdrawal open the staff notifications -> the staff notice of that join request is gone.
-- `c-anon-space-listing.11` @member #ui +archived: open 2025 Hackathon as bob -> header shows Follow not Join, empty state reads "No topics were posted here." with no New Topic link.
+- `c-anon-space-listing.11` @member #ui +archived: open an archived space with no topics as bob (archive an empty space first; 2025 Hackathon holds one topic) -> header shows Follow not Join, empty state reads "No topics were posted here." with no New Topic link.
 - `c-anon-space-listing.12` @guest #ui +empty: open an empty city space as guest -> plain "No topics yet." with no button.
 - `c-anon-space-listing.13` @member #ui +empty: open an empty city space as bob -> the empty state invites a first post with a button to compose.
 - `c-anon-space-listing.14` @member #ui +empty +settings-off: create an empty ideas space, an empty Q&A space and an empty feed space with approval joining, have carlos request to join, and open each as carlos -> plain "No ideas yet." with no button; the Q&A and feed variants read "No questions yet." and "Nothing posted yet.".
 - `c-anon-space-listing.15` @guest #ui !refuse: open Partner Program as guest -> the login prompt (and Register when open), no topic titles.
 - `c-anon-space-listing.16` @member #ui !refuse: open Customer Advisory Board as bob -> a gate naming the space and showing its description, no topics.
 - `c-anon-space-listing.17` @member #ui !refuse: open Moderators' Room by slug as bob -> the community not-found page, the space is never named.
-- `c-anon-space-listing.18` @guest #ui: open Announcements -> "Scheduled maintenance on Saturday" carries a "Closed" badge next to any Pinned badge.
-- `c-anon-space-listing.19` @guest #ui +long card:10415367216: open Help Desk (288-character description) on Reign at 1440 -> the description takes its own full-width row above the stats and the Join button, not a squeezed column beside them.
+- `c-anon-space-listing.18` @guest #ui: open Announcements -> "Scheduled maintenance on Saturday: what to expect" carries a "Closed" badge (and a Pinned badge beside it when the topic is pinned).
+- `c-anon-space-listing.19` @guest #ui +long card:10415367216: open Help Desk (288-character description) on Reign at 1440 -> the description takes its own full-width row below the title and stats row, not a squeezed column beside them.
 - `c-anon-space-listing.20` @guest #ui +long: open Help Desk at 1024 and 390 on Reign, BuddyX and Twenty Twenty-Five -> description wraps in its own row, stats and Join stay on one line or stack with no overlap.
-- `c-anon-space-listing.21` @guest #ui +long: open General Discussion and read Grace's 159-character title and the unbroken 100-character URL in the listing -> neither widens the page past the viewport.
+- `c-anon-space-listing.21` @guest #ui +long: open General Discussion and read Grace's 158-character title and the unbroken 100-character URL in the listing -> neither widens the page past the viewport.
 - `c-anon-space-listing.22` @guest #ui +rtl: open the space holding Omar's Arabic topic -> list rows mirror and the title is right-aligned.
 - `c-anon-space-listing.23` @guest #ui +dark: toggle dark mode on Help Desk -> header, badges and tabs are readable.
 - `c-anon-space-listing.24` @guest #rest: GET /jetonomy/v1/spaces/<Feature Requests id>/posts?sort=popular -> 200 with X-WP-Total matching the UI and the same order as the Popular pill.
@@ -351,11 +351,11 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-single-post.14` @guest #rest !refuse card:10415367168: GET /jetonomy/v1/updates?scope=post&id=<hidden topic id>&since=<now> -> 404 jetonomy_not_found, the same as a missing id.
 - `c-anon-single-post.15` @guest #rest card:10415367168: GET /jetonomy/v1/updates?scope=post&id=<public topic id>&since=<5 minutes ago> -> 200 with a reply id list (not 401), so the new-replies banner works for visitors.
 - `c-anon-single-post.16` @guest #rest !refuse: GET /updates?scope=global and ?scope=space&id=<id> -> 401, they stay login-only.
-- `c-anon-single-post.17` @guest #ui: view a private reply in a public topic -> a tombstone placeholder is shown, not its text; a member who may read it (author, moderator) sees the text.
+- `c-anon-single-post.17` @guest #ui: view a private reply in a public topic -> a tombstone placeholder is shown, not its text; a member who may read it (the author, a space Moderator/Admin on the roster, or a site admin) sees the text; a site Moderate capability alone does not.
 - `c-anon-single-post.18` @guest #rest !refuse: GET /replies/<private reply id> as guest -> 404 jetonomy_not_found (a private reply is not readable by id), and the list endpoint returns an empty body with is_private true; the original body never appears.
-- `c-anon-single-post.19` @guest #ui +long: open Grace's General Discussion topic (159-character title, list, quote, code block, unbroken 100-character URL) on Reign at 1440 and 390 -> the code block scrolls inside itself, the URL wraps or scrolls, the page has no horizontal scroll.
+- `c-anon-single-post.19` @guest #ui +long: open Grace's General Discussion topic (127-character URL in the body and its long title, list, quote, code block, unbroken 100-character URL) on Reign at 1440 and 390 -> the code block scrolls inside itself, the URL wraps or scrolls, the page has no horizontal scroll.
 - `c-anon-single-post.20` @guest #ui +rtl: open Omar's Arabic topic -> body, replies and the vote column mirror correctly.
-- `c-anon-single-post.21` @guest #ui +many: open Feature Requests' 45-reply topic -> 30 replies show, a page 2 control or Load More brings the rest, and the reply count reads 45.
+- `c-anon-single-post.21` @guest #ui +many: open the seed's 66-reply topic -> 30 replies show, Load More adds 30 more, and the reply count reads 66.
 - `c-anon-single-post.22` @guest #ui +deleted: view a reply whose author account was deleted -> the author shows as "[deleted]" with the grey user-silhouette avatar (`.jt-avatar-anon`), not a PHP notice or blank.
 - `c-anon-single-post.23` @guest #ui +long: view Grace (long name, no avatar) as author of a reply on 390px -> the name truncates with an ellipsis on one line, the initials avatar shows, and meta does not overlap the vote buttons.
 - `c-anon-single-post.24` @guest #ui +dark: toggle dark mode on a topic with blockquote and code -> contrast stays readable.
@@ -374,7 +374,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-user-profile.1` @guest #ui: open bob's profile /community/u/<nicename>/ -> avatar, bio, posts, replies and badges show.
 - `c-anon-user-profile.2` @guest #ui !refuse: view the profile source and page -> no email, settings link or drafts tab is visible to a guest.
 - `c-anon-user-profile.3` @guest #rest !refuse: GET /jetonomy/v1/users/<id> -> the response contains no email or notification settings fields.
-- `c-anon-user-profile.4` @guest #ui: view a member at trust level 5 -> the badge reads "Veteran" by default, and after the admin renames it in Settings > Permissions it shows the new name.
+- `c-anon-user-profile.4` @guest #ui: view a member at trust level 5 -> the badge reads "Veteran" by default, and after the admin renames it in Settings > Permissions > trust level names it shows the new name.
 - `c-anon-user-profile.5` @guest #ui !refuse: view bob's Posts tab -> topics from Partner Program, Customer Advisory Board and Moderators' Room are not listed to a guest.
 - `c-anon-user-profile.6` @guest #ui !refuse: view a profile with a private reply -> the reply row reads "Private reply" and not its text.
 - `c-anon-user-profile.7` @guest #ui: open the profile of a member whose login is an email address by nicename -> it opens, and the URL and meta description contain no email address.
@@ -608,7 +608,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-reply-quote.6` @guest #ui !refuse: as guest -> Quote and Reply buttons send to login or are hidden.
 - `c-member-reply-quote.7` @member #ui +deleted: quote a reply by a deleted account -> attribution reads a neutral deleted-user name, not blank.
 - `c-member-reply-quote.8` @member #ui: quote a private reply of bob's as bob; then view as member_b -> member_b sees the tombstone, never the quoted text.
-- `c-member-reply-quote.9` @member #ui +rtl: quote Omar's Arabic reply -> blockquote and attribution render right-to-left.
+- `c-member-reply-quote.9` @member #ui +rtl: quote Aisha's Arabic reply -> blockquote and attribution render right-to-left.
 - `c-member-reply-quote.10` @member #ui +dark: quote in dark mode -> the blockquote bar and text contrast stay readable.
 - `c-member-reply-quote.11` @member #ui: click Quote on a reply -> the saved reply is posted as a plain top-level reply with a quote, or as a threaded reply; decide which (today parent_id is set, same as Reply).
 - `c-member-reply-quote.12` @member #ui +dark: the quote bar has enough contrast in dark mode (today 12% white).
@@ -623,7 +623,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **Checks:**
 - `c-member-mention.1` @member #ui: bob writes "@alice thanks, that fixed it for me" in a reply -> the saved reply shows @alice as a link to her profile.
 - `c-member-mention.2` @member_b #ui: alice opens the bell -> exactly one mention notification linking to the reply.
-- `c-member-mention.3` @member_b #email: read alice's Mailpit email -> subject is "[forums] You were mentioned by Bob Martinez" (actor name present) and the body comes from the owner's saved Mention template or the Settings > Emails default.
+- `c-member-mention.3` @member_b #email: read alice's Mailpit email -> subject is "[<site title>] You were mentioned by Bob Martinez" (actor name present) and the body comes from the owner's saved Mention template or the Settings > Emails default.
 - `c-member-mention.4` @member_b #email card:10412885103: bob replies mentioning @alice who is the topic author (OP) -> alice gets one notification and one email, not two.
 - `c-member-mention.5` @member_b #email card:10412885103: bob replies mentioning @maya, who follows the thread -> maya gets one notification and one email, not a reply notice plus a mention notice.
 - `c-member-mention.6` @member #ui: mention the same person twice in one reply -> one link each and still one notification.
@@ -631,7 +631,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-mention.8` @member #rest: POST a reply with "@alice" -> 201, content keeps the raw @alice (no content_html field), the page render links it, and GET /notifications as alice shows it.
 - `c-member-mention.9` @member #ui !refuse: bob writes @nobodyhere (no such user) -> the text stays plain with no link and no error.
 - `c-member-mention.10` @member_b #email !refuse: bob mentions @alice in a private reply she may not read -> no notification and no email; if she may read it, she gets exactly one.
-- `c-member-mention.11` @member #ui !refuse: bob mentions @alice inside Customer Advisory Board where alice is not a member (bob cannot post there) -> and in Moderators' Room, a mention of a non-member produces no notification.
+- `c-member-mention.11` @member #ui !refuse: bob mentions @alice inside Customer Advisory Board after removing alice from it -> a mention of a non-member produces no notification.
 - `c-member-mention.12` @silenced #ui !refuse +silenced: finn writes @bob -> the reply is refused; no notification is created.
 - `c-member-mention.13` @member #ui +settings-off: alice turns off mention notifications in her preferences -> bob's mention creates no bell and no email for her.
 - `c-member-mention.14` @member #ui +long: mention "Grace Oluwaseun Adeyemi-Whitfield" from the autocomplete -> the list shows her full name and the link resolves to her profile.
@@ -1646,7 +1646,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 **Checks:**
 - `c-gating-rule-never-locks-out.1` @member #ui: as a fresh subscriber (not in either space) note what he can do in the public open space: read, post, reply, vote -> all four work.
-- `c-gating-rule-never-locks-out.2` @admin #admin: add a Logged In rule to the public space -> toast "Rule added: Logged In can read and report posts and replies. They are recorded as Viewer." and the Access Rules tab lists the rule; on a private space a confirm "Logged In will be let in to this private space and can take part right away. Continue?" comes first.
+- `c-gating-rule-never-locks-out.2` @admin #admin: add a Logged In rule with Grants Read to the public space -> toast "Rule added: Logged In can read and report posts and replies. They are recorded as Viewer." (the default Participate grant reads "can read, post, reply, vote and report ... Member") and the Access Rules tab lists the rule; on a private space a confirm "Logged In will be let in to this private space and can take part right away. Continue?" comes first.
 - `c-gating-rule-never-locks-out.3` @member #ui: repeat read, post, reply, vote after the rule -> all four still work.
 - `c-gating-rule-never-locks-out.4` @guest #ui: view the public space after the Logged In rule -> guest can still read it (the rule did not close the space).
 - `c-gating-rule-never-locks-out.5` @admin #admin: add a Role, Capability, Trust Level or Membership rule to the public space -> toast "Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.".
@@ -1683,7 +1683,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-read-on-private.2` @admin #admin: add a Read rule (WP Role: subscriber) -> toast "Rule added: WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.".
 - `c-gating-read-on-private.3` @member #ui: the subscriber reads the space and its topics -> topics show.
 - `c-gating-read-on-private.4` @member #ui !refuse: the subscriber tries to post, reply and vote -> the composer and the vote buttons are absent (only Report remains), and a direct REST vote is refused with 403.
-- `c-gating-read-on-private.5` @member #rest !refuse: POST a topic, a reply and a vote -> each returns 403 jetonomy_forbidden "You cannot post in this space." and no row is stored.
+- `c-gating-read-on-private.5` @member #rest !refuse: POST a topic, a reply and a vote -> each returns 403 jetonomy_forbidden (topic and reply say "You cannot post in this space.", the vote "You do not have permission to perform this action.") and no row is stored.
 - `c-gating-read-on-private.6` @member #rest: a Read-rule member votes -> 403 jetonomy_forbidden; POST /flags on a topic there -> 201 and the report is stored (Read is read and report).
 - `c-gating-read-on-private.7` @guest #ui !refuse: a guest opens the same private space -> not readable (login prompt or 404), the rule did not apply to guests.
 - `c-gating-read-on-private.8` @admin #admin: remove the rule -> the next load by the subscriber is a refusal again.
@@ -1841,9 +1841,9 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-surfaces-agree.2` @member #ui !refuse: bob opens a topic URL in Customer Advisory Board -> the same 404 page as a missing topic, and the page title does not reveal that it exists.
 - `c-gating-surfaces-agree.3` @member #ui !refuse: bob searches a unique word from a topic there -> "No results for ...".
 - `c-gating-surfaces-agree.4` @member #ui !refuse: bob opens the tag pages for tags used there -> the topics are not listed and the tag count excludes them.
-- `c-gating-surfaces-agree.5` @member #ui !refuse: bob loads the community home, Trending, the sidebar and search -> no topic title from Customer Advisory Board appears anywhere; the space itself shows only as a locked preview card (by design, private spaces are listed to members), and a hidden space he is not in does not show.
+- `c-gating-surfaces-agree.5` @member #ui !refuse: bob loads the community home, the Trending sidebar widget and search -> no topic title from Customer Advisory Board appears anywhere; the space itself shows only as a locked preview card (by design, private spaces are listed to members), and a hidden space he is not in does not show.
 - `c-gating-surfaces-agree.6` @guest #rest !refuse: the guest fetches /community-sitemap.xml and /wp-json/jetonomy/v1/updates?scope=global -> neither lists that space's topics (updates answers 401 for global).
-- `c-gating-surfaces-agree.7` @member #rest !refuse: bob GET /posts/{id} and /posts/{id}/replies in Partner Program -> 404; GET /spaces/{id}, /spaces/{id}/posts and /search?space_id={id} -> 403 jetonomy_forbidden; the same three for a hidden space or id 99999 -> 404 with the same body.
+- `c-gating-surfaces-agree.7` @member #rest !refuse: a non-member (test_subscriber) GET /posts/{id} and /posts/{id}/replies in Partner Program -> 404; GET /spaces/{id}, /spaces/{id}/posts and /search?space_id={id} -> 403 jetonomy_forbidden; the same three for a hidden space or id 99999 -> 404 with the same body.
 - `c-gating-surfaces-agree.8` @guest #rest !refuse: GET /updates?scope=post&id=<private post> -> refused (404 jetonomy_not_found for a private post, matching the 404 posture for reads) and the 15-second poll on a public topic gives 200.
 - `c-gating-surfaces-agree.9` @guest #ui +settings-off: with the locked preview off (default) open Partner Program logged out -> no preview card, no title.
 - `c-gating-surfaces-agree.10` @guest #ui: turn on Settings > General > Access Control locked preview -> a card shows the space name and how to request access, and still no topics.
@@ -1852,7 +1852,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-surfaces-agree.13` @member #ui +concurrent: remove bob from Partner Program in one tab and reload each surface in another -> every surface drops its topics together on the next load.
 - `c-gating-surfaces-agree.14` @member #rest +old-data: topics created before a space became private -> they vanish from every surface for non-members, not just the space page.
 - `c-gating-surfaces-agree.15` @member #ui +many: with 2000 topics across private spaces, open home -> counts and lists load in one pass and no topic leaks on page 2.
-- `c-gating-surfaces-agree.16` @guest #ui: open a private space URL logged out with the locked preview off -> the document title is the site name only, never the space name.
+- `c-gating-surfaces-agree.16` @guest #ui: open a private space URL logged out with the locked preview off -> the document title is "Community - <site name>", never the space name.
 - `c-gating-surfaces-agree.17` @guest #ui !refuse: open a private space URL logged out with the locked preview off -> the page shows only "This space is private", with no space name or description anywhere in the markup.
 - `c-gating-surfaces-agree.18` @member #ui #rest !refuse card:10463415760: a member whose only role is a custom role with no WordPress read -> no Join button and no New Topic; POST /spaces/{id}/members answers 403 (qa-actions RM3).
 
