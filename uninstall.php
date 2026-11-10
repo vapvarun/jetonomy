@@ -101,8 +101,8 @@ foreach ( wp_roles()->roles as $jetonomy_role_name => $jetonomy_role_data ) {
 
 // Every WP-Cron hook named jetonomy_*, plus the licence SDK's weekly check, read
 // from the cron array itself: a hand-kept list had drifted to hook names the
-// plugin no longer uses. Action Scheduler jobs are already gone: deactivation
-// unschedules them, and WordPress deactivates before it uninstalls.
+// plugin no longer uses. Pending Action Scheduler jobs are already cancelled:
+// deactivation unschedules them, and WordPress deactivates before it uninstalls.
 foreach ( (array) _get_cron_array() as $jetonomy_events ) {
 	foreach ( array_keys( (array) $jetonomy_events ) as $jetonomy_hook ) {
 		// jetonomy_pro_* jobs are Pro's: its own uninstall clears them, as with its options.
@@ -111,6 +111,25 @@ foreach ( (array) _get_cron_array() as $jetonomy_events ) {
 		}
 	}
 }
+
+// Action Scheduler keeps the history of every job it ran (complete, canceled,
+// failed) in its own tables. Deactivation cancelled the pending ones; the rows
+// of Jetonomy's jobs and their logs go too. jetonomy_pro_* rows are Pro's. The
+// library's own runner event goes with it: another active plugin that bundles
+// Action Scheduler schedules it again on its next load.
+$jetonomy_as_actions = $wpdb->prefix . 'actionscheduler_actions';
+$jetonomy_as_logs    = $wpdb->prefix . 'actionscheduler_logs';
+if ( $jetonomy_as_actions === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jetonomy_as_actions ) ) ) ) {
+	$jetonomy_as_hook = $wpdb->esc_like( 'jetonomy_' ) . '%';
+	$jetonomy_as_pro  = $wpdb->esc_like( 'jetonomy_pro_' ) . '%';
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- uninstall: Action Scheduler has no API to delete finished actions.
+	if ( $jetonomy_as_logs === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jetonomy_as_logs ) ) ) ) {
+		$wpdb->query( $wpdb->prepare( "DELETE l FROM {$jetonomy_as_logs} l INNER JOIN {$jetonomy_as_actions} a ON a.action_id = l.action_id WHERE a.hook LIKE %s AND a.hook NOT LIKE %s", $jetonomy_as_hook, $jetonomy_as_pro ) );
+	}
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$jetonomy_as_actions} WHERE hook LIKE %s AND hook NOT LIKE %s", $jetonomy_as_hook, $jetonomy_as_pro ) );
+	// phpcs:enable
+}
+wp_clear_scheduled_hook( 'action_scheduler_run_queue' );
 
 // -------------------------------------------------------------------------
 // 5. Delete transients created by the plugin.

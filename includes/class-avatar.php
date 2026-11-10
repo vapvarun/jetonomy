@@ -246,11 +246,14 @@ class Avatar {
 		}
 		self::$check_enqueued[ $user_id ] = true;
 
-		$lock = 'jt_grav_chk_' . $user_id;
-		if ( get_transient( $lock ) ) {
+		// 'p<timestamp>' marks a check in flight. It lives in the same user meta
+		// as the answer, which is loaded with the user, so a render that meets a
+		// pending author costs no query. A check that never ran retries after an hour.
+		$flag = (string) get_user_meta( $user_id, self::META_HAS_GRAVATAR, true );
+		if ( str_starts_with( $flag, 'p' ) && time() - (int) substr( $flag, 1 ) < HOUR_IN_SECONDS ) {
 			return;
 		}
-		set_transient( $lock, 1, HOUR_IN_SECONDS );
+		update_user_meta( $user_id, self::META_HAS_GRAVATAR, 'p' . time() );
 
 		Queue::async( self::CHECK_HOOK, array( $user_id ), true, 30 );
 	}
@@ -263,7 +266,6 @@ class Avatar {
 	 */
 	public static function run_gravatar_check( $user_id ): void {
 		$user_id = (int) $user_id;
-		delete_transient( 'jt_grav_chk_' . $user_id );
 
 		$user = get_userdata( $user_id );
 		if ( ! $user || '' === (string) $user->user_email ) {
@@ -306,7 +308,6 @@ class Avatar {
 	public static function invalidate_gravatar( $user_id ): void {
 		$user_id = (int) $user_id;
 		delete_user_meta( $user_id, self::META_HAS_GRAVATAR );
-		delete_transient( 'jt_grav_chk_' . $user_id );
 	}
 
 	/**

@@ -228,6 +228,12 @@ function asset_version( string $file, string $version ): string {
  * so a stale build can never hide a change. Script translations still match:
  * WordPress strips ".min" when it maps a script to its JSON file.
  *
+ * On RTL sites a stylesheet with a foo-rtl.css sibling (the whole sheet,
+ * mirrored by `grunt rtlcss`) is served instead of foo.css, then minified the
+ * same way. It replaces the LTR sheet: loaded on top, every physical rule
+ * applied on both sides (right:0 and left:0 together put the notification
+ * panel off-screen).
+ *
  * @param string $base_url Plugin URL (trailing slash).
  * @param string $base_dir Plugin directory (trailing slash).
  * @param string $version  Plugin version passed to the enqueues.
@@ -243,6 +249,11 @@ function version_assets_by_mtime( string $base_url, string $base_dir, string $ve
 			return $src;
 		}
 		$path = strtok( substr( $src, strlen( $base_url ) ), '?' );
+		if ( is_rtl() && preg_match( '/(?<!-rtl)(?<!\.min)\.css$/', $path ) && is_readable( $base_dir . substr( $path, 0, -4 ) . '-rtl.css' ) ) {
+			$rtl  = substr( $path, 0, -4 ) . '-rtl.css';
+			$src  = $base_url . $rtl . substr( $src, strlen( $base_url ) + strlen( $path ) );
+			$path = $rtl;
+		}
 		if ( ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) && preg_match( '/(?<!\.min)\.(css|js)$/', $path ) ) {
 			$min = preg_replace( '/\.(css|js)$/', '.min.$1', $path );
 			if ( is_readable( $base_dir . $min ) && filemtime( $base_dir . $min ) >= ( is_readable( $base_dir . $path ) ? filemtime( $base_dir . $path ) : 0 ) ) {

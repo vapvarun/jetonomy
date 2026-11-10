@@ -148,9 +148,9 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 
 			<?php if ( ! did_action( 'buddynext_loaded' ) ) : ?>
 			<div class="jt-font-scale" role="group" aria-label="<?php esc_attr_e( 'Font size', 'jetonomy' ); ?>">
-				<button class="jt-font-scale__btn active" type="button" data-scale="100" aria-label="<?php esc_attr_e( 'Default font size', 'jetonomy' ); ?>">A</button>
-				<button class="jt-font-scale__btn" type="button" data-scale="110" aria-label="<?php esc_attr_e( 'Large font size', 'jetonomy' ); ?>">A+</button>
-				<button class="jt-font-scale__btn" type="button" data-scale="120" aria-label="<?php esc_attr_e( 'Extra large font size', 'jetonomy' ); ?>">A++</button>
+				<button class="jt-font-scale__btn active" type="button" dir="ltr" aria-pressed="true" data-scale="100" aria-label="<?php esc_attr_e( 'Default font size', 'jetonomy' ); ?>">A</button>
+				<button class="jt-font-scale__btn" type="button" dir="ltr" aria-pressed="false" data-scale="110" aria-label="<?php esc_attr_e( 'Large font size', 'jetonomy' ); ?>">A+</button>
+				<button class="jt-font-scale__btn" type="button" dir="ltr" aria-pressed="false" data-scale="120" aria-label="<?php esc_attr_e( 'Extra large font size', 'jetonomy' ); ?>">A++</button>
 			</div>
 			<?php endif; ?>
 		</div>

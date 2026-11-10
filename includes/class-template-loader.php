@@ -184,11 +184,6 @@ class Template_Loader {
 			JETONOMY_VERSION
 		);
 
-		// RTL stylesheet for right-to-left languages.
-		if ( is_rtl() ) {
-			wp_enqueue_style( 'jetonomy-rtl', JETONOMY_URL . 'assets/css/jetonomy-rtl.css', array( 'jetonomy' ), JETONOMY_VERSION );
-		}
-
 		// ── Inject dynamic CSS from settings (accent color, custom CSS, etc.) ──
 		$dynamic_css = '';
 

@@ -3269,6 +3269,10 @@
   .jt-link-embed { max-width: 100%; }
 }
 
+/* Directional icons (back/next chevrons, the reply arrow) point the other way
+   in RTL. Brand marks, the search glass and checkmarks are not tagged. */
+[dir="rtl"] .jt-icon--dir { transform: scaleX(-1); }
+
 /* ── Notification Dropdown Panel ── */
 .jt-notif-dropdown-wrap { position: relative; display: inline-flex; }
 .jt-notif-panel {

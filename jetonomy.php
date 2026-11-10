@@ -284,7 +284,10 @@ function jetonomy_icon( string $name, int $size = 24 ): string {
 		$svg            = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$cache[ $name ] = $svg;
 	}
-	$svg = str_replace( '<svg ', '<svg width="' . $size . '" height="' . $size . '" ', $svg );
+	// Icons that point along the reading direction carry a class the stylesheet
+	// mirrors in RTL; symmetric and vertical icons are left as drawn.
+	$dir = in_array( $name, array( 'chevron-left', 'chevron-right', 'corner-up-left' ), true ) ? 'class="jt-icon--dir" ' : '';
+	$svg = str_replace( '<svg ', '<svg ' . $dir . 'width="' . $size . '" height="' . $size . '" ', $svg );
 	return $svg;
 }
 

@@ -18,11 +18,11 @@ ob_start();
 	<?php foreach ( $crumbs as $jt_crumb_key => $crumb ) : ?>
 		<span aria-hidden="true">/</span>
 		<?php if ( $jt_crumb_key === $jt_last_crumb ) : ?>
-			<span aria-current="page"><?php echo esc_html( $crumb['label'] ); ?></span>
+			<span aria-current="page" dir="auto"><?php echo esc_html( $crumb['label'] ); ?></span>
 		<?php elseif ( ! empty( $crumb['url'] ) ) : ?>
-			<a href="<?php echo esc_url( $crumb['url'] ); ?>"><?php echo esc_html( $crumb['label'] ); ?></a>
+			<a href="<?php echo esc_url( $crumb['url'] ); ?>" dir="auto"><?php echo esc_html( $crumb['label'] ); ?></a>
 		<?php else : ?>
-			<span><?php echo esc_html( $crumb['label'] ); ?></span>
+			<span dir="auto"><?php echo esc_html( $crumb['label'] ); ?></span>
 		<?php endif; ?>
 	<?php endforeach; ?>
 </nav>

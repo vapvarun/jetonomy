@@ -9,7 +9,11 @@
 		document.documentElement.setAttribute('data-bn-font-scale', s);
 		try { localStorage.setItem('bn_font_scale', s); } catch (e) { /* noop */ }
 		var btns = document.querySelectorAll('.jt-font-scale__btn');
-		btns.forEach(function (b) { b.classList.toggle('active', b.dataset.scale === s); });
+		btns.forEach(function (b) {
+			var on = b.dataset.scale === s;
+			b.classList.toggle('active', on);
+			b.setAttribute('aria-pressed', on ? 'true' : 'false');
+		});
 	}
 	var saved = '100';
 	try { saved = localStorage.getItem('bn_font_scale') || '100'; } catch (e) { /* noop */ }
