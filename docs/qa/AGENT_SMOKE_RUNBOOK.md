@@ -966,7 +966,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.plugin-pages
 **Covers:** includes/admin/class-admin.php, includes/admin/views/*.php, assets/css/admin.css, assets/js/admin-common.js, assets/js/admin-confirm.js, assets/js/admin-content.js, assets/js/admin-dashboard.js, assets/js/admin-media-grid.js, assets/js/admin-nav-menus.js, assets/js/admin-replies.js, assets/js/admin-revisions.js, assets/js/admin-settings.js, assets/js/admin-tags.js, includes/admin/class-activity-list-table.php, includes/admin/class-revisions-list-table.php, includes/admin/ajax/class-content-handler.php, includes/admin/ajax/class-moderation-handler.php, includes/admin/ajax/class-tags-handler.php, includes/class-activity-tracker.php, includes/class-admin-bar.php, includes/class-nav-menus.php, includes/models/class-activity-log.php, includes/models/class-revision.php, pro:includes/extensions/white-label/*.php, pro:includes/extensions/analytics/views/*.php, pro:includes/extensions/custom-fields/views/*.php, pro:includes/extensions/private-messaging/views/*.php
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** af10b788 pro:69d28a8
 **What to verify:** every Jetonomy admin page (overview, spaces, categories, content, users, moderation, settings, plus any Pro extension pages) renders without PHP Notice / Warning / Fatal. Every tab on those pages loads its content without AJAX errors. The Spaces, Users and Extensions screens open for staff holding Manage spaces, Manage community users and Manage extensions respectively. The Dashboard's "Review flags" link opens the Flags tab. Anonymous authors stay anonymous in the admin lists, Activity Log and Revisions. Every Settings sidebar row has an icon. Labels follow Terminology (topics, not posts), and the brand name set by White Label (`jetonomy_brand_name`) replaces "Jetonomy" in admin headings. Settings > Emails lists every email type: reactions, report reviewed, join request, join answer and "Confirm your email (new accounts)"; saved templates for each are kept. The Activity Log shows titles and "Gained/Lost N reputation points" with plain reasons, and its retention setting is its own card. The Permissions role table keeps its first column visible while scrolling sideways, and the trust level name fields are styled. Revisions show the stored title with "(deleted)" when the topic is gone. The setup wizard calls the type "Feed".
 
 **Checks:**
@@ -1639,7 +1639,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.rule-never-locks-out
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/permissions/class-content-gate.php, includes/admin/class-admin.php, includes/api/class-rest-auth.php, assets/js/admin-common.js, assets/css/admin.css
-**Verified:** 8478fd19 pro:81befa5
+**Verified:** af10b788 pro:69d28a8
 **What to verify:** note what the subscriber can do in the public space. Add a Logged In rule to that space. Everything they could do before, they can still do. (A Role, Capability, Trust Level or Membership rule switches a public space to Private by design - the Access Rules tab says so - so a member outside the roster can then read but not post.)
 **Promise:** "A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy."
 **Why it matters:** owners reach for rules to restrict. They do not restrict, and an owner who believes otherwise has left a space open while thinking it is closed.
@@ -1809,7 +1809,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.builder-explains-itself
 **Covers:** includes/admin/views/space-edit.php, includes/admin/views/spaces.php, includes/models/class-access-rule.php, includes/admin/class-admin.php, includes/api/class-rest-auth.php, assets/js/admin-common.js, assets/css/admin.css
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** af10b788 pro:69d28a8
 **What to verify:** on the Access Rules tab, step through every entry in the Rule type dropdown. The tab intro and empty state say a rule only lets more people in; visibility and join policy decide who else gets in. Each type shows a second sentence under the live preview saying **who** the rule catches, and the value box carries an example for that type. **Everyone** and **Logged In** show no value box at all. A rule needs a value that can work: a trust level rule with no level (or outside 1-5), a role that does not exist, or an empty capability or membership value is refused with a message, so it can never admit every member.
 **Why it matters:** picking the wrong rule is silent - it saves, the space looks configured, and the mistake only surfaces when the wrong people are in the room.
 
@@ -2430,7 +2430,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 
 ### E.site-announcements
 **Covers:** pro:includes/extensions/site-announcements/*.php, pro:assets/js/announcements-frontend.js
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** e0208e24 pro:44fcc6e
 **What to verify:** As admin or moderator, mark a topic as a site announcement and confirm it is pinned at the top of every space listing, not only its own, for member and guest views. Unmarking removes it everywhere, and dismissing (if offered) persists for that member. Normal per-space pinned topics are unchanged. Walk 1440 and 390 widths.
 
 **Checks:**
@@ -2439,7 +2439,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 - `e-site-announcements.3` @guest #ui: the guest sees the same pinned announcement on public space listings but not when the announcement's space -> is private/hidden to guests.
 - `e-site-announcements.4` @admin #ui: "Unpin from community" -> it leaves every listing at once (no stale five-minute cache), and the topic still shows in its own space normally.
 - `e-site-announcements.5` @member #ui: normal per-space pinned topics -> keep their pin order and are not moved or duplicated by the announcement; an announcement that is also pinned in its own space appears once.
-- `e-site-announcements.6` @admin #rest !refuse +limit: pin past the limit (default max pins) -> 400 `jetonomy_pin_limit` "You can only pin %d announcements at a time. Unpin one first." and the UI shows the message; pinning a draft, trashed or nonexistent post -> 404 "Post not found or not published.".
+- `e-site-announcements.6` @admin #rest !refuse +limit: pin past the limit (default max pins) -> 400 `jetonomy_pin_limit` "You can only pin %d announcements at a time. Unpin one first." and the UI shows the message; pinning a draft, trashed or nonexistent post -> 404 "Topic not found or not published.".
 - `e-site-announcements.7` @moderator #rest: test_moderator `POST/DELETE /jetonomy-pro/v1/site-announcements/{id}` -> 403 unless the role has `jetonomy_manage_spaces` (pinning needs `manage_options` or that cap, moderators do not have it by default) and bob gets 403 on `POST/DELETE /site-announcements/{id}` and `GET /site-announcements`.
 - `e-site-announcements.8` @member #rest !refuse +private: `GET /announcements/active` as bob -> never lists an announcement from Customer Advisory Board or Moderators' Room; as a member of the space, it lists it.
 - `e-site-announcements.9` @member #ui +blocked: if bob blocked the author of the announcement, it -> does not appear at the top of his listings.

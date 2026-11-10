@@ -1,11 +1,11 @@
 {
   "journey": "C.gating.rule-never-locks-out",
-  "free": "8478fd19",
-  "pro": "81befa5",
-  "walked_at": "2026-11-10T08:27:47Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "free": "af10b788",
+  "pro": "69d28a8",
+  "walked_at": "2026-11-10T12:17:22Z",
+  "walker": "release 2.0.7 combo walk w12 (Sonnet)",
   "env": {
-    "mode": "Free + Pro, all 17 Pro extensions on",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -23,65 +23,52 @@
   "checks": {
     "c-gating-rule-never-locks-out.1": {
       "result": "pass",
-      "evidence": "nadia_r (fresh subscriber, not on the roster) on public open Gadget Testing Lab: read the topic list, posted 'Best budget tablet for kids apps?' (published), replied to Tomas's topic, voted up ('Remove your upvote' shown) - all four worked."
+      "evidence": "Fresh subscriber walkrule (not in roster) on public open General Discussion (space 15): opened topics, posted a topic via New Topic form (redirected to topic page), voted up (REST 200), replied (REST 201). Screens: w12/c1-post-attempt.png"
     },
     "c-gating-rule-never-locks-out.2": {
       "result": "pass",
-      "evidence": "admin added a Logged In rule to the public space (the Grants select defaults to Participate): toast 'Rule added: Logged In can read, post, reply, vote and report. They are recorded as Member.' and the rule is listed. On the private Advisors Lounge the confirm modal 'Logged In will be let in to this private space and can take part right away. Continue?' (Cancel / Add rule) came first. The runbook toast wording (read and report ... Viewer) is the Read variant; the default grant is Participate.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-lockout-intro.png"
+      "evidence": "Admin, Access Rules tab: Logged In + Read, Add Rule -> toast 'Rule added: Logged In can read and report posts and replies. They are recorded as Viewer.' and table lists Logged in / Read / Viewer (w12/c1-add-loggedin.png). On the now-private space, adding Logged In (Participate) first showed confirm 'Logged In will be let in to this private space and can take part right away. Continue?' (w12/c1-private-confirm.png); cancelled."
     },
     "c-gating-rule-never-locks-out.3": {
       "result": "pass",
-      "evidence": "nadia after the rule: read the list, posted 'Anyone testing smart displays?', replied on the admin topic, voted - all still work."
+      "evidence": "After the Logged In rule, walkrule posted a new topic (redirect to its page), voted up (200) and replied (201) on another topic, and read topics."
     },
     "c-gating-rule-never-locks-out.4": {
       "result": "pass",
-      "evidence": "a guest (fresh context) opened /community/s/gadget-testing-lab/ after the Logged In rule -> HTTP 200 and the topic titles show."
+      "evidence": "Guest (cookies cleared) opened /community/s/general-discussion/ -> 200, topic list visible incl. the new member topic (w12/c1-guest.png)."
     },
     "c-gating-rule-never-locks-out.5": {
       "result": "pass",
-      "evidence": "after deleting the Logged In rule, added WP Role contributor + Participate to the public space -> toast 'Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.'",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-lockout-privatetoast.png"
+      "evidence": "Admin added Role rule 'editor' to the public open space -> toast 'Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.' DB: visibility private, join_policy approval (w12/c1-add-role.png)."
     },
     "c-gating-rule-never-locks-out.6": {
       "result": "pass",
-      "evidence": "hugo_m (subscriber, never joined, not matched by the contributor rule) opened the space: gate page with the description and 'Request to join', no topics; REST GET /spaces/341 and /spaces/341/posts -> 403 jetonomy_forbidden, POST topic -> 403 'You cannot post in this space.' General tab shows Visibility Private, Join Policy Requires Approval.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-lockout-hugo.png"
+      "evidence": "walkrule2 (subscriber, not on roster, not editor) with only the Role rule present: space page shows 'General Discussion is private. Request to join and an admin will review it.' (w12/c1-nonroster-private.png); REST GET /spaces/15/posts 403 jetonomy_forbidden, POST 403 jetonomy_forbidden 'You cannot post in this space.' Note: while the Logged In (Read) rule was still present the same user could read (200) and was refused only for posting (403), which is the documented behaviour of that rule."
     },
     "c-gating-rule-never-locks-out.7": {
       "result": "pass",
-      "evidence": "nadia_r (existing roster member of the space) posted 'Foldable phone hinge wear after 5000 folds' and replied after the role rule switched the space to Private -> both published."
+      "evidence": "Roster member bob (id 10) posted a new topic 'Which meeting-free morning ritual would you protect?' after the rules were added -> redirected to the topic page."
     },
     "c-gating-rule-never-locks-out.8": {
       "result": "pass",
-      "evidence": "Access Rules tab: empty state reads 'Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.'; the (collapsed by default) 'How access rules work' panel opens with 'A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy.'",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-lockout-intro.png"
+      "evidence": "Access Rules tab 'How access rules work' panel reads: 'A rule lets more people in to this space: ... Who else gets in is set by the space's visibility and join policy.' The empty state also says 'Only this space's visibility and join policy decide who gets in. Add a rule to let more people in...'."
     },
     "c-gating-rule-never-locks-out.9": {
       "result": "pass",
-      "evidence": "nadia_r (subscriber) POST /spaces/341/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; no rule created."
+      "evidence": "walkrule2 (subscriber) POST /spaces/15/access-rules (valid nonce) -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; DB shows no new rule."
     },
     "c-gating-rule-never-locks-out.10": {
       "result": "pass",
-      "evidence": "test_editor GET and POST /spaces/20/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; wp-admin ...&space_id=20&tab=access as test_editor -> HTTP 403 page with that sentence and a 'Back to Help Desk' link, no builder.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-lockout-spaceadmin.png"
+      "evidence": "test_editor GET and POST /spaces/20/access-rules -> both 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'. wp-admin Access Rules tab URL for Help Desk shows that sentence and a 'Back to Help Desk' link (http://localhost:8911/community/s/help-desk/), no builder (w12/c1-editor-access.png)."
     },
     "c-gating-rule-never-locks-out.11": {
       "result": "pass",
-      "evidence": "admin Access Rules tab at 390px (Chromium viewport): scrollWidth 390, rule type select 245x42, grants select 124x42 stacked, Add Rule button 94x40.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-lockout-390.png"
+      "evidence": "Admin at 390x844: form stacks (type 245x42 at y278, grants y328, Add Rule 94x40 at y378), no horizontal overflow (scrollWidth 390). w12/c1-390.png"
     },
     "c-gating-rule-never-locks-out.12": {
       "result": "pass",
-      "evidence": "adding the WP Role rule to the public open-join space: toast names the Private switch and 'its join policy is now Requires Approval'; the General tab note reads 'This space has an access rule, so it is Private and its join policy is Requires Approval. A rule cannot gate a public space.' (Open -> Approval)",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-lockout-general.png"
+      "evidence": "Role rule on public open-join space 15: toast says 'its join policy is now Requires Approval' and General tab note reads 'This space has an access rule, so it is Private and its join policy is Requires Approval.'; DB join_policy open -> approval."
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "c-gating-rule-never-locks-out.2",
-      "now": "the Add form's Grants defaults to Participate: toast 'Rule added: Logged In can read, post, reply, vote and report. They are recorded as Member.' (Read gives 'can read and report posts and replies ... Viewer')"
-    }
-  ]
+  "proposed_checks": []
 }

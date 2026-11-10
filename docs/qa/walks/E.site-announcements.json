@@ -1,84 +1,86 @@
 {
   "journey": "E.site-announcements",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-10T06:17:47Z",
-  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
+  "free": "e0208e24",
+  "pro": "44fcc6e",
+  "walked_at": "2026-11-10T12:38:39Z",
+  "walker": "release 2.0.7 combo walk w12 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, all extensions)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (Reign toggle)"
     ],
-    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
-    "locale": "en_US"
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US, ar"
   },
   "checks": {
     "e-site-announcements.1": {
       "result": "pass",
-      "evidence": "Browser as admin on 'Scheduled maintenance on Saturday: what to expect' (Announcements space): menu shows 'Pin to space' and 'Pin to community'; clicking 'Pin to community' flips the label to 'Unpin from community' without a reload (no separate toast was captured). REST afterwards listed it as pinned."
+      "evidence": "Admin on 'Scheduled maintenance on Saturday: what to expect' (Announcements space): More options > 'Pin to community' -> POST site-announcements 200 {pinned:true}, the menu now reads 'Unpin from community' and the page did not reload; a toast was not captured in my screenshot (flipped label is the success state I saw). w12/e-pin-toast.png"
     },
     "e-site-announcements.2": {
       "result": "pass",
-      "evidence": "With topic 250 pinned: guest page source of General Discussion, Help Desk, Feature Requests and Amsterdam Chapter each contain an 'Announcement' pill and the title 'Scheduled maintenance on Saturday: what to expect' (checked as guest; bob-specific view not repeated)."
+      "evidence": "bob on General Discussion, Help Desk and Feature Requests: the announcement is first, in a 'Community announcements' strip, with an ANNOUNCEMENT pill (text-transform uppercase of 'Announcement'). The pill carries aria-label 'Pinned site-wide by an administrator' (no title attribute, so no hover tooltip). w12/e-bob-gd.png"
     },
     "e-site-announcements.3": {
       "result": "pass",
-      "evidence": "Guest also sees it on public listings; Customer Advisory Board listing (private, guest) does not contain it."
+      "evidence": "Guest: pill and 'Community announcements' strip on General Discussion and Help Desk. With a topic from private Customer Advisory Board (240) and hidden Moderators' Room (241) also pinned, the guest strip showed only the public announcement (w12/e-guest-private.png)."
     },
     "e-site-announcements.4": {
       "result": "pass",
-      "evidence": "After DELETE /site-announcements/250 the General Discussion listing no longer contains the title immediately (no stale cache); the topic remains in Announcements."
-    },
-    "e-site-announcements.6": {
-      "result": "pass",
-      "evidence": "Pinning a 6th topic after five (250, 9, 10, 11, 12) -> 400 jetonomy_pin_limit 'You can only pin 5 announcements at a time. Unpin one first.'; all unpinned afterwards (count 0)."
-    },
-    "e-site-announcements.7": {
-      "result": "pass",
-      "evidence": "test_moderator POST /site-announcements/9 and bob POST -> 403 jetonomy_forbidden each."
-    },
-    "e-site-announcements.8": {
-      "result": "pass",
-      "evidence": "Announcements pinned from Customer Advisory Board (3262) and Moderators' Room (5348): bob (not a member) GET /announcements/active -> only the public ones (250, 5353); priya (member of Customer Advisory Board only) -> 250, 5353, 3262 (not 5348); admin -> all four. Unpinned afterwards."
+      "evidence": "Admin More options > 'Unpin from community' (DELETE 200, menu reverts to 'Pin to community'); immediately after, bob saw 0 announcement pills on General Discussion, Help Desk and Feature Requests, and the topic still loads (200) and lists in the Announcements space."
     },
     "e-site-announcements.5": {
       "result": "pass",
-      "evidence": "Two topics pinned to General Discussion only (5353, 5354): bob's listing = announcement first, then the two per-space pins, then the rest. Then 5353 also pinned to community: bob sees two announcements at the top (250 and 5353) and the per-space pin 5354 stays in the pinned zone in its order; the topic that is both pinned in its space and announced appears once (1 link). Pins removed afterwards."
+      "evidence": "With 15900 (General Discussion) and 250 pinned in their own spaces: General Discussion lists announcement first, then 'Pinned' topic 15900 in its normal place, no duplicates; the announcement that is also pinned in its own space (Announcements, a status-feed space) shows once with Pinned + Announcement labels. Sticky flags restored."
+    },
+    "e-site-announcements.6": {
+      "result": "pass",
+      "evidence": "Limit: pinning a 6th returned 400 jetonomy_pin_limit 'You can only pin 5 announcements at a time. Unpin one first.' and the UI toast shows the same text (w12/e-limit-ui.png). Trashed (15875) and nonexistent (99999999) posts returned 404 jetonomy_invalid_post with 'Topic not found or not published.', not the runbook's 'Post not found or not published.'; the code uses Terminology (topic), so this is an out-of-date check line, not a product bug. | Line literal updated to the product wording (Terminology: Topic); behaviour as observed: 400 jetonomy_pin_limit with the limit message, 404 \"Topic not found or not published.\" for a trashed or missing post."
+    },
+    "e-site-announcements.7": {
+      "result": "pass",
+      "evidence": "test_moderator: POST /jetonomy-pro/v1/site-announcements/403, DELETE .../250 and GET /site-announcements all 403 jetonomy_forbidden; bob: the same three calls all 403."
+    },
+    "e-site-announcements.8": {
+      "result": "pass",
+      "evidence": "bob (not on the roster) GET /jetonomy/v1/announcements/active listed only topic 250 while topics 240 (Customer Advisory Board, private) and 241 (Moderators' Room, hidden) were pinned. priya (member of space 42) listed 250 and 240 and saw it in her General Discussion strip; 241 (hidden, she is not a member) was never listed."
     },
     "e-site-announcements.9": {
       "result": "pass",
-      "evidence": "bob blocked maya (POST /users/me/blocks, author of announcement 250): REST active list and bob's General Discussion listing no longer contain 'Scheduled maintenance on Saturday', while admin-authored announcement 5353 still shows. Block removed afterwards."
+      "evidence": "bob blocked Maya Okafor (author of the announcement) via POST /users/me/blocks: General Discussion and Help Desk showed 0 announcement pills and /announcements/active returned an empty list; after unblocking it returned. w12/e-blocked.png"
     },
     "e-site-announcements.10": {
       "result": "pass",
-      "evidence": "Announcement cards and pills in the Help Desk listing (6 elements with 'announce' classes) contain no dismiss/close control (checked class and aria-label)."
+      "evidence": "Announcement strip and pill have no dismiss/close/hide control (only the topic's 'Closed' state badge); pass state per the check."
     },
     "e-site-announcements.11": {
       "result": "pass",
-      "evidence": "Pinned the 159-character topic (After moving our 12-year-old photography forum...) and the Arabic topic: at 390px in Help Desk the long title wraps over 7 lines, the ANNOUNCEMENT pill sits above the first line with no overlap, scrollWidth 390 (screenshot sa-390-long.png). Arabic locale (dir rtl) at 390: pill and title both right-aligned (pill 164-298, title 100-298), no overflow (sa-390-rtl.png). Observation: the pill text stays 'Announcement' in Arabic (not translated)."
+      "evidence": "390px: 159-character title wraps inside the card with the pill above it, no horizontal overflow (scrollWidth 390), no overlap (w12/e-390-gd-ann.png). Arabic topic pinned site-wide: on an LTR page the pill is left and the title right-to-left beneath; with the site language set to Arabic (html dir=rtl) the pill sits on the right (start) edge inline with the title and does not overlap (w12/e-rtl.png, e-rtl-390.png). Language restored to en_US."
     },
     "e-site-announcements.12": {
       "result": "pass",
-      "evidence": "Pinned 5317 (Arabic topic) then trashed it (DELETE /posts/5317): at once it left GET /site-announcements, GET /announcements/active (bob) and the General Discussion listing (0 matches); no ghost entry. Restored afterwards."
+      "evidence": "Admin deleted the pinned topic 'W12 delete probe...' from its page (Confirm dialog): it was gone from the pin list (GET /site-announcements) and from General Discussion and Feature Requests strips on the next load, with no ghost entry."
     },
     "e-site-announcements.13": {
       "result": "pass",
-      "evidence": "Lisbon Chapter (0 topics, public): at 390px the announcements (Scheduled maintenance, How do small communities..., After moving...) render above the empty state, and the empty text 'No topics yet. Be the first to start a discussion!' with the New Topic button is still present (screenshot sa-empty-390-light.png)."
+      "evidence": "Seoul Chapter (0 topics) at 390px: the announcement strip renders (5 announcements) above the empty state, 'No topics yet. Be the first to start a discussion!' still present below it (strip bottom y1685, empty text y1849). w12/e-390-seoul-full.png"
     },
     "e-site-announcements.14": {
       "result": "pass",
-      "evidence": "At 390px light and dark (Reign dark toggle) the listing has no overflow (scrollWidth 390); the announcement pill text colour changes with the theme (light rgb(79,87,99) to dark rgb(229,229,229)) and the page background follows the dark token (rgb(35,38,47)); screenshots sa-empty-390-dark.png."
+      "evidence": "Reign dark toggle (body.jt-dark) at 390px: pill uses token colours (text rgb 193,217,245 on 66,75,90, contrast 6.1:1), card and listing layout hold, scrollWidth 390. Theme returned to light. w12/e-dark-390.png"
     },
     "e-site-announcements.15": {
       "result": "pass",
-      "evidence": "With ids [250,5353,247,5317] pinned, DELETE (trash) /posts/5317: it dropped out of GET /site-announcements and /announcements/active at once; its pin slot was free: POST /site-announcements/5313 -> pinned, ids [250,5353,247,5313]. Cleaned up."
+      "evidence": "Admin REST DELETE /posts/17952 on a pinned topic: GET /site-announcements and GET /announcements/active no longer list it (pins 250,17950,15894), and two more pins (9, 5409) were then accepted up to the limit of 5."
     }
   },
   "proposed_checks": []

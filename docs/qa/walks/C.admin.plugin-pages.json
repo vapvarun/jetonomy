@@ -1,11 +1,11 @@
 {
   "journey": "C.admin.plugin-pages",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T21:31:19.673251Z",
-  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
+  "free": "af10b788",
+  "pro": "69d28a8",
+  "walked_at": "2026-11-10T12:33:13Z",
+  "walker": "release 2.0.7 combo walk w12 (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -15,7 +15,8 @@
       390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (Midnight admin scheme)"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
@@ -23,131 +24,112 @@
   "checks": {
     "c-admin-plugin-pages.1": {
       "result": "pass",
-      "evidence": "admin opened all 18 Jetonomy/Pro admin pages (Dashboard, Categories, Tags, Spaces, Content, Moderation, Activity Log, Revisions, Users, Import, Settings, Extensions, Community Media, Analytics, Badges, Custom Fields, Polls, Conversations): all HTTP 200, no Notice/Warning/Fatal text, no 4xx/5xx sub-requests, no page JS errors; debug.log gained no jetonomy lines.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/admin-conversations.png"
-    },
-    "c-admin-plugin-pages.3": {
-      "result": "pass",
-      "evidence": "Analytics ('Community Analytics'), Badges, Custom Fields ('Custom Field Builder'), Polls and Conversations pages all render without notices; Conversations tab title is 'Conversations \u2039 Northwind Makers Community'."
-    },
-    "c-admin-plugin-pages.13": {
-      "result": "pass",
-      "evidence": "test_editor opening ?page=jetonomy, jetonomy-spaces, jetonomy-users, jetonomy-extensions -> 'Sorry, you are not allowed to access this page.'; Jetonomy menu absent from the sidebar."
-    },
-    "c-admin-plugin-pages.14": {
-      "result": "pass",
-      "evidence": "bob opening ?page=jetonomy (and spaces/users/extensions) -> 'Sorry, you are not allowed to access this page.'; no Jetonomy menu."
-    },
-    "c-admin-plugin-pages.18": {
-      "result": "pass",
-      "evidence": "Settings > Permissions rows read 'Create topics', 'Create replies', 'Edit own topics and replies', 'Delete own topics and replies'; one residual 'post(s)' word on the tab."
+      "evidence": "Admin opened Dashboard, Categories, Tags, Spaces, Content, Moderation, Activity Log, Revisions, Users, Import, Settings, Extensions, Community Media: each rendered with an h1, no Notice/Warning/Fatal text, no failed request or console error. debug.log delta over the journey: no jetonomy/jetonomy-pro entries (only PMPro textdomain notices from the PMPro plugin I activated temporarily for J2). Screens w12/c3-page-*.png"
     },
     "c-admin-plugin-pages.2": {
       "result": "pass",
-      "evidence": "Admin walked all 16 Settings tabs (general, permissions, email, appearance, seo, antispam, integrations, license, ai, attachments, email-digest, reactions, reply-by-email, web-push, webhooks, branding), the Moderation tabs (posts, replies, flags, banned, auto-rules) and the Content, Categories, Spaces, Tags, Activity, Revisions, Users, Import, Extensions, Analytics, Badges, Custom Fields, Polls and Conversations screens: every one HTTP 200, no error notice, no page error and no failed request (>=400) in the network log. Content has no tabs, only sortable columns."
+      "evidence": "Settings: all 16 tabs (General, Permissions, Email, Appearance, SEO, Anti-Spam, Integrations, License, AI Integration, Attachments, Email Digest, Reactions, Reply by Email, Web Push, Webhooks, Branding) loaded with content and no error toast / failed request; Moderation: Pending Topics, Pending Replies, Flags, Banned Users, Auto-Rules all loaded. Content has no tabs (only space/status filters, search, sortable headers), all of which loaded. Tabs were opened by following each tab link (navigation), not by in-page JS."
     },
-    "c-admin-plugin-pages.24": {
+    "c-admin-plugin-pages.3": {
       "result": "pass",
-      "evidence": "tab=bogus-tab, tab=webhooks with the Webhooks extension removed, and tab=free-vs-pro with Pro active each show 'This settings tab is not available. It may belong to an extension that is turned off. Go to General settings' with a link to General; tab=license with Pro deactivated shows the same (Pro reactivated, 17 extensions); every real sidebar tab shows no such notice."
-    },
-    "c-admin-plugin-pages.6": {
-      "result": "pass",
-      "evidence": "Settings > Email lists 'Reaction on your topic', 'Your report was reviewed', 'Space join request', 'Your join request was answered' and 'Confirm your email (new accounts)' (20 templates); the New topic subject saved earlier is still there after reload."
+      "evidence": "Pro pages Analytics, Badges, Custom Fields, Polls, Conversations (Private Messaging) and Settings > Branding (White Label) rendered with the same admin layout, no notices."
     },
     "c-admin-plugin-pages.4": {
       "result": "pass",
-      "evidence": "Dashboard 'Review flags ->' links to admin.php?page=jetonomy-moderation&tab=flags and opens the 'Flags (5)' tab."
+      "evidence": "Dashboard 'Review flags ->' link opened admin.php?page=jetonomy-moderation&tab=flags with 'Flags (2)' active. w12/c3-review-flags.png"
     },
     "c-admin-plugin-pages.5": {
       "result": "pass",
-      "evidence": "Settings sidebar: all 16 rows (General, Permissions, Email, Appearance, SEO, Anti-Spam, Integrations, License, then AI Integration, Attachments, Email Digest, Reactions, Reply by Email, Web Push, Webhooks, Branding) carry an icon; labels say Topic/Reply (General > Terminology), none says 'posts' (admin-settings-sidebar.png)."
+      "evidence": "Settings sidebar: all 16 rows carry an icon; labels use topics/replies (no 'posts' label); Permissions capability labels read 'Create topics', 'Create replies', 'Edit own topics and replies' etc."
+    },
+    "c-admin-plugin-pages.6": {
+      "result": "pass",
+      "evidence": "Settings > Email lists 'Reaction on your topic', 'Your report was reviewed', 'Space join request', 'Your join request was answered' and 'Confirm your email (new accounts)' templates. Saved a subject for each, got 'Settings saved.', reloaded and all five subjects were still there. Option restored afterwards."
     },
     "c-admin-plugin-pages.7": {
       "result": "pass",
-      "evidence": "Activity Log filtered to 'Reputation changed': rows read 'Gained 10 reputation points - Per-space custom accent color - Their topic was upvoted', 'Lost 5 reputation points ... Their reply was upvoted, then undone' with titles; the retention note 'Entries older than 90 days are deleted automatically. Change how long entries are kept' links to its own Activity Log section in Settings > General."
+      "evidence": "Activity Log rows read 'Gained 2 reputation points', 'Gained 1 reputation point', 'Gained 10 reputation points', 'Lost 10 reputation points' with plain reasons (They posted a new topic, Their topic was upvoted, They earned a badge, Badge, then undone) and object titles; intro links 'Change how long entries are kept' to Settings > General #jt-activity-log-settings, a separate ACTIVITY LOG card. w12/c3-activity.png, c3-retention.png"
     },
     "c-admin-plugin-pages.8": {
       "result": "pass",
-      "evidence": "390 mobile emulation, Permissions: the role matrix lives in .jt-matrix-scroll (scrollWidth 576 vs 366); the first (capability) column is position:sticky left:0 and stays at x=11 after scrolling 300px; the trust level name inputs are 44px high with border like the other inputs; the page itself does not scroll sideways."
+      "evidence": "390px, Permissions: .jt-matrix-scroll scrollWidth 854 vs 366; first column is position:sticky left:0 and stayed at x=11 after scrollLeft 200; trust level name inputs are 44px high with 1px border/2px radius, same as other inputs. w12/c3-perm-390-scrolled.png"
     },
     "c-admin-plugin-pages.9": {
       "result": "pass",
-      "evidence": "An orphaned revision (its topic no longer in the DB) is listed as 'Draft notes on a community handbook outline (deleted)', not a blank row. A normal force delete removes the revisions with the topic, and a REST DELETE only trashes it, so the orphan was made by repointing the revision's object_id (old-data)."
+      "evidence": "Product purges revisions when a topic is permanently deleted (member delete -> trash keeps the title; Delete Permanently removed the revision row too), so no real flow leaves an orphan. Seeded an orphaned revision (object_id 999001, title 'Which backup plugin do you trust for nightly snapshots?') as old data: Revisions lists 'Which backup plugin do you trust for nightly snapshots? (deleted)'. Fixture removed. w12/c3-revisions-deleted.png"
     },
     "c-admin-plugin-pages.10": {
       "result": "pass",
-      "evidence": "With Anonymous posting on, bob's anonymous topic 'Anonymous poll idea...': admin Content list author 'Anonymous', Activity Log rows 'Anonymous - Started a topic / Replied / Gained reputation' and Revisions 'Anonymous'; the row HTML contains no 'bob'."
+      "evidence": "Anonymous topic 'Is it normal for my first plugin review to take three weeks?': Content list Author column 'Anonymous', Revisions 'Last edited by Anonymous', Activity Log shows 'Anonymous' as actor on anonymous-content rows; the real login never appears."
     },
     "c-admin-plugin-pages.11": {
       "result": "pass",
-      "evidence": "Settings > Branding > Community name 'Harbor Community': the Jetonomy admin menu label and the Dashboard and Settings headings read 'Harbor Community ...' (Spaces keeps its own heading); clearing it restores 'Jetonomy'."
+      "evidence": "Settings > Branding, Brand Name 'Harbor Community' saved ('Branding settings saved.'): menu label, Dashboard and Settings headings ('Harbor Community Dashboard', 'Harbor Community Settings') and footer say Harbor Community. Cleared and saved: back to 'Jetonomy'. Spaces h1 and Moderation h1 had no brand word to replace. w12/c3-brand-harbor.png"
     },
     "c-admin-plugin-pages.12": {
       "result": "pass",
-      "evidence": "Setup wizard (admin.php?page=jetonomy-setup, steps Basics / First Space / Done): the space type cards are Forum, Q&A, Ideas, Feed; the word Social appears nowhere."
+      "evidence": "Setup wizard (admin.php?page=jetonomy-setup) Default Community Type lists Forum, Q&A, Ideas, Feed; no 'Social'. w12/c3-wizard.png"
+    },
+    "c-admin-plugin-pages.13": {
+      "result": "pass",
+      "evidence": "test_editor opening wp-admin Spaces, Users and Extensions: each 403 'Sorry, you are not allowed to access this page.'; no Jetonomy link in the admin menu on those screens."
+    },
+    "c-admin-plugin-pages.14": {
+      "result": "pass",
+      "evidence": "bob opening /wp-admin/admin.php?page=jetonomy: 403 'Sorry, you are not allowed to access this page.'"
     },
     "c-admin-plugin-pages.15": {
       "result": "pass",
-      "evidence": "Topics grown to 2,029 (seed-scale plus 625 more): Content list shows '1-20 of 2,029', pager to page 102, HTTP load 0.3 s, ordering by Date works (asc, aria-sort ascending, oldest first, 0.16 s)."
+      "evidence": "Seeded 1,700 fixture topics (2,091 published): Content list shows '1-20 of 2,091', 20 rows, loads in about 130-160 ms, page 5 and sort by Date ascending and Title work with the active sort arrow. Fixtures deleted afterwards (posts back to 469). w12/c3-content-many.png"
     },
     "c-admin-plugin-pages.16": {
       "result": "pass",
-      "evidence": "Admin colour scheme set to Midnight (restored to Modern): WordPress only darkens the menu and bar, so the page and cards stay light; lowest text contrast across 80 text nodes on the Overview is 4.85:1 and the cards are the normal white. No Jetonomy-specific dark admin mode exists to test (admin-overview-midnight.png)."
+      "evidence": "Overview with Midnight admin colour scheme plus prefers-color-scheme dark emulation: WordPress only darkens menu and bar, cards stay normal white on the light canvas, text readable (one false low reading was a code chip over a translucent background); there is no Jetonomy-specific dark admin mode. Same reading as the prior walk. Admin colour restored to modern. w12/c3-overview-dark.png"
     },
     "c-admin-plugin-pages.17": {
       "result": "pass",
-      "evidence": "Settings > General: edited Community title, took the context offline and pressed Save: the browser reported net::ERR_INTERNET_DISCONNECTED (a plain form post), Back returned to the form with the typed value; online again, Save -> 'Settings saved.' and the value was stored. Value restored."
+      "evidence": "Settings > General: edited a field, took the context offline, Save -> chrome-error ERR_INTERNET_DISCONNECTED; Back returned with the typed value kept; online again, Save -> 'Settings saved.' with the new value stored. (I had typed into the first text field, Base slug, which was never submitted; I reset it and used Community title for the saved edit.) Settings option restored to its original value."
+    },
+    "c-admin-plugin-pages.18": {
+      "result": "pass",
+      "evidence": "Settings > Permissions labels: Create topics, Create replies, Edit own topics and replies, Delete own topics and replies, Edit others' topics and replies, Move topics, Close topics, Pin topics; no 'posts' capability label."
     },
     "c-admin-plugin-pages.19": {
       "result": "pass",
-      "evidence": "With WPMediaVerse active, admin.php?page=jetonomy-pro-conversations shows the dormant notice ('Private Messaging is dormant on this site. WPMediaVerse is active, and its messaging engine handles every direct message. Jetonomy Pro steps aside ...') and the browser tab title is 'Conversations \u2039 Northwind Makers Community \u2014 WordPress' (not blank). (MediaVerse's own setup wizard redirected the first load; skipped it.) Screenshot mv-conversations-admin.png."
+      "evidence": "With WPMediaVerse activated temporarily, admin.php?page=jetonomy-pro-conversations shows 'Private Messaging is dormant on this site. WPMediaVerse is active...' and the tab title is 'Conversations ‹ Northwind Makers Community — WordPress'. WPMediaVerse deactivated afterwards. w12/c3-conversations-mv.png"
     },
     "c-admin-plugin-pages.20": {
       "result": "pass",
-      "evidence": "Activity Log filtered to Anonymous Author Revealed: Details reads 'Real author: <name>' with the name linked to the profile (Bob Martinez -> /community/u/bob/; Priscilla Anon -> /community/u/walk_anon/ when created); after deleting the member's account the same row reads 'Real author: Deleted member' with no link. Screenshot ap-activity-reveal.png."
+      "evidence": "Activity Log filtered to Anonymous Author Revealed: Details 'Real author: Bob Martinez' linked to /community/u/bob/ (two rows) and 'Real author: Deleted member' with no link (third row). w12/c3-reveal.png"
     },
     "c-admin-plugin-pages.21": {
       "result": "pass",
-      "evidence": "Spaces list with 74 spaces: a 'Search spaces...' box (searching Help returns Help Desk), sortable Title, Members and Topics headers (active sort shown with aria-sort), 20 per page over 4 pages. The note 'currently no search, no sort' in the check line is out of date."
+      "evidence": "Spaces list with 51 spaces: 'Search spaces...' box, sortable Title, Members and Topics headers, 20 per page ('1-20 of 51'). w12/c3-spaces-list.png"
     },
     "c-admin-plugin-pages.22": {
       "result": "pass",
-      "evidence": "Content headers Title, Replies, Views and Date sort and show the active column (Date asc sorted, aria-sort ascending); Spaces headers Title, Members, Topics sort the same way (the Spaces table has no date or replies column)."
+      "evidence": "Clicked sortable headers: Spaces Title/Members/Topics and Content Title/Replies/Views/Date each re-sorted (URL orderby set, aria-sort ascending on the clicked column)."
     },
     "c-admin-plugin-pages.23": {
       "result": "pass",
-      "evidence": "With anonymous topic 5313 revealed by admin (button 'Reveal the anonymous author', shows 'Revealed: Priscilla Anon' to admin only), as bob: topic page, REST /posts/5313 and /spaces/15/posts (author_id 0), /posts/5313/replies, REST search and the notification list never show the real author and the author's profile does not list the topic. The reveal appears on the admin Activity Log and in its CSV export (metadata {\"real_author\":2164}); the export URL as bob returns 403."
+      "evidence": "Anonymous topic 5420 and reply 3963 both have a real_author reveal row. As subscriber walkrule2: topic page (no real name or /u/bob link), REST /posts/5420 and /spaces/20/posts (author_id 0, 'Anonymous', no real_author anywhere), /posts/5420/replies, /replies/3963, REST search, /notifications and the notifications page, and bob's profile (does not list the topic) show nothing. As admin the Activity Log CSV export contains real_author {10}; bob requesting the export URL gets 403."
+    },
+    "c-admin-plugin-pages.24": {
+      "result": "pass",
+      "evidence": "Unknown slug 'zzz-unknown', 'reactions' with the Reactions extension turned off, 'license' with Jetonomy Pro deactivated, and 'free-vs-pro' with Pro active each show 'This settings tab is not available. It may belong to an extension that is turned off. Go to General settings' (link to the General tab); general, permissions, branding and the other sidebar tabs show no such notice. Extension option and Pro plugin restored (17/17). w12/c3-unknown-tab.png"
     },
     "c-admin-plugin-pages.25": {
       "result": "pass",
-      "evidence": "Created role Walk Member (read only). Permissions column first showed Subscriber-like boxes; unticked everything and saved; the button 'Give Walk Member members the same access as the Subscriber role' ticked exactly Subscriber's 9 boxes, saved; after one box was changed and saved the member (walkrole) still got New Topic, POST /spaces/15/posts 201, POST reply 201 and joined an open space (201 joined). I unticked Upload media rather than ticking another box."
+      "evidence": "Custom role 'Walk Role Two' (has read): untick every box and save -> warning 'Members with the Walk Role Two role cannot read or post in any space, because nothing is ticked for this role.' with button 'Give Walk Role Two members the same access as the Subscriber role'; clicking it ticked Subscriber's boxes (Read, Create topics, Create replies, Edit own, Delete own, Vote, Report, Join, Upload media). Ticked Report content and saved; the member then joined view (Join Space and + New Topic shown), posted a topic and replied (201)."
     },
     "c-admin-plugin-pages.26": {
       "result": "pass",
-      "evidence": "With terms/privacy/support/email logo/share image set to '/terms', '/privacy-policy', '/support', '/logo.png', '/share.png': GET /app/config returns '' for terms_url, privacy_url, support_url; an email has a text header (no <img>); the community page prints no og:image. With https://example.org/... values: /app/config returns them, the email header gets <img src=https://example.org/logo.png> and og:image content https://example.org/share.png is printed. Settings restored."
+      "evidence": "With terms_url, privacy_url, support_url, logo_url, email_logo_url and seo_default_og_image set to site paths (/terms, /logo.png, /share.png): GET /app/config returns '' for terms, privacy, support, logo; a branded notification (Reply to your topic, Send test) arrived in Mailpit with no <img> and no logo (text header); no og:image meta on /community/ or a space page. With https://example.com/... values /app/config returned them unchanged. Settings restored."
     },
     "c-admin-plugin-pages.27": {
       "result": "pass",
-      "evidence": "Custom role 'Walk NoRead' with no capabilities: its Permissions column ticks only Read the community and every other box is disabled; the note reads 'No WordPress read capability: Walk NoRead. Their members can read but cannot post, vote or join, so only Read can be ticked for them.'; saving untouched keeps it. After adding jetonomy_create_posts / join_spaces / create_replies to the role directly, the grid still shows them unticked and the member sees no composer, no Join button, 'You do not have permission to post in this space.' on /new/, and POST /spaces/15/posts -> 403 jetonomy_forbidden."
+      "evidence": "Custom role 'Walk Role' with no capabilities: Permissions column ticks only Read the community, every other box is disabled, and the note 'No WordPress read capability: Walk Role. Their members can read but cannot post, vote or join, so only Read can be ticked for them.' appears; saving the tab untouched left the role out of jetonomy_role_caps. After storing create_posts/create_replies for it in the option the grid still showed it unticked, and the member saw no New Topic or Join button, the new-topic page said 'You do not have permission to post in this space.' and REST POST /spaces/15/posts returned 403 jetonomy_forbidden. Role, user and option restored."
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "c-admin-plugin-pages.21",
-      "now": "Spaces list has a Search spaces box and sortable Title, Members and Topics columns; 20 per page"
-    },
-    {
-      "check": "c-admin-plugin-pages.22",
-      "now": "Spaces headers that sort are Title, Members and Topics; Content headers Title, Replies, Views, Date"
-    },
-    {
-      "check": "c-admin-plugin-pages.4",
-      "now": "the Dashboard link reads 'Review flags ->'"
-    },
-    {
-      "check": "c-admin-plugin-pages.17",
-      "now": "offline Save: the browser reports net::ERR_INTERNET_DISCONNECTED; Back keeps the typed value"
-    }
-  ]
+  "proposed_checks": []
 }
