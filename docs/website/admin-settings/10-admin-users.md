@@ -30,7 +30,7 @@ The Users page menu opens for anyone whose role holds `jetonomy_manage_settings`
 The toolbar at the top of the Users screen has two controls:
 
 1. **Search box** - searches by username or display name. Type at least two characters; results update on submit.
-2. **Trust Level filter** - dropdown to show only members at a specific trust level (0 = Newcomer through 5 = Moderator). Select "All Trust Levels" to show everyone.
+2. **Trust Level filter** - dropdown to show only members at a specific trust level (0 = Newcomer through 5 = Veteran). Select "All Trust Levels" to show everyone.
 
 The paginator at the bottom shows total user count and lets you move between pages.
 
@@ -57,7 +57,7 @@ Opens the standard WordPress user edit screen for that member. This is the right
 
 ### Change Trust Level
 
-Opens an inline dropdown directly in the table row. Choose any level from 0 (Newcomer) to 5 (Moderator) and click **Save**. The change takes effect immediately and is logged in the activity log.
+Opens an inline dropdown directly in the table row. Choose any level from 0 (Newcomer) to 5 (Veteran) and click **Save**. The change takes effect immediately and is logged in the activity log.
 
 Trust levels 0 through 3 are normally earned automatically by the trust cron job. Use this override to:
 - Promote a long-standing member to Level 4 or 5 (manual tiers)
@@ -116,7 +116,7 @@ While this is on, Jetonomy suppresses the email verification reminder and every 
 | 2 | Regular | Auto - consistent participation |
 | 3 | Trusted | Auto - high engagement |
 | 4 | Leader | Manual only (moderator or admin) |
-| 5 | Moderator | Manual only (admin only) |
+| 5 | Veteran | Manual only (admin only) |
 
 Thresholds for levels 1-3 are configured on **Settings → Permissions → Trust Level Thresholds**.
 

@@ -44,9 +44,9 @@ When they submit with it on, their post shows as **Anonymous** to everyone else.
 
 Only **site administrators** can reveal who is behind an anonymous post or reply - space moderators cannot. On a post or reply, an admin uses **Reveal author**. The real name is shown only for that explicit action, and **every reveal is recorded in the activity log** (who revealed it, which item, and when), so reveals stay accountable.
 
-Use this sparingly - for abuse investigations, not routine browsing. On the community pages, a post stays anonymous even for administrators until they explicitly reveal.
+Use this sparingly - for abuse investigations, not routine browsing. A post stays anonymous for administrators too, on community pages and in wp-admin, until they explicitly reveal.
 
-**Admin screens are different.** The real account name appears without a reveal in the **Author** column of **Jetonomy → Content**, in the pending lists under **Jetonomy → Moderation**, and on **Awaiting approval** cards in the front-end moderation queue. Only the **Reveal author** button is logged, so anyone who can open those screens can see who wrote an anonymous item.
+**Admin screens stay anonymous too.** The **Author** column of **Jetonomy → Content**, the replies screen of a topic, the pending lists under **Jetonomy → Moderation** and the **Awaiting approval** cards in the front-end moderation queue all show "Anonymous". The only way to see who wrote an anonymous item is the **Reveal author** button, and every reveal is written to the activity log.
 
 ## Good to know
 

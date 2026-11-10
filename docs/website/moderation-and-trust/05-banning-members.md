@@ -16,7 +16,7 @@ Approving, marking as spam, and trashing all act on a single piece of content. B
 
 You ban and unban members from the **Jetonomy → Users** page in the WordPress admin. The page lists every community member with their trust level and stats, and gives each row a **Ban / Unban** control (plus a quick **Silence** link). Currently banned members also appear on the **Banned Users** tab of the [Moderation Queue](03-moderation-queue.md), where you can lift each ban.
 
-Banning requires the `jetonomy_moderate` capability - the same capability that gates the moderation queue itself. WordPress administrators and Trust Level 4+ members have it by default.
+Banning requires the `jetonomy_moderate` capability - the same capability that gates the moderation queue itself. WordPress administrators and the Editor role have it by default. A member's trust level never grants it, TL4 and TL5 included.
 
 ## The Ban Dialog
 

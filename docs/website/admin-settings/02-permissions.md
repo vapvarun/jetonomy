@@ -24,7 +24,7 @@ Jetonomy uses six trust levels (0 through 5) to gradually extend posting privile
 | 2 | Regular | Automatic - consistent participation |
 | 3 | Trusted | Automatic - high engagement and reputation |
 | 4 | Leader | Manual - granted by moderator or admin |
-| 5 | Moderator | Manual - granted by admin only |
+| 5 | Veteran | Manual - granted by admin only |
 
 The cron job runs every 12 hours and re-evaluates every member against the configured thresholds. Demotion is also possible - if a member is muted or receives too many spam flags, their trust level can drop.
 
