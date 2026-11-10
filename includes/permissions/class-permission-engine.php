@@ -112,7 +112,8 @@ class Permission_Engine {
 	 * Each higher role includes all actions of the roles below it.
 	 */
 	private const SPACE_ROLE_PERMS = array(
-		'viewer'    => array( 'read' ),
+		// Read rules promise "read and report" (space-edit.php, admin-common.js).
+		'viewer'    => array( 'read', 'flag' ),
 		'member'    => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' ),
 		'moderator' => array(
 			'read',
