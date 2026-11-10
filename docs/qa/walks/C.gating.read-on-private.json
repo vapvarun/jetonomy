@@ -2,8 +2,8 @@
   "journey": "C.gating.read-on-private",
   "free": "8478fd19",
   "pro": "81befa5",
-  "walked_at": "2026-11-10T08:14:05Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "walked_at": "2026-11-10T10:20:08.777797Z",
+  "walker": "release 2.0.7 combo walk (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "Free + Pro, all 17 Pro extensions on",
     "site": "http://localhost:8911",
@@ -65,15 +65,21 @@
       "result": "pass",
       "evidence": "space list at 390px: scrollWidth 390 = clientWidth, long title wraps (194px tall), no horizontal scroll, layout stacks (Chromium viewport resize).",
       "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-390.png"
+    },
+    "c-gating-read-on-private.11": {
+      "result": "pass",
+      "evidence": "Added a WP Role subscriber + Read rule on Partner Program through the admin Access Rules tab (preview 'WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.'). As test_subscriber on topic 239 (Pro Reactions on, a Like from admin seeded): the post shows a static chip 'Like: 1' (class is-static, role img), 0 .jt-reaction-trigger, the chip is not clickable (count stays 1 on a forced click), vote buttons render as jt-act-denied 'Voting is not available to you here.'; POST /posts/239/reactions and POST /replies/1161/reactions -> 403 jetonomy_forbidden, 0 rows stored for the subscriber; POST /posts/239/vote -> 403; GET /posts/239/reactions still 200 with counts. Rule deleted and admin's Like removed afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-gating-11-viewer.png"
     }
   },
-  "proposed_checks": [
-    "- `c-gating-read-on-private.11` @member #rest !refuse +private: a Read-rule viewer POSTs /posts/{id}/reactions in the private space -> 403 like a vote (today it answers 200 'added' and stores the reaction; the Vote controls are hidden but the React trigger still shows)."
-  ],
+  "proposed_checks": [],
   "runbook_fixes": [
     {
       "check": "c-gating-read-on-private.5",
       "now": "vote returns 403 jetonomy_forbidden 'You do not have permission to perform this action.'; only topic and reply say 'You cannot post in this space.'"
     }
+  ],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:20:08.777797Z: re-walked non-pass checks c-gating-read-on-private.11"
   ]
 }

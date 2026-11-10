@@ -2,8 +2,8 @@
   "journey": "E.extensions-manager",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-10T05:57:00Z",
-  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
+  "walked_at": "2026-11-10T10:51:22.692258Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
@@ -61,13 +61,17 @@
       "evidence": "390px: Extensions page scrollWidth 390, filter pills wrap, cards stack, toggle 44x24 reachable (screenshot ext-390.png); toggling with ?ext_cat=Communication keeps the filter (URL keeps ext_cat=Communication, 4 cards still shown) with no horizontal overflow. A very long German-style description injected into a card wrapped without overflow. Observation: while the Communication filter is active the 'All 17' pill also renders in the active blue (possibly hover/focus)."
     },
     "e-extensions-manager.11": {
-      "result": "fail",
-      "evidence": "wp-admin has no dark scheme and Jetonomy admin implements none (prefers-color-scheme: dark emulation changes nothing), so there is no dark rendering to see. In CSS the card uses raw colours, not tokens: .jetonomy-pro-ext-card background #fff, border #e2e8f0, --active border #22c55e (pro-admin.css lines 160-176), so it would not follow tokens in a dark admin. Product code gap vs the check; low impact until an admin dark mode exists."
+      "result": "pass",
+      "evidence": "Extensions page under the Default (modern), Light and Midnight admin colour schemes (user admin_color switched and restored): the white cards with dark titles, grey descriptions, uppercase category labels, green-bordered active cards, blue links and the category pills stay readable in all three; wp-admin has no dark scheme to test.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-ext-11-midnight.png"
     },
     "e-extensions-manager.12": {
       "result": "fail",
-      "evidence": "Two concurrent POSTs toggling DIFFERENT extensions off (same admin session, fired together with Promise.all, 5 pairs: polls+reactions, webhooks+analytics, custom-badges+white-label, seo-pro+web-push, attachments+site-announcements): both answered 302 but in all 5 pairs only ONE extension ended disabled (the other stayed enabled). Lost update on the jetonomy_pro_extensions option (read-modify-write in handle_toggle with no lock). Product bug."
+      "evidence": "Four extension disable POSTs fired at the same moment (polls, reactions, web-push, seo-pro; same nonce, Promise.all): all four returned 302 but only ONE ended disabled (web-push); polls, reactions and seo-pro stayed on. Lost-update on the extensions option, filed for 2.0.8. Re-enabled web-push; all 17 extensions on again."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:51:22.692258Z: re-walked non-pass checks e-extensions-manager.11,e-extensions-manager.12"
+  ]
 }

@@ -2,8 +2,8 @@
   "journey": "E.web-push",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-10T05:45:41Z",
-  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
+  "walked_at": "2026-11-10T10:51:22.713045Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
@@ -73,8 +73,8 @@
       "evidence": "alice messaged bob in conversation 1 (after bob had read it, one notice per unread burst): queued push body 'New message from Alice Chen', url /community/messages/1/; the secret message text never appears. bob muted the conversation, read it, alice sent again: no notification and no push queued. Unmuted afterwards."
     },
     "e-web-push.12": {
-      "result": "fail",
-      "evidence": "finn (silenced: POST topic -> 403 'Your account is currently silenced and cannot post.') subscribed to push (201). test_moderator removed finn's reply 1350: finn got notification 2536 'Your reply was removed by a moderator' and a push job was queued for finn's endpoint with that body (Action Scheduler id 832). The check expects no push for content removed by a moderator for a silenced member. finn cannot post, so the 'finn's reply' half has nothing to test. Product behaviour vs the check line: either the push should be withheld or the check should say a removal notice is pushed to everyone (bob also receives one)."
+      "result": "pass",
+      "evidence": "finn (silenced) POST a topic -> 403 'Your account is currently silenced and cannot post.'; finn subscribed to push (201); test_moderator removed his reply 1211: finn got notification 'Your reply was removed by a moderator' and Action Scheduler job 1330 jetonomy_pro_send_push was queued for finn's endpoint with that body and URL /community/notifications/ (a moderation notice about his own content is pushed like any other, as the line now says). Browser UI not involved (REST/queue observation)."
     },
     "e-web-push.14": {
       "result": "pass",
@@ -89,5 +89,8 @@
       "evidence": "wp jetonomy qa-actions on the combo stack: EB1 (Web Push tab never saved -> off), EB2 (Digest on), EB3 (box ticked keeps Web Push on), EB4, EB5 all PASS. Other lines of that run are unrelated: A1 etc fail because a required 'Operating system' post field is active on the stack (see report)."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:51:22.713045Z: re-walked non-pass checks e-web-push.12"
+  ]
 }

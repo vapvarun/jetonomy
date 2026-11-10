@@ -2,8 +2,8 @@
   "journey": "E.ai",
   "free": "9af111d9",
   "pro": "ba34f60",
-  "walked_at": "2026-11-10T07:56:23.636374Z",
-  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
+  "walked_at": "2026-11-10T10:26:59.066921Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
@@ -61,9 +61,9 @@
       "screenshot": "qa-artifacts/walk-207/combo/ai9.png"
     },
     "e-ai.10": {
-      "result": "untested",
-      "evidence": "The thread summary hook (jetonomy_pro_ai_generate_summary 249) called the stub with the summariser prompt and CLI `ai summarize` returned the stub summary, but no TL;DR card rendered on the 45+-reply Feature Requests thread for bob (selector/rendering not confirmed), so the card, invalidation on reply and the short-thread rule were not proven.",
-      "screenshot": "qa-artifacts/walk-207/combo/ai10.png"
+      "result": "pass",
+      "evidence": "Configured Ollama provider (walkstub URL) + thread summaries in Settings > AI Integration (min words field enforces >=100). As bob on Feature Requests topic 249 (66 replies) the AI Summary card (.jt-ai-summary: heading, AI badge, text, 3 key points) rendered after the queued generation ran; posting a new reply (4155) deleted the cached summary row and the card was gone on reload; short topic 402 shows no card.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-ai-10-card.png"
     },
     "e-ai.11": {
       "result": "pass",
@@ -82,28 +82,29 @@
       "evidence": "guest POST /ai/suggest-reply and GET /ai/usage -> 401; bob GET /ai/usage -> 403."
     },
     "e-ai.15": {
-      "result": "untested",
-      "evidence": "Not walked: provider order / per-feature override with two live providers needs a second provider endpoint; only the Ollama stub was configured."
+      "result": "pass",
+      "evidence": "Only an Ollama-shaped stub can answer, so the second provider was a dead Custom endpoint instead of OpenAI/Anthropic: default Custom with order 'custom, ollama' -> spam-check went to ollama after custom logged error_count 1 (next provider in order used); then per-feature override spam_detection=ollama with default Custom -> the call went straight to ollama and custom's error count stayed at 1 (override honoured). Provider names differ from the line, the routing behaviour is as described."
     },
     "e-ai.16": {
-      "result": "untested",
-      "evidence": "Not walked in this run."
+      "result": "pass",
+      "evidence": "Insiders Beta (private) topic 216 with a cached summary: guest page 404 'Page not available' with no .jt-ai-summary element or summary text; guest REST GET /posts/216 and /replies 404; test_subscriber and bob POST /ai/suggest-reply on private/missing topics -> 404 'Topic not found.' and the stub call log did not grow (4 -> 4)."
     },
     "e-ai.17": {
-      "result": "untested",
-      "evidence": "Not walked in this run (Arabic/long summary and moderation rendering)."
+      "result": "pass",
+      "evidence": "Arabic topic (omar, 180 words, 3 replies) summarised: AI Summary card paragraph and key points dir=auto resolve rtl, wrap inside the card at 1440 (right 961) and 390 (right 358 of 390), no horizontal scroll; the moderation flag 'Flagged by AI review: <Arabic reason>' shows in Moderation > Flags (starts Latin so it reads LTR with the Arabic run embedded). The 159-char General Discussion topic summary card wraps at 390 (right 358, no scroll).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-ai-17-ar-390.png"
     },
     "e-ai.18": {
       "result": "pass",
       "evidence": "wp jetonomy-pro ai status, list-providers, provider-status ollama, test-provider ollama, spam-check --content, summarize --content, batch-review-status all answer in plain output with and without a provider (without: 'Unknown provider id' / 'No AI provider configured' errors); no jetonomy notices in debug.log."
     },
     "e-ai.19": {
-      "result": "untested",
-      "evidence": "Batch reviewer sweep held/spammed items (see 2) but retry-on-failure and budget behaviour of the scheduler were not walked."
+      "result": "pass",
+      "evidence": "Batch reviewer (hook jetonomy_pro_ai_batch_review, reply shape {items:[{key,spam,confidence,action}]}): flagged a past post (watermark reset) with a pending flag; with the stub returning 500 the run published content unchanged and kept the watermark at 15856, after clearing the 500 the next cycle marked post 15857 spam and advanced to 15857; with a  daily budget and  spent no model call was made (calls 11 -> 11), the new post stayed published and the log reads 'Batch review failed, will retry next cycle: Daily AI budget exceeded'."
     },
     "e-ai.20": {
-      "result": "untested",
-      "evidence": "Not walked in this run (usage day bucket vs site timezone)."
+      "result": "pass",
+      "evidence": "Set the site timezone to Pacific/Kiritimati (UTC+14, site date 2026-11-11 while UTC date 2026-11-10): an AI call wrote the usage row under date 2026-11-11, and yesterday's $5 row no longer counted against the budget (batch review ran). Timezone and budget restored afterwards."
     },
     "e-ai.21": {
       "result": "pass",
@@ -116,5 +117,8 @@
       "check": "e-ai.21",
       "now": "the threshold-kept notice is followed by Your other changes were saved. instead of AI settings saved."
     }
+  ],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:26:59.066921Z: re-walked non-pass checks e-ai.10,e-ai.15,e-ai.16,e-ai.17,e-ai.19,e-ai.20"
   ]
 }

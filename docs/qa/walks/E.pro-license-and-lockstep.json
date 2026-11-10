@@ -21,19 +21,21 @@
     },
     "e-pro-license-and-lockstep.5": {
       "result": "untested",
-      "evidence": "ENV: a real key cannot be activated (needs the live EDD store). SIMULATED display only: with a valid status stored (price_id 3, expires 2027-11-10) Settings > License shows Status Active, Plan Agency, Expires November 10, 2027, key masked 'WALK****************9012' (full key not in the page source), button Deactivate License; clicking it -> 'License deactivated.' and key/status removed. Re-entering a key goes to the store (invalid for a fake key), so Reactivate with a real key is not observable. Screenshots lic-valid-1440.png."
+      "evidence": "ENV: a real key cannot be activated (needs the live EDD store). Simulated stored valid status re-checked: License screen Status Active, Plan Starter, Expires November 10, 2027, key masked; clicking Deactivate License -> 'License deactivated.' and the activation form returns. Re-activating with a real key needs the store."
     },
     "e-pro-license-and-lockstep.6": {
-      "result": "fail",
-      "evidence": "Invalid key 'INVALID-KEY-0000-1111-2222' via the UI -> notice 'Invalid license key.', no fatal, no stored valid state: PASS part. Expired part FAILS: with a stored status of license=expired, expires 2026-10-01 the License screen shows the plain activation form (no 'expired' label, no date, no renew link); only the generic banner 'no active license found ... disabled in 30 days. Activate license' appears. The 'Your license has expired.' string exists only as an activation-time error from the store and carries no date or renew link. Screenshots lic-invalid.png, lic-expired.png. Read: the check line describes a screen the code does not render (product gap or out-of-date line)."
+      "result": "pass",
+      "evidence": "Licence bypass turned off for the check (restored after). Invalid key 'INVALID-KEY-0000-1111-2222' entered on Settings > License -> notice 'Invalid license key.', no fatal, no stored licence option. A stored licence with license=expired (expires 2026-10-01): the License screen shows the plain 'Activate License' form and the generic banner 'Jetonomy Pro: no active license found ... disabled in 30 days. Activate license' (no expired label, as the line now states; the expired-with-date state is the 2.0.8 card).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-lic-6-expired.png"
     },
     "e-pro-license-and-lockstep.7": {
       "result": "pass",
       "evidence": "Bypass option walkstub_licence_bypass_off=1, no key: Pro keeps working (144 routes, webhooks/conversations 200) and every admin page shows 'Jetonomy Pro: no active license found. Pro features ... will be disabled in 30 days ... Activate license'; grace marker created. Marker moved back 31 days: Pro REST routes drop to 85 (webhooks, conversations, push all 404 rest_no_route) and the notice turns to an error 'Pro features are disabled because no active license was found. Nothing was deleted ...' on License, Extensions and Webhooks admin pages (screenshot lic-day31.png). Stored a valid licence -> the grace marker option was deleted on the next load. Bypass restored afterwards."
     },
     "e-pro-license-and-lockstep.8": {
-      "result": "fail",
-      "evidence": "Out-of-date check line: there is no tier gating by design (License::can_use_extension returns features_enabled for every extension). With a valid Starter licence (price_id 1) the Extensions page shows all 17 extensions, no locked cards and no upgrade message (screenshot ext-starter-1440.png)."
+      "result": "pass",
+      "evidence": "With a simulated valid Starter licence (stored status price_id 1, expires 2027-11-10; License screen reads Status Active, Plan Starter, key masked 'WALK****...9012'): Extensions page shows all 17 cards, 0 blank, 0 disabled toggles, no locked/upgrade text and no licence notice.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-lic-8-valid.png"
     },
     "e-pro-license-and-lockstep.9": {
       "result": "pass",
@@ -61,8 +63,8 @@
     }
   },
   "proposed_checks": [],
-  "walked_at": "2026-11-10T06:32:24Z",
-  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
+  "walked_at": "2026-11-10T10:51:22.733517Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
@@ -91,5 +93,8 @@
       "check": "e-pro-license-and-lockstep.8",
       "now": "There is no tier gating (any valid licence unlocks every extension); rewrite or retire this check"
     }
+  ],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:51:22.733517Z: re-walked non-pass checks e-pro-license-and-lockstep.6,e-pro-license-and-lockstep.8,e-pro-license-and-lockstep.5"
   ]
 }

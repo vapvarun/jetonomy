@@ -331,7 +331,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.single-post
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/models/class-reply.php, includes/class-attachments.php, includes/class-author.php, includes/class-embeds.php, includes/functions.php, includes/helpers.php, includes/models/class-read-status.php, includes/models/class-model.php, templates/partials/avatar.php, templates/partials/breadcrumb.php, pro:includes/extensions/polls/*.php, pro:includes/extensions/reactions/*.php, pro:assets/js/polls-frontend.js, pro:assets/js/pro-view.js, pro:includes/extensions/seo-pro/*.php
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** fb73aeda pro:e3b90b6
 **What to verify:** a topic renders with its title, body, author, replies, and vote counts; auth-gated actions (reply, vote, subscribe) cleanly redirect a logged-out visitor to login rather than failing silently with 403 (the reply area offers "Log in to reply" as a button). A topic or reply edited more than a minute after posting shows "edited 2 hours ago" to everyone, with the exact time on hover. A nested reply shows "in reply to <name>" linking to its parent. A topic with no replies says "Be the first to reply!" only to a viewer who could reply; a guest, read-only viewer, or anyone on a closed topic (moderators excepted) sees "No replies yet.". Private replies show as a tombstone to people who may not read them. A topic in a private or hidden space returns the same 404 page as a missing topic, so a guessed URL confirms nothing.
 
 **Checks:**
@@ -1675,7 +1675,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.read-on-private
 **Covers:** includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/permissions/class-content-gate.php
-**Verified:** 64212bb5
+**Verified:** 8478fd19 pro:81befa5
 **What to verify:** with a **Read** rule on the private space, the subscriber can read it and cannot post, reply or vote.
 
 **Checks:**
@@ -1920,7 +1920,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.private-messaging
 **Covers:** includes/class-router.php, templates/partials/header.php, pro:includes/extensions/private-messaging/*.php, pro:includes/extensions/private-messaging/views/*.php, pro:assets/js/pro-view.js
-**Verified:** 9af111d9 pro:ba34f60
+**Verified:** fb73aeda pro:e3b90b6
 **What to verify:** a user can start a DM with another user, send a message, receive a reply, see read receipts, and block/mute. A TL0 user in an existing conversation can still reply. Unread count endpoint tracks correctly.
 
 **Checks:**
@@ -1990,7 +1990,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.reactions
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, assets/js/view.js, pro:includes/extensions/reactions/*.php, pro:assets/js/pro-view.js
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** fb73aeda pro:e3b90b6
 **What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; hovering, focusing (Tab) or long-pressing a reaction shows who chose it ("Like: Maya, Bob and 3 others", up to 10 names), Escape closes it, a quick tap still toggles, and the list refreshes after you react. Removing must work on a reaction you just added, *without reloading the page* - that chip is built in JS and is exactly the one a person is most likely to click again to undo.
 
 **Checks:**
@@ -2001,7 +2001,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 - `e-reactions.5` @member #ui: hover (mouse), Tab focus, and long-press (touch) on a Like chip with 13 reactors -> a tooltip reads "Like: <10 names> and 3 others"; with 2 reactors "Like: Maya and Bob"; Escape closes it; a quick tap still toggles instead of opening the tooltip.
 - `e-reactions.6` @member #ui: add a reaction and, without reloading, hover the chip -> the names list already includes you (it refreshed after reacting).
 - `e-reactions.7` @member #rest !refuse: `POST /posts/{id}/reactions` with `emoji: "not-real"` or a disabled reaction -> 400 `jetonomy_invalid_emoji` "Invalid or disabled emoji.".
-- `e-reactions.8` @member #rest !refuse +private: bob `POST /posts/{id}/reactions` and `GET` on a topic in Customer Advisory Board, and on a nonexistent id -> both return the identical 404 `jetonomy_not_found` "Content not found." (never 403) for POST and GET.
+- `e-reactions.8` @member #rest !refuse +private: bob `POST /posts/{id}/reactions` and `GET` on a topic in Customer Advisory Board, and on a nonexistent id -> each answers 404 `jetonomy_not_found` (never 403), identical for the private id and the nonexistent id (POST says "Topic not found.", GET "Content not found.").
 - `e-reactions.9` @guest #rest !refuse: logged-out `POST /posts/{id}/reactions` -> 401; logged-out `GET` of a public topic's reactions -> 200 with counts (`reactors` is included only when `?emoji=` names a reaction that has reactors); of a hidden-space topic -> 404.
 - `e-reactions.10` @member #rest !refuse +deleted: react to a trashed or unpublished reply -> 409 (target not live), no row written; the chip does not appear.
 - `e-reactions.11` @silenced #ui !refuse +silenced: finn reacts to a reply -> refused with the silenced reason and no reaction recorded; also when finn's own post scored -4 is reacted to by others, the count still shows correctly.
@@ -2074,7 +2074,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.white-label
 **Covers:** includes/admin/class-admin.php, pro:includes/extensions/white-label/*.php
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** the White Label extension is BACKEND-ONLY by design (its own class docblock: "Backend-only; it does not touch the community frontend or emails"). It renames the Jetonomy presence in wp-admin only. Set `community_name`, `admin_label`, `admin_icon`, `footer_text`, then confirm each is reflected in wp-admin: the brand name (`jetonomy_brand_name`) replaces "Jetonomy" in admin headings, banners and help text, the sidebar menu label, the plugin name on the Plugins page, and the admin footer (on Jetonomy screens the default footer reads "Thank you for building your community with Jetonomy.", which is the text White Label's brand substitution replaces). Confirm the public `/community/` render is UNCHANGED — there is no brand-color or frontend-logo field, and none is expected. (A frontend brand-color/logo capability would be a new paid feature to scope, not a bug in this extension.)
 
 **Checks:**
@@ -2094,7 +2094,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.advanced-moderation
 **Covers:** includes/moderation/class-moderation-service.php, includes/api/class-base-controller.php, pro:includes/extensions/advanced-moderation/*.php, pro:assets/js/moderation-admin.js
-**Verified:** 64212bb5 pro:4d9b361
+**Verified:** 11e21b47 pro:05e4a11
 **What to verify:** an admin can create a moderation rule (pattern + action), posting content matching the rule triggers the action (hold / spam / auto-delete), and rule stats reflect hits over time.
 
 **Checks:**
@@ -2124,7 +2124,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.ai
 **Covers:** includes/adapters/interface-ai-adapter.php, includes/adapters/class-ollama-ai-adapter.php, pro:includes/extensions/ai/*.php, pro:includes/adapters/class-anthropic-ai-adapter.php, pro:includes/adapters/class-openai-ai-adapter.php, pro:includes/adapters/class-custom-ai-adapter.php
-**Verified:** pending - not walked since its Covers widened on 2026-10-16
+**Verified:** 9af111d9 pro:ba34f60
 **What to verify:** with an AI provider configured, obviously spammy content is correctly flagged; AI usage endpoint reports consistent numbers. With no provider configured, the extension silently no-ops (no fatals, no false positives).
 
 **Checks:**
@@ -2233,7 +2233,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.seo-pro
 **Covers:** includes/seo/class-schema-markup.php, includes/class-template-loader.php, pro:includes/extensions/seo-pro/*.php, pro:assets/js/admin-seo-pro.js
-**Verified:** 64212bb5 pro:4d9b361
+**Verified:** 9af111d9 pro:ba34f60
 **What to verify:** space-level SEO overrides (meta description, og:image) appear in the rendered HTML `<head>` on that space's pages. Defaults apply when overrides are absent.
 
 **Checks:**
@@ -2287,7 +2287,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 ---
 
 **Checks:**
-- `e-webhooks.1` @admin #admin: Add Webhook: URL https://hooks.example.test/jetonomy (a request-catcher), events post.created and reply.created, save -> "Webhook saved."; the list shows the URL, events, active state and a one-time/visible secret for signature checks.
+- `e-webhooks.1` @admin #admin: Add Webhook: URL https://hooks.example.test/jetonomy (a request-catcher), events post.created and reply.created, save -> "Webhook saved."; the list shows the URL, events and active state; the signing secret for signature checks is on the webhook Edit screen.
 - `e-webhooks.2` @admin #admin !refuse: type a malformed URL -> the browser refuses it before sending ("Please enter a URL."); save a well-formed URL whose host does not resolve -> "Enter a valid webhook URL. The webhook was not saved."; with a reachable URL (the walk stub) and no events ticked -> "Choose at least one event. A webhook with no events would never fire, so it was not saved.".
 - `e-webhooks.3` @admin #rest !refuse: `POST /webhooks` with `url: "ftp://x"` -> 400 `jetonomy_webhook_url_invalid` "Invalid webhook URL."; `events: ["bogus"]` -> 400 "At least one valid event is required."; a loopback or private-IP URL is refused at delivery (logged as failure, not fetched).
 - `e-webhooks.4` @admin #rest: `POST /webhooks/{id}/test` -> `success:true, status_code:200` and the receiver gets `{"event":"test","timestamp":...,"data":{"message":...}}` with `X-Jetonomy-Signature: sha256=<hmac of body with the secret>` (no X-Jetonomy-Event header on the test); a receiver returning 500 -> `success:false, status_code:500`; an invalid or refused host -> `success:false, status_code:0, error:"A valid URL was not provided."`.

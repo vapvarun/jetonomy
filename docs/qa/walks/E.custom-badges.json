@@ -2,8 +2,8 @@
   "journey": "E.custom-badges",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-10T04:35:11.143860Z",
-  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
+  "walked_at": "2026-11-10T10:51:22.624813Z",
+  "walker": "release 2.0.7 combo walk wave 4 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free+Pro)",
     "site": "http://localhost:8911",
@@ -60,7 +60,8 @@
     },
     "e-custom-badges.3": {
       "result": "fail",
-      "evidence": "The line is out of step with the code in two ways. The admin list on this stack shows eleven seeded defaults (Contributor, First Post, Helpful Member, Veteran, Conversation Starter, Early Adopter, Helpful Answer, Rising Star, Community Pillar, Top Contributor, Trusted Voice), not nine. And the defaults are NOT re-created whenever the table is empty: with the badges table emptied the page shows the 'No badges yet' empty state (bd-3.png); seed_default_badges() only runs on extension activation. So the 'No badges yet' state is reachable (delete all badges). Tables restored from a backup afterwards."
+      "evidence": "Badges list shows 16 rows (the 11 seeded defaults plus Conversationalist, Founding Member, Monthly Helper, Prolific Poster, Community Champion added by earlier walks). 'Delete every badge' cannot be done: each row only offers Edit/Award/Revoke/Deactivate; Deactivate ('Deactivate this badge?' -> 'Badge deactivated.') and REST DELETE /badges/{id} are a soft delete (is_active=0, row and awards kept), so after deactivating all 16 the list still shows 16 inactive rows with Activate buttons and the 'No badges yet' empty state is never reached from the UI/REST (only an emptied table shows it). Restored from a table backup (16 active, 149 awards).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-badges-3-empty.png"
     },
     "e-custom-badges.8": {
       "result": "pass",
@@ -113,5 +114,8 @@
       "check": "e-custom-badges.17",
       "now": "the Badge Builder saves through REST: offline it stays on the form, keeps the values and shows 'Save failed: the request did not reach the server...'."
     }
+  ],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:51:22.624813Z: re-walked non-pass checks e-custom-badges.3"
   ]
 }

@@ -2,8 +2,8 @@
   "journey": "E.analytics",
   "free": "9af111d9",
   "pro": "ba34f60",
-  "walked_at": "2026-11-10T07:50:33.217825Z",
-  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
+  "walked_at": "2026-11-10T10:38:44.829101Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
@@ -53,13 +53,14 @@
       "evidence": "`wp jetonomy-pro analytics export --format=csv` prints the 31-line CSV (header + 30 days) with no PHP warnings."
     },
     "e-analytics.8": {
-      "result": "untested",
-      "evidence": "Top spaces (10 rows) and top contributors (9 rows) are capped and fit at 1440 and 390 (no page overflow), but Grace is not among the contributors for the 30d range so the long-name wrap was not exercised."
+      "result": "pass",
+      "evidence": "Seeded 85 replies from grace so she ranks 2nd in 30 Days. At 1440 and 390: Top Spaces 10 rows and Top Contributors 9 rows (limit 10, only ranked actives), Grace Oluwaseun Adeyemi-Whitfield wraps to two lines inside her cell (57px row, right edge inside the row), no horizontal scroll (scrollWidth == viewport), tables sit in their cards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-analytics-8-390.png"
     },
     "e-analytics.9": {
-      "result": "untested",
-      "evidence": "The seeded site has no empty period (dashboard offers 7/30/90 only). With the overview response forced to zeros the cards read 0 / 0% (no NaN) and the trend chart shows 'No data for this period.', but the ranked-list widgets come from other responses that were not forced, so 'each widget' was not proven.",
-      "screenshot": "qa-artifacts/walk-207/combo/an9-empty.png"
+      "result": "pass",
+      "evidence": "The dashboard offers 7/30/90 only; fetched the real REST responses for an empty custom range (range=custom&start=2000-01-01&end=2000-01-07: zeros, empty lists) and served them to the page: cards read 0 with a dash for change (no NaN), Activity Trend, Top Spaces and Top Contributors each show 'No data for this period.', Content Health/Moderation read 0/dashes.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-analytics-9-empty.png"
     },
     "e-analytics.10": {
       "result": "pass",
@@ -88,8 +89,9 @@
       "screenshot": "qa-artifacts/walk-207/combo/an15-390.png"
     },
     "e-analytics.16": {
-      "result": "untested",
-      "evidence": "ENV: this wp-admin has no dark colour scheme and prefers-color-scheme emulation does not change it (card background transparent, body #f0f0f0), so dark admin tokens could not be evaluated."
+      "result": "fail",
+      "evidence": "wp-admin has no dark scheme here; with the plugin's dark tokens forced on (html data-theme=dark, body.jt-dark, prefers-color-scheme dark) the Analytics cards, panels and tables stay white: pro-admin.css .jtp-card/.jtp-panel use background:#fff and .jtp-card-value color:#1d2327, labels #646970, chart axis text #646970 - raw hex, not tokens. Readable on a light admin but not token-driven, so a dark admin scheme would get white panels.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-analytics-16-dark.png"
     },
     "e-analytics.17": {
       "result": "pass",
@@ -100,5 +102,8 @@
       "evidence": "site timezone America/Los_Angeles (UTC-8): `analytics export` day rows moved: 2026-11-10 81 topics (UTC) became 2026-11-09 82 (items from 00:00-08:00 UTC count in the previous local day); timezone restored."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:38:44.829101Z: re-walked non-pass checks e-analytics.8,e-analytics.9,e-analytics.16"
+  ]
 }

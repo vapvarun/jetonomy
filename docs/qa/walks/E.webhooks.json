@@ -2,8 +2,8 @@
   "journey": "E.webhooks",
   "free": "9af111d9",
   "pro": "ba34f60",
-  "walked_at": "2026-11-10T07:58:12.814090Z",
-  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
+  "walked_at": "2026-11-10T10:36:27.193898Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
@@ -23,13 +23,14 @@
   },
   "checks": {
     "e-webhooks.1": {
-      "result": "untested",
-      "evidence": "Not completed in the UI: the Add Webhook form (jt_wh_url + jt_wh_events[] checkboxes + Add) was seen but its 'Webhook saved.' notice and the list/secret display were not confirmed in this run; the webhook was created through REST (201, secret returned once in the create response, absent from GET /webhooks)."
+      "result": "pass",
+      "evidence": "Settings > Webhooks > Add Webhook: URL (walk stub http://localhost:8911/walkstub/hook standing in for the request catcher), 8 events ticked, Add Webhook -> notice 'Webhook saved.'; the list shows URL, event names, Active and failures 0; the secret is shown on the webhook's Edit screen (?edit=36), not in the list.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-wh-1.png"
     },
     "e-webhooks.2": {
-      "result": "fail",
-      "evidence": "wp-admin Settings > Webhooks: a malformed URL ('not a url') showed no notice at all in my run (nothing visible), and a well-formed https://hooks.example.test/jetonomy with no events ticked answered 'Enter a valid webhook URL. The webhook was not saved.' instead of 'Choose at least one event...'. Possible cause: .example.test fails the URL validator; main session to confirm with a resolvable host.",
-      "screenshot": "qa-artifacts/walk-207/combo/wh2.png"
+      "result": "pass",
+      "evidence": "malformed 'not a url': the browser blocks the submit with 'Please enter a URL.' (no request sent); https://hooks.example.test/jetonomy -> 'Enter a valid webhook URL. The webhook was not saved.'; the stub URL with no events -> 'Choose at least one event. A webhook with no events would never fire, so it was not saved.'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-wh-2.png"
     },
     "e-webhooks.3": {
       "result": "pass",
@@ -48,16 +49,17 @@
       "evidence": "edit -> post.updated, reply -> reply.created, delete -> post.deleted, one delivery each for one action."
     },
     "e-webhooks.7": {
-      "result": "untested",
-      "evidence": "Not walked in this run (held/spam/draft topic webhooks)."
+      "result": "pass",
+      "evidence": "bob's General Discussion topic containing 'payoutwatch' was held (status pending): 0 deliveries (catcher log and AS queue empty); after Moderation > Pending Topics > Approve exactly one post.created for 15860 arrived with X-Jetonomy-Signature and X-Jetonomy-Event post.created. A second held topic marked Spam in the same queue and a draft topic (status draft) sent nothing.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-wh-7-pending.png"
     },
     "e-webhooks.8": {
       "result": "pass",
       "evidence": "bob's is_private topic and is_private reply fired nothing (delivery log unchanged). Topics inside private/hidden spaces were not recorded."
     },
     "e-webhooks.9": {
-      "result": "untested",
-      "evidence": "Not walked in this run (anonymous topic author_id 0)."
+      "result": "pass",
+      "evidence": "With Allow anonymous ticked on Help Desk (Anonymous tab, restored after), bob's anonymous topic 15863 delivered post.created with author_id 0 (stored author 0 as well)."
     },
     "e-webhooks.10": {
       "result": "pass",
@@ -76,21 +78,32 @@
       "evidence": "bob and test_moderator: GET/POST/PATCH/DELETE /webhooks and /test all 403; guest GET -> 401; the secret appears only in the create response, not in the list."
     },
     "e-webhooks.14": {
-      "result": "untested",
-      "evidence": "space.member_joined / space.member_left deliveries from earlier walks are in the catcher log (payloads space_id/user_id/role); user.registered and user.trust_level_changed were not triggered in this run."
+      "result": "pass",
+      "evidence": "Catcher received: user.registered {id,login,email,registered} for a created account; user.trust_level_changed {user_id 10, old_level 4, new_level 2} (and back 2 -> 4) via POST /admin/users/trust-level; space.member_joined {space_id 41,user_id 10,role member} and space.member_left {space_id 41,user_id 10} for Partner Program. Deliveries are queued through Action Scheduler and land when the runner picks them up. Test account deleted, bob back at level 4 and in the space."
     },
     "e-webhooks.15": {
-      "result": "untested",
-      "evidence": "Not walked in this run (20 webhooks and 5,000 delivery rows)."
+      "result": "fail",
+      "evidence": "Seeded 20 webhooks and 5,023 delivery rows: Settings > Webhooks loads in about 220 ms (deliveries are not read for the list) and Last Triggered shows relative time with the site-timezone time in the title (site tz America/Los_Angeles: 3:30 pm for 23:30 UTC), but the list is NOT paginated: all rows render at once (get_all_webhooks() is an unbounded SELECT, and GET /webhooks returns every row). The line expects pagination. Seeded rows removed and timezone restored.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-wh-15.png"
     },
     "e-webhooks.16": {
-      "result": "untested",
-      "evidence": "Not walked in this run (receiver slower than 15 s)."
+      "result": "pass",
+      "evidence": "A webhook on http://8.8.8.8/slow-receiver (port 80 black-holes): alice's topic POST returned 201 in 0.02 s (dispatch is async); the delivery row for the webhook is status_code 0 with 'cURL error 28: Connection timed out after 10005 milliseconds' and fail_count 1."
     },
     "e-webhooks.17": {
-      "result": "untested",
-      "evidence": "Not walked in this run (390px form/list)."
+      "result": "pass",
+      "evidence": "At 390px the Webhooks tab has no horizontal scroll (scrollWidth 390): the list collapses to URL rows with a toggle (expanded row shows events, status, last triggered, failures, Edit/Send test/Delete, no cell overflows), the Add form's event checkboxes end at x=357 of 390, and the secret on the Edit screen wraps (overflow-wrap anywhere, right edge 354).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-wh-17-secret.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:36:27.193898Z: re-walked non-pass checks e-webhooks.1,e-webhooks.2,e-webhooks.7,e-webhooks.9,e-webhooks.14,e-webhooks.15,e-webhooks.16,e-webhooks.17"
+  ],
+  "runbook_fixes": [
+    {
+      "check": "e-webhooks.1",
+      "now": "the saved webhook shows URL, events and Active in the list; the signing secret is shown on the webhook Edit screen"
+    }
+  ]
 }

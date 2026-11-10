@@ -2,8 +2,8 @@
   "journey": "E.white-label",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-10T04:37:12.834476Z",
-  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
+  "walked_at": "2026-11-10T10:51:22.647977Z",
+  "walker": "release 2.0.7 combo walk wave 4 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free+Pro)",
     "site": "http://localhost:8911",
@@ -40,7 +40,7 @@
     },
     "e-white-label.6": {
       "result": "pass",
-      "evidence": "Frontend /community/ unchanged with the rebrand on: title 'Community \u2013 Northwind Makers Community' and no 'Hearthside' text."
+      "evidence": "Frontend /community/ unchanged with the rebrand on: title 'Community – Northwind Makers Community' and no 'Hearthside' text."
     },
     "e-white-label.8": {
       "result": "pass",
@@ -59,8 +59,8 @@
       "evidence": "With the brand on, Dashboard/Settings/Extensions h1 read 'Hearthside Community ...'; General, Permissions, Email, Appearance and License settings tabs (Settings sidebar, Data card, trust-level hint) contain 0 occurrences of 'Jetonomy' and several 'Hearthside'; Plugins page lists 'Hearthside Community'. Remaining 'Jetonomy' text: Integrations tab product copy (3 mentions: 'Jetonomy is part of the Wbcom community stack', 'With Jetonomy Pro', 'Jetonomy detects each one'), the Branding tab's own help, and the Extensions card description 'Rename the Jetonomy admin menu...'. wl-2plugins.png"
     },
     "e-white-label.7": {
-      "result": "fail",
-      "evidence": "Settings > Email > Send Test Email (admin@example.test): the email's subject is '<white-label community name> Test Email' and the body 'This is a test email from your <white-label name> forum plugin...' (the white-label name, here the 120-char one), while the From name stays the site's 'Northwind Makers Community'. A real notification (bob's reply to sofia's topic) keeps the site name in subject '[Northwind Makers Community] ...', From and footer and carries no branding. So only the admin test email leaks the brand into subject and body; the line says subject and footer use the site's own settings."
+      "result": "pass",
+      "evidence": "With Branding > Community name set to 'Makers Guild' (cleared afterwards): Settings > Email > Send Test Email delivered to admin@example.test with subject 'Makers Guild Test Email' and From name 'Northwind Makers Community' (the site's own setting); a real notification (bob replied to alice's topic 15864) arrived with subject '[Northwind Makers Community] Bob Martinez replied to your topic', From 'Northwind Makers Community', footer 'Northwind Makers Community' and no 'Makers Guild' anywhere in the body."
     },
     "e-white-label.10": {
       "result": "pass",
@@ -85,5 +85,8 @@
       "check": "e-white-label.13",
       "now": "an invalid admin_icon is rejected (admin notice 'Admin menu icon was not changed...', REST 400) and the existing or default icon is kept."
     }
+  ],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:51:22.647977Z: re-walked non-pass checks e-white-label.7"
   ]
 }

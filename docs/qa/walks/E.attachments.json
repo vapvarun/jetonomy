@@ -2,8 +2,8 @@
   "journey": "E.attachments",
   "free": "11e21b47",
   "pro": "05e4a11",
-  "walked_at": "2026-11-10T06:29:11Z",
-  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
+  "walked_at": "2026-11-10T10:51:22.753375Z",
+  "walker": "release 2.0.7 combo walk wave 5 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free + Pro, all extensions)",
     "site": "http://localhost:8911",
@@ -90,8 +90,12 @@
     },
     "e-attachments.18": {
       "result": "fail",
-      "evidence": "There is no Attachments admin list: Settings > Attachments is only the settings form (types, size, max files). No list or search of attachments by post and no remove action exists anywhere in the admin menu (Community Media is a different page). The backend entry point for the jt_attachments data store is missing (admin removal only via the post itself)."
+      "evidence": "Still no Attachments admin list: Settings > Attachments is only the settings form (allowed types, size, max files), no list/search of attachments by post and no remove action in the Jetonomy admin menu, Content screen or REST routes (no /attachments route in the namespace listing). Filed for 2.0.8 (owner exception).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-att-18.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:51:22.753375Z: re-walked non-pass checks e-attachments.18"
+  ]
 }

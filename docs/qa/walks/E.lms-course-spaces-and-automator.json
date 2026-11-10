@@ -2,8 +2,8 @@
   "journey": "E.lms-course-spaces-and-automator",
   "free": "9af111d9",
   "pro": "ba34f60",
-  "walked_at": "2026-11-10T07:59:11.115335Z",
-  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
+  "walked_at": "2026-11-10T10:46:08.147460Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
@@ -23,53 +23,68 @@
   },
   "checks": {
     "e-lms-course-spaces-and-automator.1": {
-      "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "result": "pass",
+      "evidence": "LearnDash 5.1.4 activated; Settings > Integrations > Auto-create spaces for courses: ticked LearnDash, Default Space Type Forum, saved ('Settings saved.'). Published course 'Introduction to WordPress Plugin Development' (sfwd-courses 117, created with WP-CLI, not the course editor) -> exactly one new space 349 with that title, type forum, visibility private, join policy invite, and one access rule membership ld_course_117 (participate/member).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-lms-integrations.png"
     },
     "e-lms-course-spaces-and-automator.2": {
-      "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "result": "pass",
+      "evidence": "Course 117 set to draft, published again, and updated (title/excerpt): still one space with the title created today and one rule for ld_course_117."
     },
     "e-lms-course-spaces-and-automator.3": {
-      "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "result": "pass",
+      "evidence": "alice enrolled via ld_update_course_access: /community/s/introduction-to-wordpress-plugin-development-2/ shows 'You have access through Introduction to WordPress Plugin Development (Course)', Joined, and her topic 'Which hooks should a first plugin start with?'; the space is in her /community directory; the LearnDash course page shows 'Course discussion' (ld-button) which links to the space and lands there.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-lms-3-space.png"
     },
     "e-lms-course-spaces-and-automator.4": {
-      "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "result": "pass",
+      "evidence": "bob (not enrolled): the directory card (Private Forum, Invite only, 1 topic) and the search result show the space; REST /spaces lists it with is_member false; opening it shows only 'Included with Introduction to WordPress Plugin Development (Course). You get access as soon as you join...' with Get/Browse buttons, 0 topic rows and no topic title in the page; GET /spaces/349/posts -> 403. Guest: not in the directory or REST, the page reads 'This space is private. Log in to see it.'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-lms-4-locked.png"
     },
     "e-lms-course-spaces-and-automator.5": {
-      "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "result": "pass",
+      "evidence": "ld_update_course_access(9,117,true) (unenrol): alice GET /spaces/349/posts and POST a topic both 403 at once; re-enrol -> 200 and her earlier topic is still listed (UI shows the space again with 1 topic).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-lms-5-reenrolled.png"
     },
     "e-lms-course-spaces-and-automator.6": {
-      "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "result": "pass",
+      "evidence": "Course set to draft: space 349 stays active/private, the rule is kept and the space's Access Rules tab flags it 'Course no longer available - It was deleted, trashed or unpublished, so nobody can get it and this rule lets nobody in. Publish it again or delete this rule.'; course trashed (LearnDash courses cannot use wp post delete without --force): space and rule unchanged; republished -> still one space and one rule.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-lms-6-rule.png"
     },
     "e-lms-course-spaces-and-automator.7": {
-      "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "result": "pass",
+      "evidence": "No bulk 'create spaces for existing courses' action is offered (Integrations tab only has the per-LMS auto-create tick; the per-course Discussion switch is the way for existing courses; no CLI/REST route for it), so the 'if offered' condition does not apply. Per-course enable is safe to repeat: Learnomy course 3 POST /learnomy/course-discussion enabled twice -> same space 350 and a single lrn_course_3 rule."
     },
     "e-lms-course-spaces-and-automator.8": {
-      "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "result": "pass",
+      "evidence": "Learnomy 1.8.0 activated with course 3 owned by admin: test_author POST /learnomy/course-discussion for course 3 -> 403 jetonomy_pro_forbidden_course 'You can only change courses you own.'; admin for course 999 -> 404 'That course could not be found.'; with Learnomy inactive -> 400 jetonomy_pro_learnomy_missing 'Learnomy is not active.'. (test_author also gets the 403 for a missing course id; the not-found text is shown to a caller who may manage courses.)"
     },
     "e-lms-course-spaces-and-automator.9": {
       "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "evidence": "Uncanny Automator 8.0.2 was activated and the recipe builder opened, but building and firing recipes with the Jetonomy actions (add/remove/change role) through the React builder (onboarding tour, per-item pickers) was not completed in the time available; WP-CLI also hit the 128 MB memory limit with LearnDash + Automator + Learnomy all active. The three actions and the trigger are registered by pro Automator_Integration (JETONOMY_ADD_TO_SPACE, _REMOVE_FROM_SPACE, _CHANGE_ROLE, trigger JETONOMY_ROLE_CHANGED) but no recipe run was observed. Needs a walker with time to build the recipes (or REST /uap/v2/recipe/{id}/item/...)."
     },
     "e-lms-course-spaces-and-automator.10": {
       "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "evidence": "Not walked: needs the recipe from check 9 (role-changed trigger) built in the Automator builder; see check 9."
     },
     "e-lms-course-spaces-and-automator.11": {
       "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "evidence": "Not walked: needs Automator recipes with an over-privileged role and a missing space; see check 9."
     },
     "e-lms-course-spaces-and-automator.12": {
       "result": "untested",
-      "evidence": "Not walked in this run: needs LearnDash/Tutor and Uncanny Automator activated, a course created and enrolments (available on the stack, not reached in the time budget)."
+      "evidence": "Course space header with a 90-character title (course 121, space 351) wraps to 5 lines at 390 inside the viewport (no scroll) and is readable in Reign dark (title 12:1); the 'Course discussion' link on the LearnDash course page stays inside 390 (right edge 385) but the LearnDash template does not follow Reign's dark toggle and the link uses LearnDash's button colours. 'Your discussions' list (Learnomy student dashboard widget) was not reached: the dashboard URL redirected to wp-admin and Learnomy's /courses/ routing also breaks LearnDash course URLs while Learnomy is active.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/e-lms-12-space-390.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:46:08.147460Z: re-walked non-pass checks e-lms-course-spaces-and-automator.1,e-lms-course-spaces-and-automator.2,e-lms-course-spaces-and-automator.3,e-lms-course-spaces-and-automator.4,e-lms-course-spaces-and-automator.5,e-lms-course-spaces-and-automator.6,e-lms-course-spaces-and-automator.7,e-lms-course-spaces-and-automator.8,e-lms-course-spaces-and-automator.9,e-lms-course-spaces-and-automator.10,e-lms-course-spaces-and-automator.11,e-lms-course-spaces-and-automator.12"
+  ],
+  "runbook_fixes": [
+    {
+      "check": "e-lms-course-spaces-and-automator.7",
+      "now": "state that no bulk action exists for LearnDash courses; the check applies only if a bulk action is offered"
+    }
+  ]
 }

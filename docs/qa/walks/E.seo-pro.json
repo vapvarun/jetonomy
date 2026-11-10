@@ -2,8 +2,8 @@
   "journey": "E.seo-pro",
   "free": "9af111d9",
   "pro": "ba34f60",
-  "walked_at": "2026-11-10T07:59:11.070987Z",
-  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
+  "walked_at": "2026-11-10T10:29:14.243151Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet) + wave 8 combo (Sonnet)",
   "env": {
     "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
@@ -31,32 +31,32 @@
       "evidence": "guest fetch of /community/s/help-desk/: one <title> ('Help Desk – Get answers from the community | Northwind Makers Community'), one meta description, og:title, og:description, og:image (the override), twitter:card summary_large_image and canonical /community/s/help-desk/; one of each, no empty content=\"\" tags."
     },
     "e-seo-pro.3": {
-      "result": "untested",
-      "evidence": "Topic head follows the space template (title/og:title/description as the space, og:type article, canonical per topic) but article:author, published and modified times were not inspected."
+      "result": "pass",
+      "evidence": "Help Desk SEO tab filled via UI (title 'Help Desk - Get answers from the community | {site_name}', description, og:image); view source of topic 174: <title>/og:title/twitter:title = 'Help Desk - Get answers from the community | Northwind Makers Community' (topic title absent since the template lacks {post_title}), meta description = the space override, og:type article, article:author 'Grace Oluwaseun Adeyemi-Whitfield', published 2026-10-22T14:14:26+00:00 and modified 2026-11-06T14:15:10+00:00, article:section 'Help Desk'; JSON-LD DiscussionForumPosting carries the same author and dates."
     },
     "e-seo-pro.4": {
       "result": "pass",
       "evidence": "General Discussion (no overrides): title 'General Discussion – Northwind Makers Community', description trimmed from the space text, og:title 'General Discussion | Northwind Makers Community', twitter:card summary, no og:image, zero empty content=\"\" tags."
     },
     "e-seo-pro.5": {
-      "result": "untested",
-      "evidence": "Not walked in this run (time)."
+      "result": "pass",
+      "evidence": "Default (no override) Help Desk description is 288 chars: the meta description and og:description are exactly 30 words ending 'what happened...' and one tag each; the 159-char General Discussion topic title prints intact in <title> (en dash entity), og:title and twitter:title."
     },
     "e-seo-pro.6": {
       "result": "pass",
       "evidence": "noindex+nofollow ticked on Help Desk -> head carries <meta name=\"robots\" content=\"noindex, nofollow\">; unticked -> no robots meta. (canonical base override not exercised)"
     },
     "e-seo-pro.7": {
-      "result": "untested",
-      "evidence": "Not walked in this run (time)."
+      "result": "pass",
+      "evidence": "community-sitemap-spaces-1.xml: Help Desk with priority override 0.5 shows <priority>0.5</priority>; General Discussion/Feature Requests at defaults keep 0.7 with age-based daily/weekly changefreq; ticking exclude_sitemap on Feature Requests (plus changefreq weekly) removed the space and all 13 of its topics from the spaces and posts sitemaps; unticked afterwards and both returned."
     },
     "e-seo-pro.8": {
       "result": "pass",
       "evidence": "guest GET of a Customer Advisory Board topic -> 404 'Page not available' page; no topic title, og tags or JSON-LD of the space."
     },
     "e-seo-pro.9": {
-      "result": "untested",
-      "evidence": "Not walked in this run (time)."
+      "result": "pass",
+      "evidence": "Anonymous topics 5313 (General Discussion) and 5414 (Help Desk, stored author_id 10 Bob Martinez): no article:author tag, JSON-LD author {Person, name 'Anonymous'}, the member's name does not appear anywhere in the JSON-LD."
     },
     "e-seo-pro.10": {
       "result": "pass",
@@ -67,25 +67,28 @@
       "evidence": "description 'Say \"hello\" <script>alert(1)</script> to the team' -> head shows 'Say &quot;hello&quot;  to the team' (quotes escaped, script stripped), no live script in <head>."
     },
     "e-seo-pro.12": {
-      "result": "untested",
-      "evidence": "Not walked in this run (time)."
+      "result": "pass",
+      "evidence": "Arabic meta title 'مجموعات التصوير | {site_name}' and description set on General Discussion: the Arabic topic's head has <title>, og:title, meta description and og:description in plain UTF-8 (only &#038;/&#039; entities elsewhere, none doubled). Space settings cleared afterwards."
     },
     "e-seo-pro.13": {
       "result": "pass",
       "evidence": "robots.txt contains Allow: /community/, Allow: /community/s/*/, Disallow: /community/notifications/, /community/mod/, /community/search/?q=*, plus the sitemap line; no Disallow of public spaces."
     },
     "e-seo-pro.14": {
-      "result": "untested",
-      "evidence": "Not walked in this run (time)."
+      "result": "pass",
+      "evidence": "Disabled SEO Pro on the Extensions page with noindex+nofollow set on Help Desk: the space head lost the Pro description, robots 'noindex, nofollow', og:image and the template titles (og:title 'Help Desk', og:type website), topic head still has article:* tags and the free DiscussionForumPosting/BreadcrumbList JSON-LD (2 ld+json blocks on the space). Re-enabled and cleared the space overrides; all 17 extensions on again."
     },
     "e-seo-pro.15": {
       "result": "pass",
       "evidence": "each PATCH to the space SEO (title, noindex, description) was visible in the very next guest page fetch with no manual cache clear."
     },
     "e-seo-pro.16": {
-      "result": "untested",
-      "evidence": "Not walked in this run (time)."
+      "result": "pass",
+      "evidence": "Settings > SEO Default share image set via UI: space Help Desk (no SEO image, cover NULL) and topic 174 (no inline image) both print og:image and twitter:image = that URL; cleared -> no tags; with site_icon set to attachment 47 -> og:image/twitter:image = the icon URL (site_icon restored to 0); topic 15859 whose body holds <img src=\"/wp-content/uploads/2026/11/screenshot.png\"> prints og:image http://localhost:8911/wp-content/uploads/2026/11/screenshot.png (absolute; this stack is http)."
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "walk_notes": [
+    "wave 8 combo walk 2026-11-10T10:29:14.243151Z: re-walked non-pass checks e-seo-pro.3,e-seo-pro.5,e-seo-pro.7,e-seo-pro.9,e-seo-pro.12,e-seo-pro.14,e-seo-pro.16"
+  ]
 }
