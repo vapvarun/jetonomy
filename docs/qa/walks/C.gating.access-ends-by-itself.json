@@ -1,11 +1,11 @@
 {
   "journey": "C.gating.access-ends-by-itself",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T21:21:24.693557Z",
-  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
+  "free": "8478fd19",
+  "pro": "81befa5",
+  "walked_at": "2026-11-10T08:35:08Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "Free + Pro, all 17 Pro extensions on",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -20,64 +20,64 @@
     "locale": "en_US"
   },
   "checks": {
-    "c-gating-access-ends-by-itself.3": {
-      "result": "pass",
-      "evidence": "Immediately after, gate_sub1 POST /posts/3259/replies -> 404 jetonomy_not_found 'Topic not found.' (DB: no new reply); POST /spaces/183/posts -> 403 jetonomy_forbidden 'You cannot post in this space.'"
-    },
     "c-gating-access-ends-by-itself.1": {
       "result": "pass",
-      "evidence": "Admin deleted the Role rule that admitted the subscribers (confirm, then toast 'Access rule deleted.')."
+      "evidence": "Founders Circle with a Participate role rule: admin pressed Delete + Confirm in the Access Rules tab -> toast 'Access rule deleted.' (repeated three times in this journey, same toast).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-ends-space.png"
     },
     "c-gating-access-ends-by-itself.2": {
       "result": "pass",
-      "evidence": "gate_sub1 (admitted only by the Role rule, no roster row) reloaded the space right after -> 'Gate Private Lab is invite-only. You need an invitation to join.' with no topics. Screenshot gt-ended-space.png."
+      "evidence": "ingrid_s (rule-admitted, no roster row) reloaded /community/s/founders-circle/ right after the delete: invite-only gate ('Ask a space admin or a site administrator to invite you.'), no topics, no admin action.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-ends-space.png"
+    },
+    "c-gating-access-ends-by-itself.3": {
+      "result": "pass",
+      "evidence": "ingrid POST /posts/{id}/replies on her own topic and on Tomas's topic in the space -> 404 jetonomy_not_found 'Topic not found.'; no reply stored."
     },
     "c-gating-access-ends-by-itself.4": {
       "result": "pass",
-      "evidence": "Set gate_sub3's PMPro membership to expired with an end date 2 days ago and fired the roster reconcile hook (do_action jetonomy_reconcile_rosters - the hourly job triggered by hand): his tier roster row was removed and /community/s/gate-plan-lab/ shows 'Included with Walk Plan. Ask a site administrator how to get access to this plan.'; gate_sub2 with an active plan kept access. The wait for the real hourly run was not done."
+      "evidence": "Advisors Lounge membership rule (WP Roles adapter, level contributor): UI Sync Members put mara_j on the roster (tier row). Changed her WordPress role to subscriber (plan lapses): access closed at once (403), then ran Membership_Roster_Sync::reconcile() (the hourly job's body) -> her tier row removed. Real PMPro/MemberPress expires_at was not exercised; the WP Roles adapter was the membership source."
     },
     "c-gating-access-ends-by-itself.5": {
       "result": "pass",
-      "evidence": "gate_sub1 had a bookmark and a follow on alice's topic, a follow on his own topic and a reply notification (bell 4). After the rule was deleted his notification list, bookmarks page and subscriptions page showed none of the space's items (notification rows stay in the database, hidden), and a new reply by alice created no new row. Screenshot gt-subs-ended.png."
+      "evidence": "before: ingrid's bookmarks page listed 'Q4 roadmap review for founders', My Subscriptions listed the space and her topic, Notifications listed 'Tomas Weber replied to your topic'. After the rule was deleted: bookmarks 'You haven't bookmarked anything yet.', subscriptions 'You are not following anything yet.', notifications list only the badge notice.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-ends-after-notifs.png"
     },
     "c-gating-access-ends-by-itself.6": {
       "result": "pass",
-      "evidence": "alice (manual roster member, not the rule) kept full access to the same topic after the rule was removed (200, topic loads)."
+      "evidence": "tomas_w (roster member, no rule) after the rule was deleted: GET the topic 200 and he replied (reply 4143) - access kept."
     },
     "c-gating-access-ends-by-itself.7": {
       "result": "pass",
-      "evidence": "gate_sub1's open topic URL now returns 404 with the same 'Topic not found. This topic may have been removed, or the link is wrong.' page as a topic that never existed (identical body text)."
+      "evidence": "ingrid's /community/s/founders-circle/t/hiring-a-first-designer-what-to-look-for/ -> HTTP 404 'This topic may have been removed, or the link is wrong.', identical text and page title ('Page not available - Northwind Makers Community') to /t/no-such-topic-ever/.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-ends-topic404.png"
     },
     "c-gating-access-ends-by-itself.8": {
       "result": "pass",
-      "evidence": "After access ended, alice replied twice (to gate_sub1's topic and a followed topic): Mailpit stayed empty (0 messages) and no new notification row was created for gate_sub1."
+      "evidence": "Mailpit search to:ingrid.solheim@example.com: 1 message ('Tomas Weber replied to your topic') while she had access; after access ended Tomas replied again (reply 4143) and no new message arrived (still 1)."
     },
     "c-gating-access-ends-by-itself.9": {
       "result": "pass",
-      "evidence": "Two browser contexts: gate_sub3 typed a reply, admin deleted the rule, he pressed Post Reply -> refused with 'Topic not found.' and the typed text stayed in the composer (same run as c-gating-participate.13)."
+      "evidence": "rule re-added, ingrid typed a reply, admin deleted the rule in another tab, Post Reply -> message 'Topic not found.' and her typed text 'Adding my own thought: references were decisive.' stayed in the editor.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-ends-concurrent.png"
     },
     "c-gating-access-ends-by-itself.10": {
       "result": "pass",
-      "evidence": "Re-added the Role rule (toast 'Rule added: WP Role: subscriber can read, post, reply, vote and report...'); gate_sub1's next page load of the space shows it (3 topics) and his bookmark is listed again, with no Sync."
+      "evidence": "admin re-added the WP Role subscriber Participate rule (toast 'Rule added: ... recorded as Member.'); ingrid's next load of the space showed her topic and New Topic, no Sync, no roster row."
     },
     "c-gating-access-ends-by-itself.11": {
       "result": "pass",
-      "evidence": "Gate Plan Lab: after Sync Members the three plan holders had 'tier' roster rows; deleting the membership rule -> gate_sub2's very next load shows 'Gate Plan Lab is invite-only' with no New Topic and POST /spaces/184/posts -> 403 jetonomy_forbidden; the tier roster rows were gone when I checked after running the reconcile hook (I did not look at the table between the delete and that run). So the people do lose access at once, unlike the parenthetical in the line ('roster rows stay until the hourly reconcile')."
+      "evidence": "UI: Sync Members (toast 'Synced 1 existing member.'), then Delete rule: the mara_j tier row was gone on the next query and she lost access (403). NOTE: the roster trim is an async Action Scheduler job (jetonomy_sweep_space_roster); when the rule was deleted over REST/CLI (no web request to run the queue) the row stayed 'pending' for several seconds while access had already closed. Access ends at once either way."
     },
     "c-gating-access-ends-by-itself.12": {
       "result": "pass",
-      "evidence": "Same run as .8: with gate_sub1's access ended, alice replied to his topic -> no email and no new notification row for him."
+      "evidence": "ingrid's own topic in the space: Tomas replied after her access ended -> no new email in Mailpit (still 1) and no new jt_notifications row for her (latest remains the earlier reply_to_post 3808, now hidden from her list)."
     },
     "c-gating-access-ends-by-itself.13": {
       "result": "pass",
-      "evidence": "Rule-admitted gate_sub1 (no roster row) saw his own bookmark, both follows and the reply notification in the UI while the rule was live. alice (roster-only in Gate Plan Lab) had a reply notification from that space; after admin removed her from the roster the notification list, bookmarks and subscriptions showed nothing from the space. (Bookmark leg for the roster-only case could not be created: POST /posts/{id}/bookmark is not a route.)"
+      "evidence": "Rule-admitted half: ingrid_s (Role rule only, no roster row) saw her bookmark of 'Q4 roadmap review for founders', her space follow and topic follow in My Subscriptions, and 'Tomas Weber replied to your topic' in Notifications. Roster-only half: tomas_w (roster member, no rule) had a bookmark on 'Welcome to the Founders Circle', follows of three topics and 8 notifications; after admin pressed Remove on his Members row the bookmark list was empty, My Subscriptions kept only the public Pixel 9 topic and notifications fell 8 -> 5 (the three from the private space gone). Tomas is back to not being on the roster (re-added below in cleanup).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-ends-before-notifs.png"
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "c-gating-access-ends-by-itself.11",
-      "now": "deleting a membership rule removes the synced (tier) roster rows at once, so people lose access on the next load."
-    }
-  ]
+  "proposed_checks": []
 }

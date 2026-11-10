@@ -1,11 +1,11 @@
 {
   "journey": "C.member.vote",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T20:04:47Z",
-  "walker": "release 2.0.7 combo walk wave 2 (Sonnet)",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "walked_at": "2026-11-10T07:00:57.451189Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,118 +16,124 @@
     ],
     "schemes": [
       "light",
-      "dark (Reign)"
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
   },
   "checks": {
+    "c-member-vote.1": {
+      "result": "pass",
+      "evidence": "bob upvoted alice's reply 3964 (Help Desk): score 0 -> 1, one toast 'Vote added', label 'Vote up' -> 'Remove your upvote'.",
+      "screenshot": "qa-artifacts/walk-207/combo/cv1-up.png"
+    },
     "c-member-vote.2": {
       "result": "pass",
-      "evidence": "bob upvoted Yuki's reply on 'Favourite lens...', reloaded: button still 'Remove your upvote', score 1."
+      "evidence": "after reload the vote is still active, score 1."
     },
     "c-member-vote.3": {
       "result": "pass",
-      "evidence": "Clicked the active upvote again: toast 'Vote removed', label back to 'Vote up'."
+      "evidence": "clicked the active upvote: score 0, one toast 'Vote removed', label back to 'Vote up'."
     },
     "c-member-vote.4": {
       "result": "pass",
-      "evidence": "Downvote on same reply: button reads 'Remove your downvote', score -1 from 0; toggled off afterwards."
+      "evidence": "downvote -> 'Remove your downvote', score -1; up->down moved 1 -> -1, down->up moved -1 -> 1 (change of 2 each way)."
     },
     "c-member-vote.5": {
       "result": "pass",
-      "evidence": "bob POST /posts/62/vote 1 -> created score 6; -1 -> updated old_value 1 score 4 (moves by 2); -1 again -> removed score 5; value 0 -> 400 rest_invalid_param 'value is not one of 1 and -1.'"
-    },
-    "c-member-vote.8": {
-      "result": "pass",
-      "evidence": "bob POST /posts/254/vote 1 and -1 on his own topic -> 400 jetonomy_self_vote 'You cannot vote on your own content.' each."
-    },
-    "c-member-vote.12": {
-      "result": "pass",
-      "evidence": "Guest: vote controls are 'Log in to vote' links to wp-login.php?redirect_to=<topic> (the click focuses the inline login form); POST /posts/92/vote without a login -> 401 rest_not_logged_in."
-    },
-    "c-member-vote.15": {
-      "result": "pass",
-      "evidence": "finn (silenced): POST /posts/62/vote -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'; in the UI the score control is disabled and clicking shows the silenced text."
-    },
-    "c-member-vote.20": {
-      "result": "pass",
-      "evidence": "bob voted on alice's reply 1161 in the Partner Program topic (toast 'Vote added', 'Remove your upvote' 1). GET /replies/1163 and POST /replies/1163/vote (Customer Advisory Board) as bob -> 404 jetonomy_not_found."
-    },
-    "c-member-vote.1": {
-      "result": "pass",
-      "evidence": "bob on alice's reply 579 (General Discussion, page 2 of the 40-reply thread): control 'Vote up' 0 -> after one click label 'Remove your upvote' and score 1; exactly one 'Vote added' toast."
+      "evidence": "POST /replies/3964/vote value 1 -> score 1, -1 -> -1, -1 again -> 0 (taken back); value 0 -> 400 rest_invalid_param 'Invalid parameter(s): value'. Same on /posts/{id}/vote."
     },
     "c-member-vote.6": {
-      "result": "fail",
-      "evidence": "Topic: bob voted on 'Better defaults for feature requests': one 'Vote added' toast, topic score 9 -> 10, the space list row reads 10 (match). Feed card (Announcements, post 12): the click registers (aria-pressed true, label 'Remove your upvote', one 'Vote added' toast) but the score printed in the card footer does NOT change on screen: 5 before and 5 after the vote, 6 after taking it back and re-voting, while the topic page says 6; it shows the right number only after a reload. Expected the card score to follow the vote. URL /community/s/announcements/ as bob."
+      "result": "pass",
+      "evidence": "topic 13751 vote on the topic page: one toast, score 1; space list row shows 1; feed card on Release Notes (post 112) went 0 -> 1 live with one 'Vote added' toast and the reload shows 1 (fix since 2.0.6 holds).",
+      "screenshot": "qa-artifacts/walk-207/combo/cv6-feed.png"
     },
     "c-member-vote.7": {
       "result": "pass",
-      "evidence": "bob's own reply 596: the score control is aria-disabled with title/aria-label 'Score 0. You cannot vote on your own content.'; clicking it shows the toast 'You cannot vote on your own content.' and the score stays 0."
+      "evidence": "bob's own reply 4096: control is aria-disabled 'You cannot vote on your own content.'; clicking it shows that message and records nothing.",
+      "screenshot": "qa-artifacts/walk-207/combo/cv7-own.png"
+    },
+    "c-member-vote.8": {
+      "result": "fail",
+      "evidence": "POST /posts/13750/vote and /replies/4096/vote with 1 and -1 on bob's own content -> 400 jetonomy_self_vote (correct). But taking back an older own vote is NOT allowed over REST: with a pre-existing own upvote row (inserted in DB, since removed) POST value 1 -> 400 jetonomy_self_vote, not 200 removal. Cause: Content_Gate::can_vote() (includes/permissions/class-content-gate.php ~line 279) refuses any vote on own content before Vote::cast() applies its 'taking back stays allowed' branch. Product bug or out-of-date line; main session to decide."
     },
     "c-member-vote.9": {
       "result": "pass",
-      "evidence": "test_subscriber (trust 0): 5 votes by REST returned 200; the 6th new vote -> REST 429 jetonomy_rate_limited 'New members can cast 5 votes a day. You can vote again in about 1 day.'; the UI click on a new vote shows the same text as a toast and the vote is not recorded."
+      "evidence": "rhea_newcomer (trust 0, limit 5): 5 votes ok, 6th click refused with 'New members can cast 5 votes a day. You can vote again in about 24 hours.', REST 429 same text.",
+      "screenshot": "qa-artifacts/walk-207/combo/cv9-limit.png"
     },
     "c-member-vote.10": {
       "result": "pass",
-      "evidence": "At the same cap test_subscriber clicked Remove your upvote on topic 'Dark mode toggle in user preferences': toast 'Vote removed' and the label went back to 'Vote up'."
+      "evidence": "at the cap rhea clicked an active vote -> removed with 'Vote removed' (label back to 'Vote up')."
     },
     "c-member-vote.11": {
       "result": "pass",
-      "evidence": "With Vote unticked for the Subscriber (Member) role in Settings > Permissions: bob's topic page shows each score as a disabled control 'Score 5. Voting is not available to you here.' (aria-disabled) and clicking it shows that toast. Role restored."
+      "evidence": "removed jetonomy_vote from the subscriber role: bob's control is aria-disabled 'Voting is not available to you here.' (click shows that toast), REST 403 jetonomy_forbidden; role restored.",
+      "screenshot": "qa-artifacts/walk-207/combo/cv11-noperm.png"
+    },
+    "c-member-vote.12": {
+      "result": "pass",
+      "evidence": "guest sees 'Log in to vote' link; clicking it opens the login form in the sidebar (Join the conversation, username focused); REST POST logged out -> 401 rest_not_logged_in.",
+      "screenshot": "qa-artifacts/walk-207/combo/cv12-guest.png"
     },
     "c-member-vote.13": {
       "result": "pass",
-      "evidence": "bob then maya (UI) upvoted alice's reply 579: alice's notifications show one grouped row '2 people voted on your reply' (REST message the same, id 858)."
+      "evidence": "bob and maya upvoted alice's reply 3964 -> alice's notifications show one grouped 'BO 2 people voted on your reply' (row 3502)."
     },
     "c-member-vote.14": {
       "result": "pass",
-      "evidence": "bob took his vote back -> the same row became '1 person voted on your reply'; maya took hers back -> no vote notification left (no '0 people voted')."
+      "evidence": "bob then maya took the vote back -> the vote_on_post notification row for reply 3964 is gone, never '0 people voted'."
+    },
+    "c-member-vote.15": {
+      "result": "pass",
+      "evidence": "finn clicking the disabled score: toast 'Your account is currently silenced and cannot post.'; REST 403 jetonomy_user_silenced.",
+      "screenshot": "qa-artifacts/walk-207/combo/cv15-silenced-vote.png"
     },
     "c-member-vote.16": {
       "result": "pass",
-      "evidence": "Closed topic 'Scheduled maintenance on Saturday: what to expect': bob's vote on a reply works in the UI ('Vote added', 'Remove your upvote') and POST /replies/1219/vote answers 200 (it toggled it off), so UI and REST agree that closed topics still take votes."
+      "evidence": "closed 'Scheduled maintenance on Saturday' topic: REST vote on reply 1219 -> 200 score 1 and the UI control is live and toggles it back ('Vote removed'); UI matches REST (votes allowed on a closed topic)."
     },
     "c-member-vote.17": {
       "result": "pass",
-      "evidence": "Offline vote click: the control stays 'Vote up|0' and the toast 'Vote failed.' shows; nothing is stored. The optimistic intermediate state was not caught in a screenshot."
+      "evidence": "offline click: optimistic score rolled back to 0 ('Vote up') and toast 'Vote failed.'",
+      "screenshot": "qa-artifacts/walk-207/combo/cv17-offline.png"
     },
     "c-member-vote.18": {
-      "result": "fail",
-      "evidence": "bob clicked Vote up ten times in the same tick on reply 575 (page 2 of the General Discussion thread). Two runs: (1) 9 clicks -> 9 POSTs, final UI 'Remove your upvote' 1 and server score 1 viewer_vote 1 (consistent). (2) 10 clicks -> 11 POST /replies/575/vote calls, all 200 but with out-of-order results ('removed' with score 1, 'created' with score 1, ...), final UI 'Remove your upvote|0' while the server says score 0 viewer_vote 0: the button claims an active vote the server does not have, so the next click creates it. debug.log also gained 'WordPress database error Duplicate entry 10-reply-575 for key user_object' (INSERT INTO wp_jt_votes) four times during these races. Expected: one consistent vote, score equal to the server, no DB errors. Read: product bug (no serialisation of toggle requests; the insert races)."
+      "result": "pass",
+      "evidence": "ten rapid clicks: UI ended at score 1 / 'Remove your upvote', server vote row and vote_score = 1 (consistent, no duplicate-key line in debug.log)."
     },
     "c-member-vote.19": {
       "result": "pass",
-      "evidence": "Two tabs: tab 1 voted (server 1); tab 2 still showed 'Vote up|0' and its click toggled the vote off: server 0 and tab 2 shows 0; a reload of tab 1 shows 0. Server score is correct, though tab 2 'removed' a vote it believed it was adding."
+      "evidence": "two tabs: tab A took the vote back (server 0); tab B still showed 'Remove your upvote' 1, clicking it re-added the vote, B reconciled to 1 / 'Remove your upvote', server score 1 (correct).",
+      "screenshot": "qa-artifacts/walk-207/combo/cv19-tabB.png"
+    },
+    "c-member-vote.20": {
+      "result": "pass",
+      "evidence": "bob voted a Partner Program reply 1161 in the UI (works); REST vote on Customer Advisory Board reply 1163 -> 404 jetonomy_not_found 'Reply not found.'."
     },
     "c-member-vote.21": {
       "result": "pass",
-      "evidence": "Finn's -4 topic ('Check out my SEO service'): the score reads '-4' with a minus sign and bob's active 'Remove your downvote' state shows correctly (vote-negative.png)."
+      "evidence": "finn's 'Check out my SEO service' topic shows -4 with a minus sign; bob's downvote is shown active ('Remove your downvote').",
+      "screenshot": "qa-artifacts/walk-207/combo/cv21-neg.png"
     },
     "c-member-vote.22": {
       "result": "pass",
-      "evidence": "Pro Reactions on reply 575: bob added a Like reaction (picker, Like 1 pressed), then Vote up (reaction stayed), then Remove your upvote (reaction stayed): vote and reaction act independently."
+      "evidence": "Pro Reactions: added a Like reaction on the reply beside the vote -> reaction chip appears, vote and score unchanged (1 / 'Remove your upvote').",
+      "screenshot": "qa-artifacts/walk-207/combo/cv22-react.png"
     },
     "c-member-vote.23": {
       "result": "pass",
-      "evidence": "390 mobile emulation, Reign dark: vote buttons are 40px high (40-52px wide) and the active one is tinted (background rgb ~ (59,67,80), blue-grey text) versus transparent inactive ones (vote-390-dark.png)."
+      "evidence": "390px dark: vote buttons 41x40 and 40x40, active upvote has aria-pressed=true with lighter colour and filled background, no horizontal scroll.",
+      "screenshot": "qa-artifacts/walk-207/combo/cv23-390-dark.png"
     },
     "c-member-vote.24": {
       "result": "pass",
-      "evidence": "finn clicks the disabled score on a reply: toast 'Your account is currently silenced and cannot post.' (same text as the REST 403), not 'Voting is not available to you here.'."
+      "evidence": "finn on the disabled reply score: toast 'Your account is currently silenced and cannot post.' (not 'Voting is not available to you here.')."
     },
     "c-member-vote.25": {
       "result": "pass",
-      "evidence": "Grouped notice text is '2 people voted on your reply' with no quotation marks around 'your reply'."
+      "evidence": "grouped notice reads '2 people voted on your reply' without quotation marks (notifications page and DB message)."
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "c-member-vote.1",
-      "now": "the inactive vote control is labelled 'Vote up' / 'Vote down' (aria-label) and the active one 'Remove your upvote' / 'Remove your downvote'"
-    }
-  ]
+  "proposed_checks": []
 }

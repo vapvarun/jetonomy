@@ -1,95 +1,94 @@
 {
   "journey": "C.member.reply-quote",
-  "free": "0217e21d",
-  "pro": "1bb3e93",
-  "checks": {
-    "c-member-reply-quote.1": {
-      "result": "pass",
-      "evidence": "bob on topic 17722 (Feature Requests): clicked the Quote icon (aria-label Quote) on alice's reply -> composer prefilled with <blockquote class=jt-quote><cite>Alice Chen</cite> + her paragraph, list, code block and link; typed text and Post Reply -> reply 1367 shows a styled blockquote with '-Alice Chen' attribution and the structure intact (quote-posted-1440.png).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-posted-1440.png"
-    },
-    "c-member-reply-quote.2": {
-      "result": "pass",
-      "evidence": "Clicked Reply on alice's reply 1363 -> chip 'Replying to Alice Chen \"Owners can set defaults in the space settings; members then override it on their...\"' with a Cancel reply X (quote-replying-chip.png); posted -> reply 1369 shows 'in reply to Alice Chen' (links to #reply-1363), parent_id 1363 in the DB.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-replying-chip.png"
-    },
-    "c-member-reply-quote.3": {
-      "result": "pass",
-      "evidence": "Clicked Reply on 1363 then the Cancel reply X -> chip gone; posted a plain reply -> reply 1368 saved with parent_id NULL (top level)."
-    },
-    "c-member-reply-quote.4": {
-      "result": "pass",
-      "evidence": "Quoted alice's reply with a 2-item list, a code block and a 112-character URL: the quote keeps the list, <pre><code> (scrolls inside its own box, overflow-x auto) and the URL wraps in the blockquote (overflow-wrap anywhere). 1440: blockquote inside the card; 390: documentElement.scrollWidth 390 = viewport, link right edge 328 < blockquote right 342, code scrolls internally (quote-posted-390.png).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-posted-390.png"
-    },
-    "c-member-reply-quote.5": {
-      "result": "pass",
-      "evidence": "bob on closed Announcements topic 'Community guidelines updated for 2026': 2 replies shown, 0 Quote buttons, 0 Reply buttons, no composer, 'closed' notice present.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-closed-bob.png"
-    },
-    "c-member-reply-quote.6": {
-      "result": "pass",
-      "evidence": "Logged-out on topic 17722 (5 replies visible): zero Quote and zero Reply buttons rendered and the page shows a log-in prompt in place of the composer."
-    },
-    "c-member-reply-quote.7": {
-      "result": "pass",
-      "evidence": "Created leaver_lena, she replied (reply 1371), then wp user delete -> author_id 0. Guest page shows '[deleted]' as the name; bob quoting it gets <cite>[deleted]</cite> in the composer and the posted reply shows '-[deleted]' and 'in reply to [deleted]' (never blank)."
-    },
-    "c-member-reply-quote.8": {
-      "result": "pass",
-      "evidence": "bob quoted Finn's reply on topic 84 (not his topic) and ticked Private reply -> reply 1370 is_private=1. As bob/admin REST returns the blockquote content; as alice (member_b) REST content is '' and the page shows 'Private reply, visible to the topic author and moderators.' with no blockquote and no 'Strong agree' text inside reply-1370."
-    },
-    "c-member-reply-quote.9": {
-      "result": "pass",
-      "evidence": "omar posted an Arabic reply (1374); bob quoted it: blockquote dir=auto computes direction rtl, the bar is on the right (3px right border), the Arabic paragraph is right-aligned rtl and the Latin attribution 'Omar Haddad' sits right-aligned (quote-arabic.png).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-arabic.png"
-    },
-    "c-member-reply-quote.10": {
-      "result": "pass",
-      "evidence": "Reign dark toggle on, quote in reply 1367: page bg rgb(35,38,47), quote bg rgb(52,55,63), quote text 7.41:1, attribution 6.14:1 on the quote background (quote-dark.png).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/quote-dark.png"
-    },
-    "c-member-reply-quote.11": {
-      "result": "pass",
-      "evidence": "Clicking Quote then posting stores a threaded reply: reply 1367 has parent_id 1366 (the quoted reply) and renders 'in reply to Alice Chen', same as Reply. Behaviour matches the line's 'today parent_id is set'."
-    },
-    "c-member-reply-quote.12": {
-      "result": "pass",
-      "evidence": "Dark mode quote bar is an opaque light grey (about rgb(185,186,188), not 12% white): 7.78:1 against the page and 6.14:1 against the quote background, above the 3:1 non-text minimum."
-    },
-    "c-member-reply-quote.13": {
-      "result": "pass",
-      "evidence": "Reply 1371 from the deleted account shows '[deleted]' with no OP badge. Also tested the harder case: topic 19772 whose author AND replier were both deleted (both author_id 0) -> reply 1373 shows '[deleted]' and no OP badge."
-    },
-    "c-member-reply-quote.14": {
-      "result": "pass",
-      "evidence": "Private reply 1370 viewed by bob (author, can read it) and by admin: action bar has no Quote button (bob: Reply, More options, Edit, Make Public, Delete; admin adds Vote up/down, Report, Split to Topic)."
-    }
-  },
-  "proposed_checks": [],
-  "walked_at": "2026-11-10T04:24:02.833833Z",
-  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "free": "0991f3be",
+  "pro": "f684443",
+  "walked_at": "2026-11-10T08:09:27.457098Z",
+  "walker": "release 2.0.7 free walk wave 7 (Sonnet)",
   "env": {
-    "mode": "free (Pro inactive)",
+    "mode": "free stack (Free; Pro as noted)",
     "site": "http://localhost:8912",
-    "browser": "Chromium via Playwright MCP",
     "themes": [
       "reign-theme"
     ],
-    "locale": "en_US",
     "viewports": [
       1440,
       390
     ],
     "schemes": [
       "light",
-      "dark (Reign)"
-    ]
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US"
   },
+  "checks": {
+    "c-member-reply-quote.1": {
+      "result": "pass",
+      "evidence": "bob on /community/s/feature-requests/t/let-members-schedule-posts/ clicked Quote (aria-label Quote) on alice's reply 1297 -> composer prefilled with blockquote.jt-quote + cite 'Alice Chen' + her paragraph; typed text, Post Reply -> reply 1420 saved with the blockquote preserved and rendered as a styled blockquote (3px bar).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-quote-posted.png"
+    },
+    "c-member-reply-quote.2": {
+      "result": "pass",
+      "evidence": "Clicked Reply on alice's reply 1298 -> chip 'Replying to Alice Chen \"A second note after bob unfollowed.\"' with X (aria-label Cancel reply); posted -> reply 1422 shows 'in reply to Alice Chen' linking #reply-1422 thread, parent_id 1298 in DB."
+    },
+    "c-member-reply-quote.3": {
+      "result": "pass",
+      "evidence": "Reply on 1298 then Cancel reply X -> chip removed; posted a plain reply -> reply 1421 saved with parent_id NULL."
+    },
+    "c-member-reply-quote.4": {
+      "result": "pass",
+      "evidence": "alice posted a reply with <ul>, <pre><code> and a 100+ char URL (1423); bob Quote -> composer held ul/li, pre/code and the URL; posted (1424) -> blockquote keeps ul and pre; blockquote scrollWidth==clientWidth (727), right edge 945 inside card 962, document has no horizontal overflow.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-quote-long.png"
+    },
+    "c-member-reply-quote.5": {
+      "result": "pass",
+      "evidence": "bob on closed topic 'Scheduled maintenance on Saturday' (Announcements): 0 Quote buttons, 0 Reply buttons, topic shows Closed label."
+    },
+    "c-member-reply-quote.6": {
+      "result": "pass",
+      "evidence": "Guest on the same topic: reply 1297 offers only author links, Permalink and 'Log in to vote'; Quote and Reply buttons are hidden."
+    },
+    "c-member-reply-quote.7": {
+      "result": "pass",
+      "evidence": "Topic 'Favourite lens for street photography' reply 1231 (deleted account, author_id 0) shows '[deleted]'; Quote prefilled <cite>[deleted]</cite> and posted (reply 1425)."
+    },
+    "c-member-reply-quote.8": {
+      "result": "pass",
+      "evidence": "bob posted private reply 1426 on topic 245; as bob it offers Reply/Edit/Make Public/Delete; as alice the same reply renders only the tombstone 'Private reply, visible to the topic author and moderators.' with no text and no buttons; guest does not see the text either.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-quote-private-alice.png"
+    },
+    "c-member-reply-quote.9": {
+      "result": "pass",
+      "evidence": "Site language Arabic (html dir=rtl lang=ar): bob quoted aisha's Arabic reply 1236 on the Arabic topic and posted 1427; blockquote direction rtl, 3px bar on the right edge, text-align start. (Aisha is the Arabic replier in this seed, not omar; her name cite renders ltr because the Latin name uses dir=auto.) Language restored to en_US.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-quote-rtl.png"
+    },
+    "c-member-reply-quote.10": {
+      "result": "pass",
+      "evidence": "Reign dark toggle on: blockquote text rgb ~0.80 on box bg ~0.20 and bar ~0.73 on body 35,38,47 -> readable, high contrast.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-quote-dark.png"
+    },
+    "c-member-reply-quote.11": {
+      "result": "pass",
+      "evidence": "Quote posts as a threaded reply: reply 1420 has parent_id 1297, same as Reply (today's behaviour described by the line)."
+    },
+    "c-member-reply-quote.12": {
+      "result": "pass",
+      "evidence": "Dark mode: quote bar colour ~0.73 luminance against 0.2 card background, well above 3:1 (line says today 12% white; it is now a light grey bar)."
+    },
+    "c-member-reply-quote.13": {
+      "result": "pass",
+      "evidence": "Reply 1231 from the deleted account on a topic by test_subscriber carries no OP badge (no OP text/badge in its markup)."
+    },
+    "c-member-reply-quote.14": {
+      "result": "pass",
+      "evidence": "bob viewing his own private reply 1426: buttons are Reply, More options, Edit, Make Public, Delete; no Quote button."
+    }
+  },
+  "proposed_checks": [],
   "runbook_fixes": [
     {
-      "check": "c-member-reply-quote.12",
-      "now": "the dark-mode quote bar is an opaque light grey (7.8:1 against the page), no longer 12% white"
+      "check": "c-member-reply-quote.9",
+      "now": "the Arabic reply in the seed is Aisha's (omar is the space-banned persona)"
     }
   ]
 }

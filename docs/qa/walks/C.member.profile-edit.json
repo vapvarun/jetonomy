@@ -1,11 +1,11 @@
 {
   "journey": "C.member.profile-edit",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T19:55:19Z",
-  "walker": "release 2.0.7 combo walk wave 2 (Sonnet)",
+  "free": "8478fd19",
+  "pro": "81befa5",
+  "walked_at": "2026-11-10T09:05:37Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "Free + Pro, all 17 Pro extensions on",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,94 +16,99 @@
     ],
     "schemes": [
       "light",
-      "dark (Reign)"
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
   },
   "checks": {
-    "c-member-profile-edit.4": {
+    "c-member-profile-edit.1": {
       "result": "pass",
-      "evidence": "bob PATCH /users/me display_name 'bob' (his nickname) -> 200; 'Totally Other' -> 400 jetonomy_invalid_display_name 'Choose a display name from your own name fields.' (allowed list Bob Martinez, bob). Restored to Bob Martinez."
-    },
-    "c-member-profile-edit.5": {
-      "result": "pass",
-      "evidence": "bob PATCH display_name 'admin' -> 400 jetonomy_invalid_display_name (allowed only own name fields)."
-    },
-    "c-member-profile-edit.12": {
-      "result": "pass",
-      "evidence": "bob PATCH display_name '' -> 200 and the old name/profile is returned unchanged."
-    },
-    "c-member-profile-edit.3": {
-      "result": "pass",
-      "evidence": "Edited the bio in wp-admin (Update User -> 'User updated.'): the community profile shows 'Edited from wp-admin.' on reload."
+      "evidence": "bob set First/Last name to Robert Martinez, picked 'Robert Martinez' as display name and a new bio, Save Profile: his community profile shows 'Robert Martinez' and the new bio; his topic's author line shows the new name.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-saved.png"
     },
     "c-member-profile-edit.2": {
       "result": "pass",
-      "evidence": "wp-admin > Users > bob: Biographical Info is exactly the bio saved in the community ('Full-stack developer and community builder. I like tools that connect people and clear docs.'), first/last name Robert / Martinez, display name Robert Martinez."
+      "evidence": "wp-admin > Users > bob (user-edit.php?user_id=10): Biographical Info equals the bio just saved in the community form ('Full-stack developer and part-time woodworker...').",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-saved.png"
     },
-    "c-member-profile-edit.11": {
+    "c-member-profile-edit.3": {
       "result": "pass",
-      "evidence": "alice on /community/u/bob/edit/: the URL is kept but the form holds alice's own data (nickname alice, her bio, display options Alice Chen / alice); PATCH /users/10 as alice -> 404 rest_no_route. She cannot see or change bob's data."
+      "evidence": "edited Biographical Info in wp-admin to '...answers most Help Desk questions.' and updated: /community/u/bob/ shows the new bio."
     },
-    "c-member-profile-edit.1": {
+    "c-member-profile-edit.4": {
       "result": "pass",
-      "evidence": "bob set First Name Robert, Last Name Martinez and a new bio on /community/u/bob/edit/, then picked 'Robert Martinez' as Display name publicly (each save is PATCH /users/me 200 and lands on the profile): the profile heading reads 'Robert Martinez' with the new bio and the reply author lines read 'Robert Martinez'."
+      "evidence": "PATCH /users/me display_name 'Martinez Robert' (built from first/last) -> 200; 'Bobby Tables' -> 400 jetonomy_invalid_display_name 'Choose a display name from your own name fields.' with the allowed list."
+    },
+    "c-member-profile-edit.5": {
+      "result": "pass",
+      "evidence": "bob set nickname 'admin' (200), then PATCH display_name 'admin' -> 400 jetonomy_invalid_display_name; the allowed list does not offer 'admin'. Nickname restored."
     },
     "c-member-profile-edit.6": {
       "result": "pass",
-      "evidence": "bob with Upload media: Upload photo -> file chooser -> 'Crop your photo' dialog -> Crop and upload (POST /media 200) -> Save Profile (PATCH /users/me 200): the uploaded file is the avatar in the profile header and on his replies; topic listing rows do not show author avatars."
+      "evidence": "bob (holding jetonomy_upload_media): Upload photo + Crop and upload with a 200x200 PNG -> avatar_url set to /wp-content/uploads/jetonomy/<id>/avatar.png; the profile header and the topic author avatar are that image.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-avatar.png"
     },
     "c-member-profile-edit.7": {
       "result": "pass",
-      "evidence": "With Upload media unticked for the Subscriber (Member) role: the edit page has no Upload photo / Remove photo buttons and no file input, and reads 'Your Gravatar is used as your photo.' (avatar-no-perm.png). Role restored."
+      "evidence": "removed jetonomy_upload_media from the subscriber role (wp cap remove, restored afterwards): nadia_r's edit form has no Upload photo control and reads 'Your Gravatar is used as your photo.'",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-noupload.png"
     },
     "c-member-profile-edit.8": {
       "result": "pass",
-      "evidence": "With the permission removed, POST /media as bob -> 403 jetonomy_forbidden."
+      "evidence": "same state: PATCH /users/me {avatar_url:<new url>} as nadia_r -> 403 jetonomy_forbidden 'You do not have permission to upload a profile picture.' (with the capability, the same call is accepted for any http URL). The avatar is set through PATCH avatar_url; there is no separate upload route under /users."
     },
     "c-member-profile-edit.9": {
       "result": "pass",
-      "evidence": "Notification Preferences lists 'Answer to my request to join a space' with Web on and Email on by default (checked, no prior saved value)."
+      "evidence": "bob's Notification Preferences list 'Answer to my request to join a space' (row join_request_result) with Web and Email both on by default.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-prefs.png"
     },
     "c-member-profile-edit.10": {
       "result": "pass",
-      "evidence": "bob turned the email box off, Save Profile, reopened the form: still off. He then asked to join Mentorship Circle and admin approved it in wp-admin: bob got the bell notice (883 join_request_result) and Mailpit shows no email to bob. The preference and membership were restored afterwards."
+      "evidence": "unticked its Email box, saved, reloaded: Email off, Web still on. A join answer then sent bob no email (Mailpit to bob stayed 63) while carlos (default on) received 'Your space join request was answered'. Preference restored to on afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-prefs.png"
+    },
+    "c-member-profile-edit.11": {
+      "result": "pass",
+      "evidence": "alice opened /community/u/bob/edit/: the form is hers (nickname 'alice', her bio), none of bob's data.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-bob.png"
+    },
+    "c-member-profile-edit.12": {
+      "result": "pass",
+      "evidence": "PATCH /users/me display_name '' -> 200 and the display name stays unchanged."
     },
     "c-member-profile-edit.13": {
       "result": "pass",
-      "evidence": "200-char first name, a 204-char display name (picked in the select) and a 2000-char bio all saved with no limit message; the profile heading wraps (overflow-wrap:anywhere) and the bio wraps, document scrollWidth equals the viewport at 1440 and 390, the reply author line does not overflow (profile-longname-390.png)."
+      "evidence": "nickname of 200 characters selected as display name and a 2000-character bio saved without a limit message; profile at 1440 and 390: scrollWidth = clientWidth, header and bio wrap (the name is 207 characters on one wrapped block).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-longname-390.png"
     },
     "c-member-profile-edit.14": {
       "result": "pass",
-      "evidence": "Remove photo then Save Profile: the uploaded file is no longer used and the member falls back to the profile's default avatar image (the seeded avatar URL; real Gravatar is offline here)."
+      "evidence": "Remove photo then Save: the profile shows the initials avatar again (no img).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-avatar.png"
     },
     "c-member-profile-edit.15": {
       "result": "pass",
-      "evidence": "Offline Save Profile: toast 'Failed to save profile.', the page stays on the edit form and the typed bio is still in the field."
+      "evidence": "context set offline, Save Profile: toast 'Failed to save profile.', page stays on the form and the typed bio is still in the textarea.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-offline.png"
     },
     "c-member-profile-edit.16": {
       "result": "pass",
-      "evidence": "Created a required Text field 'Favourite community tool' (context Profile) in Pro Custom Fields: it appears on the edit form marked *; saving it empty is blocked (field :invalid, no submit); after filling 'Jetonomy moderation queue' it shows on bob's public profile. Field deleted afterwards."
+      "evidence": "Pro Custom Fields (Pronouns, profile context): 'he/him' saved and shown on bob's public profile. With Pronouns temporarily marked required, an empty value is blocked by the browser ('Please fill in this field.') and the stored value stays 'he/him' (required flag restored to optional)."
     },
     "c-member-profile-edit.17": {
       "result": "pass",
-      "evidence": "390 mobile emulation, Reign dark: labels at least 9.4:1, inputs 10.2:1 on a dark surface, no horizontal scroll (profile-edit-390-dark.png)."
+      "evidence": "edit form at 390px with the Reign dark toggle: inputs rgb(48,50,58) on dark, text and labels rgb(229,229,229), no horizontal scroll, Save Profile button 40px tall.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/pedit-390-dark.png"
     },
     "c-member-profile-edit.18": {
       "result": "pass",
-      "evidence": "finn (silenced) opens /community/u/finn/edit/, changes the bio and saves: the public profile shows the new bio. Bio restored afterwards."
+      "evidence": "finn (silenced) edited his bio on /community/u/finn/edit/ and saved; the public profile shows the new text."
     },
     "c-member-profile-edit.19": {
       "result": "pass",
-      "evidence": "bob (has first and last name): switched Display name to 'bob' and saved; the select then offered bob, Robert, Martinez, Robert Martinez, Martinez Robert; picking 'Robert Martinez' again saved fine. (The original display name 'Bob Martinez' is no longer offered once the name fields are set - it was not derived from a profile field.)"
+      "evidence": "bob (First Robert, Last Martinez) switched display name to 'bob' (profile shows 'bob'); the select still offered Robert, Martinez, Robert Martinez, Martinez Robert and bob; switched back to 'Robert Martinez' and saved."
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "c-member-profile-edit.19",
-      "now": "the display-name options come from First/Last name, Nickname and login; after switching to the username the first-last option stays selectable"
-    }
-  ]
+  "proposed_checks": []
 }

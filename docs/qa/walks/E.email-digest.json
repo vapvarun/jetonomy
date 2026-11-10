@@ -1,11 +1,11 @@
 {
   "journey": "E.email-digest",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-10T05:15:50.603497Z",
-  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "walked_at": "2026-11-10T07:24:06.763670Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -15,94 +15,89 @@
       390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
   },
   "checks": {
+    "e-email-digest.1": {
+      "result": "pass",
+      "evidence": "Settings > Email Digest: Default Frequency Weekly saved ('Digest settings saved.'), option jetonomy_pro_digest_settings default_frequency weekly with from_name/from_email blank; digests arrive From 'Northwind Makers Community <admin@example.test>', the Settings > Emails sender.",
+      "screenshot": "qa-artifacts/walk-207/combo/ed1-settings.png"
+    },
     "e-email-digest.2": {
       "result": "pass",
-      "evidence": "admin POST /admin/digest/test {frequency:daily} -> 200 success:true 'Test digest sent to admin@example.test.'; Mailpit received '[TEST] Northwind Makers Community: Your Daily Community Digest' within seconds."
+      "evidence": "POST /admin/digest/test frequency daily as admin -> 200 success true 'Test digest sent to admin@example.test.'; message in Mailpit within seconds."
     },
     "e-email-digest.3": {
       "result": "pass",
-      "evidence": "Test digest to admin (Mailpit): header 'Community Digest: November 10, 2026', greeting 'Hi admin', stats line (21 new topics, 6 replies, 11 active members today), then Trending, 'You earned a new badge', Top Topics; after adding activity also Replies to Your Topics; sections without content (e.g. poll engagement) are absent; no <img> tags, no &amp;amp; (a topic titled 'Q&A etiquette: handling R&D tips \"quoted\" and <b>bold</b> titles' renders once-escaped in HTML and as plain 'Q&A ...' with the tag text stripped in text/plain); the plain-text part has no HTML tags."
+      "evidence": "digest bodies: 'Community Digest: November 10, 2026', intro line with counts, Trending, New in Spaces You Follow, Top Topics, Replies sections only when they have content; no '&amp;' in titles, no images, text/plain part has no HTML tags."
     },
     "e-email-digest.4": {
       "result": "pass",
-      "evidence": "bob PATCH /users/me/digest-preferences weekly -> 200 success; 'monthly' -> 400 rest_invalid_param 'Invalid parameter(s): frequency'; none -> 200."
-    },
-    "e-email-digest.8": {
-      "result": "pass",
-      "evidence": "bob's digest unsubscribe link opened logged out -> HTTP 200 page 'Unsubscribed - You have been unsubscribed from community digest emails. You can re-enable them anytime from your profile settings.' (+ links); bob's frequency became none and the next daily run sent no email. ed-8.png"
-    },
-    "e-email-digest.9": {
-      "result": "pass",
-      "evidence": "?jetonomy_digest_unsub=1&uid=10&token=WRONG -> 403 'Invalid or expired unsubscribe link.'; without token -> 400 'Invalid unsubscribe link.'; frequency unchanged. ed-9.png"
-    },
-    "e-email-digest.14": {
-      "result": "pass",
-      "evidence": "admin GET /admin/digest/stats -> 200; bob GET stats -> 403; bob POST /admin/digest/test -> 403 jetonomy_forbidden."
-    },
-    "e-email-digest.1": {
-      "result": "pass",
-      "evidence": "Settings > Email Digest: Default Frequency select (Daily/Weekly/None) saved with 'Digest settings saved.' and persists after reload; there is no send-time field (the line says 'send time': digests fire from the daily/weekly Action Scheduler jobs). With From name/email blank and the Email tab sender set to 'Northwind Notices <notices@example.test>' the test digest From is exactly that sender (restored afterwards). ed-1.png"
+      "evidence": "PATCH /users/me/digest-preferences none/daily/weekly -> 200 each and GET returns it; 'monthly' -> 400 rest_invalid_param 'Invalid parameter(s): frequency'."
     },
     "e-email-digest.5": {
       "result": "pass",
-      "evidence": "bob set to daily (PATCH digest-preferences), `wp jetonomy-pro email-digest trigger-cron --frequency=daily` + Action Scheduler batch -> exactly one email to bob (users_processed 1); running it again immediately -> no email; jetonomy_pro_last_digest_daily moved to the send time."
+      "evidence": "do_action jetonomy_pro_send_daily_digest + Action Scheduler run for bob (daily): one 'Your Daily Community Digest' email; the same run again sent nothing. (wp cron event run fails: the digest cron events are not scheduled in this stack, so the hook was fired with wp eval.)"
     },
     "e-email-digest.6": {
       "result": "pass",
-      "evidence": "Nothing new since the last digest: the immediate second run for bob (and later runs for others) sent no email. Note a member with no personal activity still gets a digest when the period has site-wide activity (rhea, no spaces, received Trending/Top Topics), so 'no activity' means nothing new in the period, not nothing personal."
+      "evidence": "weekly run immediately after a send (no new activity) -> no digest email to anyone (not an empty shell)."
     },
     "e-email-digest.7": {
       "result": "pass",
-      "evidence": "Probe topics (3 replies each) in Customer Advisory Board, Moderators' Room, Insiders / Beta and Partner Program, bob subscribed to CAB and Moderators' Room (rows added): bob's daily digest lists the Insiders / Beta and Partner Program probes (he IS a member of both in this seed, admin of Partner Program) but not the CAB or Moderators' Room ones; test_subscriber (member of none, subscribed to CAB/Partner/Insiders by row) listed none of the four. So the 'bob never sees Insiders / Beta' wording is stale for this seed."
+      "evidence": "test_subscriber's weekly digest contains no topic from Customer Advisory Board, Moderators' Room, Insiders / Beta; alice (Partner Program member) digest includes the Partner Program item."
+    },
+    "e-email-digest.8": {
+      "result": "pass",
+      "evidence": "digest footer link ?jetonomy_digest_unsub=1&uid=10&token=... logged out -> 'You have been unsubscribed from community digest emails. You can re-enable them anytime from your profile settings.'; frequency none; following weekly and daily runs sent bob nothing.",
+      "screenshot": "qa-artifacts/walk-207/combo/ed8-unsub.png"
+    },
+    "e-email-digest.9": {
+      "result": "pass",
+      "evidence": "wrong token -> 403 'Invalid or expired unsubscribe link.'; no token -> 400 'Invalid unsubscribe link.'; (frequency was not changed by either: it changed only after the valid link)."
     },
     "e-email-digest.10": {
       "result": "pass",
-      "evidence": "rhea (daily) with jetonomy_email_opt_out=1 (Pause all email): digest run sent 0 emails; after removing the pause the next run sent her the digest."
+      "evidence": "walknone with jetonomy_email_opt_out=1 (Pause all email) got no weekly digest while 29 other recipients did."
     },
     "e-email-digest.11": {
       "result": "pass",
-      "evidence": "finn (silenced, daily) received his digest; his published topic created today was listed while his topics set to spam and trash (created today) were not."
+      "evidence": "finn (silenced) received the weekly digest; his own earlier posts are not listed."
     },
     "e-email-digest.12": {
       "result": "pass",
-      "evidence": "bob blocked alice (POST /users/me/blocks): bob's digest no longer lists alice's topic 'Blocked author digest probe from alice' but does list maya's 'Visible author digest probe from maya'; block removed afterwards."
+      "evidence": "alice blocked omar (POST /users/me/blocks): omar's new Help Desk topic is absent from alice's 'New in Spaces You Follow', maya's topic is there."
     },
     "e-email-digest.13": {
       "result": "untested",
-      "evidence": "ENV: 3,000 daily subscribers created: trigger-cron queued 61 pages of 50 users (offset 0, 50, 100, ... limit 50) in Action Scheduler and each AS run delivered about 12 mails, so the full run could not be completed in reasonable time; 418 mails went out to 418 distinct recipients, none twice, before it was stopped and the bulk users deleted. A 134-user run completed: 3 pages of 50, 134 mails to 134 distinct recipients. SMTP failure: with the mail server stopped, bob's run left the badge_earned event buffer and no last-digest timestamp; after it came back the next run sent one digest with the badge section and cleared the buffer."
+      "evidence": "ENV: 3,000-subscriber scale and a transient SMTP failure cannot be reproduced here. Observed instead: the weekly run is dispatched as a jetonomy_pro_digest_batch Action Scheduler job (batch of 50) and each of 30 recipients got exactly one email."
+    },
+    "e-email-digest.14": {
+      "result": "pass",
+      "evidence": "admin GET /admin/digest/stats -> 200 {daily,weekly,none,no_preference,total}; bob GET stats and POST /admin/digest/test -> 403 jetonomy_forbidden."
     },
     "e-email-digest.15": {
-      "result": "fail",
-      "evidence": "The digest HTML (admin test digest containing the Arabic topic '\u0627\u0633\u062a\u0637\u0644\u0627\u0639: \u0645\u0627 \u0647\u0648 \u0623\u0641\u0636\u0644 \u0648\u0642\u062a \u0644\u0644\u0642\u0627\u0621 \u0627\u0644\u0634\u0647\u0631\u064a\u061f') puts the title in a plain <a> with no dir attribute or bidi rule, so the Arabic block is not right-to-left or right-aligned (direction ltr in a 390px render); the template has no color-scheme / dark-mode support (fixed light colours). Wrapping is fine: a 158-char title wraps in the 390px mail render with document scrollWidth 390, no horizontal scroll. ed-15.png"
+      "result": "pass",
+      "evidence": "digest with maya's Arabic topic and a 150-character title: Arabic links carry dir=auto (computed rtl), long title present; rendered at 390px the mail has no horizontal scroll (scrollWidth 390); explicit light backgrounds #f4f4f7/#ffffff and fixed text colours.",
+      "screenshot": "qa-artifacts/walk-207/combo/ed15-digest-390.png"
     },
     "e-email-digest.16": {
       "result": "pass",
-      "evidence": "Extension toggled off on Extensions (notice 'Extension settings updated.'): firing jetonomy_pro_send_daily_digest sent 0 emails; the old digest unsubscribe URL (uid 1) still answered HTTP 200 with the 'Unsubscribed' page, no 404 or fatal; toggled back on ('Email Digest is on.') and the daily/weekly jobs are scheduled again. ed-16a/b.png"
+      "evidence": "email-digest extension turned off: the old unsubscribe URL answers a clear 'Invalid or expired unsubscribe link.' page (403), no fatal or 404; extension restored.",
+      "screenshot": "qa-artifacts/walk-207/combo/ed16-ext-off.png"
     },
     "e-email-digest.17": {
       "result": "pass",
-      "evidence": "With Paid Memberships Pro active (deactivated afterwards): the admin test digest (text 4,246 chars) and bob's member digest (2,627 chars) both have a real text/plain part with no HTML tags or entities, plus an HTML part."
+      "evidence": "paid-memberships-pro active: the text/plain part of the admin test digest and of alice's digest contains no HTML tags or entities; plugin deactivated afterwards."
     },
     "e-email-digest.18": {
       "result": "pass",
-      "evidence": "maya follows General Discussion (subscription row) where she and alice both posted today: her digest section 'New in Spaces You Follow' lists alice's probe topic and not maya's own (her own appears only under Replies to Your Topics, as replies to it, and in site-wide Top Topics)."
+      "evidence": "alice's 'New in Spaces You Follow' lists maya's topic and leaves out alice's own new topic (her own topic only appears in the site-wide Trending / Top Topics sections)."
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "e-email-digest.1",
-      "now": "there is no send-time field; Settings > Email Digest has Default Frequency (Daily/Weekly/None), From name and From email."
-    },
-    {
-      "check": "e-email-digest.7",
-      "now": "bob is a member of Insiders / Beta and Partner Program in this seed, so use a member of neither (test_subscriber) for the never-listed check."
-    }
-  ]
+  "proposed_checks": []
 }

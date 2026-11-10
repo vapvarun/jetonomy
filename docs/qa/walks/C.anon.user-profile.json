@@ -1,109 +1,123 @@
 {
   "journey": "C.anon.user-profile",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T21:31:19.650976Z",
-  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
+  "free": "8478fd19",
+  "pro": "81befa5",
+  "walked_at": "2026-11-10T08:59:46Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "Free + Pro, all 17 Pro extensions on",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light",
-      "dark (Reign)"
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US, ar for RTL"
+    "locale": "en_US"
   },
   "checks": {
     "c-anon-user-profile.1": {
       "result": "pass",
-      "evidence": "Guest on /community/u/bob/: avatar/name, bio 'Full-stack developer...', reputation 940, 14 topics, 63 replies, trust 'Leader', 8 badges, Topics/Replies/Votes tabs."
+      "evidence": "guest on /community/u/bob/: avatar (BO initials), bio 'Full-stack developer...', stats (615 reputation, 62 topics, 162 replies), Leader trust level, 12 badges, Topics/Replies/Votes tabs with rows.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-bob.png"
     },
     "c-anon-user-profile.2": {
       "result": "pass",
-      "evidence": "Guest bob profile: no @-address anywhere in the page HTML, no settings or drafts tab (tabs: Topics, Replies, Votes)."
+      "evidence": "page text and HTML as guest: no bob.demo@jetonomy.local or any @jetonomy.local address, no Edit Profile, Settings or Drafts tab/link.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-bob.png"
     },
     "c-anon-user-profile.3": {
       "result": "pass",
-      "evidence": "Guest GET /users/10 and /users/25: keys avatar_display, avatar_url, bio, can_ban, created_at, display_name, id, is_blocked, last_seen_at, post_count, reply_count, reputation, restriction, trust_*; no email or notification fields."
-    },
-    "c-anon-user-profile.7": {
-      "result": "pass",
-      "evidence": "Guest /community/u/lucia-romeroexample-com/ (login lucia.romero@example.com) -> 200; page HTML does not contain the email; meta description 'Community profile for @lucia-romeroexample-com on Northwind Makers Community.'"
-    },
-    "c-anon-user-profile.8": {
-      "result": "pass",
-      "evidence": "Guest /community/u/lucia.romero@example.com/ (old login) -> 200 and renders Lucia Romero."
-    },
-    "c-anon-user-profile.9": {
-      "result": "pass",
-      "evidence": "Guest /community/u/no-such-person/ -> HTTP 404, 'User not found.' not-found page."
-    },
-    "c-anon-user-profile.12": {
-      "result": "pass",
-      "evidence": "Grace (Grace Oluwaseun Adeyemi-Whitfield, no avatar) profile at 390: full name in header, initials avatar 'GR', no overflow (scrollWidth 390).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/grace-390.png"
-    },
-    "c-anon-user-profile.14": {
-      "result": "pass",
-      "evidence": "Guest /community/u/finn/ -> 200 normal profile; shows a post at -4 votes; no restriction notice."
-    },
-    "c-anon-user-profile.17": {
-      "result": "pass",
-      "evidence": "Guest GET /users/25 (finn, silenced): restriction is null."
+      "evidence": "guest GET /wp-json/jetonomy/v1/users/10 -> {id, display_name, trust_level(_name/_label), reputation, post_count, reply_count, bio, avatar_url, avatar_display, created_at, last_seen_at, is_blocked, restriction:null, can_ban:false}; no email, no notification settings."
     },
     "c-anon-user-profile.4": {
       "result": "pass",
-      "evidence": "Guest on maya's profile (trust level 5): badge reads 'Veteran'. Admin renamed level 5 to 'Elder' in Settings > Permissions (saved 'Settings saved.'): profile then read 'Elder'. Cleared the field and saved: back to 'Veteran'."
+      "evidence": "theo (trust level 5) shows 'Veteran' by default; after renaming level 5 to 'Elder' under Settings > Permissions and saving, his profile shows 'Elder'; the field was cleared and saved again and the profile shows 'Veteran'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-renamed.png"
     },
     "c-anon-user-profile.5": {
       "result": "pass",
-      "evidence": "bob has topics in Partner Program (239), Insiders / Beta (224); added bob to Customer Advisory Board and Moderators' Room and posted 403 and 404 there. Guest on /community/u/bob/ and /u/bob/posts/: none of the four titles listed."
+      "evidence": "guest on bob's Topics tab (every Load More page): none of the 11 private-space titles (Partner Program, CAB, Moderators' Room) appear; bob himself (control) sees 'Referral fees for 2026' and 'Partner payout schedule for Q1'."
     },
     "c-anon-user-profile.6": {
       "result": "pass",
-      "evidence": "bob's private reply 1349 (bug-reports): guest on /community/u/bob/replies/ sees a 'Private reply' row and the text 'details by DM please' is absent."
+      "evidence": "guest on bob's Replies tab: his private reply on a public topic reads 'Private reply' (twice in the list), no text.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-replies.png"
+    },
+    "c-anon-user-profile.7": {
+      "result": "pass",
+      "evidence": "Lucia Romero's login is lucia.romero@example.com; her profile at /community/u/lucia-romeroexample-com/ returns 200; URL, title, meta description and og:description contain no email address ('Community profile for @lucia-romeroexample-com ...')."
+    },
+    "c-anon-user-profile.8": {
+      "result": "pass",
+      "evidence": "/community/u/lucia.romero@example.com/ and /community/u/lucia.romero%40example.com/ (old login URLs) -> HTTP 200 showing 'Lucia Romero' (no redirect)."
+    },
+    "c-anon-user-profile.9": {
+      "result": "pass",
+      "evidence": "/community/u/no-such-person/ -> HTTP 404 'Page not available' page.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-404.png"
     },
     "c-anon-user-profile.10": {
       "result": "pass",
-      "evidence": "Combo (Pro Private Messaging on): bob on alice's profile sees 'Message' -> /community/messages/?to=alice; guest sees no Message button."
+      "evidence": "bob on alice's profile with Private Messaging on: a 'Message' button linking /community/messages/?to=alice; guest sees none. With the extension switched off in Jetonomy > Extensions: no Message button and no Messages link in the nav.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-message-bob.png"
     },
     "c-anon-user-profile.11": {
       "result": "pass",
-      "evidence": "Removed private-messaging from jetonomy_pro_extensions (restored after): bob on alice's profile has no Message button and no Messages nav link; guest none. The jetonomy_member_message_url filter path was not exercised (needs code)."
+      "evidence": "Private Messaging extension turned off (toast 'Extension settings updated.'): bob on alice's profile has no Message button and no dead link; extension switched back on afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-message-off.png"
+    },
+    "c-anon-user-profile.12": {
+      "result": "pass",
+      "evidence": "Grace on Reign at 390px: the full name wraps over two lines in the header, GR initials avatar, no horizontal scroll (scrollWidth 390).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-grace-390.png"
     },
     "c-anon-user-profile.13": {
       "result": "pass",
-      "evidence": "lucia.romero (no posts, no bio): Topics tab 'No topics yet.', Replies tab 'No replies yet.', Votes tab 'No votes yet.' (profile-empty.png). Old login URL /u/lucia.romero@example.com/ opens (200) and the meta description names @lucia-romeroexample-com, not the email."
+      "evidence": "walknone (no posts, no bio): Topics tab 'No topics yet.', Replies 'No replies yet.', Votes 'No votes yet.'",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-empty.png"
+    },
+    "c-anon-user-profile.14": {
+      "result": "pass",
+      "evidence": "guest on finn's profile: opens normally, no silence/ban wording anywhere, the topic 'Check out my SEO service, 50% off this week' shows its -4 score.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-finn.png"
     },
     "c-anon-user-profile.15": {
       "result": "pass",
-      "evidence": "Site language ar: omar's profile: dir rtl, name and bio right-aligned, tab bar order mirrored, sidebar on the left (rtl-profile.png)."
+      "evidence": "site language Arabic: Omar's profile is dir=rtl - avatar and name at the right, bio right-aligned, stats and the Topics/Replies/Votes tab bar run right to left. Language restored.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-rtl.png"
     },
     "c-anon-user-profile.16": {
       "result": "pass",
-      "evidence": "Reign dark toggle on maya's profile: lowest text/background contrast across 210 visible text nodes is 4.62:1 (the Log in button); badges and stats readable (profile-dark.png)."
+      "evidence": "Reign dark toggle on bob's profile: header, name, trust badge, stats and badges are light on dark and readable (badge 12.0:1, name 12.0:1).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-dark.png"
+    },
+    "c-anon-user-profile.17": {
+      "result": "pass",
+      "evidence": "guest GET /users/25 (finn, silenced) -> restriction:null; no field naming silence or ban."
     },
     "c-anon-user-profile.18": {
       "result": "pass",
-      "evidence": "combo stack, WPMediaVerse 2.6.0 activated (deactivated afterwards). As bob on /community/u/alice/: the WPMediaVerse chat bubble (bottom right) and a 'Message' button next to 'More actions for Alice Chen' show; clicking Message opens the WPMediaVerse chat panel titled 'Alice Chen' with 'No messages yet. Say hello to start the conversation.' Screenshots mv-profile.png, mv-message-opened.png."
+      "evidence": "WPMediaVerse 2.6.0 activated (chat bubble 'mvs-chat-trigger' present) with Private Messaging enabled but dormant: bob on alice's profile has a 'Message' button (data-message-event mvs-open-conversation, userId 9); clicking it opens the WPMediaVerse chat panel on 'Alice Chen' ('No messages yet. Say hello to start the conversation.').",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-wpmv-opened.png"
     },
     "c-anon-user-profile.19": {
       "result": "pass",
-      "evidence": "Same state: WPMediaVerse active, Pro private messaging dormant (Conversations admin page says so). On alice's profile as bob the Message button shows and opens a WPMediaVerse conversation, so the first alternative of the line holds (the line's 'today neither: only Report and Block' is out of date). /community/messages/ answers 'Page not available' while dormant."
+      "evidence": "same setup: Jetonomy Pro's own messaging is dormant (Extensions card reads 'WPMediaVerse is active and its messaging engine takes over all direct messages. This extension stays dormant while WPMediaVerse runs.') and the Message button opens a WPMediaVerse conversation with alice. NOTE: with the Private Messaging extension switched OFF (not just dormant) and WPMediaVerse active, the Message button is absent - the WPMediaVerse bridge lives in the Jetonomy Pro extension. WPMediaVerse deactivated afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/anon-profile-wpmv-ext-on.png"
     }
   },
   "proposed_checks": [],
   "runbook_fixes": [
     {
-      "check": "c-anon-user-profile.19",
-      "now": "with WPMediaVerse active and Pro messaging dormant, alice's profile shows a Message button that opens a WPMediaVerse chat conversation."
+      "check": "c-anon-user-profile.4",
+      "now": "the settings field is Settings > Permissions > trust level names (blank = default)"
     }
   ]
 }

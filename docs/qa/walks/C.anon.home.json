@@ -1,18 +1,97 @@
 {
   "journey": "C.anon.home",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T20:25:17Z",
-  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "checks": {
+    "c-anon-home.1": {
+      "result": "pass",
+      "evidence": "Guest /community/ (cookies cleared): welcome card with 26 members / 241 topics / 17 this week, 29 space cards across 6 categories, trending, top members; 'Log in' (registration off). With users_can_register=1 the welcome and sidebar show 'Create free account' + 'Log in'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-guest.png"
+    },
+    "c-anon-home.2": {
+      "result": "pass",
+      "evidence": "Clicked the Local Chapters chip: panel expands with 6 cards (London, Berlin, Toronto, Lagos, Bengaluru, Sao Paulo) and a 'View all 14 spaces' link to /community/category/local-chapters/.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-chip.png"
+    },
+    "c-anon-home.3": {
+      "result": "pass",
+      "evidence": "Labs chip (2 spaces) expands with no View all link; Local Chapters (14) has it."
+    },
+    "c-anon-home.4": {
+      "result": "pass",
+      "evidence": "/community/category/local-chapters/ lists all 14 Chapter cards (links to /community/s/<slug>/); exactly 5 cards show '0 topics'; no error text."
+    },
+    "c-anon-home.5": {
+      "result": "pass",
+      "evidence": "users_can_register set to 0 (core Settings > General > Membership, done with wp option update): guest welcome shows only 'Log in' and the sidebar says 'No account yet? Ask an administrator for one.'; no Register/Create account link. (Opposite state with 1 shows 'Create free account'.)",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-guest.png"
+    },
+    "c-anon-home.6": {
+      "result": "pass",
+      "evidence": "guest_private_teasers absent/off: curl of /community/, /category/community/, /category/help-support/ contains 0 mentions of Partner Program, Customer Advisory or Moderators."
+    },
+    "c-anon-home.7": {
+      "result": "pass",
+      "evidence": "guest_private_teasers=1: home shows Customer Advisory Board (Private, Invite only) and Partner Program (Private, Approval required) cards with counts but no topics; clicking Partner Program opens a locked page 'Partner Program is private. Log in to request access.' with Log In and Browse spaces.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-private-click.png"
+    },
+    "c-anon-home.8": {
+      "result": "pass",
+      "evidence": "Setting on: Moderators' Room / Release Planning appear nowhere on home (body text), and /community/s/moderators-room/ returns HTTP 404 'Page not available' with 'Space not found. Browse spaces'."
+    },
+    "c-anon-home.9": {
+      "result": "pass",
+      "evidence": "Guest GET /feed?per_page=100 (50 items): no item mentions moderators-room or Moderators' Room and none from space 42 (Customer Advisory Board). GET /spaces?per_page=100: no moderators-room; CAB and Partner Program appear only as private space entries (teasers on), no topics."
+    },
+    "c-anon-home.10": {
+      "result": "pass",
+      "evidence": "Guest home at 1440 and 390: scrollWidth==clientWidth, no element past the viewport; Help Desk card (288-char description) stays inside 174-562 (1440) and 31-359 (390)."
+    },
+    "c-anon-home.12": {
+      "result": "pass",
+      "evidence": "390px: cards stack in one column (left 31 for every card), chip strips are flex-wrap:wrap and every chip sits inside its strip (31-258 within 328 wide), no horizontal scroll.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-chips-390.png"
+    },
+    "c-anon-home.13": {
+      "result": "pass",
+      "evidence": "Dark (bx-color-mode=dark) guest home: cards, welcome, sidebar and chips use dark surfaces, no panel with light background found (DOM scan), text readable (screenshot).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-dark.png"
+    },
+    "c-anon-home.15": {
+      "result": "pass",
+      "evidence": "Clicked the first Trending title (opens /community/s/general-discussion/t/whats-everyone-working-on-this-week-s15t1/ HTTP 200) and Top members 'Maya Okafor' (/community/u/maya/ HTTP 200)."
+    },
+    "c-anon-home.16": {
+      "result": "pass",
+      "evidence": "All 29 'Active N minutes/days ago' labels fit: scrollWidth<=clientWidth, none truncated at 1440 (and at 390)."
+    },
+    "c-anon-home.11": {
+      "result": "pass",
+      "evidence": "Guest, site language ar: html dir=rtl, welcome card text and Log in button mirrored, chips right-aligned (right edge 1266), cards in two columns right-to-left, sidebar on the left (174-454), no overlapping cards (rect test), scrollWidth 1440.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-rtl.png"
+    },
+    "c-anon-home.14": {
+      "result": "pass",
+      "evidence": "All 259 topics deleted through the plugin (Post::delete): guest home still renders the welcome card with the Log in button and 'Join the conversation' login form, 26 members / 0 topics pulse, every space card with '0 topics', Top members in the sidebar; no blank column. (Seed restored from snapshot afterwards.)",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-empty.png"
+    },
+    "c-anon-home.19": {
+      "result": "pass",
+      "evidence": "Immediately after the last topic was removed via Post::delete the welcome pulse read '26 members 0 topics' (was 1,341 after a raw-SQL delete that bypasses the per-space counters; deleting through the plugin recounts them) and the 'this week' stat is hidden; space cards show 0 topics.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/home-empty.png"
+    }
+  },
+  "proposed_checks": [],
+  "walked_at": "2026-11-10T07:07:59.997253+00:00",
+  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
   "env": {
-    "mode": "free stack (Pro inactive)",
+    "mode": "free stack, Pro inactive (phase 1)",
     "site": "http://localhost:8912",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
       1440,
-      1024,
       390
     ],
     "schemes": [
@@ -20,87 +99,6 @@
       "dark"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US + ar for RTL"
-  },
-  "checks": {
-    "c-anon-home.1": {
-      "result": "pass",
-      "evidence": "Guest /community/ (HTTP 200): welcome card 'Log in to post, vote...', 25 members/238 topics, Log in button, login form, seeded spaces and trending topics. Register absent because users_can_register=0; with registration on the page shows 'Create free account' and 'Register' (toggled via WP option, restored to 0).",
-      "screenshot": "walk-207/free/home-1440.png"
-    },
-    "c-anon-home.2": {
-      "result": "pass",
-      "evidence": "Clicked 'Show spaces in Local Chapters' chip: panel shows 6 spaces (London, Berlin, Toronto, Lagos, Bengaluru, Sao Paulo) and link 'View all 14 spaces' -> /community/category/local-chapters/"
-    },
-    "c-anon-home.3": {
-      "result": "pass",
-      "evidence": "Labs chip (2 spaces) expands to 2 cards and has no View all link; Local Chapters (14) has the link"
-    },
-    "c-anon-home.4": {
-      "result": "pass",
-      "evidence": "/community/category/local-chapters/ HTTP 200: 14 space cards, 5 show '0 topics', no error text"
-    },
-    "c-anon-home.5": {
-      "result": "pass",
-      "evidence": "With registration off (users_can_register=0, the WP Settings > General Anyone-can-register control) guest home shows only 'Log in' links, no Register/Create account. Jetonomy has no own registration toggle; it reads the WP option."
-    },
-    "c-anon-home.6": {
-      "result": "pass",
-      "evidence": "Default setting off: guest home text contains neither Partner Program nor Customer Advisory Board"
-    },
-    "c-anon-home.7": {
-      "result": "pass",
-      "evidence": "Set guest_private_teasers=1 (restored after): home lists Partner Program and Customer Advisory Board; /community/s/partner-program/ for guest says 'Partner Program is private. Log in to request access.' with Log In, no topics"
-    },
-    "c-anon-home.8": {
-      "result": "pass",
-      "evidence": "With teasers on, Moderators' Room and Release Planning absent from home, /spaces and /feed REST; /community/s/moderators-room/ HTTP 404 'Space not found.'"
-    },
-    "c-anon-home.9": {
-      "result": "pass",
-      "evidence": "Guest GET /jetonomy/v1/feed and /spaces: no 'Moderators' and no 'Customer Advisory'/'Partner Program' text with teasers off; with teasers on /spaces lists the CAB/Partner space titles only (teaser) and /feed has no CAB topics or Moderators' Room"
-    },
-    "c-anon-home.10": {
-      "result": "pass",
-      "evidence": "1440/1024/390: no horizontal scroll, no element past viewport edge; Help Desk card present with description wrapping",
-      "screenshot": "walk-207/free/home-390.png"
-    },
-    "c-anon-home.11": {
-      "result": "pass",
-      "evidence": "Site language Arabic (wpw site switch-language ar), guest at 1440: html dir=rtl lang=ar, body direction rtl, rtl stylesheet loaded, scrollWidth 1440=innerWidth, 0 elements overflowing the viewport; screenshot qa-artifacts/walk-207/free/rtl-home.png shows welcome card, stats, category chip and space cards mirrored with nothing overlapping. UI strings stay English (no ar translation of Jetonomy) so punctuation sits at the line start; not a layout defect."
-    },
-    "c-anon-home.12": {
-      "result": "pass",
-      "evidence": "390px: one column of cards, no horizontal scroll, bottom tab bar; chip strip (2 category chips) fits",
-      "screenshot": "walk-207/free/home-390.png"
-    },
-    "c-anon-home.13": {
-      "result": "pass",
-      "evidence": "Clicked Reign dark toggle: cards bg dark (rgb ~47,49,58), text rgb(229,229,229), 0 white panels in .jt-app",
-      "screenshot": "walk-207/free/home-dark.png"
-    },
-    "c-anon-home.14": {
-      "result": "pass",
-      "evidence": "After every topic was trashed through REST (4,422 topics; spaces kept), the guest home /community/ shows the welcome 'Log in to post, vote, and follow the spaces you care about.' with '5,027 members 0 topics', a Log in button and all space cards ('0 topics'), the Trending box empty - an inviting page, not a blank column; screenshot home-empty.png."
-    },
-    "c-anon-home.15": {
-      "result": "pass",
-      "evidence": "Guest /community/: the Trending list links (.jt-trend-title, e.g. /community/s/general-discussion/t/whats-everyone-working-on-this-week-s15t1/) return 200 and the Top members names (.jt-leader-name: Maya Okafor, Theo Lindqvist, Alice Chen, Bob Martinez, Priya Nair -> /community/u/<login>/) return 200. The guest home has no 'feed cards' (it shows spaces, Trending and Top members), so the line's wording is out of date but the behaviour it wants holds."
-    },
-    "c-anon-home.16": {
-      "result": "pass",
-      "evidence": "1440: every space card stats line reads 'Active 11 minutes ago' in full; 0 elements truncated (scrollWidth<=clientWidth)"
-    },
-    "c-anon-home.19": {
-      "result": "pass",
-      "evidence": "Deleted (trashed) all 4,422 topics via DELETE /posts/<id>: the next guest home load reads '5,027 members 0 topics' straight away (the pulse transient is cleared by each delete), unlike the stale '2,316 topics' in the line."
-    }
-  },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "c-anon-home.15",
-      "now": "click a trending topic title and a Top members name on the guest home -> the topic page and the member profile open with 200 (the home has no feed cards)"
-    }
-  ]
+    "locale": "en_US"
+  }
 }

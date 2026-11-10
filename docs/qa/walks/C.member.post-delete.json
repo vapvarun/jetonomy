@@ -1,20 +1,22 @@
 {
   "journey": "C.member.post-delete",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T19:07:57Z",
-  "walker": "release 2.0.7 free wave-2 walk (Sonnet)",
+  "free": "0991f3be",
+  "pro": "f684443",
+  "walked_at": "2026-11-10T08:24:56.061647Z",
+  "walker": "release 2.0.7 free walk wave 7 (Sonnet)",
   "env": {
-    "mode": "free stack (Pro inactive)",
+    "mode": "free stack (Free; Pro as noted)",
     "site": "http://localhost:8912",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
@@ -22,79 +24,85 @@
   "checks": {
     "c-member-post-delete.1": {
       "result": "pass",
-      "evidence": "bob (topic 256 in Help Desk, created via REST with 3 replies) used More options > Delete, Confirm in the 'Are you sure you want to delete this topic?' dialog -> returned to /community/s/help-desk/; topic gone from the space listing, guest search and REST /feed. (Tag listing not separately checked: topic had no tags.)"
+      "evidence": "bob deleted his Help Desk topic 374 (3 replies, 1 accepted) via More options > Delete > Confirm -> redirected to /community/s/help-desk/; the topic is gone from the space page, home, /community/search and REST /search."
     },
     "c-member-post-delete.2": {
       "result": "pass",
-      "evidence": "Guest opens the deleted topic URL: HTTP 404 'Topic not found. This topic may have been removed...'"
+      "evidence": "Guest GET of the deleted topic URL -> 404."
     },
     "c-member-post-delete.3": {
       "result": "pass",
-      "evidence": "bob DELETE -> 200; GET /posts/256: guest 404, alice 404 jetonomy_not_found, bob 200 status 'trash'; second DELETE -> 409 jetonomy_already_trashed"
+      "evidence": "DELETE /posts/376 as bob -> 200 {deleted:true}; GET /posts/376: guest 404 jetonomy_not_found, alice 404 jetonomy_not_found, bob and admin see status trash."
     },
     "c-member-post-delete.4": {
       "result": "pass",
-      "evidence": "Opened Delete dialog (Cancel/Confirm), pressed Cancel: GET /posts/256 still 200 (not deleted)"
+      "evidence": "Delete > Cancel in the confirm dialog ('Are you sure you want to delete this topic?') -> topic status stays publish and the page is unchanged.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-del-dialog.png"
     },
     "c-member-post-delete.5": {
       "result": "pass",
-      "evidence": "alice on bob's topic: no More options trigger and no Delete item"
+      "evidence": "alice on bob's topic: only her own reply's menu exists (inside #reply-...); no topic-level More options/Delete."
     },
     "c-member-post-delete.6": {
       "result": "pass",
-      "evidence": "alice DELETE /posts/254 (bob's) -> 403 jetonomy_forbidden; topic stayed"
+      "evidence": "DELETE /posts/374 as alice -> 403 jetonomy_forbidden; topic remained publish."
     },
     "c-member-post-delete.7": {
       "result": "pass",
-      "evidence": "With Settings > Permissions 'Delete own topics and replies' unticked for Subscriber: bob's menu has no trigger and DELETE /posts/255 -> 403 jetonomy_forbidden (restored after)"
+      "evidence": "Permissions screen: Delete own (and Edit own) unticked for Subscriber -> bob's topic page shows no More options menu and DELETE /posts/373 returns 403 jetonomy_forbidden. Caps restored afterwards (see post-edit .8)."
     },
     "c-member-post-delete.8": {
       "result": "pass",
-      "evidence": "Topic with 3 replies deleted: replies stay status publish under the trashed topic (orphan-hidden, per contract) and the reply counters of authors dropped: alice 63 -> 61, hana 60 -> 59 in jt_user_profiles"
+      "evidence": "Topic 374 with 3 replies deleted: replies stay as rows but are hidden with the parent (contract: orphaned under a trashed parent); space post_count 14->13, bob profile topics 17->16, alice replies 66->65, maya 59->58, grace 64->63."
     },
     "c-member-post-delete.9": {
       "result": "pass",
-      "evidence": "Before/after delete: Help Desk post_count 13 -> 12 (= published rows 12), bob profile post_count 16 -> 15; restored 13/16 again"
+      "evidence": "Same run: space post count 14->13 and bob's profile topic count 17->16; home feed no longer lists it."
     },
     "c-member-post-delete.10": {
       "result": "pass",
-      "evidence": "Fresh scenario: bob posted Q&A topic 340 in Help Desk, alice replied (1376), bob accepted it (alice reputation 966, got accepted_answer notification + email), unaccepted and re-accepted. Bob deleted the topic (More options > Delete > Confirm): status trash, reputation unchanged (alice 966, bob 806), bob's GET /notifications row for the reply (id 427) is gone, alice's GET /notifications has no accepted_answer row for 1376 (rows 428/429 hidden). The earlier 'one remains' was a moderation-type notification (target-status exempt by design, per main-session ruling)."
+      "evidence": "alice's accepted answer on 374: her reputation was 940 before and 940 after the delete. Her accepted_answer and bob's three reply_to_post notifications no longer appear in GET /notifications or the notifications page; a moderation notification ('Your topic was removed by a moderator') for bob stays by design."
     },
     "c-member-post-delete.11": {
       "result": "pass",
-      "evidence": "alice had bookmarked and followed topic 256: REST GET /bookmarks returns 0 rows (no broken row); her notifications about 256 are removed on delete"
+      "evidence": "alice had bookmarked and followed 374: /community/u/alice/bookmarks/ shows no broken row and the notifications page has no dead link.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-del-subs.png"
     },
     "c-member-post-delete.12": {
       "result": "pass",
-      "evidence": "test_moderator DELETE bob's topic 255 -> appears in /community/mod/?view=trash with Restore and Delete permanently; bob's bell reads 'Your topic was removed by a moderator'"
+      "evidence": "test_moderator deleted bob's topic 375 from its menu (Edit, Pin, Close, Move, Merge, Delete offered) -> status trash; /community/mod/?view=trash lists it with Restore and Delete permanently; bob's notification reads 'Your topic was removed by a moderator'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-del-trash.png"
     },
     "c-member-post-delete.13": {
       "result": "pass",
-      "evidence": "Second delete of an already trashed topic returns 409 jetonomy_already_trashed (no PHP error); not driven from two UI tabs"
+      "evidence": "Two tabs both confirmed Delete on topic 375: the second shows 'This item is already in the trash. A moderator can restore it or delete it permanently.' with no PHP error.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-del-concurrent.png"
     },
     "c-member-post-delete.14": {
       "result": "pass",
-      "evidence": "Offline: Confirm on delete -> toast 'Failed to delete.', page stays on the topic, GET /posts/255 still 200 afterwards"
+      "evidence": "Offline, Confirm -> toast 'Failed to delete.', topic page stays and status stays publish.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-del-offline.png"
     },
     "c-member-post-delete.15": {
       "result": "pass",
-      "evidence": "finn DELETE /posts/246 -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+      "evidence": "finn on his -4 topic: no menu and a silenced banner; DELETE /posts/246 as finn -> 403 jetonomy_user_silenced, still publish."
     },
     "c-member-post-delete.16": {
       "result": "pass",
-      "evidence": "alice's /community/subscriptions/ shows the row 'No longer available' with Unfollow and 'Web + Email'; no notifications for 256 in her bell"
+      "evidence": "alice > /community/subscriptions/ lists the deleted topic as 'No longer available' with an Unfollow button, no link to it; no notifications from it.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-del-subs.png"
     },
     "c-member-post-delete.17": {
       "result": "pass",
-      "evidence": "Replies stay publish under the trashed parent but are hidden everywhere (404 topic, absent from author profile Replies tab) and the counters followed (see .8); this is the observed contract"
+      "evidence": "Contract: replies of a trashed topic stay stored but are not listed anywhere (topic 404 for others, author profile Replies tab, notifications) and the authors' reply counters dropped; they come back with a restore."
     },
     "c-member-post-delete.18": {
       "result": "pass",
-      "evidence": "test_moderator clicked Restore in /community/mod/?view=trash: topic status publish again, Help Desk post_count back to 13, bob 16, alice 63, hana 60, 3 replies and accepted reply 1285 intact"
+      "evidence": "Moderation > Trash > Restore on 374 -> status publish, 3 replies, reply 1428 still is_accepted=1, guest URL 200; counts back (space 13->15 incl. 375 restored, alice 65->67, bob 16->18)."
     },
     "c-member-post-delete.19": {
       "result": "pass",
-      "evidence": "Guest /community/u/hana/replies/ and /u/alice/replies/ do not list the replies of the trashed topic"
+      "evidence": "Guest on /community/u/alice/replies/ after the trash: none of the trashed topic's replies are listed."
     }
   },
   "proposed_checks": []

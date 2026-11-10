@@ -1,11 +1,11 @@
 {
   "journey": "C.gating.surfaces-agree",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T21:26:02.574993Z",
-  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
+  "free": "8478fd19",
+  "pro": "81befa5",
+  "walked_at": "2026-11-10T08:39:03Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "Free + Pro, all 17 Pro extensions on",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -22,76 +22,102 @@
   "checks": {
     "c-gating-surfaces-agree.1": {
       "result": "pass",
-      "evidence": "bob on Customer Advisory Board: invite-only message with the space title and description, no topics; Moderators' Room: 404 'Space not found.' same as a missing space."
-    },
-    "c-gating-surfaces-agree.3": {
-      "result": "pass",
-      "evidence": "gate_sub3 (non-member) GET /search?q=referral, q=roadmap+draft, q=self-promotion+wave -> 200 with 0 results each (words from Partner Program / CAB / Moderators' Room topics)."
-    },
-    "c-gating-surfaces-agree.6": {
-      "result": "pass",
-      "evidence": "Guest /community-sitemap.xml -> 200 and contains none of the private/hidden topic slugs; guest /updates?scope=global -> 401."
-    },
-    "c-gating-surfaces-agree.7": {
-      "result": "pass",
-      "evidence": "Non-member gate_sub3: GET /posts/239 and /posts/239/replies (Partner Program) -> 404; GET /spaces/41 -> 403 jetonomy_forbidden; /spaces/41/posts -> 403; /search?space_id=41 -> 403; hidden space 43 and id 99999 -> 404 jetonomy_not_found 'Space not found.' identical."
-    },
-    "c-gating-surfaces-agree.8": {
-      "result": "pass",
-      "evidence": "Guest GET /updates?scope=post&id=241 (hidden topic) -> 404 jetonomy_not_found; id=249 public topic -> 200."
-    },
-    "c-gating-surfaces-agree.16": {
-      "result": "pass",
-      "evidence": "Guest on /community/s/partner-program/: document title 'Community \u2013 Northwind Makers Community' (site name only, no space name)."
-    },
-    "c-gating-surfaces-agree.17": {
-      "result": "pass",
-      "evidence": "Logged out on a private space URL with the locked preview off: 'This space is private. Log in to see it.' only; the page HTML contains neither the space name ('Partner Program' / 'Gate Private Lab') nor its description nor any topic title (string search false); page title is the site title only."
+      "evidence": "bob (not on the roster) opened /community/s/customer-advisory-board/: 'Customer Advisory Board is invite-only. You need an invitation to join.' with its description 'Invite-only group of long-time customers who review roadmap drafts.', no topics. /community/s/moderators-room/ (hidden) -> HTTP 404 'Page not available', identical to a nonexistent space slug.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-cab.png"
     },
     "c-gating-surfaces-agree.2": {
       "result": "pass",
-      "evidence": "bob (not on Customer Advisory Board) opened the CAB topic URL -> 404 with the identical 'Page not available' title and body as a made-up topic URL in the same space (body text identical), so the title does not reveal it exists."
+      "evidence": "bob opened /s/customer-advisory-board/t/walkthrough-notes-for-the-advisory-council/ -> HTTP 404 'This topic may have been removed, or the link is wrong.', page title 'Page not available - Northwind Makers Community', identical to a missing topic URL in a public space.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-topic404.png"
+    },
+    "c-gating-surfaces-agree.3": {
+      "result": "pass",
+      "evidence": "bob searched 'advisory council' (a phrase from a CAB topic) -> '0 results / No results for \"advisory council\"'. Positive controls: admin and the roster member see the topic in search.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-search.png"
     },
     "c-gating-surfaces-agree.4": {
       "result": "pass",
-      "evidence": "Tagged a CAB topic 'advisory-walk' and 'council-priorities', a public topic and a Partner Program topic 'advisory-walk'. bob's /community/tag/advisory-walk/ lists '2 topics' (the public one and Partner Program, where he was then a member) and not the CAB topic; /tag/council-priorities/ (CAB only) shows '0 topics / No topics with this tag yet' although the stored tag count is higher. Screenshot sa-tag.png."
+      "evidence": "bob /community/tag/council-priorities/ (used only on a CAB topic) -> '0 topics / No topics with this tag yet.'; /tag/advisory-walk/ (used in CAB and Partner Program) shows only the topics bob may read ('2 topics'), none of the CAB titles.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-tag.png"
     },
     "c-gating-surfaces-agree.5": {
-      "result": "fail",
-      "evidence": "bob's home spaces grid shows a card 'Customer Advisory Board' (badges Private, Forum, Invite only; its description; '3 topics 4 members') although he is not a member. No topic title from there appears on home, in Trending or in the sidebar, in search (web and REST) or in REST posts. So topics are consistent but the space name, description and the topic count (which includes topics he cannot open) are visible for a private (not Hidden) space. My read: probably the out-of-date wording of the check, because private non-hidden spaces are deliberately listed for logged-in members and the runbook says the home is a spaces grid; the topic count including unreadable topics is the only item that could be a leak. Screenshot sa-home-card.png."
+      "result": "pass",
+      "evidence": "bob loaded the community home and the sidebar (Trending / Top members / Popular tags) and searched 'roadmap' (12 results): no title from CAB or Moderators' Room anywhere. The home grid shows CAB only as a locked card (Private / Invite only / description / '4 topics / 4 members'); Moderators' Room does not show. NOTE: the locked card exposes the private space's topic count to a non-member. There is no separate Trending page (/community/trending/ is a 404); Trending is the sidebar widget.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-home.png"
+    },
+    "c-gating-surfaces-agree.6": {
+      "result": "pass",
+      "evidence": "guest curl /community-sitemap.xml -> index of community-sitemap-spaces-1.xml and community-sitemap-posts-1.xml (328 post URLs); no URL contains partner-program, customer-advisory-board, moderators-room, or any private topic slug; GET /updates?scope=global&since=... as guest -> 401 jetonomy_unauthorized."
+    },
+    "c-gating-surfaces-agree.7": {
+      "result": "pass",
+      "evidence": "non-member ingrid_s on Partner Program topic 239: GET /posts/239 and /posts/239/replies -> 404 jetonomy_not_found; GET /spaces/41, /spaces/41/posts, /search?space_id=41 -> 403 jetonomy_forbidden. Same six for CAB as bob. Hidden space 43 and id 99999 -> 404 'Space not found.' for /spaces/{id}, /posts and /search, identical bodies. NOTE: in this seed bob is a space ADMIN of Partner Program (jt_space_members), so the line as written (bob in Partner Program -> 404) returns 200 for bob by design."
+    },
+    "c-gating-surfaces-agree.8": {
+      "result": "pass",
+      "evidence": "guest GET /updates?scope=post&id=240&since=... (CAB topic) -> 404 jetonomy_not_found, same as id 99999999 and a hidden-space topic; on a public General Discussion topic (id 246) -> 200 {data:[],since,scope:post}."
     },
     "c-gating-surfaces-agree.9": {
       "result": "pass",
-      "evidence": "Logged out on /community/s/partner-program/ with 'Show private spaces to logged-out visitors' off: only 'This space is private. Log in to see it.' with Log In and Browse spaces; page title is just 'Community - Northwind Makers Community'; the markup has neither the space name nor its description nor any topic title. Screenshot sa-guest-off.png."
+      "evidence": "with Settings > General > Access Control 'Show private spaces to logged-out visitors' off, guest /community/s/partner-program/ -> 'This space is private. Log in to see it.' + Log In + Browse spaces; no card, no space name; home grid lists no private spaces.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-guest-off.png"
     },
     "c-gating-surfaces-agree.10": {
       "result": "pass",
-      "evidence": "Settings > General > Access Control > 'Show private spaces to logged-out visitors' on: the logged-out space page now shows 'Partner Program is private. Log in to request access.' with the space description and 'Request to join and the partner team reviews it.', Log In / Browse spaces, no topics (no title leak in the markup); the guest home lists the locked cards Insiders / Beta, Customer Advisory Board and Partner Program. Setting turned off again afterwards. Screenshot sa-guest-on.png."
+      "evidence": "turned the setting on and saved ('Settings saved.'): guest sees the Partner Program space page naming it ('Partner Program - Northwind Makers Community', description, 'Log in to request access.', Log In) and the home grid shows locked cards for Partner Program and Customer Advisory Board; no topic title in the HTML; hidden Moderators' Room still not listed. Setting turned back off.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-guest-on.png"
     },
     "c-gating-surfaces-agree.11": {
       "result": "pass",
-      "evidence": "alice (member of Partner Program) sees her topic 'Partner Program payout calendar question' on the space page, the topic page (200), the web search, the tag page and REST /search and /spaces/41/posts (200); theo (non-member) gets none of them (space page without the topic, topic 404, search/tag empty, REST /spaces/41/posts 403)."
+      "evidence": "alice (roster member of Partner Program) sees 'Referral fees for 2026: what changed' on the space page, in search ('1 result'), on /tag/partner-pricing/ ('1 topic') and over REST (GET /posts/239 200, /spaces/41/posts 200, /search?space_id=41 returns it).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-alice-space.png"
     },
     "c-gating-surfaces-agree.12": {
       "result": "pass",
-      "evidence": "test_moderator on Moderators' Room (hidden): space page lists 'Escalation checklist for the moderators room', topic page 200, web search finds it, REST /spaces/43/posts 200. bob: space 404, topic 404, search empty, REST 404; the home shows it for neither."
+      "evidence": "test_moderator sees Moderators' Room topics on the space page (both topics), in search ('Escalation checklist' 1 result), REST /spaces/43/posts 200, and the room on the home grid; bob gets search 0 results and the room is 404 for him."
     },
     "c-gating-surfaces-agree.13": {
       "result": "pass",
-      "evidence": "Two browser contexts: bob (then admin of Partner Program) loaded space, topic, search, tag and REST - all showed the topic. Admin removed him from the roster in the other context; on his next loads the space page no longer lists it, the topic is 404, search and tag are empty and REST /spaces/41/posts is 403 - every surface dropped together. (bob is not restored to Partner Program.)"
+      "evidence": "admin pressed Remove on alice's row on the Partner Program Members tab; alice's next loads: space page gate (no topics), search 'Referral fees' 0 results, tag page '0 topics', topic URL 404, REST /posts/239 404 and /spaces/41/posts 403 - all dropped together. Alice re-added afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-alice-removed.png"
     },
     "c-gating-surfaces-agree.14": {
       "result": "pass",
-      "evidence": "Created public 'Surface Switch Lab' with a tagged topic; bob sees it on the space page, topic, search, tag ('1 topic') and REST. Switched the space to Private in the admin (toast 'Space updated.'): for bob the space page lists nothing, the topic is 404, search and tag ('0 topics') are empty, REST search returns nothing and REST /spaces/187/posts is 403."
+      "evidence": "Gadget Testing Lab was public with 7 topics, then a Role rule made it Private: hugo_m (non-member) gets search 'battery drain' 0 results (admin finds 13835), /posts/13835 404, space 403, topic URL 404, home and the author's profile list none of them."
     },
     "c-gating-surfaces-agree.15": {
       "result": "pass",
-      "evidence": "Seeded 2000 topics ('Zephyrquartz private topic N') into a private invite-only space bob is not admitted to. Logged in as bob: home loads in about 650 ms with none of the titles and no card for that space; the space URL (including ?page=2) is the invite-only refusal; web and REST search return 0 results on page 1 and 2; REST /spaces/{id}/posts pages 1 and 2 -> 403 with no content. A first attempt on another space was invalid because every user held the PMPro plan that admitted them there."
+      "evidence": "created 2000 topics ('Scalecheck advisor note ...') in the private Advisors Lounge via Post::create (about 1 s): bob home loads in about 0.7 s with 0 of them, search 'Scalecheckzebra' pages 1 and 2 -> '0 results', the space page and ?page=2 are the gate with 0 titles, REST /search?q=advisor pages 1-2 return 0 private rows; admin sees them (positive control).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-many.png"
+    },
+    "c-gating-surfaces-agree.16": {
+      "result": "pass",
+      "evidence": "guest on a private space URL with the preview off: document title 'Community - Northwind Makers Community' (the community title plus site name, never the space name; the line says 'site name only')."
+    },
+    "c-gating-surfaces-agree.17": {
+      "result": "pass",
+      "evidence": "guest HTML of /community/s/partner-program/ (preview off) contains neither 'Partner Program' nor the description text nor any topic title; the page shows only 'This space is private. Log in to see it.'",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-guest-off.png"
     },
     "c-gating-surfaces-agree.18": {
       "result": "pass",
-      "evidence": "Created WordPress role walk_noread with no capabilities and a user in it (cannot read): on a public space the page shows no Join and no New Topic; POST /spaces/15/members -> 403 jetonomy_forbidden and POST /spaces/15/posts -> 403 jetonomy_forbidden. Screenshot sa-noread.png."
+      "evidence": "piet_j (custom role walk_noread, user_can read = false) on General Discussion: no Join (only a Follow button) and no New Topic; POST /spaces/15/members -> 403 jetonomy_forbidden; POST a topic -> 403.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-agree-noread.png"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "runbook_fixes": [
+    {
+      "check": "c-gating-surfaces-agree.7",
+      "now": "use a non-member such as test_subscriber for Partner Program (bob is a space admin there in the seed); bob is a non-member only of Customer Advisory Board"
+    },
+    {
+      "check": "c-gating-surfaces-agree.16",
+      "now": "the document title is 'Community - <site name>' (community title and site name), never the space name"
+    },
+    {
+      "check": "c-gating-surfaces-agree.5",
+      "now": "there is no Trending page; Trending is the sidebar widget (and /community/trending/ is a 404)"
+    }
+  ]
 }

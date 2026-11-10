@@ -1,17 +1,18 @@
 {
   "journey": "C.gating.read-on-private",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T21:07:38.485856Z",
-  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
+  "free": "8478fd19",
+  "pro": "81befa5",
+  "walked_at": "2026-11-10T08:14:05Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "Free + Pro, all 17 Pro extensions on",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
       "light"
@@ -20,52 +21,59 @@
     "locale": "en_US"
   },
   "checks": {
-    "c-gating-read-on-private.5": {
-      "result": "pass",
-      "evidence": "gate_sub2 (read-only via the Logged In read rule on the private-switched space): POST topic -> 403 jetonomy_forbidden 'You cannot post in this space.'; POST reply -> 403 'You cannot post in this space.'; no rows stored. (REST in-process as the persona on the combo stack; fresh subscribers gate_sub/gate_sub2/gate_sub3 created for the walk and deleted afterwards; Amsterdam Chapter rules/visibility/join policy restored to public/open)"
-    },
-    "c-gating-read-on-private.6": {
-      "result": "fail",
-      "evidence": "REST as gate_sub2 (Read-rule member): POST /posts/3249/vote -> 403 jetonomy_forbidden as expected; POST /flags {object_type:post,object_id:3249} -> 403 jetonomy_forbidden 'You do not have permission to perform this action.' instead of 201. The same member flags a topic in a public space with 201, so the denial is the Viewer role: Permission_Engine role map gives 'viewer' only 'read' (includes/permissions/class-permission-engine.php line 115) and Moderation_Service::check_flag asks can(user,'flag',space). Product bug versus the promise 'Read is read and report'."
-    },
-    "c-gating-read-on-private.3": {
-      "result": "pass",
-      "evidence": "gate_sub2 now sees the space (2 topics, 3 members) and its topic cards, and opens 'Roadmap review notes for the beta group' with its body. Screenshots gt-priv-read.png, gt-priv-topic.png."
-    },
     "c-gating-read-on-private.1": {
       "result": "pass",
-      "evidence": "gate_sub2 (subscriber, not on the roster) opened the invite-only Gate Private Lab with no rule -> 'Gate Private Lab is invite-only. You need an invitation to join. ... Ask a space admin or a site administrator to invite you.' with no topics; the topic URL returns the 404 'Topic not found'. Screenshot /Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gt-priv-locked.png."
+      "evidence": "priyanka_n (subscriber, no rule) opened /community/s/founders-circle/ (private, invite): 'Founders Circle is invite-only. You need an invitation to join.' with description, no topics; topic URL /t/q4-roadmap-review-for-founders/ -> HTTP 404 'Topic not found.'",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-locked.png"
     },
     "c-gating-read-on-private.2": {
       "result": "pass",
-      "evidence": "Admin added WP Role 'subscriber' + Read to the private space -> toast 'Rule added: WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.' (the line's 'Access rule added.' is the older wording)."
+      "evidence": "admin Access Rules tab: WP Role subscriber + Read; preview and toast both 'Rule added: WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.' (no confirm modal appeared for a WP Role rule)."
+    },
+    "c-gating-read-on-private.3": {
+      "result": "pass",
+      "evidence": "same subscriber loads the space: 3 topics listed (Welcome, Q4 roadmap review, long-title topic) and opens a topic page with title and body.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-list.png"
     },
     "c-gating-read-on-private.4": {
-      "result": "fail",
-      "evidence": "As gate_sub2 under the Read rule: no New Topic/Join control and no reply composer (0 contenteditable), the vote control reads 'Score 0. Voting is not available to you here.', and direct REST POST /posts/3249/vote -> 403 jetonomy_forbidden - all as expected. But there is NO Report button on the topic (buttons shown: Follow, Share, Bookmark, React). The check and the Grants help text ('Read - Lets matching people in to read and report') promise Report remains. Screenshot gt-priv-topic.png."
+      "result": "pass",
+      "evidence": "topic page as the Read-rule subscriber: no New Topic button, no reply editor, no Post Reply button, no Vote up/down buttons (score line reads 'Score 0. Voting is not available to you here.'); Report button present. Direct REST vote -> 403 jetonomy_forbidden. NOTE: the Reply jump link, Share, Bookmark and the Pro React trigger are still shown (see proposed check on reactions).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-topic.png"
+    },
+    "c-gating-read-on-private.5": {
+      "result": "pass",
+      "evidence": "priyanka_n POST /spaces/342/posts -> 403 jetonomy_forbidden 'You cannot post in this space.'; POST /posts/{id}/replies -> 403 same message; POST /posts/{id}/vote -> 403 jetonomy_forbidden but the message is 'You do not have permission to perform this action.' (not 'You cannot post in this space.'). No topic/reply/vote row stored."
+    },
+    "c-gating-read-on-private.6": {
+      "result": "pass",
+      "evidence": "vote -> 403 jetonomy_forbidden; POST /flags on the topic -> 201 {created:true,id:37}, row stored in jt_flags."
     },
     "c-gating-read-on-private.7": {
       "result": "pass",
-      "evidence": "Logged-out visitor on the private space: 'This space is private. Log in to see it.' with Log In / Browse spaces; the HTML contains neither the space name nor the topic title; the topic URL is the 404 'Topic not found'. Screenshot gt-priv-guest.png."
+      "evidence": "guest opened /community/s/founders-circle/ -> 'This space is private. Log in to see it.' + Log In button; REST GET /spaces/342/posts as guest -> 403 jetonomy_forbidden. The subscriber role rule did not apply to guests."
     },
     "c-gating-read-on-private.8": {
       "result": "pass",
-      "evidence": "Admin deleted the rule (confirm, toast 'Access rule deleted.'); gate_sub2's next load of the space is the invite-only refusal again."
+      "evidence": "admin Delete + Confirm on the rule -> toast 'Access rule deleted.'; subscriber's next load of the space is the invite-only refusal page again."
     },
     "c-gating-read-on-private.9": {
       "result": "pass",
-      "evidence": "alice posted a 159-character title ('After moving our 12-year-old photography forum from phpBB...') in the private space; gate_sub2 sees it wrapped in the list (link box 470px wide, 71px tall) and in the h1 (651px x 127px), no horizontal overflow at 1440 or 390 (scrollWidth equals viewport)."
+      "evidence": "185-character title topic (Roadmap review notes for the founders circle ...) read as the subscriber at 1440: title wraps across lines, page scrollWidth 1440 = clientWidth, no clipped link.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-long.png"
     },
     "c-gating-read-on-private.10": {
       "result": "pass",
-      "evidence": "At 390x844 the space header, follow button and tabs stack in one column; document scrollWidth 390; topic row spans 32-358. Screenshot gt-priv-list-390.png."
+      "evidence": "space list at 390px: scrollWidth 390 = clientWidth, long title wraps (194px tall), no horizontal scroll, layout stacks (Chromium viewport resize).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-390.png"
     }
   },
-  "proposed_checks": [],
+  "proposed_checks": [
+    "- `c-gating-read-on-private.11` @member #rest !refuse +private: a Read-rule viewer POSTs /posts/{id}/reactions in the private space -> 403 like a vote (today it answers 200 'added' and stores the reaction; the Vote controls are hidden but the React trigger still shows)."
+  ],
   "runbook_fixes": [
     {
-      "check": "c-gating-read-on-private.2",
-      "now": "toast reads 'Rule added: WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.' (rule-type label and 'Rule added:' prefix)."
+      "check": "c-gating-read-on-private.5",
+      "now": "vote returns 403 jetonomy_forbidden 'You do not have permission to perform this action.'; only topic and reply say 'You cannot post in this space.'"
     }
   ]
 }

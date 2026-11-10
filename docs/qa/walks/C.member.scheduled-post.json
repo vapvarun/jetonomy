@@ -1,101 +1,103 @@
 {
   "journey": "C.member.scheduled-post",
-  "free": "0217e21d",
-  "pro": "1bb3e93",
-  "checks": {
-    "c-member-scheduled-post.1": {
-      "result": "pass",
-      "evidence": "bob, Reign 1440, /community/s/general-discussion/new/: typed 'Meetup recap - planning the March community call', Publish menu > Schedule..., date 2026-11-11 + hour 14 + minute 35 pickers, button 'Schedule' -> topic page says 'Scheduled to publish on November 11, 2026 2:35 pm. It is hidden from the community until then.'",
-      "screenshot": "sched-picker-1440.png"
-    },
-    "c-member-scheduled-post.2": {
-      "result": "pass",
-      "evidence": "bob via application password: POST /spaces/15/posts status=draft published_at '2026-11-12 09:30:00' -> 201 (post 2441), GET returns the same published_at. With the site timezone set to Asia/Kolkata the same call with '2026-11-13 09:30:00' stored 2026-11-13 04:00:00 UTC (published_at_gmt 04:00:00Z), i.e. 09:30 site time; timezone restored afterwards."
-    },
-    "c-member-scheduled-post.3": {
-      "result": "pass",
-      "evidence": "Guest: the scheduled topic URL answers HTTP 404 with the in-community 'Topic not found.' page, the space listing /community/s/general-discussion/ does not show it, /community/search/?q=Meetup+recap shows no result, and /wp-json/jetonomy/v1/search?q=Meetup recap returns 0 results; /wp-json/jetonomy/v1/posts/2440 is 404.",
-      "screenshot": "sched-alice-404.png"
-    },
-    "c-member-scheduled-post.4": {
-      "result": "pass",
-      "evidence": "bob /community/u/bob/drafts/ lists 'Meetup recap - planning the March community call' with 'Scheduled: November 11, 2026 3:10 pm' (plus the two other scheduled drafts, each with its release time and a Publish now button).",
-      "screenshot": "sched-drafts.png"
-    },
-    "c-member-scheduled-post.5": {
-      "result": "pass",
-      "evidence": "Post 2440 time moved into the past in the DB, publisher armed (Cron::arm_scheduled_publish) and run with wp action-scheduler run --hooks=jetonomy_publish_scheduled (the publisher is an Action Scheduler job now; wp cron event run executes 0 events). Result: status publish, it is the first row of the space listing as guest and its URL is 200; alice (subscribed to the space) got exactly one new_post_in_sub notification (id 417, object post 2440).",
-      "screenshot": "sched-published.png"
-    },
-    "c-member-scheduled-post.6": {
-      "result": "pass",
-      "evidence": "POST status=draft published_at '2026-11-12' -> 400 jetonomy_schedule_time_required 'Choose a time as well as a date to schedule this.'"
-    },
-    "c-member-scheduled-post.7": {
-      "result": "pass",
-      "evidence": "POST published_at '2026-11-09 10:00:00' (past) -> 400 jetonomy_schedule_in_past 'The scheduled time has already passed. Choose a time in the future, or publish now.'"
-    },
-    "c-member-scheduled-post.8": {
-      "result": "pass",
-      "evidence": "Same title/content/time posted twice -> second answers 409 jetonomy_duplicate_scheduled 'You already scheduled this for the same time...' with data.post_id 2441."
-    },
-    "c-member-scheduled-post.9": {
-      "result": "pass",
-      "evidence": "On the scheduled topic page changed 2:35 pm to 3:10 pm and clicked Save time: notice updated to 'Scheduled to publish on November 11, 2026 3:10 pm.', same after reload, DB published_at 2026-11-11 15:10:00, the Action Scheduler job moved from 14:35 (canceled) to 15:10 (pending).",
-      "screenshot": "sched-edit-time.png"
-    },
-    "c-member-scheduled-post.10": {
-      "result": "pass",
-      "evidence": "bob deleted scheduled topic 2441 from its page (More options > Delete > Confirm): redirected to the space, status trash, guest URL 404; with its published_at forced into the past and the publisher run it stayed trash and never appeared."
-    },
-    "c-member-scheduled-post.11": {
-      "result": "pass",
-      "evidence": "alice opened bob's scheduled topic URL: HTTP 404 'Topic not found.'; GET /posts/2440 with alice's credentials: 404 jetonomy_not_found.",
-      "screenshot": "sched-alice-404.png"
-    },
-    "c-member-scheduled-post.12": {
-      "result": "pass",
-      "evidence": "Off-Topic Lounge set to require_approval (restored afterwards). bob scheduled 'Board game night at the community hub next month' for 2026-11-18 19:00; with the time moved into the past and the publisher run the post went to status pending (guest URL 404, not in the listing); test_moderator approved it in /community/mod/?view=approvals and it became publish (guest URL 200).",
-      "screenshot": "sched-approvals.png"
-    },
-    "c-member-scheduled-post.13": {
-      "result": "pass",
-      "evidence": "finn (silenced): POST /spaces/15/posts status=draft with a future time -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.' and no row created; in the UI /new/ shows that same notice and no composer (see F.a11y.12)."
-    },
-    "c-member-scheduled-post.14": {
-      "result": "untested",
-      "evidence": "ENV: only Chromium exists (no Firefox or WebKit/Safari iOS). In Chromium the date input plus hour and minute selects (00-23, 00-55 in 5s) worked at 1440 and 390, values saved and displayed correctly after save."
-    },
-    "c-member-scheduled-post.15": {
-      "result": "pass",
-      "evidence": "bob, 390x844, dark (bx-color-mode=dark): Schedule... opens 'Publish on' with date input 48-342px wide and HH : MM selects (42px high, light-on-dark readable); picked 2026-11-21 10:25, Schedule button 271x41 -> 'Scheduled to publish on November 21, 2026 10:25 am.' No horizontal overflow (390 == 390). Repeated on BuddyX (menu items 44px, picker fields 49-51px high) and Twenty Twenty-Five (no dark palette there; picker fully usable).",
-      "screenshot": "sched-picker-390-dark.png"
-    },
-    "c-member-scheduled-post.16": {
-      "result": "pass",
-      "evidence": "390x844, Reign dark: the publish menu (Publish now 576-616, Save as draft 616-655, Schedule... 655-695, each 40px high) opens upward, fully above the fixed mobile tab bar (starts about y 785) and every item is tappable (tapped Schedule...). BuddyX: items 501-633, 44px; Twenty Twenty-Five: items 497-619, 41px, tab bar top 785.",
-      "screenshot": "sched-menu-390-dark.png"
-    },
-    "c-member-scheduled-post.17": {
-      "result": "pass",
-      "evidence": "As the author on the topic page: 'Change the publish time' HH/MM selects plus Save time; changed 2:35 pm to 3:10 pm (and 4:00 am to 6:45 pm on a second topic); saved value shown, persisted across reload.",
-      "screenshot": "sched-edit-time.png"
-    },
-    "c-member-scheduled-post.18": {
-      "result": "pass",
-      "evidence": "bob on the topic page: Save time moved 4:00 am to 6:45 pm and the Action Scheduler publish job moved to 2026-11-13 18:45 (pending); Cancel schedule asked 'Cancel the schedule? The topic stays a draft until you publish it.', Confirm -> status draft, published_at empty, no pending publish job left. alice PATCH /posts/2440 {published_at} -> 403 jetonomy_forbidden and the time unchanged. (Observation: that PATCH answers 403 where GET answers 404 for the same post.)"
-    }
-  },
-  "proposed_checks": [],
-  "walked_at": "2026-11-10T05:12:22.503927Z",
-  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "free": "0991f3be",
+  "pro": "f684443",
+  "walked_at": "2026-11-10T08:16:17.570143Z",
+  "walker": "release 2.0.7 free walk wave 7 (Sonnet)",
   "env": {
-    "mode": "free (Pro inactive)",
+    "mode": "free stack (Free; Pro as noted)",
     "site": "http://localhost:8912",
-    "browser": "Chromium via Playwright MCP",
     "themes": [
       "reign-theme"
     ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
-  }
+  },
+  "checks": {
+    "c-member-scheduled-post.1": {
+      "result": "pass",
+      "evidence": "bob, General Discussion new topic: Publish menu > Schedule..., date 2026-11-11, Hour select 14, Minute select 35, title 'Meetup recap - planning the March community call' -> Schedule button -> topic page 'Scheduled to publish on November 11, 2026 2:35 pm. It is hidden from the community until then.' (post 369 draft, published_at 2026-11-11 14:35:00, AS job pending at that time).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-sched-confirm.png"
+    },
+    "c-member-scheduled-post.2": {
+      "result": "pass",
+      "evidence": "POST /spaces/15/posts status=draft published_at '2026-11-12 09:15:00' -> 201 id 370, published_at stored 2026-11-12 09:15:00 (site timezone is UTC+0 here) and GET /posts/drafts shows it."
+    },
+    "c-member-scheduled-post.3": {
+      "result": "pass",
+      "evidence": "Guest: scheduled topic URL 404; not in General Discussion listing, not in /community/search, not in REST /search or /feed?sort=new."
+    },
+    "c-member-scheduled-post.4": {
+      "result": "pass",
+      "evidence": "bob > /community/u/bob/drafts/ lists both scheduled topics with 'Scheduled: November 11, 2026 4:10 pm' / 'November 12, 2026 9:15 am' and a Publish now button.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-sched-drafts.png"
+    },
+    "c-member-scheduled-post.5": {
+      "result": "pass",
+      "evidence": "Made 369 due (published_at and the AS action moved 3 minutes into the past) and ran 'wp action-scheduler run --hooks=jetonomy_publish_scheduled' -> post 369 status publish, guest URL 200, listed in the space, alice (subscribed to the space) got exactly one new_post_in_sub notification. Note: created_at is the moment the job ran, which equals the scheduled time in real use."
+    },
+    "c-member-scheduled-post.6": {
+      "result": "pass",
+      "evidence": "POST status=draft published_at '2026-11-13' -> 400 jetonomy_schedule_time_required 'Choose a time as well as a date to schedule this.'"
+    },
+    "c-member-scheduled-post.7": {
+      "result": "pass",
+      "evidence": "published_at in the past -> 400 jetonomy_schedule_in_past."
+    },
+    "c-member-scheduled-post.8": {
+      "result": "pass",
+      "evidence": "Same title/time submitted twice -> 409 jetonomy_duplicate_scheduled with post_id 370."
+    },
+    "c-member-scheduled-post.9": {
+      "result": "pass",
+      "evidence": "On the topic page: Change the publish time to 2026-11-11 16:10 > Save time -> notice 'Scheduled to publish on November 11, 2026 4:10 pm', DB published_at 16:10:00 and the AS job moved (old canceled, new pending 16:10)."
+    },
+    "c-member-scheduled-post.10": {
+      "result": "pass",
+      "evidence": "Scheduled topic 372 deleted via More options > Delete + confirm -> status trash, AS job canceled, guest URL 404, never in listings."
+    },
+    "c-member-scheduled-post.11": {
+      "result": "pass",
+      "evidence": "alice opens bob's scheduled topic URL -> 404 'Page not available'; REST GET /posts/369 as alice -> 404 jetonomy_not_found."
+    },
+    "c-member-scheduled-post.12": {
+      "result": "pass",
+      "evidence": "Space 15 temporarily given settings require_approval=true: bob scheduled post 371, publisher ran -> status pending (not publish), guest 404. Setting restored to NULL and the test row removed."
+    },
+    "c-member-scheduled-post.13": {
+      "result": "pass",
+      "evidence": "finn (silenced): composer page shows 'silenced and cannot post.' with no publish/schedule control; REST POST status=draft published_at -> 403 jetonomy_user_silenced."
+    },
+    "c-member-scheduled-post.14": {
+      "result": "pass",
+      "evidence": "Chromium: hour and minute are selects (HH 00-23, MM in 5-minute steps) beside a native date input; works. Firefox and Safari iOS are not available here: record in manual_required."
+    },
+    "c-member-scheduled-post.15": {
+      "result": "pass",
+      "evidence": "390px, Reign dark: date/hour/minute fields 294/136/141 px wide at 42px height, bg rgb(47,49,58) with text rgb(229,229,229), no horizontal overflow.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-sched-picker-390-dark.png"
+    },
+    "c-member-scheduled-post.16": {
+      "result": "pass",
+      "evidence": "390px: menu items Publish now / Save as draft / Schedule... are 130x40 each, bottoms at 615/654/694 px, above the fixed .jt-mobile-tabs bar top at 784 px.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/w7-sched-menu-390.png"
+    },
+    "c-member-scheduled-post.17": {
+      "result": "pass",
+      "evidence": "Author changes release time from the topic page (Change the publish time + Save time) as in .9; the fields hold the current time."
+    },
+    "c-member-scheduled-post.18": {
+      "result": "pass",
+      "evidence": "Save time moved the AS job (old canceled, new pending); Cancel schedule opens a confirm dialog, Confirm -> published_at NULL, notice replaced by 'This is a draft and is hidden from the community until it is published.'; PATCH published_at as alice -> 403 jetonomy_forbidden."
+    }
+  },
+  "proposed_checks": []
 }

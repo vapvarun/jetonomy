@@ -1,11 +1,11 @@
 {
   "journey": "C.member.reply-create",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T19:40:27Z",
-  "walker": "release 2.0.7 combo walk wave 2 (Sonnet)",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "walked_at": "2026-11-10T06:56:35.692062Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, 17 extensions on, JETONOMY_PRO_LICENSE_BYPASS via mu-plugin walk-env.php)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -15,7 +15,8 @@
       390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
@@ -23,114 +24,121 @@
   "checks": {
     "c-member-reply-create.1": {
       "result": "pass",
-      "evidence": "bob replied the exact sentence on Feature Requests 'Dark mode for the community on phones': reply appended inline at the end, header 'Replies' 45 -> 46."
+      "evidence": "bob on 'Dark mode for the community on phones' (Feature Requests; the thread now has 63+ replies, not 45): replied with the given sentence -> reply 4093 inline, topic header Replies went 63 -> 64.",
+      "screenshot": "qa-artifacts/walk-207/combo/rc1-reply.png"
     },
     "c-member-reply-create.2": {
       "result": "pass",
-      "evidence": "bob POST /posts/249/replies -> 201 id 1223, listed under the topic."
-    },
-    "c-member-reply-create.4": {
-      "result": "pass",
-      "evidence": "bob submitted an empty reply -> inline 'Write your reply before posting.' and no reply added."
-    },
-    "c-member-reply-create.6": {
-      "result": "pass",
-      "evidence": "bob on closed Announcements topic 'Scheduled maintenance on Saturday: what to expect': no composer and no Reply/Quote buttons."
-    },
-    "c-member-reply-create.7": {
-      "result": "pass",
-      "evidence": "bob POST /posts/250/replies (closed) -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'"
-    },
-    "c-member-reply-create.11": {
-      "result": "pass",
-      "evidence": "bob (not a member now) opens a Customer Advisory Board topic: page reads 'Topic not found. This topic may have been removed, or the link is wrong.' with no composer; POST /posts/403/replies -> 404 jetonomy_not_found and the topic is still 404 for him, nothing stored."
-    },
-    "c-member-reply-create.12": {
-      "result": "pass",
-      "evidence": "finn (silenced): the reply composer is replaced by 'Your account is currently silenced and cannot post.' on the topic; POST /posts/117/replies -> 403 jetonomy_user_silenced."
-    },
-    "c-member-reply-create.23": {
-      "result": "pass",
-      "evidence": "omar opens an Off-Topic Lounge topic: 'You have been banned from this space and cannot take part in it.' (not 'Topic not found'); POST /posts/147/replies -> 403 jetonomy_user_space_banned."
-    },
-    "c-member-reply-create.24": {
-      "result": "pass",
-      "evidence": "UI: empty reply -> 'Write your reply before posting.'; REST POST /replies with empty content -> 400 jetonomy_validation 'Reply content is required.'"
-    },
-    "c-member-reply-create.5": {
-      "result": "pass",
-      "evidence": "bob POST reply with parent_id: missing (9999999) -> 400 jetonomy_invalid_parent 'The reply you are answering is no longer available.'; trashed reply -> 409 jetonomy_already_trashed; spam reply -> 409 jetonomy_not_published; a reply of another topic (1167) -> 400 jetonomy_invalid_parent. The topic reply count stayed 10 and no stray reply was stored. (Two are 409 rather than a 400 validation error.)"
-    },
-    "c-member-reply-create.8": {
-      "result": "pass",
-      "evidence": "test_moderator on the closed topic 'Scheduled maintenance on Saturday: what to expect': Closed badge, composer present, reply posted and shown (mod-reply-closed.png)."
+      "evidence": "POST /posts/13751/replies as bob -> 201 id 4096; GET /posts/13751/replies lists it."
     },
     "c-member-reply-create.3": {
       "result": "fail",
-      "evidence": "alice is OP of 'What has worked for you in General Discussion?' (topic 123). bob replied through the UI: alice got one bell notification (832 reply_to_post) and one Mailpit email 'Bob Martinez replied to your topic' as expected. Then alice pressed Follow and Following on the topic page (the button reads Follow, i.e. unsubscribed) and bob replied again: alice STILL got a bell notice (833) and another email. The check line expects neither. Code: Notifier notifies the post author unconditionally (reply_to_post), independent of any topic subscription. Read: either the line is wrong or the OP notification ignores an explicit unfollow, which a member would find surprising."
+      "evidence": "alice is OP of 'What did you ship this month?'. bob's reply -> alice 1 bell + 1 email (correct). After alice clicked Unfollow (button went to 'Follow'), bob replied again -> alice still got a reply_to_post notification (id 3478) and a Mailpit email 'Bob Martinez replied to your topic'. Known 2.0.8 card, owner exception."
+    },
+    "c-member-reply-create.4": {
+      "result": "pass",
+      "evidence": "Empty reply (and whitespace-only typed in the editor) -> inline 'Write your reply before posting.' under the editor, nothing posted.",
+      "screenshot": "qa-artifacts/walk-207/combo/rc4-empty.png"
+    },
+    "c-member-reply-create.5": {
+      "result": "pass",
+      "evidence": "bob POST parent_id: missing 999999 -> 400 jetonomy_invalid_parent; trashed 3810 -> 409 jetonomy_already_trashed; spam 1356 -> 409 jetonomy_not_published; other topic's reply 1174 -> 400 jetonomy_invalid_parent; nothing created."
+    },
+    "c-member-reply-create.6": {
+      "result": "pass",
+      "evidence": "bob on closed 'Scheduled maintenance on Saturday: what to expect' (Announcements; the earlier-named 'Scheduled maintenance this Saturday' topic is open, the closed one is id 250 and has 3 replies): no composer, 0 Reply/Quote buttons.",
+      "screenshot": "qa-artifacts/walk-207/combo/rc6-closed-bob.png"
+    },
+    "c-member-reply-create.7": {
+      "result": "pass",
+      "evidence": "POST /posts/250/replies as bob -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'"
+    },
+    "c-member-reply-create.8": {
+      "result": "pass",
+      "evidence": "test_moderator on the closed topic: composer present, reply posted (3 -> 4 replies)."
     },
     "c-member-reply-create.9": {
       "result": "pass",
-      "evidence": "carlos and david followed topic 123; bob's public reply gave each exactly one notification (836, 835 reply_to_post) and each one Mailpit email 'Bob Martinez replied in ...'; the OP alice got her own one (834)."
+      "evidence": "maya follows the thread (Follow -> Following); bob's public reply 4099 -> maya got 1 notification (3483) and 1 email 'Bob Martinez replied in What did you ship this month?'."
     },
     "c-member-reply-create.10": {
       "result": "pass",
-      "evidence": "bob's private reply mentioning @admin: carlos and david (thread followers) got no new notification or email; the OP alice got one (838) and the mentioned admin (staff, may read it) got one mention (837) and one email 'You were mentioned by Bob Martinez'."
+      "evidence": "bob private reply 4100 (Private reply checkbox) -> notification only to alice (OP); maya (thread subscriber) got no notification and no email."
+    },
+    "c-member-reply-create.11": {
+      "result": "pass",
+      "evidence": "bob on /s/customer-advisory-board/t/notes-from-the-advisory-board-call... -> 'Topic not found' empty state, no composer; POST /posts/403/replies -> 404 jetonomy_not_found 'Topic not found.'."
+    },
+    "c-member-reply-create.12": {
+      "result": "pass",
+      "evidence": "finn: composer replaced by 'Your account is currently silenced and cannot post.'; POST /posts/249/replies -> 403 jetonomy_user_silenced.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc-rc12-silenced-topic.png"
     },
     "c-member-reply-create.13": {
       "result": "pass",
-      "evidence": "omar on an Off-Topic Lounge topic: 'You have been banned from this space and cannot take part in it.' and no composer; in General Discussion he posted a reply through the form and it shows."
+      "evidence": "omar replying in Off-Topic Lounge topic 139 -> 403 jetonomy_user_space_banned with the ban message; omar's reply on a General Discussion topic -> 201 (id 4105)."
     },
     "c-member-reply-create.14": {
       "result": "pass",
-      "evidence": "test_subscriber (trust 0): 10 replies by REST returned 201, the 11th -> 429 jetonomy_rate_limited 'New members can post 10 replies a day. You can reply again in about 1 day.'; the UI form showed the same text as a toast (reply-limit.png)."
+      "evidence": "rhea_newcomer: 10 replies ok, 11th REST -> 429 jetonomy_rate_limited and UI 'New members can post 10 replies a day. You can reply again in about 1 day.'",
+      "screenshot": "qa-artifacts/walk-207/combo/rc14-limit.png"
     },
     "c-member-reply-create.15": {
       "result": "pass",
-      "evidence": "bob double-clicked Post Reply: one POST /posts/485/replies was sent and exactly one reply with that text exists in the DB."
+      "evidence": "double-click Post Reply -> exactly one reply added (6 -> 7)."
     },
     "c-member-reply-create.16": {
       "result": "pass",
-      "evidence": "Offline: Post Reply -> 'Failed to save.' toast, the reply text stays in the editor; back online the same button posted it once (one occurrence on the page, no duplicate)."
+      "evidence": "offline submit: text kept, 'Failed to save.'; back online, Post Reply -> one reply (7 -> 8), no duplicate.",
+      "screenshot": "qa-artifacts/walk-207/combo/rc16-offline.png"
     },
     "c-member-reply-create.17": {
       "result": "pass",
-      "evidence": "bob replied in Arabic on Omar's topic: the reply has dir=auto, computes rtl, text-align start (right) and shows at once (arabic-reply.png)."
+      "evidence": "Arabic reply on omar's topic 'Quick update on announcements': reply body dir=auto, computed rtl."
     },
     "c-member-reply-create.18": {
       "result": "pass",
-      "evidence": "bob posted a 2,070-character reply with an unbroken 130-character URL: at 1440 and 390 no element overflows the reply card, document scrollWidth equals the viewport, the link has overflow-wrap:anywhere (reply-long-1440.png, reply-long-390.png)."
+      "evidence": "1,900-char body + 140-char unbroken URL (2,085 chars rendered): card stays inside its column, no element overflows, no horizontal page scroll.",
+      "screenshot": "qa-artifacts/walk-207/combo/rc18-long.png"
     },
     "c-member-reply-create.19": {
       "result": "pass",
-      "evidence": "Walk Held Replies requires approval: bob's reply -> toast 'Your reply is awaiting moderation and will appear once approved.'; bob's and a guest's view of the topic do not show it; after approval in the queue it shows for guests and the OP (admin, 855) and the follower alice (856) got exactly one notification each."
+      "evidence": "Help Desk with require_approval on: bob's reply -> 'Your reply is awaiting moderation and will appear once approved.' (line says 'awaiting moderation' ok); reply count 0 visible; held in Awaiting approval; approved by test_moderator. Setting restored."
     },
     "c-member-reply-create.20": {
       "result": "pass",
-      "evidence": "bob replied on Omar's topic: the topic header Replies 1 -> 2, the listing row '1 reply' -> '2 replies', bob's profile replies 75 -> 76. The UI has no separate space-level reply counter."
+      "evidence": "bob's profile reply_count equals his published replies (155); topic 13751 reply_count 9 = 9 published replies; counts rose by one with each reply."
     },
     "c-member-reply-create.21": {
       "result": "pass",
-      "evidence": "390 mobile emulation with the viewport cut to 400px high (keyboard open): after typing, Post Reply sits at y 280-320, above the fixed bottom tab bar (top 340), and elementFromPoint at its centre is the button (reply-keyboard-390.png). A real soft keyboard was not available."
+      "evidence": "390x540 (keyboard-open height) after typing: Post Reply 40px tall, elementFromPoint at its centre is the button. At 390x380 the tall Reign sticky header covers the top half, not specific to Jetonomy.",
+      "screenshot": "qa-artifacts/walk-207/combo/rc21-390-kb.png"
     },
     "c-member-reply-create.22": {
       "result": "pass",
-      "evidence": "47-reply thread (page 1 shows 30): bob's reply -> header 47 -> 48 and the new reply is in view straight away (the page scrolled to it, scrollY 4041, top 455 inside the viewport)."
+      "evidence": "Reply on page 3 of a 3-page thread (Feature Requests topic): page reloaded to ?rpg=3#reply-4093 and the new reply is on screen."
+    },
+    "c-member-reply-create.23": {
+      "result": "pass",
+      "evidence": "omar in Off-Topic Lounge topic: banned message 'You have been banned from this space and cannot take part in it.' (not Topic not found); POST /replies -> jetonomy_user_space_banned.",
+      "screenshot": "qa-artifacts/walk-207/combo/rc23-banned-topic.png"
+    },
+    "c-member-reply-create.24": {
+      "result": "pass",
+      "evidence": "Inline 'Write your reply before posting.' is <p role=alert>; REST empty content -> 400 jetonomy_validation 'Reply content is required.' (whitespace-only '<p> </p>' via REST is accepted as a reply, see proposed check)."
     }
   },
-  "proposed_checks": [],
+  "proposed_checks": [
+    "- `c-member-reply-create.25` @member #rest !refuse +empty: POST /posts/<id>/replies with content '<p> </p>' (markup but no text) -> 400 'Reply content is required.' like empty content, nothing stored (today 201 and a reply with empty content_plain is created)."
+  ],
   "runbook_fixes": [
     {
-      "check": "c-member-reply-create.5",
-      "now": "missing and other-topic parents return 400 jetonomy_invalid_parent; a trashed parent returns 409 jetonomy_already_trashed and a spam parent 409 jetonomy_not_published"
+      "check": "c-member-reply-create.1",
+      "now": "Dark mode for the community on phones has 63+ replies (not 45)"
     },
     {
-      "check": "c-member-reply-create.14",
-      "now": "the refusal reads 'New members can post 10 replies a day. You can reply again in about 1 day.' (also 'in about 24 hours' for topics)"
-    },
-    {
-      "check": "c-member-reply-create.12",
-      "now": "for a silenced member the composer is replaced by the notice 'Your account is currently silenced and cannot post.'"
+      "check": "c-member-reply-create.6",
+      "now": "the closed Announcements topic is 'Scheduled maintenance on Saturday: what to expect'"
     }
   ]
 }

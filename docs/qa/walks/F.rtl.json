@@ -1,70 +1,69 @@
 {
   "journey": "F.rtl",
-  "free": "11e21b47",
-  "pro": "05e4a11",
+  "free": "9af111d9",
+  "pro": "ba34f60",
   "checks": {
     "f-rtl.1": {
       "result": "pass",
-      "evidence": "Installed ar locale active (site switch-language ar). bob at /community/, /community/s/general-discussion/, the Arabic topic and /community/u/omar/ at 1440 and 390: html dir=rtl, lang=ar, body rtl, community container direction rtl, scrollWidth == clientWidth on all 8 loads, no console errors.",
-      "screenshot": "rtl-topic-1440.png"
+      "evidence": "Site language ar (WPLANG=ar), bob. /community/, space, topic, profile/alice at 1440 and 390: html dir=rtl lang=ar, .jt-app direction rtl, scrollWidth==clientWidth in all 8 loads, 0 pageerror/console errors."
     },
     "f-rtl.2": {
       "result": "pass",
-      "evidence": "Arabic topic by Omar at 1440: avatar and author at the right, meta row, vote/action bar starting at the right (vote count rightmost), body direction rtl and right-aligned. The Arabic topic has no list, quote or code block, so those were measured on the 159-char English topic in the same RTL page: list/blockquote/pre are dir=ltr by dir=auto with bullets/left border/left alignment matching their own English text and pre stays ltr (unicode-bidi isolate). Reply cards in the 51-reply topic mirrored (avatar right). Observation, see f-rtl.6: breadcrumb tail '?' bidi.",
-      "screenshot": "rtl-longtopic-1440.png"
+      "evidence": "Arabic topic by Omar Haddad: author/meta row, title right-aligned rtl, action row (vote/views/reply/share/bookmark/report) mirrored, sidebar on the left (screenshot). The Arabic topic has no list/quote/code; on the long English topic (list/blockquote/pre) pre is direction ltr/text-align left, content blocks follow dir=auto (English block keeps left border 3px, correct for LTR text).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-arabic-topic.png"
     },
     "f-rtl.3": {
-      "result": "fail",
-      "evidence": "In RTL the Reply icon (lucide corner arrow, path 'M20 20v-7a4 4 0 0 0-4-4H4') still points left and no icon has a mirroring transform (computed transform none on all 26 icon svgs); the Reply arrow sits after the label and is not flipped. Breadcrumb uses plain '/' separators, so no chevron exists to mirror. Pagination here is a single 'Load More' button with no prev/next arrows. Product: reply arrow not mirrored in RTL (jetonomy.css has no rtl transform rule for it). /community/s/feature-requests/t/dark-mode-toggle-in-user-preferences-s12t1/ as bob.",
-      "screenshot": "rtl-share-1440.png"
-    },
-    "f-rtl.4": {
-      "result": "untested",
-      "evidence": "Composer in RTL as bob at 1440: toolbar starts at the right (Bold at x=1223, then Italic, Link, Emoji to its left), editor dir=rtl, caret/text start at the right, mixed Arabic sentence with URL https://example.com/photo-club?x=1 and Arabic-Indic digits kept in correct order, @ali opened the mention popup (Alice Chen) inside the editor. Attachment chips are a Pro Attachments surface and Pro is inactive here, so that part is not walked: needs the combo stack. (UI labels such as 'Describe your idea' stay English: the plugin has no ar translation.)",
-      "screenshot": "rtl-composer-1440.png"
+      "result": "pass",
+      "evidence": "Directional icons .jt-icon--dir get scaleX(-1) in rtl: reply arrow, in-reply-to arrow, FAB reply (visible at 390), tag-page Next arrow (matrix(-1,..)); search glass, bell, vote chevrons, checkmark/user-check, theme logo are not transformed. Hero breadcrumb chevron renders mirrored (theme)."
     },
     "f-rtl.5": {
-      "result": "fail",
-      "evidence": "At 1440 in RTL the notification panel (.jt-notif-panel, bell at x 307-359) spans x 19-359 but its ancestor .jt-app has overflow-x:clip with left edge 135, so the left 116px of the panel is cut off: every notification text is truncated at the left ('as accepted in...', 'ied in ...'). Share menu is fine (right-aligned to the button, inside the viewport) and dark mode renders the same in RTL. At 390 the bell lives in the bottom bar and the panel did not open as a floating panel to measure. Product bug: notification panel not constrained in RTL. User menu not separately measured.",
-      "screenshot": "rtl-notif-1440.png"
+      "result": "pass",
+      "evidence": "Dark mode (data-bx-mode=dark) + ar: notification panel opens at x306-646 of 1440 (inside viewport, anchored to the bell on the left, dir rtl); share dropdown 818-1005 (1440) and 8-195 (390) inside viewport, dir rtl; no horizontal overflow. Site header/user menu belong to Reign (out of scope).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-dark-share-390b.png"
     },
     "f-rtl.6": {
-      "result": "fail",
-      "evidence": "390px, Reign, RTL: 159-char title h1 wraps to 5 lines inside its card, no page overflow (390 == 390); Grace's profile /community/u/grace/ name wraps cleanly in 286px with no overflow. BUT the breadcrumb current-page item (the same 159-char English title ending in '?') is not isolated: at 1440 its '?' renders at the far left start of the second line ('?accepted answers people still search for') and at 390 the single-line breadcrumb shows only '...nd the accepted answers people still search for' with the head clipped and no '?'. Product: breadcrumb current item needs dir=auto/unicode-bidi isolate.",
-      "screenshot": "rtl-long-390.png"
-    },
-    "f-rtl.7": {
-      "result": "untested",
-      "evidence": "Vote buttons are mirrored (the vote group sits at the right of the post action bar and on the right of each reply card) and pagination is a 'Load More' button with no prev/next. Reaction chips, poll bars and the Messages pane are Pro extensions and Pro is inactive on this stack: needs the combo stack.",
-      "screenshot": "rtl-pagination-1440.png"
-    },
-    "f-rtl.8": {
-      "result": "untested",
-      "evidence": "Free admin screens as admin in ar at 1440 and 390 (Dashboard, Categories, Tags, Spaces, Content, Moderation, Activity Log, Revisions, Users, Import, Settings, Community Media): body direction rtl, sidebar at the right, wrap spans 20-1258 at 1440 and 12-380 at 390, scrollWidth == clientWidth everywhere, every table inside the wrap (no clipping). The Pro screens named in the check (Analytics, Badges) need Pro: untested on this stack.",
-      "screenshot": "rtl-admin-dash-1440.png"
+      "result": "pass",
+      "evidence": "390px, dark, ar, Reign: 159-char topic title wraps in 5 lines inside viewport (left 48 right 342), Grace Oluwaseun Adeyemi-Whitfield wraps on profile and members list with overflow-wrap:anywhere, scrollWidth 390.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-long-390.png"
     },
     "f-rtl.9": {
       "result": "pass",
-      "evidence": "Card 10469968283: on the ar locale as bob at /community/s/feature-requests/new/ the empty title (dir=auto) and empty editor (dir=auto) compute direction rtl under Reign (text-align start); after switching to en_US the same fields compute ltr; the saved Arabic topic body paragraph computes rtl and starts at the right edge (p right 937 vs card 961)."
+      "evidence": "ar page: New topic title input, editor (dir=auto, empty) compute direction rtl; en_US page: same fields compute ltr; saved Arabic topic paragraph direction rtl and sits against the right edge of its card (right 1241 vs card 1265)."
+    },
+    "f-rtl.4": {
+      "result": "pass",
+      "evidence": "ar + Pro, bob: composer toolbar mirrored (B at the right end); Arabic sentence with an inline URL stays intact and the @ali mention popup (rtl) opens beside the caret; Attach files with menu-notes.pdf: chips strip .jt-attach-compose-strip dir=rtl, chip sits at the right edge (406-1266 container) with its remove x; typed Arabic + URL after the chip without scrambling. Caveat: a bare '@ali' at the end of an Arabic sentence renders as 'ali@' (normal bidi for a neutral @ before a Latin word).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-attach-chip.png"
+    },
+    "f-rtl.7": {
+      "result": "pass",
+      "evidence": "ar + Pro, 1440: vote cluster at the right (x1195-1253 inside card 135-1305); reaction chip/picker direction rtl, icon then count; thread pagination/Load More dir=rtl; poll CSV 50% / JSON 50%: bars anchored at the right edge (bar 872-1243 inside option 500-1244), i.e. fill from the right; Messages list pane sits on the right with the empty conversation pane to its left, no overflow.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-poll.png"
+    },
+    "f-rtl.8": {
+      "result": "pass",
+      "evidence": "ar, admin: Jetonomy Dashboard, Settings, Pro Analytics and Pro Badges: html dir=rtl, wp admin menu on the right, tables right-aligned with 0 clipped tables, 0 elements outside the viewport, scrollWidth 1440 == viewport, no fatal.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/rtl-admin-jetonomy-pro-analytics.png"
     }
   },
   "proposed_checks": [],
-  "walked_at": "2026-11-10T04:56:59.259147Z",
-  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "walked_at": "2026-11-10T07:22:02.818740+00:00",
+  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
   "env": {
-    "mode": "free (Pro inactive)",
+    "mode": "free stack with Pro active (all 17 extensions) for .4/.7/.8",
     "site": "http://localhost:8912",
-    "browser": "Chromium via Playwright MCP",
     "themes": [
       "reign-theme"
     ],
-    "locale": "ar then en_US",
     "viewports": [
       1440,
       390
     ],
     "schemes": [
+      "light",
       "dark"
-    ]
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "ar (restored to en_US)"
   }
 }

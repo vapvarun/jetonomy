@@ -1,11 +1,11 @@
 {
   "journey": "E.ai",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-10T04:57:24.199266Z",
-  "walker": "release 2.0.7 combo walk wave 4 (Sonnet)",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "walked_at": "2026-11-10T07:56:23.636374Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -15,107 +15,106 @@
       390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US",
-    "ai_stub": "Ollama-shaped walkstub for the first checks, then a helper php -S stub inside the web container (token counts, OpenAI-shaped /v1 path) for usage, budget and provider-order checks; removed afterwards"
+    "locale": "en_US"
   },
   "checks": {
-    "e-ai.5": {
-      "result": "pass",
-      "evidence": "With a stub that reports tokens (1000 prompt / 500 completion) and ollama cost per 1k 0.002 / 0.004: GET /ai/usage rows 11 requests = 4 + 5 + 2 and 3000 tokens, cost 0.008 = 2 x 0.004; /ai/usage/summary totals 11 requests, 2000+1000 tokens, cost 0.008 (matches the rows; the earlier no-token stub rows add to 0)."
-    },
-    "e-ai.7": {
-      "result": "pass",
-      "evidence": "With no provider configured, bob POST topic in Help Desk -> 201 published, no hold, no PHP error in debug.log."
-    },
-    "e-ai.14": {
-      "result": "pass",
-      "evidence": "Guest POST /ai/suggest-reply and GET /ai/usage -> 401; bob GET /ai/usage -> 403 jetonomy_forbidden."
-    },
-    "e-ai.11": {
-      "result": "pass",
-      "evidence": "bob POST /ai/suggest-reply post 99999999 and the Customer Advisory Board topic 403 (not a member) -> both 404 'Topic not found.' (identical)."
-    },
-    "e-ai.18": {
-      "result": "pass",
-      "evidence": "wp jetonomy-pro ai has status, list-providers, provider-status, test-provider, spam-check --content, summarize --content, batch-review-status (the runbook's usage/test are not subcommands). All printed plain output; with every provider disabled test-provider prints 'Error: Adapter for provider \"ollama\" is not registered.' and no PHP notice reached debug.log."
-    },
     "e-ai.1": {
       "result": "pass",
-      "evidence": "Settings > AI Integration (sections are collapsed accordions): OpenAI enabled + key 'sk-walk-test-...' + model, Save AI Settings -> 'AI settings saved.'; after reload the key field shows '***encrypted***' (never the key), the option holds an encrypted string (no plaintext 'sk-walk-test' anywhere in wp_options); ticking 'Clear API key' and saving empties the field and the badge returns to 'No API key'. The placeholder reads 'Enter API key' rather than a 'leave blank to keep' hint. ai-1a/1b.png"
+      "evidence": "Settings > AI Integration (admin): OpenAI key typed and saved -> field returns '***encrypted***' (key stored encrypted), a 'clear api key' checkbox appears; ticking it and saving removed the key (list-providers api_key_set no). Ollama provider pointed at the walkstub URL, model walkstub.",
+      "screenshot": "qa-artifacts/walk-207/combo/ai1.png"
     },
     "e-ai.2": {
-      "result": "fail",
-      "evidence": "Spam detection is a post-publish batch (every 5 min Action Scheduler job jetonomy_pro_ai_batch_review), not at post time. Stub verdict spam conf 0.9 -> topic status spam; conf 0.6 -> status pending (held) and listed under Moderation > Pending Topics. But the held/spam item carries no AI reason in the queue (the 'Flagged by AI review: <reason>' text is only created for a content-moderation 'flag' verdict, e.g. flag 0.75 -> flag 'Flagged by AI review: Borderline off-topic content for a support space'). Also bob (trust level 4) is never sent to the model (trust 3+ and staff are skipped), so the line's persona cannot reproduce it; grace (TL1) was used. The topic is live until the next sweep. ai-2c.png"
+      "result": "pass",
+      "evidence": "grace (trust 1) posted 'Make $5000 a week from home...' (published); after the batch review run (hook jetonomy_pro_ai_batch_review, stub verdict spam 0.95 >= auto-spam 0.8) it became status spam; a second grace topic at confidence 0.6 (>= hold 0.5, < 0.8) became pending (held)."
     },
     "e-ai.3": {
       "result": "pass",
-      "evidence": "grace posted a long genuine SMTP/Brevo deliverability question in Help Desk: published at once; the sweep sent it with a non-spam verdict (conf 0.03) and it stayed published, no hold, no flag. ai verdicts were supplied by the stub."
+      "evidence": "bob's genuine SMTP certificate question stayed published after the batch (stub verdict not spam)."
     },
     "e-ai.4": {
       "result": "pass",
-      "evidence": "Auto-spam Threshold 0.3 (below Hold 0.5) -> notice 'Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept.' and the field shows 0.8 again; the number input has min 0 max 1 so the browser blocks values above 1, and a server-side 1.5 was clamped to 1 (shown in the field) with only the generic saved notice. ai-4a/b.png"
+      "evidence": "Auto-spam Threshold 0.3 (below Hold 0.5): 'Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept.' and the old 0.8 stays; 1.5 is clamped to 1 with only the generic 'AI settings saved.' (no specific clamp message)."
+    },
+    "e-ai.5": {
+      "result": "pass",
+      "evidence": "GET /ai/usage -> 200 rows per day/provider/feature (ollama spam_detection 9 requests today); /ai/usage/summary -> totals (66 requests, 26,000 prompt / 13,000 completion tokens, cost 0.08) and by_provider rows; bob GET /ai/usage -> 403. Rows also include earlier walks' data, so exact add-up was not re-derived."
     },
     "e-ai.6": {
       "result": "pass",
-      "evidence": "Daily budget 0.01 with 0.064 already spent today: no provider call was made (stub log empty) for the member suggest-reply (502 'AI request failed. Please try again later.') or the batch sweep; a topic posted meanwhile published normally; the admin notice 'Jetonomy AI is not reaching any provider. Last failure ... AI moderation and spam detection are letting content through unchecked...' shows (generic, it does not mention the budget). ai-6.png"
+      "evidence": "daily_budget 0.01 (already exceeded by recorded cost): a grace spam-looking topic was published unchecked, an admin suggest-reply call fails with 502 'AI request failed. Please try again later.' and wp-admin shows 'Jetonomy AI is not reaching any provider. Last failure ... AI moderation and spam detection are letting content through unchecked until a provider...'. Budget reset to 0 afterwards."
+    },
+    "e-ai.7": {
+      "result": "pass",
+      "evidence": "no provider configured: bob's composer has no AI button, POST topic 201 publish in 146 ms, nothing in debug.log; CLI list-providers 'No rows.', spam-check/summarize 'No AI provider configured...' as plain errors."
     },
     "e-ai.8": {
       "result": "pass",
-      "evidence": "Provider returning 500: posting a topic in Help Desk still published (201); admin dashboard and the AI settings page show 'Jetonomy AI is not reaching any provider. Last failure 1 second ago (batch_review). AI moderation and spam detection are letting content through unchecked until a provider responds.'; after the provider answered again (a successful suggest-reply) the notice was gone. ai-8a/8b.png"
+      "evidence": "Ollama base URL pointed at a dead path: suggest-reply 502, notice 'Jetonomy AI is not reaching any provider. Last failure 1 second ago (suggestion)...' in wp-admin, bob's new topic still 201 publish; after restoring the URL a successful suggest-reply made the notice disappear."
     },
     "e-ai.9": {
-      "result": "fail",
-      "evidence": "Reply suggestions card renders on an unanswered Help Desk (qa) topic: 'AI Suggested Answers' with two answers each with a 'Use as reply' button (cards are generated asynchronously and cached; first view shows nothing). Clicking 'Use as reply' does NOT fill the composer: pro-view.js POSTs /posts/{id}/replies immediately and reloads, so alice's reply 3819 was published with the suggestion text. Expected: fills the composer without posting. ai-9.png"
+      "result": "pass",
+      "evidence": "Q&A topic in Help Desk, after the suggestion job ran (jetonomy_pro_ai_generate_suggestions): 'AI Suggested Answers' block with a 'Use as reply' button; clicking it put the suggestion text into the composer and posted nothing.",
+      "screenshot": "qa-artifacts/walk-207/combo/ai9.png"
     },
     "e-ai.10": {
+      "result": "untested",
+      "evidence": "The thread summary hook (jetonomy_pro_ai_generate_summary 249) called the stub with the summariser prompt and CLI `ai summarize` returned the stub summary, but no TL;DR card rendered on the 45+-reply Feature Requests thread for bob (selector/rendering not confirmed), so the card, invalidation on reply and the short-thread rule were not proven.",
+      "screenshot": "qa-artifacts/walk-207/combo/ai10.png"
+    },
+    "e-ai.11": {
       "result": "pass",
-      "evidence": "Feature Requests 'Dark mode for the community on phones' (51+ replies): after the async job the 'AI Summary' TL;DR card with key points appeared; posting a new reply removed the cached summary (card gone until regenerated); a short thread (96-char topic, below min words 500) shows no card. ai-10a/b.png"
+      "evidence": "bob POST /ai/suggest-reply post_id 99999999 and post 403 (Customer Advisory Board) -> both 404 'Topic not found.'."
     },
     "e-ai.12": {
       "result": "pass",
-      "evidence": "hourly limit 5: bob's 5 successful suggest-reply returned 200 with remaining 4..0, the 6th and 7th -> 429 'You have reached the hourly limit for AI requests. Please try again later.'; admin after remaining 0 still got 200. (Counter shared across features not separately exercised: only suggest-reply is member-initiated.)"
+      "evidence": "bob's 1st-5th successful suggest-reply 200, 6th -> 429 'You have reached the hourly limit for AI requests. Please try again later.'; admin 7 calls in a row all 200."
     },
     "e-ai.13": {
-      "result": "fail",
-      "evidence": "Min trust level 3: grace (TL1) POST /ai/suggest-reply -> 403 'You need trust level 3 or higher to use AI features.' (REST half passes) but the 'AI Reply' composer button (.jt-ai-suggest-btn) is still rendered for grace on a Help Desk topic (same as for alice TL4), so the UI button is not hidden. ai-13-grace.png"
+      "result": "pass",
+      "evidence": "min trust level 3: grace (TL1) POST /ai/suggest-reply -> 403 'You need trust level 3 or higher to use AI features.'; no AI button in her composer or topic page. Reset to 0."
+    },
+    "e-ai.14": {
+      "result": "pass",
+      "evidence": "guest POST /ai/suggest-reply and GET /ai/usage -> 401; bob GET /ai/usage -> 403."
     },
     "e-ai.15": {
-      "result": "pass",
-      "evidence": "Used Custom (OpenAI-shaped, /v1/chat/completions) and Ollama (/api/chat) providers against the stub (Anthropic/OpenAI not callable here): default Custom + order custom,ollama + spam_detection override Ollama -> suggest-reply hit /v1/chat/completions, the spam sweep hit /api/chat; with the Custom path returning 500 the next call tried /v1 (500) then /api/chat (200) and returned the reply."
+      "result": "untested",
+      "evidence": "Not walked: provider order / per-feature override with two live providers needs a second provider endpoint; only the Ollama stub was configured."
     },
     "e-ai.16": {
-      "result": "pass",
-      "evidence": "Guest: POST /ai/suggest-reply -> 401; guest GET of a Customer Advisory Board topic page -> 404 and no summary/suggestion card; bob on that private topic -> 404 (or the hourly 429) and zero provider calls were logged during those requests; the summarizer skips private replies (code)."
+      "result": "untested",
+      "evidence": "Not walked in this run."
     },
     "e-ai.17": {
-      "result": "fail",
-      "evidence": "Summary card for an Arabic topic renders left-to-right: direction ltr, no dir attribute, text-align start (an Arabic summary and bullet list on an LTR page), card itself fits 390px (326px wide, no overflow). Also Arabic-only threads are never summarised because the min-words check uses str_word_count(), which counts 0 words for Arabic (a mixed Arabic/English post was needed to trigger it). The Latin card at 390px wraps correctly. ai-17a/b.png"
+      "result": "untested",
+      "evidence": "Not walked in this run (Arabic/long summary and moderation rendering)."
+    },
+    "e-ai.18": {
+      "result": "pass",
+      "evidence": "wp jetonomy-pro ai status, list-providers, provider-status ollama, test-provider ollama, spam-check --content, summarize --content, batch-review-status all answer in plain output with and without a provider (without: 'Unknown provider id' / 'No AI provider configured' errors); no jetonomy notices in debug.log."
     },
     "e-ai.19": {
-      "result": "pass",
-      "evidence": "Batch reviewer: with the provider returning 500 the run made 2 attempts and left the watermark at post 5340 (retry next cycle); with the provider back a flag verdict created flag 'Flagged by AI review: Borderline off-topic content for a support space' and advanced the watermark to 5342; with daily budget 0.001 a run made 0 calls and left the watermark. The job was invoked with do_action (the AS recurring job id exists every 5 minutes)."
+      "result": "untested",
+      "evidence": "Batch reviewer sweep held/spammed items (see 2) but retry-on-failure and budget behaviour of the scheduler were not walked."
     },
     "e-ai.20": {
-      "result": "pass",
-      "evidence": "Site timezone America/Los_Angeles at 04:51 UTC (20:51 on 9 Nov local): a new call was recorded in wp_jt_pro_ai_usage under date 2026-11-09 (the tracker uses current_time), existing rows stay on 2026-11-10; timezone restored."
+      "result": "untested",
+      "evidence": "Not walked in this run (usage day bucket vs site timezone)."
     },
     "e-ai.21": {
       "result": "pass",
-      "evidence": "Saving a below-hold threshold keeps the old thresholds and shows 'Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept.' plus 'Your other changes were saved.' - two notices, but the second is not 'AI settings saved.'. ai-4a.png"
+      "evidence": "saving with a rejected threshold shows 'Auto-spam Threshold must be at least the Hold Threshold. The previous thresholds were kept.' followed by 'Your other changes were saved.' (not 'AI settings saved.')."
     }
   },
   "proposed_checks": [],
   "runbook_fixes": [
     {
-      "check": "e-ai.2",
-      "now": "use a persona below trust level 3 (grace); the AI review runs in the 5-minute batch after publish; 'Flagged by AI review: <reason>' appears only for content-moderation flag verdicts, held/spam items show no reason."
-    },
-    {
-      "check": "e-ai.18",
-      "now": "subcommands are status, list-providers, provider-status, test-provider, spam-check --content, summarize --content, batch-review-status."
+      "check": "e-ai.21",
+      "now": "the threshold-kept notice is followed by Your other changes were saved. instead of AI settings saved."
     }
   ]
 }

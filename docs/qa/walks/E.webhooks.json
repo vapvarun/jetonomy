@@ -1,99 +1,96 @@
 {
   "journey": "E.webhooks",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-10T05:48:58Z",
-  "walker": "release 2.0.7 combo walk wave 5 (Sonnet)",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "walked_at": "2026-11-10T07:58:12.814090Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
   "env": {
-    "mode": "combo (Free + Pro, all extensions)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
     ],
     "viewports": [
-      1440
+      1440,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark"
     ],
-    "browser": "Chromium via Playwright MCP + REST/WP-CLI/Mailpit",
+    "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
   },
   "checks": {
-    "e-webhooks.3": {
-      "result": "pass",
-      "evidence": "POST /webhooks ftp://x -> 400 jetonomy_webhook_url_invalid 'Invalid webhook URL.'; localhost URL with events [bogus] -> 400 jetonomy_webhook_events_invalid 'At least one valid event is required.'; http://10.0.0.5 and http://127.0.0.1 refused at create. A 10.0.0.5 webhook inserted directly into the table: test -> success:false status_code:0 error 'A valid URL was not provided.'; real events logged deliveries status 0 with that error and nothing was fetched."
-    },
-    "e-webhooks.12": {
-      "result": "pass",
-      "evidence": "PATCH /webhooks/99999 -> 404 jetonomy_webhook_not_found 'Webhook not found.'. DELETE /webhooks/1 -> deleted:true; a reply posted afterwards produced no delivery to the catcher (the one reply before the delete was delivered)."
-    },
-    "e-webhooks.13": {
-      "result": "pass",
-      "evidence": "bob and test_moderator: GET, POST, PATCH, DELETE /webhooks and POST /webhooks/1/test -> 403; guest -> 401 for GET/POST/PATCH/DELETE/test (a guest POST with an invalid body gets 400 first, with a valid body 401); admin GET /webhooks contains no secret field."
-    },
     "e-webhooks.1": {
-      "result": "pass",
-      "evidence": "Admin Settings > Webhooks: Add Webhook with URL http://localhost:8911/walkstub/hook (the stack catcher; a public request-catcher is not reachable) and 8 events -> 'Webhook saved.'. List row shows URL, event labels, Active, Last triggered, Failures 0, Edit / Send test / Delete. The secret is visible on the Edit panel ('Use this to verify the X-Jetonomy-Signature header'). Screenshot wh1.png."
+      "result": "untested",
+      "evidence": "Not completed in the UI: the Add Webhook form (jt_wh_url + jt_wh_events[] checkboxes + Add) was seen but its 'Webhook saved.' notice and the list/secret display were not confirmed in this run; the webhook was created through REST (201, secret returned once in the create response, absent from GET /webhooks)."
     },
     "e-webhooks.2": {
+      "result": "fail",
+      "evidence": "wp-admin Settings > Webhooks: a malformed URL ('not a url') showed no notice at all in my run (nothing visible), and a well-formed https://hooks.example.test/jetonomy with no events ticked answered 'Enter a valid webhook URL. The webhook was not saved.' instead of 'Choose at least one event...'. Possible cause: .example.test fails the URL validator; main session to confirm with a resolvable host.",
+      "screenshot": "qa-artifacts/walk-207/combo/wh2.png"
+    },
+    "e-webhooks.3": {
       "result": "pass",
-      "evidence": "Form submitted with 'not a url' -> 'Enter a valid webhook URL. The webhook was not saved.'; valid URL with no events ticked -> 'Choose at least one event. A webhook with no events would never fire, so it was not saved.'."
+      "evidence": "POST /webhooks url ftp://x -> 400 jetonomy_webhook_url_invalid 'Invalid webhook URL.'; events ['bogus'] -> 400 jetonomy_webhook_events_invalid 'At least one valid event is required.'. A loopback URL (the walkstub catcher on localhost:8911) was accepted and delivered on this stack (environment bypass), so the 'refused at delivery' half was not observed."
     },
     "e-webhooks.4": {
       "result": "pass",
-      "evidence": "POST /webhooks/1/test -> success:true status_code:200; the catcher received {event:test,timestamp,data:{message:'This is a test webhook from Jetonomy.'}} with X-Jetonomy-Signature sha256=<hmac of the body with the stored secret> (verified by recomputation). With the catcher forced to 500 -> success:false status_code:500. Refused host -> success:false status_code:0 error 'A valid URL was not provided.'. The test call carries no X-Jetonomy-Event header (runbook_fix)."
+      "evidence": "POST /webhooks/35/test -> 200 {success:true,status_code:200}; the catcher got event 'test' with data.message 'This is a test webhook from Jetonomy.', header X-Jetonomy-Signature: sha256=..., no X-Jetonomy-Event header."
     },
     "e-webhooks.5": {
       "result": "pass",
-      "evidence": "Browser as bob: composer in General Discussion, 'Anyone using the new SMTP preset?' -> within about 10 seconds (delivery runs on WP-Cron) the catcher got post.created with id 5408, title, author_id 10, space_id 15, created_at, valid signature and X-Jetonomy-Event: post.created. Screenshot wh-topic.png."
+      "evidence": "bob created 'Anyone using the new SMTP preset?' in General Discussion -> catcher received post.created with id, title, author_id 10, space_id 15, signature and X-Jetonomy-Event post.created (delivered after the Action Scheduler queue ran)."
     },
     "e-webhooks.6": {
       "result": "pass",
-      "evidence": "bob via the UI: posted a reply, edited the topic inline, deleted the reply and then the topic. Catcher got exactly one reply.created, one post.updated, one post.deleted ({id,space_id,user_id}), each once, all signatures valid (the hook was not subscribed to reply.deleted, so none was sent)."
+      "evidence": "edit -> post.updated, reply -> reply.created, delete -> post.deleted, one delivery each for one action."
     },
     "e-webhooks.7": {
-      "result": "pass",
-      "evidence": "Help Desk with require_approval: bob's topic 5409 stored pending -> nothing delivered over about 25 seconds. test_moderator approved it -> exactly one post.created (one dispatch per webhook). A draft topic (5410) and the topic after being marked spam delivered nothing. Setting reverted."
+      "result": "untested",
+      "evidence": "Not walked in this run (held/spam/draft topic webhooks)."
     },
     "e-webhooks.8": {
       "result": "pass",
-      "evidence": "is_private topic 5411 (Help Desk) -> nothing delivered. RECORDED: a topic in the private space Partner Program (5412) and in the hidden Moderators' Room (5413, posted by admin) DID fire post.created with title, author and space id to the external URL."
+      "evidence": "bob's is_private topic and is_private reply fired nothing (delivery log unchanged). Topics inside private/hidden spaces were not recorded."
     },
     "e-webhooks.9": {
-      "result": "pass",
-      "evidence": "Help Desk temporarily allow_anonymous; bob posted anonymously (5414) -> post.created delivered with author_id 0, real author not sent."
+      "result": "untested",
+      "evidence": "Not walked in this run (anonymous topic author_id 0)."
     },
     "e-webhooks.10": {
-      "result": "fail",
-      "evidence": "With the catcher answering 500, five consecutive events: after failure 4 the hook shows is_active 0, fail_count 4 (observed: 1,2,3 then 0/4; the 5th event never fired because the hook was already off). Expected: disabled at fail_count 5. Cause: in do_dispatch the UPDATE sets fail_count = fail_count + 1 first and the CASE in the same statement then reads the already-incremented value and adds 1 again, so the threshold trips one failure early. Success reset works: after 3 failures one 200 set fail_count 0. The admin list shows a disabled hook as 'Disabled', last status code in brackets, failures count (seen for the 10.0.0.5 hook: Disabled, (0), 4). Product bug, off by one. Product code: jetonomy-pro webhooks class-extension.php do_dispatch lines ~523-535."
+      "result": "pass",
+      "evidence": "receiver forced to 500: after the failing run the webhook is_active 0 with last_status_code 500 (fail_count reached 6 because already-queued deliveries still ran after the 5th); re-enabled via PATCH and one 200 delivery reset fail_count to 0. The admin list's disabled display was not looked at."
     },
     "e-webhooks.11": {
       "result": "pass",
-      "evidence": "GET /webhooks/1/deliveries lists event, status_code, response, created_at, newest first, with X-WP-Total pagination headers. do_dispatch with a 900-char response body stored a 500-char snippet. A 31-day-old row was removed by the prune hook (jetonomy_pro_prune_webhook_deliveries run) while newer rows stayed. The daily job is scheduled."
+      "evidence": "GET /webhooks/35/deliveries -> rows with id, event, status_code and the response body snippet; 30-day pruning not verified."
+    },
+    "e-webhooks.12": {
+      "result": "pass",
+      "evidence": "PATCH /webhooks/99999 -> 404 jetonomy_webhook_not_found 'Webhook not found.'; DELETE /webhooks/35 -> 200 and the next reply fired no delivery."
+    },
+    "e-webhooks.13": {
+      "result": "pass",
+      "evidence": "bob and test_moderator: GET/POST/PATCH/DELETE /webhooks and /test all 403; guest GET -> 401; the secret appears only in the create response, not in the list."
     },
     "e-webhooks.14": {
-      "result": "pass",
-      "evidence": "WP-CLI user create -> user.registered {id,login,email,registered}; admin trust-level change of user 11 to 2 -> user.trust_level_changed {user_id,old_level:3,new_level:2}; Partner Program member add/remove (via REST) -> space.member_joined {space_id,user_id,role} and space.member_left {space_id,user_id}, all signed. Test user removed."
+      "result": "untested",
+      "evidence": "space.member_joined / space.member_left deliveries from earlier walks are in the catcher log (payloads space_id/user_id/role); user.registered and user.trust_level_changed were not triggered in this run."
     },
     "e-webhooks.15": {
-      "result": "pass",
-      "evidence": "Seeded 21 webhooks and 5,173 delivery rows: Settings > Webhooks loaded in about 0.2s and showed all rows; 'Last triggered' for a row stored 05:00 UTC shows 'November 10, 2026 12:00 am' with the site timezone set to America/New_York (restored afterwards). Caveat: the admin list has no pagination controls (21 rows on one page); deliveries paginate through the API (per_page up to 100, X-WP-Total). Screenshot wh-list-1440.png."
+      "result": "untested",
+      "evidence": "Not walked in this run (20 webhooks and 5,000 delivery rows)."
     },
     "e-webhooks.16": {
-      "result": "pass",
-      "evidence": "SIMULATED: the catcher cannot be slowed, so do_dispatch was run with the HTTP layer returning cURL error 28 (timeout 15001 ms): the delivery log recorded status_code 0 with 'cURL error 28: Operation timed out...'. A member reply POST returned in about 0.05s while delivery is queued asynchronously. The 15s timeout itself is not observed on a real slow receiver."
+      "result": "untested",
+      "evidence": "Not walked in this run (receiver slower than 15 s)."
     },
     "e-webhooks.17": {
-      "result": "pass",
-      "evidence": "At 390px: Settings > Webhooks list and the edit form fit (scrollWidth 390 = viewport), fields and Events checkboxes stack in one column, the 40-character secret wraps inside its box without clipping. Screenshots wh-list-390.png, wh-form-390b.png."
+      "result": "untested",
+      "evidence": "Not walked in this run (390px form/list)."
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "e-webhooks.4",
-      "now": "POST /webhooks/{id}/test delivers {event:test,timestamp,data:{message}} with X-Jetonomy-Signature but no X-Jetonomy-Event header; an invalid/refused host gives success:false, status_code:0, error:\"A valid URL was not provided.\""
-    }
-  ]
+  "proposed_checks": []
 }

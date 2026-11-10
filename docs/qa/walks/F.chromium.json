@@ -1,33 +1,41 @@
 {
   "journey": "F.chromium",
-  "free": "11e21b47",
-  "pro": "05e4a11",
+  "free": "9af111d9",
+  "pro": "ba34f60",
   "checks": {
     "f-chromium.1": {
       "result": "pass",
-      "evidence": "Guest, Chromium, /community/, /community/s/feature-requests/, topic /community/s/feature-requests/t/dark-mode-for-the-community-on-phones/ and profile /community/u/alice/ at 1440, 1024 and 390: all HTTP 200, scrollWidth == clientWidth on every load, zero console errors, zero failed/4xx requests (an earlier first pass used a wrong topic URL /community/t/<slug>/ and got the theme 404 - my URL mistake, not a product issue; the real URL passes)."
+      "evidence": "Guest, cookies cleared: /community/, /community/s/general-discussion/, topic whats-everyone-working-on-this-week-s15t1, /community/u/alice/ at 1440/1024/390: all HTTP 200, 0 console errors, 0 failed/4xx requests, no horizontal overflow (scrollWidth==clientWidth)."
     },
     "f-chromium.2": {
-      "result": "untested",
-      "evidence": "Member bob in Chromium 1440: vote toggle off/on on a topic (aria-label Remove your upvote -> Vote up -> Remove your upvote), reply posted and rendered inline, new idea created through the composer (/community/s/feature-requests/t/remember-my-dark-mode-choice-across-devices/), zero console errors or uncaught rejections. The 'reaction' part needs Pro Reactions, which is not active on the Free stack (no reaction chips exist). ENV: reaction part belongs to the combo walk.",
-      "screenshot": "fchromium-2.png"
+      "result": "pass",
+      "evidence": "bob in Chromium with Pro on: composer (new topic 369 created 201 and a poll topic), vote (post 243 on/off, score and aria state updated, kept after reload), reaction (React > Like on a topic: POST /posts/117/reactions 200, chip 'Like 1' appears pressed) and reply submit (POST /replies 201) all worked; 0 pageerror and 0 console errors."
     },
     "f-chromium.3": {
       "result": "pass",
-      "evidence": "Dark toggle (.bx-color-mode-toggle__btn) at /community/: dark -> light (body bg rgb(250,251,253), localStorage bx-color-mode=light) survived reload; light -> dark (bg rgb(35,38,47), bx-color-mode=dark) survived reload. No console errors.",
-      "screenshot": "fchromium-dark.png"
+      "evidence": "Reign toggle: light->dark set data-bx-mode=dark, label became Dark mode, stayed dark after reload (localStorage bx-color-mode=dark); toggled back to light and persisted after reload. Screenshot chromium-dark1.png shows Jetonomy topic page dark.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/chromium-dark1.png"
     }
   },
   "proposed_checks": [],
-  "walked_at": "2026-11-10T04:52:09.909657Z",
-  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "walked_at": "2026-11-10T07:22:02.844386+00:00",
+  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
   "env": {
-    "mode": "free (Pro inactive)",
+    "mode": "free stack Pro inactive (phase 1) then Pro active (f-chromium.2 reaction)",
     "site": "http://localhost:8912",
-    "browser": "Chromium via Playwright MCP",
     "themes": [
       "reign-theme"
     ],
+    "viewports": [
+      1440,
+      1024,
+      390
+    ],
+    "schemes": [
+      "light",
+      "dark"
+    ],
+    "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
   }
 }

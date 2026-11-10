@@ -1,11 +1,11 @@
 {
   "journey": "C.member.post-create",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T21:31:19.713974Z",
-  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
+  "free": "9af111d9",
+  "pro": "ba34f60",
+  "walked_at": "2026-11-10T06:53:35.710447Z",
+  "walker": "release 2.0.7 combo walk wave 6 (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "combo (Free+Pro, 17 extensions)",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -16,7 +16,7 @@
     ],
     "schemes": [
       "light",
-      "dark (Reign)"
+      "dark"
     ],
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
@@ -24,135 +24,148 @@
   "checks": {
     "c-member-post-create.1": {
       "result": "pass",
-      "evidence": "bob: Help Desk > /new/: title 'How do I reset my membership password?', two-paragraph body, tags password/membership, Post Question -> landed on /help-desk/t/how-do-i-reset-my-membership-password/ ('Following', tags #membership #password); Help Desk list shows it first."
+      "evidence": "bob, Help Desk New Topic (Operating system is a required custom field, picked a value): title 'How do I reset my membership password?' + two paragraphs -> landed on /s/help-desk/t/how-do-i-reset-my-membership-password-1/, topic 13740 first in Help Desk list.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc1-result.png"
     },
     "c-member-post-create.2": {
       "result": "pass",
-      "evidence": "bob POST /jetonomy/v1/spaces/20/posts {title,content} -> 201 id 254 'Can members change their username after signing up?' (in-process REST as bob)."
+      "evidence": "POST /spaces/20/posts as bob -> 201 id 13741; GET /spaces/20/posts lists it first."
     },
     "c-member-post-create.3": {
       "result": "pass",
-      "evidence": "Empty title -> browser validation 'Please fill in this field.'; empty body -> inline 'Please add some details before posting.'; stayed on /new/, nothing created.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/postcreate-empty.png"
-    },
-    "c-member-post-create.7": {
-      "result": "pass",
-      "evidence": "Help Desk post_count 12 -> 13 after the UI topic (and header '13 topics'); profile count not separately compared."
-    },
-    "c-member-post-create.12": {
-      "result": "pass",
-      "evidence": "bob POST /spaces/40/posts (2025 Hackathon archived) -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.' (CLI path not run)."
-    },
-    "c-member-post-create.14": {
-      "result": "pass",
-      "evidence": "finn POST /spaces/20/posts -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
-    },
-    "c-member-post-create.16": {
-      "result": "pass",
-      "evidence": "bob POST /spaces/42/posts (Customer Advisory Board) -> 403 jetonomy_forbidden 'You cannot post in this space.' (compose-page gate in the UI not opened)."
-    },
-    "c-member-post-create.19": {
-      "result": "pass",
-      "evidence": "Double-click on Post Question -> exactly one topic in DB (count 1 for that title), alice got one new_post_in_sub notification for it."
-    },
-    "c-member-post-create.22": {
-      "result": "pass",
-      "evidence": "Guest POST /spaces/20/posts -> 401."
-    },
-    "c-member-post-create.6": {
-      "result": "pass",
-      "evidence": "Admin saved Settings > Emails: New topic subject '[{site}] Fresh topic in {space_title}' and turned on email for new_post_in_sub. alice follows Help Desk; bob posted via the UI: alice got exactly one in-app notification (755 new_post_in_sub) and exactly one Mailpit email '[Northwind Makers Community] Fresh topic in Help Desk' to alice.demo@jetonomy.local."
-    },
-    "c-member-post-create.15": {
-      "result": "pass",
-      "evidence": "omar on /s/off-topic-lounge/new/: 'You have been banned from this space and cannot take part in it.' with Back to Space, no form. In Help Desk he composed and posted a topic via the UI (landed on its page)."
+      "evidence": "Empty title: native 'Please fill in this field.' on the title; title only, empty body: 'Please add some details before posting.' ; no topic created (DB).",
+      "screenshot": "qa-artifacts/walk-207/combo/pc3-emptybody.png"
     },
     "c-member-post-create.4": {
       "result": "pass",
-      "evidence": "bob typed a 300-char title in General Discussion: the input stops at 255 (maxlength) and a permanent line under the field reads 'Titles can be up to 255 characters.' (composer-long-title.png)."
+      "evidence": "300-char title: input stops at 255 (maxlength) and the form hint 'Titles can be up to 255 characters.' is visible under the field from the start; no layout break.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc4-longtitle.png"
     },
     "c-member-post-create.5": {
       "result": "pass",
-      "evidence": "bob composed in General Discussion with tags 'engagement, onboarding', the Private checkbox and Schedule... (date 2026-11-09 09:00): saved topic shows the 'Scheduled to publish on November 9, 2026 9:00 am. It is hidden from the community until then.' banner with Change the publish time, a Private badge, and #engagement #onboarding tags (composer-scheduled-result.png)."
+      "evidence": "Tags 'passwords, email', Private checkbox and Schedule (Nov 14 2026 09:00): saved topic shows #email #passwords, 'Private' and 'Scheduled to publish on November 14, 2026 9:00 am'.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc5-saved.png"
+    },
+    "c-member-post-create.6": {
+      "result": "pass",
+      "evidence": "alice follows Help Desk (site default for new_post_in_sub email is OFF in Settings, so alice's own pref was set to email on for the check): bob posted -> 1 bell notification (new_post_in_sub) + exactly 1 Mailpit email '[Northwind Makers Community] New topic in Help Desk' (default subject; no saved override). Not two."
+    },
+    "c-member-post-create.7": {
+      "result": "pass",
+      "evidence": "Help Desk post_count 32->33, bob profile post_count 44->45 after the UI post; space listing/home card matches the counter."
     },
     "c-member-post-create.8": {
       "result": "pass",
-      "evidence": "bob (Member with Upload media): the Upload image button opened the file chooser, a file uploaded and showed inline; a pasted image and a dropped image (synthetic ClipboardEvent / DragEvent with a File) each uploaded (3x POST /media 200) and showed inline, natural width 120 (composer-images.png). Not a real OS drag."
+      "evidence": "bob (Upload media on): toolbar image button -> file chooser upload, synthetic paste and drop of PNGs each produced an inline <img> under /uploads/jetonomy/.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc8-images.png"
     },
     "c-member-post-create.9": {
       "result": "pass",
-      "evidence": "Unticked Upload media for the Subscriber (Member) role in Settings > Permissions and saved: bob's composer has no Upload image button; a pasted image shows the toast 'You do not have permission to upload images.' and no image is inserted. Role restored afterwards."
+      "evidence": "Removed jetonomy_upload_media from subscriber role: image button absent, paste shows 'You do not have permission to upload images.' (restored the cap afterwards).",
+      "screenshot": "qa-artifacts/walk-207/combo/pc9-noupload.png"
     },
     "c-member-post-create.10": {
       "result": "pass",
-      "evidence": "With Upload media removed: bob POST /jetonomy/v1/media (png) -> 403 jetonomy_forbidden; no file x.png stored under uploads/jetonomy."
+      "evidence": "POST /media without the cap -> 403 jetonomy_forbidden 'You do not have permission to perform this action.'; no new upload."
     },
     "c-member-post-create.11": {
       "result": "pass",
-      "evidence": "bob opened /s/2025-hackathon/new/: 'This space is archived or locked and no longer accepts new content.' + 'Back to 2025 Hackathon' link, no form. A space set to Locked in wp-admin (Walk Locked Lounge) behaves the same with 'Back to Walk Locked Lounge'."
+      "evidence": "/s/2025-hackathon/new/ -> 'This space is archived or locked and no longer accepts new content.' + 'Back to 2025 Hackathon', no form. Space set to status locked (Off-Topic Lounge) behaves the same; restored to active.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc11-archived.png"
+    },
+    "c-member-post-create.12": {
+      "result": "pass",
+      "evidence": "POST /spaces/40/posts (with the required custom field) -> 403 jetonomy_space_restricted with the archived/locked text; `wp jetonomy post create --space=40` -> Error [jetonomy_space_restricted]; nothing stored. Note: without the required OS field the REST call answers 400 jetonomy_field_required first."
     },
     "c-member-post-create.13": {
       "result": "pass",
-      "evidence": "finn opened General Discussion composer: page reads 'Your account is currently silenced and cannot post.' with Back to Space and no form, so nothing can be created (post-finn.png)."
+      "evidence": "finn on /s/help-desk/new/: no form, 'Your account is currently silenced and cannot post.' with Back to Space.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc13-silenced.png"
+    },
+    "c-member-post-create.14": {
+      "result": "pass",
+      "evidence": "finn POST /spaces/20/posts -> 403 jetonomy_user_silenced."
+    },
+    "c-member-post-create.15": {
+      "result": "pass",
+      "evidence": "omar /s/off-topic-lounge/new/: 'You have been banned from this space and cannot take part in it.' no form; REST 403 jetonomy_user_space_banned; POST in Help Desk -> 201.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc15-banned.png"
+    },
+    "c-member-post-create.16": {
+      "result": "pass",
+      "evidence": "bob /s/customer-advisory-board/new/ -> redirected to the space page gate 'Customer Advisory Board is invite-only...', no form; POST /spaces/42/posts -> 403 jetonomy_forbidden.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc16-cab.png"
     },
     "c-member-post-create.17": {
       "result": "pass",
-      "evidence": "test_author (trust 0) posted 3 topics through the UI; the 4th UI submit stayed on the composer with 'New members can post 3 topics a day. You can post again in about 24 hours.' and REST POST /spaces/15/posts returned 429 jetonomy_rate_limited with the same text. The line does not end with 'Please try again later.'."
+      "evidence": "rhea_newcomer (trust 0): 3 topics ok, 4th REST -> 429 jetonomy_rate_limited, UI shows 'New members can post 3 topics a day. You can post again in about 1 day.'",
+      "screenshot": "qa-artifacts/walk-207/combo/pc17-limit.png"
     },
     "c-member-post-create.18": {
       "result": "pass",
-      "evidence": "Context offline, bob submitted: composer kept title and body, one error 'Failed to save.'; back online the same Post Topic click saved once (single topic id 411 in the DB)."
+      "evidence": "Offline submit: composer kept title+body, one 'Failed to save.'; back online, Submit again -> one topic created (no duplicate).",
+      "screenshot": "qa-artifacts/walk-207/combo/pc18-offline.png"
+    },
+    "c-member-post-create.19": {
+      "result": "pass",
+      "evidence": "Double-click Post Question -> exactly one topic (id 13743) with that title."
     },
     "c-member-post-create.20": {
       "result": "pass",
-      "evidence": "bob posted an Arabic title and body: h1 and body have dir=auto, computed direction rtl, text right-aligned inside the card (arabic-topic-ltr-site.png)."
+      "evidence": "Arabic title+body: h1 and .jt-post-body carry dir=auto and compute direction rtl.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc20-arabic.png"
     },
     "c-member-post-create.21": {
       "result": "pass",
-      "evidence": "Space with require approval (Walk Held Replies), alice follows it. bob's UI post: toast 'Your topic is awaiting moderation and will appear once approved.' (about 3 s, the form keeps its text and the button resets); guest sees none of it, the topic is pending; admin sees it queued in Awaiting approval; alice had no notification before approval and exactly one new_post_in_sub (758) after the moderator approved it. Observation: after a held post the composer stays on the page with the fields still filled, so a second click would queue a duplicate."
+      "evidence": "Help Desk require_approval on: bob sees 'Your topic is awaiting moderation and will appear once approved.' (line says 'awaiting approval'); topic pending, listed in /community/mod/ Awaiting approval; no notification to alice before approval; after test_moderator Approve alice got exactly one notification + one email.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc21-approval.png"
+    },
+    "c-member-post-create.22": {
+      "result": "pass",
+      "evidence": "POST /spaces/20/posts without cookies -> 401 rest_not_logged_in."
     },
     "c-member-post-create.23": {
       "result": "pass",
-      "evidence": "390x844 as bob on /community/s/general-discussion/new/: the editor toolbar (.jt-editor-bar, 8 buttons Bold ... Insert emoji) is a single non-wrapping flex row (flex-wrap nowrap, overflow-x auto, clientWidth 326, scrollWidth 368) with a 24px right-edge fade (mask linear-gradient); scrolling it to the end brings 'Insert emoji' fully inside the bar; Post Topic is at y 702-742 of 844 and x 31-303, no horizontal page overflow (scrollWidth 390). The fade is static, so it also covers the last 24px when scrolled to the end. Screenshots pc-composer-390-a/b/c.png."
+      "evidence": "390px: toolbar one row, overflow-x auto with 24px fade mask, scrolled to end Insert emoji is fully in view, Post Question reachable.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc23-390-toolbar.png"
     },
     "c-member-post-create.24": {
       "result": "pass",
-      "evidence": "Reign dark toggle on New Topic: editor text 10.2:1 on its dark surface, toolbar icons 9.5:1, title input 10.2:1 (composer-dark.png)."
+      "evidence": "Dark mode: editor surface and toolbar icons light-on-dark and readable.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc24-dark.png"
     },
     "c-member-post-create.25": {
       "result": "pass",
-      "evidence": "Typing 300 characters: the field stops at 255 and the line 'Titles can be up to 255 characters.' is visible under the title field the whole time, before and after the limit."
+      "evidence": "Same as .4: limit message visible from the start; field stops at 255."
     },
     "c-member-post-create.26": {
       "result": "pass",
-      "evidence": "Offline submit shows exactly one 'Failed to save.' (one element in the DOM and one in the live-region list)."
+      "evidence": "Offline submit shows exactly one 'Failed to save.' message."
     },
     "c-member-post-create.27": {
       "result": "pass",
-      "evidence": "Same Arabic topic on the LTR site: h1 and body carry dir=auto and render rtl, right-aligned. The topic listing row's title link has no dir attribute and computes ltr."
+      "evidence": "Arabic topic on LTR site: title/body dir=auto, computed rtl (right-aligned start)."
     },
     "c-member-post-create.28": {
       "result": "pass",
-      "evidence": "The community home shows a space directory, not a recent-topics feed: the Help Desk card shows '14 topics' after bob's new topic (13 before) and the Help Desk listing shows the new topic first, so the directory count and the listing agree."
+      "evidence": "alice posted in General Discussion -> community home space card went 46 -> 47 topics, matching the listing counter. (Counter was already 1 above the 45 published topics before the walk: pre-existing drift, not caused by the post.)",
+      "screenshot": "qa-artifacts/walk-207/combo/pc28-home.png"
     },
     "c-member-post-create.29": {
       "result": "pass",
-      "evidence": "390 mobile emulation: the fixed bottom tab bar starts at y=784. On New Topic, Post Topic scrolled with scrollIntoView({block:'end'}) ends at bottom=764 and elementFromPoint at its centre and bottom edge is the button; Tab focus lands on it with the same result. Same on Post Reply in the 47-reply thread (bottom 764). At 1440 the gap under the button is 24px of container padding, then the footer."
+      "evidence": "390px: Post Topic and Post Reply (53+ reply thread) after scrollIntoView block:end sit at bottom 764 vs tab bar top 784; elementFromPoint at centre and bottom edge is the button; focus lands in view. 1440: 24px between button and footer, no extra gap.",
+      "screenshot": "qa-artifacts/walk-207/combo/pc29-390-reply.png"
     }
   },
   "proposed_checks": [],
   "runbook_fixes": [
     {
-      "check": "c-member-post-create.17",
-      "now": "the refusal reads 'New members can post 3 topics a day. You can post again in about 24 hours.' (no trailing 'Please try again later.')"
+      "check": "c-member-post-create.6",
+      "now": "alice must have the New topic email preference on (the site default for new_post_in_sub email is off); the email subject is '[site] New topic in Help Desk'."
     },
     {
-      "check": "c-member-post-create.28",
-      "now": "the community home is a space directory with per-space topic counts, not a recent-topics feed; the check is about those counts matching the listing"
-    },
-    {
-      "check": "c-member-post-create.11",
-      "now": "a Locked space can only be set in wp-admin Spaces > edit (REST PATCH accepts status=active only); the notice reads 'This space is archived or locked and no longer accepts new content.'"
+      "check": "c-member-post-create.21",
+      "now": "the member sees 'Your topic is awaiting moderation and will appear once approved.'"
     }
   ]
 }

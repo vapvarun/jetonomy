@@ -1,8 +1,8 @@
 {
   "journey": "C.admin.blocks-shortcodes-widgets",
   "free": "11e21b47",
-  "walked_at": "2026-11-10T04:58:22.791030Z",
-  "walker": "release 2.0.7 free walk wave 4 (Sonnet)",
+  "walked_at": "2026-11-10T07:06:52.132923+00:00",
+  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
   "env": {
     "themes": [
       "reign-theme"
@@ -15,7 +15,7 @@
       "light",
       "dark"
     ],
-    "mode": "free (Pro inactive)",
+    "mode": "free stack (wave 6 re-walk of .16 only)",
     "site": "http://localhost:8912",
     "browser": "Chromium via Playwright MCP",
     "locale": "en_US"
@@ -23,7 +23,7 @@
   "checks": {
     "c-admin-blocks-shortcodes-widgets.1": {
       "result": "pass",
-      "evidence": "Block editor (admin) on the eight QA block pages: each shows a labelled preview - 'Jetonomy · Forum Feed - Latest topics from all spaces', 'Jetonomy · Trending Topics - 7 day window', 'Jetonomy · Space List - All public spaces', 'Jetonomy · Leaderboard', 'Jetonomy · Navigation - Categories -> spaces tree, permission-aware', 'Jetonomy · User Panel', 'Jetonomy · Login', 'Compose Topic: space picker'; as bob each published page renders its content (forum feed rows, trending, spaces with topic counts, leaderboard, navigation tree, user panel with 48 notifications, login greeting, compose form)."
+      "evidence": "Block editor (admin) on the eight QA block pages: each shows a labelled preview - 'Jetonomy \u00b7 Forum Feed - Latest topics from all spaces', 'Jetonomy \u00b7 Trending Topics - 7 day window', 'Jetonomy \u00b7 Space List - All public spaces', 'Jetonomy \u00b7 Leaderboard', 'Jetonomy \u00b7 Navigation - Categories -> spaces tree, permission-aware', 'Jetonomy \u00b7 User Panel', 'Jetonomy \u00b7 Login', 'Compose Topic: space picker'; as bob each published page renders its content (forum feed rows, trending, spaces with topic counts, leaderboard, navigation tree, user panel with 48 notifications, login greeting, compose form)."
     },
     "c-admin-blocks-shortcodes-widgets.2": {
       "result": "pass",
@@ -83,9 +83,8 @@
       "evidence": "Grace's 159-character topic (made the newest) in [jetonomy_recent_posts count=50] and the forum-feed block: the link wraps (43px tall at 1440, 108px at 390, white-space normal), its right edge (928 / 352) stays inside the card (961 / 375), page scrollWidth equals the viewport; screenshot blocks-long-title-390.png."
     },
     "c-admin-blocks-shortcodes-widgets.16": {
-      "result": "fail",
-      "evidence": "Site seeded to 2,054 published topics (seed-scale + 700 copied rows), 79 distinct authors; Forum feed block (jetonomy/forum-feed count=50) as member bob on /walk-recent-50/. Times hold: browser load 136 ms first, 72 ms second, curl TTFB ~38 ms, PHP render 10 ms; 50 topic rows shown. Query shape does NOT hold on the stock install (no persistent object cache, wp_using_ext_object_cache() false): each page request, cold or warm, runs 56 queries = 1 batched post query, batched users/usermeta/profiles/blocked-users, and 50 separate single-row wp_options reads of _transient_jt_grav_chk_<author id> (one per distinct author), repeated identically on 3 consecutive fresh requests. Inside one PHP request the second render is 1 query, because the transient reads are then cached in memory. So 'warm render = one batched query pass, no per-row queries' fails across requests: a per-author lookup that could be primed with one wp_options IN() read. The [jetonomy_recent_posts count=50] shortcode renders 1 query warm. Product perf finding or an over-strict line: main session decides.",
-      "screenshot": "blocks16-recent50.png"
+      "result": "pass",
+      "evidence": "Free stack seeded to 2,055 published topics (seed-scale 1,100 + 700 copied rows, 79 distinct authors). Forum feed block count=50 as bob: 50 topic links rendered. Separate requests (wp eval, warm): 8 queries each (1 batched topics query, batched users/usermeta/profiles, 1 option read), no per-author _transient_jt_grav_chk reads (grav=0); second render inside the same request = 1 query, 3 ms. First cold render 313 queries (new-author profile/Gravatar bookkeeping, allowed by the line). Browser /walk-recent-50/ as bob: 200, TTFB 71 ms then 52 ms, total 108 ms then 78 ms, both under 1 s."
     },
     "c-admin-blocks-shortcodes-widgets.17": {
       "result": "pass",

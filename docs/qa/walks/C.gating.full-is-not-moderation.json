@@ -1,11 +1,11 @@
 {
   "journey": "C.gating.full-is-not-moderation",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T21:13:20.602900Z",
-  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
+  "free": "8478fd19",
+  "pro": "81befa5",
+  "walked_at": "2026-11-10T08:19:27Z",
+  "walker": "release 2.0.7 combo walk (Sonnet)",
   "env": {
-    "mode": "combo (Free+Pro)",
+    "mode": "Free + Pro, all 17 Pro extensions on",
     "site": "http://localhost:8911",
     "themes": [
       "reign-theme"
@@ -20,37 +20,41 @@
     "locale": "en_US"
   },
   "checks": {
-    "c-gating-full-is-not-moderation.2": {
-      "result": "pass",
-      "evidence": "admin POST /spaces/34/access-rules {role, subscriber, grants:full, space_role:admin} -> 201; DB row: grants=participate, space_role=member. (REST in-process as the persona on the combo stack; fresh subscribers gate_sub/gate_sub2/gate_sub3 created for the walk and deleted afterwards; Amsterdam Chapter rules/visibility/join policy restored to public/open)"
-    },
-    "c-gating-full-is-not-moderation.5": {
-      "result": "pass",
-      "evidence": "Matched subscriber PATCH and DELETE another member's topic, POST /posts/{id}/pin and /close -> 403 jetonomy_forbidden each; POST /moderation/trash/post/{id} -> 403. (REST in-process as the persona on the combo stack; fresh subscribers gate_sub/gate_sub2/gate_sub3 created for the walk and deleted afterwards; Amsterdam Chapter rules/visibility/join policy restored to public/open)"
-    },
     "c-gating-full-is-not-moderation.1": {
       "result": "pass",
-      "evidence": "Private space Access Rules tab: the add form grant select offers Read and Participate only, each listed rule's grant select offers Read/Participate, and the 'How access rules work' help panel has no Full entry (text search for 'Full' is false)."
+      "evidence": "admin Access Rules tab on Founders Circle: add form Grants select = Read / Participate; the row's grants select = Read / Participate*; the 'How access rules work' grants table lists only Read and Participate, no Full row.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-admin.png"
+    },
+    "c-gating-full-is-not-moderation.2": {
+      "result": "pass",
+      "evidence": "admin POST /spaces/342/access-rules {rule_type:role,rule_value:subscriber,grants:full} -> 201 'Access rule added.', stored grants participate, space_role member."
     },
     "c-gating-full-is-not-moderation.3": {
       "result": "pass",
-      "evidence": "Rule created over REST with grants=full (stored as participate/Member). As fresh subscriber gate_sub1 in the browser: posted a topic, edited it (Save), deleted it (confirm), voted and replied on alice's topic and the Report button is present - all worked. (A first attempt as gate_sub3 hit the new-member limit 'New members can post 3 topics a day', so gate_sub1 was used.)"
+      "evidence": "ingrid_s (subscriber) under that rule in the browser: posted 'How do you handle investor updates?', replied on admin's topic, voted (button became 'Remove your upvote'), reported (toast 'Reported. Thank you.'), edited her topic (saved) and deleted it (confirm, redirected to space).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-member.png"
     },
     "c-gating-full-is-not-moderation.4": {
       "result": "pass",
-      "evidence": "gate_sub1 on alice's topic: no Edit, Delete, Close, Pin or Move control anywhere on the page."
+      "evidence": "ingrid on admin's 'Welcome to the Founders Circle': the only More options menu on the page is on her own reply; no Edit/Delete/Close/Pin control on the topic.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-member.png"
+    },
+    "c-gating-full-is-not-moderation.5": {
+      "result": "pass",
+      "evidence": "ingrid REST: PATCH /posts/13837, DELETE /posts/13837, POST /posts/13837/close, POST /posts/13837/pin -> 403 jetonomy_forbidden each; topic still publish, not closed, original title."
     },
     "c-gating-full-is-not-moderation.6": {
       "result": "pass",
-      "evidence": "gate_sub1 opened /community/s/gate-private-lab/mod/ -> 'You do not have permission to moderate this space.' with no queue (screenshot gt-mod-denied.png); POST /moderation/trash/post/3249 as the same kind of member -> 403 jetonomy_forbidden (seen in participate.6)."
+      "evidence": "ingrid opened /community/s/founders-circle/mod/ -> HTTP 403 page 'You do not have permission to moderate this space.', no queue; POST /moderation/trash/post/13837 -> 403 jetonomy_forbidden.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-mod.png"
     },
     "c-gating-full-is-not-moderation.7": {
       "result": "pass",
-      "evidence": "Set the rule row to grants='full' directly in the database (an enum value that still exists), ran Migration_2_0_7->up() through wp eval -> the row reads grants=participate, space_role=member, and the Access Rules list shows Participate (screenshot gt-full-migrated.png)."
+      "evidence": "set rule 49 to grants=full, space_role=moderator directly in jt_access_rules (REST GET then showed full/moderator), ran (new Jetonomy\\DB\\Migrations\\Migration_2_0_7())->up() via wp eval -> row reads participate/member and the admin rules list shows Participate selected."
     },
     "c-gating-full-is-not-moderation.8": {
       "result": "pass",
-      "evidence": "With test_moderator on the roster as a plain Member, alice's topic menu offers Edit, Pin to space, Close topic, Move, Delete and /mod/ opens the queue with a pending flag - his Moderate capability from the WordPress editor role, not from any rule. Removed from the roster again, the space is the invite-only refusal and the topic URL a 404 (a site moderator does not reach a private space he cannot read). Screenshot gt-moderator-menu.png."
+      "evidence": "test_moderator (site Moderate capability, added to the roster as Member) opened the topic: More options lists Edit, Make Private, Pin to space, Close topic, Move, Delete; REST POST /moderation/trash/post/{id} -> 200 trashed. The rule gives him nothing extra (it matches subscribers only). Fixture restored afterwards."
     }
   },
   "proposed_checks": []
