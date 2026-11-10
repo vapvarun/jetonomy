@@ -1181,6 +1181,8 @@ function jtFlagField( field, errEl, onFix ) {
     field.addEventListener( 'input', clear );
     field.addEventListener( 'change', clear );
 }
+// Pro's composers (the poll builder) flag their fields the same way.
+window.jetonomyFlagField = jtFlagField;
 
 /**
  * Show an empty-body error under an inline editor (topic or reply edit in place),
