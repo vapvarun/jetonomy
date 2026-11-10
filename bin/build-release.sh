@@ -223,6 +223,7 @@ tools/
 dist/
 docs/
 CLAUDE.md
+.core-first-allow
 phpcs.xml
 phpcs.xml.dist
 .phpcs.xml.dist

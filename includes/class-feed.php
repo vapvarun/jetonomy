@@ -75,13 +75,13 @@ class Feed {
 		?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-	<title><?php echo self::xml( wp_specialchars_decode( (string) $space->title, ENT_QUOTES ) . ' – ' . get_bloginfo( 'name' ) ); ?></title>
+	<title><?php echo self::xml( wp_specialchars_decode( (string) $space->title, ENT_QUOTES ) . ' – ' . get_bloginfo( 'name' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></title>
 	<link><?php echo esc_url( $space_url ); ?></link>
 	<atom:link href="<?php echo esc_url( $self_url ); ?>" rel="self" type="application/rss+xml" />
-	<description><?php echo self::xml( wp_strip_all_tags( (string) ( $space->description ?? '' ) ) ); ?></description>
-	<language><?php echo self::xml( get_bloginfo( 'language' ) ); ?></language>
-	<lastBuildDate><?php echo self::xml( mysql2date( 'r', $newest, false ) ); ?></lastBuildDate>
-	<generator>Jetonomy <?php echo self::xml( JETONOMY_VERSION ); ?></generator>
+	<description><?php echo self::xml( wp_strip_all_tags( (string) ( $space->description ?? '' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></description>
+	<language><?php echo self::xml( get_bloginfo( 'language' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></language>
+	<lastBuildDate><?php echo self::xml( mysql2date( 'r', $newest, false ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></lastBuildDate>
+	<generator>Jetonomy <?php echo self::xml( JETONOMY_VERSION ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></generator>
 		<?php foreach ( $posts as $post ) : ?>
 			<?php
 			$post_url = route_url( 'post', rawurlencode( (string) $space->slug ), rawurlencode( (string) $post->slug ) );
@@ -89,12 +89,12 @@ class Feed {
 			$excerpt  = wp_trim_words( (string) ( $post->content_plain ?? \jetonomy_content_to_plain( (string) $post->content ) ), 55 );
 			?>
 	<item>
-		<title><?php echo self::xml( wp_specialchars_decode( (string) $post->title, ENT_QUOTES ) ); ?></title>
+		<title><?php echo self::xml( wp_specialchars_decode( (string) $post->title, ENT_QUOTES ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></title>
 		<link><?php echo esc_url( $post_url ); ?></link>
 		<guid isPermaLink="true"><?php echo esc_url( $post_url ); ?></guid>
-		<pubDate><?php echo self::xml( mysql2date( 'r', (string) $post->created_at, false ) ); ?></pubDate>
-		<dc:creator><?php echo self::xml( '' !== $display['name'] ? $display['name'] : \Jetonomy\jetonomy_label( 'member' ) ); ?></dc:creator>
-		<description><?php echo self::xml( $excerpt ); ?></description>
+		<pubDate><?php echo self::xml( mysql2date( 'r', (string) $post->created_at, false ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></pubDate>
+		<dc:creator><?php echo self::xml( '' !== $display['name'] ? $display['name'] : \Jetonomy\jetonomy_label( 'member' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></dc:creator>
+		<description><?php echo self::xml( $excerpt ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></description>
 	</item>
 <?php endforeach; ?>
 </channel>

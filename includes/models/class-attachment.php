@@ -36,12 +36,13 @@ class Attachment {
 	 */
 	public static function link( string $object_type, int $object_id, int $attachment_id, int $sort = 0 ): int {
 		global $wpdb;
+		$table       = static::table();
 		$object_type = 'reply' === $object_type ? 'reply' : 'post';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$existing = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT id FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d AND attachment_id = %d LIMIT 1',
+				"SELECT id FROM {$table} WHERE object_type = %s AND object_id = %d AND attachment_id = %d LIMIT 1",
 				$object_type,
 				$object_id,
 				$attachment_id
@@ -70,8 +71,9 @@ class Attachment {
 
 	public static function find( int $link_id ): ?object {
 		global $wpdb;
+		$table = static::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . static::table() . ' WHERE id = %d', $link_id ) );
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $link_id ) );
 
 		return $row ?: null;
 	}
@@ -90,8 +92,9 @@ class Attachment {
 
 	public static function unlink_all( string $object_type, int $object_id ): int {
 		global $wpdb;
+		$table = static::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$n = (int) $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d', $object_type, $object_id ) );
+		$n = (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE object_type = %s AND object_id = %d", $object_type, $object_id ) );
 		unset( static::$cache[ $object_type ][ $object_id ] );
 
 		return $n;
@@ -99,10 +102,11 @@ class Attachment {
 
 	public static function count_for( string $object_type, int $object_id ): int {
 		global $wpdb;
+		$table = static::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d',
+				"SELECT COUNT(*) FROM {$table} WHERE object_type = %s AND object_id = %d",
 				$object_type,
 				$object_id
 			)
@@ -115,10 +119,11 @@ class Attachment {
 		}
 
 		global $wpdb;
+		$table = static::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d ORDER BY sort ASC, id ASC',
+				"SELECT * FROM {$table} WHERE object_type = %s AND object_id = %d ORDER BY sort ASC, id ASC",
 				$object_type,
 				$object_id
 			)
@@ -152,9 +157,10 @@ class Attachment {
 		}
 
 		global $wpdb;
+		$table        = static::table();
 		$placeholders = implode( ',', array_fill( 0, count( $object_ids ), '%d' ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders built above, values bound via prepare().
-		$sql = 'SELECT * FROM ' . static::table() . " WHERE object_type = %s AND object_id IN ({$placeholders}) ORDER BY sort ASC, id ASC";
+		$sql = "SELECT * FROM {$table} WHERE object_type = %s AND object_id IN ({$placeholders}) ORDER BY sort ASC, id ASC";
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( array( $object_type ), $object_ids ) ) );
 
@@ -217,15 +223,16 @@ class Attachment {
 			return;
 		}
 		global $wpdb;
+		$table         = static::table();
 		$replies_table = $wpdb->prefix . 'jt_replies';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT a.* FROM ' . static::table() . ' a
-				 INNER JOIN ' . $replies_table . ' r ON r.id = a.object_id
+				"SELECT a.* FROM {$table} a
+				 INNER JOIN {$replies_table} r ON r.id = a.object_id
 				 WHERE a.object_type = %s AND r.post_id = %d
-				 ORDER BY a.sort ASC, a.id ASC',
+				 ORDER BY a.sort ASC, a.id ASC",
 				'reply',
 				$post_id
 			)
@@ -239,7 +246,7 @@ class Attachment {
 		// Seed every reply on the post (empty where none) so get_for() never
 		// re-queries a reply that simply has no attachments.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		foreach ( (array) $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . $replies_table . ' WHERE post_id = %d', $post_id ) ) as $rid ) {
+		foreach ( (array) $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$replies_table} WHERE post_id = %d", $post_id ) ) as $rid ) {
 			static::$cache['reply'][ (int) $rid ] = $grouped[ (int) $rid ] ?? array();
 		}
 	}
@@ -329,8 +336,9 @@ class Attachment {
 	 */
 	public static function count_links_to( int $attachment_id ): int {
 		global $wpdb;
+		$table = static::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE attachment_id = %d', $attachment_id ) );
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE attachment_id = %d", $attachment_id ) );
 	}
 
 	/**
@@ -348,14 +356,17 @@ class Attachment {
 	 */
 	public static function anonymize_uploader( int $user_id, int $limit ): int {
 		global $wpdb;
+		$table = static::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_author = %d AND post_type = 'attachment' AND ID IN ( SELECT attachment_id FROM " . static::table() . ' ) LIMIT %d', $user_id, $limit ) );
+		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_author = %d AND post_type = 'attachment' AND ID IN ( SELECT attachment_id FROM {$table} ) LIMIT %d", $user_id, $limit ) );
 		$ids = array_map( 'intval', (array) $ids );
 		if ( ! $ids ) {
 			return 0;
 		}
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "UPDATE {$wpdb->posts} SET post_author = 0 WHERE ID IN (" . implode( ',', $ids ) . ')' );
+		$in = implode( ',', $ids );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is intval'd above.
+		$wpdb->query( "UPDATE {$wpdb->posts} SET post_author = 0 WHERE ID IN ({$in})" );
 		foreach ( $ids as $id ) {
 			clean_post_cache( $id );
 		}
@@ -370,7 +381,8 @@ class Attachment {
 	 */
 	public static function delete_dangling_links(): int {
 		global $wpdb;
+		$table = static::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (int) $wpdb->query( 'DELETE a FROM ' . static::table() . " a LEFT JOIN {$wpdb->posts} p ON p.ID = a.attachment_id WHERE p.ID IS NULL" );
+		return (int) $wpdb->query( "DELETE a FROM {$table} a LEFT JOIN {$wpdb->posts} p ON p.ID = a.attachment_id WHERE p.ID IS NULL" );
 	}
 }
