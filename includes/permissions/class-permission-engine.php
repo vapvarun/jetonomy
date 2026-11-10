@@ -377,8 +377,9 @@ class Permission_Engine {
 		if ( $access ) {
 			// Access rule grants access — check if sufficient for the action.
 			// Member-grade only: moderation comes from a real space mod role.
+			// Read promises "read and report", the same as a roster viewer.
 			$grants_map      = array(
-				'read'        => array( 'read' ),
+				'read'        => array( 'read', 'flag' ),
 				'participate' => self::MEMBER_GRADE_ACTIONS,
 			);
 			$allowed_actions = $grants_map[ $access['grants'] ] ?? array( 'read' );
