@@ -2053,7 +2053,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **Checks:**
 - `e-custom-badges.1` @admin #admin: Badge Builder: create "Conversationalist" with a Lucide icon, a description, criteria posts >= 25 and replies >= 50, press "Save Badge" -> notice "Badge saved." and the badge appears in the admin list with its criteria summary.
 - `e-custom-badges.2` @admin #admin: create a badge with no criteria -> the list shows "Manual award only".
-- `e-custom-badges.3` @admin #admin: open Badges -> the list shows the eleven seeded default badges (seeded on extension activation only); delete every badge -> the "No badges yet" empty state shows.
+- `e-custom-badges.3` @admin #admin: open Badges -> the list shows the eleven seeded default badges (seeded on extension activation only); delete (deactivate) one badge -> it stays in the list as inactive, members keep the awards they earned, and reactivating it restores it (badges are soft-deleted by design).
 - `e-custom-badges.4` @admin #admin: Award Badge dialog: search "Maya", pick her, press Award Badge (picking the user and pressing the button is the confirmation, there is no second confirm) -> alert "Badge awarded." and after OK the page reloads with the recipient count on the badge up by one.
 - `e-custom-badges.5` @member_c #ui: maya opens her profile -> the badge shows under Badges with name and tier chip, and GET /badges lists it for a guest; there is no public badge list page and post cards show no author badges.
 - `e-custom-badges.6` @member_b #ui: alice's profile does NOT -> show maya's badge and her badge count is unchanged (negative case).
