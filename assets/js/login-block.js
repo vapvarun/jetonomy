@@ -23,6 +23,11 @@
 		block.querySelectorAll( '.jt-login-tab' ).forEach( function ( tab ) {
 			var active = tab.dataset.jtTab === name;
 			tab.classList.toggle( 'is-active', active );
+			// Only real tabs carry tab semantics. When Register links to the
+			// site's own sign-up page there is no tablist, just a label.
+			if ( 'tab' !== tab.getAttribute( 'role' ) ) {
+				return;
+			}
 			tab.setAttribute( 'aria-selected', active ? 'true' : 'false' );
 			// Roving tabindex: Tab reaches only the selected tab; arrows move.
 			tab.setAttribute( 'tabindex', active ? '0' : '-1' );
@@ -379,7 +384,7 @@
 
 		// WAI-ARIA tabs keyboard model: Left/Right (and Home/End) move between
 		// the Log in / Register tabs and select the one focused.
-		var tablist = block.querySelector( '.jt-login-tabs' );
+		var tablist = block.querySelector( '.jt-login-tabs[role="tablist"]' );
 		if ( tablist ) {
 			tablist.addEventListener( 'keydown', function ( e ) {
 				var tabs = Array.prototype.slice.call( tablist.querySelectorAll( '.jt-login-tab' ) );

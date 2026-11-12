@@ -78,5 +78,22 @@ class DiviThemeBuilderTest extends WP_UnitTestCase {
 		$this->assertNotFalse( has_action( 'et_theme_builder_before_layout_closing_wrappers', array( $divi, 'close_layout' ) ) );
 		$this->assertSame( 9, has_action( 'wp', array( $divi, 'setup_module_styles' ) ), 'Before Divi sets up its stylesheet at 10.' );
 	}
+
+	/**
+	 * Divi's Dynamic Assets pick the base module CSS on `wp` at 999. Without a
+	 * window around that and a virtual-page entry, a header Menu module printed
+	 * as a bare vertical list with the mobile menu showing on desktop.
+	 */
+	public function test_dynamic_assets_setup_sees_the_layouts_on_a_community_route(): void {
+		global $wp;
+		$divi = new Divi_Theme_Builder();
+		$this->assertSame( 998, has_action( 'wp', array( $divi, 'open' ) ), 'Opens just before Divi Dynamic Assets (999).' );
+		$this->assertSame( 1000, has_action( 'wp', array( $divi, 'close' ) ), 'Closes just after it.' );
+
+		$wp->request = 'community/s/general';
+		$this->assertSame( array( 'other' ), $divi->virtual_page( array( 'other' ) ), 'Off community routes the list is untouched.' );
+		set_query_var( 'jetonomy_route', 'space' );
+		$this->assertSame( array( 'other', 'community/s/general' ), $divi->virtual_page( array( 'other' ) ) );
+	}
 }
 }

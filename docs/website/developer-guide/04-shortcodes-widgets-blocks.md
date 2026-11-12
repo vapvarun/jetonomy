@@ -371,7 +371,7 @@ Renders an inline login and register panel for the community sidebar. Logged-out
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `title` | string | `''` | Header above the tabs |
-| `showRegister` | boolean | `true` | Show the Register tab alongside Login (honours `users_can_register`) |
+| `showRegister` | boolean | `true` | Show the Register tab alongside Login (honours `users_can_register`). When `wp_registration_url()` is not the default `wp-login.php?action=register`, Register links there instead of showing the inline form |
 
 **Security**
 

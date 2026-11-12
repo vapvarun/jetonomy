@@ -85,6 +85,8 @@ Every community URL redirects an anonymous visitor to the WordPress login screen
 
 Registration can be disabled separately if you only want to allow invited members. In that case the Login block hides its Register tab.
 
+If your site has its own registration page (a registration or membership plugin, or the WordPress `register_url` filter, sets one), Register links to that page instead of opening Jetonomy's short inline form. New members then fill in your fields, such as name and terms. Log in stays inline either way.
+
 ## Customization
 
 The auth surface uses the same `--jt-*` design tokens as the rest of Jetonomy. That means your theme's brand color, fonts, border radius, and spacing are picked up automatically. No custom CSS required for a polished match.

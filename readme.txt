@@ -296,6 +296,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Improve  - After "Give members access" on the Permissions tab, a notice explains that the role now gets access through its spaces with nothing ticked.
 * Improve  - The text size buttons tell screen readers which size is on, and the Hide replies button is easier to tap on phones.
 * Improve  - Pages with many authors run fewer database queries when checking for Gravatar images.
+* Improve  - An Everyone or Logged In access rule that changes nothing on a Public space says so when saved and on the Access Rules tab, and names Who Can Post and Who Can Reply as the way to make signed-in visitors read-only.
 * Fix      - Address fields (terms, privacy, support, logos, share image, space cover, avatar) refuse a value that is not an address by name and keep the saved one.
 * Fix      - Terms, privacy and support links, the app logo, the email logo and the default share image saved as a site path like /terms are no longer sent to the mobile app, emails or social shares, which cannot open them.
 * Fix      - Leaving a space now uses the red confirm button with Cancel focused, and the message says how to get back in: rejoin any time, request again, or wait for a new invitation.
@@ -341,6 +342,8 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Fix      - Reactivating Jetonomy re-arms the publisher for scheduled topics.
 * Fix      - A topic or reply with no text, only empty formatting, is refused on create and edit.
 * Fix      - Deleting Jetonomy with its data also removes its scheduled background jobs.
+* Fix      - A Divi Theme Builder header or footer on community pages now gets Divi's base module styles, so a Menu module shows as a menu bar instead of a long list.
+* Fix      - The sidebar sign-in card and the Login block send Register to your site's own registration page when a registration plugin or the register_url filter sets one, instead of a separate inline form.
 * Security - A signed-out visitor on a private community gets no answer from any action, including Pro polls, reactions and attachment downloads.
 * Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
 * Security - Guests never see a private space's name on its members or roadmap page.

@@ -94,18 +94,76 @@ class AccessRule extends Model {
 	}
 
 	/**
+	 * Whether an Everyone / Logged In rule gives nobody anything on this space.
+	 *
+	 * Rules only ever let people in. A Public space is already readable by
+	 * everyone, and a Public + Open space already lets every signed-in user
+	 * post, so on those a Read rule (or, when Open, any such rule) changes
+	 * nothing. Owners added "Logged In - Read" expecting signed-in visitors to
+	 * become read-only and saw no effect; Who Can Post / Who Can Reply is the
+	 * setting that does that.
+	 *
+	 * @param object $space     Space row (visibility, join_policy).
+	 * @param string $rule_type Rule type.
+	 * @param string $grants    read | participate.
+	 */
+	public static function is_noop_on_space( object $space, string $rule_type, string $grants ): bool {
+		if ( ! in_array( $rule_type, array( 'everyone', 'logged_in' ), true ) || 'public' !== ( $space->visibility ?? '' ) ) {
+			return false;
+		}
+		return 'read' === $grants || 'open' === ( $space->join_policy ?? 'open' );
+	}
+
+	/**
+	 * The sentence that explains a rule is_noop_on_space() flagged, and what to
+	 * change instead. Shared by the save messages and the Access Rules tab.
+	 *
+	 * @param object $space Space row.
+	 */
+	public static function noop_explanation( object $space ): string {
+		$label = \Jetonomy\space_label( false, true );
+		return 'open' === ( $space->join_policy ?? 'open' )
+			? sprintf(
+				/* translators: 1: the singular space label, lowercase (e.g. "space"). 2: the Who Can Post option for members, as the dropdown shows it (e.g. "Members Only"). */
+				__( 'This %1$s is Public with an Open join policy, so everyone can already read it and anyone signed in can already post and reply. To make signed-in visitors read-only until they join, set Who Can Post and Who Can Reply to %2$s on the General tab.', 'jetonomy' ), // jt-terms-ok: "post" and "reply" are verbs; "Who Can Reply" is the field label.
+				$label,
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				sprintf( __( '%s Only', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) )
+			)
+			/* translators: %s: the singular space label, lowercase (e.g. "space"). */
+			: sprintf( __( 'This %s is Public, so everyone can already read it.', 'jetonomy' ), $label );
+	}
+
+	/**
+	 * Save message for a rule that changes nothing, or '' when it does something.
+	 *
+	 * @param int    $space_id  Space the rule belongs to.
+	 * @param string $rule_type Rule type.
+	 * @param string $grants    read | participate.
+	 */
+	public static function noop_notice( int $space_id, string $rule_type, string $grants ): string {
+		$space = Space::find( $space_id );
+		return ( $space && self::is_noop_on_space( $space, $rule_type, $grants ) ) ? self::noop_explanation( $space ) : '';
+	}
+
+	/**
 	 * The notice both rule-create paths (wp-admin AJAX, REST) show. When the
 	 * space was switched to Private it also names the join policy that now
-	 * applies, since Private is never open to join.
+	 * applies, since Private is never open to join. When the rule changes
+	 * nothing (is_noop_on_space()) it says so and names the setting to use.
 	 *
-	 * @param int  $space_id     Space the rule was attached to.
-	 * @param bool $made_private What enforce_gate_on_public_space() returned.
+	 * @param int    $space_id     Space the rule was attached to.
+	 * @param bool   $made_private What enforce_gate_on_public_space() returned.
+	 * @param string $rule_type    Rule type just created.
+	 * @param string $grants       What it grants.
 	 * @return string
 	 */
-	public static function added_message( int $space_id, bool $made_private ): string {
+	public static function added_message( int $space_id, bool $made_private, string $rule_type = '', string $grants = '' ): string {
 		$space = $made_private ? Space::find( $space_id ) : null;
 		if ( ! $space ) {
-			return __( 'Access rule added.', 'jetonomy' );
+			$noop = $made_private ? '' : self::noop_notice( $space_id, $rule_type, $grants );
+			/* translators: %s: why the rule changes nothing and what to change instead. */
+			return '' !== $noop ? sprintf( __( 'Access rule added, but it changes nothing. %s', 'jetonomy' ), $noop ) : __( 'Access rule added.', 'jetonomy' );
 		}
 		return sprintf(
 			/* translators: 1: space label, lowercase (e.g. "space"). 2: join policy label (e.g. "Requires Approval"). */
@@ -113,6 +171,18 @@ class AccessRule extends Model {
 			\Jetonomy\space_label( false, true ),
 			\Jetonomy\space_join_policy_label( Space::effective_join_policy( $space ) )
 		);
+	}
+
+	/**
+	 * Save message for a grant edit (wp-admin AJAX and REST PATCH share it).
+	 *
+	 * @param int $rule_id Rule just updated.
+	 */
+	public static function updated_message( int $rule_id ): string {
+		$rule = static::find( $rule_id );
+		$noop = $rule ? self::noop_notice( (int) $rule->space_id, (string) $rule->rule_type, (string) $rule->grants ) : '';
+		/* translators: %s: why the rule changes nothing and what to change instead. */
+		return '' !== $noop ? sprintf( __( 'Access rule updated, but it changes nothing. %s', 'jetonomy' ), $noop ) : __( 'Access rule updated.', 'jetonomy' );
 	}
 
 	/**
