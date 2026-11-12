@@ -1,6 +1,6 @@
 {
   "journey": "C.admin.plugin-pages",
-  "free": "0ab0fa5e",
+  "free": "d4e4d677",
   "pro": "0496dc4",
   "walked_at": "2026-11-12T11:08:00Z",
   "walker": "claude self-qa",
@@ -143,5 +143,6 @@
       "evidence": "wp jetonomy qa-actions: RM4 (Permissions column for a role without WordPress read ticks only Read) and RM5 (such a role is refused writes the owner ticked, as the write routes refuse them) PASS (603/603); the Permissions tab also shows the note 'No WordPress read capability: QA-RFT noread. Their members can read but cannot post, vote or join, so only Read can be ticked for them.' for an existing seeded role. (UI of the custom-role grid not re-walked.)"
     }
   },
-  "proposed_checks": []
+  "proposed_checks": [],
+  "note": "Checks .1-.22 and .24-.27 were walked in the browser at Free 0ab0fa5e. The only code change from 0ab0fa5e to d4e4d677 is the edited_by mask in the post and reply REST serializers (d4e4d677); .23 was re-walked at d4e4d677, and the full PHPUnit suite (1825) and wp jetonomy qa-actions (603/603) pass there."
 }
