@@ -131,8 +131,8 @@ behaved this way; both surfaces now share one implementation
 
 An `everyone` or `logged_in` rule that gives nobody anything on a public space
 (Read on any public space, or any grant on a public space with an open join
-policy) is saved as asked, and `message` starts with "Access rule added, but it
-changes nothing." followed by the reason. `PATCH /access-rules/{rule_id}`
+policy) is saved as asked, `no_effect` is `true`, and `message` starts with "Access rule
+added, but it changes nothing." followed by the reason. `PATCH /access-rules/{rule_id}`
 returns the same note in its `message` when the new grant changes nothing.
 
 ```bash
@@ -145,6 +145,7 @@ curl -X POST https://your-site.com/wp-json/jetonomy/v1/spaces/42/access-rules \
 {
   "data": { "id": 7, "space_id": 42, "rule_type": "trust_level", "rule_value": "2", "grants": "participate", "space_role": "member", "priority": 0 },
   "made_private": true,
+  "no_effect": false,
   "message": "Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space."
 }
 ```

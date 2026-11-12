@@ -161,6 +161,18 @@
       "title": "The Report button showed for a role the owner took Report from, then failed with 403",
       "guard": "runbook:c-mod-flag-resolution.22",
       "added": "2026-11-06"
+    },
+    {
+      "card": "10498439475",
+      "title": "A Logged In Read rule on a public open space looked like a read-only gate but changed nothing",
+      "guard": "runbook:c-gating-builder-explains-itself.14",
+      "added": "2026-11-12"
+    },
+    {
+      "card": "10497555913",
+      "title": "The sidebar sign-in card's Register ignored the site's own registration page",
+      "guard": "runbook:c-anon-quick-login-and-captcha.22",
+      "added": "2026-11-12"
     }
   ]
 }

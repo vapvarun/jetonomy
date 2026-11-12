@@ -415,6 +415,7 @@ class Spaces_Controller extends Base_Controller {
 			array(
 				'data'         => $rule,
 				'made_private' => $made_private,
+				'no_effect'    => ! $made_private && '' !== AccessRule::noop_notice( $space_id, $rule_type, (string) ( $rule->grants ?? '' ) ),
 				'message'      => AccessRule::added_message( $space_id, $made_private, $rule_type, (string) ( $rule->grants ?? '' ) ),
 			),
 			201

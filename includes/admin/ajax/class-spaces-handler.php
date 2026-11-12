@@ -617,6 +617,7 @@ class Spaces_Handler {
 				'id'           => $id,
 				'rule'         => $rule,
 				'made_private' => $made_private,
+				'no_effect'    => ! $made_private && '' !== AccessRule::noop_notice( $space_id, $rule_type, (string) $rule->grants ),
 				'message'      => $message,
 			)
 		);

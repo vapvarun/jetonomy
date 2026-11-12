@@ -1379,6 +1379,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-quick-login-and-captcha.19` @guest #block: Resend confirmation email after registering -> 'If an account is waiting on confirmation for that email, a new link is on its way.' and a new email arrives.
 - `c-anon-quick-login-and-captcha.20` @guest #block: click Resend confirmation email -> the 'a new link is on its way' sentence replaces the error and is styled as a success (today it is appended in red under the error).
 - `c-anon-quick-login-and-captcha.21` @guest #block: click Resend confirmation email twice within 60 seconds -> the second click tells the member to wait (today it shows the same success sentence and sends nothing).
+- `c-anon-quick-login-and-captcha.22` @guest #ui +390 card:10497555913: with registration open and a register_url filter pointing at /join/, open /community/ -> the sidebar card's Register is a link to /join/ with no inline sign-up form, Log in stays inline, at 1440 and 390; without the filter the inline Register tab still works.
 
 ### C.member.space-create-and-join
 **Covers:** templates/views/new-space.php, templates/views/my-spaces.php, templates/partials/icon-picker.php, assets/js/jetonomy-icon-picker.js, includes/models/class-join-request.php
@@ -1580,6 +1581,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-site-host-integrations.16` @admin #ui: set "Community as homepage" -> the root `/` shows the community and still obeys the maintenance gate.
 - `c-site-host-integrations.18` @guest #ui: on the Divi theme with a Theme Builder global header and footer, open /community/ and a topic -> the Divi header and footer render with their module styles, and debug.log has no warning from an empty Divi menu.
 - `c-site-host-integrations.17` @admin #admin: open Settings > Appearance on a theme that shows a sidebar (BuddyX) -> the Layout card offers Container Width, Page Padding and Layout Density (there is no sidebar setting), and the community pages show the Jetonomy sidebar, not the theme's.
+- `c-site-host-integrations.19` @guest #ui +390: with a Divi Theme Builder global header holding a Menu module, open /community/, a space and a topic -> the menu is a horizontal bar with the mobile menu hidden at 1440 (header height matches a normal page), and at 390 the hamburger opens the menu.
 
 ### C.integration.abilities-api
 **Covers:** includes/class-abilities.php
@@ -1665,7 +1667,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 **Promise:** "Lets matching people in to read. It takes nothing away from people who already get in another way, such as members on the roster."
 
 **Checks:**
-- `c-gating-read-on-public.1` @admin #admin: add a Read rule (Everyone or Logged In) to the public open-join space -> the rule saves (REST 201 "Access rule added.") and the admin toast reads "Rule added: <who> can read and report posts and replies. They are recorded as Viewer.".
+- `c-gating-read-on-public.1` @admin #admin card:10498439475: add a Read rule (Everyone or Logged In) to the public open-join space -> the rule saves (REST 201, no_effect true, message starting "Access rule added, but it changes nothing.") and the admin toast says the rule changes nothing and names Who Can Post and Who Can Reply.
 - `c-gating-read-on-public.2` @member #ui: the subscriber opens the space and posts a topic "What is the best phone for testing?" -> it publishes.
 - `c-gating-read-on-public.3` @member #ui: the subscriber replies and votes -> both still work.
 - `c-gating-read-on-public.4` @member_b #ui: a roster member keeps all abilities -> unchanged.
@@ -1827,6 +1829,8 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-builder-explains-itself.11` @admin #admin +dark: builder in a dark scheme -> text readable.
 - `c-gating-builder-explains-itself.12` @admin #admin +rtl: builder in Arabic -> the example text is right to left.
 - `c-gating-builder-explains-itself.13` @admin #admin: pick Participate with any rule type (Logged In, Role, Capability, Trust Level, or a membership plan) -> the preview says "They are recorded as Member."; after Add Rule the Space Role column shows Member; POST /spaces/{id}/access-rules with grants=full and space_role=admin stores grants participate and space_role member.
+- `c-gating-builder-explains-itself.14` @admin #admin card:10498439475: on a public open-join space add Logged In with Read -> the toast and a standing warning on the Access Rules tab say the rule changes nothing and name Who Can Post and Who Can Reply; switching the rule to Participate shows the same in the update toast.
+- `c-gating-builder-explains-itself.15` @admin #admin card:10498439475: add Logged In with Participate to a public space whose join policy is Requires Approval, and Logged In with Read to a private space -> the plain "Rule added" toast and no warning, because both rules let people in.
 
 ### C.gating.surfaces-agree
 **Covers:** includes/class-visibility.php, includes/permissions/class-permission-engine.php, includes/search/class-fulltext-search.php, templates/views/home.php, templates/partials/sidebar.php, includes/api/class-search-controller.php, includes/api/class-base-controller.php, includes/api/class-posts-controller.php, includes/class-template-loader.php, includes/models/class-space.php
