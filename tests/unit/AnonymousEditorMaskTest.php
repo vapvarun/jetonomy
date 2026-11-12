@@ -63,6 +63,11 @@ class AnonymousEditorMaskTest extends WP_UnitTestCase {
 		$this->assertNull( $reply['edited_by'], 'reply edited_by leaks the anonymous author' );
 	}
 
+	/**
+	 * The mask must not hide a moderator's edit, which already showed.
+	 *
+	 * @covers-existing
+	 */
 	public function test_moderator_edit_still_names_the_moderator(): void {
 		global $wpdb;
 		$mod = self::factory()->user->create();
