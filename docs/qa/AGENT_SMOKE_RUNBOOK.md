@@ -453,7 +453,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.invite-landing
 **Covers:** templates/views/invite.php, includes/models/class-invite-link.php, includes/api/class-spaces-controller.php
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** 0ab0fa5e
 **What to verify:** an invite link lands on a page that names the space being offered and does NOT join anyone by itself. Logged out: it offers "Create free account" (when registration is open) and "Log in to accept invite", and returns to the invite after login. Logged in: it shows a "Join" button; the member is added only when they click it (a POST with a nonce), then land in the space. Opening the link, a link preview or a prefetch never adds anyone. Invalid codes, expired links and links at their usage limit get a clean error, not a fatal. An archived or locked space, or a member banned from the space, cannot be joined by invite.
 
 **Checks:**
@@ -966,7 +966,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.plugin-pages
 **Covers:** includes/admin/class-admin.php, includes/admin/views/*.php, assets/css/admin.css, assets/js/admin-common.js, assets/js/admin-confirm.js, assets/js/admin-content.js, assets/js/admin-dashboard.js, assets/js/admin-media-grid.js, assets/js/admin-nav-menus.js, assets/js/admin-replies.js, assets/js/admin-revisions.js, assets/js/admin-settings.js, assets/js/admin-tags.js, includes/admin/class-activity-list-table.php, includes/admin/class-revisions-list-table.php, includes/admin/ajax/class-content-handler.php, includes/admin/ajax/class-moderation-handler.php, includes/admin/ajax/class-tags-handler.php, includes/class-activity-tracker.php, includes/class-admin-bar.php, includes/class-nav-menus.php, includes/models/class-activity-log.php, includes/models/class-revision.php, pro:includes/extensions/white-label/*.php, pro:includes/extensions/analytics/views/*.php, pro:includes/extensions/custom-fields/views/*.php, pro:includes/extensions/private-messaging/views/*.php
-**Verified:** af10b788 pro:69d28a8
+**Verified:** d4e4d677 pro:0496dc4
 **What to verify:** every Jetonomy admin page (overview, spaces, categories, content, users, moderation, settings, plus any Pro extension pages) renders without PHP Notice / Warning / Fatal. Every tab on those pages loads its content without AJAX errors. The Spaces, Users and Extensions screens open for staff holding Manage spaces, Manage community users and Manage extensions respectively. The Dashboard's "Review flags" link opens the Flags tab. Anonymous authors stay anonymous in the admin lists, Activity Log and Revisions. Every Settings sidebar row has an icon. Labels follow Terminology (topics, not posts), and the brand name set by White Label (`jetonomy_brand_name`) replaces "Jetonomy" in admin headings. Settings > Emails lists every email type: reactions, report reviewed, join request, join answer and "Confirm your email (new accounts)"; saved templates for each are kept. The Activity Log shows titles and "Gained/Lost N reputation points" with plain reasons, and its retention setting is its own card. The Permissions role table keeps its first column visible while scrolling sideways, and the trust level name fields are styled. Revisions show the stored title with "(deleted)" when the topic is gone. The setup wizard calls the type "Feed".
 
 **Checks:**
@@ -1000,7 +1000,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.category-and-space-crud
 **Covers:** includes/admin/ajax/class-categories-handler.php, includes/admin/ajax/class-spaces-handler.php, includes/admin/views/categories.php, includes/admin/views/spaces.php, includes/models/class-space.php, includes/models/class-category.php, includes/api/class-categories-controller.php, includes/class-space-purge.php, includes/models/class-model.php, pro:includes/class-space-relations.php
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** 0ab0fa5e pro:0496dc4
 **What to verify:** an admin can create, edit, reorder, and delete categories and spaces. Deleting a non-empty category handles its spaces per contract (cascade or refuse). Space settings edits persist and MERGE with existing settings (editing one key does not drop others - this is a hard contract). The space form keeps visibility and join policy consistent: choosing Hidden forces Invite only, choosing Private turns Open into Approval required, each with a note. The last admin of a space cannot be removed or demoted from wp-admin. Deleting a space with more than 500 topics locks it and finishes in the background, and the screen says so; a database error stops the delete with the space intact. Archive and hand-over moves ownership to a valid heir, and the former owner stays as a moderator.
 
 **Checks:**
@@ -1066,7 +1066,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.invite-links
 **Covers:** includes/models/class-invite-link.php, templates/views/invite.php, includes/api/class-spaces-controller.php, templates/views/space-edit.php, templates/partials/space-header.php
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** 0ab0fa5e
 **What to verify:** an admin can mint an invite link for a space (optionally with a use limit and an expiry date), copy it, and the link works through the full accept flow: opening it shows the space with a Join button, and the member is added only when they click Join (sign up or log in first if needed), landing in the space with correct membership. An expiry date means the link works until the end of that day in the site's timezone; an unreadable or past date is refused, and the invite list shows the date in the site's format. A link past its limit or date is refused, and two people using the last use at the same moment cannot exceed the limit. The invite and join-request lists are paginated. A request the member withdrew leaves the list.
 
 **Checks:**
@@ -1327,7 +1327,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.admin.blocks-shortcodes-widgets
 **Covers:** includes/class-blocks.php, includes/class-shortcodes.php, includes/class-widgets.php, includes/widgets/*.php, assets/js/blocks-editor.js, assets/js/compose-topic-block.js, assets/css/blocks.css, assets/css/blocks-editor.css
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** 0ab0fa5e
 **What to verify:** Site admin inserts each Jetonomy block in the editor, each shortcode on a page, and each widget in a sidebar, then views them as a guest and as a member: they render the same content the community shows, honour private/hidden spaces (a guest never sees private space titles), and the compose-topic block posts a topic. The editor preview must match the front end. Check 1440 and 390 widths and dark mode.
 
 **Checks:**
@@ -1354,7 +1354,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.quick-login-and-captcha
 **Covers:** includes/api/class-auth-controller.php, includes/captcha/*.php, assets/js/login-block.js
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** 0ab0fa5e
 **What to verify:** A guest uses the Login block to sign in and (if enabled) register without leaving the page; wrong password and duplicate email show clear errors and no account is revealed beyond the standard message. With reCAPTCHA or Turnstile configured, the challenge appears on register and on topic/reply submission, a failed challenge blocks the submit, and with captcha off nothing extra shows. Check 1440 and 390 widths.
 
 **Checks:**
@@ -1379,6 +1379,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-anon-quick-login-and-captcha.19` @guest #block: Resend confirmation email after registering -> 'If an account is waiting on confirmation for that email, a new link is on its way.' and a new email arrives.
 - `c-anon-quick-login-and-captcha.20` @guest #block: click Resend confirmation email -> the 'a new link is on its way' sentence replaces the error and is styled as a success (today it is appended in red under the error).
 - `c-anon-quick-login-and-captcha.21` @guest #block: click Resend confirmation email twice within 60 seconds -> the second click tells the member to wait (today it shows the same success sentence and sends nothing).
+- `c-anon-quick-login-and-captcha.22` @guest #ui +390 card:10497555913: with registration open and a register_url filter pointing at /join/, open /community/ -> the sidebar card's Register is a link to /join/ with no inline sign-up form, Log in stays inline, at 1440 and 390; without the filter the inline Register tab still works.
 
 ### C.member.space-create-and-join
 **Covers:** templates/views/new-space.php, templates/views/my-spaces.php, templates/partials/icon-picker.php, assets/js/jetonomy-icon-picker.js, includes/models/class-join-request.php
@@ -1558,7 +1559,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.site.host-integrations
 **Covers:** includes/integrations/class-buddypress.php, includes/integrations/class-fluent-community.php, includes/integrations/class-layout-css.php, includes/integrations/class-theme-integration.php, includes/integrations/class-divi-theme-builder.php, assets/css/buddypress.css, assets/css/fluent-community.css
-**Verified:** pending - new journey, not walked yet
+**Verified:** 0ab0fa5e
 **What to verify:** On a BuddyPress site, a Fluent Community site, and under BuddyX or Reign themes, community pages pick up the theme's colours and fonts, the layout settings (width, sidebar) set by the admin apply, and the BuddyPress profile tab shows the member's Jetonomy activity. Nothing breaks when the host plugin is absent. Check 1440 and 390 widths, light and dark mode.
 
 **Checks:**
@@ -1580,6 +1581,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-site-host-integrations.16` @admin #ui: set "Community as homepage" -> the root `/` shows the community and still obeys the maintenance gate.
 - `c-site-host-integrations.18` @guest #ui: on the Divi theme with a Theme Builder global header and footer, open /community/ and a topic -> the Divi header and footer render with their module styles, and debug.log has no warning from an empty Divi menu.
 - `c-site-host-integrations.17` @admin #admin: open Settings > Appearance on a theme that shows a sidebar (BuddyX) -> the Layout card offers Container Width, Page Padding and Layout Density (there is no sidebar setting), and the community pages show the Jetonomy sidebar, not the theme's.
+- `c-site-host-integrations.19` @guest #ui +390: with a Divi Theme Builder global header holding a Menu module, open /community/, a space and a topic -> the menu is a horizontal bar with the mobile menu hidden at 1440 (header height matches a normal page), and at 390 the hamburger opens the menu.
 
 ### C.integration.abilities-api
 **Covers:** includes/class-abilities.php
@@ -1639,14 +1641,14 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.rule-never-locks-out
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/permissions/class-content-gate.php, includes/admin/class-admin.php, includes/api/class-rest-auth.php, assets/js/admin-common.js, assets/css/admin.css
-**Verified:** af10b788 pro:69d28a8
+**Verified:** 0ab0fa5e
 **What to verify:** note what the subscriber can do in the public space. Add a Logged In rule to that space. Everything they could do before, they can still do. (A Role, Capability, Trust Level or Membership rule switches a public space to Private by design - the Access Rules tab says so - so a member outside the roster can then read but not post.)
 **Promise:** "A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy."
 **Why it matters:** owners reach for rules to restrict. They do not restrict, and an owner who believes otherwise has left a space open while thinking it is closed.
 
 **Checks:**
 - `c-gating-rule-never-locks-out.1` @member #ui: as a fresh subscriber (not in either space) note what he can do in the public open space: read, post, reply, vote -> all four work.
-- `c-gating-rule-never-locks-out.2` @admin #admin: add a Logged In rule with Grants Read to the public space -> toast "Rule added: Logged In can read and report posts and replies. They are recorded as Viewer." (the default Participate grant reads "can read, post, reply, vote and report ... Member") and the Access Rules tab lists the rule; on a private space a confirm "Logged In will be let in to this private space and can take part right away. Continue?" comes first.
+- `c-gating-rule-never-locks-out.2` @admin #admin: add a Logged In rule with Grants Read to the public open space -> toast "Access rule added, but it changes nothing." with the Who Can Post / Who Can Reply hint (on a space that is not Public + Open the toast reads "Rule added: Logged In can read and report posts and replies. They are recorded as Viewer."; the default Participate grant reads "can read, post, reply, vote and report ... Member") and the Access Rules tab lists the rule; on a private space a confirm "Logged In will be let in to this private space and can take part right away. Continue?" comes first.
 - `c-gating-rule-never-locks-out.3` @member #ui: repeat read, post, reply, vote after the rule -> all four still work.
 - `c-gating-rule-never-locks-out.4` @guest #ui: view the public space after the Logged In rule -> guest can still read it (the rule did not close the space).
 - `c-gating-rule-never-locks-out.5` @admin #admin: add a Role, Capability, Trust Level or Membership rule to the public space -> toast "Access rule added. This space was switched to Private so the rule can restrict access, and its join policy is now Requires Approval. A rule cannot gate a public space.".
@@ -1660,12 +1662,12 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.read-on-public
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
-**Verified:** 8478fd19 pro:81befa5
+**Verified:** 0ab0fa5e
 **What to verify:** with a **Read** rule on the public open-join space, the subscriber can still post.
 **Promise:** "Lets matching people in to read. It takes nothing away from people who already get in another way, such as members on the roster."
 
 **Checks:**
-- `c-gating-read-on-public.1` @admin #admin: add a Read rule (Everyone or Logged In) to the public open-join space -> the rule saves (REST 201 "Access rule added.") and the admin toast reads "Rule added: <who> can read and report posts and replies. They are recorded as Viewer.".
+- `c-gating-read-on-public.1` @admin #admin card:10498439475: add a Read rule (Everyone or Logged In) to the public open-join space -> the rule saves (REST 201, no_effect true, message starting "Access rule added, but it changes nothing.") and the admin toast says the rule changes nothing and names Who Can Post and Who Can Reply.
 - `c-gating-read-on-public.2` @member #ui: the subscriber opens the space and posts a topic "What is the best phone for testing?" -> it publishes.
 - `c-gating-read-on-public.3` @member #ui: the subscriber replies and votes -> both still work.
 - `c-gating-read-on-public.4` @member_b #ui: a roster member keeps all abilities -> unchanged.
@@ -1675,7 +1677,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.read-on-private
 **Covers:** includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/permissions/class-content-gate.php
-**Verified:** 8478fd19 pro:81befa5
+**Verified:** 0ab0fa5e
 **What to verify:** with a **Read** rule on the private space, the subscriber can read it and cannot post, reply or vote.
 
 **Checks:**
@@ -1693,7 +1695,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.participate
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/adapters/class-adapter-registry.php, includes/adapters/interface-membership-adapter.php
-**Verified:** 8478fd19 pro:81befa5
+**Verified:** 0ab0fa5e
 **What to verify:** with a **Participate** rule on the private space, the subscriber can read, post, reply, vote and report - all five - and can edit and delete their own posts (the Edit own posts and Delete own posts permissions come with Participate and Full).
 **Promise:** "Participate - Read, plus post, reply, vote and report."
 
@@ -1714,7 +1716,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.full-is-not-moderation
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
-**Verified:** 8478fd19 pro:81befa5
+**Verified:** 0ab0fa5e
 **What to verify:** the old **Full** grant is gone (2.0.7): the Access Rules screen offers Read and Participate only, a rule saved as Full before 2.0.7 (or sent as `grants=full` by an old API client) is stored and acts as Participate, and an ordinary subscriber under it cannot edit, delete, close or pin anyone else's topic. It is recorded as Member for every rule type, never Moderator.
 **Promise:** "A rule can open a space; it never hands out moderation."
 **Why it matters:** "Full" read like "everything". It never was, so 2.0.7 removed it.
@@ -1731,7 +1733,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.no-rule-hands-out-moderation
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/class-membership-roster-sync.php, includes/admin/ajax/class-spaces-handler.php
-**Verified:** 8478fd19 pro:81befa5
+**Verified:** 0ab0fa5e
 **What to verify:** try every grant level, and set the rule's Space Role as high as the screen allows. A subscriber matched by that rule still cannot moderate, edit others' posts, delete others' posts, or pin. (A site moderator holding the Moderate capability does moderate in spaces they can read, but that comes from their WordPress role, never from a rule.) Full is recorded as Member for every rule type, never Moderator.
 **Promise:** "A rule can never hand out moderation."
 **Why it matters:** **this is the 1.9.1 escalation.** Before the fix, a rule set to Read with an elevated space role made every matched person a space admin. If this step ever fails again, it is a security bug - file it immediately and say so in the title.
@@ -1749,7 +1751,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.roster-role-is-a-per-person-decision
 **Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-space-member.php, templates/views/space-members.php
-**Verified:** 11e21b47 pro:05e4a11
+**Verified:** 0ab0fa5e
 **What to verify:** after anyone is admitted by a rule - including via an LMS or membership plugin enrolment if one is installed - open the space **Members** tab. Nobody added by a rule is listed as Moderator or Admin. Full is recorded as Member for every rule type, never Moderator.
 **Promise:** "To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule."
 
@@ -1770,7 +1772,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.admission-without-a-roster-row
 **Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/adapters/class-adapter-registry.php, includes/adapters/class-member-press-adapter.php, includes/adapters/class-pmpro-adapter.php, includes/adapters/class-wp-roles-adapter.php, includes/adapters/interface-membership-adapter.php
-**Verified:** 8478fd19 pro:81befa5
+**Verified:** 0ab0fa5e
 **What to verify:** a person matched by a rule can use the space **without** appearing on the Members tab, unless Sync Members was pressed.
 **Promise:** "The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well."
 
@@ -1788,7 +1790,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.access-ends-by-itself
 **Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/class-membership-roster-sync.php, includes/models/class-space-member.php, includes/notifications/class-notifier.php, pro:includes/adapters/class-tag-space-integration.php
-**Verified:** 8478fd19 pro:81befa5
+**Verified:** 0ab0fa5e pro:0496dc4
 **What to verify:** remove the rule (or let the membership lapse where a plugin provides one). Access closes on the next page load, with no admin action.
 **Promise:** "Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand."
 
@@ -1809,7 +1811,7 @@ Setup once: a **public** space with open joining, a **private** space with invit
 
 ### C.gating.builder-explains-itself
 **Covers:** includes/admin/views/space-edit.php, includes/admin/views/spaces.php, includes/models/class-access-rule.php, includes/admin/class-admin.php, includes/api/class-rest-auth.php, assets/js/admin-common.js, assets/css/admin.css
-**Verified:** af10b788 pro:69d28a8
+**Verified:** 0ab0fa5e
 **What to verify:** on the Access Rules tab, step through every entry in the Rule type dropdown. The tab intro and empty state say a rule only lets more people in; visibility and join policy decide who else gets in. Each type shows a second sentence under the live preview saying **who** the rule catches, and the value box carries an example for that type. **Everyone** and **Logged In** show no value box at all. A rule needs a value that can work: a trust level rule with no level (or outside 1-5), a role that does not exist, or an empty capability or membership value is refused with a message, so it can never admit every member.
 **Why it matters:** picking the wrong rule is silent - it saves, the space looks configured, and the mistake only surfaces when the wrong people are in the room.
 
@@ -1827,6 +1829,8 @@ Setup once: a **public** space with open joining, a **private** space with invit
 - `c-gating-builder-explains-itself.11` @admin #admin +dark: builder in a dark scheme -> text readable.
 - `c-gating-builder-explains-itself.12` @admin #admin +rtl: builder in Arabic -> the example text is right to left.
 - `c-gating-builder-explains-itself.13` @admin #admin: pick Participate with any rule type (Logged In, Role, Capability, Trust Level, or a membership plan) -> the preview says "They are recorded as Member."; after Add Rule the Space Role column shows Member; POST /spaces/{id}/access-rules with grants=full and space_role=admin stores grants participate and space_role member.
+- `c-gating-builder-explains-itself.14` @admin #admin card:10498439475: on a public open-join space add Logged In with Read -> the toast and a standing warning on the Access Rules tab say the rule changes nothing and name Who Can Post and Who Can Reply; switching the rule to Participate shows the same in the update toast.
+- `c-gating-builder-explains-itself.15` @admin #admin card:10498439475: add Logged In with Participate to a public space whose join policy is Requires Approval, and Logged In with Read to a private space -> the plain "Rule added" toast and no warning, because both rules let people in.
 
 ### C.gating.surfaces-agree
 **Covers:** includes/class-visibility.php, includes/permissions/class-permission-engine.php, includes/search/class-fulltext-search.php, templates/views/home.php, templates/partials/sidebar.php, includes/api/class-search-controller.php, includes/api/class-base-controller.php, includes/api/class-posts-controller.php, includes/class-template-loader.php, includes/models/class-space.php

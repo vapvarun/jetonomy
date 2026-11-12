@@ -7254,7 +7254,7 @@
         ],
         "summary": "Create an access rule",
         "operationId": "createAccessRule",
-        "description": "Creates a rule. A restrictive rule (membership, role, capability, trust_level) on a PUBLIC space switches that space to Private, because a public space is always readable and the rule would otherwise silently do nothing. The response reports this via made_private. Requires `jetonomy_manage_spaces`.",
+        "description": "Creates a rule. A restrictive rule (membership, role, capability, trust_level) on a PUBLIC space switches that space to Private, because a public space is always readable and the rule would otherwise silently do nothing. The response reports this via made_private. An everyone or logged_in rule that changes nothing on a public space is saved, and no_effect is true with a message that says why. Requires `jetonomy_manage_spaces`.",
         "requestBody": {
           "required": true,
           "content": {

@@ -1286,8 +1286,9 @@
 						priority: $('#rule-priority').val()
 					}).done(function(res) {
 						if (res.success) {
-							// A space switched to Private gets the server's explanation instead.
-							self.reloadWithToast(res.data.made_private ? res.data.message : (i18n.added || '%s').replace('%s', summary));
+							// A space switched to Private, or a rule that changes nothing,
+							// gets the server's explanation instead.
+							self.reloadWithToast(res.data.made_private || res.data.no_effect ? res.data.message : (i18n.added || '%s').replace('%s', summary));
 						} else {
 							self.toast(res.data || self.i18n.error, 'error');
 							$btn.prop('disabled', false);

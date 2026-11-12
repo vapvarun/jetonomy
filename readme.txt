@@ -348,6 +348,7 @@ Clearer access rules and membership gates, safer address fields, Divi Theme Buil
 * Security - Space cover and avatar addresses that start with javascript: or data: are refused instead of clearing the image.
 * Security - Guests never see a private space's name on its members or roadmap page.
 * Security - Erasing a member's personal data also removes them as the uploader of their attachments.
+* Security - An anonymous topic or reply edited by its author no longer reveals the author's user id through the REST API.
 * Dev      - The list-posts and list-replies abilities describe the after parameter as the offset it is.
 * Compat   - Aligned with Jetonomy Pro 2.0.7. Install both updates together.
 * Compat   - BuddyNext suspensions and blocks carry into the forum with BuddyNext 1.2.8 or later.

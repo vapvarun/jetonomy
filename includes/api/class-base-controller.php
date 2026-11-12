@@ -994,7 +994,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'vote_score'              => (int) ( $post->vote_score ?? 0 ),
 			'last_reply_at'           => $post->last_reply_at ?? null,
 			'edited_at'               => $post->edited_at ?? null,
-			'edited_by'               => $post->edited_by ? (int) $post->edited_by : null,
+			// An anonymous author's own edit must not name them; a moderator's edit still shows.
+			'edited_by'               => $post->edited_by && ! ( 0 === $author_id && (int) $post->edited_by === $real_author_id ) ? (int) $post->edited_by : null,
 			// Send back as edit_token on PATCH; null on list rows read without their content.
 			'edit_token'              => isset( $post->content ) ? \Jetonomy\Models\Post::edit_token( $post, \Jetonomy\Models\Post::EDIT_FIELDS ) : null,
 			'published_at'            => $post->published_at ?? null,

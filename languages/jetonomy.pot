@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T07:45:52+00:00\n"
+"POT-Creation-Date: 2026-11-12T08:32:10+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -148,15 +148,15 @@ msgstr ""
 #: includes/admin/ajax/class-spaces-handler.php:507
 #: includes/admin/ajax/class-spaces-handler.php:529
 #: includes/admin/ajax/class-spaces-handler.php:561
-#: includes/admin/ajax/class-spaces-handler.php:628
-#: includes/admin/ajax/class-spaces-handler.php:650
-#: includes/admin/ajax/class-spaces-handler.php:674
-#: includes/admin/ajax/class-spaces-handler.php:690
-#: includes/admin/ajax/class-spaces-handler.php:776
-#: includes/admin/ajax/class-spaces-handler.php:800
-#: includes/admin/ajax/class-spaces-handler.php:827
-#: includes/admin/ajax/class-spaces-handler.php:867
-#: includes/admin/ajax/class-spaces-handler.php:908
+#: includes/admin/ajax/class-spaces-handler.php:629
+#: includes/admin/ajax/class-spaces-handler.php:651
+#: includes/admin/ajax/class-spaces-handler.php:675
+#: includes/admin/ajax/class-spaces-handler.php:691
+#: includes/admin/ajax/class-spaces-handler.php:777
+#: includes/admin/ajax/class-spaces-handler.php:801
+#: includes/admin/ajax/class-spaces-handler.php:828
+#: includes/admin/ajax/class-spaces-handler.php:868
+#: includes/admin/ajax/class-spaces-handler.php:909
 #: includes/admin/ajax/class-tags-handler.php:26
 #: includes/admin/ajax/class-tags-handler.php:64
 #: includes/admin/ajax/class-tags-handler.php:115
@@ -180,8 +180,8 @@ msgstr ""
 #: includes/admin/ajax/class-spaces-handler.php:161
 #: includes/api/class-categories-controller.php:161
 #: includes/api/class-replies-controller.php:341
-#: includes/api/class-spaces-controller.php:745
-#: includes/api/class-spaces-controller.php:755
+#: includes/api/class-spaces-controller.php:746
+#: includes/api/class-spaces-controller.php:756
 #, php-format
 msgid "Failed to create %s."
 msgstr ""
@@ -570,14 +570,14 @@ msgstr ""
 #: includes/admin/ajax/class-spaces-handler.php:475
 #: includes/admin/ajax/class-spaces-handler.php:514
 #: includes/admin/ajax/class-spaces-handler.php:537
-#: includes/admin/ajax/class-spaces-handler.php:781
-#: includes/admin/ajax/class-spaces-handler.php:806
-#: includes/admin/ajax/class-spaces-handler.php:915
+#: includes/admin/ajax/class-spaces-handler.php:782
+#: includes/admin/ajax/class-spaces-handler.php:807
+#: includes/admin/ajax/class-spaces-handler.php:916
 msgid "Missing required fields."
 msgstr ""
 
 #: includes/admin/ajax/class-spaces-handler.php:484
-#: includes/api/class-spaces-controller.php:1150
+#: includes/api/class-spaces-controller.php:1151
 #: includes/class-abilities.php:1588
 #: includes/models/class-blocked-user.php:77
 #: templates/views/user-profile.php:20
@@ -606,8 +606,8 @@ msgstr ""
 
 #. translators: %s: space label, lowercase (e.g. "space").
 #: includes/admin/ajax/class-spaces-handler.php:572
-#: includes/admin/ajax/class-spaces-handler.php:833
-#: includes/admin/ajax/class-spaces-handler.php:873
+#: includes/admin/ajax/class-spaces-handler.php:834
+#: includes/admin/ajax/class-spaces-handler.php:874
 #, php-format
 msgid "Missing %s ID."
 msgstr ""
@@ -621,61 +621,61 @@ msgstr ""
 msgid "Failed to create access rule."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:633
+#: includes/admin/ajax/class-spaces-handler.php:634
 msgid "Invalid rule ID."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:638
+#: includes/admin/ajax/class-spaces-handler.php:639
 msgid "Failed to delete rule."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:641
+#: includes/admin/ajax/class-spaces-handler.php:642
 msgid "Access rule deleted."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:698
+#: includes/admin/ajax/class-spaces-handler.php:699
 msgid "Missing parameters."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:709
-#: includes/api/class-spaces-controller.php:450
-#: includes/models/class-access-rule.php:206
+#: includes/admin/ajax/class-spaces-handler.php:710
+#: includes/api/class-spaces-controller.php:451
+#: includes/models/class-access-rule.php:211
 msgid "Access rule not found."
 msgstr ""
 
 #. translators: 1: number of members synced. 2: member label, singular or plural to match the number (e.g. "member" / "members").
-#: includes/admin/ajax/class-spaces-handler.php:764
+#: includes/admin/ajax/class-spaces-handler.php:765
 #, php-format
 msgid "Synced %1$d existing %2$s."
 msgid_plural "Synced %1$d existing %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/admin/ajax/class-spaces-handler.php:811
-#: includes/api/class-spaces-controller.php:1395
+#: includes/admin/ajax/class-spaces-handler.php:812
+#: includes/api/class-spaces-controller.php:1396
 msgid "Join request not found or already processed."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:815
-#: includes/api/class-spaces-controller.php:1357
+#: includes/admin/ajax/class-spaces-handler.php:816
+#: includes/api/class-spaces-controller.php:1358
 #: includes/models/class-join-request.php:163
 msgid "This request has already been handled."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:845
-#: includes/api/class-spaces-controller.php:1501
+#: includes/admin/ajax/class-spaces-handler.php:846
+#: includes/api/class-spaces-controller.php:1502
 msgid "The invite link could not be created. Please try again."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:856
+#: includes/admin/ajax/class-spaces-handler.php:857
 msgid "Invite link generated."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:920
+#: includes/admin/ajax/class-spaces-handler.php:921
 msgid "Failed to revoke invite link."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:923
+#: includes/admin/ajax/class-spaces-handler.php:924
 msgid "Invite link revoked."
 msgstr ""
 
@@ -5074,6 +5074,7 @@ msgstr ""
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #: includes/admin/views/space-edit.php:725
 #: includes/admin/views/space-edit.php:736
+#: includes/models/class-access-rule.php:131
 #, php-format
 msgid "%s Only"
 msgstr ""
@@ -5315,7 +5316,7 @@ msgstr ""
 #: templates/views/moderation.php:221
 #: templates/views/space-members.php:492
 #: templates/views/user-profile.php:66
-#: assets/js/admin-common.js:1886
+#: assets/js/admin-common.js:1887
 msgid "Banned"
 msgstr ""
 
@@ -5328,7 +5329,7 @@ msgstr ""
 #: includes/admin/views/users.php:35
 #: templates/views/moderation.php:224
 #: templates/views/user-profile.php:65
-#: assets/js/admin-common.js:1886
+#: assets/js/admin-common.js:1887
 msgid "Silenced"
 msgstr ""
 
@@ -5436,7 +5437,7 @@ msgid "Ban"
 msgstr ""
 
 #: includes/admin/views/users.php:196
-#: assets/js/admin-common.js:1810
+#: assets/js/admin-common.js:1811
 msgid "Ban IP address"
 msgstr ""
 
@@ -5447,7 +5448,7 @@ msgstr ""
 
 #: includes/admin/views/users.php:269
 #: includes/admin/views/users.php:312
-#: assets/js/admin-common.js:1808
+#: assets/js/admin-common.js:1809
 msgid "Ban User"
 msgstr ""
 
@@ -5663,7 +5664,7 @@ msgid "Invalid published_at: expected Y-m-d H:i:s or ISO 8601."
 msgstr ""
 
 #: includes/api/class-base-controller.php:414
-#: includes/api/class-spaces-controller.php:481
+#: includes/api/class-spaces-controller.php:482
 msgid "You must be logged in."
 msgstr ""
 
@@ -5684,7 +5685,7 @@ msgstr ""
 #: includes/api/class-categories-controller.php:210
 #: includes/api/class-posts-controller.php:845
 #: includes/api/class-replies-controller.php:519
-#: includes/api/class-spaces-controller.php:910
+#: includes/api/class-spaces-controller.php:911
 msgid "No fields provided for update."
 msgstr ""
 
@@ -5949,94 +5950,94 @@ msgstr ""
 msgid "Add this user instead of joining yourself. Needs the jetonomy_manage_spaces capability."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:455
+#: includes/api/class-spaces-controller.php:456
 msgid "Failed to delete access rule."
 msgstr ""
 
 #. translators: %s: the singular Space label.
-#: includes/api/class-spaces-controller.php:660
+#: includes/api/class-spaces-controller.php:661
 #, php-format
 msgid "%s title is required."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:706
-#: includes/api/class-spaces-controller.php:886
+#: includes/api/class-spaces-controller.php:707
+#: includes/api/class-spaces-controller.php:887
 #: assets/js/composer.js:346
 msgid "You do not have permission to upload images."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/api/class-spaces-controller.php:803
+#: includes/api/class-spaces-controller.php:804
 #, php-format
 msgid "This %s is archived or locked, so it cannot be edited. Unarchive it first."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/api/class-spaces-controller.php:850
+#: includes/api/class-spaces-controller.php:851
 #, php-format
 msgid "This %s can only be set back to active here."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/api/class-spaces-controller.php:979
+#: includes/api/class-spaces-controller.php:980
 #, php-format
 msgid "Permanently deleting this %s is restricted to site administrators on this community."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/api/class-spaces-controller.php:1019
+#: includes/api/class-spaces-controller.php:1020
 #: includes/models/class-space.php:477
 #, php-format
 msgid "This %s is already archived."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/api/class-spaces-controller.php:1155
+#: includes/api/class-spaces-controller.php:1156
 #, php-format
 msgid "That user is already in this %s."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1192
+#: includes/api/class-spaces-controller.php:1193
 msgid "Join request submitted. Awaiting approval."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/api/class-spaces-controller.php:1193
+#: includes/api/class-spaces-controller.php:1194
 #, php-format
 msgid "You already have a pending join request for this %s."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/api/class-spaces-controller.php:1237
-#: includes/api/class-spaces-controller.php:1434
+#: includes/api/class-spaces-controller.php:1238
+#: includes/api/class-spaces-controller.php:1435
 #: includes/models/class-space-member.php:481
 #, php-format
 msgid "User does not belong to this %s."
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/api/class-spaces-controller.php:1285
+#: includes/api/class-spaces-controller.php:1286
 #: templates/views/space-members.php:194
 #, php-format
 msgid "Unknown %s"
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1308
+#: includes/api/class-spaces-controller.php:1309
 msgid "You have no pending request here."
 msgstr ""
 
 #. translators: %s: comma-separated list of valid space roles.
-#: includes/api/class-spaces-controller.php:1427
+#: includes/api/class-spaces-controller.php:1428
 #: includes/models/class-space-member.php:472
 #, php-format
 msgid "Invalid role. Allowed: %s."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1450
+#: includes/api/class-spaces-controller.php:1451
 msgid "You cannot remove your own admin role. Ask another admin to do it."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1706
+#: includes/api/class-spaces-controller.php:1707
 msgid "Return only spaces the current user is a member of AND can create posts in. Logged-out callers receive an empty array."
 msgstr ""
 
@@ -8555,74 +8556,74 @@ msgstr ""
 msgid "Every product above is a standalone Wbcom plugin. Jetonomy detects each one and lights up the matching features automatically when it is active."
 msgstr ""
 
-#. translators: %s: the singular space label, lowercase (e.g. "space").
-#: includes/models/class-access-rule.php:127
+#. translators: 1: the singular space label, lowercase (e.g. "space"). 2: the Who Can Post option for members, as the dropdown shows it (e.g. "Members Only").
+#: includes/models/class-access-rule.php:128
 #, php-format
-msgid "This %s is Public with an Open join policy, so everyone can already read it and anyone signed in can already post and reply. An Everyone or Logged In rule adds nothing here. To make signed-in non-members read-only, set Who Can Post and Who Can Reply to Members Only on the General tab."
+msgid "This %1$s is Public with an Open join policy, so everyone can already read it and anyone signed in can already post and reply. To make signed-in visitors read-only until they join, set Who Can Post and Who Can Reply to %2$s on the General tab."
 msgstr ""
 
 #. translators: %s: the singular space label, lowercase (e.g. "space").
-#: includes/models/class-access-rule.php:129
+#: includes/models/class-access-rule.php:134
 #, php-format
-msgid "This %s is Public, so everyone can already read it. A Read rule for Everyone or Logged In adds nothing here."
+msgid "This %s is Public, so everyone can already read it."
 msgstr ""
 
 #. translators: %s: why the rule changes nothing and what to change instead.
-#: includes/models/class-access-rule.php:161
+#: includes/models/class-access-rule.php:166
 #, php-format
 msgid "Access rule added, but it changes nothing. %s"
 msgstr ""
 
 #. translators: %s: why the rule changes nothing and what to change instead.
-#: includes/models/class-access-rule.php:161
+#: includes/models/class-access-rule.php:166
 msgid "Access rule added."
 msgstr ""
 
 #. translators: 1: space label, lowercase (e.g. "space"). 2: join policy label (e.g. "Requires Approval").
-#: includes/models/class-access-rule.php:165
+#: includes/models/class-access-rule.php:170
 #, php-format
 msgid "Access rule added. This %1$s was switched to Private so the rule can restrict access, and its join policy is now %2$s. A rule cannot gate a public %1$s."
 msgstr ""
 
 #. translators: %s: why the rule changes nothing and what to change instead.
-#: includes/models/class-access-rule.php:180
+#: includes/models/class-access-rule.php:185
 #, php-format
 msgid "Access rule updated, but it changes nothing. %s"
 msgstr ""
 
 #. translators: %s: why the rule changes nothing and what to change instead.
-#: includes/models/class-access-rule.php:180
+#: includes/models/class-access-rule.php:185
 msgid "Access rule updated."
 msgstr ""
 
-#: includes/models/class-access-rule.php:209
+#: includes/models/class-access-rule.php:214
 msgid "Invalid grants value."
 msgstr ""
 
-#: includes/models/class-access-rule.php:219
+#: includes/models/class-access-rule.php:224
 msgid "Failed to update access rule."
 msgstr ""
 
-#: includes/models/class-access-rule.php:320
+#: includes/models/class-access-rule.php:325
 msgid "Choose a trust level from 1 to 5."
 msgstr ""
 
-#: includes/models/class-access-rule.php:321
+#: includes/models/class-access-rule.php:326
 msgid "Choose a role that exists on this site."
 msgstr ""
 
-#: includes/models/class-access-rule.php:322
+#: includes/models/class-access-rule.php:327
 msgid "Enter a value for this rule."
 msgstr ""
 
 #. translators: %s: the singular space label, lowercase (e.g. space, group).
-#: includes/models/class-access-rule.php:703
+#: includes/models/class-access-rule.php:708
 #, php-format
 msgid "This %s already has a rule for that. Change what the existing rule grants instead."
 msgstr ""
 
 #. translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group).
-#: includes/models/class-access-rule.php:792
+#: includes/models/class-access-rule.php:797
 #, php-format
 msgid "%1$s (%2$s)"
 msgstr ""
@@ -12836,35 +12837,35 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: invite links shown, 2: all invite links on the space.
-#: assets/js/admin-common.js:1493
+#: assets/js/admin-common.js:1494
 #, js-format
 msgid "Showing %1$s of %2$s invite links."
 msgstr ""
 
-#: assets/js/admin-common.js:1809
+#: assets/js/admin-common.js:1810
 msgid "Silence User"
 msgstr ""
 
 #. translators: %s: username of the member being banned.
-#: assets/js/admin-common.js:1838
+#: assets/js/admin-common.js:1839
 #, js-format
 msgid "Banning: %s"
 msgstr ""
 
 #. translators: %s: username of the member being silenced.
-#: assets/js/admin-common.js:1845
+#: assets/js/admin-common.js:1846
 #, js-format
 msgid "Silencing: %s"
 msgstr ""
 
 #. translators: %s: username of the member whose IP address is being banned.
-#: assets/js/admin-common.js:1852
+#: assets/js/admin-common.js:1853
 #, js-format
 msgid "Banning an IP address used by: %s"
 msgstr ""
 
 #. translators: %d: number of records imported.
-#: assets/js/admin-common.js:1989
+#: assets/js/admin-common.js:1990
 #, js-format
 msgid "%d record imported successfully."
 msgid_plural "%d records imported successfully."
@@ -12872,7 +12873,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of attachment files that could not be recovered.
-#: assets/js/admin-common.js:2002
+#: assets/js/admin-common.js:2003
 #, js-format
 msgid "%d file could not be recovered and was left linked in the original post text."
 msgid_plural "%d files could not be recovered and were left linked in the original post text."
@@ -12880,7 +12881,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: the "Reload page" link.
-#: assets/js/admin-common.js:2014
+#: assets/js/admin-common.js:2015
 #, js-format
 msgid "%s to see updated status."
 msgstr ""

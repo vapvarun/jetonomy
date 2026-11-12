@@ -1,110 +1,129 @@
 {
   "journey": "C.anon.quick-login-and-captcha",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T20:47:47Z",
-  "walker": "release 2.0.7 free wave-3 walk (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
-    "mode": "free stack (Pro inactive)",
-    "site": "http://localhost:8912",
-    "browser": "Chromium via Playwright MCP",
-    "locale": "en_US",
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
       1440,
+      1024,
       390
     ],
     "schemes": [
       "light",
-      "dark"
-    ]
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
+    ],
+    "browser": "Chromium via Playwright MCP",
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
     "c-anon-quick-login-and-captcha.1": {
       "result": "pass",
-      "evidence": "Guest on /jt-qa-block-login/ signed in as bob through the Login block: the page updated in place (same URL) to 'You are signed in as Bob Martinez.' with Go to the community / My profile / Log out. Screenshot walk-207/free/w3-login-ok.png"
+      "evidence": "Guest on the Login block (fixture page): entered walkrule + password, clicked Log in -> page stayed on the same URL, body became logged-in (class logged-in), the block switched to the signed-in state without navigation."
     },
     "c-anon-quick-login-and-captcha.2": {
       "result": "pass",
-      "evidence": "Wrong password for bob and an unknown username both showed 'Incorrect username or password.' in the block."
+      "evidence": "Wrong password for an existing user and an unknown username both -> 'Incorrect username or password.'"
     },
     "c-anon-quick-login-and-captcha.3": {
       "result": "pass",
-      "evidence": "Empty submit showed 'Enter your username and password.' (jt-login-message)."
+      "evidence": "Empty submit -> 'Enter your username and password.'"
     },
     "c-anon-quick-login-and-captcha.4": {
       "result": "pass",
-      "evidence": "REST POST /auth/login with wrong password for alice: 401 x5 then 429 jetonomy_rate_limited 'Too many attempts. Please wait a minute and try again.' (12 calls, from the 6th)."
+      "evidence": "curl POST /auth/login wrong password 12 times: 401 x5 then 429 from the 6th, body {code: jetonomy_rate_limited, message: 'Too many attempts. Please wait a minute and try again.'}."
     },
     "c-anon-quick-login-and-captcha.5": {
       "result": "pass",
-      "evidence": "users_can_register=1, require_email_verification on. Registered priya.raman@example.com through the block: 'Account created. Check p***@example.com for a confirmation link...' ; Mailpit got '[Northwind Makers Community] Confirm your email to finish signing up'; POST /auth/login then answered 403 jetonomy_pending_verification 'Confirm your email to finish signing up...'. Screenshot w3-register-ok.png"
+      "evidence": "users_can_register=1, require_email_verification on. Register tab: priya.raman / priya.raman@example.com -> 'Account created. Check p***@example.com for a confirmation link to finish signing up.'; the mail-log fixture recorded '[forums] Confirm your email to finish signing up' to that address (Mailpit not running on this site); login before confirming -> 'Confirm your email to finish signing up. Check your inbox for the link, or use \"Resend confirmation\"...' with a Resend button.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-register-ok.png"
     },
     "c-anon-quick-login-and-captcha.6": {
       "result": "pass",
-      "evidence": "Existing email (bob.demo@jetonomy.local) -> 'That email is unavailable.'; existing username bob -> 'That username is unavailable.'."
+      "evidence": "Register with alice's email -> 'That email is unavailable.'; with username alice -> 'That username is unavailable.'",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-register-errors.png"
     },
     "c-anon-quick-login-and-captcha.7": {
       "result": "pass",
-      "evidence": "5-char password -> 'Password must be at least 8 characters.'; maria.k@mailinator.com -> 'Please use a permanent email address. Disposable mailboxes are not accepted.'."
+      "evidence": "Register with password '12345' -> 'Password must be at least 8 characters.'; with walkdisp@mailinator.com -> 'Please use a permanent email address. Disposable mailboxes are not accepted.'"
     },
     "c-anon-quick-login-and-captcha.8": {
       "result": "pass",
-      "evidence": "users_can_register=0: POST /auth/register -> 403 jetonomy_registration_disabled 'Registration is disabled on this site.'; the block showed no Register tab ('No account yet? Ask an administrator for one.')."
+      "evidence": "users_can_register set to 0: curl POST /auth/register -> HTTP 403 jetonomy_registration_disabled 'Registration is disabled on this site.'; the Login block shows no Register tab and no registration form. Option restored to 1.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-register-closed.png"
     },
     "c-anon-quick-login-and-captcha.9": {
       "result": "pass",
-      "evidence": "Turnstile configured (provider turnstile, Cloudflare always-pass test keys 1x0000...AA, internet reachable). The widget rendered (token XXXX.DUMMY.TOKEN) in the Login block's login, register and lost-password forms, in the new-topic composer (bob, /community/s/bug-reports/new/) and in the reply composer (walknew, topic page). Screenshots w3-turnstile-register.png, w3-captcha-reply.png."
+      "evidence": "Turnstile configured (Cloudflare always-pass test keys, captcha_provider turnstile): .cf-turnstile widgets rendered with a filled cf-turnstile-response token in the Login block's login, register and lost-password forms (3), in the new-topic composer (bob, /community/s/bug-reports/new/) and in the reply composer (bob, topic page). Settings restored afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-turnstile-reply.png"
     },
     "c-anon-quick-login-and-captcha.10": {
       "result": "pass",
-      "evidence": "Secret switched to Cloudflare's always-fail key: register through the block -> 'CAPTCHA verification failed. Please try again.' and no account captcha.fail created (wp user list empty). Same key: walknew (trust 0) 'Post Reply' -> toast 'Security check failed. Please refresh the page and try again.' and 0 replies stored. Screenshot w3-captcha-reply-fail.png."
+      "evidence": "Secret switched to Cloudflare's always-fail test key: Register through the block -> 'CAPTCHA verification failed. Please try again.' and no account created (wp user list for the name is empty).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-turnstile-fail.png"
     },
     "c-anon-quick-login-and-captcha.11": {
       "result": "pass",
-      "evidence": "captcha_provider none: no .cf-turnstile / cf-turnstile-response field and no turnstile/recaptcha script on the login block or a topic page; walknew posted a reply (replies 0 -> 1)."
+      "evidence": "Captcha settings removed (original had none): no widget or captcha field on the register form, new-topic composer or reply composer (0 matches); bob's reply POST /posts/13384/replies -> 201."
     },
     "c-anon-quick-login-and-captcha.12": {
       "result": "pass",
-      "evidence": "walkban given a global_ban restriction (Restriction::ban): Login block -> 'Your account has been banned from this community. Contact a moderator if you believe this is a mistake.'; REST 403 jetonomy_user_banned."
+      "evidence": "walkrule3 given a temporary global_ban restriction: Login block with the right password -> 'Your account has been banned from this community. Contact a moderator if you believe this is a mistake.' (not the generic invalid-password text). Restriction lifted afterwards."
     },
     "c-anon-quick-login-and-captcha.13": {
       "result": "pass",
-      "evidence": "Reign dark mode (bx-color-mode=dark) at 390: login title rgb(229,229,229) on dark card rgb(47,49,58), contrast 16.65:1. Screenshot w3-login-390-dark.png."
+      "evidence": "BuddyX Pro dark mode (no Reign here): Login block card rgb(26,26,46), title color rgb(191,194,201) = 9.6:1.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-login-dark.png"
     },
     "c-anon-quick-login-and-captcha.14": {
       "result": "pass",
-      "evidence": "390px: inputs 42px, Log in submit 44px, Create account 42px; documentElement.scrollWidth 390 (no sideways scroll)."
+      "evidence": "390px: block inputs and buttons 40, 40, 45, 45, 43 and 40px tall (minimum 40), no horizontal overflow.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-login-390.png"
     },
     "c-anon-quick-login-and-captcha.15": {
       "result": "pass",
-      "evidence": "context offline, submit: role=alert 'Network error. Please try again.' takes focus (activeElement is the message), username 'bob' and 13-char password remain, submit button enabled."
+      "evidence": "Context offline, submit login: message 'Network error. Please try again.' (role=alert) takes focus, typed username 'walkrule' and the 13-character password stay, submit button enabled again.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-login-offline.png"
     },
     "c-anon-quick-login-and-captcha.16": {
       "result": "pass",
-      "evidence": "60-char username lamplighter_x5 registered ('Account created...'); its profile /community/u/lamplighter_... at 390: name wraps (overflow-wrap anywhere, 286/286), scrollWidth 390. Note: the register form has a time-on-form gate, a submit under 2 seconds answers 'Could not create the account. Please try again.' (by design, anti-spam). Screenshot w3-longname-profile-390.png."
+      "evidence": "Registered a 60-character username (walklongname_x...) -> 'Account created...'; DB length 60; its profile at 390px: h1 286px wide, scrollWidth = clientWidth 286, no page overflow.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-longname-390.png"
     },
     "c-anon-quick-login-and-captcha.17": {
       "result": "pass",
-      "evidence": "Register form fields: username, email, password (+ hidden honeypot 'website'); no display-name field."
+      "evidence": "Register form fields: username, email, password only (plus a hidden honeypot 'website' and loaded_at); no display-name field."
     },
     "c-anon-quick-login-and-captcha.18": {
       "result": "pass",
-      "evidence": "7 POST /auth/register in a minute: 200 x5 then 429 jetonomy_rate_limited from the 6th."
+      "evidence": "curl POST /auth/register six times in a minute: 400 x5 (validation) then 429 jetonomy_rate_limited on the 6th."
     },
     "c-anon-quick-login-and-captcha.19": {
       "result": "pass",
-      "evidence": "After the cooldown POST /auth/resend-verification (param user_login) -> 'If an account is waiting on confirmation for that email, a new link is on its way.' and a fresh Confirm email for priya.raman arrived in Mailpit. (A resend seconds after registering answers the same success without sending, it hits the 60s window; resend is also capped at 3 per 5 minutes per IP.)"
+      "evidence": "About 60 s after registering, Resend confirmation email -> 'If an account is waiting on confirmation for that email, a new link is on its way.' and a second confirmation mail was logged for priya.raman@example.com."
     },
     "c-anon-quick-login-and-captcha.20": {
       "result": "pass",
-      "evidence": "Resend click in the block: new message has class 'jt-login-message is-success' with the 'a new link is on its way' sentence, replacing the error."
+      "evidence": "The first Resend click replaced the red error with the sentence in a message element of class 'jt-login-message is-success'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-resend.png"
     },
     "c-anon-quick-login-and-captcha.21": {
       "result": "pass",
-      "evidence": "Second Resend click within 60s -> 'A link was just sent. Please wait 58 seconds before asking for another.' (not the success sentence)."
+      "evidence": "A second Resend click right after -> 'A link was just sent. Please wait 58 seconds before asking for another.' (not the success sentence); no extra mail logged."
+    },
+    "c-anon-quick-login-and-captcha.22": {
+      "result": "pass",
+      "evidence": "Default site: sidebar/Login block has Log in and Register tabs with an inline sign-up form. With a mu-plugin filter register_url -> home_url('/join/') (wp_registration_url() = http://forums.local/join/): at 1440 and 390 the card's Register is an <a href=http://forums.local/join/> (40px high), 0 username/email inputs are printed, Log in stays inline (login input present), no overflow. Fixture removed.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-registerurl-390.png"
     }
   },
   "proposed_checks": []

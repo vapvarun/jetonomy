@@ -1,80 +1,86 @@
 {
   "journey": "C.gating.participate",
-  "free": "8478fd19",
-  "pro": "81befa5",
-  "walked_at": "2026-11-10T08:17:25Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
-    "mode": "Free + Pro, all 17 Pro extensions on",
-    "site": "http://localhost:8911",
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
-      1440
+      1440,
+      1024,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
     "c-gating-participate.1": {
       "result": "pass",
-      "evidence": "admin Access Rules tab on Founders Circle (private, invite): WP Role subscriber + Participate; preview and toast 'Rule added: WP Role: subscriber can read, post, reply, vote and report. They are recorded as Member.'"
+      "evidence": "Admin UI Add Rule WP Role 'subscriber' + Participate on Walk Priv (private) -> toast 'Rule added: WP Role: subscriber can read, post, reply, vote and report. They are recorded as Member.' (no private confirm for a Role rule)."
     },
     "c-gating-participate.2": {
       "result": "pass",
-      "evidence": "ingrid_s (fresh subscriber, not on roster) opened /community/s/founders-circle/ -> topics listed, + New Topic shown, no Join button."
+      "evidence": "walkrule (subscriber, not on roster) opens /community/s/walk-priv/ -> topics listed, New Topic link shown, no 'Request to join' step."
     },
     "c-gating-participate.3": {
       "result": "pass",
-      "evidence": "ingrid_s posted 'Anyone using the new roadmap view?' through the composer (required Operating system select filled) -> published at /t/anyone-using-the-new-roadmap-view/. (Note: priyanka_n hit 'New members can post 3 topics a day. You can post again in about 24 hours.' after 3 topics, so a fresh user was used.)"
+      "evidence": "walkrule used New Topic form on /community/s/walk-priv/new/: 'Anyone using the new roadmap view?' -> redirected to /community/s/walk-priv/t/anyone-using-the-new-roadmap-view/."
     },
     "c-gating-participate.4": {
       "result": "pass",
-      "evidence": "ingrid_s on Tomas's topic: replied via composer (reply 4136 stored), clicked Vote up (jt_votes row 1329), Report -> reason Off-topic -> toast 'Reported. Thank you.' (jt_flags row 38 pending).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-participate-other.png"
+      "evidence": "On bob's topic walkrule clicked Vote up (button became 'Remove your upvote'), posted a reply (reply row stored, id 28868) and reported another topic through the Report dialog -> POST /flags 201."
     },
     "c-gating-participate.5": {
       "result": "pass",
-      "evidence": "own topic: More options > Edit, appended text, Save -> shown; More options > Delete > confirm 'Are you sure you want to delete this topic?' -> redirected to the space, DB status trash."
+      "evidence": "On his own topic the More options menu offers Edit, Make Private, Delete; REST PATCH own topic 13393 -> 200 title changed; DELETE own topic -> 200 deleted:true.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-participate-own.png"
     },
     "c-gating-participate.6": {
       "result": "pass",
-      "evidence": "on admin's topic ingrid sees no Edit/Delete/Close/Pin/More options controls; REST as ingrid PATCH and DELETE /posts/13836, POST /close and /pin -> 403 jetonomy_forbidden each; topic unchanged.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-participate-other.png"
+      "evidence": "On bob's topic walkrule sees no topic-level More options (only his own reply has Edit/Make Private/Delete); REST PATCH /posts/13392, DELETE /posts/13392, POST /close, POST /pin, POST /moderation/trash/post/13392 -> all 403 jetonomy_forbidden."
     },
     "c-gating-participate.7": {
       "result": "pass",
-      "evidence": "tomas_w (roster member) posted 'Pricing page experiment results' via the UI under the rule -> published; earlier replied and voted too."
+      "evidence": "Roster member bob POST reply on the same topic under the rule -> 201."
     },
     "c-gating-participate.8": {
       "result": "pass",
-      "evidence": "finn (silenced, matched by the subscriber rule) POST /spaces/342/posts -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
+      "evidence": "finn (silenced via a temporary restriction, matched by the role rule) POST topic -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'"
     },
     "c-gating-participate.9": {
       "result": "pass",
-      "evidence": "omar given a space ban on Founders Circle (POST /moderation/ban space_ban) then POST /spaces/342/posts -> 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.'"
+      "evidence": "omar (temporary space_ban on Walk Priv, matched by the role rule) POST topic -> 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.'"
     },
     "c-gating-participate.10": {
       "result": "pass",
-      "evidence": "admin closed topic 13836, ingrid POST reply -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.' (reopened afterwards)."
+      "evidence": "Admin closed topic 13391 (POST /close), walkrule POST reply -> 403 jetonomy_post_closed 'This topic is closed and cannot receive new replies.'; topic reopened afterwards."
     },
     "c-gating-participate.11": {
       "result": "pass",
-      "evidence": "admin set Status Archived on the General tab and Updated; ingrid's topic page then shows no reply editor and no Post Reply button; POST reply and POST topic -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.' Space restored to Active.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-participate-archived.png"
+      "evidence": "Admin UI Archive on Walk Priv (confirm 'Archive this space and hand it to an administrator?...'): list shows Archived; walkrule's topic page has no reply editor / Post Reply and the space page has no New Topic; REST POST topic and reply (walkrule, walkrule3) -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.' Space set back to active afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-participate-archived.png"
     },
     "c-gating-participate.12": {
       "result": "pass",
-      "evidence": "guest opened the private space: no composer, page reads 'This space is private. Log in to see it.' with Log In button (seen in read-on-private); guest POST reply on a public topic -> 401."
+      "evidence": "Guest on /community/s/walk-priv/ -> 'This space is private. Log in to see it.' with Log In / Register buttons, no composer or New Topic; a topic URL as guest -> 'Topic not found.'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-participate-guest.png"
     },
     "c-gating-participate.13": {
       "result": "pass",
-      "evidence": "ingrid typed a reply in the composer, admin deleted the rule in another tab, ingrid pressed Post Reply -> message 'Topic not found.' and the typed text stayed in the editor; no reply stored.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-participate-concurrent.png"
+      "evidence": "walkrule3 typed a reply, the rule was deleted, Post Reply -> POST /posts/13392/replies 404 jetonomy_not_found; the inline message 'Topic not found.' appears briefly (captured with a mutation observer, it auto-hides) and the typed text stays in the editor, button re-enabled.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-participate-concurrent.png"
     }
   },
   "proposed_checks": []

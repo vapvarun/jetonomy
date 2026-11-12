@@ -844,7 +844,8 @@ class Replies_Controller extends Base_Controller {
 			'is_accepted'             => (bool) ( $reply->is_accepted ?? false ),
 			'vote_score'              => (int) ( $reply->vote_score ?? 0 ),
 			'edited_at'               => $reply->edited_at ?? null,
-			'edited_by'               => $reply->edited_by ? (int) $reply->edited_by : null,
+			// An anonymous author's own edit must not name them; a moderator's edit still shows.
+			'edited_by'               => $reply->edited_by && ! ( 0 === $author_id && (int) $reply->edited_by === $real_author_id ) ? (int) $reply->edited_by : null,
 			// Send back as edit_token on PATCH.
 			'edit_token'              => isset( $reply->content ) ? Reply::edit_token( $reply, Reply::EDIT_FIELDS ) : null,
 			'created_at'              => $reply->created_at ?? null,

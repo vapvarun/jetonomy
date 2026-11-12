@@ -1,78 +1,93 @@
 {
   "journey": "C.gating.builder-explains-itself",
-  "free": "af10b788",
-  "pro": "69d28a8",
-  "walked_at": "2026-11-10T12:22:35Z",
-  "walker": "release 2.0.7 combo walk w12 (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
-    "mode": "combo (Free+Pro, 17 extensions)",
-    "site": "http://localhost:8911",
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
       1440,
+      1024,
       390
     ],
     "schemes": [
       "light",
-      "dark (midnight admin scheme)"
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US, ar"
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
     "c-gating-builder-explains-itself.1": {
       "result": "pass",
-      "evidence": "Admin Access Rules tab on space 15: empty state reads \"Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.\"; the 'How access rules work' panel opens with 'A rule lets more people in to this space ... Who else gets in is set by the space's visibility and join policy.'"
+      "evidence": "Walk Pub Access Rules tab (empty): preview line 'Choose who this rule lets in. Nothing changes until you add the rule.'; empty state 'No access rules - Only this space's visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.'; 'How access rules work' panel present."
     },
     "c-gating-builder-explains-itself.2": {
       "result": "pass",
-      "evidence": "Stepped through every Rule type. Each shows a second sentence under the live preview: Everyone 'Matches everyone. A visitor who is not signed in is still asked to log in first...'; Logged In 'Matches anyone with an account on this site...'; Role 'Matches anyone holding this WordPress role...' (placeholder 'subscriber'); Capability 'Matches anyone whose WordPress role carries this capability...' (placeholder 'edit_posts'); Trust Level 'Matches members at or above this trust level, 1 to 5...' (placeholder '2'); Membership (PMPro activated temporarily, option 'membership:pmpro / PMPro') 'Matches members who hold the PMPro level you pick below.' with a level search box (placeholder 'PMPro...'). Membership option is disabled with no membership plugin active. Note: membership box has a search placeholder, not a worked example. w12/c2-membership.png"
+      "evidence": "Stepped Everyone, Logged In, Role, Capability, Trust Level and Membership: each shows a second sentence under the live preview and an example placeholder (Everyone 'Matches everyone. A visitor who is not signed in is still asked to log in first...'; Logged In 'Matches anyone with an account on this site...'; Role 'Matches anyone holding this WordPress role...' placeholder 'subscriber'; Capability '...carries this capability...' placeholder 'edit_posts'; Trust Level 'Matches members at or above this trust level, 1 to 5...' placeholder '2'; Membership 'Matches members who hold the Walkqa level you pick below.' with a search box placeholder 'Walkqa...'). No membership plugin is installed here, so the Membership entry was exercised with a temporary mu-plugin fixture registering a fake adapter (removed after the walk)."
     },
     "c-gating-builder-explains-itself.3": {
       "result": "pass",
-      "evidence": "Everyone and Logged In: #rule-value is not visible (offsetParent null); only the type, grants and Add Rule controls show."
+      "evidence": "Everyone and Logged In: #rule-value computed display none; only type, grants and Add Rule show."
     },
     "c-gating-builder-explains-itself.4": {
       "result": "pass",
-      "evidence": "UI: Trust Level 0 and 9 typed and Add Rule clicked -> toast 'Choose a trust level from 1 to 5.' (admin-ajax success:false), no rule created (w12/c2-ui-tl-0.png, c2-ui-tl-9.png). With the level empty the Add Rule button is disabled client-side so it cannot be clicked; the same refusal text for an empty level came from posting jetonomy_add_access_rule directly: 'Choose a trust level from 1 to 5.' and REST 400 (see 7)."
+      "evidence": "UI: Trust Level 0 and 9 + Add Rule -> toast 'Choose a trust level from 1 to 5.' each, no rule created; empty level leaves Add Rule disabled (client-side). REST level '' / 0 / 9 -> 400 jetonomy_invalid_rule_value same text."
     },
     "c-gating-builder-explains-itself.5": {
       "result": "pass",
-      "evidence": "UI: Role 'ghost_role' + Add Rule -> toast 'Choose a role that exists on this site.' and no rule created (w12/c2-ui-ghost.png)."
+      "evidence": "UI: Role 'ghost_role' + Add Rule -> toast 'Choose a role that exists on this site.'; REST same 400; GET rules afterwards {data:[]}."
     },
     "c-gating-builder-explains-itself.6": {
       "result": "pass",
-      "evidence": "Empty Capability and empty Membership: Add Rule button is disabled in the UI (cannot be clicked); direct admin-ajax jetonomy_add_access_rule with empty value returned 'Enter a value for this rule.' for both, and REST returned the same; no rule was created. The refusal message is therefore only observable server-side, the UI blocks earlier."
+      "evidence": "UI: empty Capability leaves Add Rule disabled (blocked before submit); REST capability '' and membership '' -> 400 'Enter a value for this rule.'; no rule created."
     },
     "c-gating-builder-explains-itself.7": {
       "result": "pass",
-      "evidence": "Admin REST POST /spaces/15/access-rules: trust_level ''/0/9 -> 400 jetonomy_invalid_rule_value 'Choose a trust level from 1 to 5.'; role ghost_role -> 400 'Choose a role that exists on this site.'; capability '' and membership '' -> 400 'Enter a value for this rule.'. GET /spaces/15/access-rules afterwards -> {\"data\":[]}."
+      "evidence": "Admin REST POST /spaces/6581/access-rules with trust_level ''/0/9, role ghost_role, capability '', membership '' -> 400 jetonomy_invalid_rule_value with the same messages; GET /spaces/6581/access-rules -> {data:[]}."
     },
     "c-gating-builder-explains-itself.8": {
       "result": "pass",
-      "evidence": "test_editor opened wp-admin Access Rules tab for Help Desk (space 20): page titled 'Access Rules' shows 'Only site administrators can manage access rules for this space.' and 'Back to Help Desk' link to /community/s/help-desk/; no builder. w12/c1-editor-access.png"
+      "evidence": "test_editor opened /wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=1993&tab=access: page titled 'Access Rules' reads 'Only site administrators can manage access rules for this space.' with 'Back to Help Desk' link; no builder."
     },
     "c-gating-builder-explains-itself.9": {
       "result": "pass",
-      "evidence": "Subscriber walkrule2 POST /spaces/15/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; no rule created."
+      "evidence": "walkrule2 (subscriber) POST /spaces/6581/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; no rule listed afterwards."
     },
     "c-gating-builder-explains-itself.10": {
       "result": "pass",
-      "evidence": "390x844: dropdown, value box, grants select, preview and sentence stack vertically; Add Rule button 94x40; no horizontal overflow (scrollWidth 390). w12/c2-390.png"
+      "evidence": "390x844: select 245x42, grants 124x42, Add Rule 94x40, preview 318px wide, all stacked vertically (tops 248/298/348/402); scrollWidth 390 = innerWidth.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-builder-390.png"
     },
     "c-gating-builder-explains-itself.11": {
       "result": "pass",
-      "evidence": "WordPress Midnight admin colour scheme (admin-color-midnight) and prefers-color-scheme: dark emulation: builder text readable (computed contrast ~10:1 or higher, dark text on white card). Jetonomy admin.css has no dark mode of its own and does not follow prefers-color-scheme. w12/c2-dark-midnight.png, c2-dark.png. Admin colour restored to modern."
+      "evidence": "prefers-color-scheme dark emulation: builder preview text rgb(85,96,110) on rgb(255,255,255) (about 6.4:1, readable); Jetonomy admin has no dark scheme of its own, panel stays light."
     },
     "c-gating-builder-explains-itself.12": {
       "result": "pass",
-      "evidence": "Site language Arabic (ar) activated: html dir=rtl, body.rtl, builder lays out right to left, value input direction rtl (placeholder 'subscriber'). Strings remain English as untranslated. w12/c2-rtl.png. Language restored to en_US (WPLANG empty)."
+      "evidence": "Site language ar installed and set (WPLANG=ar): html dir=rtl, body.rtl, rule value input direction rtl, placeholder 'subscriber'; select left edge 1135 vs Add Rule button left 553 at 1440 (mirrored). Strings stay English. Locale restored afterwards.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-builder-rtl.png"
     },
     "c-gating-builder-explains-itself.13": {
       "result": "pass",
-      "evidence": "Previews for Logged In, Role, Capability, Trust Level, Everyone and PMPro membership with Participate all say 'They are recorded as Member.'. After REST POST rule_type logged_in grants=full space_role=admin -> 201 stored grants participate, space_role member; the admin table row shows Logged in / Participate / Member."
+      "evidence": "Previews for Everyone, Logged In, Role, Capability, Trust Level with Participate all read '...They are recorded as Member.'. REST POST logged_in grants=full space_role=admin on Walk Pub -> 201 stored grants participate, space_role member; table row shows Logged in / Participate / Member. Membership entry (fake adapter fixture) with Participate also reads '...They are recorded as Member.'"
+    },
+    "c-gating-builder-explains-itself.14": {
+      "result": "pass",
+      "evidence": "Walk Pub (public, open): UI Add Rule Logged In+Read -> reload toast 'Access rule added, but it changes nothing. This space is Public with an Open join policy ... Who Can Post and Who Can Reply...' and standing warning '.jt-access-warning' ('An Everyone or Logged In rule here changes nothing.') on the tab; switching the rule's grant select to Participate -> toast 'Access rule updated, but it changes nothing. ...' (same naming of Who Can Post / Who Can Reply).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-read-on-public-toast.png"
+    },
+    "c-gating-builder-explains-itself.15": {
+      "result": "pass",
+      "evidence": "REST: Logged In+Participate on Walk PubAppr (public, Requires Approval) -> 201 no_effect:false message 'Access rule added.'; Logged In+Read on Walk Priv (private) -> 201 no_effect:false 'Access rule added.'. Admin Access Rules tab of both: .jt-access-warning count 0, rule listed (Logged in/Member and Logged in/Viewer)."
     }
   },
   "proposed_checks": []

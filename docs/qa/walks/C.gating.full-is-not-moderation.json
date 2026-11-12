@@ -1,60 +1,63 @@
 {
   "journey": "C.gating.full-is-not-moderation",
-  "free": "8478fd19",
-  "pro": "81befa5",
-  "walked_at": "2026-11-10T08:19:27Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
-    "mode": "Free + Pro, all 17 Pro extensions on",
-    "site": "http://localhost:8911",
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
-      1440
+      1440,
+      1024,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
     "c-gating-full-is-not-moderation.1": {
       "result": "pass",
-      "evidence": "admin Access Rules tab on Founders Circle: add form Grants select = Read / Participate; the row's grants select = Read / Participate*; the 'How access rules work' grants table lists only Read and Participate, no Full row.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-admin.png"
+      "evidence": "Access Rules tab on Walk Pub/Walk Priv: add-form Grants select options are read:Read and participate:Participate only; a saved rule's grant select (table row) lists Read/Participate only; the 'How access rules work' Grants table has Read and Participate rows, no Full row."
     },
     "c-gating-full-is-not-moderation.2": {
       "result": "pass",
-      "evidence": "admin POST /spaces/342/access-rules {rule_type:role,rule_value:subscriber,grants:full} -> 201 'Access rule added.', stored grants participate, space_role member."
+      "evidence": "Admin REST POST /spaces/6582/access-rules {role subscriber, grants:full} -> 201, stored grants 'participate', space_role 'member', message 'Access rule added.'"
     },
     "c-gating-full-is-not-moderation.3": {
       "result": "pass",
-      "evidence": "ingrid_s (subscriber) under that rule in the browser: posted 'How do you handle investor updates?', replied on admin's topic, voted (button became 'Remove your upvote'), reported (toast 'Reported. Thank you.'), edited her topic (saved) and deleted it (confirm, redirected to space).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-member.png"
+      "evidence": "walkrule3 (matched by that rule, not on roster): POST topic 201, POST reply 201, POST vote 200, POST /flags 201, PATCH own topic 200, DELETE own topic 200."
     },
     "c-gating-full-is-not-moderation.4": {
       "result": "pass",
-      "evidence": "ingrid on admin's 'Welcome to the Founders Circle': the only More options menu on the page is on her own reply; no Edit/Delete/Close/Pin control on the topic.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-member.png"
+      "evidence": "walkrule3 on bob's topic page: no Edit, Delete, Close, Pin, Lock, Move, Merge or Moderate control; the only More options trigger belongs to his own reply."
     },
     "c-gating-full-is-not-moderation.5": {
       "result": "pass",
-      "evidence": "ingrid REST: PATCH /posts/13837, DELETE /posts/13837, POST /posts/13837/close, POST /posts/13837/pin -> 403 jetonomy_forbidden each; topic still publish, not closed, original title."
+      "evidence": "walkrule3 REST on bob's topic 13392: PATCH, DELETE, POST /close, POST /pin -> each 403 jetonomy_forbidden; DELETE on another member's reply (28868) also 403; admin GET afterwards shows title unchanged, is_closed false, is_sticky false, status publish."
     },
     "c-gating-full-is-not-moderation.6": {
       "result": "pass",
-      "evidence": "ingrid opened /community/s/founders-circle/mod/ -> HTTP 403 page 'You do not have permission to moderate this space.', no queue; POST /moderation/trash/post/13837 -> 403 jetonomy_forbidden.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-full-mod.png"
+      "evidence": "walkrule3 opens /community/s/walk-priv/mod/ -> 'You do not have permission to moderate this space.' (no queue); POST /moderation/trash/post/13392 -> 403 jetonomy_forbidden.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-full-mod-denied.png"
     },
     "c-gating-full-is-not-moderation.7": {
       "result": "pass",
-      "evidence": "set rule 49 to grants=full, space_role=moderator directly in jt_access_rules (REST GET then showed full/moderator), ran (new Jetonomy\\DB\\Migrations\\Migration_2_0_7())->up() via wp eval -> row reads participate/member and the admin rules list shows Participate selected."
+      "evidence": "Inserted a jt_access_rules row with grants='full', space_role='admin' for Walk Priv, ran Jetonomy\\DB\\Migrations\\Migration_2_0_7::up() via wp eval -> row reads grants=participate, space_role=member; admin REST rules list shows it as participate/member. Fixture rows deleted."
     },
     "c-gating-full-is-not-moderation.8": {
       "result": "pass",
-      "evidence": "test_moderator (site Moderate capability, added to the roster as Member) opened the topic: More options lists Edit, Make Private, Pin to space, Close topic, Move, Delete; REST POST /moderation/trash/post/{id} -> 200 trashed. The rule gives him nothing extra (it matches subscribers only). Fixture restored afterwards."
+      "evidence": "test_moderator (editor role, matched by an editor Participate rule so he can read the private space): /community/s/walk-priv/mod/ shows the Moderation queue (flags, Awaiting approval, Trash tabs); REST POST /posts/13392/pin -> 200 (toggled twice, left unpinned) and PATCH -> 200; comes from his WordPress role, not the rule."
     }
   },
   "proposed_checks": []

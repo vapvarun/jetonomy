@@ -1,122 +1,118 @@
 {
   "journey": "C.admin.blocks-shortcodes-widgets",
-  "free": "11e21b47",
-  "walked_at": "2026-11-10T07:06:52.132923+00:00",
-  "walker": "release 2.0.7 wave 6 free-stack walk (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
       1440,
+      1024,
       390
     ],
     "schemes": [
       "light",
-      "dark"
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
     ],
-    "mode": "free stack (wave 6 re-walk of .16 only)",
-    "site": "http://localhost:8912",
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
     "c-admin-blocks-shortcodes-widgets.1": {
       "result": "pass",
-      "evidence": "Block editor (admin) on the eight QA block pages: each shows a labelled preview - 'Jetonomy \u00b7 Forum Feed - Latest topics from all spaces', 'Jetonomy \u00b7 Trending Topics - 7 day window', 'Jetonomy \u00b7 Space List - All public spaces', 'Jetonomy \u00b7 Leaderboard', 'Jetonomy \u00b7 Navigation - Categories -> spaces tree, permission-aware', 'Jetonomy \u00b7 User Panel', 'Jetonomy \u00b7 Login', 'Compose Topic: space picker'; as bob each published page renders its content (forum feed rows, trending, spaces with topic counts, leaderboard, navigation tree, user panel with 48 notifications, login greeting, compose form)."
+      "evidence": "Block editor on a fixture page: all 8 blocks (login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel, navigation) show labelled placeholders ('Jetonomy · Login - Quick login + register...', 'Compose Topic: space picker', 'Jetonomy · Leaderboard', 'Forum Feed', 'Space List', 'Trending Topics', 'User Panel', 'Navigation'); published page renders them (guest: login, compose login prompt, leaderboard, feed, space-list, trending, navigation; bob/admin: compose form, leaderboard, feed, space list, trending, user panel, navigation; the login block shows 'You are signed in as Bob Martinez...' for a member).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-blocks-editor.png"
     },
     "c-admin-blocks-shortcodes-widgets.2": {
       "result": "pass",
-      "evidence": "As bob the QA pages with [jetonomy_recent_posts], [jetonomy_trending_posts], [jetonomy_spaces], [jetonomy_leaderboard], [jetonomy_user_profile], [jetonomy_space_members] and [jetonomy_compose_topic] all render (200) real content; [jetonomy_widget id=...] renders on the widget sidebar (see .3)."
+      "evidence": "Fixture page as bob: [jetonomy_spaces], [jetonomy_recent_posts], [jetonomy_trending_posts], [jetonomy_leaderboard], [jetonomy_user_profile user_id=2235] (profile card), [jetonomy_space_members space_id=help-desk] (roster) and [jetonomy_widget id=jetonomy_active_spaces] each render content (.jt-shortcode-* boxes)."
     },
     "c-admin-blocks-shortcodes-widgets.3": {
       "result": "pass",
-      "evidence": "Added the four widgets (Recent Posts, Leaderboard, Active Spaces, User Stats) to the 'Community Sidebar' (jetonomy-sidebar) with titles and count 3 using wp widget add: options persisted (wp widget list shows title/count), /community/ as bob renders 'NEWEST COMMUNITY TOPICS' (recent rows), 'TOP HELPERS' (3 leaders), 'BUSY SPACES' (3 spaces), 'YOUR NUMBERS' (Bob Martinez 818 points 29 topics); widgets.php lists the Community Sidebar. Added through WP-CLI rather than dragging in the widgets screen. Widgets removed afterwards."
+      "evidence": "Widgets screen (block widgets editor) > Community Sidebar: inserted Jetonomy: Recent Posts / Leaderboard / Active Spaces / User Stats from the inserter, set titles WalkRecent/WalkLeaders/WalkSpaces/WalkStats and counts 3/4/3, Update -> 'Widgets saved.'; reload shows the same titles/counts in the forms; front end (/community/s/help-desk/) renders WALKRECENT (3 items), WALKLEADERS (4 rows) and WALKSPACES in the sidebar, WALKSTATS for a signed-in member.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-widgets-front.png"
     },
     "c-admin-blocks-shortcodes-widgets.4": {
       "result": "pass",
-      "evidence": "Logged out: Space List, Forum Feed, [jetonomy_spaces], [jetonomy_recent_posts] and the Navigation block contain no 'Customer Advisory Board', 'Moderators Room', 'Partner Program' or topic from them; with count=60 the guest list has 90 topic-count entries and no private/hidden space."
+      "evidence": "Guest fixture page: Space List block lists 42 spaces = GET /spaces as guest (42), none of Customer Advisory Board, Moderators' Room, Partner Program, Release Planning, Smoke Feed Priv; no private topic titles appear in the feed/trending."
     },
     "c-admin-blocks-shortcodes-widgets.5": {
       "result": "pass",
-      "evidence": "bob on a temporary page with the Space List block at count 60 (block default is 6, which hides everything past the first 6): 44 spaces listed = GET /spaces as bob (total 44). His own private spaces Insiders / Beta and Customer Advisory Board open normally ('Joined', Follow); Partner Program (he is not on its roster) is listed and opens as a locked preview ('Partner Program is private. Request to join and an admin will review it.'); the hidden Moderators' Room and Release Planning are absent from both the block and GET /spaces and /community/s/moderators-room/ is 404. The block cards carry no lock marker themselves; the locked state shows on the space page. Temporary page deleted.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/free/blocks-pp-locked-bob.png"
+      "evidence": "Space List block (count 60 for the comparison) as bob: 48 spaces, identical set to GET /spaces as bob (48); private Customer Advisory Board and Partner Program show, hidden Moderators' Room / Release Planning do not. Admin sees all private/hidden (block 50 vs REST 51: only the just-created Walk PubAppr differs)."
     },
     "c-admin-blocks-shortcodes-widgets.6": {
       "result": "pass",
-      "evidence": "bob used the Compose Topic block page, chose Feature Requests, title 'Which phone browsers support dark mode best?' and a body, Post topic -> redirected to the new topic (id 417, publish) in Feature Requests; a guest sees 'Join the conversation - Sign in to start a discussion ... Sign in to post' instead of the form."
+      "evidence": "bob used the compose-topic block: Feature Requests + 'Which phone browsers support dark mode best?' -> POST /spaces/1985/posts 201 and redirected to the new topic in Feature Requests; guest sees 'Join the conversation - Sign in to start a discussion...' in the block instead of the form.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-blocks-compose.png"
     },
     "c-admin-blocks-shortcodes-widgets.7": {
       "result": "pass",
-      "evidence": "finn (silenced) on the compose block page sees 'Your account is currently silenced and cannot post.' and no form; POST /spaces/12/posts as finn -> 403 jetonomy_user_silenced 'Your account is currently silenced and cannot post.'."
+      "evidence": "finn (silenced) on the compose-topic block page and on [jetonomy_compose_topic]: block text 'Your account is currently silenced and cannot post.' and no form fields.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-blocks-silenced.png"
     },
     "c-admin-blocks-shortcodes-widgets.8": {
       "result": "pass",
-      "evidence": "As admin a page with [jetonomy_space_members][jetonomy_widget] shows two .jt-shortcode-notice boxes: 'jetonomy_space_members needs a space_id attribute - the space slug or its numeric id, e.g. [jetonomy_space_members space_id=\"announcements\"].' and 'jetonomy_widget needs an id attribute, e.g. [jetonomy_widget id=\"jetonomy_recent_posts\"].'."
+      "evidence": "Admin on a page with [jetonomy_space_members] and [jetonomy_widget] (no attributes): two .jt-shortcode-notice boxes 'jetonomy_space_members needs a space_id attribute - the space slug or its numeric id...' and 'jetonomy_widget needs an id attribute, e.g. [jetonomy_widget id=\"jetonomy_recent_posts\"].'"
     },
     "c-admin-blocks-shortcodes-widgets.9": {
       "result": "pass",
-      "evidence": "Logged out the same page renders nothing between its START and END paragraphs (zero bytes, no notice)."
+      "evidence": "Guest on the same page: .entry-content renders 0 bytes (no notice)."
     },
     "c-admin-blocks-shortcodes-widgets.10": {
       "result": "pass",
-      "evidence": "As admin [jetonomy_widget id=\"bogus_widget_id\"] -> 'jetonomy_widget: unknown id \"bogus_widget_id\". Valid ids are jetonomy_recent_posts, jetonomy_leaderboard, jetonomy_active_spaces, jetonomy_user_stats.' and [jetonomy_user_profile user_id=\"999999\"] -> 'jetonomy_user_profile: no user with ID 999999.'; guest sees nothing."
+      "evidence": "Admin: [jetonomy_widget id=\"bogus_widget_id\"] -> 'unknown id \"bogus_widget_id\". Valid ids are jetonomy_recent_posts, jetonomy_leaderboard, jetonomy_active_spaces, jetonomy_user_stats.'; [jetonomy_user_profile user_id=\"999999\"] -> 'jetonomy_user_profile: no user with ID 999999.'"
     },
     "c-admin-blocks-shortcodes-widgets.11": {
       "result": "pass",
-      "evidence": "[jetonomy_space_members space_id=\"help-desk\"] and space_id=\"20\" on one page render the same roster (Maya Okafor, Theo Lindqvist, Alice Chen, Bob Martinez, Priya Nair, David Kim, ...)."
+      "evidence": "[jetonomy_space_members space_id=\"help-desk\"] and space_id=\"1993\" on one page render the identical roster."
     },
     "c-admin-blocks-shortcodes-widgets.12": {
       "result": "pass",
-      "evidence": "A space with no members (Lisbon Pastry Club, members removed) via [jetonomy_space_members space_id=\"lisbon-pastry-club\"] as bob renders <div class=\"jt-shortcode-empty\">No members yet.</div>; (the seeded Amsterdam Chapter now has 3 members so a fresh empty space was used)."
+      "evidence": "Empty roster fixture (Walk Empty with its roster rows removed) as bob: [jetonomy_space_members] renders '<div class=\"jt-shortcode-empty\">No members yet.</div>'. (The seeded city spaces all have members here.)"
     },
     "c-admin-blocks-shortcodes-widgets.13": {
       "result": "pass",
-      "evidence": "Reign dark mode (body.jt-dark), as bob on 11 block/shortcode pages: 0 white panels, lowest text contrast 5.1:1 - 8.05:1 (post meta 6.67:1, compose label 8.05:1, 'Member' badge 5.1:1); the sidebar widgets on /community/ are covered by the same audit (368 text nodes, min 5.1:1)."
+      "evidence": "BuddyX Pro (no Reign on this site) dark mode via its toggle (body.dark-mode): block cards switch from rgb(247,247,249) to rgb(26,26,46) and link text rgb(191,194,201) on it (about 9.7:1), navigation text color(srgb 0.59 0.60 0.64).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-blocks-dark.png"
     },
     "c-admin-blocks-shortcodes-widgets.14": {
       "result": "pass",
-      "evidence": "390x844 as bob on the 8 block pages, 3 shortcode pages, the Walk Recent / Walk Spaces All pages and /community/ (with widgets): scrollWidth equals the viewport on every page (no sideways scroll)."
+      "evidence": "390x844 blocks page as guest: scrollWidth 390 = innerWidth, blocks 360px wide, furthest child right edge 375px; cards stack.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-blocks-390.png"
     },
     "c-admin-blocks-shortcodes-widgets.15": {
       "result": "pass",
-      "evidence": "Grace's 159-character topic (made the newest) in [jetonomy_recent_posts count=50] and the forum-feed block: the link wraps (43px tall at 1440, 108px at 390, white-space normal), its right edge (928 / 352) stays inside the card (961 / 375), page scrollWidth equals the viewport; screenshot blocks-long-title-390.png."
+      "evidence": "Forum-feed block (spaceId General Discussion, count 50) as bob lists Grace's 159-character topic 'After moving our 12-year-old photography forum from phpBB...': 41px tall (wraps) at 1440 and 81px at 390, link right edge inside the block, no page overflow."
     },
     "c-admin-blocks-shortcodes-widgets.16": {
       "result": "pass",
-      "evidence": "Free stack seeded to 2,055 published topics (seed-scale 1,100 + 700 copied rows, 79 distinct authors). Forum feed block count=50 as bob: 50 topic links rendered. Separate requests (wp eval, warm): 8 queries each (1 batched topics query, batched users/usermeta/profiles, 1 option read), no per-author _transient_jt_grav_chk reads (grav=0); second render inside the same request = 1 query, 3 ms. First cold render 313 queries (new-author profile/Gravatar bookkeeping, allowed by the line). Browser /walk-recent-50/ as bob: 200, TTFB 71 ms then 52 ms, total 108 ms then 78 ms, both under 1 s."
+      "evidence": "Seeded 2093 published topics (1800 added to Walk PubAppr). Forum-feed block count 50 in-process as bob: cold render 31 ms / 10 queries, warm renders 9 ms and 8 ms / 1 query, 50 topic links; the page /walk-feed50/ answers in 62-83 ms (curl, twice) - no per-row queries."
     },
     "c-admin-blocks-shortcodes-widgets.17": {
       "result": "pass",
-      "evidence": "Compose-topic block space picker as bob lists 26 spaces (Announcements ... Wins & Milestones, incl. his private ones) and does not contain the archived '2025 Hackathon'."
+      "evidence": "Compose-topic block space picker as bob lists 27 spaces; '2025 Hackathon' (archived) is not among them."
     },
     "c-admin-blocks-shortcodes-widgets.18": {
       "result": "pass",
-      "evidence": "finn (silenced) on both the compose-topic block and [jetonomy_compose_topic]: the notice is 'Your account is currently silenced and cannot post.' and 'not joined any space' text is absent."
+      "evidence": "finn (silenced, member of many spaces): the compose-topic block shows the silenced notice 'Your account is currently silenced and cannot post.' - not 'You have not joined any space yet' (same for [jetonomy_compose_topic]).",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-blocks-silenced.png"
     },
     "c-admin-blocks-shortcodes-widgets.19": {
       "result": "pass",
-      "evidence": "The seeded QA pages now render: /jt-qa-sc-space-members/ shows the roster (Maya Okafor 1,840 rep, Theo Lindqvist, Alice Chen ...) and /jt-qa-sc-user-profile/ shows the profile card (admin, 9 points, 21 topics), so the stale-id problem is gone."
+      "evidence": "Seeded QA pages now use slugs: /jt-qa-sc-space-members/ ([space_id=\"general-discussion\"]) renders the roster (Varun Dubey 3,552 rep, Maya Okafor...), /jt-qa-sc-user-profile/ ([user_id=\"1\"]) renders Varun Dubey's profile card."
     },
     "c-admin-blocks-shortcodes-widgets.20": {
       "result": "pass",
-      "evidence": "The editor lists exactly the eight blocks login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel and navigation (each QA block page shows its jetonomy/<name> block)."
+      "evidence": "Check .1 now names the eight real blocks; registered blocks on this site are jetonomy/login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel, navigation (WP_Block_Type_Registry)."
     }
   },
-  "pro": "05e4a11",
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "c-admin-blocks-shortcodes-widgets.1",
-      "now": "the eight blocks are login, compose-topic, leaderboard, forum-feed, space-list, trending, user-panel and navigation (all eight have a labelled editor preview)"
-    },
-    {
-      "check": "c-admin-blocks-shortcodes-widgets.5",
-      "now": "(if the product keeps the current listing) logged-in members see private spaces they are not members of as locked previews, the same list as GET /spaces; the check should name a space hidden from the viewer instead"
-    },
-    {
-      "check": "c-admin-blocks-shortcodes-widgets.5",
-      "now": "the Space List block shows 6 spaces by default; set count higher to compare with GET /spaces; Customer Advisory Board is open for bob (he is a member), use Partner Program for the locked preview"
-    }
-  ]
+  "proposed_checks": []
 }
