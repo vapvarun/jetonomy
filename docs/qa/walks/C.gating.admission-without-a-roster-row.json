@@ -1,69 +1,71 @@
 {
   "journey": "C.gating.admission-without-a-roster-row",
-  "free": "8478fd19",
-  "pro": "81befa5",
-  "walked_at": "2026-11-10T08:31:25Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
-    "mode": "Free + Pro, all 17 Pro extensions on",
-    "site": "http://localhost:8911",
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
-      1440
+      1440,
+      1024,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
     "c-gating-admission-without-a-roster-row.1": {
       "result": "pass",
-      "evidence": "Advisors Lounge (private) with a Participate membership rule (WP Roles adapter level 'subscriber'); did not press Sync Members. Admin Members tab lists only admin although 33 subscribers match.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-admission-members-before.png"
+      "evidence": "Walk Pub (private, Membership rule Walk Gold plan + Participate, added in the admin UI): before any Sync Members the Members tab reads 'Members (2)' and lists only Varun Dubey and Bob Martinez although walkrule/walkrule2/walkrule3 hold the plan and match the rule."
     },
     "c-gating-admission-without-a-roster-row.2": {
       "result": "pass",
-      "evidence": "lars_o (matched, not on roster) in the browser: read the space, posted 'Mentoring checklist for new advisors' and replied to it; the Members tab still listed only admin afterwards."
+      "evidence": "walkrule3 (matches the rule, not on roster) in the browser: space page lists topics with a New Topic link and no 'Request to join'; replied to bob's topic (POST /posts/13384/replies 201) and posted 'Membership rule topic from a non-roster member' (POST /spaces/6581/posts 201); roster still showed 2 rows afterwards."
     },
     "c-gating-admission-without-a-roster-row.3": {
       "result": "pass",
-      "evidence": "admin pressed Sync Members -> toast 'Synced 33 existing members.'; Members tab then reads '1-25 of 34' (admin + 33), Lars Olsen listed as Member (DB: 33 rows role member source tier). Note: jt_spaces.member_count had drifted by a few because earlier fixture rows were removed with raw SQL.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-admission-members-after.png"
+      "evidence": "Access Rules tab Sync Members -> toast 'Synced 3 existing members.', button 'Synced (3)'; Members (2) -> Members (5) with walkrule, walkrule2, walkrule3 listed as member.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-sync-members.png"
     },
     "c-gating-admission-without-a-roster-row.4": {
       "result": "pass",
-      "evidence": "Access Rules help reads 'The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well.'",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-admission-sync.png"
+      "evidence": "'How access rules work' panel (membership available) ends: 'Membership rules are live. Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand. The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well.'"
     },
     "c-gating-admission-without-a-roster-row.5": {
       "result": "pass",
-      "evidence": "guest opened /community/s/advisors-lounge/ -> login prompt only ('Log In', 'Browse spaces'), no composer."
+      "evidence": "Guest: REST GET /spaces/6581/posts -> 403 jetonomy_forbidden and POST topic -> 401 rest_not_logged_in; the browser shows 'This space is private. Log in to see it.' with Log In / Register on the private Walk Priv space; no admission without login."
     },
     "c-gating-admission-without-a-roster-row.6": {
       "result": "pass",
-      "evidence": "test_author (role author, does not match the subscriber membership rule): POST /spaces/343/posts -> 403 jetonomy_forbidden 'You cannot post in this space.'; POST /posts/13846/replies -> 404 jetonomy_not_found 'Topic not found.'; GET posts -> 403."
+      "evidence": "alice (does not hold the plan, not on roster): POST /spaces/6581/posts -> 403 jetonomy_forbidden 'You cannot post in this space.'; POST /posts/13384/replies -> 404 jetonomy_not_found 'Topic not found.'"
     },
     "c-gating-admission-without-a-roster-row.7": {
       "result": "pass",
-      "evidence": "generated 2000 users with a new role walk_bulk (wp user generate), added a membership rule walk_bulk via REST, pressed Sync Members in the UI -> toast 'Synced 2000 existing members.' in about 2 s; roster rows 2034 = 34 + 2000, all distinct.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-admission-sync2000.png"
+      "evidence": "Fixture of 2000 users holding the plan: Sync Members on Walk Pub -> toast 'Synced 2000 existing members.' in about 1.3 s; DB space_members for the space 2005 rows = 2005 distinct users, member_count column 2005, 2003 'tier' rows (= 2000 + the 3 earlier matches); Members tab pages '1-25 of 2,005'."
     },
     "c-gating-admission-without-a-roster-row.8": {
       "result": "pass",
-      "evidence": "pressed Sync Members three times at once (parallel clicks) on the subscriber rule: roster stays 34 rows / 34 distinct user ids, no duplicates."
+      "evidence": "Sync Members pressed three more times (two in quick succession): roster stays 2005 rows / 2005 distinct users, no duplicate roster rows."
     },
     "c-gating-admission-without-a-roster-row.9": {
       "result": "pass",
-      "evidence": "inserted a rule row directly in jt_access_rules dated 2025-03-01 (membership/author, participate) with no roster rows: test_author reads the space and POST topic -> 201 (id 13851); roster still only admin."
+      "evidence": "Older space (Smoke Feed Priv id 1054, created 2026-09-04, private) given a Membership rule: walkrule (holds the plan, jt_space_members rows for him in that space: 0) GET /spaces/1054/posts -> 200 without a roster row; after the rule was deleted the same call -> 404 Space not found. (No genuine pre-2.0 space exists on this site.)"
     },
     "c-gating-admission-without-a-roster-row.10": {
       "result": "pass",
-      "evidence": "added a Logged In Participate rule to Off-Topic Lounge (omar is space-banned there): omar's space page shows 'banned from this space and cannot take part in it.' with no New Topic; /new/ shows the same message; REST POST -> 403 jetonomy_user_space_banned. Rule removed afterwards.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-admission-omar.png"
+      "evidence": "omar (holds the plan so the rule matches him; temporary space_ban on Walk Pub): POST topic and GET posts -> 403 jetonomy_user_space_banned 'You have been banned from this space and cannot take part in it.' - the ban wins."
     }
   },
   "proposed_checks": []

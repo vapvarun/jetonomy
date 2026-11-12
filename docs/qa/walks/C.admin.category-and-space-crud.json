@@ -1,142 +1,150 @@
 {
   "journey": "C.admin.category-and-space-crud",
-  "free": "11e21b47",
-  "pro": "05e4a11",
-  "walked_at": "2026-11-07T20:38:59.123497Z",
-  "walker": "release 2.0.7 combo walk wave 3 (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
-    "mode": "combo (Free+Pro)",
-    "site": "http://localhost:8911",
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
-      1440
+      1440,
+      1024,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
-    "c-admin-category-and-space-crud.3": {
-      "result": "pass",
-      "evidence": "admin DELETE /categories/8 while it held space 'Gardening Tips' -> 409 jetonomy_category_has_spaces 'Cannot delete this category while it contains spaces. Move or delete the spaces first.' (spaces remain)."
-    },
-    "c-admin-category-and-space-crud.7": {
-      "result": "pass",
-      "evidence": "admin PATCH /spaces/4 settings {allow_polls:true} -> stored settings became {posts_per_page:1, allow_polls:true} (other key kept). Restored afterwards."
-    },
-    "c-admin-category-and-space-crud.14": {
-      "result": "pass",
-      "evidence": "admin POST /categories name 'Product Questions' twice -> second saved as slug product-questions-1 (id 9), no error."
-    },
-    "c-admin-category-and-space-crud.17": {
-      "result": "pass",
-      "evidence": "bob POST /categories and /spaces -> 403 jetonomy_forbidden both."
-    },
-    "c-admin-category-and-space-crud.23": {
-      "result": "pass",
-      "evidence": "bob POST /categories and /spaces -> both 403 jetonomy_forbidden (same code)."
-    },
-    "c-admin-category-and-space-crud.20": {
-      "result": "pass",
-      "evidence": "After DELETE /spaces/{id}?mode=purge for 'Gardening Tips' and 'Q&A: Roadmap & Plans': 0 rows left in jt_spaces, jt_space_members, jt_subscriptions for those ids; `wp jetonomy space list` no longer lists them. Note: default DELETE (mode=transfer) archives the space and hands it to a successor instead of deleting - by design, but worth knowing."
-    },
-    "c-admin-category-and-space-crud.24": {
-      "result": "pass",
-      "evidence": "After purge: no rows in jt_space_members/jt_subscriptions for the deleted ids; orphan member rows overall 0 on this seed (jt_read_status not checked)."
-    },
     "c-admin-category-and-space-crud.1": {
       "result": "pass",
-      "evidence": "wp-admin > Jetonomy > Categories, Add Category 'Product Questions': after the form post and redirect the page shows the toast 'Category created.' (caught on the post-redirect page with a sampler installed on every load) and the category is listed with 0 spaces. It is not on the community home because it has no spaces yet. Categories deleted afterwards."
-    },
-    "c-admin-category-and-space-crud.4": {
-      "result": "pass",
-      "evidence": "Admin: Spaces > Add New, title 'Gardening Tips', category Community, icon 'home' -> toast 'Space created.', redirected to edit (id 177), icon=home stored; front end /community/s/gardening-tips/ 200 with h1 'Gardening Tips'; /community/my-spaces/ listed it for admin. Screenshot /Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/cs-gardening.png. (Space deleted later in check 9.)"
-    },
-    "c-admin-category-and-space-crud.6": {
-      "result": "pass",
-      "evidence": "New space form: Public+Open then Private -> join policy switched to approval and note 'Private spaces need approval or an invite. Join policy switched to Approval Required.' shown."
+      "evidence": "Categories > Add New Category 'Product Questions' (cat-name + Add Category): toast 'Category created.' (captured after the redirect), listed in the admin table; the category shows on the community home once it holds a space (curl /community/ contains it after 'Gardening Tips' was added; an empty category is not shown there)."
     },
     "c-admin-category-and-space-crud.2": {
       "result": "pass",
-      "evidence": "Admin, categories screen at 1440: dragged the Help & Support row above Community with real mouse events -> toast 'Order saved.'; DOM order and GET /jetonomy/v1/categories both returned Help & Support(0), Community(1), Product & Engineering(2), Start Here(5) after reload. Renamed Help & Support to 'Help and Support' via Edit modal -> toast 'Category updated.', REST and list showed the new name; renamed back."
+      "evidence": "Dragged the Help & Support row above Community with real mouse events -> toast 'Order saved.'; DOM and a reload both show the new order; renamed Product Questions via Edit -> toast 'Category updated.' (name 'Product Questions Renamed' in DB); GET /jetonomy/v1/categories as admin returned Community, Product & Engineering, Help & Support, Product Questions... matching the DB sort_order after my second drag. Original order restored afterwards."
+    },
+    "c-admin-category-and-space-crud.3": {
+      "result": "pass",
+      "evidence": "REST DELETE /categories/3150 (holds the space Gardening Tips) -> 409 jetonomy_category_has_spaces 'Cannot delete this category while it contains spaces. Move or delete the spaces first.'; DELETE of a parent with a sub-category -> 409 jetonomy_category_has_children 'Cannot delete this category while it has sub-categories. Delete them first.'"
+    },
+    "c-admin-category-and-space-crud.4": {
+      "result": "pass",
+      "evidence": "Spaces > Add New: 'Gardening Tips', Forum, category Product Questions, icon picked -> toast 'Space created.' and redirect to edit space 6635 (icon stored); /community/s/gardening-tips/ 200 with h1 'Gardening Tips'; /community/my-spaces/ lists it."
     },
     "c-admin-category-and-space-crud.5": {
       "result": "pass",
-      "evidence": "New space form: choosing Hidden switched join policy to invite and showed 'Hidden spaces must use Invite Only. Join policy switched.' (jt-admin-msg--info)."
+      "evidence": "New space form: choosing Hidden switched Join Policy to invite and showed 'Hidden spaces must use Invite Only. Join policy switched.'"
+    },
+    "c-admin-category-and-space-crud.6": {
+      "result": "pass",
+      "evidence": "New space form: Public + Open then Private -> Join Policy 'approval' and the note 'Private spaces need approval or an invite. Join policy switched to Approval Required.'"
+    },
+    "c-admin-category-and-space-crud.7": {
+      "result": "pass",
+      "evidence": "Admin REST PATCH /spaces/6584 settings who_can_post=member then allow_voting=1: DB settings JSON went {allow_anonymous:1} -> {allow_anonymous:1, who_can_post:member} -> adds allow_voting, every earlier key kept (merge)."
     },
     "c-admin-category-and-space-crud.8": {
       "result": "pass",
-      "evidence": "Help Desk (space 20) Members tab. Roster had two admins (admin, test_editor) so the line's 'only admin' needed a setup: demoted test_editor to Member (allowed, 'Role updated.'), then demoted the remaining admin -> refused 'This space must keep at least one admin. Promote someone else first.'; Remove on the same row -> same refusal; after reload admin is still Admin. Minor UX: after the refusal the role dropdown stays on 'Member' until reload. Restored test_editor to Admin. Screenshot /Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/cs-lastadmin.png."
+      "evidence": "Walk PubAppr (id 6583, sole admin varundubey): Members tab role select to Member -> toast 'This space must keep at least one admin. Promote someone else first.' and the roster still has the admin; REST PATCH/DELETE of the last admin -> 400 jetonomy_cannot_self_demote / jetonomy_last_admin_required. (Help Desk has two admins here, so a one-admin fixture was used.)"
     },
     "c-admin-category-and-space-crud.9": {
       "result": "pass",
-      "evidence": "Seeded 620 topics into Gardening Tips (SQL), then Delete permanently via the typed-name modal -> toast 'This space is locked and its content is being deleted in the background.'; row showed status Locked; DB: status=locked, 120 topics left after first 500-batch; POST /spaces/177/posts as alice -> 403 jetonomy_space_restricted 'This space is archived or locked and no longer accepts new content.'; ran Action Scheduler -> space row and all topics gone (0 rows). Note: the list kept showing the stale count 620 while locked. Screenshots cs-purge-modal.png, cs-purge-after.png."
+      "evidence": "Walk PubAppr with 1,800 topics (REST-seeded): Delete permanently -> typed-name modal -> toast 'This space is locked and its content is being deleted in the background.'; list row shows status Locked with 1800 topics; DB status locked, 1300 topics after the first 500-topic batch; after running the Action Scheduler queue the space row and all topics were gone."
     },
     "c-admin-category-and-space-crud.10": {
       "result": "pass",
-      "evidence": "Added a MySQL BEFORE DELETE trigger on jt_posts that raises an error, then deleted 'Q&A: Roadmap & Plans' (2 topics) from the admin -> toast 'The space could not be deleted, so it was kept with its content. Deletion will be retried shortly.'; after reload the space row is still listed (2 topics) and DB has the space and both topics. Debug log shows the simulated DB error only. Trigger dropped afterwards. Screenshot cs-delfail.png."
+      "evidence": "MySQL BEFORE DELETE trigger on jt_spaces raising an error for 'Q&A: Roadmap & Plans' (id 6636): Delete permanently with the typed name -> toast 'The space could not be deleted, so it was kept with its content. Deletion will be retried shortly.'; the space is still listed with its topics; trigger dropped afterwards. qa-actions PG1/PG3/PG4 (failed deletes keep the space) also PASS."
     },
     "c-admin-category-and-space-crud.11": {
       "result": "pass",
-      "evidence": "2025 Hackathon is archived (status archived); the front end opens it read-only (see c-member-post-create.11). The hand-over / heir behaviour was not walked."
+      "evidence": "Walk Priv archived from the Spaces list (confirm 'Archive this space and hand it to an administrator?...'): list shows Archived; DB author_id moved to test_admin (154) who is admin on the roster; former owner varundubey is moderator. (2025 Hackathon is already archived with no owner row to hand over.)"
     },
     "c-admin-category-and-space-crud.12": {
       "result": "pass",
-      "evidence": "Added a topic to the archived 2025 Hackathon (the reseed left it empty). As bob: space page shows 'This space is archived. New topics and replies are no longer accepted.' with the topic listed and no New Topic button; the topic page /community/s/2025-hackathon/t/hackathon-2025-recap/ reads fine with no composer; POST /posts/3243/replies -> 403 jetonomy_space_restricted. Screenshots cs-archived-space.png, cs-archived-topic.png."
+      "evidence": "2025 Hackathon is archived and empty, so a fixture topic in an archived space (Walk Empty, archived through the UI) was used. As member walkrule2: space page 'This space is archived. New topics and replies are no longer accepted.' with the topic listed and no New Topic; topic page readable with no reply editor; POST reply -> 403 jetonomy_space_restricted.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-crud-archived.png"
     },
     "c-admin-category-and-space-crud.13": {
       "result": "pass",
-      "evidence": "Help Desk 288-char description: edit form holds 288 chars, Update Space -> 'Space updated.', reload still 288. The Spaces list row does not render the description at all (title, slug, type, category, counts), so nothing truncates or breaks: table 1236/1236 wide, page no horizontal overflow at 1440."
+      "evidence": "Help Desk (288-character description): Update Space -> toast 'Space updated.', description still 288 characters after reload; the Spaces list row does not render descriptions (row text 121 chars, table 1076px wide, no horizontal overflow)."
+    },
+    "c-admin-category-and-space-crud.14": {
+      "result": "pass",
+      "evidence": "Created 'Product Questions' twice in the admin form: both 'Category created.', slugs product-questions and product-questions-1 (no error, other not overwritten)."
     },
     "c-admin-category-and-space-crud.15": {
       "result": "pass",
-      "evidence": "Empty Local Chapters spaces (Lisbon, Mexico City, Nairobi, Seoul, Amsterdam all list 0 topics). Lisbon front end: '0 topics ... No topics yet. Be the first to start a discussion!'. Edit Lisbon description -> 'Space updated.'. Deleted Nairobi via Delete permanently -> 'Space and all its content were deleted.' and gone after reload. Screenshot cs-empty-lisbon.png."
+      "evidence": "Amsterdam Chapter (0 topics in the admin list): front end shows 'No topics yet'. Edit works (Help Desk and fixtures saved with 'Space updated.') and delete works (fixtures deleted from the same Spaces list); no seeded city space was deleted."
     },
     "c-admin-category-and-space-crud.16": {
       "result": "pass",
-      "evidence": "test_editor (space admin of Help Desk, no jetonomy_manage_spaces cap) with a real session token posted admin-ajax jetonomy_delete_space for Moderators' Room (43), with and without mode=purge, and a valid jetonomy_admin nonce -> both {success:false,data:'Permission denied.'}; space 43 still exists. Done over HTTP with a generated session (no wp-admin UI for an editor)."
+      "evidence": "test_editor (space admin of Help Desk, no manage-spaces capability) with his real session cookie and a valid jetonomy_admin nonce POSTed admin-ajax jetonomy_delete_space for Moderators' Room (2016), plain and mode=purge -> {success:false, data:'Permission denied.'} both; the space still exists."
+    },
+    "c-admin-category-and-space-crud.17": {
+      "result": "pass",
+      "evidence": "bob POST /jetonomy/v1/spaces and POST /categories -> 403 jetonomy_forbidden for both."
     },
     "c-admin-category-and-space-crud.18": {
       "result": "pass",
-      "evidence": "Created 'Q&A: Roadmap & Plans' in the admin form: DB title stored without &amp;; Spaces list, page title ('Q&A: Roadmap & Plans \u2013 Northwind Makers Community'), h1 and breadcrumb ('Home / Community / Q&A: Roadmap & Plans') all show the plain text; no '&amp;amp;' in the HTML."
+      "evidence": "Created 'Q&A: Roadmap & Plans': DB title stored plain (no &amp;); Spaces list shows 'Q&A: Roadmap & Plans', browser title 'Q&A: Roadmap & Plans – forums', h1 and breadcrumb 'Home / Start Here / Q&A: Roadmap & Plans'; the page source has no '&amp;amp;'."
     },
     "c-admin-category-and-space-crud.19": {
       "result": "pass",
-      "evidence": "Space settings tab in two tabs (Lisbon). Tab A saved posts-per-page=15 -> 'Space updated.'. Tab B (stale) unticked Allow voting and saved -> refused with 'This space was changed by someone else. Reload to see their changes.' (no silent revert; ppp=15 persisted). After reloading B and saving the voting change -> 'Space updated.'; final state ppp=15 and voting off, both edits persisted."
+      "evidence": "Space settings in two tabs (Gardening Tips): tab A saved posts-per-page 15 -> 'Space updated.'; stale tab B unticked Allow voting and saved -> refused 'This space was changed by someone else. Reload to see their changes.'; after reloading B and saving again both persisted (ppp 15, voting off)."
+    },
+    "c-admin-category-and-space-crud.20": {
+      "result": "pass",
+      "evidence": "After deleting Walk PubAppr (1800 topics) and Walk Parent: 0 rows left in jt_posts, jt_space_members and jt_subscriptions for them; wp jetonomy space list --category=1085 no longer lists them; wp jetonomy space scan-orphans added no new orphan rows."
     },
     "c-admin-category-and-space-crud.21": {
       "result": "pass",
-      "evidence": "The 'Category created.' toast is shown on the page after the redirect, so it is not lost by the reload. The space form's toast was not checked."
+      "evidence": "The 'Category created.' toast shows on the page after the post-redirect and the 'Space created.' toast shows after the redirect to the edit screen (both captured after reload)."
     },
     "c-admin-category-and-space-crud.22": {
       "result": "pass",
-      "evidence": "Same two-tab run as .19: the stale second tab's save was refused with 'This space was changed by someone else. Reload to see their changes.' and the first tab's newer value stayed."
+      "evidence": "Same two-tab run as .19: the stale second tab's save was refused with 'This space was changed by someone else. Reload to see their changes.' and the first tab's newer value (15) stayed."
+    },
+    "c-admin-category-and-space-crud.23": {
+      "result": "pass",
+      "evidence": "bob POST /categories and POST /spaces -> both 403 jetonomy_forbidden (same code)."
+    },
+    "c-admin-category-and-space-crud.24": {
+      "result": "pass",
+      "evidence": "Walk PubAppr: before delete 1800 topics, 2 member rows, 1 subscription; after the background job 0 rows in jt_space_members and jt_subscriptions for its id (jt_read_status has no space column, it is keyed by topic), 0 topics."
     },
     "c-admin-category-and-space-crud.25": {
       "result": "pass",
-      "evidence": "Spaces list (74 spaces) has a 'Search spaces...' box; searching Help returns Help Desk."
+      "evidence": "Spaces list with 52 spaces has a Search box; 'Chapter' -> 14 results."
     },
     "c-admin-category-and-space-crud.26": {
       "result": "pass",
-      "evidence": "Found 6 jt_space_members rows for 5 deleted spaces (148-152, left by earlier walks); wp jetonomy recount did not remove them, wp jetonomy space scan-orphans listed them (64 orphan rows in total across tables) and wp jetonomy space purge-orphans removed them -> 'database reports 0 remaining'; count query returns 0."
+      "evidence": "wp jetonomy space scan-orphans listed 1,140 stale rows from 690 deleted spaces (jt_space_members 488, jt_posts 137, jt_activity_log 506, ...), none from this walk; wp jetonomy space purge-orphans -> 'Purged 690 orphaned space(s); database reports 0 remaining.'; scan-orphans 'No orphaned space data'; SELECT count of member rows without a space = 0. (This removed old orphan data left on the site by earlier sessions.)"
     },
     "c-admin-category-and-space-crud.27": {
       "result": "pass",
-      "evidence": "As bob on the archived 2025 Hackathon topic (added a topic): readable, no reply composer, POST /posts/3243/replies -> 403 jetonomy_space_restricted."
+      "evidence": "walkrule2 (member) on the archived Walk Empty topic: readable, no reply composer, POST /posts/15201/replies -> 403 jetonomy_space_restricted.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-crud-archived.png"
     },
     "c-admin-category-and-space-crud.28": {
       "result": "pass",
-      "evidence": "No admin form, REST or CLI field sets parent_id (PATCH /spaces ignores it), so sub-spaces were built with Space::update in wp eval: self-parent, parent=own child and parent=own grandchild all refused with jetonomy_space_parent_cycle 'A space cannot be placed inside itself or one of its own sub-spaces.'. Then deleted the middle space via admin -> its child moved to the grandparent; deleted the top space -> child became top level (parent_id 0). Observation: parent is not settable from the admin."
+      "evidence": "Sub-space built with Space::update in wp eval (no admin or REST field sets parent_id): Walk Child under Walk Parent; self-parent and parent=own child both refused jetonomy_space_parent_cycle 'A space cannot be placed inside itself or one of its own sub-spaces.'; DELETE /spaces/{parent}?mode=purge -> child still exists and its parent_id is now 0 (top level)."
     },
     "c-admin-category-and-space-crud.29": {
       "result": "pass",
-      "evidence": "At 1024 on Help Desk > Access Rules, added a Logged In/Read rule: the Grants select (left 516, right 597) sits inside its cell (505-606). PATCH /access-rules/15 grants=full -> 400 rest_invalid_param 'grants is not one of read and participate.'; GET rules still shows grants=read. Rule removed afterwards. Screenshot cs-rules1024b.png."
+      "evidence": "1024px Access Rules tab: Grants select 516-597 inside its cell 505-606, no page overflow; REST PATCH /access-rules/{id} {grants:full} -> 400 rest_invalid_param 'grants is not one of read and participate.' and the rule kept grants read.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-crud-grants-1024.png"
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": []
+  "proposed_checks": []
 }

@@ -1,85 +1,80 @@
 {
   "journey": "C.gating.read-on-private",
-  "free": "8478fd19",
-  "pro": "81befa5",
-  "walked_at": "2026-11-10T10:20:08.777797Z",
-  "walker": "release 2.0.7 combo walk (Sonnet) + wave 8 combo (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
-    "mode": "Free + Pro, all 17 Pro extensions on",
-    "site": "http://localhost:8911",
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
       1440,
+      1024,
       390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
     "c-gating-read-on-private.1": {
       "result": "pass",
-      "evidence": "priyanka_n (subscriber, no rule) opened /community/s/founders-circle/ (private, invite): 'Founders Circle is invite-only. You need an invitation to join.' with description, no topics; topic URL /t/q4-roadmap-review-for-founders/ -> HTTP 404 'Topic not found.'",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-locked.png"
+      "evidence": "Walk Priv (id 6582, private/approval), no rules: walkrule (subscriber, not roster) opens /community/s/walk-priv/ -> 'Walk Priv is private. Request to join and an admin will review it.' with Request to join, no topics; REST GET posts 403 jetonomy_forbidden.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-read-private-locked.png"
     },
     "c-gating-read-on-private.2": {
       "result": "pass",
-      "evidence": "admin Access Rules tab: WP Role subscriber + Read; preview and toast both 'Rule added: WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.' (no confirm modal appeared for a WP Role rule)."
+      "evidence": "Admin UI Add Rule WP Role 'subscriber' + Read on Walk Priv -> toast 'Rule added: WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.'"
     },
     "c-gating-read-on-private.3": {
       "result": "pass",
-      "evidence": "same subscriber loads the space: 3 topics listed (Welcome, Q4 roadmap review, long-title topic) and opens a topic page with title and body.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-list.png"
+      "evidence": "walkrule reloads /community/s/walk-priv/ -> both topics (long-title topic and 'Bob private topic two') listed; opens the topic page.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-read-private-list.png"
     },
     "c-gating-read-on-private.4": {
       "result": "pass",
-      "evidence": "topic page as the Read-rule subscriber: no New Topic button, no reply editor, no Post Reply button, no Vote up/down buttons (score line reads 'Score 0. Voting is not available to you here.'); Report button present. Direct REST vote -> 403 jetonomy_forbidden. NOTE: the Reply jump link, Share, Bookmark and the Pro React trigger are still shown (see proposed check on reactions).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-topic.png"
+      "evidence": "walkrule on the topic page: no reply editor, no New Topic link on the list, the vote control reads 'Score 0. Voting is not available to you here.' (no Vote up/down buttons); Follow, Share, Bookmark and Report remain.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-read-private-topic.png"
     },
     "c-gating-read-on-private.5": {
       "result": "pass",
-      "evidence": "priyanka_n POST /spaces/342/posts -> 403 jetonomy_forbidden 'You cannot post in this space.'; POST /posts/{id}/replies -> 403 same message; POST /posts/{id}/vote -> 403 jetonomy_forbidden but the message is 'You do not have permission to perform this action.' (not 'You cannot post in this space.'). No topic/reply/vote row stored."
+      "evidence": "walkrule REST: POST topic 403 'You cannot post in this space.', POST reply 403 'You cannot post in this space.', POST /posts/13392/vote 403 'You do not have permission to perform this action.' (all jetonomy_forbidden); DB: 0 posts by walkrule in space 6582, 0 votes on those topics."
     },
     "c-gating-read-on-private.6": {
       "result": "pass",
-      "evidence": "vote -> 403 jetonomy_forbidden; POST /flags on the topic -> 201 {created:true,id:37}, row stored in jt_flags."
+      "evidence": "walkrule POST /posts/13392/vote -> 403 jetonomy_forbidden; POST /flags {object_type:post, object_id:13392, reason:spam} -> 201 created:true, row stored in jt_flags (reporter walkrule, status pending)."
     },
     "c-gating-read-on-private.7": {
       "result": "pass",
-      "evidence": "guest opened /community/s/founders-circle/ -> 'This space is private. Log in to see it.' + Log In button; REST GET /spaces/342/posts as guest -> 403 jetonomy_forbidden. The subscriber role rule did not apply to guests."
+      "evidence": "Guest GET /spaces/6582/posts with the Read rule present -> 403 jetonomy_forbidden (not readable); the role rule did not apply to guests."
     },
     "c-gating-read-on-private.8": {
       "result": "pass",
-      "evidence": "admin Delete + Confirm on the rule -> toast 'Access rule deleted.'; subscriber's next load of the space is the invite-only refusal page again."
+      "evidence": "Admin deleted the rule (DELETE /access-rules/384 -> deleted:true); next walkrule GET /spaces/6582/posts -> 403 jetonomy_forbidden and GET /posts/13392 -> 404 Topic not found."
     },
     "c-gating-read-on-private.9": {
       "result": "pass",
-      "evidence": "185-character title topic (Roadmap review notes for the founders circle ...) read as the subscriber at 1440: title wraps across lines, page scrollWidth 1440 = clientWidth, no clipped link.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-long.png"
+      "evidence": "walkrule reads the 157-character-title topic (rule present): h1 is 686px wide, 90px tall (wraps to multiple lines), scrollWidth = clientWidth, no page overflow.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-read-private-long.png"
     },
     "c-gating-read-on-private.10": {
       "result": "pass",
-      "evidence": "space list at 390px: scrollWidth 390 = clientWidth, long title wraps (194px tall), no horizontal scroll, layout stacks (Chromium viewport resize).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpriv-390.png"
+      "evidence": "390x844 /community/s/walk-priv/ as walkrule: scrollWidth 390 = innerWidth, layout stacks.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-read-private-390.png"
     },
     "c-gating-read-on-private.11": {
       "result": "pass",
-      "evidence": "Added a WP Role subscriber + Read rule on Partner Program through the admin Access Rules tab (preview 'WP Role: subscriber can read and report posts and replies. They are recorded as Viewer.'). As test_subscriber on topic 239 (Pro Reactions on, a Like from admin seeded): the post shows a static chip 'Like: 1' (class is-static, role img), 0 .jt-reaction-trigger, the chip is not clickable (count stays 1 on a forced click), vote buttons render as jt-act-denied 'Voting is not available to you here.'; POST /posts/239/reactions and POST /replies/1161/reactions -> 403 jetonomy_forbidden, 0 rows stored for the subscriber; POST /posts/239/vote -> 403; GET /posts/239/reactions still 200 with counts. Rule deleted and admin's Like removed afterwards.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/w8-combo/c-gating-11-viewer.png"
+      "evidence": "Pro Reactions active: bob reacted thumbsup on the topic (POST /posts/13392/reactions 200); walkrule (Read rule) sees the static count chip (.jt-reaction-chip.is-static, count 1) and no .jt-reaction-trigger React button; POST /posts/13392/reactions as walkrule -> 403 jetonomy_forbidden and 0 rows in jt_pro_reactions for walkrule."
     }
   },
-  "proposed_checks": [],
-  "runbook_fixes": [
-    {
-      "check": "c-gating-read-on-private.5",
-      "now": "vote returns 403 jetonomy_forbidden 'You do not have permission to perform this action.'; only topic and reply say 'You cannot post in this space.'"
-    }
-  ],
-  "walk_notes": [
-    "wave 8 combo walk 2026-11-10T10:20:08.777797Z: re-walked non-pass checks c-gating-read-on-private.11"
-  ]
+  "proposed_checks": []
 }

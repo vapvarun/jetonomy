@@ -1,54 +1,59 @@
 {
   "journey": "C.gating.read-on-public",
-  "free": "8478fd19",
-  "pro": "81befa5",
-  "walked_at": "2026-11-10T08:12:18Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
-    "mode": "Free + Pro, all 17 Pro extensions on",
-    "site": "http://localhost:8911",
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
-      1440
+      1440,
+      1024,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
     "c-gating-read-on-public.1": {
       "result": "pass",
-      "evidence": "admin Access Rules tab on Gadget Testing Lab (public, open): selected Logged In + Read; live preview 'Logged In can read and report posts and replies. They are recorded as Viewer.'; toast read 'Rule added: Logged In can read and report posts and replies. They are recorded as Viewer.'; row listed. REST: POST rule everyone/read as admin -> 201 'Access rule added.' (rule id 46), GET lists both.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpublic-add.png"
+      "evidence": "Walk Pub (id 6581, public/open). REST POST /spaces/6581/access-rules {logged_in|everyone, read} -> 201 no_effect:true, message 'Access rule added, but it changes nothing. This space is Public with an Open join policy ... set Who Can Post and Who Can Reply to Members Only on the General tab.'; admin UI Add Rule (Logged In + Read) reloads with toast of that exact text (captured from jetonomyAdminToast) and a standing .jt-access-warning 'An Everyone or Logged In rule here changes nothing.' on the Access Rules tab. PATCH to Participate gives 'Access rule updated, but it changes nothing...'.",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-read-on-public-toast.png"
     },
     "c-gating-read-on-public.2": {
       "result": "pass",
-      "evidence": "priyanka_n (subscriber, not on roster) opened /community/s/gadget-testing-lab/new/, filled title 'What is the best phone for testing?', body, required Operating system select (global required Pro custom field), clicked Post Topic -> redirected to /t/what-is-the-best-phone-for-testing/ published (DB status publish)."
+      "evidence": "With the Read rule present, subscriber walkrule (not on roster) used the New Topic form on /community/s/walk-pub/new/ and posted 'What is the best phone for testing?' -> redirected to its topic page."
     },
     "c-gating-read-on-public.3": {
       "result": "pass",
-      "evidence": "same subscriber replied on Tomas's topic via composer (reply shows on page, DB reply 4134 publish) and clicked Vote up (DB jt_votes row 1327 post 13835 value 1).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-readpublic-member.png"
+      "evidence": "walkrule on bob's topic with the rule present: Vote up -> POST /posts/13384/vote 200; Post Reply -> POST /posts/13384/replies 201."
     },
     "c-gating-read-on-public.4": {
       "result": "pass",
-      "evidence": "tomas_w (roster member) in a second browser context replied 'I would pick the Galaxy Tab S9...' and voted up on the admin topic through the UI; vote row 1328 stored."
+      "evidence": "Roster member bob with the rule present: REST POST topic 201, reply 201 (vote on his own topic refused 400 jetonomy_self_vote, the normal own-content rule)."
     },
     "c-gating-read-on-public.5": {
       "result": "pass",
-      "evidence": "guest GET /spaces/341/posts -> 200 list; guest POST /posts/13835/replies -> 401 rest_not_logged_in."
+      "evidence": "Guest (user 0) GET /spaces/6581/posts -> 200 list while the Read rule exists; guest POST /posts/13384/replies -> 401 rest_not_logged_in. (Note: an earlier 404 for guests came from my fixture pointing at a non-existent category id 1, not from the rule; fixed to a real category.)"
     },
     "c-gating-read-on-public.6": {
       "result": "pass",
-      "evidence": "admin pressed Delete on each rule in the Access Rules tab, confirm modal 'Are you sure? This cannot be undone.' Confirm -> toast 'Access rule deleted.' (both rules); rules list empty. Subscriber then POSTed a topic -> 201 (id 13841)."
+      "evidence": "Admin Access Rules tab: Delete -> confirm -> toast 'Access rule deleted.'; walkrule then POST topic 201 (still posts)."
     },
     "c-gating-read-on-public.7": {
       "result": "pass",
-      "evidence": "priyanka_n POST /spaces/341/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; GET rules shows none stored."
+      "evidence": "walkrule POST /spaces/6581/access-rules -> 403 jetonomy_forbidden 'Only site administrators can manage access rules for this space.'; GET rules afterwards {data:[]} (nothing stored)."
     }
   },
   "proposed_checks": []

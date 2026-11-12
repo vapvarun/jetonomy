@@ -1,63 +1,67 @@
 {
   "journey": "C.gating.no-rule-hands-out-moderation",
-  "free": "8478fd19",
-  "pro": "81befa5",
-  "walked_at": "2026-11-10T08:24:29Z",
-  "walker": "release 2.0.7 combo walk (Sonnet)",
+  "free": "0ab0fa5e",
+  "pro": "0496dc4",
+  "walked_at": "2026-11-12T11:08:00Z",
+  "walker": "claude self-qa",
   "env": {
-    "mode": "Free + Pro, all 17 Pro extensions on",
-    "site": "http://localhost:8911",
+    "mode": "Free+Pro combo (Pro: 16 extensions), Local by Flywheel",
+    "site": "http://forums.local",
     "themes": [
-      "reign-theme"
+      "buddyx-pro (active)",
+      "buddyx",
+      "twentytwentyfive",
+      "reign-theme (temporary symlink)"
     ],
     "viewports": [
-      1440
+      1440,
+      1024,
+      390
     ],
     "schemes": [
-      "light"
+      "light",
+      "dark (BuddyX Pro / Reign toggle, prefers-color-scheme emulation for wp-admin)"
     ],
     "browser": "Chromium via Playwright MCP",
-    "locale": "en_US"
+    "locale": "en_US (ar temporarily for RTL checks)"
   },
   "checks": {
     "c-gating-no-rule-hands-out-moderation.1": {
       "result": "pass",
-      "evidence": "admin UI add form on Founders Circle has no Space Role selector (only Rule type, value, Grants, priority); added Capability read + Read -> toast 'Rule added: Capability: read can read and report posts and replies. They are recorded as Viewer.' REST POST role=author grants=read space_role=admin -> 201 stored grants read, space_role viewer."
+      "evidence": "Access Rules add form has only Rule type, value, Grants and Add Rule (no Space Role selector). Admin REST POST /spaces/6581/access-rules {role subscriber, grants:read, space_role:admin} -> 201 stored grants read, space_role viewer."
     },
     "c-gating-no-rule-hands-out-moderation.2": {
       "result": "pass",
-      "evidence": "lars_o (subscriber matched by the Participate rule) REST: POST /moderation/trash/post/{id}, PATCH /posts/{id}, DELETE /posts/{id}, POST /posts/{id}/pin, POST /moderation/approve/post/{id} -> 403 jetonomy_forbidden each."
+      "evidence": "walkrule (subscriber matched by that Read rule, not on roster): POST /moderation/trash/post/13384, PATCH /posts/13384, DELETE /posts/13384, POST /pin, POST /moderation/spam/post/13384, POST /close -> six 403 jetonomy_forbidden."
     },
     "c-gating-no-rule-hands-out-moderation.3": {
       "result": "pass",
-      "evidence": "REST POST rules with space_role=admin/moderator: role contributor grants=participate -> stored member; trust_level 1 grants=full -> stored participate/member; logged_in participate space_role=moderator -> stored member. lars_o POST /moderation/trash -> 403."
+      "evidence": "REST matrix with space_role:admin sent for every rule type (logged_in, role, capability, trust_level, membership): grants participate -> stored participate/member; grants full -> participate/member; grants read -> read/viewer. Never admin or moderator."
     },
     "c-gating-no-rule-hands-out-moderation.4": {
       "result": "pass",
-      "evidence": "new private space Advisors Lounge with a membership rule subscriber, grants=read, stored space_role forced to admin in the DB; fired do_action('jetonomy_membership_activated', lars_o, 'subscriber', 'walk') -> roster row role viewer (source tier); Permission_Engine::can: read=true, moderate, edit_others_posts, delete_others_posts, pin_posts, create_posts, create_replies all false. (A made-up level id such as walkplan:gold is not honoured at all because the live gate asks the adapter; the WP Roles adapter level 'subscriber' was used.)"
+      "evidence": "wp eval: legacy membership rule row grants=read, space_role=admin, fired do_action('jetonomy_membership_activated', 5501, 'walk_gold', 'walkqa') for a plain subscriber who holds the fixture plan -> roster role viewer; Permission_Engine::can moderate / edit_others_posts / delete_others_posts / pin_posts all 'no' (create_posts and create_replies 'no' too). Fixture row and roster row removed."
     },
     "c-gating-no-rule-hands-out-moderation.5": {
       "result": "pass",
-      "evidence": "same rule set to participate with space_role admin, hook fired again -> roster role member; moderate/edit_others/delete_others/pin all false, create_posts and create_replies true; lars_o REST POST /spaces/343/posts -> 201."
+      "evidence": "Same hook with grants=participate (space_role=admin stored) -> roster role member; can moderate, edit_others_posts, delete_others_posts, pin_posts 'no'; create_posts and create_replies 'yes'."
     },
     "c-gating-no-rule-hands-out-moderation.6": {
       "result": "pass",
-      "evidence": "admin Members tab of Advisors Lounge: admin = Admin (manual, creator), Lars Olsen (rule-admitted) = Member. Founders Circle: Tomas Weber Member, Olivia Grant (test_moderator) Member, Lars Olsen Viewer; nobody admitted by a rule is Moderator/Admin.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-nohand-members.png"
+      "evidence": "Members tab after Sync Members of the Participate membership rule: walkrule, walkrule2, walkrule3 listed with role select 'member'. Nobody admitted by the rule is Moderator or Admin (walkrule2 became Moderator only after the admin set it by hand)."
     },
     "c-gating-no-rule-hands-out-moderation.7": {
       "result": "pass",
-      "evidence": "ingrid_s (subscriber admitted by the rule) opened /community/s/founders-circle/mod/ and /community/s/advisors-lounge/mod/ -> HTTP 403 'You do not have permission to moderate this space.'"
+      "evidence": "walkrule3 (rule-admitted subscriber) opens /community/s/walk-priv/mod/ -> 'You do not have permission to moderate this space.'",
+      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-retag/walk-retag-gating-full-mod-denied.png"
     },
     "c-gating-no-rule-hands-out-moderation.8": {
       "result": "pass",
-      "evidence": "test_moderator (editor, Moderate capability) in the public Gadget Testing Lab: More options on a member's topic lists Edit, Make Private, Pin to space, Close topic, Move, Delete; REST trash by him -> 200 (seen in full-is-not-moderation).",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-nohand-mod.png"
+      "evidence": "test_moderator (editor, Moderate capability): public Help Desk topic 7809 POST /pin -> 200 (toggled twice, left as found); in Walk Priv where an Editor Participate rule lets him read, /mod/ shows the Moderation queue and POST /pin 200; in private Walk Pub where nothing admits him GET posts -> 403 and POST /posts/13384/pin -> 404 Topic not found."
     },
     "c-gating-no-rule-hands-out-moderation.9": {
       "result": "pass",
-      "evidence": "Access Rules form with Participate selected: Logged In, WP Role, Capability, Trust Level previews each end 'They are recorded as Member.'; Membership (PMPro activated briefly, option 'PMPro') preview 'People who match this rule can read, post, reply, vote and report. They are recorded as Member.' No preview mentions Moderator. Without a membership plugin the Membership option is disabled in the dropdown.",
-      "screenshot": "/Users/varundubey/Local Sites/forums/app/qa-artifacts/walk-207/combo/gating-nohand-preview.png"
+      "evidence": "Access Rules builder, Participate selected for Everyone, Logged In, Role, Capability, Trust Level and Membership: every preview reads '...They are recorded as Member.' and never Moderator (Read reads 'Viewer')."
     }
   },
   "proposed_checks": []
