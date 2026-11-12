@@ -129,6 +129,12 @@ and the response says so via `made_private`. The wp-admin path has always
 behaved this way; both surfaces now share one implementation
 (`AccessRule::enforce_gate_on_public_space()`).
 
+An `everyone` or `logged_in` rule that gives nobody anything on a public space
+(Read on any public space, or any grant on a public space with an open join
+policy) is saved as asked, and `message` starts with "Access rule added, but it
+changes nothing." followed by the reason. `PATCH /access-rules/{rule_id}`
+returns the same note in its `message` when the new grant changes nothing.
+
 ```bash
 curl -X POST https://your-site.com/wp-json/jetonomy/v1/spaces/42/access-rules \
   -H "Content-Type: application/json" -H "X-WP-Nonce: $NONCE" --cookie "$COOKIES" \

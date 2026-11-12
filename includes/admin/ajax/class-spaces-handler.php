@@ -610,7 +610,7 @@ class Spaces_Handler {
 		// so the rule actually restricts access, and tell the admin what happened.
 		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
 
-		$message = AccessRule::added_message( $space_id, $made_private );
+		$message = AccessRule::added_message( $space_id, $made_private, $rule_type, (string) $rule->grants );
 
 		wp_send_json_success(
 			array(
@@ -650,15 +650,16 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$grants = sanitize_key( wp_unslash( $_POST['grants'] ?? '' ) );
-		$result = AccessRule::update_grants( absint( $_POST['id'] ?? 0 ), $grants );
+		$grants  = sanitize_key( wp_unslash( $_POST['grants'] ?? '' ) );
+		$rule_id = absint( $_POST['id'] ?? 0 );
+		$result  = AccessRule::update_grants( $rule_id, $grants );
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( $result->get_error_message() );
 		}
 
 		wp_send_json_success(
 			array(
-				'message' => __( 'Access rule updated.', 'jetonomy' ),
+				'message' => AccessRule::updated_message( $rule_id ),
 				'role'    => ucfirst( AccessRule::role_for_grants( $grants ) ),
 			)
 		);

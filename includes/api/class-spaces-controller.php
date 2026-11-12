@@ -409,11 +409,13 @@ class Spaces_Controller extends Base_Controller {
 
 		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
 
+		$rule = AccessRule::find( (int) $id );
+
 		return new WP_REST_Response(
 			array(
-				'data'         => AccessRule::find( (int) $id ),
+				'data'         => $rule,
 				'made_private' => $made_private,
-				'message'      => AccessRule::added_message( $space_id, $made_private ),
+				'message'      => AccessRule::added_message( $space_id, $made_private, $rule_type, (string) ( $rule->grants ?? '' ) ),
 			),
 			201
 		);
@@ -432,7 +434,7 @@ class Spaces_Controller extends Base_Controller {
 		return new WP_REST_Response(
 			array(
 				'data'    => AccessRule::find( $rule_id ),
-				'message' => __( 'Access rule updated.', 'jetonomy' ),
+				'message' => AccessRule::updated_message( $rule_id ),
 			),
 			200
 		);

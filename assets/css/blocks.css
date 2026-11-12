@@ -298,6 +298,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	border-radius: var(--jt-radius-full);
 }
 .jt-login-tab {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-decoration: none !important;
 	flex: 1 1 0;
 	min-block-size: var(--jt-tap, 40px);
 	padding: var(--jt-space-2) var(--jt-space-3);

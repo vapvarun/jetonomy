@@ -810,6 +810,14 @@ class Blocks {
 		} else {
 			$show_register_tab = $wp_can_register;
 		}
+		// A registration plugin or a register_url filter means the owner runs
+		// their own sign-up page (extra fields, terms, names). Register then
+		// links there, as every other Jetonomy sign-up link already does;
+		// only a default site keeps the inline form. Login stays inline.
+		$register_link = '';
+		if ( $show_register_tab && wp_registration_url() !== site_url( 'wp-login.php?action=register', 'login' ) ) {
+			$register_link = wp_registration_url();
+		}
 		// 1.4.0 A.3 commit 3: both Login and Register tabs use REST. Block
 		// only exposes the REST endpoint base; no nonce — the auth endpoints
 		// are public (REST_Auth::auth_public_write) and sending X-WP-Nonce
@@ -835,7 +843,12 @@ class Blocks {
 			data-rest-url="<?php echo esc_attr( $rest_url ); ?>">
 			<h2 class="jt-login-title"><?php echo esc_html( $title ); ?></h2>
 
-			<?php if ( $show_register_tab ) : ?>
+			<?php if ( '' !== $register_link ) : ?>
+				<div class="jt-login-tabs">
+					<span class="jt-login-tab is-active" data-jt-tab="login"><?php esc_html_e( 'Log in', 'jetonomy' ); ?></span>
+					<a class="jt-login-tab" href="<?php echo esc_url( $register_link ); ?>"><?php esc_html_e( 'Register', 'jetonomy' ); ?></a>
+				</div>
+			<?php elseif ( $show_register_tab ) : ?>
 				<div class="jt-login-tabs" role="tablist">
 					<button type="button" class="jt-login-tab is-active" data-jt-tab="login" role="tab" aria-selected="true">
 						<?php esc_html_e( 'Log in', 'jetonomy' ); ?>
@@ -869,7 +882,7 @@ class Blocks {
 				</button>
 			</form>
 
-			<?php if ( $show_register_tab ) : ?>
+			<?php if ( $show_register_tab && '' === $register_link ) : ?>
 				<form class="jt-login-form" data-jt-panel="register" novalidate>
 					<label class="jt-login-label">
 						<span><?php esc_html_e( 'Username', 'jetonomy' ); ?></span>

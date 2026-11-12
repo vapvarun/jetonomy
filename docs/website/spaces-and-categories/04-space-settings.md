@@ -121,6 +121,8 @@ Each rule has three parts:
 
 > **When rules overlap, the most generous one wins.** If someone matches two rules, for example a Logged In rule set to Read and a membership rule set to Participate, they get Participate. Jetonomy refuses a second rule with the same type and value as an existing one, because only one of them could ever apply.
 
+> **Everyone and Logged In rules cannot make a Public space read-only.** A Public space is already readable by everyone, and with an Open join policy anyone signed in can already post and reply. So a Logged In rule set to Read gives nobody anything there, and Jetonomy says so when you save it and on the Access Rules tab. To let signed-in visitors read but not post until they join, set **Who Can Post** and **Who Can Reply** to Members Only on the **General** tab.
+
 **Recorded space role** - not a separate choice. The role a matching member is recorded as follows from the access grant above, the same for every rule type, and never goes above Member:
 
 | Access grant | Recorded as |

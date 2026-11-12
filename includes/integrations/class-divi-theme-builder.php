@@ -35,6 +35,16 @@ class Divi_Theme_Builder {
 		add_action( 'et_theme_builder_template_head', array( $this, 'close' ), 0 );
 		add_action( 'wp_footer', array( $this, 'close' ), PHP_INT_MIN );
 		add_action( 'wp', array( $this, 'setup_module_styles' ), 9 );
+		// Divi's Dynamic Assets decide on `wp` (999) which base module CSS
+		// (menu layout, hidden mobile menu, ...) the page needs, from the
+		// layouts in play. Outside a window they find none, so a header with a
+		// Menu module printed as a bare vertical list with the mobile menu
+		// showing. A window around that one setup lets it see the header and
+		// footer; the virtual-page filter gives a community route the
+		// "no post" cache bucket Divi keeps for plugin endpoints.
+		add_action( 'wp', array( $this, 'open' ), 998 );
+		add_action( 'wp', array( $this, 'close' ), 1000 );
+		add_filter( 'et_builder_dynamic_css_virtual_pages', array( $this, 'virtual_page' ) );
 		add_filter( 'et_core_page_resource_current_post_id', array( $this, 'no_post_id' ) );
 		// While a layout renders, Divi picks where its styles go. Read as singular,
 		// it uses the page's stylesheet, which prints in the footer; otherwise a
@@ -93,6 +103,20 @@ class Divi_Theme_Builder {
 	 */
 	public function no_post_id( $post_id ) {
 		return '' !== (string) get_query_var( 'jetonomy_route' ) ? 0 : $post_id;
+	}
+
+	/**
+	 * Name the current community route as a Divi virtual page.
+	 *
+	 * @param mixed $pages Request paths Divi treats as virtual pages.
+	 * @return mixed
+	 */
+	public function virtual_page( $pages ) {
+		if ( ! is_array( $pages ) || '' === (string) get_query_var( 'jetonomy_route' ) ) {
+			return $pages;
+		}
+		$pages[] = (string) $GLOBALS['wp']->request;
+		return $pages;
 	}
 
 	/**

@@ -450,13 +450,22 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			$jt_rule_open_join = 'open' === ( $space->join_policy ?? 'open' );
 			$jt_rule_public    = 'public' === ( $space->visibility ?? 'public' );
 			$jt_has_membership = false;
+			$jt_has_noop_rule  = false;
 			foreach ( $access_rules as $jt_r ) {
 				if ( 'membership' === $jt_r->rule_type ) {
 					$jt_has_membership = true;
-					break;
+				}
+				if ( \Jetonomy\Models\AccessRule::is_noop_on_space( $space, (string) $jt_r->rule_type, (string) $jt_r->grants ) ) {
+					$jt_has_noop_rule = true;
 				}
 			}
 			?>
+			<?php if ( $jt_has_noop_rule ) : ?>
+				<div class="notice notice-warning inline jt-access-warning">
+					<p><strong><?php esc_html_e( 'An Everyone or Logged In rule here changes nothing.', 'jetonomy' ); ?></strong></p>
+					<p><?php echo esc_html( \Jetonomy\Models\AccessRule::noop_explanation( $space ) ); ?></p>
+				</div>
+			<?php endif; ?>
 			<?php if ( $jt_has_membership && ( $jt_rule_public || $jt_rule_open_join ) ) : ?>
 				<div class="notice notice-warning inline jt-access-warning">
 					<p>
