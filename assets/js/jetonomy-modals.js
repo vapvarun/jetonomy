@@ -242,6 +242,23 @@
 	 * @param {Function} onClose Called on Escape.
 	 * @return {Function} Release: removes the listener and restores focus.
 	 */
+	// Give focus back to whatever opened a dialog. A menu item (Report, Delete...) sits inside a dropdown that has
+	// closed by now, so it cannot take focus and focus would fall to <body>; its menu's own button can.
+	function restoreFocus( el ) {
+		if ( ! el || ! el.focus ) {
+			return;
+		}
+		var target = el;
+		if ( ! el.offsetParent && el.closest ) {
+			var menu    = el.closest( '.jt-more-menu' );
+			var trigger = menu ? menu.querySelector( '[data-wp-on--click="actions.toggleMoreMenu"]' ) : null;
+			if ( trigger ) {
+				target = trigger;
+			}
+		}
+		target.focus();
+	}
+
 	window.jetonomyTrapDialog = function ( root, onClose ) {
 		var opener = document.activeElement;
 		function onKey( e ) {
@@ -255,9 +272,7 @@
 		document.addEventListener( 'keydown', onKey );
 		return function () {
 			document.removeEventListener( 'keydown', onKey );
-			if ( opener && opener.focus ) {
-				opener.focus();
-			}
+			restoreFocus( opener );
 		};
 	};
 
@@ -275,9 +290,7 @@
 				document.removeEventListener( 'keydown', onKey );
 				dom.overlay.remove();
 				document.body.style.overflow = prevBodyOverflow;
-				if ( lastFocused && lastFocused.focus ) {
-					lastFocused.focus();
-				}
+				restoreFocus( lastFocused );
 				resolve( result );
 			}
 
