@@ -245,15 +245,13 @@ class Shortcodes {
 		$out = '<div class="jt-shortcode jt-shortcode-recent-posts">';
 		foreach ( $posts as $post ) {
 			$url    = route_url( 'post', $post->space_slug, $post->slug );
-			$time   = human_time_diff( strtotime( $post->created_at ), time() );
 			$author = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 			$out   .= '<div class="jt-shortcode-post">';
 			$out   .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-post-title">' . esc_html( $post->title ) . '</a>';
 			$out   .= '<div class="jt-shortcode-post-meta">';
 			$out   .= esc_html( $author['name'] );
 			$out   .= ' · ' . esc_html( $post->space_title ?? '' );
-			/* translators: %s: human-readable time difference. */
-			$out .= ' · ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time ) );
+			$out .= ' · ' . esc_html( \Jetonomy\time_ago( (string) $post->created_at ) );
 			$out .= '</div>';
 			$out .= '<div class="jt-shortcode-post-stats">';
 			/* translators: %s: number of votes. */

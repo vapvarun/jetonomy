@@ -345,11 +345,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		if ( false === $ts ) {
 			return esc_html( $raw );
 		}
-		$human = sprintf(
-			/* translators: %s: human-readable time difference. */
-			__( '%s ago', 'jetonomy' ),
-			human_time_diff( $ts, time() )
-		);
+		$human = \Jetonomy\time_ago( gmdate( 'Y-m-d H:i:s', $ts ) );
 		return sprintf(
 			'<span title="%1$s">%2$s</span>',
 			esc_attr( $raw ),

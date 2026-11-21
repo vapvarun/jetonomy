@@ -1371,11 +1371,12 @@ function short_title( string $text, int $len = 50 ): string {
  */
 function time_ago( string $gmt ): string {
 	$ts = ( '' === $gmt || str_starts_with( $gmt, '0000' ) ) ? false : strtotime( $gmt . ' UTC' );
-	if ( ! $ts ) {
+	// A date in the future (beyond a few minutes of clock skew) is not "ago": say nothing rather than claim the past.
+	if ( ! $ts || $ts > time() + 300 ) {
 		return '';
 	}
 	/* translators: %s: human-readable time difference, e.g. "2 hours". */
-	return sprintf( __( '%s ago', 'jetonomy' ), human_time_diff( $ts, time() ) );
+	return sprintf( __( '%s ago', 'jetonomy' ), human_time_diff( min( $ts, time() ), time() ) );
 }
 
 /**
