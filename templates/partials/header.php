@@ -242,13 +242,14 @@ $jt_mobile_tabs = $user_id
  */
 $jt_mobile_tabs = (array) apply_filters( 'jetonomy_mobile_tabs', $jt_mobile_tabs, (bool) $user_id );
 ?>
-<nav class="jt-mobile-tabs" aria-label="<?php esc_attr_e( 'Mobile navigation', 'jetonomy' ); ?>">
+<nav class="jt-mobile-tabs" aria-label="<?php esc_attr_e( 'Mobile navigation', 'jetonomy' ); ?>"
+	data-jt-base="<?php echo esc_attr( (string) wp_parse_url( $base, PHP_URL_PATH ) ); ?>" data-jt-new-fallback="<?php echo esc_url( \Jetonomy\route_url( 'my-spaces' ) ); ?>">
 	<?php foreach ( $jt_mobile_tabs as $jt_tab ) : ?>
 		<?php
 		$jt_classes = 'jt-mobile-tab' . ( ! empty( $jt_tab['primary'] ) ? ' jt-mobile-tab--primary' : '' ) . ( ! empty( $jt_tab['active'] ) ? ' active' : '' );
 		?>
 		<?php // A tab that opens a menu is a button (it never navigates by itself); every other tab is a link. ?>
-		<<?php echo ! empty( $jt_tab['menu'] ) ? 'button type="button"' : 'a href="' . esc_url( $jt_tab['url'] ) . '"'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- url escaped, rest is literal. ?> class="<?php echo esc_attr( $jt_classes ); ?>"
+		<<?php echo ! empty( $jt_tab['menu'] ) ? 'button type="button"' : 'a href="' . esc_url( $jt_tab['url'] ) . '"'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- url escaped, rest is literal. ?> class="<?php echo esc_attr( $jt_classes ); ?>" data-jt-key="<?php echo esc_attr( $jt_tab['key'] ); ?>"
 			<?php echo ! empty( $jt_tab['host'] ) ? 'data-jt-unread-host="' . esc_attr( $jt_tab['host'] ) . '"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attribute escaped above. ?>
 			<?php echo ! empty( $jt_tab['menu'] ) ? 'data-jt-tab="profile"' : ''; ?>
 			<?php echo ! empty( $jt_tab['login'] ) ? 'data-jt-login' : ''; ?>
@@ -260,7 +261,7 @@ $jt_mobile_tabs = (array) apply_filters( 'jetonomy_mobile_tabs', $jt_mobile_tabs
 			<?php endif; ?>
 			<span><?php echo esc_html( $jt_tab['label'] ); ?></span>
 			<?php if ( ! empty( $jt_tab['badge'] ) && (int) $jt_tab['badge'] > 0 ) : ?>
-				<span class="jt-mobile-tab-badge"><?php echo (int) $jt_tab['badge']; ?></span>
+				<span class="jt-mobile-tab-badge"><?php echo esc_html( (int) $jt_tab['badge'] > 99 ? '99+' : (string) (int) $jt_tab['badge'] ); ?></span>
 			<?php endif; ?>
 		</<?php echo ! empty( $jt_tab['menu'] ) ? 'button' : 'a'; ?>>
 	<?php endforeach; ?>

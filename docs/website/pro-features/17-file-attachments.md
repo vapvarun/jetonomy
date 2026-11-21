@@ -50,7 +50,7 @@ Go to **Jetonomy → Settings → Attachments** to control:
 
 **Jetonomy > Settings > Attachments** starts with an **Uploaded files** list: every file attached to a topic or reply, newest first, 20 to a page. Each row shows the file, its type and size, who uploaded it, the topic or reply it is attached to (with its space, marked when the space is private or hidden), and the date. Search by file name, or filter by space and file type; the filters stay in place when you delete a file.
 
-**Delete** removes the file from its topic or reply and from the media library. If the same file is attached in more than one place, only that attachment is removed and the file stays in the media library until the last one goes. Deleting cannot be undone. The same list and delete are available over REST (`GET /attachments/files`, `DELETE /attachments/files/{id}`, admins only).
+**Delete** removes the file from its topic or reply. A file Jetonomy uploaded is also deleted from the media library once nothing else is attached to it; a file attached in several places stays until the last attachment goes, and a file that came from the media library or another plugin is only detached, never deleted. Deleting cannot be undone. The same list and delete are available over REST (`GET /attachments/files`, `DELETE /attachments/files/{id}`, admins only).
 
 ## What Members See
 

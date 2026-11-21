@@ -67,7 +67,9 @@ class Attachment {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 		return $db->get_results(
 			$db->prepare(
-				"SELECT a.id AS link_id, a.attachment_id, a.object_type, a.object_id, a.created_at,
+				// STRAIGHT_JOIN keeps the attachments table first: it is walked newest-first by its primary key and each file is
+				// looked up by ID, instead of the optimizer scanning wp_posts for a mime or name filter on a big site.
+				"SELECT STRAIGHT_JOIN a.id AS link_id, a.attachment_id, a.object_type, a.object_id, a.created_at,
 					f.post_title AS file_title, f.post_mime_type AS mime,
 					COALESCE(p1.space_id, p2.space_id) AS space_id, COALESCE(p1.id, p2.id) AS topic_id, COALESCE(p1.title, p2.title) AS topic_title
 				 FROM {$p}jt_attachments a

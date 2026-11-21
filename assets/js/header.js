@@ -136,7 +136,7 @@
 				badge.className = cls;
 				host.appendChild(badge);
 			}
-			badge.textContent = String(count);
+			badge.textContent = count > 99 ? '99+' : String(count);
 		} else if (badge) {
 			badge.remove();
 		}
@@ -332,10 +332,43 @@
 		var first = menu.querySelector('a');
 		if (first) { first.focus(); }
 	}
+	/**
+	 * Keep the bottom bar true after a client-side navigation (the header is not re-rendered): the active tab, aria-current,
+	 * and where New goes (the space you are in, else My spaces). A full page load is rendered by the server already.
+	 */
+	function syncMobileTabs() {
+		var bar = document.querySelector('.jt-mobile-tabs');
+		if (!bar) { return; }
+		var base = (bar.getAttribute('data-jt-base') || '').replace(/\/$/, '');
+		var rel = location.pathname.indexOf(base) === 0 ? location.pathname.slice(base.length) : location.pathname;
+		var space = rel.match(/^\/s\/([^/]+)/);
+		var key = '';
+		if (/^\/?$/.test(rel)) { key = 'home'; }
+		else if (/^\/s\/[^/]+\/new\/?$/.test(rel)) { key = 'new'; }
+		else if (/^\/(my-spaces|s\/|category\/)/.test(rel)) { key = 'spaces'; }
+		else if (/^\/notifications/.test(rel)) { key = 'alerts'; }
+		else if (/^\/search/.test(rel)) { key = 'search'; }
+		else if (/^\/(u\/|bookmarks|drafts|subscriptions|leaderboard|mod|messages)/.test(rel)) { key = 'me'; }
+		bar.querySelectorAll(':scope > .jt-mobile-tab[data-jt-key]').forEach(function (t) {
+			var on = t.getAttribute('data-jt-key') === key;
+			t.classList.toggle('active', on);
+			if (on) { t.setAttribute('aria-current', 'page'); } else { t.removeAttribute('aria-current'); }
+		});
+		var add = bar.querySelector('.jt-mobile-tab[data-jt-key="new"]');
+		if (add && add.tagName === 'A') {
+			add.setAttribute('href', space ? base + '/s/' + space[1] + '/new/' : bar.getAttribute('data-jt-new-fallback'));
+		}
+	}
 	prepareProfileTab();
 	document.addEventListener('jetonomy:navigated', function () {
 		closeTabMenu(false);
 		prepareProfileTab();
+		syncMobileTabs();
+	});
+	// Tabbing out of the Me sheet closes it (it has no scrim, so it must not be left open over the page).
+	document.addEventListener('focusin', function (e) {
+		var menu = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
+		if (menu && e.target && !menu.contains(e.target) && !e.target.closest('[data-jt-tab="profile"]')) { closeTabMenu(false); }
 	});
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
