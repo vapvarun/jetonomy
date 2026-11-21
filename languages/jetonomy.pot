@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-21T19:38:05+00:00\n"
+"POT-Creation-Date: 2026-11-21T19:42:13+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -1924,7 +1924,7 @@ msgstr ""
 #: includes/class-abilities.php:1533
 #: includes/notifications/class-notifier.php:1045
 #: templates/partials/moderation/flag-card.php:69
-#: templates/views/moderation.php:575
+#: templates/views/moderation.php:576
 msgid "Unknown"
 msgstr ""
 
@@ -2024,7 +2024,7 @@ msgstr ""
 #: includes/admin/views/content.php:107
 #: includes/admin/views/replies.php:145
 #: includes/admin/views/tags.php:83
-#: templates/views/moderation.php:454
+#: templates/views/moderation.php:455
 #: templates/views/search.php:282
 #: templates/views/space-moderation.php:260
 msgid "Apply"
@@ -2126,7 +2126,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:136
 #: includes/admin/views/moderation.php:247
 #: includes/admin/views/replies.php:273
-#: includes/functions.php:1734
+#: includes/functions.php:1745
 #: templates/views/moderation.php:334
 #: templates/views/space-moderation.php:222
 msgid "Trash"
@@ -2136,12 +2136,12 @@ msgstr ""
 #: includes/admin/views/moderation.php:135
 #: includes/admin/views/moderation.php:246
 #: includes/admin/views/replies.php:286
-#: includes/functions.php:1733
+#: includes/functions.php:1744
 #: includes/models/class-flag.php:27
 #: templates/partials/moderation/approval-card.php:170
 #: templates/partials/moderation/flag-card.php:33
 #: templates/views/moderation.php:242
-#: templates/views/moderation.php:452
+#: templates/views/moderation.php:453
 #: templates/views/space-moderation.php:258
 msgid "Spam"
 msgstr ""
@@ -2150,7 +2150,7 @@ msgstr ""
 #: includes/admin/views/dashboard.php:177
 #: includes/admin/views/replies.php:313
 #: includes/admin/views/tags.php:157
-#: includes/helpers.php:554
+#: includes/helpers.php:551
 #: assets/js/admin-common.js:71
 msgid "Show more details"
 msgstr ""
@@ -2180,22 +2180,12 @@ msgstr ""
 #. translators: %s: human-readable time difference.
 #. translators: %s: human-readable time difference, e.g. "2 hours".
 #: includes/admin/views/content.php:403
-#: includes/functions.php:1379
+#: includes/functions.php:1390
 #: includes/integrations/class-buddypress.php:877
 #: includes/integrations/class-buddypress.php:1002
 #: includes/integrations/class-buddypress.php:1035
 #: includes/integrations/class-buddypress.php:1066
-#: templates/partials/feed-card.php:73
-#: templates/partials/moderation/flag-card.php:118
-#: templates/partials/post-card.php:168
-#: templates/partials/reply-card.php:157
-#: templates/views/moderation.php:614
-#: templates/views/notifications.php:337
-#: templates/views/search.php:383
-#: templates/views/single-post.php:556
-#: templates/views/user-profile.php:438
-#: templates/views/user-profile.php:567
-#: templates/views/user-profile.php:691
+#: templates/views/moderation.php:615
 #, php-format
 msgid "%s ago"
 msgstr ""
@@ -2819,7 +2809,7 @@ msgstr ""
 #: includes/admin/views/users.php:188
 #: includes/class-template-loader.php:461
 #: includes/class-template-loader.php:462
-#: templates/views/moderation.php:397
+#: templates/views/moderation.php:398
 #: templates/views/user-profile.php:228
 #: assets/js/admin-common.js:47
 msgid "Lift restriction"
@@ -4651,7 +4641,7 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:128
 #: includes/admin/views/spaces.php:86
-#: includes/functions.php:1786
+#: includes/functions.php:1797
 #: jetonomy.php:620
 #: templates/partials/feed-card.php:130
 msgid "Open"
@@ -4659,13 +4649,13 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:129
 #: includes/admin/views/spaces.php:87
-#: includes/functions.php:1788
+#: includes/functions.php:1799
 msgid "Requires Approval"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:130
 #: includes/admin/views/spaces.php:88
-#: includes/functions.php:1790
+#: includes/functions.php:1801
 #: templates/partials/space-header.php:59
 msgid "Invite Only"
 msgstr ""
@@ -4679,14 +4669,14 @@ msgstr ""
 #: includes/admin/views/space-edit.php:156
 #: includes/admin/views/spaces.php:96
 #: includes/admin/views/spaces.php:185
-#: includes/functions.php:1763
+#: includes/functions.php:1774
 msgid "Active"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:157
 #: includes/admin/views/spaces.php:97
 #: includes/admin/views/spaces.php:186
-#: includes/functions.php:1765
+#: includes/functions.php:1776
 #: jetonomy.php:728
 msgid "Archived"
 msgstr ""
@@ -4694,7 +4684,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:158
 #: includes/admin/views/spaces.php:98
 #: includes/admin/views/spaces.php:187
-#: includes/functions.php:1767
+#: includes/functions.php:1778
 #: jetonomy.php:728
 msgid "Locked"
 msgstr ""
@@ -7899,53 +7889,53 @@ msgid "New Status"
 msgstr ""
 
 #. translators: 1: visibility level, e.g. "Private". 2: what it means.
-#: includes/functions.php:1690
+#: includes/functions.php:1701
 #, php-format
 msgctxt "space visibility option"
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: includes/functions.php:1731
+#: includes/functions.php:1742
 msgid "Published"
 msgstr ""
 
-#: includes/functions.php:1732
-#: templates/views/moderation.php:451
+#: includes/functions.php:1743
+#: templates/views/moderation.php:452
 #: templates/views/space-moderation.php:257
 msgid "Pending"
 msgstr ""
 
-#: includes/functions.php:1737
+#: includes/functions.php:1748
 #: templates/views/notifications.php:113
 #: templates/views/search.php:293
 msgid "All"
 msgstr ""
 
 #. translators: %s: field label, e.g. "Cover image".
-#: includes/functions.php:1876
+#: includes/functions.php:1887
 #, php-format
 msgid "%s must be a full address starting with http:// or https://."
 msgstr ""
 
 #. translators: %s: human-readable time difference, e.g. "2 hours".
-#: includes/helpers.php:177
+#: includes/helpers.php:174
 #, php-format
 msgid "Active %s ago"
 msgstr ""
 
-#: includes/helpers.php:570
+#: includes/helpers.php:567
 msgid "Nothing here yet"
 msgstr ""
 
 #. translators: 1: plural space label; 2: singular category label.
-#: includes/helpers.php:647
+#: includes/helpers.php:644
 #: templates/views/category.php:103
 #, php-format
 msgid "No %1$s in this %2$s yet."
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/helpers.php:715
+#: includes/helpers.php:712
 #: includes/integrations/class-buddypress.php:883
 #: templates/partials/sidebar.php:157
 #, php-format
@@ -10386,8 +10376,11 @@ msgstr ""
 msgid "Only you, the %s author and moderators can see it."
 msgstr ""
 
-#. translators: %s: human-readable time since the edit, e.g. "2 hours".
-#: templates/partials/edited-mark.php:31
+#: templates/partials/edited-mark.php:32
+msgid "edited"
+msgstr ""
+
+#: templates/partials/edited-mark.php:32
 #, php-format
 msgid "edited %s ago"
 msgstr ""
@@ -10572,7 +10565,14 @@ msgstr ""
 
 #. translators: 1: a person's display name; 2: human-readable time elapsed.
 #: templates/partials/moderation/approval-card.php:102
-#: templates/views/moderation.php:381
+#: templates/views/moderation.php:382
+#, php-format
+msgid "by %s"
+msgstr ""
+
+#. translators: 1: a person's display name; 2: human-readable time elapsed.
+#: templates/partials/moderation/approval-card.php:102
+#: templates/views/moderation.php:382
 #, php-format
 msgid "by %1$s · %2$s ago"
 msgstr ""
@@ -10619,7 +10619,7 @@ msgstr ""
 
 #. translators: 1: newest reporter's display name; 2: number of other members who reported the same item.
 #: templates/partials/moderation/flag-card.php:72
-#: templates/views/moderation.php:579
+#: templates/views/moderation.php:580
 #, php-format
 msgid "%1$s and %2$s other"
 msgid_plural "%1$s and %2$s others"
@@ -10654,14 +10654,14 @@ msgstr[1] ""
 
 #. translators: %s: reporter's display name
 #: templates/partials/moderation/flag-card.php:116
-#: templates/views/moderation.php:636
+#: templates/views/moderation.php:637
 #, php-format
 msgid "Reported by %s"
 msgstr ""
 
 #. translators: %s: singular topic or reply label, lowercase.
 #: templates/partials/moderation/flag-card.php:137
-#: templates/views/moderation.php:628
+#: templates/views/moderation.php:629
 #, php-format
 msgid "This %s was already removed. Dismiss the report to clear it."
 msgstr ""
@@ -11335,24 +11335,24 @@ msgid "No %s are currently banned or silenced."
 msgstr ""
 
 #. translators: %s: plural member label.
-#: templates/views/moderation.php:413
+#: templates/views/moderation.php:414
 #, php-format
 msgid "Banned %s pagination"
 msgstr ""
 
-#: templates/views/moderation.php:421
+#: templates/views/moderation.php:422
 #: templates/views/space-moderation.php:227
 msgid "Content type"
 msgstr ""
 
-#: templates/views/moderation.php:449
+#: templates/views/moderation.php:450
 #: templates/views/space-moderation.php:255
 msgid "Show"
 msgstr ""
 
 #. translators: %s: plural label of the items in this tab (topics or replies).
-#: templates/views/moderation.php:462
 #: templates/views/moderation.php:463
+#: templates/views/moderation.php:464
 #: templates/views/space-moderation.php:268
 #: templates/views/space-moderation.php:269
 #, php-format
@@ -11360,8 +11360,8 @@ msgid "No %s in the trash."
 msgstr ""
 
 #. translators: %s: plural label of the items in this tab (topics or replies).
-#: templates/views/moderation.php:466
 #: templates/views/moderation.php:467
+#: templates/views/moderation.php:468
 #: templates/views/space-moderation.php:272
 #: templates/views/space-moderation.php:273
 #, php-format
@@ -11369,48 +11369,48 @@ msgid "No %s are marked as spam."
 msgstr ""
 
 #. translators: %s: plural label of the items in this tab (topics or replies).
-#: templates/views/moderation.php:470
 #: templates/views/moderation.php:471
+#: templates/views/moderation.php:472
 #: templates/views/space-moderation.php:276
 #: templates/views/space-moderation.php:277
 #, php-format
 msgid "No %s are waiting for approval."
 msgstr ""
 
-#: templates/views/moderation.php:476
+#: templates/views/moderation.php:477
 #: templates/views/space-moderation.php:282
 msgid "The trash is empty."
 msgstr ""
 
-#: templates/views/moderation.php:523
+#: templates/views/moderation.php:524
 #: templates/views/space-moderation.php:327
 msgid "Trash pagination"
 msgstr ""
 
-#: templates/views/moderation.php:523
+#: templates/views/moderation.php:524
 #: templates/views/space-moderation.php:327
 msgid "Awaiting approval pagination"
 msgstr ""
 
-#: templates/views/moderation.php:532
+#: templates/views/moderation.php:533
 msgid "No pending flags anywhere. Your community is clean."
 msgstr ""
 
 #. translators: %s: plural space label.
-#: templates/views/moderation.php:534
+#: templates/views/moderation.php:535
 #, php-format
 msgid "No pending flags in the %s you moderate."
 msgstr ""
 
-#: templates/views/moderation.php:642
+#: templates/views/moderation.php:643
 msgid "Note"
 msgstr ""
 
-#: templates/views/moderation.php:647
+#: templates/views/moderation.php:648
 msgid "Review in queue"
 msgstr ""
 
-#: templates/views/moderation.php:662
+#: templates/views/moderation.php:663
 #: templates/views/space-moderation.php:363
 msgid "Moderation queue pagination"
 msgstr ""

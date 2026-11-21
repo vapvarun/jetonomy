@@ -40,7 +40,7 @@ $jt_is_spam  = 'spam' === (string) ( $item->status ?? '' );
 // Same identity rule as everywhere else: an anonymous item reads "Anonymous"
 // to moderators too, and only an explicit (logged) reveal shows the name
 $jt_author_name = \Jetonomy\Author::for_display( (int) ( $item->author_id ?? 0 ), $item )['name'];
-$jt_age         = human_time_diff( strtotime( (string) $item->created_at ), time() );
+$jt_age         = \Jetonomy\time_span( (string) $item->created_at );
 
 // content_plain is maintained on both tables; fall back for rows written
 // before it existed rather than rendering an empty card.
@@ -99,7 +99,7 @@ $jt_ac_describe = ' aria-describedby="' . esc_attr( $jt_ac_target ) . '"';
 		<span class="jt-mod-flag-reporter">
 			<?php
 			/* translators: 1: a person's display name; 2: human-readable time elapsed. */
-			echo esc_html( sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_author_name, $jt_age ) );
+			echo esc_html( '' === $jt_age ? sprintf( __( 'by %s', 'jetonomy' ), $jt_author_name ) : sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_author_name, $jt_age ) );
 			?>
 		</span>
 	</div>

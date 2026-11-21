@@ -398,7 +398,7 @@ $crumbs = array(
 						<?php foreach ( $user_replies as $ur ) : ?>
 							<?php
 							$ur_url   = \Jetonomy\reply_permalink( (string) ( $ur->space_slug ?? '' ), (string) ( $ur->post_slug ?? '' ), (int) $ur->id );
-							$ur_ago   = human_time_diff( strtotime( $ur->created_at ), time() );
+							$ur_ago   = \Jetonomy\time_ago( (string) $ur->created_at );
 							$ur_space = $jt_space_by_slug( $ur->space_slug ?? '' );
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $ur_url ); ?>">
@@ -435,7 +435,7 @@ $crumbs = array(
 									<div class="jt-row-time">
 										<?php
 										/* translators: %s: human-readable time difference. */
-										echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $ur_ago ) );
+										echo esc_html( $ur_ago );
 										?>
 									</div>
 								</div>
@@ -463,7 +463,7 @@ $crumbs = array(
 						<?php foreach ( $user_votes as $uv ) : ?>
 							<?php
 							$uv_url   = \Jetonomy\route_url( 'post', ( $uv->space_slug ?? '' ), ( $uv->post_slug ?? '' ) );
-							$uv_ago   = human_time_diff( strtotime( $uv->voted_at ), time() );
+							$uv_ago   = \Jetonomy\time_span( (string) $uv->voted_at );
 							$uv_space = $jt_space_by_slug( $uv->space_slug ?? '' );
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $uv_url ); ?>">
@@ -486,7 +486,7 @@ $crumbs = array(
 									<div class="jt-row-time">
 										<?php
 										/* translators: %s: human-readable time difference. */
-										echo esc_html( sprintf( __( 'voted %s ago', 'jetonomy' ), $uv_ago ) );
+										echo esc_html( '' === $uv_ago ? '' : sprintf( __( 'voted %s ago', 'jetonomy' ), $uv_ago ) );
 										?>
 									</div>
 								</div>
@@ -512,7 +512,7 @@ $crumbs = array(
 				<div class="jt-topics">
 					<?php foreach ( $user_drafts as $dr_post ) : ?>
 						<?php
-						$dr_ago   = human_time_diff( strtotime( $dr_post->created_at ), time() );
+						$dr_ago   = \Jetonomy\time_ago( (string) $dr_post->created_at );
 						$dr_space = (string) ( $dr_post->space_slug ?? '' );
 						$dr_slug  = (string) ( $dr_post->slug ?? '' );
 						// Drafts and scheduled posts are viewable at the single-post
@@ -564,7 +564,7 @@ $crumbs = array(
 								<div class="jt-row-time">
 									<?php
 									/* translators: %s: human-readable time difference. */
-									echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $dr_ago ) );
+									echo esc_html( $dr_ago );
 									?>
 								</div>
 								<button type="button"
@@ -615,7 +615,7 @@ $crumbs = array(
 							<?php
 							$bk_space = $bk_spaces[ (int) $bk_post->space_id ] ?? null;
 							$bk_url   = \Jetonomy\route_url( 'post', ( $bk_space->slug ?? '' ), $bk_post->slug );
-							$bk_ago   = human_time_diff( strtotime( $bk_post->bookmarked_at ), time() );
+							$bk_ago   = \Jetonomy\time_span( (string) $bk_post->bookmarked_at );
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $bk_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $bk_space ) ) : ?>
@@ -637,7 +637,7 @@ $crumbs = array(
 									<div class="jt-row-time">
 										<?php
 										/* translators: %s: human-readable time difference. */
-										echo esc_html( sprintf( __( 'saved %s ago', 'jetonomy' ), $bk_ago ) );
+										echo esc_html( '' === $bk_ago ? '' : sprintf( __( 'saved %s ago', 'jetonomy' ), $bk_ago ) );
 										?>
 									</div>
 								</div>
@@ -661,7 +661,7 @@ $crumbs = array(
 					<div class="jt-topics">
 						<?php foreach ( $recent_posts as $r_post ) : ?>
 							<?php
-							$time_ago = human_time_diff( strtotime( $r_post->created_at ), time() );
+							$time_ago = \Jetonomy\time_ago( (string) $r_post->created_at );
 							$post_url = \Jetonomy\route_url( 'post', $r_post->space_slug, $r_post->slug );
 							$r_space  = $jt_space_by_slug( $r_post->space_slug ?? '' );
 							?>
@@ -688,7 +688,7 @@ $crumbs = array(
 									<div class="jt-row-time">
 										<?php
 										/* translators: %s: human-readable time difference. */
-										echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
+										echo esc_html( $time_ago );
 										?>
 									</div>
 								</div>

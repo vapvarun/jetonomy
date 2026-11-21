@@ -360,7 +360,7 @@ $crumbs = array(
 							// Authors, profiles and spaces in one query each, not per row.
 							\Jetonomy\prime_post_cards( $posts );
 							foreach ( $posts as $post ) :
-								$time_ago       = human_time_diff( strtotime( $post->created_at ), time() );
+								$time_ago       = \Jetonomy\time_ago( (string) $post->created_at );
 								$post_url       = \Jetonomy\route_url( 'post', $post->space_slug, $post->slug );
 								$excerpt        = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
 								$author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
@@ -380,7 +380,7 @@ $crumbs = array(
 											<?php echo esc_html( $post->space_title ); ?>
 											&middot;
 											<?php /* translators: %s: human-readable time difference. */ ?>
-											<?php echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ); ?>
+											<?php echo esc_html( $time_ago ); ?>
 										</div>
 										<?php if ( $excerpt ) : ?>
 											<div class="jt-row-excerpt" dir="auto"><?php echo $jt_highlight( $excerpt ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>

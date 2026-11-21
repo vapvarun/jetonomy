@@ -1363,20 +1363,31 @@ function short_title( string $text, int $len = 50 ): string {
 }
 
 /**
+ * The bare span "5 minutes" for a UTC MySQL datetime, for phrases that carry their own words ("voted %s ago").
+ *
+ * @param string $gmt UTC datetime from the database.
+ * @return string Empty when the datetime is empty, invalid, or in the future beyond a few minutes of clock skew.
+ */
+function time_span( string $gmt ): string {
+	$ts = ( '' === $gmt || str_starts_with( $gmt, '0000' ) ) ? false : strtotime( $gmt . ' UTC' );
+	// A future date is not "ago": say nothing rather than claim the past.
+	if ( ! $ts || $ts > time() + 300 ) {
+		return '';
+	}
+	return human_time_diff( min( $ts, time() ), time() );
+}
+
+/**
  * "5 minutes ago" for a UTC MySQL datetime. One translatable string, so a language can place the number and the word
  * where it needs them (concatenating "ago" onto the number cannot be reordered).
  *
  * @param string $gmt UTC datetime from the database.
- * @return string Empty when the datetime is empty or invalid.
+ * @return string Empty when time_span() is empty.
  */
 function time_ago( string $gmt ): string {
-	$ts = ( '' === $gmt || str_starts_with( $gmt, '0000' ) ) ? false : strtotime( $gmt . ' UTC' );
-	// A date in the future (beyond a few minutes of clock skew) is not "ago": say nothing rather than claim the past.
-	if ( ! $ts || $ts > time() + 300 ) {
-		return '';
-	}
+	$span = time_span( $gmt );
 	/* translators: %s: human-readable time difference, e.g. "2 hours". */
-	return sprintf( __( '%s ago', 'jetonomy' ), human_time_diff( min( $ts, time() ), time() ) );
+	return '' === $span ? '' : sprintf( __( '%s ago', 'jetonomy' ), $span );
 }
 
 /**

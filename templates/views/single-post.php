@@ -148,7 +148,7 @@ $category          = ( $space && $space->category_id ) ? \Jetonomy\Models\Catego
 
 $author_id = (int) $post->author_id;
 $trust     = $profile ? (int) $profile->trust_level : 0;
-$time_ago  = human_time_diff( strtotime( $post->created_at ), time() );
+$time_ago  = \Jetonomy\time_ago( (string) $post->created_at );
 $base      = \Jetonomy\base_url();
 $post_url  = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
 
@@ -553,7 +553,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<span>
 							<?php
 							/* translators: %s: human-readable time difference. */
-							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
+							echo esc_html( $time_ago );
 							?>
 						</span>
 						<?php \Jetonomy\Template_Loader::partial( 'edited-mark', array( 'item' => $post ) ); ?>

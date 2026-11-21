@@ -237,7 +237,7 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 				$action_label  = ! empty( $notif->message )
 					? $notif->message
 					: ( $type_labels[ $notif->type ] ?? $notif->type );
-				$time_ago      = human_time_diff( strtotime( $notif->created_at ), time() );
+				$time_ago      = \Jetonomy\time_ago( (string) $notif->created_at );
 
 				// Build link to the relevant object using pre-joined slug columns.
 				$notif_url = $base;
@@ -334,7 +334,7 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 							<div class="jt-notif-time">
 								<?php
 								/* translators: %s: human-readable time difference. */
-								echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
+								echo esc_html( $time_ago );
 								?>
 							</div>
 						</div>

@@ -358,7 +358,7 @@ $crumbs = array(
 					$jt_banned_user = get_userdata( (int) $jt_ban->user_id );
 					$jt_issuer      = (int) $jt_ban->issued_by ? get_userdata( (int) $jt_ban->issued_by ) : null;
 					$jt_ban_label   = $jt_ban_types[ $jt_ban->type ] ?? $jt_ban_types['global_ban'];
-					$jt_ban_age     = human_time_diff( strtotime( $jt_ban->created_at ), time() );
+					$jt_ban_age     = \Jetonomy\time_span( (string) $jt_ban->created_at );
 					$jt_ban_space   = $jt_ban->space_id ? ( $jt_ban_spaces[ (int) $jt_ban->space_id ] ?? null ) : null;
 					$jt_is_ip_ban   = 'ip_ban' === $jt_ban->type;
 					?>
@@ -378,7 +378,8 @@ $crumbs = array(
 							<span class="jt-mod-flag-age">
 								<?php
 								/* translators: 1: a person's display name; 2: human-readable time elapsed. */
-								echo esc_html( sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_issuer ? \Jetonomy\user_display_name( $jt_issuer ) : __( 'System', 'jetonomy' ), $jt_ban_age ) );
+								$jt_by = $jt_issuer ? \Jetonomy\user_display_name( $jt_issuer ) : __( 'System', 'jetonomy' );
+								echo esc_html( '' === $jt_ban_age ? sprintf( __( 'by %s', 'jetonomy' ), $jt_by ) : sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_by, $jt_ban_age ) );
 								?>
 							</span>
 						</div>
@@ -578,7 +579,7 @@ $crumbs = array(
 					/* translators: 1: newest reporter's display name; 2: number of other members who reported the same item. */
 					$reporter_name = sprintf( _n( '%1$s and %2$s other', '%1$s and %2$s others', $jt_reports - 1, 'jetonomy' ), $reporter_name, number_format_i18n( $jt_reports - 1 ) );
 				}
-				$age           = human_time_diff( strtotime( $flag->created_at ), time() );
+				$age           = \Jetonomy\time_span( (string) $flag->created_at );
 				$content_plain = (string) ( $obj->content_plain ?? wp_strip_all_tags( (string) ( $obj->content ?? '' ) ) );
 				$excerpt       = trim( mb_substr( $content_plain, 0, 140 ) );
 				if ( mb_strlen( $content_plain ) > 140 ) {

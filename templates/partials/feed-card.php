@@ -24,7 +24,7 @@ $profile      = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_
 $space        = \Jetonomy\Models\Space::find( (int) $post->space_id );
 $has_unread   = isset( $has_unread ) ? (bool) $has_unread : false;
 $post_url     = \Jetonomy\route_url( 'post', ( $space->slug ?? '' ), $post->slug );
-$time_ago     = human_time_diff( strtotime( $post->created_at ), time() );
+$time_ago     = \Jetonomy\time_ago( (string) $post->created_at );
 $viewer_id    = get_current_user_id();
 $viewer_vote  = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
 
@@ -70,7 +70,7 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 			<a class="jt-feed-card-time" href="<?php echo esc_url( $post_url ); ?>">
 				<?php
 				/* translators: %s: human-readable time difference. */
-				echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
+				echo esc_html( $time_ago );
 				?>
 			</a>
 		</div>

@@ -169,12 +169,9 @@ if ( ! function_exists( 'jetonomy_space_activity_label' ) ) {
 		if ( '' === $ts || '0000-00-00 00:00:00' === $ts ) {
 			return '';
 		}
-		$time = strtotime( $ts );
-		if ( ! $time ) {
-			return '';
-		}
+		$span = \Jetonomy\time_span( $ts );
 		/* translators: %s: human-readable time difference, e.g. "2 hours". */
-		return sprintf( __( 'Active %s ago', 'jetonomy' ), human_time_diff( $time, time() ) );
+		return '' === $span ? '' : sprintf( __( 'Active %s ago', 'jetonomy' ), $span );
 	}
 }
 
