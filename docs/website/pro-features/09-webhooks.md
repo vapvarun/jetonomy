@@ -34,6 +34,7 @@ Jetonomy lives inside WordPress - but your business does not. Your team lives in
 | **URL** | The HTTPS endpoint that will receive the POST request |
 | **Events** | Which community events trigger this webhook |
 | **Active** | Toggle the webhook on or off without deleting it |
+| **Private spaces** | Off by default. Tick **Include private and hidden spaces** to also send topics, replies and member activity from members-only spaces. Leave it off for a public Slack channel or any service your members have not agreed to share with. Webhooks created before this option existed keep sending everything until you change them |
 
 4. Click **Save Webhook**.
 

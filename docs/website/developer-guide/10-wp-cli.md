@@ -766,11 +766,13 @@ Manage outbound webhook endpoints.
 
 Note: `--target-url` is used instead of `--url` because WP-CLI reserves `--url` globally for multisite routing.
 
-**Flags - create:** `--target-url=<url>` `--events=<csv>` `[--name=<text>]` `[--secret=<text>]` `[--description=<text>]` `[--disabled]` `[--format=<format>]`
+**Flags - create:** `--target-url=<url>` `--events=<csv>` `[--name=<text>]` `[--secret=<text>]` `[--description=<text>]` `[--disabled]` `[--include-private]` `[--format=<format>]`
 
 Secret is auto-generated if omitted. Events are a comma-separated list of event slugs such as `post.created`, `reply.created`, `user.registered`.
 
-**Flags - update:** `[--target-url=<url>]` `[--events=<csv>]` `[--name=<text>]` `[--description=<text>]` `[--format=<format>]`
+**Flags - update:** `[--target-url=<url>]` `[--events=<csv>]` `[--name=<text>]` `[--description=<text>]` `[--include-private]` `[--exclude-private]` `[--format=<format>]`
+
+A new webhook sends only events from public spaces. Add `--include-private` on `create` (or `update`) to also send events from private and hidden spaces; `--exclude-private` turns it off again.
 
 ```bash
 wp jetonomy-pro webhooks list
