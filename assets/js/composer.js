@@ -230,6 +230,41 @@ document.addEventListener( 'DOMContentLoaded', () => {
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
         }[ c ] ) );
 
+        // Inline code. With text selected it wraps the selection. With a bare cursor it opens a code run the member
+        // types into (the caret goes INSIDE it, on a zero-width placeholder that the server strips), and a second
+        // click steps out of it; before, it inserted an empty <code> and left the caret outside, so the button
+        // looked dead and the next words were plain text.
+        const ZWSP = '\u200b';
+        const toggleInlineCode = () => {
+            const sel = window.getSelection();
+            if ( ! sel.rangeCount ) return;
+            const range = sel.getRangeAt( 0 );
+            if ( ! range.collapsed ) {
+                document.execCommand( 'insertHTML', false, '<code>' + escapeHtml( sel.toString() ) + '</code>' );
+                return;
+            }
+            const start = range.startContainer;
+            const host  = start.nodeType === 1 ? start : start.parentElement;
+            const code  = host && host.closest ? host.closest( 'code' ) : null;
+            const place = ( node, offset ) => {
+                const r = document.createRange();
+                r.setStart( node, offset );
+                r.collapse( true );
+                sel.removeAllRanges();
+                sel.addRange( r );
+            };
+            if ( code && body.contains( code ) ) {
+                const after = document.createTextNode( ZWSP );
+                code.after( after );
+                place( after, 1 );
+                return;
+            }
+            document.execCommand( 'insertHTML', false, '<code>' + ZWSP + '</code>' );
+            const runs = Array.from( body.querySelectorAll( 'code' ) ).filter( ( c ) => c.textContent === ZWSP );
+            const run  = runs.length ? runs[ runs.length - 1 ] : null;
+            if ( run && run.firstChild ) place( run.firstChild, 1 );
+        };
+
         // Toolbar button actions
         toolbar.addEventListener( 'click', ( e ) => {
             const btn = e.target.closest( 'button' );
@@ -252,7 +287,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     document.execCommand( 'italic' );
                     break;
                 case 'code':
-                    document.execCommand( 'insertHTML', false, '<code>' + escapeHtml( window.getSelection().toString() ) + '</code>' );
+                    toggleInlineCode();
                     break;
                 case 'link': {
                     // The shared modal toolkit (jetonomy-modals.js) steals focus

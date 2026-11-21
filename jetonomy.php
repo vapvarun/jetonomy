@@ -982,7 +982,27 @@ function jetonomy_normalize_editor_html( string $content ): string {
  * @return string Normalized, kses-safe HTML.
  */
 function jetonomy_sanitize_editor_content( string $content ): string {
-	return wp_kses_post( jetonomy_normalize_editor_html( $content ) );
+	return wp_kses_post( jetonomy_strip_code_placeholders( jetonomy_normalize_editor_html( $content ) ) );
+}
+
+/**
+ * Remove the zero-width placeholder the editor's Inline Code button puts in a code run.
+ *
+ * The button opens `<code>` with a zero-width space so the caret has somewhere to sit (and leaves one after the run when
+ * the member steps out of it). A run they never typed into is dropped, and every placeholder is removed.
+ *
+ * @since 2.0.8
+ *
+ * @param string $content Body HTML.
+ * @return string Body HTML without the placeholder.
+ */
+function jetonomy_strip_code_placeholders( string $content ): string {
+	if ( false === strpos( $content, "\u{200B}" ) ) {
+		return $content;
+	}
+	// A run the member never typed into disappears; every placeholder, inside code or just outside it, is removed.
+	$content = (string) preg_replace( '#<code>\x{200B}+</code>#u', '', $content );
+	return str_replace( "\u{200B}", '', $content );
 }
 
 /**
