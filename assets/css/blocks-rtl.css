@@ -957,6 +957,33 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	line-height: 1.35;
 }
 
+/* A theme can restyle every link in a widget or footer area (Reign: `.footer-wrap a { display: block }`), which beat
+   the row's own flex column and ran the space name into its description and topic count. Say it again, scoped. */
+[class*="widget_jetonomy_"] .jt-shortcode-space {
+	display: flex;
+	flex-direction: column;
+	gap: var(--jt-space-1);
+}
+
+/* Blocks placed in a widget area: the theme already draws the card, so the Trending block drops its own border,
+   padding, shadow and accent bar and sits flat inside it (a card inside a card left under 230px for text). */
+:is(.widget, .widget_block, .wp-block-widget-area, aside, footer) .jt-trending-block.jt-app {
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	background: transparent;
+}
+:is(.widget, .widget_block, .wp-block-widget-area, aside, footer) .jt-trending-block.jt-app::before {
+	display: none;
+}
+
+/* A reputation count is one unit: it never breaks onto two lines, and it does not shrink next to a long name. */
+.jt-shortcode-rep {
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
 /* Trending — two-column layout: rank badge + body */
 .jt-shortcode-trending-post {
 	flex-direction: row !important;
