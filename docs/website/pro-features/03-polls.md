@@ -52,7 +52,7 @@ The poll appears below the post body, before any replies. Each option is display
 
 After voting, members can change their vote by clicking a different option. Clicking your current selection a second time removes your vote entirely.
 
-Members who have not voted see the options. Members who have voted see the live results. This design keeps undecided members from being anchored by early results.
+What members see before voting depends on **Show results**: with **Always** (the default) everyone sees the live results; with **After a member votes** only members who have voted do, which keeps undecided members from being anchored by early results; with **After the poll closes** nobody but the author and moderators sees them until it closes. You can change the setting later in the poll list under **Jetonomy > Polls** (**Results shown**).
 
 **Who can vote.** Anyone who can reply in the space can vote. In a space that needs approval to join, a visitor who is not a member can still read the poll and its results, and is told "Join this space to vote." A member who cannot reply there (a read-only access rule, for example) sees "You cannot vote in this space." Silenced and banned members cannot vote or change a vote. The word "space" follows your Terminology settings.
 
