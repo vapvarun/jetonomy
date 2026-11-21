@@ -204,6 +204,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 									<?php echo esc_html( $p->title ); ?>
 								<?php endif; ?>
 							</strong>
+							<span class="jt-save-feedback jt-row-feedback" role="status" aria-live="polite"></span>
 
 							<!-- Inline edit fields (hidden by default) -->
 							<div class="jt-inline-edit" style="display:none;" aria-hidden="true">

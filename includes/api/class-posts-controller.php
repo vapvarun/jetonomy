@@ -753,7 +753,7 @@ class Posts_Controller extends Base_Controller {
 
 		if ( null !== $request->get_param( 'title' ) ) {
 			$update_data['title'] = sanitize_text_field( $request->get_param( 'title' ) );
-			$title_error          = Post::title_length_error( $update_data['title'] );
+			$title_error          = Post::title_update_error( $update_data['title'] );
 			if ( $title_error ) {
 				return $title_error;
 			}

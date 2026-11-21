@@ -64,8 +64,8 @@
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
 			body: params.toString()
 		}).then(function (res) {
-			if (!res.ok) { throw new Error(res.statusText); }
-			return res.json();
+			// A 4xx still carries the server's own message as JSON ({success:false,data:...}), shown as is.
+			return res.json().catch(function () { throw new Error(res.statusText); });
 		});
 	}
 
@@ -167,7 +167,7 @@
 						viewEl.style.display = '';
 					}, 1200);
 				} else {
-					var msg = (res.data && res.data.message) ? res.data.message : cfg.i18n.saveError;
+					var msg = ('string' === typeof res.data ? res.data : (res.data && res.data.message)) || cfg.i18n.saveError;
 					showFeedback(feedback, msg, 'error');
 				}
 			})

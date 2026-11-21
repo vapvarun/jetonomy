@@ -46,6 +46,24 @@ class Post extends Model {
 	}
 
 	/**
+	 * Validate a title being CHANGED on an existing topic: it may not be blank, and the length rule applies.
+	 * Shared by the REST edit and the wp-admin inline edit so the two cannot drift apart.
+	 *
+	 * @param string $title Sanitized title.
+	 * @return \WP_Error|null Error when the title is empty or too long, null when it is fine.
+	 */
+	public static function title_update_error( string $title ): ?\WP_Error {
+		if ( '' === trim( $title ) ) {
+			return new \WP_Error(
+				'jetonomy_title_required',
+				__( 'The title cannot be empty.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+		return self::title_length_error( $title );
+	}
+
+	/**
 	 * Get the table name suffix.
 	 *
 	 * @return string

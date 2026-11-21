@@ -4530,3 +4530,15 @@ tr.jetonomy-moderated td {
 		border-block-start: 1px solid var(--jt-admin-border);
 	}
 }
+
+/* Inline edit feedback (Content and Replies screens): the message after Save. */
+.jt-save-feedback {
+	margin-inline-start: 8px;
+	font-size: 13px;
+}
+.jt-save-feedback--success {
+	color: var(--jt-admin-success);
+}
+.jt-save-feedback--error {
+	color: var(--jt-admin-danger-wp);
+}
