@@ -1015,7 +1015,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $author_last_seen ),
 			'trust_level'             => $trust_level,
 			'reputation'              => $reputation,
-			'time_ago'                => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'time_ago'                => $post->created_at ? \Jetonomy\time_ago( (string) $post->created_at ) : '',
 			'profile_url'             => $profile_url,
 			// Space context
 			'space_title'             => $space ? $space->title : '',

@@ -126,7 +126,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo esc_html( $p->space_title ?? '—' );
 									break;
 								case 'date':
-									echo esc_html( human_time_diff( strtotime( $p->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+									echo esc_html( \Jetonomy\time_ago( (string) $p->created_at ) );
 									break;
 								case 'actions':
 									?>
@@ -237,7 +237,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo esc_html( $r->post_title ?? '#' . $r->post_id );
 									break;
 								case 'date':
-									echo esc_html( human_time_diff( strtotime( $r->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+									echo esc_html( \Jetonomy\time_ago( (string) $r->created_at ) );
 									break;
 								case 'actions':
 									?>
@@ -366,7 +366,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo esc_html( $reporter ? $reporter->display_name : __( 'Unknown', 'jetonomy' ) );
 									break;
 								case 'date':
-									echo esc_html( human_time_diff( strtotime( $f->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+									echo esc_html( \Jetonomy\time_ago( (string) $f->created_at ) );
 									break;
 								case 'actions':
 									?>

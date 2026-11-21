@@ -863,7 +863,7 @@ class Replies_Controller extends Base_Controller {
 			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $author_last_seen ),
 			'trust_level'             => $trust_level,
 			'reputation'              => $reputation,
-			'time_ago'                => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'time_ago'                => $reply->created_at ? \Jetonomy\time_ago( (string) $reply->created_at ) : '',
 			'profile_url'             => $profile_url,
 			// True when the viewer has blocked this author. Reply::list_by_post()
 			// and build_tree() keep the node (with its content emptied) rather than

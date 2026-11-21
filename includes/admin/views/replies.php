@@ -322,10 +322,7 @@ if ( ! empty( $trash_count ) ) {
 							<span title="<?php echo esc_attr( $r->created_at ?? '' ); ?>">
 								<?php
 								if ( ! empty( $r->created_at ) ) {
-									echo esc_html(
-										human_time_diff( strtotime( $r->created_at ), time() )
-										. ' ' . __( 'ago', 'jetonomy' )
-									);
+									echo esc_html( \Jetonomy\time_ago( (string) $r->created_at ) );
 								} else {
 									echo '&mdash;';
 								}

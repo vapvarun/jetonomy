@@ -216,10 +216,10 @@ $restriction_labels = array(
 						echo absint( $u->reply_count );
 						break;
 					case 'joined':
-						echo esc_html( $u->user_registered ? human_time_diff( strtotime( $u->user_registered ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '—' );
+						echo esc_html( $u->user_registered ? \Jetonomy\time_ago( (string) $u->user_registered ) : '—' );
 						break;
 					case 'last-seen':
-						echo esc_html( $u->last_seen_at ? human_time_diff( strtotime( $u->last_seen_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : __( 'Never', 'jetonomy' ) );
+						echo esc_html( $u->last_seen_at ? \Jetonomy\time_ago( (string) $u->last_seen_at ) : __( 'Never', 'jetonomy' ) );
 						break;
 				}
 			},

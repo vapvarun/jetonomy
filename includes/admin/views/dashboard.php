@@ -180,7 +180,7 @@ $stat_cards = array(
 									<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:<?php echo esc_attr( $dot_color ); ?>;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span><?php echo esc_html( $action_label ); ?>
 								</td>
 								<td data-colname="<?php esc_attr_e( 'Object', 'jetonomy' ); ?>"><?php echo wp_kses( $object_html, array( 'a' => array( 'href' => array() ) ) ); ?></td>
-								<td data-colname="<?php esc_attr_e( 'When', 'jetonomy' ); ?>"><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td data-colname="<?php esc_attr_e( 'When', 'jetonomy' ); ?>"><?php echo esc_html( \Jetonomy\time_ago( (string) $activity->created_at ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

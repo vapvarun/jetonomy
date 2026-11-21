@@ -1363,6 +1363,22 @@ function short_title( string $text, int $len = 50 ): string {
 }
 
 /**
+ * "5 minutes ago" for a UTC MySQL datetime. One translatable string, so a language can place the number and the word
+ * where it needs them (concatenating "ago" onto the number cannot be reordered).
+ *
+ * @param string $gmt UTC datetime from the database.
+ * @return string Empty when the datetime is empty or invalid.
+ */
+function time_ago( string $gmt ): string {
+	$ts = ( '' === $gmt || str_starts_with( $gmt, '0000' ) ) ? false : strtotime( $gmt . ' UTC' );
+	if ( ! $ts ) {
+		return '';
+	}
+	/* translators: %s: human-readable time difference, e.g. "2 hours". */
+	return sprintf( __( '%s ago', 'jetonomy' ), human_time_diff( $ts, time() ) );
+}
+
+/**
  * Resolve a deep-link URL for a notification's target object.
  *
  * Single source of truth for notification deep links. Used by the notifier,

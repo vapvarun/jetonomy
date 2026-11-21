@@ -328,7 +328,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								<?php
 								break;
 							case 'joined':
-								echo esc_html( human_time_diff( strtotime( $member->joined_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+								echo esc_html( \Jetonomy\time_ago( (string) $member->joined_at ) );
 								break;
 							case 'actions':
 								?>
@@ -916,7 +916,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								echo esc_html( ! empty( $request->message ) ? $request->message : '—' );
 								break;
 							case 'requested':
-								echo esc_html( human_time_diff( strtotime( $request->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+								echo esc_html( \Jetonomy\time_ago( (string) $request->created_at ) );
 								break;
 							case 'actions':
 								?>
