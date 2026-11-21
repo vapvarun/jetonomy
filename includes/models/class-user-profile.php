@@ -445,6 +445,20 @@ class UserProfile extends Model {
 	}
 
 	/**
+	 * The next page of site user ids, by keyset on the users primary key (never a deep OFFSET), for broadcasts to every
+	 * member.
+	 *
+	 * @param int $after Last user id already handled (0 to start).
+	 * @param int $limit Page size.
+	 * @return int[] User ids, ascending.
+	 */
+	public static function site_user_ids_after( int $after, int $limit ): array {
+		$db = static::db();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return array_map( 'intval', $db->get_col( $db->prepare( "SELECT ID FROM {$db->users} WHERE ID > %d ORDER BY ID ASC LIMIT %d", $after, max( 1, $limit ) ) ) ?: array() );
+	}
+
+	/**
 	 * Return the decoded settings array for a user profile.
 	 *
 	 * @param int $user_id

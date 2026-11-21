@@ -191,6 +191,14 @@ if ( ! $cancel_url ) {
 		if ( \Jetonomy\messaging_active() ) {
 			$notif_types['message'] = __( 'Private message', 'jetonomy' );
 		}
+		/**
+		 * Notification types the member can switch on or off here. Jetonomy Pro adds 'announcement' while Site
+		 * announcements is enabled, so a Free-only site never shows a switch that does nothing.
+		 *
+		 * @since 2.0.8
+		 * @param array<string,string> $notif_types Type slug => label.
+		 */
+		$notif_types = (array) apply_filters( 'jetonomy_profile_notification_types', $notif_types );
 		?>
 		<div class="jt-form-group" id="notification-preferences">
 			<label class="jt-label"><?php esc_html_e( 'Notification Preferences', 'jetonomy' ); ?></label>
@@ -249,7 +257,7 @@ if ( ! $cancel_url ) {
 					<input type="checkbox" name="show_online" value="1" <?php checked( ! \Jetonomy\Models\UserProfile::hides_online( $current_user->ID ) ); ?>>
 					<span>
 						<strong><?php esc_html_e( "Show when I'm online", 'jetonomy' ); ?></strong><br>
-						<?php esc_html_e( 'Off: you never appear online or show a last-seen time, and you do not see who else is online. Your posts stay visible.', 'jetonomy' ); ?>
+						<?php esc_html_e( 'Off: other members never see you online or when you were last active, and you do not see their status either. Moderators and admins can still see when members were last active. Your posts stay visible.', 'jetonomy' ); ?>
 					</span>
 				</label>
 			</div>

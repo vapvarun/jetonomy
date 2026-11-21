@@ -868,6 +868,25 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * The next page of a space's member ids, by keyset on the primary key (space_id, user_id): one indexed read per
+	 * batch, so a broadcast to a large space never deep-OFFSETs.
+	 *
+	 * @param int $space_id Space.
+	 * @param int $after    Last user id already handled (0 to start).
+	 * @param int $limit    Page size.
+	 * @return int[] User ids, ascending.
+	 */
+	public static function user_ids_after( int $space_id, int $after, int $limit ): array {
+		if ( $space_id <= 0 ) {
+			return array();
+		}
+		$db    = static::db();
+		$table = static::table();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return array_map( 'intval', $db->get_col( $db->prepare( "SELECT user_id FROM {$table} WHERE space_id = %d AND user_id > %d ORDER BY user_id ASC LIMIT %d", $space_id, $after, max( 1, $limit ) ) ) ?: array() );
+	}
+
+	/**
 	 * Of the given user IDs, return the subset that are members of the space.
 	 *
 	 * One index-covered batch query (space_members PK is (space_id, user_id)),
