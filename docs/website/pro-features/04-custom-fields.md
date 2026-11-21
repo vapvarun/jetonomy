@@ -59,17 +59,16 @@ A generic WordPress profile has a bio and a website URL. That is not enough for 
 
 For the **Select** and **Radio** types, you define the options in the field editor - one per line. Select renders a dropdown; Radio renders a set of radio buttons.
 
-## Visibility Options
+## Who Can See a Profile Field
 
-Each field has one of three visibility settings:
+A **profile** field has a **Who can see it** setting in the field form (it only appears when the context is Profile):
 
-| Visibility | Who sees the value |
-|------------|--------------------|
-| **Public** | Anyone, including logged-out visitors |
-| **Members only** | Logged-in community members |
-| **Private** | Only the member themselves and admins |
+| Setting | Who sees the value |
+|---------|--------------------|
+| **Everyone who can see the profile** (default) | Anyone who can view the member's profile |
+| **Only the member and moderators** | The member, moderators and admins |
 
-Private fields are still editable by the member but do not appear on their public profile. They are accessible to admins via the admin Users page.
+A private field is left out of the profile page and of the REST API (`GET /users/{id}/fields` and the profile response) for everyone else, not just hidden on the page. The member is told who can see it under the field in their edit form: "Only you and moderators can see this." Topic and space fields are always visible to anyone who can see the topic or space. Over REST, set `visibility` to `everyone` or `owner` when you create or update a field.
 
 ## How Members Fill In Fields
 
