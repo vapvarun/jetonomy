@@ -822,7 +822,11 @@
   .jt-editor-body { padding: 16px; min-height: 120px; color: var(--jt-text); outline: none; font-family: var(--jt-font); font-size: 1rem; line-height: 1.75; }
   .jt-editor-body:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; border-radius: var(--jt-radius-sm); }
   .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
-  .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--jt-border); }
+  .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--jt-space-2); padding: 8px 12px; border-top: 1px solid var(--jt-border); }
+  /* The buttons keep their label on one line and never shrink; when the hint and the Private toggle leave no room
+     they wrap onto the next row instead of squeezing "Post Reply" into two lines. */
+  .jt-editor-foot .jt-btn { white-space: nowrap; }
+  .jt-editor-foot > :last-child { flex-shrink: 0; margin-inline-start: auto; }
   .jt-editor .jt-editor-error { margin: 0 var(--jt-space-3) var(--jt-space-3); }
   .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); }
 
@@ -1196,6 +1200,7 @@
     /* Reply composer footer stacks vertically */
     .jt-editor-foot { flex-direction: column; gap: var(--jt-space-2); align-items: stretch; }
     .jt-editor-foot .jt-btn { width: 100%; justify-content: center; }
+    .jt-editor-foot > :last-child { margin-inline-start: 0; }
 
     /* One nav layer on phones. The fixed bottom tab bar carries Home,
        Search, Leaderboard, Notifications and My Profile, so the top row is

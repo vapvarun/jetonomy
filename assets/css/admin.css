@@ -4542,3 +4542,13 @@ tr.jetonomy-moderated td {
 .jt-save-feedback--error {
 	color: var(--jt-admin-danger-wp);
 }
+
+/* Space edit, Members tab: the search form sat flush against the table below it. */
+.jt-spacedit-member-search {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--jt-space-2, 8px);
+	float: none;
+	margin: 0 0 var(--jt-space-4, 16px);
+}
