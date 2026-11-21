@@ -36,6 +36,19 @@ class Search_Indexer {
 		// Create fires once a topic or reply is published, including at approval.
 		add_action( 'jetonomy_after_create_post', static fn( $id ) => self::sync( 'post', (int) $id ) );
 		add_action( 'jetonomy_after_create_reply', static fn( $id ) => self::sync( 'reply', (int) $id ) );
+		// An importer batch creates rows without firing the create actions (that would notify and
+		// post for every old topic); it announces them instead, so an external index still gets them.
+		add_action(
+			'jetonomy_import_batch_imported',
+			static function ( $source, $type, $ids ): void {
+				unset( $source );
+				foreach ( (array) $ids as $id ) {
+					self::sync( 'topic' === $type ? 'post' : 'reply', (int) $id );
+				}
+			},
+			10,
+			3
+		);
 		add_action( 'jetonomy_post_updated', static fn( $id ) => self::sync( 'post', (int) $id ) );
 		add_action( 'jetonomy_reply_updated', static fn( $id ) => self::sync( 'reply', (int) $id ) );
 		// Approve, trash, close, spam: the row's status changed, re-send it.

@@ -24,6 +24,16 @@ abstract class Importer {
 	public array $id_map    = array();
 	protected array $errors = array();
 	protected int $imported = 0;
+
+	/**
+	 * Topic and reply ids created since take_created() was last called.
+	 *
+	 * @var array{topic: int[], reply: int[]}
+	 */
+	protected array $created = array(
+		'topic' => array(),
+		'reply' => array(),
+	);
 	protected int $skipped  = 0;
 
 	/**
@@ -379,7 +389,29 @@ abstract class Importer {
 	protected function remember( string $type, $source_id, int $object_id ): void {
 		if ( '' !== $this->map_source() && ! $this->dry_run ) {
 			Import_Map::record( $this->map_source(), $type, $source_id, $object_id );
+			if ( 'post' === $type || 'reply' === $type ) {
+				$this->created[ 'post' === $type ? 'topic' : 'reply' ][] = $object_id;
+			}
 		}
+	}
+
+	/**
+	 * Topics and replies this importer created since the last call, then forget them.
+	 *
+	 * Only rows created now: one an earlier run mapped is skipped before remember(), so a re-run
+	 * returns nothing.
+	 *
+	 * @since 2.0.8
+	 *
+	 * @return array{topic: int[], reply: int[]}
+	 */
+	public function take_created(): array {
+		$created       = $this->created;
+		$this->created = array(
+			'topic' => array(),
+			'reply' => array(),
+		);
+		return $created;
 	}
 
 	/**

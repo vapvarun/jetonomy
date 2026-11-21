@@ -21,6 +21,7 @@ Plugin version: 2.0.7 - 116 actions, 143 filters.
 | `jetonomy_after_content` | type, object_id | templates/post.php |
 | `jetonomy_after_create_flag` |  | includes/api/class-moderation-controller.php |
 | `jetonomy_after_create_post` | int $post_id, int $space_id, WP_REST_Request\|null $request | includes/api/class-posts-controller.php (REST create); includes/models/class-post.php Post::publish_draft() (publish-now and cron-published scheduled post, $request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending/spam -> publish approval of never-announced content, $request null) |
+| `jetonomy_import_batch_imported` | string $source, string $type, int[] $ids | includes/import/class-import-manager.php (track_batch) |
 | `jetonomy_after_create_reply` | int $reply_id, int $post_id, WP_REST_Request\|null $request | includes/api/class-replies-controller.php (REST create); includes/notifications/class-notifier.php on_reply_from_email() ($request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending/spam -> publish approval of never-announced content, $request null) |
 | `jetonomy_after_create_space` | space_id, request | includes/api/class-spaces-controller.php |
 | `jetonomy_after_delete_post` |  | includes/api/class-posts-controller.php:778 |

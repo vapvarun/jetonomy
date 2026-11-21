@@ -13,6 +13,68 @@ class Import_Manager {
 
 	private static array $importers = array();
 
+	/**
+	 * How many import batches are running in this request (never stored, so another request is unaffected).
+	 *
+	 * @var int
+	 */
+	private static int $running = 0;
+
+	/**
+	 * Whether an import batch is running in this request.
+	 *
+	 * Request-local on purpose: a plugin that eases a limit while an import runs (a post rate limit,
+	 * say) must not ease it for another member's request.
+	 *
+	 * @since 2.0.8
+	 *
+	 * @return bool
+	 */
+	public static function is_running(): bool {
+		return self::$running > 0;
+	}
+
+	/**
+	 * Run one import batch (or a whole CLI run) and announce what it newly created.
+	 *
+	 * Sets is_running() for the duration, also when the work throws, then fires
+	 * jetonomy_import_batch_imported once per type with only the ids this batch created. The create
+	 * actions (activity, notifications, webhooks, points) are deliberately not fired for imported
+	 * history; integrations catch up from this action instead.
+	 *
+	 * @since 2.0.8
+	 *
+	 * @param string   $source   Importer id (bbpress, wpforo, asgaros).
+	 * @param Importer $importer The importer doing the work.
+	 * @param callable $work     The batch or run.
+	 * @return mixed What $work returns.
+	 */
+	public static function track_batch( string $source, Importer $importer, callable $work ) {
+		++self::$running;
+		try {
+			return $work();
+		} finally {
+			--self::$running;
+			foreach ( $importer->take_created() as $type => $ids ) {
+				if ( $ids ) {
+					/**
+					 * Topics or replies an importer batch has just created.
+					 *
+					 * Fires once per type per batch, after the rows exist, with only the new ids. A re-run
+					 * of an import that finds everything already mapped fires nothing.
+					 *
+					 * @since 2.0.8
+					 *
+					 * @param string $source Importer id.
+					 * @param string $type   'topic' or 'reply'.
+					 * @param int[]  $ids    Newly created ids.
+					 */
+					do_action( 'jetonomy_import_batch_imported', $source, $type, array_map( 'intval', $ids ) );
+				}
+			}
+		}
+	}
+
 	public static function init(): void {
 		self::register( 'bbpress', new BBPress_Importer() );
 		self::register( 'wpforo', new WPForo_Importer() );
@@ -119,6 +181,6 @@ class Import_Manager {
 
 		// Counted in jt_import_map rows, the same as the Import screen.
 		$before = $importer->mapped_count();
-		return $importer->settle_tally( $importer->run( $options ), $before );
+		return $importer->settle_tally( self::track_batch( $id, $importer, fn() => $importer->run( $options ) ), $before );
 	}
 }
