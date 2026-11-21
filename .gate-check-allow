@@ -1,0 +1,5 @@
+# Gate exceptions. Format: ID  path-fragment  [ceiling in KB gzipped]   # reason
+# A number holds that file at an agreed size (the gate still fails if it grows); no number skips the check.
+P2 assets/css/jetonomy.css 62   # Owner 2026-11-21: held at today's 56 KB plus ~10% until the per-surface CSS split is planned (default 35 KB).
+P2 assets/css/jetonomy-rtl.css 62   # Generated right-to-left copy of jetonomy.css, same size and same agreement.
+P2 assets/js/view.js 63         # Owner 2026-11-21: held at today's 57 KB plus ~10% until the bundle is split (default 40 KB).
