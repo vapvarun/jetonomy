@@ -125,6 +125,10 @@ class Vote extends Model {
 
 		try {
 			if ( ! $existing ) {
+				// Two parallel requests from one member (two tabs, the app and the web) both found no row and both
+				// insert; the unique key lets one through. The duplicate is expected, so it is not logged as a database
+				// error, and the loser answers as the winner did: the vote is recorded.
+				$errors = static::db()->suppress_errors( true );
 				$result = static::insert(
 					array(
 						'user_id'     => $user_id,
@@ -134,10 +138,18 @@ class Vote extends Model {
 						'created_at'  => now(),
 					)
 				);
+				static::db()->suppress_errors( $errors );
 				if ( false === $result ) {
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 					}
+					if ( false !== stripos( (string) static::db()->last_error, 'duplicate entry' ) ) {
+						return array(
+							'action'    => 'created',
+							'old_value' => null,
+						);
+					}
+					error_log( 'Jetonomy: vote insert failed: ' . static::db()->last_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- a real failure must stay visible.
 					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to record vote.', 'jetonomy' ), array( 'status' => 500 ) );
 				}
 				static::update_target_score( $object_type, $object_id );
