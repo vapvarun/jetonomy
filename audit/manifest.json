@@ -3740,6 +3740,14 @@
       "consumed_by": []
     },
     {
+      "name": "jetonomy_space_members_purged",
+      "type": "action",
+      "args": "$space_id, $user_ids (up to 500, ascending; may repeat if a purge is retried)",
+      "where": "includes/class-space-purge.php:announce_members",
+      "consumed_by": null,
+      "notes": "Fires before a deleted space's member rows are removed, so points or badges given for joining can be reversed."
+    },
+    {
       "name": "jetonomy_space_pending_requests_shown",
       "type": "filter",
       "args": "",

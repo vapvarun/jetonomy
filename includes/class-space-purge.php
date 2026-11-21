@@ -577,7 +577,10 @@ final class Space_Purge {
 			);
 		}
 
-		// No topics left. Space-scoped rows, then the space row, then counters.
+		// No topics left. Tell listeners who is losing a seat BEFORE the member rows go (they are deleted in bulk, so
+		// jetonomy_user_left_space never fires per member), then space-scoped rows, the space row, counters.
+		self::announce_members( $space_id );
+
 		$space       = Models\Space::find( $space_id );
 		$slug        = $space->slug ?? null;
 		$category_id = (int) ( $space->category_id ?? 0 );
@@ -625,6 +628,35 @@ final class Space_Purge {
 			'removed' => $removed,
 			'authors' => array(),
 		);
+	}
+
+	/**
+	 * Announce the members of a space that is being purged, in keyset chunks, before their rows are deleted.
+	 *
+	 * Deleting a space removes every member row in bulk, so no per-member leave signal fires. Anything that gave a member
+	 * something for joining (points, a badge) needs the ids to take it back. One action per chunk of ids, not one per
+	 * member: a space of 20,000 members is 40 calls. It fires before the delete, so an interrupted purge that resumes
+	 * announces the same members again; a listener must be idempotent.
+	 *
+	 * @param int $space_id Space being purged.
+	 */
+	private static function announce_members( int $space_id ): void {
+		$after = 0;
+		do {
+			$ids = Models\SpaceMember::user_ids_after( $space_id, $after, 500 );
+			if ( ! $ids ) {
+				return;
+			}
+			/**
+			 * Members of a space that is being deleted, before their rows are removed.
+			 *
+			 * @since 2.0.8
+			 * @param int   $space_id Space being deleted.
+			 * @param int[] $user_ids Up to 500 member ids (ascending); fires again for the next chunk. May repeat if a purge is retried.
+			 */
+			do_action( 'jetonomy_space_members_purged', $space_id, $ids );
+			$after = (int) end( $ids );
+		} while ( count( $ids ) >= 500 );
 	}
 
 	/**
