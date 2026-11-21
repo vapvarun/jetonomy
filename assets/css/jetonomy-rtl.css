@@ -384,6 +384,8 @@
   /* Full name, wrapped: two members can share a first name, so a cut name can pick the wrong person. */
   .jt-mention-name { font-weight: 600; color: var(--jt-text); flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
   .jt-mention-login { color: var(--jt-text-tertiary); font-size: 0.8125rem; }
+  /* A login is LTR text: in RTL it showed as "alice@". The rtl:ignore keeps rtlcss from flipping the direction. */
+  .jt-mention-login { direction: ltr; unicode-bidi: isolate; }
   .jt-mention-empty { padding: 10px 12px; color: var(--jt-text-tertiary); font-size: 0.875rem; }
 
   /* 1.4.0 C.5: "New" pill on post cards when the viewer has unread replies. */
@@ -658,6 +660,9 @@
   /* A <pre> stays inside its column and scrolls there. Images, tables and
      embeds get the same ceiling in the post-body rules further down. */
   .jt-post-body pre, .jt-reply-body pre { max-width: 100%; }
+  /* Code is left-to-right text whatever language the page around it is in: in an Arabic or Hebrew topic a block
+     inherited direction: rtl and rendered ";const a = 1". Isolated so the surrounding text cannot reorder it. */
+  .jt-post-body pre, .jt-reply-body pre { direction: ltr; unicode-bidi: isolate; text-align: left; }
   .jt-post-body pre, .jt-reply-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
   /* The bar uses the tertiary text tone, not --jt-border: a border-tone bar
      measured ~1.35:1 on the dark surface; tertiary holds >= 3:1 in both modes.
@@ -3922,6 +3927,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
       centred ::after - the tap lands on the control, nothing reflows.
    ═══════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
+  /* A name that ends in an ellipsis is an overflow:hidden box, which clipped its own hit layer to the text height (a 23px
+     tap on "Top Members"). Padding gives the box the tap height; the negative margin keeps the row exactly as tall. */
+  .jt-app .jt-leader-name { padding-block: calc( ( var(--jt-tap) - 1lh ) / 2 ); margin-block: calc( ( var(--jt-tap) - 1lh ) / -2 ); }
+  /* Tags sit 5px apart, so each one's hit layer overlapped its neighbours and every chip lost part of it (about 33px). */
+  .jt-app .jt-tags { row-gap: var(--jt-space-3); }
   .jt-app :is(.jt-pill, .jt-act, .jt-reaction-trigger, .jt-reaction-chip, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button, .jt-member-role-select, .jt-mod-flag-actions .jt-btn, .jt-btn, .jt-managed-by-link, .jt-mod-flag-action) {
     min-block-size: var(--jt-tap);
   }
