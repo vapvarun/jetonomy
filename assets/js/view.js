@@ -1461,7 +1461,9 @@ const { state, actions } = store( 'jetonomy', {
                 if ( ! jtScrolled ) {
                     window.scrollTo( 0, 0 );
                 }
-                document.querySelectorAll( '.jt-community-nav-links a, .jt-mobile-tabs a' ).forEach( ( a ) => {
+                // The top nav only: the phone bar's active tab is recomputed by header.js (syncMobileTabs), which knows that
+                // a topic or space page belongs to Spaces and not just an exact path match.
+                document.querySelectorAll( '.jt-community-nav-links a' ).forEach( ( a ) => {
                     a.classList.toggle( 'active', a.pathname === window.location.pathname );
                 } );
             } catch ( e ) {

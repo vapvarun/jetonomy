@@ -412,7 +412,7 @@ class Admin {
 			'new_post_in_sub'        => array( sprintf( __( 'New %1$s in subscribed %2$s', 'jetonomy' ), $topic, \Jetonomy\space_label( false, true ) ), true ),
 			'badge_earned'           => array( __( 'Badge earned', 'jetonomy' ), true ),
 			// Sent by Jetonomy Pro's Site announcements when an announcement is pinned. Email is off unless the member or owner turns it on.
-			'announcement'           => array( __( 'Site announcement', 'jetonomy' ), true ),
+			'announcement'           => array( __( 'Site announcements', 'jetonomy' ), true ),
 			/* translators: %s: singular topic label, lowercase. */
 			'vote_on_post'           => array( sprintf( __( 'Vote on your %s', 'jetonomy' ), $topic ), true ),
 			/* translators: %s: singular topic label, lowercase. */

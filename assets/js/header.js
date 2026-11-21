@@ -387,6 +387,9 @@
 		if (!menu) { return; }
 		if ('Escape' === e.key) {
 			closeTabMenu(true);
+		} else if ('Tab' === e.key && e.shiftKey && document.activeElement === menu.querySelector('a')) {
+			// Shift+Tab from the first row goes back to the Me button: close the sheet behind it.
+			closeTabMenu(false);
 		} else if (menu.contains(document.activeElement) && window.jetonomySmartDropdown && window.jetonomySmartDropdown.menuKeys) {
 			window.jetonomySmartDropdown.menuKeys(menu, e);
 		}

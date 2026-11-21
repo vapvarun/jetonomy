@@ -3073,7 +3073,7 @@
   position: relative;
 }
 button.jt-mobile-tab { background: none; border: 0; font: inherit; font-size: 0.6875rem; font-weight: 500; line-height: inherit; cursor: pointer; appearance: none; }
-.jt-mobile-tab svg { display: block; }
+.jt-mobile-tab svg { display: block; inline-size: 20px; block-size: 20px; } /* some shared icons carry width=24 */
 /* The centre action (New for members, Sign in for guests): an accent circle raised out of the bar. The bubble is the tap
    target, so the whole column stays one tab. */
 .jt-mobile-tab--primary { color: var(--jt-accent-strong); font-weight: 600; }
