@@ -66,9 +66,9 @@ A **profile** field has a **Who can see it** setting in the field form (it only 
 | Setting | Who sees the value |
 |---------|--------------------|
 | **Everyone who can see the profile** (default) | Anyone who can view the member's profile |
-| **Only the member and moderators** | The member, moderators and admins |
+| **Only the member and site moderators** | The member, moderators and admins |
 
-A private field is left out of the profile page and of the REST API (`GET /users/{id}/fields` and the profile response) for everyone else, not just hidden on the page. The member is told who can see it under the field in their edit form: "Only you and moderators can see this." Topic and space fields are always visible to anyone who can see the topic or space. Over REST, set `visibility` to `everyone` or `owner` when you create or update a field.
+A private field is left out of the profile page and of the REST API (`GET /users/{id}/fields` and the profile response) for everyone else, not just hidden on the page. The member is told who can see it under the field in their edit form: "Only you and site moderators can see this." Topic and space fields are always visible to anyone who can see the topic or space. Over REST, set `visibility` to `everyone` or `owner` when you create or update a field.
 
 ## How Members Fill In Fields
 
