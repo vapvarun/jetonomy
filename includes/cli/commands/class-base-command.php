@@ -91,6 +91,17 @@ abstract class Base_Command {
 		$format = (string) ( $assoc['format'] ?? 'table' );
 		$fields = $assoc['fields'] ?? ( is_array( $columns ) ? implode( ',', $columns ) : '' );
 
+		// A table prints a boolean false as an empty cell, so a 'no' looked like missing data. Readable yes/no there;
+		// json and yaml keep real booleans for scripts.
+		if ( ! in_array( $format, array( 'json', 'yaml' ), true ) ) {
+			$items = array_map(
+				static fn( $row ) => is_array( $row )
+					? array_map( static fn( $v ) => is_bool( $v ) ? ( $v ? 'yes' : 'no' ) : $v, $row )
+					: $row,
+				$items
+			);
+		}
+
 		\WP_CLI\Utils\format_items(
 			$format,
 			$items,
