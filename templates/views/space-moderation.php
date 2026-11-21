@@ -281,6 +281,8 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<?php else : ?>
 					<div class="jt-card jt-card-flush" data-jt-mod-queue="approvals" data-space-id="<?php echo absint( $space->id ); ?>"<?php echo $jt_is_trash ? ' data-empty-text="' . esc_attr__( 'The trash is empty.', 'jetonomy' ) . '"' : ''; ?>>
 						<?php
+						// Why each item is held, when something (Jetonomy Pro's AI review) knows: one call per page.
+						$jt_held_notes = (array) apply_filters( 'jetonomy_held_item_notes', array(), $jt_kind, array_map( static fn( $r ) => (int) $r->id, $jt_held ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals -- documented in views/moderation.php.
 						foreach ( $jt_held as $jt_item ) :
 							$jt_parent = 'reply' === $jt_kind
 								? ( $jt_held_parents[ (int) $jt_item->post_id ] ?? null )
@@ -293,6 +295,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 							\Jetonomy\Template_Loader::partial(
 								'moderation/approval-card',
 								array(
+									'note'        => $jt_held_notes[ (int) $jt_item->id ] ?? '',
 									'item'        => $jt_item,
 									'kind'        => $jt_kind,
 									'space'       => $space,

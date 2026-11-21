@@ -146,6 +146,17 @@ if ( in_array( $jt_view, array( 'approvals', 'trash' ), true ) && $jt_held_count
 		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page, $jt_held_status );
 }
 
+// Why each item is held, when something (Jetonomy Pro's AI review) knows: one call per page, never one per row.
+/**
+ * Notes to show on held or spam items in the moderation queue.
+ *
+ * @since 2.0.8
+ * @param array<int,string> $notes Item id => sentence (empty by default).
+ * @param string            $kind  'post' or 'reply'.
+ * @param int[]             $ids   Ids of the items on this page.
+ */
+$jt_held_notes = $jt_held ? (array) apply_filters( 'jetonomy_held_item_notes', array(), $jt_kind, array_map( static fn( $r ) => (int) $r->id, $jt_held ) ) : array();
+
 // Batch-resolve everything the cards need: parent posts (replies only), spaces,
 // and the WP user cache. Done here rather than inside approval-card.php so a
 // full page of 25 costs three queries instead of seventy-five.
@@ -482,6 +493,7 @@ $crumbs = array(
 					\Jetonomy\Template_Loader::partial(
 						'moderation/approval-card',
 						array(
+							'note'        => $jt_held_notes[ (int) $jt_item->id ] ?? '',
 							'item'        => $jt_item,
 							'kind'        => $jt_kind,
 							'space'       => $jt_item_space,

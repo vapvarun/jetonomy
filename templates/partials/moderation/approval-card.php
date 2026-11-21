@@ -120,6 +120,10 @@ $jt_ac_describe = ' aria-describedby="' . esc_attr( $jt_ac_target ) . '"';
 	<div class="jt-mod-flag-excerpt" id="<?php echo esc_attr( 'jt-approval-' . sanitize_key( $kind ) . '-' . absint( $item->id ) . '-text' ); ?>" dir="auto">
 		<?php echo esc_html( $jt_excerpt ); ?>
 	</div>
+	<?php if ( ! empty( $note ) ) : ?>
+		<?php // Why it is held (e.g. "Held by AI review: ... (confidence 0.60)"): set by whatever held it, shown only when known. ?>
+		<p class="jt-mod-held-note" dir="auto"><?php echo esc_html( (string) $note ); ?></p>
+	<?php endif; ?>
 
 	<div class="jt-mod-flag-actions">
 		<?php if ( $jt_permalink ) : ?>

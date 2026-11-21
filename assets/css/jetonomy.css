@@ -1972,6 +1972,7 @@
   .jt-mod-flag-title { font-weight: 600; font-size: 0.9375rem; color: var(--jt-text); }
   /* The per-space card (flag-card.php) stacks title and excerpt above its actions. */
   .jt-mod-flag > .jt-mod-flag-title, .jt-mod-flag > .jt-mod-flag-excerpt { margin: 0 0 var(--jt-space-2); }
+.jt-mod-held-note { margin: var(--jt-space-2) 0 0; font-size: 0.8125rem; color: var(--jt-text-secondary); }
   .jt-mod-flag > .jt-mod-flag-title a { color: inherit; }
   .jt-mod-flag-excerpt { font-size: 0.9375rem; color: var(--jt-text-secondary); line-height: 1.5; word-break: break-word; }
   .jt-mod-flag-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); border-block-start: 1px solid var(--jt-border); }
