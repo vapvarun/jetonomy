@@ -46,6 +46,12 @@ Go to **Jetonomy → Settings → Attachments** to control:
 
 **SVG is never available**, because it can carry executable scripts. Every upload is re-validated against this allow-list on the server - the file extension and the actual file content must both match an allowed type - so the settings are a real security boundary, not just a UI restriction.
 
+## Managing Uploaded Files
+
+**Jetonomy > Settings > Attachments** starts with an **Uploaded files** list: every file attached to a topic or reply, newest first, 20 to a page. Each row shows the file, its type and size, who uploaded it, the topic or reply it is attached to (with its space, marked when the space is private or hidden), and the date. Search by file name, or filter by space and file type; the filters stay in place when you delete a file.
+
+**Delete** removes the file from its topic or reply and from the media library. If the same file is attached in more than one place, only that attachment is removed and the file stays in the media library until the last one goes. Deleting cannot be undone. The same list and delete are available over REST (`GET /attachments/files`, `DELETE /attachments/files/{id}`, admins only).
+
 ## What Members See
 
 Attached files render as cards under the post or reply. The base card - image thumbnail or a download chip with file name, size, and type - is rendered by the free plugin. With File Attachments enabled, Pro upgrades the card:
@@ -80,6 +86,8 @@ File Attachments registers these endpoints under `jetonomy-pro/v1`:
 |--------|----------|--------------|
 | `POST` | `/attachments` | Link an already-uploaded attachment to a post or reply |
 | `DELETE` | `/attachments/{id}` | Detach an attachment from its post or reply |
+| `GET` | `/attachments/files` | Admins: one page of attached files with filters `space_id`, `type`, `search`, `page` (response has `rows`, `page`, `has_next`) |
+| `DELETE` | `/attachments/files/{id}` | Admins: remove an attachment and, when nothing else uses it, its media-library file |
 | `GET` | `/attachments/{id}/download` | Download the file |
 | `GET` | `/attachments/batch` | Batch-read attachments for many posts or replies in one call |
 

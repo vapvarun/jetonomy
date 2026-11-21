@@ -28,6 +28,62 @@ class Attachment {
 	}
 
 	/**
+	 * One page of attached files for the admin list, newest first, with where each is attached.
+	 *
+	 * Filters: space_id (the topic's, or a reply's topic's, space), mimes (list of exact mime types), search (file name).
+	 * Returns up to $limit rows from $offset; the caller asks for one more than it shows to know whether a next page
+	 * exists, so no COUNT runs over the whole table. Ordered by the primary key, so page one is an index read.
+	 *
+	 * @param array{space_id?:int,mimes?:string[],search?:string} $filters Filters.
+	 * @param int                                                $limit   Rows wanted.
+	 * @param int                                                $offset  Rows to skip.
+	 * @return object[] Rows: link_id, attachment_id, object_type, object_id, created_at, file_title, mime, space_id, topic_id, topic_title.
+	 */
+	public static function admin_page( array $filters, int $limit, int $offset ): array {
+		global $wpdb;
+		$db     = $wpdb;
+		$p      = $db->prefix;
+		$where  = array();
+		$args   = array();
+		$space  = (int) ( $filters['space_id'] ?? 0 );
+		$mimes  = array_values( array_filter( (array) ( $filters['mimes'] ?? array() ), 'is_string' ) );
+		$search = trim( (string) ( $filters['search'] ?? '' ) );
+		if ( $space > 0 ) {
+			$where[] = '(p1.space_id = %d OR p2.space_id = %d)';
+			$args[]  = $space;
+			$args[]  = $space;
+		}
+		if ( $mimes ) {
+			$where[] = 'f.post_mime_type IN (' . implode( ',', array_fill( 0, count( $mimes ), '%s' ) ) . ')';
+			$args    = array_merge( $args, $mimes );
+		}
+		if ( '' !== $search ) {
+			$where[] = 'f.post_title LIKE %s';
+			$args[]  = '%' . $db->esc_like( $search ) . '%';
+		}
+		$args[] = max( 1, $limit );
+		$args[] = max( 0, $offset );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		return $db->get_results(
+			$db->prepare(
+				"SELECT a.id AS link_id, a.attachment_id, a.object_type, a.object_id, a.created_at,
+					f.post_title AS file_title, f.post_mime_type AS mime,
+					COALESCE(p1.space_id, p2.space_id) AS space_id, COALESCE(p1.id, p2.id) AS topic_id, COALESCE(p1.title, p2.title) AS topic_title
+				 FROM {$p}jt_attachments a
+				 INNER JOIN {$db->posts} f ON f.ID = a.attachment_id
+				 LEFT JOIN {$p}jt_posts p1 ON a.object_type = 'post' AND p1.id = a.object_id
+				 LEFT JOIN {$p}jt_replies r ON a.object_type = 'reply' AND r.id = a.object_id
+				 LEFT JOIN {$p}jt_posts p2 ON p2.id = r.post_id"
+				. ( $where ? ' WHERE ' . implode( ' AND ', $where ) : '' )
+				. ' ORDER BY a.id DESC LIMIT %d OFFSET %d',
+				$args
+			)
+		) ?: array();
+		// phpcs:enable
+	}
+
+	/**
 	 * Attach a media item to a post or reply.
 	 *
 	 * Idempotent: the same file linked to the same object twice is a no-op, so a
