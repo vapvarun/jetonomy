@@ -3935,7 +3935,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
      tap on "Top Members"). Padding gives the box the tap height; the negative margin keeps the row exactly as tall. */
   .jt-app .jt-leader-name { padding-block: calc( ( var(--jt-tap) - 1lh ) / 2 ); margin-block: calc( ( var(--jt-tap) - 1lh ) / -2 ); }
   /* Tags sit 5px apart, so each one's hit layer overlapped its neighbours and every chip lost part of it (about 33px). */
-  .jt-app .jt-tags { row-gap: 1rem; } /* chips are ~27px, their hit layer 40px: a gap under 13px makes neighbours overlap */
+  /* Chips are ~27px tall; their invisible hit layer is --jt-tap. Tags use the 44px touch target (the layer also widens a
+     narrow chip to 44px) and the 18px row gap keeps neighbouring layers from overlapping (27 + 18 = 45 >= 44). */
+  .jt-app a.jt-tag { --jt-tap: 44px; }
+  .jt-app .jt-tags { row-gap: 1.125rem; }
   .jt-app :is(.jt-pill, .jt-act, .jt-reaction-trigger, .jt-reaction-chip, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button, .jt-member-role-select, .jt-mod-flag-actions .jt-btn, .jt-btn, .jt-managed-by-link, .jt-mod-flag-action) {
     min-block-size: var(--jt-tap);
   }
