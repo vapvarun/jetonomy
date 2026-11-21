@@ -277,7 +277,7 @@ class Schema {
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
   object_type ENUM('space','post') NOT NULL DEFAULT 'space',
   object_id bigint(20) unsigned NOT NULL DEFAULT 0,
-  notify_via ENUM('web','email','both') NOT NULL DEFAULT 'web',
+  notify_via ENUM('web','email','both','none') NOT NULL DEFAULT 'web',
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   UNIQUE KEY user_object (user_id,object_type,object_id),

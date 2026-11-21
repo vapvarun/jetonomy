@@ -669,8 +669,9 @@ class Notifier {
 		// One notice per person per reply: a mention wins over every notice below.
 		$told = self::mentioned_in( $reply );
 
-		// 1. Notify post author (if not the replier).
-		if ( (int) $post->author_id !== $actor_id && ! isset( $told[ (int) $post->author_id ] ) ) {
+		// 1. Notify post author (if not the replier), unless they unfollowed their own topic.
+		if ( (int) $post->author_id !== $actor_id && ! isset( $told[ (int) $post->author_id ] )
+			&& ! \Jetonomy\Models\Subscription::has_unfollowed_own_topic( (int) $post->author_id, $post_id ) ) {
 			self::create_and_maybe_email(
 				(int) $post->author_id,
 				$actor_id,

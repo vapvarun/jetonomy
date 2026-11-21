@@ -43,11 +43,28 @@ class Subscription extends Model {
 			)
 		);
 
+		$inserted = (int) static::db()->insert_id;
+
+		// A row left as 'none' by unfollowing your own topic comes back as a follow.
+		if ( 0 === $inserted ) {
+			static::db()->query(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"UPDATE {$tbl} SET notify_via = %s, created_at = %s WHERE user_id = %d AND object_type = %s AND object_id = %d AND notify_via = 'none'",
+					$via,
+					now(),
+					$user_id,
+					$object_type,
+					$object_id
+				)
+			);
+		}
+
 		// A toggle mid-request must be visible to the next is_subscribed()
 		// in the same process.
 		self::reset_memo();
 
-		return (int) static::db()->insert_id;
+		return $inserted;
 	}
 
 	/**
@@ -63,7 +80,7 @@ class Subscription extends Model {
 		return static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $read_sql's %d values are spread via $read_vals.
-				'SELECT sub.* FROM ' . self::table() . " sub WHERE sub.user_id = %d{$read_sql} ORDER BY sub.created_at DESC, sub.id DESC LIMIT %d OFFSET %d",
+				'SELECT sub.* FROM ' . self::table() . " sub WHERE sub.user_id = %d AND sub.notify_via <> 'none'{$read_sql} ORDER BY sub.created_at DESC, sub.id DESC LIMIT %d OFFSET %d",
 				...array_merge( array( $user_id ), $read_vals, array( $limit, $offset ) )
 			)
 		) ?: array();
@@ -104,7 +121,7 @@ class Subscription extends Model {
 		return (int) static::db()->get_var(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- see list_for_user().
-				'SELECT COUNT(*) FROM ' . self::table() . " sub WHERE sub.user_id = %d{$read_sql}",
+				'SELECT COUNT(*) FROM ' . self::table() . " sub WHERE sub.user_id = %d AND sub.notify_via <> 'none'{$read_sql}",
 				...array_merge( array( $user_id ), $read_vals )
 			)
 		);
@@ -242,6 +259,26 @@ class Subscription extends Model {
 	 * @return bool True if a row was deleted.
 	 */
 	public static function unsubscribe( int $user_id, string $object_type, int $object_id ): bool {
+		// A topic's author is followed automatically and is also told of replies as its author, so
+		// their Unfollow is kept as a 'none' row; deleting it would look like a topic that never had
+		// a follow (imported topics) and they would keep being notified. Everyone else's row is deleted.
+		if ( 'post' === $object_type ) {
+			$post = Post::find( $object_id );
+			if ( $post && (int) $post->author_id === $user_id ) {
+				$result = false !== static::db()->update(
+					static::table(),
+					array( 'notify_via' => 'none' ),
+					array(
+						'user_id'     => $user_id,
+						'object_type' => $object_type,
+						'object_id'   => $object_id,
+					)
+				);
+				self::reset_memo();
+				return $result;
+			}
+		}
+
 		$result = false !== static::db()->delete(
 			static::table(),
 			array(
@@ -252,6 +289,24 @@ class Subscription extends Model {
 		);
 		self::reset_memo();
 		return $result;
+	}
+
+	/**
+	 * Whether a member explicitly unfollowed a topic they wrote (see unsubscribe()).
+	 * False for a topic with no row at all, such as an imported one.
+	 *
+	 * @param int $user_id Member.
+	 * @param int $post_id Topic.
+	 */
+	public static function has_unfollowed_own_topic( int $user_id, int $post_id ): bool {
+		return null !== static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT id FROM ' . static::table() . " WHERE user_id = %d AND object_type = 'post' AND object_id = %d AND notify_via = 'none' LIMIT 1",
+				$user_id,
+				$post_id
+			)
+		);
 	}
 
 	/**
@@ -298,7 +353,7 @@ class Subscription extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$subscribed = static::db()->get_col(
 			static::db()->prepare(
-				'SELECT object_id FROM ' . static::table() . " WHERE user_id = %d AND object_type = %s AND object_id IN ({$placeholders})",
+				'SELECT object_id FROM ' . static::table() . " WHERE user_id = %d AND notify_via <> 'none' AND object_type = %s AND object_id IN ({$placeholders})",
 				array_merge( array( $user_id, $object_type ), $object_ids )
 			)
 		) ?: array();
@@ -343,7 +398,7 @@ class Subscription extends Model {
 
 		$row = static::db()->get_row(
 			static::db()->prepare(
-				'SELECT id FROM ' . static::table() . ' WHERE user_id = %d AND object_type = %s AND object_id = %d LIMIT 1',
+				'SELECT id FROM ' . static::table() . " WHERE user_id = %d AND notify_via <> 'none' AND object_type = %s AND object_id = %d LIMIT 1",
 				$user_id,
 				$object_type,
 				$object_id
@@ -368,7 +423,7 @@ class Subscription extends Model {
 		return (int) static::db()->get_var(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d',
+				'SELECT COUNT(*) FROM ' . static::table() . " WHERE object_type = %s AND object_id = %d AND notify_via <> 'none'",
 				$object_type,
 				$object_id
 			)
@@ -389,7 +444,7 @@ class Subscription extends Model {
 	 * @return int[]
 	 */
 	public static function get_subscribers( string $object_type, int $object_id, int $after_user_id = 0, int $limit = 0 ): array {
-		$sql  = 'SELECT user_id FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d AND user_id > %d ORDER BY user_id ASC';
+		$sql  = 'SELECT user_id FROM ' . static::table() . " WHERE object_type = %s AND object_id = %d AND user_id > %d AND notify_via <> 'none' ORDER BY user_id ASC";
 		$args = array( $object_type, $object_id, $after_user_id );
 		if ( $limit > 0 ) {
 			$sql   .= ' LIMIT %d';
@@ -418,7 +473,7 @@ class Subscription extends Model {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				'SELECT p.id, p.title, p.slug, p.space_id FROM ' . static::table() . " s
 				 INNER JOIN {$posts} p ON s.object_id = p.id
-				 WHERE s.user_id = %d AND s.object_type = 'post' AND p.status = 'publish'
+				 WHERE s.user_id = %d AND s.notify_via <> 'none' AND s.object_type = 'post' AND p.status = 'publish'
 				 ORDER BY s.created_at DESC
 				 LIMIT %d",
 				$user_id,
@@ -439,7 +494,7 @@ class Subscription extends Model {
 	public static function find_for( int $user_id, string $object_type, int $object_id ): ?object {
 		$row = static::db()->get_row(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d AND object_type = %s AND object_id = %d',
+				"SELECT * FROM " . static::table() . " WHERE user_id = %d AND notify_via <> 'none' AND object_type = %s AND object_id = %d",
 				$user_id,
 				$object_type,
 				$object_id
