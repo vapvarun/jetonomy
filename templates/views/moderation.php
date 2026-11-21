@@ -612,7 +612,7 @@ $crumbs = array(
 						<span class="jt-mod-flag-age">
 							<?php
 							/* translators: %s: human-readable time difference. */
-							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $age ) );
+							echo esc_html( '' === $age ? '' : sprintf( __( '%s ago', 'jetonomy' ), $age ) );
 							?>
 						</span>
 					</div>

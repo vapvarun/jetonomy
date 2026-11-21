@@ -114,8 +114,7 @@ if ( ! isset( $context->topic ) ) {
 			<?php
 			/* translators: %s: reporter's display name */
 			echo esc_html( sprintf( __( 'Reported by %s', 'jetonomy' ), $jt_fc_reporter ) );
-			/* translators: %s: human-readable time difference. */
-			echo ' &middot; ' . esc_html( $time_ago );
+			echo '' === $time_ago ? '' : ' &middot; ' . esc_html( $time_ago );
 			?>
 		</span>
 	</div>
