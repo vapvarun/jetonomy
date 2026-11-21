@@ -21,9 +21,9 @@ Promotion to levels 1-3 is based on a combination of activity stats, not a singl
 | Level | Name | Default Requirements |
 |-------|------|----------------------|
 | TL0 | Newcomer | Automatic on signup |
-| TL1 | Member | 5 posts, 3 days active, 10 replies received |
-| TL2 | Regular | 30 posts, 20 days active, 50 reputation |
-| TL3 | Trusted | 100 posts, 60 days active, 200 reputation |
+| TL1 | Member | 5 topics or replies, 3 days active |
+| TL2 | Regular | 30 topics or replies, 20 days active, 50 reputation |
+| TL3 | Trusted | 100 topics or replies, 60 days active, 200 reputation |
 | TL4 | Leader | Manually granted by an admin |
 | TL5 | Veteran | Manually granted by an admin |
 
@@ -98,7 +98,7 @@ The **Jetonomy → Users** page is the central place to manage individual member
 
 ## Configuring Thresholds
 
-Go to **Jetonomy → Settings → Permissions** to adjust the promotion requirements. Each of the three earned levels (1, 2, and 3) has its own row with four inputs: **posts**, **days active**, **reputation**, and **replies received**. A member must meet every value in a row to reach that level. Changes take effect on the next cron run.
+Go to **Jetonomy → Settings → Permissions** to adjust the promotion requirements. Each of the three earned levels (1, 2, and 3) has its own row with four inputs: **topics and replies written**, **days active**, **reputation**, and **replies received**. A member must meet every value in a row to reach that level, and a value left at 0 is not checked. Levels only go up automatically; to lower a member, change their level by hand on the Users screen. Changes take effect on the next cron run.
 
 Levels 4 and 5 have no requirement inputs - they are granted manually from **Jetonomy → Users** and cannot be earned automatically.
 
@@ -127,7 +127,7 @@ In a traditional forum, you manually decide who is a "trusted" member. That does
 
 Trust and moderation events fire WordPress action hooks you can listen to in a small custom plugin or your theme's `functions.php` - for example to send a welcome message when a member is promoted, or to log every resolved flag to an external system:
 
-- `jetonomy_trust_level_changed` - fires when a member's trust level goes up or down.
+- `jetonomy_trust_level_changed` - fires when a member's trust level changes: up by the automatic sweep or by hand, and down only when an admin lowers it by hand.
 - `jetonomy_flag_resolved` - fires when a moderator marks a flag valid or dismisses it.
 - `jetonomy_sidebar_auth_card` - lets you add content to the community sidebar.
 

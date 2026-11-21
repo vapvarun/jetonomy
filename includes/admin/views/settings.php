@@ -489,13 +489,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Trust Level Thresholds', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Define what users must achieve to advance through trust levels. Higher levels unlock posting privileges and reduce moderation scrutiny.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'A member needs every figure in a row. A figure left at 0 is not checked. Levels go up automatically and never down; you can lower one by hand on the Users screen.', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( "Level 3's moderation powers only apply to roles you gave those capabilities without Moderate (queue, flags, bans). Moderators (Editor by default) are not held to trust levels.", 'jetonomy' ); ?></p>
 				</div>
 				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Level', 'jetonomy' ); ?></th>
-							<th><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s Required', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></th>
+							<th><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%1$s and %2$s Written', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?></th>
 							<?php // A comment line on the row above would be read as this string's translator comment. ?>
 							<th><?php esc_html_e( 'Days Active', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Reputation', 'jetonomy' ); ?></th>
@@ -511,7 +512,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							?>
 							<tr>
 								<th scope="row"><strong><?php echo esc_html( $level_names[ $level ] ); ?></strong></th>
-								<td data-colname="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( '%s Required', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?>"><input type="number" aria-label="<?php /* translators: 1: topic label, plural (e.g. "Topics"). 2: trust level name. */ echo esc_attr( sprintf( __( '%1$s Required for %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( '%1$s and %2$s Written', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?>"><input type="number" aria-label="<?php /* translators: 1: topic label, plural (e.g. "Topics"). 2: reply label, plural (e.g. "Replies"). 3: trust level name. */ echo esc_attr( sprintf( __( '%1$s and %2$s written, required for %3$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
 							<?php // A comment line on the row above would be read as this string's translator comment. ?>
 								<td data-colname="<?php esc_attr_e( 'Days Active', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: trust level name. */ __( 'Days Active for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
 								<td data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: trust level name. */ __( 'Reputation for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>

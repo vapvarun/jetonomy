@@ -127,7 +127,7 @@ class Trust_Levels {
 				'posts'            => 5,
 				'days_active'      => 3,
 				'reputation'       => 0,
-				'replies_received' => 10,
+				'replies_received' => 0,
 			),
 			2 => array(
 				'posts'            => 30,

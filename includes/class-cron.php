@@ -276,7 +276,8 @@ class Cron {
 				: 0;
 
 			$stats = array(
-				'post_count'       => (int) $profile->post_count,
+				// Topics plus replies written: a member who only answers questions counts too.
+				'post_count'       => (int) $profile->post_count + (int) $profile->reply_count,
 				'days_active'      => $days_active,
 				'reputation'       => (int) $profile->reputation,
 				'replies_received' => $replies_received_map[ (int) $profile->user_id ] ?? 0,

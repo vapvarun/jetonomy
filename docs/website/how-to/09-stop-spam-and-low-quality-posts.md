@@ -45,7 +45,7 @@ New accounts start at trust level 0 (Newcomer). You can cap what they do each da
 2. In **Rate Limits for New Users (Level 0)**, set **Posts per Day**, **Replies per Day** and **Votes per Day**. The defaults are 3, 10 and 5.
 3. Click **Save Settings**.
 
-Members move up on their own as they take part. In the **Trust Level Thresholds** card, each earned level has **Posts Required**, **Days Active**, **Reputation** and **Replies Received**. By default, level 1 (Member) needs 5 posts, 3 days active and 10 replies received. Level 1 and above have no daily limits.
+Members move up on their own as they take part. In the **Trust Level Thresholds** card, each earned level has **Topics and Replies Written**, **Days Active**, **Reputation** and **Replies Received**. By default, level 1 (Member) needs 5 topics or replies and 3 days active, so a member who only answers questions still moves up. Level 1 and above have no daily limits.
 
 Administrators and anyone with the Moderate capability are never limited. Each field accepts 1 or more.
 

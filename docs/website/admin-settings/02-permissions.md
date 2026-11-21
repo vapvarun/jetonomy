@@ -26,18 +26,18 @@ Jetonomy uses six trust levels (0 through 5) to gradually extend posting privile
 | 4 | Leader | Manual - granted by moderator or admin |
 | 5 | Veteran | Manual - granted by admin only |
 
-The cron job runs every 12 hours and re-evaluates every member against the configured thresholds. Demotion is also possible - if a member is muted or receives too many spam flags, their trust level can drop.
+The cron job runs every 12 hours and re-evaluates every member against the configured thresholds. Levels 1 to 3 only go up automatically: a member who later falls below a level keeps it, so nobody loses abilities without warning. To lower a member's level, change it by hand on the Users screen.
 
 ## Trust Level Thresholds
 
 **Setting:** `trust_thresholds`
 **Location:** Permissions tab → Trust Levels section
 
-Each auto-promotion level (1, 2, and 3) has a configurable set of thresholds. A member must meet all thresholds for a level to be promoted to it.
+Each auto-promotion level (1, 2, and 3) has a configurable set of thresholds. A member must meet all four thresholds for a level to be promoted to it, and the levels are cleared in order. A threshold left at 0 is not checked, so you turn one off by clearing it.
 
 | Threshold | Description | Configurable |
 |---|---|---|
-| `posts` | Minimum posts created | Yes |
+| `posts` | Minimum topics and replies written | Yes |
 | `days_active` | Minimum days since registration | Yes |
 | `reputation` | Minimum reputation score | Yes |
 | `replies_received` | Minimum replies received on own posts | Yes |
@@ -49,7 +49,9 @@ Each auto-promotion level (1, 2, and 3) has a configurable set of thresholds. A 
 | `posts` | 5 |
 | `days_active` | 3 |
 | `reputation` | 0 |
-| `replies_received` | 10 |
+| `replies_received` | 0 |
+
+A member who only answers questions still reaches Level 1: replies count toward `posts`, and no replies on their own topics are required by default. Communities that saved their own thresholds before this change keep the values they saved; clear **Replies Received** on Level 1 to let reply-only members through.
 
 For small communities (under 200 members), lower the thresholds. Members can feel stuck if Level 1 requirements take weeks to meet. For larger communities, raise the thresholds to protect against spam waves.
 
