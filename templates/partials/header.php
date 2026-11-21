@@ -162,7 +162,8 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 // The tabs, built as data so the order and the items can be changed with the jetonomy_mobile_tabs filter. 'primary' is the
 // centred accent button; 'menu' marks the tab that opens the sheet (header.js). Where "New" goes: inside a space that
 // space's composer; elsewhere the member's spaces, where each one starts a topic.
-$jt_slug        = (string) get_query_var( 'jetonomy_slug', '' );
+// On a topic page jetonomy_slug is the TOPIC; the space is jetonomy_space_slug. Every other space route uses jetonomy_slug.
+$jt_slug        = (string) get_query_var( 'post' === $current_route ? 'jetonomy_space_slug' : 'jetonomy_slug', '' );
 $jt_in_space    = '' !== $jt_slug && in_array( $current_route, array( 'space', 'new-post', 'post', 'space-members', 'space-feed' ), true );
 $jt_new_url     = $jt_in_space ? \Jetonomy\route_url( 'new-post', $jt_slug ) : \Jetonomy\route_url( 'my-spaces' );
 $jt_mobile_tabs = $user_id
@@ -179,7 +180,7 @@ $jt_mobile_tabs = $user_id
 			'label'  => \Jetonomy\space_label( true ),
 			'url'    => \Jetonomy\route_url( 'my-spaces' ),
 			'icon'   => 'layout-grid',
-			'active' => in_array( $current_route, array( 'my-spaces', 'space', 'category' ), true ),
+			'active' => in_array( $current_route, array( 'my-spaces', 'space', 'category', 'post', 'space-members', 'space-feed', 'space-roadmap', 'space-moderation' ), true ),
 		),
 		array(
 			'key'     => 'new',

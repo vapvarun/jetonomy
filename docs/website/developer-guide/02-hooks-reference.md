@@ -80,6 +80,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_join_request_approved`<br>_action_ | - | - | `includes/models/class-join-request.php` |
 | `jetonomy_space_transferred`<br>_action_ | A space changed hands - owner account deleted, or an explicit delete that chose transfer. | `space_id, from_user_id, to_user_id` | `includes/models/class-space.php` |
 | `jetonomy_space_purged`<br>_action_ | A space and everything it owned was permanently removed. `removed` maps `table.column:ref` to rows deleted. | `space_id, removed` | `includes/class-space-purge.php` |
+| `jetonomy_space_members_purged`<br>_action_ | The members of a space that is being deleted, announced just BEFORE their rows are removed (they go in bulk, so `jetonomy_user_left_space` never fires per member). One call per chunk of up to 500 ids, ascending; it can repeat if an interrupted purge resumes, so a listener must be idempotent. Use it to take back points or badges given for joining. | `space_id, user_ids` | `includes/class-space-purge.php` |
 | `jetonomy_space_purge_batch`<br>_action_ | Action Scheduler continuation for a batched purge; re-enqueued until the space drains. Not intended as an extension point. | `args{space_id}` | `includes/class-space-purge.php` |
 | `jetonomy_join_request_created`<br>_action_ | - | `request_id` | `includes/cli/journeys/class-member-journey.php` |
 | `jetonomy_join_request_denied`<br>_action_ | - | - | `includes/models/class-join-request.php` |
@@ -150,6 +151,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_after_create_flag`<br>_action_ | - | - | `includes/api/class-moderation-controller.php` |
 | `jetonomy_after_resolve_flag`<br>_action_ | - | - | `includes/moderation/class-moderation-service.php` |
 | `jetonomy_content_moderated`<br>_action_ | - | `action, type, id, moderator_id` | `includes/moderation/class-moderation-service.php` |
+| `jetonomy_held_item_notes`<br>_filter_ | Why items on the moderation queue are held or marked as spam, one call per page of held items. Return `item_id => sentence`; the sentence is shown in a box under the item. Jetonomy Pro's AI review answers it; return the array you were given when you have nothing to add. | `$notes (array<int,string>), $kind ('post' or 'reply'), $ids (int[])` | `templates/views/moderation.php`, `templates/views/space-moderation.php` |
 | `jetonomy_flag_created`<br>_action_ | - | `flag_id` | `includes/api/class-posts-controller.php` |
 | `jetonomy_flag_resolved`<br>_action_ | - | `flag_id, action` | `includes/moderation/class-moderation-service.php` |
 | `jetonomy_moderation_flag_resolution`<br>_filter_ | Filter the status applied to an object's pending flags when it is moderated directly (outside the flag-resolution flow). | `flag_status, action, type, id, user_id` | `includes/moderation/class-moderation-service.php` |
@@ -347,6 +349,7 @@ Pro-only hooks (marked _Pro_ above and listed below) fire from the Jetonomy Pro 
 | `jetonomy_pro_field_created`<br>_action_ ·_Pro_ | Fires after a custom field is created. | `$field_id, $context` | `includes/extensions/custom-fields/class-extension.php` |
 | `jetonomy_pro_first_reaction`<br>_action_ ·_Pro_ | Fires the first time an object receives any reaction. | `$object_type, $object_id, $user_id` | `includes/extensions/reactions/class-extension.php` |
 | `jetonomy_pro_message_sent`<br>_action_ ·_Pro_ | Fires after a message is sent. | `$message_id, $conversation_id, $sender_id` | `includes/extensions/private-messaging/class-extension.php` |
-| `jetonomy_pro_poll_created`<br>_action_ ·_Pro_ | Fires after a poll is created. | `$poll_id, $post_id, $user_id` | `includes/extensions/polls/class-extension.php` |
+| `jetonomy_pro_poll_created`<br>_action_ ·_Pro_ | Fires after a poll is created. | `$poll_id, $post_id, $user_id` |
+| `jetonomy_pro_poll_deleted`<br>_action_ ·_Pro_ | A poll was deleted from the admin Polls screen (its votes and options went with it; it does not fire if the poll was already gone). Deleting a topic, which removes its poll too, fires `jetonomy_post_deleted` instead, so a listener that rewards polls should reverse on both. | `$poll_id, $post_id` | `includes/extensions/polls/class-extension.php` | `includes/extensions/polls/class-extension.php` |
 | `jetonomy_pro_reaction_icon_renderer`<br>_filter_ ·_Pro_ | Sites that want the SVG look can opt in via the filter below. | `$renderer, $slug, $size` | `includes/extensions/reactions/class-extension.php` |
 | `jetonomy_pro_reaction_toggled`<br>_action_ ·_Pro_ | Fires after a reaction is toggled. | `$object_type, $object_id, $emoji, $user_id, $action` | `includes/extensions/reactions/class-extension.php` |

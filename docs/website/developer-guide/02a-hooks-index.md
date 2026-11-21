@@ -113,6 +113,7 @@ Plugin version: 2.0.7 - 116 actions, 143 filters.
 | `jetonomy_space_posts_retyped` | space_id, post_type, updated | includes/models/class-space.php |
 | `jetonomy_space_purge_batch` | array $args | includes/class-space-purge.php:58 |
 | `jetonomy_space_purged` | $space_id (int), $removed (array<string,int> rows removed per table.column:ref) | includes/class-space-purge.php (Space_Purge::purge) |
+| `jetonomy_space_members_purged` | $space_id (int), $user_ids (int[], up to 500 per call, before the member rows are removed) | includes/class-space-purge.php (Space_Purge::announce_members) |
 | `jetonomy_space_transferred` | space_id, from_user_id, to_user_id | includes/models/class-space.php (Space::hand_over) |
 | `jetonomy_trust_evaluation` | cron-only | includes/class-cron.php |
 | `jetonomy_trust_level_changed` | user_id, old_level, new_level | includes/class-cron.php, includes/trust/class-trust-levels.php (Trust_Levels::set_manually - wp-admin Users + REST /admin/users/trust-level; 2.0.2: the wp-admin path now fires it too) |
@@ -273,3 +274,5 @@ Plugin version: 2.0.7 - 116 actions, 143 filters.
 | `jetonomy_user_handle` | string $handle, WP_User $user | includes/functions.php:359 |
 | `jetonomy_user_is_silenced` | bool $silenced, int $user_id | includes/models/class-restriction.php (Restriction::is_silenced) |
 | `jetonomy_users_query_args` |  | includes/api/class-leaderboards-controller.php |
+| `jetonomy_held_item_notes` (filter) | $notes (array<int,string>), $kind ('post'\|'reply'), $ids (int[]) | templates/views/moderation.php, templates/views/space-moderation.php |
+| `jetonomy_pro_poll_deleted` (Pro) | $poll_id (int), $post_id (int) | extensions/polls/class-extension.php (admin delete) |
