@@ -69,3 +69,9 @@ Both `scan` commands are read-only. Both `purge-orphans` commands accept `--dry-
 Deleting a space in wp-admin or the front end defaults to **Transfer**: the space is archived and handed to another admin, and every topic and reply inside it is kept. This is deliberate - a space holds other members' contributions, not just its owner's, so the default never destroys anyone's writing.
 
 An administrator can permanently destroy a space and everything in it instead. This is a separate, explicit action (not the default "delete" button's behaviour), and site administrators can always do it. To let a space's own admin do the same, turn on **Let space admins permanently delete a space and everything in it** under **Jetonomy → Settings → General** ("Deleting spaces"). It is off by default. A permanent purge runs in the background and cannot be undone.
+
+## Hiding online status
+
+Members choose whether they appear online. On **Edit Profile > Privacy**, **Show when I'm online** is on by default. Turning it off means the member never shows a green dot or a last-seen time to other people (the member and site staff still see their own time), and they do not see who else is online. Their posts stay visible.
+
+When BuddyNext is active, BuddyNext owns presence, so this setting is not shown and BuddyNext decides who appears online. A member who turned it off before BuddyNext was switched on stays hidden. The same setting is available as `show_online` on `PATCH /users/me`.

@@ -4692,6 +4692,12 @@ const { state, actions } = store( 'jetonomy', {
                 payload.email_opt_out = optOut.checked;
             }
 
+            // "Show when I'm online": always sent, so unticking is saved as well as ticking.
+            const showOnline = form.querySelector( '[name="show_online"]' );
+            if ( showOnline ) {
+                payload.show_online = showOnline.checked;
+            }
+
             try {
                 const response = yield window.jetonomyRest.restFetch(
                     `/users/me`,

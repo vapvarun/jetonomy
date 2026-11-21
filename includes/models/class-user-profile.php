@@ -369,7 +369,32 @@ class UserProfile extends Model {
 		if ( get_current_user_id() === $user_id || current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' ) ) {
 			return $last_seen;
 		}
-		return strtotime( $last_seen ) > ( time() - self::ONLINE_WINDOW ) ? \Jetonomy\now() : null;
+		// Everyone else learns only what the dot shows, so one rule (is_online) decides: a member who hides their status
+		// reveals nothing here, and BuddyNext's presence decides when it is active.
+		return self::is_online( $user_id ) ? \Jetonomy\now() : null;
+	}
+
+	/**
+	 * Whether a member chose not to appear online ("Show when I'm online" off).
+	 *
+	 * One usermeta key, like the email pause switch. Honoured on every site, with BuddyNext or without: a member who
+	 * hid their status before BuddyNext was switched on stays hidden.
+	 *
+	 * @param int $user_id Member.
+	 * @return bool
+	 */
+	public static function hides_online( int $user_id ): bool {
+		return $user_id > 0 && (bool) get_user_meta( $user_id, 'jetonomy_hide_online', true );
+	}
+
+	/**
+	 * Whether this site lets members choose to hide their status. Off when BuddyNext is active: it owns presence and
+	 * its settings, so Jetonomy shows no second toggle (an existing hidden choice is still honoured).
+	 *
+	 * @return bool
+	 */
+	public static function online_choice_available(): bool {
+		return ! did_action( 'buddynext_loaded' );
 	}
 
 	/**
@@ -382,6 +407,22 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function is_online( int $user_id ): bool {
+		// Never a dot for a member who opted out, whatever decides presence.
+		if ( self::hides_online( $user_id ) ) {
+			return false;
+		}
+
+		// BuddyNext owns presence when active: its service decides who is online and who may see it.
+		if ( ! self::online_choice_available() && class_exists( '\\BuddyNext\\Realtime\\PresenceService' ) ) {
+			return \BuddyNext\Realtime\PresenceService::visible_to_viewer( get_current_user_id() )
+				&& \BuddyNext\Realtime\PresenceService::is_online( $user_id );
+		}
+
+		// A member who hides their own status also stops seeing other members' (they cannot see what they do not share).
+		if ( get_current_user_id() !== $user_id && self::hides_online( get_current_user_id() ) ) {
+			return false;
+		}
+
 		$key    = 'online_' . $user_id;
 		$cached = Cache::get( $key );
 

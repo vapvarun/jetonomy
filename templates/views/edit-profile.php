@@ -52,6 +52,9 @@ if ( ! $cancel_url ) {
 	<nav class="jt-space-tabs jt-space-tabs--wrap" aria-label="<?php esc_attr_e( 'Profile sections', 'jetonomy' ); ?>">
 		<a class="jt-space-tab" href="#profile-details"><?php esc_html_e( 'Profile', 'jetonomy' ); ?></a>
 		<a class="jt-space-tab" href="#notification-preferences"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></a>
+		<?php if ( \Jetonomy\Models\UserProfile::online_choice_available() ) : ?>
+			<a class="jt-space-tab" href="#privacy"><?php esc_html_e( 'Privacy', 'jetonomy' ); ?></a>
+		<?php endif; ?>
 		<a class="jt-space-tab" href="#blocked-members"><?php esc_html_e( 'People you have blocked', 'jetonomy' ); ?></a>
 	</nav>
 
@@ -237,6 +240,20 @@ if ( ! $cancel_url ) {
 			do_action( 'jetonomy_profile_notification_fields', $current_user->ID );
 			?>
 		</div>
+
+		<?php if ( \Jetonomy\Models\UserProfile::online_choice_available() ) : ?>
+			<?php // Hidden when BuddyNext is active: it owns presence and its own settings, and a second toggle would fight it. ?>
+			<div class="jt-form-group" id="privacy">
+				<span class="jt-label"><?php esc_html_e( 'Privacy', 'jetonomy' ); ?></span>
+				<label class="jt-notif-optout">
+					<input type="checkbox" name="show_online" value="1" <?php checked( ! \Jetonomy\Models\UserProfile::hides_online( $current_user->ID ) ); ?>>
+					<span>
+						<strong><?php esc_html_e( "Show when I'm online", 'jetonomy' ); ?></strong><br>
+						<?php esc_html_e( 'Off: you never appear online or show a last-seen time, and you do not see who else is online. Your posts stay visible.', 'jetonomy' ); ?>
+					</span>
+				</label>
+			</div>
+		<?php endif; ?>
 
 		<?php
 		// Everyone this member has blocked, newest first, 20 a page. The one
