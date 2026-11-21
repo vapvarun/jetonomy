@@ -71,6 +71,10 @@ A badge with no auto-award criteria is manual-only and is never awarded automati
 
 The member receives a notification immediately and the badge appears on their profile.
 
+### Deactivate or delete a badge
+
+**Deactivate** hides a badge and stops it being awarded, but keeps it and every award of it; **Activate** brings it back. **Delete permanently** removes the badge and takes it off every member who holds it. The confirmation tells you how many members that is. Reputation members already earned from the badge stays as it is, and deleting cannot be undone. The same permanent delete is available from the REST API (`DELETE /badges/{id}?permanent=1`) and WP-CLI (`wp jetonomy-pro badges delete <id>`).
+
 ## Badge Tiers
 
 Badges have three visual tiers that appear as border colors on the badge icon:
@@ -98,7 +102,7 @@ Custom Badges registers these endpoints under `jetonomy/v1`:
 | `GET` | `/badges` | List all defined badges and their settings |
 | `POST` | `/badges` | Create a badge |
 | `PATCH` | `/badges/{id}` | Update a badge |
-| `DELETE` | `/badges/{id}` | Deactivate a badge (it stays in the database and can be reactivated with `PATCH`) |
+| `DELETE` | `/badges/{id}` | Deactivate a badge (it stays in the database and can be reactivated with `PATCH`). Add `?permanent=1` to delete the badge and every award of it for good |
 | `POST` | `/users/{id}/badges` | Award a badge to a member |
 
 Badges can be created, edited, and awarded entirely through REST, so you can automate awards from your own tooling or grant a badge as part of an external workflow. Listing badges is open to any logged-in member; creating, editing, deleting, and awarding require `manage_options`. See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
