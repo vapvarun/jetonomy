@@ -144,7 +144,9 @@ function jetonomyReport( message, labels, submit ) {
 				if ( sent ) {
 					close( true );
 				} else {
+					// A disabled button cannot keep focus, so without this focus fell to <body>, outside the dialog.
 					okBtn.disabled = false;
+					okBtn.focus();
 				}
 			} );
 		} );
@@ -176,16 +178,21 @@ async function jtSubmitFlag( objectType, objectId, report, i18n ) {
 		method: 'POST',
 		body: { object_type: objectType, object_id: parseInt( objectId, 10 ), reason: report.reason, description: report.description },
 	} );
+	// Reporting something you already reported is a finished state, not a failure: say so in the toast and let the
+	// dialog close (and the trigger show "reported"), instead of leaving the form open to be filled in again.
+	const already = ! res.ok && ( 409 === res.status || ( res.data && 'jetonomy_already_flagged' === res.data.code ) );
 	if ( window.bnToast ) {
 		if ( res.ok ) {
 			window.bnToast( t.reportedThankYou || 'Reported. Thank you.' );
+		} else if ( already ) {
+			window.bnToast( ( res.data && res.data.message ) || t.alreadyReported || 'You already reported this.' );
 		} else if ( 0 === res.status ) {
 			window.bnToast( t.networkError || 'Network error. Please try again.', 'error' );
 		} else {
 			window.bnToast( ( res.data && res.data.message ) || t.failedReport || 'Failed to submit report.', 'error' );
 		}
 	}
-	return res.ok;
+	return res.ok || already;
 }
 
 function jetonomyPrompt( message, options ) {
