@@ -1642,6 +1642,11 @@ tr.jetonomy-moderated td {
 	border-bottom: 1px solid var(--jt-admin-surface-wp);
 }
 
+.jetonomy-ac-item.is-active {
+	outline: 2px solid var(--wp-admin-theme-color, currentColor);
+	outline-offset: -2px;
+}
+
 .jetonomy-ac-item:hover {
 	background: var(--jt-admin-blue-surface);
 }
