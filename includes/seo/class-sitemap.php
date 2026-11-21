@@ -35,7 +35,7 @@ class Sitemap {
 
 	/**
 	 * Append a `Sitemap:` line for the custom community sitemap so crawlers
-	 * discover it. Gated on the same seo_sitemap toggle as the emitter.
+	 * discover it. Gated by Sitemap_Emitter::enabled(), the same rule the emitter follows.
 	 *
 	 * @param string $output The robots.txt content.
 	 * @param bool   $public Whether the site is public.
@@ -45,8 +45,7 @@ class Sitemap {
 		if ( ! $public ) {
 			return $output;
 		}
-		$settings = \Jetonomy\seo_settings();
-		if ( empty( $settings['seo_sitemap'] ) ) {
+		if ( ! Sitemap_Emitter::enabled() ) {
 			return $output;
 		}
 

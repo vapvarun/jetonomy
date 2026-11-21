@@ -51,12 +51,11 @@ Thin or duplicative surfaces (such as paginated tails) emit `<meta name="robots"
 
 ## XML sitemap
 
-Jetonomy registers two providers on WordPress core's sitemap (`wp-sitemap.xml`), so spaces and topics are submitted to search engines with no extra plugin (`includes/seo/class-sitemap.php`):
+Jetonomy serves its own sitemap (`includes/seo/class-sitemap-emitter.php`) at `/{base}-sitemap.xml`, an index that points to paged child sitemaps for spaces and topics (`/{base}-sitemap-spaces-1.xml`, `/{base}-sitemap-posts-1.xml`, 5,000 URLs per page). `{base}` is the community base URL, `community` by default. The index is advertised in `robots.txt`. It is separate from WordPress core's `wp-sitemap.xml`.
 
-- `jetonomyspaces` - every public space
-- `jetonomyposts` - every public topic
+`Sitemap_Emitter::enabled()` decides whether it is served: the SEO sitemap toggle must be on and the community must be public. In a Private community the index, the child sitemaps and the `robots.txt` line all disappear (404), the same rule the space RSS feed follows.
 
-Visit `https://yoursite.com/wp-sitemap.xml` and you'll see the `jetonomyspaces` and `jetonomyposts` sub-sitemaps listed.
+Visit `https://yoursite.com/community-sitemap.xml` to see the index.
 
 ## RSS feeds
 
@@ -122,7 +121,7 @@ When SEO Pro is active it takes over the topic (`post`) route's baseline meta to
 curl -s 'https://yoursite.com/community/s/general/t/welcome/' | grep -E 'og:|twitter:|canonical|ld\+json|robots'
 
 # Sitemap providers
-curl -s 'https://yoursite.com/wp-sitemap.xml' | grep jetonomy
+curl -s 'https://yoursite.com/community-sitemap.xml'
 
 # A space feed
 curl -s 'https://yoursite.com/community/s/general/feed/' | head -20
