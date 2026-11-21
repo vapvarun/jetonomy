@@ -1933,6 +1933,8 @@ class Model_Tests {
 		}
 		$topic( $p, 'DI newer quiet' );
 		$list = \Jetonomy\Models\Post::list_by_space_visible( $p, 0, false, 'popular', 5 );
+		// Pro's Site Announcements pins a topic from ANOTHER space to the top of every list; judge only this space's rows.
+		$list = array_values( array_filter( (array) $list, static fn( $r ) => (int) $r->space_id === $p ) );
 		$this->check( 'DI6: Popular breaks vote ties by replies', $list && (int) $list[0]->id === $older );
 
 		foreach ( array( $a, $b, $q, $p, $m1, $m2 ) as $sid ) {
