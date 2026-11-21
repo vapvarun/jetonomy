@@ -521,7 +521,14 @@ class Moderation_Service {
 			foreach ( $resolved as $row ) {
 				$reporter_id = (int) ( $row->reporter_id ?? 0 );
 				if ( $reporter_id > 0 && $reporter_id !== $author_id ) {
-					Reputation::award( $reporter_id, 'flag_validated' );
+					Reputation::award(
+						$reporter_id,
+						'flag_validated',
+						array(
+							'object_type' => 'flag',
+							'object_id'   => (int) ( $row->id ?? 0 ),
+						)
+					);
 				}
 			}
 		}
@@ -724,6 +731,7 @@ class Moderation_Service {
 				array(
 					'object_type' => $object_type,
 					'object_id'   => $object_id,
+					'reporter_id' => $reporter_id,
 				)
 			);
 		}

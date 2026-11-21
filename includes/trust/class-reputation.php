@@ -267,9 +267,12 @@ class Reputation {
 		 * @param string $action  The action that triggered the change. For
 		 *                        revocations, this is `<original_action>_revoked`.
 		 * @param int    $delta   Points added (positive) or removed (negative).
-		 * @param array  $context Optional context payload supplied by callers
-		 *                        of {@see award_custom()}. Empty array for
-		 *                        award()/revoke().
+		 * @param array  $context What caused the change, as the caller supplied it:
+		 *                        `object_type` and `object_id` (the post, reply or
+		 *                        report it was about), plus `voter_id` for a vote and
+		 *                        `reporter_id` for a report, so a listener can tell one
+		 *                        member's award from another's on the same object.
+		 *                        Empty when the caller gave none.
 		 */
 		do_action( 'jetonomy_reputation_changed', $user_id, $action, $delta, $context );
 

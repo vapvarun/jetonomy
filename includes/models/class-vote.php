@@ -59,7 +59,7 @@ class Vote extends Model {
 		do_action( 'jetonomy_after_vote', $object_type, $object_id, $user_id, 'removed' === $result['action'] ? 0 : $value );
 
 		$object = 'post' === $object_type ? Post::find( $object_id ) : Reply::find( $object_id );
-		self::adjust_reputation( $object_type, $value, $result, (int) ( $object->author_id ?? 0 ), $object_id );
+		self::adjust_reputation( $object_type, $value, $result, (int) ( $object->author_id ?? 0 ), $object_id, $user_id );
 
 		return $result;
 	}
@@ -528,14 +528,16 @@ class Vote extends Model {
 	 * @param array  $result    The result from Vote::cast().
 	 * @param int    $author_id The object author's user ID.
 	 * @param int    $object_id The voted post or reply, logged as the source of the change.
+	 * @param int    $voter_id  Who voted. Carried in the context so a listener can tell one voter's award from another's.
 	 */
-	private static function adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id ): void {
+	private static function adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id, int $voter_id ): void {
 		if ( ! $author_id ) {
 			return;
 		}
 		$source = array(
 			'object_type' => $type,
 			'object_id'   => $object_id,
+			'voter_id'    => $voter_id,
 		);
 		// Removing a vote takes back its award; changing direction takes back the old one.
 		$taken_back = array(
