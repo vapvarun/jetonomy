@@ -1860,3 +1860,39 @@ function invalid_url_error( string $label ): \WP_Error {
 		array( 'status' => 400 )
 	);
 }
+
+/**
+ * The site's own registration page, when it has one.
+ *
+ * Returns its URL when the owner runs their own sign-up (extra fields, terms, names), so the login card's Register tab
+ * can link there like every other Jetonomy sign-up link, and '' when the default form applies and Jetonomy's short inline
+ * form can be used. A plugin can change the register_url filter (caught by wp_registration_url()) or redirect
+ * wp-login.php?action=register instead; the second kind never touches wp_registration_url(), so User Registration &
+ * Membership is recognised by its own member-registration-page setting (only while the plugin is active), and the
+ * jetonomy_external_registration_url filter lets any other plugin say the same.
+ *
+ * @since 2.0.8
+ *
+ * @return string URL of the site's registration page, or '' for the default form.
+ */
+function external_registration_url(): string {
+	$url = '';
+
+	if ( wp_registration_url() !== site_url( 'wp-login.php?action=register', 'login' ) ) {
+		$url = wp_registration_url();
+	} elseif ( class_exists( 'UserRegistration' ) ) {
+		$page_id = (int) get_option( 'user_registration_member_registration_page_id', 0 );
+		if ( $page_id > 0 && 'publish' === get_post_status( $page_id ) ) {
+			$url = (string) get_permalink( $page_id );
+		}
+	}
+
+	/**
+	 * Filter the URL of the site's own registration page. Return '' to keep Jetonomy's inline form.
+	 *
+	 * @since 2.0.8
+	 *
+	 * @param string $url The detected registration page URL, or '' for the default form.
+	 */
+	return (string) apply_filters( 'jetonomy_external_registration_url', $url );
+}

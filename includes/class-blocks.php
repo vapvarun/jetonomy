@@ -814,10 +814,7 @@ class Blocks {
 		// their own sign-up page (extra fields, terms, names). Register then
 		// links there, as every other Jetonomy sign-up link already does;
 		// only a default site keeps the inline form. Login stays inline.
-		$register_link = '';
-		if ( $show_register_tab && wp_registration_url() !== site_url( 'wp-login.php?action=register', 'login' ) ) {
-			$register_link = wp_registration_url();
-		}
+		$register_link = $show_register_tab ? \Jetonomy\external_registration_url() : '';
 		// 1.4.0 A.3 commit 3: both Login and Register tabs use REST. Block
 		// only exposes the REST endpoint base; no nonce — the auth endpoints
 		// are public (REST_Auth::auth_public_write) and sending X-WP-Nonce
