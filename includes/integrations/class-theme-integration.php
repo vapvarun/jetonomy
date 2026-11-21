@@ -198,9 +198,7 @@ class Theme_Integration {
 			return;
 		}
 
-		$template = get_template();
-		if ( 'reign-theme' !== $template
-			&& ! in_array( $template, array( 'buddyx', 'buddyx-pro' ), true ) ) {
+		if ( '' === self::theme_family() ) {
 			return;
 		}
 
@@ -220,19 +218,41 @@ class Theme_Integration {
 	 * @return array<string,string> Token name => hex color (with leading `#`).
 	 */
 	private function resolve_token_map( $dark ) {
-		$template = get_template();
-
 		// Reign 8.0.0+ keeps --wp--preset--color--* in sync with its own
 		// --reign-* token system in BOTH light and dark, so Jetonomy's base
 		// --jt-accent chain (var(--bx-color-accent, var(--brand,
 		// var(--wp--preset--color--primary)))) already adopts the correct Reign
 		// brand per mode. The legacy reign_dark-* color mod is not read: it produced a stale,
 		// off-brand dark accent (e.g. #10b981) that overrode the chain - defer to the chain.
-		if ( in_array( $template, array( 'buddyx', 'buddyx-pro' ), true ) ) {
+		if ( in_array( self::theme_family(), array( 'buddyx', 'buddyx-pro' ), true ) ) {
 			return $this->buddyx_token_map( (bool) $dark );
 		}
 
 		return array();
+	}
+
+	/**
+	 * Which Wbcom theme is active: 'reign', 'buddyx-pro', 'buddyx', or '' for any other theme.
+	 *
+	 * Matched on the template slug's prefix, not equality, because a theme zip unpacks into a versioned folder
+	 * (reign-theme-8.1.1) and customers rename folders; get_template() is already the PARENT of a child theme, so a
+	 * child of any of these matches too. An exact-name check left every versioned install without its dark mirror, so
+	 * Jetonomy painted light surfaces under the theme's dark page.
+	 *
+	 * @return string
+	 */
+	public static function theme_family(): string {
+		$template = strtolower( (string) get_template() );
+		if ( 0 === strpos( $template, 'reign-theme' ) ) {
+			return 'reign';
+		}
+		if ( 0 === strpos( $template, 'buddyx-pro' ) ) {
+			return 'buddyx-pro';
+		}
+		if ( 0 === strpos( $template, 'buddyx' ) ) {
+			return 'buddyx';
+		}
+		return '';
 	}
 
 	/**
@@ -245,7 +265,7 @@ class Theme_Integration {
 	 * @return array<string,string>
 	 */
 	private function buddyx_token_map( $dark ) {
-		if ( $dark && 'buddyx-pro' !== get_template() ) {
+		if ( $dark && 'buddyx-pro' !== self::theme_family() ) {
 			return array();
 		}
 

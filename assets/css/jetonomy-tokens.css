@@ -242,7 +242,8 @@
      [data-theme="dark"] sit on <body>/<html>, never on a nested surface. */
   :root,
   .jt-dark,
-  [data-theme="dark"] {
+  [data-theme="dark"],
+  [data-bx-mode="dark"] {
     --jt-accent-hover: #2563EB;
     --jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
     --jt-accent-light: #EFF6FF;
@@ -294,7 +295,8 @@
   @supports (color: oklch(from red l c h)) {
     :root,
     .jt-dark,
-    [data-theme="dark"] {
+    [data-theme="dark"],
+    [data-bx-mode="dark"] {
       --jt-accent-fg: oklch(from var(--jt-accent) clamp(0, (0.7 - l) * 1000, 1) 0 h);
       /* Hover is the accent mixed 85% toward black, i.e. strictly darker, so the
          black/white choice can flip against it. Derive it from the hover colour
@@ -324,7 +326,8 @@
      already supported it while jetonomy.css did not — a theme that signals dark
      only via the attribute got a half-dark plugin. One list, both signals. */
   .jt-dark,
-  [data-theme="dark"] {
+  [data-theme="dark"],
+  [data-bx-mode="dark"] {
     /* Adopt the host theme's DARK palette, the same way light mode adopts
        its light one, so a card reads as a lifted piece of the theme's own
        page and not a neutral near-black dropped onto it (Reign's page is
