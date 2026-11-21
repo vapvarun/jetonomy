@@ -158,41 +158,121 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 </nav>
 <!-- Mobile bottom tab bar (visible ≤640px only, hidden when BuddyNext provides its own) -->
 <?php if ( ! did_action( 'buddynext_loaded' ) ) : ?>
+<?php
+// The tabs, built as data so the order and the items can be changed with the jetonomy_mobile_tabs filter. 'primary' is the
+// centred accent button; 'menu' marks the tab that opens the sheet (header.js). Where "New" goes: inside a space that
+// space's composer; elsewhere the member's spaces, where each one starts a topic.
+$jt_slug        = (string) get_query_var( 'jetonomy_slug', '' );
+$jt_in_space    = '' !== $jt_slug && in_array( $current_route, array( 'space', 'new-post', 'post', 'space-members', 'space-feed' ), true );
+$jt_new_url     = $jt_in_space ? \Jetonomy\route_url( 'new-post', $jt_slug ) : \Jetonomy\route_url( 'my-spaces' );
+$jt_mobile_tabs = $user_id
+	? array(
+		array(
+			'key'    => 'home',
+			'label'  => __( 'Home', 'jetonomy' ),
+			'url'    => $base . '/',
+			'icon'   => 'home',
+			'active' => 'home' === $current_route,
+		),
+		array(
+			'key'    => 'spaces',
+			'label'  => \Jetonomy\space_label( true ),
+			'url'    => \Jetonomy\route_url( 'my-spaces' ),
+			'icon'   => 'layout-grid',
+			'active' => in_array( $current_route, array( 'my-spaces', 'space', 'category' ), true ),
+		),
+		array(
+			'key'     => 'new',
+			'label'   => __( 'New', 'jetonomy' ),
+			'url'     => $jt_new_url,
+			'icon'    => 'plus',
+			'primary' => true,
+			'active'  => 'new-post' === $current_route,
+		),
+		array(
+			'key'    => 'alerts',
+			'label'  => __( 'Alerts', 'jetonomy' ),
+			'url'    => \Jetonomy\route_url( 'notifications' ),
+			'icon'   => 'bell',
+			'badge'  => $unread,
+			'host'   => 'jt-mobile-tab-badge',
+			'active' => 'notifications' === $current_route,
+		),
+		array(
+			'key'    => 'me',
+			'label'  => __( 'Me', 'jetonomy' ),
+			'url'    => \Jetonomy\get_profile_url( $user_id ),
+			'icon'   => 'user',
+			'menu'   => true,
+			'active' => in_array( $current_route, array( 'profile', 'moderation', 'bookmarks', 'drafts', 'subscriptions', 'leaderboard', 'edit-profile', 'messages', 'conversation' ), true ),
+		),
+	)
+	: array(
+		array(
+			'key'    => 'home',
+			'label'  => __( 'Home', 'jetonomy' ),
+			'url'    => $base . '/',
+			'icon'   => 'home',
+			'active' => 'home' === $current_route,
+		),
+		array(
+			'key'    => 'search',
+			'label'  => __( 'Search', 'jetonomy' ),
+			'url'    => \Jetonomy\route_url( 'search' ),
+			'icon'   => 'search',
+			'active' => 'search' === $current_route,
+		),
+		array(
+			'key'     => 'signin',
+			'label'   => __( 'Sign in', 'jetonomy' ),
+			'url'     => wp_login_url( \Jetonomy\current_url() ),
+			'icon'    => 'users',
+			'primary' => true,
+			'login'   => true,
+		),
+	);
+
+/**
+ * The phone bottom bar's tabs, in order. Each is array{key, label, url, icon, active?, badge?, host?, primary?, menu?, login?}.
+ * Return a different order or add/remove tabs; the bar is not shown at all when BuddyNext is active.
+ *
+ * @since 2.0.8
+ * @param array[] $jt_mobile_tabs Tabs.
+ * @param bool    $logged_in      Whether the viewer is signed in.
+ */
+$jt_mobile_tabs = (array) apply_filters( 'jetonomy_mobile_tabs', $jt_mobile_tabs, (bool) $user_id );
+?>
 <nav class="jt-mobile-tabs" aria-label="<?php esc_attr_e( 'Mobile navigation', 'jetonomy' ); ?>">
-	<a href="<?php echo esc_url( $base . '/' ); ?>" class="jt-mobile-tab <?php echo 'home' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-		<?php jetonomy_echo_icon( 'home', 20 ); ?>
-		<span><?php esc_html_e( 'Home', 'jetonomy' ); ?></span>
-	</a>
-	<a href="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-mobile-tab <?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-		<?php jetonomy_echo_icon( 'search', 20 ); ?>
-		<span><?php esc_html_e( 'Search', 'jetonomy' ); ?></span>
-	</a>
-	<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>" class="jt-mobile-tab <?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-		<?php jetonomy_echo_icon( 'award', 20 ); ?>
-		<span><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span>
-	</a>
-	<?php if ( $user_id ) : ?>
-		<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" data-jt-unread-host="jt-mobile-tab-badge" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-			<?php jetonomy_echo_icon( 'bell', 20 ); ?>
-			<span><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></span>
-			<?php if ( $unread > 0 ) : ?>
-				<span class="jt-mobile-tab-badge"><?php echo (int) $unread; ?></span>
-			<?php endif; ?>
-		</a>
+	<?php foreach ( $jt_mobile_tabs as $jt_tab ) : ?>
 		<?php
-		// header.js turns this tab into a small menu when the top nav holds
-		// links the tab bar has no tab for (Moderation, Pro's Messages), so
-		// phones can drop that second nav row and still reach them.
+		$jt_classes = 'jt-mobile-tab' . ( ! empty( $jt_tab['primary'] ) ? ' jt-mobile-tab--primary' : '' ) . ( ! empty( $jt_tab['active'] ) ? ' active' : '' );
 		?>
-		<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" data-jt-tab="profile" class="jt-mobile-tab <?php echo in_array( $current_route, array( 'profile', 'moderation', 'space-moderation', 'messages' ), true ) ? esc_attr( 'active' ) : ''; ?>">
-			<?php jetonomy_echo_icon( 'user', 20 ); ?>
-			<span><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
-		</a>
-	<?php else : ?>
-		<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>" class="jt-mobile-tab" data-jt-login>
-			<?php jetonomy_echo_icon( 'users', 20 ); ?>
-			<span><?php esc_html_e( 'Log in', 'jetonomy' ); ?></span>
-		</a>
+		<?php // A tab that opens a menu is a button (it never navigates by itself); every other tab is a link. ?>
+		<<?php echo ! empty( $jt_tab['menu'] ) ? 'button type="button"' : 'a href="' . esc_url( $jt_tab['url'] ) . '"'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- url escaped, rest is literal. ?> class="<?php echo esc_attr( $jt_classes ); ?>"
+			<?php echo ! empty( $jt_tab['host'] ) ? 'data-jt-unread-host="' . esc_attr( $jt_tab['host'] ) . '"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attribute escaped above. ?>
+			<?php echo ! empty( $jt_tab['menu'] ) ? 'data-jt-tab="profile"' : ''; ?>
+			<?php echo ! empty( $jt_tab['login'] ) ? 'data-jt-login' : ''; ?>
+			<?php echo ! empty( $jt_tab['active'] ) ? 'aria-current="page"' : ''; ?>>
+			<?php if ( ! empty( $jt_tab['primary'] ) ) : ?>
+				<span class="jt-mobile-tab__bubble"><?php jetonomy_echo_icon( (string) $jt_tab['icon'], 20 ); ?></span>
+			<?php else : ?>
+				<?php jetonomy_echo_icon( (string) $jt_tab['icon'], 20 ); ?>
+			<?php endif; ?>
+			<span><?php echo esc_html( $jt_tab['label'] ); ?></span>
+			<?php if ( ! empty( $jt_tab['badge'] ) && (int) $jt_tab['badge'] > 0 ) : ?>
+				<span class="jt-mobile-tab-badge"><?php echo (int) $jt_tab['badge']; ?></span>
+			<?php endif; ?>
+		</<?php echo ! empty( $jt_tab['menu'] ) ? 'button' : 'a'; ?>>
+	<?php endforeach; ?>
+	<?php if ( $user_id ) : ?>
+		<?php // The Me sheet: header.js shows it, appending the top-nav-only links (Moderation, Pro's Messages) once. ?>
+		<div id="jt-mobile-tab-menu" class="jt-mobile-tab-menu" role="menu" hidden>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>"><?php jetonomy_echo_icon( 'user', 18 ); ?><span><?php esc_html_e( 'My profile', 'jetonomy' ); ?></span></a>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( trailingslashit( \Jetonomy\get_profile_url( $user_id ) ) . 'posts/' ); ?>"><?php jetonomy_echo_icon( 'file-text', 18 ); ?><span><?php echo esc_html( sprintf( /* translators: %s: topic label, plural. */ __( 'My %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></span></a>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'bookmarks' ) ); ?>"><?php jetonomy_echo_icon( 'bookmark', 18 ); ?><span><?php esc_html_e( 'Bookmarks', 'jetonomy' ); ?></span></a>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>"><?php jetonomy_echo_icon( 'award', 18 ); ?><span><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span></a>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'edit-profile', get_userdata( $user_id )->user_nicename ) ); ?>"><?php jetonomy_echo_icon( 'settings', 18 ); ?><span><?php esc_html_e( 'Settings', 'jetonomy' ); ?></span></a>
+		</div>
 	<?php endif; ?>
 </nav>
 <?php endif; ?>

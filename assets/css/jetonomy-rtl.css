@@ -3068,7 +3068,19 @@
   transition: color var(--jt-dur);
   position: relative;
 }
+button.jt-mobile-tab { background: none; border: 0; font-family: inherit; cursor: pointer; appearance: none; }
 .jt-mobile-tab svg { display: block; }
+/* The centre action (New for members, Sign in for guests): an accent circle raised out of the bar. The bubble is the tap
+   target, so the whole column stays one tab. */
+.jt-mobile-tab--primary { color: var(--jt-accent-strong); font-weight: 600; }
+.jt-mobile-tab__bubble {
+  display: inline-flex; align-items: center; justify-content: center;
+  inline-size: 44px; block-size: 44px; margin-block: -22px 0; border-radius: var(--jt-radius-full);
+  background: var(--jt-accent); color: var(--jt-accent-fg, #fff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+.jt-mobile-tab--primary:hover .jt-mobile-tab__bubble, .jt-mobile-tab--primary.active .jt-mobile-tab__bubble { background: var(--jt-accent-strong); }
+.jt-mobile-tab--primary:hover svg, .jt-mobile-tab--primary.active svg { color: inherit; }
 .jt-mobile-tab:hover, .jt-mobile-tab.active { color: var(--jt-accent-strong); }
 .jt-mobile-tab:hover svg, .jt-mobile-tab.active svg { color: var(--jt-accent); }
 .jt-mobile-tab-badge {
@@ -3087,7 +3099,7 @@
   background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg);
   box-shadow: var(--jt-shadow-md);
 }
-.jt-mobile-tab-menu .jt-more-item { min-height: var(--jt-tap); padding-inline: var(--jt-space-4); font-size: 0.9375rem; }
+.jt-mobile-tab-menu .jt-more-item { min-height: max(var(--jt-tap), 44px); padding-inline: var(--jt-space-4); font-size: 0.9375rem; }
 .jt-mobile-tab-menu .jt-more-item svg { flex-shrink: 0; width: 18px; height: 18px; color: var(--jt-text-secondary); }
 
 /* ── Toast notification (standalone fallback) ── */

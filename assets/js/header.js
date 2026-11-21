@@ -307,33 +307,27 @@
 	}
 	function prepareProfileTab() {
 		var tab = document.querySelector('.jt-mobile-tab[data-jt-tab="profile"]');
-		if (!tab || !tabMenuExtras().length) { return; }
+		if (!tab || !document.getElementById('jt-mobile-tab-menu')) { return; }
 		tab.setAttribute('aria-haspopup', 'menu');
 		tab.setAttribute('aria-expanded', 'false');
 		tab.setAttribute('aria-controls', 'jt-mobile-tab-menu');
 	}
+	// The Me sheet is rendered by header.php (profile, my topics, bookmarks, leaderboard, settings). Opening it adds
+	// the top-nav-only links (Moderation, Pro's Messages) once, cloned so the hook output is never rendered twice.
 	function openTabMenu(tab) {
-		var bar = tab.closest('.jt-mobile-tabs');
 		var menu = document.getElementById('jt-mobile-tab-menu');
-		if (menu) { menu.remove(); }
-		menu = document.createElement('div');
-		menu.id = 'jt-mobile-tab-menu';
-		menu.className = 'jt-mobile-tab-menu';
-		menu.setAttribute('role', 'menu');
-		var own = document.createElement('a');
-		own.href = tab.href;
-		var ownIcon = tab.querySelector('svg');
-		if (ownIcon) { own.appendChild(ownIcon.cloneNode(true)); }
-		var ownLabel = document.createElement('span');
-		ownLabel.textContent = (tab.querySelector('span') || tab).textContent.trim();
-		own.appendChild(ownLabel);
-		[own].concat(tabMenuExtras().map(function (a) { return a.cloneNode(true); })).forEach(function (a) {
-			a.className = 'jt-more-item';
-			a.removeAttribute('title');
-			a.setAttribute('role', 'menuitem');
-			menu.appendChild(a);
-		});
-		bar.appendChild(menu);
+		if (!menu) { return; }
+		if (!menu.querySelector('[data-jt-extra]')) {
+			tabMenuExtras().forEach(function (a) {
+				var c = a.cloneNode(true);
+				c.className = 'jt-more-item';
+				c.setAttribute('data-jt-extra', '1');
+				c.removeAttribute('title');
+				c.setAttribute('role', 'menuitem');
+				menu.appendChild(c);
+			});
+		}
+		menu.hidden = false;
 		tab.setAttribute('aria-expanded', 'true');
 		var first = menu.querySelector('a');
 		if (first) { first.focus(); }
@@ -346,7 +340,7 @@
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
 		var tab = e.target.closest('.jt-mobile-tab[data-jt-tab="profile"]');
-		if (tab && tabMenuExtras().length) {
+		if (tab && document.getElementById('jt-mobile-tab-menu')) {
 			e.preventDefault();
 			var open = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
 			if (open) { closeTabMenu(false); } else { openTabMenu(tab); }
