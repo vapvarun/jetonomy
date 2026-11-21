@@ -34,6 +34,7 @@ The poll builder lets you:
 - Write up to 20 options (minimum 2 required).
 - Choose **Single choice** (members pick one) or **Multiple choice** (members pick several).
 - Optionally set a **Close date** - the poll stops accepting votes automatically at that date and time.
+- Choose **Show results**: **Always** (the default), **After a member votes** (so early votes do not steer later ones), or **After the poll closes**. The poll's author and moderators always see results, and everyone sees them once the poll closes. While results are hidden, the page and the REST API send no tallies or voter counts, only a note saying when they appear.
 
 ![The poll builder open in the new topic form, with the question, options, single or multiple choice and an optional close date](../images/pro-polls-composer.webp)
 The poll is attached to the topic and saved together when you click **Post**. You cannot attach a poll to a reply - only to top-level topics.
@@ -97,7 +98,7 @@ Polls registers these endpoints under `jetonomy/v1`:
 | `GET` | `/posts/{post_id}/poll` | Get a poll's options and live vote counts |
 | `POST` | `/polls/{id}/vote` | Cast a vote - pass `option_id` for single choice or `option_ids` (array) for multiple choice |
 | `DELETE` | `/polls/{id}/vote` | Remove your vote(s) from the poll |
-| `PATCH` | `/polls/{id}` | Update a poll (for example, change the close date) |
+| `PATCH` | `/polls/{id}` | Update a poll (for example, change the close date or `results_visibility`: `always`, `after_vote`, `after_close`) |
 
 Creating a poll and voting require the member to be logged in; poll creation additionally requires the right to post in the target space. See the [REST API reference](../developer-guide/01-rest-api.md) for full request and response payloads.
 
