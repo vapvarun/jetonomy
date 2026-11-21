@@ -126,6 +126,19 @@
 				top = tr.bottom + offset;
 			}
 
+			// Switch sides before sliding: a panel wider than the room on its preferred side (a 220px menu
+			// right-aligned to a button 194px from the edge) used to be clamped to the gutter, ending up
+			// far from its button and over unrelated content. Aligning to the other edge of the button keeps it
+			// attached when that side fits; clamping stays only for a panel that fits neither way.
+			var minLeft = flipPadding;
+			var maxLeft = window.innerWidth - pw - flipPadding;
+			if ( left < minLeft || left > maxLeft ) {
+				var other = horizontal === 'end' ? tr.left : tr.right - pw;
+				if ( other >= minLeft && other <= maxLeft ) {
+					left = other;
+				}
+			}
+
 			// Shift horizontal.
 			left = clamp( left, flipPadding, window.innerWidth - pw - flipPadding );
 
