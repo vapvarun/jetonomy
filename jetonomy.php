@@ -150,6 +150,17 @@ add_action(
 	}
 );
 
+// Free has no licence for an owner to manage: drop the SDK's "Manage License" row link (added at priority 100). Not the
+// SDK's 'keyless' flag: that sends an empty key on update checks, and Free's updates authenticate with the preset key.
+add_filter(
+	'plugin_action_links_' . plugin_basename( JETONOMY_FILE ),
+	static function ( $actions ) {
+		unset( $actions['edd_sdk_manage'] );
+		return $actions;
+	},
+	101
+);
+
 // SDK lives at libs/ (committed, ships in zip). Pro reads it via the same path.
 //
 // Load the vendored EDD SL SDK only when the package is COMPLETE. A partial

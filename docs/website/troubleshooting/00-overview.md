@@ -128,9 +128,9 @@ Common to all of them: access rules are evaluated when the member loads the spac
 
 ## Pro features are not available
 
-Check **Jetonomy -> Settings -> License** first. The Pro gate is all-or-nothing: a valid licence unlocks every extension, and an expired one closes them all once the grace window ends. There is no per-feature tier.
+The licence never turns a Pro feature off: it controls updates only. Check that the feature's extension is switched on.
 
-If the licence is active but a specific feature is missing, check it is switched on at **Jetonomy -> Extensions** - extensions are individually enabled, separately from licensing.
+Extensions are switched on one by one at **Jetonomy -> Extensions**. If an enabled feature is still missing, check that Jetonomy Pro is active and that its version matches Jetonomy.
 
 See [License](../admin-settings/14-license.md) for activation problems.
 

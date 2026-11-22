@@ -1622,7 +1622,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Jetonomy Pro License', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( 'Activate or manage your license key to unlock Pro extensions.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Activate or manage your license key to receive Pro updates. Every Pro feature works with or without it.', 'jetonomy' ); ?></p>
 				</div>
 				<?php
 				/**
