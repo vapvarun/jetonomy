@@ -66,7 +66,17 @@ The cards are server-rendered on every page load, so they show correctly even wi
 
 Members only see attachment cards on topics and replies they are allowed to read, and community uploads are left out of the WordPress media API (`/wp/v2/media`) for anyone who cannot manage media, so visitors cannot browse a list of files.
 
-Like every WordPress upload, the file itself sits in your `wp-content/uploads` folder and your web server sends it to anyone who has its exact address. If your private spaces hold sensitive documents, ask your host to protect the uploads folder (for example with a rule that only serves files to signed-in visitors), or keep such documents outside the community.
+With Pro, files in a private or hidden space are served only through Jetonomy's download link, which checks that the viewer may read the topic. The first time such a file is shown, Pro adds a small `.htaccess` file to that file's own folder under `wp-content/uploads/jetonomy/`, so its direct address stops working on Apache and LiteSpeed servers. If the space becomes public again, the next view removes it. Files in public spaces keep their normal, cacheable addresses.
+
+On **nginx**, `.htaccess` files are ignored. Ask your host to add a rule that blocks direct requests for folders that hold Jetonomy's marker file, for example:
+
+```nginx
+location ~ ^/wp-content/uploads/jetonomy/([0-9a-f]+)/ {
+    if (-f $document_root/wp-content/uploads/jetonomy/$1/.htaccess) { return 403; }
+}
+```
+
+Without that rule, a private file is still protected by its long random folder name, as before. Switching the Attachments extension off, or deactivating Pro, removes Pro's `.htaccess` files so the free plugin can keep showing every attachment.
 
 ## If You Deactivate Pro
 
@@ -76,6 +86,7 @@ Attachment link records live in the free plugin as of 1.8.0. Deactivating or uni
 
 - **Removing an attachment** detaches it from the post or reply; the underlying uploaded file is left alone in case it is still referenced elsewhere.
 - **Deleting a topic or reply** removes its attachment links automatically.
+- **Deleting the plugin**, even with "remove data" on, never deletes uploaded files. They stay in `wp-content/uploads/jetonomy/` and in the media library.
 - **Orphan cleanup** runs once a day: it drops link rows whose underlying file was removed some other way, and deletes community uploads that were never linked to any post or reply within 24 hours of being uploaded. This sweep is scoped strictly to files uploaded through the community composer, so it never touches the site owner's own WordPress media library. Cleanup only removes files this plugin created, never another forum plugin's media, so a migration can never lose files.
 
 ## REST API
