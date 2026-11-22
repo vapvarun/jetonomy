@@ -64,10 +64,10 @@ class PMPro_Adapter implements Membership_Adapter {
 			return array();
 		}
 
-		$needle = mb_strtolower( trim( $search ) );
+		$needle = \Jetonomy\lower( trim( $search ) );
 		$levels = array();
 		foreach ( (array) pmpro_getAllLevels( false, true ) as $level ) {
-			if ( '' !== $needle && false === mb_strpos( mb_strtolower( (string) $level->name ), $needle ) ) {
+			if ( '' !== $needle && ! str_contains( \Jetonomy\lower( (string) $level->name ), $needle ) ) {
 				continue;
 			}
 			$levels[] = array(

@@ -50,7 +50,7 @@ class Shortcodes {
 			return null;
 		}
 
-		return ctype_digit( $ref )
+		return is_digits( $ref )
 			? Models\Space::find( absint( $ref ) )
 			: Models\Space::find_by_slug( $ref );
 	}
@@ -360,7 +360,7 @@ class Shortcodes {
 			// Both branches resolve through the viewer's visibility, so a
 			// shortcode cannot surface a category (or the spaces inside it)
 			// that the community listing withholds from the same viewer.
-			$category = ctype_digit( $category_ref )
+			$category = is_digits( $category_ref )
 				? Models\Category::find_visible( absint( $category_ref ) )
 				: Models\Category::find_by_slug( $category_ref );
 			if ( ! $category ) {
@@ -523,7 +523,7 @@ class Shortcodes {
 		$space     = null;
 
 		if ( '' !== $space_ref ) {
-			$space = ctype_digit( $space_ref )
+			$space = is_digits( $space_ref )
 				? Models\Space::find( absint( $space_ref ) )
 				: Models\Space::find_by_slug( $space_ref );
 

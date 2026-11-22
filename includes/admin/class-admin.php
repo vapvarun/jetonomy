@@ -31,6 +31,7 @@ class Admin {
 		add_action( 'admin_page_access_denied', array( $this, 'explain_access_rules_refusal' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_notices', array( $this, 'render_permalink_notice' ) );
+		add_action( 'admin_notices', array( $this, 'render_php_extensions_notice' ) );
 		add_action( 'admin_init', array( $this, 'maybe_render_setup_wizard' ) );
 		// A6: intercepts the CSV export request before any output is sent so
 		// the download streams cleanly without admin-header HTML interleaving.
@@ -464,6 +465,26 @@ class Admin {
 			esc_html__( 'your community cannot be reached while permalinks are set to Plain. Visitors see the homepage instead.', 'jetonomy' ),
 			esc_url( admin_url( 'options-permalink.php' ) ),
 			esc_html__( 'Choose a permalink structure', 'jetonomy' )
+		);
+	}
+
+	/**
+	 * A PHP build without mbstring, dom or ctype keeps working (the affected features step aside); say so on
+	 * Jetonomy's own screens so the owner can ask the host to enable them.
+	 */
+	public function render_php_extensions_notice(): void {
+		$page = sanitize_key( wp_unslash( $_GET['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! current_user_can( 'manage_options' ) || 0 !== strpos( $page, 'jetonomy' ) ) {
+			return;
+		}
+		$missing = \Jetonomy\missing_php_extensions();
+		if ( ! $missing ) {
+			return;
+		}
+		printf(
+			'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p></div>',
+			esc_html( sprintf( /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ __( '%s:', 'jetonomy' ), self::brand_name() ) ),
+			esc_html( sprintf( /* translators: %s: comma-separated PHP extension names. */ __( 'your server is missing the PHP extension(s) %s. Jetonomy keeps working, but search highlighting, link previews and some text handling are limited. Ask your host to enable them.', 'jetonomy' ), implode( ', ', $missing ) ) )
 		);
 	}
 

@@ -313,7 +313,7 @@ class AccessRule extends Model {
 	 */
 	public static function value_error( string $rule_type, string $rule_value ): ?\WP_Error {
 		$ok = match ( $rule_type ) {
-			'trust_level'               => ctype_digit( $rule_value ) && (int) $rule_value >= 1 && (int) $rule_value <= 5,
+			'trust_level'               => \Jetonomy\is_digits( (string) $rule_value ) && (int) $rule_value >= 1 && (int) $rule_value <= 5,
 			'role'                      => '' !== $rule_value && wp_roles()->is_role( $rule_value ),
 			'capability', 'membership'  => '' !== $rule_value,
 			default                     => true,

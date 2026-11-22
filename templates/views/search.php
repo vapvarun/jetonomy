@@ -149,7 +149,7 @@ $jt_result_total = $jt_posts_total + $jt_spaces_total + $jt_tags_total;
 $jt_hl_terms = array();
 if ( $jt_has_query ) {
 	foreach ( (array) preg_split( '/[^\p{L}\p{N}]+/u', $q, -1, PREG_SPLIT_NO_EMPTY ) as $jt_term ) {
-		$jt_hl_terms[] = mb_strtolower( remove_accents( (string) $jt_term ) );
+		$jt_hl_terms[] = \Jetonomy\lower( remove_accents( (string) $jt_term ) );
 	}
 }
 
@@ -167,7 +167,8 @@ if ( $jt_has_query ) {
 $jt_highlight = static function ( string $text ) use ( $jt_hl_terms ): string {
 	$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	$esc  = static fn( string $s ): string => htmlspecialchars( $s, ENT_QUOTES, 'UTF-8' );
-	if ( ! $jt_hl_terms || '' === $text ) {
+	// Without mbstring the highlighter cannot index characters: show the text unmarked rather than fatal.
+	if ( ! $jt_hl_terms || '' === $text || ! function_exists( 'mb_strpos' ) || ! function_exists( 'mb_strtolower' ) ) {
 		return $esc( $text );
 	}
 

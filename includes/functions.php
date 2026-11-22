@@ -401,7 +401,7 @@ function mid_sentence( string $noun ): string {
 	if ( ! apply_filters( 'jetonomy_label_lowercase', ! in_array( strtok( $locale, '_' ), array( 'de', 'lb' ), true ), $locale ) ) {
 		return $noun;
 	}
-	return mb_strtolower( $noun );
+	return lower( $noun );
 }
 
 /**
@@ -1388,6 +1388,41 @@ function time_ago( string $gmt ): string {
 	$span = time_span( $gmt );
 	/* translators: %s: human-readable time difference, e.g. "2 hours". */
 	return '' === $span ? '' : sprintf( __( '%s ago', 'jetonomy' ), $span );
+}
+
+/**
+ * Lower-case a string without requiring the mbstring extension (a host without it must not fatal a community page).
+ *
+ * @param string $text Text.
+ * @return string
+ */
+function lower( string $text ): string {
+	return function_exists( 'mb_strtolower' ) ? mb_strtolower( $text ) : strtolower( $text );
+}
+
+/**
+ * Whether a string is only ASCII digits, without requiring the ctype extension.
+ *
+ * @param string $text Text.
+ * @return bool
+ */
+function is_digits( string $text ): bool {
+	return 1 === preg_match( '/^[0-9]+$/D', $text );
+}
+
+/**
+ * PHP extensions Jetonomy needs for every feature but degrades without (it never fatals on their absence).
+ *
+ * @return string[] Names of the missing extensions.
+ */
+function missing_php_extensions(): array {
+	$missing = array();
+	foreach ( array( 'mbstring', 'dom', 'ctype' ) as $ext ) {
+		if ( ! extension_loaded( $ext ) ) {
+			$missing[] = $ext;
+		}
+	}
+	return $missing;
 }
 
 /**

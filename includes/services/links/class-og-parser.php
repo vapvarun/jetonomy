@@ -91,6 +91,11 @@ final class OG_Parser {
 	private function collect_meta( string $html ): array {
 		$meta = array();
 
+		// A PHP build without the dom extension gets a plain link, not a fatal.
+		if ( ! class_exists( '\DOMDocument' ) ) {
+			return $meta;
+		}
+
 		$dom        = new \DOMDocument();
 		$prev_error = libxml_use_internal_errors( true );
 		// UTF-8 preamble forces DOMDocument's default ISO-8859-1 assumption
