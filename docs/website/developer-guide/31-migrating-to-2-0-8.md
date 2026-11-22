@@ -44,7 +44,7 @@ a deprecation notice until 2.1.0.
 | `Space_Purge::clear_scheduled()`, `Recount_Backfill::clear_scheduled()` | Cancelled their job on deactivation | Removed. Deactivation cancels through `Queue::cancel_on_deactivate()`, which keeps an in-flight space purge pending. |
 
 New on `\Jetonomy\Queue`: `when_ready()`, `is_pending()`, `pending_args()` (oldest 100), `ensure_recurring()`, `delete_rows()`,
-`is_scheduling_request()`, `prune_history()`, `now()`, `cancel_on_deactivate()`, the `TIME_BUDGET` constant (10 seconds per prune or delete call)
+`is_scheduling_request()`, `prune_history()`, `now()`, `cancel_on_deactivate()`, `flag_recovery()`, `recover_kept_jobs()`, the `TIME_BUDGET` constant (10 seconds per prune or delete call)
 and the `KEEP_ON_DEACTIVATE` list.
 
 ## Renamed
@@ -74,6 +74,8 @@ Code examples for each are in [Background Jobs](./30-background-jobs.md).
 - Deactivating Free or Pro leaves work already promised queued: a space purge in progress, scheduled topics,
   subscriber notifications, a site announcement and the Pro upgrade conversion stay queued through an update
   (`Queue::KEEP_ON_DEACTIVATE`); recurring sweeps, digests and sends are still cancelled and re-armed on activation.
+  If one of those jobs failed while the plugin was off (another plugin's Action Scheduler ran it with no listener),
+  activation queues it again with the same arguments.
 - Jetonomy deletes its own completed and cancelled jobs 7 days after they finished and its own failed jobs after 90
   days, for at most 10 seconds and 10,000 rows per status a day (50 runs of 200); a larger backlog is cleared over
   the following days. Other plugins' jobs and Action Scheduler's site-wide retention are not touched.

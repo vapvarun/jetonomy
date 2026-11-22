@@ -140,6 +140,7 @@ final class Jetonomy {
 
 		require_once JETONOMY_DIR . 'includes/db/class-schema.php';
 		DB\Schema::create_tables();
+		Queue::flag_recovery(); // Kept jobs that failed while Jetonomy was off are queued again on the next scheduling request.
 
 		require_once JETONOMY_DIR . 'includes/permissions/class-capabilities.php';
 		Permissions\Capabilities::register();

@@ -75,4 +75,57 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 			Queue::cancel( 'jetonomy_pro_deliver_webhook' );
 		}
 	}
+
+	/** Run one pending row the way another plugin's runner would. */
+	private function run_row( int $id ): void {
+		\ActionScheduler::runner()->process_action( $id, 'WP Cron' );
+	}
+
+	private function status( int $id ): string {
+		return (string) \ActionScheduler::store()->get_status( (string) $id );
+	}
+
+	/**
+	 * While Jetonomy is off another plugin's runner fails a kept row ("no callbacks are registered"); after activation
+	 * the next scheduling request queues it again with the same args and deletes the failed row. A row that really ran
+	 * and threw stays failed.
+	 */
+	public function test_a_kept_job_failed_while_off_is_queued_again_after_activation(): void {
+		$args   = array( 'space_id' => 4242 );
+		$orphan = (int) as_enqueue_async_action( Space_Purge::BATCH_HOOK, $args, Queue::GROUP );
+		\Jetonomy\Jetonomy::instance()->deactivate();
+		$this->assertSame( 'pending', $this->status( $orphan ) );
+
+		remove_all_actions( Space_Purge::BATCH_HOOK ); // Jetonomy is off: no listener (the test case restores hooks).
+		$this->run_row( $orphan );
+		$this->assertSame( 'failed', $this->status( $orphan ), 'no listener: Action Scheduler fails the row' );
+
+		$boom = static function () {
+			throw new \RuntimeException( 'database went away' );
+		};
+		add_action( Space_Purge::BATCH_HOOK, $boom );
+		$real = (int) as_enqueue_async_action( Space_Purge::BATCH_HOOK, array( 'space_id' => 4343 ), Queue::GROUP );
+		$this->run_row( $real );
+		remove_action( Space_Purge::BATCH_HOOK, $boom );
+		$this->assertSame( 'failed', $this->status( $real ) );
+
+		add_action( Space_Purge::BATCH_HOOK, '__return_null' ); // Jetonomy is on again: the hook has a listener.
+		Queue::flag_recovery(); // As activate() does.
+		add_filter( 'wp_doing_cron', '__return_true' ); // The next scheduling request.
+		try {
+			$this->assertSame( 1, Queue::recover_kept_jobs() );
+			$this->assertSame( 0, Queue::recover_kept_jobs(), 'the flag is cleared once a pass finds less than a batch' );
+		} finally {
+			remove_filter( 'wp_doing_cron', '__return_true' );
+		}
+
+		$pending = as_get_scheduled_actions( array( 'hook' => Space_Purge::BATCH_HOOK, 'status' => 'pending', 'per_page' => 10 ) );
+		$this->assertCount( 1, $pending, 'one pending copy' );
+		$this->assertSame( $args, reset( $pending )->get_args(), 'same args' );
+		$this->assertNotSame( 'failed', $this->status( $orphan ), 'the failed row is deleted' );
+		global $wpdb;
+		$this->assertSame( 0, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}actionscheduler_logs WHERE action_id = %d", $orphan ) ), 'with its logs' ); // phpcs:ignore WordPress.DB
+		$this->assertSame( 'failed', $this->status( $real ), 'a job that really ran and errored stays failed' );
+		\ActionScheduler::store()->delete_action( (string) $real );
+	}
 }

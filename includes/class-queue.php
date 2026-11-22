@@ -254,8 +254,9 @@ final class Queue {
 	 * - jetonomy_pro_upgrade_jobs: converts the old version's queued jobs; the version is already stored, so nothing
 	 *   would queue it again and old rows (with their secrets) would stay.
 	 *
-	 * Limit: while the plugin stays off, Action Scheduler (loaded by another plugin) runs these rows with no
-	 * listener and marks them complete after its next run, about a minute; the update flow re-activates first.
+	 * While the plugin stays off, Action Scheduler loaded by another plugin runs these rows with no listener and marks
+	 * them FAILED ("no callbacks are registered") on its next run, about a minute; recover_kept_jobs() queues them
+	 * again after activation. The update flow re-activates first and loses nothing.
 	 * Member erasure and moderation cascades run in the request (no job), so none is listed.
 	 */
 	public const KEEP_ON_DEACTIVATE = array(
@@ -266,6 +267,84 @@ final class Queue {
 		'jetonomy_pro_announce_post',
 		'jetonomy_pro_upgrade_jobs',
 	);
+
+	/** Transient set on activation: recover kept jobs that failed while the plugin was off. */
+	public const RECOVER_FLAG = 'jetonomy_recover_kept_jobs';
+
+	/** Failed rows recovered per scheduling request; the flag stays until a pass finds fewer. */
+	public const RECOVER_BATCH = 200;
+
+	/**
+	 * Called by Free's and Pro's activation: the next scheduling request runs recover_kept_jobs().
+	 *
+	 * @since 2.0.8
+	 */
+	public static function flag_recovery(): void {
+		set_transient( self::RECOVER_FLAG, 1, WEEK_IN_SECONDS );
+	}
+
+	/**
+	 * Put back kept jobs (KEEP_ON_DEACTIVATE) that another plugin's Action Scheduler ran while ours was off: with no
+	 * listener they failed with "no callbacks are registered". Only rows whose log says so are re-queued, so a job
+	 * that really ran and errored stays failed. Each is queued again once (async_once, same args) and the failed row is
+	 * deleted with its logs. Runs on scheduling requests while the activation flag is set, RECOVER_BATCH rows at a
+	 * time, and only for hooks that have a listener now (Pro's are skipped while Pro is off). Rows already pruned
+	 * (failed rows are kept FAILED_RETENTION_DAYS) cannot be recovered.
+	 *
+	 * @since 2.0.8
+	 *
+	 * @return int Rows re-queued.
+	 */
+	public static function recover_kept_jobs(): int {
+		if ( ! get_transient( self::RECOVER_FLAG ) || ! self::has_as() || ! self::is_scheduling_request() ) {
+			return 0;
+		}
+		$hooks = array_values( array_filter( self::KEEP_ON_DEACTIVATE, 'has_action' ) );
+		if ( ! $hooks ) {
+			return 0;
+		}
+		global $wpdb;
+		$actions = $wpdb->prefix . 'actionscheduler_actions';
+		$groups  = $wpdb->prefix . 'actionscheduler_groups';
+		$logs    = $wpdb->prefix . 'actionscheduler_logs';
+		// Action Scheduler writes the message in the runner's language: match English and the current translation.
+		$english = '%' . $wpdb->esc_like( 'will not be executed as no callbacks are registered' ) . '%';
+		/* translators: Action Scheduler's own string, matched as written in its log. */
+		$frag  = trim( (string) preg_replace( '/^.*%1\$s/', '', __( 'Scheduled action for %1$s will not be executed as no callbacks are registered.', 'action-scheduler' ) ) ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+		$local = mb_strlen( $frag ) >= 10 ? '%' . $wpdb->esc_like( $frag ) . '%' : $english; // Too short to match on its own.
+		$in    = implode( ',', array_fill( 0, count( $hooks ), '%s' ) );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Action Scheduler's API cannot filter by log message.
+		$ids = array_map(
+			'intval',
+			$wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT a.action_id FROM {$actions} a INNER JOIN {$groups} g ON g.group_id = a.group_id
+					WHERE g.slug = %s AND a.status = 'failed' AND a.hook IN ({$in})
+					AND EXISTS ( SELECT 1 FROM {$logs} l WHERE l.action_id = a.action_id AND ( l.message LIKE %s OR l.message LIKE %s ) )
+					ORDER BY a.action_id LIMIT %d",
+					array_merge( array( self::GROUP ), $hooks, array( $english, $local, self::RECOVER_BATCH ) )
+				)
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$store = \ActionScheduler::store();
+		$done  = 0;
+		foreach ( $ids as $id ) {
+			try {
+				$action = $store->fetch_action( (string) $id );
+				if ( self::async_once( $action->get_hook(), (array) $action->get_args() ) ) {
+					$store->delete_action( (string) $id );
+					++$done;
+				}
+			} catch ( \Throwable $e ) {
+				unset( $e ); // Deleted by another process meanwhile: nothing to recover.
+			}
+		}
+		if ( count( $ids ) < self::RECOVER_BATCH ) {
+			delete_transient( self::RECOVER_FLAG );
+		}
+		return $done;
+	}
 
 	/**
 	 * Deactivation's cancel: cancel each hook unless it is in KEEP_ON_DEACTIVATE.

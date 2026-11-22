@@ -42,7 +42,9 @@ Deactivating Jetonomy or Jetonomy Pro, the first step of every manual update, ca
 purge, scheduled topics, subscriber notifications for published content, a site announcement and the Pro upgrade
 conversion. The list is `\Jetonomy\Queue::KEEP_ON_DEACTIVATE`; cancel your own jobs on deactivation with
 `\Jetonomy\Queue::cancel_on_deactivate( $hooks )` so the same rule applies. If the plugin stays off and another
-plugin runs Action Scheduler, a kept job runs with no listener and is marked complete about a minute later.
+plugin runs Action Scheduler, a kept job runs with no listener and fails ("no callbacks are registered") about a minute
+later; after the plugin is activated again, Jetonomy queues those jobs again with the same arguments, unless they
+are older than the 90 days failed jobs are kept.
 
 ## Filters
 

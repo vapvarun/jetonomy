@@ -86,6 +86,9 @@ class Cron {
 		add_action( 'jetonomy_cleanup_notifications', array( $this, 'cleanup_old_notifications' ) );
 		add_action( 'jetonomy_publish_scheduled', array( $this, 'publish_scheduled_posts' ) ); // A retry passes its attempt number.
 		add_action( 'jetonomy_cleanup_media', array( \Jetonomy\Media_Library::class, 'run_scheduled_cleanup' ) );
+		// After activation: re-queue kept jobs that failed with no listener while the plugin was off. wp_loaded, so Pro's
+		// listeners are registered and its kept hooks count too.
+		add_action( 'wp_loaded', array( Queue::class, 'recover_kept_jobs' ) );
 
 		// Self-heal: ensure every recurring action is registered. We hook the
 		// 'action_scheduler_init' action AS fires once its data store is ready

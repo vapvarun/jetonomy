@@ -131,18 +131,23 @@ else can rebuild, stay pending. Jetonomy keeps ONE list, `\Jetonomy\Queue::KEEP_
 deactivation path (Free's `Cron::unschedule()`, Pro's `deactivate()`, each extension's base `deactivate()`) cancels
 through `Queue::cancel_on_deactivate()`, which skips it:
 
-| Kept hook | Why it must survive |
-|---|---|
-| `jetonomy_space_purge_batch` | Deletes the rows of a space the owner deleted; the space row is already gone. |
-| `jetonomy_publish_scheduled` | Publishes topics their authors scheduled. |
-| `jetonomy_fanout_post_subscribers`, `jetonomy_fanout_reply_subscribers` | Write the in-app notifications for content already published; push and email are delivery and may drop, the in-app record may not. |
-| `jetonomy_pro_announce_post` | Notifies members of an announcement the owner published. |
-| `jetonomy_pro_upgrade_jobs` | Converts the old version's queued jobs; the version is already stored, so nothing queues it again. |
+| Kept hook | Why it must survive | Recovery if it failed while the plugin was off |
+|---|---|---|
+| `jetonomy_space_purge_batch` | Deletes the rows of a space the owner deleted; the space row is already gone. | Re-queued after Free's activation |
+| `jetonomy_publish_scheduled` | Publishes topics their authors scheduled. | Re-queued after Free's activation |
+| `jetonomy_fanout_post_subscribers`, `jetonomy_fanout_reply_subscribers` | Write the in-app notifications for content already published; push and email are delivery and may drop, the in-app record may not. | Re-queued after Free's activation |
+| `jetonomy_pro_announce_post` | Notifies members of an announcement the owner published. | Re-queued after Pro's activation |
+| `jetonomy_pro_upgrade_jobs` | Converts the old version's queued jobs; the version is already stored, so nothing queues it again. | Re-queued after Pro's activation |
 
-Member erasure and moderation cascades run inside the request (no job), so none is listed. Honest limit: while the
-plugin stays off, Action Scheduler loaded by another plugin runs a kept row with no listener and marks it complete
-on its next run (about a minute). The update flow re-activates before that and loses nothing. Add a new hook to the
-list only for the same reason, with its row in this table.
+Member erasure and moderation cascades run inside the request (no job), so none is listed. While the plugin stays
+off, Action Scheduler loaded by another plugin runs a kept row with no listener and marks it FAILED ("no callbacks
+are registered") on its next run, about a minute. Activation sets a flag (`Queue::flag_recovery()`), and on the next
+scheduling requests `Queue::recover_kept_jobs()` re-queues those rows: only failed rows of kept hooks whose log
+carries that message (a job that really ran and errored stays failed), 200 per request, same args, one pending copy
+(`async_once`), and the failed row is deleted with its logs. Only hooks with a listener at that moment are recovered,
+so Pro's wait for Pro. What remains lost: a failed row already pruned, older than the 90-day failed retention. The
+update flow re-activates before the runner reaches the rows and loses nothing. Add a new hook to the list only for the
+same reason, with its row in this table.
 
 ```php
 public static function deactivate_cron(): void {
