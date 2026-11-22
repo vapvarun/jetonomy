@@ -99,6 +99,7 @@
 			panelEl.style.visibility = 'hidden';
 			panelEl.style.top = '0px';
 			panelEl.style.left = '0px';
+			panelEl.style.maxWidth = '';
 
 			var tr = triggerEl.getBoundingClientRect();
 			var pr = panelEl.getBoundingClientRect();
@@ -113,18 +114,7 @@
 				horizontal = horizontal === 'start' ? 'end' : 'start';
 			}
 
-			// Initial position.
-			var top = vertical === 'bottom' ? tr.bottom + offset : tr.top - ph - offset;
 			var left = horizontal === 'end' ? tr.right - pw : tr.left;
-
-			// Flip vertical.
-			if ( vertical === 'bottom' && top + ph > viewportBottom() - flipPadding ) {
-				top = tr.top - ph - offset;
-			}
-			if ( top < flipPadding ) {
-				// Force bottom if forced off-screen at top.
-				top = tr.bottom + offset;
-			}
 
 			// Switch sides before sliding: a panel wider than the room on its preferred side (a 220px menu
 			// right-aligned to a button 194px from the edge) used to be clamped to the gutter, ending up
@@ -136,11 +126,35 @@
 				var other = horizontal === 'end' ? tr.left : tr.right - pw;
 				if ( other >= minLeft && other <= maxLeft ) {
 					left = other;
+				} else {
+					// Neither edge fits (a 220px menu by a mid-screen button on a 320px phone): narrow the panel
+					// to the roomier side so it stays edge-aligned to its button; rows wrap instead. Below 160px
+					// a menu is unreadable, so it falls through to the clamp.
+					var roomEnd = tr.right - flipPadding;
+					var roomStart = window.innerWidth - flipPadding - tr.left;
+					var room = Math.floor( Math.max( roomEnd, roomStart ) );
+					if ( room >= 160 ) {
+						panelEl.style.maxWidth = room + 'px';
+						pr = panelEl.getBoundingClientRect();
+						pw = pr.width;
+						ph = pr.height;
+						left = roomEnd >= roomStart ? tr.right - pw : tr.left;
+					}
 				}
 			}
 
 			// Shift horizontal.
 			left = clamp( left, flipPadding, window.innerWidth - pw - flipPadding );
+
+			// Vertical, after the width is final (a narrowed panel is taller).
+			var top = vertical === 'bottom' ? tr.bottom + offset : tr.top - ph - offset;
+			if ( vertical === 'bottom' && top + ph > viewportBottom() - flipPadding ) {
+				top = tr.top - ph - offset;
+			}
+			if ( top < flipPadding ) {
+				// Force bottom if forced off-screen at top.
+				top = tr.bottom + offset;
+			}
 
 			panelEl.style.top = Math.round( top ) + 'px';
 			panelEl.style.left = Math.round( left ) + 'px';
