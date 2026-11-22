@@ -155,12 +155,7 @@ $crumbs[] = array(
 	'url'   => '',
 );
 
-$role_labels = array(
-	'viewer'    => __( 'Viewer', 'jetonomy' ),
-	'member'    => __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
-	'moderator' => __( 'Moderator', 'jetonomy' ),
-	'admin'     => __( 'Admin', 'jetonomy' ),
-);
+$role_labels = \Jetonomy\space_role_labels();
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 

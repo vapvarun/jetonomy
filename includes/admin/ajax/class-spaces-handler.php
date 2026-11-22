@@ -661,7 +661,7 @@ class Spaces_Handler {
 		wp_send_json_success(
 			array(
 				'message' => AccessRule::updated_message( $rule_id ),
-				'role'    => ucfirst( AccessRule::role_for_grants( $grants ) ),
+				'role'    => \Jetonomy\space_role_labels()[ AccessRule::role_for_grants( $grants ) ] ?? '',
 			)
 		);
 	}

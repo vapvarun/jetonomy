@@ -434,11 +434,7 @@ class Template_Loader {
 					'pickerReplySingular'    => esc_html( sprintf( __( '%%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
 					/* translators: %d: number of replies; %s: the reply label (substituted server-side). */
 					'pickerReplyPlural'      => esc_html( sprintf( __( '%%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ),
-					'roleLabels'             => array(
-						'member'    => __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
-						'moderator' => __( 'Moderator', 'jetonomy' ),
-						'admin'     => __( 'Admin', 'jetonomy' ),
-					),
+					'roleLabels'             => \Jetonomy\space_role_labels(),
 					'failedSaveProfile'      => __( 'Failed to save profile.', 'jetonomy' ),
 					// space-members ban dialog (translator placeholders).
 					/* translators: 1: member display name (substituted client-side); 2: singular space label; 3: plural topic label; 4: plural reply label. */

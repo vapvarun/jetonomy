@@ -139,7 +139,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 			<div class="jt-sidebar-meta">
 				<span class="jt-tag"><?php echo esc_html( $space_type_labels[ $space_type ] ?? ucfirst( $space_type ) ); ?></span>
 				<?php if ( 'public' !== ( $space->visibility ?? 'public' ) ) : ?>
-					<span class="jt-tag"><?php echo esc_html( ucfirst( $space->visibility ) ); ?></span>
+					<span class="jt-tag"><?php echo esc_html( \Jetonomy\space_visibility_label( (string) $space->visibility ) ); ?></span>
 				<?php endif; ?>
 			</div>
 			<?php

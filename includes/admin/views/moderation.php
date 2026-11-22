@@ -356,7 +356,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									}
 									break;
 								case 'reason':
-									echo '<span class="jetonomy-badge jetonomy-badge--flag-' . esc_attr( $f->reason ) . '">' . esc_html( ucfirst( str_replace( '_', ' ', $f->reason ) ) ) . '</span>';
+									echo '<span class="jetonomy-badge jetonomy-badge--flag-' . esc_attr( $f->reason ) . '">' . esc_html( \Jetonomy\Models\Flag::reason_labels()[ $f->reason ] ?? ucfirst( str_replace( '_', ' ', $f->reason ) ) ) . '</span>';
 									break;
 								case 'description':
 									echo esc_html( $f->description ? $f->description : '—' );

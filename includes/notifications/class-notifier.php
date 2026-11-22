@@ -1638,6 +1638,22 @@ class Notifier {
 	 * and filters until 2.0.2.
 	 */
 	public static function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {
+		// Subject, template defaults and layout strings in the recipient's language, not the actor's or the site's.
+		// Limit: $message was composed when the notification was created, in that request's language.
+		$switched = switch_to_user_locale( $user_id );
+		try {
+			self::send_email_in_locale( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
+		} finally {
+			if ( $switched ) {
+				restore_previous_locale();
+			}
+		}
+	}
+
+	/**
+	 * The body of send_email_notification(), run inside the recipient's locale.
+	 */
+	private static function send_email_in_locale( int $user_id, string $type, string $message, string $object_type, int $object_id, string $url, array $extra ): void {
 		$user = get_userdata( $user_id );
 		if ( ! $user || ! $user->user_email ) {
 			return;

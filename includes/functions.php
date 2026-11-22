@@ -1762,6 +1762,21 @@ function space_visibility_label( string $visibility ): string {
 }
 
 /**
+ * Translated name per space role, keyed by the stored role. The one map for the members page, the admin access
+ * rules and the client-side role labels, so a role is never shown as ucfirst() of its raw value.
+ *
+ * @return array<string, string>
+ */
+function space_role_labels(): array {
+	return array(
+		'viewer'    => __( 'Viewer', 'jetonomy' ),
+		'member'    => __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
+		'moderator' => __( 'Moderator', 'jetonomy' ),
+		'admin'     => __( 'Admin', 'jetonomy' ),
+	);
+}
+
+/**
  * Human labels for the post/reply `status` enum, keyed by stored value.
  *
  * One map for the Content and Replies screens, which each carried their own

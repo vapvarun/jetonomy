@@ -630,7 +630,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							case 'role':
 								// The role a sync would actually store, not the raw column
 								// of a rule saved before rules were capped at Member.
-								echo '<span class="jetonomy-rule-role">' . esc_html( ucfirst( \Jetonomy\Models\AccessRule::role_for_grants( (string) $rule->grants ) ) ) . '</span>';
+								echo '<span class="jetonomy-rule-role">' . esc_html( \Jetonomy\space_role_labels()[ \Jetonomy\Models\AccessRule::role_for_grants( (string) $rule->grants ) ] ?? '' ) . '</span>';
 								break;
 							case 'actions':
 								echo '<div class="jetonomy-rule-actions">';
