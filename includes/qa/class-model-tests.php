@@ -3113,6 +3113,10 @@ class Model_Tests {
 			$this->skip( 'HP1: old completed Jetonomy jobs are pruned with their logs', 'Action Scheduler not loaded' );
 			return;
 		}
+		if ( ! method_exists( \Jetonomy\Queue::class, 'prune_history' ) ) {
+			$this->check( 'HP1: old completed Jetonomy jobs are pruned with their logs', false, 'Queue::prune_history() missing' );
+			return;
+		}
 		global $wpdb;
 		$hook  = 'jetonomy_qa_history_probe'; // Test-only hook.
 		$store = \ActionScheduler::store();
@@ -3128,7 +3132,7 @@ class Model_Tests {
 		$logs   = $wpdb->prefix . 'actionscheduler_logs';
 		$had    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$logs} WHERE action_id = %d", $old ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		// Our own older history may sit ahead of the probe in a 200-row run, so run until the probe is reached.
-		for ( $i = 0; $i < 50 && 200 === \Jetonomy\Queue::prune_history(); $i++ ) {
+		for ( $i = 0; $i < 50 && 0 < \Jetonomy\Queue::prune_history(); $i++ ) {
 			continue;
 		}
 		$exists = static fn( int $id ): bool => (bool) $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$wpdb->prefix}actionscheduler_actions WHERE action_id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
@@ -3136,11 +3140,20 @@ class Model_Tests {
 		$this->check( 'HP1: a Jetonomy job completed 8 days ago is deleted with its log rows', ! $exists( $old ) && $had > 0 && 0 === $left, "exists={$exists( $old )} logs {$had}->{$left}" );
 		$this->check( 'HP2: a recent job, a failed job and another plugin\'s job are kept', $exists( $recent ) && $exists( $failed ) && $exists( $other ) );
 
+		// HP4: Action Scheduler 3.x never purges failed rows, so a Jetonomy job that failed over 90 days ago goes here.
+		$stale_failed = $make( 91, 'jetonomy', 'failed' );
+		$other_failed = $make( 91, 'jt-qa-other-group', 'failed' );
+		for ( $i = 0; $i < 50 && 0 < \Jetonomy\Queue::prune_history(); $i++ ) {
+			continue;
+		}
+		$this->check( 'HP4: a Jetonomy job that failed 91 days ago is deleted; another plugin\'s is kept', ! $exists( $stale_failed ) && $exists( $other_failed ) );
+		$store->delete_action( $other_failed );
+
 		// HP3: the family-wide retention filter shortens the window.
 		$keep_one = static fn(): int => 1;
 		add_filter( 'jetonomy_finished_action_retention_days', $keep_one );
 		$two_days = $make( 2, 'jetonomy', 'complete' );
-		for ( $i = 0; $i < 50 && 200 === \Jetonomy\Queue::prune_history(); $i++ ) {
+		for ( $i = 0; $i < 50 && 0 < \Jetonomy\Queue::prune_history(); $i++ ) {
 			continue;
 		}
 		remove_filter( 'jetonomy_finished_action_retention_days', $keep_one );

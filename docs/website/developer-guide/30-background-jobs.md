@@ -22,7 +22,8 @@ shows together under **Tools > Scheduled Actions** (filter the group by `jetonom
 - **Recurring jobs are armed only on cron, wp-admin and WP-CLI requests**, never on a visitor's page view.
 - **Jetonomy trims only its own history.** Action Scheduler keeps every plugin's finished jobs for 31 days and
   Jetonomy does not change that site-wide setting. It deletes its own completed jobs, with their log rows, after
-  7 days. Failed and pending jobs are kept until you uninstall.
+  7 days, and its failed jobs after 90 days (the window Action Scheduler 4.0 uses; older Action Scheduler
+  versions never delete failed jobs). Pending jobs are kept until you uninstall.
 
 The full list of jobs (hook, trigger, arguments, rows per event) is in `docs/standards/background-jobs.md`,
 section 9, in the plugin repository.

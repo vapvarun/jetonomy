@@ -27,6 +27,9 @@ final class Queue {
 	/** Finished jobs deleted per prune_history() call. */
 	private const PRUNE_BATCH = 200;
 
+	/** Days a failed Jetonomy job is kept for diagnosis: Action Scheduler 4.0's own default for failed rows. */
+	private const FAILED_RETENTION_DAYS = 90;
+
 	/**
 	 * Whether Action Scheduler is loaded and may be called. Its functions exist
 	 * from plugins_loaded, but its store is not ready before action_scheduler_init.
@@ -181,28 +184,46 @@ final class Queue {
 		}
 		/**
 		 * Days a finished (completed) Jetonomy job is kept before Jetonomy deletes it with its log rows. Only the
-		 * 'jetonomy' group is touched; failed and pending jobs are never deleted.
+		 * 'jetonomy' group is touched; pending jobs are never deleted.
 		 *
 		 * @since 2.0.8
 		 *
 		 * @param int $days Whole days, at least 1. Default 7.
 		 */
 		$days = max( 1, (int) apply_filters( 'jetonomy_finished_action_retention_days', self::FINISHED_RETENTION_DAYS ) );
-		$ids  = as_get_scheduled_actions(
-			array(
-				'group'        => self::GROUP,
-				'status'       => \ActionScheduler_Store::STATUS_COMPLETE,
-				'date'         => gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ),
-				'date_compare' => '<',
-				'per_page'     => self::PRUNE_BATCH,
-				'orderby'      => 'none',
-			),
-			'ids'
+		$ids  = array_merge(
+			self::history_ids( \ActionScheduler_Store::STATUS_COMPLETE, $days ),
+			// Action Scheduler 4.0 purges failed rows after 90 days itself; 3.x never does, so own rows go here too.
+			self::history_ids( \ActionScheduler_Store::STATUS_FAILED, self::FAILED_RETENTION_DAYS )
 		);
 		$store = \ActionScheduler::store();
-		foreach ( (array) $ids as $id ) {
+		foreach ( $ids as $id ) {
 			$store->delete_action( (int) $id ); // The DB logger deletes the action's log rows on this hook.
 		}
-		return count( (array) $ids );
+		return count( $ids );
+	}
+
+	/**
+	 * Ids of up to PRUNE_BATCH Jetonomy jobs with a status, scheduled more than $days days ago.
+	 *
+	 * @param string $status Action Scheduler status.
+	 * @param int    $days   Age in days.
+	 * @return int[]
+	 */
+	private static function history_ids( string $status, int $days ): array {
+		return array_map(
+			'intval',
+			(array) as_get_scheduled_actions(
+				array(
+					'group'        => self::GROUP,
+					'status'       => $status,
+					'date'         => gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ),
+					'date_compare' => '<',
+					'per_page'     => self::PRUNE_BATCH,
+					'orderby'      => 'none',
+				),
+				'ids'
+			)
+		);
 	}
 }

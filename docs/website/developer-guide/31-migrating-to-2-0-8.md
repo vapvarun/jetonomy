@@ -1,8 +1,9 @@
 # Migrating to 2.0.8
 
 Jetonomy 2.0.8 rebuilt its background jobs (see [Background Jobs](./30-background-jobs.md)). Updating needs
-no action from site owners: the upgrade cancels the old schedules once and converts any job that was still
-waiting. This page is for developers whose code calls, listens to or filters a job hook.
+no action from site owners. The upgrade cancels the old schedules once. A job that was still waiting is either
+converted to its replacement (webhook deliveries, digest and badge runs) or, where it cannot be converted, run
+by a listener 2.0.8 keeps for that purpose (pushes and field re-index chunks). This page is for developers whose code calls, listens to or filters a job hook.
 
 ## Removed
 
@@ -12,11 +13,11 @@ waiting. This page is for developers whose code calls, listens to or filters a j
 | `jetonomy_verification_reminder` (hourly) | `jetonomy_due_jobs`, armed for the next reminder that is owed |
 | `jetonomy_reconcile_rosters` (hourly) | `jetonomy_due_jobs`, hourly only while membership-synced rows exist |
 | Pro class `Jetonomy_Pro\Queue` | `\Jetonomy\Queue` (same methods, plus `recurring()`) |
-| Pro `jetonomy_pro_send_push`, `jetonomy_pro_send_expo_push` (one job per device) | `jetonomy_pro_send_push_batch` (one cursor job per push) |
+| Pro `jetonomy_pro_send_push`, `jetonomy_pro_send_expo_push` (one job per device) | `jetonomy_pro_send_push_batch` (one cursor job per push). 2.0.8 still runs copies queued before the update, so no push is lost; the listeners go in 2.0.9. |
 | Pro `jetonomy_pro_dispatch_webhook` (URL and secret in args) | `jetonomy_pro_deliver_webhook` |
 | Pro `jetonomy_pro_digest_batch` (offset chunks) | `jetonomy_pro_send_digests` (cursor job) |
 | Pro `jetonomy_pro_badges_batch` (offset chunks) | `jetonomy_pro_evaluate_badges_after` (cursor job) |
-| Pro `jetonomy_pro_backfill_searchable_fields` | `jetonomy_pro_reindex_field` (cursor job per field) |
+| Pro `jetonomy_pro_backfill_searchable_fields` | `jetonomy_pro_reindex_field` (cursor job per field). 2.0.8 still runs copies queued before the update; the listener goes in 2.0.9. |
 | Pro AI batch review every 5 minutes | `jetonomy_pro_ai_batch_review` is now armed by a new topic or reply |
 
 None of the removed hooks was a documented extension point. If your code called `do_action()` on one of
@@ -46,3 +47,11 @@ Code examples for each are in [Background Jobs](./30-background-jobs.md).
 - Recurring jobs are armed on cron, wp-admin and WP-CLI requests only, never on a visitor's page view.
 - Jetonomy deletes its own completed jobs after 7 days. Other plugins' jobs and Action Scheduler's
   site-wide retention are not touched.
+
+## Failed jobs from retired hooks
+
+**Tools > Scheduled Actions** may list failed rows for a retired hook, for example
+`jetonomy_pro_badges_batch` or `jetonomy_pro_send_push` from a site that ran a 2.0.8 development build before
+the upgrade routine. They are history only and can be ignored. Jetonomy deletes its own failed rows after
+90 days in its daily cleanup, on any Action Scheduler version (Action Scheduler 4.0 also does this itself;
+3.x never deletes failed rows). Uninstalling Jetonomy deletes all of its rows.

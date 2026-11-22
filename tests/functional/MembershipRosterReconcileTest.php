@@ -74,14 +74,21 @@ class MembershipRosterReconcileTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The jetonomy_reconcile_rosters cron runs the reconcile backstop.
+	 * The due-time job (2.0.8, replacing the hourly jetonomy_reconcile_rosters) runs the reconcile backstop.
 	 */
-	public function test_reconcile_cron_hook_is_wired(): void {
+	public function test_reconcile_runs_from_the_due_job(): void {
 		new Cron();
+		$this->assertNotFalse( has_action( Cron::DUE_HOOK ), 'The due-time job has no handler.' );
 
-		$this->assertNotFalse(
-			has_action( 'jetonomy_reconcile_rosters', array( Membership_Roster_Sync::class, 'reconcile' ) ),
-			'The jetonomy_reconcile_rosters cron hook must invoke Membership_Roster_Sync::reconcile().'
-		);
+		$ran = false;
+		// reconcile() pages tier rows; a call to the roster query proves it ran.
+		add_filter( 'query', static function ( $sql ) use ( &$ran ) {
+			if ( false !== strpos( (string) $sql, "source = 'tier'" ) ) {
+				$ran = true;
+			}
+			return $sql;
+		} );
+		( new Cron() )->run_due_jobs();
+		$this->assertTrue( $ran, 'run_due_jobs() must invoke Membership_Roster_Sync::reconcile().' );
 	}
 }

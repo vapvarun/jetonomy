@@ -21,7 +21,7 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 	private int $alice;
 	private int $bob;
 
-	/** @var array[] Push payloads queued during the test. */
+	/** @var array[] Args of the push cursor jobs queued during the test. */
 	private array $queued = array();
 
 	public function set_up(): void {
@@ -43,8 +43,8 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 		$this->bob   = self::factory()->user->create( array( 'role' => 'subscriber', 'display_name' => 'Bob' ) );
 
 		$capture = function ( $pre, $event ) {
-			if ( 'jetonomy_pro_send_push' === $event->hook ) {
-				$this->queued[] = $event->args[0];
+			if ( 'jetonomy_pro_send_push_batch' === $event->hook ) {
+				$this->queued[] = $event->args;
 				return true;
 			}
 			return $pre;
@@ -53,8 +53,8 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 		add_filter(
 			'pre_as_enqueue_async_action',
 			function ( $pre, $hook, $args ) {
-				if ( 'jetonomy_pro_send_push' === $hook ) {
-					$this->queued[] = $args[0];
+				if ( 'jetonomy_pro_send_push_batch' === $hook ) {
+					$this->queued[] = $args;
 					return 1;
 				}
 				return $pre;
@@ -110,23 +110,41 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * Send one notification through the push cursor job to Bob's app device and return the body Expo received.
+	 */
+	private function pushed_body( string $type, string $object_type, int $object_id, string $message ): ?string {
+		$device = new \ReflectionMethod( $this->ext, 'store_device' );
+		$device->setAccessible( true );
+		$device->invoke( $this->ext, $this->bob, 'ExponentPushToken[bob' . uniqid() . ']', 'ios', 'Phone' );
+		$id = Notification::create( array( 'user_id' => $this->bob, 'actor_id' => $this->alice, 'type' => $type, 'object_type' => $object_type, 'object_id' => $object_id, 'message' => $message ) );
+		$this->ext->on_notification_created( $id, $this->bob, $type, $object_type, $object_id, $message, '' );
+		$this->ext->flush_pending();
+		$this->assertCount( 1, $this->queued, 'one push cursor job per push' );
+
+		$bodies = array();
+		$expo   = static function ( $pre, $r, $url ) use ( &$bodies ) {
+			if ( false === strpos( (string) $url, 'exp.host' ) ) {
+				return $pre;
+			}
+			$sent     = (array) json_decode( (string) $r['body'], true );
+			$bodies[] = $sent['body'] ?? null;
+			return array( 'body' => '{"data":[]}', 'response' => array( 'code' => 200 ), 'headers' => array(), 'cookies' => array() );
+		};
+		add_filter( 'pre_http_request', $expo, 5, 3 );
+		$this->ext->do_send_batch( ...array_values( $this->queued[0] ) );
+		remove_filter( 'pre_http_request', $expo, 5 );
+		$this->assertCount( 1, $bodies );
+		return $bodies[0];
+	}
+
 	public function test_private_message_push_names_the_sender_but_not_the_text(): void {
-		$this->store( $this->bob, 'https://fcm.googleapis.com/fcm/send/b-' . uniqid(), 'k' );
-		$id = Notification::create( array( 'user_id' => $this->bob, 'actor_id' => $this->alice, 'type' => 'message', 'object_type' => 'message', 'object_id' => 7, 'message' => 'Alice: my bank PIN is 1234' ) );
-
-		$this->ext->on_notification_created( $id, $this->bob, 'message', 'message', 7, 'Alice: my bank PIN is 1234', '' );
-
-		$this->assertCount( 1, $this->queued );
-		$this->assertSame( 'New message from Alice', $this->queued[0]['body'] );
+		$this->assertSame( 'New message from Alice', $this->pushed_body( 'message', 'message', 7, 'Alice: my bank PIN is 1234' ) );
 	}
 
 	/** @covers-existing A forum notification keeps its sentence. */
 	public function test_forum_notification_push_keeps_its_message(): void {
-		$this->store( $this->bob, 'https://fcm.googleapis.com/fcm/send/b-' . uniqid(), 'k' );
-		$this->ext->on_notification_created( 1, $this->bob, 'reply_to_post', 'reply', 3, 'Alice replied to your topic', '' );
-
-		$this->assertCount( 1, $this->queued );
-		$this->assertSame( 'Alice replied to your topic', $this->queued[0]['body'] );
+		$this->assertSame( 'Alice replied to your topic', $this->pushed_body( 'reply_to_post', 'reply', 3, 'Alice replied to your topic' ) );
 	}
 
 	/** Push args with a real P-256 key, so the send gets as far as the POST. */

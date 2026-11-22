@@ -242,7 +242,10 @@ One group for the family: `jetonomy`. One scheduling API: `\Jetonomy\Queue` in F
 no copy. Recurring jobs are armed only by `Cron::ensure_scheduled()` on cron, wp-admin and WP-CLI
 requests, never on a visitor's page view. Finished (completed) jobs older than
 `jetonomy_finished_action_retention_days` (default 7) are deleted with their logs, 200 per day, by the
-daily `jetonomy_prune_activity` run. Failed and pending rows are kept until uninstall.
+daily `jetonomy_prune_activity` run. Failed rows are kept 90 days for diagnosis, then deleted the same way
+(Action Scheduler 4.0 does this itself; 3.x never purges failed rows). Pending rows are kept until uninstall.
+A job whose hook was retired keeps its listener for one release when its queued args cannot be converted
+(2.0.8: the per-device push and field re-index chunks); otherwise the upgrade converts and cancels it.
 
 | Hook | Plugin | Trigger | Args | Rows per event |
 |---|---|---|---|---|

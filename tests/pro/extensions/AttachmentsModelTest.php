@@ -221,10 +221,10 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 	/**
 	 * The retired GC schedule is cancelled, never armed.
 	 *
-	 * Free owns the sweep now (`jetonomy_cleanup_media`), so Pro's boot() must
+	 * Free owns the sweep now (`jetonomy_cleanup_media`), so Pro's activate() must
 	 * not schedule `jetonomy_pro_attachments_gc` and must remove a schedule an
 	 * earlier version left behind - on `action_scheduler_init`, because AS's
-	 * store is not ready when boot() runs. \Jetonomy\Queue::cancel() clears both
+	 * store may not be ready when activate() runs. \Jetonomy\Queue::cancel() clears both
 	 * schedulers, so a stale row in either one is seeded and must be gone.
 	 *
 	 * @dataProvider scheduler_branches
@@ -245,15 +245,15 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 		$this->assertTrue( $this->gc_is_scheduled( $use_as ), 'fixture precondition: stale GC schedule seeded' );
 
 		$init_before = $this->callbacks_on( 'action_scheduler_init' );
-		( new Extension() )->boot();
+		( new Extension() )->activate(); // Runs on enable and on every version upgrade.
 
-		// Fire only what boot() hooked onto action_scheduler_init, not the
+		// Fire only what activate() hooked onto action_scheduler_init, not the
 		// whole action: AS and free hang their own start-up work there.
 		foreach ( array_diff_key( $this->callbacks_on( 'action_scheduler_init' ), $init_before ) as $callback ) {
 			call_user_func( $callback['function'] );
 		}
 
-		$this->assertFalse( $this->gc_is_scheduled( $use_as ), 'boot() left the retired GC scheduled.' );
+		$this->assertFalse( $this->gc_is_scheduled( $use_as ), 'activate() left the retired GC scheduled.' );
 	}
 
 	/**
