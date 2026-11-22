@@ -1,7 +1,9 @@
 <?php
 /**
  * The 2.0.8 upgrade leaves no secret in the job tables, our cancelled rows are pruned, and work queued during the
- * upgrade request becomes an Action Scheduler job rather than a WP-Cron fallback.
+ * upgrade request becomes an Action Scheduler job rather than a WP-Cron fallback. The upgrade runs once under its
+ * lock (a concurrent first request runs no ALTER and queues nothing), stores the version at once, and clears a
+ * 12,000-row backlog in bounded background passes.
  *
  * @package Jetonomy\Tests\Pro
  */
@@ -15,6 +17,7 @@ class UpgradeJobsTest extends WP_UnitTestCase {
 	private const LEGACY  = 'jetonomy_pro_dispatch_webhook';
 	private const DELIVER = 'jetonomy_pro_deliver_webhook';
 	private const LOCK    = 'jetonomy_pro_attachments_lock';
+	private const UPGRADE = 'jetonomy_pro_upgrade_jobs';
 
 	public function set_up(): void {
 		parent::set_up();
@@ -22,15 +25,38 @@ class UpgradeJobsTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'Jetonomy Pro or Action Scheduler is not loaded.' );
 		}
 		require_once JETONOMY_PRO_DIR . 'includes/extensions/webhooks/class-extension.php';
+		if ( ! in_array( 'webhooks', \Jetonomy_Pro\Extension::enabled_ids(), true ) ) {
+			update_option( 'jetonomy_pro_extensions', array_merge( \Jetonomy_Pro\Extension::enabled_ids(), array( 'webhooks' ) ), false );
+		}
 		require_once JETONOMY_PRO_DIR . 'includes/extensions/attachments/class-extension.php';
 	}
 
 	public function tear_down(): void {
-		foreach ( array( self::LEGACY, self::DELIVER, self::LOCK ) as $hook ) {
+		Queue::$clock = null;
+		foreach ( array( self::LEGACY, self::DELIVER, self::LOCK, self::UPGRADE ) as $hook ) {
 			Queue::delete_rows( $hook );
 			wp_unschedule_hook( $hook );
 		}
 		parent::tear_down();
+	}
+
+	/**
+	 * Run the upgrade job the way Action Scheduler would, pass after pass, until it stops re-queueing itself.
+	 *
+	 * @return float[] Seconds each pass took.
+	 */
+	private function drain( string $from = '2.0.7' ): array {
+		$passes = array();
+		for ( $i = 0; $i < 40; $i++ ) {
+			Queue::cancel( self::UPGRADE ); // The copy this pass stands in for.
+			$started = microtime( true );
+			\Jetonomy_Pro::instance()->upgrade_jobs( $from );
+			$passes[] = microtime( true ) - $started;
+			if ( ! Queue::is_pending( self::UPGRADE ) ) {
+				break;
+			}
+		}
+		return $passes;
 	}
 
 	/** Rows of a hook in any status. */
@@ -57,7 +83,7 @@ class UpgradeJobsTest extends WP_UnitTestCase {
 		$ids = $this->rows( self::LEGACY );
 		$this->assertCount( 3, $ids, 'fixture: three 2.0.7 rows' );
 
-		( new \Jetonomy_Pro\Extensions\Webhooks\Extension() )->upgrade_jobs( '2.0.7' );
+		$this->drain();
 
 		$this->assertSame( array(), $this->rows( self::LEGACY ), 'no row of the old hook remains, in any status' );
 		$logs = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}actionscheduler_logs WHERE action_id IN (" . implode( ',', array_map( 'intval', $ids ) ) . ')' ); // phpcs:ignore WordPress.DB
@@ -121,5 +147,111 @@ class UpgradeJobsTest extends WP_UnitTestCase {
 		wp_schedule_single_event( time(), self::LOCK, $args ); // Left by an early request.
 		Queue::async_once( self::LOCK, $args );
 		$this->assertTrue( (bool) as_get_scheduled_actions( array( 'hook' => self::LOCK, 'args' => $args, 'status' => 'pending' ), 'ids' ) );
+	}
+
+	/**
+	 * A 12,000-row backlog of the old webhook hook (finished rows plus waiting deliveries) is cleared by the upgrade
+	 * job in passes, none longer than the time budget, and a row deleted by another process mid-pass does not throw.
+	 * The upgrade itself is run twice, as two first requests after an update would.
+	 */
+	public function test_a_12000_row_legacy_backlog_is_cleared_in_bounded_background_passes(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'actionscheduler_actions';
+		$tpl   = (int) as_schedule_single_action( time() - DAY_IN_SECONDS, self::LEGACY, array( 'webhook_id' => 1, 'url' => 'https://example.test/x', 'secret' => 's', 'payload' => '{}', 'event' => 'e' ), 'jetonomy' );
+		\ActionScheduler::store()->mark_failure( $tpl );
+		$cols = 'hook, status, scheduled_date_gmt, scheduled_date_local, priority, args, schedule, group_id, attempts, last_attempt_gmt, last_attempt_local, claim_id, extended_args';
+		while ( count( $this->rows( self::LEGACY ) ) < 12000 ) {
+			$need = 12000 - count( $this->rows( self::LEGACY ) );
+			$wpdb->query( $wpdb->prepare( "INSERT INTO {$table} ( {$cols} ) SELECT {$cols} FROM {$table} WHERE hook = %s LIMIT %d", self::LEGACY, $need ) ); // phpcs:ignore WordPress.DB
+		}
+		for ( $i = 0; $i < 3; $i++ ) { // A few deliveries still waiting.
+			as_schedule_single_action( time() + HOUR_IN_SECONDS, self::LEGACY, array( 'webhook_id' => 70 + $i, 'url' => 'https://example.test/x', 'secret' => 's', 'payload' => '{"n":' . $i . '}', 'event' => 'e' ), 'jetonomy' );
+		}
+		$this->assertGreaterThanOrEqual( 12000, count( $this->rows( self::LEGACY ) ) );
+
+		// Another process deletes a row between the read and our delete, once.
+		$victim = 0;
+		$race   = static function ( $id ) use ( &$victim, $wpdb, $table ): void {
+			if ( ! $victim ) {
+				$victim = (int) $wpdb->get_var( $wpdb->prepare( "SELECT action_id FROM {$table} WHERE hook = %s AND action_id <> %d ORDER BY action_id DESC LIMIT 1", self::LEGACY, (int) $id ) ); // phpcs:ignore WordPress.DB
+				$wpdb->delete( $table, array( 'action_id' => $victim ) ); // phpcs:ignore WordPress.DB
+			}
+		};
+		add_action( 'action_scheduler_deleted_action', $race );
+		try {
+			$pro = \Jetonomy_Pro::instance();
+			$this->assertTrue( $pro->run_upgrade( '2.0.7' ) );
+			$this->assertTrue( $pro->run_upgrade( '2.0.7' ) );
+			$this->assertSame( JETONOMY_PRO_VERSION, get_option( 'jetonomy_pro_db_version' ), 'the version is stored at once' );
+			$passes = $this->drain();
+		} finally {
+			remove_action( 'action_scheduler_deleted_action', $race );
+		}
+
+		$this->assertSame( array(), $this->rows( self::LEGACY ), 'no row of the old hook remains after the chain' );
+		$this->assertGreaterThan( 1, count( $passes ), 'more than one pass: no request deleted the whole backlog' );
+		foreach ( $passes as $seconds ) {
+			$this->assertLessThan( Queue::TIME_BUDGET + 5, $seconds, 'no pass ran past the budget (plus one batch of slack)' );
+		}
+		$this->assertCount( 3, as_get_scheduled_actions( array( 'hook' => self::DELIVER, 'status' => 'pending', 'per_page' => 10 ), 'ids' ), 'every waiting delivery converted once' );
+	}
+
+	/**
+	 * Two first requests after an update: while one holds the upgrade lock the other runs no extension activate()
+	 * (no ALTER), stores no version and queues no conversion.
+	 */
+	public function test_a_concurrent_first_request_runs_no_alter_and_queues_nothing(): void {
+		$pro   = \Jetonomy_Pro::instance();
+		$calls = 0;
+		$spy   = new class( $calls ) extends \Jetonomy_Pro\Extension {
+			private $calls;
+			public function __construct( &$calls ) {
+				$this->calls = &$calls;
+			}
+			public function meta(): array {
+				return array( 'id' => 'qa-spy', 'name' => 'QA spy', 'description' => '', 'version' => '1', 'category' => '' );
+			}
+			public function boot(): void {}
+			public function activate(): void {
+				++$this->calls;
+			}
+		};
+		$prop = new \ReflectionProperty( $pro, 'extensions' );
+		$prop->setAccessible( true );
+		$saved = $prop->getValue( $pro );
+		$prop->setValue( $pro, array( 'qa-spy' => $spy ) );
+		if ( ! class_exists( 'WP_Upgrader' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		}
+		try {
+			update_option( 'jetonomy_pro_db_version', '2.0.7' );
+			\WP_Upgrader::create_lock( 'jetonomy_pro_upgrade', 10 * MINUTE_IN_SECONDS ); // The first request.
+			$this->assertFalse( $pro->run_upgrade( '2.0.7' ) );
+			$this->assertSame( 0, $calls, 'no activate(), so no ALTER, in the second request' );
+			$this->assertSame( '2.0.7', get_option( 'jetonomy_pro_db_version' ) );
+			$this->assertFalse( Queue::is_pending( self::UPGRADE ) );
+
+			\WP_Upgrader::release_lock( 'jetonomy_pro_upgrade' );
+			$this->assertTrue( $pro->run_upgrade( '2.0.7' ) );
+			$this->assertSame( 1, $calls );
+			$this->assertSame( JETONOMY_PRO_VERSION, get_option( 'jetonomy_pro_db_version' ) );
+			$this->assertCount( 1, as_get_scheduled_actions( array( 'hook' => self::UPGRADE, 'status' => 'pending' ), 'ids' ), 'the conversion is queued once' );
+			$this->assertFalse( get_option( 'jetonomy_pro_upgrade.lock' ), 'the lock is released' );
+		} finally {
+			\WP_Upgrader::release_lock( 'jetonomy_pro_upgrade' );
+			$prop->setValue( $pro, $saved );
+		}
+	}
+
+	/** Two activations (two upgrade requests) queue one lock sweep: the insert is unique. */
+	public function test_activating_attachments_twice_queues_one_lock_sweep(): void {
+		$ext = new \Jetonomy_Pro\Extensions\Attachments\Extension();
+		if ( ! $ext->is_enabled() ) {
+			update_option( 'jetonomy_pro_extensions', array_merge( \Jetonomy_Pro\Extension::enabled_ids(), array( 'attachments' ) ), false );
+		}
+		Queue::cancel( self::LOCK );
+		$ext->activate();
+		$ext->activate();
+		$this->assertCount( 1, as_get_scheduled_actions( array( 'hook' => self::LOCK, 'args' => array( array( 'sweep' => 1 ) ), 'status' => 'pending' ), 'ids' ) );
 	}
 }

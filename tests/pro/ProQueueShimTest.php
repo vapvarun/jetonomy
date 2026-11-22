@@ -67,4 +67,32 @@ class ProQueueShimTest extends WP_UnitTestCase {
 			);
 		}
 	}
+
+	/**
+	 * The 2.0.7 five-parameter recurring( hook, interval, args, group, first_run ): with arguments it keeps one
+	 * recurring copy with those arguments at first_run; without, it registers with Free's scheduler and arms one copy.
+	 *
+	 * @expectedDeprecated Jetonomy_Pro\Queue::recurring
+	 */
+	public function test_recurring_five_parameter_form_with_and_without_args(): void {
+		add_filter( 'wp_doing_cron', '__return_true' ); // Recurring jobs are armed on scheduling requests.
+		try {
+			$first = time() + 2 * HOUR_IN_SECONDS;
+			\Jetonomy_Pro\Queue::recurring( self::HOOK, DAY_IN_SECONDS, array( 9 ), 'other-group', $first );
+			\Jetonomy_Pro\Queue::recurring( self::HOOK, DAY_IN_SECONDS, array( 9 ), 'other-group', $first );
+			$with = as_get_scheduled_actions( array( 'hook' => self::HOOK, 'args' => array( 9 ), 'status' => 'pending' ) );
+			$this->assertCount( 1, $with, 'one recurring copy with its arguments, called twice' );
+			$action = reset( $with );
+			$this->assertSame( $first, $action->get_schedule()->get_date()->getTimestamp() );
+			$this->assertSame( 'jetonomy', $action->get_group(), 'the group argument is ignored' );
+
+			\Jetonomy\Queue::cancel( self::HOOK );
+			\Jetonomy_Pro\Queue::recurring( self::HOOK, DAY_IN_SECONDS, array(), 'jetonomy', $first );
+			$without = as_get_scheduled_actions( array( 'hook' => self::HOOK, 'args' => array(), 'status' => 'pending' ) );
+			$this->assertCount( 1, $without );
+			$this->assertArrayHasKey( self::HOOK, apply_filters( 'jetonomy_recurring_jobs', array() ), 'registered with Free\'s scheduler' );
+		} finally {
+			remove_filter( 'wp_doing_cron', '__return_true' );
+		}
+	}
 }
