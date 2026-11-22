@@ -29,6 +29,7 @@
 	--jt-admin-text-muted: #5f6b7d; /* 4.75:1 on the lightest admin grey (WCAG AA). */
 	--jt-admin-text-wp: #1d2327;
 	--jt-admin-text-wp-2: #646970;
+	--jt-admin-border-input: #8c8f94; /* WordPress form-control border grey; named so no rule carries the literal. */
 	--jt-admin-text-wp-3: var(--jt-admin-text-muted); /* Text only; #8c8f94 measured 2.85:1 on #f0f0f1. */
 	--jt-admin-text-step: #666666;
 	--jt-admin-text-arrow: #cccccc;
@@ -935,19 +936,19 @@
 .jetonomy-admin .tablenav-pages a.page-numbers:hover,
 .jetonomy-admin .tablenav-pages a.page-numbers:focus {
 	background: var(--jt-admin-surface-1, #f6f7f7);
-	border-color: #8c8f94;
+	border-color: var(--jt-admin-border-input, #8c8f94);
 	color: var(--jt-admin-text-wp, #1d2327);
 	outline: none;
 }
 .jetonomy-admin .tablenav-pages a.page-numbers:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--jt-admin-blue-wp, #2271b1);
 	outline-offset: 2px;
-	border-color: #2271b1;
+	border-color: var(--jt-admin-blue-wp, #2271b1);
 }
 .jetonomy-admin .tablenav-pages .page-numbers.current {
-	background: #2271b1;
-	border-color: #2271b1;
-	color: #fff;
+	background: var(--jt-admin-blue-wp, #2271b1);
+	border-color: var(--jt-admin-blue-wp, #2271b1);
+	color: var(--jt-admin-white, #fff);
 	cursor: default;
 }
 .jetonomy-admin .tablenav-pages .page-numbers.dots {
@@ -2153,7 +2154,7 @@ tr.jetonomy-moderated td {
 		flex-wrap: wrap;
 		gap: 8px 12px;
 		padding: 9px 10px;
-		border-top: 1px solid #f0f0f1;
+		border-top: 1px solid var(--jt-admin-surface-wp, #f0f0f1);
 	}
 
 	.jetonomy-admin .wp-list-table tr.is-expanded td:not(.column-primary)::before {
@@ -2911,7 +2912,7 @@ tr.jetonomy-moderated td {
 
 .jt-fc-admin-slug {
 	font-size: 11px;
-	color: #646970;
+	color: var(--jt-admin-text-wp-2, #646970);
 }
 
 .jt-fc-admin-submit {
@@ -2945,7 +2946,7 @@ tr.jetonomy-moderated td {
 	inset-inline-start: 10px;
 	inset-block-start: 50%;
 	transform: translateY(-50%);
-	color: #646970;
+	color: var(--jt-admin-text-wp-2, #646970);
 	pointer-events: none;
 	display: inline-flex;
 }
@@ -4008,12 +4009,12 @@ tr.jetonomy-moderated td {
 .jetonomy-admin .tablenav-pages .pagination-links a:hover,
 .jetonomy-admin .tablenav-pages .pagination-links a:focus {
 	background: var(--jt-admin-surface-1, #f6f7f7);
-	border-color: #8c8f94;
+	border-color: var(--jt-admin-border-input, #8c8f94);
 	color: var(--jt-admin-text-wp, #1d2327);
 	outline: none;
 }
 .jetonomy-admin .tablenav-pages .pagination-links a:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--jt-admin-blue-wp, #2271b1);
 	outline-offset: 2px;
 }
 .jetonomy-admin .tablenav-pages .tablenav-pages-navspan {
@@ -4109,7 +4110,7 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin select::picker(select) {
 		border: 1px solid var(--jt-admin-border, #dcdcde);
 		border-radius: 6px;
-		background: #fff;
+		background: var(--jt-admin-white, #fff);
 		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 		padding: 4px;
 		margin-block-start: 4px;
@@ -4388,7 +4389,7 @@ tr.jetonomy-moderated td {
 	box-sizing: border-box;
 	border: 1px solid var(--jt-admin-border, #dcdcde);
 	border-radius: 50%;
-	background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2350575e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 16px no-repeat;
+	background: var(--jt-admin-white, #fff) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2350575e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 16px no-repeat;
 	transition: transform 0.15s;
 }
 .jt-settings-card--disclosure[open] > summary::after {
