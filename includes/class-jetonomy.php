@@ -470,9 +470,14 @@ final class Jetonomy {
 	 * whenever the table is absent is safe.
 	 */
 	private function maybe_repair_schema(): void {
-		if ( get_option( 'jetonomy_schema_checked' ) === JETONOMY_VERSION ) {
+		// Once per plugin version, and then at most once a day on an admin request: a table dropped after the version check
+		// ran (a partial restore, a hosting clean-up) would otherwise stay missing, with an error on every query, until the
+		// plugin was deactivated and activated again. The steady-state cost is one transient read.
+		if ( get_option( 'jetonomy_schema_checked' ) === JETONOMY_VERSION
+			&& ( ! is_admin() || get_transient( 'jetonomy_schema_recheck' ) ) ) {
 			return;
 		}
+		set_transient( 'jetonomy_schema_recheck', 1, DAY_IN_SECONDS );
 
 		global $wpdb;
 
