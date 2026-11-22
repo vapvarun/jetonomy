@@ -2687,6 +2687,13 @@
       "notes": "Rows erased per personal-data erasure batch. Lower it on hosts with short max_execution_time. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
     },
     {
+      "name": "jetonomy_external_registration_url",
+      "type": "filter",
+      "args": "$url",
+      "where": "includes/functions.php",
+      "consumed_by": null
+    },
+    {
       "name": "jetonomy_fanout_post_subscribers",
       "type": "action",
       "args_count": 2,
@@ -2744,6 +2751,13 @@
       "consumed_by": "jetonomy-pro"
     },
     {
+      "name": "jetonomy_held_item_notes",
+      "type": "filter",
+      "args": "$notes, $kind, $ids",
+      "where": "templates/views/moderation.php",
+      "consumed_by": null
+    },
+    {
       "name": "jetonomy_home_member_hint",
       "type": "filter",
       "args_count": 1,
@@ -2773,6 +2787,13 @@
       "args": "",
       "where": "includes/models/class-post.php",
       "consumed_by": []
+    },
+    {
+      "name": "jetonomy_import_batch_imported",
+      "type": "action",
+      "args": "$source, $type, $ids",
+      "where": "includes/import/class-import-manager.php",
+      "consumed_by": null
     },
     {
       "name": "jetonomy_import_batch_seconds",
@@ -2980,6 +3001,13 @@
       "where": "includes/adapters/class-adapter-registry.php (Adapter_Registry::membership_level_url)",
       "consumed_by": null,
       "notes": "1.8.1. Where a visitor buys the membership level a space is gated on - the href of the button on the \"this space is included with VIP\" gate. Resolved from the owning adapter's OPTIONAL get_level_url() (probed with method_exists so third-party adapters implementing the interface are not fataled by a new method), then filtered. Adapters whose level is granted rather than sold - WP Roles, WP Fusion tags, SureMembers, tag-membership - intentionally resolve to \"\" and the gate renders the requirement with no button; this filter is how such a site supplies its own destination. A wrong button is worse than none."
+    },
+    {
+      "name": "jetonomy_mobile_tabs",
+      "type": "filter",
+      "args": "$tabs, $logged_in",
+      "where": "templates/partials/header.php",
+      "consumed_by": null
     },
     {
       "name": "jetonomy_moderation_flag_resolution",
@@ -3232,6 +3260,13 @@
       "notes": "2.0.3. Renders extra fields inside #notification-preferences on the profile edit page (Pro: None/Daily/Weekly digest)."
     },
     {
+      "name": "jetonomy_profile_notification_types",
+      "type": "filter",
+      "args": "$types",
+      "where": "templates/views/edit-profile.php",
+      "consumed_by": null
+    },
+    {
       "name": "jetonomy_profile_response",
       "type": "filter",
       "args": "response, user",
@@ -3270,6 +3305,20 @@
         "jetonomy-pro: Privacy::on_user_delete"
       ],
       "notes": "1.8.0. Fired once per orphaned (already-deleted) user id during 'wp jetonomy privacy purge-orphans'. Free and Pro both listen via on_user_delete, so the backfill replays the real delete path rather than reimplementing it."
+    },
+    {
+      "name": "jetonomy_qa_actions_end",
+      "type": "action",
+      "args": "none",
+      "where": "includes/class-cli.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_qa_actions_start",
+      "type": "action",
+      "args": "none",
+      "where": "includes/class-cli.php",
+      "consumed_by": "jetonomy-pro"
     },
     {
       "name": "jetonomy_recount_backfill_batch",

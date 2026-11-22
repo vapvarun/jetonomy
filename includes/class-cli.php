@@ -1007,6 +1007,14 @@ class CLI {
 
 		$footprint_before = self::qa_footprint();
 
+		/**
+		 * A qa-actions run is starting. Pro uses it to give the harness's own creates a value for every Required
+		 * custom field, so a site that has one still runs the suite green.
+		 *
+		 * @since 2.0.8
+		 */
+		do_action( 'jetonomy_qa_actions_start' );
+
 		$phase( 'Phase 1: REST Round-Trip Tests' );
 		$rest = new \Jetonomy\QA\REST_Tests();
 		$r1   = $rest->run();
@@ -1026,6 +1034,13 @@ class CLI {
 		$phase( 'Phase 5: Refusal Journeys (RF1-RF10)' );
 		$refusal = new \Jetonomy\QA\Refusal_Tests();
 		$r5      = $refusal->run();
+
+		/**
+		 * The qa-actions run has finished; undo whatever jetonomy_qa_actions_start set up.
+		 *
+		 * @since 2.0.8
+		 */
+		do_action( 'jetonomy_qa_actions_end' );
 
 		$total_pass = $r1['pass'] + $r2['pass'] + $r3['pass'] + $r4['pass'] + $r5['pass'];
 		$total_fail = $r1['fail'] + $r2['fail'] + $r3['fail'] + $r4['fail'] + $r5['fail'];
