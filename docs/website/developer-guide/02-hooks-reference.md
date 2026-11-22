@@ -349,7 +349,7 @@ Pro-only hooks (marked _Pro_ above and listed below) fire from the Jetonomy Pro 
 | `jetonomy_pro_field_created`<br>_action_ ·_Pro_ | Fires after a custom field is created. | `$field_id, $context` | `includes/extensions/custom-fields/class-extension.php` |
 | `jetonomy_pro_first_reaction`<br>_action_ ·_Pro_ | Fires the first time an object receives any reaction. | `$object_type, $object_id, $user_id` | `includes/extensions/reactions/class-extension.php` |
 | `jetonomy_pro_message_sent`<br>_action_ ·_Pro_ | Fires after a message is sent. | `$message_id, $conversation_id, $sender_id` | `includes/extensions/private-messaging/class-extension.php` |
-| `jetonomy_pro_poll_created`<br>_action_ ·_Pro_ | Fires after a poll is created. | `$poll_id, $post_id, $user_id` |
+| `jetonomy_pro_poll_created`<br>_action_ ·_Pro_ | Fires after a poll is created. | `$poll_id, $post_id, $user_id` | `includes/extensions/polls/class-extension.php` |
 | `jetonomy_pro_poll_deleted`<br>_action_ ·_Pro_ | A poll was deleted from the admin Polls screen (its votes and options went with it; it does not fire if the poll was already gone). Deleting a topic, which removes its poll too, fires `jetonomy_post_deleted` instead, so a listener that rewards polls should reverse on both. | `$poll_id, $post_id` | `includes/extensions/polls/class-extension.php` |
 | `jetonomy_pro_reaction_icon_renderer`<br>_filter_ ·_Pro_ | Sites that want the SVG look can opt in via the filter below. | `$renderer, $slug, $size` | `includes/extensions/reactions/class-extension.php` |
 | `jetonomy_pro_reaction_toggled`<br>_action_ ·_Pro_ | Fires after a reaction is toggled. | `$object_type, $object_id, $emoji, $user_id, $action` | `includes/extensions/reactions/class-extension.php` |
