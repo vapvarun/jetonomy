@@ -3125,9 +3125,12 @@ class Model_Tests {
 		global $wpdb;
 		$hook  = 'jetonomy_qa_history_probe'; // Test-only hook.
 		$store = \ActionScheduler::store();
-		$make  = static function ( int $age_days, string $group, string $end ) use ( $hook, $store ): int {
+		// A job scheduled and finished $age_days ago: the prune ages finished rows by their last attempt.
+		$make = static function ( int $age_days, string $group, string $end ) use ( $hook, $store, $wpdb ): int {
 			$id = (int) as_schedule_single_action( time() - $age_days * DAY_IN_SECONDS, $hook, array( wp_rand() ), $group );
 			'failed' === $end ? $store->mark_failure( $id ) : $store->mark_complete( $id );
+			$at = gmdate( 'Y-m-d H:i:s', time() - $age_days * DAY_IN_SECONDS );
+			$wpdb->update( $wpdb->prefix . 'actionscheduler_actions', array( 'last_attempt_gmt' => $at, 'last_attempt_local' => $at ), array( 'action_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			return $id;
 		};
 		$old    = $make( 8, 'jetonomy', 'complete' );

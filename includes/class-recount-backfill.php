@@ -291,13 +291,4 @@ final class Recount_Backfill {
 
 		return is_array( $state ) ? $state : null;
 	}
-
-	/**
-	 * Drop any queued continuation. Called on deactivation.
-	 *
-	 * @return void
-	 */
-	public static function clear_scheduled(): void {
-		Queue::cancel( self::BATCH_HOOK );
-	}
 }

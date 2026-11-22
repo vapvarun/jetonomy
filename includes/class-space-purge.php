@@ -277,13 +277,6 @@ final class Space_Purge {
 	}
 
 	/**
-	 * Clear any queued purge work. Called on deactivation.
-	 */
-	public static function clear_scheduled(): void {
-		Queue::cancel( self::BATCH_HOOK );
-	}
-
-	/**
 	 * Action adapter for `jetonomy_purge_orphan_space`.
 	 *
 	 * The purge() method returns its per-table counts because callers want

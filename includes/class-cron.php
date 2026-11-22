@@ -37,6 +37,15 @@ class Cron {
 	/** Rows a batch-limited job handles per pass; the default of the jetonomy_cron_batch_size filter. */
 	public const BATCH_SIZE = 500;
 
+	/** Activity-log rows deleted per statement by prune_activity_log(). */
+	private const ACTIVITY_PRUNE_BATCH = 5000;
+
+	/** Seconds a daily or weekly clean-up may run; whatever is left waits for the next run. */
+	private const CLEANUP_SECONDS = 20;
+
+	/** Retry argument of the run queued when a scheduled topic gives up: one more try a day (or at the next schedule). */
+	private const PUBLISH_GAVE_UP = self::PUBLISH_MAX_RETRIES;
+
 	/**
 	 * Expired restrictions, verification reminders and the roster backstop, in one single action armed at the
 	 * earliest moment one of them is due ({@see arm_due_jobs()}). They used to tick hourly each, 72 actions a day on a
@@ -69,7 +78,7 @@ class Cron {
 	);
 
 	public function __construct() {
-		// Handler listeners — fire whether scheduled via AS or (legacy) WP-Cron.
+		// Job listeners, whichever scheduler queued the job.
 		add_action( 'jetonomy_trust_evaluation', array( $this, 'evaluate_trust_levels' ) );
 		add_action( 'jetonomy_trust_evaluation_batch', array( $this, 'evaluate_trust_batch' ) );
 		add_action( self::DUE_HOOK, array( $this, 'run_due_jobs' ) );
@@ -83,6 +92,8 @@ class Cron {
 		// (not 'init', which can run before AS's data store is wired up and
 		// would emit "called incorrectly" notices on every page load).
 		add_action( 'action_scheduler_init', array( self::class, 'ensure_scheduled' ) );
+		// Action Scheduler's daily re-arm run: a recurring row lost on a site with no admin visits comes back within a day.
+		add_action( 'action_scheduler_ensure_recurring_actions', array( self::class, 'ensure_scheduled' ) );
 	}
 
 	/**
@@ -103,23 +114,24 @@ class Cron {
 	 * (idempotent — safe to call regardless of which scheduler the install was on).
 	 */
 	public static function unschedule(): void {
-		// The recurring jobs plus the one-off ones: trust-sweep batches, per-member
-		// Gravatar checks, the scheduled-topic publisher, the per-space roster sweep and the
-		// subscriber fan-out batches.
-		$hooks = array_merge( array_keys( self::RECURRING ), self::RETIRED_HOOKS, array( self::DUE_HOOK, 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK, Membership_Roster_Sync::SWEEP_HOOK, 'jetonomy_fanout_post_subscribers', 'jetonomy_fanout_reply_subscribers' ) );
-		foreach ( $hooks as $hook ) {
-			Queue::cancel( $hook );
-		}
+		// Every Free job; Queue::cancel_on_deactivate() leaves the ones in Queue::KEEP_ON_DEACTIVATE pending (the space
+		// purge, the scheduled-topic publisher, the subscriber fan-out).
+		Queue::cancel_on_deactivate(
+			array_merge(
+				array_keys( self::RECURRING ),
+				self::RETIRED_HOOKS,
+				array( self::DUE_HOOK, 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK, Membership_Roster_Sync::SWEEP_HOOK, 'jetonomy_fanout_post_subscribers', 'jetonomy_fanout_reply_subscribers', Space_Purge::BATCH_HOOK, Recount_Backfill::BATCH_HOOK )
+			)
+		);
 		delete_option( self::TRUST_CURSOR_OPTION );
 	}
 
 	/**
 	 * Is this a request where recurring schedules should be checked and armed?
 	 *
-	 * Each check is a database lookup (as_has_scheduled_action, plus the one-time
-	 * migration flags), and running them on every page, REST call and heartbeat
-	 * made them part of every request's query floor. Check only in the cron runner
-	 * (which re-arms a lost job within one tick), wp-admin page loads and WP-CLI.
+	 * Each check is a database lookup, and running them on every page, REST call and
+	 * heartbeat made them part of every request's query floor. Check only in the cron
+	 * runner, Action Scheduler's daily re-arm run, wp-admin page loads and WP-CLI.
 	 * See docs/standards/background-jobs.md.
 	 *
 	 * @return bool
@@ -129,9 +141,8 @@ class Cron {
 	}
 
 	/**
-	 * Idempotent scheduler — ensures every recurring action exists in AS exactly
-	 * once. On first run after upgrade from <1.4.4, also wipes the legacy WP-Cron
-	 * registrations so the same handler doesn't fire from two schedulers.
+	 * Idempotent scheduler: every recurring action exists in Action Scheduler exactly once, and the two due-time jobs
+	 * are armed if something is due.
 	 */
 	public static function ensure_scheduled(): void {
 		if ( ! self::is_scheduling_request() ) {
@@ -139,14 +150,6 @@ class Cron {
 		}
 		if ( ! function_exists( 'as_schedule_recurring_action' ) ) {
 			return; // AS not booted yet (e.g. activation request before plugins_loaded). Retry next request.
-		}
-
-		// One-time migration: drop legacy WP-Cron registrations so AS owns these hooks.
-		if ( ! get_option( 'jetonomy_cron_as_migrated' ) ) {
-			foreach ( array_keys( self::RECURRING ) as $hook ) {
-				wp_clear_scheduled_hook( $hook );
-			}
-			update_option( 'jetonomy_cron_as_migrated', 1, false );
 		}
 
 		/**
@@ -175,9 +178,10 @@ class Cron {
 	 * Arm the publisher for the earliest scheduled topic. Called by Post on every write that sets a schedule, after
 	 * each run, and by ensure_scheduled() as a self-heal. Nothing scheduled, nothing queued; a run left queued for a
 	 * schedule that was cleared finds nothing due and stops, so clearing a schedule needs no cancel. One lookup: a copy
-	 * armed for that moment is left alone, so it never stacks; so is a retry waiting for an overdue topic (at most 4
-	 * minutes away), because re-arming would restart its attempt count. Otherwise the run moves to the earliest
-	 * schedule, so moving a topic later moves the run with it.
+	 * armed for that moment is left alone, so it never stacks. While the earliest topic is overdue (a schedule can only
+	 * be set in the future, so that is a topic that failed to publish), a queued run is kept: a retry, or the daily
+	 * give-up run, so the retry cap holds; it moves only for another topic due before it. Otherwise the run moves to the earliest schedule, so moving
+	 * a topic later moves the run with it. The insert is unique, so two requests arriving together queue one run.
 	 */
 	public static function arm_scheduled_publish(): void {
 		if ( self::$publishing ) {
@@ -191,12 +195,17 @@ class Cron {
 				}
 				$when   = max( (int) strtotime( $next . ' UTC' ), time() );
 				$queued = Queue::next( self::PUBLISH_HOOK );
-				$retry  = $when <= time() && $queued <= time() + MINUTE_IN_SECONDS * ( 2 ** ( self::PUBLISH_MAX_RETRIES - 1 ) );
-				if ( $queued && ( $queued === $when || $retry ) ) {
+				if ( $queued && $when <= time() ) {
+					$later = \Jetonomy\Models\Post::next_scheduled_at( gmdate( 'Y-m-d H:i:s' ) );
+					$when  = null === $later ? 0 : (int) strtotime( $later . ' UTC' );
+					if ( ! $when || $queued <= $when ) {
+						return; // A run is already coming (a retry, or the give-up run of a failing topic) and nothing is due before it.
+					}
+				} elseif ( $queued === $when ) {
 					return;
 				}
 				Queue::cancel( self::PUBLISH_HOOK );
-				Queue::at( $when, self::PUBLISH_HOOK );
+				Queue::at( $when, self::PUBLISH_HOOK, array(), true );
 			}
 		);
 	}
@@ -218,7 +227,7 @@ class Cron {
 					return; // Nothing due, or already armed for that moment or sooner.
 				}
 				Queue::cancel( self::DUE_HOOK );
-				Queue::at( $when, self::DUE_HOOK );
+				Queue::at( $when, self::DUE_HOOK, array(), true ); // Unique: two requests arriving together queue one run.
 			}
 		);
 	}
@@ -413,7 +422,7 @@ class Cron {
 	}
 
 	/**
-	 * Remove expired bans/restrictions (runs hourly).
+	 * Remove expired bans/restrictions (part of DUE_HOOK, armed for the earliest expiry).
 	 *
 	 * Processes at most jetonomy_cron_batch_size rows per run (default 500)
 	 * to avoid long-running DELETE locks on large communities.
@@ -427,23 +436,25 @@ class Cron {
 	 *
 	 * Retention period is configurable via jetonomy_settings['activity_log_retention_days'].
 	 * Defaults to 90 days. Set to 0 to keep forever.
-	 * Deletes in batches of 5 000 to avoid lock contention, looping until all expired rows are removed.
+	 * Deletes ACTIVITY_PRUNE_BATCH rows per statement to avoid lock contention, within CLEANUP_SECONDS; the rest waits
+	 * for tomorrow. Then trims Jetonomy's own Action Scheduler history (Queue::prune_history(), its own time budget),
+	 * in finally, so neither prune can stop the other.
 	 */
 	public function prune_activity_log(): void {
-		\Jetonomy\Queue::prune_history();
-
-		$settings = get_option( 'jetonomy_settings', array() );
-		$days     = (int) ( $settings['activity_log_retention_days'] ?? 90 );
-		if ( $days <= 0 ) {
-			return; // 0 = keep forever.
+		try {
+			$settings = get_option( 'jetonomy_settings', array() );
+			$days     = (int) ( $settings['activity_log_retention_days'] ?? 90 );
+			if ( $days <= 0 ) {
+				return; // 0 = keep forever.
+			}
+			$cutoff   = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+			$deadline = Queue::now() + self::CLEANUP_SECONDS;
+			do {
+				$deleted = \Jetonomy\Models\ActivityLog::delete_before( $cutoff, self::ACTIVITY_PRUNE_BATCH );
+			} while ( $deleted >= self::ACTIVITY_PRUNE_BATCH && Queue::now() < $deadline );
+		} finally {
+			Queue::prune_history();
 		}
-		$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
-		// Delete in batches to avoid lock contention, loop until done.
-		// Within a 20 s budget like cleanup_old_notifications(); the rest waits for tomorrow.
-		$deadline = microtime( true ) + 20;
-		do {
-			$deleted = \Jetonomy\Models\ActivityLog::delete_before( $cutoff, 5000 );
-		} while ( $deleted >= 5000 && microtime( true ) < $deadline );
 	}
 
 	/**
@@ -457,24 +468,25 @@ class Cron {
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( 30 * DAY_IN_SECONDS ) );
 		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', self::BATCH_SIZE, 'cleanup_old_notifications' );
 
-		// Batches until the backlog is clear, within a 20 s budget: one 500-row
+		// Batches until the backlog is clear, within CLEANUP_SECONDS: one 500-row
 		// pass a week fell behind on any community producing more than that.
 		// Index read_created makes each pass a range read; whatever the budget
 		// leaves is picked up next week.
-		$deadline = microtime( true ) + 20;
+		$deadline = Queue::now() + self::CLEANUP_SECONDS;
 		do {
 			$done = \Jetonomy\Models\Notification::mark_read_before( $cutoff, $batch );
-		} while ( $done >= $batch && microtime( true ) < $deadline );
+		} while ( $done >= $batch && Queue::now() < $deadline );
 	}
 
 	/**
 	 * Publish the topics whose schedule has passed, at most jetonomy_cron_batch_size (default 500) per run.
 	 *
 	 * A topic that fails to publish does not stop the others. The run is then retried with the attempt number in its
-	 * args, 1, 2 and 4 minutes later; after the third retry it logs one line and waits for the next schedule (the
-	 * failed topic is tried again then), instead of re-running the moment the queue runs as it did before.
+	 * args, 1, 2 and 4 minutes later; after the third retry it logs one line and queues one more run at the next
+	 * schedule or a day later, whichever comes first (PUBLISH_GAVE_UP in its args; arm_scheduled_publish() keeps it).
+	 * A topic that never publishes costs one try and one log line a day, not a loop.
 	 *
-	 * @param int $attempt Retry number (0 = the scheduled run).
+	 * @param int $attempt Retry number (0 = the scheduled run, PUBLISH_GAVE_UP = the daily run after giving up).
 	 */
 	public function publish_scheduled_posts( $attempt = 0 ): void {
 		$attempt   = (int) $attempt;
@@ -512,10 +524,12 @@ class Cron {
 			return;
 		}
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- one line when a scheduled topic gives up.
-		error_log( sprintf( 'Jetonomy: scheduled topics %s did not publish after %d retries%s; trying again at the next schedule.', implode( ',', $failed ), self::PUBLISH_MAX_RETRIES, '' !== $error ? ' (' . $error . ')' : '' ) );
+		error_log( sprintf( 'Jetonomy: scheduled topics %s did not publish after %d retries%s; trying again at the next schedule or in a day.', implode( ',', $failed ), self::PUBLISH_MAX_RETRIES, '' !== $error ? ' (' . $error . ')' : '' ) );
 		$later = \Jetonomy\Models\Post::next_scheduled_at( gmdate( 'Y-m-d H:i:s' ) );
+		$when  = time() + DAY_IN_SECONDS;
 		if ( null !== $later ) {
-			Queue::at( (int) strtotime( $later . ' UTC' ), self::PUBLISH_HOOK );
+			$when = min( $when, (int) strtotime( $later . ' UTC' ) );
 		}
+		Queue::at( $when, self::PUBLISH_HOOK, array( self::PUBLISH_GAVE_UP ) );
 	}
 }

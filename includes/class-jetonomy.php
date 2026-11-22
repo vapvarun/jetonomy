@@ -263,11 +263,7 @@ final class Jetonomy {
 	public function deactivate(): void {
 		// Delete the versioned flush-key so the next activation triggers a fresh flush.
 		delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
-		Cron::unschedule();
-		// In-flight space purges too, in both schedulers - the background-jobs
-		// standard requires deactivation to leave nothing queued.
-		Space_Purge::clear_scheduled();
-		Recount_Backfill::clear_scheduled();
+		Cron::unschedule(); // Leaves the jobs in Queue::KEEP_ON_DEACTIVATE pending.
 		flush_rewrite_rules();
 	}
 
