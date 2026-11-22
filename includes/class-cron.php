@@ -242,12 +242,13 @@ class Cron {
 	 * command so there is one implementation (no parallel logic, no OOM on the
 	 * CLI). Served by the user_profiles trust_user (trust_level, user_id) index.
 	 *
-	 * @param int $after Keyset cursor — return rows with user_id greater than this.
-	 * @param int $limit Slice size.
+	 * @param int  $after   Keyset cursor — return rows with user_id greater than this.
+	 * @param int  $limit   Slice size.
+	 * @param bool $dry_run Count the promotions that WOULD happen and write nothing (no profile update, no action).
 	 * @return array{last_id:int,count:int,promoted:int} Max user_id seen, rows
-	 *                                                    processed, promotions made.
+	 *                                                    processed, promotions made (or that would be made).
 	 */
-	public static function run_trust_batch( int $after, int $limit ): array {
+	public static function run_trust_batch( int $after, int $limit, bool $dry_run = false ): array {
 		$profiles = UserProfile::list_for_trust_batch( $after, $limit );
 
 		if ( empty( $profiles ) ) {
@@ -301,6 +302,10 @@ class Cron {
 			$new_level = (int) apply_filters( 'jetonomy_trust_level_pre_change', $new_level, (int) $profile->user_id, $stats );
 
 			if ( $new_level > (int) $profile->trust_level ) {
+				if ( $dry_run ) {
+					++$promoted;
+					continue;
+				}
 				// Through the model, not raw $wpdb: update_profile() busts
 				// profile:{id} BEFORE the action below fires, so its four
 				// listeners (activity tracker, notifier, Pro badges, Pro

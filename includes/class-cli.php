@@ -45,8 +45,14 @@ class CLI {
 	/**
 	 * Evaluate trust levels for all users.
 	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Report how many members would be promoted and change nothing.
+	 *
 	 * ## EXAMPLES
 	 *     wp jetonomy trust-evaluate
+	 *     wp jetonomy trust-evaluate --dry-run
 	 *
 	 * @subcommand trust-evaluate
 	 */
@@ -64,17 +70,22 @@ class CLI {
 		 * @return int Rows per batch.
 		 */
 		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'evaluate_trust_levels' );
+		$dry_run   = ! empty( $assoc_args['dry-run'] );
 		$after     = 0;
 		$processed = 0;
 		$promoted  = 0;
 
 		do {
-			$result     = \Jetonomy\Cron::run_trust_batch( $after, $batch );
+			$result     = \Jetonomy\Cron::run_trust_batch( $after, $batch, $dry_run );
 			$processed += $result['count'];
 			$promoted  += $result['promoted'];
 			$after      = $result['last_id'];
 		} while ( $result['count'] >= $batch );
 
+		if ( $dry_run ) {
+			\WP_CLI::success( sprintf( 'Dry run: %d profiles evaluated, %d users would be promoted. Nothing was changed.', $processed, $promoted ) );
+			return;
+		}
 		\WP_CLI::success( sprintf( '%d profiles evaluated, %d users promoted.', $processed, $promoted ) );
 	}
 
