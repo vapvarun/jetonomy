@@ -290,10 +290,10 @@ class Activity_List_Table extends \WP_List_Table {
 		if ( '' === (string) ( $item->action ?? '' ) ) {
 			return '&mdash;';
 		}
-		// The raw code stays as a tooltip for admins debugging tracker output.
+		// The tooltip names the type (translated); the cell text can carry details such as points.
 		return sprintf(
 			'<span title="%1$s">%2$s</span>',
-			esc_attr( (string) $item->action ),
+			esc_attr( Admin::action_label( (string) $item->action ) ),
 			esc_html( self::action_text( $item ) )
 		);
 	}
