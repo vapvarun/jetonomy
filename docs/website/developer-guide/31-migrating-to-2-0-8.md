@@ -55,3 +55,5 @@ Code examples for each are in [Background Jobs](./30-background-jobs.md).
 the upgrade routine. They are history only and can be ignored. Jetonomy deletes its own failed rows after
 90 days in its daily cleanup, on any Action Scheduler version (Action Scheduler 4.0 also does this itself;
 3.x never deletes failed rows). Uninstalling Jetonomy deletes all of its rows.
+
+Rolling back from 2.0.8 to 2.0.7 is not a supported path: old jobs are cancelled once, at the first 2.0.8 upgrade, and are not cancelled again after a rollback.
