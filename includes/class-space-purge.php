@@ -74,7 +74,7 @@ final class Space_Purge {
 
 		// Action Scheduler fires this like any other action, so a plain
 		// add_action is all the wiring the batch needs.
-		add_action( self::BATCH_HOOK, array( self::class, 'run_batch' ) );
+		add_action( self::BATCH_HOOK, array( self::class, 'run_batch' ), 10, 2 );
 	}
 
 	/**
@@ -111,8 +111,10 @@ final class Space_Purge {
 
 		// Already handed off by an earlier request - let the runner have it
 		// rather than deleting the same slice from two directions.
-		if ( Queue::is_queued( self::BATCH_HOOK, $args ) ) {
-			return true;
+		for ( $attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++ ) {
+			if ( Queue::is_queued( self::BATCH_HOOK, $attempt ? $args + array( 'attempt' => $attempt ) : $args ) ) {
+				return true;
+			}
 		}
 
 		// Is this space actually big enough to need batching? Ask for one slice
@@ -171,8 +173,9 @@ final class Space_Purge {
 	 * One batch. Deletes a bounded slice, then re-queues itself if work remains.
 	 *
 	 * @param mixed $space_id Space id, as passed by Action Scheduler.
+	 * @param int   $attempt  Retries already made after a database error (0 on a normal batch).
 	 */
-	public static function run_batch( $space_id ): void {
+	public static function run_batch( $space_id, $attempt = 0 ): void {
 		$space_id = (int) ( is_array( $space_id ) ? ( $space_id['space_id'] ?? 0 ) : $space_id );
 		if ( $space_id <= 0 ) {
 			return;
@@ -181,7 +184,7 @@ final class Space_Purge {
 		$step = self::purge_step( $space_id );
 		if ( ! empty( $step['error'] ) ) {
 			// The database refused a read. Nothing was deleted past it; try again shortly.
-			self::retry_later( $space_id );
+			self::retry_later( $space_id, (int) $attempt );
 			return;
 		}
 
@@ -227,15 +230,29 @@ final class Space_Purge {
 		self::purge( $space_id );
 	}
 
+	/** Retries after a database error before the purge waits for the next delete request or orphan sweep. */
+	private const MAX_RETRIES = 3;
+
 	/**
-	 * Schedule another attempt after a database error, a minute out so a
-	 * struggling database is not hammered. If even that fails, the next delete
-	 * request or orphan sweep resumes it, because the space row stays.
+	 * Schedule another attempt after a database error, 1, 2 then 4 minutes out so a struggling database is not
+	 * hammered. After MAX_RETRIES it stops: before, a database that kept refusing queued a new job every minute
+	 * forever. The space row stays, so the next delete request or the orphan sweep resumes it.
 	 *
 	 * @param int $space_id Space being purged.
+	 * @param int $attempt  Retries already made.
 	 */
-	private static function retry_later( int $space_id ): void {
-		Queue::at( time() + MINUTE_IN_SECONDS, self::BATCH_HOOK, array( 'space_id' => $space_id ) );
+	private static function retry_later( int $space_id, int $attempt = 0 ): void {
+		if ( $attempt >= self::MAX_RETRIES ) {
+			return;
+		}
+		Queue::at(
+			time() + MINUTE_IN_SECONDS * ( 2 ** $attempt ),
+			self::BATCH_HOOK,
+			array(
+				'space_id' => $space_id,
+				'attempt'  => $attempt + 1,
+			)
+		);
 	}
 
 	/**

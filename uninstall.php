@@ -52,27 +52,61 @@ foreach ( (array) _get_cron_array() as $jetonomy_events ) {
 // Action Scheduler keeps the history of every job it ran (complete, canceled,
 // failed) in its own tables. Deactivation cancelled the pending ones; the rows
 // of Jetonomy's jobs and their logs go too. jetonomy_pro_* rows are Pro's.
-$jetonomy_as_actions = $wpdb->prefix . 'actionscheduler_actions';
-$jetonomy_as_logs    = $wpdb->prefix . 'actionscheduler_logs';
-if ( $jetonomy_as_actions === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jetonomy_as_actions ) ) ) ) {
-	$jetonomy_as_hook = $wpdb->esc_like( 'jetonomy_' ) . '%';
-	$jetonomy_as_pro  = $wpdb->esc_like( 'jetonomy_pro_' ) . '%';
+// Batched (logs first, then their actions, 2,000 ids at a time) so a site with a
+// large history never runs one huge DELETE. Every status goes, failed included.
+// The shared Action Scheduler tables themselves are never dropped. Multisite
+// (one set of tables per subsite) is not handled yet.
+$jetonomy_as_purge = static function () use ( $wpdb ): void {
+	$actions = $wpdb->prefix . 'actionscheduler_actions';
+	$logs    = $wpdb->prefix . 'actionscheduler_logs';
+	$groups  = $wpdb->prefix . 'actionscheduler_groups';
 	// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- uninstall: Action Scheduler has no API to delete finished actions.
-	if ( $jetonomy_as_logs === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jetonomy_as_logs ) ) ) ) {
-		$wpdb->query( $wpdb->prepare( "DELETE l FROM {$jetonomy_as_logs} l INNER JOIN {$jetonomy_as_actions} a ON a.action_id = l.action_id WHERE a.hook LIKE %s AND a.hook NOT LIKE %s", $jetonomy_as_hook, $jetonomy_as_pro ) );
+	if ( $actions !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $actions ) ) ) ) {
+		return;
 	}
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$jetonomy_as_actions} WHERE hook LIKE %s AND hook NOT LIKE %s", $jetonomy_as_hook, $jetonomy_as_pro ) );
+	$has_logs = $logs === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $logs ) ) );
+	do {
+		$ids = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT action_id FROM {$actions} WHERE hook LIKE %s AND hook NOT LIKE %s LIMIT 2000", $wpdb->esc_like( 'jetonomy_' ) . '%', $wpdb->esc_like( 'jetonomy_pro_' ) . '%' ) ) );
+		if ( $ids ) {
+			$in = implode( ',', $ids );
+			if ( $has_logs ) {
+				$wpdb->query( "DELETE FROM {$logs} WHERE action_id IN ({$in})" );
+			}
+			$wpdb->query( "DELETE FROM {$actions} WHERE action_id IN ({$in})" );
+		}
+		$batch = count( $ids );
+	} while ( 2000 === $batch );
 	// The shared 'jetonomy' group row goes once no action is left in it (Pro, if still installed, keeps it).
-	$jetonomy_as_groups = $wpdb->prefix . 'actionscheduler_groups';
-	if ( $jetonomy_as_groups === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jetonomy_as_groups ) ) ) ) {
-		$wpdb->query( "DELETE g FROM {$jetonomy_as_groups} g LEFT JOIN {$jetonomy_as_actions} a ON a.group_id = g.group_id WHERE g.slug = 'jetonomy' AND a.action_id IS NULL" );
+	if ( $groups === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $groups ) ) ) ) {
+		$wpdb->query( "DELETE g FROM {$groups} g LEFT JOIN {$actions} a ON a.group_id = g.group_id WHERE g.slug = 'jetonomy' AND a.action_id IS NULL" );
 	}
 	// phpcs:enable
-}
+};
+$jetonomy_as_purge();
 // The library's runner event is scheduled with args ( 'WP Cron' ), so it is cleared for every args set. Only when no other
-// active plugin still loads Action Scheduler (Jetonomy is inactive here, so a loaded ActionScheduler class is someone
-// else's copy, which still needs its runner).
-if ( ! class_exists( 'ActionScheduler' ) ) {
+// active plugin ships Action Scheduler, which still needs its runner. Checked by file, not class_exists(): in a single
+// `wp plugin uninstall --deactivate` process Jetonomy's own copy is still loaded, so the class always exists there.
+$jetonomy_other_as = false;
+$jetonomy_active   = array_merge( (array) get_option( 'active_plugins', array() ), array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) );
+foreach ( $jetonomy_active as $jetonomy_plugin ) {
+	$jetonomy_dir = dirname( WP_PLUGIN_DIR . '/' . $jetonomy_plugin );
+	if ( WP_PLUGIN_DIR === $jetonomy_dir || 'jetonomy' === basename( $jetonomy_dir ) ) {
+		continue; // A single-file plugin, or Jetonomy itself.
+	}
+	// The library's loader at the plugin root (the standalone plugin) or up to three folders down (libs/, vendor/woocommerce/,
+	// packages/). No GLOB_BRACE: it is undefined on Alpine (musl) PHP builds.
+	foreach ( array( '', '*/', '*/*/', '*/*/*/' ) as $jetonomy_depth ) {
+		if ( glob( $jetonomy_dir . '/' . $jetonomy_depth . 'action-scheduler/action-scheduler.php' ) ) {
+			$jetonomy_other_as = true;
+			break 2;
+		}
+	}
+	if ( file_exists( $jetonomy_dir . '/action-scheduler.php' ) ) {
+		$jetonomy_other_as = true;
+		break;
+	}
+}
+if ( ! $jetonomy_other_as ) {
 	wp_unschedule_hook( 'action_scheduler_run_queue' );
 }
 

@@ -351,6 +351,8 @@ class Cron {
 	 * Deletes in batches of 5 000 to avoid lock contention, looping until all expired rows are removed.
 	 */
 	public function prune_activity_log(): void {
+		\Jetonomy\Queue::prune_history();
+
 		$settings = get_option( 'jetonomy_settings', array() );
 		$days     = (int) ( $settings['activity_log_retention_days'] ?? 90 );
 		if ( $days <= 0 ) {

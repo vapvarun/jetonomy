@@ -141,4 +141,40 @@ final class Queue {
 		}
 		wp_unschedule_hook( $hook );
 	}
+
+	/**
+	 * Delete this family's finished job history: completed actions in the 'jetonomy' group (Free and Pro) older than
+	 * 7 days, with their log rows, at most 200 per call. Action Scheduler's own cleaner keeps every plugin's history
+	 * for 31 days, and our plugins must not change that site-wide setting, so we trim only our own rows. Failed and
+	 * pending rows are never touched. Called from the daily activity prune, not a job of its own.
+	 *
+	 * @return int Rows deleted.
+	 */
+	public static function prune_history(): int {
+		if ( ! self::has_as() || ! function_exists( 'as_get_scheduled_actions' ) ) {
+			return 0;
+		}
+		/**
+		 * Days a finished Jetonomy job is kept before Jetonomy deletes it.
+		 *
+		 * @param int $days Default 7.
+		 */
+		$days = max( 1, (int) apply_filters( 'jetonomy_action_history_days', 7 ) );
+		$ids  = as_get_scheduled_actions(
+			array(
+				'group'        => self::GROUP,
+				'status'       => \ActionScheduler_Store::STATUS_COMPLETE,
+				'date'         => gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ),
+				'date_compare' => '<',
+				'per_page'     => 200,
+				'orderby'      => 'none',
+			),
+			'ids'
+		);
+		$store = \ActionScheduler::store();
+		foreach ( (array) $ids as $id ) {
+			$store->delete_action( (int) $id ); // The DB logger deletes the action's log rows on this hook.
+		}
+		return count( (array) $ids );
+	}
 }

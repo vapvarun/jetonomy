@@ -247,6 +247,7 @@ class Model_Tests {
 		$this->test_space_ownership_transfer();
 		$this->test_space_hand_over_rules();
 		$this->test_space_purge_stops_on_db_error();
+		$this->test_space_purge_retry_cap();
 		$this->test_topic_data_integrity();
 		$this->test_category_visibility();
 		$this->test_child_space_in_category_listing();
@@ -269,6 +270,7 @@ class Model_Tests {
 		$this->test_edited_marker();
 		$this->test_upload_box_rules();
 		$this->test_queue_cancel();
+		$this->test_queue_prune_history();
 		$this->test_ability_mark_read_scope();
 		$this->test_app_strings_defined();
 		$this->test_import_map();
@@ -695,7 +697,11 @@ class Model_Tests {
 
 		// UT2: Action Scheduler's runner event carries args, so only an all-args unschedule clears it, and only when no
 		// other active plugin still loads the library.
-		$un_runner = (bool) preg_match( "/if\s*\(\s*!\s*class_exists\(\s*'ActionScheduler'\s*\)\s*\)\s*\{\s*wp_unschedule_hook\(\s*'action_scheduler_run_queue'\s*\)/", $un_src )
+		// The guard looks for another active plugin's copy by file: class_exists() is always true in a one-process
+		// `wp plugin uninstall --deactivate`, where Jetonomy's own copy is still loaded, so the runner was never cleared.
+		$un_runner = (bool) preg_match( '/if\s*\(\s*!\s*\$jetonomy_other_as\s*\)\s*\{\s*wp_unschedule_hook\(\s*\'action_scheduler_run_queue\'\s*\)/', $un_src )
+			&& false !== strpos( $un_src, "'action-scheduler/action-scheduler.php' )" )
+			&& false === strpos( $un_src, "class_exists( 'ActionScheduler' )" )
 			&& false === strpos( $un_src, "wp_clear_scheduled_hook( 'action_scheduler_run_queue' )" );
 		$this->check( 'UT2: uninstall clears the Action Scheduler runner for all args, only when no other plugin loads it', $un_runner, 'guarded wp_unschedule_hook missing' );
 		if ( wp_next_scheduled( 'action_scheduler_run_queue', array( 'WP Cron' ) ) ) {
@@ -1831,6 +1837,33 @@ class Model_Tests {
 	 * A failed topic-id read used to look like "no topics left", so the purge
 	 * deleted the space row and orphaned every reply.
 	 */
+	/**
+	 * PR1-PR2: a purge that keeps hitting a database error retries 3 times with backoff, then stops. Before: a new
+	 * job every minute, forever.
+	 */
+	private function test_space_purge_retry_cap(): void {
+		$retry = new \ReflectionMethod( \Jetonomy\Space_Purge::class, 'retry_later' );
+		$retry->setAccessible( true );
+		$hook = \Jetonomy\Space_Purge::BATCH_HOOK;
+		$sid  = 999971; // No such space: nothing runs against it, the jobs are only inspected and cancelled.
+		$at   = array();
+		foreach ( array( 0, 1, 2, 3 ) as $attempt ) {
+			$retry->invoke( null, $sid, $attempt );
+			$next = $attempt < 3 ? array( 'space_id' => $sid, 'attempt' => $attempt + 1 ) : array( 'space_id' => $sid, 'attempt' => 4 );
+			$at[ $attempt ] = \Jetonomy\Queue::is_queued( $hook, $next );
+		}
+		$this->check( 'PR1: retries 1 to 3 are queued', $at[0] && $at[1] && $at[2] );
+		$this->check( 'PR2: after the third retry nothing more is queued', ! $at[3] );
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			foreach ( array( 1, 2, 3 ) as $n ) {
+				as_unschedule_all_actions( $hook, array( 'space_id' => $sid, 'attempt' => $n ), \Jetonomy\Queue::GROUP );
+			}
+		}
+		foreach ( array( 1, 2, 3 ) as $n ) {
+			wp_clear_scheduled_hook( $hook, array( 'space_id' => $sid, 'attempt' => $n ) );
+		}
+	}
+
 	private function test_space_purge_stops_on_db_error(): void {
 		global $wpdb;
 		$slug  = 'qa-pg-' . wp_generate_password( 6, false, false );
@@ -2906,6 +2939,42 @@ class Model_Tests {
 		$queued = \Jetonomy\Queue::is_queued( $hook, array( 999981 ) );
 		\Jetonomy\Queue::cancel( $hook );
 		$this->check( 'QU1: Queue::cancel() removes per-member jobs whatever their arguments', $queued && ! \Jetonomy\Queue::is_queued( $hook, array( 999981 ) ) && ! \Jetonomy\Queue::is_queued( $hook, array( 999982 ) ) );
+	}
+
+	/**
+	 * HP1-HP2: Queue::prune_history() deletes our completed jobs older than 7 days, with their logs, and nothing else:
+	 * not a recent one, not a failed one, not another plugin's group. Before: only Action Scheduler's own 31-day cleaner.
+	 */
+	private function test_queue_prune_history(): void {
+		if ( ! \Jetonomy\Queue::has_as() || ! did_action( 'action_scheduler_init' ) ) {
+			$this->skip( 'HP1: old completed Jetonomy jobs are pruned with their logs', 'Action Scheduler not loaded' );
+			return;
+		}
+		global $wpdb;
+		$hook  = 'jetonomy_qa_history_probe'; // Test-only hook.
+		$store = \ActionScheduler::store();
+		$make  = static function ( int $age_days, string $group, string $end ) use ( $hook, $store ): int {
+			$id = (int) as_schedule_single_action( time() - $age_days * DAY_IN_SECONDS, $hook, array( wp_rand() ), $group );
+			'failed' === $end ? $store->mark_failure( $id ) : $store->mark_complete( $id );
+			return $id;
+		};
+		$old    = $make( 8, 'jetonomy', 'complete' );
+		$recent = $make( 1, 'jetonomy', 'complete' );
+		$failed = $make( 8, 'jetonomy', 'failed' );
+		$other  = $make( 8, 'jt-qa-other-group', 'complete' );
+		$logs   = $wpdb->prefix . 'actionscheduler_logs';
+		$had    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$logs} WHERE action_id = %d", $old ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// Our own older history may sit ahead of the probe in a 200-row run, so run until the probe is reached.
+		for ( $i = 0; $i < 50 && 200 === \Jetonomy\Queue::prune_history(); $i++ ) {
+			continue;
+		}
+		$exists = static fn( int $id ): bool => (bool) $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$wpdb->prefix}actionscheduler_actions WHERE action_id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$left   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$logs} WHERE action_id = %d", $old ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$this->check( 'HP1: a Jetonomy job completed 8 days ago is deleted with its log rows', ! $exists( $old ) && $had > 0 && 0 === $left, "exists={$exists( $old )} logs {$had}->{$left}" );
+		$this->check( 'HP2: a recent job, a failed job and another plugin\'s job are kept', $exists( $recent ) && $exists( $failed ) && $exists( $other ) );
+		foreach ( array( $recent, $failed, $other ) as $id ) {
+			$store->delete_action( $id );
+		}
 	}
 
 	/**
