@@ -1651,6 +1651,17 @@ class Template_Loader {
 		$missing = false;
 
 		switch ( $data['route'] ) {
+			case 'moderation':
+				// The view also says "no permission", but only after the theme has started output, when a classic theme
+				// has already sent a 200. Decide the status here, before any output, so every theme answers 403.
+				$mod_viewer = get_current_user_id();
+				if ( $mod_viewer > 0
+					&& ! \Jetonomy\Moderation\Moderation_Permissions::can_view_admin_dashboard( $mod_viewer )
+					&& ! \Jetonomy\Moderation\Moderation_Permissions::can_view_any_queue( $mod_viewer ) ) {
+					status_header( 403 );
+				}
+				break;
+
 			case 'space':
 			case 'space-members':
 			case 'space-roadmap':
