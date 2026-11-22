@@ -64,6 +64,11 @@ if ( $jetonomy_as_actions === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE 
 		$wpdb->query( $wpdb->prepare( "DELETE l FROM {$jetonomy_as_logs} l INNER JOIN {$jetonomy_as_actions} a ON a.action_id = l.action_id WHERE a.hook LIKE %s AND a.hook NOT LIKE %s", $jetonomy_as_hook, $jetonomy_as_pro ) );
 	}
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$jetonomy_as_actions} WHERE hook LIKE %s AND hook NOT LIKE %s", $jetonomy_as_hook, $jetonomy_as_pro ) );
+	// The shared 'jetonomy' group row goes once no action is left in it (Pro, if still installed, keeps it).
+	$jetonomy_as_groups = $wpdb->prefix . 'actionscheduler_groups';
+	if ( $jetonomy_as_groups === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jetonomy_as_groups ) ) ) ) {
+		$wpdb->query( "DELETE g FROM {$jetonomy_as_groups} g LEFT JOIN {$jetonomy_as_actions} a ON a.group_id = g.group_id WHERE g.slug = 'jetonomy' AND a.action_id IS NULL" );
+	}
 	// phpcs:enable
 }
 wp_clear_scheduled_hook( 'action_scheduler_run_queue' );

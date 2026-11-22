@@ -456,9 +456,11 @@ final class Jetonomy {
 	/**
 	 * Create any schema table that is missing even though db_version is at target.
 	 *
-	 * Runs at most once per plugin version (an autoloaded option flag short-circuits
-	 * it), and the SHOW TABLES sentinel only triggers real work when a table is
-	 * actually absent — so the steady-state cost is a single option read.
+	 * Runs once per plugin version (the autoloaded jetonomy_schema_checked flag), then
+	 * again at most once a day on an admin request (the jetonomy_schema_recheck
+	 * transient), so a table dropped after the version check is recreated too. The
+	 * SHOW TABLES sentinel only triggers real work when a table is actually absent, so
+	 * the steady-state cost is one option read plus, in wp-admin, one transient read.
 	 *
 	 * The sentinel is EVERY table the schema defines, compared in one SHOW TABLES
 	 * query, so a table added later is repaired too even when the version constant was
