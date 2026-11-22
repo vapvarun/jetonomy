@@ -135,7 +135,16 @@ class Setup_Handler {
 		}
 		update_option( 'jetonomy_settings', $settings );
 
-		Demo_Seeder::import( $uid );
+		// The seeder refuses a community with spaces or topics of its own; the wizard asks the owner, then sends force.
+		$demo = Demo_Seeder::import( $uid, ! empty( $_POST['force'] ) );
+		if ( is_wp_error( $demo ) ) {
+			wp_send_json_error(
+				array(
+					'code'    => $demo->get_error_code(),
+					'message' => $demo->get_error_message(),
+				)
+			);
+		}
 
 		flush_rewrite_rules();
 		update_option( 'jetonomy_setup_complete', true );

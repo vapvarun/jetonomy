@@ -62,7 +62,19 @@ class Demo_Seeder {
 	 * @param int $admin_id Site administrator who owns the demo spaces.
 	 * @return array Manifest stored in `jetonomy_demo_data`.
 	 */
-	public static function import( int $admin_id ): array {
+	public static function import( int $admin_id, bool $force = false ): array|\WP_Error {
+		$real = self::real_content_count();
+		if ( $real > 0 && ! $force ) {
+			return new \WP_Error(
+				'jetonomy_demo_real_content',
+				sprintf(
+					/* translators: %s: number of spaces and topics. */
+					_n( 'This community already has %s space or topic of its own. Add the sample content anyway?', 'This community already has %s spaces and topics of its own. Add the sample content anyway?', $real, 'jetonomy' ),
+					number_format_i18n( $real )
+				),
+				array( 'status' => 409 )
+			);
+		}
 		// One seed runs ~25k queries. Lift the admin memory limit, and stop
 		// Query Monitor keeping a backtrace for every one of them, which on its
 		// own pushed the request past 256MB.
@@ -99,9 +111,7 @@ class Demo_Seeder {
 	 */
 	public static function real_content_count(): int {
 		$demo = (array) get_option( 'jetonomy_demo_data', array() );
-		$real = Space::count() - count( (array) ( $demo['spaces'] ?? array() ) )
-			+ Post::count() - count( (array) ( $demo['posts'] ?? array() ) );
-		return max( 0, $real );
+		return Space::count_excluding( (array) ( $demo['spaces'] ?? array() ) ) + Post::count_excluding( (array) ( $demo['posts'] ?? array() ) );
 	}
 
 	/**

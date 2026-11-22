@@ -36,7 +36,7 @@ class DemoImportCrashTest extends WP_UnitTestCase {
 		add_action( 'jetonomy_reply_created', $crash );
 
 		try {
-			Demo_Seeder::import( $admin_id );
+			Demo_Seeder::import( $admin_id, true );
 			$this->fail( 'The simulated fatal did not fire.' );
 		} catch ( RuntimeException $e ) {
 			remove_action( 'jetonomy_reply_created', $crash );

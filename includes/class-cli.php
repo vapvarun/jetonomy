@@ -295,8 +295,9 @@ class CLI {
 	 * ## OPTIONS
 	 *
 	 * [--force]
-	 * : Auto-cleanup existing demo data before seeding. Without this flag the
-	 *   command aborts if demo data already exists.
+	 * : Replace existing demo data, and seed even when the community already has
+	 *   spaces or topics of its own. Without this flag the command aborts in
+	 *   either case.
 	 *
 	 * [--model]
 	 * : Full reset before seeding. Truncates ALL Jetonomy content (categories,
@@ -348,7 +349,11 @@ class CLI {
 		);
 
 		\WP_CLI::log( 'Seeding demo users...' );
-		$demo = Demo_Seeder::import( $admin_id );
+		$demo = Demo_Seeder::import( $admin_id, $model || ! empty( $assoc_args['force'] ) );
+		if ( is_wp_error( $demo ) ) {
+			\WP_CLI::error( $demo->get_error_message() . ' Run with --force to seed anyway.' );
+			return;
+		}
 		flush_rewrite_rules();
 
 		\WP_CLI::log( sprintf( '  Users created:     %d', count( $demo['users'] ) ) );

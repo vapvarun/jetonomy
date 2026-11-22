@@ -142,4 +142,20 @@ abstract class Model {
 		}
 		return (int) static::db()->get_var( $sql );
 	}
+
+	/**
+	 * Rows whose id is not in $ids (one COUNT on the primary key).
+	 *
+	 * @since 2.0.8
+	 *
+	 * @param int[] $ids Ids to leave out.
+	 */
+	public static function count_excluding( array $ids ): int {
+		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
+		if ( ! $ids ) {
+			return static::count();
+		}
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name and a placeholder list.
+		return (int) static::db()->get_var( static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE id NOT IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', ...$ids ) );
+	}
 }

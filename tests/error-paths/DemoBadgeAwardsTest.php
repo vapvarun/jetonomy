@@ -78,7 +78,7 @@ class DemoBadgeAwardsTest extends WP_UnitTestCase {
 
 		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
 
-		Demo_Seeder::import( $admin_id );
+		Demo_Seeder::import( $admin_id, true );
 
 		$this->assertSame( 0, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$this->awards} WHERE user_id = %d", $admin_id ) ), 'The site admin is not a demo member and gets no demo badges.' );
 		$dupes = (int) $wpdb->get_var( "SELECT COUNT(*) FROM ( SELECT user_id, badge_id FROM {$this->awards} GROUP BY user_id, badge_id HAVING COUNT(*) > 1 ) d" );

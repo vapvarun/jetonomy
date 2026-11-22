@@ -127,19 +127,10 @@ class Admin_Controller extends Base_Controller {
 		if ( true !== $request->get_param( 'confirm' ) ) {
 			return new WP_Error( 'jetonomy_confirm_required', __( 'Send confirm=true to import demo data.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
-		$real = Demo_Seeder::real_content_count();
-		if ( $real > 0 && true !== $request->get_param( 'force' ) ) {
-			return new WP_Error(
-				'jetonomy_demo_real_content',
-				sprintf(
-					/* translators: %s: number of spaces and topics. */
-					_n( 'This community already has %s space or topic of its own. Add the sample content anyway?', 'This community already has %s spaces and topics of its own. Add the sample content anyway?', $real, 'jetonomy' ),
-					number_format_i18n( $real )
-				),
-				array( 'status' => 409 )
-			);
+		$demo = Demo_Seeder::import( get_current_user_id(), true === $request->get_param( 'force' ) );
+		if ( is_wp_error( $demo ) ) {
+			return $demo;
 		}
-		Demo_Seeder::import( get_current_user_id() );
 		$data            = Demo_Seeder::summary();
 		$data['message'] = __( 'Demo data imported.', 'jetonomy' );
 		return new WP_REST_Response( $data, 201 );
