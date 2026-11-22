@@ -712,6 +712,8 @@ class Notification extends Model {
 	 * cursor job instead of carrying member ids in its job arguments. The match is the text and target only, as Pro
 	 * groups a push (identical text from two actors is one push), and the last row stands in as the anchor when the
 	 * first was deleted before the job ran, so one member clearing a notification never drops everyone's push.
+	 * Only each member's first row of the push is returned, so a member with two identical rows is sent one push even
+	 * when a run splits between them.
 	 *
 	 * @param int $anchor_id First notification of the push.
 	 * @param int $max_id    Last notification id the push may include.
@@ -723,8 +725,8 @@ class Notification extends Model {
 		$t = static::table();
 		$b = \Jetonomy\table( 'blocked_users' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only.
-		$sql = "SELECT n.id, n.user_id, n.actor_id, n.type, n.object_type, n.object_id, n.message FROM {$t} a INNER JOIN {$t} n ON n.type = a.type AND n.object_type = a.object_type AND n.object_id = a.object_id AND n.message = a.message LEFT JOIN {$b} bl ON n.actor_id > 0 AND bl.blocker_id = n.user_id AND bl.blocked_id = n.actor_id WHERE a.id = ( SELECT MIN(x.id) FROM {$t} x WHERE x.id IN ( %d, %d ) ) AND n.id BETWEEN %d AND %d AND n.id > %d AND bl.blocker_id IS NULL ORDER BY n.id ASC LIMIT %d";
-		return (array) static::db()->get_results( static::db()->prepare( $sql, $anchor_id, $max_id, $anchor_id, $max_id, $after, $limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$sql = "SELECT n.id, n.user_id, n.actor_id, n.type, n.object_type, n.object_id, n.message FROM {$t} a INNER JOIN {$t} n ON n.type = a.type AND n.object_type = a.object_type AND n.object_id = a.object_id AND n.message = a.message LEFT JOIN {$b} bl ON n.actor_id > 0 AND bl.blocker_id = n.user_id AND bl.blocked_id = n.actor_id WHERE a.id = ( SELECT MIN(x.id) FROM {$t} x WHERE x.id IN ( %d, %d ) ) AND n.id BETWEEN %d AND %d AND n.id > %d AND bl.blocker_id IS NULL AND NOT EXISTS ( SELECT 1 FROM {$t} d WHERE d.user_id = n.user_id AND d.id >= %d AND d.id < n.id AND d.type = n.type AND d.object_type = n.object_type AND d.object_id = n.object_id AND d.message = n.message ) ORDER BY n.id ASC LIMIT %d";
+		return (array) static::db()->get_results( static::db()->prepare( $sql, $anchor_id, $max_id, $anchor_id, $max_id, $after, $anchor_id, $limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**

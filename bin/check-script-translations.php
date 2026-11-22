@@ -123,6 +123,9 @@ foreach ( array_keys( $handles ) as $handle ) {
 	}
 }
 
+if ( ! $handles ) {
+	$problems[] = 'no script_translations() handles found: the check is not reading this plugin (moved or renamed?)';
+}
 if ( $problems ) {
 	fwrite( STDERR, 'check-script-translations: ' . count( $problems ) . " problem(s) in $domain\n  " . implode( "\n  ", $problems ) . "\n" );
 	exit( 1 );

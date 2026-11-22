@@ -43,13 +43,20 @@ final class Queue_Isolation {
 	 */
 	public static function run( array $hooks, callable $check ): void {
 		self::restore(); // An earlier run that died before its finally left copies aside.
+		$taken = array(); // Only hooks fully set aside are cancelled afterwards: never a live copy that was not saved.
 		try {
 			foreach ( $hooks as $hook ) {
-				self::take( $hook );
+				if ( ! self::take( $hook ) ) {
+					if ( defined( 'WP_CLI' ) && WP_CLI ) {
+						\WP_CLI::warning( "Skipped a queue check: {$hook} has more pending copies than QA sets aside." );
+					}
+					return; // The finally puts back what was saved and leaves the rest alone.
+				}
+				$taken[] = $hook;
 			}
 			$check();
 		} finally {
-			foreach ( $hooks as $hook ) {
+			foreach ( $taken as $hook ) {
 				Queue::cancel( $hook );
 			}
 			self::restore();
@@ -60,8 +67,9 @@ final class Queue_Isolation {
 	 * Save and cancel every pending copy of a hook, page by page; the saved list is stored after each page.
 	 *
 	 * @param string $hook Job hook.
+	 * @return bool False when more than MAX_PAGES pages are pending: the rest are left as they are.
 	 */
-	private static function take( string $hook ): void {
+	private static function take( string $hook ): bool {
 		$saved = (array) get_option( self::OPTION, array() );
 		if ( Queue::has_as() ) {
 			$store = \ActionScheduler::store();
@@ -92,6 +100,9 @@ final class Queue_Isolation {
 					$store->cancel_action( (int) $id );
 				}
 			}
+			if ( self::MAX_PAGES === $page && as_get_scheduled_actions( $query, 'ids' ) ) {
+				return false;
+			}
 		}
 		foreach ( (array) _get_cron_array() as $at => $events ) {
 			foreach ( (array) ( $events[ $hook ] ?? array() ) as $event ) {
@@ -106,6 +117,7 @@ final class Queue_Isolation {
 		}
 		update_option( self::OPTION, $saved, false );
 		wp_unschedule_hook( $hook );
+		return true;
 	}
 
 	/**
