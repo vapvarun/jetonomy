@@ -11,6 +11,8 @@ parameters:
     scanFiles:
         - jetonomy.php
         - libs/action-scheduler/functions.php
+        - libs/action-scheduler/classes/abstracts/ActionScheduler.php
+        - libs/action-scheduler/classes/abstracts/ActionScheduler_Store.php
         # BuddyPress symbols for the integration layer. A committed stub file,
         # NOT a scanDirectories pointed at a real checkout: scanning BuddyPress
         # meant parsing 687 files purely for symbol discovery, which exhausted

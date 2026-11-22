@@ -688,6 +688,7 @@ class Auth_Controller extends Base_Controller {
 			update_user_meta( (int) $user_id, '_jetonomy_verification_token_hash', $token_hash );
 			update_user_meta( (int) $user_id, '_jetonomy_verification_token_expires', $expires_at );
 			update_user_meta( (int) $user_id, '_jetonomy_verification_sent_at', time() );
+			\Jetonomy\Cron::arm_due_jobs(); // Arms the reminder for when it is owed.
 
 			\Jetonomy\Notifications\Notifier::send_verification_email( (int) $user_id, $token );
 

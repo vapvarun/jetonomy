@@ -21,6 +21,12 @@ final class Queue {
 	/** Action Scheduler group for every free job. */
 	public const GROUP = 'jetonomy';
 
+	/** Days a finished job is kept by prune_history() (filter: jetonomy_finished_action_retention_days). */
+	public const FINISHED_RETENTION_DAYS = 7;
+
+	/** Finished jobs deleted per prune_history() call. */
+	private const PRUNE_BATCH = 200;
+
 	/**
 	 * Whether Action Scheduler is loaded and may be called. Its functions exist
 	 * from plugins_loaded, but its store is not ready before action_scheduler_init.
@@ -143,8 +149,27 @@ final class Queue {
 	}
 
 	/**
+	 * Register a recurring job of the Jetonomy family. Free's Cron::ensure_scheduled() arms every registered job on
+	 * cron, wp-admin and WP-CLI requests (never on a visitor's page view), so there is one scheduler for Free and
+	 * Pro. Call it from boot, before action_scheduler_init.
+	 *
+	 * @param string $hook        Action hook (takes no arguments).
+	 * @param int    $interval    Seconds between runs.
+	 * @param int    $first_delay Seconds from now to the first run (0 = now).
+	 */
+	public static function recurring( string $hook, int $interval, int $first_delay = 0 ): void {
+		add_filter(
+			'jetonomy_recurring_jobs',
+			static function ( array $jobs ) use ( $hook, $interval, $first_delay ): array {
+				$jobs[ $hook ] = array( $interval, $first_delay );
+				return $jobs;
+			}
+		);
+	}
+
+	/**
 	 * Delete this family's finished job history: completed actions in the 'jetonomy' group (Free and Pro) older than
-	 * 7 days, with their log rows, at most 200 per call. Action Scheduler's own cleaner keeps every plugin's history
+	 * FINISHED_RETENTION_DAYS, with their log rows, at most PRUNE_BATCH per call. Action Scheduler's own cleaner keeps every plugin's history
 	 * for 31 days, and our plugins must not change that site-wide setting, so we trim only our own rows. Failed and
 	 * pending rows are never touched. Called from the daily activity prune, not a job of its own.
 	 *
@@ -155,18 +180,21 @@ final class Queue {
 			return 0;
 		}
 		/**
-		 * Days a finished Jetonomy job is kept before Jetonomy deletes it.
+		 * Days a finished (completed) Jetonomy job is kept before Jetonomy deletes it with its log rows. Only the
+		 * 'jetonomy' group is touched; failed and pending jobs are never deleted.
 		 *
-		 * @param int $days Default 7.
+		 * @since 2.0.8
+		 *
+		 * @param int $days Whole days, at least 1. Default 7.
 		 */
-		$days = max( 1, (int) apply_filters( 'jetonomy_action_history_days', 7 ) );
+		$days = max( 1, (int) apply_filters( 'jetonomy_finished_action_retention_days', self::FINISHED_RETENTION_DAYS ) );
 		$ids  = as_get_scheduled_actions(
 			array(
 				'group'        => self::GROUP,
 				'status'       => \ActionScheduler_Store::STATUS_COMPLETE,
 				'date'         => gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ),
 				'date_compare' => '<',
-				'per_page'     => 200,
+				'per_page'     => self::PRUNE_BATCH,
 				'orderby'      => 'none',
 			),
 			'ids'

@@ -2228,12 +2228,13 @@ class Post extends Model {
 	 *
 	 * Served by the status_created index (status = 'draft' is a small slice).
 	 *
+	 * @param string $after Only schedules later than this UTC 'Y-m-d H:i:s' ('' = any).
 	 * @return string|null UTC 'Y-m-d H:i:s'.
 	 */
-	public static function next_scheduled_at(): ?string {
+	public static function next_scheduled_at( string $after = '' ): ?string {
 		$table = static::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$next = static::db()->get_var( "SELECT MIN(published_at) FROM {$table} WHERE status = 'draft' AND published_at IS NOT NULL" );
+		$next = static::db()->get_var( static::db()->prepare( "SELECT MIN(published_at) FROM {$table} WHERE status = 'draft' AND published_at > %s", '' === $after ? '1000-01-01 00:00:00' : $after ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $next ? (string) $next : null;
 	}
 

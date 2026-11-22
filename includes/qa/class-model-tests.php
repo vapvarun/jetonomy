@@ -248,6 +248,10 @@ class Model_Tests {
 		$this->test_space_hand_over_rules();
 		$this->test_space_purge_stops_on_db_error();
 		$this->test_space_purge_retry_cap();
+		$this->test_publish_retry_cap();
+		$this->test_due_jobs();
+		$this->test_trust_candidates();
+		$this->test_recurring_registry();
 		$this->test_topic_data_integrity();
 		$this->test_category_visibility();
 		$this->test_child_space_in_category_listing();
@@ -1854,14 +1858,173 @@ class Model_Tests {
 		}
 		$this->check( 'PR1: retries 1 to 3 are queued', $at[0] && $at[1] && $at[2] );
 		$this->check( 'PR2: after the third retry nothing more is queued', ! $at[3] );
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			foreach ( array( 1, 2, 3 ) as $n ) {
-				as_unschedule_all_actions( $hook, array( 'space_id' => $sid, 'attempt' => $n ), \Jetonomy\Queue::GROUP );
-			}
-		}
+		// Action Scheduler is bundled, so the retries are AS rows; clear this space's only.
 		foreach ( array( 1, 2, 3 ) as $n ) {
-			wp_clear_scheduled_hook( $hook, array( 'space_id' => $sid, 'attempt' => $n ) );
+			as_unschedule_all_actions( $hook, array( 'space_id' => $sid, 'attempt' => $n ), \Jetonomy\Queue::GROUP );
 		}
+	}
+
+	/**
+	 * PS1-PS5: a scheduled topic that fails to publish does not hold up the others, is retried 3 times with the
+	 * attempt in the job args, then logs one line and waits for the next schedule. Before, the run re-armed itself
+	 * the moment it finished, so a topic that always failed ran the publisher on every queue run.
+	 */
+	private function test_publish_retry_cap(): void {
+		global $wpdb;
+		$posts = \Jetonomy\table( 'posts' );
+		$slug  = 'qa-ps-' . wp_generate_password( 6, false, false );
+		$space = (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA PS', 'slug' => $slug, 'type' => 'forum', 'author_id' => $this->qa_admin ), $this->qa_admin );
+		$now   = current_time( 'mysql', true );
+		$ids   = array();
+		// No publisher may be queued, or a background runner could publish the probe topics outside this process.
+		\Jetonomy\Queue::cancel( \Jetonomy\Cron::PUBLISH_HOOK );
+		foreach ( array( 'bad' => '-1 hour', 'good' => '-1 hour', 'later' => '+1 day' ) as $k => $when ) {
+			$wpdb->insert( $posts, array( 'space_id' => $space, 'author_id' => $this->qa_admin, 'title' => 'PS ' . $k, 'slug' => "{$slug}-{$k}", 'content' => 'x', 'content_plain' => 'x', 'status' => 'draft', 'published_at' => gmdate( 'Y-m-d H:i:s', strtotime( $when ) ), 'created_at' => $now, 'last_reply_at' => $now ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$ids[ $k ] = (int) $wpdb->insert_id;
+		}
+		$bad   = $ids['bad'];
+		$throw = static function ( $sql ) use ( $posts, $bad ) {
+			if ( 0 === strpos( ltrim( (string) $sql ), 'UPDATE' ) && false !== strpos( (string) $sql, $posts ) && preg_match( "/`id` = '?{$bad}\\b/", (string) $sql ) ) {
+				throw new \RuntimeException( 'qa ps' );
+			}
+			return $sql;
+		};
+		$hook = \Jetonomy\Cron::PUBLISH_HOOK;
+		$cron = ( new \ReflectionClass( \Jetonomy\Cron::class ) )->newInstanceWithoutConstructor();
+		$log  = wp_tempnam( 'qa-ps' );
+		$prev = ini_set( 'error_log', $log ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		$got  = array();
+		$kept = false;
+		add_filter( 'query', $throw );
+		try {
+			foreach ( array( 0, 1, 2, 3 ) as $attempt ) {
+				try {
+					$cron->publish_scheduled_posts( $attempt );
+				} catch ( \Throwable $e ) {
+					$got[ $attempt ] = 'threw';
+					continue;
+				}
+				$got[ $attempt ] = \Jetonomy\Queue::is_queued( $hook, array( 'attempt' => $attempt + 1 ) );
+				if ( 0 === $attempt ) {
+					\Jetonomy\Cron::arm_scheduled_publish(); // As a topic write or an admin page would.
+					$kept = \Jetonomy\Queue::is_queued( $hook, array( 'attempt' => 1 ) );
+				}
+			}
+		} finally {
+			remove_filter( 'query', $throw );
+			ini_set( 'error_log', (string) $prev ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		}
+		$next  = \Jetonomy\Queue::next( $hook );
+		$later = (int) strtotime( (string) $wpdb->get_var( $wpdb->prepare( "SELECT published_at FROM {$posts} WHERE id = %d", $ids['later'] ) ) . ' UTC' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$lines = array_values( array_filter( explode( "\n", (string) file_get_contents( $log ) ), static fn( $l ) => false !== strpos( $l, 'did not publish' ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+		$this->check( 'PS1: a topic that fails does not stop a due topic beside it', 'publish' === ( \Jetonomy\Models\Post::find( $ids['good'] )->status ?? '' ) );
+		$this->check( 'PS2: retries 1 to 3 are queued with the attempt in the args', true === ( $got[0] ?? null ) && true === ( $got[1] ?? null ) && true === ( $got[2] ?? null ), wp_json_encode( $got ) );
+		$this->check( 'PS3: a topic write while a retry waits keeps the retry (no reset of the count)', $kept );
+		$this->check( 'PS4: after the third retry nothing more is retried and the publisher waits for the next schedule', false === ( $got[3] ?? null ) && is_int( $next ) && $next > time() && $next <= $later, "next {$next} later {$later}" ); // Another real schedule may come first.
+		$this->check( 'PS5: giving up logs one line naming the topic', 1 === count( $lines ) && false !== strpos( $lines[0], (string) $bad ), (string) count( $lines ) );
+
+		wp_delete_file( $log );
+		\Jetonomy\Queue::cancel( $hook );
+		$wpdb->query( "DELETE FROM {$posts} WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		\Jetonomy\Cron::arm_scheduled_publish();
+		\Jetonomy\Space_Purge::purge( $space );
+	}
+
+	/**
+	 * DJ1-DJ4: the expired-restriction cleanup, verification reminder and roster backstop are one job armed when
+	 * something is due, instead of three hourly jobs that ran whether or not there was work.
+	 */
+	private function test_due_jobs(): void {
+		if ( ! method_exists( \Jetonomy\Cron::class, 'arm_due_jobs' ) ) {
+			$this->check( 'DJ1: one due-time job replaces the three hourly jobs', false, 'Cron::arm_due_jobs() missing' );
+			return;
+		}
+		global $wpdb;
+		$hook = \Jetonomy\Cron::DUE_HOOK;
+		\Jetonomy\Cron::ensure_scheduled();
+		$hourly = array_filter( \Jetonomy\Cron::RETIRED_HOOKS, static fn( $h ) => \Jetonomy\Queue::is_queued( $h ) );
+		$this->check( 'DJ1: the hourly cleanup, reminder and roster jobs are not scheduled', ! $hourly, implode( ',', $hourly ) );
+
+		// A restriction that expires in 10 minutes arms the job for that moment (or sooner if something else is due).
+		$member  = (int) wp_insert_user( array( 'user_login' => 'jt_qa_dj_' . wp_rand( 1000, 9999 ), 'user_pass' => wp_generate_password(), 'user_email' => 'dj' . wp_rand( 1000, 9999 ) . '@example.test' ) );
+		$expires = time() + 10 * MINUTE_IN_SECONDS;
+		$ban     = \Jetonomy\Models\Restriction::ban( $member, 'silence', $this->qa_admin, null, 'QA DJ', gmdate( 'Y-m-d H:i:s', $expires ) );
+		$next    = \Jetonomy\Queue::next( $hook );
+		$this->check( 'DJ2: a restriction expiring in 10 minutes arms the job by then', $ban > 0 && is_int( $next ) && $next <= $expires, "ban {$ban} next " . wp_json_encode( $next ) . " expires {$expires}" );
+
+		// Run the job as the queue would once it has expired: the row is gone and the next run is at least a minute out.
+		$table = \Jetonomy\table( 'restrictions' );
+		$wpdb->update( $table, array( 'expires_at' => gmdate( 'Y-m-d H:i:s', time() - 60 ) ), array( 'id' => $ban ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		\Jetonomy\Queue::cancel( $hook );
+		( new \ReflectionClass( \Jetonomy\Cron::class ) )->newInstanceWithoutConstructor()->run_due_jobs();
+		$left  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE id = %d", $ban ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$after = \Jetonomy\Queue::next( $hook );
+		$this->check( 'DJ3: the job removes an expired restriction when it runs', 0 === $left );
+		$this->check( 'DJ4: after a run the job is re-armed only for real work, never sooner than a minute', false === $after || ( is_int( $after ) && $after >= time() + MINUTE_IN_SECONDS - 5 ), wp_json_encode( $after ) );
+
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( $member );
+		\Jetonomy\Queue::cancel( $hook );
+		\Jetonomy\Cron::arm_due_jobs();
+	}
+
+	/**
+	 * TR1-TR2: the 12-hour trust sweep reads only members who could reach the level above their own, and a sweep
+	 * with nobody to move up queues no batch action.
+	 */
+	private function test_trust_candidates(): void {
+		$next = array(
+			1 => array( 'posts' => 5, 'days_active' => 0, 'reputation' => 0 ),
+			2 => array( 'posts' => 50, 'days_active' => 0, 'reputation' => 0 ),
+			3 => array( 'posts' => 500, 'days_active' => 0, 'reputation' => 0 ),
+		);
+		$profiles = \Jetonomy\table( 'user_profiles' );
+		global $wpdb;
+		$low  = (int) wp_insert_user( array( 'user_login' => 'jt_qa_tr_low_' . wp_rand( 1000, 9999 ), 'user_pass' => wp_generate_password(), 'user_email' => 'trl' . wp_rand( 1000, 9999 ) . '@example.test' ) );
+		$high = (int) wp_insert_user( array( 'user_login' => 'jt_qa_tr_high_' . wp_rand( 1000, 9999 ), 'user_pass' => wp_generate_password(), 'user_email' => 'trh' . wp_rand( 1000, 9999 ) . '@example.test' ) );
+		\Jetonomy\Models\UserProfile::find_or_create( $low );
+		\Jetonomy\Models\UserProfile::find_or_create( $high );
+		$wpdb->update( $profiles, array( 'trust_level' => 0, 'post_count' => 1, 'reply_count' => 0 ), array( 'user_id' => $low ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->update( $profiles, array( 'trust_level' => 0, 'post_count' => 4, 'reply_count' => 2 ), array( 'user_id' => $high ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$rows = wp_list_pluck( \Jetonomy\Models\UserProfile::list_for_trust_batch( min( $low, $high ) - 1, 50, $next ), 'user_id' );
+		$rows = array_map( 'intval', $rows );
+		$this->check( 'TR1: the sweep reads a member who could move up and skips one who cannot', in_array( $high, $rows, true ) && ! in_array( $low, $rows, true ), wp_json_encode( $rows ) );
+
+		// Nobody can move up under thresholds no member meets: the 12-hour run queues no batch.
+		$none = static fn(): array => array( 'posts' => PHP_INT_MAX >> 1, 'days_active' => 0, 'reputation' => 0, 'replies_received' => 0 );
+		$probe                     = (array) get_option( 'jetonomy_settings', array() );
+		$probe['trust_thresholds'] = array( 1 => $none(), 2 => $none(), 3 => $none() );
+		$hold                      = static fn() => $probe;
+		add_filter( 'pre_option_jetonomy_settings', $hold );
+		\Jetonomy\Queue::cancel( 'jetonomy_trust_evaluation_batch' );
+		( new \ReflectionClass( \Jetonomy\Cron::class ) )->newInstanceWithoutConstructor()->evaluate_trust_levels();
+		remove_filter( 'pre_option_jetonomy_settings', $hold );
+		$this->check( 'TR2: a sweep with nobody to move up queues no batch action', ! \Jetonomy\Queue::is_queued( 'jetonomy_trust_evaluation_batch' ) );
+
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( $low );
+		wp_delete_user( $high );
+	}
+
+	/**
+	 * RJ1: a recurring job registered with Queue::recurring() (as Pro's extensions do) is armed by Free's scheduler,
+	 * with its first-run delay.
+	 */
+	private function test_recurring_registry(): void {
+		if ( ! method_exists( \Jetonomy\Queue::class, 'recurring' ) ) {
+			$this->check( 'RJ1: Queue::recurring() registers a job with Free\'s scheduler', false, 'missing' );
+			return;
+		}
+		$hook = 'jetonomy_qa_recurring_probe'; // Test-only hook.
+		\Jetonomy\Queue::cancel( $hook );
+		\Jetonomy\Queue::recurring( $hook, DAY_IN_SECONDS, HOUR_IN_SECONDS );
+		\Jetonomy\Cron::ensure_scheduled();
+		$next = \Jetonomy\Queue::next( $hook );
+		\Jetonomy\Queue::cancel( $hook );
+		// The registration lives for the rest of this process: take the probe back out so no later run arms it.
+		add_filter( 'jetonomy_recurring_jobs', static fn( array $jobs ): array => array_diff_key( $jobs, array( $hook => 0 ) ), PHP_INT_MAX );
+		$this->check( 'RJ1: Queue::recurring() is armed by Free\'s scheduler after its first-run delay', is_int( $next ) && abs( $next - ( time() + HOUR_IN_SECONDS ) ) < MINUTE_IN_SECONDS, wp_json_encode( $next ) );
 	}
 
 	private function test_space_purge_stops_on_db_error(): void {
@@ -2811,7 +2974,7 @@ class Model_Tests {
 		global $wpdb;
 		$hook   = 'jetonomy_fanout_post_subscribers';
 		$author = $this->qa_admin; // Never a real member: posting earns reputation that the topic's deletion does not take back.
-		$fake   = range( 990000001, 990000250 );
+		$fake   = range( 990000001, 990000600 );
 		$space  = Space::create( array( 'title' => 'QA FO', 'slug' => 'jt-qa-fo-' . wp_generate_password( 6, false, false ), 'author_id' => $author ) );
 		$post   = 0;
 
@@ -2823,10 +2986,10 @@ class Model_Tests {
 			$seen  = array();
 			$after = 0;
 			do {
-				$batch = \Jetonomy\Models\Subscription::get_subscribers( 'space', $space, $after, 100 );
+				$batch = \Jetonomy\Models\Subscription::get_subscribers( 'space', $space, $after, 250 );
 				$seen  = array_merge( $seen, $batch );
 				$after = $batch ? (int) end( $batch ) : $after;
-			} while ( 100 === count( $batch ) );
+			} while ( 250 === count( $batch ) );
 			$this->check( 'FO1: cursor batches cover every subscriber once, in order', $fake === $seen );
 
 			$post = Post::create( array( 'space_id' => $space, 'author_id' => $author, 'title' => 'QA FO', 'slug' => 'jt-qa-fo-p-' . wp_generate_password( 6, false, false ), 'content' => '<p>FO</p>' ) );
@@ -2835,7 +2998,7 @@ class Model_Tests {
 
 			$count = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_notifications WHERE object_type = 'post' AND object_id = %d AND type = 'new_post_in_sub'", $post ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			do_action( $hook, $post, $space );
-			$this->check( 'FO3: one run notifies one batch and queues the rest from its cursor', 100 === $count() && as_has_scheduled_action( $hook, array( $post, $space, 990000100 ), 'jetonomy' ) );
+			$this->check( 'FO3: one run notifies a batch of 250 and queues the rest from its cursor', 250 === $count() && as_has_scheduled_action( $hook, array( $post, $space, 990000250 ), 'jetonomy' ), 'notified ' . $count() );
 
 			// Run each continuation by hand, first taking it off the queue so a
 			// background Action Scheduler runner cannot run the same batch too.
@@ -2844,21 +3007,21 @@ class Model_Tests {
 					as_unschedule_all_actions( $hook, $args, 'jetonomy' );
 				}
 			};
-			$own( array( $post, $space, 990000100 ) );
-			do_action( $hook, $post, $space, 990000100 );
-			$own( array( $post, $space, 990000200 ) );
-			do_action( $hook, $post, $space, 990000200 );
-			$this->check( 'FO4: following the cursor reaches every subscriber exactly once', 250 === $count(), 'notified ' . $count() );
+			$own( array( $post, $space, 990000250 ) );
+			do_action( $hook, $post, $space, 990000250 );
+			$own( array( $post, $space, 990000500 ) );
+			do_action( $hook, $post, $space, 990000500 );
+			$this->check( 'FO4: following the cursor reaches every subscriber exactly once', 600 === $count(), 'notified ' . $count() );
 		} finally {
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
 				as_unschedule_all_actions( $hook, array(), 'jetonomy' );
-				foreach ( array( array( $post, $space ), array( $post, $space, 990000100 ), array( $post, $space, 990000200 ) ) as $args ) {
+				foreach ( array( array( $post, $space ), array( $post, $space, 990000250 ), array( $post, $space, 990000500 ) ) as $args ) {
 					as_unschedule_all_actions( $hook, $args, 'jetonomy' );
 				}
 			}
 			wp_clear_scheduled_hook( $hook, array( $post, $space ) );
-			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_notifications WHERE user_id BETWEEN 990000001 AND 990000250" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_subscriptions WHERE user_id BETWEEN 990000001 AND 990000250" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_notifications WHERE user_id BETWEEN 990000001 AND 990000600" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_subscriptions WHERE user_id BETWEEN 990000001 AND 990000600" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			\Jetonomy\Space_Purge::purge( $space );
 		}
 	}
@@ -2972,8 +3135,20 @@ class Model_Tests {
 		$left   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$logs} WHERE action_id = %d", $old ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$this->check( 'HP1: a Jetonomy job completed 8 days ago is deleted with its log rows', ! $exists( $old ) && $had > 0 && 0 === $left, "exists={$exists( $old )} logs {$had}->{$left}" );
 		$this->check( 'HP2: a recent job, a failed job and another plugin\'s job are kept', $exists( $recent ) && $exists( $failed ) && $exists( $other ) );
-		foreach ( array( $recent, $failed, $other ) as $id ) {
-			$store->delete_action( $id );
+
+		// HP3: the family-wide retention filter shortens the window.
+		$keep_one = static fn(): int => 1;
+		add_filter( 'jetonomy_finished_action_retention_days', $keep_one );
+		$two_days = $make( 2, 'jetonomy', 'complete' );
+		for ( $i = 0; $i < 50 && 200 === \Jetonomy\Queue::prune_history(); $i++ ) {
+			continue;
+		}
+		remove_filter( 'jetonomy_finished_action_retention_days', $keep_one );
+		$this->check( 'HP3: jetonomy_finished_action_retention_days = 1 deletes a job finished 2 days ago', ! $exists( $two_days ) );
+		foreach ( array( $recent, $failed, $other, $two_days ) as $id ) {
+			if ( $exists( $id ) ) {
+				$store->delete_action( $id );
+			}
 		}
 	}
 

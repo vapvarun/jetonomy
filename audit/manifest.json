@@ -2716,6 +2716,14 @@
       "consumed_by": "jetonomy"
     },
     {
+      "name": "jetonomy_finished_action_retention_days",
+      "type": "filter",
+      "args": "days (int, default 7)",
+      "where": "includes/class-queue.php Queue::prune_history()",
+      "consumed_by": null,
+      "audit_notes": "2.0.8: days a completed job in the jetonomy Action Scheduler group is kept before Jetonomy deletes it with its log rows. Only Jetonomy rows; the site-wide action_scheduler_retention_period is never touched. Family naming convention {prefix}_finished_action_retention_days."
+    },
+    {
       "name": "jetonomy_flag_created",
       "type": "action",
       "args": "flag_id",
@@ -3335,6 +3343,14 @@
       "where": "includes/class-recount-backfill.php (Recount_Backfill::complete)",
       "consumed_by": null,
       "notes": "2.0.0. Fired once the upgrade-time recount of reply/post counters has finished on a site."
+    },
+    {
+      "name": "jetonomy_recurring_jobs",
+      "type": "filter",
+      "args": "jobs (array hook => interval seconds | array(interval, first_delay))",
+      "where": "includes/class-cron.php Cron::ensure_scheduled(); includes/class-queue.php Queue::recurring() adds to it",
+      "consumed_by": "jetonomy-pro",
+      "audit_notes": "2.0.8: the one registry of recurring jobs for Free and Pro. Pro extensions register through Queue::recurring(); Pro keeps no scheduler of its own."
     },
     {
       "name": "jetonomy_replies_query_args",
@@ -4174,21 +4190,15 @@
   "cron": [
     {
       "hook": "jetonomy_trust_evaluation",
-      "schedule": "twicedaily",
-      "purpose": "Evaluate and update user trust levels",
+      "schedule": "every 12 hours (recurring)",
+      "purpose": "Evaluate trust levels: first slice inline, then one jetonomy_trust_evaluation_batch cursor chain; 2.0.8 reads only members who could reach the next level, so a run with nobody to promote queues no batch",
       "handler": "Cron::evaluate_trust_levels"
     },
     {
-      "hook": "jetonomy_reconcile_rosters",
-      "schedule": "hourly",
-      "purpose": "Drop 'tier' roster rows whose membership grant has lapsed (backstop for adapters like BN Pro that never fire jetonomy_membership_deactivated)",
-      "handler": "Membership_Roster_Sync::reconcile"
-    },
-    {
-      "hook": "jetonomy_cleanup_expired",
-      "schedule": "hourly",
-      "purpose": "Clean up expired restrictions and bans",
-      "handler": "Cron::cleanup_expired_restrictions"
+      "hook": "jetonomy_due_jobs",
+      "schedule": "single, armed at the next due time (Cron::arm_due_jobs): next restriction expiry, next owed verification reminder, or an hour out while tier roster rows exist; nothing queued when nothing is due",
+      "purpose": "2.0.8: one job for expired-restriction cleanup, verification reminders and the membership roster backstop, replacing three hourly jobs (jetonomy_cleanup_expired, jetonomy_verification_reminder, jetonomy_reconcile_rosters; their old schedules are cancelled by migration 2.0.8.1)",
+      "handler": "Cron::run_due_jobs"
     },
     {
       "hook": "jetonomy_prune_activity",
@@ -4209,16 +4219,22 @@
       "handler": "Cron::publish_scheduled_posts"
     },
     {
-      "hook": "jetonomy_verification_reminder",
-      "schedule": "hourly",
-      "purpose": "Send single-shot nudge email to users who never verified after `jetonomy_settings.verification_reminder_hours` (default 24, 0 disables). Rate-limited via `jt_user_profiles.verification_reminder_sent_at` column (1.4.1 migration). Self-heals: also lazy-scheduled on init to upgrade installs without re-activate (1.4.1 A10).",
-      "handler": "Verification_Reminder::run"
-    },
-    {
       "hook": "jetonomy_cleanup_media",
       "interval": "DAY_IN_SECONDS",
       "where": "includes/class-cron.php",
       "purpose": "Delete community uploads never attached to a post or reply (first run reports only)."
+    },
+    {
+      "hook": "jetonomy_fanout_post_subscribers",
+      "schedule": "single cursor job, args (object id, space id, last user id)",
+      "purpose": "Notify subscribers of a big space or topic, 250 per run (Notifier::FANOUT_BATCH); chains only while more subscribers remain",
+      "handler": "Notifier"
+    },
+    {
+      "hook": "jetonomy_fanout_reply_subscribers",
+      "schedule": "single cursor job, args (object id, space id, last user id)",
+      "purpose": "Notify subscribers of a big space or topic, 250 per run (Notifier::FANOUT_BATCH); chains only while more subscribers remain",
+      "handler": "Notifier"
     }
   ],
   "wp_cli": [

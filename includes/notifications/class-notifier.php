@@ -514,11 +514,11 @@ class Notifier {
 	private const FANOUT_INLINE_MAX = 25;
 
 	/**
-	 * Subscribers notified per background run. Each one can send an email, so
-	 * a run stays well inside a PHP time limit; the next batch is queued from
-	 * the last user id until the list is exhausted.
+	 * Subscribers notified per background run, so a post in a 5,000-member space is about 20 runs. Each one only
+	 * records the notification and queues its email and push (those send in their own jobs), so a run stays well
+	 * inside a PHP time limit; the next batch is queued from the last user id until the list is exhausted.
 	 */
-	private const FANOUT_BATCH = 100;
+	private const FANOUT_BATCH = 250;
 
 	/**
 	 * Queue a fan-out batch off the request path: Action Scheduler first (the
@@ -549,13 +549,16 @@ class Notifier {
 	 */
 	private function fanout_batches( string $object_type, int $object_id, int $after, string $hook, array $hook_args, callable $notify, object $topic ): void {
 		do {
-			$batch = Subscription::get_subscribers( $object_type, $object_id, $after, self::FANOUT_BATCH );
+			// One row past the batch tells whether more remain, so the chain never ends on an empty run.
+			$batch = Subscription::get_subscribers( $object_type, $object_id, $after, self::FANOUT_BATCH + 1 );
+			$more  = count( $batch ) > self::FANOUT_BATCH;
+			$batch = array_slice( $batch, 0, self::FANOUT_BATCH );
 			// A subscriber who cannot read the topic (left a private space, never
 			// joined a hidden one, or the topic is private) hears nothing of it.
 			foreach ( Permission_Engine::readers_among( $topic, $batch ) as $user_id ) {
 				$notify( $user_id );
 			}
-			if ( count( $batch ) < self::FANOUT_BATCH ) {
+			if ( ! $more ) {
 				return;
 			}
 			$after = (int) end( $batch );

@@ -779,22 +779,40 @@ class UserProfile extends Model {
 
 	/**
 	 * One keyset slice of profiles still eligible for automatic promotion
-	 * (trust level below 4), by user id. Served by the trust_user index.
+	 * (trust level below 4), by user id.
 	 *
-	 * @param int $after Return rows with user_id greater than this.
-	 * @param int $limit Slice size.
+	 * With $next (the thresholds of levels 1-3) only members whose topic and reply count, reputation and account age
+	 * reach the level above their own are returned: nobody else can be promoted, so the sweep skips them. Replies
+	 * received is still checked by the caller.
+	 *
+	 * @param int              $after Return rows with user_id greater than this.
+	 * @param int              $limit Slice size.
+	 * @param array<int,array> $next  Level => thresholds (posts, days_active, reputation); empty = every row below 4.
 	 * @return object[] Rows with user_id, post_count, reply_count, reputation, trust_level, created_at.
 	 */
-	public static function list_for_trust_batch( int $after, int $limit ): array {
+	public static function list_for_trust_batch( int $after, int $limit, array $next = array() ): array {
+		$where = 'trust_level < 4';
+		$args  = array();
+		if ( $next ) {
+			$any = array();
+			for ( $level = 0; $level < 3; $level++ ) {
+				$req    = (array) ( $next[ $level + 1 ] ?? array() );
+				$clause = 'trust_level = %d AND post_count + reply_count >= %d AND reputation >= %d';
+				array_push( $args, $level, (int) ( $req['posts'] ?? 0 ), (int) ( $req['reputation'] ?? 0 ) );
+				$days = (int) ( $req['days_active'] ?? 0 );
+				if ( $days > 0 ) {
+					$clause .= ' AND created_at <= %s';
+					$args[]  = gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS );
+				}
+				$any[] = "( {$clause} )";
+			}
+			$where = '( ' . implode( ' OR ', $any ) . ' )';
+		}
+		array_push( $args, $after, $limit );
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT user_id, post_count, reply_count, reputation, trust_level, created_at
-				 FROM ' . static::table() . '
-				 WHERE trust_level < 4 AND user_id > %d
-				 ORDER BY user_id ASC
-				 LIMIT %d',
-				$after,
-				$limit
+				'SELECT user_id, post_count, reply_count, reputation, trust_level, created_at FROM ' . static::table() . " WHERE {$where} AND user_id > %d ORDER BY user_id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where holds placeholders only.
+				...$args
 			)
 		) ?: array();
 	}

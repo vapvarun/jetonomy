@@ -231,6 +231,9 @@ class Restriction extends Model {
 		// after banning; the QA suite bans then asserts denial).
 		self::reset_memo();
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
+		if ( $id && null !== $expires_at ) {
+			\Jetonomy\Cron::arm_due_jobs(); // Its row is cleaned up when it expires.
+		}
 
 		return $id;
 	}
@@ -645,6 +648,16 @@ class Restriction extends Model {
 		self::reset_memo();
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 		return $result;
+	}
+
+	/**
+	 * Earliest expiry among restrictions that expire (expires index), or null.
+	 *
+	 * @return string|null UTC 'Y-m-d H:i:s'.
+	 */
+	public static function next_expiry(): ?string {
+		$next = static::db()->get_var( 'SELECT MIN(expires_at) FROM ' . static::table() . ' WHERE expires_at IS NOT NULL' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name only.
+		return $next ? (string) $next : null;
 	}
 
 	/**

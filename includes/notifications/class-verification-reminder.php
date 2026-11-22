@@ -42,8 +42,23 @@ class Verification_Reminder {
 	private const DEFAULT_HOURS = 24;
 
 	/**
-	 * Cron entry point. Registered against `jetonomy_verification_reminder`
-	 * in `Jetonomy\Cron`.
+	 * When the next reminder is owed: the oldest unstamped sign-up plus the
+	 * threshold, or 0 when reminders are off or nobody is waiting.
+	 *
+	 * @return int Unix time.
+	 */
+	public static function next_due_at(): int {
+		$settings = get_option( 'jetonomy_settings', array() );
+		$hours    = isset( $settings['verification_reminder_hours'] ) ? (int) $settings['verification_reminder_hours'] : self::DEFAULT_HOURS;
+		if ( empty( $settings['require_email_verification'] ) || $hours <= 0 ) {
+			return 0;
+		}
+		$oldest = UserProfile::list_awaiting_verification_reminder( '9999-12-31 23:59:59', 1 );
+		return $oldest ? (int) strtotime( $oldest[0]->created_at . ' UTC' ) + $hours * HOUR_IN_SECONDS : 0;
+	}
+
+	/**
+	 * Due-time entry point, run by `Jetonomy\Cron::run_due_jobs()`.
 	 */
 	public static function run(): void {
 		$settings = get_option( 'jetonomy_settings', array() );

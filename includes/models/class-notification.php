@@ -706,6 +706,26 @@ class Notification extends Model {
 	}
 
 	/**
+	 * Notifications that carry the same push as an anchor row (same type, target and text: one fan-out), in the id range
+	 * [$anchor_id, $max_id], after the cursor $after, oldest first. Recipients who blocked the actor are left out, the
+	 * same rule emit_notification_created() applies. Pro's web-push walks these in a cursor job instead of carrying
+	 * member ids in its job arguments.
+	 *
+	 * @param int $anchor_id First notification of the push.
+	 * @param int $max_id    Last notification id the push may include.
+	 * @param int $after     Cursor: last notification id already handled (0 = start).
+	 * @param int $limit     Rows to return.
+	 * @return object[] Rows with id, user_id, actor_id, type, object_type, object_id, message.
+	 */
+	public static function same_push_after( int $anchor_id, int $max_id, int $after, int $limit ): array {
+		$t = static::table();
+		$b = \Jetonomy\table( 'blocked_users' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only.
+		$sql = "SELECT n.id, n.user_id, n.actor_id, n.type, n.object_type, n.object_id, n.message FROM {$t} a INNER JOIN {$t} n ON n.type = a.type AND n.object_type = a.object_type AND n.object_id = a.object_id AND n.message = a.message AND n.actor_id = a.actor_id LEFT JOIN {$b} bl ON n.actor_id > 0 AND bl.blocker_id = n.user_id AND bl.blocked_id = n.actor_id WHERE a.id = %d AND n.id BETWEEN %d AND %d AND n.id > %d AND bl.blocker_id IS NULL ORDER BY n.id ASC LIMIT %d";
+		return (array) static::db()->get_results( static::db()->prepare( $sql, $anchor_id, $anchor_id, $max_id, $after, $limit ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	}
+
+	/**
 	 * Mark up to $limit unread notifications older than a moment as read.
 	 *
 	 * @param string $cutoff UTC MySQL datetime.
