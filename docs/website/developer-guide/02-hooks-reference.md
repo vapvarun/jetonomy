@@ -304,6 +304,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_composer_toolbar`<br>_action_ | Fires inside the composer toolbar, after the built-in formatting buttons. | - | `templates/partials/composer.php` |
 | `jetonomy_cron_batch_size`<br>_filter_ | - | - | `includes/class-cron.php` |
 | `jetonomy_erase_batch_size`<br>_filter_ ·_Pro_ | Filter the batch size used by the GDPR personal-data eraser (default 1000). | - | `includes/class-privacy.php` |
+| `jetonomy_finished_action_retention_days`<br>_filter_ | Days a finished Jetonomy background job is kept before Jetonomy deletes it with its log rows (default 7). Only the `jetonomy` group is touched. Since 2.0.8. See [Background Jobs](./30-background-jobs.md). | `days` | `includes/class-queue.php` |
 | `jetonomy_footer_text`<br>_filter_ | Filter the footer text used by Jetonomy-rendered surfaces. | `text` | `includes/functions.php` |
 | `jetonomy_home_welcome_heading`<br>_filter_ | - | - | `templates/views/home.php` |
 | `jetonomy_home_welcome_subheading`<br>_filter_ | - | - | `templates/views/home.php` |
@@ -319,6 +320,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_orphan_purge_batch_seconds`<br>_filter_ | Filter the wall-clock budget (default 15) one `wp jetonomy privacy purge-orphans` slice may run before stopping cleanly at a user boundary. | `seconds` | `includes/class-privacy-backfill.php` |
 | `jetonomy_privacy_orphan_columns`<br>_filter_ | Filter the `(table, column, where)` discovery targets scanned for orphaned user ids; Pro adds its own `jt_pro_*` columns here rather than shipping a parallel sweeper. | `columns` | `includes/class-privacy-backfill.php` |
 | `jetonomy_purge_orphan_user`<br>_action_ | Purge every trace of a user id that no longer exists. Fired per orphaned id by `wp jetonomy privacy purge-orphans`; free's and Pro's `Privacy::on_user_delete()` both listen, so it reuses the real delete path. | `user_id` | `includes/class-privacy-backfill.php` |
+| `jetonomy_recurring_jobs`<br>_filter_ | Every recurring job of the Jetonomy family: hook => interval in seconds, or `array( interval, first delay )`. Pro and add-ons register through `\Jetonomy\Queue::recurring()`. Since 2.0.8. See [Background Jobs](./30-background-jobs.md). | `jobs` | `includes/class-cron.php` |
 | `jetonomy_search_filters`<br>_action_ | - | - | `templates/views/search.php` |
 | `jetonomy_show_community_nav`<br>_filter_ | Filter whether to show the Jetonomy community navigation bar. | `show` | `templates/partials/header.php` |
 | `jetonomy_theme_dark_tokens`<br>_filter_ | Return an empty array to disable the dark override. | `tokens` | `includes/integrations/class-theme-integration.php` |
