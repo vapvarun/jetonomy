@@ -2207,7 +2207,16 @@ class REST_Tests {
 		$found = static fn( $res ): bool => false !== strpos( (string) wp_json_encode( $res->get_data()['data'] ?? array() ), $token );
 		$guest = $this->rest( 'GET', '/search', array( 'q' => $token, 'type' => 'reply' ), 0 );
 		$this->check( 'PV1: reply search never returns a private reply to a guest', ! $found( $guest ) && 0 === (int) ( $guest->get_headers()['X-WP-Total'] ?? $guest->get_data()['meta']['total'] ?? 0 ), 'row or count leaked' );
-		$this->check( 'PV1: reply search still finds it for its author', $found( $this->rest( 'GET', '/search', array( 'q' => $token, 'type' => 'reply' ), $this->test_user_id ) ), 'author search empty' );
+		// The search runs on MySQL FULLTEXT. A database whose FULLTEXT index no longer sees new rows (seen after a MySQL
+		// crash: new doc ids collide with ids already marked deleted) fails this for every search, so it is reported
+		// as the site's index, not as a privacy bug. Fix on the site: ALTER TABLE <prefix>jt_replies FORCE.
+		global $wpdb;
+		$ft_sees_new = (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . \Jetonomy\table( 'replies' ) . ' WHERE id = %d AND MATCH(content_plain) AGAINST(%s IN BOOLEAN MODE)', $reply_id, '+' . $token ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+		if ( ! $ft_sees_new ) {
+			$this->skip( 'PV1: reply search still finds it for its author', 'this database\'s FULLTEXT index does not see new replies; rebuild it with ALTER TABLE ' . \Jetonomy\table( 'replies' ) . ' FORCE' );
+		} else {
+			$this->check( 'PV1: reply search still finds it for its author', $found( $this->rest( 'GET', '/search', array( 'q' => $token, 'type' => 'reply' ), $this->test_user_id ) ), 'author search empty' );
+		}
 
 		wp_set_current_user( 0 );
 		$rows = array_filter( \Jetonomy\Models\Reply::list_by_user( $this->test_user_id, 50 ), static fn( $row ) => (int) $row->id === $reply_id );

@@ -108,7 +108,9 @@ The button shows to:
 
 - a site administrator, for any archived space;
 - the member who received the space through **Archive and hand over**, until
-  someone next saves the space's settings.
+  the space's status next changes. Saving its other settings (name, description,
+  visibility) leaves the button in place; any status change, including a site
+  admin setting it back to Active, removes it.
 
 Anyone else, or a space archived another way, is reopened from
 **wp-admin → Jetonomy → Spaces** by setting its status back to Active.

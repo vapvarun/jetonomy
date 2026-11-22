@@ -12,7 +12,7 @@ values: **YES** shipped and complete, **YES-beta** shipped but young,
 **PARTIAL** works with a real caveat stated in the row, **NO** not in the free
 plugin (Pro rows live in `../jetonomy-pro/CAPABILITIES.md`).
 
-Verified 2026-08-31 against 1.9.4. When you add or remove a capability, update
+Verified 2026-11-22 against 2.0.7. When you add or remove a capability, update
 this file in the same commit.
 
 ## Running a community
@@ -54,7 +54,6 @@ this file in the same commit.
 | Let a space have its own moderators, separate from site admins | YES | `includes/api/class-space-moderation-controller.php`, space roles |
 | Stop members publishing under a reserved or impersonating name | YES | `includes/functions.php` (`display_name_choices`, `is_reserved_display_name`), enforced in `PATCH /users/me` |
 | Let members choose a public name from their own fields, WordPress-style | YES | `templates/views/edit-profile.php` first/last/nickname plus a "Display name publicly as" select |
-| Lock member names to administrators | YES | `lock_member_names` setting, enforced in `includes/api/class-users-controller.php` |
 | Rename every member on screen without touching stored data | YES | `jetonomy_user_display_name` filter, honoured by ~39 display surfaces |
 | Agree with a partner plugin on what an @handle is | YES | `jetonomy_user_handle` (emit) paired with `jetonomy_resolve_mention_handles` (resolve), both on `user_nicename` |
 | Ban or silence a member | YES | `includes/models/class-restriction.php` (ban blocks login, silence blocks posting) |
