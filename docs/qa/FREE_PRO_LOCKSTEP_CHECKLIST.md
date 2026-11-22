@@ -15,6 +15,7 @@ sufficient. Always test with **both plugins active**.
 - [ ] `wp jetonomy qa-actions` → all green (REST + Model + Pro + Journey). The gate is zero FAIL lines; qa-actions also fails on its own when a phase runs no checks.
 - [ ] Browser console open; auto-login via `?autologin=1`.
 - [ ] Run each surface at desktop AND 390px (mobile).
+- [ ] **After the version bump, re-run the upgrade checks.** Dev branches keep the last release's version headers, so Pro's upgrade routine (`Jetonomy_Pro::run_upgrade()`) never runs on them. Once Free and Pro carry the new version, on a site still stamped with the previous one: `wp jetonomy qa-actions` (UG1-UG12 drive the 2.0.7 job conversion) and `composer test` (`tests/pro/UpgradeJobsTest.php`, `tests/pro/ProQueueShimTest.php`), then load one wp-admin page and confirm `jetonomy_pro_db_version` moved to the new version.
 
 ## Free surfaces (shared store)
 - [ ] **Vote** post up/down + reply up/down → score reconciles, button toggles, POST 200, no console error.

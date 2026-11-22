@@ -7,8 +7,8 @@ shows together under **Tools > Scheduled Actions** (filter the group by `jetonom
 ## How the jobs are built
 
 - **Nothing runs when there is nothing to do.** A site where nobody posts and nothing is due schedules about
-  10 job runs a day (12 with Pro's badge, digest and webhook jobs on, plus Reply by Email's 5-minute inbox poll
-  when that is on IMAP).
+  4 job runs a day (about 10 with Pro's badge, digest, webhook and licence jobs on). The one poll is Reply by
+  Email's 5-minute inbox check, and only while it is switched on with IMAP, which cannot push.
 - **Jobs are armed when work appears**, not polled: a restriction that expires, a scheduled topic, a sign-up that
   is owed a verification reminder, a post that needs AI review.
 - **Big lists are walked by a cursor job.** The job's arguments are an object id and the last id it handled; it
@@ -17,12 +17,14 @@ shows together under **Tools > Scheduled Actions** (filter the group by `jetonom
 - **Arguments are ids and small numbers**, under 191 characters. URLs, secrets and member lists never go into the
   job tables. (A webhook delivery carries its event payload, the one exception, because a deleted topic cannot
   be read back later.)
+- **Long sends are time-boxed.** A web push run sends for about 15 seconds, then queues the rest from the last
+  member it sent, so a slow push service never holds a job past the host's time limit.
 - **Retries are capped.** A scheduled topic that will not publish is retried 3 times, 1, 2 and 4 minutes apart,
   with the attempt number in the job arguments, then logged once.
 - **Recurring jobs are armed only on cron, wp-admin and WP-CLI requests**, never on a visitor's page view.
 - **Jetonomy trims only its own history.** Action Scheduler keeps every plugin's finished jobs for 31 days and
-  Jetonomy does not change that site-wide setting. It deletes its own completed jobs, with their log rows, after
-  7 days, and its failed jobs after 90 days (the window Action Scheduler 4.0 uses; older Action Scheduler
+  Jetonomy does not change that site-wide setting. It deletes its own completed and cancelled jobs, with their log rows,
+  after 7 days, and its failed jobs after 90 days (the window Action Scheduler 4.0 uses; older Action Scheduler
   versions never delete failed jobs). Pending jobs are kept until you uninstall.
 
 The full list of jobs (hook, trigger, arguments, rows per event) is in `docs/standards/background-jobs.md`,
@@ -40,7 +42,17 @@ Days a finished (completed) Jetonomy job is kept before Jetonomy deletes it with
 add_filter( 'jetonomy_finished_action_retention_days', static fn(): int => 3 );
 ```
 
-The trim runs inside the daily `jetonomy_prune_activity` job, 200 rows per run.
+The trim runs inside the daily `jetonomy_prune_activity` job, in runs of 200 rows, up to 10,000 rows a day; a
+bigger backlog is cleared over the following days.
+
+### `jetonomy_pro_push_send_seconds` (Pro)
+
+Seconds one web push run sends before it queues the rest. **Default: 15.** Lower it on a host with a short
+PHP time limit. Since 2.0.8.
+
+```php
+add_filter( 'jetonomy_pro_push_send_seconds', static fn(): int => 8 );
+```
 
 ### `jetonomy_recurring_jobs`
 

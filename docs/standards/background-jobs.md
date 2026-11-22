@@ -2,7 +2,7 @@
 
 **Status:** Normative. Applies to every Wbcom WordPress plugin/theme that runs
 background work (cron, queues, digests, cleanups, scheduled publishing).
-**Version:** 1.0 (2026-06-18). Distilled from the BuddyNext cron/AS audit;
+**Version:** 1.1 (2026-11-23; first issued 1.0, 2026-06-18). Distilled from the BuddyNext cron/AS audit;
 reference implementations across BuddyNext and Jetonomy in Section 7.
 
 This is the single source of truth. Each plugin keeps a synced copy at
@@ -32,6 +32,9 @@ Apply in order. Stop at the first that works.
 runs whether or not there is work. That is the "heavy community plugin" smell.
 
 ## 3. Copy-paste patterns
+
+These show what the calls do. A plugin with its own queue class calls the class instead (Jetonomy:
+`\Jetonomy\Queue`, MediaVerse: `Core\Jobs`), so the timing, fallback and cancel rules live in one place.
 
 ### (1) Lazy-on-read — no job
 ```php
@@ -122,9 +125,10 @@ Always verify scheduling happened after the fact.
 ```php
 public static function deactivate_cron(): void {
     if ( function_exists( 'as_unschedule_all_actions' ) ) {
-        as_unschedule_all_actions( self::HOOK, array(), self::GROUP );
+        // Hook only: passing array() with a group matches argument-less copies only, so jobs with ids survive.
+        as_unschedule_all_actions( self::HOOK );
     }
-    wp_clear_scheduled_hook( self::HOOK );
+    wp_unschedule_hook( self::HOOK );                   // every copy, whatever its arguments
 }
 ```
 
@@ -173,12 +177,13 @@ a ready-to-paste system-cron command built from the site's own URL:
    ( defined( 'WP_CLI' ) && WP_CLI )`, plus activation (in Jetonomy: `Cron::is_scheduling_request()`).
    The cron runner re-arms a lost job within one tick. A transient guard is not the fix: without a
    persistent object cache the transient read is itself a query.
-3. **Batch sweeps** with a cursor/watermark + continuation; keep fan-outs
-   (notifications, indexing) per-item async so each retries independently.
+3. **Batch sweeps** with a cursor/watermark + continuation. Fan-outs (notifications, indexing) are cursor
+   jobs too (rule 6); a failed slice retries from its own cursor, so one bad row never repeats the rest.
 4. **Prune our own rows only** — never change Action Scheduler's site-wide retention (its cleaner keeps
    every plugin's finished jobs 31 days). Delete your own group's completed jobs, with their logs, after
-   `{prefix}_finished_action_retention_days` (integer days, default 7) in small batches from a job that
-   already runs daily. Never delete failed or pending rows; uninstall removes all of your rows.
+   `{prefix}_finished_action_retention_days` (integer days, default 7), cancelled ones likewise, and your own failed jobs after 90
+   days (Action Scheduler 4.0 does this itself; 3.x never does), from a job that already runs daily, in runs
+   of 200 rows, at most 50 runs a day. Never delete pending rows; uninstall removes all of your rows.
 5. **Small arguments** — job args are ids and small integers, under 191 characters (longer args go to a
    separate column and cost a second write). Never put URLs, secrets, tokens or member lists in args.
 6. **Cursor jobs, never up-front fan-out** — a job walks its rows from `last id` and queues the next run
@@ -191,7 +196,8 @@ a ready-to-paste system-cron command built from the site's own URL:
 ## 6. Per-job checklist (gate before shipping any job)
 
 1. Could this be lazy-on-read instead of a job?
-2. Does it poll when idle? (It must not.)
+2. Does it poll when idle? (It must not. The one documented exception in Jetonomy is Reply by Email on IMAP,
+   which has no push channel and polls every 5 minutes only while the owner has it switched on.)
 3. Group tag set?
 4. Idempotent guard before scheduling?
 5. Scheduled on `init` / `wp_loaded` / `action_scheduler_init`, **not** `plugins_loaded`?
@@ -215,13 +221,14 @@ a ready-to-paste system-cron command built from the site's own URL:
 **Jetonomy** (2.0.8)
 | Pattern | File |
 |---|---|
-| One scheduling API for Free and Pro (`async`, `async_once`, `at`, `recurring`, `next`, `cancel`, `prune_history`) | `jetonomy/includes/class-queue.php` |
+| One scheduling API for Free and Pro, the same shape as MediaVerse `Core\Jobs` (`when_ready`, `async`, `async_once`, `at`, `is_queued`, `is_pending`, `next`, `cancel`, `pending_args`, `recurring`, `ensure_recurring`, `prune_history`, `delete_rows`) | `jetonomy/includes/class-queue.php` |
 | Recurring jobs armed in one place, on scheduling requests only; Pro registers through `jetonomy_recurring_jobs` | `jetonomy/includes/class-cron.php::ensure_scheduled()` |
 | Single event at the next due moment, re-armed after each run (expiries, reminders, roster backstop) | `jetonomy/includes/class-cron.php::arm_due_jobs()` |
 | Single event at due time with capped retries (attempt number in the args) | `jetonomy/includes/class-cron.php::publish_scheduled_posts()` |
 | Cursor job (object id + last id in the args) | `jetonomy/includes/notifications/class-notifier.php::fanout_batches()`, `jetonomy-pro/includes/extensions/web-push/class-extension.php::do_send_batch()` |
 | Lazy, armed on write (no idle polling) | `jetonomy-pro/includes/extensions/ai/class-batch-reviewer.php::arm()` |
-| One-time conversion of an older version's queued jobs on upgrade | `jetonomy-pro/includes/class-extension.php::upgrade_jobs()` / `retired_jobs()` |
+| One-time conversion of an older version's queued jobs on upgrade, under core's upgrader lock, version stored after | `jetonomy-pro/includes/class-jetonomy-pro.php::run_upgrade()`, each extension's `upgrade_jobs()` / `retired_jobs()` |
+| Time-boxed send loop that continues from the last row sent | `jetonomy-pro/includes/extensions/web-push/class-extension.php::do_send_batch()` |
 | Bundled Action Scheduler (always present, fallback unneeded) | `jetonomy/jetonomy.php` (loads `libs/action-scheduler`) |
 
 The full Jetonomy job register (every hook, trigger, rows per event and retention) is section 9 of the
@@ -241,9 +248,13 @@ Free copy: `jetonomy/docs/standards/background-jobs.md`.
 One group for the family: `jetonomy`. One scheduling API: `\Jetonomy\Queue` in Free; Pro calls it and owns
 no copy. Recurring jobs are armed only by `Cron::ensure_scheduled()` on cron, wp-admin and WP-CLI
 requests, never on a visitor's page view. Finished (completed) jobs older than
-`jetonomy_finished_action_retention_days` (default 7) are deleted with their logs, 200 per day, by the
-daily `jetonomy_prune_activity` run. Failed rows are kept 90 days for diagnosis, then deleted the same way
-(Action Scheduler 4.0 does this itself; 3.x never purges failed rows). Pending rows are kept until uninstall.
+`jetonomy_finished_action_retention_days` (default 7) are deleted with their logs by the daily
+`jetonomy_prune_activity` run, in runs of 200, at most 50 runs (10,000 rows) a day; a bigger backlog is
+cleared over the following days. Our own cancelled rows go after the same 7 days. Our own failed rows are kept 90 days for diagnosis, then
+deleted the same way (Action Scheduler 4.0 does this itself; 3.x never purges failed rows). Pending rows are kept until
+uninstall. Every row of the retired 2.0.7 webhook hook (its args held the URL and secret) is deleted, in any
+status with its logs, right after its deliveries are re-queued. Old jobs are converted once, by the Pro upgrade under core's upgrader lock; the version is stored
+after the conversion, so a request that dies part way is retried by the next one.
 A job whose hook was retired keeps its listener for one release when its queued args cannot be converted
 (2.0.8: the per-device push and field re-index chunks); otherwise the upgrade converts and cancels it.
 
@@ -261,7 +272,7 @@ A job whose hook was retired keeps its listener for one release when its queued 
 | `jetonomy_sweep_space_roster` | Free | an access rule of a space is removed | space id | 1 per space change |
 | `jetonomy_gravatar_check` | Free | a member without a cached avatar check | user id | 1 per member, once |
 | `jetonomy_recount_backfill_batch` | Free | the counter backfill after an update | cursor | 1 per batch, once |
-| `jetonomy_pro_send_push_batch` | Pro | a request that created notifications for members with push | first notification id, last id handled, last notification id | 1 per push per request, chaining per 300 members who have a device (reads at most 3,000 rows a run) |
+| `jetonomy_pro_send_push_batch` | Pro | a request that created notifications for members with push | first notification id, last id handled, last notification id | 1 per push per request, chaining per 300 members who have a device (reads at most 3,000 rows a run); a run sends for about 15 s (`jetonomy_pro_push_send_seconds`), then continues from the last member sent |
 | `jetonomy_pro_deliver_webhook` | Pro | an event a webhook listens to | webhook id, event, payload | 1 per webhook and event |
 | `jetonomy_pro_prune_webhook_deliveries` | Pro | recurring, daily | none | 1 a day |
 | `jetonomy_pro_send_digests` | Pro | the daily or weekly digest run (first batch inline) | frequency, last user id | 1 per further 50 recipients (`jetonomy_pro_digest_batch_size`) |
@@ -273,14 +284,15 @@ A job whose hook was retired keeps its listener for one release when its queued 
 | `jetonomy_pro_ai_batch_review` | Pro | single, 5 min after a topic or reply is written (or when content is waiting) | none | 1 per 5-minute window with new content; 0 when idle |
 | `jetonomy_pro_ai_generate_summary`, `jetonomy_pro_ai_generate_suggestions` | Pro | a topic needs a summary or suggestions | post id | 1 per topic |
 | `jetonomy_pro_announce_post` | Pro | a topic is pinned as an announcement | post id, last user id | 1 per batch of members |
-| `jetonomy_pro_rbe_imap_poll` | Pro | recurring, 5 min, only with Reply by Email on IMAP | none | 288 a day while on |
+| `jetonomy_pro_rbe_imap_poll` | Pro | recurring, 5 min, only with Reply by Email on IMAP (the one documented exception to "no idle polling": IMAP has no push) | none | 288 a day while on |
 | `jetonomy_pro_license_check` | Pro | recurring, weekly | none | 1 a week |
 
 Idle site, measured from the live schedule on 2026-11-23 (nothing written, nothing due): Free alone 2 trust
-runs + 2 daily jobs + 1 weekly, about 5 rows a day; with Pro's badge, digest, webhook and licence jobs on,
-10.4 rows a day. Reply by Email on IMAP adds 288. One topic in a 5,000-member space, measured on a 10,000-member
-seed: 20 fan-out rows + 1 to 20 push rows (one per runner request that recorded notifications; 6 measured) +
-1 badge row, each run under 1 second.
+runs + 2 daily jobs + one weekly job (1/7 a day), about 4.1 rows a day; with Pro's badge, digest, webhook and
+licence jobs on, about 10.4 rows a day. Reply by Email on IMAP adds 288. One topic in a 5,000-member space,
+measured on a 10,000-member seed: 20 fan-out rows + 1 to 20 push rows (one per runner request that recorded
+notifications; 6 measured) + 1 badge row. Fan-out and badge runs took under 1 second each; a push run is
+bounded by its 15-second send budget plus one member's sends, because each send waits on the push service.
 
 Uninstall deletes every `jetonomy_%` row of Free (and `jetonomy_pro_%` of Pro) with its logs, failed rows
 included, in batches; the shared Action Scheduler tables are never dropped, and the runner event is
