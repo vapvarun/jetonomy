@@ -659,6 +659,39 @@ class Model_Tests {
 		$sm = (int) Space::create( array( 'title' => 'QA 207 sitemap ' . $suffix, 'slug' => 'qa-207-sm-' . $suffix, 'type' => 'forum' ) );
 		$this->check( 'SX1: a new space drops the cached sitemap so it is listed now', $sm > 0 && false === get_transient( 'jt_sitemap_cursors_spaces' ) );
 
+		// UT1: uninstall removes every short-prefixed transient family the plugin creates.
+		$un_src   = (string) file_get_contents( JETONOMY_DIR . 'uninstall.php' );
+		$un_found = array();
+		$un_iter  = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( JETONOMY_DIR . 'includes', \FilesystemIterator::SKIP_DOTS ) );
+		foreach ( $un_iter as $un_file ) {
+			if ( 'php' !== $un_file->getExtension() || false !== strpos( $un_file->getPathname(), '/qa/' ) ) {
+				continue;
+			}
+			$un_code = (string) file_get_contents( $un_file->getPathname() );
+			// A literal first argument to a transient call, or a PREFIX constant that feeds one.
+			preg_match_all( "/(?:set|get|delete)_transient\(\s*'(jt_[a-z_]+?_?)(?:'|\\\$)/", $un_code, $un_a );
+			preg_match_all( "/const\s+\w*PREFIX\w*\s*=\s*'(jt_[a-z_]+_)'/", $un_code, $un_b );
+			// A prefix literal concatenated with a variable ('jt_resend_' . $hash) that becomes a transient key.
+			preg_match_all( "/'(jt_[a-z]+(?:_[a-z]+)*_)'\\s*\\./", $un_code, $un_c );
+			foreach ( array_merge( $un_a[1], $un_b[1], $un_c[1] ) as $un_prefix ) {
+				$un_found[ rtrim( $un_prefix, '_' ) . '_' ] = true;
+			}
+		}
+		$un_missing = array();
+		foreach ( array_keys( $un_found ) as $un_prefix ) {
+			// jt_sitemap_cursors_ is covered by jt_sitemap_; a family is listed when uninstall names it or a shorter family of it.
+			$covered = false;
+			foreach ( array( $un_prefix, preg_replace( '/^(jt_[a-z]+_).*/', '$1', $un_prefix ) ) as $try ) {
+				if ( false !== strpos( $un_src, "'" . $try . "'" ) ) {
+					$covered = true;
+				}
+			}
+			if ( ! $covered ) {
+				$un_missing[] = $un_prefix;
+			}
+		}
+		$this->check( 'UT1: uninstall removes every jt_ transient family in the code', ! $un_missing && count( $un_found ) >= 6, 'missing: ' . implode( ', ', $un_missing ) . '; found ' . count( $un_found ) );
+
 		// IS1-IS2.
 		$clean = new \ReflectionMethod( \Jetonomy\Import\Importer::class, 'clean_slug' );
 		$this->check( 'IS1: decomposed (NFD) accents fold to plain letters in an imported slug', 'naive-uber' === $clean->invoke( null, "nai\u{0308}ve u\u{0308}ber" ) );

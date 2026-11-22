@@ -142,17 +142,21 @@ wp_clear_scheduled_hook( 'action_scheduler_run_queue' );
 $transient_prefix = $wpdb->esc_like( '_transient_jetonomy_' );
 $timeout_prefix   = $wpdb->esc_like( '_transient_timeout_jetonomy_' );
 
+// jetonomy_pro_* transients belong to Jetonomy Pro, which may stay installed: its own uninstall clears them.
 $wpdb->query(
 	$wpdb->prepare(
-		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+		"DELETE FROM {$wpdb->options} WHERE ( option_name LIKE %s OR option_name LIKE %s ) AND option_name NOT LIKE %s AND option_name NOT LIKE %s",
 		$transient_prefix . '%',
-		$timeout_prefix . '%'
+		$timeout_prefix . '%',
+		$wpdb->esc_like( '_transient_jetonomy_pro_' ) . '%',
+		$wpdb->esc_like( '_transient_timeout_jetonomy_pro_' ) . '%'
 	)
 );
 
-// Jetonomy's short-prefixed transients (sitemap, sign-in and view caches) are missed by the jetonomy_ sweep above. The
-// prefixes are listed in full so another plugin's jt_* transients are never touched.
-foreach ( array( 'jt_sitemap_', 'jt_auth_', 'jt_view_' ) as $jetonomy_short_prefix ) {
+// Jetonomy's short-prefixed transients are missed by the jetonomy_ sweep above. The prefixes are listed in full so
+// another plugin's jt_* transients are never touched. Keep this list equal to every transient prefix in includes/
+// (a self-test, UN1, fails when a new one is added without a line here).
+foreach ( array( 'jt_sitemap_', 'jt_auth_', 'jt_view_', 'jt_app_connect_', 'jt_app_bridge_', 'jt_resend_', 'jt_lp_', 'jt_oembed_short_' ) as $jetonomy_short_prefix ) {
 	$wpdb->query(
 		$wpdb->prepare(
 			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
@@ -173,6 +177,12 @@ $wpdb->query(
 		$wpdb->esc_like( '_jetonomy_pro_' ) . '%'
 	)
 );
+
+// A persistent object cache (Redis, Memcached) outlives the plugin: drop Jetonomy's group so a reinstall never reads
+// rows cached in an old shape.
+if ( function_exists( 'wp_cache_flush_group' ) ) {
+	wp_cache_flush_group( 'jetonomy' );
+}
 
 // -------------------------------------------------------------------------
 // 6. Flush rewrite rules.

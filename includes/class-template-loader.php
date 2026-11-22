@@ -1673,6 +1673,12 @@ class Template_Loader {
 					if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 						$missing = true;
 					}
+					// The view also refuses a viewer who may not moderate this space, but only after the theme has
+					// started output (a 200 on block themes): decide the status before output, as for /mod/.
+					if ( ! $missing && 'space-moderation' === $data['route'] && get_current_user_id() > 0
+						&& ! \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( get_current_user_id(), (int) $space->id ) ) {
+						status_header( 403 );
+					}
 				}
 				break;
 
