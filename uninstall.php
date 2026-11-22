@@ -150,6 +150,24 @@ $wpdb->query(
 	)
 );
 
+// Sitemap caches use a shorter prefix (jt_sitemap_*), so the jetonomy_ sweep above misses them.
+$wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+		$wpdb->esc_like( '_transient_jt_' ) . '%',
+		$wpdb->esc_like( '_transient_timeout_jt_' ) . '%'
+	)
+);
+
+// Per-member settings and verification state Jetonomy stored on user accounts (the accounts themselves stay).
+$wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s OR meta_key LIKE %s",
+		$wpdb->esc_like( 'jetonomy_' ) . '%',
+		$wpdb->esc_like( '_jetonomy_' ) . '%'
+	)
+);
+
 // -------------------------------------------------------------------------
 // 6. Flush rewrite rules.
 //
