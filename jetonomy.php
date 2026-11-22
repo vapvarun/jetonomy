@@ -16,6 +16,22 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Runtime PHP floor. The "Requires PHP" header only gates activation; a host that downgrades PHP afterwards (or a copied
+// plugin folder) would otherwise load files written for 8.1 and fatal the whole site. Nothing below is loaded on an older
+// PHP, so this block uses only syntax every PHP 7 understands.
+if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
+	add_action(
+		'admin_notices',
+		function () {
+			if ( ! current_user_can( 'activate_plugins' ) ) {
+				return;
+			}
+			echo '<div class="notice notice-error"><p><strong>Jetonomy</strong> ' . esc_html( sprintf( 'needs PHP 8.1 or newer and this server runs PHP %s, so Jetonomy is paused. Ask your host to switch this site to PHP 8.1 or newer.', PHP_VERSION ) ) . '</p></div>';
+		}
+	);
+	return;
+}
+
 define( 'JETONOMY_VERSION', '2.0.7' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
