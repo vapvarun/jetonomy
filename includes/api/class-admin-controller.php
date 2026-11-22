@@ -81,11 +81,30 @@ class Admin_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'import_demo_data' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
+					'args'                => array(
+						'confirm' => array(
+							'description' => __( 'Must be true: importing replaces the current demo set.', 'jetonomy' ),
+							'type'        => 'boolean',
+							'required'    => true,
+						),
+						'force'   => array(
+							'description' => __( 'True to import even though the community already has its own spaces or topics.', 'jetonomy' ),
+							'type'        => 'boolean',
+							'default'     => false,
+						),
+					),
 				),
 				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'remove_demo_data' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
+					'args'                => array(
+						'confirm' => array(
+							'description' => __( 'Must be true: removing the demo set cannot be undone.', 'jetonomy' ),
+							'type'        => 'boolean',
+							'required'    => true,
+						),
+					),
 				),
 			)
 		);
@@ -99,9 +118,27 @@ class Admin_Controller extends Base_Controller {
 	}
 
 	/**
-	 * POST /admin/demo-data - Load the demo community (replaces an earlier set).
+	 * POST /admin/demo-data - Load the demo community (replaces an earlier set). Needs confirm=true, and force=true
+	 * when the community already has its own spaces or topics, so a stray request never seeds a live community.
+	 *
+	 * @param WP_REST_Request $request Request.
 	 */
-	public function import_demo_data(): WP_REST_Response {
+	public function import_demo_data( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		if ( true !== $request->get_param( 'confirm' ) ) {
+			return new WP_Error( 'jetonomy_confirm_required', __( 'Send confirm=true to import demo data.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+		$real = Demo_Seeder::real_content_count();
+		if ( $real > 0 && true !== $request->get_param( 'force' ) ) {
+			return new WP_Error(
+				'jetonomy_demo_real_content',
+				sprintf(
+					/* translators: %s: number of spaces and topics. */
+					_n( 'This community already has %s space or topic of its own. Add the sample content anyway?', 'This community already has %s spaces and topics of its own. Add the sample content anyway?', $real, 'jetonomy' ),
+					number_format_i18n( $real )
+				),
+				array( 'status' => 409 )
+			);
+		}
 		Demo_Seeder::import( get_current_user_id() );
 		$data            = Demo_Seeder::summary();
 		$data['message'] = __( 'Demo data imported.', 'jetonomy' );
@@ -111,7 +148,10 @@ class Admin_Controller extends Base_Controller {
 	/**
 	 * DELETE /admin/demo-data - Remove the demo set; owner content is untouched.
 	 */
-	public function remove_demo_data(): WP_REST_Response|WP_Error {
+	public function remove_demo_data( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		if ( true !== $request->get_param( 'confirm' ) ) {
+			return new WP_Error( 'jetonomy_confirm_required', __( 'Send confirm=true to remove the demo data.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
 		if ( ! Demo_Seeder::remove() ) {
 			return new WP_Error( 'jetonomy_no_demo_data', __( 'No demo data found to clean up.', 'jetonomy' ), array( 'status' => 404 ) );
 		}

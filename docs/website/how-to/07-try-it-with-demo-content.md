@@ -83,7 +83,9 @@ Importing never doubles the content. Each import first removes the previous demo
 
 The wizard offers the same sample community. On its second step, click **Import the demo community instead** rather than creating one space by hand. The wizard opens by itself the first time you activate Jetonomy. Until setup is complete, the Dashboard shows **Run Setup Wizard**. See [Setup Wizard](../getting-started/02-setup-wizard.md).
 
-Developers can also use `wp jetonomy demo-seed` and `wp jetonomy demo-cleanup`, or the `/jetonomy/v1/admin/demo-data` REST route.
+Developers can also use `wp jetonomy demo-seed` and `wp jetonomy demo-cleanup`, or the `/jetonomy/v1/admin/demo-data` REST route, which needs `confirm: true` and refuses to seed a community that already has its own spaces or topics unless the request also sends `force: true`.
+
+If your community already has its own spaces or topics, the Dashboard asks a second time before adding the sample content next to them.
 
 ## Check that it works
 

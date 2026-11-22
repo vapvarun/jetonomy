@@ -93,6 +93,18 @@ class Demo_Seeder {
 	}
 
 	/**
+	 * Spaces and topics that are not part of the demo set: the community's own content.
+	 *
+	 * @return int
+	 */
+	public static function real_content_count(): int {
+		$demo = (array) get_option( 'jetonomy_demo_data', array() );
+		$real = Space::count() - count( (array) ( $demo['spaces'] ?? array() ) )
+			+ Post::count() - count( (array) ( $demo['posts'] ?? array() ) );
+		return max( 0, $real );
+	}
+
+	/**
 	 * What the current demo set holds, for the Dashboard and REST.
 	 *
 	 * @return array{active:bool,counts:array<string,int>}

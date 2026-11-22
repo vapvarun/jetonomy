@@ -3388,10 +3388,20 @@ class Model_Tests {
 		$this->check( 'DD1: /admin/demo-data answers GET, POST and DELETE', ! array_diff( array( 'GET', 'POST', 'DELETE' ), $methods ) );
 
 		$previous = get_current_user_id();
+		$guest    = new \WP_REST_Request( 'POST', '/jetonomy/v1/admin/demo-data' );
+		$guest->set_param( 'confirm', true );
 		wp_set_current_user( 0 );
-		$status = rest_do_request( new \WP_REST_Request( 'POST', '/jetonomy/v1/admin/demo-data' ) )->get_status();
+		$status = rest_do_request( $guest )->get_status();
 		wp_set_current_user( $previous );
 		$this->check( 'DD2: a guest cannot import demo data', 401 === $status );
+
+		// A plain POST (no confirm) must never seed: it is refused before the seeder runs.
+		$before = get_option( 'jetonomy_demo_data' );
+		$admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
+		wp_set_current_user( (int) ( $admins[0] ?? 0 ) );
+		$plain = rest_do_request( new \WP_REST_Request( 'POST', '/jetonomy/v1/admin/demo-data' ) )->get_status();
+		wp_set_current_user( $previous );
+		$this->check( 'DD3: a plain admin POST to /admin/demo-data is refused and seeds nothing', 400 === $plain && get_option( 'jetonomy_demo_data' ) === $before, "status {$plain}" );
 	}
 
 	/**

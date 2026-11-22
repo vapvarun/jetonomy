@@ -408,7 +408,7 @@
         ],
         "summary": "Import demo data",
         "operationId": "adminDemoDataImport",
-        "description": "Load the demo community; replaces an earlier demo set. Requires manage_options.",
+        "description": "Load the demo community; replaces an earlier demo set. Requires manage_options and confirm=true; answers 409 jetonomy_demo_real_content while the community has its own spaces or topics unless force=true.",
         "responses": {
           "201": {
             "description": "Success",
@@ -453,6 +453,36 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "400": {
+            "description": "confirm missing or not true"
+          },
+          "409": {
+            "description": "The community already has its own content; resend with force=true"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean",
+                    "description": "Must be true."
+                  },
+                  "force": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Import even though the community has its own spaces or topics."
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -462,7 +492,7 @@
         ],
         "summary": "Remove demo data",
         "operationId": "adminDemoDataRemove",
-        "description": "Delete the demo set; owner content is untouched. Requires manage_options.",
+        "description": "Delete the demo set; owner content is untouched. Requires manage_options. Requires confirm=true.",
         "responses": {
           "200": {
             "description": "Success",
@@ -510,6 +540,28 @@
           },
           "404": {
             "description": "No demo data to remove"
+          },
+          "400": {
+            "description": "confirm missing or not true"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean",
+                    "description": "Must be true."
+                  }
+                }
+              }
+            }
           }
         }
       }
