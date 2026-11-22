@@ -1037,6 +1037,15 @@
   @media (max-width: 1024px) {
     .jt-community-nav-actions .jt-font-scale { display: none; }
   }
+  /* Tablets and large phones (641-1024): the bottom bar is hidden here, so the top nav is the only navigation and
+     every item needs a visible name. Icon above a one-line label (the phone bar's pattern); the whole link is one
+     target of at least 64x52; the row wraps to a second line instead of scrolling behind a hidden scrollbar, so
+     long translated labels are never cut. Overrides the container queries above (more specific on purpose). */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .jt-community-nav .jt-community-nav-inner .jt-community-nav-links { flex-wrap: wrap; overflow: visible; }
+    .jt-community-nav .jt-community-nav-inner .jt-community-nav-links a { flex: 0 0 auto; flex-direction: column; justify-content: center; gap: 2px; min-width: 64px; min-height: 52px; padding: var(--jt-space-1) var(--jt-space-2); font-size: var(--jt-text-xs); }
+    .jt-community-nav .jt-community-nav-inner .jt-community-nav-links a > .jt-nav-label { display: block; white-space: nowrap; }
+  }
 
   /* ── Phone (≤640px) ────────────────────────────────────────────────
      Layout density drops one level. Typography scales down one step
@@ -3103,6 +3112,11 @@ button.jt-mobile-tab { background: none; border: 0; font: inherit; font-size: 0.
 }
 .jt-mobile-tab-menu .jt-more-item { min-height: max(var(--jt-tap), 44px); padding-inline: var(--jt-space-4); font-size: 0.9375rem; }
 .jt-mobile-tab-menu .jt-more-item svg { flex-shrink: 0; width: 18px; height: 18px; color: var(--jt-text-secondary); }
+/* "Start a topic in..." (New outside a space): full width above the bar, long space names end in an ellipsis. */
+.jt-mobile-tab-menu--wide { inset-inline: var(--jt-space-2); max-block-size: 60vh; overflow-y: auto; }
+.jt-mobile-tab-menu--wide .jt-more-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.jt-mobile-tab-menu__title { padding: var(--jt-space-2) var(--jt-space-4) var(--jt-space-1); font-size: var(--jt-text-xs); font-weight: 600; color: var(--jt-text-secondary); }
+.jt-mobile-tab-menu__note { margin: 0; padding: var(--jt-space-1) var(--jt-space-4) var(--jt-space-2); font-size: var(--jt-text-sm); color: var(--jt-text); white-space: normal; }
 
 /* ── Toast notification (standalone fallback) ── */
 .jt-toast {

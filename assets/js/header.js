@@ -295,10 +295,15 @@
 	function tabMenuExtras() {
 		return Array.prototype.slice.call(document.querySelectorAll('.jt-community-nav-links > a:not(.jt-nav-dup)'));
 	}
+	// Bar tabs that open a sheet name it in data-jt-menu: Me (jt-mobile-tab-menu) and, outside a space, New
+	// (jt-new-sheet, "Start a topic in..."). A link tab marked data-jt-direct navigates instead (New inside a space).
+	function sheetTrigger(menu) {
+		return menu ? document.querySelector('.jt-mobile-tab[data-jt-menu="' + menu.id + '"]') : null;
+	}
 	function closeTabMenu(returnFocus) {
-		var menu = document.querySelector('.jt-mobile-tab-menu');
-		var tab = document.querySelector('.jt-mobile-tab[data-jt-tab="profile"]');
-		if (!menu || menu.hidden) { return; }
+		var menu = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
+		if (!menu) { return; }
+		var tab = sheetTrigger(menu);
 		menu.hidden = true;
 		if (tab) {
 			tab.setAttribute('aria-expanded', 'false');
@@ -306,18 +311,25 @@
 		}
 	}
 	function prepareProfileTab() {
-		var tab = document.querySelector('.jt-mobile-tab[data-jt-tab="profile"]');
-		if (!tab || !document.getElementById('jt-mobile-tab-menu')) { return; }
-		tab.setAttribute('aria-haspopup', 'menu');
-		tab.setAttribute('aria-expanded', 'false');
-		tab.setAttribute('aria-controls', 'jt-mobile-tab-menu');
+		document.querySelectorAll('.jt-mobile-tab[data-jt-menu]').forEach(function (tab) {
+			var id = tab.getAttribute('data-jt-menu');
+			if (!document.getElementById(id) || tab.hasAttribute('data-jt-direct')) {
+				tab.removeAttribute('aria-haspopup');
+				tab.removeAttribute('aria-expanded');
+				tab.removeAttribute('aria-controls');
+				return;
+			}
+			tab.setAttribute('aria-haspopup', 'menu');
+			tab.setAttribute('aria-expanded', 'false');
+			tab.setAttribute('aria-controls', id);
+		});
 	}
 	// The Me sheet is rendered by header.php (profile, my topics, bookmarks, leaderboard, settings). Opening it adds
 	// the top-nav-only links (Moderation, Pro's Messages) once, cloned so the hook output is never rendered twice.
 	function openTabMenu(tab) {
-		var menu = document.getElementById('jt-mobile-tab-menu');
+		var menu = document.getElementById(tab.getAttribute('data-jt-menu'));
 		if (!menu) { return; }
-		if (!menu.querySelector('[data-jt-extra]')) {
+		if ('jt-mobile-tab-menu' === menu.id && !menu.querySelector('[data-jt-extra]')) {
 			tabMenuExtras().forEach(function (a) {
 				var c = a.cloneNode(true);
 				c.className = 'jt-more-item';
@@ -334,7 +346,8 @@
 	}
 	/**
 	 * Keep the bottom bar true after a client-side navigation (the header is not re-rendered): the active tab, aria-current,
-	 * and where New goes (the space you are in, else My spaces). A full page load is rendered by the server already.
+	 * and where New goes (the space you are in, else the "Start a topic in..." sheet or the one space's composer).
+	 * A full page load is rendered by the server already.
 	 */
 	function syncMobileTabs() {
 		var bar = document.querySelector('.jt-mobile-tabs');
@@ -357,38 +370,41 @@
 		var add = bar.querySelector('.jt-mobile-tab[data-jt-key="new"]');
 		if (add && add.tagName === 'A') {
 			add.setAttribute('href', space ? base + '/s/' + space[1] + '/new/' : bar.getAttribute('data-jt-new-fallback'));
+			add.toggleAttribute('data-jt-direct', !!space);
 		}
 	}
 	prepareProfileTab();
 	document.addEventListener('jetonomy:navigated', function () {
 		closeTabMenu(false);
-		prepareProfileTab();
 		syncMobileTabs();
+		prepareProfileTab();
 	});
-	// Tabbing out of the Me sheet closes it (it has no scrim, so it must not be left open over the page).
+	// Tabbing out of a sheet closes it (it has no scrim, so it must not be left open over the page).
 	document.addEventListener('focusin', function (e) {
 		var menu = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
-		if (menu && e.target && !menu.contains(e.target) && !e.target.closest('[data-jt-tab="profile"]')) { closeTabMenu(false); }
+		if (menu && e.target && !menu.contains(e.target) && e.target !== sheetTrigger(menu)) { closeTabMenu(false); }
 	});
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
-		var tab = e.target.closest('.jt-mobile-tab[data-jt-tab="profile"]');
-		if (tab && document.getElementById('jt-mobile-tab-menu')) {
+		var tab = e.target.closest('.jt-mobile-tab[data-jt-menu]:not([data-jt-direct])');
+		if (tab && document.getElementById(tab.getAttribute('data-jt-menu'))) {
 			e.preventDefault();
 			var open = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
-			if (open) { closeTabMenu(false); } else { openTabMenu(tab); }
+			var mine = open && open.id === tab.getAttribute('data-jt-menu');
+			closeTabMenu(false);
+			if (!mine) { openTabMenu(tab); }
 			return;
 		}
 		// A click outside the menu, or on one of its links, closes it.
 		if (!e.target.closest('.jt-mobile-tab-menu') || e.target.closest('.jt-mobile-tab-menu a')) { closeTabMenu(false); }
-	});
+	}, true); // Capture: New is a real link, so the sheet must claim the click before the client-side router sees it.
 	document.addEventListener('keydown', function (e) {
 		var menu = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
 		if (!menu) { return; }
 		if ('Escape' === e.key) {
 			closeTabMenu(true);
 		} else if ('Tab' === e.key && e.shiftKey && document.activeElement === menu.querySelector('a')) {
-			// Shift+Tab from the first row goes back to the Me button: close the sheet behind it.
+			// Shift+Tab from the first row goes back to the tab that opened it: close the sheet behind it.
 			closeTabMenu(false);
 		} else if (menu.contains(document.activeElement) && window.jetonomySmartDropdown && window.jetonomySmartDropdown.menuKeys) {
 			window.jetonomySmartDropdown.menuKeys(menu, e);
