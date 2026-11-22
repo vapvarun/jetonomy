@@ -89,6 +89,19 @@ class Cron {
 		// After activation: re-queue kept jobs that failed with no listener while the plugin was off. wp_loaded, so Pro's
 		// listeners are registered and its kept hooks count too.
 		add_action( 'wp_loaded', array( Queue::class, 'recover_kept_jobs' ) );
+		// Core's one-click update deactivates silently (no deactivation or activation hook), so the update itself flags
+		// recovery. Runs with the code that was installed before the update, from the version after this one.
+		add_action(
+			'upgrader_process_complete',
+			static function ( $upgrader, $extra ): void {
+				$ours = array( 'jetonomy/jetonomy.php', 'jetonomy-pro/jetonomy-pro.php' );
+				if ( 'plugin' === ( $extra['type'] ?? '' ) && array_intersect( $ours, (array) ( $extra['plugins'] ?? $extra['plugin'] ?? array() ) ) ) {
+					Queue::flag_recovery();
+				}
+			},
+			10,
+			2
+		);
 
 		// Self-heal: ensure every recurring action is registered. We hook the
 		// 'action_scheduler_init' action AS fires once its data store is ready
@@ -111,7 +124,8 @@ class Cron {
 	}
 
 	/**
-	 * Unschedule all cron events on plugin deactivation.
+	 * Deactivation: cancel Free's jobs in both schedulers, except the ones in Queue::KEEP_ON_DEACTIVATE (they finish
+	 * something already done and are recovered if they fail while the plugin is off).
 	 *
 	 * Clears both AS-scheduled actions (current) and any legacy WP-Cron entries
 	 * (idempotent — safe to call regardless of which scheduler the install was on).
@@ -132,14 +146,12 @@ class Cron {
 	/**
 	 * Is this a request where recurring schedules should be checked and armed?
 	 *
-	 * Each check is a database lookup, and running them on every page, REST call and
-	 * heartbeat made them part of every request's query floor. Check only in the cron
-	 * runner, Action Scheduler's daily re-arm run, wp-admin page loads and WP-CLI.
-	 * See docs/standards/background-jobs.md.
+	 * @deprecated 2.0.8 Use \Jetonomy\Queue::is_scheduling_request(), the one implementation for Free and Pro.
 	 *
 	 * @return bool
 	 */
 	public static function is_scheduling_request(): bool {
+		_deprecated_function( __METHOD__, '2.0.8', '\\Jetonomy\\Queue::is_scheduling_request()' );
 		return Queue::is_scheduling_request();
 	}
 
@@ -148,7 +160,7 @@ class Cron {
 	 * are armed if something is due.
 	 */
 	public static function ensure_scheduled(): void {
-		if ( ! self::is_scheduling_request() ) {
+		if ( ! Queue::is_scheduling_request() ) {
 			return;
 		}
 		if ( ! function_exists( 'as_schedule_recurring_action' ) ) {
@@ -168,7 +180,8 @@ class Cron {
 			Queue::ensure_recurring( (string) $hook, time() + (int) ( $job[1] ?? 0 ), (int) $job[0] );
 		}
 		// Self-heal for the two due-time jobs (one lookup each); the writes that make something due arm them
-		// themselves, and deactivation cancels them, so activation arms them again here.
+		// themselves. Deactivation cancels DUE_HOOK (PUBLISH_HOOK is kept: Queue::KEEP_ON_DEACTIVATE), so
+		// activation arms it again here.
 		if ( ! Queue::is_queued( self::DUE_HOOK ) ) {
 			self::arm_due_jobs();
 		}

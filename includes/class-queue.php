@@ -22,7 +22,19 @@
  * - delete_rows() deletes every row of a retired hook (the 2.0.7 webhook rows held URLs and secrets); MediaVerse has
  *   none and deletes by hook list in uninstall.
  * - No adopt_pending() or LEGACY_GROUPS: Jetonomy never used another group.
- * - at() and async_once() insert with Action Scheduler's unique flag, so two requests arriving together queue one copy.
+ * - at( ..., $unique ) and async_once() insert with Action Scheduler's unique flag, so two requests arriving together
+ *   queue one copy; at() adds a plain copy when only a RUNNING copy blocked the insert, so a job re-arms from its run.
+ * - Deactivation: cancel_on_deactivate( $hooks ) cancels each hook not in KEEP_ON_DEACTIVATE (MediaVerse:
+ *   cancel_pending( $hooks ), set-based, returns a count).
+ * - Recovery of kept jobs failed while the plugin was off: flag_recovery() + recover_kept_jobs(), RECOVER_BATCH,
+ *   RECOVER_WINDOW_DAYS (MediaVerse: requeue_after_activation( $transient, $hooks ) + requeue_unheard( $hooks ),
+ *   REQUEUE_BATCH, REQUEUE_DAYS). Same guard order (scheduling request, store, then the flag); Jetonomy also skips
+ *   hooks with no listener and catches per row.
+ * - prune_history() ages completed and failed rows by last attempt, cancelled rows by scheduled date (Action Scheduler
+ *   records no cancel time).
+ * - TIME_BUDGET is public (tests and Pro read it); private in MediaVerse.
+ * - cancel( $hook, array() ) cancels every copy, but is_queued( $hook, array() ) asks for the argument-less copy only
+ *   (pass null for any arguments). next() answers 0 both when nothing is queued and when a copy is running.
  *
  * @package Jetonomy
  * @since   2.0.8
@@ -53,12 +65,11 @@ final class Queue {
 	public const TIME_BUDGET = 10;
 
 	/**
-	 * Tests only: replaces microtime( true ) in now(), so a time budget can be tested without waiting.
+	 * Replaces microtime( true ) in now(); set only through set_clock().
 	 *
-	 * @internal
 	 * @var \Closure|null
 	 */
-	public static ?\Closure $clock = null;
+	private static ?\Closure $clock = null;
 
 	/** Pending actions pending_args() reads per hook. */
 	public const PENDING_READ_LIMIT = 100;
@@ -80,6 +91,18 @@ final class Queue {
 	 */
 	public static function now(): float {
 		return null === self::$clock ? microtime( true ) : (float) ( self::$clock )();
+	}
+
+	/**
+	 * Tests only: a fake clock for now(), so a time budget can be tested without waiting. Null restores the real one.
+	 *
+	 * @internal
+	 * @since 2.0.8
+	 *
+	 * @param \Closure|null $clock Returns the time as a float.
+	 */
+	public static function set_clock( ?\Closure $clock ): void {
+		self::$clock = $clock;
 	}
 
 	/**
@@ -154,14 +177,19 @@ final class Queue {
 	 * @param int    $timestamp Unix time.
 	 * @param string $hook      Action hook.
 	 * @param array  $args      Hook arguments.
-	 * @param bool   $unique    Insert only when no pending or running copy with these arguments exists (one atomic
-	 *                          insert, so requests arriving together add one copy). WP-Cron already drops a duplicate
-	 *                          within ten minutes.
-	 * @return bool Whether a scheduler accepted the job (false when $unique found a copy).
+	 * @param bool   $unique    Insert only when no pending copy with these arguments exists (one atomic insert, so
+	 *                          requests arriving together add one copy). A running copy does not count, so a job may
+	 *                          re-arm itself from inside its run. WP-Cron already drops a duplicate within ten minutes.
+	 * @return bool Whether a scheduler accepted the job (false when $unique found a pending copy).
 	 */
 	public static function at( int $timestamp, string $hook, array $args = array(), bool $unique = false ): bool {
 		if ( self::has_as() ) {
-			return (bool) as_schedule_single_action( $timestamp, $hook, $args, self::GROUP, $unique );
+			if ( as_schedule_single_action( $timestamp, $hook, $args, self::GROUP, $unique ) ) {
+				return true;
+			}
+			// Action Scheduler's unique insert also refuses while a copy RUNS, so a job re-arming itself from inside its
+			// own run would get nothing. Only a pending copy means the later run is already coming.
+			return $unique && ! self::as_pending( $hook, $args ) && (bool) as_schedule_single_action( $timestamp, $hook, $args, self::GROUP );
 		}
 		return true === wp_schedule_single_event( $timestamp, $hook, array_values( $args ), true );
 	}
@@ -251,12 +279,17 @@ final class Queue {
 	 * - jetonomy_fanout_post_subscribers / jetonomy_fanout_reply_subscribers: writes the in-app notifications for a
 	 *   topic or reply already published; push and email are delivery and may be dropped, the in-app record may not.
 	 * - jetonomy_pro_announce_post: notifies members of an announcement the owner published.
-	 * - jetonomy_pro_upgrade_jobs: converts the old version's queued jobs; the version is already stored, so nothing
-	 *   would queue it again and old rows (with their secrets) would stay.
+	 * - jetonomy_pro_upgrade_jobs: converts the old version's queued jobs; once the version is stored nothing queues it
+	 *   again, and old rows (with their secrets) would stay.
+	 * - jetonomy_pro_reindex_field / jetonomy_pro_backfill_searchable_fields: re-index custom fields for search; the
+	 *   cursor (or id list) is in the args and nothing else queues the rest, so search would stay half-indexed.
+	 * - jetonomy_pro_attachments_lock: locks the files of a space made private, page by page; cancelled midway, files
+	 *   of a private space stay reachable by URL.
 	 *
-	 * While the plugin stays off, Action Scheduler loaded by another plugin runs these rows with no listener and marks
+	 * While the plugin is off, Action Scheduler loaded by another plugin runs these rows with no listener and marks
 	 * them FAILED ("no callbacks are registered") on its next run, about a minute; recover_kept_jobs() queues them
-	 * again after activation. The update flow re-activates first and loses nothing.
+	 * again after the next activation or version change. A manual update deactivates and re-activates; core's
+	 * one-click update deactivates silently (no hooks), so the version-change paths set the recovery flag too.
 	 * Member erasure and moderation cascades run in the request (no job), so none is listed.
 	 */
 	public const KEEP_ON_DEACTIVATE = array(
@@ -266,6 +299,9 @@ final class Queue {
 		'jetonomy_fanout_reply_subscribers',
 		'jetonomy_pro_announce_post',
 		'jetonomy_pro_upgrade_jobs',
+		'jetonomy_pro_reindex_field',
+		'jetonomy_pro_backfill_searchable_fields',
+		'jetonomy_pro_attachments_lock',
 	);
 
 	/** Transient set on activation: recover kept jobs that failed while the plugin was off. */
@@ -273,6 +309,9 @@ final class Queue {
 
 	/** Failed rows recovered per scheduling request; the flag stays until a pass finds fewer. */
 	public const RECOVER_BATCH = 200;
+
+	/** Only kept rows that failed within this many days are re-queued. */
+	public const RECOVER_WINDOW_DAYS = 7;
 
 	/**
 	 * Called by Free's and Pro's activation: the next scheduling request runs recover_kept_jobs().
@@ -288,15 +327,18 @@ final class Queue {
 	 * listener they failed with "no callbacks are registered". Only rows whose log says so are re-queued, so a job
 	 * that really ran and errored stays failed. Each is queued again once (async_once, same args) and the failed row is
 	 * deleted with its logs. Runs on scheduling requests while the activation flag is set, RECOVER_BATCH rows at a
-	 * time, and only for hooks that have a listener now (Pro's are skipped while Pro is off). Rows already pruned
-	 * (failed rows are kept FAILED_RETENTION_DAYS) cannot be recovered.
+	 * time, and only for hooks that have a listener now (Pro's are skipped while Pro is off). Only rows that failed
+	 * within RECOVER_WINDOW_DAYS are replayed, so an old fan-out never reaches members long after the fact. The log
+	 * message is matched in English, the site's language and the request's language; a row logged in a fourth
+	 * language is missed. A row whose args no longer decode is left failed. The cheap checks come first: on a
+	 * normal page view this returns before any query.
 	 *
 	 * @since 2.0.8
 	 *
 	 * @return int Rows re-queued.
 	 */
 	public static function recover_kept_jobs(): int {
-		if ( ! get_transient( self::RECOVER_FLAG ) || ! self::has_as() || ! self::is_scheduling_request() ) {
+		if ( ! self::is_scheduling_request() || ! self::has_as() || ! get_transient( self::RECOVER_FLAG ) ) {
 			return 0;
 		}
 		$hooks = array_values( array_filter( self::KEEP_ON_DEACTIVATE, 'has_action' ) );
@@ -307,11 +349,20 @@ final class Queue {
 		$actions = $wpdb->prefix . 'actionscheduler_actions';
 		$groups  = $wpdb->prefix . 'actionscheduler_groups';
 		$logs    = $wpdb->prefix . 'actionscheduler_logs';
-		// Action Scheduler writes the message in the runner's language: match English and the current translation.
+		// Action Scheduler writes the message in the runner's language: match English, this request's and the site's.
 		$english = '%' . $wpdb->esc_like( 'will not be executed as no callbacks are registered' ) . '%';
-		/* translators: Action Scheduler's own string, matched as written in its log. */
-		$frag  = trim( (string) preg_replace( '/^.*%1\$s/', '', __( 'Scheduled action for %1$s will not be executed as no callbacks are registered.', 'action-scheduler' ) ) ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
-		$local = mb_strlen( $frag ) >= 10 ? '%' . $wpdb->esc_like( $frag ) . '%' : $english; // Too short to match on its own.
+		$like    = static function () use ( $wpdb, $english ): string {
+			/* translators: Action Scheduler's own string, matched as written in its log. */
+			$frag = trim( (string) preg_replace( '/^.*%1\$s/', '', __( 'Scheduled action for %1$s will not be executed as no callbacks are registered.', 'action-scheduler' ) ) ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+			return mb_strlen( $frag ) >= 10 ? '%' . $wpdb->esc_like( $frag ) . '%' : $english; // Too short to match on its own.
+		};
+		$local = $like();
+		$site  = $local;
+		if ( determine_locale() !== get_locale() && switch_to_locale( get_locale() ) ) {
+			$site = $like();
+			restore_previous_locale();
+		}
+		$since = gmdate( 'Y-m-d H:i:s', time() - self::RECOVER_WINDOW_DAYS * DAY_IN_SECONDS );
 		$in    = implode( ',', array_fill( 0, count( $hooks ), '%s' ) );
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Action Scheduler's API cannot filter by log message.
 		$ids = array_map(
@@ -319,10 +370,10 @@ final class Queue {
 			$wpdb->get_col(
 				$wpdb->prepare(
 					"SELECT a.action_id FROM {$actions} a INNER JOIN {$groups} g ON g.group_id = a.group_id
-					WHERE g.slug = %s AND a.status = 'failed' AND a.hook IN ({$in})
-					AND EXISTS ( SELECT 1 FROM {$logs} l WHERE l.action_id = a.action_id AND ( l.message LIKE %s OR l.message LIKE %s ) )
+					WHERE g.slug = %s AND a.status = 'failed' AND a.hook IN ({$in}) AND a.last_attempt_gmt > %s
+					AND EXISTS ( SELECT 1 FROM {$logs} l WHERE l.action_id = a.action_id AND ( l.message LIKE %s OR l.message LIKE %s OR l.message LIKE %s ) )
 					ORDER BY a.action_id LIMIT %d",
-					array_merge( array( self::GROUP ), $hooks, array( $english, $local, self::RECOVER_BATCH ) )
+					array_merge( array( self::GROUP ), $hooks, array( $since, $english, $local, $site, self::RECOVER_BATCH ) )
 				)
 			)
 		);
@@ -332,6 +383,9 @@ final class Queue {
 		foreach ( $ids as $id ) {
 			try {
 				$action = $store->fetch_action( (string) $id );
+				if ( '' === $action->get_hook() ) {
+					continue; // Args that no longer decode (a NullAction): leave the failed row for the owner to see.
+				}
 				if ( self::async_once( $action->get_hook(), (array) $action->get_args() ) ) {
 					$store->delete_action( (string) $id );
 					++$done;

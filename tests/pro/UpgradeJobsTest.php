@@ -32,7 +32,7 @@ class UpgradeJobsTest extends WP_UnitTestCase {
 	}
 
 	public function tear_down(): void {
-		Queue::$clock = null;
+		Queue::set_clock( null );
 		foreach ( array( self::LEGACY, self::DELIVER, self::LOCK, self::UPGRADE ) as $hook ) {
 			Queue::delete_rows( $hook );
 			wp_unschedule_hook( $hook );
@@ -241,6 +241,33 @@ class UpgradeJobsTest extends WP_UnitTestCase {
 			\WP_Upgrader::release_lock( 'jetonomy_pro_upgrade' );
 			$prop->setValue( $pro, $saved );
 		}
+	}
+
+	/**
+	 * The conversion is queued BEFORE the version is stored (a request dying in between leaves the job), a late
+	 * request that read the old version queues no second copy, and the upgrade sets the recovery flag (core's
+	 * one-click update fires no activation hook).
+	 */
+	public function test_the_conversion_is_queued_before_the_version_and_only_once(): void {
+		$pro     = \Jetonomy_Pro::instance();
+		$at_save = null;
+		$spy     = function ( $value ) use ( &$at_save ) {
+			$at_save = Queue::is_pending( self::UPGRADE );
+			return $value;
+		};
+		update_option( 'jetonomy_pro_db_version', '2.0.6' ); // Older than this build, whatever its header says on a dev branch.
+		delete_transient( Queue::RECOVER_FLAG );
+		add_filter( 'pre_update_option_jetonomy_pro_db_version', $spy );
+		try {
+			$this->assertTrue( $pro->run_upgrade( '2.0.7' ) );
+		} finally {
+			remove_filter( 'pre_update_option_jetonomy_pro_db_version', $spy );
+		}
+		$this->assertTrue( $at_save, 'the job was pending when the version was written' );
+		$this->assertTrue( $pro->run_upgrade( '2.0.7' ), 'a request that read the old version before the lock was released' );
+		$this->assertCount( 1, as_get_scheduled_actions( array( 'hook' => self::UPGRADE, 'status' => 'pending' ), 'ids' ), 'one conversion job' );
+		$this->assertNotFalse( get_transient( Queue::RECOVER_FLAG ), 'the upgrade flags recovery of kept jobs' );
+		delete_transient( Queue::RECOVER_FLAG );
 	}
 
 	/** Two activations (two upgrade requests) queue one lock sweep: the insert is unique. */

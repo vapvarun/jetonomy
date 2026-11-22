@@ -35,6 +35,9 @@ require_once $_tests_dir . '/includes/functions.php';
 // Tests never reach the live store. Without this, every CI job ran the free-key activation on admin_init as
 // http://example.org, and each push sent dozens of activations to wbcomdesigns.com (2026-10-26).
 define( 'JETONOMY_NO_LICENSE_PHONE_HOME', true );
+// A fresh test database has never run Action Scheduler's post-store migration, so AS would pick its HybridStore,
+// which has no atomic unique insert and so hid that a running copy blocks a unique one. Live sites use DBStore.
+tests_add_filter( 'pre_option_action_scheduler_migration_status', static fn() => 'complete' );
 tests_add_filter(
 	'pre_http_request',
 	static function ( $pre, $args, $url ) {

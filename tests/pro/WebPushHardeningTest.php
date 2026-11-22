@@ -168,9 +168,9 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $this->queued );
 
 		$now               = 1000.0;
-		\Jetonomy\Queue::$clock = static function () use ( &$now ): float {
+		\Jetonomy\Queue::set_clock( static function () use ( &$now ): float {
 			return $now;
-		};
+		} );
 		$sent = array();
 		$slow = static function ( $pre, $r, $url ) use ( &$sent, &$now ) {
 			if ( false === strpos( (string) $url, 'exp.host' ) ) {
@@ -195,7 +195,7 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 				$this->ext->do_send_batch( ...array_values( $this->queued[ $run ] ) );
 			}
 		} finally {
-			\Jetonomy\Queue::$clock = null;
+			\Jetonomy\Queue::set_clock( null );
 			remove_filter( 'pre_http_request', $slow, 5 );
 			remove_filter( 'jetonomy_pro_push_send_seconds', $budget );
 		}
@@ -227,9 +227,9 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 		$this->ext->flush_pending();
 
 		$now               = 1000.0;
-		\Jetonomy\Queue::$clock = static function () use ( &$now ): float {
+		\Jetonomy\Queue::set_clock( static function () use ( &$now ): float {
 			return $now;
-		};
+		} );
 		$sent = array();
 		$slow = static function ( $pre, $r, $url ) use ( &$sent, &$now ) {
 			if ( false === strpos( (string) $url, 'exp.host' ) ) {
@@ -249,7 +249,7 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 			$now = 1000.0;
 			$this->ext->do_send_batch( ...array_values( $this->queued[1] ) );
 		} finally {
-			\Jetonomy\Queue::$clock = null;
+			\Jetonomy\Queue::set_clock( null );
 			remove_filter( 'pre_http_request', $slow, 5 );
 			remove_filter( 'jetonomy_pro_push_send_seconds', $budget );
 		}

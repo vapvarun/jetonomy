@@ -23,9 +23,7 @@ class PublishRetryCapTest extends WP_UnitTestCase {
 
 	public function set_up(): void {
 		parent::set_up();
-		if ( ! Queue::has_as() ) {
-			$this->markTestSkipped( 'Action Scheduler is not loaded.' );
-		}
+		$this->assertTrue( Queue::has_as(), 'Action Scheduler ships with Jetonomy: these proofs must run, never skip' );
 		Schema::create_tables();
 		Queue::cancel( Cron::PUBLISH_HOOK );
 		$suffix          = uniqid( 'prc_', true );

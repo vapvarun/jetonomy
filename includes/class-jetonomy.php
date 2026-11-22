@@ -435,6 +435,7 @@ final class Jetonomy {
 			require_once JETONOMY_DIR . 'includes/db/class-schema.php';
 			DB\Schema::create_tables();
 
+			Queue::flag_recovery(); // One-click updates deactivate silently: recover kept jobs failed during the swap.
 			update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
 			delete_transient( $lock );
 			return;

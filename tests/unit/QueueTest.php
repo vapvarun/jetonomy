@@ -19,13 +19,11 @@ class QueueTest extends WP_UnitTestCase {
 
 	public function set_up(): void {
 		parent::set_up();
-		if ( ! Queue::has_as() ) {
-			$this->markTestSkipped( 'Action Scheduler is not loaded.' );
-		}
+		$this->assertTrue( Queue::has_as(), 'Action Scheduler ships with Jetonomy: these proofs must run, never skip' );
 	}
 
 	public function tear_down(): void {
-		Queue::$clock = null;
+		Queue::set_clock( null );
 		global $wpdb;
 		$wpdb->delete( $wpdb->prefix . 'actionscheduler_actions', array( 'hook' => self::HOOK ) ); // phpcs:ignore WordPress.DB
 		wp_unschedule_hook( self::HOOK );
@@ -90,9 +88,9 @@ class QueueTest extends WP_UnitTestCase {
 			$this->finished( 'complete', 30, 30 );
 		}
 		$now          = 1000.0;
-		Queue::$clock = static function () use ( &$now ): float {
+		Queue::set_clock( static function () use ( &$now ): float {
 			return $now += 1.0; // Every read of the clock is one second later.
-		};
+		} );
 
 		Queue::prune_history();
 		$left = count( $this->rows() );
@@ -100,7 +98,7 @@ class QueueTest extends WP_UnitTestCase {
 		$this->assertLessThan( 25, $left, 'it deleted some first' );
 		$this->assertGreaterThanOrEqual( 25 - Queue::TIME_BUDGET, $left, 'no more than one row per budgeted second' );
 
-		Queue::$clock = null;
+		Queue::set_clock( null );
 		Queue::prune_history();
 		$this->assertSame( array(), $this->rows(), 'the next run clears the rest' );
 	}

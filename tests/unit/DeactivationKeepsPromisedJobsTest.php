@@ -21,9 +21,7 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 
 	public function set_up(): void {
 		parent::set_up();
-		if ( ! Queue::has_as() ) {
-			$this->markTestSkipped( 'Action Scheduler is not loaded.' );
-		}
+		$this->assertTrue( Queue::has_as(), 'Action Scheduler ships with Jetonomy: these proofs must run, never skip' );
 	}
 
 	public function tear_down(): void {
@@ -63,16 +61,21 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 		}
 		require_once JETONOMY_PRO_DIR . 'includes/extensions/site-announcements/class-extension.php';
 		require_once JETONOMY_PRO_DIR . 'includes/extensions/webhooks/class-extension.php';
+		require_once JETONOMY_PRO_DIR . 'includes/extensions/custom-fields/class-extension.php';
 		as_enqueue_async_action( 'jetonomy_pro_announce_post', array( 5, 0 ), Queue::GROUP );
 		as_enqueue_async_action( 'jetonomy_pro_deliver_webhook', array( 1, 'e', '{}' ), Queue::GROUP );
+		as_enqueue_async_action( 'jetonomy_pro_reindex_field', array( 3, 0 ), Queue::GROUP );
 		try {
 			( new \Jetonomy_Pro\Extensions\Site_Announcements\Extension() )->deactivate();
 			( new \Jetonomy_Pro\Extensions\Webhooks\Extension() )->deactivate();
+			( new \Jetonomy_Pro\Extensions\Custom_Fields\Extension() )->deactivate();
+			$this->assertSame( 1, $this->pending( 'jetonomy_pro_reindex_field' ), 'a re-index in progress is kept: its cursor is in the args' );
 			$this->assertSame( 1, $this->pending( 'jetonomy_pro_announce_post' ) );
 			$this->assertSame( 0, $this->pending( 'jetonomy_pro_deliver_webhook' ) );
 		} finally {
 			Queue::cancel( 'jetonomy_pro_announce_post' );
 			Queue::cancel( 'jetonomy_pro_deliver_webhook' );
+			Queue::cancel( 'jetonomy_pro_reindex_field' );
 		}
 	}
 
@@ -81,8 +84,14 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 		\ActionScheduler::runner()->process_action( $id, 'WP Cron' );
 	}
 
+	/** A row's status, '' once it is deleted (DBStore throws for a missing row). */
 	private function status( int $id ): string {
-		return (string) \ActionScheduler::store()->get_status( (string) $id );
+		try {
+			return (string) \ActionScheduler::store()->get_status( (string) $id );
+		} catch ( \InvalidArgumentException $e ) {
+			unset( $e );
+			return '';
+		}
 	}
 
 	/**
@@ -127,5 +136,28 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 		$this->assertSame( 0, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}actionscheduler_logs WHERE action_id = %d", $orphan ) ), 'with its logs' ); // phpcs:ignore WordPress.DB
 		$this->assertSame( 'failed', $this->status( $real ), 'a job that really ran and errored stays failed' );
 		\ActionScheduler::store()->delete_action( (string) $real );
+	}
+
+	/** A kept row that failed more than RECOVER_WINDOW_DAYS ago (an old fan-out) is never replayed. */
+	public function test_a_kept_row_failed_long_ago_is_not_replayed(): void {
+		global $wpdb;
+		$old = (int) as_enqueue_async_action( 'jetonomy_fanout_post_subscribers', array( 77, 0 ), Queue::GROUP );
+		remove_all_actions( 'jetonomy_fanout_post_subscribers' );
+		$this->run_row( $old );
+		$this->assertSame( 'failed', $this->status( $old ) );
+		$at = gmdate( 'Y-m-d H:i:s', time() - ( Queue::RECOVER_WINDOW_DAYS + 1 ) * DAY_IN_SECONDS );
+		$wpdb->update( $wpdb->prefix . 'actionscheduler_actions', array( 'last_attempt_gmt' => $at, 'last_attempt_local' => $at ), array( 'action_id' => $old ) ); // phpcs:ignore WordPress.DB
+
+		add_action( 'jetonomy_fanout_post_subscribers', '__return_null' );
+		Queue::flag_recovery();
+		add_filter( 'wp_doing_cron', '__return_true' );
+		try {
+			$this->assertSame( 0, Queue::recover_kept_jobs() );
+		} finally {
+			remove_filter( 'wp_doing_cron', '__return_true' );
+		}
+		$this->assertSame( 'failed', $this->status( $old ), 'left failed, not replayed to members' );
+		$this->assertSame( 0, $this->pending( 'jetonomy_fanout_post_subscribers' ) );
+		\ActionScheduler::store()->delete_action( (string) $old );
 	}
 }
