@@ -316,13 +316,11 @@ $restriction_labels = array(
 		</div>
 	</div>
 </div>
-<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+<?php if ( \Jetonomy\Admin\Admin::show_pro_promo( 'badges' ) ) : ?>
 <div class="jt-pro-upsell">
 	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 	<h4><?php esc_html_e( 'Custom Badges & Advanced Moderation', 'jetonomy' ); ?></h4>
 	<p><?php esc_html_e( 'Auto-award badges based on activity, create custom fields for profiles, and set up keyword-based auto-moderation rules.', 'jetonomy' ); ?></p>
-	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
-	&nbsp;
-	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>
+	<?php \Jetonomy\Admin\Admin::pro_promo_actions( 'badges' ); ?>
 </div>
 <?php endif; ?>

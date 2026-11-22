@@ -46,8 +46,9 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 			<?php /* translators: %d: number of currently banned members. */ ?>
 			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), absint( $total_banned ) ); ?>
 		</a>
-		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Auto-Rules', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+		<?php if ( \Jetonomy\Admin\Admin::show_pro_promo() ) : ?>
+			<?php // A real link to what Pro adds, not a disabled control a keyboard cannot reach. ?>
+			<a class="nav-tab" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-settings&tab=free-vs-pro' ) ); ?>"><?php esc_html_e( 'Auto-Rules', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
 		<?php endif; ?>
 		<?php
 		/**

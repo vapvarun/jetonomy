@@ -54,9 +54,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<?php endif; ?>
 			</a>
 		<?php endif; ?>
-		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Custom Fields', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
-			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Reactions', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+		<?php if ( \Jetonomy\Admin\Admin::show_pro_promo() ) : ?>
+			<?php $jt_fvp = admin_url( 'admin.php?page=jetonomy-settings&tab=free-vs-pro' ); ?>
+			<a class="nav-tab" href="<?php echo esc_url( $jt_fvp ); ?>"><?php esc_html_e( 'Custom Fields', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+			<a class="nav-tab" href="<?php echo esc_url( $jt_fvp ); ?>"><?php esc_html_e( 'Reactions', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
 		<?php endif; ?>
 		<?php
 		/**

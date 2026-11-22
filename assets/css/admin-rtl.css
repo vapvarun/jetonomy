@@ -2359,12 +2359,44 @@ tr.jetonomy-moderated td {
 	font-size: 12px;
 }
 
-.jt-pulse-dismiss {
-	display: block;
-	margin-top: 8px;
-	font-size: 11px;
+/* Pro promo card actions: "See what Pro adds" + a per-admin Dismiss (Admin::pro_promo_actions()). */
+.jt-pro-upsell__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 8px 16px;
+	margin: 0;
+}
+
+.jt-pro-upsell__dismiss {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding-inline: 4px;
+	font-size: 13px;
 	color: var(--jt-admin-text-3);
-	text-decoration: none;
+}
+
+.jt-pro-upsell__dismiss:hover,
+.jt-pro-upsell__dismiss:focus {
+	color: var(--jt-admin-text);
+}
+
+.jt-pro-faq {
+	margin: 0;
+	padding: 0 16px 16px;
+}
+
+.jt-pro-faq dt {
+	margin-top: 12px;
+	font-weight: 600;
+	color: var(--jt-admin-text);
+}
+
+.jt-pro-faq dd {
+	margin: 4px 0 0;
+	color: var(--jt-admin-text-3);
 }
 
 @media (max-width: 640px) {

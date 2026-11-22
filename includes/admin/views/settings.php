@@ -443,6 +443,27 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
+			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Jetonomy Pro', 'jetonomy' ); ?></p>
+				</div>
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Pro suggestions', 'jetonomy' ); ?></th>
+						<td>
+							<input type="hidden" name="jetonomy_settings[pro_suggestions_field]" value="1">
+							<label>
+								<input type="checkbox" name="jetonomy_settings[show_pro_suggestions]" value="1" <?php checked( empty( $settings['hide_pro_suggestions'] ) ); ?>>
+								<?php esc_html_e( 'Show Pro suggestions', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Short cards on these admin screens that point to the matching Pro feature. Turn off to hide them for every admin. Each admin can also dismiss a single card. Never shown to members.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<?php endif; ?>
+
 			<!-- Data -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
@@ -1000,13 +1021,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 			</div>
 
-			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+			<?php if ( \Jetonomy\Admin\Admin::show_pro_promo( 'digest' ) ) : ?>
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'Email Digest', 'jetonomy' ); ?></h4>
 					<p><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Send daily or weekly email digests to re-engage %s who haven\'t visited recently.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
-
-					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+					<?php \Jetonomy\Admin\Admin::pro_promo_actions( 'digest' ); ?>
 				</div>
 			<?php endif; ?>
 
@@ -1178,12 +1198,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
-			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+			<?php if ( \Jetonomy\Admin\Admin::show_pro_promo( 'white-label' ) ) : ?>
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'White Label', 'jetonomy' ); ?></h4>
 					<p><?php esc_html_e( 'Replace Jetonomy branding with your own community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ); ?></p>
-					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+					<?php \Jetonomy\Admin\Admin::pro_promo_actions( 'white-label' ); ?>
 				</div>
 			<?php endif; ?>
 
@@ -1374,13 +1394,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</details>
 			</div>
 
-			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+			<?php if ( \Jetonomy\Admin\Admin::show_pro_promo( 'seo' ) ) : ?>
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'SEO Pro', 'jetonomy' ); ?></h4>
 					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<p><?php echo esc_html( sprintf( __( 'Open Graph tags, per-%s canonical URLs, breadcrumb schema, and advanced robots control.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
-					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+					<?php \Jetonomy\Admin\Admin::pro_promo_actions( 'seo' ); ?>
 				</div>
 			<?php endif; ?>
 
@@ -1486,15 +1506,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p style="margin: 0 0 16px; color: var(--jt-admin-text-2, #4B5563); font-size: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
 						<?php esc_html_e( 'Your community is growing. Give it reactions, messaging, polls, analytics, badges, webhooks, and more. Each feature is an independent module you enable only when you need it.', 'jetonomy' ); ?>
 					</p>
-					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary button-hero" target="_blank" style="font-size: 14px; padding: 8px 28px;">
-						<?php esc_html_e( 'Get Jetonomy Pro. Starting at $69/yr.', 'jetonomy' ); ?>
+					<?php // No price or coupon in a translatable string: prices change, translations do not. ?>
+					<a href="<?php echo esc_url( \Jetonomy\Admin\Admin::PRO_URL ); ?>" class="button button-primary button-hero" target="_blank" rel="noopener noreferrer" style="font-size: 14px; padding: 8px 28px;">
+						<?php esc_html_e( 'See plans and pricing', 'jetonomy' ); ?>
 					</a>
-					<p style="margin: 8px 0 0; font-size: 12px; color: var(--jt-admin-text-3, #6B7280);">
-						<?php
-						/* translators: %s: coupon code */
-						printf( esc_html__( 'Use code %s for 30%% off lifetime plans.', 'jetonomy' ), '<strong>Jetonomy30</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static trusted HTML tag.
-						?>
-					</p>
 				</div>
 			</div>
 
@@ -1615,6 +1630,20 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</div>
 					<?php endforeach; ?>
 				</div>
+			</div>
+
+			<div class="jt-settings-card" id="jt-pro-faq">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Questions', 'jetonomy' ); ?></p>
+				</div>
+				<dl class="jt-pro-faq">
+					<dt><?php esc_html_e( 'What happens if my licence lapses?', 'jetonomy' ); ?></dt>
+					<dd><?php esc_html_e( 'Everything keeps working. The licence only brings updates.', 'jetonomy' ); ?></dd>
+					<dt><?php esc_html_e( 'Do I lose anything if I switch Pro off?', 'jetonomy' ); ?></dt>
+					<dd><?php esc_html_e( 'No. Your community, its content and its attachments stay. Only the Pro features pause until Pro is back on.', 'jetonomy' ); ?></dd>
+					<dt><?php esc_html_e( 'Can I hide these suggestions?', 'jetonomy' ); ?></dt>
+					<dd><?php esc_html_e( 'Yes. Dismiss any card for yourself, or turn off "Show Pro suggestions" under Settings > General to hide them for every admin.', 'jetonomy' ); ?></dd>
+				</dl>
 			</div>
 
 		<?php elseif ( 'license' === $active_tab && defined( 'JETONOMY_PRO_VERSION' ) ) : ?>

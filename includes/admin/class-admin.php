@@ -26,7 +26,14 @@ use function Jetonomy\now;
 
 class Admin {
 
+	/** Jetonomy Pro's product page; the only place a Pro promo links off site. */
+	public const PRO_URL = 'https://store.wbcomdesigns.com/jetonomy-pro/';
+
+	/** User meta: the Pro promo ids this admin dismissed (array). Removed on uninstall with every jetonomy_ key. */
+	private const PROMO_DISMISS_META = 'jetonomy_dismissed_promos';
+
 	public function __construct() {
+		add_action( 'admin_post_jetonomy_dismiss_promo', array( __CLASS__, 'dismiss_pro_promo' ) );
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_page_access_denied', array( $this, 'explain_access_rules_refusal' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
@@ -288,6 +295,43 @@ class Admin {
 		include JETONOMY_DIR . 'includes/admin/views/setup-wizard.php';
 		exit;
 	}
+
+	/**
+	 * Whether a Pro promotion may show here: never with Pro active, never after the site owner turned
+	 * "Show Pro suggestions" off, and (for a dismissible card, $id) not once this admin dismissed it.
+	 *
+	 * @param string $id Promo id, or '' for a non-dismissible spot such as a locked tab.
+	 */
+	public static function show_pro_promo( string $id = '' ): bool {
+		if ( defined( 'JETONOMY_PRO_VERSION' ) || ! empty( get_option( 'jetonomy_settings', array() )['hide_pro_suggestions'] ) ) {
+			return false;
+		}
+		return '' === $id || ! in_array( $id, (array) get_user_meta( get_current_user_id(), self::PROMO_DISMISS_META, true ), true );
+	}
+
+	/** "See what Pro adds" (our own Free vs Pro screen) and a per-user Dismiss, for a promo card. */
+	public static function pro_promo_actions( string $id ): void {
+		printf(
+			'<p class="jt-pro-upsell__actions"><a class="button" href="%1$s">%2$s</a> <a class="jt-pro-upsell__dismiss" href="%3$s">%4$s</a></p>',
+			esc_url( admin_url( 'admin.php?page=jetonomy-settings&tab=free-vs-pro' ) ),
+			esc_html__( 'See what Pro adds', 'jetonomy' ),
+			esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=jetonomy_dismiss_promo&promo=' . rawurlencode( $id ) ), 'jetonomy_dismiss_promo' ) ),
+			esc_html__( 'Dismiss', 'jetonomy' )
+		);
+	}
+
+	/** admin-post handler: remember one dismissed promo for the current admin, then go back. */
+	public static function dismiss_pro_promo(): void {
+		check_admin_referer( 'jetonomy_dismiss_promo' );
+		$id = sanitize_key( wp_unslash( $_GET['promo'] ?? '' ) );
+		if ( '' !== $id ) {
+			$ids = (array) get_user_meta( get_current_user_id(), self::PROMO_DISMISS_META, true );
+			update_user_meta( get_current_user_id(), self::PROMO_DISMISS_META, array_values( array_unique( array_merge( array_filter( $ids ), array( $id ) ) ) ) );
+		}
+		wp_safe_redirect( wp_get_referer() ?: admin_url( 'admin.php?page=jetonomy' ) );
+		exit;
+	}
+
 
 	/**
 	 * The product name wp-admin shows in headings, banners and help text.
@@ -931,6 +975,10 @@ class Admin {
 			if ( current_user_can( 'manage_options' ) ) {
 				$clean['remove_data_on_uninstall'] = ! empty( $input['remove_data_on_uninstall'] );
 			}
+			// Rendered only while Pro is inactive, so only a form that carried the row may change it.
+			if ( ! empty( $input['pro_suggestions_field'] ) ) {
+				$clean['hide_pro_suggestions'] = empty( $input['show_pro_suggestions'] );
+			}
 		}
 
 		// ── Permissions tab ──
@@ -1475,12 +1523,10 @@ class Admin {
 		// blurred screenshot — the widget demonstrates what Pro's analytics
 		// does). Dismissible per user; cached 1h so it costs the dashboard
 		// nothing on repeat views.
-		if ( isset( $_GET['jetonomy_dismiss_pulse'] ) && check_admin_referer( 'jetonomy_dismiss_pulse' ) ) {
-			update_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', 1 );
-		}
-		$pulse = get_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', true )
-			? null
-			: $this->weekly_pulse();
+		// jetonomy_pulse_dismissed is the pre-2.0.8 dismiss of this same card; honoured so nobody sees it again.
+		$pulse = self::show_pro_promo( 'pulse' ) && ! get_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', true )
+			? $this->weekly_pulse()
+			: null;
 
 		include JETONOMY_DIR . 'includes/admin/views/dashboard.php';
 	}

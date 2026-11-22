@@ -310,8 +310,7 @@ $stat_cards = array(
 						</p>
 					<?php endif; ?>
 					<p><?php esc_html_e( 'Pro adds full history, engagement and moderation analytics, top contributors, and CSV export.', 'jetonomy' ); ?></p>
-					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
-					<a class="jt-pulse-dismiss" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'jetonomy_dismiss_pulse', '1' ), 'jetonomy_dismiss_pulse' ) ); ?>"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></a>
+					<?php \Jetonomy\Admin\Admin::pro_promo_actions( 'pulse' ); ?>
 				</div>
 			<?php endif; ?>
 
