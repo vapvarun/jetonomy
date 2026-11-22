@@ -3116,6 +3116,9 @@ button.jt-mobile-tab { background: none; border: 0; font: inherit; font-size: 0.
 .jt-mobile-tab-menu--wide { inset-inline: var(--jt-space-2); max-block-size: 60vh; overflow-y: auto; }
 .jt-mobile-tab-menu--wide .jt-more-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .jt-mobile-tab-menu__title { padding: var(--jt-space-2) var(--jt-space-4) var(--jt-space-1); font-size: var(--jt-text-xs); font-weight: 600; color: var(--jt-text-secondary); }
+.jt-mobile-tab-menu__search { display: block; padding: var(--jt-space-1) var(--jt-space-4) var(--jt-space-2); }
+.jt-mobile-tab-menu__search input { inline-size: 100%; min-block-size: max(var(--jt-tap), 44px); padding-inline: var(--jt-space-3); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius); box-sizing: border-box; }
+.jt-mobile-tab-menu .jt-more-item[hidden] { display: none; }
 .jt-mobile-tab-menu__note { margin: 0; padding: var(--jt-space-1) var(--jt-space-4) var(--jt-space-2); font-size: var(--jt-text-sm); color: var(--jt-text); white-space: normal; }
 
 /* ── Toast notification (standalone fallback) ── */

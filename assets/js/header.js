@@ -319,7 +319,7 @@
 				tab.removeAttribute('aria-controls');
 				return;
 			}
-			tab.setAttribute('aria-haspopup', 'menu');
+			tab.setAttribute('aria-haspopup', 'dialog' === document.getElementById(id).getAttribute('role') ? 'dialog' : 'menu');
 			tab.setAttribute('aria-expanded', 'false');
 			tab.setAttribute('aria-controls', id);
 		});
@@ -373,6 +373,21 @@
 			add.toggleAttribute('data-jt-direct', !!space);
 		}
 	}
+	// The "Start a topic in..." sheet past 8 spaces: filter the loaded rows by name as the member types.
+	document.addEventListener('input', function (e) {
+		var box = e.target && e.target.closest ? e.target.closest('[data-jt-sheet-filter]') : null;
+		if (!box) { return; }
+		var sheet = box.closest('.jt-mobile-tab-menu');
+		var q = box.value.trim().toLowerCase();
+		var shown = 0;
+		sheet.querySelectorAll('[data-jt-sheet-row]').forEach(function (row) {
+			var hit = !q || row.textContent.toLowerCase().indexOf(q) !== -1;
+			row.hidden = !hit;
+			if (hit) { shown++; }
+		});
+		var empty = sheet.querySelector('[data-jt-sheet-empty]');
+		if (empty) { empty.hidden = shown > 0; }
+	});
 	prepareProfileTab();
 	document.addEventListener('jetonomy:navigated', function () {
 		closeTabMenu(false);
@@ -403,10 +418,10 @@
 		if (!menu) { return; }
 		if ('Escape' === e.key) {
 			closeTabMenu(true);
-		} else if ('Tab' === e.key && e.shiftKey && document.activeElement === menu.querySelector('a')) {
+		} else if ('Tab' === e.key && e.shiftKey && document.activeElement === menu.querySelector('input, a')) {
 			// Shift+Tab from the first row goes back to the tab that opened it: close the sheet behind it.
 			closeTabMenu(false);
-		} else if (menu.contains(document.activeElement) && window.jetonomySmartDropdown && window.jetonomySmartDropdown.menuKeys) {
+		} else if (menu.contains(document.activeElement) && !('INPUT' === document.activeElement.tagName && ('Home' === e.key || 'End' === e.key)) && window.jetonomySmartDropdown && window.jetonomySmartDropdown.menuKeys) {
 			window.jetonomySmartDropdown.menuKeys(menu, e);
 		}
 	});

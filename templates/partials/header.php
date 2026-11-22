@@ -169,21 +169,24 @@ $jt_in_space = '' !== $jt_slug && in_array( $current_route, array( 'space', 'new
 
 // Spaces the member can start a topic in, most recently joined first. Rendered on every page (not only outside a space)
 // so the sheet still works after a client-side navigation out of a space. Bounded: one indexed query for the member's
-// space ids, then at most 30 of them primed in one query and checked from the request cache, keeping 8 for the sheet.
-// ponytail: a member whose 30 newest spaces are all closed to posting sees only "All my spaces"; widen the scan if that is ever real.
+// space ids, then batches of 30 primed in one query each and checked from the request cache, so archived or read-only
+// spaces at the top do not hide an older open one. Up to 30 rows; past 8 the sheet gets a filter box (header.js).
+// ponytail: stops after 300 memberships; a member in more than that still has "All my spaces" and the filter.
 $jt_postable = array();
 if ( $user_id ) {
-	$jt_ids = array_slice( \Jetonomy\Models\SpaceMember::spaces_for_user( $user_id ), 0, 30 );
-	\Jetonomy\Models\Space::prime( $jt_ids );
-	\Jetonomy\Models\SpaceMember::warm_viewer_roles( $user_id, $jt_ids );
-	foreach ( $jt_ids as $jt_sid ) {
-		$jt_sp = \Jetonomy\Models\Space::find( (int) $jt_sid );
-		if ( $jt_sp && true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $jt_sid )
-			&& \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $jt_sid ) ) {
-			$jt_postable[] = $jt_sp;
-			if ( count( $jt_postable ) >= 8 ) {
-				break;
+	foreach ( array_chunk( array_slice( \Jetonomy\Models\SpaceMember::spaces_for_user( $user_id ), 0, 300 ), 30 ) as $jt_ids ) {
+		\Jetonomy\Models\Space::prime( $jt_ids );
+		\Jetonomy\Models\SpaceMember::warm_viewer_roles( $user_id, $jt_ids );
+		foreach ( $jt_ids as $jt_sid ) {
+			$jt_sp = \Jetonomy\Models\Space::find( (int) $jt_sid );
+			if ( $jt_sp && true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $jt_sid )
+				&& \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $jt_sid ) ) {
+				$jt_postable[] = $jt_sp;
 			}
+		}
+		if ( count( $jt_postable ) >= 30 ) {
+			$jt_postable = array_slice( $jt_postable, 0, 30 );
+			break;
 		}
 	}
 }
@@ -308,14 +311,25 @@ $jt_mobile_tabs = (array) apply_filters( 'jetonomy_mobile_tabs', $jt_mobile_tabs
 			$jt_sheet_title = sprintf( __( 'Start a %s in...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) );
 			?>
 			<?php // "Start a topic in...", opened from New outside a space. With no space to post in it says so and links to the directory. ?>
-			<div id="jt-new-sheet" class="jt-mobile-tab-menu jt-mobile-tab-menu--wide" role="menu" aria-label="<?php echo esc_attr( $jt_sheet_title ); ?>" hidden>
+			<?php $jt_searchable = count( $jt_postable ) > 8; ?>
+			<?php // With a filter box the sheet is a dialog (a text field does not belong in a menu); otherwise a menu. ?>
+			<div id="jt-new-sheet" class="jt-mobile-tab-menu jt-mobile-tab-menu--wide" role="<?php echo $jt_searchable ? 'dialog' : 'menu'; ?>" aria-label="<?php echo esc_attr( $jt_sheet_title ); ?>" hidden>
 				<div class="jt-mobile-tab-menu__title" aria-hidden="true"><?php echo esc_html( $jt_sheet_title ); ?></div>
+				<?php if ( $jt_searchable ) : ?>
+					<?php /* translators: %s: the plural space label, lowercase (e.g. "spaces"). */ ?>
+					<?php $jt_find = sprintf( __( 'Find in your %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ); ?>
+					<label class="jt-mobile-tab-menu__search">
+						<span class="screen-reader-text"><?php echo esc_html( $jt_find ); ?></span>
+						<input type="search" data-jt-sheet-filter placeholder="<?php echo esc_attr( $jt_find ); ?>" autocomplete="off">
+					</label>
+					<p class="jt-mobile-tab-menu__note" data-jt-sheet-empty hidden><?php esc_html_e( 'No match.', 'jetonomy' ); ?></p>
+				<?php endif; ?>
 				<?php if ( $jt_postable ) : ?>
 					<?php foreach ( $jt_postable as $jt_sp ) : ?>
-						<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'new-post', $jt_sp->slug ) ); ?>"><?php jetonomy_echo_icon( 'layout-grid', 18 ); ?><span><?php echo esc_html( $jt_sp->title ); ?></span></a>
+						<a class="jt-more-item" <?php echo $jt_searchable ? '' : 'role="menuitem"'; ?> data-jt-sheet-row href="<?php echo esc_url( \Jetonomy\route_url( 'new-post', $jt_sp->slug ) ); ?>"><?php jetonomy_echo_icon( 'layout-grid', 18 ); ?><span><?php echo esc_html( $jt_sp->title ); ?></span></a>
 					<?php endforeach; ?>
 					<?php /* translators: %s: the plural space label, lowercase (e.g. "spaces", "groups"). */ ?>
-					<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'my-spaces' ) ); ?>"><?php jetonomy_echo_icon( 'users', 18 ); ?><span><?php echo esc_html( sprintf( __( 'All my %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></span></a>
+					<a class="jt-more-item" <?php echo $jt_searchable ? '' : 'role="menuitem"'; ?> href="<?php echo esc_url( \Jetonomy\route_url( 'my-spaces' ) ); ?>"><?php jetonomy_echo_icon( 'users', 18 ); ?><span><?php echo esc_html( sprintf( __( 'All my %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></span></a>
 				<?php else : ?>
 					<?php /* translators: 1: the plural space label, lowercase (e.g. "spaces"). 2: the topic label, singular, lowercase. */ ?>
 					<p class="jt-mobile-tab-menu__note"><?php echo esc_html( sprintf( __( 'Join one of the %1$s to start a %2$s.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></p>
