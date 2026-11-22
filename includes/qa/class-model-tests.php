@@ -661,11 +661,9 @@ class Model_Tests {
 
 		// IS1-IS2.
 		$clean = new \ReflectionMethod( \Jetonomy\Import\Importer::class, 'clean_slug' );
-		$clean->setAccessible( true );
 		$this->check( 'IS1: decomposed (NFD) accents fold to plain letters in an imported slug', 'naive-uber' === $clean->invoke( null, "nai\u{0308}ve u\u{0308}ber" ) );
 		if ( method_exists( \Jetonomy\Import\WPForo_Importer::class, 'board_category_slug' ) ) {
 			$board = new \ReflectionMethod( \Jetonomy\Import\WPForo_Importer::class, 'board_category_slug' );
-			$board->setAccessible( true );
 			$taken = array();
 			$a     = $board->invokeArgs( null, array( 'Café', 2, &$taken ) );
 			$b     = $board->invokeArgs( null, array( 'Cafe!', 3, &$taken ) );
@@ -3607,8 +3605,6 @@ class Model_Tests {
 		$def    = \Jetonomy\Admin\Ajax\Demo_Content::users()[0];
 		$create = new \ReflectionMethod( $seeder, 'create_users' );
 		$delete = new \ReflectionMethod( $seeder, 'delete_demo_users' );
-		$create->setAccessible( true );
-		$delete->setAccessible( true );
 
 		$real  = 0;
 		$post  = 0;

@@ -58,9 +58,10 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<td>
 						<?php
 						$jt_settings       = get_option( 'jetonomy_settings', array() );
-						$default_new_space = in_array( $jt_settings['default_space_type'] ?? 'forum', \Jetonomy\Models\Space::valid_types(), true )
-							? $jt_settings['default_space_type']
-							: 'forum';
+						$default_new_space = (string) ( $jt_settings['default_space_type'] ?? 'forum' );
+						if ( ! in_array( $default_new_space, \Jetonomy\Models\Space::valid_types(), true ) ) {
+							$default_new_space = 'forum';
+						}
 						?>
 						<select id="space-type">
 							<option value="forum" <?php selected( $default_new_space, 'forum' ); ?>><?php esc_html_e( 'Forum', 'jetonomy' ); ?></option>
