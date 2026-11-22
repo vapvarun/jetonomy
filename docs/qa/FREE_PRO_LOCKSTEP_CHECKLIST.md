@@ -16,6 +16,7 @@ sufficient. Always test with **both plugins active**.
 - [ ] Browser console open; auto-login via `?autologin=1`.
 - [ ] Run each surface at desktop AND 390px (mobile).
 - [ ] **After the version bump, re-run the upgrade checks.** Dev branches keep the last release's version headers, so Pro's upgrade routine (`Jetonomy_Pro::run_upgrade()`) never runs on them. Once Free and Pro carry the new version, on a site still stamped with the previous one: `wp jetonomy qa-actions` (UG1-UG12 drive the 2.0.7 job conversion) and `composer test` (`tests/pro/UpgradeJobsTest.php`, `tests/pro/ProQueueShimTest.php`), then load one wp-admin page and confirm `jetonomy_pro_db_version` moved to the new version.
+- [ ] **Translations at release.** Regenerate the .pot (`grunt makepot`), then merge it into every shipped .po with `msgmerge --update --backup=none languages/<domain>-<locale>.po languages/<domain>.pot` (Free and Pro) so no msgid is missing (2.0.8 QA found 75 Free and 90 Pro missing), translate, compile .mo and JSON (`grunt i18n`), then `php bin/check-script-translations.php --fix` and `php bin/check-script-translations.php ../jetonomy-pro --fix` (`wp i18n make-json` mangles names ending in `dmin.js`). The build fails while either check fails.
 
 ## Free surfaces (shared store)
 - [ ] **Vote** post up/down + reply up/down → score reconciles, button toggles, POST 200, no console error.
