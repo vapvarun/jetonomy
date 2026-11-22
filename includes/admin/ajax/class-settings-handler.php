@@ -77,6 +77,11 @@ class Settings_Handler {
 				'message' => __( 'You earned the "First Post" badge. Nice work.', 'jetonomy' ), // jt-terms-ok: the seeded badge's proper name.
 				'url'     => \Jetonomy\route_url( 'profile', 'me' ),
 			),
+			'announcement'           => array(
+				/* translators: %s: announcement title. Same wording Pro's Site announcements sends. */
+				'message' => sprintf( __( 'Announcement: %s', 'jetonomy' ), __( 'Community guidelines updated', 'jetonomy' ) ),
+				'url'     => \Jetonomy\base_url() . '/',
+			),
 			'vote_on_post'           => array(
 				/* translators: %s: singular topic label, lowercase. */
 				'message' => sprintf( __( 'Your %s received a new vote.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),

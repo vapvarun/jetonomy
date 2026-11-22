@@ -154,6 +154,11 @@ class Notifier {
 				'subject' => __( '[{site}] You earned a new badge', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nKeep contributing to unlock more.", 'jetonomy' ),
 			),
+			// Sent by Pro's Site announcements; {message} is "Announcement: <title>".
+			'announcement'           => array(
+				'subject' => __( '[{site}] {message}', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the community to read the full announcement.", 'jetonomy' ),
+			),
 			'vote_on_post'           => array(
 				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] Your %s received a vote', 'jetonomy' ), $topic ),
 				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to see the discussion.", 'jetonomy' ), $topic ),
