@@ -336,21 +336,29 @@
    ═══════════════════════════════════════════════════════════ */
 
 .jetonomy-stat-cards {
+	/* Six cards: one row only on wide screens, otherwise 3 x 2, 2 x 3, then one column. minmax(0, 1fr) (not 1fr,
+	   whose minimum is the longest word) keeps a long translated label from pushing the row past the screen. */
 	display: grid;
-	grid-template-columns: repeat(6, 1fr);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 16px;
 	margin: 20px 0;
 }
 
-@media (max-width: 1200px) {
+@media (min-width: 1440px) {
 	.jetonomy-stat-cards {
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(6, minmax(0, 1fr));
 	}
 }
 
 @media (max-width: 782px) {
 	.jetonomy-stat-cards {
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 600px) {
+	.jetonomy-stat-cards {
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -372,12 +380,12 @@
 }
 
 .jetonomy-stat-card--warning {
-	border-right: 4px solid var(--jt-admin-warn);
+	border-inline-start: 4px solid var(--jt-admin-warn);
 }
 
 /* Shared card warning state — used on dashboard demo notice, etc. */
 .jt-card--warning {
-	border-right: 4px solid var(--jt-admin-warn);
+	border-inline-start: 4px solid var(--jt-admin-warn);
 }
 
 /* Destructive button */
@@ -421,7 +429,13 @@
 	color: var(--jt-admin-text-wp);
 }
 
+.jetonomy-stat-card__content {
+	min-width: 0;
+}
+
 .jetonomy-stat-card__label {
+	overflow-wrap: break-word;
+	hyphens: auto;
 	font-size: 12px;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
@@ -432,6 +446,8 @@
 /* "Review flags →" link inside the Pending Flags stat card (1.5.0). */
 .jetonomy-stat-card__cta {
 	display: inline-block;
+	max-width: 100%;
+	overflow-wrap: break-word;
 	margin-top: 6px;
 	font-size: 12px;
 	font-weight: 600;
@@ -2907,10 +2923,6 @@ tr.jetonomy-moderated td {
    ═══════════════════════════════════════════════════════════ */
 
 @media (max-width: 782px) {
-	.jetonomy-stat-cards {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
 	.jetonomy-import-sources {
 		grid-template-columns: 1fr;
 	}
@@ -2953,9 +2965,11 @@ tr.jetonomy-moderated td {
 		padding: 8px 10px;
 		font-size: 13px;
 		box-sizing: border-box;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
+		/* A long translated label (German "Berechtigungen") wraps, hyphenated where the language allows, instead
+		   of being cut off: text-overflow cannot show an ellipsis on a flex row, so overflow: hidden only clipped it. */
+		min-width: 0;
+		overflow-wrap: anywhere;
+		hyphens: auto;
 	}
 
 	.jt-snav-link:not(:has(.dashicons))::before {
@@ -2984,10 +2998,6 @@ tr.jetonomy-moderated td {
 }
 
 @media (max-width: 600px) {
-	.jetonomy-stat-cards {
-		grid-template-columns: 1fr;
-	}
-
 	.jetonomy-modal__content {
 		width: 95%;
 		padding: 16px;
