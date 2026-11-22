@@ -14,10 +14,10 @@ by a listener 2.0.8 keeps for that purpose (pushes and field re-index chunks). T
 | `jetonomy_reconcile_rosters` (hourly) | `jetonomy_due_jobs`, hourly only while membership-synced rows exist |
 | Pro class `Jetonomy_Pro\Queue` (deprecated, removed in 2.1.0) | `\Jetonomy\Queue`. The old class still works and logs a deprecation notice. `batch()` has no replacement: queue one cursor job (object id, last id) that queues its next pass while rows remain. `recurring()` is now `recurring( $hook, $interval, $first_delay )`, called from boot; the 2.0.7 form with `$args`, `$group` and `$first_run` is accepted by the old class only. |
 | Pro `jetonomy_pro_send_push`, `jetonomy_pro_send_expo_push` (one job per device) | `jetonomy_pro_send_push_batch` (one cursor job per push). 2.0.8 still runs copies queued before the update, so no push is lost; the listeners go in 2.0.9. |
-| Pro `jetonomy_pro_dispatch_webhook` (URL and secret in args) | `jetonomy_pro_deliver_webhook`. The upgrade re-queues waiting deliveries, then deletes every row of the old hook (any status, with its logs) so no URL or secret stays in the job tables. |
+| Pro `jetonomy_pro_dispatch_webhook` (URL and secret in args) | `jetonomy_pro_deliver_webhook`. The upgrade job (`jetonomy_pro_upgrade_jobs`, a background job) re-queues waiting deliveries, then deletes every row of the old hook (any status, with its logs) so no URL or secret stays in the job tables. |
 | Pro `jetonomy_pro_digest_batch` (offset chunks) | `jetonomy_pro_send_digests` (cursor job) |
 | Pro `jetonomy_pro_badges_batch` (offset chunks) | `jetonomy_pro_evaluate_badges_after` (cursor job) |
-| Pro `jetonomy_pro_backfill_searchable_fields` | `jetonomy_pro_reindex_field` (cursor job per field). 2.0.8 still runs copies queued before the update; the listener goes in 2.0.9. |
+| Pro `jetonomy_pro_backfill_searchable_fields` | `jetonomy_pro_reindex_field` (cursor job per field). The listener stays until 2.1.0 to run copies queued before the update and those the deprecated `queue_reindex( array )` form queues. |
 | Pro AI batch review every 5 minutes | `jetonomy_pro_ai_batch_review` is now armed by a new topic or reply |
 
 None of the removed hooks was a documented extension point. If your code called `do_action()` on one of
@@ -30,16 +30,22 @@ a deprecation notice until 2.1.0.
 
 | Method | 2.0.7 | 2.0.8 |
 |---|---|---|
-| `\Jetonomy\Queue::is_queued( $hook, $args, $include_running )` | Exact arguments, empty by default; third parameter for pending only | `is_queued( $hook, ?array $args = null )`: any arguments unless given, pending or running. Pending only: `is_pending()`. |
-| `\Jetonomy\Queue::next( $hook )` | `int` or `false` | `int`, `0` when nothing is pending. |
+| `\Jetonomy\Queue::is_queued( $hook, $args, $include_running )` | Exact arguments, empty by default; third parameter for pending only | `is_queued( $hook, ?array $args = null )`: any arguments unless given, pending or running. A call with `false` as the third argument still asks the pending-only question and logs a deprecation notice; use `is_pending()`. A call with only the hook now matches copies with any arguments, where 2.0.7 matched argument-less copies only. |
+| `\Jetonomy\Queue::next( $hook )` | `int` or `false`, argument-less copies only | `int`, `0` when nothing is pending (or the soonest copy is async or running). Matches copies with any arguments. |
+| `\Jetonomy\Queue::at( $timestamp, $hook, $args )` | Always inserted | New fourth parameter `$unique`: insert only when no pending or running copy with these arguments exists. |
+| Pro `Extension::upgrade_jobs( $from )` | New in 2.0.8 development builds, returned `void` | Returns `bool`: true while old copies remain to convert. Pro's upgrade job calls it again until it returns false. |
+| Pro `Custom_Badges\Extension::evaluate_badges_batch( array $batch )` | One offset chunk | `evaluate_badges_batch( $after )`: a cursor job from the last member id. |
+| Pro `Email_Digest\Extension::process_digest_batch( array $batch )` | One offset chunk | `process_digest_batch( $frequency, $after )`: a cursor job per frequency from the last member id. |
 | `\Jetonomy\Queue::cancel( $hook )` | Every copy | `cancel( $hook, array $args = array() )`: every copy, or only the copy with these arguments. |
 | Pro `Webhooks\Extension::do_dispatch( $id, $url, $secret, $payload, $event )` | Sent one delivery | Deprecated shim, removed in 2.1.0. Queued deliveries call `deliver( $id, $event, $payload )`. |
 | Pro `Custom_Fields\Extension::run_searchable_backfill( $post_ids )` | Re-indexed topics | Deprecated shim, removed in 2.1.0. Use `queue_reindex( $field_id )`. |
-| Pro `Custom_Fields\Extension::queue_reindex( array $post_ids )` | Queued 500-topic chunks | Takes a field id and queues one cursor job. An array still works (deprecated): the topics are re-indexed in that request. |
+| Pro `Custom_Fields\Extension::queue_reindex( array $post_ids )` | Queued 500-topic chunks | Takes a field id and queues one cursor job. An array still works (deprecated): the topics are queued in 500-topic chunks, as before. |
 | Pro `Attachments\Extension::gc()` | No-op listener for the retired daily GC | Removed. The GC schedule is cancelled once by the upgrade. |
+| `Space_Purge::clear_scheduled()`, `Recount_Backfill::clear_scheduled()` | Cancelled their job on deactivation | Removed. Deactivation cancels through `Queue::cancel_on_deactivate()`, which keeps an in-flight space purge pending. |
 
 New on `\Jetonomy\Queue`: `when_ready()`, `is_pending()`, `pending_args()` (oldest 100), `ensure_recurring()`, `delete_rows()`,
-`is_scheduling_request()` and `prune_history()`.
+`is_scheduling_request()`, `prune_history()`, `now()`, `cancel_on_deactivate()`, the `TIME_BUDGET` constant (10 seconds per prune or delete call)
+and the `KEEP_ON_DEACTIVATE` list.
 
 ## Renamed
 
@@ -62,13 +68,20 @@ Code examples for each are in [Background Jobs](./30-background-jobs.md).
 ## Behaviour changes worth knowing
 
 - A scheduled topic that fails to publish is retried 3 times (1, 2 and 4 minutes apart), then one line is
-  written to the PHP error log and the topic waits for the next scheduled publish.
+  written to the PHP error log and one more run is queued at the next scheduled publish or a day later,
+  whichever comes first. A topic that never publishes costs one try and one log line a day.
 - Recurring jobs are armed on cron, wp-admin and WP-CLI requests only, never on a visitor's page view.
-- Jetonomy deletes its own completed and cancelled jobs after 7 days and its own failed jobs after 90 days, up to 10,000 rows
-  a day (50 runs of 200); a larger backlog is cleared over the following days. Other plugins' jobs and Action
-  Scheduler's site-wide retention are not touched.
-- A web push run sends for about 15 seconds, then queues itself from the last member it sent
-  (filter `jetonomy_pro_push_send_seconds`).
+- Deactivating Free or Pro leaves work already promised queued: a space purge in progress, scheduled topics,
+  subscriber notifications, a site announcement and the Pro upgrade conversion stay queued through an update
+  (`Queue::KEEP_ON_DEACTIVATE`); recurring sweeps, digests and sends are still cancelled and re-armed on activation.
+- Jetonomy deletes its own completed and cancelled jobs 7 days after they finished and its own failed jobs after 90
+  days, for at most 10 seconds and 10,000 rows per status a day (50 runs of 200); a larger backlog is cleared over
+  the following days. Other plugins' jobs and Action Scheduler's site-wide retention are not touched.
+- The Pro upgrade runs in one request at a time under core's upgrader lock: it updates the extension tables and
+  stores the new version at once, and the job conversion runs as a background job, never on a visitor's page view.
+- A web push run sends for about 15 seconds, then queues itself from the last member it fully sent
+  (filter `jetonomy_pro_push_send_seconds`). Each push and webhook request waits at most 5 seconds
+  (`Jetonomy_Pro\Extension::REMOTE_TIMEOUT`, was 15).
 
 ## Failed jobs from retired hooks
 

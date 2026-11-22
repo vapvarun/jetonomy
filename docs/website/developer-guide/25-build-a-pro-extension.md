@@ -53,8 +53,10 @@ class My_Extension extends \Jetonomy_Pro\Extension {
 	/** Called on the version-change migration guard — dbDelta your tables here. Idempotent. */
 	public function activate(): void {}
 
-	/** Called on Jetonomy Pro deactivation — clear cron, etc. */
-	public function deactivate(): void {}
+	/** Called on Jetonomy Pro deactivation. The base class cancels jobs() via Queue::cancel_on_deactivate(). */
+	public function deactivate(): void {
+		parent::deactivate();
+	}
 }
 ```
 
@@ -74,7 +76,7 @@ Enable/disable state lives in the `jetonomy_pro_extensions` option and is toggle
 1. **Never reuse a bundled id** (`private-messaging`, `polls`, `reactions`, …) — duplicate ids are ignored, first registration wins.
 2. **Prefix everything**: options and user meta `acme_kudos_*`, tables `{$wpdb->prefix}acme_kudos_*`, cron hooks `acme_kudos_*`. Do not use the `jetonomy_pro_` prefixes — those namespaces belong to bundled modules.
 3. **REST permission callbacks**: use `$this->rest_auth_mutation( $caps )` from the base class for mutation routes — it resolves free's `REST_Auth` lazily and fails closed (never reference `\Jetonomy\API\REST_Auth` directly at registration time).
-4. **Background jobs** go through `Jetonomy_Pro\Queue` (`async()` / `recurring()` / `cancel()`) — Action-Scheduler-first with WP-Cron fallback; cancel your hooks in `deactivate()`.
+4. **Background jobs** go through Free's `\Jetonomy\Queue` (`async()`, `recurring()` from `boot()`, `cancel()`), which uses Action Scheduler and falls back to WP-Cron only for one-off jobs queued before Action Scheduler is ready. List your hooks in `jobs()` so switching the extension off cancels them. `Jetonomy_Pro\Queue` is deprecated since 2.0.8 and goes in 2.1.0. See [Background jobs](30-background-jobs.md).
 5. **Licensing is yours**: the customer's Jetonomy Pro license never disables your extension. If yours is paid, check your own license at the top of `boot()` and return early.
 6. **Frontend surfaces** must follow the Frontend Interactivity Standard (`docs/standards/frontend-interactivity.md` in the plugin repo) (declarative store actions, `restFetch`, re-init on `jetonomy:navigated`) and use the [`--jt-*` design tokens](16-theming-and-tokens.md).
 

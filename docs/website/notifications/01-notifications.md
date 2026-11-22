@@ -93,6 +93,12 @@ Deleting is permanent for that member's own inbox. It does not affect anyone els
 
 > **Note:** Per-notification delete and the bulk-delete toolbar were added in 1.4.3.
 
+## Notifications From a Member You Blocked
+
+When you block a member, anything they do that would notify you stays out of your way everywhere at once: it is not shown in your notification bell or on the notifications page, it does not count toward your unread badge, and no email or push notification is sent for it.
+
+Jetonomy still keeps the record. If you unblock the member later, their past notifications appear in your list again, without sending you any emails or pushes for them.
+
 ## The Verification Reminder Email
 
 When a community requires email verification at signup (**Jetonomy → Settings → Email**), some members register but never click the verification link in their welcome email. Jetonomy sends those members a single follow-up reminder email nudging them to finish verifying, so they do not get stuck unable to participate.

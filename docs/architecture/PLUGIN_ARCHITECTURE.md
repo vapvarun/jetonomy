@@ -796,16 +796,16 @@ Registered at:
 
 ## 19. Cron Jobs
 
-All scheduled via `Cron::schedule()` on activation.
+Every job goes through `\Jetonomy\Queue` (Action Scheduler). The full register, with arguments and costs, is section 9 of `docs/standards/background-jobs.md`; the main ones:
 
 | Hook | Schedule | Handler | Purpose |
 |------|----------|---------|---------|
-| `jetonomy_trust_evaluation` | twicedaily | `Cron::evaluate_trust_levels()` | Runs `Trust_Evaluator` for all users |
-| `jetonomy_cleanup_expired` | hourly | `Cron::cleanup_expired_restrictions()` | Removes expired bans/silences |
-| `jetonomy_prune_activity` | weekly | `Cron::prune_activity_log()` | Keeps activity log lean |
-| `jetonomy_cleanup_notifications` | weekly | `Cron::cleanup_old_notifications()` | Deletes old read notifications |
-
-Custom schedule `'weekly'` registered via `cron_schedules` filter in `Cron::add_schedules()`.
+| `jetonomy_trust_evaluation` | every 12 hours | `Cron::evaluate_trust_levels()` | Trust sweep (cursor job `jetonomy_trust_evaluation_batch` for the rest) |
+| `jetonomy_due_jobs` | single, armed for the earliest due moment | `Cron::run_due_jobs()` | Expired restrictions, verification reminders, roster backstop (replaced the hourly `jetonomy_cleanup_expired`, `jetonomy_verification_reminder`, `jetonomy_reconcile_rosters` in 2.0.8) |
+| `jetonomy_publish_scheduled` | single, armed for the earliest scheduled topic | `Cron::publish_scheduled_posts()` | Publishes scheduled topics |
+| `jetonomy_prune_activity` | daily | `Cron::prune_activity_log()` | Activity-log prune, then `Queue::prune_history()` |
+| `jetonomy_cleanup_media` | daily | `Media_Library::run_scheduled_cleanup()` | Abandoned composer uploads |
+| `jetonomy_cleanup_notifications` | weekly | `Cron::cleanup_old_notifications()` | Marks notifications older than 30 days read |
 
 ---
 
