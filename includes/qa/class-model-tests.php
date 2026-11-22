@@ -75,9 +75,9 @@ class Model_Tests {
 		$admin_id       = $this->qa_admin;
 
 		// Find a test space for membership checks.
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+		$space = $wpdb->get_row( "SELECT * FROM {$spaces_table} WHERE status = 'active' LIMIT 1" );
 
 		// ── Permission_Engine ─────────────────────────────────────────────────
 		\WP_CLI::log( '  Permission_Engine' );
@@ -210,8 +210,8 @@ class Model_Tests {
 		$this->check( 'TA11: find_by_slug returns the same row', $found_tag && (int) $found_tag->id === $tag_id );
 
 		// Cleanup tag directly.
-		$tags_t = table( 'tags' );
-		$wpdb->delete( $tags_t, array( 'id' => $tag_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$tags_tbl = table( 'tags' );
+		$wpdb->delete( $tags_tbl, array( 'id' => $tag_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// ── Notification ──────────────────────────────────────────────────────
 		\WP_CLI::log( '  Notification' );
@@ -720,17 +720,17 @@ class Model_Tests {
 	private function check_follow_visibility(): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
-		$posts_t  = table( 'posts' );
-		$space    = static function ( string $visibility ) use ( $wpdb, $spaces_t ): int {
-			$wpdb->insert( $spaces_t, array( 'title' => 'QA follow ' . $visibility, 'slug' => 'qa-follow-' . wp_generate_password( 8, false, false ), 'visibility' => $visibility, 'status' => 'active', 'type' => 'forum', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$spaces_table = table( 'spaces' );
+		$posts_tbl  = table( 'posts' );
+		$space    = static function ( string $visibility ) use ( $wpdb, $spaces_table ): int {
+			$wpdb->insert( $spaces_table, array( 'title' => 'QA follow ' . $visibility, 'slug' => 'qa-follow-' . wp_generate_password( 8, false, false ), 'visibility' => $visibility, 'status' => 'active', 'type' => 'forum', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			return (int) $wpdb->insert_id;
 		};
 		$private = $space( 'private' );
 		$public  = $space( 'public' );
 		$ruled   = $space( 'private' );
 		$rule_id = $ruled > 0 ? AccessRule::create( array( 'space_id' => $ruled, 'rule_type' => 'logged_in', 'rule_value' => '1', 'grants' => 'read' ) ) : 0;
-		$wpdb->insert( $posts_t, array( 'space_id' => $public, 'author_id' => $this->qa_admin, 'title' => 'QA followed topic', 'slug' => 'qa-followed-' . wp_generate_password( 8, false, false ), 'content' => 'probe', 'status' => 'trash', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->insert( $posts_tbl, array( 'space_id' => $public, 'author_id' => $this->qa_admin, 'title' => 'QA followed topic', 'slug' => 'qa-followed-' . wp_generate_password( 8, false, false ), 'content' => 'probe', 'status' => 'trash', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$topic  = (int) $wpdb->insert_id;
 		$member = wp_insert_user( array( 'user_login' => 'jt_qa_fl_' . uniqid(), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
 		$member = is_wp_error( $member ) ? 0 : (int) $member;
@@ -767,11 +767,11 @@ class Model_Tests {
 		$wpdb->delete( table( 'restrictions' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( table( 'space_members' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( table( 'subscriptions' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->delete( $posts_t, array( 'id' => $topic ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $posts_tbl, array( 'id' => $topic ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( table( 'access_rules' ), array( 'space_id' => $ruled ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		AccessRule::reset_memo();
 		foreach ( array( $private, $public, $ruled ) as $id ) {
-			$wpdb->delete( $spaces_t, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $spaces_table, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 		if ( $member > 0 ) {
 			wp_delete_user( $member );
@@ -808,9 +808,9 @@ class Model_Tests {
 	private function check_split_leaves_a_trace(): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_table} WHERE status = 'active' LIMIT 1" );
 
 		if ( $space_id <= 0 ) {
 			$this->skip( 'SP1: a split leaves a trace in the source thread', 'no active space' );
@@ -843,9 +843,9 @@ class Model_Tests {
 
 		$new_post_id = (int) Reply::split_to_topic( $reply_id, 'QA split target' );
 
-		$replies_t = table( 'replies' );
+		$replies_tbl = table( 'replies' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, status, content FROM {$replies_t} WHERE post_id = %d", $post_id ) );
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, status, content FROM {$replies_tbl} WHERE post_id = %d", $post_id ) );
 
 		$trace  = false;
 		$moved  = false;
@@ -886,11 +886,11 @@ class Model_Tests {
 	private function check_subspace_listing(): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		$author   = $this->qa_admin;
-		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_t, $author ): int {
+		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_table, $author ): int {
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-				$spaces_t,
+				$spaces_table,
 				array(
 					'category_id' => 0,
 					'parent_id'   => $parent,
@@ -929,7 +929,7 @@ class Model_Tests {
 		);
 
 		foreach ( array( $hidden, $open, $parent ) as $id ) {
-			$wpdb->delete( $spaces_t, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $spaces_table, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 	}
 
@@ -1023,9 +1023,9 @@ class Model_Tests {
 		// to members AND to the moderation queue) or, in strict mode, threw the
 		// row away. Checking the value against the column is the only test that
 		// could have caught it.
-		$replies_t = table( 'replies' );
+		$replies_tbl = table( 'replies' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$column = (array) $wpdb->get_row( "SHOW COLUMNS FROM {$replies_t} LIKE 'status'", ARRAY_A );
+		$column = (array) $wpdb->get_row( "SHOW COLUMNS FROM {$replies_tbl} LIKE 'status'", ARRAY_A );
 		$allowed = array();
 		if ( ! empty( $column['Type'] ) && preg_match_all( "/'([^']+)'/", (string) $column['Type'], $m ) ) {
 			$allowed = $m[1];
@@ -1066,8 +1066,8 @@ class Model_Tests {
 	private function check_scheduled_contract(): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
-		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} WHERE status = 'active' LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$spaces_table = table( 'spaces' );
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_table} WHERE status = 'active' LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		if ( $space_id <= 0 ) {
 			$this->skip( 'SC-A1: approving a scheduled draft', 'no active space' );
 			return;
@@ -1091,8 +1091,8 @@ class Model_Tests {
 			return;
 		}
 
-		$posts_t = table( 'posts' );
-		$wpdb->update( $posts_t, array( 'published_at' => $future ), array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$posts_tbl = table( 'posts' );
+		$wpdb->update( $posts_tbl, array( 'published_at' => $future ), array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		$fired = array();
 		$probe = static function ( $id ) use ( &$fired ) {
@@ -1131,10 +1131,10 @@ class Model_Tests {
 			)
 		);
 		$overdue_id = is_wp_error( $overdue_id ) ? 0 : (int) $overdue_id;
-		$wpdb->update( $posts_t, array( 'published_at' => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ) ), array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->update( $posts_tbl, array( 'published_at' => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ) ), array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$queued = array_map( 'intval', (array) $wpdb->get_col( "SELECT id FROM {$posts_t} WHERE status = 'draft' AND published_at IS NOT NULL" ) );
+		$queued = array_map( 'intval', (array) $wpdb->get_col( "SELECT id FROM {$posts_tbl} WHERE status = 'draft' AND published_at IS NOT NULL" ) );
 
 		$this->check(
 			'SC-A3: an overdue queued post stays in the Scheduled listing',
@@ -1239,8 +1239,8 @@ class Model_Tests {
 		// store a value. The admin JS must not coerce '' to 'members', which would turn an
 		// open community into members-only whenever the owner touched any other field on
 		// that tab.
-		$spaces_t = table( 'spaces' );
-		$space_id = (int) $this->db_insert_probe_space( $spaces_t );
+		$spaces_table = table( 'spaces' );
+		$space_id = (int) $this->db_insert_probe_space( $spaces_table );
 		if ( $space_id > 0 ) {
 			Space::update(
 				$space_id,
@@ -1253,7 +1253,7 @@ class Model_Tests {
 			);
 
 			global $wpdb;
-			$wpdb->delete( $spaces_t, array( 'id' => $space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $spaces_table, array( 'id' => $space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		} else {
 			$this->skip( 'SV3: empty post restriction unsets the key', 'probe space insert failed' );
 		}
@@ -1286,14 +1286,14 @@ class Model_Tests {
 	/**
 	 * Insert a throwaway active space for a settings probe.
 	 *
-	 * @param string $spaces_t Prefixed spaces table.
+	 * @param string $spaces_table Prefixed spaces table.
 	 * @return int Row id, or 0.
 	 */
-	private function db_insert_probe_space( string $spaces_t ): int {
+	private function db_insert_probe_space( string $spaces_table ): int {
 		global $wpdb;
 
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$spaces_t,
+			$spaces_table,
 			array(
 				'category_id' => 0,
 				'parent_id'   => 0,
@@ -1348,12 +1348,12 @@ class Model_Tests {
 		$this->check( 'SR2: the notice is never shown to visitors', empty( $leaked ), 'leaked from: ' . implode( ', ', $leaked ) );
 
 		// SR3/SR4: a slug and its numeric id must resolve identically.
-		$spaces_t = $wpdb->prefix . 'jt_spaces';
-		$cats_t   = $wpdb->prefix . 'jt_categories';
+		$spaces_table = $wpdb->prefix . 'jt_spaces';
+		$cats_tbl   = $wpdb->prefix . 'jt_categories';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$space = $wpdb->get_row( "SELECT id, slug FROM {$spaces_t} ORDER BY id ASC LIMIT 1", ARRAY_A );
+		$space = $wpdb->get_row( "SELECT id, slug FROM {$spaces_table} ORDER BY id ASC LIMIT 1", ARRAY_A );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$cat = $wpdb->get_row( "SELECT id, slug FROM {$cats_t} ORDER BY id ASC LIMIT 1", ARRAY_A );
+		$cat = $wpdb->get_row( "SELECT id, slug FROM {$cats_tbl} ORDER BY id ASC LIMIT 1", ARRAY_A );
 
 		if ( is_array( $space ) && ! empty( $space['slug'] ) ) {
 			$by_slug = do_shortcode( '[jetonomy_space_members space_id="' . $space['slug'] . '"]' );
@@ -1387,9 +1387,9 @@ class Model_Tests {
 	private function check_delete_contract( int $admin_id ): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" );
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_table} ORDER BY id ASC LIMIT 1" );
 		if ( ! $space_id ) {
 			// Skip rather than fail, matching how the REST phase handles an
 			// unseeded site. A missing fixture is not a broken delete contract,
@@ -1532,8 +1532,8 @@ class Model_Tests {
 			require_once ABSPATH . 'wp-admin/includes/user.php';
 		}
 
-		$spaces_t  = table( 'spaces' );
-		$members_t = table( 'space_members' );
+		$spaces_table  = table( 'spaces' );
+		$members_tbl = table( 'space_members' );
 		$suffix    = (string) time();
 
 		$owner  = wp_insert_user(
@@ -1580,7 +1580,7 @@ class Model_Tests {
 		// B: a second admin remains -> nothing is stranded, leave it running.
 		$shared = $make_space( 'qa-transfer-shared-' . $suffix, (int) $owner );
 		$wpdb->insert(
-			$members_t,
+			$members_tbl,
 			array(
 				'space_id'  => $shared,
 				'user_id'   => (int) $co_admin,
@@ -1605,9 +1605,9 @@ class Model_Tests {
 
 		remove_action( 'jetonomy_space_transferred', $spy, 10 );
 
-		$row = static function ( int $id ) use ( $wpdb, $spaces_t ) {
+		$row = static function ( int $id ) use ( $wpdb, $spaces_table ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-			return $wpdb->get_row( $wpdb->prepare( "SELECT author_id, status FROM {$spaces_t} WHERE id = %d", $id ) );
+			return $wpdb->get_row( $wpdb->prepare( "SELECT author_id, status FROM {$spaces_table} WHERE id = %d", $id ) );
 		};
 
 		$a = $row( $sole );
@@ -1617,7 +1617,7 @@ class Model_Tests {
 		$this->check( 'ST2: stranded space is parked', $a && 'archived' === $a->status, $a->status ?? 'missing' );
 		$this->check(
 			'ST3: successor holds an admin row (author_id alone is unmanageable)',
-			$a && (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members_t} WHERE space_id = %d AND user_id = %d AND role = 'admin'", $sole, (int) $a->author_id ) ) > 0 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$a && (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members_tbl} WHERE space_id = %d AND user_id = %d AND role = 'admin'", $sole, (int) $a->author_id ) ) > 0 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		);
 
 		// The guard assertion.
@@ -2622,15 +2622,15 @@ class Model_Tests {
 		);
 
 		[ $avatar_id, $avatar_file ] = $mk_used( 'QA media as avatar' );
-		$profiles                    = \Jetonomy\table( 'user_profiles' );
-		$prev_avatar                 = $wpdb->get_var( "SELECT avatar_url FROM {$profiles} WHERE user_id = 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles} SET avatar_url = %s WHERE user_id = 1", content_url( '/uploads/' . $avatar_file ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$profiles_tbl                = \Jetonomy\table( 'user_profiles' );
+		$prev_avatar                 = $wpdb->get_var( "SELECT avatar_url FROM {$profiles_tbl} WHERE user_id = 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles_tbl} SET avatar_url = %s WHERE user_id = 1", content_url( '/uploads/' . $avatar_file ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		[ $cover_id, $cover_file ] = $mk_used( 'QA media as space cover' );
-		$spaces_t                  = \Jetonomy\table( 'spaces' );
-		$cover_space               = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$prev_cover                = $wpdb->get_var( $wpdb->prepare( "SELECT cover_image FROM {$spaces_t} WHERE id = %d", $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_t} SET cover_image = %s WHERE id = %d", content_url( '/uploads/' . $cover_file ), $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$spaces_table                  = \Jetonomy\table( 'spaces' );
+		$cover_space               = (int) $wpdb->get_var( "SELECT id FROM {$spaces_table} ORDER BY id ASC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$prev_cover                = $wpdb->get_var( $wpdb->prepare( "SELECT cover_image FROM {$spaces_table} WHERE id = %d", $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_table} SET cover_image = %s WHERE id = %d", content_url( '/uploads/' . $cover_file ), $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$first = \Jetonomy\Media_Library::cleanup_abandoned_uploads();
 		$this->check(
@@ -2661,8 +2661,8 @@ class Model_Tests {
 
 		// Restore the rows the in-use fixtures borrowed.
 		Reply::delete( $reply_id );
-		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles} SET avatar_url = %s WHERE user_id = 1", $prev_avatar ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_t} SET cover_image = %s WHERE id = %d", $prev_cover, $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles_tbl} SET avatar_url = %s WHERE user_id = 1", $prev_avatar ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_table} SET cover_image = %s WHERE id = %d", $prev_cover, $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		foreach ( $used as $id ) {
 			if ( get_post( $id ) ) {
@@ -3424,9 +3424,9 @@ class Model_Tests {
 		// A gate documented as "zero FAIL lines" that fails for no defect teaches
 		// people to ignore red, which is what let the 2.0.0 migration blocker
 		// through in the first place.
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$spaces_t,
+			$spaces_table,
 			array(
 				'category_id' => 0,
 				'parent_id'   => 0,
@@ -3471,7 +3471,7 @@ class Model_Tests {
 			'a different source or type must not resolve to our row'
 		);
 
-		$wpdb->delete( $spaces_t, array( 'id' => $probe_space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $spaces_table, array( 'id' => $probe_space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->delete( $table, array( 'source' => $source ) );
@@ -3662,13 +3662,13 @@ class Model_Tests {
 	private function test_recount_backfill(): void {
 		global $wpdb;
 
-		$posts_t   = \Jetonomy\table( 'posts' );
-		$replies_t = \Jetonomy\table( 'replies' );
+		$posts_tbl   = \Jetonomy\table( 'posts' );
+		$replies_tbl = \Jetonomy\table( 'replies' );
 		$suffix    = wp_generate_password( 6, false, false );
 
-		$mk_post = function ( string $title ) use ( $wpdb, $posts_t ) {
+		$mk_post = function ( string $title ) use ( $wpdb, $posts_tbl ) {
 			$wpdb->insert(
-				$posts_t,
+				$posts_tbl,
 				array(
 					'space_id'     => 1,
 					'author_id'    => $this->qa_admin,
@@ -3691,7 +3691,7 @@ class Model_Tests {
 		// One published reply each, so the truthful count is 1 apiece.
 		foreach ( array( $low, $high ) as $pid ) {
 			$wpdb->insert(
-				$replies_t,
+				$replies_tbl,
 				array(
 					'post_id'    => $pid,
 					'author_id'  => $this->qa_admin,
@@ -3703,9 +3703,9 @@ class Model_Tests {
 		}
 
 		// Drift both, the way an upgrading site carries it.
-		$wpdb->query( $wpdb->prepare( "UPDATE {$posts_t} SET reply_count = 9 WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$posts_tbl} SET reply_count = 9 WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		$stored = static fn( int $id ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT reply_count FROM {$posts_t} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$stored = static fn( int $id ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT reply_count FROM {$posts_tbl} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		// A slice that starts exactly at $low must include $low.
 		\Jetonomy\Recount::run( 'posts', $low, $low + 1 );
@@ -3741,8 +3741,8 @@ class Model_Tests {
 			update_option( 'jetonomy_recount_backfill', $saved, false );
 		}
 
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$replies_t} WHERE post_id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$posts_t} WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$replies_tbl} WHERE post_id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$posts_tbl} WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 }

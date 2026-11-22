@@ -190,12 +190,12 @@ class REST_Tests {
 		// space blindly made those tests fail with a correct 403 whenever the
 		// site's first space happened to be private. Fall back to any active
 		// space if the install has no public+open one.
-		$spaces_t = table( 'spaces' );
+		$spaces_tbl = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' AND visibility = 'public' AND join_policy = 'open' ORDER BY id LIMIT 1" );
+		$space = $wpdb->get_row( "SELECT * FROM {$spaces_tbl} WHERE status = 'active' AND visibility = 'public' AND join_policy = 'open' ORDER BY id LIMIT 1" );
 		if ( ! $space ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+			$space = $wpdb->get_row( "SELECT * FROM {$spaces_tbl} WHERE status = 'active' LIMIT 1" );
 		}
 		if ( ! $space ) {
 			return; // run() will detect this and bail.
@@ -207,7 +207,7 @@ class REST_Tests {
 		$other = $wpdb->get_row(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$spaces_t} WHERE status = 'active' AND id != %d LIMIT 1",
+				"SELECT * FROM {$spaces_tbl} WHERE status = 'active' AND id != %d LIMIT 1",
 				(int) $this->space->id
 			)
 		);
@@ -292,8 +292,8 @@ class REST_Tests {
 		// Re-open via direct DB — no REST re-open endpoint exists (close is one-way).
 		// This is necessary so Group B can create replies on the same post.
 		global $wpdb;
-		$posts_t = table( 'posts' );
-		$wpdb->update( $posts_t, array( 'is_closed' => 0 ), array( 'id' => $this->post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$posts_tbl = table( 'posts' );
+		$wpdb->update( $posts_tbl, array( 'is_closed' => 0 ), array( 'id' => $this->post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// 6+7. Move post (requires a second space).
 		if ( $this->other_space ) {
@@ -948,9 +948,9 @@ class REST_Tests {
 		// to a specific number goes green the moment someone raises the cap while
 		// a site past the new number stays broken.
 		global $wpdb;
-		$spaces_t   = $wpdb->prefix . 'jt_spaces';
+		$spaces_tbl   = $wpdb->prefix . 'jt_spaces';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$visible_ct = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE visibility = 'public' AND status = 'active'" );
+		$visible_ct = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_tbl} WHERE visibility = 'public' AND status = 'active'" );
 
 		if ( $visible_ct <= 20 ) {
 			$this->skip( 'MV1: the move picker can reach every movable space', "only {$visible_ct} visible spaces; need more than the 20-row default page" );
@@ -958,7 +958,7 @@ class REST_Tests {
 			// Walk the endpoint the way the picker does and prove the walk ends up
 			// with everything, including the space ranked last.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$last_title = (string) $wpdb->get_var( "SELECT title FROM {$spaces_t} WHERE visibility = 'public' AND status = 'active' ORDER BY sort_order DESC, title DESC LIMIT 1" );
+			$last_title = (string) $wpdb->get_var( "SELECT title FROM {$spaces_tbl} WHERE visibility = 'public' AND status = 'active' ORDER BY sort_order DESC, title DESC LIMIT 1" );
 
 			$titles = array();
 			$offset = 0;
@@ -1342,9 +1342,9 @@ class REST_Tests {
 		// public: an unreadable target correctly answers 404, not 403.
 		if ( $this->post_id ) {
 			global $wpdb;
-			$spaces_t = table( 'spaces' );
+			$spaces_tbl = table( 'spaces' );
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$other = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$spaces_t} WHERE status = 'active' AND visibility = 'public' AND id != %d LIMIT 1", (int) $this->space->id ) );
+			$other = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$spaces_tbl} WHERE status = 'active' AND visibility = 'public' AND id != %d LIMIT 1", (int) $this->space->id ) );
 			// phpcs:enable
 			$target = $other ? (int) $other->id : (int) $this->space->id;
 			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/move', array(
@@ -1421,13 +1421,13 @@ class REST_Tests {
 				case 'flag_db':
 					// No DELETE endpoint for flags — remove directly.
 					global $wpdb;
-					$flags_t = table( 'flags' );
+					$flags_tbl = table( 'flags' );
 					// Filing a flag notifies every real moderator; take those rows with it.
 					$flag = \Jetonomy\Models\Flag::find( (int) $item['id'] );
 					if ( $flag ) {
 						$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . table( 'notifications' ) . " WHERE type = 'moderation' AND object_id = %d AND created_at >= %s", (int) $flag->object_id, $flag->created_at ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 					}
-					$wpdb->delete( $flags_t, array( 'id' => (int) $item['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+					$wpdb->delete( $flags_tbl, array( 'id' => (int) $item['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 					break;
 
 				case 'space_member_db':
@@ -1529,9 +1529,9 @@ class REST_Tests {
 		// earlier tests, and creating through the REST collection depends on the fixture
 		// space still being valid. Only the PATCH needs to go through REST here.
 		global $wpdb;
-		$spaces_t = $wpdb->prefix . 'jt_spaces';
+		$spaces_tbl = $wpdb->prefix . 'jt_spaces';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" );
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_tbl} ORDER BY id ASC LIMIT 1" );
 		if ( $space_id <= 0 ) {
 			$this->check( 'XF1: extension-only update seam', false, 'no space available' );
 			return;
@@ -1628,17 +1628,17 @@ class REST_Tests {
 		$this->cleanup[] = array( 'type' => 'space_rest', 'id' => $space_id );
 
 		$handle  = (string) get_userdata( $this->admin_id )->user_nicename;
-		$notif_t = table( 'notifications' );
-		$log_t   = table( 'activity_log' );
+		$notif_tbl = table( 'notifications' );
+		$log_tbl   = table( 'activity_log' );
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$mentions = static function ( string $type, int $id ) use ( $wpdb, $notif_t ): int {
-			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notif_t} WHERE type = 'mention' AND object_type = %s AND object_id = %d", $type, $id ) );
+		$mentions = static function ( string $type, int $id ) use ( $wpdb, $notif_tbl ): int {
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notif_tbl} WHERE type = 'mention' AND object_type = %s AND object_id = %d", $type, $id ) );
 		};
-		$created = static function ( string $type, int $id ) use ( $wpdb, $log_t ): array {
-			return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM {$log_t} WHERE action = %s AND object_type = %s AND object_id = %d", 'created_' . $type, $type, $id ) ) );
+		$created = static function ( string $type, int $id ) use ( $wpdb, $log_tbl ): array {
+			return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM {$log_tbl} WHERE action = %s AND object_type = %s AND object_id = %d", 'created_' . $type, $type, $id ) ) );
 		};
-		$rows = static function ( string $type, int $id ) use ( $wpdb, $notif_t ): int {
-			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notif_t} WHERE object_type = %s AND object_id = %d", $type, $id ) );
+		$rows = static function ( string $type, int $id ) use ( $wpdb, $notif_tbl ): int {
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notif_tbl} WHERE object_type = %s AND object_id = %d", $type, $id ) );
 		};
 		// phpcs:enable
 
@@ -2045,11 +2045,11 @@ class REST_Tests {
 		$this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ), $uid );
 
 		global $wpdb;
-		$notifications_t = table( 'notifications' );
-		$votes_t         = table( 'votes' );
+		$notifications_tbl = table( 'notifications' );
+		$votes_tbl         = table( 'votes' );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$notif_before = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notifications_t} WHERE actor_id = %d", $uid ) );
+		$notif_before = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notifications_tbl} WHERE actor_id = %d", $uid ) );
 		$this->check( 'K0: fixture notification exists with actor_id = throwaway user', $notif_before > 0, "notif_before={$notif_before}" );
 
 		// K1: missing confirm → 400 (schema-required arg).
@@ -2120,12 +2120,12 @@ class REST_Tests {
 		// K8: jt_notifications.actor_id nullified — the deleted user no
 		// longer shows up as the actor on the admin's notification.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$notif_after = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notifications_t} WHERE actor_id = %d", $uid ) );
+		$notif_after = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notifications_tbl} WHERE actor_id = %d", $uid ) );
 		$this->check( 'K8: notifications.actor_id nullified', 0 === $notif_after, "notif_after={$notif_after}" );
 
 		// K9: no orphan jt_votes rows remain for the deleted user.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$votes_after = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$votes_t} WHERE user_id = %d", $uid ) );
+		$votes_after = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$votes_tbl} WHERE user_id = %d", $uid ) );
 		$this->check( 'K9: votes purged', 0 === $votes_after, "votes_after={$votes_after}" );
 
 		// Cleanup — the fixture rows are now anonymized (author_id = 0), not

@@ -1083,13 +1083,13 @@ class CLI {
 	 */
 	private static function qa_footprint(): array {
 		global $wpdb;
-		$spaces  = \Jetonomy\table( 'spaces' );
-		$members = \Jetonomy\table( 'space_members' );
+		$spaces_table  = \Jetonomy\table( 'spaces' );
+		$members_table = \Jetonomy\table( 'space_members' );
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row                   = $wpdb->get_row( "SELECT COUNT(*) AS spaces, COALESCE( SUM( post_count ), 0 ) AS post_counts, COALESCE( SUM( member_count ), 0 ) AS member_counts FROM {$spaces}", ARRAY_A );
+		$row                   = $wpdb->get_row( "SELECT COUNT(*) AS spaces, COALESCE( SUM( post_count ), 0 ) AS post_counts, COALESCE( SUM( member_count ), 0 ) AS member_counts FROM {$spaces_table}", ARRAY_A );
 		$row['posts']          = $wpdb->get_var( 'SELECT COUNT(*) FROM ' . \Jetonomy\table( 'posts' ) );
 		$row['replies']        = $wpdb->get_var( 'SELECT COUNT(*) FROM ' . \Jetonomy\table( 'replies' ) );
-		$row['orphan_members'] = $wpdb->get_var( "SELECT COUNT(*) FROM {$members} m LEFT JOIN {$spaces} s ON s.id = m.space_id WHERE s.id IS NULL" );
+		$row['orphan_members'] = $wpdb->get_var( "SELECT COUNT(*) FROM {$members_table} m LEFT JOIN {$spaces_table} s ON s.id = m.space_id WHERE s.id IS NULL" );
 		// Every plugin table (core jt_ and Pro jt_pro_): a row left behind anywhere is a leak.
 		$like = $wpdb->esc_like( $wpdb->prefix . 'jt_' ) . '%';
 		foreach ( (array) $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ) as $tbl ) {
@@ -1103,7 +1103,8 @@ class CLI {
 		// WB Gamification listens to our hooks: no real member may earn events, points or queued toasts from a QA run.
 		foreach ( array( 'wb_gam_events', 'wb_gam_points', 'wb_gam_notifications_queue' ) as $gam ) {
 			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . $gam ) ) ) {
-				$row[ 'members:' . $gam ] = $wpdb->get_var( "SELECT COUNT(*) FROM `{$wpdb->prefix}{$gam}` g INNER JOIN {$wpdb->users} u ON u.ID = g.user_id" );
+				$gam_table                = $wpdb->prefix . $gam; // $gam comes from the fixed list above.
+				$row[ 'members:' . $gam ] = $wpdb->get_var( "SELECT COUNT(*) FROM `{$gam_table}` g INNER JOIN {$wpdb->users} u ON u.ID = g.user_id" );
 			}
 		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

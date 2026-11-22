@@ -776,9 +776,9 @@ final class Space_Purge {
 				continue;
 			}
 			foreach ( array_chunk( $ids, self::CHUNK ) as $chunk ) {
-				$in = implode( ',', array_map( 'intval', $chunk ) );
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$out = array_merge( $out, (array) $wpdb->get_col( "SELECT DISTINCT author_id FROM {$tbl} WHERE id IN ({$in})" ) );
+				$in = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$out = array_merge( $out, (array) $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT author_id FROM {$tbl} WHERE id IN ({$in})", $chunk ) ) );
 			}
 		}
 
@@ -859,9 +859,10 @@ final class Space_Purge {
 		$n     = 0;
 
 		foreach ( array_chunk( $ids, self::CHUNK ) as $chunk ) {
-			$in = implode( ',', array_map( 'intval', $chunk ) );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$n += (int) $wpdb->query( "DELETE FROM {$tbl} WHERE {$col} IN ({$in}){$extra}" );
+			$in = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			// $col and $extra are fixed strings from the relation list above (no request value, no '%'); the ids are bound.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$n += (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$tbl} WHERE {$col} IN ({$in}){$extra}", $chunk ) );
 			// A refused delete must stop the purge, or the parent rows go and these become orphans.
 			self::fail_on_db_error();
 		}

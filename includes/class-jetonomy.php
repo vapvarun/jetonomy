@@ -696,10 +696,10 @@ final class Jetonomy {
 		}
 
 		global $wpdb;
-		$activity_t = table( 'activity_log' );
+		$activity_table = table( 'activity_log' );
 
 		// Only backfill if activity_log is empty (first run).
-		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$activity_t}" );
+		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$activity_table}" );
 		if ( $count > 0 ) {
 			update_option( 'jetonomy_activity_backfilled', true );
 			return;
@@ -711,21 +711,21 @@ final class Jetonomy {
 
 		// Posts.
 		$wpdb->query(
-			"INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
+			"INSERT INTO {$activity_table} (user_id, action, object_type, object_id, metadata, created_at)
              SELECT author_id, 'created_post', 'post', id, JSON_OBJECT('space_id', space_id), created_at
              FROM {$posts_t} WHERE status = 'publish'"
 		);
 
 		// Replies.
 		$wpdb->query(
-			"INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
+			"INSERT INTO {$activity_table} (user_id, action, object_type, object_id, metadata, created_at)
              SELECT author_id, 'created_reply', 'reply', id, JSON_OBJECT('post_id', post_id), created_at
              FROM {$replies_t} WHERE status = 'publish'"
 		);
 
 		// Space memberships.
 		$wpdb->query(
-			"INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
+			"INSERT INTO {$activity_table} (user_id, action, object_type, object_id, metadata, created_at)
              SELECT user_id, 'joined_space', 'space', space_id, JSON_OBJECT('role', role), joined_at
              FROM {$members_t}"
 		);

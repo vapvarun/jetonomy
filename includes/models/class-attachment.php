@@ -422,9 +422,9 @@ class Attachment {
 			return 0;
 		}
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$in = implode( ',', $ids );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is intval'd above.
-		$wpdb->query( "UPDATE {$wpdb->posts} SET post_author = 0 WHERE ID IN ({$in})" );
+		$in = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- the ids are intval'd above and bound here.
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->posts} SET post_author = 0 WHERE ID IN ({$in})", $ids ) );
 		foreach ( $ids as $id ) {
 			clean_post_cache( $id );
 		}

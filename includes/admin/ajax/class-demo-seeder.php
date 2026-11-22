@@ -800,19 +800,19 @@ class Demo_Seeder {
 		// badge to non-demo members are left intact). Badge definitions are
 		// removed only for ids this seeder actually inserted, never Pro defaults.
 
-		$badges_t      = $wpdb->prefix . 'jt_pro_badges';
-		$user_badges_t = $wpdb->prefix . 'jt_pro_user_badges';
+		$badges_table      = $wpdb->prefix . 'jt_pro_badges';
+		$user_badges_table = $wpdb->prefix . 'jt_pro_user_badges';
 
-		if ( $user_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $user_badges_t ) ) === $user_badges_t ) {
-			self::delete_in( $user_badges_t, 'user_id', $user_ids );
+		if ( $user_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $user_badges_table ) ) === $user_badges_table ) {
+			self::delete_in( $user_badges_table, 'user_id', $user_ids );
 		}
 		// Awards of the badges deleted below, whoever holds them (older seeds
 		// awarded the site admin too), or they are left pointing at nothing.
-		if ( $badge_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $user_badges_t ) ) === $user_badges_t ) {
-			self::delete_in( $user_badges_t, 'badge_id', $badge_ids );
+		if ( $badge_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $user_badges_table ) ) === $user_badges_table ) {
+			self::delete_in( $user_badges_table, 'badge_id', $badge_ids );
 		}
-		if ( $badge_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $badges_t ) ) === $badges_t ) {
-			self::delete_in( $badges_t, 'id', $badge_ids );
+		if ( $badge_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $badges_table ) ) === $badges_table ) {
+			self::delete_in( $badges_table, 'id', $badge_ids );
 		}
 
 		// --- Spaces and everything in them ---
@@ -1026,12 +1026,12 @@ class Demo_Seeder {
 		// Badges live in the Pro custom-badges tables. The schema carries a
 		// UNIQUE slug, a category enum, and a JSON criteria column; awards key
 		// on earned_at. Skip cleanly when Pro / its tables are absent.
-		$badges_t      = $wpdb->prefix . 'jt_pro_badges';
-		$user_badges_t = $wpdb->prefix . 'jt_pro_user_badges';
+		$badges_table      = $wpdb->prefix . 'jt_pro_badges';
+		$user_badges_table = $wpdb->prefix . 'jt_pro_user_badges';
 		$badge_ids     = array(); // All resolved ids (created + reused) for awarding.
 		$created_ids   = array(); // Only ids this seeder inserted — cleanup deletes these.
 
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $badges_t ) ) !== $badges_t ) {
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $badges_table ) ) !== $badges_table ) {
 			return $created_ids;
 		}
 
@@ -1052,7 +1052,7 @@ class Demo_Seeder {
 			// activation, several sharing these slugs. Reuse an existing badge
 			// rather than colliding on the UNIQUE slug; only insert new ones.
 			$existing = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-				$wpdb->prepare( "SELECT id FROM {$badges_t} WHERE slug = %s", $b[1] ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->prepare( "SELECT id FROM {$badges_table} WHERE slug = %s", $b[1] ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			);
 			if ( $existing > 0 ) {
 				$badge_ids[] = $existing;
@@ -1060,7 +1060,7 @@ class Demo_Seeder {
 			}
 
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-				$badges_t,
+				$badges_table,
 				array(
 					'name'             => $b[0],
 					'slug'             => $b[1],
@@ -1100,27 +1100,28 @@ class Demo_Seeder {
 			$created_ids[] = $new_id;
 		}
 
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $user_badges_t ) ) !== $user_badges_t ) {
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $user_badges_table ) ) !== $user_badges_table ) {
 			return $created_ids;
 		}
 
 		// Awards already held, loaded once: a reused Pro badge may already be held,
 		// and a non-repeatable badge must never be awarded twice.
-		$ids_in    = implode( ',', array_map( 'absint', $badge_ids ) );
+		$ids_in    = implode( ',', array_fill( 0, count( $badge_ids ), '%d' ) );
+		$badge_ids = array_map( 'absint', $badge_ids );
 		$held      = array();
-		$repeating = array_map( 'intval', (array) $wpdb->get_col( "SELECT id FROM {$badges_t} WHERE is_repeatable = 1 AND id IN ({$ids_in})" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint'd.
-		foreach ( (array) $wpdb->get_results( "SELECT user_id, badge_id FROM {$user_badges_t} WHERE badge_id IN ({$ids_in})" ) as $row ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint'd.
+		$repeating = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$badges_table} WHERE is_repeatable = 1 AND id IN ({$ids_in})", $badge_ids ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint'd.
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( "SELECT user_id, badge_id FROM {$user_badges_table} WHERE badge_id IN ({$ids_in})", $badge_ids ) ) as $row ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint'd.
 			$held[ (int) $row->user_id . ':' . (int) $row->badge_id ] = true;
 		}
 
-		$award = static function ( int $uid, int $badge_id ) use ( $wpdb, $user_badges_t, $now, &$held, $repeating ) {
+		$award = static function ( int $uid, int $badge_id ) use ( $wpdb, $user_badges_table, $now, &$held, $repeating ) {
 			$key = $uid . ':' . $badge_id;
 			if ( isset( $held[ $key ] ) && ! in_array( $badge_id, $repeating, true ) ) {
 				return;
 			}
 			$held[ $key ] = true;
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-				$user_badges_t,
+				$user_badges_table,
 				array(
 					'user_id'   => $uid,
 					'badge_id'  => $badge_id,
