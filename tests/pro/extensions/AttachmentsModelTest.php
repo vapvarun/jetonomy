@@ -224,9 +224,8 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 	 * Free owns the sweep now (`jetonomy_cleanup_media`), so Pro's boot() must
 	 * not schedule `jetonomy_pro_attachments_gc` and must remove a schedule an
 	 * earlier version left behind - on `action_scheduler_init`, because AS's
-	 * store is not ready when boot() runs. Pro's Queue picks Action Scheduler
-	 * or WP-Cron at runtime, so both branches are exercised here regardless of
-	 * whether the environment loaded AS.
+	 * store is not ready when boot() runs. \Jetonomy\Queue::cancel() clears both
+	 * schedulers, so a stale row in either one is seeded and must be gone.
 	 *
 	 * @dataProvider scheduler_branches
 	 *
@@ -237,35 +236,24 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'Action Scheduler is not loaded.' );
 		}
 
-		$has_as = new \ReflectionProperty( \Jetonomy_Pro\Queue::class, 'has_as' );
-		$has_as->setAccessible( true );
-		$was_as = $has_as->getValue();
-		$has_as->setValue( null, $use_as );
-
-		try {
-			// A stale schedule left by a pre-retirement version.
-			if ( $use_as ) {
-				as_schedule_recurring_action( time() + HOUR_IN_SECONDS, DAY_IN_SECONDS, Extension::GC_HOOK, array(), 'jetonomy' );
-			} else {
-				wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', Extension::GC_HOOK );
-			}
-			$this->assertTrue( $this->gc_is_scheduled( $use_as ), 'fixture precondition: stale GC schedule seeded' );
-
-			$init_before = $this->callbacks_on( 'action_scheduler_init' );
-			( new Extension() )->boot();
-
-			// Fire only what boot() hooked onto action_scheduler_init, not the
-			// whole action: AS and free hang their own start-up work there.
-			foreach ( array_diff_key( $this->callbacks_on( 'action_scheduler_init' ), $init_before ) as $callback ) {
-				call_user_func( $callback['function'] );
-			}
-
-			$this->assertFalse( $this->gc_is_scheduled( $use_as ), 'boot() left the retired GC scheduled.' );
-		} finally {
-			// boot()'s other hooks (uploader, REST routes, renderer) are undone
-			// by WP_UnitTestCase's own hook backup/restore around every test.
-			$has_as->setValue( null, $was_as );
+		// A stale schedule left by a pre-retirement version.
+		if ( $use_as ) {
+			as_schedule_recurring_action( time() + HOUR_IN_SECONDS, DAY_IN_SECONDS, Extension::GC_HOOK, array(), 'jetonomy' );
+		} else {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', Extension::GC_HOOK );
 		}
+		$this->assertTrue( $this->gc_is_scheduled( $use_as ), 'fixture precondition: stale GC schedule seeded' );
+
+		$init_before = $this->callbacks_on( 'action_scheduler_init' );
+		( new Extension() )->boot();
+
+		// Fire only what boot() hooked onto action_scheduler_init, not the
+		// whole action: AS and free hang their own start-up work there.
+		foreach ( array_diff_key( $this->callbacks_on( 'action_scheduler_init' ), $init_before ) as $callback ) {
+			call_user_func( $callback['function'] );
+		}
+
+		$this->assertFalse( $this->gc_is_scheduled( $use_as ), 'boot() left the retired GC scheduled.' );
 	}
 
 	/**
