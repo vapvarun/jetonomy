@@ -407,15 +407,17 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function is_online( int $user_id ): bool {
-		// Never a dot for a member who opted out, whatever decides presence.
-		if ( self::hides_online( $user_id ) ) {
-			return false;
-		}
-
-		// BuddyNext owns presence when active: its service decides who is online and who may see it.
+		// BuddyNext owns presence when active: its service decides who is online and who may see it, including a
+		// member who hid their status (still shown to themselves and to staff, as on BuddyNext's own pages). It reads
+		// jetonomy_hide_online too, so it is asked before the opt-out check below.
 		if ( ! self::online_choice_available() && class_exists( '\\BuddyNext\\Realtime\\PresenceService' ) ) {
 			return \BuddyNext\Realtime\PresenceService::visible_to_viewer( get_current_user_id() )
 				&& \BuddyNext\Realtime\PresenceService::is_online( $user_id );
+		}
+
+		// Without BuddyNext: never a dot for a member who opted out.
+		if ( self::hides_online( $user_id ) ) {
+			return false;
 		}
 
 		// A member who hides their own status also stops seeing other members' (they cannot see what they do not share).

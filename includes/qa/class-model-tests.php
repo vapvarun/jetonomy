@@ -285,6 +285,7 @@ class Model_Tests {
 		$this->check_subspace_listing();
 		$this->check_split_leaves_a_trace();
 		$this->check_follow_visibility();
+		$this->check_online_status_visibility();
 		$this->check_reparent_on_delete();
 		$this->check_2_0_7_fixes();
 
@@ -757,6 +758,51 @@ class Model_Tests {
 	 * no access to was listed by title, and a trashed topic vanished with no
 	 * way to stop following it.
 	 */
+	/**
+	 * OS1-OS3: a member who hides their online status. With BuddyNext active its presence rules apply on Jetonomy
+	 * pages too, the same answer BuddyNext's own profile gives: staff still see the dot, other members and guests do
+	 * not. Before: Jetonomy returned false for everyone, staff included, before asking BuddyNext. Without BuddyNext:
+	 * nobody else sees it.
+	 */
+	private function check_online_status_visibility(): void {
+		$hidden = (int) wp_insert_user( array( 'user_login' => 'jt_qa_os_h_' . uniqid(), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
+		$other  = (int) wp_insert_user( array( 'user_login' => 'jt_qa_os_o_' . uniqid(), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
+		if ( $hidden <= 0 || $other <= 0 ) {
+			$this->skip( 'OS1: online status of a member who hides it', 'fixture users failed' );
+			return;
+		}
+		update_user_meta( $hidden, 'jetonomy_hide_online', 1 );
+		$prev = get_current_user_id();
+		$sees = static function ( int $viewer ) use ( $hidden ): bool {
+			wp_set_current_user( $viewer );
+			return UserProfile::is_online( $hidden );
+		};
+		if ( ! UserProfile::online_choice_available() && class_exists( '\\BuddyNext\\Realtime\\PresenceService' ) ) {
+			\BuddyNext\Realtime\PresenceService::write( $hidden, time() );
+			// The same answer BuddyNext's own profile gives (BlockService::is_user_online(): can_see() and is_online()).
+			$bn = static function ( int $viewer ) use ( $hidden ): bool {
+				wp_set_current_user( $viewer );
+				return \BuddyNext\Realtime\PresenceService::can_see( $viewer, $hidden ) && \BuddyNext\Realtime\PresenceService::is_online( $hidden );
+			};
+			$diff = array();
+			foreach ( array( 'self' => $hidden, 'staff' => $this->qa_admin, 'member' => $other, 'guest' => 0 ) as $who => $viewer ) {
+				if ( $sees( $viewer ) !== $bn( $viewer ) ) {
+					$diff[] = $who;
+				}
+			}
+			$this->check( 'OS1: BuddyNext active, Jetonomy shows a hidden member\'s dot exactly as BuddyNext does (self, staff, member, guest)', ! $diff, 'differs for: ' . implode( ', ', $diff ) );
+			$this->check( 'OS2: BuddyNext active, staff still see the dot', $sees( $this->qa_admin ) );
+			$this->check( 'OS3: BuddyNext active, another member and a guest do not', ! $sees( $other ) && ! $sees( 0 ) );
+		} else {
+			UserProfile::update_last_seen( $hidden );
+			\Jetonomy\Cache::delete( 'online_' . $hidden );
+			$this->check( 'OS3: without BuddyNext, another member and a guest do not see a hidden member online', ! $sees( $other ) && ! $sees( 0 ) );
+		}
+		wp_set_current_user( $prev );
+		wp_delete_user( $hidden );
+		wp_delete_user( $other );
+	}
+
 	private function check_follow_visibility(): void {
 		global $wpdb;
 
