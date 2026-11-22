@@ -102,6 +102,25 @@ foreach ( array_diff( array_unique( $m[1] ), $jt_manifest_routes, array( '/' ) )
 	$jt_problems[] = "rest route: in the code, missing from the manifest: {$jt_route}";
 }
 
+// One job register: the standard's section 9 Free rows and the manifest's cron list name the same hooks.
+$jt_std = (string) @file_get_contents( $jt_root . '/docs/standards/background-jobs.md' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+if ( '' !== $jt_std && preg_match( '/^## 9\..*?(?=^## |\z)/ms', $jt_std, $jt_sec ) ) {
+	$jt_reg = array();
+	foreach ( preg_split( '/\R/', $jt_sec[0] ) as $jt_line ) {
+		if ( preg_match( '/^\| (.+?) \| Free \|/', $jt_line, $jt_row ) ) {
+			preg_match_all( '/`(jetonomy_[a-z0-9_]+)`/', $jt_row[1], $jt_h );
+			$jt_reg = array_merge( $jt_reg, $jt_h[1] );
+		}
+	}
+	$jt_man = array_column( (array) ( $jt_manifest['cron'] ?? array() ), 'hook' );
+	foreach ( array_diff( $jt_reg, $jt_man ) as $jt_h ) {
+		$jt_problems[] = "cron: in the standard's register, missing from the manifest: {$jt_h}";
+	}
+	foreach ( array_diff( $jt_man, $jt_reg ) as $jt_h ) {
+		$jt_problems[] = "cron: in the manifest, missing from the standard's register: {$jt_h}";
+	}
+}
+
 // CLAUDE.md's inventory line is the first thing every session reads; its
 // counts must agree with the manifest (which the checks above tie to code).
 $jt_claude = (string) @file_get_contents( $jt_root . '/CLAUDE.md' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors

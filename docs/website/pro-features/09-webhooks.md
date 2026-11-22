@@ -125,7 +125,7 @@ Every delivery attempt is logged. Go to **Jetonomy → Webhooks → [webhook nam
 
 Failed deliveries are retried up to three times with exponential backoff (5 min, 30 min, 2 hrs). After the third failure, the delivery is marked as permanently failed and no further retries are attempted.
 
-> **Tip:** If you see consistent failures, check that your endpoint returns a `2xx` response within 10 seconds. Jetonomy times out at 10 seconds and treats the delivery as failed.
+> **Tip:** If you see consistent failures, check that your endpoint returns a `2xx` response within 15 seconds. Jetonomy waits 15 seconds, then treats the delivery as failed. Developers can change the wait with the `jetonomy_pro_webhook_timeout` filter.
 
 ## Use Case Examples
 

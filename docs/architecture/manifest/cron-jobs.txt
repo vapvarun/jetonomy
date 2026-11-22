@@ -1,12 +1,5 @@
 # Cron Jobs Manifest
-# Generated: 2026-11-23
-# Source: includes/class-cron.php (registered through \Jetonomy\Queue)
-# Full register with arguments and costs: docs/standards/background-jobs.md section 9
-
-[x] jetonomy_trust_evaluation | class-cron.php RECURRING | schedule:12h | status:documented
-[x] jetonomy_trust_evaluation_batch | class-cron.php enqueue_trust_batch() | schedule:async cursor | status:documented
-[x] jetonomy_prune_activity | class-cron.php RECURRING | schedule:daily | status:documented
-[x] jetonomy_cleanup_media | class-cron.php RECURRING | schedule:daily | status:documented
-[x] jetonomy_cleanup_notifications | class-cron.php RECURRING | schedule:weekly | status:documented
-[x] jetonomy_due_jobs | class-cron.php arm_due_jobs() | schedule:single, when due | status:documented
-[x] jetonomy_publish_scheduled | class-cron.php arm_scheduled_publish() | schedule:single, when due | status:documented
+#
+# One list only. Every Jetonomy job (Free and Pro) with its trigger, arguments and cost is the register in
+# docs/standards/background-jobs.md section 9. audit/manifest.json "cron" holds the Free hooks, and
+# bin/check-manifest-fresh.php fails when it and the register's Free rows disagree.

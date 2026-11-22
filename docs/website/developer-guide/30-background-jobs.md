@@ -28,8 +28,9 @@ shows together under **Tools > Scheduled Actions** (filter the group by `jetonom
 - **Recurring jobs are armed only on cron, wp-admin and WP-CLI requests** and on Action Scheduler's daily
   re-arm run, never on a visitor's page view.
 - **Jetonomy trims only its own history.** Action Scheduler keeps every plugin's finished jobs for 31 days and
-  Jetonomy does not change that site-wide setting. It deletes its own completed and cancelled jobs, with their log rows,
-  7 days after they finished, and its failed jobs after 90 days (the window Action Scheduler 4.0 uses; older Action Scheduler
+  Jetonomy does not change that site-wide setting. It deletes its own completed jobs, with their log rows, 7 days after
+  they finished, cancelled jobs 7 days after the time they were scheduled for (Action Scheduler records no cancel time),
+  and its failed jobs after 90 days (the window Action Scheduler 4.0 uses; older Action Scheduler
   versions never delete failed jobs). Pending jobs are kept until you uninstall.
 
 The full list of jobs (hook, trigger, arguments, rows per event) is in `docs/standards/background-jobs.md`,
@@ -38,20 +39,20 @@ section 9, in the plugin repository.
 ## What deactivation keeps
 
 Deactivating Jetonomy or Jetonomy Pro, the first step of every manual update, cancels jobs that are rebuilt later
-(recurring sweeps, digests, sends, re-index). It leaves pending the jobs that finish something already done: a space
-purge, scheduled topics, subscriber notifications for published content, a site announcement and the Pro upgrade
-conversion. The list is `\Jetonomy\Queue::KEEP_ON_DEACTIVATE`; cancel your own jobs on deactivation with
-`\Jetonomy\Queue::cancel_on_deactivate( $hooks )` so the same rule applies. If the plugin stays off and another
-plugin runs Action Scheduler, a kept job runs with no listener and fails ("no callbacks are registered") about a minute
-later; after the plugin is activated again, Jetonomy queues those jobs again with the same arguments, unless they
-are older than the 90 days failed jobs are kept.
+(recurring sweeps, digests, sends). It leaves pending the jobs that finish something already done: a space purge,
+scheduled topics, subscriber notifications for published content, a site announcement, the Pro upgrade conversion,
+a custom-field re-index and the locking of a private space's files. The list is
+`\Jetonomy\Queue::KEEP_ON_DEACTIVATE`. If the plugin stays off and another plugin runs Action Scheduler, a kept job
+runs with no listener and fails ("no callbacks are registered") about a minute later; after the next activation or
+version change (a one-click update fires neither hook, so the version change counts), Jetonomy queues those jobs
+again with the same arguments when they failed within the last 7 days.
 
 ## Filters
 
 ### `jetonomy_finished_action_retention_days`
 
-Days a completed or cancelled Jetonomy job is kept, from when it finished, before Jetonomy deletes it with its
-log rows. Only the
+Days a completed Jetonomy job is kept from when it finished (a cancelled one from the time it was scheduled for)
+before Jetonomy deletes it with its log rows. Only the
 `jetonomy` group is touched. Integer days, at least 1. **Default: 7.** Since 2.0.8.
 
 ```php
@@ -103,7 +104,7 @@ function myaddon_run_nightly_cleanup(): void {
 }
 ```
 
-Cancel it when your add-on is switched off: `\Jetonomy\Queue::cancel( 'myaddon_nightly_cleanup' );`.
+Cancel your jobs when your add-on is switched off with `\Jetonomy\Queue::cancel_on_deactivate( array( 'myaddon_nightly_cleanup' ) );`, the call Jetonomy's own deactivation uses.
 
 For one-off work use `\Jetonomy\Queue::async( $hook, $args )`, or `\Jetonomy\Queue::async_once()` to skip a
 copy that is already waiting with the same arguments. Keep `$args` to ids and small integers.

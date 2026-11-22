@@ -12,8 +12,8 @@ by a listener 2.0.8 keeps for that purpose (pushes and field re-index chunks). T
 | `jetonomy_cleanup_expired` (hourly) | `jetonomy_due_jobs`, armed for the next restriction expiry |
 | `jetonomy_verification_reminder` (hourly) | `jetonomy_due_jobs`, armed for the next reminder that is owed |
 | `jetonomy_reconcile_rosters` (hourly) | `jetonomy_due_jobs`, hourly only while membership-synced rows exist |
-| Pro class `Jetonomy_Pro\Queue` (deprecated, removed in 2.1.0) | `\Jetonomy\Queue`. The old class still works and logs a deprecation notice. `batch()` has no replacement: queue one cursor job (object id, last id) that queues its next pass while rows remain. `recurring()` is now `recurring( $hook, $interval, $first_delay )`, called from boot; the 2.0.7 form with `$args`, `$group` and `$first_run` is accepted by the old class only. |
-| Pro `jetonomy_pro_send_push`, `jetonomy_pro_send_expo_push` (one job per device) | `jetonomy_pro_send_push_batch` (one cursor job per push). 2.0.8 still runs copies queued before the update, so no push is lost; the listeners go in 2.0.9. |
+| Pro class `Jetonomy_Pro\Queue` (deprecated, removed in 2.1.0) | `\Jetonomy\Queue`. The old class still works and logs a deprecation notice. `batch()` has no replacement: queue one cursor job (object id, last id) that queues its next pass while rows remain. `recurring()` is now `recurring( $hook, $interval, $first_delay )`, called from boot; the 2.0.7 form with `$args`, `$group` and `$first_run` is accepted by the old class only. The old class's `async()` ignores its `$group` argument: every job goes to the `jetonomy` group. |
+| Pro `jetonomy_pro_send_push`, `jetonomy_pro_send_expo_push` (one job per device) | `jetonomy_pro_send_push_batch` (one cursor job per push). 2.0.8 still runs copies queued before the update, so no push is lost; the listeners go in 2.1.0. |
 | Pro `jetonomy_pro_dispatch_webhook` (URL and secret in args) | `jetonomy_pro_deliver_webhook`. The upgrade job (`jetonomy_pro_upgrade_jobs`, a background job) re-queues waiting deliveries, then deletes every row of the old hook (any status, with its logs) so no URL or secret stays in the job tables. |
 | Pro `jetonomy_pro_digest_batch` (offset chunks) | `jetonomy_pro_send_digests` (cursor job) |
 | Pro `jetonomy_pro_badges_batch` (offset chunks) | `jetonomy_pro_evaluate_badges_after` (cursor job) |
@@ -32,7 +32,7 @@ a deprecation notice until 2.1.0.
 |---|---|---|
 | `\Jetonomy\Queue::is_queued( $hook, $args, $include_running )` | Exact arguments, empty by default; third parameter for pending only | `is_queued( $hook, ?array $args = null )`: any arguments unless given, pending or running. A call with `false` as the third argument still asks the pending-only question and logs a deprecation notice; use `is_pending()`. A call with only the hook now matches copies with any arguments, where 2.0.7 matched argument-less copies only. |
 | `\Jetonomy\Queue::next( $hook )` | `int` or `false`, argument-less copies only | `int`, `0` when nothing is pending (or the soonest copy is async or running). Matches copies with any arguments. |
-| `\Jetonomy\Queue::at( $timestamp, $hook, $args )` | Always inserted | New fourth parameter `$unique`: insert only when no pending or running copy with these arguments exists. |
+| `\Jetonomy\Queue::at( $timestamp, $hook, $args )` | Always inserted | New fourth parameter `$unique`: insert only when no pending copy with these arguments exists (a running copy does not count, so a job can re-arm itself from its own run). |
 | Pro `Extension::upgrade_jobs( $from )` | New in 2.0.8 development builds, returned `void` | Returns `bool`: true while old copies remain to convert. Pro's upgrade job calls it again until it returns false. |
 | Pro `Custom_Badges\Extension::evaluate_badges_batch( array $batch )` | One offset chunk | `evaluate_badges_batch( $after )`: a cursor job from the last member id. |
 | Pro `Email_Digest\Extension::process_digest_batch( array $batch )` | One offset chunk | `process_digest_batch( $frequency, $after )`: a cursor job per frequency from the last member id. |
@@ -59,6 +59,7 @@ None. The filter for finished-job retention shipped for the first time in 2.0.8 
 |---|---|---|
 | `jetonomy_recurring_jobs` | filter | Every recurring job of the family, hook => interval or `array( interval, first delay )`. |
 | `jetonomy_finished_action_retention_days` | filter | Days a finished Jetonomy job is kept. Default 7. |
+| `jetonomy_pro_webhook_timeout` | filter (Pro) | Seconds a webhook delivery waits for the receiver. Default 15. |
 | `jetonomy_due_jobs` | job | Expired-restriction cleanup, verification reminders and the membership roster backstop. |
 | `\Jetonomy\Queue::recurring()` | method | Register a recurring job with Jetonomy's scheduler. |
 | `jetonomy_pro_push_send_seconds` | filter | Seconds one web push run sends before queueing the rest. Default 15. |
@@ -75,15 +76,18 @@ Code examples for each are in [Background Jobs](./30-background-jobs.md).
   subscriber notifications, a site announcement and the Pro upgrade conversion stay queued through an update
   (`Queue::KEEP_ON_DEACTIVATE`); recurring sweeps, digests and sends are still cancelled and re-armed on activation.
   If one of those jobs failed while the plugin was off (another plugin's Action Scheduler ran it with no listener),
-  activation queues it again with the same arguments.
-- Jetonomy deletes its own completed and cancelled jobs 7 days after they finished and its own failed jobs after 90
+  the next activation, version change or one-click update queues it again with the same arguments, when it failed
+  within the last 7 days.
+- Jetonomy deletes its own completed jobs 7 days after they finished, cancelled jobs 7 days after the time they were
+  scheduled for, and its own failed jobs after 90
   days, for at most 10 seconds and 10,000 rows per status a day (50 runs of 200); a larger backlog is cleared over
   the following days. Other plugins' jobs and Action Scheduler's site-wide retention are not touched.
-- The Pro upgrade runs in one request at a time under core's upgrader lock: it updates the extension tables and
-  stores the new version at once, and the job conversion runs as a background job, never on a visitor's page view.
+- The Pro upgrade runs in one request at a time under core's upgrader lock: it updates the extension tables, queues
+  the job conversion (a background job, never on a visitor's page view), then stores the new version.
 - A web push run sends for about 15 seconds, then queues itself from the last member it fully sent
-  (filter `jetonomy_pro_push_send_seconds`). Each push and webhook request waits at most 5 seconds
-  (`Jetonomy_Pro\Extension::REMOTE_TIMEOUT`, was 15).
+  (filter `jetonomy_pro_push_send_seconds`). Each push request waits at most 5 seconds
+  (`Jetonomy_Pro\Extension::REMOTE_TIMEOUT`, was 15). Webhook deliveries still wait 15 seconds (new filter
+  `jetonomy_pro_webhook_timeout`).
 
 ## Failed jobs from retired hooks
 
