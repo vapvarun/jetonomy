@@ -69,7 +69,7 @@ class CLI {
 		 * @param string $job        Sweep identifier, e.g. evaluate_trust_levels.
 		 * @return int Rows per batch.
 		 */
-		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'evaluate_trust_levels' );
+		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', Cron::BATCH_SIZE, 'evaluate_trust_levels' );
 		$dry_run   = ! empty( $assoc_args['dry-run'] );
 		$after     = 0;
 		$processed = 0;

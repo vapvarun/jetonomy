@@ -34,6 +34,9 @@ class Cron {
 	/** Retries of a publisher run that failed to publish a due topic, 1, 2 then 4 minutes apart. */
 	private const PUBLISH_MAX_RETRIES = 3;
 
+	/** Rows a batch-limited job handles per pass; the default of the jetonomy_cron_batch_size filter. */
+	public const BATCH_SIZE = 500;
+
 	/**
 	 * Expired restrictions, verification reminders and the roster backstop, in one single action armed at the
 	 * earliest moment one of them is due ({@see arm_due_jobs()}). They used to tick hourly each, 72 actions a day on a
@@ -122,9 +125,7 @@ class Cron {
 	 * @return bool
 	 */
 	public static function is_scheduling_request(): bool {
-		return wp_doing_cron()
-			|| ( is_admin() && ! wp_doing_ajax() )
-			|| ( defined( 'WP_CLI' ) && WP_CLI );
+		return Queue::is_scheduling_request();
 	}
 
 	/**
@@ -157,61 +158,47 @@ class Cron {
 		 * @param array<string,int|array{0:int,1:int}> $jobs Jobs.
 		 */
 		foreach ( (array) apply_filters( 'jetonomy_recurring_jobs', self::RECURRING ) as $hook => $job ) {
-			if ( ! as_has_scheduled_action( $hook, array(), Queue::GROUP ) ) {
-				$job = (array) $job;
-				as_schedule_recurring_action( time() + (int) ( $job[1] ?? 0 ), max( MINUTE_IN_SECONDS, (int) $job[0] ), $hook, array(), Queue::GROUP );
-			}
+			$job = (array) $job;
+			Queue::ensure_recurring( (string) $hook, time() + (int) ( $job[1] ?? 0 ), (int) $job[0] );
 		}
-		// Self-heal for the due-time job; the writes that make something due arm it themselves.
+		// Self-heal for the two due-time jobs (one lookup each); the writes that make something due arm them
+		// themselves, and deactivation cancels them, so activation arms them again here.
 		if ( ! Queue::is_queued( self::DUE_HOOK ) ) {
 			self::arm_due_jobs();
 		}
-
-		// Deactivation cancels the scheduled-topic publisher, so every
-		// activation arms it again for whatever is already scheduled
-		// (idempotent: it replaces what is queued).
-		delete_option( 'jetonomy_publish_single_armed' ); // Retired 2.0.1 one-time flag.
-		self::arm_scheduled_publish();
+		if ( ! Queue::is_queued( self::PUBLISH_HOOK ) ) {
+			self::arm_scheduled_publish();
+		}
 	}
 
 	/**
-	 * Arm the publisher for the earliest scheduled topic, or disarm it when
-	 * nothing is scheduled. Idempotent: replaces whatever was queued, so it
-	 * never stacks. Called by Post on every write that sets or clears a
-	 * schedule, and after each run.
+	 * Arm the publisher for the earliest scheduled topic. Called by Post on every write that sets a schedule, after
+	 * each run, and by ensure_scheduled() as a self-heal. Nothing scheduled, nothing queued; a run left queued for a
+	 * schedule that was cleared finds nothing due and stops, so clearing a schedule needs no cancel. One lookup: a copy
+	 * armed for that moment is left alone, so it never stacks; so is a retry waiting for an overdue topic (at most 4
+	 * minutes away), because re-arming would restart its attempt count. Otherwise the run moves to the earliest
+	 * schedule, so moving a topic later moves the run with it.
 	 */
 	public static function arm_scheduled_publish(): void {
 		if ( self::$publishing ) {
 			return; // publish_scheduled_posts() re-arms once when it finishes.
 		}
-		// Action Scheduler's store is not ready before action_scheduler_init;
-		// an early call would silently no-op, so defer it.
-		if ( function_exists( 'as_schedule_single_action' ) && ! did_action( 'action_scheduler_init' ) ) {
-			if ( ! has_action( 'action_scheduler_init', array( self::class, 'arm_scheduled_publish' ) ) ) {
-				add_action( 'action_scheduler_init', array( self::class, 'arm_scheduled_publish' ), 20 );
+		Queue::when_ready(
+			static function (): void {
+				$next = \Jetonomy\Models\Post::next_scheduled_at();
+				if ( null === $next ) {
+					return;
+				}
+				$when   = max( (int) strtotime( $next . ' UTC' ), time() );
+				$queued = Queue::next( self::PUBLISH_HOOK );
+				$retry  = $when <= time() && $queued <= time() + MINUTE_IN_SECONDS * ( 2 ** ( self::PUBLISH_MAX_RETRIES - 1 ) );
+				if ( $queued && ( $queued === $when || $retry ) ) {
+					return;
+				}
+				Queue::cancel( self::PUBLISH_HOOK );
+				Queue::at( $when, self::PUBLISH_HOOK );
 			}
-			return;
-		}
-
-		// A retry is waiting ({@see publish_scheduled_posts()}): it runs within minutes and re-arms after.
-		for ( $attempt = 1; $attempt <= self::PUBLISH_MAX_RETRIES; $attempt++ ) {
-			if ( Queue::is_queued( self::PUBLISH_HOOK, array( 'attempt' => $attempt ) ) ) {
-				return;
-			}
-		}
-
-		$next = \Jetonomy\Models\Post::next_scheduled_at();
-		$when = null === $next ? 0 : max( (int) strtotime( $next . ' UTC' ), time() );
-
-		// Already armed for that instant (e.g. a later schedule was added):
-		// leave it, rather than cancel and re-queue an identical action.
-		if ( $when && Queue::next( self::PUBLISH_HOOK ) === $when ) {
-			return;
-		}
-		Queue::cancel( self::PUBLISH_HOOK );
-		if ( $when ) {
-			Queue::at( $when, self::PUBLISH_HOOK );
-		}
+		);
 	}
 
 	/**
@@ -221,22 +208,19 @@ class Cron {
 	 *
 	 * @param int $not_before Earliest time to arm for (0 = no floor).
 	 */
-	public static function arm_due_jobs( $not_before = 0 ): void {
-		$not_before = (int) $not_before; // Untyped: as a deferred action_scheduler_init callback it is passed ''.
-		if ( function_exists( 'as_schedule_single_action' ) && ! did_action( 'action_scheduler_init' ) ) {
-			if ( ! has_action( 'action_scheduler_init', array( self::class, 'arm_due_jobs' ) ) ) {
-				add_action( 'action_scheduler_init', array( self::class, 'arm_due_jobs' ), 20 );
+	public static function arm_due_jobs( int $not_before = 0 ): void {
+		Queue::when_ready(
+			static function () use ( $not_before ): void {
+				$when   = self::next_due_at();
+				$when   = $when ? max( $when, $not_before ) : 0;
+				$queued = Queue::next( self::DUE_HOOK );
+				if ( ! $when || ( $queued && $queued <= $when ) ) {
+					return; // Nothing due, or already armed for that moment or sooner.
+				}
+				Queue::cancel( self::DUE_HOOK );
+				Queue::at( $when, self::DUE_HOOK );
 			}
-			return;
-		}
-		$when   = self::next_due_at();
-		$when   = $when ? max( $when, $not_before ) : 0;
-		$queued = Queue::next( self::DUE_HOOK );
-		if ( ! $when || ( is_int( $queued ) && $queued <= $when ) ) {
-			return; // Nothing due, or already armed for that moment or sooner.
-		}
-		Queue::cancel( self::DUE_HOOK );
-		Queue::at( $when, self::DUE_HOOK );
+		);
 	}
 
 	/**
@@ -294,7 +278,7 @@ class Cron {
 	 */
 	public function evaluate_trust_batch(): void {
 		$after  = (int) get_option( self::TRUST_CURSOR_OPTION, 0 );
-		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'evaluate_trust_levels' );
+		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', self::BATCH_SIZE, 'evaluate_trust_levels' );
 		$result = self::run_trust_batch( $after, $batch );
 
 		if ( 0 === $result['count'] ) {
@@ -435,7 +419,7 @@ class Cron {
 	 * to avoid long-running DELETE locks on large communities.
 	 */
 	public function cleanup_expired_restrictions(): void {
-		\Jetonomy\Models\Restriction::delete_expired( (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_expired_restrictions' ) );
+		\Jetonomy\Models\Restriction::delete_expired( (int) apply_filters( 'jetonomy_cron_batch_size', self::BATCH_SIZE, 'cleanup_expired_restrictions' ) );
 	}
 
 	/**
@@ -471,7 +455,7 @@ class Cron {
 	 */
 	public function cleanup_old_notifications(): void {
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( 30 * DAY_IN_SECONDS ) );
-		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_old_notifications' );
+		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', self::BATCH_SIZE, 'cleanup_old_notifications' );
 
 		// Batches until the backlog is clear, within a 20 s budget: one 500-row
 		// pass a week fell behind on any community producing more than that.
@@ -494,7 +478,7 @@ class Cron {
 	 */
 	public function publish_scheduled_posts( $attempt = 0 ): void {
 		$attempt   = (int) $attempt;
-		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'publish_scheduled_posts' );
+		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', self::BATCH_SIZE, 'publish_scheduled_posts' );
 		$due_posts = \Jetonomy\Models\Post::get_due_scheduled( $batch );
 		$failed    = array();
 		$error     = '';
@@ -524,7 +508,7 @@ class Cron {
 		}
 		Queue::cancel( self::PUBLISH_HOOK );
 		if ( $attempt < self::PUBLISH_MAX_RETRIES ) {
-			Queue::at( time() + MINUTE_IN_SECONDS * ( 2 ** $attempt ), self::PUBLISH_HOOK, array( 'attempt' => $attempt + 1 ) );
+			Queue::at( time() + MINUTE_IN_SECONDS * ( 2 ** $attempt ), self::PUBLISH_HOOK, array( $attempt + 1 ) );
 			return;
 		}
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- one line when a scheduled topic gives up.

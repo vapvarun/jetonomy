@@ -100,6 +100,25 @@ class TrashAndScheduleRestTest extends WP_UnitTestCase {
 		);
 	}
 
+	/** Pending publisher copies (Action Scheduler). */
+	private function publish_copies(): int {
+		return function_exists( 'as_get_scheduled_actions' )
+			? count( as_get_scheduled_actions( [ 'hook' => Cron::PUBLISH_HOOK, 'status' => 'pending', 'per_page' => 10 ], 'ids' ) )
+			: (int) (bool) wp_next_scheduled( Cron::PUBLISH_HOOK );
+	}
+
+	/**
+	 * With nothing scheduled, a write queues and cancels nothing (no scheduler query on every topic write): a copy
+	 * left queued runs once, finds nothing due and queues nothing new.
+	 */
+	private function assert_nothing_new_is_queued(): void {
+		$this->assertNull( Post::next_scheduled_at() );
+		$this->assertLessThanOrEqual( 1, $this->publish_copies(), 'never stacks' );
+		$before = $this->publish_copies();
+		( new Cron() )->publish_scheduled_posts();
+		$this->assertSame( $before, $this->publish_copies(), 'the run finds nothing due and queues nothing' );
+	}
+
 	private function next_publish_run(): int {
 		return function_exists( 'as_next_scheduled_action' )
 			? (int) as_next_scheduled_action( Cron::PUBLISH_HOOK, [], 'jetonomy' )
@@ -196,15 +215,15 @@ class TrashAndScheduleRestTest extends WP_UnitTestCase {
 		$later_ts = strtotime( Post::find( (int) $later['id'] )->published_at . ' UTC' );
 		$this->assertSame( $later_ts, $this->next_publish_run(), 're-armed for the next schedule' );
 
-		// Nothing left scheduled: disarmed, nothing polls.
+		// Nothing left scheduled: nothing new is queued, nothing polls.
 		Post::update( (int) $later['id'], [ 'published_at' => null ] );
-		$this->assertSame( 0, $this->next_publish_run() );
+		$this->assert_nothing_new_is_queued();
 
 		// Deleting the only scheduled draft disarms too.
 		[ , $gone ] = $this->schedule( 'Deleted', wp_date( 'Y-m-d\TH:i:s', time() + DAY_IN_SECONDS ) );
 		$this->assertGreaterThan( 0, $this->next_publish_run() );
 		Post::delete( (int) $gone['id'] );
-		$this->assertSame( 0, $this->next_publish_run() );
+		$this->assert_nothing_new_is_queued();
 	}
 
 	/**
@@ -239,7 +258,7 @@ class TrashAndScheduleRestTest extends WP_UnitTestCase {
 		$cancelled = Post::find( $id );
 		$this->assertSame( 'draft', $cancelled->status );
 		$this->assertNull( $cancelled->published_at );
-		$this->assertSame( 0, $this->next_publish_run() );
+		$this->assert_nothing_new_is_queued();
 	}
 
 	/** @covers-existing Opening the schedule to authors does not open backdating of live topics. */
