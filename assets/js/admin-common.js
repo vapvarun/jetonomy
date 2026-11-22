@@ -2019,10 +2019,13 @@
 				var strong = document.createElement('strong');
 				strong.textContent = (Jetonomy.i18n.importDone) + ' ';
 				p.appendChild(strong);
-				p.appendChild(document.createTextNode(
-					/* translators: %d: number of records imported. */
-					sprintf(_n('%d record imported successfully.', '%d records imported successfully.', processed, 'jetonomy'), processed) + ' '
-				));
+				// A re-run that brought nothing new: the server summary says "Nothing new to import", not "0 records imported".
+				if (processed > 0 || !summary) {
+					p.appendChild(document.createTextNode(
+						/* translators: %d: number of records imported. */
+						sprintf(_n('%d record imported successfully.', '%d records imported successfully.', processed, 'jetonomy'), processed) + ' '
+					));
+				}
 				// What was not created and why: already imported by an earlier run
 				// (or "0 records imported" reads as a failure), and rows left out
 				// because their topic or forum was not imported (or the source

@@ -116,11 +116,15 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 								?>
 								&mdash;
 								<?php
-								printf(
-									/* translators: %s: number of records imported */
-									esc_html__( '%s records imported', 'jetonomy' ),
-									esc_html( number_format_i18n( $import_history[ $id ]['imported'] ) )
-								);
+								if ( 0 === (int) $import_history[ $id ]['imported'] && ! empty( $import_history[ $id ]['already'] ) ) {
+									esc_html_e( 'nothing new', 'jetonomy' );
+								} else {
+									printf(
+										/* translators: %s: number of records imported */
+										esc_html__( '%s records imported', 'jetonomy' ),
+										esc_html( number_format_i18n( $import_history[ $id ]['imported'] ) )
+									);
+								}
 								?>
 								<?php if ( ! empty( $import_history[ $id ]['already'] ) ) : ?>
 									&mdash;
@@ -284,16 +288,20 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						<strong><?php echo esc_html( $jt_name ); ?></strong>
 						&mdash;
 						<?php
-						printf(
-							/* translators: 1: number of records imported, 2: date and time */
-							esc_html__( '%1$s records imported on %2$s', 'jetonomy' ),
-							esc_html( number_format_i18n( (int) ( $jt_record['imported'] ?? 0 ) ) ),
-							esc_html(
-								! empty( $jt_record['completed_at'] )
-									? date_i18n( $datetime_format, strtotime( (string) $jt_record['completed_at'] ) )
-									: __( 'an unknown date', 'jetonomy' )
-							)
-						);
+						$jt_when = ! empty( $jt_record['completed_at'] )
+							? date_i18n( $datetime_format, strtotime( (string) $jt_record['completed_at'] ) )
+							: __( 'an unknown date', 'jetonomy' );
+						if ( 0 === (int) ( $jt_record['imported'] ?? 0 ) && (int) ( $jt_record['already'] ?? 0 ) > 0 ) {
+							/* translators: %s: date and time */
+							printf( esc_html__( 'Nothing new was imported on %s', 'jetonomy' ), esc_html( $jt_when ) );
+						} else {
+							printf(
+								/* translators: 1: number of records imported, 2: date and time */
+								esc_html__( '%1$s records imported on %2$s', 'jetonomy' ),
+								esc_html( number_format_i18n( (int) ( $jt_record['imported'] ?? 0 ) ) ),
+								esc_html( $jt_when )
+							);
+						}
 						?>
 					</p>
 

@@ -521,6 +521,10 @@ abstract class Importer {
 		$thread  = (int) ( $tally['rethreaded'] ?? 0 );
 		$orphans = (array) ( $tally['orphans'] ?? array() );
 
+		// A re-run that found everything already brought over says so first, instead of reading as "imported 0".
+		if ( isset( $tally['imported'] ) && 0 === (int) $tally['imported'] && $already > 0 && 0 === $thread && ! array_filter( $orphans ) ) {
+			$lines[] = __( 'Nothing new to import: everything from this source was already brought over.', 'jetonomy' );
+		}
 		if ( $already > 0 ) {
 			/* translators: %s: number of items a previous import already brought over. */
 			$lines[] = sprintf( _n( '%s item was already imported and was skipped.', '%s items were already imported and were skipped.', $already, 'jetonomy' ), number_format_i18n( $already ) );
