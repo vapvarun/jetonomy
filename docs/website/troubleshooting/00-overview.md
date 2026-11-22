@@ -117,14 +117,12 @@ Common to all of them: access rules are evaluated when the member loads the spac
 
 1. **Does the account's WordPress role hold the right capability?** The **Moderation** screen needs `jetonomy_moderate`. Every other Jetonomy admin screen - Dashboard, Spaces, Categories, Users, Settings, Import, Community Media - needs `jetonomy_manage_settings`, which only Administrators have by default. A moderator who can see Moderation but nothing else is working as designed. Check or grant either capability on the [Role Capability Mapping](../admin-settings/18-role-capabilities.md) grid.
 2. **Looking for a Pro-only screen (Extensions, License, a Pro settings tab)?** Those menu items are added by Jetonomy Pro itself and only appear when Pro is installed **and** active - they are never present on a free-only install.
-3. **Pro menu item is there but the feature underneath says it is unavailable?** Check **Settings -> License** - an expired or missing license closes every Pro extension even though the Extensions grid still shows each toggle. See [License](../admin-settings/14-license.md).
-4. **License is valid but one specific feature is still missing?** Check it is switched on at **Jetonomy -> Extensions** - extensions are enabled individually, separately from licensing. See [Extensions](../admin-settings/13-extensions.md).
+3. **One specific Pro feature is missing?** Check it is switched on at **Jetonomy -> Extensions** - extensions are enabled individually. The license never switches a feature off; it only brings updates. See [Extensions](../admin-settings/13-extensions.md) and [License](../admin-settings/14-license.md).
 
 ## A feature is missing after updating
 
 1. **Check the extension is still switched on** at **Jetonomy -> Extensions**. An update never re-enables an extension you had turned off, and disabling one preserves its data rather than removing it.
-2. **Check the license** at **Settings -> License**. An expired license closes every Pro extension even though the Extensions grid still shows each one's toggle - the license, not the toggle, decides whether the code actually runs.
-3. **Clear any page cache.** A page cached before the update can keep serving the old markup to logged-out visitors until the cache expires or is purged.
+2. **Clear any page cache.** A page cached before the update can keep serving the old markup to logged-out visitors until the cache expires or is purged.
 
 ## Pro features are not available
 
