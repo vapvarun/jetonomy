@@ -371,12 +371,12 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 		<?php endif; ?>
 	<?php endif; ?>
 </div>
-<?php if ( \Jetonomy\Admin\Admin::show_pro_promo( 'spaces' ) ) : ?>
-<div class="jt-pro-upsell">
-	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
-	<h4><?php /* translators: %s: space label (e.g. "Space"). */ echo esc_html( sprintf( __( 'Polls, Reactions & Analytics for Every %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?></h4>
-
-	<p><?php /* translators: %s: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'Add emoji reactions, polls, and custom fields to your %s. Track engagement with the analytics dashboard.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?></p>
-	<?php \Jetonomy\Admin\Admin::pro_promo_actions( 'spaces' ); ?>
-</div>
-<?php endif; ?>
+<?php
+\Jetonomy\Admin\Admin::pro_card(
+	'spaces',
+	/* translators: %s: space label (e.g. "Space"). */
+	sprintf( __( 'Polls, Reactions & Analytics for Every %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
+	/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
+	sprintf( __( 'Add emoji reactions, polls, and custom fields to your %s. Track engagement with the analytics dashboard.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) )
+);
+?>

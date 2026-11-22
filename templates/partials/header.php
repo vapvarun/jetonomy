@@ -171,10 +171,14 @@ $jt_in_space = '' !== $jt_slug && in_array( $current_route, array( 'space', 'new
 // so the sheet still works after a client-side navigation out of a space. Bounded: one indexed query for the member's
 // space ids, then batches of 30 primed in one query each and checked from the request cache, so archived or read-only
 // spaces at the top do not hide an older open one. Up to 30 rows; past 8 the sheet gets a filter box (header.js).
-// ponytail: stops after 300 memberships; a member in more than that still has "All my spaces" and the filter.
-$jt_postable = array();
+// ponytail: scans the 300 newest memberships; past that $jt_unscanned keeps "All my spaces" on screen (no one-space
+// shortcut, no "Join one" note), because a space the member can post in may sit beyond the scan.
+$jt_postable  = array();
+$jt_unscanned = false;
 if ( $user_id ) {
-	foreach ( array_chunk( array_slice( \Jetonomy\Models\SpaceMember::spaces_for_user( $user_id ), 0, 300 ), 30 ) as $jt_ids ) {
+	$jt_member_of = \Jetonomy\Models\SpaceMember::spaces_for_user( $user_id );
+	$jt_unscanned = count( $jt_member_of ) > 300;
+	foreach ( array_chunk( array_slice( $jt_member_of, 0, 300 ), 30 ) as $jt_ids ) {
 		\Jetonomy\Models\Space::prime( $jt_ids );
 		\Jetonomy\Models\SpaceMember::warm_viewer_roles( $user_id, $jt_ids );
 		foreach ( $jt_ids as $jt_sid ) {
@@ -190,7 +194,7 @@ if ( $user_id ) {
 		}
 	}
 }
-$jt_one_space   = 1 === count( $jt_postable ) ? \Jetonomy\route_url( 'new-post', $jt_postable[0]->slug ) : '';
+$jt_one_space   = 1 === count( $jt_postable ) && ! $jt_unscanned ? \Jetonomy\route_url( 'new-post', $jt_postable[0]->slug ) : '';
 $jt_new_home    = '' !== $jt_one_space ? $jt_one_space : \Jetonomy\route_url( 'my-spaces' );
 $jt_new_url     = $jt_in_space ? \Jetonomy\route_url( 'new-post', $jt_slug ) : $jt_new_home;
 $jt_mobile_tabs = $user_id
@@ -330,6 +334,9 @@ $jt_mobile_tabs = (array) apply_filters( 'jetonomy_mobile_tabs', $jt_mobile_tabs
 					<?php endforeach; ?>
 					<?php /* translators: %s: the plural space label, lowercase (e.g. "spaces", "groups"). */ ?>
 					<a class="jt-more-item" <?php echo $jt_searchable ? '' : 'role="menuitem"'; ?> href="<?php echo esc_url( \Jetonomy\route_url( 'my-spaces' ) ); ?>"><?php jetonomy_echo_icon( 'users', 18 ); ?><span><?php echo esc_html( sprintf( __( 'All my %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></span></a>
+				<?php elseif ( $jt_unscanned ) : ?>
+					<?php /* translators: %s: the plural space label, lowercase (e.g. "spaces", "groups"). */ ?>
+					<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'my-spaces' ) ); ?>"><?php jetonomy_echo_icon( 'users', 18 ); ?><span><?php echo esc_html( sprintf( __( 'All my %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></span></a>
 				<?php else : ?>
 					<?php /* translators: 1: the plural space label, lowercase (e.g. "spaces"). 2: the topic label, singular, lowercase. */ ?>
 					<p class="jt-mobile-tab-menu__note"><?php echo esc_html( sprintf( __( 'Join one of the %1$s to start a %2$s.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></p>

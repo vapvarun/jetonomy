@@ -2369,6 +2369,79 @@ tr.jetonomy-moderated td {
 	margin: 0;
 }
 
+/* Locked Pro tab: a link to the explainer on the same page, styled as unavailable. */
+.jt-pro-locked-tab {
+	color: var(--jt-admin-text-3);
+}
+
+/* One-line explainer a locked Pro tab points at (aria-describedby target). */
+.jt-pro-explainer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+	margin: 12px 0;
+	padding: 8px 12px;
+	border: 1px dashed var(--jt-admin-pro-border);
+	border-radius: 8px;
+	background: var(--jt-admin-pro-bg);
+	color: var(--jt-admin-text-2);
+	font-size: 13px;
+}
+
+.jt-pro-explainer a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+}
+
+/* Free vs Pro table. */
+.jt-fvp-table {
+	border: 0;
+	box-shadow: none;
+}
+
+.jt-fvp-table th[scope="row"] {
+	font-weight: 400;
+}
+
+.jt-fvp-table__desc {
+	display: block;
+	margin-block-start: 2px;
+	color: var(--jt-admin-text-3);
+	font-size: 12.5px;
+}
+
+.jt-fvp-table .jt-fvp-table__col {
+	width: 72px;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.jt-fvp-table .dashicons-yes {
+	color: var(--jt-admin-pro);
+}
+
+.jt-fvp-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 16px;
+	margin: 0;
+}
+
+.jt-fvp-links .button {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+}
+
+@media (max-width: 640px) {
+	.jt-fvp-table .jt-fvp-table__col {
+		width: 48px;
+	}
+}
+
 /* Core sets .button to 40px under 782px; the 44px target rule wins here. */
 .jt-pro-upsell__actions .button {
 	display: inline-flex;
@@ -4323,9 +4396,6 @@ tr.jetonomy-moderated td {
 }
 
 /* Pro extension tier badge on the Free vs Pro tab. */
-.jetonomy-admin .jt-tier-badge { margin-inline-start: auto; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; background: var(--jt-admin-success-light, #f0fdf4); color: var(--jt-admin-success-dark, #166534); }
-.jetonomy-admin .jt-tier-badge--agency { background: var(--jt-admin-warn-light, #fef3c7); color: var(--jt-admin-warn-dark, #92400e); }
-.jetonomy-admin .jt-tier-badge--growth { background: var(--jt-admin-info-light, #e0e7ff); color: var(--jt-admin-info-dark, #3730a3); }
 
 
 /* ── Trust level names (Settings > Permissions, Trust Levels card) ──

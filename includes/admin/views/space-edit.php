@@ -54,10 +54,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<?php endif; ?>
 			</a>
 		<?php endif; ?>
-		<?php if ( \Jetonomy\Admin\Admin::show_pro_promo() ) : ?>
-			<?php $jt_fvp = admin_url( 'admin.php?page=jetonomy-settings&tab=free-vs-pro' ); ?>
-			<a class="nav-tab" href="<?php echo esc_url( $jt_fvp ); ?>"><?php esc_html_e( 'Custom Fields', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
-			<a class="nav-tab" href="<?php echo esc_url( $jt_fvp ); ?>"><?php esc_html_e( 'Reactions', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+		<?php $jt_pro_locked = \Jetonomy\Admin\Admin::show_pro_promo(); ?>
+		<?php if ( $jt_pro_locked ) : ?>
+			<?php \Jetonomy\Admin\Admin::pro_locked_tab( __( 'Custom Fields', 'jetonomy' ), 'jt-pro-explain-space' ); ?>
+			<?php \Jetonomy\Admin\Admin::pro_locked_tab( __( 'Reactions', 'jetonomy' ), 'jt-pro-explain-space' ); ?>
 		<?php endif; ?>
 		<?php
 		/**
@@ -69,6 +69,12 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		do_action( 'jetonomy_admin_space_edit_tabs', $space );
 		?>
 	</nav>
+	<?php
+	if ( $jt_pro_locked ) {
+		/* translators: %s: the singular space label, lowercase (e.g. "space"). */
+		\Jetonomy\Admin\Admin::pro_explainer( 'jt-pro-explain-space', sprintf( __( 'Custom Fields and Reactions are part of Pro: add polls, reactions and your own fields to this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+	}
+	?>
 
 	<?php if ( 'general' === $active_tab ) : ?>
 		<!-- General Tab -->

@@ -46,9 +46,10 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 			<?php /* translators: %d: number of currently banned members. */ ?>
 			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), absint( $total_banned ) ); ?>
 		</a>
-		<?php if ( \Jetonomy\Admin\Admin::show_pro_promo() ) : ?>
-			<?php // A real link to what Pro adds, not a disabled control a keyboard cannot reach. ?>
-			<a class="nav-tab" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-settings&tab=free-vs-pro' ) ); ?>"><?php esc_html_e( 'Auto-Rules', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+		<?php $jt_pro_locked = \Jetonomy\Admin\Admin::show_pro_promo(); ?>
+		<?php if ( $jt_pro_locked ) : ?>
+			<?php // Locked, not dead: a keyboard-reachable link to the explainer below, announced as unavailable. ?>
+			<?php \Jetonomy\Admin\Admin::pro_locked_tab( __( 'Auto-Rules', 'jetonomy' ), 'jt-pro-explain-auto-rules' ); ?>
 		<?php endif; ?>
 		<?php
 		/**
@@ -60,6 +61,24 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 		do_action( 'jetonomy_admin_moderation_tabs', $active_tab );
 		?>
 	</nav>
+
+	<?php
+	if ( $jt_pro_locked ) {
+		// A busy queue (5 or more waiting, from the counts already on this page) gets the dismissible card; otherwise,
+		// or once dismissed, the one-line explainer. Either way the locked tab's describedby target is on screen.
+		$jt_queue = absint( $total_posts ) + absint( $total_replies ) + absint( $total_flags );
+		$jt_card  = $jt_queue >= 5 && \Jetonomy\Admin\Admin::pro_card(
+			'moderation-busy',
+			__( 'Tired of reviewing the same spam by hand?', 'jetonomy' ),
+			/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. */
+			sprintf( __( 'Pro Auto-Rules filter new %1$s and %2$s by keyword, link count and spam score before they reach your queue.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+			'jt-pro-explain-auto-rules'
+		);
+		if ( ! $jt_card ) {
+			\Jetonomy\Admin\Admin::pro_explainer( 'jt-pro-explain-auto-rules', __( 'Auto-Rules is part of Pro: keyword, link and spam-score filters that hold content before it reaches this queue.', 'jetonomy' ) );
+		}
+	}
+	?>
 
 	<?php if ( 'posts' === $active_tab ) : ?>
 		<!-- Pending Posts -->

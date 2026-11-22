@@ -421,7 +421,7 @@
 		} else if ('Tab' === e.key && e.shiftKey && document.activeElement === menu.querySelector('input, a')) {
 			// Shift+Tab from the first row goes back to the tab that opened it: close the sheet behind it.
 			closeTabMenu(false);
-		} else if (menu.contains(document.activeElement) && !('INPUT' === document.activeElement.tagName && ('Home' === e.key || 'End' === e.key)) && window.jetonomySmartDropdown && window.jetonomySmartDropdown.menuKeys) {
+		} else if (menu.contains(document.activeElement) && !('INPUT' === document.activeElement.tagName && /^(Home|End)$/.test(e.key)) && window.jetonomySmartDropdown && window.jetonomySmartDropdown.menuKeys) {
 			window.jetonomySmartDropdown.menuKeys(menu, e);
 		}
 	});

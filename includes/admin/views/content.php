@@ -473,11 +473,10 @@ wp_localize_script(
 );
 ?>
 
-<?php if ( \Jetonomy\Admin\Admin::show_pro_promo( 'moderation' ) ) : ?>
-<div class="jt-pro-upsell">
-	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
-	<h4><?php esc_html_e( 'Advanced Moderation & Webhooks', 'jetonomy' ); ?></h4>
-	<p><?php esc_html_e( 'Auto-moderate with keyword filters, regex patterns, and spam scoring. Connect to Slack, Zapier, or any webhook endpoint.', 'jetonomy' ); ?></p>
-	<?php \Jetonomy\Admin\Admin::pro_promo_actions( 'moderation' ); ?>
-</div>
-<?php endif; ?>
+<?php
+\Jetonomy\Admin\Admin::pro_card(
+	'moderation',
+	__( 'Advanced Moderation & Webhooks', 'jetonomy' ),
+	__( 'Auto-moderate with keyword filters, regex patterns, and spam scoring. Connect to Slack, Zapier, or any webhook endpoint.', 'jetonomy' )
+);
+?>

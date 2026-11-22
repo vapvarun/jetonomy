@@ -320,6 +320,107 @@ class Admin {
 		);
 	}
 
+	/**
+	 * A dismissible Pro card on our own screens: badge, title, one value sentence, See what Pro adds and Dismiss.
+	 * Prints nothing with Pro active, with "Show Pro suggestions" off, or once this admin dismissed $id.
+	 *
+	 * @param string $id     Promo id (per-user dismiss key).
+	 * @param string $title  Card title.
+	 * @param string $copy   One sentence in the owner's words.
+	 * @param string $anchor Optional element id, so a locked tab can point at the card.
+	 * @return bool Whether the card was printed.
+	 */
+	public static function pro_card( string $id, string $title, string $copy, string $anchor = '' ): bool {
+		if ( ! self::show_pro_promo( $id ) ) {
+			return false;
+		}
+		printf(
+			'<div class="jt-pro-upsell"%1$s><span class="jt-pro-badge">%2$s</span><h4>%3$s</h4><p>%4$s</p>',
+			'' !== $anchor ? ' id="' . esc_attr( $anchor ) . '"' : '',
+			esc_html__( 'PRO', 'jetonomy' ),
+			esc_html( $title ),
+			esc_html( $copy )
+		);
+		self::pro_promo_actions( $id );
+		echo '</div>';
+		return true;
+	}
+
+	/**
+	 * A locked Pro tab: a link to the explainer on this page, announced as unavailable and described by it.
+	 *
+	 * @param string $label  Tab label.
+	 * @param string $anchor Id of the explainer ({@see pro_explainer()} or a {@see pro_card()} anchor).
+	 */
+	public static function pro_locked_tab( string $label, string $anchor ): void {
+		printf(
+			'<a class="nav-tab jt-pro-locked-tab" href="#%1$s" aria-disabled="true" aria-describedby="%1$s">%2$s <span class="jt-pro-badge">%3$s</span></a>',
+			esc_attr( $anchor ),
+			esc_html( $label ),
+			esc_html__( 'PRO', 'jetonomy' )
+		);
+	}
+
+	/**
+	 * The visible one-line explainer a locked tab points at. Not dismissible: it explains a control that stays on screen.
+	 *
+	 * @param string $anchor Element id the locked tab references.
+	 * @param string $copy   One sentence.
+	 */
+	public static function pro_explainer( string $anchor, string $copy ): void {
+		printf(
+			'<p id="%1$s" class="jt-pro-explainer"><span class="jt-pro-badge">%2$s</span> <span>%3$s</span> <a href="%4$s">%5$s</a></p>',
+			esc_attr( $anchor ),
+			esc_html__( 'PRO', 'jetonomy' ),
+			esc_html( $copy ),
+			esc_url( admin_url( 'admin.php?page=jetonomy-settings&tab=free-vs-pro' ) ),
+			esc_html__( 'See what Pro adds', 'jetonomy' )
+		);
+	}
+
+	/**
+	 * Every Pro extension, keyed by Pro's extension id, for the Free vs Pro table. Pro's QA run checks that each
+	 * extension Pro registers has a row here, so a new extension cannot be missing from the table.
+	 *
+	 * @return array<string, array{name: string, desc: string}>
+	 */
+	public static function pro_extensions(): array {
+		$topics  = \Jetonomy\jetonomy_label( 'topic', true, true );
+		$replies = \Jetonomy\jetonomy_label( 'reply', true, true );
+		$members = \Jetonomy\jetonomy_label( 'member', true, true );
+		return array(
+			/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). */
+			'reactions'           => array( 'name' => __( 'Emoji Reactions', 'jetonomy' ), 'desc' => sprintf( __( 'Like, love, and celebrate with Slack-style reactions on %1$s and %2$s.', 'jetonomy' ), $topics, $replies ) ),
+			/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+			'private-messaging'   => array( 'name' => __( 'Private Messaging', 'jetonomy' ), 'desc' => sprintf( __( 'One-on-one and group conversations between community %s.', 'jetonomy' ), $members ) ),
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			'polls'               => array( 'name' => __( 'Polls', 'jetonomy' ), 'desc' => sprintf( __( 'Create polls within %s for community voting and decision-making.', 'jetonomy' ), $topics ) ),
+			/* translators: 1: the plural space label the site owner configured (e.g. spaces, groups). 2: topic label, lowercase (e.g. "topic"). */
+			'analytics'           => array( 'name' => __( 'Analytics Dashboard', 'jetonomy' ), 'desc' => sprintf( __( 'Engagement graphs, user growth, top %1$s, %2$s trends, and CSV export.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ),
+			'email-digest'        => array( 'name' => __( 'Email Digests', 'jetonomy' ), 'desc' => __( 'Daily and weekly email digests of community activity for subscribed users.', 'jetonomy' ) ),
+			/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
+			'web-push'            => array( 'name' => __( 'Web Push', 'jetonomy' ), 'desc' => sprintf( __( 'Browser push notifications for %s, mentions, and forum events.', 'jetonomy' ), $replies ) ),
+			'webhooks'            => array( 'name' => __( 'Webhooks', 'jetonomy' ), 'desc' => __( 'Fire HTTP POST requests to Zapier, Slack, n8n, or any endpoint on forum events.', 'jetonomy' ) ), // jt-terms-ok: the HTTP method.
+			/* translators: %s: member label, plural (e.g. "Members"). */
+			'reply-by-email'      => array( 'name' => __( 'Reply by Email', 'jetonomy' ), 'desc' => sprintf( __( '%s reply to notifications by email. No login required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ), // jt-terms-ok: Pro add-on name; "reply" is the verb.
+			'custom-badges'       => array( 'name' => __( 'Custom Badges', 'jetonomy' ), 'desc' => __( 'Create and auto-award custom badges based on community activity criteria.', 'jetonomy' ) ),
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			'custom-fields'       => array( 'name' => __( 'Custom Fields', 'jetonomy' ), 'desc' => sprintf( __( 'Add custom fields to %s and user profiles: text, select, checkbox, date, and more.', 'jetonomy' ), $topics ) ),
+			'advanced-moderation' => array( 'name' => __( 'Advanced Moderation', 'jetonomy' ), 'desc' => __( 'Auto-moderation rules engine: keyword filters, regex, link limits, and spam scoring.', 'jetonomy' ) ),
+			/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. */
+			'ai'                  => array( 'name' => __( 'AI Assistant', 'jetonomy' ), 'desc' => sprintf( __( 'Spam and toxicity review, summaries and suggested answers for %1$s and %2$s, with the AI provider you choose.', 'jetonomy' ), $topics, $replies ) ),
+			/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+			'anonymous-posting'   => array( 'name' => __( 'Anonymous Posting', 'jetonomy' ), 'desc' => sprintf( __( 'Let %s write without showing their name; only site owners can reveal the author, and every reveal is logged.', 'jetonomy' ), $members ) ),
+			/* translators: 1: topic label, singular, lowercase. 2: the plural space label, lowercase (e.g. "spaces"). */
+			'site-announcements'  => array( 'name' => __( 'Site Announcements', 'jetonomy' ), 'desc' => sprintf( __( 'Feature an important %1$s at the top of every one of your %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( true, true ) ) ),
+			/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. 3: member label, plural, lowercase. */
+			'attachments'         => array( 'name' => __( 'File Attachments', 'jetonomy' ), 'desc' => sprintf( __( 'Attach images and files to %1$s and %2$s; files in a private space are served only to its %3$s.', 'jetonomy' ), $topics, $replies, $members ) ),
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			'seo-pro'             => array( 'name' => __( 'SEO Pro', 'jetonomy' ), 'desc' => sprintf( __( 'Per-%s meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
+			'white-label'         => array( 'name' => __( 'White Label', 'jetonomy' ), 'desc' => __( 'Replace Jetonomy branding: community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ) ),
+		);
+	}
+
 	/** admin-post handler: remember one dismissed promo for the current admin, then go back. */
 	public static function dismiss_pro_promo(): void {
 		check_admin_referer( 'jetonomy_dismiss_promo' );
