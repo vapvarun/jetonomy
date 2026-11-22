@@ -96,18 +96,90 @@ class MemberUiAssetsTest extends WP_UnitTestCase {
 
 	// 2.0.3 release walk.
 
-	/** The report dialog submits from inside and closes only on success, so a failed request keeps the reason and details. */
+	/**
+	 * The report dialog closes only when the request succeeds: a failed or
+	 * rejected request keeps it open with the chosen reason and typed details.
+	 *
+	 * Runs the shipped jetonomyReport() in jsdom (node), clicking Report the way
+	 * a member does, so a refactor that keeps the behaviour keeps the test green.
+	 */
 	public function test_report_dialog_stays_open_with_inputs_when_the_request_fails(): void {
-		$js     = $this->src( 'assets/js/view.js' );
-		$dialog = substr( $js, strpos( $js, 'function jetonomyReport(' ), 6000 );
-		$this->assertStringContainsString( 'function jetonomyReport( message, labels, submit )', $dialog );
-		$this->assertMatchesRegularExpression( '/okBtn\.disabled = true;\s*submit\( \{ reason: picked\.value, description: details\.value\.trim\(\) \} \)/', $dialog );
-		$this->assertMatchesRegularExpression( '/if \( sent \) \{\s*close\( true \);\s*\} else \{\s*okBtn\.disabled = false;/', $dialog );
-		$this->assertStringNotContainsString( 'close( { reason:', $dialog, 'the dialog no longer closes before the request' );
+		$js = $this->src( 'assets/js/view.js' );
 		foreach ( array( 'post', 'reply', 'user' ) as $type ) {
 			$this->assertStringContainsString( "jtSubmitFlag( '{$type}', ", $js );
 		}
 		$this->assertSame( 1, substr_count( $js, "restFetch( '/flags'" ), 'one report request path' );
+
+		$node  = trim( (string) shell_exec( 'command -v node 2>/dev/null' ) );
+		$jsdom = JETONOMY_DIR . 'node_modules/jsdom';
+		if ( '' === $node || ! is_dir( $jsdom ) ) {
+			$this->markTestSkipped( 'node and node_modules/jsdom are needed to run the report dialog (npm install).' );
+		}
+
+		$start = strpos( $js, 'function jetonomyReport(' );
+		$this->assertNotFalse( $start, 'jetonomyReport() is gone from view.js' );
+		$fn = substr( $js, $start, strpos( $js, "\n}\n", $start ) + 2 - $start );
+
+		$harness = <<<'JS'
+const { JSDOM } = require( process.argv[2] );
+const fs = require( 'fs' );
+const { window } = new JSDOM( '<body></body>', { runScripts: 'outside-only' } );
+window.eval( 'function jtModalI18n() { return {}; }\n' + fs.readFileSync( process.argv[3], 'utf8' ) + '\nwindow.jetonomyReport = jetonomyReport;' );
+const d = window.document;
+const tick = () => new Promise( ( r ) => setTimeout( r, 0 ) );
+async function attempt( outcome ) {
+	const calls = [];
+	let result = 'pending';
+	window.jetonomyReport( 'Why?', {}, ( report ) => {
+		calls.push( report );
+		return 'reject' === outcome ? Promise.reject( new Error( 'net' ) ) : Promise.resolve( outcome );
+	} ).then( ( v ) => { result = v; } );
+	d.querySelector( 'input[value="spam"]' ).click();
+	d.querySelector( 'textarea' ).value = 'Selling things';
+	const ok = d.querySelector( '.jt-btn-fill' );
+	ok.click();
+	await tick();
+	const open = !! d.querySelector( '.jt-modal-overlay' );
+	const row = {
+		calls, result, open,
+		reason: open ? d.querySelector( 'input:checked' )?.value : null,
+		details: open ? d.querySelector( 'textarea' ).value : null,
+		okEnabled: open ? ! ok.disabled : null,
+		okFocused: open ? d.activeElement === ok : null,
+	};
+	if ( open ) { d.querySelector( '.jt-btn-ghost' ).click(); await tick(); }
+	return row;
+}
+( async () => {
+	const out = {};
+	for ( const o of [ false, 'reject', true ] ) out[ String( o ) ] = await attempt( o );
+	process.stdout.write( JSON.stringify( out ) );
+} )();
+JS;
+		$dir = get_temp_dir();
+		file_put_contents( $dir . 'jt-report-fn.js', $fn ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		file_put_contents( $dir . 'jt-report-harness.js', $harness ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		$raw = (string) shell_exec( escapeshellarg( $node ) . ' ' . escapeshellarg( $dir . 'jt-report-harness.js' ) . ' ' . escapeshellarg( $jsdom ) . ' ' . escapeshellarg( $dir . 'jt-report-fn.js' ) . ' 2>&1' );
+		$out = json_decode( $raw, true );
+		$this->assertIsArray( $out, 'harness output: ' . $raw );
+
+		$sent = array(
+			array(
+				'reason'      => 'spam',
+				'description' => 'Selling things',
+			),
+		);
+		foreach ( array( 'false', 'reject' ) as $failed ) {
+			$this->assertSame( $sent, $out[ $failed ]['calls'], "$failed: submit gets the reason and details" );
+			$this->assertTrue( $out[ $failed ]['open'], "$failed: the dialog stays open" );
+			$this->assertSame( 'spam', $out[ $failed ]['reason'], "$failed: the reason is kept" );
+			$this->assertSame( 'Selling things', $out[ $failed ]['details'], "$failed: the details are kept" );
+			$this->assertTrue( $out[ $failed ]['okEnabled'], "$failed: Report can be pressed again" );
+			$this->assertTrue( $out[ $failed ]['okFocused'], "$failed: focus stays on Report, inside the dialog" );
+		}
+		$this->assertSame( $sent, $out['true']['calls'] );
+		$this->assertFalse( $out['true']['open'], 'a filed report closes the dialog' );
+		$this->assertTrue( $out['true']['result'], 'and resolves true' );
 	}
 
 	/** Deleting or bulk-acting on notifications shows the server's fresh tab counts (All, Unread, type tabs). */
