@@ -51,9 +51,7 @@ foreach ( (array) _get_cron_array() as $jetonomy_events ) {
 
 // Action Scheduler keeps the history of every job it ran (complete, canceled,
 // failed) in its own tables. Deactivation cancelled the pending ones; the rows
-// of Jetonomy's jobs and their logs go too. jetonomy_pro_* rows are Pro's. The
-// library's own runner event goes with it: another active plugin that bundles
-// Action Scheduler schedules it again on its next load.
+// of Jetonomy's jobs and their logs go too. jetonomy_pro_* rows are Pro's.
 $jetonomy_as_actions = $wpdb->prefix . 'actionscheduler_actions';
 $jetonomy_as_logs    = $wpdb->prefix . 'actionscheduler_logs';
 if ( $jetonomy_as_actions === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jetonomy_as_actions ) ) ) ) {
@@ -71,7 +69,12 @@ if ( $jetonomy_as_actions === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE 
 	}
 	// phpcs:enable
 }
-wp_clear_scheduled_hook( 'action_scheduler_run_queue' );
+// The library's runner event is scheduled with args ( 'WP Cron' ), so it is cleared for every args set. Only when no other
+// active plugin still loads Action Scheduler (Jetonomy is inactive here, so a loaded ActionScheduler class is someone
+// else's copy, which still needs its runner).
+if ( ! class_exists( 'ActionScheduler' ) ) {
+	wp_unschedule_hook( 'action_scheduler_run_queue' );
+}
 
 // -------------------------------------------------------------------------
 // 5. Delete transients created by the plugin.

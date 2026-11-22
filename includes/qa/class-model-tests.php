@@ -692,6 +692,15 @@ class Model_Tests {
 		}
 		$this->check( 'UT1: uninstall removes every jt_ transient family in the code', ! $un_missing && count( $un_found ) >= 6, 'missing: ' . implode( ', ', $un_missing ) . '; found ' . count( $un_found ) );
 
+		// UT2: Action Scheduler's runner event carries args, so only an all-args unschedule clears it, and only when no
+		// other active plugin still loads the library.
+		$un_runner = (bool) preg_match( "/if\s*\(\s*!\s*class_exists\(\s*'ActionScheduler'\s*\)\s*\)\s*\{\s*wp_unschedule_hook\(\s*'action_scheduler_run_queue'\s*\)/", $un_src )
+			&& false === strpos( $un_src, "wp_clear_scheduled_hook( 'action_scheduler_run_queue' )" );
+		$this->check( 'UT2: uninstall clears the Action Scheduler runner for all args, only when no other plugin loads it', $un_runner, 'guarded wp_unschedule_hook missing' );
+		if ( wp_next_scheduled( 'action_scheduler_run_queue', array( 'WP Cron' ) ) ) {
+			$this->check( 'UT2: the runner event has args, so a no-args clear would miss it', false === wp_next_scheduled( 'action_scheduler_run_queue' ) );
+		}
+
 		// IS1-IS2.
 		$clean = new \ReflectionMethod( \Jetonomy\Import\Importer::class, 'clean_slug' );
 		$this->check( 'IS1: decomposed (NFD) accents fold to plain letters in an imported slug', 'naive-uber' === $clean->invoke( null, "nai\u{0308}ve u\u{0308}ber" ) );
