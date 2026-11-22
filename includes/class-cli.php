@@ -1068,18 +1068,29 @@ class CLI {
 
 		// The suite runs on real sites: every fixture must leave the data and
 		// its counters exactly as it found them.
+		// WB Gamification rows are reported as a note, not a failure: that plugin awards on its own schedule
+		// (and from other members' activity during the run), so its counts are not ours to hold still.
 		$footprint_after = self::qa_footprint();
-		if ( $footprint_after !== $footprint_before ) {
-			++$total_fail;
-			$drift = array();
-			foreach ( $footprint_after + $footprint_before as $key => $unused ) {
-				$was = $footprint_before[ $key ] ?? null;
-				$now = $footprint_after[ $key ] ?? null;
-				if ( $was !== $now ) {
-					$drift[] = sprintf( '%s %s -> %s', $key, $was ?? 'absent', $now ?? 'absent' );
+		$drift           = array();
+		$gam_drift       = array();
+		foreach ( $footprint_after + $footprint_before as $key => $unused ) {
+			$was = $footprint_before[ $key ] ?? null;
+			$now = $footprint_after[ $key ] ?? null;
+			if ( $was !== $now ) {
+				$line = sprintf( '%s %s -> %s', $key, $was ?? 'absent', $now ?? 'absent' );
+				if ( str_starts_with( (string) $key, 'members:wb_gam_' ) ) {
+					$gam_drift[] = $line;
+				} else {
+					$drift[] = $line;
 				}
 			}
+		}
+		if ( $drift ) {
+			++$total_fail;
 			\WP_CLI::warning( 'Fixtures left data behind: ' . implode( '; ', $drift ) );
+		}
+		if ( $gam_drift ) {
+			\WP_CLI::log( 'Note (not a failure): WB Gamification counts changed during the run: ' . implode( '; ', $gam_drift ) );
 		}
 
 		\WP_CLI::log( '' );
