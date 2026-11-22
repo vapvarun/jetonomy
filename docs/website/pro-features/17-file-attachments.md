@@ -66,7 +66,9 @@ The cards are server-rendered on every page load, so they show correctly even wi
 
 Members only see attachment cards on topics and replies they are allowed to read, and community uploads are left out of the WordPress media API (`/wp/v2/media`) for anyone who cannot manage media, so visitors cannot browse a list of files.
 
-With Pro, files in a private or hidden space are served only through Jetonomy's download link, which checks that the viewer may read the topic. The first time such a file is shown, Pro adds a small `.htaccess` file to that file's own folder under `wp-content/uploads/jetonomy/`, so its direct address stops working on Apache and LiteSpeed servers. If the space becomes public again, the next view removes it. Files in public spaces keep their normal, cacheable addresses.
+With Pro, files in a private or hidden space are served only through Jetonomy's download link, which checks that the viewer may read the topic. Pro adds a small `.htaccess` file to that file's own folder under `wp-content/uploads/jetonomy/`, so its direct address stops working on Apache and LiteSpeed servers. It does this in the background when the extension is switched on, when Pro is reactivated or updated, and whenever a space is saved as private or hidden; saving a space as public removes it again. Files in public spaces keep their normal, cacheable addresses.
+
+**Files picked from the Media Library are not locked.** A file that already lived in your Media Library (outside `wp-content/uploads/jetonomy/`) and was attached from there keeps its usual address, because other pages on your site may use it too. The card still only shows to people who can read the topic, but anyone who has the file's direct address can open it. For files that must stay private, upload them from the topic composer instead of picking them from the Media Library.
 
 On **nginx**, `.htaccess` files are ignored. Ask your host to add a rule that blocks direct requests for folders that hold Jetonomy's marker file, for example:
 
@@ -78,7 +80,7 @@ location ~ ^/wp-content/uploads/jetonomy/([0-9a-f]+)/ {
 
 Without that rule, a private file is still protected by its long random folder name, as before.
 
-Files uploaded before you updated are locked the first time someone views them. To lock every existing private-space file at once, run `wp jetonomy-pro attachments lock-private` (add `--dry-run` first to see the counts). It works in batches, is safe to run again, and never moves or deletes a file. Switching the Attachments extension off, or deactivating Pro, removes Pro's `.htaccess` files so the free plugin can keep showing every attachment.
+Locking runs in batches in the background, so on a large site it can take a few minutes after an update. To lock every existing private-space file at once yourself, run `wp jetonomy-pro attachments lock-private` (add `--dry-run` first to see the counts). It works in batches, is safe to run again, and never moves or deletes a file. Switching the Attachments extension off, or deactivating Pro, removes Pro's `.htaccess` files so the free plugin can keep showing every attachment.
 
 ## If You Deactivate Pro
 
