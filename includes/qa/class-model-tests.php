@@ -248,9 +248,10 @@ class Model_Tests {
 		$this->test_space_hand_over_rules();
 		$this->test_space_purge_stops_on_db_error();
 		$this->test_space_purge_retry_cap();
-		$this->test_publish_retry_cap();
-		$this->test_due_jobs();
-		$this->test_trust_candidates();
+		// These cancel real jobs to observe their own: the site's queued copies are set aside and put back.
+		Queue_Isolation::run( array( \Jetonomy\Cron::PUBLISH_HOOK ), fn() => $this->test_publish_retry_cap() );
+		Queue_Isolation::run( array( \Jetonomy\Cron::DUE_HOOK ), fn() => $this->test_due_jobs() );
+		Queue_Isolation::run( array( 'jetonomy_trust_evaluation_batch' ), fn() => $this->test_trust_candidates() );
 		$this->test_recurring_registry();
 		$this->test_topic_data_integrity();
 		$this->test_category_visibility();
@@ -1904,10 +1905,10 @@ class Model_Tests {
 					$got[ $attempt ] = 'threw';
 					continue;
 				}
-				$got[ $attempt ] = \Jetonomy\Queue::is_queued( $hook, array( 'attempt' => $attempt + 1 ) );
+				$got[ $attempt ] = \Jetonomy\Queue::is_queued( $hook, array( $attempt + 1 ) );
 				if ( 0 === $attempt ) {
 					\Jetonomy\Cron::arm_scheduled_publish(); // As a topic write or an admin page would.
-					$kept = \Jetonomy\Queue::is_queued( $hook, array( 'attempt' => 1 ) );
+					$kept = \Jetonomy\Queue::is_queued( $hook, array( 1 ) );
 				}
 			}
 		} finally {
@@ -1956,15 +1957,20 @@ class Model_Tests {
 		// Run the job as the queue would once it has expired: the row is gone and the next run is at least a minute out.
 		$table = \Jetonomy\table( 'restrictions' );
 		$wpdb->update( $table, array( 'expires_at' => gmdate( 'Y-m-d H:i:s', time() - 60 ) ), array( 'id' => $ban ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// Real work still waiting after the run: a second restriction expiring in 30 minutes.
+		$later_member = (int) wp_insert_user( array( 'user_login' => 'jt_qa_dj2_' . wp_rand( 1000, 9999 ), 'user_pass' => wp_generate_password(), 'user_email' => 'dj2' . wp_rand( 1000, 9999 ) . '@example.test' ) );
+		$later        = time() + 30 * MINUTE_IN_SECONDS;
+		\Jetonomy\Models\Restriction::ban( $later_member, 'silence', $this->qa_admin, null, 'QA DJ', gmdate( 'Y-m-d H:i:s', $later ) );
 		\Jetonomy\Queue::cancel( $hook );
 		( new \ReflectionClass( \Jetonomy\Cron::class ) )->newInstanceWithoutConstructor()->run_due_jobs();
 		$left  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE id = %d", $ban ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$after = \Jetonomy\Queue::next( $hook );
 		$this->check( 'DJ3: the job removes an expired restriction when it runs', 0 === $left );
-		$this->check( 'DJ4: after a run the job is re-armed only for real work, never sooner than a minute', false === $after || ( is_int( $after ) && $after >= time() + MINUTE_IN_SECONDS - 5 ), wp_json_encode( $after ) );
+		$this->check( 'DJ4: after a run the job is re-armed for the work still due, never sooner than a minute', $after >= time() + MINUTE_IN_SECONDS - 5 && $after <= $later, "next {$after}, due {$later}" );
 
 		require_once ABSPATH . 'wp-admin/includes/user.php';
 		wp_delete_user( $member );
+		wp_delete_user( $later_member );
 		\Jetonomy\Queue::cancel( $hook );
 		\Jetonomy\Cron::arm_due_jobs();
 	}
@@ -2997,16 +3003,15 @@ class Model_Tests {
 			$this->check( 'FO2: a post to a large space queues the fan-out on Action Scheduler', function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, array( $post, $space ), 'jetonomy' ) );
 
 			$count = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_notifications WHERE object_type = 'post' AND object_id = %d AND type = 'new_post_in_sub'", $post ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			// Each run is made by hand, first taking it off the queue so a background Action Scheduler runner cannot run
+			// the same batch too.
+			$own = static function ( array $args ) use ( $hook ): void {
+				as_unschedule_all_actions( $hook, $args, 'jetonomy' );
+			};
+			$own( array( $post, $space ) );
 			do_action( $hook, $post, $space );
 			$this->check( 'FO3: one run notifies a batch of 250 and queues the rest from its cursor', 250 === $count() && as_has_scheduled_action( $hook, array( $post, $space, 990000250 ), 'jetonomy' ), 'notified ' . $count() );
 
-			// Run each continuation by hand, first taking it off the queue so a
-			// background Action Scheduler runner cannot run the same batch too.
-			$own = static function ( array $args ) use ( $hook ): void {
-				if ( function_exists( 'as_unschedule_all_actions' ) ) {
-					as_unschedule_all_actions( $hook, $args, 'jetonomy' );
-				}
-			};
 			$own( array( $post, $space, 990000250 ) );
 			do_action( $hook, $post, $space, 990000250 );
 			$own( array( $post, $space, 990000500 ) );
@@ -3105,7 +3110,7 @@ class Model_Tests {
 	}
 
 	/**
-	 * HP1-HP2: Queue::prune_history() deletes our completed jobs older than 7 days, with their logs, and nothing else:
+	 * HP1-HP5: Queue::prune_history() deletes our completed jobs older than 7 days, with their logs, and nothing else:
 	 * not a recent one, not a failed one, not another plugin's group. Before: only Action Scheduler's own 31-day cleaner.
 	 */
 	private function test_queue_prune_history(): void {
@@ -3131,10 +3136,8 @@ class Model_Tests {
 		$other  = $make( 8, 'jt-qa-other-group', 'complete' );
 		$logs   = $wpdb->prefix . 'actionscheduler_logs';
 		$had    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$logs} WHERE action_id = %d", $old ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		// Our own older history may sit ahead of the probe in a 200-row run, so run until the probe is reached.
-		for ( $i = 0; $i < 50 && 0 < \Jetonomy\Queue::prune_history(); $i++ ) {
-			continue;
-		}
+		// One call, as the daily cleanup makes it: it works through up to 50 runs of 200 rows itself.
+		\Jetonomy\Queue::prune_history();
 		$exists = static fn( int $id ): bool => (bool) $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$wpdb->prefix}actionscheduler_actions WHERE action_id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$left   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$logs} WHERE action_id = %d", $old ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		$this->check( 'HP1: a Jetonomy job completed 8 days ago is deleted with its log rows', ! $exists( $old ) && $had > 0 && 0 === $left, "exists={$exists( $old )} logs {$had}->{$left}" );
@@ -3143,9 +3146,7 @@ class Model_Tests {
 		// HP4: Action Scheduler 3.x never purges failed rows, so a Jetonomy job that failed over 90 days ago goes here.
 		$stale_failed = $make( 91, 'jetonomy', 'failed' );
 		$other_failed = $make( 91, 'jt-qa-other-group', 'failed' );
-		for ( $i = 0; $i < 50 && 0 < \Jetonomy\Queue::prune_history(); $i++ ) {
-			continue;
-		}
+		\Jetonomy\Queue::prune_history();
 		$this->check( 'HP4: a Jetonomy job that failed 91 days ago is deleted; another plugin\'s is kept', ! $exists( $stale_failed ) && $exists( $other_failed ) );
 		$store->delete_action( $other_failed );
 
@@ -3153,11 +3154,21 @@ class Model_Tests {
 		$keep_one = static fn(): int => 1;
 		add_filter( 'jetonomy_finished_action_retention_days', $keep_one );
 		$two_days = $make( 2, 'jetonomy', 'complete' );
-		for ( $i = 0; $i < 50 && 0 < \Jetonomy\Queue::prune_history(); $i++ ) {
-			continue;
-		}
+		\Jetonomy\Queue::prune_history();
 		remove_filter( 'jetonomy_finished_action_retention_days', $keep_one );
 		$this->check( 'HP3: jetonomy_finished_action_retention_days = 1 deletes a job finished 2 days ago', ! $exists( $two_days ) );
+
+		// HP5: one call clears more than one 200-row run.
+		$many = array();
+		for ( $i = 0; $i < 250; $i++ ) {
+			$many[] = $make( 8, 'jetonomy', 'complete' );
+		}
+		\Jetonomy\Queue::prune_history();
+		$kept = array_filter( $many, $exists );
+		$this->check( 'HP5: one daily prune deletes 250 old jobs, more than one 200-row run', ! $kept, count( $kept ) . ' left' );
+		foreach ( $kept as $id ) {
+			$store->delete_action( $id );
+		}
 		foreach ( array( $recent, $failed, $other, $two_days ) as $id ) {
 			if ( $exists( $id ) ) {
 				$store->delete_action( $id );
