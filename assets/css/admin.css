@@ -2369,6 +2369,13 @@ tr.jetonomy-moderated td {
 	margin: 0;
 }
 
+/* Core sets .button to 40px under 782px; the 44px target rule wins here. */
+.jt-pro-upsell__actions .button {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+}
+
 .jt-pro-upsell__dismiss {
 	display: inline-flex;
 	align-items: center;

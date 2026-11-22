@@ -76,7 +76,9 @@ location ~ ^/wp-content/uploads/jetonomy/([0-9a-f]+)/ {
 }
 ```
 
-Without that rule, a private file is still protected by its long random folder name, as before. Switching the Attachments extension off, or deactivating Pro, removes Pro's `.htaccess` files so the free plugin can keep showing every attachment.
+Without that rule, a private file is still protected by its long random folder name, as before.
+
+Files uploaded before you updated are locked the first time someone views them. To lock every existing private-space file at once, run `wp jetonomy-pro attachments lock-private` (add `--dry-run` first to see the counts). It works in batches, is safe to run again, and never moves or deletes a file. Switching the Attachments extension off, or deactivating Pro, removes Pro's `.htaccess` files so the free plugin can keep showing every attachment.
 
 ## If You Deactivate Pro
 
