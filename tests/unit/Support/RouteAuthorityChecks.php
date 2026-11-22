@@ -505,6 +505,19 @@ trait Route_Authority_Checks {
 		$this->assertSame( array(), $problems, implode( "\n", $problems ) );
 	}
 
+	/** A route declared member must admit a signed-in member, or its entry understates who is refused. */
+	public function test_member_routes_admit_a_signed_in_member(): void {
+		$problems = array();
+
+		foreach ( array_intersect_key( $this->manifest, $this->live ) as $key => $entry ) {
+			if ( 'member' === ( $entry['audience'] ?? '' ) && true !== $this->gate( $key, (int) $this->fx['outsider'] ) ) {
+				$problems[] = $key . ' - declared member, but a subscriber is refused by the gate: declare admin, owner or guarded.';
+			}
+		}
+
+		$this->assertSame( array(), $problems, implode( "\n", $problems ) );
+	}
+
 	public function test_public_routes_answer_a_stranger_as_observed(): void {
 		$problems = array();
 
