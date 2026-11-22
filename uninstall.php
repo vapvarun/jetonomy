@@ -150,21 +150,27 @@ $wpdb->query(
 	)
 );
 
-// Sitemap caches use a shorter prefix (jt_sitemap_*), so the jetonomy_ sweep above misses them.
-$wpdb->query(
-	$wpdb->prepare(
-		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-		$wpdb->esc_like( '_transient_jt_' ) . '%',
-		$wpdb->esc_like( '_transient_timeout_jt_' ) . '%'
-	)
-);
+// Jetonomy's short-prefixed transients (sitemap, sign-in and view caches) are missed by the jetonomy_ sweep above. The
+// prefixes are listed in full so another plugin's jt_* transients are never touched.
+foreach ( array( 'jt_sitemap_', 'jt_auth_', 'jt_view_' ) as $jetonomy_short_prefix ) {
+	$wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+			$wpdb->esc_like( '_transient_' . $jetonomy_short_prefix ) . '%',
+			$wpdb->esc_like( '_transient_timeout_' . $jetonomy_short_prefix ) . '%'
+		)
+	);
+}
 
 // Per-member settings and verification state Jetonomy stored on user accounts (the accounts themselves stay).
+// jetonomy_pro_* keys are Jetonomy Pro's: its own uninstall clears them, as with its options.
 $wpdb->query(
 	$wpdb->prepare(
-		"DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s OR meta_key LIKE %s",
+		"DELETE FROM {$wpdb->usermeta} WHERE ( meta_key LIKE %s OR meta_key LIKE %s ) AND meta_key NOT LIKE %s AND meta_key NOT LIKE %s",
 		$wpdb->esc_like( 'jetonomy_' ) . '%',
-		$wpdb->esc_like( '_jetonomy_' ) . '%'
+		$wpdb->esc_like( '_jetonomy_' ) . '%',
+		$wpdb->esc_like( 'jetonomy_pro_' ) . '%',
+		$wpdb->esc_like( '_jetonomy_pro_' ) . '%'
 	)
 );
 

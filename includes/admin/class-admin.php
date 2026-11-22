@@ -481,10 +481,19 @@ class Admin {
 		if ( ! $missing ) {
 			return;
 		}
+		$effects = array(
+			'mbstring' => __( 'search highlighting and non-English text matching are limited', 'jetonomy' ),
+			'dom'      => __( 'link previews show only a plain link', 'jetonomy' ),
+			'ctype'    => __( 'a few number checks use a slower fallback', 'jetonomy' ),
+		);
+		$lines   = array();
+		foreach ( $missing as $ext ) {
+			$lines[] = sprintf( /* translators: 1: PHP extension name, 2: what is limited without it. */ __( '%1$s (%2$s)', 'jetonomy' ), $ext, $effects[ $ext ] ?? '' );
+		}
 		printf(
 			'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p></div>',
 			esc_html( sprintf( /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ __( '%s:', 'jetonomy' ), self::brand_name() ) ),
-			esc_html( sprintf( /* translators: %s: comma-separated PHP extension names. */ __( 'your server is missing the PHP extension(s) %s. Jetonomy keeps working, but search highlighting, link previews and some text handling are limited. Ask your host to enable them.', 'jetonomy' ), implode( ', ', $missing ) ) )
+			esc_html( sprintf( /* translators: %s: list of missing PHP extensions with what each limits. */ __( 'your server is missing: %s. Jetonomy keeps working; ask your host to enable them.', 'jetonomy' ), implode( '; ', $lines ) ) )
 		);
 	}
 
