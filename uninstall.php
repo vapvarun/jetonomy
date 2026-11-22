@@ -44,7 +44,7 @@ foreach ( (array) _get_cron_array() as $jetonomy_events ) {
 	foreach ( array_keys( (array) $jetonomy_events ) as $jetonomy_hook ) {
 		// jetonomy_pro_* jobs are Pro's: its own uninstall clears them, as with its options.
 		if ( ( str_starts_with( (string) $jetonomy_hook, 'jetonomy_' ) && ! str_starts_with( (string) $jetonomy_hook, 'jetonomy_pro_' ) ) || 'edd_sl_sdk_weekly_license_check_jetonomy' === $jetonomy_hook ) {
-			wp_clear_scheduled_hook( $jetonomy_hook );
+			wp_unschedule_hook( $jetonomy_hook ); // Every copy, whatever its arguments.
 		}
 	}
 }
@@ -52,10 +52,11 @@ foreach ( (array) _get_cron_array() as $jetonomy_events ) {
 // Action Scheduler keeps the history of every job it ran (complete, canceled,
 // failed) in its own tables. Deactivation cancelled the pending ones; the rows
 // of Jetonomy's jobs and their logs go too. jetonomy_pro_* rows are Pro's.
-// Batched (logs first, then their actions, 2,000 ids at a time) so a site with a
+// Batched (logs first, then their actions, JETONOMY_UNINSTALL_BATCH ids at a time) so a site with a
 // large history never runs one huge DELETE. Every status goes, failed included.
 // The shared Action Scheduler tables themselves are never dropped. Multisite
 // (one set of tables per subsite) is not handled yet.
+defined( 'JETONOMY_UNINSTALL_BATCH' ) || define( 'JETONOMY_UNINSTALL_BATCH', 2000 );
 $jetonomy_as_purge = static function () use ( $wpdb ): void {
 	$actions = $wpdb->prefix . 'actionscheduler_actions';
 	$logs    = $wpdb->prefix . 'actionscheduler_logs';
@@ -66,16 +67,20 @@ $jetonomy_as_purge = static function () use ( $wpdb ): void {
 	}
 	$has_logs = $logs === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $logs ) ) );
 	do {
-		$ids = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT action_id FROM {$actions} WHERE hook LIKE %s AND hook NOT LIKE %s LIMIT 2000", $wpdb->esc_like( 'jetonomy_' ) . '%', $wpdb->esc_like( 'jetonomy_pro_' ) . '%' ) ) );
-		if ( $ids ) {
-			$in = implode( ',', $ids );
-			if ( $has_logs ) {
-				$wpdb->query( "DELETE FROM {$logs} WHERE action_id IN ({$in})" );
-			}
-			$wpdb->query( "DELETE FROM {$actions} WHERE action_id IN ({$in})" );
+		$ids = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT action_id FROM {$actions} WHERE hook LIKE %s AND hook NOT LIKE %s LIMIT %d", $wpdb->esc_like( 'jetonomy_' ) . '%', $wpdb->esc_like( 'jetonomy_pro_' ) . '%', JETONOMY_UNINSTALL_BATCH ) ) );
+		if ( ! $ids ) {
+			break;
+		}
+		$in = implode( ',', $ids );
+		if ( $has_logs ) {
+			$wpdb->query( "DELETE FROM {$logs} WHERE action_id IN ({$in})" );
+		}
+		// A refused or empty delete would select the same ids again forever: stop instead.
+		if ( ! $wpdb->query( "DELETE FROM {$actions} WHERE action_id IN ({$in})" ) ) {
+			break;
 		}
 		$batch = count( $ids );
-	} while ( 2000 === $batch );
+	} while ( JETONOMY_UNINSTALL_BATCH === $batch );
 	// The shared 'jetonomy' group row goes once no action is left in it (Pro, if still installed, keeps it).
 	if ( $groups === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $groups ) ) ) ) {
 		$wpdb->query( "DELETE g FROM {$groups} g LEFT JOIN {$actions} a ON a.group_id = g.group_id WHERE g.slug = 'jetonomy' AND a.action_id IS NULL" );
@@ -84,7 +89,7 @@ $jetonomy_as_purge = static function () use ( $wpdb ): void {
 };
 $jetonomy_as_purge();
 // The library's runner event is scheduled with args ( 'WP Cron' ), so it is cleared for every args set. Only when no other
-// active plugin ships Action Scheduler, which still needs its runner. Checked by file, not class_exists(): in a single
+// active plugin ships Action Scheduler, which still needs its runner. The family rule: check by file, never class_exists(): in a single
 // `wp plugin uninstall --deactivate` process Jetonomy's own copy is still loaded, so the class always exists there.
 $jetonomy_other_as = false;
 $jetonomy_active   = array_merge( (array) get_option( 'active_plugins', array() ), array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) );
