@@ -844,11 +844,15 @@ class REST_Tests {
 			), $this->admin_id );
 			$probe_id  = (int) ( $probe->get_data()['id'] ?? 0 );
 			$feed      = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $public_slug ) . '/feed/', array( 'timeout' => 10 ) );
-			$prev      = libxml_use_internal_errors( true );
-			$xml_ok    = false !== simplexml_load_string( (string) wp_remote_retrieve_body( $feed ) );
-			$xml_error = $xml_ok ? '' : trim( (string) ( libxml_get_last_error()->message ?? '' ) );
-			libxml_clear_errors();
-			libxml_use_internal_errors( $prev );
+			$xml_ok    = false;
+			$xml_error = 'the simplexml extension is not loaded';
+			if ( function_exists( 'simplexml_load_string' ) ) {
+				$prev      = libxml_use_internal_errors( true );
+				$xml_ok    = false !== simplexml_load_string( (string) wp_remote_retrieve_body( $feed ) );
+				$xml_error = $xml_ok ? '' : trim( (string) ( libxml_get_last_error()->message ?? '' ) );
+				libxml_clear_errors();
+				libxml_use_internal_errors( $prev );
+			}
 			$this->check( 'E32b: feed with a trimmed excerpt and pasted control characters is valid XML', $probe_id > 0 && $xml_ok, $probe_id ? $xml_error : 'probe topic not created' );
 			if ( $probe_id ) {
 				$this->rest( 'DELETE', "/posts/{$probe_id}", array( 'force' => true ), $this->admin_id );

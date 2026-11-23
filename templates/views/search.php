@@ -168,7 +168,7 @@ $jt_highlight = static function ( string $text ) use ( $jt_hl_terms ): string {
 	$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	$esc  = static fn( string $s ): string => htmlspecialchars( $s, ENT_QUOTES, 'UTF-8' );
 	// Without mbstring the highlighter cannot index characters: show the text unmarked rather than fatal.
-	if ( ! $jt_hl_terms || '' === $text || ! function_exists( 'mb_strpos' ) || ! function_exists( 'mb_strtolower' ) ) {
+	if ( ! $jt_hl_terms || '' === $text || ! function_exists( 'mb_strtolower' ) ) {
 		return $esc( $text );
 	}
 
@@ -183,18 +183,21 @@ $jt_highlight = static function ( string $text ) use ( $jt_hl_terms ): string {
 		}
 	}
 
-	$hay  = implode( '', $folded );
+	// Match on the folded character arrays (mb_str_split is polyfilled by WordPress).
 	$mark = array();
+	$n    = count( $folded );
 	foreach ( $jt_hl_terms as $term ) {
-		$len = mb_strlen( $term );
-		$at  = 0;
-		while ( false !== ( $pos = mb_strpos( $hay, $term, $at ) ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+		$tchars = mb_str_split( $term );
+		$len    = count( $tchars );
+		for ( $pos = 0; $len && $pos + $len <= $n; $pos++ ) {
+			if ( $folded[ $pos ] !== $tchars[0] || array_slice( $folded, $pos, $len ) !== $tchars ) {
+				continue;
+			}
 			if ( 0 === $pos || ! preg_match( '/[\p{L}\p{N}]/u', $folded[ $pos - 1 ] ) ) {
 				for ( $k = $owner[ $pos ]; $k <= $owner[ $pos + $len - 1 ]; $k++ ) {
 					$mark[ $k ] = true;
 				}
 			}
-			$at = $pos + 1;
 		}
 	}
 

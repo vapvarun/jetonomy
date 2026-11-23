@@ -1392,6 +1392,7 @@ function time_ago( string $gmt ): string {
 
 /**
  * Lower-case a string without requiring the mbstring extension (a host without it must not fatal a community page).
+ * Without mbstring the fallback is strtolower(), which is ASCII-only: "Élite" stays "Élite".
  *
  * @param string $text Text.
  * @return string
