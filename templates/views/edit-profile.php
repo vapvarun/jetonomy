@@ -195,7 +195,7 @@ if ( ! $cancel_url ) {
 		 * Notification types the member can switch on or off here. Jetonomy Pro adds 'announcement' while Site
 		 * announcements is enabled, so a Free-only site never shows a switch that does nothing.
 		 *
-		 * @since 2.0.8
+		 * @since 2.1.0
 		 * @param array<string,string> $notif_types Type slug => label.
 		 */
 		$notif_types = (array) apply_filters( 'jetonomy_profile_notification_types', $notif_types );

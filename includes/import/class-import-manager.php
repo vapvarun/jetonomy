@@ -26,7 +26,7 @@ class Import_Manager {
 	 * Request-local on purpose: a plugin that eases a limit while an import runs (a post rate limit,
 	 * say) must not ease it for another member's request.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @return bool
 	 */
@@ -42,7 +42,7 @@ class Import_Manager {
 	 * actions (activity, notifications, webhooks, points) are deliberately not fired for imported
 	 * history; integrations catch up from this action instead.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string   $source   Importer id (bbpress, wpforo, asgaros).
 	 * @param Importer $importer The importer doing the work.
@@ -63,7 +63,7 @@ class Import_Manager {
 					 * Fires once per type per batch, after the rows exist, with only the new ids. A re-run
 					 * of an import that finds everything already mapped fires nothing.
 					 *
-					 * @since 2.0.8
+					 * @since 2.1.0
 					 *
 					 * @param string $source Importer id.
 					 * @param string $type   'topic' or 'reply'.

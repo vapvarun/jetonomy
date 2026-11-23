@@ -1016,7 +1016,7 @@ class CLI {
 		 * A qa-actions run is starting. Pro uses it to give the harness's own creates a value for every Required
 		 * custom field, so a site that has one still runs the suite green.
 		 *
-		 * @since 2.0.8
+		 * @since 2.1.0
 		 */
 		do_action( 'jetonomy_qa_actions_start' );
 
@@ -1043,7 +1043,7 @@ class CLI {
 		/**
 		 * The qa-actions run has finished; undo whatever jetonomy_qa_actions_start set up.
 		 *
-		 * @since 2.0.8
+		 * @since 2.1.0
 		 */
 		do_action( 'jetonomy_qa_actions_end' );
 

@@ -51,7 +51,7 @@ Read and write community data from another application, agent, or platform.
 - [Attachment Model](./23-attachment-model.md) - `Jetonomy\Models\Attachment` (link, get_for, get_for_many, prime_for_post, hydrate, payload_for) and the `jt_attachments` table.
 - [Import Framework](./29-import-framework.md) - the `Jetonomy\Import\Importer` base contract (media migration, error surfacing, the per-batch time budget) and how to add a source importer.
 - [Background Jobs](./30-background-jobs.md) - how Jetonomy schedules work on Action Scheduler, the `jetonomy_recurring_jobs` and `jetonomy_finished_action_retention_days` filters, and adding your own recurring job with `\Jetonomy\Queue::recurring()`.
-- [Migrating to 2.0.8](./31-migrating-to-2-0-8.md) - job hooks removed, renamed and added in 2.0.8.
+- [Migrating to 2.1.0](./31-migrating-to-2-1-0.md) - job hooks removed, renamed and added in 2.1.0.
 - [Abilities API](./11-abilities-api.md) - expose the community to AI agents and automation tools through the WordPress Abilities API.
 - [FluentCommunity Integration](./06-fluent-community-integration.md) - developer reference for the FluentCommunity coexistence layer.
 - [BuddyPress Integration](./07-buddypress-integration.md) - developer reference for the BuddyPress Groups coexistence layer, including how to disable leave-sync.

@@ -92,6 +92,10 @@ class Migrator {
 			'2.0.2'   => '2_0_2',
 			'2.0.4'   => '2_0_4',
 			'2.0.7'   => '2_0_7',
+			// Schema steps of the 2.1.0 release, keyed 2.0.8 / 2.0.8.1 because the
+			// release was developed as 2.0.8 (never shipped). Same rule as 1.8.1:
+			// a 2.0.7 site still runs both once, and internal sites already stamped
+			// 2.0.8.1 skip them. Do not renumber.
 			'2.0.8'   => '2_0_8',
 			'2.0.8.1' => '2_0_8_1',
 		);

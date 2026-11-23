@@ -287,7 +287,7 @@ a ready-to-paste system-cron command built from the site's own URL:
 | AS-first recurring helper | `includes/Core/CronScheduler.php::maybe_schedule()` |
 | Cron health + Tools note | `includes/Core/CronScheduler.php::health()` + `includes/Admin/ToolsTab.php` |
 
-**Jetonomy** (2.0.8)
+**Jetonomy** (2.1.0)
 | Pattern | File |
 |---|---|
 | One scheduling API for Free and Pro (`when_ready`, `async`, `async_once`, `at`, `is_queued`, `is_pending`, `next`, `cancel`, `cancel_on_deactivate`, `flag_recovery`, `recover_kept_jobs`, `is_scheduling_request`, `pending_args`, `recurring`, `ensure_recurring`, `prune_history`, `delete_rows`, `now`). The shared method names behave as in MediaVerse `Core\Jobs`; the differences are listed in the class header and in section 1: `ensure_recurring()` takes an interval only, `recurring()` is a registry armed by `Cron::ensure_scheduled()` (also on `action_scheduler_ensure_recurring_actions`) where each MediaVerse job arms itself, `delete_rows()` exists only here, `adopt_pending()` and `LEGACY_GROUPS` only in MediaVerse, and `at()` / `async_once()` insert with the unique flag | `jetonomy/includes/class-queue.php` |
@@ -312,7 +312,7 @@ Free copy: `jetonomy/docs/standards/background-jobs.md`.
 3. Run the Section 6 checklist (wp-plugin-qa includes it in its audit notes).
 4. Fix violations; verify scheduling happened after the fact before release.
 
-## 9. Jetonomy job register (Free + Pro, 2.0.8)
+## 9. Jetonomy job register (Free + Pro, 2.1.0)
 
 One group for the family: `jetonomy`. One scheduling API: `\Jetonomy\Queue` in Free; Pro calls it and owns
 no copy. Recurring jobs are armed only by `Cron::ensure_scheduled()` on cron, wp-admin and WP-CLI
@@ -332,8 +332,8 @@ job does not wait for the lock and runs meanwhile. That job is
 a background job that converts the waiting
 old jobs and then cancels and deletes every row of the retired hooks (the 2.0.7 webhook rows held the URL and
 secret), re-queueing itself while either remains. A job whose hook was retired keeps its listener when its
-queued args cannot be converted (2.0.8: the per-device push until 2.1.0, the field re-index chunks until
-2.1.0); otherwise the upgrade converts and cancels it.
+queued args cannot be converted (2.1.0: the per-device push until 2.1.1, the field re-index chunks until
+2.1.1); otherwise the upgrade converts and cancels it.
 
 | Hook | Plugin | Trigger | Args | Rows per event |
 |---|---|---|---|---|
@@ -377,5 +377,5 @@ Uninstall deletes every `jetonomy_%` row of Free (and `jetonomy_pro_%` of Pro) w
 included, in batches; the shared Action Scheduler tables are never dropped, and the runner event is
 cleared only when no other active plugin bundles Action Scheduler.
 
-Changes in 2.0.8 for developers: `docs/website/developer-guide/` (Background jobs, Migrating to 2.0.8).
+Changes in 2.1.0 for developers: `docs/website/developer-guide/` (Background jobs, Migrating to 2.1.0).
 

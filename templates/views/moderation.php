@@ -150,7 +150,7 @@ if ( in_array( $jt_view, array( 'approvals', 'trash' ), true ) && $jt_held_count
 /**
  * Notes to show on held or spam items in the moderation queue.
  *
- * @since 2.0.8
+ * @since 2.1.0
  * @param array<int,string> $notes Item id => sentence (empty by default).
  * @param string            $kind  'post' or 'reply'.
  * @param int[]             $ids   Ids of the items on this page.

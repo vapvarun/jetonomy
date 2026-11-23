@@ -51,7 +51,7 @@ define( 'JETONOMY_VERSION', '2.0.7' );
 // upgrade block and Migration_1_9_3 never ran there. Keep this in step with
 // the newest key in Migrator::get_migrations() or the newest migration is
 // silently dead on exactly the sites that need it.
-define( 'JETONOMY_DB_VERSION', '2.0.8.1' );
+define( 'JETONOMY_DB_VERSION', '2.0.8.1' ); // Schema milestone, not the release number (see Migrator::get_migrations()).
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -1018,7 +1018,7 @@ function jetonomy_sanitize_editor_content( string $content ): string {
  * The button opens `<code>` with a zero-width space so the caret has somewhere to sit (and leaves one after the run when
  * the member steps out of it). A run they never typed into is dropped, and every placeholder is removed.
  *
- * @since 2.0.8
+ * @since 2.1.0
  *
  * @param string $content Body HTML.
  * @return string Body HTML without the placeholder.

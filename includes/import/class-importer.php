@@ -401,7 +401,7 @@ abstract class Importer {
 	 * Only rows created now: one an earlier run mapped is skipped before remember(), so a re-run
 	 * returns nothing.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @return array{topic: int[], reply: int[]}
 	 */

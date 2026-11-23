@@ -1950,7 +1950,7 @@ function invalid_url_error( string $label ): \WP_Error {
  * Membership is recognised by its own member-registration-page setting (only while the plugin is active), and the
  * jetonomy_external_registration_url filter lets any other plugin say the same.
  *
- * @since 2.0.8
+ * @since 2.1.0
  *
  * @return string URL of the site's registration page, or '' for the default form.
  */
@@ -1969,7 +1969,7 @@ function external_registration_url(): string {
 	/**
 	 * Filter the URL of the site's own registration page. Return '' to keep Jetonomy's inline form.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string $url The detected registration page URL, or '' for the default form.
 	 */

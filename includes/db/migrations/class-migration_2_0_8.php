@@ -1,6 +1,6 @@
 <?php // phpcs:ignore WordPress.Files.FileName.NotHyphenatedLowercase, WordPress.Files.FileName.InvalidClassFileName
 /**
- * 2.0.8: jt_subscriptions.notify_via can say "none".
+ * Schema step 2.0.8 (shipped in 2.1.0): jt_subscriptions.notify_via can say "none".
  *
  * A topic's author who clicks Unfollow keeps their row as 'none' so they stop being told of
  * replies, while an imported topic with no row at all keeps notifying its author. Appending a

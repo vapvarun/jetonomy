@@ -13,7 +13,7 @@
  * the check's own copies and is cancelled with them; isolate per-row by id if a check ever runs for seconds.
  *
  * @package Jetonomy
- * @since   2.0.8
+ * @since   2.1.0
  */
 
 namespace Jetonomy\QA;
@@ -36,7 +36,7 @@ final class Queue_Isolation {
 	/**
 	 * Run $check with these hooks' pending copies set aside, then put them back.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string[] $hooks Real job hooks the check cancels or counts.
 	 * @param callable $check The check.

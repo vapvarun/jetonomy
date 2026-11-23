@@ -37,7 +37,7 @@
  *   (pass null for any arguments). next() answers 0 both when nothing is queued and when a copy is running.
  *
  * @package Jetonomy
- * @since   2.0.8
+ * @since   2.1.0
  */
 
 namespace Jetonomy;
@@ -78,7 +78,7 @@ final class Queue {
 	 * Whether Action Scheduler may be called: its functions exist from plugins_loaded, its store only from
 	 * action_scheduler_init.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 */
 	public static function has_as(): bool {
 		return function_exists( 'as_enqueue_async_action' ) && did_action( 'action_scheduler_init' );
@@ -87,7 +87,7 @@ final class Queue {
 	/**
 	 * The clock every Jetonomy time budget reads (microtime( true ) unless a test set $clock).
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 */
 	public static function now(): float {
 		return null === self::$clock ? microtime( true ) : (float) ( self::$clock )();
@@ -97,7 +97,7 @@ final class Queue {
 	 * Tests only: a fake clock for now(), so a time budget can be tested without waiting. Null restores the real one.
 	 *
 	 * @internal
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param \Closure|null $clock Returns the time as a float.
 	 */
@@ -109,7 +109,7 @@ final class Queue {
 	 * Run a callback now if Action Scheduler's store is ready, else on action_scheduler_init. Upgrade routines and
 	 * early writes run before the store loads, and queuing before then fails.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param callable $callback Callback (no arguments).
 	 */
@@ -124,7 +124,7 @@ final class Queue {
 	/**
 	 * Queue a one-off job to run as soon as possible.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string $hook          Action hook.
 	 * @param array  $args          Hook arguments (positional).
@@ -155,7 +155,7 @@ final class Queue {
 	 * not a reason to skip the Action Scheduler job. The insert uses Action Scheduler's unique flag, so two requests
 	 * arriving together queue one copy; when it is refused because a copy is running, a plain copy is queued.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string $hook Action hook.
 	 * @param array  $args Hook arguments.
@@ -172,7 +172,7 @@ final class Queue {
 	/**
 	 * Run a job once at a given time.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param int    $timestamp Unix time.
 	 * @param string $hook      Action hook.
@@ -198,7 +198,7 @@ final class Queue {
 	 * Whether a pending or running copy exists, in either scheduler. Use it to avoid starting the same work twice; use
 	 * is_pending() when the question is whether a later run is still coming.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string     $hook            Action hook.
 	 * @param array|null $args            Exact arguments, or null for any.
@@ -206,7 +206,7 @@ final class Queue {
 	 */
 	public static function is_queued( string $hook, ?array $args = null, bool $include_running = true ): bool {
 		if ( ! $include_running ) {
-			_deprecated_argument( __METHOD__, '2.0.8', 'Use \\Jetonomy\\Queue::is_pending() to ask whether a copy is waiting.' );
+			_deprecated_argument( __METHOD__, '2.1.0', 'Use \\Jetonomy\\Queue::is_pending() to ask whether a copy is waiting.' );
 			return self::is_pending( $hook, $args );
 		}
 		if ( self::has_as() && as_has_scheduled_action( $hook, $args ) ) {
@@ -218,7 +218,7 @@ final class Queue {
 	/**
 	 * Whether a copy is waiting to start, in either scheduler. A running copy does not count.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string     $hook Action hook.
 	 * @param array|null $args Exact arguments, or null for any.
@@ -251,7 +251,7 @@ final class Queue {
 	/**
 	 * Next run time of a pending copy with any arguments.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string $hook Action hook.
 	 * @return int Unix time; 0 when none is pending, one is running now, or the soonest is an async copy (use
@@ -324,7 +324,7 @@ final class Queue {
 	/**
 	 * Called by Free's and Pro's activation: the next scheduling request runs recover_kept_jobs().
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 */
 	public static function flag_recovery(): void {
 		set_transient( self::RECOVER_FLAG, 1, WEEK_IN_SECONDS );
@@ -342,7 +342,7 @@ final class Queue {
 	 * language is missed. A row whose args no longer decode is left failed. The cheap checks come first: on a
 	 * normal page view this returns before any query.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @return int Rows re-queued.
 	 */
@@ -426,7 +426,7 @@ final class Queue {
 	/**
 	 * Deactivation's cancel: cancel each hook unless it is in KEEP_ON_DEACTIVATE, in both schedulers, set-based.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string[] $hooks Hooks of the deactivated plugin or extension.
 	 * @return int Action Scheduler rows cancelled.
@@ -448,7 +448,7 @@ final class Queue {
 	 * minutes row by row. Pending only, never another group's rows; Action Scheduler's per-row cancel hook does not
 	 * fire (nothing of ours listens to it). Needs no store, so it works during deactivation however early.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string[] $hooks Exact hook names.
 	 * @return int Rows cancelled.
@@ -480,7 +480,7 @@ final class Queue {
 	/**
 	 * Cancel pending copies of a job in both schedulers.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string $hook Action hook.
 	 * @param array  $args Exact arguments; empty cancels every copy whatever its arguments.
@@ -499,7 +499,7 @@ final class Queue {
 	/**
 	 * Arguments of the pending Action Scheduler copies of a job, oldest first, as stored.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string $hook Action hook.
 	 * @return array[] Up to PENDING_READ_LIMIT argument lists.
@@ -525,7 +525,7 @@ final class Queue {
 	 * ensure_recurring() on cron, wp-admin and WP-CLI requests (never on a visitor's page view), so there is one
 	 * scheduler for Free and Pro. Call it from boot, before action_scheduler_init.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string $hook        Action hook (takes no arguments).
 	 * @param int    $interval    Seconds between runs.
@@ -548,7 +548,7 @@ final class Queue {
 	 * Scheduler's $unique flag inserts only when no pending copy exists, and extra copies an older version left behind
 	 * are cancelled here. Only the argument-less row counts. Runs only on a scheduling request.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string $hook     Action hook.
 	 * @param int    $first    Unix time of the first run.
@@ -584,7 +584,7 @@ final class Queue {
 	 * (Cron hooks ensure_scheduled() there, so a recurring row lost on a site nobody administers comes back within a
 	 * day). Each check costs a query, so a visitor's request never pays for it.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 */
 	public static function is_scheduling_request(): bool {
 		return wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) || ( is_admin() && ! wp_doing_ajax() )
@@ -600,7 +600,7 @@ final class Queue {
 	 * Scheduler records no such time for it, and its scheduled time is used. Runs on the daily activity prune, not a job of its own,
 	 * for at most TIME_BUDGET seconds and PRUNE_MAX_BATCHES batches per status; the rest goes on the next run.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @return int Rows deleted.
 	 */
@@ -612,7 +612,7 @@ final class Queue {
 		 * Days a completed or cancelled Jetonomy job is kept before Jetonomy deletes it with its log rows. Only the
 		 * 'jetonomy' group is touched; pending and running jobs are never deleted, failed ones after 90 days.
 		 *
-		 * @since 2.0.8
+		 * @since 2.1.0
 		 *
 		 * @param int $days Whole days, at least 1. Default 7.
 		 */
@@ -629,7 +629,7 @@ final class Queue {
 	 * after TIME_BUDGET seconds or PRUNE_MAX_BATCHES batches: a caller that got a non-zero count calls again (from a
 	 * job of its own, never a visitor's request) until it gets 0.
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param string $hook Action hook.
 	 * @return int Rows deleted by this call.

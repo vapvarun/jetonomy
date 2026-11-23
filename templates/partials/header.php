@@ -270,7 +270,7 @@ $jt_mobile_tabs = $user_id
  * The phone bottom bar's tabs, in order. Each is array{key, label, url, icon, active?, badge?, host?, primary?, menu?, sheet?, direct?, login?}.
  * Return a different order or add/remove tabs; the bar is not shown at all when BuddyNext is active.
  *
- * @since 2.0.8
+ * @since 2.1.0
  * @param array[] $jt_mobile_tabs Tabs.
  * @param bool    $logged_in      Whether the viewer is signed in.
  */

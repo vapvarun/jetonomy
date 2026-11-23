@@ -53,7 +53,7 @@ again with the same arguments when they failed within the last 7 days.
 
 Days a completed Jetonomy job is kept from when it finished (a cancelled one from the time it was scheduled for)
 before Jetonomy deletes it with its log rows. Only the
-`jetonomy` group is touched. Integer days, at least 1. **Default: 7.** Since 2.0.8.
+`jetonomy` group is touched. Integer days, at least 1. **Default: 7.** Since 2.1.0.
 
 ```php
 // Keep finished Jetonomy jobs for 3 days instead of 7.
@@ -66,7 +66,7 @@ and 10 seconds a day; a bigger backlog is cleared over the following days.
 ### `jetonomy_pro_push_send_seconds` (Pro)
 
 Seconds one web push run sends before it queues the rest. **Default: 15.** Lower it on a host with a short
-PHP time limit. Since 2.0.8.
+PHP time limit. Since 2.1.0.
 
 ```php
 add_filter( 'jetonomy_pro_push_send_seconds', static fn(): int => 8 );
@@ -77,7 +77,7 @@ add_filter( 'jetonomy_pro_push_send_seconds', static fn(): int => 8 );
 Every recurring job of the Jetonomy family, armed in one place. The value maps a hook to its interval in
 seconds, or to `array( interval, seconds before the first run )`. **Default:** Jetonomy's own jobs
 (`jetonomy_trust_evaluation` every 12 hours, `jetonomy_prune_activity` and `jetonomy_cleanup_media` daily,
-`jetonomy_cleanup_notifications` weekly) plus whatever Pro's extensions register. Since 2.0.8.
+`jetonomy_cleanup_notifications` weekly) plus whatever Pro's extensions register. Since 2.1.0.
 
 ```php
 // Mark old notifications read every 3 days instead of weekly.
@@ -116,4 +116,4 @@ wp action-scheduler action list --group=jetonomy --status=pending --fields=hook,
 wp action-scheduler action list --group=jetonomy --status=failed --fields=hook,args
 ```
 
-Changed jobs, hooks and filters in 2.0.8: [Migrating to 2.0.8](./31-migrating-to-2-0-8.md).
+Changed jobs, hooks and filters in 2.1.0: [Migrating to 2.1.0](./31-migrating-to-2-1-0.md).

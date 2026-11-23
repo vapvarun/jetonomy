@@ -801,7 +801,7 @@ Every job goes through `\Jetonomy\Queue` (Action Scheduler). The full register, 
 | Hook | Schedule | Handler | Purpose |
 |------|----------|---------|---------|
 | `jetonomy_trust_evaluation` | every 12 hours | `Cron::evaluate_trust_levels()` | Trust sweep (cursor job `jetonomy_trust_evaluation_batch` for the rest) |
-| `jetonomy_due_jobs` | single, armed for the earliest due moment | `Cron::run_due_jobs()` | Expired restrictions, verification reminders, roster backstop (replaced the hourly `jetonomy_cleanup_expired`, `jetonomy_verification_reminder`, `jetonomy_reconcile_rosters` in 2.0.8) |
+| `jetonomy_due_jobs` | single, armed for the earliest due moment | `Cron::run_due_jobs()` | Expired restrictions, verification reminders, roster backstop (replaced the hourly `jetonomy_cleanup_expired`, `jetonomy_verification_reminder`, `jetonomy_reconcile_rosters` in 2.1.0) |
 | `jetonomy_publish_scheduled` | single, armed for the earliest scheduled topic | `Cron::publish_scheduled_posts()` | Publishes scheduled topics |
 | `jetonomy_prune_activity` | daily | `Cron::prune_activity_log()` | Activity-log prune, then `Queue::prune_history()` |
 | `jetonomy_cleanup_media` | daily | `Media_Library::run_scheduled_cleanup()` | Abandoned composer uploads |

@@ -146,7 +146,7 @@ abstract class Model {
 	/**
 	 * Rows whose id is not in $ids (one COUNT on the primary key).
 	 *
-	 * @since 2.0.8
+	 * @since 2.1.0
 	 *
 	 * @param int[] $ids Ids to leave out.
 	 */

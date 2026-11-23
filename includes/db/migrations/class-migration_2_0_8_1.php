@@ -1,6 +1,6 @@
 <?php // phpcs:ignore WordPress.Files.FileName.NotHyphenatedLowercase, WordPress.Files.FileName.InvalidClassFileName
 /**
- * Jetonomy 2.0.8 (schema step 2.0.8.1): the hourly expired-restriction cleanup, verification reminder and roster
+ * Jetonomy 2.1.0 (schema step 2.0.8.1): the hourly expired-restriction cleanup, verification reminder and roster
  * reconcile became one job armed when something is due (Cron::DUE_HOOK). Cancel the old recurring copies so they
  * stop ticking; the next scheduling request arms the new job if anything is due. Also drops the retired 2.0.1
  * jetonomy_publish_single_armed flag, which ensure_scheduled() used to delete on every scheduling request, and the

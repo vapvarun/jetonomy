@@ -1340,7 +1340,7 @@ class Admin {
 		// blurred screenshot — the widget demonstrates what Pro's analytics
 		// does). Dismissible per user; cached 1h so it costs the dashboard
 		// nothing on repeat views.
-		// jetonomy_pulse_dismissed is the pre-2.0.8 dismiss of this same card; honoured so nobody sees it again.
+		// jetonomy_pulse_dismissed is the pre-2.1.0 dismiss of this same card; honoured so nobody sees it again.
 		$pulse = self::show_pro_promo( 'pulse' ) && ! get_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', true )
 			? $this->weekly_pulse()
 			: null;

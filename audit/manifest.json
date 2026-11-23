@@ -2735,7 +2735,7 @@
       "args": "days (int, default 7)",
       "where": "includes/class-queue.php Queue::prune_history()",
       "consumed_by": null,
-      "audit_notes": "2.0.8: days a completed job in the jetonomy Action Scheduler group is kept before Jetonomy deletes it with its log rows. Only Jetonomy rows; the site-wide action_scheduler_retention_period is never touched. Family naming convention {prefix}_finished_action_retention_days."
+      "audit_notes": "2.1.0: days a completed job in the jetonomy Action Scheduler group is kept before Jetonomy deletes it with its log rows. Only Jetonomy rows; the site-wide action_scheduler_retention_period is never touched. Family naming convention {prefix}_finished_action_retention_days."
     },
     {
       "name": "jetonomy_flag_created",
@@ -3364,7 +3364,7 @@
       "args": "jobs (array hook => interval seconds | array(interval, first_delay))",
       "where": "includes/class-cron.php Cron::ensure_scheduled(); includes/class-queue.php Queue::recurring() adds to it",
       "consumed_by": "jetonomy-pro",
-      "audit_notes": "2.0.8: the one registry of recurring jobs for Free and Pro. Pro extensions register through Queue::recurring(); Pro keeps no scheduler of its own."
+      "audit_notes": "2.1.0: the one registry of recurring jobs for Free and Pro. Pro extensions register through Queue::recurring(); Pro keeps no scheduler of its own."
     },
     {
       "name": "jetonomy_replies_query_args",
@@ -4228,14 +4228,14 @@
     {
       "hook": "jetonomy_trust_evaluation",
       "schedule": "every 12 hours (recurring)",
-      "purpose": "Evaluate trust levels: first slice inline, then one jetonomy_trust_evaluation_batch cursor chain; 2.0.8 reads only members who could reach the next level, so a run with nobody to promote queues no batch",
+      "purpose": "Evaluate trust levels: first slice inline, then one jetonomy_trust_evaluation_batch cursor chain; 2.1.0 reads only members who could reach the next level, so a run with nobody to promote queues no batch",
       "handler": "Cron::evaluate_trust_levels",
       "keep_on_deactivate": false
     },
     {
       "hook": "jetonomy_due_jobs",
       "schedule": "single, armed at the next due time (Cron::arm_due_jobs): next restriction expiry, next owed verification reminder, or an hour out while tier roster rows exist; nothing queued when nothing is due",
-      "purpose": "2.0.8: one job for expired-restriction cleanup, verification reminders and the membership roster backstop, replacing three hourly jobs (jetonomy_cleanup_expired, jetonomy_verification_reminder, jetonomy_reconcile_rosters; their old schedules are cancelled by migration 2.0.8.1)",
+      "purpose": "2.1.0: one job for expired-restriction cleanup, verification reminders and the membership roster backstop, replacing three hourly jobs (jetonomy_cleanup_expired, jetonomy_verification_reminder, jetonomy_reconcile_rosters; their old schedules are cancelled by migration 2.1.0.1)",
       "handler": "Cron::run_due_jobs",
       "keep_on_deactivate": false
     },

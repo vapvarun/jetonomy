@@ -74,7 +74,7 @@ class MembershipRosterReconcileTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The due-time job (2.0.8, replacing the hourly jetonomy_reconcile_rosters) runs the reconcile backstop.
+	 * The due-time job (2.1.0, replacing the hourly jetonomy_reconcile_rosters) runs the reconcile backstop.
 	 */
 	public function test_reconcile_runs_from_the_due_job(): void {
 		new Cron();

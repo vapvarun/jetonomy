@@ -1,6 +1,6 @@
 <?php
 /**
- * The 2.0.8 upgrade leaves no secret in the job tables, our cancelled rows are pruned, and work queued during the
+ * The 2.1.0 upgrade leaves no secret in the job tables, our cancelled rows are pruned, and work queued during the
  * upgrade request becomes an Action Scheduler job rather than a WP-Cron fallback. The upgrade runs once under its
  * lock (a concurrent first request runs no ALTER and queues nothing), stores the version at once, and clears a
  * 12,000-row backlog in bounded background passes.

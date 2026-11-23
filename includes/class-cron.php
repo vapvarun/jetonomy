@@ -53,7 +53,7 @@ class Cron {
 	 */
 	public const DUE_HOOK = 'jetonomy_due_jobs';
 
-	/** The hourly jobs DUE_HOOK replaced (2.0.8); cancelled on upgrade. */
+	/** The hourly jobs DUE_HOOK replaced (2.1.0); cancelled on upgrade. */
 	public const RETIRED_HOOKS = array( 'jetonomy_cleanup_expired', 'jetonomy_verification_reminder', 'jetonomy_reconcile_rosters' );
 
 	/** Keyset cursor (last processed user_id) for the batched trust sweep. */
@@ -146,12 +146,12 @@ class Cron {
 	/**
 	 * Is this a request where recurring schedules should be checked and armed?
 	 *
-	 * @deprecated 2.0.8 Use \Jetonomy\Queue::is_scheduling_request(), the one implementation for Free and Pro.
+	 * @deprecated 2.1.0 Use \Jetonomy\Queue::is_scheduling_request(), the one implementation for Free and Pro.
 	 *
 	 * @return bool
 	 */
 	public static function is_scheduling_request(): bool {
-		_deprecated_function( __METHOD__, '2.0.8', '\\Jetonomy\\Queue::is_scheduling_request()' );
+		_deprecated_function( __METHOD__, '2.1.0', '\\Jetonomy\\Queue::is_scheduling_request()' );
 		return Queue::is_scheduling_request();
 	}
 
@@ -171,7 +171,7 @@ class Cron {
 		 * Recurring jobs of the Jetonomy family, armed here and only here: hook => interval in seconds, or
 		 * array( interval, seconds before the first run ). Pro's extensions add theirs from boot.
 		 *
-		 * @since 2.0.8
+		 * @since 2.1.0
 		 *
 		 * @param array<string,int|array{0:int,1:int}> $jobs Jobs.
 		 */

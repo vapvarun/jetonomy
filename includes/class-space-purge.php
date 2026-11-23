@@ -660,7 +660,7 @@ final class Space_Purge {
 			/**
 			 * Members of a space that is being deleted, before their rows are removed.
 			 *
-			 * @since 2.0.8
+			 * @since 2.1.0
 			 * @param int   $space_id Space being deleted.
 			 * @param int[] $user_ids Up to 500 member ids (ascending); fires again for the next chunk. May repeat if a purge is retried.
 			 */
