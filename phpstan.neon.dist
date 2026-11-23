@@ -21,6 +21,7 @@ parameters:
         # a hand-made /tmp symlink into another Local site, so the config only
         # resolved on one machine and did not survive a reboot.
         - phpstan-stubs/buddypress.php
+        - phpstan-stubs/buddynext.php
     ignoreErrors:
         # Third-party plugin classes not available in CI
         -

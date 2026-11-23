@@ -377,9 +377,14 @@ $crumbs = array(
 							<?php endif; ?>
 							<span class="jt-mod-flag-age">
 								<?php
-								/* translators: 1: a person's display name; 2: human-readable time elapsed. */
 								$jt_by = $jt_issuer ? \Jetonomy\user_display_name( $jt_issuer ) : __( 'System', 'jetonomy' );
-								echo esc_html( '' === $jt_ban_age ? sprintf( __( 'by %s', 'jetonomy' ), $jt_by ) : sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_by, $jt_ban_age ) );
+								echo esc_html(
+									'' === $jt_ban_age
+										/* translators: %s: a person's display name. */
+										? sprintf( __( 'by %s', 'jetonomy' ), $jt_by )
+										/* translators: 1: a person's display name; 2: human-readable time elapsed. */
+										: sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_by, $jt_ban_age )
+								);
 								?>
 							</span>
 						</div>

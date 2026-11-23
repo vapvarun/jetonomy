@@ -526,8 +526,8 @@ class CLI {
 			}
 		}
 
-		$settings   = get_option( 'jetonomy_settings', array() );
-		$notif_defs = $settings['notification_defaults'] ?? array();
+		// The defaults in effect, as the notifier reads them: a type registered after the option was saved has one.
+		$notif_defs = (array) Settings::read( array( 'notification_defaults' ) )['notification_defaults'];
 
 		if ( empty( $template_keys ) ) {
 			$record( 'notification_keys', 'notifications.php $type_labels parseable', false, 'Could not parse template or file missing' );

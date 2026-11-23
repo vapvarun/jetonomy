@@ -244,11 +244,23 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 
 	/** The set-based cancel touches only pending rows of the exact hooks in our group: never another group's rows. */
 	public function test_the_set_based_cancel_touches_only_our_pending_rows_of_the_given_hooks(): void {
+		// Rows other tests committed (user sign-ups queue a gravatar check) are ours too: count them, do not assume none.
+		$before  = count(
+			as_get_scheduled_actions(
+				array(
+					'hook'     => 'jetonomy_gravatar_check',
+					'group'    => Queue::GROUP,
+					'status'   => 'pending',
+					'per_page' => -1,
+				),
+				'ids'
+			)
+		);
 		$ours    = (int) as_enqueue_async_action( 'jetonomy_gravatar_check', array( 1 ), Queue::GROUP );
 		$foreign = (int) as_enqueue_async_action( 'jetonomy_gravatar_check', array( 2 ), 'another-plugin' );
 		$kept    = (int) as_enqueue_async_action( Space_Purge::BATCH_HOOK, array( 'space_id' => 5 ), Queue::GROUP );
 		$other   = (int) as_enqueue_async_action( Cron::DUE_HOOK, array(), Queue::GROUP );
-		$this->assertSame( 1, Queue::cancel_on_deactivate( array( 'jetonomy_gravatar_check', Space_Purge::BATCH_HOOK ) ) );
+		$this->assertSame( $before + 1, Queue::cancel_on_deactivate( array( 'jetonomy_gravatar_check', Space_Purge::BATCH_HOOK ) ) );
 		$this->assertSame( 'canceled', $this->status( $ours ) );
 		$this->assertSame( 'pending', $this->status( $foreign ), 'another group\'s row is never touched' );
 		$this->assertSame( 'pending', $this->status( $kept ), 'KEEP_ON_DEACTIVATE stays pending' );

@@ -257,7 +257,10 @@ if ( ! $cancel_url ) {
 					<input type="checkbox" name="show_online" value="1" <?php checked( ! \Jetonomy\Models\UserProfile::hides_online( $current_user->ID ) ); ?>>
 					<span>
 						<strong><?php esc_html_e( "Show when I'm online", 'jetonomy' ); ?></strong><br>
-						<?php esc_html_e( 'Off: other members never see you online or when you were last active, and you do not see their status either. Moderators and admins can still see when members were last active. Your posts stay visible.', 'jetonomy' ); ?>
+						<?php
+						/* translators: 1: member label, plural, lowercase (e.g. "members"). */
+						echo esc_html( sprintf( __( 'Off: other %1$s never see you online or when you were last active, and you do not see their status either. Moderators and admins can still see when %1$s were last active. Your posts stay visible.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) );
+						?>
 					</span>
 				</label>
 			</div>

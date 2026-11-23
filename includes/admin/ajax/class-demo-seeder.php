@@ -68,9 +68,11 @@ class Demo_Seeder {
 			return new \WP_Error(
 				'jetonomy_demo_real_content',
 				sprintf(
-					/* translators: %s: number of spaces and topics. */
-					_n( 'This community already has %s space or topic of its own. Add the sample content anyway?', 'This community already has %s spaces and topics of its own. Add the sample content anyway?', $real, 'jetonomy' ),
-					number_format_i18n( $real )
+					/* translators: 1: number of spaces and topics. 2: space label, lowercase (e.g. "space" or "spaces"). 3: topic label, lowercase (e.g. "topic" or "topics"). */
+					_n( 'This community already has %1$s %2$s or %3$s of its own. Add the sample content anyway?', 'This community already has %1$s %2$s and %3$s of its own. Add the sample content anyway?', $real, 'jetonomy' ),
+					number_format_i18n( $real ),
+					\Jetonomy\space_label( 1 !== $real, true ),
+					\Jetonomy\jetonomy_label( 'topic', 1 !== $real, true )
 				),
 				array( 'status' => 409 )
 			);

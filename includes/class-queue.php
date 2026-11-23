@@ -392,7 +392,7 @@ final class Queue {
 		$english = '%' . $wpdb->esc_like( 'will not be executed as no callbacks are registered' ) . '%';
 		$like    = static function () use ( $wpdb, $english ): string {
 			/* translators: Action Scheduler's own string, matched as written in its log. */
-			$frag = trim( (string) preg_replace( '/^.*%1\$s/', '', __( 'Scheduled action for %1$s will not be executed as no callbacks are registered.', 'action-scheduler' ) ) ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+			$frag = trim( (string) preg_replace( '/^.*%1[$]s/', '', __( 'Scheduled action for %1$s will not be executed as no callbacks are registered.', 'action-scheduler' ) ) ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 			return mb_strlen( $frag ) >= 10 ? '%' . $wpdb->esc_like( $frag ) . '%' : $english; // Too short to match on its own.
 		};
 		$local   = $like();

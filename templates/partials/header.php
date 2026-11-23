@@ -158,46 +158,46 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 </nav>
 <!-- Mobile bottom tab bar (visible ≤640px only, hidden when BuddyNext provides its own) -->
 <?php if ( ! did_action( 'buddynext_loaded' ) ) : ?>
-<?php
-// The tabs, built as data so the order and the items can be changed with the jetonomy_mobile_tabs filter. 'primary' is the
-// centred accent button; 'menu' marks the tab that opens the Me sheet; 'sheet' names the sheet a link tab opens instead
-// of navigating, unless 'direct' (header.js). Where "New" goes: inside a space that space's composer; elsewhere a
-// "Start a topic in..." sheet of the spaces the member can post in, or that one space's composer when there is only one.
-// On a topic page jetonomy_slug is the TOPIC; the space is jetonomy_space_slug. Every other space route uses jetonomy_slug.
-$jt_slug     = (string) get_query_var( 'post' === $current_route ? 'jetonomy_space_slug' : 'jetonomy_slug', '' );
-$jt_in_space = '' !== $jt_slug && in_array( $current_route, array( 'space', 'new-post', 'post', 'space-members', 'space-feed' ), true );
+	<?php
+	// The tabs, built as data so the order and the items can be changed with the jetonomy_mobile_tabs filter. 'primary' is the
+	// centred accent button; 'menu' marks the tab that opens the Me sheet; 'sheet' names the sheet a link tab opens instead
+	// of navigating, unless 'direct' (header.js). Where "New" goes: inside a space that space's composer; elsewhere a
+	// "Start a topic in..." sheet of the spaces the member can post in, or that one space's composer when there is only one.
+	// On a topic page jetonomy_slug is the TOPIC; the space is jetonomy_space_slug. Every other space route uses jetonomy_slug.
+	$jt_slug     = (string) get_query_var( 'post' === $current_route ? 'jetonomy_space_slug' : 'jetonomy_slug', '' );
+	$jt_in_space = '' !== $jt_slug && in_array( $current_route, array( 'space', 'new-post', 'post', 'space-members', 'space-feed' ), true );
 
-// Spaces the member can start a topic in, most recently joined first. Rendered on every page (not only outside a space)
-// so the sheet still works after a client-side navigation out of a space. Bounded: one indexed query for the member's
-// space ids, then batches of 30 primed in one query each and checked from the request cache, so archived or read-only
-// spaces at the top do not hide an older open one. Up to 30 rows; past 8 the sheet gets a filter box (header.js).
-// ponytail: scans the 300 newest memberships; past that $jt_unscanned keeps "All my spaces" on screen (no one-space
-// shortcut, no "Join one" note), because a space the member can post in may sit beyond the scan.
-$jt_postable  = array();
-$jt_unscanned = false;
-if ( $user_id ) {
-	$jt_member_of = \Jetonomy\Models\SpaceMember::spaces_for_user( $user_id );
-	$jt_unscanned = count( $jt_member_of ) > 300;
-	foreach ( array_chunk( array_slice( $jt_member_of, 0, 300 ), 30 ) as $jt_ids ) {
-		\Jetonomy\Models\Space::prime( $jt_ids );
-		\Jetonomy\Models\SpaceMember::warm_viewer_roles( $user_id, $jt_ids );
-		foreach ( $jt_ids as $jt_sid ) {
-			$jt_sp = \Jetonomy\Models\Space::find( (int) $jt_sid );
-			if ( $jt_sp && true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $jt_sid )
+	// Spaces the member can start a topic in, most recently joined first. Rendered on every page (not only outside a space)
+	// so the sheet still works after a client-side navigation out of a space. Bounded: one indexed query for the member's
+	// space ids, then batches of 30 primed in one query each and checked from the request cache, so archived or read-only
+	// spaces at the top do not hide an older open one. Up to 30 rows; past 8 the sheet gets a filter box (header.js).
+	// ponytail: scans the 300 newest memberships; past that $jt_unscanned keeps "All my spaces" on screen (no one-space
+	// shortcut, no "Join one" note), because a space the member can post in may sit beyond the scan.
+	$jt_postable  = array();
+	$jt_unscanned = false;
+	if ( $user_id ) {
+		$jt_member_of = \Jetonomy\Models\SpaceMember::spaces_for_user( $user_id );
+		$jt_unscanned = count( $jt_member_of ) > 300;
+		foreach ( array_chunk( array_slice( $jt_member_of, 0, 300 ), 30 ) as $jt_ids ) {
+			\Jetonomy\Models\Space::prime( $jt_ids );
+			\Jetonomy\Models\SpaceMember::warm_viewer_roles( $user_id, $jt_ids );
+			foreach ( $jt_ids as $jt_sid ) {
+				$jt_sp = \Jetonomy\Models\Space::find( (int) $jt_sid );
+				if ( $jt_sp && true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $jt_sid )
 				&& \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $jt_sid ) ) {
-				$jt_postable[] = $jt_sp;
+					$jt_postable[] = $jt_sp;
+				}
+			}
+			if ( count( $jt_postable ) >= 30 ) {
+				$jt_postable = array_slice( $jt_postable, 0, 30 );
+				break;
 			}
 		}
-		if ( count( $jt_postable ) >= 30 ) {
-			$jt_postable = array_slice( $jt_postable, 0, 30 );
-			break;
-		}
 	}
-}
-$jt_one_space   = 1 === count( $jt_postable ) && ! $jt_unscanned ? \Jetonomy\route_url( 'new-post', $jt_postable[0]->slug ) : '';
-$jt_new_home    = '' !== $jt_one_space ? $jt_one_space : \Jetonomy\route_url( 'my-spaces' );
-$jt_new_url     = $jt_in_space ? \Jetonomy\route_url( 'new-post', $jt_slug ) : $jt_new_home;
-$jt_mobile_tabs = $user_id
+	$jt_one_space   = 1 === count( $jt_postable ) && ! $jt_unscanned ? \Jetonomy\route_url( 'new-post', $jt_postable[0]->slug ) : '';
+	$jt_new_home    = '' !== $jt_one_space ? $jt_one_space : \Jetonomy\route_url( 'my-spaces' );
+	$jt_new_url     = $jt_in_space ? \Jetonomy\route_url( 'new-post', $jt_slug ) : $jt_new_home;
+	$jt_mobile_tabs = $user_id
 	? array(
 		array(
 			'key'    => 'home',
@@ -266,16 +266,16 @@ $jt_mobile_tabs = $user_id
 		),
 	);
 
-/**
- * The phone bottom bar's tabs, in order. Each is array{key, label, url, icon, active?, badge?, host?, primary?, menu?, sheet?, direct?, login?}.
- * Return a different order or add/remove tabs; the bar is not shown at all when BuddyNext is active.
- *
- * @since 2.1.0
- * @param array[] $jt_mobile_tabs Tabs.
- * @param bool    $logged_in      Whether the viewer is signed in.
- */
-$jt_mobile_tabs = (array) apply_filters( 'jetonomy_mobile_tabs', $jt_mobile_tabs, (bool) $user_id );
-?>
+	/**
+	 * The phone bottom bar's tabs, in order. Each is array{key, label, url, icon, active?, badge?, host?, primary?, menu?, sheet?, direct?, login?}.
+	 * Return a different order or add/remove tabs; the bar is not shown at all when BuddyNext is active.
+	 *
+	 * @since 2.1.0
+	 * @param array[] $jt_mobile_tabs Tabs.
+	 * @param bool    $logged_in      Whether the viewer is signed in.
+	 */
+	$jt_mobile_tabs = (array) apply_filters( 'jetonomy_mobile_tabs', $jt_mobile_tabs, (bool) $user_id );
+	?>
 <nav class="jt-mobile-tabs" aria-label="<?php esc_attr_e( 'Mobile navigation', 'jetonomy' ); ?>"
 	data-jt-base="<?php echo esc_attr( (string) wp_parse_url( $base, PHP_URL_PATH ) ); ?>" data-jt-new-fallback="<?php echo esc_url( $jt_new_home ); ?>">
 	<?php foreach ( $jt_mobile_tabs as $jt_tab ) : ?>

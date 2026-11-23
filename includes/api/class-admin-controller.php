@@ -88,7 +88,7 @@ class Admin_Controller extends Base_Controller {
 							'required'    => true,
 						),
 						'force'   => array(
-							'description' => __( 'True to import even though the community already has its own spaces or topics.', 'jetonomy' ),
+							'description' => __( 'True to import even though the community already has its own spaces or topics.', 'jetonomy' ), // jt-terms-ok: REST schema description for API developers.
 							'type'        => 'boolean',
 							'default'     => false,
 						),

@@ -35,8 +35,8 @@ class Attachment {
 	 * exists, so no COUNT runs over the whole table. Ordered by the primary key, so page one is an index read.
 	 *
 	 * @param array{space_id?:int,mimes?:string[],search?:string} $filters Filters.
-	 * @param int                                                $limit   Rows wanted.
-	 * @param int                                                $offset  Rows to skip.
+	 * @param int                                                 $limit   Rows wanted.
+	 * @param int                                                 $offset  Rows to skip.
 	 * @return object[] Rows: link_id, attachment_id, object_type, object_id, created_at, file_title, mime, space_id, topic_id, topic_title.
 	 */
 	public static function admin_page( array $filters, int $limit, int $offset ): array {

@@ -88,7 +88,12 @@ class Cron {
 		add_action( 'jetonomy_cleanup_media', array( \Jetonomy\Media_Library::class, 'run_scheduled_cleanup' ) );
 		// After activation: re-queue kept jobs that failed with no listener while the plugin was off. wp_loaded, so Pro's
 		// listeners are registered and its kept hooks count too.
-		add_action( 'wp_loaded', array( Queue::class, 'recover_kept_jobs' ) );
+		add_action(
+			'wp_loaded',
+			static function (): void {
+				Queue::recover_kept_jobs(); // Returns the count for tests and CLI; an action listener returns nothing.
+			}
+		);
 		// Core's one-click update deactivates silently (no deactivation or activation hook), so the update itself flags
 		// recovery. Runs with the code that was installed before the update, from the version after this one.
 		add_action(

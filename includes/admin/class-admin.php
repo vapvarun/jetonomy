@@ -389,35 +389,86 @@ class Admin {
 		$replies = \Jetonomy\jetonomy_label( 'reply', true, true );
 		$members = \Jetonomy\jetonomy_label( 'member', true, true );
 		return array(
-			/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). */
-			'reactions'           => array( 'name' => __( 'Emoji Reactions', 'jetonomy' ), 'desc' => sprintf( __( 'Like, love, and celebrate with Slack-style reactions on %1$s and %2$s.', 'jetonomy' ), $topics, $replies ) ),
-			/* translators: %s: member label, plural, lowercase (e.g. "members"). */
-			'private-messaging'   => array( 'name' => __( 'Private Messaging', 'jetonomy' ), 'desc' => sprintf( __( 'One-on-one and group conversations between community %s.', 'jetonomy' ), $members ) ),
-			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			'polls'               => array( 'name' => __( 'Polls', 'jetonomy' ), 'desc' => sprintf( __( 'Create polls within %s for community voting and decision-making.', 'jetonomy' ), $topics ) ),
-			/* translators: 1: the plural space label the site owner configured (e.g. spaces, groups). 2: topic label, lowercase (e.g. "topic"). */
-			'analytics'           => array( 'name' => __( 'Analytics Dashboard', 'jetonomy' ), 'desc' => sprintf( __( 'Engagement graphs, user growth, top %1$s, %2$s trends, and CSV export.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ),
-			'email-digest'        => array( 'name' => __( 'Email Digests', 'jetonomy' ), 'desc' => __( 'Daily and weekly email digests of community activity for subscribed users.', 'jetonomy' ) ),
-			/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
-			'web-push'            => array( 'name' => __( 'Web Push', 'jetonomy' ), 'desc' => sprintf( __( 'Browser push notifications for %s, mentions, and forum events.', 'jetonomy' ), $replies ) ),
-			'webhooks'            => array( 'name' => __( 'Webhooks', 'jetonomy' ), 'desc' => __( 'Fire HTTP POST requests to Zapier, Slack, n8n, or any endpoint on forum events.', 'jetonomy' ) ), // jt-terms-ok: the HTTP method.
-			/* translators: %s: member label, plural (e.g. "Members"). */
-			'reply-by-email'      => array( 'name' => __( 'Reply by Email', 'jetonomy' ), 'desc' => sprintf( __( '%s reply to notifications by email. No login required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ), // jt-terms-ok: Pro add-on name; "reply" is the verb.
-			'custom-badges'       => array( 'name' => __( 'Custom Badges', 'jetonomy' ), 'desc' => __( 'Create and auto-award custom badges based on community activity criteria.', 'jetonomy' ) ),
-			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			'custom-fields'       => array( 'name' => __( 'Custom Fields', 'jetonomy' ), 'desc' => sprintf( __( 'Add custom fields to %s and user profiles: text, select, checkbox, date, and more.', 'jetonomy' ), $topics ) ),
-			'advanced-moderation' => array( 'name' => __( 'Advanced Moderation', 'jetonomy' ), 'desc' => __( 'Auto-moderation rules engine: keyword filters, regex, link limits, and spam scoring.', 'jetonomy' ) ),
-			/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. */
-			'ai'                  => array( 'name' => __( 'AI Assistant', 'jetonomy' ), 'desc' => sprintf( __( 'Spam and toxicity review, summaries and suggested answers for %1$s and %2$s, with the AI provider you choose.', 'jetonomy' ), $topics, $replies ) ),
-			/* translators: %s: member label, plural, lowercase (e.g. "members"). */
-			'anonymous-posting'   => array( 'name' => __( 'Anonymous Posting', 'jetonomy' ), 'desc' => sprintf( __( 'Let %s write without showing their name; only site owners can reveal the author, and every reveal is logged.', 'jetonomy' ), $members ) ),
-			/* translators: 1: topic label, singular, lowercase. 2: the plural space label, lowercase (e.g. "spaces"). */
-			'site-announcements'  => array( 'name' => __( 'Site Announcements', 'jetonomy' ), 'desc' => sprintf( __( 'Feature an important %1$s at the top of every one of your %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( true, true ) ) ),
-			/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. 3: member label, plural, lowercase. */
-			'attachments'         => array( 'name' => __( 'File Attachments', 'jetonomy' ), 'desc' => sprintf( __( 'Attach images and files to %1$s and %2$s; files in a private space are served only to its %3$s.', 'jetonomy' ), $topics, $replies, $members ) ),
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			'seo-pro'             => array( 'name' => __( 'SEO Pro', 'jetonomy' ), 'desc' => sprintf( __( 'Per-%s meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
-			'white-label'         => array( 'name' => __( 'White Label', 'jetonomy' ), 'desc' => __( 'Replace Jetonomy branding: community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ) ),
+			'reactions'           => array(
+				'name' => __( 'Emoji Reactions', 'jetonomy' ),
+				/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). */
+				'desc' => sprintf( __( 'Like, love, and celebrate with Slack-style reactions on %1$s and %2$s.', 'jetonomy' ), $topics, $replies ),
+			),
+			'private-messaging'   => array(
+				'name' => __( 'Private Messaging', 'jetonomy' ),
+				/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+				'desc' => sprintf( __( 'One-on-one and group conversations between community %s.', 'jetonomy' ), $members ),
+			),
+			'polls'               => array(
+				'name' => __( 'Polls', 'jetonomy' ),
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				'desc' => sprintf( __( 'Create polls within %s for community voting and decision-making.', 'jetonomy' ), $topics ),
+			),
+			'analytics'           => array(
+				'name' => __( 'Analytics Dashboard', 'jetonomy' ),
+				/* translators: 1: the plural space label the site owner configured (e.g. spaces, groups). 2: topic label, lowercase (e.g. "topic"). */
+				'desc' => sprintf( __( 'Engagement graphs, user growth, top %1$s, %2$s trends, and CSV export.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			),
+			'email-digest'        => array(
+				'name' => __( 'Email Digests', 'jetonomy' ),
+				'desc' => __( 'Daily and weekly email digests of community activity for subscribed users.', 'jetonomy' ),
+			),
+			'web-push'            => array(
+				'name' => __( 'Web Push', 'jetonomy' ),
+				/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
+				'desc' => sprintf( __( 'Browser push notifications for %s, mentions, and forum events.', 'jetonomy' ), $replies ),
+			),
+			'webhooks'            => array(
+				'name' => __( 'Webhooks', 'jetonomy' ),
+				'desc' => __( 'Fire HTTP POST requests to Zapier, Slack, n8n, or any endpoint on forum events.', 'jetonomy' ), // jt-terms-ok: the HTTP method.
+			),
+			'reply-by-email'      => array(
+				'name' => __( 'Reply by Email', 'jetonomy' ), // jt-terms-ok: Pro add-on name.
+				/* translators: %s: member label, plural (e.g. "Members"). */
+				'desc' => sprintf( __( '%s reply to notifications by email. No login required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ), // jt-terms-ok: "reply" is the verb.
+			),
+			'custom-badges'       => array(
+				'name' => __( 'Custom Badges', 'jetonomy' ),
+				'desc' => __( 'Create and auto-award custom badges based on community activity criteria.', 'jetonomy' ),
+			),
+			'custom-fields'       => array(
+				'name' => __( 'Custom Fields', 'jetonomy' ),
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				'desc' => sprintf( __( 'Add custom fields to %s and user profiles: text, select, checkbox, date, and more.', 'jetonomy' ), $topics ),
+			),
+			'advanced-moderation' => array(
+				'name' => __( 'Advanced Moderation', 'jetonomy' ),
+				'desc' => __( 'Auto-moderation rules engine: keyword filters, regex, link limits, and spam scoring.', 'jetonomy' ),
+			),
+			'ai'                  => array(
+				'name' => __( 'AI Assistant', 'jetonomy' ),
+				/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. */
+				'desc' => sprintf( __( 'Spam and toxicity review, summaries and suggested answers for %1$s and %2$s, with the AI provider you choose.', 'jetonomy' ), $topics, $replies ),
+			),
+			'anonymous-posting'   => array(
+				'name' => __( 'Anonymous Posting', 'jetonomy' ),
+				/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+				'desc' => sprintf( __( 'Let %s write without showing their name; only site owners can reveal the author, and every reveal is logged.', 'jetonomy' ), $members ),
+			),
+			'site-announcements'  => array(
+				'name' => __( 'Site Announcements', 'jetonomy' ),
+				/* translators: 1: topic label, singular, lowercase. 2: the plural space label, lowercase (e.g. "spaces"). */
+				'desc' => sprintf( __( 'Feature an important %1$s at the top of every one of your %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( true, true ) ),
+			),
+			'attachments'         => array(
+				'name' => __( 'File Attachments', 'jetonomy' ),
+				/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. 3: space label, singular, lowercase. 4: member label, plural, lowercase. */
+				'desc' => sprintf( __( 'Attach images and files to %1$s and %2$s; files in a private %3$s are served only to its %4$s.', 'jetonomy' ), $topics, $replies, \Jetonomy\space_label( false, true ), $members ),
+			),
+			'seo-pro'             => array(
+				'name' => __( 'SEO Pro', 'jetonomy' ),
+				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+				'desc' => sprintf( __( 'Per-%s meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			),
+			'white-label'         => array(
+				'name' => __( 'White Label', 'jetonomy' ),
+				'desc' => __( 'Replace Jetonomy branding: community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ),
+			),
 		);
 	}
 

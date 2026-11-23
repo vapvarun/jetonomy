@@ -92,7 +92,8 @@ class Restriction extends Model {
 			if ( null === $target_role ) {
 				return new \WP_Error(
 					'jetonomy_not_space_member',
-					__( 'This person is not a member here.', 'jetonomy' ),
+					/* translators: %s: member label, singular, lowercase (e.g. "member"). */
+					sprintf( __( 'This person is not a %s here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
 					array( 'status' => 404 )
 				);
 			}
@@ -100,7 +101,8 @@ class Restriction extends Model {
 			if ( ! in_array( $target_role, array( 'member', 'viewer' ), true ) || ( $space && (int) $space->author_id === $target_id ) ) {
 				return new \WP_Error(
 					'jetonomy_cannot_ban_space_staff',
-					__( 'A moderator cannot restrict the owner, an admin or a moderator of this space.', 'jetonomy' ),
+					/* translators: %s: space label, singular, lowercase (e.g. "space"). */
+					sprintf( __( 'A moderator cannot restrict the owner, an admin or a moderator of this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					array( 'status' => 403 )
 				);
 			}

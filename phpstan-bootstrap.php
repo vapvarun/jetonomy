@@ -32,6 +32,9 @@ if ( ! defined( 'JETONOMY_URL' ) ) {
 if ( ! defined( 'JETONOMY_BASENAME' ) ) {
 	define( 'JETONOMY_BASENAME', 'jetonomy/jetonomy.php' );
 }
+if ( ! defined( 'JETONOMY_MAX_OFFSET' ) ) {
+	define( 'JETONOMY_MAX_OFFSET', intdiv( PHP_INT_MAX, 2 ) ); // Runtime define: includes/helpers.php.
+}
 
 if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) {
 	define( 'JETONOMY_PRO_VERSION', '1.4.2' );

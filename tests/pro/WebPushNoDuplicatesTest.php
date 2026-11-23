@@ -81,8 +81,16 @@ class WebPushNoDuplicatesTest extends WP_UnitTestCase {
 		$runs = 0;
 		try {
 			$runner = \ActionScheduler_QueueRunner::instance();
+			$store  = \ActionScheduler::store();
+			$hooks  = array( self::CHUNK_HOOK, 'jetonomy_pro_send_push_batch' );
 			while ( $runs < 500 && ( as_has_scheduled_action( self::CHUNK_HOOK ) || as_has_scheduled_action( 'jetonomy_pro_send_push_batch' ) ) ) {
-				$runner->run( 'PHPUnit' );
+				// One runner pass over this test's hooks only, as Action Scheduler's WP-CLI runner claims: past-due rows
+				// other tests left in the shared table would otherwise fill every batch and starve these.
+				$claim = $store->stake_claim( 25, null, $hooks );
+				foreach ( $claim->get_actions() as $action_id ) {
+					$runner->process_action( $action_id, 'PHPUnit' );
+				}
+				$store->release_claim( $claim );
 				// Both requests end (shutdown) after every runner pass.
 				$a->flush_pending();
 				$b->flush_pending();

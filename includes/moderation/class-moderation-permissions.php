@@ -213,7 +213,7 @@ class Moderation_Permissions {
 		if ( 'space_ban' === $type && ( null === $space_id || $space_id <= 0 ) ) {
 			return new \WP_Error(
 				'rest_missing_callback_param',
-				__( 'A space ban needs space_id: the space the member is banned from.', 'jetonomy' ),
+				__( 'A space ban needs space_id: the space the member is banned from.', 'jetonomy' ), // jt-terms-ok: API validation error naming the space_id parameter.
 				array(
 					'status' => 400,
 					'params' => array( 'space_id' ),

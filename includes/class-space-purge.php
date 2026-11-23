@@ -666,7 +666,8 @@ final class Space_Purge {
 			 */
 			do_action( 'jetonomy_space_members_purged', $space_id, $ids );
 			$after = (int) end( $ids );
-		} while ( count( $ids ) >= 500 );
+			$full  = count( $ids ) >= 500;
+		} while ( $full );
 	}
 
 	/**

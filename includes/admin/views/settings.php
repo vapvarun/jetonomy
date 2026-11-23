@@ -512,7 +512,7 @@ $jetonomy_schema = \Jetonomy\Settings::schema();
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Trust Level Thresholds', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Define what users must achieve to advance through trust levels. Higher levels unlock posting privileges and reduce moderation scrutiny.', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( 'A member needs every figure in a row. A figure left at 0 is not checked. Levels go up automatically and never down; you can lower one by hand on the Users screen.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php /* translators: %s: member label, singular, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'A %s needs every figure in a row. A figure left at 0 is not checked. Levels go up automatically and never down; you can lower one by hand on the Users screen.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( "Level 3's moderation powers only apply to roles you gave those capabilities without Moderate (queue, flags, bans). Moderators (Editor by default) are not held to trust levels.", 'jetonomy' ); ?></p>
 				</div>
 				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
@@ -629,12 +629,12 @@ $jetonomy_schema = \Jetonomy\Settings::schema();
 						<td>
 							<label for="jt-moderators-can-ban">
 								<input type="checkbox" id="jt-moderators-can-ban" name="jetonomy_settings[moderators_can_ban]" value="1" aria-describedby="jt-moderators-can-ban-hint" <?php checked( ! empty( $settings['moderators_can_ban'] ) ); ?> <?php disabled( ! current_user_can( 'manage_options' ) ); ?>>
-								<?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( '%s moderators can ban members', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
+								<?php /* translators: 1: space label (e.g. "Space"). 2: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( '%1$s moderators can ban %2$s', 'jetonomy' ), \Jetonomy\space_label(), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 							</label>
 							<p class="description" id="jt-moderators-can-ban-hint">
 								<?php
-								/* translators: 1: space label, lowercase (e.g. "space"). */
-								echo esc_html( sprintf( __( 'When on, a %1$s moderator can ban a member of their own %1$s from that %1$s, and lift those bans. Moderators can never ban a %1$s admin, the %1$s owner, another moderator or a site administrator. Off by default. Only administrators can change this.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+								/* translators: 1: space label, lowercase (e.g. "space"). 2: member label, singular, lowercase (e.g. "member"). */
+								echo esc_html( sprintf( __( 'When on, a %1$s moderator can ban a %2$s of their own %1$s from that %1$s, and lift those bans. Moderators can never ban a %1$s admin, the %1$s owner, another moderator or a site administrator. Off by default. Only administrators can change this.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) );
 								?>
 							</p>
 						</td>
@@ -1232,8 +1232,8 @@ $jetonomy_schema = \Jetonomy\Settings::schema();
 			$jt_widget_meta = array(
 				'trending'     => array(
 					__( 'Trending', 'jetonomy' ),
-					/* translators: %s: topic label, plural, lowercase (e.g. "topics"). */
-					sprintf( __( 'The top-voted %s, in the current space or across the community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+					/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: space label, singular, lowercase (e.g. "space"). */
+					sprintf( __( 'The top-voted %1$s, in the current %2$s or across the community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\space_label( false, true ) ),
 				),
 				'top_members'  => array(
 					/* translators: %s: plural member label. */

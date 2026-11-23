@@ -494,7 +494,7 @@ class Subscription extends Model {
 	public static function find_for( int $user_id, string $object_type, int $object_id ): ?object {
 		$row = static::db()->get_row(
 			static::db()->prepare(
-				"SELECT * FROM " . static::table() . " WHERE user_id = %d AND notify_via <> 'none' AND object_type = %s AND object_id = %d",
+				'SELECT * FROM ' . static::table() . " WHERE user_id = %d AND notify_via <> 'none' AND object_type = %s AND object_id = %d",
 				$user_id,
 				$object_type,
 				$object_id
