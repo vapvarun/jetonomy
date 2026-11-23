@@ -127,11 +127,9 @@ class Admin_Controller extends Base_Controller {
 					'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
 					'args'                => array(
 						'settings' => array(
-							'description'   => __( 'Setting key => new value. Only keys GET /admin/settings lists; at most 50 per request.', 'jetonomy' ),
-							'type'          => 'object',
-							'required'      => true,
-							'minProperties' => 1,
-							'maxProperties' => \Jetonomy\Settings::MAX_KEYS,
+							'description' => __( 'Setting key => new value. Only keys GET /admin/settings lists; at most 50 per request.', 'jetonomy' ),
+							'type'        => 'object',
+							'required'    => true,
 						),
 					),
 				),

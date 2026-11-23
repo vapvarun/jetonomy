@@ -9857,7 +9857,7 @@
         ],
         "summary": "Change site settings",
         "operationId": "adminSettingsUpdate",
-        "description": "Change up to 50 settings through the settings form's sanitizer. Only keys GET /admin/settings lists are accepted: an unknown key, a value outside its schema (enum, pattern, type) or more than 50 keys answers 400 and writes nothing. Out-of-range numbers are clamped. Answers the cleaned values of the keys sent plus notices (for example an address that was refused and kept its old value). Fires jetonomy_settings_updated with source rest. Requires manage_options.",
+        "description": "Change up to 50 settings through the settings form's sanitizer. Only keys GET /admin/settings lists are accepted: an unknown key, a value outside its schema (enum, pattern, type) or more than 50 keys answers 400 and writes nothing. Strings have a length cap (text 1,000, addresses 2,048, custom_css 65,535) and numbers the range the settings screen allows; a value outside either answers 400. Answers the cleaned values of the keys sent plus notices (for example an address that was refused and kept its old value). Fires jetonomy_settings_updated with source rest. Requires manage_options.",
         "requestBody": {
           "required": true,
           "content": {
@@ -12319,38 +12319,50 @@
         "properties": {
           "base_slug": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "community_title": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "terms_url": {
             "type": "string",
+            "maxLength": 2048,
             "description": "Settings section: general."
           },
           "privacy_url": {
             "type": "string",
+            "maxLength": 2048,
             "description": "Settings section: general."
           },
           "support_url": {
             "type": "string",
+            "maxLength": 2048,
             "description": "Settings section: general."
           },
           "posts_per_page": {
             "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
             "description": "Settings section: general."
           },
           "activity_log_retention_days": {
             "type": "integer",
+            "minimum": 1,
+            "maximum": 3650,
             "description": "Settings section: general."
           },
           "replies_per_page": {
             "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
             "description": "Settings section: general."
           },
           "default_space_type": {
             "type": "string",
+            "maxLength": 1000,
             "enum": [
               "forum",
               "qa",
@@ -12374,8 +12386,10 @@
           "frontend_space_creation_roles": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 200
             },
+            "maxItems": 50,
             "description": "Settings section: general."
           },
           "require_email_verification": {
@@ -12392,17 +12406,28 @@
           },
           "trust_thresholds": {
             "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              }
+            },
             "description": "Settings section: trust."
           },
           "trust_level_names": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 200
             },
+            "maxItems": 50,
             "description": "Settings section: trust."
           },
           "member_name_display": {
             "type": "string",
+            "maxLength": 1000,
             "enum": [
               "display_name",
               "handle",
@@ -12412,75 +12437,110 @@
           },
           "rate_limits": {
             "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000
+            },
             "description": "Settings section: rate_limits."
           },
           "reputation_points": {
             "type": "object",
+            "additionalProperties": {
+              "type": [
+                "integer",
+                "string"
+              ],
+              "minimum": -10000,
+              "maximum": 10000,
+              "maxLength": 6
+            },
             "description": "Settings section: reputation."
           },
           "email_from_name": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: email."
           },
           "email_from_email": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: email."
           },
           "email_logo_url": {
             "type": "string",
+            "maxLength": 2048,
             "description": "Settings section: email."
           },
           "email_footer_text": {
             "type": "string",
+            "maxLength": 2000,
             "description": "Settings section: email."
           },
           "verification_reminder_hours": {
             "type": "integer",
+            "minimum": 0,
+            "maximum": 168,
             "description": "Settings section: email."
           },
           "notification_defaults": {
             "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "boolean"
+              }
+            },
             "description": "Settings section: email."
           },
           "accent_color": {
             "type": "string",
+            "maxLength": 1000,
             "pattern": "^#([0-9a-fA-F]{3}){1,2}$",
             "description": "Settings section: appearance."
           },
           "logo_url": {
             "type": "string",
+            "maxLength": 2048,
             "description": "Settings section: appearance."
           },
           "text_color": {
             "type": "string",
+            "maxLength": 1000,
             "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
             "description": "Settings section: appearance."
           },
           "bg_color": {
             "type": "string",
+            "maxLength": 1000,
             "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
             "description": "Settings section: appearance."
           },
           "bg_subtle_color": {
             "type": "string",
+            "maxLength": 1000,
             "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
             "description": "Settings section: appearance."
           },
           "border_color": {
             "type": "string",
+            "maxLength": 1000,
             "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
             "description": "Settings section: appearance."
           },
           "layout_density": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: appearance."
           },
           "custom_css": {
             "type": "string",
+            "maxLength": 65535,
             "description": "Settings section: appearance."
           },
           "container_width": {
             "type": "string",
+            "maxLength": 1000,
             "enum": [
               "theme",
               "full",
@@ -12490,10 +12550,13 @@
           },
           "container_width_custom": {
             "type": "integer",
+            "minimum": 600,
+            "maximum": 2400,
             "description": "Settings section: appearance."
           },
           "padding_preset": {
             "type": "string",
+            "maxLength": 1000,
             "enum": [
               "theme",
               "none",
@@ -12503,6 +12566,7 @@
           },
           "captcha_provider": {
             "type": "string",
+            "maxLength": 1000,
             "enum": [
               "none",
               "recaptcha_v3",
@@ -12512,22 +12576,28 @@
           },
           "captcha_site_key": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: antispam."
           },
           "captcha_secret_key": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Write-only: reads as \"********\" when set; sending \"********\" back keeps the stored value. Settings section: antispam."
           },
           "captcha_score_threshold": {
             "type": "number",
+            "minimum": 0.1,
+            "maximum": 0.9,
             "description": "Settings section: antispam."
           },
           "seo_post_title": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: seo."
           },
           "seo_space_title": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: seo."
           },
           "seo_schema": {
@@ -12548,58 +12618,72 @@
           },
           "seo_twitter_handle": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: seo."
           },
           "seo_default_og_image": {
             "type": "string",
+            "maxLength": 2048,
             "description": "Settings section: seo."
           },
           "fb_app_id": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: seo."
           },
           "fb_app_secret": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Write-only: reads as \"********\" when set; sending \"********\" back keeps the stored value. Settings section: seo."
           },
           "space_label_singular": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "space_label_plural": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "topic_label_singular": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "topic_label_plural": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "reply_label_singular": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "reply_label_plural": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "member_label_singular": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "member_label_plural": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "category_label_singular": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           },
           "category_label_plural": {
             "type": "string",
+            "maxLength": 1000,
             "description": "Settings section: general."
           }
         },

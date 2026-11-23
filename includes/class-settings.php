@@ -30,6 +30,9 @@ class Settings {
 	/** What a secret reads as over REST. Sending it back keeps the stored secret. */
 	public const MASK = '********';
 
+	/** Above this serialized size the option is not autoloaded (core's own threshold, 150 KB). */
+	private const AUTOLOAD_MAX_BYTES = 150000;
+
 	/** How long a write waits for another one to finish before answering 503. */
 	private const LOCK_WAIT_MS = 5000;
 
@@ -85,57 +88,114 @@ class Settings {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function schema(): array {
-		$s = static fn( string $section, string $type, array $extra = array() ): array => array_merge(
+		// Every string has a length cap (text 1,000, addresses 2,048, CSS 64 KB)
+		// and every number the range its sanitizer allows, so a request cannot
+		// store megabytes or a value no screen shows.
+		$s     = static fn( string $section, string $type, array $extra = array() ): array => array_merge(
 			array(
 				'type'    => $type,
 				'section' => $section,
 			),
+			'string' === $type ? array( 'maxLength' => 1000 ) : array(),
 			$extra
+		);
+		$url   = array( 'maxLength' => 2048 );
+		$int   = static fn( int $min, int $max ): array => array(
+			'minimum' => $min,
+			'maximum' => $max,
+		);
+		$texts = array(
+			'items'    => array(
+				'type'      => 'string',
+				'maxLength' => 200,
+			),
+			'maxItems' => 50,
+		);
+		$count = array(
+			'type'    => 'integer',
+			'minimum' => 0,
+			'maximum' => 1000000,
 		);
 
 		$schema = array(
 			'base_slug'                     => $s( 'general', 'string' ),
 			'community_title'               => $s( 'general', 'string' ),
-			'terms_url'                     => $s( 'general', 'string' ),
-			'privacy_url'                   => $s( 'general', 'string' ),
-			'support_url'                   => $s( 'general', 'string' ),
-			'posts_per_page'                => $s( 'general', 'integer' ),
-			'activity_log_retention_days'   => $s( 'general', 'integer' ),
-			'replies_per_page'              => $s( 'general', 'integer' ),
+			'terms_url'                     => $s( 'general', 'string', $url ),
+			'privacy_url'                   => $s( 'general', 'string', $url ),
+			'support_url'                   => $s( 'general', 'string', $url ),
+			'posts_per_page'                => $s( 'general', 'integer', $int( 1, 100 ) ),
+			'activity_log_retention_days'   => $s( 'general', 'integer', $int( 1, 3650 ) ),
+			'replies_per_page'              => $s( 'general', 'integer', $int( 1, 100 ) ),
 			'default_space_type'            => $s( 'general', 'string', array( 'enum' => \Jetonomy\Models\Space::valid_types() ) ),
 			'guest_read'                    => $s( 'general', 'boolean' ),
 			'front_page'                    => $s( 'general', 'boolean' ),
 			'guest_private_teasers'         => $s( 'general', 'boolean' ),
-			'frontend_space_creation_roles' => $s( 'general', 'array', array( 'items' => array( 'type' => 'string' ) ) ),
+			'frontend_space_creation_roles' => $s( 'general', 'array', $texts ),
 			'require_email_verification'    => $s( 'general', 'boolean' ),
 			'allow_space_admin_purge'       => $s( 'general', 'boolean' ),
 			'remove_data_on_uninstall'      => $s( 'general', 'boolean' ),
-			'trust_thresholds'              => $s( 'trust', 'object' ),
-			'trust_level_names'             => $s( 'trust', 'array', array( 'items' => array( 'type' => 'string' ) ) ),
+			'trust_thresholds'              => $s(
+				'trust',
+				'object',
+				array(
+					'additionalProperties' => array(
+						'type'                 => 'object',
+						'additionalProperties' => $count,
+					),
+				)
+			),
+			'trust_level_names'             => $s( 'trust', 'array', $texts ),
 			'member_name_display'           => $s( 'member_name', 'string', array( 'enum' => array( 'display_name', 'handle', 'both' ) ) ),
-			'rate_limits'                   => $s( 'rate_limits', 'object' ),
-			'reputation_points'             => $s( 'reputation', 'object' ),
+			'rate_limits'                   => $s( 'rate_limits', 'object', array( 'additionalProperties' => array_merge( $count, array( 'maximum' => 100000 ) ) ) ),
+			'reputation_points'             => $s(
+				'reputation',
+				'object',
+				array(
+					'additionalProperties' => array(
+						'type'      => array( 'integer', 'string' ),
+						'minimum'   => -10000,
+						'maximum'   => 10000,
+						'maxLength' => 6,
+					),
+				)
+			),
 			'email_from_name'               => $s( 'email', 'string' ),
 			'email_from_email'              => $s( 'email', 'string' ),
-			'email_logo_url'                => $s( 'email', 'string' ),
-			'email_footer_text'             => $s( 'email', 'string' ),
-			'verification_reminder_hours'   => $s( 'email', 'integer' ),
-			'notification_defaults'         => $s( 'email', 'object' ),
+			'email_logo_url'                => $s( 'email', 'string', $url ),
+			'email_footer_text'             => $s( 'email', 'string', array( 'maxLength' => 2000 ) ),
+			'verification_reminder_hours'   => $s( 'email', 'integer', $int( 0, 168 ) ),
+			'notification_defaults'         => $s(
+				'email',
+				'object',
+				array(
+					'additionalProperties' => array(
+						'type'                 => 'object',
+						'additionalProperties' => array( 'type' => 'boolean' ),
+					),
+				)
+			),
 			'accent_color'                  => $s( 'appearance', 'string', array( 'pattern' => '^#([0-9a-fA-F]{3}){1,2}$' ) ),
-			'logo_url'                      => $s( 'appearance', 'string' ),
+			'logo_url'                      => $s( 'appearance', 'string', $url ),
 			'text_color'                    => $s( 'appearance', 'string', array( 'pattern' => '^(#([0-9a-fA-F]{3}){1,2})?$' ) ),
 			'bg_color'                      => $s( 'appearance', 'string', array( 'pattern' => '^(#([0-9a-fA-F]{3}){1,2})?$' ) ),
 			'bg_subtle_color'               => $s( 'appearance', 'string', array( 'pattern' => '^(#([0-9a-fA-F]{3}){1,2})?$' ) ),
 			'border_color'                  => $s( 'appearance', 'string', array( 'pattern' => '^(#([0-9a-fA-F]{3}){1,2})?$' ) ),
 			'layout_density'                => $s( 'appearance', 'string' ),
-			'custom_css'                    => $s( 'appearance', 'string' ),
+			'custom_css'                    => $s( 'appearance', 'string', array( 'maxLength' => 65535 ) ),
 			'container_width'               => $s( 'appearance', 'string', array( 'enum' => array( 'theme', 'full', 'custom' ) ) ),
-			'container_width_custom'        => $s( 'appearance', 'integer' ),
+			'container_width_custom'        => $s( 'appearance', 'integer', $int( 600, 2400 ) ),
 			'padding_preset'                => $s( 'appearance', 'string', array( 'enum' => array( 'theme', 'none', 'comfortable' ) ) ),
 			'captcha_provider'              => $s( 'antispam', 'string', array( 'enum' => array( 'none', 'recaptcha_v3', 'turnstile' ) ) ),
 			'captcha_site_key'              => $s( 'antispam', 'string' ),
 			'captcha_secret_key'            => $s( 'antispam', 'string', array( 'secret' => true ) ),
-			'captcha_score_threshold'       => $s( 'antispam', 'number' ),
+			'captcha_score_threshold'       => $s(
+				'antispam',
+				'number',
+				array(
+					'minimum' => 0.1,
+					'maximum' => 0.9,
+				)
+			),
 			'seo_post_title'                => $s( 'seo', 'string' ),
 			'seo_space_title'               => $s( 'seo', 'string' ),
 			'seo_schema'                    => $s( 'seo', 'boolean' ),
@@ -143,7 +203,7 @@ class Settings {
 			'seo_noindex_profiles'          => $s( 'seo', 'boolean' ),
 			'seo_noindex_search'            => $s( 'seo', 'boolean' ),
 			'seo_twitter_handle'            => $s( 'seo', 'string' ),
-			'seo_default_og_image'          => $s( 'seo', 'string' ),
+			'seo_default_og_image'          => $s( 'seo', 'string', $url ),
 			'fb_app_id'                     => $s( 'seo', 'string' ),
 			'fb_app_secret'                 => $s( 'seo', 'string', array( 'secret' => true ) ),
 		);
@@ -226,6 +286,18 @@ class Settings {
 			if ( ! empty( $schema[ $key ]['secret'] ) && self::MASK === $value ) {
 				unset( $patch[ $key ] );
 				continue;
+			}
+			// Anything else made only of asterisks is a mangled mask, not a secret.
+			if ( ! empty( $schema[ $key ]['secret'] ) && is_string( $value ) && '' !== $value && '' === trim( $value, '*' ) ) {
+				return new \WP_Error(
+					'rest_invalid_param',
+					/* translators: 1: setting key, 2: the mask. */
+					sprintf( __( '%1$s: send the real secret, or exactly %2$s to keep the stored one.', 'jetonomy' ), (string) $key, self::MASK ),
+					array(
+						'status' => 400,
+						'key'    => (string) $key,
+					)
+				);
 			}
 			$valid = rest_validate_value_from_schema( $value, array_diff_key( $schema[ $key ], array_flip( array( 'section', 'secret' ) ) ), (string) $key );
 			if ( is_wp_error( $valid ) ) {
@@ -400,6 +472,10 @@ class Settings {
 	 * @param mixed $value     New value.
 	 */
 	public static function announce( $old_value, $value ): void {
+		// A large option (custom CSS, mostly) must not load on every request, and
+		// one shrunk back must load again: decide by size on every write.
+		wp_set_option_autoload( self::OPTION, strlen( (string) maybe_serialize( $value ) ) <= self::AUTOLOAD_MAX_BYTES );
+
 		$old     = self::$baseline ?? ( is_array( $old_value ) ? $old_value : array() );
 		$new     = is_array( $value ) ? $value : array();
 		$changed = array();

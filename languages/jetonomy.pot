@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T04:29:29+00:00\n"
+"POT-Creation-Date: 2026-11-23T04:31:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: jetonomy\n"
@@ -2389,12 +2389,12 @@ msgid "Auto-moderate with keyword filters, regex patterns, and spam scoring. Con
 msgstr ""
 
 #: includes/admin/views/dashboard.php:29
-#: includes/api/class-admin-controller.php:188
+#: includes/api/class-admin-controller.php:186
 msgid "Demo data imported."
 msgstr ""
 
 #: includes/admin/views/dashboard.php:30
-#: includes/api/class-admin-controller.php:203
+#: includes/api/class-admin-controller.php:201
 msgid "All demo data has been removed."
 msgstr ""
 
@@ -3147,7 +3147,7 @@ msgstr ""
 #: includes/admin/views/settings.php:162
 #: includes/class-blocks.php:612
 #: includes/class-nav-menus.php:96
-#: includes/class-settings.php:501
+#: includes/class-settings.php:586
 #: includes/functions.php:29
 #: includes/functions.php:39
 #: includes/integrations/class-fluent-community.php:1035
@@ -3159,7 +3159,7 @@ msgid "Displayed as the main heading on the community home page."
 msgstr ""
 
 #: includes/admin/views/settings.php:167
-#: includes/class-settings.php:503
+#: includes/class-settings.php:588
 msgid "Terms of Service URL"
 msgstr ""
 
@@ -3170,7 +3170,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty if you hav
 msgstr ""
 
 #: includes/admin/views/settings.php:174
-#: includes/class-settings.php:504
+#: includes/class-settings.php:589
 msgid "Privacy Policy URL"
 msgstr ""
 
@@ -3181,7 +3181,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty to use you
 msgstr ""
 
 #: includes/admin/views/settings.php:181
-#: includes/class-settings.php:505
+#: includes/class-settings.php:590
 msgid "Support URL"
 msgstr ""
 
@@ -3835,7 +3835,7 @@ msgid "From Email"
 msgstr ""
 
 #: includes/admin/views/settings.php:821
-#: includes/class-settings.php:659
+#: includes/class-settings.php:744
 msgid "Email Logo"
 msgstr ""
 
@@ -4034,7 +4034,7 @@ msgid "Your community logo. Shown in the mobile app (login + header) and anywher
 msgstr ""
 
 #: includes/admin/views/settings.php:1071
-#: includes/class-settings.php:685
+#: includes/class-settings.php:770
 msgid "Logo URL"
 msgstr ""
 
@@ -4243,7 +4243,7 @@ msgid "Site handle emitted as twitter:site on every public route. Leave blank to
 msgstr ""
 
 #: includes/admin/views/settings.php:1296
-#: includes/class-settings.php:731
+#: includes/class-settings.php:816
 msgid "Default share image"
 msgstr ""
 
@@ -5677,19 +5677,19 @@ msgstr ""
 msgid "Setting key => new value. Only keys GET /admin/settings lists; at most 50 per request."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:181
+#: includes/api/class-admin-controller.php:179
 msgid "Send confirm=true to import demo data."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:197
+#: includes/api/class-admin-controller.php:195
 msgid "Send confirm=true to remove the demo data."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:200
+#: includes/api/class-admin-controller.php:198
 msgid "No demo data found to clean up."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:240
+#: includes/api/class-admin-controller.php:238
 msgid "At least one user_id is required."
 msgstr ""
 
@@ -7025,34 +7025,40 @@ msgstr ""
 msgid "Jetonomy: %1$s and %2$s anonymized. Personal data deleted."
 msgstr ""
 
-#: includes/class-settings.php:204
+#: includes/class-settings.php:264
 msgid "Send at least one setting."
 msgstr ""
 
 #. translators: %d: the most settings one request may change.
-#: includes/class-settings.php:208
+#: includes/class-settings.php:268
 #, php-format
 msgid "Change at most %d settings in one request."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:218
+#: includes/class-settings.php:278
 #, php-format
 msgid "%s is not a setting that can be changed here."
 msgstr ""
 
-#: includes/class-settings.php:251
+#. translators: 1: setting key, 2: the mask.
+#: includes/class-settings.php:295
+#, php-format
+msgid "%1$s: send the real secret, or exactly %2$s to keep the stored one."
+msgstr ""
+
+#: includes/class-settings.php:323
 msgid "Another settings change is being saved. Try again in a moment."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:319
+#: includes/class-settings.php:391
 #, php-format
 msgid "%s was not changed: the value was refused, or changing it needs an administrator."
 msgstr ""
 
 #. translators: %s: settings field label.
-#: includes/class-settings.php:460
+#: includes/class-settings.php:545
 #, php-format
 msgid "%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept."
 msgstr ""

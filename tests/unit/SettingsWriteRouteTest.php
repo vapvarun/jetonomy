@@ -66,7 +66,7 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 		$response = $this->post(
 			array(
 				'accent_color'           => '#ABCDEF',
-				'container_width_custom' => 99999,
+				'container_width_custom' => 1320,
 				'seo_post_title'         => '<b>x</b> {post_title}',
 			),
 			$this->admin
@@ -76,10 +76,10 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 		$data   = $response->get_data();
 		$stored = get_option( 'jetonomy_settings' );
 		$this->assertSame( '#ABCDEF', $stored['accent_color'] );
-		$this->assertSame( 2400, $stored['container_width_custom'], 'Out-of-range number is clamped, not stored raw.' );
+		$this->assertSame( 1320, $stored['container_width_custom'] );
 		$this->assertSame( 'x {post_title}', $stored['seo_post_title'] );
 		$this->assertSame( '#ABCDEF', $data['settings']['accent_color'] );
-		$this->assertSame( 2400, $data['settings']['container_width_custom'] );
+		$this->assertSame( 1320, $data['settings']['container_width_custom'] );
 		// Same section, not sent: kept.
 		$this->assertSame( '.a{color:red}', $stored['custom_css'] );
 		$this->assertSame( 'turnstile', $stored['captcha_provider'] );
@@ -115,7 +115,9 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 			$many[ $key ] = '';
 		}
 		$this->assertCount( Settings::MAX_KEYS + 1, $many );
-		$this->assertSame( 400, $this->post( $many, $this->admin )->get_status() );
+		$response = $this->post( $many, $this->admin );
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'jetonomy_settings_too_many', $response->get_data()['code'] );
 	}
 
 	public function test_secrets_are_never_echoed_and_the_mask_keeps_the_stored_one(): void {
@@ -233,6 +235,30 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 		$this->assertSame( array( 'jetonomy_invalid_terms_url' ), array_column( $data['notices'], 'code' ), 'One notice per refusal.' );
 		$data = $this->post( array( 'seo_twitter_handle' => 'abc' ), $this->admin )->get_data();
 		$this->assertSame( array(), $data['notices'], 'A cleaned value that was stored is not a refusal.' );
+	}
+
+	public function test_sizes_and_ranges_are_capped_and_a_large_option_is_not_autoloaded(): void {
+		$before = get_option( 'jetonomy_settings' );
+		foreach ( array(
+			array( 'custom_css' => str_repeat( 'a', 65536 ) ),
+			array( 'community_title' => str_repeat( 'a', 1001 ) ),
+			array( 'terms_url' => 'https://example.com/' . str_repeat( 'a', 2048 ) ),
+			array( 'rate_limits' => array( 'posts' => 1e15 ) ),
+			array( 'container_width_custom' => 99999 ),
+			array( 'trust_thresholds' => array( 1 => array( 'posts' => -1 ) ) ),
+			array( 'captcha_secret_key' => '*******' ), // A mangled mask is not a secret.
+		) as $patch ) {
+			$this->assertSame( 400, $this->post( $patch, $this->admin )->get_status(), (string) key( $patch ) );
+		}
+		$this->assertSame( $before, get_option( 'jetonomy_settings' ) );
+
+		global $wpdb;
+		$autoload = static fn(): string => (string) $wpdb->get_var( "SELECT autoload FROM {$wpdb->options} WHERE option_name = 'jetonomy_settings'" );
+		// The form has no cap on CSS; whatever the size, the flag follows it.
+		update_option( 'jetonomy_settings', array_merge( $before, array( 'custom_css' => str_repeat( 'a', 200000 ) ) ) );
+		$this->assertContains( $autoload(), array( 'off', 'no' ), 'A 200 KB option is autoloaded.' );
+		update_option( 'jetonomy_settings', $before );
+		$this->assertContains( $autoload(), array( 'on', 'yes' ), 'The option stayed off autoload after shrinking.' );
 	}
 
 	/**
