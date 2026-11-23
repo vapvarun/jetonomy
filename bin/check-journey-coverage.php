@@ -14,6 +14,11 @@
  * docs/qa/journey-exempt.txt (`glob - reason`, Pro globs prefixed `pro:`).
  * Covers entries for Pro files use the same `pro:` prefix.
  *
+ * Run it from a git clone of Jetonomy with the jetonomy-pro clone beside it
+ * (../jetonomy-pro): it lists shipped files with `git ls-files` and exits 1
+ * outside a git checkout, and bin/ is not in a `git archive` or release zip, so
+ * an extracted tree cannot run it. Without the Pro sibling it checks Free only.
+ *
  * Usage:
  *   php bin/check-journey-coverage.php           # exit 1 while any file is unclaimed
  *   php bin/check-journey-coverage.php --list    # also print every unclaimed file
