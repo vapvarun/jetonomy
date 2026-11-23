@@ -4,7 +4,8 @@
  * runner requests (A runs chunks 1, 3, 5, 7; B runs 2, 4, 6, 8). Each request used to queue one push cursor job at
  * shutdown from the lowest to the highest notification id it saw, so A's range covered B's rows and both jobs sent
  * them (QA: 250 of 2,000 tokens twice). The push now flushes after every Action Scheduler action, so each job covers
- * one chunk. Driven through the real queue runner with a slow provider (40 ms per send, 2 s budget per run).
+ * one chunk. Driven through the real queue runner with a slow provider (40 ms per send, 2 s budget per run); 150 of
+ * the 2,000 members have 6 devices, so time boxes stop mid-member and the continuation must resume at the next device.
  *
  * @package Jetonomy\Tests\Pro
  */
@@ -18,7 +19,7 @@ class WebPushNoDuplicatesTest extends WP_UnitTestCase {
 
 	private const CHUNK_HOOK = 'jetonomy_test_push_chunk';
 
-	public function test_a_push_written_by_two_runner_requests_reaches_each_of_2000_tokens_once(): void {
+	public function test_a_push_written_by_two_runner_requests_reaches_each_of_2750_tokens_once(): void {
 		if ( ! defined( 'JETONOMY_PRO_VERSION' ) || ! class_exists( 'ActionScheduler_QueueRunner' ) ) {
 			$this->markTestSkipped( 'Jetonomy Pro or Action Scheduler is not active.' );
 		}
@@ -39,7 +40,14 @@ class WebPushNoDuplicatesTest extends WP_UnitTestCase {
 		for ( $i = 0; $i < 2000; $i++ ) {
 			$tokens[] = 'ExponentPushToken[dup' . $i . ']';
 			$device->invoke( $a, 500000 + $i, end( $tokens ), 'ios', 'Phone' ); // No user row is read on this path.
+			if ( $i < 300 && 1 === $i % 2 ) { // 150 members with 5 more devices each: a time box can stop mid-member.
+				for ( $d = 0; $d < 5; $d++ ) {
+					$tokens[] = 'ExponentPushToken[dup' . $i . 'x' . $d . ']';
+					$device->invoke( $a, 500000 + $i, end( $tokens ), 'ios', 'Tablet ' . $d );
+				}
+			}
 		}
+		$this->assertCount( 2750, $tokens );
 		// Each chunk is one Action Scheduler action, written by "request" A or B (the extension instance holds the
 		// request's collected pushes, as it does in a live runner request).
 		$requests = array( 'a' => $a, 'b' => $b );
@@ -93,6 +101,6 @@ class WebPushNoDuplicatesTest extends WP_UnitTestCase {
 		$this->assertSame( 0, count( $twice ), count( $twice ) . ' tokens were pushed twice' );
 		sort( $sent );
 		sort( $tokens );
-		$this->assertSame( $tokens, $sent, 'every token got the push' );
+		$this->assertSame( $tokens, $sent, 'every token got the push: 0 missing' );
 	}
 }
