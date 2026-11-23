@@ -30,7 +30,7 @@ foreach ( array( 'includes', 'tests' ) as $dir ) {
 			continue;
 		}
 		foreach ( file( $f->getPathname() ) as $n => $line ) {
-			if ( str_contains( $line, 'setAccessible(' ) ) {
+			if ( preg_match( '/setaccessible\s*\(/i', $line ) ) { // Any spacing or case: `setAccessible (true)` is the same call.
 				$found[] = substr( $f->getPathname(), strlen( $root ) + 1 ) . ':' . ( $n + 1 ) . ' setAccessible() (no-op since PHP 8.1, deprecated in 8.5)';
 			}
 		}
