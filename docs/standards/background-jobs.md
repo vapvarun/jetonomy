@@ -325,7 +325,10 @@ backlog is cleared over the following days. Our own failed rows are kept 90 days
 the same way (Action Scheduler 4.0 does this itself; 3.x never purges failed rows). Pending rows are kept until
 uninstall. The Pro upgrade runs in one request under core's upgrader lock: it updates the extension tables, queues
 `jetonomy_pro_upgrade_jobs` with `async_once` (a durable WP-Cron event when Action Scheduler's store is not ready)
-and sets the recovery flag, then stores the version, so a request that dies in between leaves the job. That job is
+and sets the recovery flag, then stores the version, so a request that dies in between leaves the job. A request
+killed mid-upgrade holds the lock for its full 10 minutes (`WP_Upgrader::create_lock( ..., 10 * MINUTE_IN_SECONDS )`),
+so the version is stored only after the lock expires and the next request runs the upgrade again; the conversion
+job does not wait for the lock and runs meanwhile. That job is
 a background job that converts the waiting
 old jobs and then cancels and deletes every row of the retired hooks (the 2.0.7 webhook rows held the URL and
 secret), re-queueing itself while either remains. A job whose hook was retired keeps its listener when its

@@ -84,7 +84,9 @@ Code examples for each are in [Background Jobs](./30-background-jobs.md).
   days, for at most 10 seconds and 10,000 rows per status a day (50 runs of 200); a larger backlog is cleared over
   the following days. Other plugins' jobs and Action Scheduler's site-wide retention are not touched.
 - The Pro upgrade runs in one request at a time under core's upgrader lock: it updates the extension tables, queues
-  the job conversion (a background job, never on a visitor's page view), then stores the new version.
+  the job conversion (a background job, never on a visitor's page view), then stores the new version. If that
+  request is killed midway, the lock stays held for 10 minutes, so the new version is stored only after it expires;
+  the conversion job does not wait for the lock.
 - A web push run sends for about 15 seconds, then queues itself from the last member it fully sent
   (filter `jetonomy_pro_push_send_seconds`). Each push request waits at most 5 seconds
   (`Jetonomy_Pro\Extension::REMOTE_TIMEOUT`, was 15). Webhook deliveries still wait 15 seconds (new filter
