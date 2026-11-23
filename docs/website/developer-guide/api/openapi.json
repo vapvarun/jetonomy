@@ -9920,6 +9920,9 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "503": {
+            "description": "Another settings write held the lock for 5 seconds (jetonomy_settings_busy); nothing was saved. Retry."
           }
         }
       }

@@ -30,6 +30,9 @@ class Settings {
 	/** What a secret reads as over REST. Sending it back keeps the stored secret. */
 	public const MASK = '********';
 
+	/** How long a write waits for another one to finish before answering 503. */
+	private const LOCK_WAIT_MS = 5000;
+
 	/**
 	 * Notices the last sanitize() raised (a refused address, for example).
 	 *
@@ -237,6 +240,40 @@ class Settings {
 			}
 		}
 
+		// One writer at a time: two requests that each read the option and save
+		// their change would otherwise drop each other's keys.
+		if ( ! class_exists( 'WP_Upgrader' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		}
+		$waited = 0;
+		while ( ! \WP_Upgrader::create_lock( self::OPTION, 10 ) ) {
+			if ( $waited >= self::LOCK_WAIT_MS ) {
+				return new \WP_Error( 'jetonomy_settings_busy', __( 'Another settings change is being saved. Try again in a moment.', 'jetonomy' ), array( 'status' => 503 ) );
+			}
+			usleep( 100000 );
+			$waited += 100;
+		}
+		try {
+			return self::write_locked( $patch, $source, $schema, $sent );
+		} finally {
+			\WP_Upgrader::release_lock( self::OPTION );
+		}
+	}
+
+	/**
+	 * The read-modify-write of write(), run while holding the settings lock.
+	 *
+	 * @param array<string, mixed>                $patch  Validated key => new value.
+	 * @param string                              $source 'rest' or 'cli'.
+	 * @param array<string, array<string, mixed>> $schema Settings::schema().
+	 * @param string[]                            $sent   Keys the caller sent.
+	 * @return array{settings: array<string, mixed>, notices: array<int, array{code: string, message: string}>}
+	 */
+	private static function write_locked( array $patch, string $source, array $schema, array $sent ): array {
+		// Read what the last writer saved, not this request's cached copy.
+		wp_cache_delete( self::OPTION, 'options' );
+		wp_cache_delete( 'alloptions', 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
 		$stored   = get_option( self::OPTION, array() );
 		$stored   = is_array( $stored ) ? $stored : array();
 		$sections = self::sections();

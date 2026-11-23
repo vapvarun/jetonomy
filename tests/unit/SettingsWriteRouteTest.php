@@ -194,6 +194,38 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 		$this->assertFalse( get_option( 'jetonomy_settings' )['seo_schema'] );
 	}
 
+	public function test_a_write_waits_for_the_lock_and_answers_503_when_it_stays_taken(): void {
+		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		$this->assertTrue( \WP_Upgrader::create_lock( 'jetonomy_settings', 60 ) );
+		$response = $this->post( array( 'accent_color' => '#555555' ), $this->admin );
+		\WP_Upgrader::release_lock( 'jetonomy_settings' );
+
+		$this->assertSame( 503, $response->get_status() );
+		$this->assertSame( 'jetonomy_settings_busy', $response->get_data()['code'] );
+		$this->assertSame( '#0073aa', get_option( 'jetonomy_settings' )['accent_color'] );
+
+		// The lock is released after every write, so writes in a row all land.
+		$this->assertSame( 200, $this->post( array( 'accent_color' => '#555555' ), $this->admin )->get_status() );
+		$this->assertSame( 200, $this->post( array( 'custom_css' => '.b{}' ), $this->admin )->get_status() );
+		$this->assertFalse( get_option( 'jetonomy_settings.lock' ) );
+	}
+
+	public function test_a_write_reads_what_another_request_saved_meanwhile(): void {
+		get_option( 'jetonomy_settings' ); // Primes this request's cache.
+		// Another request saves directly in the table, behind this request's cache.
+		global $wpdb;
+		$other                 = get_option( 'jetonomy_settings' );
+		$other['custom_css']   = '.other{}';
+		$wpdb->update( $wpdb->options, array( 'option_value' => maybe_serialize( $other ) ), array( 'option_name' => 'jetonomy_settings' ) );
+
+		$this->post( array( 'accent_color' => '#666666' ), $this->admin );
+		wp_cache_delete( 'alloptions', 'options' );
+		wp_cache_delete( 'jetonomy_settings', 'options' );
+		$stored = get_option( 'jetonomy_settings' );
+		$this->assertSame( '.other{}', $stored['custom_css'], 'The other request\'s change was lost.' );
+		$this->assertSame( '#666666', $stored['accent_color'] );
+	}
+
 	/**
 	 * Writing a section fills its untouched keys from the stored values, so each
 	 * key's sanitizer must give back what it stored. Proven for every key the
