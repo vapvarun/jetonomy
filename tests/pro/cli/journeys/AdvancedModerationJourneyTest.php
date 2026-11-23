@@ -407,4 +407,11 @@ class AdvancedModerationJourneyTest extends WP_UnitTestCase {
 		$this->assertFalse( $miss->data['matched'] );
 		$this->assertNull( $miss->data['first_match'] );
 	}
+
+	public function test_enabled_string_false_creates_a_disabled_rule_and_a_non_boolean_is_refused(): void {
+		$off = $this->make_rule( array( 'enabled' => 'false' ) );
+		$this->assertTrue( $off->is_success(), implode( '; ', $off->errors ) );
+		$this->assertFalse( (bool) $off->data['is_active'] );
+		$this->assertFalse( $this->make_rule( array( 'enabled' => 'maybe' ) )->is_success() );
+	}
 }

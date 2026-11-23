@@ -9826,7 +9826,7 @@
         ],
         "summary": "Read site settings",
         "operationId": "adminSettingsGet",
-        "description": "Every setting the API can change, secrets masked. Requires manage_options (stricter than the settings form, which a jetonomy_manage_settings delegate can save).",
+        "description": "Every setting the API can change, secrets masked. Requires manage_options (stricter than the settings form, which a jetonomy_manage_settings delegate can save). Returns more keys (64 today) than one POST accepts (50): send back only the keys you change, or split a full copy into two POSTs.",
         "responses": {
           "200": {
             "description": "Success",
@@ -9857,7 +9857,7 @@
         ],
         "summary": "Change site settings",
         "operationId": "adminSettingsUpdate",
-        "description": "Change up to 50 settings through the settings form's sanitizer. Only keys GET /admin/settings lists are accepted: an unknown key, a value outside its schema (enum, pattern, type) or more than 50 keys answers 400 and writes nothing. Strings have a length cap (text 1,000, addresses 2,048, custom_css 65,535) and numbers the range the settings screen allows; a value outside either answers 400. Answers the cleaned values of the keys sent plus notices (for example an address that was refused and kept its old value). Fires jetonomy_settings_updated with source rest. Requires manage_options.",
+        "description": "Change up to 50 settings through the settings form's sanitizer. Only keys GET /admin/settings lists are accepted: an unknown key, a value outside its schema (enum, pattern, type) or more than 50 keys answers 400 and writes nothing. Strings have a length cap (text 1,000, addresses 2,048, custom_css 65,535) and numbers the range the settings screen allows; a value outside either answers 400. On/off values take true/false, 1/0, \"1\"/\"0\" or \"true\"/\"false\" in any letter case. A number takes a JSON number or a string of digits with an optional minus; \"abc\", \"5abc\", \"0x1A\" or \"false\" answers 400. In reputation_points an empty string puts that action back on its default. Answers the cleaned values of the keys sent plus notices (for example an address that was refused and kept its old value). Fires jetonomy_settings_updated with source rest. Requires manage_options.",
         "requestBody": {
           "required": true,
           "content": {

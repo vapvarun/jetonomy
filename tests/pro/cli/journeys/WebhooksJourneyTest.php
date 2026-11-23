@@ -36,6 +36,13 @@ class WebhooksJourneyTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 
+		// Pro loads its journeys only under WP-CLI; include the file so the tests run instead of skipping.
+		if ( ! class_exists( Webhooks_Journey::class ) ) {
+			$path = dirname( __DIR__, 5 ) . '/jetonomy-pro/includes/cli/journeys/class-webhooks-journey.php';
+			if ( file_exists( $path ) ) {
+				require_once $path;
+			}
+		}
 		if ( ! class_exists( Webhooks_Journey::class ) || ! class_exists( \Jetonomy_Pro::class ) ) {
 			$this->markTestSkipped( 'Jetonomy Pro is not loaded — cannot exercise Webhooks_Journey.' );
 		}
@@ -409,5 +416,21 @@ class WebhooksJourneyTest extends WP_UnitTestCase {
 		$this->assertContains( 'reply.created', $events );
 		$this->assertContains( 'user.registered', $events );
 		$this->assertContains( 'flag.created', $events );
+	}
+
+	public function test_string_false_flags_are_false_and_a_non_boolean_is_refused(): void {
+		global $wpdb;
+		$created = $this->create_fixture(
+			array(
+				'enabled'         => 'false',
+				'include_private' => 'false',
+			)
+		);
+		$this->assertTrue( $created->is_success(), implode( '; ', $created->errors ) );
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT is_active, include_private FROM {$wpdb->prefix}jt_pro_webhooks WHERE id = %d", (int) $created->data['webhook_id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$this->assertSame( array( '0', '0' ), array( (string) $row->is_active, (string) $row->include_private ) );
+
+		$this->assertFalse( $this->create_fixture( array( 'enabled' => 'maybe' ) )->is_success() );
+		$this->assertFalse( $this->journey->update_webhook( (int) $created->data['webhook_id'], array( 'include_private' => 'yes please' ) )->is_success() );
 	}
 }

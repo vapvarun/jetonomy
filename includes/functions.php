@@ -1975,3 +1975,52 @@ function external_registration_url(): string {
 	 */
 	return (string) apply_filters( 'jetonomy_external_registration_url', $url );
 }
+
+/**
+ * Read a yes/no value strictly: true/false, 1/0, or the strings true/false, 1/0,
+ * yes/no, on/off in any case. Anything else answers null, so a caller refuses it
+ * instead of guessing ("false" is a non-empty string, which a cast reads as true).
+ *
+ * @since 2.1.0
+ *
+ * @param mixed $raw Value from a CLI flag or a loosely typed input.
+ * @return bool|null
+ */
+function strict_bool( $raw ): ?bool {
+	if ( is_bool( $raw ) ) {
+		return $raw;
+	}
+	if ( 1 === $raw || 0 === $raw ) {
+		return 1 === $raw;
+	}
+	if ( is_string( $raw ) ) {
+		$value = strtolower( trim( $raw ) );
+		if ( in_array( $value, array( '1', 'true', 'yes', 'on' ), true ) ) {
+			return true;
+		}
+		if ( in_array( $value, array( '0', 'false', 'no', 'off' ), true ) ) {
+			return false;
+		}
+	}
+	return null;
+}
+
+/**
+ * Read a whole number strictly: an int, or a string of digits with an optional
+ * minus sign. Anything else ("abc", "5abc", "0x1A", "1.5", "") answers null, where
+ * a cast would have read 0 or 5.
+ *
+ * @since 2.1.0
+ *
+ * @param mixed $raw Value from a CLI argument or a form field.
+ * @return int|null
+ */
+function strict_int( $raw ): ?int {
+	if ( is_int( $raw ) ) {
+		return $raw;
+	}
+	if ( is_string( $raw ) && preg_match( '/^\s*-?[0-9]{1,18}\s*$/', $raw ) ) {
+		return (int) $raw;
+	}
+	return null;
+}

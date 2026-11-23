@@ -208,10 +208,6 @@ final class Moderation_Journey {
 				sprintf( 'type must be one of: %s.', implode( ', ', self::BAN_TYPES ) )
 			);
 		}
-		if ( 'space_ban' === $type && ( null === $space_id || $space_id <= 0 ) ) {
-			return Journey_Result::fail( 'space_id is required and must be positive for space_ban.' );
-		}
-
 		// Restriction::ban() answers a refusal with 0; ask the same checks as REST
 		// first (issuer authority incl. the moderators_can_ban toggle, then the
 		// target rules for this space) so the operator gets the real code and reason.

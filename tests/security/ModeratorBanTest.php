@@ -288,5 +288,26 @@ class ModeratorBanTest extends WP_UnitTestCase {
 		$this->assertSame( 'moderator', SpaceMember::get_role( $this->space, $this->peer_mod ) );
 		$this->assertSame( $before, $wpdb->num_queries );
 	}
-}
 
+	public function test_a_space_ban_without_space_id_is_a_400_naming_space_id_for_every_entry_point(): void {
+		$admin    = $this->user( 'administrator' );
+		$site_mod = $this->user();
+		get_userdata( $site_mod )->add_cap( 'jetonomy_moderate' );
+		foreach ( array( $admin, $site_mod ) as $as ) {
+			wp_set_current_user( $as );
+			$request = new WP_REST_Request( 'POST', '/jetonomy/v1/moderation/ban' );
+			$request->set_body_params(
+				array(
+					'user_id' => $this->member,
+					'type'    => 'space_ban',
+				)
+			);
+			$res = $this->server->dispatch( $request );
+			$this->assertSame( 400, $res->get_status() );
+			$this->assertSame( 'rest_missing_callback_param', $this->code( $res ) );
+			$this->assertSame( array( 'space_id' ), $res->get_data()['data']['params'] );
+		}
+		$cli = ( new \Jetonomy\CLI\Journeys\Moderation_Journey() )->ban_user( $this->member, $admin, 'space_ban', null );
+		$this->assertStringStartsWith( 'rest_missing_callback_param:', (string) $cli->first_error() );
+	}
+}

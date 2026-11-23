@@ -163,6 +163,9 @@ class Settings {
 						'minimum'   => -10000,
 						'maximum'   => 10000,
 						'maxLength' => 6,
+						// A string is only "" (back to the default) or digits: "false",
+						// "abc" or "5abc" used to store 0 or 5 with no notice.
+						'pattern'   => '^(-?[0-9]+)?$',
 					),
 				)
 			),
@@ -625,6 +628,38 @@ class Settings {
 	}
 
 	/**
+	 * One whole-number setting from the posted form, the same rule for every
+	 * number field: digits (an optional minus) are kept within the field's range;
+	 * absent or empty means the default; anything else ("abc", "5abc", "false")
+	 * is refused by name and the stored value kept. REST and the CLI never reach
+	 * the refusal: write() turns those away with a 400 first.
+	 *
+	 * @param mixed  $raw      Posted value (null when absent).
+	 * @param mixed  $previous Stored value.
+	 * @param int    $fallback Default.
+	 * @param int    $min      Lowest value kept.
+	 * @param int    $max      Highest value kept.
+	 * @param string $key      Top-level setting key (notice code).
+	 * @param string $label    What the owner sees the field called.
+	 */
+	private static function int_setting( $raw, $previous, int $fallback, int $min, int $max, string $key, string $label ): int {
+		if ( null === $raw || ( is_string( $raw ) && '' === trim( $raw ) ) ) {
+			return $fallback;
+		}
+		$value = \Jetonomy\strict_int( $raw );
+		if ( null === $value ) {
+			self::notice(
+				'jetonomy_invalid_' . $key,
+				/* translators: %s: settings field label. */
+				sprintf( __( '%s was not changed: it must be a whole number. The previous value was kept.', 'jetonomy' ), $label )
+			);
+			$kept = \Jetonomy\strict_int( $previous );
+			return null === $kept ? $fallback : $kept;
+		}
+		return max( $min, min( $max, $value ) );
+	}
+
+	/**
 	 * One address setting from the posted form: cleaned, or refused by name with
 	 * the stored value kept, so the save never shows "saved" over a broken value.
 	 *
@@ -697,11 +732,11 @@ class Settings {
 			}
 			// Clamp to the UI max (100) so a crafted POST can't store a huge
 			// value that flows straight into a SQL LIMIT on a big-site query.
-			$clean['posts_per_page'] = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
+			$clean['posts_per_page'] = self::int_setting( $input['posts_per_page'] ?? null, $existing['posts_per_page'] ?? null, 20, 1, 100, 'posts_per_page', /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ sprintf( __( '%s Per Page', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) );
 			// Activity-log retention: 1 day to ~10 years. Consumed by the daily
 			// jetonomy_prune_activity cron (class-cron.php).
-			$clean['activity_log_retention_days'] = min( 3650, max( 1, absint( $input['activity_log_retention_days'] ?? 90 ) ) );
-			$clean['replies_per_page']            = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
+			$clean['activity_log_retention_days'] = self::int_setting( $input['activity_log_retention_days'] ?? null, $existing['activity_log_retention_days'] ?? null, 90, 1, 3650, 'activity_log_retention_days', __( 'Activity Log', 'jetonomy' ) );
+			$clean['replies_per_page']            = self::int_setting( $input['replies_per_page'] ?? null, $existing['replies_per_page'] ?? null, 30, 1, 100, 'replies_per_page', /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ sprintf( __( '%s Per Page', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) );
 			$raw_space_type                       = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
 			$clean['default_space_type']          = in_array( $raw_space_type, \Jetonomy\Models\Space::valid_types(), true ) ? $raw_space_type : 'forum';
 			// Community access mode — radio stores "1" (public) or "0" (private).
@@ -762,14 +797,15 @@ class Settings {
 			$raw_thresholds = is_array( $input['trust_thresholds'] ) ? $input['trust_thresholds'] : array();
 			$tl_defaults    = \Jetonomy\Trust\Trust_Levels::defaults();
 			foreach ( array( 1, 2, 3 ) as $level ) {
-				$td                                  = $tl_defaults[ $level ];
-				$lv                                  = is_array( $raw_thresholds[ $level ] ?? null ) ? $raw_thresholds[ $level ] : array();
-				$clean['trust_thresholds'][ $level ] = array(
-					'posts'            => absint( $lv['posts'] ?? $td['posts'] ),
-					'days_active'      => absint( $lv['days_active'] ?? $td['days_active'] ),
-					'reputation'       => absint( $lv['reputation'] ?? $td['reputation'] ),
-					'replies_received' => absint( $lv['replies_received'] ?? $td['replies_received'] ),
-				);
+				$td   = $tl_defaults[ $level ];
+				$lv   = is_array( $raw_thresholds[ $level ] ?? null ) ? $raw_thresholds[ $level ] : array();
+				$was  = is_array( $existing['trust_thresholds'][ $level ] ?? null ) ? $existing['trust_thresholds'][ $level ] : array();
+				$tier = array();
+				foreach ( array( 'posts', 'days_active', 'reputation', 'replies_received' ) as $metric ) {
+					/* translators: %d: trust level number. */
+					$tier[ $metric ] = self::int_setting( $lv[ $metric ] ?? null, $was[ $metric ] ?? null, (int) $td[ $metric ], 0, 1000000, 'trust_thresholds', sprintf( __( 'Trust level %d requirements', 'jetonomy' ), $level ) );
+				}
+				$clean['trust_thresholds'][ $level ] = $tier;
 			}
 			// Display names per level; blank keeps the built-in name.
 			$raw_names                  = is_array( $input['trust_level_names'] ?? null ) ? $input['trust_level_names'] : array();
@@ -799,11 +835,11 @@ class Settings {
 		if ( isset( $input['rate_limits'] ) ) {
 			$raw_limits           = is_array( $input['rate_limits'] ) ? $input['rate_limits'] : array();
 			$rl_defaults          = \Jetonomy\Permissions\Rate_Limiter::defaults();
-			$clean['rate_limits'] = array(
-				'posts'   => absint( $raw_limits['posts'] ?? $rl_defaults['posts'] ),
-				'replies' => absint( $raw_limits['replies'] ?? $rl_defaults['replies'] ),
-				'votes'   => absint( $raw_limits['votes'] ?? $rl_defaults['votes'] ),
-			);
+			$rl_stored            = is_array( $existing['rate_limits'] ?? null ) ? $existing['rate_limits'] : array();
+			$clean['rate_limits'] = array();
+			foreach ( array( 'posts', 'replies', 'votes' ) as $metric ) {
+				$clean['rate_limits'][ $metric ] = self::int_setting( $raw_limits[ $metric ] ?? null, $rl_stored[ $metric ] ?? null, (int) $rl_defaults[ $metric ], 0, 100000, 'rate_limits', __( 'Rate Limits for New Users (Level 0)', 'jetonomy' ) );
+			}
 		}
 
 		// Reputation point overrides — only persist the keys we recognise so
@@ -820,9 +856,21 @@ class Settings {
 
 				// An empty field means "use the default", not zero. Storing 0 for a
 				// cleared box silently turned off the points for that action.
-				if ( '' === trim( (string) $raw_rep[ $action_key ] ) ) {
+				if ( is_string( $raw_rep[ $action_key ] ) && '' === trim( $raw_rep[ $action_key ] ) ) {
 					continue;
 				}
+				// "false", "abc" or "5abc" is refused, never read as 0 or 5: the stored override stays.
+				$points = \Jetonomy\strict_int( $raw_rep[ $action_key ] );
+				if ( null === $points ) {
+					if ( ! self::noticed( 'jetonomy_invalid_reputation_points' ) ) {
+						self::notice( 'jetonomy_invalid_reputation_points', __( 'Reputation points were not changed for a value that is not a whole number. The previous value was kept.', 'jetonomy' ) );
+					}
+					if ( isset( $existing['reputation_points'][ $action_key ] ) ) {
+						$clean_rep[ $action_key ] = (int) $existing['reputation_points'][ $action_key ];
+					}
+					continue;
+				}
+				$points = max( -10000, min( 10000, $points ) );
 
 				// Store only what DIFFERS from the default. The form posts every
 				// action, so persisting them all made the first save a full set of
@@ -831,11 +879,11 @@ class Settings {
 				// stored override ahead of the filtered map. An owner who never
 				// touched this tab had their integration's ladder silently frozen
 				// by visiting Permissions once.
-				if ( (int) $raw_rep[ $action_key ] === (int) $default_val ) {
+				if ( $points === (int) $default_val ) {
 					continue;
 				}
 
-				$clean_rep[ $action_key ] = (int) $raw_rep[ $action_key ];
+				$clean_rep[ $action_key ] = $points;
 			}
 			$clean['reputation_points'] = $clean_rep;
 		}
@@ -851,7 +899,7 @@ class Settings {
 			// Verification-reminder cadence (hours). 0 = disabled; clamp to a
 			// week so a typo can't schedule an absurd delay. Consumed by the
 			// verification-reminder cron (Verification_Reminder).
-			$clean['verification_reminder_hours'] = min( 168, max( 0, absint( $input['verification_reminder_hours'] ?? 24 ) ) );
+			$clean['verification_reminder_hours'] = self::int_setting( $input['verification_reminder_hours'] ?? null, $existing['verification_reminder_hours'] ?? null, 24, 0, 168, 'verification_reminder_hours', __( 'Email Verification Reminder', 'jetonomy' ) );
 
 			// Notification defaults — checkbox values absent when unchecked, so default false if not present.
 			// Same single list as the Notification Defaults table. Pro's `message`
@@ -881,7 +929,7 @@ class Settings {
 
 			$raw_width                       = sanitize_key( (string) ( $input['container_width'] ?? 'theme' ) );
 			$clean['container_width']        = in_array( $raw_width, array( 'theme', 'full', 'custom' ), true ) ? $raw_width : 'theme';
-			$clean['container_width_custom'] = max( 600, min( 2400, absint( $input['container_width_custom'] ?? 1280 ) ) );
+			$clean['container_width_custom'] = self::int_setting( $input['container_width_custom'] ?? null, $existing['container_width_custom'] ?? null, 1280, 600, 2400, 'container_width_custom', __( 'Custom width', 'jetonomy' ) );
 
 			$raw_padding             = sanitize_key( (string) ( $input['padding_preset'] ?? 'theme' ) );
 			$clean['padding_preset'] = in_array( $raw_padding, array( 'theme', 'none', 'comfortable' ), true ) ? $raw_padding : 'theme';
@@ -892,13 +940,20 @@ class Settings {
 		// ── Anti-Spam tab ──
 		// Only process if captcha_provider is present (Anti-Spam tab was submitted).
 		if ( isset( $input['captcha_provider'] ) ) {
-			$allowed_providers                = array( 'none', 'recaptcha_v3', 'turnstile' );
-			$raw_provider                     = sanitize_text_field( $input['captcha_provider'] );
-			$clean['captcha_provider']        = in_array( $raw_provider, $allowed_providers, true ) ? $raw_provider : 'none';
-			$clean['captcha_site_key']        = sanitize_text_field( $input['captcha_site_key'] ?? '' );
-			$clean['captcha_secret_key']      = sanitize_text_field( $input['captcha_secret_key'] ?? '' );
-			$raw_threshold                    = (float) ( $input['captcha_score_threshold'] ?? 0.5 );
-			$clean['captcha_score_threshold'] = max( 0.1, min( 0.9, $raw_threshold ) );
+			$allowed_providers           = array( 'none', 'recaptcha_v3', 'turnstile' );
+			$raw_provider                = sanitize_text_field( $input['captcha_provider'] );
+			$clean['captcha_provider']   = in_array( $raw_provider, $allowed_providers, true ) ? $raw_provider : 'none';
+			$clean['captcha_site_key']   = sanitize_text_field( $input['captcha_site_key'] ?? '' );
+			$clean['captcha_secret_key'] = sanitize_text_field( $input['captcha_secret_key'] ?? '' );
+			// Same rule as the whole-number fields: empty is the default, a non-number keeps the stored value.
+			$raw_threshold = $input['captcha_score_threshold'] ?? '';
+			if ( is_string( $raw_threshold ) && '' === trim( $raw_threshold ) ) {
+				$raw_threshold = 0.5;
+			} elseif ( ! is_numeric( $raw_threshold ) ) {
+				self::notice( 'jetonomy_invalid_captcha_score_threshold', __( 'Score Threshold was not changed: it must be a number between 0.1 and 0.9. The previous value was kept.', 'jetonomy' ) );
+				$raw_threshold = $existing['captcha_score_threshold'] ?? 0.5;
+			}
+			$clean['captcha_score_threshold'] = max( 0.1, min( 0.9, (float) $raw_threshold ) );
 		}
 
 		// ── SEO tab ──

@@ -357,4 +357,19 @@ class ReplyByEmailJourneyTest extends WP_UnitTestCase {
 		$content = (string) $wpdb->get_var( $wpdb->prepare( "SELECT content FROM {$table} WHERE id = %d", $reply_id ) );
 		$this->assertStringContainsString( 'End-to-end smoke test body.', $content );
 	}
+
+	public function test_auto_subscribe_false_switches_it_off_and_a_non_boolean_is_refused(): void {
+		update_option( 'jetonomy_pro_reply_by_email', array( 'auto_subscribe' => true ) );
+		foreach ( array( false, 'false', '0', 0, 'FALSE', 'off' ) as $off ) {
+			update_option( 'jetonomy_pro_reply_by_email', array( 'auto_subscribe' => true ) );
+			$this->assertTrue( $this->journey->update_config( array( 'auto_subscribe' => $off ) )->is_success(), wp_json_encode( $off ) );
+			$this->assertFalse( get_option( 'jetonomy_pro_reply_by_email' )['auto_subscribe'], wp_json_encode( $off ) );
+		}
+		$this->assertTrue( $this->journey->update_config( array( 'auto_subscribe' => 'true' ) )->is_success() );
+		$this->assertTrue( get_option( 'jetonomy_pro_reply_by_email' )['auto_subscribe'] );
+		foreach ( array( 'maybe', '2', '', array() ) as $bad ) {
+			$this->assertFalse( $this->journey->update_config( array( 'auto_subscribe' => $bad ) )->is_success(), wp_json_encode( $bad ) );
+			$this->assertTrue( get_option( 'jetonomy_pro_reply_by_email' )['auto_subscribe'], wp_json_encode( $bad ) );
+		}
+	}
 }

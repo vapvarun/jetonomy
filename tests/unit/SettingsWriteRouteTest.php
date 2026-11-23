@@ -373,5 +373,24 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 			get_option( 'jetonomy_settings' )['notification_defaults'][ $type ]
 		);
 	}
-}
 
+	public function test_reputation_points_refuse_anything_but_a_whole_number(): void {
+		$this->post( array( 'reputation_points' => array( 'post_upvoted' => 7 ) ), $this->admin );
+		foreach ( array( 'false', 'true', 'yes', 'abc', '0x1A', '5abc', '1.5', false, true, null ) as $bad ) {
+			$response = $this->post( array( 'reputation_points' => array( 'post_upvoted' => $bad ) ), $this->admin );
+			$this->assertSame( 400, $response->get_status(), wp_json_encode( $bad ) );
+			$this->assertSame( 'rest_invalid_param', $response->get_data()['code'], wp_json_encode( $bad ) );
+			$this->assertSame( 7, get_option( 'jetonomy_settings' )['reputation_points']['post_upvoted'], wp_json_encode( $bad ) );
+		}
+	}
+
+	/** @covers-existing whole numbers and the empty reset already worked; pinned with the fix. */
+	public function test_reputation_points_take_numbers_and_empty_means_the_default(): void {
+		foreach ( array( '-3' => -3, '12' => 12 ) as $sent => $stored ) {
+			$this->assertSame( 200, $this->post( array( 'reputation_points' => array( 'post_upvoted' => (string) $sent ) ), $this->admin )->get_status() );
+			$this->assertSame( $stored, get_option( 'jetonomy_settings' )['reputation_points']['post_upvoted'] );
+		}
+		$this->assertSame( 200, $this->post( array( 'reputation_points' => array( 'post_upvoted' => '' ) ), $this->admin )->get_status() );
+		$this->assertArrayNotHasKey( 'post_upvoted', get_option( 'jetonomy_settings' )['reputation_points'] );
+	}
+}

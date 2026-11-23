@@ -2502,7 +2502,7 @@ wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
 **Depth note:** no `wp jetonomy-pro` CLI group covers anonymous posting; entry points are ui, admin and rest only. Cross-check the CLI list in E.pro-cli.
 
 ### E.attachments
-**Covers:** pro:includes/extensions/attachments/**, pro:assets/css/attachments.css, pro:assets/js/attachments-admin.js, pro:assets/js/attachments-frontend.js, pro:assets/js/pdf-viewer.js
+**Covers:** pro:includes/extensions/attachments/**, pro:assets/css/attachments.css, pro:assets/css/attachments-files.css, pro:assets/js/attachments-admin.js, pro:assets/js/attachments-frontend.js, pro:assets/js/pdf-viewer.js
 **Verified:** pending - new journey, not walked yet
 **What to verify:** As admin, set allowed types and size limits on the Attachments settings page. As a member, attach an image, a PDF and a disallowed file type to a topic and a reply. Confirm the allowed ones upload and render, the PDF opens in the viewer modal, and the disallowed or oversized one is refused with a clear message. A guest cannot upload, a user who cannot see the topic cannot download the file, and deleting the post removes the file. Walk 1440 and 390 widths.
 

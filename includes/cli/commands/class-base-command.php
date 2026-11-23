@@ -24,6 +24,45 @@ defined( 'ABSPATH' ) || exit;
 abstract class Base_Command {
 
 	/**
+	 * A yes/no flag. A bare `--flag` is yes; `--flag=false` (or 0, no, off) is no;
+	 * anything else stops the command with exit 1 instead of being read as yes.
+	 *
+	 * @param array<string,mixed> $assoc   Associative args.
+	 * @param string              $key     Flag name without the dashes.
+	 * @param bool                $default Value when the flag is absent.
+	 */
+	protected function bool_arg( array $assoc, string $key, bool $default = false ): bool {
+		if ( ! array_key_exists( $key, $assoc ) ) {
+			return $default;
+		}
+		$value = \Jetonomy\strict_bool( $assoc[ $key ] );
+		if ( null === $value ) {
+			\WP_CLI::error( sprintf( '--%s must be true or false (or 1/0, yes/no, on/off); got "%s".', $key, (string) $assoc[ $key ] ) );
+		}
+		return (bool) $value;
+	}
+
+	/**
+	 * A whole-number argument (positional by index, or a --flag by name).
+	 * "abc" or "5abc" stops the command with exit 1 instead of being read as 0 or 5.
+	 *
+	 * @param array<int|string,mixed> $from    $args or $assoc.
+	 * @param int|string              $key     Positional index or flag name.
+	 * @param int|null                $default Value when it is absent.
+	 */
+	protected function int_arg( array $from, $key, ?int $default = 0 ): ?int {
+		if ( ! array_key_exists( $key, $from ) ) {
+			return $default;
+		}
+		$value = \Jetonomy\strict_int( $from[ $key ] );
+		if ( null === $value ) {
+			$name = is_int( $key ) ? sprintf( 'Argument %d', $key + 1 ) : '--' . $key;
+			\WP_CLI::error( sprintf( '%s must be a whole number; got "%s".', $name, (string) $from[ $key ] ) );
+		}
+		return $value;
+	}
+
+	/**
 	 * Render a single Journey_Result to the terminal.
 	 *
 	 * Prints any breadcrumb logs first, then either emits success output

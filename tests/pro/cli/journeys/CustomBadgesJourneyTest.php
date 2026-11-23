@@ -24,6 +24,13 @@ class CustomBadgesJourneyTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 
+		// Pro loads its journeys only under WP-CLI; include the file so the tests run instead of skipping.
+		if ( ! class_exists( Custom_Badges_Journey::class ) ) {
+			$path = dirname( __DIR__, 5 ) . '/jetonomy-pro/includes/cli/journeys/class-custom-badges-journey.php';
+			if ( file_exists( $path ) ) {
+				require_once $path;
+			}
+		}
 		if ( ! class_exists( Custom_Badges_Journey::class ) || ! class_exists( \Jetonomy_Pro::class ) ) {
 			$this->markTestSkipped( 'Jetonomy Pro is not loaded — cannot exercise Custom_Badges_Journey.' );
 		}
@@ -362,5 +369,23 @@ class CustomBadgesJourneyTest extends WP_UnitTestCase {
 		$badge_ids = array_column( $result->data['items'], 'badge_id' );
 		$this->assertContains( $badge_one, $badge_ids );
 		$this->assertContains( $badge_two, $badge_ids );
+	}
+
+	public function test_is_repeatable_string_false_and_a_partly_numeric_bonus(): void {
+		global $wpdb;
+		$base    = array(
+			'name'        => 'Strict ' . uniqid(),
+			'description' => 'Strict input.',
+			'icon'        => 'award',
+			'tier'        => 'bronze',
+			'category'    => 'participation',
+		);
+		$created = $this->journey->create_badge( $base + array( 'is_repeatable' => 'false' ) );
+		$this->assertTrue( $created->is_success(), implode( '; ', $created->errors ) );
+		$this->assertSame( '0', (string) $wpdb->get_var( $wpdb->prepare( "SELECT is_repeatable FROM {$wpdb->prefix}jt_pro_badges WHERE id = %d", (int) $created->data['badge_id'] ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		$base['name'] = 'Strict ' . uniqid();
+		$this->assertFalse( $this->journey->create_badge( $base + array( 'reputation_bonus' => '5abc' ) )->is_success() );
+		$this->assertFalse( $this->journey->update_badge( (int) $created->data['badge_id'], array( 'is_repeatable' => 'maybe' ) )->is_success() );
 	}
 }

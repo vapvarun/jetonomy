@@ -208,6 +208,18 @@ class Moderation_Permissions {
 			&& ( 'space_ban' !== $type || ! $space_id || ! Permission_Engine::can_space_ban( $user_id, $space_id ) ) ) {
 			return \Jetonomy\API\REST_Auth::forbidden();
 		}
+		// A space ban needs its space: Restriction::ban() stores nothing without one,
+		// which REST used to answer with a 500 and the CLI with a message and no code.
+		if ( 'space_ban' === $type && ( null === $space_id || $space_id <= 0 ) ) {
+			return new \WP_Error(
+				'rest_missing_callback_param',
+				__( 'A space ban needs space_id: the space the member is banned from.', 'jetonomy' ),
+				array(
+					'status' => 400,
+					'params' => array( 'space_id' ),
+				)
+			);
+		}
 		// A silenced or banned moderator takes no moderation action.
 		return self::restriction_error( $user_id, $space_id );
 	}
