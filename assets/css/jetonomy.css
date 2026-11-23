@@ -836,7 +836,7 @@
   .jt-editor-bar button:hover, .jt-editor-bar button:focus { background: var(--jt-bg); color: var(--jt-text); border: none; }
   .jt-editor-bar button[aria-pressed="true"] { background: var(--jt-bg-hover); color: var(--jt-accent); box-shadow: inset 0 0 0 1px var(--jt-border-strong); }
   .jt-editor-body { padding: 16px; min-height: 120px; color: var(--jt-text); outline: none; font-family: var(--jt-font); font-size: 1rem; line-height: 1.75; }
-  .jt-editor-body:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; border-radius: var(--jt-radius-sm); }
+  .jt-editor-body:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: -2px; border-radius: var(--jt-radius-sm); }
   .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
   .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--jt-space-2); padding: 8px 12px; border-top: 1px solid var(--jt-border); }
   /* The buttons keep their label on one line and never shrink; when the hint and the Private toggle leave no room
@@ -1311,13 +1311,13 @@
   .jt-cat-chips + * { margin-top: var(--jt-space-3); }
   .jt-app .jt-cat-chip { display: inline-flex; align-items: center; gap: var(--jt-space-2); min-height: 40px; padding: 0 var(--jt-space-4); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-full); background: var(--jt-bg); color: var(--jt-text); font-size: 0.9375rem; font-weight: 500; text-decoration: none; transition: border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease); }
   .jt-app .jt-cat-chip:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); color: var(--jt-text); }
-  .jt-app .jt-cat-chip:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-app .jt-cat-chip:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
   .jt-cat-chip-count { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); background: var(--jt-bg-muted); border-radius: var(--jt-radius-full); padding: 0 var(--jt-space-2); }
   /* Sub-category chip + chevron read as one pill; the chevron shows that sub-category's spaces inline. Every property is set here so a theme styling bare `button` cannot restyle it. */
   .jt-cat-chip-group { display: inline-flex; align-items: stretch; }
   .jt-app .jt-cat-chip-group .jt-cat-chip { border-start-end-radius: 0; border-end-end-radius: 0; border-inline-end: 0; }
   .jt-app .jt-cat-chip-toggle { appearance: none; display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; margin: 0; padding: 0 var(--jt-space-2); border: 1px solid var(--jt-border); border-inline-start-color: var(--jt-border-strong); border-start-start-radius: 0; border-end-start-radius: 0; border-start-end-radius: var(--jt-radius-full); border-end-end-radius: var(--jt-radius-full); font: inherit; line-height: 1; text-transform: none; box-shadow: none; cursor: pointer; transition: border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
-  .jt-app .jt-cat-chip-toggle:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-app .jt-cat-chip-toggle:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
   .jt-app .jt-cat-chip-toggle svg { transition: transform var(--jt-dur) var(--jt-ease); }
   .jt-app .jt-cat-chip-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
   /* The open panel is a nested group: an accent rule and its own heading keep its spaces apart from the parent's grid below. */
@@ -1350,7 +1350,7 @@
   .jt-app .jt-space-grid .jt-space-card-link { display: inline; padding: 0; color: var(--jt-text); text-decoration: none; }
   .jt-app .jt-space-grid .jt-space-card-link::after { content: ""; position: absolute; inset: 0; }
   .jt-app .jt-space-grid .jt-space-card-link:focus-visible { outline: none; }
-  .jt-app .jt-space-grid > .jt-space-card:focus-within { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-app .jt-space-grid > .jt-space-card:focus-within { outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
   .jt-app .jt-space-grid > .jt-space-card:has(.jt-follow-space-btn:focus-visible) { outline: none; }
   /* Above the stretched link, so they stay their own targets. */
   .jt-app .jt-space-grid .jt-space-card :is(button, a:not(.jt-space-card-link), input, select, textarea, label) { position: relative; z-index: 1; }
@@ -1441,7 +1441,7 @@
   .jt-feed-votes { display: inline-flex; align-items: center; gap: 4px; }
   .jt-feed-act { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; background: transparent; border: 0; color: var(--jt-text-secondary); font: inherit; font-size: 0.875rem; cursor: pointer; border-radius: var(--jt-radius-sm); text-decoration: none; transition: background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
   .jt-feed-act:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
-  .jt-feed-act:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-feed-act:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
   .jt-feed-act.jt-voted, .jt-feed-act.voted { color: var(--jt-accent-strong); }
   .jt-feed-act svg { flex-shrink: 0; }
   .jt-feed-act-n { font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -1914,7 +1914,7 @@
   }
 
   .jt-notif-item__menu-trigger:focus-visible {
-    outline: 2px solid var(--jt-accent);
+    outline: 2px solid var(--jt-focus-ring);
     outline-offset: 2px;
   }
 
@@ -2052,7 +2052,7 @@
   .jt-held-filter { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); margin-block-end: var(--jt-space-4); font-size: var(--jt-text-sm); color: var(--jt-text-secondary); }
   .jt-held-filter .jt-select { padding-block: var(--jt-space-1); padding-inline: var(--jt-space-3); font-size: var(--jt-text-sm); }
   .jt-held-filter .jt-input { flex: 1 1 12rem; width: auto; min-width: 0; max-width: 22rem; padding-block: var(--jt-space-2); font-size: var(--jt-text-sm); }
-  .jt-subtab:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-subtab:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
   .jt-subtab.active .jt-tab-count { background: transparent; color: inherit; padding-inline: 0; }
   .jt-mod-flag-reason--held { background: var(--jt-warn-light); color: var(--jt-warn-strong); }
 
@@ -2118,7 +2118,7 @@
     max-width: 8rem;
   }
   .jt-member-role-select:disabled { opacity: .6; cursor: progress; }
-  .jt-member-role-select:focus { outline: 2px solid var(--jt-accent); outline-offset: 1px; }
+  .jt-member-role-select:focus { outline: 2px solid var(--jt-focus-ring); outline-offset: 1px; }
   .jt-member-role-error { flex-basis: 100%; color: var(--jt-danger); font-size: var(--jt-text-xs); margin-top: var(--jt-space-1); }
 
   @media (max-width: 640px) {
@@ -2176,7 +2176,7 @@
   .jt-reply-permalink { color: inherit; text-decoration: none; border-radius: var(--jt-radius-sm); }
   .jt-reply-permalink:visited { color: inherit; }
   .jt-reply-permalink:hover, .jt-reply-permalink:focus-visible { color: var(--jt-text-secondary); text-decoration: underline; }
-  .jt-reply-permalink:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-reply-permalink:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
   .jt-reply-edit { color: var(--jt-text-tertiary); margin-left: auto; }
 
   /* ── Time stat on post rows ── */
@@ -2233,7 +2233,7 @@
   .jt-invite-field { display: flex; flex-direction: column; gap: var(--jt-space-1); }
   .jt-invite-label { font-size: var(--jt-text-xs); font-weight: 600; color: var(--jt-text-secondary); }
   .jt-invite-input { min-height: var(--jt-tap); padding: var(--jt-space-2) var(--jt-space-3); border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); font-family: var(--jt-font); font-size: var(--jt-text-sm); }
-  .jt-invite-input:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 1px; }
+  .jt-invite-input:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: 1px; }
   .jt-invite-error { margin: var(--jt-space-3) 0 0; color: var(--jt-danger); font-size: var(--jt-text-xs); }
   .jt-invite-list { list-style: none; margin: var(--jt-space-4) 0 0; padding: 0; }
   .jt-invite-item { display: flex; align-items: center; gap: var(--jt-space-3); padding: var(--jt-space-3) 0; border-top: 1px solid var(--jt-border); }
@@ -2782,7 +2782,7 @@
 
   /* ── 10. Focus Visible Rings (Accessibility + Premium) ── */
   .jt-app *:focus-visible {
-    outline: 2px solid var(--jt-accent);
+    outline: 2px solid var(--jt-focus-ring);
     outline-offset: 2px;
     border-radius: var(--jt-radius-sm);
   }
@@ -2964,7 +2964,7 @@
 .jt-hc-stats { display: flex; gap: 16px; font-size: 0.9375rem; color: var(--jt-text-tertiary); font-weight: 500; }
 
 /* ── G8: Keyboard Shortcuts ── */
-.jt-kb-focus { outline: 2px solid var(--jt-accent) !important; outline-offset: -2px; }
+.jt-kb-focus { outline: 2px solid var(--jt-focus-ring) !important; outline-offset: -2px; }
 .jt-shortcut-help { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
 /* Appended to <body>, OUTSIDE .jt-app, so nothing from the app reset reaches it:
    the text and the Close button inherited the THEME's colours (Reign paints
@@ -3012,7 +3012,7 @@
 .jt-share-item-label { display: inline-block; }
 .jt-share-item:hover,
 .jt-share-item:focus-visible { background: var(--jt-bg-hover); color: var(--jt-accent-strong); }
-.jt-share-item:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; }
+.jt-share-item:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: -2px; }
 .jt-share-item:hover .jt-share-item-icon,
 .jt-share-item:focus-visible .jt-share-item-icon { color: var(--jt-accent); }
 
@@ -3265,7 +3265,7 @@ button.jt-mobile-tab { background: none; border: 0; font: inherit; font-size: 0.
 .jt-modal-picker-item { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 10px 12px; text-align: start; background: transparent; border: 0; border-bottom: 1px solid var(--jt-border); cursor: pointer; color: var(--jt-text); font: inherit; transition: background-color 0.15s; }
 .jt-modal-picker-item:last-child { border-bottom: 0; }
 .jt-modal-picker-item:hover { background: var(--jt-bg-hover, var(--jt-bg-muted)); }
-.jt-modal-picker-item:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--jt-accent); }
+.jt-modal-picker-item:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--jt-focus-ring); }
 .jt-modal-picker-item.is-selected { background: var(--jt-accent-light, var(--jt-bg-muted)); }
 .jt-modal-picker-item-title { font-size: 0.9375rem; font-weight: 500; color: var(--jt-text); line-height: 1.4; }
 .jt-modal-picker-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--jt-text-tertiary); }
@@ -3485,7 +3485,7 @@ button.jt-mobile-tab { background: none; border: 0; font: inherit; font-size: 0.
   color: var(--jt-accent-strong); font-size: 0.875rem; font-weight: 600; text-decoration: none;
 }
 .jt-search-overlay-all:hover { background: var(--jt-bg-hover); }
-.jt-search-overlay-all:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; }
+.jt-search-overlay-all:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: -2px; }
 
 /* ── Skeleton Loading Placeholders ── */
 @keyframes jt-shimmer {
@@ -3920,7 +3920,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	}
 }
 .jt-emoji-picker .jt-emoji-option:focus-visible {
-	outline: 2px solid var(--jt-accent, #0073aa);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 1px;
 	border-radius: var(--jt-radius-sm);
 }

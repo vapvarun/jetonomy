@@ -246,6 +246,8 @@
   [data-bx-mode="dark"] {
     --jt-accent-hover: #2563EB;
     --jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
+    /* Keyboard focus ring. The accent in light; dark lifts it (below). */
+    --jt-focus-ring: var(--jt-accent);
     --jt-accent-light: #EFF6FF;
     --jt-accent-light: color-mix(in srgb, var(--jt-accent) 10%, white);
     --jt-accent-muted: #DBEAFE;
@@ -302,10 +304,13 @@
     [data-theme="dark"],
     [data-bx-mode="dark"] {
       --jt-accent-fg: oklch(from var(--jt-accent) clamp(0, (0.7 - l) * 1000, 1) 0 h);
-      /* Hover is the accent mixed 85% toward black, i.e. strictly darker, so the
-         black/white choice can flip against it. Derive it from the hover colour
-         rather than reusing --jt-accent-fg and hoping. */
-      --jt-accent-hover-fg: oklch(from var(--jt-accent-hover) clamp(0, (0.7 - l) * 1000, 1) 0 h);
+      /* Hover keeps the rest colour's text. Deriving it from the hover colour
+         flipped black text to white on light accents: oklch(72% 0.16 252) rests
+         black, hovers at about L 0.64 and got white at 3.37:1. Hover is the
+         accent only 15% toward black, so an accent that rests black (L >= 0.7)
+         still carries black at 4.5:1 or more, and one that rests white only
+         gets darker under it. */
+      --jt-accent-hover-fg: var(--jt-accent-fg);
     }
   }
 
@@ -397,4 +402,16 @@
     --jt-warn-strong: color-mix(in srgb, var(--jt-warn) 60%, white);
     --jt-danger-strong: color-mix(in srgb, var(--jt-danger) 60%, white);
     --jt-accent-strong: color-mix(in srgb, var(--jt-accent) 60%, white);
+  }
+
+  /* A dark accent such as the #0073aa default drew the focus ring at 2.72:1 on a dark
+     page. Lift only its lightness to 0.72 (OKLCH), which clears 3:1 on any dark
+     surface; an accent that is already light, such as Reign's dark blue, keeps
+     its exact colour. Browsers without relative colour keep the accent. */
+  @supports (color: oklch(from red l c h)) {
+    .jt-dark,
+    [data-theme="dark"],
+    [data-bx-mode="dark"] {
+      --jt-focus-ring: oklch(from var(--jt-accent) max(l, 0.72) c h);
+    }
   }

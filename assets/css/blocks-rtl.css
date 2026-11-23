@@ -168,7 +168,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: none;
 }
 .jt-nav-space > a:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 .jt-nav-space.is-active > a,
@@ -319,7 +319,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	color: var(--jt-text) !important;
 }
 .jt-login-tab:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 .jt-login-tab.is-active {
@@ -424,7 +424,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	color: var(--jt-bg);
 }
 .jt-login-submit:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 .jt-login-submit:active { transform: scale(0.98); }
@@ -459,7 +459,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: underline;
 }
 .jt-login-lostpw:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 	border-radius: var(--jt-radius-sm, 4px);
 }
@@ -588,7 +588,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	background: var(--jt-bg-hover);
 	color: var(--jt-accent-strong);
 	text-decoration: none;
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: -2px;
 }
 .jt-userpanel-link.is-active {
@@ -671,7 +671,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: underline;
 }
 .jt-feed-viewall:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 	border-radius: var(--jt-radius-sm, 4px);
 }
@@ -731,7 +731,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: none;
 }
 .jt-shortcode-post-title:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 
@@ -781,7 +781,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	border-color: var(--jt-accent);
 }
 .jt-shortcode-space:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 .jt-shortcode-space-desc {
@@ -1151,7 +1151,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: none;
 }
 .jt-compose-topic-login-primary:focus-visible {
-	outline: 2px solid var(--jt-accent, #3b82f6);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 
@@ -1170,7 +1170,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	border-bottom-color: transparent;
 }
 .jt-compose-topic-login-secondary:focus-visible {
-	outline: 2px solid var(--jt-accent, #3b82f6);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 3px;
 	border-radius: var(--jt-radius-sm);
 }
@@ -1214,7 +1214,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-space:focus-visible,
 .jt-compose-topic-title:focus-visible,
 .jt-compose-topic-body:focus-visible {
-	outline: 2px solid var(--jt-accent, #3b82f6);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 1px;
 	border-color: transparent;
 }
@@ -1380,7 +1380,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-signed-in .jt-login-submit { margin-top: 0; text-decoration: none; }
 .jt-login-secondary { display: inline-flex; align-items: center; padding: 0.5625rem 0.9375rem; border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius-full); color: var(--jt-text); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }
 .jt-login-secondary:hover, .jt-login-secondary:focus-visible { border-color: var(--jt-accent); color: var(--jt-accent-strong); }
-.jt-login-secondary:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+.jt-login-secondary:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
 
 /* Trust level name pill (profile card shortcode). jetonomy.css is not loaded
    beside shortcodes, so the pill carries its own fill from the trust tokens. */
