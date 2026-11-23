@@ -355,7 +355,8 @@ class Settings {
 					)
 				);
 			}
-			$valid = rest_validate_value_from_schema( $value, array_diff_key( $schema[ $key ], array_flip( array( 'section', 'secret' ) ) ), (string) $key );
+			$rule  = array_diff_key( $schema[ $key ], array_flip( array( 'section', 'secret' ) ) );
+			$valid = rest_validate_value_from_schema( $value, $rule, (string) $key );
 			if ( is_wp_error( $valid ) ) {
 				return new \WP_Error(
 					'rest_invalid_param',
@@ -365,6 +366,12 @@ class Settings {
 						'key'    => (string) $key,
 					)
 				);
+			}
+			// The schema accepts "false" as a boolean, but sanitize() reads the form's
+			// checkbox rule (present = on), so the string "false" stored true. Hand it
+			// the typed value, nested booleans included; text stays raw for sanitize().
+			if ( 'string' !== ( $rule['type'] ?? '' ) ) {
+				$patch[ $key ] = rest_sanitize_value_from_schema( $value, $rule, (string) $key );
 			}
 		}
 

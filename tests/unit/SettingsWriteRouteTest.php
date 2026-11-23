@@ -315,4 +315,63 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 		}
 		$this->assertIsArray( Settings::write( array( 'captcha_score_threshold' => 0.7 ), 'rest' ) );
 	}
+
+	/**
+	 * Every boolean setting, read from the schema so a new one is covered.
+	 *
+	 * @return string[]
+	 */
+	private function boolean_keys(): array {
+		return array_keys( array_filter( Settings::schema(), static fn( array $d ): bool => 'boolean' === $d['type'] ) );
+	}
+
+	public function test_the_string_false_stores_false_on_every_boolean_key(): void {
+		$keys = $this->boolean_keys();
+		$this->assertContains( 'moderators_can_ban', $keys );
+		$off = array( 'false', '0', 0, false );
+		$on  = array( 'true', '1', 1, true );
+		foreach ( $keys as $key ) {
+			foreach ( $off as $value ) {
+				$this->assertSame( 200, $this->post( array( $key => true ), $this->admin )->get_status(), $key );
+				$this->assertSame( 200, $this->post( array( $key => $value ), $this->admin )->get_status(), $key . ' ' . wp_json_encode( $value ) );
+				$this->assertFalse( get_option( 'jetonomy_settings' )[ $key ], $key . ' ' . wp_json_encode( $value ) );
+			}
+			foreach ( $on as $value ) {
+				$this->post( array( $key => false ), $this->admin );
+				$this->assertSame( 200, $this->post( array( $key => $value ), $this->admin )->get_status(), $key . ' ' . wp_json_encode( $value ) );
+				$this->assertTrue( get_option( 'jetonomy_settings' )[ $key ], $key . ' ' . wp_json_encode( $value ) );
+			}
+		}
+	}
+
+	/** @covers-existing null, arrays and other strings were already refused; pinned with the fix. */
+	public function test_anything_else_on_a_boolean_key_is_refused_and_keeps_the_stored_value(): void {
+		foreach ( $this->boolean_keys() as $key ) {
+			$this->post( array( $key => true ), $this->admin );
+			foreach ( array( null, array(), array( 'x' ), 'no', 'yes', 'off', '2', 2 ) as $value ) {
+				$response = $this->post( array( $key => $value ), $this->admin );
+				$this->assertSame( 400, $response->get_status(), $key . ' ' . wp_json_encode( $value ) );
+				$this->assertTrue( get_option( 'jetonomy_settings' )[ $key ], $key . ' ' . wp_json_encode( $value ) );
+			}
+		}
+	}
+
+	public function test_a_nested_string_false_stores_false(): void {
+		$type    = array_key_first( array_filter( \Jetonomy\Admin\Admin::email_types(), static fn( array $t ): bool => $t['toggle'] ) );
+		$payload = array(
+			$type => array(
+				'web'   => 'false',
+				'email' => 'true',
+			),
+		);
+		$this->assertSame( 200, $this->post( array( 'notification_defaults' => $payload ), $this->admin )->get_status() );
+		$this->assertSame(
+			array(
+				'web'   => false,
+				'email' => true,
+			),
+			get_option( 'jetonomy_settings' )['notification_defaults'][ $type ]
+		);
+	}
 }
+

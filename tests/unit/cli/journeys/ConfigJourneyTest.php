@@ -272,4 +272,18 @@ class ConfigJourneyTest extends WP_UnitTestCase {
 		$this->assertContains( 'trust_thresholds', $keys );
 		$this->assertContains( 'rate_limits', $keys );
 	}
+
+	/** @covers-existing the CLI already coerced "false"; pinned beside the REST fix. */
+	public function test_set_false_or_zero_on_a_boolean_stores_false(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		foreach ( [ 'moderators_can_ban', 'allow_space_admin_purge', 'front_page' ] as $key ) {
+			foreach ( [ 'false', '0', 'FALSE' ] as $raw ) {
+				$this->assertTrue( $this->journey->set( $key, 'true' )->success, $key );
+				$this->assertTrue( $this->journey->set( $key, $raw )->success, $key . ' ' . $raw );
+				$this->assertFalse( get_option( 'jetonomy_settings' )[ $key ], $key . ' ' . $raw );
+			}
+			$this->assertFalse( $this->journey->set( $key, 'no' )->success, $key . ' no' );
+		}
+	}
 }
+
