@@ -237,6 +237,39 @@ foreach ( $specs as $slug => $spec ) {
 	}
 }
 
+// The Q&A question also carries the states the control-contrast crawl needs to
+// see: a reaction chip of the admin's own (is-mine) and one of another member,
+// and an image attachment (opens the lightbox). Reactions and attachments are
+// Pro, so each step runs only when its route or model is there.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+$qa_post_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT p.id FROM {$posts_t} p INNER JOIN {$spaces_t} s ON s.id = p.space_id WHERE s.slug = %s ORDER BY p.id ASC LIMIT 1", 'jt-qa-qna' ) );
+if ( $qa_post_id && isset( rest_get_server()->get_routes()['/jetonomy/v1/posts/(?P<id>\d+)/reactions'] ) ) {
+	$member  = (int) ( get_users( array( 'role' => 'subscriber', 'number' => 1, 'fields' => 'ID', 'orderby' => 'ID' ) )[0] ?? 0 );
+	$restore = get_current_user_id();
+	foreach ( array( $author => 'heart', $member => 'thumbsup' ) as $uid => $emoji ) {
+		if ( ! $uid ) {
+			continue;
+		}
+		wp_set_current_user( $uid );
+		$have = rest_do_request( new WP_REST_Request( 'GET', "/jetonomy/v1/posts/{$qa_post_id}/reactions" ) )->get_data();
+		// The POST toggles, so only add a reaction this user does not have yet.
+		if ( ! in_array( $emoji, (array) ( $have['user_reactions'] ?? array() ), true ) ) {
+			$req = new WP_REST_Request( 'POST', "/jetonomy/v1/posts/{$qa_post_id}/reactions" );
+			$req->set_param( 'emoji', $emoji );
+			rest_do_request( $req );
+		}
+	}
+	wp_set_current_user( $restore );
+	$out['reactions_on'] = $qa_post_id;
+}
+if ( $qa_post_id && defined( 'JETONOMY_PRO_VERSION' ) && 0 === \Jetonomy\Models\Attachment::count_for( 'post', $qa_post_id ) ) {
+	$image = get_posts( array( 'post_type' => 'attachment', 'post_mime_type' => 'image', 'numberposts' => 1, 'fields' => 'ids' ) );
+	if ( $image ) {
+		\Jetonomy\Models\Attachment::link( 'post', $qa_post_id, (int) $image[0] );
+		$out['image_on'] = $qa_post_id;
+	}
+}
+
 $out['search_needle'] = JT_QA_SEARCH_NEEDLE;
 
 echo 'FIXTURES ' . wp_json_encode( $out ) . "\n";
