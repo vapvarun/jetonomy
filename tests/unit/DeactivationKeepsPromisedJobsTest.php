@@ -183,6 +183,65 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 		\ActionScheduler::store()->delete_action( (string) $old );
 	}
 
+	/**
+	 * Parallel recovery: 452 rows failed while Jetonomy was off. While the first request recovers them, a runner
+	 * completes the first copy and a second request starts on the same rows (the copy's store hook stands in for the
+	 * moment both are in flight). Each row is claimed before its copy is queued, so the second request skips what the
+	 * first holds: 452 rows give 452 runs, none twice, and no failed row is left.
+	 */
+	public function test_parallel_recovery_with_a_runner_finishing_a_copy_midway_runs_each_row_once(): void {
+		$hook = Space_Purge::BATCH_HOOK;
+		remove_all_actions( $hook ); // Jetonomy is off: no listener.
+		for ( $i = 1; $i <= 452; $i++ ) {
+			$this->run_row( (int) as_enqueue_async_action( $hook, array( 'space_id' => 900000 + $i ), Queue::GROUP ) );
+		}
+		global $wpdb;
+		$failed = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}actionscheduler_actions WHERE hook = %s AND status = 'failed'", $hook ) ); // phpcs:ignore WordPress.DB
+		$this->assertSame( 452, $failed() );
+
+		$runs = array();
+		add_action(
+			$hook,
+			static function ( $space_id ) use ( &$runs ) {
+				$runs[] = (int) $space_id;
+			}
+		);
+		$raced = false;
+		$race  = function ( $action_id ) use ( &$raced, $hook ) {
+			if ( $raced || \ActionScheduler::store()->fetch_action( (string) $action_id )->get_hook() !== $hook ) {
+				return;
+			}
+			$raced = true;
+			$this->run_row( (int) $action_id ); // A runner completes the first copy...
+			Queue::recover_kept_jobs();         // ...while a second request reaches the same rows.
+		};
+		add_action( 'action_scheduler_stored_action', $race );
+		Queue::flag_recovery();
+		add_filter( 'wp_doing_cron', '__return_true' );
+		try {
+			for ( $pass = 0; $pass < 10 && get_transient( Queue::RECOVER_FLAG ); $pass++ ) {
+				Queue::recover_kept_jobs();
+			}
+		} finally {
+			remove_filter( 'wp_doing_cron', '__return_true' );
+			remove_action( 'action_scheduler_stored_action', $race );
+		}
+		$this->assertTrue( $raced );
+		foreach ( as_get_scheduled_actions(
+			array(
+				'hook'     => $hook,
+				'status'   => 'pending',
+				'per_page' => 1000,
+			),
+			'ids'
+		) as $id ) {
+			$this->run_row( (int) $id );
+		}
+		$this->assertSame( 0, $failed(), 'no failed row left' );
+		$this->assertCount( 452, $runs, '452 rows, 452 runs' );
+		$this->assertSame( 452, count( array_unique( $runs ) ), 'each row ran once' );
+	}
+
 	/** The set-based cancel touches only pending rows of the exact hooks in our group: never another group's rows. */
 	public function test_the_set_based_cancel_touches_only_our_pending_rows_of_the_given_hooks(): void {
 		$ours    = (int) as_enqueue_async_action( 'jetonomy_gravatar_check', array( 1 ), Queue::GROUP );

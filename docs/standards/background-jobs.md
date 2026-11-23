@@ -165,8 +165,13 @@ deactivates silently (no deactivation or activation hook fires), so activation a
 the file swap. On the next scheduling requests `Queue::recover_kept_jobs()` re-queues those rows: only failed rows of
 kept hooks whose log carries that message in English, the site's language or the request's language (a job that
 really ran and errored stays failed), only rows that failed within the last 7 days (`RECOVER_WINDOW_DAYS`, so an old
-fan-out is never replayed to members), 200 per request, same args, one pending copy (`async_once`), and the failed
-row is deleted with its logs. A row whose args no longer decode stays failed. Only hooks with a listener at that
+fan-out is never replayed to members), 200 per request, same args, one pending copy (`async_once`). Each row is
+claimed first (one UPDATE from failed to cancelled), so of several parallel requests only the winner queues the copy
+(`async_once` alone lets a runner finish a copy before a slower request queues the same row again); a row another
+request holds counts as handled, the claimed row is deleted with its logs once the copy is accepted, and a copy no
+scheduler accepts puts the row back to failed and keeps the flag set. A row whose args no longer decode stays failed.
+A request that dies between the claim and the copy leaves the row cancelled and the job lost; `prune_history()`
+deletes that row later. Only hooks with a listener at that
 moment are recovered, so Pro's wait for Pro. The guard reads the cheap checks first (scheduling request, store
 ready, then the flag), so a page view costs nothing. What remains lost: a row that failed more than 7 days before
 recovery runs, or logged in a fourth language. Add a new hook to the list only for the same reason, with its row in

@@ -327,8 +327,9 @@ final class Queue {
 	/**
 	 * Put back kept jobs (KEEP_ON_DEACTIVATE) that another plugin's Action Scheduler ran while ours was off: with no
 	 * listener they failed with "no callbacks are registered". Only rows whose log says so are re-queued, so a job
-	 * that really ran and errored stays failed. Each is queued again once (async_once, same args) and the failed row is
-	 * deleted with its logs. Runs on scheduling requests while the activation flag is set, RECOVER_BATCH rows at a
+	 * that really ran and errored stays failed. Each row is claimed first (failed to cancelled in one UPDATE), so of
+	 * several parallel requests only one queues its copy (async_once, same args); the row is then deleted with its
+	 * logs, or put back to failed when no scheduler takes the copy (the flag then stays set). Runs on scheduling requests while the activation flag is set, RECOVER_BATCH rows at a
 	 * time, and only for hooks that have a listener now (Pro's are skipped while Pro is off). Only rows that failed
 	 * within RECOVER_WINDOW_DAYS are replayed, so an old fan-out never reaches members long after the fact. The log
 	 * message is matched in English, the site's language and the request's language; a row logged in a fourth
@@ -358,8 +359,8 @@ final class Queue {
 			$frag = trim( (string) preg_replace( '/^.*%1\$s/', '', __( 'Scheduled action for %1$s will not be executed as no callbacks are registered.', 'action-scheduler' ) ) ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 			return mb_strlen( $frag ) >= 10 ? '%' . $wpdb->esc_like( $frag ) . '%' : $english; // Too short to match on its own.
 		};
-		$local = $like();
-		$site  = $local;
+		$local   = $like();
+		$site    = $local;
 		if ( determine_locale() !== get_locale() && switch_to_locale( get_locale() ) ) {
 			$site = $like();
 			restore_previous_locale();
@@ -380,23 +381,37 @@ final class Queue {
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-		$store = \ActionScheduler::store();
-		$done  = 0;
+		$store    = \ActionScheduler::store();
+		$done     = 0;
+		$released = false;
+		$claim    = static fn( int $id, string $from, string $to ): bool => 1 === (int) $wpdb->query( $wpdb->prepare( "UPDATE {$actions} SET status = %s WHERE action_id = %d AND status = %s", $to, $id, $from ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- compare-and-set; Action Scheduler has none.
 		foreach ( $ids as $id ) {
+			// Claim first: only the request that turns the failed row into a cancelled one queues the copy. Without it,
+			// a runner could finish a copy before a slower request reached the same row and queued it again
+			// (async_once only blocks a duplicate while the first copy is pending or running). A row another request
+			// holds counts as handled. ponytail: a request that dies between the claim and the copy leaves the row
+			// cancelled and the job lost; prune_history() deletes the row (cancelled rows age by scheduled date).
+			if ( ! $claim( $id, 'failed', 'canceled' ) ) {
+				continue;
+			}
 			try {
 				$action = $store->fetch_action( (string) $id );
 				if ( '' === $action->get_hook() ) {
-					continue; // Args that no longer decode (a NullAction): leave the failed row for the owner to see.
+					$claim( $id, 'canceled', 'failed' ); // Args that no longer decode (a NullAction): left failed for the owner.
+					continue;
 				}
-				if ( self::async_once( $action->get_hook(), (array) $action->get_args() ) ) {
-					$store->delete_action( (string) $id );
-					++$done;
+				if ( ! self::async_once( $action->get_hook(), (array) $action->get_args() ) ) {
+					$claim( $id, 'canceled', 'failed' ); // No scheduler took the copy: give the row back for the next pass.
+					$released = true;
+					continue;
 				}
+				++$done;
+				$store->delete_action( (string) $id ); // The DB logger deletes the row's logs on this hook.
 			} catch ( \Throwable $e ) {
-				unset( $e ); // Deleted by another process meanwhile: nothing to recover.
+				unset( $e ); // Deleted by another process meanwhile: the copy, if any, is queued either way.
 			}
 		}
-		if ( count( $ids ) < self::RECOVER_BATCH ) {
+		if ( count( $ids ) < self::RECOVER_BATCH && ! $released ) {
 			delete_transient( self::RECOVER_FLAG );
 		}
 		return $done;
@@ -638,8 +653,8 @@ final class Queue {
 	private static function delete_finished( string $status, int $days, float $deadline, string $age_by ): int {
 		return self::delete_where(
 			array(
-				'status'            => $status,
-				$age_by             => gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ),
+				'status'             => $status,
+				$age_by              => gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ),
 				$age_by . '_compare' => '<',
 			),
 			$deadline
