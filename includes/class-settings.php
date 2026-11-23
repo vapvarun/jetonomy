@@ -286,6 +286,11 @@ class Settings {
 			if ( 'reputation_points' === $key ) {
 				$value = array_merge( \Jetonomy\Trust\Reputation::action_points_defaults(), is_array( $value ) ? $value : array() );
 			}
+			// Every notification type the site uses, a type registered after the option was saved included (web on,
+			// email per the notifier), so posting this body back changes nothing (QA J32).
+			if ( 'notification_defaults' === $key ) {
+				$value = self::effective( array( 'notification_defaults' => $value ) )['notification_defaults'];
+			}
 			// A map stays a JSON object even when empty or keyed 0..n, never [].
 			if ( 'object' === $def['type'] && is_array( $value ) ) {
 				$value = (object) $value;

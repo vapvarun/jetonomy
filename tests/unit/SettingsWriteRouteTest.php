@@ -445,4 +445,29 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 		$this->assertSame( 0, $clean['verification_reminder_hours'] );
 		$this->assertContains( 'jetonomy_invalid_verification_reminder_hours', array_column( $notices->getValue(), 'code' ) );
 	}
+
+	/**
+	 * QA J32: an option saved before a notification type existed (Pro's announcement or message type registers
+	 * later) read back without that type, and posting the GET body back stored it as web and email OFF. The GET
+	 * body now carries every type as the site uses it, so the first write-back changes nothing.
+	 */
+	public function test_writing_back_the_get_body_changes_nothing_the_first_time(): void {
+		$types = array_keys( array_filter( \Jetonomy\Admin\Admin::email_types(), static fn( array $t ): bool => $t['toggle'] ) );
+		$this->assertGreaterThan( 1, count( $types ), 'fixture: toggle types' );
+		$missing = array_pop( $types ); // A type registered after the option was saved.
+		$saved   = array();
+		foreach ( $types as $type ) {
+			$saved[ $type ] = array( 'web' => true, 'email' => false );
+		}
+		update_option( 'jetonomy_settings', array( 'notification_defaults' => $saved ) );
+		wp_set_current_user( $this->admin );
+		$get   = static fn(): array => json_decode( (string) wp_json_encode( rest_do_request( new WP_REST_Request( 'GET', '/jetonomy/v1/admin/settings' ) )->get_data() ), true )['settings'];
+		$first = $get();
+		$this->assertArrayHasKey( $missing, $first['notification_defaults'], 'the type the site uses is read' );
+		$this->assertTrue( $first['notification_defaults'][ $missing ]['web'], 'as the site uses it: web on' );
+
+		$this->assertSame( 200, $this->post( array( 'notification_defaults' => $first['notification_defaults'] ), $this->admin )->get_status() );
+		$this->assertSame( $first, $get(), 'the first write-back is identical' );
+	}
 }
+
