@@ -3448,6 +3448,8 @@ tr.jetonomy-moderated td {
 .jt-companion-card__title { min-width: 0; }
 .jt-companion-card .button,
 .jt-companion-badge { white-space: normal; height: auto; max-width: 100%; }
+/* The badge's own padding counts inside that 100%, or it pokes 2px past a narrow card. */
+.jt-companion-badge { box-sizing: border-box; }
 
 /* ── Responsive ── */
 @media (max-width: 782px) {
