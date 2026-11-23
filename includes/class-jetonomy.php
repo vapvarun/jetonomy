@@ -286,7 +286,9 @@ final class Jetonomy {
 		$this->check_db_version();
 		$this->load_dependencies();
 		$this->maybe_backfill_activity();
-		$this->maybe_seed_verification_reminder_defaults();
+		// The seed builds a translated email template, so it waits for init, after load_textdomain() (priority 1):
+		// on plugins_loaded it triggered WordPress's "translation loaded too early" notice.
+		add_action( 'init', array( $this, 'maybe_seed_verification_reminder_defaults' ), 2 );
 		$this->maybe_seed_frontend_space_creation_roles();
 
 		Admin_Bar::register();
@@ -333,7 +335,7 @@ final class Jetonomy {
 	 * single option so the work only happens once per site, identical
 	 * pattern to maybe_backfill_activity() above.
 	 */
-	private function maybe_seed_verification_reminder_defaults(): void {
+	public function maybe_seed_verification_reminder_defaults(): void {
 		if ( get_option( 'jetonomy_verification_reminder_seeded' ) ) {
 			return;
 		}
