@@ -287,30 +287,31 @@
 
   /* Derive readable text on the adopted accent. Split from the block above
      because relative colour syntax must be feature-gated: engines without it
-     would drop the declaration and fall back to --jt-white, which is exactly
-     the current (broken-on-light-accents) behaviour - never worse.
+     would drop the declaration and fall back to --jt-white.
 
-     The threshold is 0.7, not the mathematical crossover. White and black reach
-     equal WCAG contrast at roughly L 0.62, so a "pick whichever scores higher"
-     rule flips to black for ordinary brand colours - #1d76da, a plain blue,
-     computes to L 0.57065 and lost the old 0.57 comparison by 0.00065, painting
-     black text on a blue button. Both choices technically pass there; only one
-     of them looks like a working button. 0.7 keeps white on every normal brand
-     blue, green, purple and red, and hands black to the colours that genuinely
-     need it - yellows, ambers and pastels, which sit above 0.75. */
-  @supports (color: oklch(from red l c h)) {
+     The label is white while white reaches 4.5:1 on the fill, else black. In
+     linear sRGB the fill's relative luminance is 0.2126 r + 0.7152 g +
+     0.0722 b, and white keeps 4.5:1 up to 0.1833; above it black is 4.67:1
+     or more, so the pick never falls under 4.5:1. White is preferred, not
+     the higher of the two, so every brand colour where white already passes
+     keeps it (Reign #1d76da at 4.51:1, #0073aa, BuddyNext #5b67d0). The old
+     OKLCH L < 0.7 rule gave white at 4.29:1 on #1d7cd5 (Twenty Twenty-Five),
+     3.46:1 on #ef5455 (BuddyX) and 3.68:1 on #3b82f6; those now get black.
+     Hover is the accent 15% toward black, so it gets the same rule on its own
+     colour: a fill that rests black can hover white. */
+  @supports (color: color(from red srgb-linear r g b)) {
     :root,
     .jt-dark,
     [data-theme="dark"],
     [data-bx-mode="dark"] {
-      --jt-accent-fg: oklch(from var(--jt-accent) clamp(0, (0.7 - l) * 1000, 1) 0 h);
-      /* Hover keeps the rest colour's text. Deriving it from the hover colour
-         flipped black text to white on light accents: oklch(72% 0.16 252) rests
-         black, hovers at about L 0.64 and got white at 3.37:1. Hover is the
-         accent only 15% toward black, so an accent that rests black (L >= 0.7)
-         still carries black at 4.5:1 or more, and one that rests white only
-         gets darker under it. */
-      --jt-accent-hover-fg: var(--jt-accent-fg);
+      --jt-accent-fg: color(from var(--jt-accent) srgb-linear
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1)
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1)
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1));
+      --jt-accent-hover-fg: color(from var(--jt-accent-hover) srgb-linear
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1)
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1)
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1));
     }
   }
 

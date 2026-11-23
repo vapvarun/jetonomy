@@ -194,7 +194,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-nav-space.is-active .jt-nav-count,
 .jt-nav-space > a[aria-current="page"] .jt-nav-count {
 	background: var(--jt-accent);
-	color: var(--jt-bg);
+	color: var(--jt-accent-fg);
 }
 
 .jt-nav-spaces-uncategorized {
@@ -408,7 +408,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	justify-content: center;
 	padding: 10px 16px;
 	background: var(--jt-accent);
-	color: var(--jt-bg);
+	color: var(--jt-accent-fg);
 	border: 0;
 	border-radius: var(--jt-radius-full);
 	font: inherit;
@@ -421,7 +421,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-submit:hover,
 .jt-login-submit:focus-visible {
 	background: var(--jt-accent-hover);
-	color: var(--jt-bg);
+	color: var(--jt-accent-hover-fg);
 }
 .jt-login-submit:focus-visible {
 	outline: 2px solid var(--jt-focus-ring);
@@ -617,7 +617,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	padding: 0 6px;
 	border-radius: var(--jt-radius-full);
 	background: var(--jt-accent);
-	color: var(--jt-bg);
+	color: var(--jt-accent-fg);
 	font-size: 0.75rem;
 	font-weight: 700;
 	font-variant-numeric: tabular-nums;
@@ -1014,7 +1014,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-shortcode-trending-post:hover .jt-shortcode-trending-rank {
 	background: var(--jt-accent);
-	color: var(--jt-bg);
+	color: var(--jt-accent-fg);
 }
 
 /* ─── Responsive (390px) ───────────────────────────────────────────── */

@@ -1803,7 +1803,7 @@
 
   .jt-notif-tab.is-active .jt-notif-tab__count {
     background: var(--jt-accent);
-    color: var(--jt-bg);
+    color: var(--jt-accent-fg);
   }
 
   .jt-notif-bulkbar {
