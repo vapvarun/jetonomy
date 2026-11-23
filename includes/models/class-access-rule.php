@@ -274,6 +274,33 @@ class AccessRule extends Model {
 	}
 
 	/**
+	 * Fill the list_for_space() memo for several spaces with one query, so a
+	 * grid that checks read access per card does not query rules per card.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param int[] $space_ids Space ids.
+	 */
+	public static function prime_for_spaces( array $space_ids ): void {
+		$ids = array_values( array_filter( array_unique( array_map( 'intval', $space_ids ) ), static fn( int $id ): bool => $id > 0 && ! array_key_exists( $id, self::$memo ) ) );
+		if ( ! $ids ) {
+			return;
+		}
+		self::list_for_space( 0 ); // Registers the memo reset once; space 0 holds no rules.
+		$ph   = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows = static::db()->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			static::db()->prepare( 'SELECT * FROM ' . static::table() . " WHERE space_id IN ({$ph}) ORDER BY priority DESC, id ASC", ...$ids )
+		) ?: array();
+		foreach ( $ids as $id ) {
+			self::$memo[ $id ] = array();
+		}
+		foreach ( $rows as $row ) {
+			self::$memo[ (int) $row->space_id ][] = $row;
+		}
+	}
+
+	/**
 	 * List all access rules for a space, ordered by priority descending.
 	 *
 	 * Memoized per request — see $memo.

@@ -107,7 +107,7 @@ Plugin version: 2.0.7 - 121 actions, 151 filters.
 | `jetonomy_sidebar_before_top_members` |  | templates/partials/sidebar.php (widget loop, owner order since 2.1.0) |
 | `jetonomy_sidebar_before_trending` |  | templates/partials/sidebar.php (widget loop, owner order since 2.1.0) |
 | `jetonomy_sitemap_prime_spaces` | $space_ids (int[]) | includes/seo/class-sitemap-emitter.php (Sitemap_Emitter::emit) |
-| `jetonomy_space_card_after` | $space | templates/views/home.php, templates/views/category.php |
+| `jetonomy_space_card_after` | $space | includes/helpers.php (jetonomy_render_space_grid: home, category, search) |
 | `jetonomy_space_display_fields` | space | templates/views/space.php |
 | `jetonomy_space_edit_fields` | space | templates/views/space-edit.php |
 | `jetonomy_space_member_joined` |  | includes/models/class-space-member.php:69 |

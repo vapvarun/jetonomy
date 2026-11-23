@@ -2524,14 +2524,18 @@ const { state, actions } = store( 'jetonomy', {
 
             let subscriptionId = null;
             if ( wasFollowing ) {
+                let gone = false;
                 try {
                     const res = yield window.jetonomyRest.restFetch( `/subscriptions?object_type=space&object_id=${ spaceId }` );
                     if ( res.ok ) {
                         const data = res.data || {};
                         const subs = data.data || [];
                         if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
+                        else gone = true;
                     }
                 } catch { /* fall through */ }
+                // Already unfollowed elsewhere (another tab): show the real state.
+                if ( gone ) applyFollowingUI( false );
                 if ( ! subscriptionId ) return;
             }
 

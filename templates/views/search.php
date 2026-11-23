@@ -405,30 +405,19 @@ $crumbs = array(
 						<h2 class="jt-section-label">
 							<?php echo esc_html( \Jetonomy\space_label( true ) ); ?>
 						</h2>
-						<div class="jt-space-grid jt-mb-lg">
+						<div class="jt-mb-lg">
 							<?php
-							// One query for the viewer's role in every card, as the home and category grids do (the member marker in the badges).
-							\Jetonomy\Models\SpaceMember::warm_viewer_roles( get_current_user_id(), array_map( static fn( $s ) => (int) $s->id, $spaces ) );
-							foreach ( $spaces as $space ) :
-								?>
-								<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
-									class="jt-card jt-space-card jt-no-underline jt-block">
-									<div class="jt-space-card-inner">
-										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-icon', $space->type ?? '' ); ?>
-										<div>
-											<div class="jt-space-card-title" dir="auto"><?php echo $jt_highlight( (string) $space->title ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>
-											<?php // The same badges as every other space card (Private, member, joined), so a private space is never mistaken for an open one. ?>
-											<div class="jt-space-card-badges"><?php jetonomy_render_space_meta_badges( $space ); ?></div>
-											<?php if ( ! empty( $space->description ) ) : ?>
-												<div class="jt-space-card-excerpt jt-mt-sm" dir="auto"><?php echo $jt_highlight( wp_trim_words( $space->description, 12 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>
-											<?php endif; ?>
-											<div class="jt-space-card-stat jt-mt-sm">
-												<?php echo esc_html( \Jetonomy\count_label( (int) $space->post_count, 'topic' ) ); ?>
-											</div>
-										</div>
-									</div>
-								</a>
-							<?php endforeach; ?>
+							// The shared card renderer: highlighted title and a 12-word excerpt.
+							jetonomy_render_space_grid(
+								$spaces,
+								\Jetonomy\base_url(),
+								'',
+								array(
+									'highlight'     => $jt_highlight,
+									'excerpt_words' => 12,
+								)
+							);
+							?>
 						</div>
 					<?php endif; ?>
 

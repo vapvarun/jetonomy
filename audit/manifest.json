@@ -3749,8 +3749,9 @@
       "name": "jetonomy_space_card_after",
       "type": "action",
       "args": "$space",
-      "where": "templates/views/home.php, templates/views/category.php",
-      "consumed_by": []
+      "where": "includes/helpers.php (jetonomy_render_space_grid: home, category, search)",
+      "consumed_by": [],
+      "notes": "2.1.0: fires inside the card <li>, after the stats and outside the stretched title link (was after the card <a>)."
     },
     {
       "name": "jetonomy_space_display_fields",

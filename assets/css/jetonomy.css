@@ -1322,9 +1322,39 @@
   .jt-app .jt-cat-empty { color: var(--jt-text-tertiary); margin: 0; padding: 0; }
 
   /* ── Space card (home/category) ── */
-  .jt-space-card-inner { display: flex; align-items: flex-start; gap: var(--jt-space-3); }
   .jt-space-card-emoji { font-size: 1.75em; flex-shrink: 0; line-height: 1; }
-  .jt-space-card-body { min-width: 0; flex: 1; }
+  /* 2.1.0 grid card: an <li> whose title link is stretched over the card (one
+     link for screen readers, the whole card still clickable). Icon, title and
+     Follow share the head row; badges, excerpt and stats run full width, so
+     there is no dead gutter under the icon. Scoped to .jt-space-grid because
+     My Spaces keeps its own .jt-space-card-link / -head card. */
+  .jt-app .jt-space-grid { list-style: none; margin: 0; padding: 0; }
+  .jt-app .jt-space-grid > .jt-space-card { container-type: inline-size; position: relative; display: flex; flex-direction: column; gap: var(--jt-space-2); margin: 0; padding: var(--jt-space-4); overflow: hidden; }
+  .jt-app .jt-space-grid .jt-space-card-cover { margin-block-start: calc(-1 * var(--jt-space-4)); margin-inline: calc(-1 * var(--jt-space-4)); block-size: 72px; background: var(--jt-bg-subtle); }
+  .jt-app .jt-space-grid .jt-space-card-cover img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; }
+  .jt-app .jt-space-grid .jt-space-card-cover img[src=""] { display: none; }
+  .jt-app .jt-space-grid .jt-space-card-head { display: flex; align-items: center; gap: var(--jt-space-3); }
+  .jt-app .jt-space-grid .jt-space-card-title { flex: 1; min-inline-size: 0; margin: 0; font-size: 0.9375rem; font-weight: 700; line-height: 1.3; overflow-wrap: break-word; hyphens: auto; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .jt-app .jt-space-grid .jt-space-card-link { display: inline; padding: 0; color: var(--jt-text); text-decoration: none; }
+  .jt-app .jt-space-grid .jt-space-card-link::after { content: ""; position: absolute; inset: 0; }
+  .jt-app .jt-space-grid .jt-space-card-link:focus-visible { outline: none; }
+  .jt-app .jt-space-grid > .jt-space-card:focus-within { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-app .jt-space-grid > .jt-space-card:has(.jt-follow-space-btn:focus-visible) { outline: none; }
+  /* Above the stretched link, so they stay their own targets. */
+  .jt-app .jt-space-grid .jt-space-card :is(button, a:not(.jt-space-card-link), input, select, textarea, label) { position: relative; z-index: 1; }
+  .jt-app .jt-space-grid .jt-follow-space-btn { flex: none; }
+  .jt-app .jt-space-grid .jt-space-card-badges,
+  .jt-app .jt-space-grid .jt-space-card-stats,
+  .jt-app .jt-space-grid .jt-space-card-excerpt { margin: 0; }
+  /* Narrow card (four columns at 1280, or a slim sidebar): the bell alone; the
+     label stays in the DOM for screen readers and aria-pressed carries the state. */
+  @container (max-width: 340px) {
+    .jt-app .jt-space-grid .jt-follow-space-btn { min-inline-size: 36px; justify-content: center; padding-inline: 0; }
+    .jt-app .jt-space-grid .jt-follow-space-btn .jt-follow-label { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  }
+  @media (max-width: 480px) {
+    .jt-app .jt-space-grid .jt-follow-space-btn { min-inline-size: var(--jt-tap); min-block-size: var(--jt-tap); }
+  }
   /* Wrapped, not cut: two spaces can share a long common prefix. */
   .jt-space-card-title { font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 4px; overflow-wrap: anywhere; }
   .jt-space-card-excerpt { font-size: 0.8125rem; color: var(--jt-text-tertiary); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

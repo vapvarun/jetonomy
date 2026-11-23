@@ -202,11 +202,13 @@ add_action( 'jetonomy_reply_actions', function( object $reply ) {
 
 ## Space Cards
 
-Space cards appear on the community home grid (`/community/`) and the category page (`/community/category/{slug}/`). The hook fires outside the card's `<a>` wrapper, so interactive elements (buttons, forms) are valid HTML here.
+Space cards appear on the community home grid (`/community/`), the category page (`/community/category/{slug}/`) and the search results, all drawn by one function, `jetonomy_render_space_grid()`.
+
+Since 2.1.0 each card is an `<li class="jt-card jt-space-card">` in a `<ul class="jt-space-grid">`. The space title is the only link (`<a class="jt-space-card-link">` inside an `<h3 class="jt-space-card-title">`), and it is stretched over the whole card with `.jt-space-card-link::after { position: absolute; inset: 0 }`, so a click anywhere on the card still opens the space while screen readers hear one link. A **Follow** button sits beside the title for signed-in members who can read the space, and a space with a cover image shows it as a 72px strip at the top. Buttons, links and form fields you add inside the card get `position: relative; z-index: 1` from Jetonomy's CSS so they stay clickable above the stretched link; anything else that should take its own clicks needs the same.
 
 ### `jetonomy_space_card_after`
 
-Fires after each space card, outside its `<a>` wrapper.
+Fires at the end of each space card, after the counts. Since 2.1.0 it fires inside the card's `<li>` and outside any link (before 2.1.0 it fired after the card's `<a>` wrapper).
 
 ```
 do_action( 'jetonomy_space_card_after', $space )
@@ -218,7 +220,7 @@ do_action( 'jetonomy_space_card_after', $space )
 |-----------|------|-------------|
 | `$space` | `object` | The space being rendered. |
 
-**Source:** `templates/views/home.php`, `templates/views/category.php`
+**Source:** `includes/helpers.php` (`jetonomy_render_space_grid()`, used by home, category and search)
 
 **Example: "New" badge on recently created spaces**
 
@@ -234,7 +236,7 @@ add_action( 'jetonomy_space_card_after', function( object $space ) {
 
 **Example: Join button outside the card link**
 
-Since this hook fires outside the `<a>` wrapper, you can safely render a button here without nesting interactive elements inside the link.
+The hook fires outside the title link, so a button here is valid HTML and sits above the stretched link.
 
 ```php
 add_action( 'jetonomy_space_card_after', function( object $space ) {
@@ -353,7 +355,7 @@ Available tokens are listed in the plugin's `CLAUDE.md` CSS Token Rules section.
 ## Notes
 
 - `jetonomy_post_card_after_badges` fires in both the listing card and the single-post header. Test both surfaces when you add a badge.
-- `jetonomy_space_card_after` fires outside the `<a>` wrapper - this is intentional so buttons and forms are valid HTML. Don't wrap the emitted content in another `<a>`.
+- `jetonomy_space_card_after` fires inside the card but outside its title link, so buttons and forms are valid HTML. Don't wrap the emitted content in another `<a>`; a card has one link, the title.
 - `jetonomy_member_card_after` fires inside the members list grid, not inside any wrapper link, so interactive elements are valid.
 - For heavier customizations that require restructuring the card layout, use [Template Overrides](./03-template-overrides.md) instead.
 - See [Hooks Reference](./02-hooks-reference.md) for the full list of hooks, including sidebar, reply, and between-replies slots.

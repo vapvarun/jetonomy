@@ -230,7 +230,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_sidebar_before_popular_tags`<br>_action_ | Insert a custom widget or ad before the Popular Tags section. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_before_trending`<br>_action_ | Insert a custom widget or ad before the Trending section. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_widgets`<br>_filter_ | The sidebar widget list (`id`, `enabled`) in display order, after the owner's Appearance setting. The only way to switch on a widget the owner turned off, or to reorder. Since 2.1.0. | `widgets` | `includes/helpers.php` |
-| `jetonomy_space_card_after`<br>_action_ | Fires after each space card. Append a per-space badge, link, or action here. | `$space` | `templates/views/category.php`, `templates/views/home.php` |
+| `jetonomy_space_card_after`<br>_action_ | Fires at the end of each space card (home, category and search grids), inside the card and outside its title link since 2.1.0. Append a per-space badge, link, or action here. | `$space` | `includes/helpers.php` |
 | `jetonomy_template_map`<br>_filter_ | Values may be relative (resolved against plugin_dir/theme_dir) or absolute paths (starting with /). | `map` | `includes/class-template-loader.php` |
 
 ## Theme & CSS

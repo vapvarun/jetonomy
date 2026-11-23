@@ -617,18 +617,31 @@ if ( ! function_exists( 'jetonomy_register_token_style' ) ) {
 
 if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 	/**
-	 * Render a grid of space cards.
+	 * Render a grid of space cards: the one renderer for home, category and
+	 * search (since 2.1.0 search no longer keeps its own copy).
 	 *
 	 * With $view_all_url the grid is a preview: the first N cards (6, filter
 	 * jetonomy_space_preview_limit) and a "View all X" link to the page that
 	 * lists them all, so a category with hundreds of spaces stays one short
 	 * section on the community home.
 	 *
+	 * Each card is an <li>: the title is the only link, stretched over the card
+	 * (`.jt-space-card-link::after`), so the whole card stays clickable while
+	 * the Follow button beside the title is a real button. Since 2.1.0.
+	 *
 	 * @param object[] $spaces
-	 * @param string   $base         Community base URL.
+	 * @param string   $base         Community base URL (kept for compatibility).
 	 * @param string   $view_all_url Optional page listing every space in the group.
+	 * @param array    $args {
+	 *     Optional. Since 2.1.0.
+	 *
+	 *     @type callable|null $highlight     Turns raw text into escaped HTML (search marks the terms). Default esc_html.
+	 *     @type int           $excerpt_words Trim the description to this many words. Default 0 (CSS clamps it to two lines).
+	 *     @type int           $heading_level Heading level of each card title, 2 to 6. Default 3.
+	 * }
 	 */
-	function jetonomy_render_space_grid( array $spaces, string $base, string $view_all_url = '' ): void {
+	function jetonomy_render_space_grid( array $spaces, string $base, string $view_all_url = '', array $args = array() ): void {
+		unset( $base );
 		$total = count( $spaces );
 		if ( '' !== $view_all_url ) {
 			/**
@@ -645,67 +658,100 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 			return;
 		}
 
-		// One query for the viewer's role in every card (member marker in the badges).
-		\Jetonomy\Models\SpaceMember::warm_viewer_roles( get_current_user_id(), array_map( static fn( $s ) => (int) $s->id, $spaces ) );
+		$highlight = isset( $args['highlight'] ) && is_callable( $args['highlight'] ) ? $args['highlight'] : 'esc_html';
+		$words     = max( 0, (int) ( $args['excerpt_words'] ?? 0 ) );
+		$level     = min( 6, max( 2, (int) ( $args['heading_level'] ?? 3 ) ) );
 
-		echo '<div class="jt-space-grid">';
+		// The rendered slice only: one query each for the viewer's role
+		// (member marker), their space bans (read check) and their follows.
+		$viewer = get_current_user_id();
+		$ids    = array_map( static fn( $s ) => (int) $s->id, $spaces );
+		\Jetonomy\Models\SpaceMember::warm_viewer_roles( $viewer, $ids );
+		if ( $viewer ) {
+			// The Follow button's read check: rows, bans and access rules in bulk.
+			// ponytail: a private space with membership rules still asks its
+			// membership adapter once per card (bounded by the slice size).
+			\Jetonomy\Models\Space::prime( $ids );
+			\Jetonomy\Models\AccessRule::prime_for_spaces( $ids );
+			\Jetonomy\Models\Restriction::prime_space_bans( $viewer, $ids );
+			\Jetonomy\Models\Subscription::warm_viewer_subscriptions( $viewer, 'space', $ids );
+		}
+
+		echo '<ul class="jt-space-grid" role="list">';
 		foreach ( $spaces as $space ) {
+			$jt_cover  = (string) ( $space->cover_image ?? '' );
+			$jt_follow = $viewer && \Jetonomy\Permissions\Permission_Engine::can( $viewer, 'read', (int) $space->id );
+			$jt_on     = $jt_follow && \Jetonomy\Models\Subscription::is_subscribed( $viewer, 'space', (int) $space->id );
+			$jt_desc   = (string) ( $space->description ?? '' );
 			?>
-			<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
-				class="jt-card jt-space-card jt-no-underline jt-block">
-				<div class="jt-space-card-inner">
+			<li class="jt-card jt-space-card<?php echo '' !== $jt_cover ? ' jt-space-card--cover' : ''; ?>">
+				<?php if ( '' !== $jt_cover ) : ?>
+					<div class="jt-space-card-cover" aria-hidden="true"><img src="<?php echo esc_url( $jt_cover ); ?>" alt="" loading="lazy" decoding="async"></div>
+				<?php endif; ?>
+				<div class="jt-space-card-head">
 					<?php
 					// Always route through the icon helper so a stored "message-circle"
-					// renders as the Lucide SVG (not as the literal text). The helper
-					// also defends against legacy emoji values and dashicon prefixes.
+					// renders as the Lucide SVG (not as the literal text).
 					jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-icon', $space->type ?? '' );
+					printf( '<h%d class="jt-space-card-title">', (int) $level );
 					?>
-					<div class="jt-space-card-body">
-						<div class="jt-space-card-title">
-							<?php echo esc_html( $space->title ); ?>
-						</div>
-						<div class="jt-space-card-badges">
-							<?php jetonomy_render_space_meta_badges( $space ); ?>
-						</div>
-						<?php if ( ! empty( $space->description ) ) : ?>
-							<div class="jt-space-card-excerpt">
-								<?php echo esc_html( $space->description ); ?>
-							</div>
-						<?php endif; ?>
-						<div class="jt-space-card-stats">
-							<span class="jt-space-card-stat">
-								<?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $space->post_count, 'topic' ) ), '<strong>' . esc_html( number_format_i18n( (int) $space->post_count ) ) . '</strong>' ), array( 'strong' => array() ) ); ?>
-							</span>
-							<span class="jt-space-card-stat">
-								<?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $space->member_count, 'member' ) ), '<strong>' . esc_html( number_format_i18n( (int) $space->member_count ) ) . '</strong>' ), array( 'strong' => array() ) ); ?>
-							</span>
-							<?php
-							// Recency tells a newcomer the space is alive — totals alone
-							// can't distinguish a dormant space from a thriving one.
-							$jt_activity = jetonomy_space_activity_label( $space );
-							if ( '' !== $jt_activity ) :
-								?>
-								<span class="jt-space-card-stat jt-space-card-activity"><?php echo esc_html( $jt_activity ); ?></span>
-							<?php endif; ?>
-						</div>
-					</div>
+					<a class="jt-space-card-link" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>" dir="auto"><?php echo $highlight( (string) $space->title ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html or search's highlighter, which escapes every segment. ?></a>
+					<?php printf( '</h%d>', (int) $level ); ?>
+					<?php if ( $jt_follow ) : ?>
+						<button type="button" class="jt-btn jt-btn-sm jt-follow-space-btn <?php echo esc_attr( $jt_on ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
+							data-wp-interactive="jetonomy"
+							data-wp-on--click="actions.followSpace"
+							data-space-id="<?php echo absint( $space->id ); ?>"
+							data-following="<?php echo esc_attr( $jt_on ? '1' : '0' ); ?>"
+							aria-pressed="<?php echo $jt_on ? 'true' : 'false'; ?>"
+							title="<?php /* translators: %s: space title. */ echo esc_attr( sprintf( __( 'Get notified about new activity in %s', 'jetonomy' ), $space->title ) ); ?>">
+							<?php jetonomy_echo_icon( 'bell', 14 ); ?>
+							<span class="jt-follow-label"><?php echo $jt_on ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?></span>
+						</button>
+					<?php endif; ?>
 				</div>
-			</a>
+				<div class="jt-space-card-badges">
+					<?php jetonomy_render_space_meta_badges( $space ); ?>
+				</div>
+				<?php if ( '' !== $jt_desc ) : ?>
+					<p class="jt-space-card-excerpt" dir="auto"><?php echo $highlight( $words ? wp_trim_words( $jt_desc, $words ) : $jt_desc ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see the title. ?></p>
+				<?php endif; ?>
+				<div class="jt-space-card-stats">
+					<span class="jt-space-card-stat">
+						<?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $space->post_count, 'topic' ) ), '<strong>' . esc_html( number_format_i18n( (int) $space->post_count ) ) . '</strong>' ), array( 'strong' => array() ) ); ?>
+					</span>
+					<span class="jt-space-card-stat">
+						<?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $space->member_count, 'member' ) ), '<strong>' . esc_html( number_format_i18n( (int) $space->member_count ) ) . '</strong>' ), array( 'strong' => array() ) ); ?>
+					</span>
+					<?php
+					// Recency tells a newcomer the space is alive.
+					$jt_activity = jetonomy_space_activity_label( $space );
+					if ( '' !== $jt_activity ) :
+						?>
+						<span class="jt-space-card-stat jt-space-card-activity"><?php echo esc_html( $jt_activity ); ?></span>
+					<?php endif; ?>
+				</div>
+				<?php
+				/**
+				 * Fires at the end of each space card in the home, category and
+				 * search grids.
+				 *
+				 * Append a custom badge, button, or note. Since 2.1.0 it fires
+				 * INSIDE the card's <li>, after the stats and outside any link, so
+				 * interactive markup stays valid; give it `position: relative` to
+				 * sit above the card's stretched title link. Before 2.1.0 it fired
+				 * after the card's <a> wrapper.
+				 *
+				 * @since 1.5.0
+				 *
+				 * @param object $space The space being rendered.
+				 */
+				do_action( 'jetonomy_space_card_after', $space );
+				?>
+			</li>
 			<?php
-			/**
-			 * Fires after each space card in the community home grid.
-			 *
-			 * Append a custom badge, button, or note after a space card. Fires
-			 * OUTSIDE the card's <a> wrapper so interactive markup (buttons,
-			 * forms) is valid. The same hook fires from the category view.
-			 *
-			 * @since 1.5.0
-			 *
-			 * @param object $space The space being rendered.
-			 */
-			do_action( 'jetonomy_space_card_after', $space );
 		}
-		echo '</div>';
+		echo '</ul>';
 		if ( '' !== $view_all_url && $total > count( $spaces ) ) {
 			echo '<p class="jt-space-grid-more"><a class="jt-btn jt-btn-sm jt-btn-ghost" href="' . esc_url( $view_all_url ) . '">';
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
