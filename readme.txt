@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.1
-Stable tag: 2.0.7
+Stable tag: 2.1.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,67 @@ Absolutely. Jetonomy has 85 REST routes / 117 method-endpoints (144 routes acros
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 2.1.0 - November 2026 =
+
+Space cards with Follow, a sidebar you arrange, a phone bottom bar, and a contrast and accessibility pass over every control. API clients: a missing space now answers with one error code, jetonomy_space_not_found.
+
+* New      - Space cards on the home, category and search pages show a cover strip and a Follow button beside the space title.
+* New      - Choose which community sidebar widgets show, and in what order, under Settings > Appearance.
+* New      - Select all and Clear all for each role in the Permissions capability matrix.
+* New      - Space moderators can ban members of their own space when the new setting is on (off by default), and space admins can lift those bans.
+* New      - A bottom bar on phones: Home, Spaces, New, Alerts and Me for members, and Home, Search and Sign in for guests.
+* New      - Members can hide their online status, so other members see no online dot or last-seen time.
+* New      - The moderation queue shows why each item is held.
+* New      - Site announcement emails have a default template you can see and a working Preview.
+* New      - wp jetonomy trust-evaluate --dry-run lists who would be promoted and changes nothing.
+* Improve  - Every control edge, focus ring and label meets WCAG AA contrast in light and dark mode, with any accent colour and on any host theme.
+* Improve  - Text in a light accent colour is darker so it stays readable, and buttons on the BuddyX coral accent get a black label.
+* Improve  - Controls and labels no longer fade out with transparency, so muted and disabled text stays readable.
+* Improve  - The sidebar search field and the block theme Search button have a visible outline.
+* Improve  - Every confirm dialog is named for screen readers, and each Members page action names the member it acts on.
+* Improve  - Tag chips, Follow buttons, sidebar links, menu rows and the role matrix boxes are at least 44px to tap on phones.
+* Improve  - More menus stay attached to their button on phones and when neither screen edge fits.
+* Improve  - Emails go out in the recipient's language, and role, visibility and report-reason labels are translated everywhere.
+* Improve  - Times such as "5 minutes ago" are one translatable phrase, and a date in the future shows nothing.
+* Improve  - Members tied on reputation on the leaderboard are listed newest first.
+* Improve  - Trust levels check every threshold shown on the settings screen, count replies, and never demote a member automatically.
+* Improve  - Start a topic finds open spaces past archived ones and can filter past the first eight.
+* Improve  - The membership level and PMPro access-rule pickers search the server, work with the keyboard and say when the search fails.
+* Improve  - Scheduled work that was promised before deactivation, such as scheduled posts, is kept and runs after you activate Jetonomy again.
+* Improve  - Jetonomy bundles Action Scheduler 4.0.0, retries a failed publish at most three times, trims its own finished job history, and does no scheduler work on ordinary page views.
+* Improve  - Load Sample Data asks first when the community already has content of its own, and can no longer be re-run by a stray request.
+* Improve  - A private community is left out of the sitemap and robots.txt.
+* Improve  - On PHP older than 8.1 Jetonomy pauses with an admin notice instead of breaking the site, and a missing mbstring, ctype or dom extension never causes a fatal error.
+* Improve  - Reign in a folder named "reign" and child themes of Reign and BuddyX get their dark mode and colours.
+* Improve  - Uninstall always clears Jetonomy's scheduled work, transients, cache and rewrite rules; with data removal on it also deletes the tables, options, capabilities, member meta and the licence update cache.
+* Improve  - A licence brings Pro updates only, and the Jetonomy row on the Plugins screen no longer shows a Manage License link.
+* Improve  - An import re-run that finds nothing new says so instead of "0 records imported".
+* Fix      - A rate limit of 0 now means that limit is off; sites that stored 0 were blocking every new member on that action and now have no cap on it.
+* Fix      - An empty number field on the settings screen saves the default instead of 0, and an out-of-range number saves the nearest allowed value with a notice saying so, reputation points included.
+* Fix      - The verification reminder defaults to 24 hours on a site that never saved it, and the "translation loaded too early" notice on the first load after an upgrade is gone.
+* Fix      - A settings save that is refused says so instead of "Saved", two saves close together keep each other's changes, and the text "false" no longer turns a setting on.
+* Fix      - A very large page number in an address no longer breaks community pages, admin lists or the media library.
+* Fix      - No restriction or other row is stored for a space that does not exist.
+* Fix      - The moderation pages answer 403 to a member who cannot moderate, on every theme.
+* Fix      - Voting twice at the same moment counts once instead of showing a database error.
+* Fix      - Unfollowing your own topic stops its reply notices.
+* Fix      - Follow buttons ignore repeat clicks while a request is running.
+* Fix      - The report dialog closes on a duplicate report and keeps focus inside when a submit fails.
+* Fix      - Inline Code works with nothing selected.
+* Fix      - Admin inline edit refuses an empty title or body and shows the result.
+* Fix      - Register on the login card follows a registration plugin that redirects wp-login.php.
+* Fix      - With BuddyNext active, staff see a hidden member's online dot on Jetonomy pages, as they do on BuddyNext's own.
+* Fix      - A Jetonomy table dropped after an update is re-created within a day.
+* Dev      - Every REST response for a missing space now uses the error code jetonomy_space_not_found (was jetonomy_not_found or space_not_found); update any client that matched the old codes.
+* Dev      - New jetonomy_loaded action fires once when Jetonomy has finished booting, with the main plugin object.
+* Dev      - New jetonomy_held_item_notes filter and jetonomy_space_members_purged action.
+* Dev      - \Jetonomy\Queue is the one scheduler for Jetonomy and Jetonomy Pro, and recurring jobs register through the jetonomy_recurring_jobs filter.
+* Dev      - Settings are written through \Jetonomy\Settings, so the settings form, the REST settings route and wp jetonomy config set share one sanitizer.
+* Dev      - WP-CLI refuses bad numbers and flags, and every whole-number argument states its minimum.
+* Dev      - The repository's bin folder has a control contrast crawler and the seeders it uses; they are not in the plugin zip.
+* Compat   - Aligned with Jetonomy Pro 2.1.0. Install both updates together.
+* Compat   - Going back to 2.0.7 after upgrading is not supported.
 
 = 2.0.7 - November 2026 =
 
