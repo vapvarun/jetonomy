@@ -143,7 +143,12 @@ promise already made to a member. It cancels only jobs that are recomputed or lo
 due-time job, digests, trust and badge sweeps, AI review, push sends, recount, the IMAP poll). Jobs that finish an action a member or the owner already committed, or carry state nothing
 else can rebuild, stay pending. Jetonomy keeps ONE list, `\Jetonomy\Queue::KEEP_ON_DEACTIVATE`, and every
 deactivation path (Free's `Cron::unschedule()`, Pro's `deactivate()`, each extension's base `deactivate()`) cancels
-through `Queue::cancel_on_deactivate()`, which skips it:
+through `Queue::cancel_on_deactivate()`, which skips it. That cancel is set-based (`Queue::cancel_pending_rows()`: one
+UPDATE of at most 10,000 pending rows per statement, exact hooks, our group only, never Action Scheduler's per-row
+API, which took minutes for 100,000 rows), plus `wp_unschedule_hook()` for WP-Cron copies. Pro registers
+`jetonomy_pro_deactivate()` at top level, before its Free-present guard, so it also runs when Free was deactivated
+first; without Free it runs the same bounded UPDATE on its own `jetonomy_pro_` rows, skipping
+`JETONOMY_PRO_KEEP_ON_DEACTIVATE` (a copy of Pro's keep entries, held equal by a test):
 
 | Kept hook | Why it must survive | Recovery if it failed while the plugin was off |
 |---|---|---|
