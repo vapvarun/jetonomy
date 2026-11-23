@@ -217,7 +217,6 @@ class UpgradeJobsTest extends WP_UnitTestCase {
 			}
 		};
 		$prop = new \ReflectionProperty( $pro, 'extensions' );
-		$prop->setAccessible( true );
 		$saved = $prop->getValue( $pro );
 		$prop->setValue( $pro, array( 'qa-spy' => $spy ) );
 		if ( ! class_exists( 'WP_Upgrader' ) ) {

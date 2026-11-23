@@ -22,7 +22,6 @@ class LayoutCssScopeTest extends WP_UnitTestCase {
 
 	private function rules( array $settings ): string {
 		$method = new \ReflectionMethod( Layout_CSS::class, 'build_rules' );
-		$method->setAccessible( true );
 		return (string) $method->invoke( new Layout_CSS(), $settings );
 	}
 

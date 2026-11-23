@@ -34,7 +34,6 @@ class WebPushNoDuplicatesTest extends WP_UnitTestCase {
 		remove_action( 'jetonomy_pro_send_push_batch', array( $b, 'do_send_batch' ), 10 ); // One sender, as on a live site.
 
 		$device = new \ReflectionMethod( $a, 'store_device' );
-		$device->setAccessible( true );
 		$actor  = self::factory()->user->create();
 		$tokens = array();
 		for ( $i = 0; $i < 2000; $i++ ) {

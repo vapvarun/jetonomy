@@ -115,7 +115,6 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 	 */
 	private function pushed_body( string $type, string $object_type, int $object_id, string $message ): ?string {
 		$device = new \ReflectionMethod( $this->ext, 'store_device' );
-		$device->setAccessible( true );
 		$device->invoke( $this->ext, $this->bob, 'ExponentPushToken[bob' . uniqid() . ']', 'ios', 'Phone' );
 		$id = Notification::create( array( 'user_id' => $this->bob, 'actor_id' => $this->alice, 'type' => $type, 'object_type' => $object_type, 'object_id' => $object_id, 'message' => $message ) );
 		$this->ext->on_notification_created( $id, $this->bob, $type, $object_type, $object_id, $message, '' );
@@ -155,7 +154,6 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 	 */
 	public function test_a_slow_push_service_splits_the_send_across_runs_without_repeats(): void {
 		$device = new \ReflectionMethod( $this->ext, 'store_device' );
-		$device->setAccessible( true );
 		$members = array();
 		for ( $i = 0; $i < 5; $i++ ) {
 			$uid             = self::factory()->user->create();
@@ -213,7 +211,6 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 	 */
 	public function test_the_deadline_is_checked_between_one_members_devices(): void {
 		$device = new \ReflectionMethod( $this->ext, 'store_device' );
-		$device->setAccessible( true );
 		$tokens = array();
 		foreach ( array( 1, 3 ) as $count ) {
 			$uid = self::factory()->user->create();
@@ -268,7 +265,6 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 	 */
 	public function test_a_stop_mid_member_resumes_at_the_next_device(): void {
 		$device = new \ReflectionMethod( $this->ext, 'store_device' );
-		$device->setAccessible( true );
 		$uid    = self::factory()->user->create();
 		$tokens = array();
 		for ( $d = 0; $d < 5; $d++ ) {
