@@ -19,7 +19,8 @@ defined( 'ABSPATH' ) || exit;
 // re-rank the board and leak "you blocked someone" via rank gaps.
 //
 // Cached 600s under ONE global key — zero viewer variance,
-// runs on 100% of page views, and the bare ORDER BY reputation filesorts.
+// runs on 100% of page views. Without a persistent object cache it still runs
+// per page, which is why the sort is index-served (reputation_user, backward scan).
 // TTL-only by design: a 10-minute-stale Top Members widget is invisible,
 // and busting on every reputation write would defeat the point.
 //

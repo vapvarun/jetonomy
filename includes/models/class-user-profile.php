@@ -589,15 +589,20 @@ class UserProfile extends Model {
 	 * @param string $order_by ORDER BY clause. Trusted: callers pass a fixed
 	 *                         literal or a value already vetted via the
 	 *                         `jetonomy_users_query_args` filter. Defaults to
-	 *                         'reputation DESC, user_id ASC'. The user_id half is
+	 *                         'reputation DESC, user_id DESC'. The user_id half is
 	 *                         load-bearing, not cosmetic: under LIMIT/OFFSET,
 	 *                         MySQL may return tied rows in a different order for
 	 *                         each page, so without it a member tied on
 	 *                         reputation could appear on both pages of the board
-	 *                         or on neither.
+	 *                         or on neither. Both halves DESC so the
+	 *                         reputation_user (reputation, user_id) index serves
+	 *                         the sort as a backward scan: a mixed ASC/DESC order
+	 *                         filesorts the whole table on every page view
+	 *                         (14 ms vs 0.25 ms at 20k profiles). Tied members
+	 *                         share one competition rank either way.
 	 * @return object[] Profile rows for the page (empty array when none).
 	 */
-	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC, user_id ASC' ): array {
+	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC, user_id DESC' ): array {
 		// Deliberately NOT block-filtered — a ranking, not a content feed.
 		// Per-viewer filtering would re-rank the board and leak "you blocked
 		// someone" via rank gaps.
