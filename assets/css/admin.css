@@ -3445,7 +3445,13 @@ tr.jetonomy-moderated td {
 /* ── Responsive ── */
 @media (max-width: 782px) {
 	.jt-fam-header { flex-wrap: wrap; }
-	.jt-companions-grid { grid-template-columns: 1fr; }
+	.jt-companions-grid { grid-template-columns: minmax(0, 1fr); }
+	/* Long translations (German compounds): the card's head wraps and words break inside the card, never past it. */
+	.jt-companion-card { overflow-wrap: anywhere; }
+	.jt-companion-card__head { flex-wrap: wrap; }
+	.jt-companion-card__title { min-width: 0; }
+	.jt-companion-card .button,
+	.jt-companion-badge { white-space: normal; height: auto; max-width: 100%; }
 }
 
 /* ═══════════════════════════════════════════════════════════

@@ -314,6 +314,15 @@ else
     FAILED_GATES+=("script-translations")
 fi
 
+# --- Gate 3d: .pot matches the code ----------------------------------------
+step "Translation template fresh (free${PRO:+ + pro})"
+if php bin/check-pot-fresh.php && { [ -z "$PRO" ] || php bin/check-pot-fresh.php "$PRO"; }; then
+    ok ".pot matches the code"
+else
+    fail ".pot is stale (run npx grunt makepot, then commit languages/*.pot)"
+    FAILED_GATES+=("pot-fresh")
+fi
+
 # --- Gate 4: PHPUnit combo (free+pro integration) ------------------------
 if [ "$DO_COMBO" -eq 1 ]; then
     step "PHPUnit combo (free+pro integration)"

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-22T14:27:48+00:00\n"
+"POT-Creation-Date: 2026-11-23T03:06:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -136,10 +136,10 @@ msgstr ""
 #: includes/admin/ajax/class-moderation-handler.php:48
 #: includes/admin/ajax/class-moderation-handler.php:63
 #: includes/admin/ajax/class-moderation-handler.php:77
-#: includes/admin/ajax/class-settings-handler.php:143
-#: includes/admin/ajax/class-settings-handler.php:223
-#: includes/admin/ajax/class-settings-handler.php:276
-#: includes/admin/ajax/class-settings-handler.php:313
+#: includes/admin/ajax/class-settings-handler.php:148
+#: includes/admin/ajax/class-settings-handler.php:228
+#: includes/admin/ajax/class-settings-handler.php:281
+#: includes/admin/ajax/class-settings-handler.php:318
 #: includes/admin/ajax/class-spaces-handler.php:100
 #: includes/admin/ajax/class-spaces-handler.php:179
 #: includes/admin/ajax/class-spaces-handler.php:354
@@ -272,6 +272,14 @@ msgstr ""
 msgid "Invalid bulk action."
 msgstr ""
 
+#. translators: %s: number of spaces and topics.
+#: includes/admin/ajax/class-demo-seeder.php:72
+#, php-format
+msgid "This community already has %s space or topic of its own. Add the sample content anyway?"
+msgid_plural "This community already has %s spaces and topics of its own. Add the sample content anyway?"
+msgstr[0] ""
+msgstr[1] ""
+
 #: includes/admin/ajax/class-import-handler.php:43
 msgid "Unknown import source."
 msgstr ""
@@ -376,110 +384,121 @@ msgstr ""
 msgid "You earned the \"First Post\" badge. Nice work."
 msgstr ""
 
-#. translators: %s: singular topic label, lowercase.
+#. translators: %s: announcement title. Same wording Pro's Site announcements sends.
 #: includes/admin/ajax/class-settings-handler.php:82
+#, php-format
+msgid "Announcement: %s"
+msgstr ""
+
+#. translators: %s: announcement title. Same wording Pro's Site announcements sends.
+#: includes/admin/ajax/class-settings-handler.php:82
+msgid "Community guidelines updated"
+msgstr ""
+
+#. translators: %s: singular topic label, lowercase.
+#: includes/admin/ajax/class-settings-handler.php:87
 #, php-format
 msgid "Your %s received a new vote."
 msgstr ""
 
 #. translators: %s: content title.
-#: includes/admin/ajax/class-settings-handler.php:87
-#: includes/notifications/class-notifier.php:920
+#: includes/admin/ajax/class-settings-handler.php:92
+#: includes/notifications/class-notifier.php:928
 #, php-format
 msgid "Someone reacted to %s"
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:91
-#: includes/notifications/class-notifier.php:952
+#: includes/admin/ajax/class-settings-handler.php:96
+#: includes/notifications/class-notifier.php:960
 msgid "Your report was reviewed. Thanks for helping keep the community healthy."
 msgstr ""
 
 #. translators: %s: space name
-#: includes/admin/ajax/class-settings-handler.php:96
-#: includes/notifications/class-notifier.php:1994
+#: includes/admin/ajax/class-settings-handler.php:101
+#: includes/notifications/class-notifier.php:2002
 #, php-format
 msgid "Your request to join %s was approved"
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:100
+#: includes/admin/ajax/class-settings-handler.php:105
 #: includes/notifications/class-community-notification-contract.php:255
 msgid "Someone sent you a private message."
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:104
+#: includes/admin/ajax/class-settings-handler.php:109
 msgid "Please confirm your email address to finish creating your account."
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:108
+#: includes/admin/ajax/class-settings-handler.php:113
 msgid "A moderator reviewed your recent content."
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:112
-#: includes/notifications/class-notifier.php:1152
+#: includes/admin/ajax/class-settings-handler.php:117
+#: includes/notifications/class-notifier.php:1160
 #: templates/views/notifications.php:82
 msgid "New content flag requires review"
 msgstr ""
 
 #. translators: %s: space label, plural, lowercase (e.g. "spaces").
-#: includes/admin/ajax/class-settings-handler.php:118
+#: includes/admin/ajax/class-settings-handler.php:123
 #, php-format
 msgid "Someone has asked to join one of your %s."
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:122
+#: includes/admin/ajax/class-settings-handler.php:127
 msgid "We noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating."
 msgstr ""
 
 #. translators: 1: reply label, lowercase. 2: topic label, lowercase. 3: reply label, plural lowercase.
-#: includes/admin/ajax/class-settings-handler.php:127
+#: includes/admin/ajax/class-settings-handler.php:132
 #, php-format
 msgid "Your %1$s sent by email was not posted. This %2$s is closed and cannot receive new %3$s."
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/ajax/class-settings-handler.php:156
+#: includes/admin/ajax/class-settings-handler.php:161
 #, php-format
 msgid "This is a test email from your %s forum plugin. If you received this, email is working correctly."
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/ajax/class-settings-handler.php:157
+#: includes/admin/ajax/class-settings-handler.php:162
 #, php-format
 msgid "%s Test Email"
 msgstr ""
 
 #. translators: %s: admin email
-#: includes/admin/ajax/class-settings-handler.php:166
+#: includes/admin/ajax/class-settings-handler.php:171
 #, php-format
 msgid "Test email sent to %s."
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:170
+#: includes/admin/ajax/class-settings-handler.php:175
 msgid "Failed to send test email. Check your WordPress email configuration."
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:180
+#: includes/admin/ajax/class-settings-handler.php:185
 msgid "No admin recipient to send to."
 msgstr ""
 
 #. translators: 1: type label, 2: recipient email
-#: includes/admin/ajax/class-settings-handler.php:192
-#: includes/admin/ajax/class-settings-handler.php:210
+#: includes/admin/ajax/class-settings-handler.php:197
+#: includes/admin/ajax/class-settings-handler.php:215
 #, php-format
 msgid "Preview (%1$s) sent to %2$s."
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:228
-#: includes/admin/ajax/class-settings-handler.php:281
-#: includes/admin/ajax/class-settings-handler.php:289
+#: includes/admin/ajax/class-settings-handler.php:233
+#: includes/admin/ajax/class-settings-handler.php:286
+#: includes/admin/ajax/class-settings-handler.php:294
 msgid "Unknown notification type."
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:303
+#: includes/admin/ajax/class-settings-handler.php:308
 msgid "Reset to default."
 msgstr ""
 
-#: includes/admin/ajax/class-settings-handler.php:317
+#: includes/admin/ajax/class-settings-handler.php:322
 msgid "Community links repaired."
 msgstr ""
 
@@ -488,13 +507,13 @@ msgstr ""
 #: includes/admin/views/settings.php:71
 #: includes/admin/views/setup-wizard.php:174
 #: includes/admin/views/space-edit.php:42
-#: assets/js/setup-wizard.js:130
+#: assets/js/setup-wizard.js:135
 msgid "General"
 msgstr ""
 
 #: includes/admin/ajax/class-setup-handler.php:53
 #: includes/admin/views/setup-wizard.php:182
-#: assets/js/setup-wizard.js:131
+#: assets/js/setup-wizard.js:136
 msgid "Community Discussion"
 msgstr ""
 
@@ -505,7 +524,7 @@ msgstr ""
 msgid "Could not create the %s. Please try again."
 msgstr ""
 
-#: includes/admin/ajax/class-setup-handler.php:143
+#: includes/admin/ajax/class-setup-handler.php:152
 msgid "Sample community created with realistic multi-user content."
 msgstr ""
 
@@ -893,7 +912,7 @@ msgstr ""
 #: includes/class-author.php:60
 #: includes/integrations/class-buddypress.php:236
 #: includes/integrations/class-buddypress.php:875
-#: includes/notifications/class-notifier.php:1309
+#: includes/notifications/class-notifier.php:1317
 #: templates/partials/avatar.php:17
 #: templates/partials/feed-card.php:37
 #: templates/partials/post-card.php:126
@@ -1109,7 +1128,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:30
 #: includes/class-template-loader.php:1085
 #: includes/class-template-loader.php:1251
-#: includes/notifications/class-notifier.php:1890
+#: includes/notifications/class-notifier.php:1898
 #: includes/seo/class-schema-markup.php:525
 #: templates/partials/header.php:96
 #: templates/partials/header.php:98
@@ -1501,7 +1520,7 @@ msgid "%s join request"
 msgstr ""
 
 #: includes/admin/class-admin.php:571
-#: includes/notifications/class-notifier.php:1893
+#: includes/notifications/class-notifier.php:1901
 msgid "Your join request was answered"
 msgstr ""
 
@@ -2141,7 +2160,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:494
 #: includes/admin/views/users.php:205
 #: includes/class-abilities.php:1533
-#: includes/notifications/class-notifier.php:1045
+#: includes/notifications/class-notifier.php:1053
 #: templates/partials/moderation/flag-card.php:69
 #: templates/views/moderation.php:576
 msgid "Unknown"
@@ -2424,12 +2443,12 @@ msgid "Auto-moderate with keyword filters, regex patterns, and spam scoring. Con
 msgstr ""
 
 #: includes/admin/views/dashboard.php:29
-#: includes/api/class-admin-controller.php:107
+#: includes/api/class-admin-controller.php:135
 msgid "Demo data imported."
 msgstr ""
 
 #: includes/admin/views/dashboard.php:30
-#: includes/api/class-admin-controller.php:119
+#: includes/api/class-admin-controller.php:150
 msgid "All demo data has been removed."
 msgstr ""
 
@@ -5656,11 +5675,31 @@ msgstr ""
 msgid "Auto-award badges based on activity, create custom fields for profiles, and set up keyword-based auto-moderation rules."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:116
+#: includes/api/class-admin-controller.php:86
+msgid "Must be true: importing replaces the current demo set."
+msgstr ""
+
+#: includes/api/class-admin-controller.php:91
+msgid "True to import even though the community already has its own spaces or topics."
+msgstr ""
+
+#: includes/api/class-admin-controller.php:103
+msgid "Must be true: removing the demo set cannot be undone."
+msgstr ""
+
+#: includes/api/class-admin-controller.php:128
+msgid "Send confirm=true to import demo data."
+msgstr ""
+
+#: includes/api/class-admin-controller.php:144
+msgid "Send confirm=true to remove the demo data."
+msgstr ""
+
+#: includes/api/class-admin-controller.php:147
 msgid "No demo data found to clean up."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:156
+#: includes/api/class-admin-controller.php:187
 msgid "At least one user_id is required."
 msgstr ""
 
@@ -5675,7 +5714,7 @@ msgstr ""
 
 #: includes/api/class-auth-controller.php:340
 #: includes/api/class-auth-controller.php:662
-#: includes/api/class-auth-controller.php:1035
+#: includes/api/class-auth-controller.php:1036
 msgid "CAPTCHA verification failed. Please try again."
 msgstr ""
 
@@ -5737,53 +5776,53 @@ msgid "Password must be at least 8 characters."
 msgstr ""
 
 #. translators: %s: masked email address (e.g. j***@example.com)
-#: includes/api/class-auth-controller.php:714
+#: includes/api/class-auth-controller.php:715
 #, php-format
 msgid "Account created. Check %s for a confirmation link to finish signing up."
 msgstr ""
 
-#: includes/api/class-auth-controller.php:738
+#: includes/api/class-auth-controller.php:739
 msgid "Account created. Reloading…"
 msgstr ""
 
-#: includes/api/class-auth-controller.php:758
+#: includes/api/class-auth-controller.php:759
 msgid "This confirmation link is missing details. Try the link from your email again."
 msgstr ""
 
-#: includes/api/class-auth-controller.php:763
+#: includes/api/class-auth-controller.php:764
 msgid "This account is already confirmed. You can log in directly."
 msgstr ""
 
-#: includes/api/class-auth-controller.php:770
+#: includes/api/class-auth-controller.php:771
 msgid "This confirmation link is invalid. Request a new one from the sign-in page."
 msgstr ""
 
-#: includes/api/class-auth-controller.php:773
+#: includes/api/class-auth-controller.php:774
 msgid "This confirmation link has expired. Request a new one from the sign-in page."
 msgstr ""
 
-#: includes/api/class-auth-controller.php:818
-#: includes/api/class-auth-controller.php:1010
+#: includes/api/class-auth-controller.php:819
+#: includes/api/class-auth-controller.php:1011
 msgid "Too many attempts. Please wait a few minutes and try again."
 msgstr ""
 
-#: includes/api/class-auth-controller.php:826
+#: includes/api/class-auth-controller.php:827
 msgid "If an account is waiting on confirmation for that email, a new link is on its way."
 msgstr ""
 
 #. translators: %d: seconds to wait.
-#: includes/api/class-auth-controller.php:845
+#: includes/api/class-auth-controller.php:846
 #, php-format
 msgid "A link was just sent. Please wait %d second before asking for another."
 msgid_plural "A link was just sent. Please wait %d seconds before asking for another."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/api/class-auth-controller.php:1023
+#: includes/api/class-auth-controller.php:1024
 msgid "Enter your username or email."
 msgstr ""
 
-#: includes/api/class-auth-controller.php:1054
+#: includes/api/class-auth-controller.php:1055
 msgid "If an account matches, a reset link is on its way to that account's email."
 msgstr ""
 
@@ -6774,15 +6813,15 @@ msgstr ""
 msgid "Confirm your email to finish signing up. Check your inbox for the link, or use \"Resend confirmation\" on the sign-in form."
 msgstr ""
 
-#: includes/class-jetonomy.php:764
+#: includes/class-jetonomy.php:762
 msgid "This unsubscribe link is invalid or has expired."
 msgstr ""
 
-#: includes/class-jetonomy.php:780
+#: includes/class-jetonomy.php:778
 msgid "You have been unsubscribed from these email notifications. You can re-enable them in your notification preferences."
 msgstr ""
 
-#: includes/class-jetonomy.php:781
+#: includes/class-jetonomy.php:779
 msgid "Unsubscribed"
 msgstr ""
 
@@ -6807,19 +6846,19 @@ msgstr ""
 
 #. translators: %s: the singular Reply label, lowercase.
 #: includes/class-mentions.php:275
-#: includes/notifications/class-notifier.php:812
-#: includes/notifications/class-notifier.php:903
+#: includes/notifications/class-notifier.php:820
+#: includes/notifications/class-notifier.php:911
 #, php-format
 msgid "your %s"
 msgstr ""
 
 #: includes/class-mentions.php:277
-#: includes/notifications/class-notifier.php:684
-#: includes/notifications/class-notifier.php:711
-#: includes/notifications/class-notifier.php:774
-#: includes/notifications/class-notifier.php:871
-#: includes/notifications/class-notifier.php:924
-#: includes/notifications/class-notifier.php:2048
+#: includes/notifications/class-notifier.php:692
+#: includes/notifications/class-notifier.php:719
+#: includes/notifications/class-notifier.php:782
+#: includes/notifications/class-notifier.php:879
+#: includes/notifications/class-notifier.php:932
+#: includes/notifications/class-notifier.php:2056
 #: templates/views/notifications.php:236
 msgid "Someone"
 msgstr ""
@@ -6926,7 +6965,7 @@ msgstr ""
 
 #. translators: %s: topic and reply labels, e.g. "topics and replies".
 #: includes/class-privacy.php:348
-#: includes/notifications/class-notifier.php:1883
+#: includes/notifications/class-notifier.php:1891
 #: includes/permissions/class-capabilities.php:321
 msgid "Vote"
 msgstr ""
@@ -7136,7 +7175,7 @@ msgstr ""
 #: assets/js/login-block.js:189
 #: assets/js/login-block.js:319
 #: assets/js/login-block.js:372
-#: assets/js/setup-wizard.js:117
+#: assets/js/setup-wizard.js:122
 msgid "Network error. Please try again."
 msgstr ""
 
@@ -7368,9 +7407,9 @@ msgstr ""
 #: includes/class-template-loader.php:1138
 #: includes/class-template-loader.php:1439
 #: includes/functions.php:589
-#: includes/notifications/class-notifier.php:1879
-#: includes/notifications/class-notifier.php:1881
-#: includes/notifications/class-notifier.php:1888
+#: includes/notifications/class-notifier.php:1887
+#: includes/notifications/class-notifier.php:1889
+#: includes/notifications/class-notifier.php:1896
 #: templates/views/drafts.php:69
 #: templates/views/new-space.php:45
 #, php-format
@@ -8919,13 +8958,13 @@ msgid "The title cannot be empty."
 msgstr ""
 
 #. translators: %s: the singular Topic label, lowercase.
-#: includes/models/class-post.php:2326
+#: includes/models/class-post.php:2327
 #, php-format
 msgid "This %s is private. Make it public before merging it."
 msgstr ""
 
 #. translators: %s: title of the topic that was merged in.
-#: includes/models/class-post.php:2399
+#: includes/models/class-post.php:2400
 #, php-format
 msgid "Merged from \"%s\":"
 msgstr ""
@@ -9502,15 +9541,28 @@ msgid ""
 "Keep contributing to unlock more."
 msgstr ""
 
+#: includes/notifications/class-notifier.php:159
+msgid "[{site}] {message}"
+msgstr ""
+
+#: includes/notifications/class-notifier.php:160
+msgid ""
+"Hi {user},\n"
+"\n"
+"{message}\n"
+"\n"
+"Open the community to read the full announcement."
+msgstr ""
+
 #. translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending.
-#: includes/notifications/class-notifier.php:158
+#: includes/notifications/class-notifier.php:163
 #, php-format
 msgid "[{site}] Your %s received a vote"
 msgstr ""
 
 #. translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending.
-#: includes/notifications/class-notifier.php:159
-#: includes/notifications/class-notifier.php:163
+#: includes/notifications/class-notifier.php:164
+#: includes/notifications/class-notifier.php:168
 #, php-format
 msgid ""
 "Hi {user},\n"
@@ -9521,26 +9573,13 @@ msgid ""
 msgstr ""
 
 #. translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending.
-#: includes/notifications/class-notifier.php:162
+#: includes/notifications/class-notifier.php:167
 #, php-format
 msgid "[{site}] Someone reacted to your %s"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:166
+#: includes/notifications/class-notifier.php:171
 msgid "[{site}] Your report was reviewed"
-msgstr ""
-
-#: includes/notifications/class-notifier.php:167
-msgid ""
-"Hi {user},\n"
-"\n"
-"{message}\n"
-"\n"
-"Thanks for helping keep {site} healthy."
-msgstr ""
-
-#: includes/notifications/class-notifier.php:170
-msgid "[{site}] A moderator reviewed your content"
 msgstr ""
 
 #: includes/notifications/class-notifier.php:172
@@ -9549,14 +9588,27 @@ msgid ""
 "\n"
 "{message}\n"
 "\n"
-"If you think this was a mistake, reply to a moderator in the community."
+"Thanks for helping keep {site} healthy."
 msgstr ""
 
-#: includes/notifications/class-notifier.php:176
-msgid "[{site}] New report needs review"
+#: includes/notifications/class-notifier.php:175
+msgid "[{site}] A moderator reviewed your content"
 msgstr ""
 
 #: includes/notifications/class-notifier.php:177
+msgid ""
+"Hi {user},\n"
+"\n"
+"{message}\n"
+"\n"
+"If you think this was a mistake, reply to a moderator in the community."
+msgstr ""
+
+#: includes/notifications/class-notifier.php:181
+msgid "[{site}] New report needs review"
+msgstr ""
+
+#: includes/notifications/class-notifier.php:182
 msgid ""
 "Hi {user},\n"
 "\n"
@@ -9566,12 +9618,12 @@ msgid ""
 msgstr ""
 
 #. translators: %s: the singular space label; {site} is replaced with the site name before sending.
-#: includes/notifications/class-notifier.php:181
+#: includes/notifications/class-notifier.php:186
 #, php-format
 msgid "[{site}] New %s join request"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:182
+#: includes/notifications/class-notifier.php:187
 msgid ""
 "Hi {user},\n"
 "\n"
@@ -9580,29 +9632,29 @@ msgid ""
 "Review the request and approve or decline it."
 msgstr ""
 
-#: includes/notifications/class-notifier.php:185
-#: includes/notifications/class-notifier.php:194
+#: includes/notifications/class-notifier.php:190
+#: includes/notifications/class-notifier.php:199
 msgid "[{site}] Confirm your email to finish signing up"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:186
+#: includes/notifications/class-notifier.php:191
 msgid "Thanks for joining {site}. Confirm your email to finish creating your account."
 msgstr ""
 
 #. translators: %s: the singular space label; {site} is replaced with the site name before sending.
-#: includes/notifications/class-notifier.php:190
+#: includes/notifications/class-notifier.php:195
 #, php-format
 msgid "[{site}] Your %s join request was answered"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:191
+#: includes/notifications/class-notifier.php:196
 msgid ""
 "Hi {user},\n"
 "\n"
 "{message}."
 msgstr ""
 
-#: includes/notifications/class-notifier.php:195
+#: includes/notifications/class-notifier.php:200
 msgid ""
 "Hi {user},\n"
 "\n"
@@ -9612,7 +9664,7 @@ msgid ""
 msgstr ""
 
 #. translators: 1: display name, 2: the intro sentence, 3: verification link.
-#: includes/notifications/class-notifier.php:276
+#: includes/notifications/class-notifier.php:281
 #, php-format
 msgid ""
 "Hi %1$s,\n"
@@ -9627,70 +9679,70 @@ msgid ""
 msgstr ""
 
 #. translators: %s: display name
-#: includes/notifications/class-notifier.php:289
+#: includes/notifications/class-notifier.php:294
 #, php-format
 msgid "Hi %s,"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:302
+#: includes/notifications/class-notifier.php:307
 msgid "Confirm email"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:306
+#: includes/notifications/class-notifier.php:311
 msgid "This link expires in 24 hours."
 msgstr ""
 
-#: includes/notifications/class-notifier.php:309
+#: includes/notifications/class-notifier.php:314
 msgid "If you didn't sign up, you can ignore this email."
 msgstr ""
 
 #. translators: 1: singular reply label; 2: the reason it was refused.
-#: includes/notifications/class-notifier.php:463
+#: includes/notifications/class-notifier.php:468
 #, php-format
 msgid "Your %1$s sent by email was not posted. %2$s"
 msgstr ""
 
 #. translators: 1: display name, 2: site name
-#: includes/notifications/class-notifier.php:494
+#: includes/notifications/class-notifier.php:499
 #, php-format
 msgid "Welcome to %2$s, %1$s. Your account is ready. Jump into the community to introduce yourself, ask a question, or browse existing discussions."
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
-#: includes/notifications/class-notifier.php:612
-#: includes/notifications/class-notifier.php:1985
-#: includes/notifications/class-notifier.php:2005
-#: includes/notifications/class-notifier.php:2023
+#: includes/notifications/class-notifier.php:620
+#: includes/notifications/class-notifier.php:1993
+#: includes/notifications/class-notifier.php:2013
+#: includes/notifications/class-notifier.php:2031
 #, php-format
 msgid "the %s"
 msgstr ""
 
 #. translators: 1: singular topic label, lowercase, 2: space name, 3: topic title
-#: includes/notifications/class-notifier.php:633
+#: includes/notifications/class-notifier.php:641
 #, php-format
 msgid "New %1$s in %2$s: %3$s"
 msgstr ""
 
 #. translators: 1: replier display name, 2: singular topic label, lowercase, 3: topic title.
-#: includes/notifications/class-notifier.php:683
+#: includes/notifications/class-notifier.php:691
 #, php-format
 msgid "%1$s replied to your %2$s \"%3$s\""
 msgstr ""
 
 #. translators: 1: replier display name, 2: post title.
-#: includes/notifications/class-notifier.php:710
+#: includes/notifications/class-notifier.php:718
 #, php-format
 msgid "%1$s replied to your comment in \"%2$s\""
 msgstr ""
 
 #. translators: 1: replier display name, 2: post title.
-#: includes/notifications/class-notifier.php:773
+#: includes/notifications/class-notifier.php:781
 #, php-format
 msgid "%1$s replied in \"%2$s\""
 msgstr ""
 
 #. translators: 1: vote count, 2: content title.
-#: includes/notifications/class-notifier.php:843
+#: includes/notifications/class-notifier.php:851
 #, php-format
 msgid "%1$d person voted on %2$s"
 msgid_plural "%1$d people voted on %2$s"
@@ -9698,156 +9750,156 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: content title.
-#: includes/notifications/class-notifier.php:866
+#: includes/notifications/class-notifier.php:874
 #, php-format
 msgid "Someone voted on %s"
 msgstr ""
 
 #. translators: %s: post title.
-#: includes/notifications/class-notifier.php:981
+#: includes/notifications/class-notifier.php:989
 #, php-format
 msgid "Your answer was accepted in \"%s\""
 msgstr ""
 
 #. translators: 1: idea title, 2: new status label
-#: includes/notifications/class-notifier.php:1023
+#: includes/notifications/class-notifier.php:1031
 #, php-format
 msgid "Your idea \"%1$s\" is now %2$s"
 msgstr ""
 
 #. translators: 1: trust level name, 2: trust level number.
-#: includes/notifications/class-notifier.php:1055
+#: includes/notifications/class-notifier.php:1063
 #, php-format
 msgid "Congratulations! You have been promoted to %1$s (Level %2$d)"
 msgstr ""
 
 #. translators: %s: badge name.
-#: includes/notifications/class-notifier.php:1078
+#: includes/notifications/class-notifier.php:1086
 #, php-format
 msgid "Congratulations! You earned the %s badge"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1106
+#: includes/notifications/class-notifier.php:1114
 msgid "approved"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1107
+#: includes/notifications/class-notifier.php:1115
 msgid "marked as spam"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1108
+#: includes/notifications/class-notifier.php:1116
 msgid "removed"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1109
+#: includes/notifications/class-notifier.php:1117
 msgid "held for review"
 msgstr ""
 
 #. translators: 1: the owner-configured noun for a topic or reply, lowercase; 2: action label (approved, removed...).
-#: includes/notifications/class-notifier.php:1120
+#: includes/notifications/class-notifier.php:1128
 #, php-format
 msgid "Your %1$s was %2$s by a moderator"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1126
-#: includes/notifications/class-notifier.php:1915
-#: includes/notifications/class-notifier.php:1917
-#: includes/notifications/class-notifier.php:1918
+#: includes/notifications/class-notifier.php:1134
+#: includes/notifications/class-notifier.php:1923
+#: includes/notifications/class-notifier.php:1925
+#: includes/notifications/class-notifier.php:1926
 msgid "Open the Community"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1882
+#: includes/notifications/class-notifier.php:1890
 msgid "Mention"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1884
+#: includes/notifications/class-notifier.php:1892
 msgid "Reaction"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1885
+#: includes/notifications/class-notifier.php:1893
 msgid "Answer Accepted"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1886
+#: includes/notifications/class-notifier.php:1894
 msgid "Roadmap Update"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1889
+#: includes/notifications/class-notifier.php:1897
 msgid "Achievement"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1891
+#: includes/notifications/class-notifier.php:1899
 msgid "Report Reviewed"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1892
+#: includes/notifications/class-notifier.php:1900
 msgid "Join Request"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1894
+#: includes/notifications/class-notifier.php:1902
 #: templates/partials/icon-picker.php:53
 #: templates/views/home.php:59
 msgid "Welcome"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1895
+#: includes/notifications/class-notifier.php:1903
 msgid "Private Message"
 msgstr ""
 
 #. translators: %s: singular reply label.
-#: includes/notifications/class-notifier.php:1897
+#: includes/notifications/class-notifier.php:1905
 #, php-format
 msgid "%s not posted"
 msgstr ""
 
 #. translators: %s: the topic or reply label, singular or plural.
-#: includes/notifications/class-notifier.php:1902
-#: includes/notifications/class-notifier.php:1906
+#: includes/notifications/class-notifier.php:1910
+#: includes/notifications/class-notifier.php:1914
 #: templates/partials/feed-card.php:121
 #, php-format
 msgid "View %s"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1910
+#: includes/notifications/class-notifier.php:1918
 msgid "View Answer"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1911
+#: includes/notifications/class-notifier.php:1919
 msgid "View Idea"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1913
+#: includes/notifications/class-notifier.php:1921
 msgid "View Your Badges"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1914
+#: includes/notifications/class-notifier.php:1922
 msgid "Review in Mod Queue"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1916
+#: includes/notifications/class-notifier.php:1924
 msgid "Review Request"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1919
+#: includes/notifications/class-notifier.php:1927
 msgid "Read Message"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1920
+#: includes/notifications/class-notifier.php:1928
 msgid "Open the Discussion"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1922
+#: includes/notifications/class-notifier.php:1930
 msgid "View in Community"
 msgstr ""
 
 #. translators: %s: space name
-#: includes/notifications/class-notifier.php:2013
+#: includes/notifications/class-notifier.php:2021
 #, php-format
 msgid "Your request to join %s was not approved"
 msgstr ""
 
 #. translators: 1: user display name, 2: space name
-#: includes/notifications/class-notifier.php:2047
+#: includes/notifications/class-notifier.php:2055
 #, php-format
 msgid "%1$s requested to join %2$s"
 msgstr ""
@@ -10056,18 +10108,18 @@ msgstr ""
 msgid "Please try again later."
 msgstr ""
 
-#: includes/qa/class-model-tests.php:420
+#: includes/qa/class-model-tests.php:428
 #: templates/views/space.php:151
 msgid "You get access as soon as you join, and lose it if you leave."
 msgstr ""
 
-#: includes/qa/class-model-tests.php:420
+#: includes/qa/class-model-tests.php:428
 #: templates/views/space.php:149
 msgid "Ask a site administrator to add you."
 msgstr ""
 
 #. translators: %s: comma-separated plan, course or group names.
-#: includes/qa/class-model-tests.php:420
+#: includes/qa/class-model-tests.php:428
 #: templates/views/space.php:166
 #, php-format
 msgid "Included with %s."
