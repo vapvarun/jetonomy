@@ -379,7 +379,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-label > input:focus,
 .jt-login-label > input:focus-visible {
 	outline: 0;
-	border-color: var(--jt-accent);
+	border-color: var(--jt-accent-ink);
 	box-shadow: 0 0 0 3px var(--jt-accent-muted);
 }
 .jt-login-label > input::placeholder { color: var(--jt-text-secondary); }
@@ -447,7 +447,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font: inherit;
 	font-size: var(--jt-text-sm, 0.8125rem);
 	font-weight: 500;
-	color: var(--jt-accent-strong, var(--jt-accent));
+	color: var(--jt-accent-strong, var(--jt-accent-ink));
 	text-decoration: none;
 	text-underline-offset: 2px;
 	cursor: pointer;
@@ -455,7 +455,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-login-lostpw:hover,
 .jt-login-lostpw:focus-visible {
-	color: var(--jt-accent-strong, var(--jt-accent));
+	color: var(--jt-accent-strong, var(--jt-accent-ink));
 	text-decoration: underline;
 }
 .jt-login-lostpw:focus-visible {
@@ -667,7 +667,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-feed-viewall:hover,
 .jt-feed-viewall:focus-visible {
-	color: var(--jt-accent-hover);
+	color: var(--jt-accent-ink-hover);
 	text-decoration: underline;
 }
 .jt-feed-viewall:focus-visible {
@@ -778,7 +778,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-shortcode-space:hover,
 .jt-shortcode-space:focus-visible {
 	background: var(--jt-bg-hover);
-	border-color: var(--jt-accent);
+	border-color: var(--jt-accent-ink);
 }
 .jt-shortcode-space:focus-visible {
 	outline: 2px solid var(--jt-focus-ring);
@@ -1157,7 +1157,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 .jt-compose-topic-login-secondary {
 	font-size: 0.875rem;
-	color: var(--jt-accent-strong, var(--jt-accent, #3b82f6));
+	color: var(--jt-accent-strong, var(--jt-accent-ink, var(--jt-accent, #3b82f6)));
 	text-decoration: none;
 	border-bottom: 1px dashed currentColor;
 	padding-bottom: 1px;
@@ -1165,7 +1165,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-compose-topic-login-secondary:hover,
 .jt-compose-topic-login-secondary:focus-visible {
-	color: var(--jt-accent-hover, color-mix(in srgb, var(--jt-accent, #3b82f6) 78%, #000));
+	color: var(--jt-accent-ink-hover, var(--jt-accent-hover, color-mix(in srgb, var(--jt-accent, #3b82f6) 78%, #000)));
 	text-decoration: none;
 	border-bottom-color: transparent;
 }
@@ -1379,7 +1379,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-signed-in .jt-login-signed-in-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); margin-block-start: var(--jt-space-3); }
 .jt-login-signed-in .jt-login-submit { margin-top: 0; text-decoration: none; }
 .jt-login-secondary { display: inline-flex; align-items: center; padding: 0.5625rem 0.9375rem; border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius-full); color: var(--jt-text); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }
-.jt-login-secondary:hover, .jt-login-secondary:focus-visible { border-color: var(--jt-accent); color: var(--jt-accent-strong); }
+.jt-login-secondary:hover, .jt-login-secondary:focus-visible { border-color: var(--jt-accent-ink); color: var(--jt-accent-strong); }
 .jt-login-secondary:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
 
 /* Trust level name pill (profile card shortcode). jetonomy.css is not loaded

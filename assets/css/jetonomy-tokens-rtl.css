@@ -246,8 +246,14 @@
   [data-bx-mode="dark"] {
     --jt-accent-hover: #2563EB;
     --jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
-    /* Keyboard focus ring. The accent in light; dark lifts it (below). */
-    --jt-focus-ring: var(--jt-accent);
+    /* The accent used AS a line or as text on the page (links, outlines,
+       hover borders, focus ring), never as a fill. The accent itself in
+       light; dark lifts it (below) so a dark accent stays visible on a dark
+       page. Fills keep --jt-accent / --jt-accent-hover. */
+    --jt-accent-ink: var(--jt-accent);
+    --jt-accent-ink-hover: var(--jt-accent-hover);
+    /* Keyboard focus ring. */
+    --jt-focus-ring: var(--jt-accent-ink);
     --jt-accent-light: #EFF6FF;
     --jt-accent-light: color-mix(in srgb, var(--jt-accent) 10%, white);
     --jt-accent-muted: #DBEAFE;
@@ -402,17 +408,23 @@
     --jt-success-strong: color-mix(in srgb, var(--jt-success) 60%, white);
     --jt-warn-strong: color-mix(in srgb, var(--jt-warn) 60%, white);
     --jt-danger-strong: color-mix(in srgb, var(--jt-danger) 60%, white);
-    --jt-accent-strong: color-mix(in srgb, var(--jt-accent) 60%, white);
+    /* From the lifted ink, not the raw accent: a dark accent mixed 60% toward
+       white read 4.44:1 on a tinted dark card. Same colour for a light accent. */
+    --jt-accent-strong: color-mix(in srgb, var(--jt-accent-ink) 60%, white);
   }
 
-  /* A dark accent such as the #0073aa default drew the focus ring at 2.72:1 on a dark
-     page. Lift only its lightness to 0.72 (OKLCH), which clears 3:1 on any dark
-     surface; an accent that is already light, such as Reign's dark blue, keeps
-     its exact colour. Browsers without relative colour keep the accent. */
+  /* A dark accent such as the #0073aa default drew the focus ring at 2.72:1
+     and hover text at 2.48:1 on a dark page. In dark, accent lines and accent
+     text lift only their lightness to 0.72 (OKLCH), which clears 3:1 for a
+     line and 4.5:1 for text on any dark surface; an accent that is already
+     light, such as Reign's dark blue, keeps its exact colour. Hover gets the
+     same floor on its own colour, so a dark accent's hover (darker still)
+     cannot fall under it. Browsers without relative colour keep the accent. */
   @supports (color: oklch(from red l c h)) {
     .jt-dark,
     [data-theme="dark"],
     [data-bx-mode="dark"] {
-      --jt-focus-ring: oklch(from var(--jt-accent) max(l, 0.72) c h);
+      --jt-accent-ink: oklch(from var(--jt-accent) max(l, 0.72) c h);
+      --jt-accent-ink-hover: oklch(from var(--jt-accent-hover) max(l, 0.72) c h);
     }
   }
