@@ -34,6 +34,10 @@ final class Jetonomy {
 		// Active theme's theme.json always wins — this provides sensible defaults for classic themes.
 		add_filter( 'wp_theme_json_data_default', array( $this, 'register_plugin_theme_json' ) );
 
+		// One "settings changed" action for every writer: form, REST, CLI, direct update_option().
+		add_action( 'update_option_' . Settings::OPTION, array( Settings::class, 'announce' ), 10, 2 );
+		add_action( 'add_option_' . Settings::OPTION, array( Settings::class, 'announce' ), 10, 2 );
+
 		// 1.4.0 C.3: a globally banned user must not be able to log in. Without
 		// this filter, a banned user retained their session cookie across the
 		// ban (and could re-authenticate after logout) — Permission_Engine

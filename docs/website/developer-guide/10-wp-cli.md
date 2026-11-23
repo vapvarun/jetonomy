@@ -324,9 +324,12 @@ wp jetonomy config get --key=trust_thresholds.1.posts
 wp jetonomy config get --key=rate_limits --format=json
 wp jetonomy config set --key=trust_thresholds.1.posts --value=7
 wp jetonomy config set --key=notification_defaults.mention.email --value=false
+wp jetonomy config set --key=accent_color --value='#336699'
 wp jetonomy config keys --key=trust_thresholds
 wp jetonomy config list
 ```
+
+Since 2.1.0, `set` writes through the same sanitizer as Jetonomy > Settings and `POST /jetonomy/v1/admin/settings`. Only registered settings can be set (the keys `GET /admin/settings` lists); any other key fails with `jetonomy_unknown_setting`, and a value outside the key's schema (an unknown provider, a colour that is not a hex code) fails with `rest_invalid_param`. Both exit non-zero and change nothing. A JSON array or object string is decoded, so `--value='{"posts":7}'` sets a whole block. Text settings keep a numeric-looking value as text.
 
 ---
 

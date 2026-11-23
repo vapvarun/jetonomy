@@ -108,6 +108,59 @@ class Admin_Controller extends Base_Controller {
 				),
 			)
 		);
+
+		// Site settings (jetonomy_settings). manage_options on purpose: stricter than
+		// the form's delegated jetonomy_manage_settings, because an app token reaches
+		// further than a logged-in screen. Role capabilities are not reachable here.
+		register_rest_route(
+			$ns,
+			'/admin/settings',
+			array(
+				array(
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_settings' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
+				),
+				array(
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'update_settings' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
+					'args'                => array(
+						'settings' => array(
+							'description'   => __( 'Setting key => new value. Only keys GET /admin/settings lists; at most 50 per request.', 'jetonomy' ),
+							'type'          => 'object',
+							'required'      => true,
+							'minProperties' => 1,
+							'maxProperties' => \Jetonomy\Settings::MAX_KEYS,
+						),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * GET /admin/settings - Every setting the API can change, secrets masked.
+	 *
+	 * @since 2.1.0
+	 */
+	public function get_settings(): WP_REST_Response {
+		return new WP_REST_Response( array( 'settings' => \Jetonomy\Settings::read() ), 200 );
+	}
+
+	/**
+	 * POST /admin/settings - Change settings through the admin form's sanitizer.
+	 *
+	 * Answers the cleaned values of the keys sent, plus any notice the sanitizer
+	 * raised (an address it refused and kept the old value for, for example).
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param WP_REST_Request $request Request.
+	 */
+	public function update_settings( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$result = \Jetonomy\Settings::write( (array) $request->get_param( 'settings' ), 'rest' );
+		return is_wp_error( $result ) ? $result : new WP_REST_Response( $result, 200 );
 	}
 
 	/**

@@ -133,6 +133,11 @@
       "permission_callback": "REST_Auth::auth_mutation(caps=manage_options; opts=)",
       "reason": "auth_mutation(manage_options). Observed: a subscriber is refused, an administrator passes."
     },
+    "GET /jetonomy/v1/admin/settings": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=manage_options; opts=)",
+      "reason": "auth_mutation(manage_options): stricter than the settings form's delegated jetonomy_manage_settings, because an app token reaches further than a logged-in screen. Only keys in Settings::schema() are accepted (unknown key 400), every value goes through the form's sanitizer, secrets are masked. Observed: a subscriber and a jetonomy_manage_settings delegate are refused 403, an administrator passes (SettingsWriteRouteTest)."
+    },
     "GET /jetonomy/v1/app/config": {
       "audience": "public",
       "permission_callback": "__return_true",
@@ -527,6 +532,11 @@
       "audience": "admin",
       "permission_callback": "REST_Auth::auth_mutation(caps=manage_options; opts=)",
       "reason": "auth_mutation(manage_options). Observed: a subscriber is refused, an administrator passes."
+    },
+    "POST /jetonomy/v1/admin/settings": {
+      "audience": "admin",
+      "permission_callback": "REST_Auth::auth_mutation(caps=manage_options; opts=)",
+      "reason": "auth_mutation(manage_options): stricter than the settings form's delegated jetonomy_manage_settings, because an app token reaches further than a logged-in screen. Only keys in Settings::schema() are accepted (unknown key 400), every value goes through the form's sanitizer, secrets are masked. Observed: a subscriber and a jetonomy_manage_settings delegate are refused 403, an administrator passes (SettingsWriteRouteTest)."
     },
     "POST /jetonomy/v1/admin/users/trust-level": {
       "audience": "admin",

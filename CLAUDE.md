@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 84 REST routes (115 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 83 without it - do not cite the length of the manifest's endpoints array, which holds 88 entries for 82 unique paths), 46 AJAX handlers, 269 hooks fired (120 actions, 149 filters), 23 tables, 22 capabilities (2.0.2 retired jetonomy_create_spaces), 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 13 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` and the live site on 2026-10-31 for 2.0.7 and enforced by `bin/check-manifest-fresh.php`; if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 85 REST routes (117 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 84 without it - do not cite the length of the manifest's endpoints array, which holds 88 entries for 82 unique paths), 46 AJAX handlers, 271 hooks fired (121 actions, 150 filters), 23 tables, 22 capabilities (2.0.2 retired jetonomy_create_spaces), 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 13 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` and the live site on 2026-10-31 for 2.0.7 and enforced by `bin/check-manifest-fresh.php`; if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -163,7 +163,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 - **WP**: 6.7+ required
 - **Namespace**: `Jetonomy\`
 - **Table prefix**: `jt_` (23 custom tables)
-- **REST API**: `jetonomy/v1` (84 REST routes, 115 method-endpoints, 23 controllers; 143 routes with Pro)
+- **REST API**: `jetonomy/v1` (85 REST routes, 117 method-endpoints, 23 controllers; 144 routes with Pro)
 
 ## Architecture
 - **Database**: Custom MySQL tables via `dbDelta()` - NOT WordPress CPTs
@@ -185,7 +185,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/models/` | 22 model classes (Category, Space, Post, Reply, Vote, etc.) |
 | `includes/permissions/class-permission-engine.php` | 3-layer permission resolver |
 | `includes/trust/` | Trust levels (0-5), reputation calculator, auto-evaluator |
-| `includes/api/` | 23 REST API controller classes (84 REST routes) |
+| `includes/api/` | 23 REST API controller classes (85 REST routes) |
 | `includes/adapters/` | 4 interfaces (membership, email, search, AI) + Adapter_Registry and the WP Roles, wp_mail, MemberPress, PMPro and Ollama adapters. Pro registers the rest (WooCommerce, RCP, LearnDash, Tutor). |
 | `includes/notifications/class-notifier.php` | Event-driven notification dispatcher |
 | `includes/import/` | bbPress + wpForo import tools |
@@ -309,6 +309,7 @@ For release history, run `git log --oneline` or read `readme.txt`. For architect
 - Activity logging via `Activity_Tracker` hooks - no direct `ActivityLog::log()` in controllers
 - Demo data tracked in `jetonomy_demo_data` option for one-click cleanup
 - Activity backfill runs automatically once via `jetonomy_activity_backfilled` flag
+- Settings writes only via `\Jetonomy\Settings` (since 2.1.0): `sanitize()` is the form sanitizer, `write()` is what REST (`/admin/settings`) and `wp jetonomy config set` call. A new setting is a `schema()` entry plus its branch in `sanitize()` in the same commit; never `update_option( 'jetonomy_settings' )` with an unsanitized value
 - Community base slug/URL only via `\Jetonomy\base_slug()` / `\Jetonomy\base_url()` - never read `jetonomy_settings['base_slug']` inline or hardcode `/community/` (20 inline copies drifted; the admin Spaces list showed the wrong URL)
 - Community route URLs only via `\Jetonomy\route_url( 'post', $space_slug, $post_slug )` (keys = `jetonomy_route` values; the one map of fixed English segments lives in `includes/functions.php`) - never concatenate `/s/`, `/t/`, `/u/`, `/tag/`, `/mod/`... onto `base_url()`. Segments are fixed, not translated or filterable; `Router::add_rewrite_rules()` holds the matching regexes, so change both together. Arguments go in verbatim - `rawurlencode()` at the call site where needed
 - Importers: ask `Importer::find_imported()` before creating and call `Importer::remember()` after - `jt_import_map` is the only "already imported" record, and every importer shares that one check (re-runs must add only what is missing)

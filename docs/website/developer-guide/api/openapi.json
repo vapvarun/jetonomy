@@ -9818,6 +9818,111 @@
           }
         }
       }
+    },
+    "/admin/settings": {
+      "get": {
+        "tags": [
+          "App Config"
+        ],
+        "summary": "Read site settings",
+        "operationId": "adminSettingsGet",
+        "description": "Every setting the API can change, secrets masked. Requires manage_options (stricter than the settings form, which a jetonomy_manage_settings delegate can save).",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "settings": {
+                      "$ref": "#/components/schemas/Settings"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "App Config"
+        ],
+        "summary": "Change site settings",
+        "operationId": "adminSettingsUpdate",
+        "description": "Change up to 50 settings through the settings form's sanitizer. Only keys GET /admin/settings lists are accepted: an unknown key, a value outside its schema (enum, pattern, type) or more than 50 keys answers 400 and writes nothing. Out-of-range numbers are clamped. Answers the cleaned values of the keys sent plus notices (for example an address that was refused and kept its old value). Fires jetonomy_settings_updated with source rest. Requires manage_options.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "settings"
+                ],
+                "properties": {
+                  "settings": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Settings"
+                      }
+                    ],
+                    "minProperties": 1,
+                    "maxProperties": 50
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "settings": {
+                      "$ref": "#/components/schemas/Settings"
+                    },
+                    "notices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -12204,6 +12309,298 @@
             "description": "The author's public handle (user_nicename), the same string @mentions and profile links use. Since 2.0.2 it is never the WordPress login, which can be an email address."
           }
         }
+      },
+      "Settings": {
+        "type": "object",
+        "description": "Every key the API can change in jetonomy_settings (Settings::schema(), filterable with jetonomy_settings_schema). Values are cleaned by the same sanitizer as Jetonomy > Settings.",
+        "properties": {
+          "base_slug": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "community_title": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "terms_url": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "privacy_url": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "support_url": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "posts_per_page": {
+            "type": "integer",
+            "description": "Settings section: general."
+          },
+          "activity_log_retention_days": {
+            "type": "integer",
+            "description": "Settings section: general."
+          },
+          "replies_per_page": {
+            "type": "integer",
+            "description": "Settings section: general."
+          },
+          "default_space_type": {
+            "type": "string",
+            "enum": [
+              "forum",
+              "qa",
+              "ideas",
+              "feed"
+            ],
+            "description": "Settings section: general."
+          },
+          "guest_read": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "front_page": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "guest_private_teasers": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "frontend_space_creation_roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Settings section: general."
+          },
+          "require_email_verification": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "allow_space_admin_purge": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "remove_data_on_uninstall": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "trust_thresholds": {
+            "type": "object",
+            "description": "Settings section: trust."
+          },
+          "trust_level_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Settings section: trust."
+          },
+          "member_name_display": {
+            "type": "string",
+            "enum": [
+              "display_name",
+              "handle",
+              "both"
+            ],
+            "description": "Settings section: member_name."
+          },
+          "rate_limits": {
+            "type": "object",
+            "description": "Settings section: rate_limits."
+          },
+          "reputation_points": {
+            "type": "object",
+            "description": "Settings section: reputation."
+          },
+          "email_from_name": {
+            "type": "string",
+            "description": "Settings section: email."
+          },
+          "email_from_email": {
+            "type": "string",
+            "description": "Settings section: email."
+          },
+          "email_logo_url": {
+            "type": "string",
+            "description": "Settings section: email."
+          },
+          "email_footer_text": {
+            "type": "string",
+            "description": "Settings section: email."
+          },
+          "verification_reminder_hours": {
+            "type": "integer",
+            "description": "Settings section: email."
+          },
+          "notification_defaults": {
+            "type": "object",
+            "description": "Settings section: email."
+          },
+          "accent_color": {
+            "type": "string",
+            "pattern": "^#([0-9a-fA-F]{3}){1,2}$",
+            "description": "Settings section: appearance."
+          },
+          "logo_url": {
+            "type": "string",
+            "description": "Settings section: appearance."
+          },
+          "text_color": {
+            "type": "string",
+            "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
+            "description": "Settings section: appearance."
+          },
+          "bg_color": {
+            "type": "string",
+            "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
+            "description": "Settings section: appearance."
+          },
+          "bg_subtle_color": {
+            "type": "string",
+            "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
+            "description": "Settings section: appearance."
+          },
+          "border_color": {
+            "type": "string",
+            "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
+            "description": "Settings section: appearance."
+          },
+          "layout_density": {
+            "type": "string",
+            "description": "Settings section: appearance."
+          },
+          "custom_css": {
+            "type": "string",
+            "description": "Settings section: appearance."
+          },
+          "container_width": {
+            "type": "string",
+            "enum": [
+              "theme",
+              "full",
+              "custom"
+            ],
+            "description": "Settings section: appearance."
+          },
+          "container_width_custom": {
+            "type": "integer",
+            "description": "Settings section: appearance."
+          },
+          "padding_preset": {
+            "type": "string",
+            "enum": [
+              "theme",
+              "none",
+              "comfortable"
+            ],
+            "description": "Settings section: appearance."
+          },
+          "captcha_provider": {
+            "type": "string",
+            "enum": [
+              "none",
+              "recaptcha_v3",
+              "turnstile"
+            ],
+            "description": "Settings section: antispam."
+          },
+          "captcha_site_key": {
+            "type": "string",
+            "description": "Settings section: antispam."
+          },
+          "captcha_secret_key": {
+            "type": "string",
+            "description": "Write-only: reads as \"********\" when set; sending \"********\" back keeps the stored value. Settings section: antispam."
+          },
+          "captcha_score_threshold": {
+            "type": "number",
+            "description": "Settings section: antispam."
+          },
+          "seo_post_title": {
+            "type": "string",
+            "description": "Settings section: seo."
+          },
+          "seo_space_title": {
+            "type": "string",
+            "description": "Settings section: seo."
+          },
+          "seo_schema": {
+            "type": "boolean",
+            "description": "Settings section: seo."
+          },
+          "seo_sitemap": {
+            "type": "boolean",
+            "description": "Settings section: seo."
+          },
+          "seo_noindex_profiles": {
+            "type": "boolean",
+            "description": "Settings section: seo."
+          },
+          "seo_noindex_search": {
+            "type": "boolean",
+            "description": "Settings section: seo."
+          },
+          "seo_twitter_handle": {
+            "type": "string",
+            "description": "Settings section: seo."
+          },
+          "seo_default_og_image": {
+            "type": "string",
+            "description": "Settings section: seo."
+          },
+          "fb_app_id": {
+            "type": "string",
+            "description": "Settings section: seo."
+          },
+          "fb_app_secret": {
+            "type": "string",
+            "description": "Write-only: reads as \"********\" when set; sending \"********\" back keeps the stored value. Settings section: seo."
+          },
+          "space_label_singular": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "space_label_plural": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "topic_label_singular": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "topic_label_plural": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "reply_label_singular": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "reply_label_plural": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "member_label_singular": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "member_label_plural": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "category_label_singular": {
+            "type": "string",
+            "description": "Settings section: general."
+          },
+          "category_label_plural": {
+            "type": "string",
+            "description": "Settings section: general."
+          }
+        },
+        "additionalProperties": false
       }
     },
     "responses": {

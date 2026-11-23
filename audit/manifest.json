@@ -13,9 +13,9 @@
   },
   "rest": {
     "namespace": "jetonomy/v1",
-    "route_count": 84,
-    "method_endpoints": 115,
-    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-10-31 for 2.0.7, 115 pairs after PATCH /access-rules/{rule_id} (first derived 2026-10-06 from rest_get_server() filtered to free controller classes). route_count INCLUDES the /jetonomy/v1 index route itself (82 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 88 entries covering 82 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
+    "route_count": 85,
+    "method_endpoints": 117,
+    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-10-31 for 2.0.7, 115 pairs after PATCH /access-rules/{rule_id}; 2.1.0 adds GET+POST /admin/settings (85 routes, 117 pairs) (first derived 2026-10-06 from rest_get_server() filtered to free controller classes). route_count INCLUDES the /jetonomy/v1 index route itself (82 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 88 entries covering 82 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
     "endpoints": [
       {
         "route": "/app/config",
@@ -1176,6 +1176,20 @@
         "audit_notes": "2.0.1. 401 guest, 403 member (qa-actions DD1-DD2)."
       },
       {
+        "route": "/admin/settings",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Admin_Controller::get_settings / update_settings",
+        "permission": "REST_Auth::auth_mutation (closure)",
+        "purpose": "Read (secrets masked) and change jetonomy_settings through Settings::write(): only Settings::schema() keys, the form sanitizer, at most 50 keys; the same writer as wp jetonomy config set",
+        "auth": "login_required",
+        "capability": "manage_options",
+        "ownership_check": "not_applicable",
+        "audit_notes": "2.1.0. Stricter than the form (jetonomy_manage_settings delegate 403). Unknown key, schema miss or 51 keys 400 with nothing written. SettingsWriteRouteTest."
+      },
+      {
         "route": "/spaces/(?P<id>\\d+)/join-requests/mine",
         "methods": [
           "DELETE"
@@ -1631,7 +1645,7 @@
       "type": "array",
       "default": {},
       "controls": "base_slug, front_page, accent_color, text_color, bg_color, bg_subtle_color, border_color, default_space_type, notification_defaults, trust_thresholds, trust_level_names, rate_limits, activity_log_retention_days, require_email_verification, frontend_space_creation_roles, reputation_points, terms_url, privacy_url",
-      "notes": " 1.4.3: gained reputation_points array (action_slug → int) for the new configurable-reputation settings card; sanitize_settings filters to known action slugs from Reputation::action_points_defaults(). 1.5.0: gained front_page (bool, default false) - \"Community as Homepage\"; 1.8.0: that request-filter injection (Router::maybe_serve_front_page) is GONE. It made the front page's query vars non-empty, which broke WP's own is_front_page() resolution and left the real page unqueryable — so the owner's per-page SEO on it (e.g. their Yoast title) was unreachable. Router::handle_request() now derives the home route at template_redirect via is_mapped_front_page(), leaving WP's resolution intact, and Template_Loader::set_seo_meta() defers entirely on that mapped page because a real page owns its own SEO. 1.5.0: gained the Color Palette set (text_color, bg_color, bg_subtle_color, border_color; empty = no override) - Template_Loader::palette_tokens()/palette_css() emit root token overrides whenever a palette field is set (accent_color treats its #0073aa default as a \"not set\" sentinel, which is what makes theme adoption the default); Theme_Integration light bridge subtracts palette-set tokens so explicit admin picks beat auto theme bridging. 1.7.1: gained terms_url + privacy_url (Settings -> General -> Community Setup) - consumed by GET /app/config for the mobile app's pre-login EULA screen; privacy_url falls back to get_privacy_policy_url() when unset. 1.8.0: inherit_fonts + inherit_colors REMOVED — both option keys and both checkboxes. inherit_fonts did nothing: measured byte-identical across 11 themes, because the --jt-font chain already ends in `inherit`, so the token resolves empty and .jt-app inherits the theme font either way — a checkbox governing a font setting that does not exist. inherit_colors was worse than dead: checked by default, it made palette_tokens() return empty, so an owner who picked an accent had it silently discarded, and the first Save destroyed a colour that had been applying (the key was absent, so the runtime had read it as unchecked). Theme adoption is now unconditional via the chains in jetonomy.css; the accent field is the single override."
+      "notes": " 1.4.3: gained reputation_points array (action_slug → int) for the new configurable-reputation settings card; sanitize_settings filters to known action slugs from Reputation::action_points_defaults(). 1.5.0: gained front_page (bool, default false) - \"Community as Homepage\"; 1.8.0: that request-filter injection (Router::maybe_serve_front_page) is GONE. It made the front page's query vars non-empty, which broke WP's own is_front_page() resolution and left the real page unqueryable — so the owner's per-page SEO on it (e.g. their Yoast title) was unreachable. Router::handle_request() now derives the home route at template_redirect via is_mapped_front_page(), leaving WP's resolution intact, and Template_Loader::set_seo_meta() defers entirely on that mapped page because a real page owns its own SEO. 1.5.0: gained the Color Palette set (text_color, bg_color, bg_subtle_color, border_color; empty = no override) - Template_Loader::palette_tokens()/palette_css() emit root token overrides whenever a palette field is set (accent_color treats its #0073aa default as a \"not set\" sentinel, which is what makes theme adoption the default); Theme_Integration light bridge subtracts palette-set tokens so explicit admin picks beat auto theme bridging. 1.7.1: gained terms_url + privacy_url (Settings -> General -> Community Setup) - consumed by GET /app/config for the mobile app's pre-login EULA screen; privacy_url falls back to get_privacy_policy_url() when unset. 1.8.0: inherit_fonts + inherit_colors REMOVED — both option keys and both checkboxes. inherit_fonts did nothing: measured byte-identical across 11 themes, because the --jt-font chain already ends in `inherit`, so the token resolves empty and .jt-app inherits the theme font either way — a checkbox governing a font setting that does not exist. inherit_colors was worse than dead: checked by default, it made palette_tokens() return empty, so an owner who picked an accent had it silently discarded, and the first Save destroyed a colour that had been applying (the key was absent, so the runtime had read it as unchecked). Theme adoption is now unconditional via the chains in jetonomy.css; the accent field is the single override. 2.1.0: one writer for every entry point. Jetonomy\\Settings::sanitize() holds the form sanitizer (Admin::sanitize_settings keeps only the role-caps branch and delegates); Settings::schema() is the allowlist (filter jetonomy_settings_schema) read by GET/POST /admin/settings and wp jetonomy config set, which before 2.1.0 stored values unsanitized. Settings::write() fills a touched section from the stored values so a one-key write never resets its neighbours. jetonomy_settings_updated fires on every write (update/add_option hook) with source form|rest|cli."
     },
     {
       "key": "jetonomy_email_templates",
@@ -4094,6 +4108,20 @@
       "args": "",
       "where": "includes/models/class-vote.php",
       "consumed_by": []
+    },
+    {
+      "name": "jetonomy_settings_schema",
+      "type": "filter",
+      "args": "array $schema",
+      "where": "includes/class-settings.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_settings_updated",
+      "type": "action",
+      "args": "string[] $changed, string $source (form|rest|cli)",
+      "where": "includes/class-settings.php",
+      "consumed_by": null
     }
   ],
   "buddypress_integration": {

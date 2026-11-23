@@ -9,17 +9,9 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T03:06:52+00:00\n"
+"POT-Creation-Date: 2026-11-23T04:00:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Poedit-Country: United States\n"
-"X-Poedit-SourceCharset: UTF-8\n"
-"X-Poedit-KeywordsList: __;_e;_x:1,2c;_ex:1,2c;_n:1,2;_nx:1,2,4c;_n_noop:1,2;_nx_noop:1,2,3c;esc_attr__;esc_html__;esc_attr_e;esc_html_e;esc_attr_x:1,2c;esc_html_x:1,2c;\n"
-"X-Poedit-Basepath: ../\n"
-"X-Poedit-SearchPath-0: .\n"
-"X-Poedit-Bookmarks: \n"
-"X-Textdomain-Support: yes\n"
 "X-Domain: jetonomy\n"
 
 #. Plugin Name of the plugin
@@ -542,8 +534,8 @@ msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #: includes/admin/ajax/class-spaces-handler.php:393
-#: includes/admin/class-admin.php:1759
-#: includes/admin/class-admin.php:2192
+#: includes/admin/class-admin.php:1477
+#: includes/admin/class-admin.php:1910
 #: includes/api/class-base-controller.php:97
 #: includes/api/class-spaces-controller.php:367
 #: includes/api/class-spaces-controller.php:386
@@ -900,7 +892,7 @@ msgid "System"
 msgstr ""
 
 #: includes/admin/class-activity-list-table.php:263
-#: includes/admin/class-admin.php:1953
+#: includes/admin/class-admin.php:1671
 #: includes/admin/class-revisions-list-table.php:362
 #: includes/admin/views/dashboard.php:176
 #: includes/admin/views/revisions.php:162
@@ -1595,99 +1587,53 @@ msgstr ""
 msgid "%1$s on \"%2$s\""
 msgstr ""
 
-#. translators: %s: settings field label.
-#: includes/admin/class-admin.php:906
-#, php-format
-msgid "%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept."
-msgstr ""
-
-#: includes/admin/class-admin.php:933
+#: includes/admin/class-admin.php:907
 #: includes/admin/views/settings.php:626
 msgid "Only administrators can change the role capability mapping."
 msgstr ""
 
 #. translators: 1: member label, plural (e.g. "Members"). 2: role name. 3: the Subscriber role name.
-#: includes/admin/class-admin.php:980
+#: includes/admin/class-admin.php:954
 #, php-format
 msgid "%1$s with the %2$s role now have the same access as the %3$s role. Their column below shows it; tick or untick boxes to change it."
 msgstr ""
 
-#: includes/admin/class-admin.php:1012
-#: includes/admin/views/settings.php:162
-#: includes/class-blocks.php:612
-#: includes/class-nav-menus.php:96
-#: includes/functions.php:29
-#: includes/functions.php:39
-#: includes/integrations/class-fluent-community.php:1035
-msgid "Community"
-msgstr ""
-
-#: includes/admin/class-admin.php:1014
-#: includes/admin/views/settings.php:167
-msgid "Terms of Service URL"
-msgstr ""
-
-#: includes/admin/class-admin.php:1015
-#: includes/admin/views/settings.php:174
-msgid "Privacy Policy URL"
-msgstr ""
-
-#: includes/admin/class-admin.php:1016
-#: includes/admin/views/settings.php:181
-msgid "Support URL"
-msgstr ""
-
-#: includes/admin/class-admin.php:1170
-#: includes/admin/views/settings.php:821
-msgid "Email Logo"
-msgstr ""
-
-#: includes/admin/class-admin.php:1196
-#: includes/admin/views/settings.php:1071
-msgid "Logo URL"
-msgstr ""
-
-#: includes/admin/class-admin.php:1242
-#: includes/admin/views/settings.php:1296
-msgid "Default share image"
-msgstr ""
-
 #. translators: %s: plugin name.
-#: includes/admin/class-admin.php:1273
+#: includes/admin/class-admin.php:991
 #, php-format
 msgid "Thank you for building your community with %s."
 msgstr ""
 
-#: includes/admin/class-admin.php:1380
+#: includes/admin/class-admin.php:1098
 msgid "Community emails"
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/class-admin.php:1384
+#: includes/admin/class-admin.php:1102
 #, php-format
 msgid "Pause all %s email notifications for this user."
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/class-admin.php:1386
+#: includes/admin/class-admin.php:1104
 #, php-format
 msgid "When enabled, the email verification reminder and other %s emails are suppressed. Web notifications are unaffected."
 msgstr ""
 
 #. translators: %s: the singular space label, lowercase (e.g. space, group).
-#: includes/admin/class-admin.php:1737
+#: includes/admin/class-admin.php:1455
 #: includes/api/class-spaces-controller.php:298
 #, php-format
 msgid "Only site administrators can manage access rules for this %s."
 msgstr ""
 
-#: includes/admin/class-admin.php:1738
+#: includes/admin/class-admin.php:1456
 #: includes/admin/views/space-edit.php:44
 msgid "Access Rules"
 msgstr ""
 
 #. translators: %s: where the link returns to - the configured space label, or a specific space title.
-#: includes/admin/class-admin.php:1743
+#: includes/admin/class-admin.php:1461
 #: includes/admin/views/space-edit.php:37
 #: includes/integrations/class-fluent-community.php:835
 #: templates/views/new-post.php:59
@@ -1696,25 +1642,25 @@ msgstr ""
 msgid "Back to %s"
 msgstr ""
 
-#: includes/admin/class-admin.php:1750
+#: includes/admin/class-admin.php:1468
 msgid "Sorry, you are not allowed to access this page."
 msgstr ""
 
-#: includes/admin/class-admin.php:1869
+#: includes/admin/class-admin.php:1587
 msgid "Entries per page"
 msgstr ""
 
-#: includes/admin/class-admin.php:1901
-#: includes/admin/class-admin.php:1992
+#: includes/admin/class-admin.php:1619
+#: includes/admin/class-admin.php:1710
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: includes/admin/class-admin.php:1926
+#: includes/admin/class-admin.php:1644
 msgid "You do not have sufficient permissions to export activity."
 msgstr ""
 
 #. translators: 1: reply label (e.g. "Reply"). 2: parent post title.
-#: includes/admin/class-admin.php:2050
+#: includes/admin/class-admin.php:1768
 #: includes/admin/class-revisions-list-table.php:310
 #, php-format
 msgid "%1$s to: %2$s"
@@ -2443,12 +2389,12 @@ msgid "Auto-moderate with keyword filters, regex patterns, and spam scoring. Con
 msgstr ""
 
 #: includes/admin/views/dashboard.php:29
-#: includes/api/class-admin-controller.php:135
+#: includes/api/class-admin-controller.php:188
 msgid "Demo data imported."
 msgstr ""
 
 #: includes/admin/views/dashboard.php:30
-#: includes/api/class-admin-controller.php:150
+#: includes/api/class-admin-controller.php:203
 msgid "All demo data has been removed."
 msgstr ""
 
@@ -3198,8 +3144,23 @@ msgstr ""
 msgid "Community Title"
 msgstr ""
 
+#: includes/admin/views/settings.php:162
+#: includes/class-blocks.php:612
+#: includes/class-nav-menus.php:96
+#: includes/class-settings.php:393
+#: includes/functions.php:29
+#: includes/functions.php:39
+#: includes/integrations/class-fluent-community.php:1035
+msgid "Community"
+msgstr ""
+
 #: includes/admin/views/settings.php:163
 msgid "Displayed as the main heading on the community home page."
+msgstr ""
+
+#: includes/admin/views/settings.php:167
+#: includes/class-settings.php:395
+msgid "Terms of Service URL"
 msgstr ""
 
 #. translators: %s: member label, plural, lowercase (e.g. "members").
@@ -3208,10 +3169,20 @@ msgstr ""
 msgid "Shown to %s before they sign up in the mobile app. Leave empty if you have none."
 msgstr ""
 
+#: includes/admin/views/settings.php:174
+#: includes/class-settings.php:396
+msgid "Privacy Policy URL"
+msgstr ""
+
 #. translators: %s: member label, plural, lowercase (e.g. "members").
 #: includes/admin/views/settings.php:177
 #, php-format
 msgid "Shown to %s before they sign up in the mobile app. Leave empty to use your WordPress Privacy Policy page."
+msgstr ""
+
+#: includes/admin/views/settings.php:181
+#: includes/class-settings.php:397
+msgid "Support URL"
 msgstr ""
 
 #. translators: %s: member label, plural, lowercase (e.g. "members").
@@ -3863,6 +3834,11 @@ msgstr ""
 msgid "From Email"
 msgstr ""
 
+#: includes/admin/views/settings.php:821
+#: includes/class-settings.php:551
+msgid "Email Logo"
+msgstr ""
+
 #: includes/admin/views/settings.php:824
 msgid "URL to your logo image for notification emails. Recommended: 200x40px, PNG or SVG. Leave empty to use site name as text."
 msgstr ""
@@ -4055,6 +4031,11 @@ msgstr ""
 
 #: includes/admin/views/settings.php:1067
 msgid "Your community logo. Shown in the mobile app (login + header) and anywhere a brand mark is needed. Square or wide PNG/SVG; leave empty to show the Community Title as text."
+msgstr ""
+
+#: includes/admin/views/settings.php:1071
+#: includes/class-settings.php:577
+msgid "Logo URL"
 msgstr ""
 
 #: includes/admin/views/settings.php:1074
@@ -4259,6 +4240,11 @@ msgstr ""
 
 #: includes/admin/views/settings.php:1292
 msgid "Site handle emitted as twitter:site on every public route. Leave blank to omit."
+msgstr ""
+
+#: includes/admin/views/settings.php:1296
+#: includes/class-settings.php:623
+msgid "Default share image"
 msgstr ""
 
 #: includes/admin/views/settings.php:1299
@@ -5687,19 +5673,23 @@ msgstr ""
 msgid "Must be true: removing the demo set cannot be undone."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:128
+#: includes/api/class-admin-controller.php:130
+msgid "Setting key => new value. Only keys GET /admin/settings lists; at most 50 per request."
+msgstr ""
+
+#: includes/api/class-admin-controller.php:181
 msgid "Send confirm=true to import demo data."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:144
+#: includes/api/class-admin-controller.php:197
 msgid "Send confirm=true to remove the demo data."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:147
+#: includes/api/class-admin-controller.php:200
 msgid "No demo data found to clean up."
 msgstr ""
 
-#: includes/api/class-admin-controller.php:187
+#: includes/api/class-admin-controller.php:240
 msgid "At least one user_id is required."
 msgstr ""
 
@@ -6805,23 +6795,23 @@ msgstr ""
 msgid "Back to login"
 msgstr ""
 
-#: includes/class-jetonomy.php:89
+#: includes/class-jetonomy.php:93
 msgid "Your account has been banned from this community. Contact a moderator if you believe this is a mistake."
 msgstr ""
 
-#: includes/class-jetonomy.php:116
+#: includes/class-jetonomy.php:120
 msgid "Confirm your email to finish signing up. Check your inbox for the link, or use \"Resend confirmation\" on the sign-in form."
 msgstr ""
 
-#: includes/class-jetonomy.php:762
+#: includes/class-jetonomy.php:766
 msgid "This unsubscribe link is invalid or has expired."
 msgstr ""
 
-#: includes/class-jetonomy.php:778
+#: includes/class-jetonomy.php:782
 msgid "You have been unsubscribed from these email notifications. You can re-enable them in your notification preferences."
 msgstr ""
 
-#: includes/class-jetonomy.php:779
+#: includes/class-jetonomy.php:783
 msgid "Unsubscribed"
 msgstr ""
 
@@ -7033,6 +7023,28 @@ msgstr ""
 #: includes/class-privacy.php:718
 #, php-format
 msgid "Jetonomy: %1$s and %2$s anonymized. Personal data deleted."
+msgstr ""
+
+#: includes/class-settings.php:193
+msgid "Send at least one setting."
+msgstr ""
+
+#. translators: %d: the most settings one request may change.
+#: includes/class-settings.php:197
+#, php-format
+msgid "Change at most %d settings in one request."
+msgstr ""
+
+#. translators: %s: setting key.
+#: includes/class-settings.php:207
+#, php-format
+msgid "%s is not a setting that can be changed here."
+msgstr ""
+
+#. translators: %s: settings field label.
+#: includes/class-settings.php:352
+#, php-format
+msgid "%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept."
 msgstr ""
 
 #. translators: 1: shortcode tag, 2: the kind of thing referenced, 3: the value written.
