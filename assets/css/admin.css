@@ -84,6 +84,8 @@
 	--jt-admin-pro: #8B5CF6;
 	--jt-admin-pro-2: #6366F1;
 	--jt-admin-pro-dark: #7c3aed;
+	--jt-admin-pro-darker: #6d28d9;
+	--jt-admin-pro-2-dark: #4f46e5;
 	--jt-admin-pro-light: #f3e8fd;
 	--jt-admin-pro-bg: #F8F7FF;
 	--jt-admin-pro-border: #C4B5FD;
@@ -2234,9 +2236,10 @@ tr.jetonomy-moderated td {
 /* Pro Badge */
 .jt-pro-badge {
 	display: inline-block;
-	background: linear-gradient(135deg, var(--jt-admin-pro), var(--jt-admin-pro-2));
+	/* Darker stops: white text stays at 4.5:1 or more across the gradient. */
+	background: linear-gradient(135deg, var(--jt-admin-pro-dark), var(--jt-admin-pro-2-dark));
 	color: var(--jt-admin-white);
-	font-size: 10px;
+	font-size: 11px;
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
@@ -2458,11 +2461,20 @@ tr.jetonomy-moderated td {
 	}
 }
 
-/* Core sets .button to 40px under 782px; the 44px target rule wins here. */
+/* Core sets .button to 40px under 782px; the 44px target rule wins here. Pro colours, not the admin colour
+   scheme's: a scheme colour (sunrise amber) fell under 4.5:1 on the Pro card background. */
 .jt-pro-upsell__actions .button {
 	display: inline-flex;
 	align-items: center;
 	min-height: 44px;
+	color: var(--jt-admin-pro-dark);
+	border-color: var(--jt-admin-pro-dark);
+}
+
+.jt-pro-upsell__actions .button:hover,
+.jt-pro-upsell__actions .button:focus {
+	color: var(--jt-admin-pro-darker);
+	border-color: var(--jt-admin-pro-darker);
 }
 
 .jt-pro-upsell__dismiss {
