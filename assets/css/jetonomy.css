@@ -264,6 +264,10 @@
   /* The reset's border colour is the control edge: a button that draws a border
      is a control and needs 3:1 (WCAG 1.4.11). It was --jt-border (1.18:1), which
      beat every button's own edge, the Pro PDF card and a core Search button among them. */
+  /* A core block button inside Jetonomy (the Search block in a sidebar) loses
+     its theme fill to the reset above, and a block theme may also set
+     border: none (Twenty Twenty-Five). Give it the control edge on any theme. */
+  .jt-app button.wp-element-button { border: 1px solid var(--jt-border-strong) !important; }
   /* Re-assert the plugin's own intentional button surfaces/text that the reset
      above (and the theme) would otherwise flatten. Each carries !important to
      beat the blanket; the design tokens keep them theme-adaptive. */
@@ -973,6 +977,10 @@
   .jt-tags { display: flex; flex-wrap: wrap; gap: 5px; }
   .jt-tags .jt-tag { cursor: pointer; transition: all 0.1s; }
   .jt-tags .jt-tag:hover { background: var(--jt-accent-muted); color: var(--jt-text-secondary); }
+  /* Dark: a light accent's muted tint is a mid tone (#ffd34d: 4.2:1 under the
+     secondary text), so the hover takes the full text colour. */
+  :is(.jt-dark, [data-theme="dark"], [data-bx-mode="dark"]) .jt-tags .jt-tag:hover,
+  :is(.jt-dark, [data-theme="dark"], [data-bx-mode="dark"]) .jt-tags .jt-tag:hover .jt-tag-count { color: var(--jt-text); }
 
   /* ── Loading ── */
   .jt-loading { text-align: center; padding: 40px; color: var(--jt-text-tertiary); }
@@ -1474,7 +1482,7 @@
   /* Idea roadmap status pill - four canonical statuses, color-coded so the
      listing and post header speak the same visual language as the kanban. */
   /* --jt-ip is the status hue (tint, border); --jt-ip-fg the readable text shade of it. */
-  .jt-idea-pill { --jt-ip: var(--jt-text-secondary); --jt-ip-fg: var(--jt-text); display: inline-flex; align-items: center; background: color-mix(in srgb, var(--jt-ip) 14%, transparent); color: var(--jt-ip-fg); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }
+  .jt-idea-pill { --jt-ip: var(--jt-text-secondary); --jt-ip-fg: var(--jt-text-secondary); display: inline-flex; align-items: center; background: color-mix(in srgb, var(--jt-ip) 14%, transparent); color: var(--jt-ip-fg); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }
   .jt-idea-pill-planned { --jt-ip: var(--jt-accent); --jt-ip-fg: var(--jt-accent-strong); }
   .jt-idea-pill-in_progress { --jt-ip: var(--jt-warn); --jt-ip-fg: var(--jt-warn-strong); }
   .jt-idea-pill-shipped { --jt-ip: var(--jt-success); --jt-ip-fg: var(--jt-success-strong); }
