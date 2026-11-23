@@ -145,6 +145,21 @@ class ConfigJourneyTest extends WP_UnitTestCase {
 		$this->assertSame( $before, get_option( 'jetonomy_settings' ) );
 	}
 
+	public function test_set_fails_when_the_sanitizer_keeps_the_old_value(): void {
+		wp_set_current_user( 0 ); // WP-CLI runs with no user unless --user is passed.
+		$before = get_option( 'jetonomy_settings' );
+		foreach ( array(
+			'terms_url'                => 'javascript:alert(1)',
+			'remove_data_on_uninstall' => 'true',
+			'trust_thresholds.9.posts' => '5',
+		) as $path => $value ) {
+			$result = $this->journey->set( $path, $value );
+			$this->assertFalse( $result->is_success(), $path . ' answered success but nothing was stored.' );
+			$this->assertNotEmpty( $result->first_error(), $path );
+		}
+		$this->assertSame( $before, get_option( 'jetonomy_settings' ) );
+	}
+
 	public function test_set_updates_existing_leaf_and_returns_old(): void {
 		$result = $this->journey->set( 'base_slug', 'forum' );
 

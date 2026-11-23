@@ -299,10 +299,33 @@ class Settings {
 		self::$baseline = self::sanitize( $input );
 		self::$notices  = array();
 		$clean          = self::sanitize( array_replace( $input, $patch ) );
-		$notices        = self::$notices;
+
+		// A sent value the sanitizer refused (it kept the old one) is reported,
+		// never answered as saved: a level that does not exist, a setting only an
+		// administrator may change, an address that is not http(s).
+		$refused = 0;
+		foreach ( $patch as $key => $value ) {
+			$want = rest_sanitize_value_from_schema( $value, array_diff_key( $schema[ $key ], array_flip( array( 'section', 'secret' ) ) ), (string) $key );
+			$was  = self::$baseline[ $key ] ?? null;
+			if ( ( $clean[ $key ] ?? null ) == $was && $want != $was // phpcs:ignore Universal.Operators.StrictComparisons -- "1" and true are the same setting.
+			) {
+				++$refused;
+				if ( self::noticed( 'jetonomy_invalid_' . $key ) ) {
+					continue; // The sanitizer already said why.
+				}
+				self::notice(
+					'jetonomy_setting_not_stored',
+					/* translators: %s: setting key. */
+					sprintf( __( '%s was not changed: the value was refused, or changing it needs an administrator.', 'jetonomy' ), (string) $key )
+				);
+			}
+		}
+		$notices = self::$notices;
 
 		self::$source = $source;
-		update_option( self::OPTION, $clean );
+		if ( $refused < count( $patch ) ) { // Nothing to save when every sent value was refused.
+			update_option( self::OPTION, $clean );
+		}
 		self::$source   = '';
 		self::$baseline = null;
 
@@ -398,6 +421,15 @@ class Settings {
 		 * @param string   $source  'form' (wp-admin or any direct write), 'rest' or 'cli'.
 		 */
 		do_action( 'jetonomy_settings_updated', $changed, '' !== self::$source ? self::$source : 'form' );
+	}
+
+	/**
+	 * Whether the last sanitize() already raised this notice.
+	 *
+	 * @param string $code Notice code.
+	 */
+	private static function noticed( string $code ): bool {
+		return in_array( $code, array_column( self::$notices, 'code' ), true );
 	}
 
 	/**

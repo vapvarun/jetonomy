@@ -146,6 +146,10 @@ final class Config_Journey {
 		if ( is_wp_error( $result ) ) {
 			return Journey_Result::fail( $result->get_error_code() . ': ' . $result->get_error_message() );
 		}
+		// A refused value is a failure, never "Success" over the old value.
+		if ( $result['notices'] ) {
+			return Journey_Result::fail( implode( ' ', array_column( $result['notices'], 'message' ) ) );
+		}
 		$stored    = get_option( self::OPTION_KEY, array() );
 		$new_value = $this->descend( is_array( $stored ) ? $stored : array(), $path, $found );
 

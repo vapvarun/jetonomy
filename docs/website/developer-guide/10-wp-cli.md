@@ -329,7 +329,7 @@ wp jetonomy config keys --key=trust_thresholds
 wp jetonomy config list
 ```
 
-Since 2.1.0, `set` writes through the same sanitizer as Jetonomy > Settings and `POST /jetonomy/v1/admin/settings`. Only registered settings can be set (the keys `GET /admin/settings` lists); any other key fails with `jetonomy_unknown_setting`, and a value outside the key's schema (an unknown provider, a colour that is not a hex code) fails with `rest_invalid_param`. Both exit non-zero and change nothing. A JSON array or object string is decoded, so `--value='{"posts":7}'` sets a whole block. Text settings keep a numeric-looking value as text.
+Since 2.1.0, `set` writes through the same sanitizer as Jetonomy > Settings and `POST /jetonomy/v1/admin/settings`. Only registered settings can be set (the keys `GET /admin/settings` lists); any other key fails with `jetonomy_unknown_setting`, and a value outside the key's schema (an unknown provider, a colour that is not a hex code) fails with `rest_invalid_param`. Both exit non-zero and change nothing. So does a value the sanitizer refuses and keeps the old one for (an address that is not http or https, a trust level that does not exist, or `remove_data_on_uninstall` without `--user=<an administrator>`): the error says why. A JSON array or object string is decoded, so `--value='{"posts":7}'` sets a whole block. Text settings keep a numeric-looking value as text.
 
 ---
 

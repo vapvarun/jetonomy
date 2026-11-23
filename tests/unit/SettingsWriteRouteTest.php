@@ -226,6 +226,15 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 		$this->assertSame( '#666666', $stored['accent_color'] );
 	}
 
+	public function test_a_refused_value_comes_back_as_a_notice_not_as_saved(): void {
+		$data = $this->post( array( 'trust_thresholds' => array( 9 => array( 'posts' => 5 ) ) ), $this->admin )->get_data();
+		$this->assertSame( 'jetonomy_setting_not_stored', $data['notices'][0]['code'] ?? '' );
+		$data = $this->post( array( 'terms_url' => 'javascript:alert(1)' ), $this->admin )->get_data();
+		$this->assertSame( array( 'jetonomy_invalid_terms_url' ), array_column( $data['notices'], 'code' ), 'One notice per refusal.' );
+		$data = $this->post( array( 'seo_twitter_handle' => 'abc' ), $this->admin )->get_data();
+		$this->assertSame( array(), $data['notices'], 'A cleaned value that was stored is not a refusal.' );
+	}
+
 	/**
 	 * Writing a section fills its untouched keys from the stored values, so each
 	 * key's sanitizer must give back what it stored. Proven for every key the
