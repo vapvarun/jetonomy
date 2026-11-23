@@ -97,6 +97,49 @@ class UpgradeJobsTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'secret-endpoint', (string) wp_json_encode( $args ) );
 	}
 
+	/**
+	 * A 2.0.7 row whose stored args JSON has its keys in a different order than a re-encoding (here: a long payload,
+	 * so Action Scheduler matches on a hash of the JSON) cannot be cancelled by its arguments. It used to be converted
+	 * again on every page of every pass: a full page of them gave ten copies of each delivery and a pass that never ended.
+	 */
+	public function test_a_row_cancel_by_args_cannot_match_is_converted_once_and_the_pass_ends(): void {
+		global $wpdb;
+		$limit = Queue::PENDING_READ_LIMIT;
+		for ( $i = 1; $i <= $limit; $i++ ) {
+			$id   = (int) as_schedule_single_action(
+				time() + HOUR_IN_SECONDS,
+				self::LEGACY,
+				array(
+					'webhook_id' => $i,
+					'url'        => 'https://example.test/hook',
+					'secret'     => 's',
+					'payload'    => wp_json_encode( array( 'text' => str_repeat( 'x', 200 ) ) ),
+					'event'      => 'qa.event',
+				),
+				'jetonomy'
+			);
+			$row  = $wpdb->get_var( $wpdb->prepare( "SELECT extended_args FROM {$wpdb->prefix}actionscheduler_actions WHERE action_id = %d", $id ) ); // phpcs:ignore WordPress.DB
+			$this->assertNotEmpty( $row, 'fixture: long args are matched by hash' );
+			$sorted = json_decode( (string) $row, true );
+			ksort( $sorted );
+			$wpdb->update( $wpdb->prefix . 'actionscheduler_actions', array( 'extended_args' => wp_json_encode( $sorted ) ), array( 'action_id' => $id ) ); // phpcs:ignore WordPress.DB
+		}
+
+		$more = ( new \Jetonomy_Pro\Extensions\Webhooks\Extension() )->upgrade_jobs( '2.0.7' );
+
+		$this->assertFalse( $more, 'the pass ends' );
+		$delivered = as_get_scheduled_actions(
+			array(
+				'hook'     => self::DELIVER,
+				'status'   => 'pending',
+				'per_page' => -1,
+			),
+			'objects'
+		);
+		$this->assertCount( $limit, $delivered, 'one delivery per 2.0.7 row, not one per page' );
+		$this->assertSame( array(), as_get_scheduled_actions( array( 'hook' => self::LEGACY, 'status' => 'pending' ), 'ids' ), 'every converted row is cancelled' );
+	}
+
 	public function test_history_prune_deletes_our_old_cancelled_rows(): void {
 		$old = (int) as_schedule_single_action( time() - 8 * DAY_IN_SECONDS, self::LEGACY, array( 1 ), 'jetonomy' );
 		\ActionScheduler::store()->cancel_action( $old );

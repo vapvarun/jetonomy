@@ -146,12 +146,21 @@ class Cron {
 	/**
 	 * Is this a request where recurring schedules should be checked and armed?
 	 *
-	 * @deprecated 2.1.0 Use \Jetonomy\Queue::is_scheduling_request(), the one implementation for Free and Pro.
+	 * Kept working through 2.1.x for Pro 2.0.7 and older, which call it on every
+	 * request; removal no earlier than 2.2.0. Under WP_DEBUG it writes one log line
+	 * per request instead of _deprecated_function(), whose notice would print on
+	 * every page (and break REST JSON) on a site with WP_DEBUG_DISPLAY on.
+	 *
+	 * @deprecated 2.1.0 Use \Jetonomy\Queue::is_scheduling_request(), the one implementation for Free and Pro. Removal: 2.2.0 or later.
 	 *
 	 * @return bool
 	 */
 	public static function is_scheduling_request(): bool {
-		_deprecated_function( __METHOD__, '2.1.0', '\\Jetonomy\\Queue::is_scheduling_request()' );
+		static $logged = false;
+		if ( ! $logged && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			$logged = true;
+			error_log( 'Jetonomy: Cron::is_scheduling_request() is deprecated since 2.1.0 and will be removed in 2.2.0 or later; use Queue::is_scheduling_request() (update Jetonomy Pro).' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- a log line only, never page output.
+		}
 		return Queue::is_scheduling_request();
 	}
 

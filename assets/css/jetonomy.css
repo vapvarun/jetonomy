@@ -1352,7 +1352,7 @@
   .jt-app .jt-space-grid .jt-space-card-excerpt { margin: 0; }
   /* Narrow card (under about 280px wide, so under 246px of content: the query
      reads the card's content box): the bell alone. The button's aria-label still
-     names the action and the space, and aria-pressed carries the state. */
+     names the action and the space and carries the state ("Following <space>"). */
   @container (max-width: 245px) {
     .jt-app .jt-space-grid .jt-follow-space-btn { padding-inline: 0; }
     .jt-app .jt-space-grid .jt-follow-space-btn .jt-follow-label { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

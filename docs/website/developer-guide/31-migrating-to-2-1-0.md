@@ -41,6 +41,7 @@ a deprecation notice until 2.1.1.
 | Pro `Custom_Fields\Extension::run_searchable_backfill( $post_ids )` | Re-indexed topics | Deprecated shim, removed in 2.1.1. Use `queue_reindex( $field_id )`. |
 | Pro `Custom_Fields\Extension::queue_reindex( array $post_ids )` | Queued 500-topic chunks | Takes a field id and queues one cursor job. An array still works (deprecated): the topics are queued in 500-topic chunks, as before. |
 | Pro `Attachments\Extension::gc()` | No-op listener for the retired daily GC | Removed. The GC schedule is cancelled once by the upgrade. |
+| `\Jetonomy\Cron::is_scheduling_request()` | Said whether recurring jobs are checked on this request | Deprecated, keeps working through 2.1.x (Pro 2.0.7 and older call it on every request); removal 2.2.0 or later. Under `WP_DEBUG` it writes one log line per request, never a notice on the page. Use `Queue::is_scheduling_request()`. |
 | `Space_Purge::clear_scheduled()`, `Recount_Backfill::clear_scheduled()` | Cancelled their job on deactivation | Removed. Deactivation cancels through `Queue::cancel_on_deactivate()`, which keeps an in-flight space purge pending. |
 
 New on `\Jetonomy\Queue`: `when_ready()`, `is_pending()`, `pending_args()` (oldest 100), `ensure_recurring()`, `delete_rows()`,
@@ -83,6 +84,11 @@ Code examples for each are in [Background Jobs](./30-background-jobs.md).
   scheduled for, and its own failed jobs after 90
   days, for at most 10 seconds and 10,000 rows per status a day (50 runs of 200); a larger backlog is cleared over
   the following days. Other plugins' jobs and Action Scheduler's site-wide retention are not touched.
+- The Free database update runs in one request at a time: the first request after the update takes a 5-minute
+  lock (the `jetonomy_migration_lock` transient) while every other request keeps serving on the old schema. If that
+  request is killed midway, the lock stays until it expires, so the site can sit half-migrated for up to 5 minutes
+  before the next request resumes the update. This is by design: a second request never runs the same table
+  changes at the same time, and the migrations are safe to run again.
 - The Pro upgrade runs in one request at a time under core's upgrader lock: it updates the extension tables, queues
   the job conversion (a background job, never on a visitor's page view), then stores the new version. If that
   request is killed midway, the lock stays held for 10 minutes, so the new version is stored only after it expires;

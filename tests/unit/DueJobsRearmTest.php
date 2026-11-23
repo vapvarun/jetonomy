@@ -110,4 +110,23 @@ class DueJobsRearmTest extends WP_UnitTestCase {
 		$this->assertFalse( $read, 'the flag is not even read' );
 		$this->assertSame( $before, $wpdb->num_queries, 'no query' );
 	}
+
+	/**
+	 * Released Pro 2.0.7 calls Cron::is_scheduling_request() on every request: it keeps
+	 * answering like Queue's, raises no deprecation notice (which would print on every
+	 * page with WP_DEBUG_DISPLAY on) and writes at most one log line per request.
+	 */
+	public function test_the_old_cron_check_still_works_without_a_page_notice(): void {
+		$log      = wp_tempnam( 'jt-deprecated-log' );
+		$previous = ini_set( 'error_log', $log ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		try {
+			set_current_screen( 'front' );
+			$this->assertSame( Queue::is_scheduling_request(), \Jetonomy\Cron::is_scheduling_request() );
+			$this->assertSame( Queue::is_scheduling_request(), \Jetonomy\Cron::is_scheduling_request() );
+		} finally {
+			ini_set( 'error_log', (string) $previous ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		}
+		$this->assertLessThanOrEqual( 1, substr_count( (string) file_get_contents( $log ), 'is deprecated since 2.1.0' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		wp_delete_file( $log );
+	}
 }
