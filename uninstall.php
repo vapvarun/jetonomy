@@ -195,6 +195,13 @@ require_once __DIR__ . '/includes/db/class-schema.php';
 // 2. Delete plugin options.
 // -------------------------------------------------------------------------
 
+// The licence SDK's cached update info, named exactly as the SDK names it:
+// edd_sl_ + md5 of [plugin folder, saved licence key, beta flag]
+// (EasyDigitalDownloads\Updater\Updaters\Updater::get_cache_key()). Never by
+// pattern: other plugins on the same SDK keep theirs. Read the key before the
+// jetonomy_ sweep below deletes it.
+delete_option( 'edd_sl_' . md5( (string) wp_json_encode( array( basename( __DIR__ ), get_option( 'jetonomy_license_key' ), 0 ) ) ) );
+
 delete_option( 'jetonomy_settings' );
 delete_option( 'jetonomy_db_version' );
 delete_option( 'jetonomy_setup_complete' );

@@ -122,6 +122,8 @@ Deactivating Jetonomy never touches your data. Deleting it from the Plugins scre
 
 To remove everything when you delete the plugin, go to **Jetonomy → Settings → General → Data** and tick **Remove all community data when Jetonomy is deleted** (only administrators can change it). With that on, deleting Jetonomy removes the `wp_jt_*` tables, all plugin options, and all registered capabilities, giving you a clean removal with no database debris. Jetonomy Pro follows the same setting: its `wp_jt_pro_*` tables, options, user meta and scheduled tasks are removed only when it is on. Removal is permanent, so back up your database first.
 
+With removal on, the licence key, licence status and the update-check cache of both plugins are deleted too, so a reinstall starts with no licence and Pro asks for its key again. With data kept, they stay: a reinstall picks up the saved key and status at once, the next update check (at most 3 hours later) and the weekly licence check refresh them from the store, and an expired or deactivated licence shows as such after that check. Features never switch off either way; only updates depend on the licence.
+
 ## What's Next?
 
 Run the three-step setup wizard to choose your community URL, create your first space, and go live.
