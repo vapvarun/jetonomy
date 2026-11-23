@@ -321,6 +321,27 @@ if ( $qa_post_id && defined( 'JETONOMY_PRO_VERSION' ) && \Jetonomy\Models\Attach
 	}
 }
 
+// A PDF renders Pro's PDF card (a button with an edge and an "Open viewer"
+// link on the subtle surface): third attachment.
+if ( $qa_post_id && defined( 'JETONOMY_PRO_VERSION' ) && \Jetonomy\Models\Attachment::count_for( 'post', $qa_post_id ) < 3 ) {
+	$pdf    = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+	$upload = wp_upload_bits( 'jt-qa-notes.pdf', null, $pdf );
+	if ( empty( $upload['error'] ) ) {
+		$file_id = wp_insert_attachment(
+			array(
+				'post_title'     => 'jt-qa-notes.pdf',
+				'post_mime_type' => 'application/pdf',
+				'post_status'    => 'inherit',
+			),
+			$upload['file']
+		);
+		if ( $file_id && ! is_wp_error( $file_id ) ) {
+			\Jetonomy\Models\Attachment::link( 'post', $qa_post_id, (int) $file_id );
+			$out['pdf_on'] = $qa_post_id;
+		}
+	}
+}
+
 $out['search_needle'] = JT_QA_SEARCH_NEEDLE;
 
 echo 'FIXTURES ' . wp_json_encode( $out ) . "\n";

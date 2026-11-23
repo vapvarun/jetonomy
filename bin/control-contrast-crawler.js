@@ -23,7 +23,9 @@
 //    own edge, its fill, or the edge of a wrapper that hugs it (search pill).
 //    A link whose image fills it (a thumbnail) is identified by that image,
 //    and a card link (title plus meta) by its text: a faint card frame is
-//    listed under cards, not counted.
+//    listed under cards, not counted. A text link whose only edge is a single
+//    border side (a footer link under a divider) is listed the same way, and
+//    so is a core block's own field (theme form styles, not Jetonomy's).
 //    A button with no edge is identified by its label: a text-only button
 //    passes, and a button whose only boundary is a sub-3:1 fill (hover tint,
 //    voted tint) is listed under fillOnly for review, not counted. Its text
@@ -40,6 +42,10 @@
 //    each step (a selector string, { type: [selector, text] }, { press: key }
 //    or { js: selector } for a DOM click with navigation blocked) so modals,
 //    menus and pickers are measured open.
+//  - an open state whose step times out or finds nothing, and a page that
+//    fails to load, is listed in `missed` and makes `ok` false: it was not
+//    measured. opts.stepTimeout (default 10000 ms) sets the click wait; run
+//    it on a quiet machine.
 //  - opts.guest runs the set in a fresh logged-out browser context.
 //  - opts.hostCss is extra CSS for every run, to stand in for a host setup,
 //    e.g. ':root{--text-1:initial!important;--bg:initial!important;--brand:initial!important}'
@@ -75,24 +81,32 @@ const FRONT = [
     'widget-user-stats', 'widget-active-spaces', 'widget-leaderboard', 'widget-recent-posts'].map((s) => '/jt-qa-' + s + '/'),
 ];
 
-// Open states: each loads the page, clicks the steps, then measures.
+// Open states: each loads the page, clicks the steps, then measures. `who`:
+// member (default) runs logged in, guest only for a guest, any for both.
 const TOPIC = '/community/s/feature-requests/t/dark-mode-toggle-in-user-preferences/';
 const QA_TOPIC = '/community/s/jt-qa-qna/t/qa-qa-space-fixture-topic/';
 const FRONT_OPEN = [
   { path: '/community/s/general-discussion/members/', name: 'ban', open: ['.jt-member-ban-btn'] },
   { path: TOPIC, name: 'report', open: ['button.jt-act[aria-label="Report"]'] },
-  { path: TOPIC, name: 'share', open: ['.jt-share-btn'] },
+  { path: TOPIC, name: 'share', who: 'any', open: ['.jt-share-btn'] },
   { path: TOPIC, name: 'more', open: ['.jt-more-trigger'] },
   { path: TOPIC, name: 'delete-confirm', open: ['.jt-more-trigger', '[data-wp-on--click="actions.deletePost"]'] },
   { path: TOPIC, name: 'move', open: ['.jt-more-trigger', '[data-wp-on--click="actions.movePost"]'] },
   { path: TOPIC, name: 'react-picker', open: ['.jt-reaction-trigger'] },
   { path: TOPIC, name: 'editor-emoji', open: ['[aria-label="Insert emoji"]'] },
   { path: TOPIC, name: 'mention', open: [{ type: ['.jt-editor-body', '@a'] }] },
-  { path: QA_TOPIC, name: 'lightbox', open: ['.jt-attach-img'] },
+  { path: QA_TOPIC, name: 'lightbox', who: 'any', open: ['.jt-attach-img'] },
   { path: '/community/s/general-discussion/edit/', name: 'space-delete', open: ['.jt-space-delete'] },
-  { path: '/community/', name: 'notifications', open: ['.jt-community-nav-notif'] },
-  { path: '/community/', name: 'tab-menu', open: ['[data-jt-menu]'] },
-  { path: '/jt-qa-block-login/', name: 'register-tab', open: ['.jt-login-tab[data-jt-tab="register"]'] },
+  // The bell shows at desktop width; the tab overflow menu only on a phone,
+  // and only for a member (a guest's community nav has no overflow menu).
+  // `absentOk`: Jetonomy's own community nav, which a host shell (BuddyNext)
+  // replaces with its own; when the trigger is not in the page at all the
+  // state is listed under `absent`, not measured and not a failure. A trigger
+  // that is present but does not open still fails.
+  { path: '/community/', name: 'notifications', width: 1280, absentOk: true, open: ['.jt-community-nav-notif'] },
+  { path: '/community/', name: 'tab-menu', width: 390, absentOk: true, open: ['[data-jt-menu]'] },
+  // With a host that owns sign-up (BuddyNext), Register is a link to its page, not a tab.
+  { path: '/jt-qa-block-login/', name: 'register-tab', who: 'guest', absentOk: true, open: ['.jt-login-tab[data-jt-tab="register"]'] },
 ];
 
 const ADMIN = [
@@ -111,6 +125,8 @@ const ADMIN_OPEN = [
   // The shared confirm dialog every data-jt-confirm link opens, called directly (needs no row to exist).
   { path: '/wp-admin/admin.php?page=jetonomy-spaces', name: 'confirm', open: [{ run: 'window.jetonomyConfirm("Delete this item?", { danger: true })' }] },
 ];
+
+const SITE_CHROME = '.bn-cookie-consent{display:none!important}';
 
 // Runs inside the page. Returns one record per tagged control.
 const IN_PAGE = (args) => {
@@ -185,6 +201,7 @@ const IN_PAGE = (args) => {
       if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
       const r = el.getBoundingClientRect();
       if (r.width < 4 || r.height < 4) continue;
+      if (r.right + scrollX <= 0 || r.bottom + scrollY <= 0) continue; // off-screen (spam honeypot): never seen
       const cs = getComputedStyle(el);
       if (el.tagName === 'INPUT' && /^(checkbox|radio)$/.test(el.type) && cs.appearance !== 'none') continue; // UA-drawn
       if (el.tagName === 'INPUT' && /^(range|color|file|image)$/.test(el.type)) continue;
@@ -292,6 +309,13 @@ const IN_PAGE = (args) => {
     // A card link (title plus meta, 56px or taller) is identified by its text;
     // a faint card frame is listed under cards for review, not counted.
     if (nonText === 'fail' && el.tagName === 'A' && texts.length >= 2 && el.getBoundingClientRect().height >= 56) nonText = 'card';
+    // A text link whose only edge is one border side (a "View all" footer under
+    // a divider) is identified by its text; the rule is a divider, not its edge.
+    const edges = parts.filter((p) => p.k !== 'fill');
+    if (nonText === 'fail' && el.tagName === 'A' && texts.length && edges.length === 1 && /^border-/.test(edges[0].k)) nonText = 'divider';
+    // A core block's own field (the Search block in a Jetonomy sidebar) is drawn
+    // by the theme's form styles, not by Jetonomy: listed, not counted.
+    if (nonText === 'fail' && isField && [...el.classList].some((c) => c.startsWith('wp-block-'))) nonText = 'host-field';
     out.push({
       i: +el.getAttribute('data-jtc'),
       sel: sel(el),
@@ -310,7 +334,7 @@ const IN_PAGE = (args) => {
 };
 
 // Clicks each step; stops at the first one that has nothing visible to act on.
-const runSteps = async (pg, steps) => {
+const runSteps = async (pg, steps, timeout) => {
   for (const s of steps) {
     const target = typeof s === 'string' ? s : (s.type ? s.type[0] : null);
     try {
@@ -319,12 +343,12 @@ const runSteps = async (pg, steps) => {
         await pg.route('**/*', (r) => (r.request().isNavigationRequest() ? r.abort() : r.continue()));
         if (!(await pg.evaluate((q) => { const el = document.querySelector(q); if (el) el.click(); return !!el; }, s.js))) return 'miss: ' + s.js;
       }
-      if (target) await pg.locator(target + ' >> visible=true').first().click({ timeout: 3000 });
+      if (target) await pg.locator(target + ' >> visible=true').first().click({ timeout });
       if (s.type) await pg.keyboard.type(s.type[1], { delay: 40 });
       if (s.press) await pg.keyboard.press(s.press);
       if (s.run) await pg.evaluate((code) => { (0, eval)(code); }, s.run);
       await pg.waitForTimeout(s.wait || 500);
-    } catch (e) { return 'miss: ' + (target || s.press || s.js); }
+    } catch (e) { return (/Timeout/.test(String(e)) ? 'timeout: ' : 'miss: ') + (target || s.press || s.js); }
   }
   return 'open';
 };
@@ -334,7 +358,8 @@ const jtcCrawl = async (page0, opts = {}) => {
   const BASE = opts.base || (origin !== 'null' ? origin : '');
   if (!BASE) throw new Error('jtcCrawl: pass opts.base, e.g. { base: "http://example.local" }');
   const set = opts.set || 'front';
-  const urls = opts.urls || (set === 'admin' ? [...ADMIN, ...ADMIN_OPEN] : [...FRONT, ...FRONT_OPEN]);
+  const forWho = (e) => typeof e === 'string' || (e.who || 'member') === 'any' || (e.who || 'member') === (opts.guest ? 'guest' : 'member');
+  const urls = (opts.urls || (set === 'admin' ? [...ADMIN, ...ADMIN_OPEN] : [...FRONT, ...FRONT_OPEN])).filter(forWho);
   const guestCtx = opts.guest ? await page0.context().browser().newContext() : null;
   const page = guestCtx ? await guestCtx.newPage() : page0;
   const modes = opts.modes || (set === 'admin' ? ['light'] : ['light', 'dark']);
@@ -351,6 +376,7 @@ const jtcCrawl = async (page0, opts = {}) => {
   for (const width of widths) {
     await page.setViewportSize({ width, height: width > 800 ? 900 : 844 });
     for (const entry of urls) {
+      if (entry.width && entry.width !== width) continue;
       const path = typeof entry === 'string' ? entry : entry.path + ' #' + entry.name;
       const url = typeof entry === 'string' ? entry : entry.path;
       for (const mode of modes) {
@@ -358,7 +384,9 @@ const jtcCrawl = async (page0, opts = {}) => {
         await page.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {});
         try { resp = await page.goto(BASE + url, { waitUntil: 'load', timeout: 30000 }); } catch (e) { pages.push({ path, mode, width, error: String(e).slice(0, 80) }); continue; }
         const finalUrl = page.url();
-        await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important;caret-color:transparent!important}' + (opts.hostCss || '') + (mode === 'dark' && opts.darkHostCss ? opts.darkHostCss : '') });
+        // SITE_CHROME hides the seed site's cookie banner: at 390 it covers the
+        // menus a visitor opens after dismissing it.
+        await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important;caret-color:transparent!important}' + SITE_CHROME + (opts.hostCss || '') + (mode === 'dark' && opts.darkHostCss ? opts.darkHostCss : '') });
         await page.evaluate((m) => {
           document.querySelectorAll('details').forEach((d) => { d.open = true; });
           if (m === 'dark') { document.documentElement.setAttribute('data-bx-mode', 'dark'); document.documentElement.setAttribute('data-theme', 'dark'); }
@@ -379,10 +407,11 @@ const jtcCrawl = async (page0, opts = {}) => {
             const sheet = [...document.querySelectorAll('link[rel=stylesheet]')].map((l) => l.href).find((h) => /\/themes\/[^/]+\//.test(h)) || '';
             // A block theme may load no stylesheet of its own; core's body class names it.
             const theme = (sheet.match(/\/themes\/([^/]+)\//) || [])[1] || ((document.body.className.match(/\bwp-theme-([\w-]+)/) || [])[1] || '');
-            return { theme, themeVer: (sheet.match(/[?&]ver=([^&]+)/) || [])[1] || '', bodyBg: getComputedStyle(document.body).backgroundColor, tokens: tok, ua: navigator.userAgent.replace(/^.*(Chrome\/[\d.]+).*$/, '$1') };
+            return { loggedIn: document.body.classList.contains('logged-in'), theme, themeVer: (sheet.match(/[?&]ver=([^&]+)/) || [])[1] || '', bodyBg: getComputedStyle(document.body).backgroundColor, tokens: tok, ua: navigator.userAgent.replace(/^.*(Chrome\/[\d.]+).*$/, '$1') };
           });
         }
-        const opened = typeof entry === 'string' ? '' : await runSteps(page, entry.open);
+        if (entry.absentOk && !(await page.locator(entry.open[0]).count())) { pages.push({ path, mode, width, absent: true }); continue; }
+        const opened = typeof entry === 'string' ? '' : await runSteps(page, entry.open, opts.stepTimeout || 10000);
         const n = await page.evaluate(IN_PAGE, { scope: set, tag: true });
         controls += n;
         pages.push({ path, final: finalUrl.replace(BASE, ''), status: resp && resp.status(), mode, width, controls: n, opened });
@@ -404,6 +433,7 @@ const jtcCrawl = async (page0, opts = {}) => {
               if (state === 'default') disabledInfo.push({ path, mode, width, sel: r.sel, label: r.label, nonText: r.nonText, best: r.best, text: r.text && r.text.r });
               continue;
             }
+            if ((r.nonText === 'divider' || r.nonText === 'host-field') && state === 'default') cards.push(`${r.nonText}: ${mode} ${width} ${r.sel} "${r.label}" ${r.parts}`);
             if (r.nonText === 'card' && state === 'default') cards.push(`${mode} ${width} ${r.sel} "${r.label}" best ${r.best}`);
             if (r.nonText === 'fill-only') fillOnly.push({ sel: r.sel, label: r.label, state, mode, width, best: r.best, path });
             const bad = [];
@@ -438,7 +468,9 @@ const jtcCrawl = async (page0, opts = {}) => {
   }
   await cdp.detach();
   if (guestCtx) await guestCtx.close();
-  const missed = pages.filter((p) => p.opened && p.opened !== 'open').map((p) => `${p.width} ${p.mode} ${p.path}: ${p.opened}`);
+  // An open state that did not open, or a page that did not load, was not
+  // measured: it fails the run instead of passing silently.
+  const missed = pages.filter((p) => (p.opened && p.opened !== 'open') || p.error).map((p) => `${p.width} ${p.mode} ${p.path}: ${p.opened || p.error}`);
   // Collapse identical (selector, kind, state, mode) across pages/widths.
   const groups = {};
   for (const v of violations) {
@@ -450,7 +482,7 @@ const jtcCrawl = async (page0, opts = {}) => {
   const table = Object.values(groups).map((g) => ({ sel: g.sel, label: g.label, kind: g.kind, state: g.state, mode: g.mode, widths: [...g.widths].join('/'), pages: [...g.pages].slice(0, 3).join(' ') + (g.pages.size > 3 ? ` (+${g.pages.size - 3})` : ''), surf: g.surf, fill: g.fill, parts: g.parts, text: g.text ? `${g.text.r} (${g.text.fg} on ${g.text.bg}) "${g.text.text}"` : '', rule: g.rule }));
   const fo = {};
   for (const f of fillOnly) { const k = f.sel + '|' + f.state + '|' + f.mode; if (!fo[k] || f.best < fo[k].best) fo[k] = f; }
-  return { host, hostCss: opts.hostCss || '', darkHostCss: opts.darkHostCss || '', guest: !!opts.guest, cards: [...new Set(cards)], fillOnly: Object.values(fo).map((f) => `${f.state}/${f.mode} ${f.sel} "${f.label}" fill ${f.best}`), set, modes, widths, states, pagesLoaded: pages.length, opened: pages.filter((p) => p.opened === 'open').length, missed, controlsMeasured: controls, violationCount: violations.length, uniqueViolations: table.length, table, disabled: opts.showDisabled ? disabledInfo : disabledInfo.length, pages: opts.showPages ? pages : undefined };
+  return { ok: violations.length === 0 && missed.length === 0, host, hostCss: opts.hostCss || '', darkHostCss: opts.darkHostCss || '', guest: !!opts.guest, cards: [...new Set(cards)], fillOnly: Object.values(fo).map((f) => `${f.state}/${f.mode} ${f.sel} "${f.label}" fill ${f.best}`), set, modes, widths, states, pagesLoaded: pages.length, opened: pages.filter((p) => p.opened === 'open').length, missed, absent: pages.filter((p) => p.absent).map((p) => `${p.width} ${p.mode} ${p.path}`), controlsMeasured: controls, violationCount: violations.length, uniqueViolations: table.length, table, disabled: opts.showDisabled ? disabledInfo : disabledInfo.length, pages: opts.showPages ? pages : undefined };
 };
 
 // Kept on the browser context so later calls can run it without re-sending this file.
