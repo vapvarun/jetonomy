@@ -154,27 +154,52 @@ class Refusal_Tests {
 			403 === $res->get_status() && null === SpaceMember::get_role( $space, $this->member ),
 			'status ' . $res->get_status()
 		);
-		// RF11: a ban from a space that does not exist is refused and stores no orphan row.
+		// RF11: no restriction type stores a row for a space that does not exist,
+		// on REST, WP-CLI or the model: every one answers jetonomy_space_not_found.
 		global $wpdb;
 		$missing = (int) $wpdb->get_var( "SELECT COALESCE( MAX( id ), 0 ) + 1000 FROM {$wpdb->prefix}jt_spaces" );
-		$res     = $this->rest(
-			$this->moderator,
-			'POST',
-			'/moderation/ban',
-			array(
-				'user_id'  => $this->member,
-				'type'     => 'space_ban',
-				'space_id' => $missing,
-			)
-		);
-		$direct  = Restriction::ban( $this->member, 'space_ban', $this->moderator, $missing );
-		$orphans = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_restrictions WHERE space_id = %d", $missing ) );
-		$wpdb->delete( $wpdb->prefix . 'jt_restrictions', array( 'space_id' => $missing ) ); // Leave no orphan behind when the old code fails.
-		$this->record(
-			'RF11: a ban from a missing space is a 404 and stores nothing',
-			404 === $res->get_status() && 'jetonomy_space_not_found' === ( $res->get_data()['code'] ?? '' ) && 0 === $direct && 0 === $orphans,
-			'status ' . $res->get_status() . ', model ' . $direct . ', rows ' . $orphans
-		);
+		$cli     = new \Jetonomy\CLI\Journeys\Moderation_Journey();
+		// Each surface is checked on its own, clearing rows in between, so one
+		// surface's orphan cannot hide another's behind a duplicate refusal.
+		$orphans = static function () use ( $wpdb, $missing ): int {
+			$rows = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_restrictions WHERE space_id = %d", $missing ) );
+			$wpdb->delete( $wpdb->prefix . 'jt_restrictions', array( 'space_id' => $missing ) );
+			return $rows;
+		};
+		foreach ( array( 'space_ban', 'silence', 'global_ban', 'ip_ban' ) as $type ) {
+			$res        = $this->rest(
+				$this->moderator,
+				'POST',
+				'/moderation/ban',
+				array(
+					'user_id'  => $this->member,
+					'type'     => $type,
+					'space_id' => $missing,
+					'ip'       => '203.0.113.9',
+				)
+			);
+			$rest_rows  = $orphans();
+			$via_cli    = $cli->ban_user( $this->member, $this->moderator, $type, $missing, '203.0.113.9' );
+			$cli_rows   = $orphans();
+			$direct     = Restriction::ban( $this->member, $type, $this->moderator, $missing, '203.0.113.9' );
+			$model_rows = $orphans();
+			$cli_msg    = implode( ' ', (array) $via_cli->errors );
+			$this->record(
+				"RF11: type {$type} naming a missing space: REST",
+				404 === $res->get_status() && 'jetonomy_space_not_found' === ( $res->get_data()['code'] ?? '' ) && 0 === $rest_rows,
+				'status ' . $res->get_status() . ' ' . ( $res->get_data()['code'] ?? '-' ) . ', rows ' . $rest_rows
+			);
+			$this->record(
+				"RF11: type {$type} naming a missing space: WP-CLI",
+				! $via_cli->success && 0 === strpos( $cli_msg, 'jetonomy_space_not_found' ) && 0 === $cli_rows,
+				( $via_cli->success ? 'stored' : substr( $cli_msg, 0, 50 ) ) . ', rows ' . $cli_rows
+			);
+			$this->record(
+				"RF11: type {$type} naming a missing space: model",
+				0 === $direct && 0 === $model_rows,
+				'id ' . $direct . ', rows ' . $model_rows
+			);
+		}
 	}
 
 	private function test_invites(): void {

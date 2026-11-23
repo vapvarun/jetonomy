@@ -374,7 +374,7 @@ class SpaceMember extends Model {
 		$space = Space::find( $space_id );
 		if ( ! $space || Space::concealed_from_viewer( $space, $user_id ) ) {
 			return new \WP_Error(
-				'jetonomy_not_found',
+				'jetonomy_space_not_found',
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 				array( 'status' => 404 )

@@ -91,8 +91,9 @@ abstract class Base_Controller extends WP_REST_Controller {
 			/* translators: %s: singular topic or space label, lowercase. */
 			'Target space' => sprintf( __( 'Target %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 		);
+		// A missing space has one code everywhere, the same as Space::missing_error().
 		return new WP_Error(
-			'jetonomy_not_found',
+			in_array( $what, array( 'Space', 'Target space' ), true ) ? 'jetonomy_space_not_found' : 'jetonomy_not_found',
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			sprintf( __( '%s not found.', 'jetonomy' ), $labels[ $what ] ?? __( 'Item', 'jetonomy' ) ),
 			array( 'status' => 404 )

@@ -216,9 +216,10 @@ class Restriction extends Model {
 		}
 
 		// is_space_banned() matches an exact space, so a space ban with no
-		// space restricts nothing while every caller reports success
-		// Nor does one from a space that no longer exists (every writer lands here).
-		if ( 'space_ban' === $type && ( ! $space_id || ! Space::find( $space_id ) ) ) {
+		// space restricts nothing while every caller reports success. Any type
+		// naming a space that does not exist would store an orphan row (every
+		// writer lands here).
+		if ( ( 'space_ban' === $type && ! $space_id ) || ( $space_id && ! Space::find( $space_id ) ) ) {
 			return 0;
 		}
 

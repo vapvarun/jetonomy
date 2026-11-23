@@ -213,7 +213,8 @@ final class Moderation_Journey {
 		// target rules for this space) so the operator gets the real code and reason.
 		$space_scope = 'space_ban' === $type ? $space_id : null;
 		$checks      = array(
-			static fn() => \Jetonomy\Moderation\Moderation_Permissions::issue_error( $issued_by, $type, $space_scope ),
+			// The full space_id, as REST passes it: a space named by any type must exist.
+			static fn() => \Jetonomy\Moderation\Moderation_Permissions::issue_error( $issued_by, $type, $space_id ),
 			static fn() => Restriction::actor_may_restrict( $user_id, $issued_by, $space_scope ),
 			static fn() => 'ip_ban' === $type ? Restriction::validate_ip_ban( (string) $reason, $issued_by ) : null,
 			static fn() => Restriction::validate_not_duplicate( $user_id, $type, $space_id ),

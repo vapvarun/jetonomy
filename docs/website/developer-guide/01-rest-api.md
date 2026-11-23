@@ -952,10 +952,11 @@ Common error codes:
 | Code | HTTP | Meaning |
 |------|------|---------|
 | `rest_forbidden` | 401/403 | Not logged in, or a missing or expired nonce |
-| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this. Only given for something you can see: a topic, reply or hidden space you cannot read answers `jetonomy_not_found` instead, on write routes too |
+| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this. Only given for something you can see: a topic or reply you cannot read answers `jetonomy_not_found`, and a hidden space `jetonomy_space_not_found`, instead, on write routes too |
 | `jetonomy_user_banned` | 403 | The authenticated user is banned from the community (mutation routes) |
 | `jetonomy_pending_verification` | 403 | The authenticated user has not confirmed their email yet (mutation routes) |
 | `jetonomy_not_found` | 404 | Resource does not exist (or is not visible to you) |
+| `jetonomy_space_not_found` | 404 | The space does not exist (or is hidden from you). Every route, ability and WP-CLI command that names a space answers this one code, reads and writes alike, since 2.1.0 (before, most read routes said `jetonomy_not_found`) |
 | `jetonomy_validation` | 400 | Invalid or missing parameters |
 | `jetonomy_rate_limited` | 429 | Too many requests from this user |
 
