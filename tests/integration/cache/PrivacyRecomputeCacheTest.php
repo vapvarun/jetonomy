@@ -43,7 +43,6 @@ class PrivacyRecomputeCacheTest extends WP_UnitTestCase {
 		);
 
 		$method = new ReflectionMethod( Privacy::class, 'recompute_counters_after_purge' );
-		$method->setAccessible( true );
 		$method->invoke( new Privacy(), [], [ $id ] );
 
 		$this->assertSame(

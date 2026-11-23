@@ -195,6 +195,17 @@ else
     FAILED_GATES+=("comment-refs")
 fi
 
+step "Never-fatal calls (free + pro)"
+# setAccessible() is a no-op since PHP 8.1 and deprecated in 8.5; mb_* (beyond
+# WordPress's polyfills), ctype_*, DOMDocument and finfo_open fatal on a host
+# without the extension unless guarded. Pro has no runner of its own here.
+if php bin/check-never-fatal.php && { [ -z "$PRO" ] || php bin/check-never-fatal.php "$PRO"; }; then
+    ok "no call that fatals or deprecates on a supported host"
+else
+    fail "never-fatal gate (php bin/check-never-fatal.php)"
+    FAILED_GATES+=("never-fatal")
+fi
+
 step "Terminology nouns (free)"
 if php bin/check-terminology.php >/dev/null; then
     ok "every user-facing noun follows Settings -> Terminology"

@@ -1848,7 +1848,6 @@ class Model_Tests {
 	 */
 	private function test_space_purge_retry_cap(): void {
 		$retry = new \ReflectionMethod( \Jetonomy\Space_Purge::class, 'retry_later' );
-		$retry->setAccessible( true );
 		$hook = \Jetonomy\Space_Purge::BATCH_HOOK;
 		$sid  = 999971; // No such space: nothing runs against it, the jobs are only inspected and cancelled.
 		$at   = array();
