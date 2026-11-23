@@ -196,9 +196,9 @@ else
 fi
 
 step "Never-fatal calls (free + pro)"
-# setAccessible() is a no-op since PHP 8.1 and deprecated in 8.5; mb_* (beyond
-# WordPress's polyfills), ctype_*, DOMDocument and finfo_open fatal on a host
-# without the extension unless guarded. Pro has no runner of its own here.
+# setAccessible() is a no-op since PHP 8.1 and deprecated in 8.5. Calls into
+# optional extensions go through the family gate bin/lib/extension-guard-check.php
+# (its self-test runs first). Pro has no runner of its own here.
 if php bin/check-never-fatal.php && { [ -z "$PRO" ] || php bin/check-never-fatal.php "$PRO"; }; then
     ok "no call that fatals or deprecates on a supported host"
 else
