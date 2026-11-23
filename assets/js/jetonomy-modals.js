@@ -73,10 +73,12 @@
 		box.setAttribute( 'role', 'dialog' );
 		box.setAttribute( 'aria-modal', 'true' );
 		box.setAttribute( 'tabindex', '-1' );
-		if ( opts.title ) {
-			box.setAttribute( 'aria-labelledby', titleId );
+		// The dialog's name is its title, or its message when it has no title
+		// (Delete this post?), so it is never announced unnamed.
+		if ( opts.title || opts.message ) {
+			box.setAttribute( 'aria-labelledby', opts.title ? titleId : bodyId );
 		}
-		if ( opts.message ) {
+		if ( opts.title && opts.message ) {
 			box.setAttribute( 'aria-describedby', bodyId );
 		}
 
