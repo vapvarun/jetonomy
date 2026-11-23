@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T09:26:53+00:00\n"
+"POT-Creation-Date: 2026-11-23T09:32:39+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -1091,7 +1091,7 @@ msgstr ""
 #: includes/admin/views/content.php:89
 #: includes/admin/views/replies.php:128
 #: templates/views/search.php:287
-#: templates/views/space-members.php:391
+#: templates/views/space-members.php:393
 msgid "Clear"
 msgstr ""
 
@@ -1921,7 +1921,7 @@ msgstr ""
 #: templates/partials/header.php:254
 #: templates/views/search.php:220
 #: templates/views/search.php:231
-#: templates/views/space-members.php:389
+#: templates/views/space-members.php:391
 #: assets/js/header.js:696
 msgid "Search"
 msgstr ""
@@ -2193,6 +2193,7 @@ msgstr ""
 msgid "Delete Permanently"
 msgstr ""
 
+#. translators: %s: member display name.
 #: includes/admin/views/content.php:102
 #: includes/admin/views/content.php:260
 #: includes/admin/views/moderation.php:154
@@ -2201,7 +2202,7 @@ msgstr ""
 #: includes/admin/views/replies.php:261
 #: includes/admin/views/space-edit.php:931
 #: templates/partials/moderation/approval-card.php:160
-#: templates/views/space-members.php:207
+#: templates/views/space-members.php:208
 msgid "Approve"
 msgstr ""
 
@@ -2955,7 +2956,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:469
 #: includes/admin/views/space-edit.php:396
 #: includes/admin/views/space-edit.php:423
-#: templates/views/space-members.php:275
+#: templates/views/space-members.php:277
 #: assets/js/admin-common.js:69
 msgid "Expires"
 msgstr ""
@@ -3082,8 +3083,8 @@ msgstr ""
 #: includes/admin/views/revisions.php:222
 #: templates/partials/pagination-nav.php:41
 #: templates/views/edit-profile.php:318
-#: templates/views/space-members.php:360
-#: templates/views/space-members.php:575
+#: templates/views/space-members.php:362
+#: templates/views/space-members.php:579
 #: templates/views/subscriptions.php:132
 #: templates/views/tag.php:160
 msgid "Previous"
@@ -5129,17 +5130,17 @@ msgid "Invite links work with any join policy; set Join Policy to 'Invite only' 
 msgstr ""
 
 #: includes/admin/views/space-edit.php:393
-#: templates/views/space-members.php:271
+#: templates/views/space-members.php:273
 msgid "Max uses"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:399
-#: templates/views/space-members.php:280
+#: templates/views/space-members.php:282
 msgid "Generate invite link"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:401
-#: templates/views/space-members.php:283
+#: templates/views/space-members.php:285
 msgid "Max uses 0 means unlimited. Leave Expires blank for no expiry."
 msgstr ""
 
@@ -5496,9 +5497,10 @@ msgstr ""
 msgid "New requests to join this %s will appear here for review."
 msgstr ""
 
+#. translators: %s: member display name.
 #: includes/admin/views/space-edit.php:932
 #: includes/class-template-loader.php:476
-#: templates/views/space-members.php:213
+#: templates/views/space-members.php:215
 msgid "Deny"
 msgstr ""
 
@@ -5626,7 +5628,7 @@ msgstr ""
 
 #: includes/admin/views/users.php:32
 #: templates/views/moderation.php:232
-#: templates/views/space-members.php:501
+#: templates/views/space-members.php:503
 #: templates/views/user-profile.php:66
 #: assets/js/admin-common.js:1921
 msgid "Banned"
@@ -7263,7 +7265,7 @@ msgstr ""
 #: includes/class-shortcodes.php:559
 #: includes/functions.php:175
 #: templates/views/single-post.php:1028
-#: templates/views/space-members.php:405
+#: templates/views/space-members.php:407
 #: templates/views/space.php:572
 #: templates/views/user-profile.php:391
 #: templates/views/user-profile.php:655
@@ -11157,8 +11159,8 @@ msgstr ""
 #. translators: 1: current page, 2: total pages
 #: templates/partials/pagination-nav.php:47
 #: templates/views/edit-profile.php:320
-#: templates/views/space-members.php:366
-#: templates/views/space-members.php:581
+#: templates/views/space-members.php:368
+#: templates/views/space-members.php:585
 #: templates/views/tag.php:166
 #, php-format
 msgid "Page %1$d of %2$d"
@@ -11166,8 +11168,8 @@ msgstr ""
 
 #: templates/partials/pagination-nav.php:52
 #: templates/views/edit-profile.php:322
-#: templates/views/space-members.php:371
-#: templates/views/space-members.php:586
+#: templates/views/space-members.php:373
+#: templates/views/space-members.php:590
 #: templates/views/subscriptions.php:135
 #: templates/views/tag.php:171
 msgid "Next"
@@ -11705,7 +11707,7 @@ msgid "Rank %d"
 msgstr ""
 
 #: templates/views/leaderboard.php:241
-#: templates/views/space-members.php:542
+#: templates/views/space-members.php:546
 msgid "rep"
 msgstr ""
 
@@ -12575,156 +12577,180 @@ msgstr ""
 msgid "Pending join requests"
 msgstr ""
 
+#. translators: %s: member display name.
+#: templates/views/space-members.php:207
+#, php-format
+msgid "Approve join request from %s"
+msgstr ""
+
+#. translators: %s: member display name.
+#: templates/views/space-members.php:214
+#, php-format
+msgid "Deny join request from %s"
+msgstr ""
+
 #. translators: 1: shown count, 2: total count
-#: templates/views/space-members.php:223
+#: templates/views/space-members.php:225
 #, php-format
 msgid "Showing %1$d of %2$d pending requests. Manage the rest from the admin Join Requests tab."
 msgstr ""
 
-#: templates/views/space-members.php:232
-#: templates/views/space-members.php:254
+#: templates/views/space-members.php:234
+#: templates/views/space-members.php:256
 msgid "Invite links"
 msgstr ""
 
 #. translators: 1: number of uses so far, 2: maximum number of uses.
-#: templates/views/space-members.php:236
-#: templates/views/space-members.php:310
+#: templates/views/space-members.php:238
+#: templates/views/space-members.php:312
 #, php-format
 msgid "Uses: %1$s of %2$s"
 msgstr ""
 
 #. translators: %s: number of uses so far.
-#: templates/views/space-members.php:238
-#: templates/views/space-members.php:312
+#: templates/views/space-members.php:240
+#: templates/views/space-members.php:314
 #, php-format
 msgid "Uses: %s"
 msgstr ""
 
-#: templates/views/space-members.php:239
-#: templates/views/space-members.php:322
+#: templates/views/space-members.php:241
+#: templates/views/space-members.php:324
 msgid "No expiry"
 msgstr ""
 
 #. translators: %s: expiry date.
-#: templates/views/space-members.php:241
-#: templates/views/space-members.php:321
+#: templates/views/space-members.php:243
+#: templates/views/space-members.php:323
 #, php-format
 msgid "Expires %s"
 msgstr ""
 
-#: templates/views/space-members.php:242
-#: templates/views/space-members.php:336
+#: templates/views/space-members.php:244
+#: templates/views/space-members.php:338
 #: assets/js/admin-common.js:72
 msgid "Copy"
 msgstr ""
 
-#: templates/views/space-members.php:243
-#: templates/views/space-members.php:333
+#: templates/views/space-members.php:245
+#: templates/views/space-members.php:335
 msgid "Copy invite link"
 msgstr ""
 
-#: templates/views/space-members.php:244
+#: templates/views/space-members.php:246
 msgid "Copied"
 msgstr ""
 
-#: templates/views/space-members.php:245
+#: templates/views/space-members.php:247
 msgid "Press Ctrl+C to copy the selected link."
 msgstr ""
 
-#: templates/views/space-members.php:246
-#: templates/views/space-members.php:341
+#: templates/views/space-members.php:248
+#: templates/views/space-members.php:343
 #: assets/js/admin-common.js:73
 msgid "Revoke"
 msgstr ""
 
-#: templates/views/space-members.php:247
-#: templates/views/space-members.php:248
-#: templates/views/space-members.php:339
+#: templates/views/space-members.php:249
+#: templates/views/space-members.php:250
+#: templates/views/space-members.php:341
 msgid "Revoke invite link"
 msgstr ""
 
-#: templates/views/space-members.php:249
+#: templates/views/space-members.php:251
 msgid "Revoke this invite link? Anyone still holding it will not be able to join, and the link cannot be restored."
 msgstr ""
 
-#: templates/views/space-members.php:250
+#: templates/views/space-members.php:252
 msgid "Could not generate an invite link. Please try again."
 msgstr ""
 
-#: templates/views/space-members.php:251
+#: templates/views/space-members.php:253
 msgid "Could not revoke that link. Please try again."
 msgstr ""
 
-#: templates/views/space-members.php:266
+#: templates/views/space-members.php:268
 msgid "Invite links work with any join policy; set Join policy to 'Invite only' to require them."
 msgstr ""
 
-#: templates/views/space-members.php:327
+#: templates/views/space-members.php:329
 msgid "No longer works"
 msgstr ""
 
 #. translators: %s: space label, e.g. "space"
-#: templates/views/space-members.php:351
+#: templates/views/space-members.php:353
 #, php-format
 msgid "No invite links yet. Generate one to invite people straight into this %s."
 msgstr ""
 
-#: templates/views/space-members.php:356
+#: templates/views/space-members.php:358
 msgid "Invite links pagination"
 msgstr ""
 
 #. translators: %s: plural member label, lowercase.
-#: templates/views/space-members.php:385
+#: templates/views/space-members.php:387
 #, php-format
 msgid "Search %s by name"
 msgstr ""
 
-#: templates/views/space-members.php:388
+#: templates/views/space-members.php:390
 msgid "Search by name"
 msgstr ""
 
 #. translators: %s: plural member label, lowercase.
-#: templates/views/space-members.php:404
+#: templates/views/space-members.php:406
 #, php-format
 msgid "No %s match your search."
 msgstr ""
 
 #. translators: %s: join date.
-#: templates/views/space-members.php:455
+#: templates/views/space-members.php:457
 #: templates/views/user-profile.php:267
 #, php-format
 msgid "Joined %s"
 msgstr ""
 
 #. translators: %s: the singular member label, lowercase (e.g. member).
-#: templates/views/space-members.php:465
+#: templates/views/space-members.php:467
 #, php-format
 msgid "You blocked this %s. Unblock from their profile."
 msgstr ""
 
 #. translators: %s: the singular member label, lowercase (e.g. member).
-#: templates/views/space-members.php:466
+#: templates/views/space-members.php:468
 msgid "Blocked"
 msgstr ""
 
 #. translators: %s: member display name
-#: templates/views/space-members.php:473
+#: templates/views/space-members.php:475
 #, php-format
 msgid "Change role for %s"
 msgstr ""
 
+#. translators: %s: member display name.
 #: templates/views/space-members.php:508
+#, php-format
+msgid "Lift ban for %s"
+msgstr ""
+
+#: templates/views/space-members.php:511
 msgid "Lift ban"
 msgstr ""
 
+#. translators: 1: member display name, 2: the singular space label the site owner configured (e.g. space, group).
+#: templates/views/space-members.php:533
+#, php-format
+msgid "Ban %1$s from this %2$s"
+msgstr ""
+
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
-#: templates/views/space-members.php:532
+#: templates/views/space-members.php:536
 #, php-format
 msgid "Ban from %s"
 msgstr ""
 
 #. translators: %s: plural member label.
-#: templates/views/space-members.php:571
+#: templates/views/space-members.php:575
 #, php-format
 msgid "%s pagination"
 msgstr ""

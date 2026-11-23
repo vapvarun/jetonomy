@@ -203,13 +203,15 @@ $role_labels = \Jetonomy\space_role_labels();
 									<button type="button" class="jt-btn jt-btn-sm jt-btn-fill"
 										data-wp-on--click="actions.approveJoinRequest"
 										data-space-id="<?php echo absint( $space->id ); ?>"
-										data-request-id="<?php echo absint( $jt_req->id ); ?>">
+										data-request-id="<?php echo absint( $jt_req->id ); ?>"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: member display name. */ __( 'Approve join request from %s', 'jetonomy' ), $jt_req_name ) ); ?>">
 										<?php esc_html_e( 'Approve', 'jetonomy' ); ?>
 									</button>
 									<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost"
 										data-wp-on--click="actions.denyJoinRequest"
 										data-space-id="<?php echo absint( $space->id ); ?>"
-										data-request-id="<?php echo absint( $jt_req->id ); ?>">
+										data-request-id="<?php echo absint( $jt_req->id ); ?>"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: member display name. */ __( 'Deny join request from %s', 'jetonomy' ), $jt_req_name ) ); ?>">
 										<?php esc_html_e( 'Deny', 'jetonomy' ); ?>
 									</button>
 								</div>
@@ -503,6 +505,7 @@ $role_labels = \Jetonomy\space_role_labels();
 										<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm jt-member-lift-btn"
 											data-wp-on--click="actions.liftRestriction"
 											data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
+											aria-label="<?php echo esc_attr( sprintf( /* translators: %s: member display name. */ __( 'Lift ban for %s', 'jetonomy' ), \Jetonomy\user_display_name( $mu ) ) ); ?>"
 											data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>">
 											<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
 											<?php esc_html_e( 'Lift ban', 'jetonomy' ); ?>
@@ -526,7 +529,8 @@ $role_labels = \Jetonomy\space_role_labels();
 										class="jt-btn jt-btn-ghost jt-btn-danger jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
 										data-space-id="<?php echo absint( $space->id ); ?>"
 										data-user-id="<?php echo absint( $member->user_id ); ?>"
-										data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>">
+										data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: 1: member display name, 2: the singular space label the site owner configured (e.g. space, group). */ __( 'Ban %1$s from this %2$s', 'jetonomy' ), \Jetonomy\user_display_name( $mu ), \Jetonomy\space_label( false, true ) ) ); ?>">
 										<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
 										<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 										<?php echo esc_html( sprintf( __( 'Ban from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
