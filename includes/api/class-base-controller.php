@@ -487,7 +487,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'after'  => array(
 				'type'        => 'integer',
 				'default'     => 0,
-				'description' => 'Forward cursor: send back the `meta.cursor_next` from the previous page. Opaque to clients — treat it as a token, not a row ID.',
+				'description' => 'Offset of the first row to return, same as `offset` (wins when both are sent). Send back `meta.cursor_next` from the previous page, which is that page\'s offset plus its count. Not a row ID.',
 			),
 			'before' => array(
 				'type'        => 'integer',

@@ -5976,8 +5976,9 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
-            }
+              "type": "integer"
+            },
+            "description": "Offset of the first row to return, same as offset (wins when both are sent). Send back meta.cursor_next from the previous page. Not a row ID."
           },
           {
             "name": "before",
@@ -8364,9 +8365,9 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer"
             },
-            "description": "Cursor for next page"
+            "description": "Offset of the first row to return, same as offset (wins when both are sent). Send back meta.cursor_next from the previous page. Not a row ID."
           },
           {
             "name": "before",
@@ -9983,9 +9984,10 @@
           },
           "cursor_next": {
             "type": [
-              "string",
+              "integer",
               "null"
-            ]
+            ],
+            "description": "Offset of the next page (offset + count), or null on the last page. Send it back as offset (or after). Not a row ID or an opaque token."
           },
           "total": {
             "type": "integer"
