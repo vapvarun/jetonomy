@@ -323,4 +323,155 @@ class UpgradeJobsTest extends WP_UnitTestCase {
 		$ext->activate();
 		$this->assertCount( 1, as_get_scheduled_actions( array( 'hook' => self::LOCK, 'args' => array( array( 'sweep' => 1 ) ), 'status' => 'pending' ), 'ids' ) );
 	}
+
+	/** The webhooks extension's forwarding callback, as its boot() adds it when the extension is on. */
+	private function forward_webhooks(): void {
+		$ext = new \Jetonomy_Pro\Extensions\Webhooks\Extension();
+		if ( ! has_action( self::LEGACY ) && method_exists( $ext, 'forward_legacy_delivery' ) ) {
+			add_action( self::LEGACY, array( $ext, 'forward_legacy_delivery' ), 10, 5 );
+		}
+	}
+
+	/**
+	 * Insert $count pending 2.0.7 rows of $hook, due now, each with its own webhook id (so duplicates show).
+	 */
+	private function seed_legacy( int $count ): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'actionscheduler_actions';
+		as_schedule_single_action( time() - 60, self::LEGACY, array( 'webhook_id' => 1, 'url' => 'https://example.test/x', 'secret' => 's', 'payload' => '{}', 'event' => 'e' ), 'jetonomy' );
+		$cols = 'hook, status, scheduled_date_gmt, scheduled_date_local, priority, args, schedule, group_id, attempts, last_attempt_gmt, last_attempt_local, claim_id, extended_args';
+		while ( ( $have = count( $this->rows( self::LEGACY ) ) ) < $count ) {
+			$wpdb->query( $wpdb->prepare( "INSERT INTO {$table} ( {$cols} ) SELECT {$cols} FROM {$table} WHERE hook = %s LIMIT %d", self::LEGACY, $count - $have ) ); // phpcs:ignore WordPress.DB
+		}
+		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET args = REPLACE( args, '\"webhook_id\":1,', CONCAT( '\"webhook_id\":', action_id, ',' ) ) WHERE hook = %s", self::LEGACY ) ); // phpcs:ignore WordPress.DB
+	}
+
+	/** Webhook ids of every pending delivery. */
+	private function delivered_ids(): array {
+		global $wpdb;
+		$out = array();
+		foreach ( $wpdb->get_col( $wpdb->prepare( "SELECT args FROM {$wpdb->prefix}actionscheduler_actions WHERE hook = %s AND status = 'pending'", self::DELIVER ) ) as $args ) { // phpcs:ignore WordPress.DB
+			$out[] = (int) ( json_decode( (string) $args, true )[0] ?? 0 );
+		}
+		return $out;
+	}
+
+	/**
+	 * QA J33: a runner working the queue while the upgrade converts it. The runner takes the oldest rows (the legacy
+	 * ones) and used to fail them ("no callbacks are registered"); the upgrade then deleted them. Every row must be
+	 * delivered exactly once whichever side reaches it.
+	 */
+	public function test_a_runner_working_during_the_conversion_loses_and_duplicates_nothing(): void {
+		global $wpdb;
+		$count = 12000;
+		$this->forward_webhooks();
+		$this->seed_legacy( $count );
+		$store  = \ActionScheduler::store();
+		$runner = \ActionScheduler::runner();
+		$run = static function ( $claim ) use ( $store, $runner ): void {
+			foreach ( $claim->get_actions() as $id ) {
+				$runner->process_action( $id, 'qa' );
+			}
+			$store->release_claim( $claim );
+		};
+		for ( $round = 0; $round < 400; $round++ ) {
+			$run( $store->stake_claim( 50, null, array( self::LEGACY ), 'jetonomy' ) ); // The runner reaches old rows first ...
+			$claim = $store->stake_claim( 50, null, array( self::LEGACY ), 'jetonomy' ); // ... claims more ...
+			Queue::cancel( self::UPGRADE );
+			\Jetonomy_Pro::instance()->upgrade_jobs( '2.0.7' ); // ... the upgrade pass runs meanwhile ...
+			$run( $claim ); // ... then the runner runs what it claimed.
+			if ( ! Queue::is_pending( self::UPGRADE ) && ! $this->rows( self::LEGACY ) ) {
+				break;
+			}
+		}
+		$ids = $this->delivered_ids();
+		$this->assertCount( $count, $ids, "{$count} deliveries" );
+		$this->assertCount( $count, array_unique( $ids ), 'no duplicate' );
+		$failed = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}actionscheduler_actions WHERE hook IN (%s, %s) AND status = 'failed'", self::LEGACY, self::DELIVER ) ); // phpcs:ignore WordPress.DB
+		$this->assertSame( 0, $failed, 'nothing failed' );
+		$this->assertSame( array(), $this->rows( self::LEGACY ), 'no old row (URL and secret) left' );
+		Queue::delete_rows( self::DELIVER );
+	}
+
+	/** Rows a runner already failed before this fix are delivered (claim-first, last 7 days), not deleted. */
+	public function test_rows_already_failed_with_no_callbacks_are_requeued_before_the_delete(): void {
+		$this->forward_webhooks();
+		$this->seed_legacy( 30 );
+		global $wpdb;
+		$logger = \ActionScheduler::logger();
+		foreach ( $this->rows( self::LEGACY ) as $id ) {
+			\ActionScheduler::store()->mark_failure( (int) $id );
+			$wpdb->update( $wpdb->prefix . 'actionscheduler_actions', array( 'last_attempt_gmt' => gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) ), array( 'action_id' => (int) $id ) ); // phpcs:ignore WordPress.DB
+			// Half failed for no callback, half by a runner deadlock on the claim: neither ran.
+			$logger->log( (int) $id, $id % 2 ? 'Scheduled action for jetonomy_pro_dispatch_webhook will not be executed as no callbacks are registered.' : "action failed via WP CLI: Unable to update the status of action {$id} to in-progress." );
+		}
+		$this->drain();
+		$ids = $this->delivered_ids();
+		$this->assertCount( 30, $ids );
+		$this->assertCount( 30, array_unique( $ids ) );
+		$this->assertSame( array(), $this->rows( self::LEGACY ) );
+		Queue::delete_rows( self::DELIVER );
+	}
+
+	/** Legacy digest and badge batches a runner reaches first restart as one cursor run each; none fails. */
+	public function test_a_runner_reaching_legacy_digest_and_badge_batches_restarts_them(): void {
+		require_once JETONOMY_PRO_DIR . 'includes/extensions/email-digest/class-extension.php';
+		require_once JETONOMY_PRO_DIR . 'includes/extensions/custom-badges/class-extension.php';
+		// What the two extensions' boot() adds when they are on.
+		if ( ! has_action( 'jetonomy_pro_digest_batch' ) ) {
+			add_action( 'jetonomy_pro_digest_batch', array( new \Jetonomy_Pro\Extensions\Email_Digest\Extension(), 'forward_legacy_batch' ) );
+		}
+		if ( ! has_action( 'jetonomy_pro_badges_batch' ) ) {
+			add_action( 'jetonomy_pro_badges_batch', array( new \Jetonomy_Pro\Extensions\Custom_Badges\Extension(), 'forward_legacy_batch' ) );
+		}
+		$ids = array();
+		for ( $i = 0; $i < 3; $i++ ) {
+			$ids[] = (int) as_schedule_single_action( time() - 60, 'jetonomy_pro_digest_batch', array( array( 'frequency' => 'weekly', 'offset' => 50 * $i, 'limit' => 50 ) ), 'jetonomy' );
+			$ids[] = (int) as_schedule_single_action( time() - 60, 'jetonomy_pro_badges_batch', array( array( 'offset' => 100 * $i, 'limit' => 100 ) ), 'jetonomy' );
+		}
+		try {
+			foreach ( $ids as $id ) {
+				\ActionScheduler::runner()->process_action( $id, 'qa' );
+			}
+			foreach ( $ids as $id ) {
+				$this->assertSame( 'complete', \ActionScheduler::store()->get_status( (string) $id ), 'ran, not failed' );
+			}
+			$this->assertSame( array( array( 'weekly', 0 ) ), array_map( static fn( $a ) => array_values( $a->get_args() ), array_values( as_get_scheduled_actions( array( 'hook' => 'jetonomy_pro_send_digests', 'status' => 'pending' ), 'objects' ) ) ) );
+			$this->assertCount( 1, as_get_scheduled_actions( array( 'hook' => 'jetonomy_pro_evaluate_badges_after', 'status' => 'pending', 'args' => array( 0 ) ), 'ids' ) );
+		} finally {
+			foreach ( array( 'jetonomy_pro_digest_batch', 'jetonomy_pro_badges_batch', 'jetonomy_pro_send_digests', 'jetonomy_pro_evaluate_badges_after' ) as $hook ) {
+				Queue::delete_rows( $hook );
+			}
+		}
+	}
+
+	/**
+	 * QA J33: the upgrade runs on plugins_loaded, before Action Scheduler's store is ready, and queued the conversion on
+	 * WP-Cron, which waited for a visit while the runner reached the old rows. Now a WP-Cron copy is only the backstop
+	 * and is replaced by an Action Scheduler copy once the store is ready.
+	 */
+	public function test_the_conversion_moves_to_action_scheduler_once_its_store_is_ready(): void {
+		global $wp_actions, $wp_filter;
+		$pro   = \Jetonomy_Pro::instance();
+		$args  = array( '2.0.7' );
+		$fired = $wp_actions['action_scheduler_init'] ?? 0;
+		$hooks = $wp_filter['action_scheduler_init'] ?? null;
+		unset( $wp_filter['action_scheduler_init'] ); // Only what run_upgrade() adds runs below.
+		$wp_actions['action_scheduler_init'] = 0; // The first request, before the store is ready.
+		try {
+			$this->assertTrue( $pro->run_upgrade( '2.0.7' ) );
+			$this->assertNotFalse( wp_next_scheduled( self::UPGRADE, $args ), 'a WP-Cron backstop for a request that ends early' );
+			$wp_actions['action_scheduler_init'] = $fired;
+			do_action( 'action_scheduler_init' ); // The store is ready later in the same request.
+		} finally {
+			$wp_actions['action_scheduler_init'] = max( 1, (int) $fired );
+			if ( null !== $hooks ) {
+				$wp_filter['action_scheduler_init'] = $hooks;
+			}
+		}
+		$this->assertCount( 1, as_get_scheduled_actions( array( 'hook' => self::UPGRADE, 'status' => 'pending' ), 'ids' ), 'on Action Scheduler' );
+		$this->assertFalse( wp_next_scheduled( self::UPGRADE, $args ), 'the WP-Cron copy is gone' );
+		delete_transient( Queue::RECOVER_FLAG );
+	}
 }
+

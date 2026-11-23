@@ -354,6 +354,36 @@ final class Queue {
 		if ( ! $hooks ) {
 			return 0;
 		}
+		list( $done, $found, $released ) = self::requeue_failed_unrun( $hooks );
+		if ( $found < self::RECOVER_BATCH && ! $released ) {
+			delete_transient( self::RECOVER_FLAG );
+		}
+		return $done;
+	}
+
+	/**
+	 * Re-queue rows of these hooks that Action Scheduler failed with "no callbacks are registered" in the last
+	 * RECOVER_WINDOW_DAYS, RECOVER_BATCH at a time, claim-first, exactly as recover_kept_jobs() does. For an upgrade
+	 * job whose retired hooks a runner reached before their forwarding callback existed: the copy is queued under the
+	 * same hook, which now has a listener. Call it from a background job; it runs a query on every call.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string[] $hooks Hooks with a listener now.
+	 * @return int Rows re-queued (RECOVER_BATCH means more may remain).
+	 */
+	public static function requeue_unrun( array $hooks ): int {
+		$hooks = array_values( array_filter( $hooks, 'has_action' ) );
+		return $hooks && self::has_as() ? self::requeue_failed_unrun( $hooks )[0] : 0;
+	}
+
+	/**
+	 * The shared body of recover_kept_jobs() and requeue_unrun().
+	 *
+	 * @param string[] $hooks Hooks that have a listener now.
+	 * @return array{0: int, 1: int, 2: bool} Rows re-queued, rows found, whether a claimed row was given back.
+	 */
+	private static function requeue_failed_unrun( array $hooks ): array {
 		global $wpdb;
 		$actions = $wpdb->prefix . 'actionscheduler_actions';
 		$groups  = $wpdb->prefix . 'actionscheduler_groups';
@@ -371,8 +401,11 @@ final class Queue {
 			$site = $like();
 			restore_previous_locale();
 		}
-		$since = gmdate( 'Y-m-d H:i:s', time() - self::RECOVER_WINDOW_DAYS * DAY_IN_SECONDS );
-		$in    = implode( ',', array_fill( 0, count( $hooks ), '%s' ) );
+		// Also never run: two runners deadlocked on the claim and Action Scheduler failed the row before its callback
+		// (QA J33). ponytail: matched in English only; a runner logging in another language leaves those rows failed.
+		$unclaimed = '%' . $wpdb->esc_like( 'Unable to update the status of action ' ) . '%' . $wpdb->esc_like( ' to in-progress' ) . '%';
+		$since     = gmdate( 'Y-m-d H:i:s', time() - self::RECOVER_WINDOW_DAYS * DAY_IN_SECONDS );
+		$in        = implode( ',', array_fill( 0, count( $hooks ), '%s' ) );
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Action Scheduler's API cannot filter by log message.
 		$ids = array_map(
 			'intval',
@@ -380,9 +413,9 @@ final class Queue {
 				$wpdb->prepare(
 					"SELECT a.action_id FROM {$actions} a INNER JOIN {$groups} g ON g.group_id = a.group_id
 					WHERE g.slug = %s AND a.status = 'failed' AND a.hook IN ({$in}) AND a.last_attempt_gmt > %s
-					AND EXISTS ( SELECT 1 FROM {$logs} l WHERE l.action_id = a.action_id AND ( l.message LIKE %s OR l.message LIKE %s OR l.message LIKE %s ) )
+					AND EXISTS ( SELECT 1 FROM {$logs} l WHERE l.action_id = a.action_id AND ( l.message LIKE %s OR l.message LIKE %s OR l.message LIKE %s OR l.message LIKE %s ) )
 					ORDER BY a.action_id LIMIT %d",
-					array_merge( array( self::GROUP ), $hooks, array( $since, $english, $local, $site, self::RECOVER_BATCH ) )
+					array_merge( array( self::GROUP ), $hooks, array( $since, $english, $local, $site, $unclaimed, self::RECOVER_BATCH ) )
 				)
 			)
 		);
@@ -417,10 +450,7 @@ final class Queue {
 				unset( $e ); // Deleted by another process meanwhile: the copy, if any, is queued either way.
 			}
 		}
-		if ( count( $ids ) < self::RECOVER_BATCH && ! $released ) {
-			delete_transient( self::RECOVER_FLAG );
-		}
-		return $done;
+		return array( $done, count( $ids ), $released );
 	}
 
 	/**
