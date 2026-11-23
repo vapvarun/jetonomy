@@ -597,17 +597,16 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font-weight: 600;
 }
 .jt-userpanel-link--logout {
-	margin-top: 4px;
-	padding-top: 10px;
-	border-top: 1px solid var(--jt-border);
-	border-radius: 0;
+	/* Spacing, not a rule line, sets it apart: a 1px subtle divider drawn on
+	   the link read as its edge at about 1.1:1. */
+	margin-top: 8px;
 	color: var(--jt-text-secondary);
 	font-size: 0.8125rem;
 }
 .jt-userpanel-link--logout:hover,
 .jt-userpanel-link--logout:focus-visible {
 	background: transparent;
-	color: color-mix(in srgb, #dc2626 80%, var(--jt-text));
+	color: var(--jt-danger);
 }
 .jt-userpanel-badge {
 	display: inline-flex;
@@ -1199,9 +1198,9 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-body {
 	width: 100%;
 	padding: 0.5rem 0.75rem;
-	border: 1px solid var(--jt-border, var(--jt-border, #e5e7eb));
+	border: 1px solid var(--jt-border-strong);
 	border-radius: var(--jt-radius);
-	background: var(--jt-bg, var(--jt-bg, #ffffff));
+	background: var(--jt-bg, #ffffff);
 	color: inherit;
 	font: inherit;
 	box-sizing: border-box;
@@ -1291,8 +1290,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font-weight: 600;
 	min-width: 8rem;
 }
-.jt-compose-topic-submit:hover:not([disabled]) {
+.jt-compose-topic-submit:hover:not([disabled]),
+.jt-compose-topic-submit:focus-visible:not([disabled]) {
 	background: var(--jt-accent-hover, color-mix(in srgb, var(--jt-accent, #3b82f6) 88%, #000));
+	/* The embed's ghost-button hover above sets the body text colour. */
+	color: var(--jt-accent-hover-fg, #fff);
 }
 .jt-compose-topic-submit[disabled],
 .jt-compose-topic-submit.is-submitting {

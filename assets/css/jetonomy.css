@@ -345,6 +345,10 @@
      !important, so free's reset wins over it; the re-assert therefore belongs
      here, beside the reset that breaks it, rather than as an !important war
      inside Pro. */
+  /* The reset above makes the chip transparent with the subtle border (1.24:1 light,
+     1.38:1 dark), so the chip had no visible edge. The control border keeps 3:1. */
+  .jt-app button.jt-reaction-chip { border-color: var(--jt-border-strong) !important; }
+  .jt-app button.jt-reaction-chip:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; }
   .jt-app button.jt-reaction-chip.is-mine { color: var(--jt-accent-strong) !important; background-color: var(--jt-accent-light) !important; border-color: var(--jt-accent) !important; }
 
   .jt-app button.jt-btn-ghost.jt-btn-danger { color: var(--jt-danger) !important; }
@@ -496,7 +500,7 @@
      by a top border. Each action is a real ghost button so customers
      read them as interactive, not as muted text. */
   .jt-space-card-actions { display: flex; gap: 6px; padding: 10px 14px; border-block-start: 1px solid var(--jt-border); background: var(--jt-bg-subtle); flex-wrap: wrap; }
-  .jt-space-card-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-full); background: var(--jt-bg); border: 1px solid var(--jt-border); color: var(--jt-text); font-size: 0.8125rem; font-weight: 500; text-decoration: none; transition: border-color 0.1s ease, color 0.1s ease, background 0.1s ease; }
+  .jt-space-card-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-full); background: var(--jt-bg); border: 1px solid var(--jt-border-strong); color: var(--jt-text); font-size: 0.8125rem; font-weight: 500; text-decoration: none; transition: border-color 0.1s ease, color 0.1s ease, background 0.1s ease; }
   .jt-space-card-action:hover { border-color: var(--jt-accent); color: var(--jt-accent-strong); background: var(--jt-accent-muted); }
   .jt-space-card-action svg { flex-shrink: 0; }
   .jt-empty-cta { margin-block-start: 16px; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--jt-space-2); }
