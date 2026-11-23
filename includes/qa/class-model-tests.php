@@ -318,7 +318,7 @@ class Model_Tests {
 	 * MN1     the public members search never matches an email address (10430894693)
 	 * LV1     the leave confirm follows the join policy (10483409032)
 	 * RM1-RM3 Permissions: the reset copies Subscriber, ticking only adds, Join matches the route (10463415760)
-	 * RM4-RM5 a role without WordPress read is shown only Read, and is refused writes even when ticked (10483588613)
+	 * RM4-RM5 a role without WordPress read is shown only Read, and never holds a ticked write (10483588613, QA J22)
 	 * SI1     space and topic pages fall back to the Default share image, SEO Pro on or off (10483605549)
 	 * RT1-RT2 Report follows Permission_Engine::can( flag ) on the route and the buttons (10483720093)
 	 * SX1     a new space drops the cached sitemap (10430894693)
@@ -576,8 +576,9 @@ class Model_Tests {
 			\Jetonomy\Permissions\Capabilities::register();
 			$this->check( 'RM3: a role without WordPress read is not offered Join, which the join route refuses', ! SpaceMember::may_join_spaces( $pm_bare ) );
 			$this->check( 'RM4: the Permissions column for a role without WordPress read ticks only Read, the one thing it gets', array( 'jetonomy_read' ) === \Jetonomy\Permissions\Capabilities::unmapped_caps( 'jt_qa_pmx_' . $suffix ) && ! Permission_Engine::can( $pm_bare, 'create_posts', $space ) );
-			// RM5. The owner ticks Create topics for that role anyway: the engine
-			// still refuses it, as the write route does, so no New Topic is shown.
+			// RM5. A stored list ticking Create topics for that role anyway (older
+			// data or a tampered save) is applied as Read only since 2.1.0, and the
+			// engine refuses it as the write route does, so no New Topic is shown.
 			SpaceMember::add( $space, $pm_bare, 'member' );
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array( 'jt_qa_pmx_' . $suffix => array( 'jetonomy_read', 'jetonomy_create_posts', 'jetonomy_create_replies' ) ), false );
 			\Jetonomy\Permissions\Capabilities::register();
@@ -588,7 +589,7 @@ class Model_Tests {
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $pm_caps_was, false );
 			\Jetonomy\Permissions\Capabilities::register();
 			\Jetonomy\Cache::reset_memos();
-			$this->check( 'RM5: a role without WordPress read is refused writes the owner ticked for it, as the write routes refuse them', $rm5_ticked && ! $rm5_offers, $rm5_ticked ? '' : 'the ticked cap did not reach the role' );
+			$this->check( 'RM5: a role without WordPress read never gets writes ticked for it, and the engine refuses them as the write routes do', ! $rm5_ticked && ! $rm5_offers, $rm5_ticked ? 'the ticked cap reached the role' : 'the engine offered a write' );
 			remove_role( 'jt_qa_pm_' . $suffix );
 			remove_role( 'jt_qa_pmx_' . $suffix );
 
