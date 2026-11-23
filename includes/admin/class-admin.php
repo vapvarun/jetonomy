@@ -1312,7 +1312,7 @@ class Admin {
 			wp_enqueue_script(
 				'jetonomy-admin-settings',
 				JETONOMY_URL . 'assets/js/admin-settings.js',
-				array( 'jetonomy-admin', 'wp-i18n' ),
+				array( 'jetonomy-admin', 'wp-i18n', 'jquery-ui-sortable' ),
 				JETONOMY_VERSION,
 				true
 			);

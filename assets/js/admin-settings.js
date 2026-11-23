@@ -305,3 +305,81 @@
 	});
 	syncAll();
 })();
+
+/**
+ * Community Sidebar Widgets card (since 2.1.0): drag (core jQuery UI Sortable)
+ * or Move up / Move down to reorder, re-indexing the hidden inputs so the
+ * normal Appearance form saves the order.
+ */
+(function () {
+	'use strict';
+
+	var list = document.querySelector('.jt-widget-list');
+	if (!list || !window.wp || !wp.i18n) {
+		return;
+	}
+	var __ = wp.i18n.__, sprintf = wp.i18n.sprintf;
+	var live = document.querySelector('.jt-widget-live');
+	var none = document.querySelector('.jt-widget-none');
+
+	function rows() {
+		return Array.prototype.slice.call(list.children);
+	}
+	function reindex() {
+		var all = rows();
+		all.forEach(function (li, i) {
+			li.querySelectorAll('input[name^="jetonomy_settings[sidebar_widgets]"]').forEach(function (input) {
+				input.name = input.name.replace(/\[sidebar_widgets\]\[\d+\]/, '[sidebar_widgets][' + i + ']');
+			});
+			var moves = li.querySelectorAll('.jt-widget-move');
+			moves[0].disabled = i === 0;
+			moves[1].disabled = i === all.length - 1;
+		});
+	}
+	function announce(li) {
+		var all = rows();
+		/* translators: 1: widget name, 2: new position, 3: number of widgets. */
+		live.textContent = sprintf(__('%1$s moved to position %2$d of %3$d', 'jetonomy'), li.getAttribute('data-name'), all.indexOf(li) + 1, all.length);
+	}
+
+	rows().forEach(function (li) {
+		li.querySelector('.jt-widget-moves').hidden = false;
+	});
+	list.addEventListener('click', function (e) {
+		var btn = e.target.closest('.jt-widget-move');
+		if (!btn || btn.disabled) {
+			return;
+		}
+		var li = btn.closest('.jt-widget-row');
+		var up = btn.getAttribute('data-dir') === '-1';
+		var other = up ? li.previousElementSibling : li.nextElementSibling;
+		if (!other) {
+			return;
+		}
+		list.insertBefore(li, up ? other : other.nextElementSibling);
+		reindex();
+		announce(li);
+		// Keep focus on the moved row; fall back to its other button at the ends.
+		var moves = li.querySelectorAll('.jt-widget-move');
+		var target = moves[up ? 0 : 1];
+		(target.disabled ? moves[up ? 1 : 0] : target).focus();
+	});
+	list.addEventListener('change', function (e) {
+		if (e.target.classList.contains('jt-widget-on') && none) {
+			none.hidden = list.querySelectorAll('.jt-widget-on:checked').length > 0;
+		}
+	});
+	if (window.jQuery && jQuery.fn.sortable) {
+		jQuery(list).sortable({
+			axis: 'y',
+			handle: '.jt-widget-handle',
+			placeholder: 'jt-widget-placeholder',
+			update: function (event, ui) {
+				reindex();
+				announce(ui.item[0]);
+			}
+		});
+	}
+	reindex();
+})();
+

@@ -12564,6 +12564,23 @@
             ],
             "description": "Settings section: appearance."
           },
+          "sidebar_widgets": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                "enabled": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": "Settings section: appearance. Community sidebar widgets in display order; ids trending, top_members, popular_tags. Unknown ids are dropped and missing ones are appended switched on."
+          },
           "captcha_provider": {
             "type": "string",
             "maxLength": 1000,

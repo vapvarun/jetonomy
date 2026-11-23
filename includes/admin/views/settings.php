@@ -1201,6 +1201,60 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
+			<!-- Community Sidebar Widgets (2.1.0) -->
+			<?php
+			$jt_widget_meta = array(
+				'trending'     => array(
+					__( 'Trending', 'jetonomy' ),
+					/* translators: %s: topic label, plural, lowercase (e.g. "topics"). */
+					sprintf( __( 'The top-voted %s, in the current space or across the community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+				),
+				'top_members'  => array(
+					/* translators: %s: plural member label. */
+					sprintf( __( 'Top %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ),
+					/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+					sprintf( __( 'The five %s with the highest reputation.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+				),
+				'popular_tags' => array(
+					__( 'Popular Tags', 'jetonomy' ),
+					__( 'The most used tags across the community.', 'jetonomy' ),
+				),
+			);
+			$jt_widgets     = \Jetonomy\Settings::sidebar_widgets( $settings['sidebar_widgets'] ?? null );
+			?>
+			<div class="jt-settings-card jt-sidebar-widgets-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Community Sidebar Widgets', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( 'Choose which widgets show in the community sidebar and drag them into the order you want. About and Managed by always show first on a %s page.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+				</div>
+				<ul class="jt-widget-list">
+					<?php foreach ( $jt_widgets as $jt_i => $jt_w ) : ?>
+						<?php $jt_name = $jt_widget_meta[ $jt_w['id'] ][0]; ?>
+						<li class="jt-widget-row" data-name="<?php echo esc_attr( $jt_name ); ?>">
+							<span class="jt-widget-handle dashicons dashicons-menu" aria-hidden="true"></span>
+							<input type="hidden" class="jt-widget-id" name="jetonomy_settings[sidebar_widgets][<?php echo (int) $jt_i; ?>][id]" value="<?php echo esc_attr( $jt_w['id'] ); ?>">
+							<input type="hidden" class="jt-widget-off" name="jetonomy_settings[sidebar_widgets][<?php echo (int) $jt_i; ?>][enabled]" value="0">
+							<div class="jt-widget-main">
+								<label>
+									<input type="checkbox" class="jt-widget-on" name="jetonomy_settings[sidebar_widgets][<?php echo (int) $jt_i; ?>][enabled]" value="1" <?php checked( $jt_w['enabled'] ); ?>>
+									<?php /* translators: %s: widget name, e.g. Trending. */ echo esc_html( sprintf( __( 'Show %s', 'jetonomy' ), $jt_name ) ); ?>
+								</label>
+								<span class="jt-widget-hint"><?php echo esc_html( $jt_widget_meta[ $jt_w['id'] ][1] ); ?></span>
+							</div>
+							<?php // Revealed by admin-settings.js; without JS the order stays as saved. ?>
+							<div class="jt-widget-moves" hidden>
+								<button type="button" class="button jt-widget-move" data-dir="-1" aria-label="<?php /* translators: %s: widget name. */ echo esc_attr( sprintf( __( 'Move %s up', 'jetonomy' ), $jt_name ) ); ?>"><span class="dashicons dashicons-arrow-up-alt2" aria-hidden="true"></span></button>
+								<button type="button" class="button jt-widget-move" data-dir="1" aria-label="<?php /* translators: %s: widget name. */ echo esc_attr( sprintf( __( 'Move %s down', 'jetonomy' ), $jt_name ) ); ?>"><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button>
+							</div>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+				<p class="description jt-widget-none" <?php echo array_filter( wp_list_pluck( $jt_widgets, 'enabled' ) ) ? 'hidden' : ''; ?>>
+					<?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( 'No widgets selected: the sidebar will show only About, Managed by (on a %s page) and any WordPress widgets you add.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
+				</p>
+				<p class="screen-reader-text jt-widget-live" aria-live="polite"></p>
+			</div>
+
 			<!-- Custom CSS -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">

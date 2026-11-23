@@ -3451,6 +3451,35 @@ tr.jetonomy-moderated td {
 /* The badge's own padding counts inside that 100%, or it pokes 2px past a narrow card. */
 .jt-companion-badge { box-sizing: border-box; }
 
+/* ── Community Sidebar Widgets (Appearance tab) ── */
+.jt-widget-list { margin: 0; padding: 8px 20px 4px; list-style: none; }
+.jt-widget-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0 0 8px;
+	padding: 10px 12px;
+	border: 1px solid var(--jt-admin-border);
+	border-radius: 6px;
+	background: var(--jt-admin-white);
+}
+.jt-widget-handle { cursor: grab; color: var(--jt-admin-text-muted); }
+.jt-widget-main { flex: 1; min-width: 0; }
+.jt-widget-main label { font-weight: 600; }
+.jt-widget-hint { display: block; margin-inline-start: 24px; color: var(--jt-admin-text-muted); font-size: 12px; }
+.jt-widget-moves { display: flex; gap: 4px; }
+.jt-widget-moves[hidden] { display: none; }
+.jt-widget-moves .button { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; padding: 0 4px; }
+.jt-widget-placeholder { height: 52px; margin: 0 0 8px; border: 2px dashed var(--jt-admin-border); border-radius: 6px; }
+.jt-widget-none { margin: 0 20px 16px; }
+@media (max-width: 640px) {
+	.jt-widget-list { padding-inline: 12px; }
+	.jt-widget-row { flex-wrap: wrap; }
+	.jt-widget-handle { display: none; }
+	.jt-widget-moves .button { min-width: 40px; min-height: 40px; }
+	.jt-widget-none { margin-inline: 12px; }
+}
+
 /* ── Role Capability Mapping: Select all boxes (inserted by admin-settings.js) ── */
 .jt-role-matrix .jt-matrix-all-label {
 	display: block;

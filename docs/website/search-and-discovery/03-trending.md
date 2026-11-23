@@ -17,7 +17,7 @@ Two trending surfaces ship with Jetonomy, and they answer slightly different que
 
 ### The sidebar Trending widget (automatic)
 
-Every community page shows a **Trending** card in the sidebar with the top five topics. It appears automatically - there is nothing to configure. When a member is viewing a space, the card shows that space's top topics; everywhere else it shows the community-wide top topics. This card ranks by net votes (then reply count) and respects privacy, so private topics never leak to members who cannot access them.
+Every community page shows a **Trending** card in the sidebar with the top five topics. It appears automatically; to hide it or move it, use **Settings > Appearance > Community Sidebar Widgets**. When a member is viewing a space, the card shows that space's top topics; everywhere else it shows the community-wide top topics. This card ranks by net votes (then reply count) and respects privacy, so private topics never leak to members who cannot access them.
 
 ### The Trending block and shortcode (you place it)
 
@@ -67,4 +67,4 @@ Learn how Jetonomy's trust system automatically identifies your most reliable me
 
 - Block name: `jetonomy/trending`. Shortcode: `[jetonomy_trending_posts]`. Both call the same render path, so block/shortcode output is identical.
 - The hot score is computed in `Post::list_trending( $limit, $space_id, $window_days )`.
-- The sidebar Trending card can be hidden with the `jetonomy_show_sidebar_trending` filter, and you can inject markup around it with the `jetonomy_sidebar_before_trending` / `jetonomy_sidebar_after_trending` action hooks (each receives the current `$space` or `null`). See the [Blocks & Shortcodes reference](../developer-guide/04-shortcodes-widgets-blocks.md) and the [Hooks Reference](../developer-guide/02-hooks-reference.md).
+- The sidebar Trending card can be hidden with the `jetonomy_show_sidebar_trending` filter (it can only hide a card the owner switched on; `jetonomy_sidebar_widgets` can switch one on or reorder), and you can inject markup around it with the `jetonomy_sidebar_before_trending` / `jetonomy_sidebar_after_trending` action hooks (each receives the current `$space` or `null`). See the [Blocks & Shortcodes reference](../developer-guide/04-shortcodes-widgets-blocks.md) and the [Hooks Reference](../developer-guide/02-hooks-reference.md).

@@ -3609,19 +3609,19 @@
     {
       "name": "jetonomy_show_sidebar_popular_tags",
       "type": "filter",
-      "where": "templates/partials/sidebar.php:358",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_show_sidebar_top_members",
       "type": "filter",
-      "where": "templates/partials/sidebar.php:302",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_show_sidebar_trending",
       "type": "filter",
-      "where": "templates/partials/sidebar.php:237",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
@@ -3654,19 +3654,19 @@
     {
       "name": "jetonomy_sidebar_after_popular_tags",
       "type": "action",
-      "where": "templates/partials/sidebar.php:387",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_sidebar_after_top_members",
       "type": "action",
-      "where": "templates/partials/sidebar.php:345",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_sidebar_after_trending",
       "type": "action",
-      "where": "templates/partials/sidebar.php:289",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
@@ -3698,19 +3698,19 @@
     {
       "name": "jetonomy_sidebar_before_popular_tags",
       "type": "action",
-      "where": "templates/partials/sidebar.php:356",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_sidebar_before_top_members",
       "type": "action",
-      "where": "templates/partials/sidebar.php:300",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_sidebar_before_trending",
       "type": "action",
-      "where": "templates/partials/sidebar.php:235",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
@@ -4122,6 +4122,14 @@
       "args": "string[] $changed, string $source (form|rest|cli)",
       "where": "includes/class-settings.php",
       "consumed_by": null
+    },
+    {
+      "name": "jetonomy_sidebar_widgets",
+      "type": "filter",
+      "args": "array $widgets",
+      "where": "includes/helpers.php",
+      "consumed_by": null,
+      "since": "2.1.0"
     }
   ],
   "buddypress_integration": {

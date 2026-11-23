@@ -17,54 +17,6 @@ if ( ! apply_filters( 'jetonomy_show_sidebar', true ) ) {
 	return;
 }
 
-$trending = \Jetonomy\Models\Post::list_top_voted( ( ! empty( $space ) && isset( $space->id ) ) ? (int) $space->id : 0 );
-
-// Top members by reputation. Deliberately NOT block-filtered — this is a
-// ranking/leaderboard, not a content feed; per-viewer filtering would
-// re-rank the board and leak "you blocked someone" via rank gaps.
-//
-// Cached 600s under ONE global key — zero viewer variance,
-// runs on 100% of page views, and the bare ORDER BY reputation filesorts.
-// TTL-only by design: a 10-minute-stale Top Members widget is invisible,
-// and busting on every reputation write would defeat the point.
-//
-// Reads the leaderboard model, not its own query, so the widget ranks exactly
-// the population the Leaderboard page does (members with reputation > 0).
-// The key is not the legacy 'sidebar:leaders', so an upgraded site does not serve a
-// stale unfiltered list for the rest of the TTL.
-$leaders = \Jetonomy\Cache::remember(
-	'sidebar:top-members',
-	static fn() => \Jetonomy\Models\UserProfile::list_for_leaderboard( 'all', 5, 0 ),
-	600
-);
-
-// Warm the profile cache for the Top Members widget in one query so the avatar
-// partial below does not fire a per-row SELECT on a cold cache.
-if ( ! empty( $leaders ) ) {
-	\Jetonomy\Models\UserProfile::prime( array_map( static fn( $r ) => (int) $r->user_id, $leaders ) );
-}
-
-// Popular tags. Cached 900s under one global key — fully
-// shared, ordered by post_count (indexed since 1.9.2), moves only on
-// post publish. TTL-only: staleness is invisible on a tag cloud.
-$popular_tags = \Jetonomy\Cache::remember(
-	'tags:popular:15',
-	static function () {
-		return \Jetonomy\Models\Tag::list_popular( 15 );
-	},
-	900
-);
-// The shared list is ordered by the stored count, which includes topics this
-// viewer cannot read. Show each tag's count as the tag page will (one grouped
-// query), and drop tags with nothing visible so a name never hints at a
-// private topic.
-// Guests share one cached answer (the bulk of traffic); members vary by membership.
-$jt_tag_ids    = wp_list_pluck( (array) $popular_tags, 'id' );
-$jt_tag_counts = is_user_logged_in()
-	? \Jetonomy\Models\Post::count_by_tags_visible( $jt_tag_ids )
-	: \Jetonomy\Cache::remember( 'tags:popular:15:guest-counts', static fn() => \Jetonomy\Models\Post::count_by_tags_visible( $jt_tag_ids ), 900 );
-$popular_tags  = array_values( array_filter( (array) $popular_tags, static fn( $t ) => ! empty( $jt_tag_counts[ (int) $t->id ] ) ) );
-
 // When BuddyNext is active, use its sidebar card skeleton so all sidebar
 // widgets across BuddyNext, Jetonomy, and WPMediaVerse look identical.
 $bn_active = did_action( 'buddynext_loaded' );
@@ -240,206 +192,42 @@ $bn_active = did_action( 'buddynext_loaded' );
 	<?php endif; ?>
 
 	<?php
-	/**
-	 * Insert a custom widget or ad before the Trending section. Always fires
-	 * (even when the section is hidden or empty) so an injected block can
-	 * always render. Use jetonomy_show_sidebar_trending to hide the section.
+	/*
+	 * Trending, Top Members and Popular Tags, in the owner's order (Settings >
+	 * Appearance, since 2.1.0). For each widget, in that order:
 	 *
-	 * @param object|null $space Current space object, or null.
+	 * - jetonomy_sidebar_before_{id} always fires, even when the widget is off,
+	 *   hidden or empty, so an injected block can always render. {id} is
+	 *   trending, top_members or popular_tags.
+	 * - jetonomy_show_sidebar_{id} (bool $show, object|null $space, since 1.4.5)
+	 *   can hide a widget the owner switched on. It is not called for one the
+	 *   owner switched off; use the jetonomy_sidebar_widgets filter for that.
+	 * - jetonomy_sidebar_after_{id} always fires.
+	 *
+	 * Each widget lives in partials/sidebar/{id with dashes}.php and fetches its
+	 * own data, so a switched-off widget runs no query.
 	 */
-	do_action( 'jetonomy_sidebar_before_trending', $space ?? null );
-	?>
-	<?php
-	/**
-	 * Filters whether the sidebar renders the Trending card.
-	 *
-	 * @since 1.4.5
-	 *
-	 * @param bool        $show  Whether to render the card.
-	 * @param object|null $space Current space, or null outside a space.
-	 * @return bool Whether to render the card.
-	 */
-	?>
-	<?php if ( apply_filters( 'jetonomy_show_sidebar_trending', true, $space ?? null ) ) : ?>
-		<?php if ( ! empty( $trending ) ) : ?>
-	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
-		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
-			<?php if ( ! $bn_active ) : ?>
-				<h2 class="jt-card-title"><?php esc_html_e( 'Trending', 'jetonomy' ); ?></h2>
-			<?php else : ?>
-				<?php esc_html_e( 'Trending', 'jetonomy' ); ?>
-			<?php endif; ?>
-		</div>
-		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
-			<?php foreach ( $trending as $i => $t_post ) : ?>
-				<div class="jt-trend">
-					<div>
-						<div class="jt-trend-title">
-							<a href="<?php echo esc_url( \Jetonomy\route_url( 'post', $t_post->space_slug, $t_post->slug ) ); ?>">
-								<bdi><?php echo esc_html( jetonomy_post_title_or_excerpt( $t_post ) ); ?></bdi>
-							</a>
-						</div>
-						<div class="jt-trend-meta">
-							<?php
-							$v = (int) $t_post->vote_score;
-							$r = (int) $t_post->reply_count;
-							/* translators: 1: vote count with singular/plural, 2: reply count with singular/plural */
-							echo esc_html(
-								sprintf(
-									/* translators: %d: number of votes. */
-									_n( '%d vote', '%d votes', $v, 'jetonomy' ),
-									$v
-								)
-								. ' · '
-								. \Jetonomy\count_label( (int) $r, 'reply' )
-							);
-							?>
-						</div>
-					</div>
-				</div>
-			<?php endforeach; ?>
-		</div>
-	</div>
-	<?php endif; ?>
-	<?php endif; ?>
-	<?php
-	/**
-	 * Insert a custom widget or ad after the Trending section. Always fires.
-	 *
-	 * @param object|null $space Current space object, or null.
-	 */
-	do_action( 'jetonomy_sidebar_after_trending', $space ?? null );
-	?>
-
-	<?php
-	/**
-	 * Insert a custom widget or ad before the Top Members section. Always fires
-	 * (even when the section is hidden or empty). Use
-	 * jetonomy_show_sidebar_top_members to hide the section.
-	 *
-	 * @param object|null $space Current space object, or null.
-	 */
-	do_action( 'jetonomy_sidebar_before_top_members', $space ?? null );
-	?>
-	<?php
-	/**
-	 * Filters whether the sidebar renders the Top members card.
-	 *
-	 * @since 1.4.5
-	 *
-	 * @param bool        $show  Whether to render the card.
-	 * @param object|null $space Current space, or null outside a space.
-	 * @return bool Whether to render the card.
-	 */
-	?>
-	<?php if ( apply_filters( 'jetonomy_show_sidebar_top_members', true, $space ?? null ) ) : ?>
-		<?php if ( ! empty( $leaders ) ) : ?>
-	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
-		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
-			<?php if ( ! $bn_active ) : ?>
-				<h2 class="jt-card-title"><?php printf( /* translators: %s: plural member label. */ esc_html__( 'Top %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></h2>
-			<?php else : ?>
-				<?php printf( /* translators: %s: plural member label. */ esc_html__( 'Top %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
-			<?php endif; ?>
-		</div>
-		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
-			<?php foreach ( $leaders as $rank => $leader ) : ?>
-				<?php
-				$lu = get_userdata( (int) $leader->user_id );
-				if ( ! $lu ) {
-					continue;
-				}
-				?>
-				<div class="jt-leader">
-					<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $leader->user_id ) ? esc_attr( 'is-online' ) : ''; ?>">
-						<?php
-						// Real avatar (image with initials fallback) via the shared
-						// partial, consistent with every other member surface.
-						\Jetonomy\Template_Loader::partial(
-							'avatar',
-							array(
-								'user_id' => (int) $leader->user_id,
-								'size'    => 30,
-								'class'   => 'jt-avatar-sm jt-flex-shrink-0',
-							)
-						);
-						?>
-					</span>
-					<span class="jt-leader-name">
-						<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
-							<?php echo esc_html( \Jetonomy\user_display_name( $lu ) ); ?>
-						</a>
-					</span>
-					<span class="jt-leader-pts"><?php echo (int) $leader->reputation; ?></span>
-				</div>
-			<?php endforeach; ?>
-			<div class="jt-sidebar-link">
-				<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>"><?php esc_html_e( 'View full leaderboard', 'jetonomy' ); ?></a>
-			</div>
-		</div>
-	</div>
-	<?php endif; ?>
-	<?php endif; ?>
-	<?php
-	/**
-	 * Insert a custom widget or ad after the Top Members section. Always fires.
-	 *
-	 * @param object|null $space Current space object, or null.
-	 */
-	do_action( 'jetonomy_sidebar_after_top_members', $space ?? null );
-	?>
-
-	<?php
-	/**
-	 * Insert a custom widget or ad before the Popular Tags section. Always fires
-	 * (even when the section is hidden or empty). Use
-	 * jetonomy_show_sidebar_popular_tags to hide the section.
-	 *
-	 * @param object|null $space Current space object, or null.
-	 */
-	do_action( 'jetonomy_sidebar_before_popular_tags', $space ?? null );
-	?>
-	<?php
-	/**
-	 * Filters whether the sidebar renders the Popular tags card.
-	 *
-	 * @since 1.4.5
-	 *
-	 * @param bool        $show  Whether to render the card.
-	 * @param object|null $space Current space, or null outside a space.
-	 * @return bool Whether to render the card.
-	 */
-	?>
-	<?php if ( apply_filters( 'jetonomy_show_sidebar_popular_tags', true, $space ?? null ) ) : ?>
-		<?php if ( ! empty( $popular_tags ) ) : ?>
-	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card' ); ?>">
-		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
-			<?php if ( ! $bn_active ) : ?>
-				<h2 class="jt-card-title"><?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?></h2>
-			<?php else : ?>
-				<?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?>
-			<?php endif; ?>
-		</div>
-		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
-			<div class="jt-tags">
-				<?php foreach ( $popular_tags as $tag ) : ?>
-					<a href="<?php echo esc_url( \Jetonomy\route_url( 'tag', $tag->slug ) ); ?>" class="jt-tag">
-						<?php echo esc_html( $tag->name ); ?>
-						<span class="jt-tag-count"><?php echo (int) $jt_tag_counts[ (int) $tag->id ]; ?></span>
-					</a>
-				<?php endforeach; ?>
-			</div>
-		</div>
-	</div>
-	<?php endif; ?>
-	<?php endif; ?>
-	<?php
-	/**
-	 * Insert a custom widget or ad after the Popular Tags section. Always fires.
-	 *
-	 * @param object|null $space Current space object, or null.
-	 */
-	do_action( 'jetonomy_sidebar_after_popular_tags', $space ?? null );
+	// Literal names so a search for any of these hooks lands here: before, show, after.
+	$jt_widget_hooks = array(
+		'trending'     => array( 'jetonomy_sidebar_before_trending', 'jetonomy_show_sidebar_trending', 'jetonomy_sidebar_after_trending' ),
+		'top_members'  => array( 'jetonomy_sidebar_before_top_members', 'jetonomy_show_sidebar_top_members', 'jetonomy_sidebar_after_top_members' ),
+		'popular_tags' => array( 'jetonomy_sidebar_before_popular_tags', 'jetonomy_show_sidebar_popular_tags', 'jetonomy_sidebar_after_popular_tags' ),
+	);
+	foreach ( jetonomy_sidebar_widgets() as $jt_widget ) {
+		list( $jt_before, $jt_show, $jt_after ) = $jt_widget_hooks[ $jt_widget['id'] ];
+		do_action( $jt_before, $space ?? null ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- literal names above.
+		if ( $jt_widget['enabled'] && apply_filters( $jt_show, true, $space ?? null ) ) { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- literal names above.
+			\Jetonomy\Template_Loader::partial(
+				'sidebar/' . str_replace( '_', '-', $jt_widget['id'] ),
+				array(
+					'space'     => $space ?? null,
+					'bn_active' => $bn_active,
+				)
+			);
+		}
+		do_action( $jt_after, $space ?? null ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- literal names above.
+	}
+	unset( $jt_widget_hooks, $jt_widget, $jt_before, $jt_show, $jt_after );
 	?>
 
 	<?php

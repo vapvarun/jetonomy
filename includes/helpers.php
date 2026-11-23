@@ -714,3 +714,44 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 		}
 	}
 }
+
+if ( ! function_exists( 'jetonomy_sidebar_widgets' ) ) {
+	/**
+	 * The community sidebar widgets in display order, as the owner set them on
+	 * Settings > Appearance (default: Trending, Top Members, Popular Tags, all on).
+	 *
+	 * @since 2.1.0
+	 *
+	 * @return array<int, array{id: string, enabled: bool}>
+	 */
+	function jetonomy_sidebar_widgets(): array {
+		$settings = get_option( 'jetonomy_settings', array() );
+		$widgets  = \Jetonomy\Settings::sidebar_widgets( is_array( $settings ) ? ( $settings['sidebar_widgets'] ?? null ) : null );
+
+		/**
+		 * Filters the sidebar widget list after the owner's setting is applied.
+		 *
+		 * The `jetonomy_show_sidebar_{id}` filters can only hide a widget the owner
+		 * switched on; use this filter to switch one on that the owner turned off,
+		 * or to change the order. Unknown ids are ignored.
+		 *
+		 * @since 2.1.0
+		 *
+		 * @param array<int, array{id: string, enabled: bool}> $widgets Widgets in display order.
+		 */
+		/** @var mixed $filtered A filter may return anything; only known ids survive. */
+		$filtered = apply_filters( 'jetonomy_sidebar_widgets', $widgets );
+		$out      = array();
+		foreach ( is_array( $filtered ) ? $filtered : array() as $row ) {
+			$id = is_array( $row ) ? (string) ( $row['id'] ?? '' ) : '';
+			if ( in_array( $id, \Jetonomy\Settings::SIDEBAR_WIDGETS, true ) && ! isset( $out[ $id ] ) ) {
+				$out[ $id ] = array(
+					'id'      => $id,
+					'enabled' => ! empty( $row['enabled'] ),
+				);
+			}
+		}
+		return array_values( $out );
+	}
+}
+

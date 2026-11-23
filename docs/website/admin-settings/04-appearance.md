@@ -94,6 +94,8 @@ Controls how wide the community canvas can grow before it stops expanding.
 
 ### Community sidebar widgets
 
+**Community Sidebar Widgets** (since 2.1.0) controls Jetonomy's three built-in sidebar widgets: **Trending**, **Top Members** and **Popular Tags**. Untick **Show** to hide a widget, and drag a row by its handle, or use its up and down arrows, to change the order. Save the Appearance tab to apply. By default all three show in that order, so a site that never touches this card looks the same as before. On a space page **About** and **Managed by** always come first. A widget with nothing to show (for example, no tags yet) stays hidden even when ticked. If you untick all three, the sidebar shows only About, Managed by and any WordPress widgets you add.
+
 Community pages never show your theme's sidebar; they show Jetonomy's own sidebar. To add your own widgets or blocks to it, go to **Appearance → Widgets** and add them to **Community Sidebar**. They appear at the bottom of the sidebar on every community page, on any theme, and nothing shows when the area is empty.
 
 ### Page Padding

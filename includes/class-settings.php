@@ -37,6 +37,12 @@ class Settings {
 	private const LOCK_WAIT_MS = 5000;
 
 	/**
+	 * The community sidebar widgets, in their default order (since 2.1.0).
+	 * The ids double as the `jetonomy_show_sidebar_{id}` hook suffixes.
+	 */
+	public const SIDEBAR_WIDGETS = array( 'trending', 'top_members', 'popular_tags' );
+
+	/**
 	 * Notices the last sanitize() raised (a refused address, for example).
 	 *
 	 * @var array<int, array{code: string, message: string}>
@@ -185,6 +191,23 @@ class Settings {
 			'container_width'               => $s( 'appearance', 'string', array( 'enum' => array( 'theme', 'full', 'custom' ) ) ),
 			'container_width_custom'        => $s( 'appearance', 'integer', $int( 600, 2400 ) ),
 			'padding_preset'                => $s( 'appearance', 'string', array( 'enum' => array( 'theme', 'none', 'comfortable' ) ) ),
+			'sidebar_widgets'               => $s(
+				'appearance',
+				'array',
+				array(
+					'maxItems' => 20,
+					'items'    => array(
+						'type'       => 'object',
+						'properties' => array(
+							'id'      => array(
+								'type'      => 'string',
+								'maxLength' => 64,
+							),
+							'enabled' => array( 'type' => 'boolean' ),
+						),
+					),
+				)
+			),
 			'captcha_provider'              => $s( 'antispam', 'string', array( 'enum' => array( 'none', 'recaptcha_v3', 'turnstile' ) ) ),
 			'captcha_site_key'              => $s( 'antispam', 'string' ),
 			'captcha_secret_key'            => $s( 'antispam', 'string', array( 'secret' => true ) ),
@@ -432,6 +455,42 @@ class Settings {
 		}
 		$stored['notification_defaults'] = $notif;
 		return $stored;
+	}
+
+	/**
+	 * Clean a sidebar widget list: known ids only, each once, in the given
+	 * order; known ids that are missing are appended switched on, so a widget
+	 * added in a later version shows by default. Position is the order; an
+	 * `order` field in the input is ignored.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param mixed $raw List of {id, enabled}; anything else gives the default.
+	 * @return array<int, array{id: string, enabled: bool}>
+	 */
+	public static function sidebar_widgets( $raw ): array {
+		$out  = array();
+		$seen = array();
+		foreach ( is_array( $raw ) ? $raw : array() as $row ) {
+			$id = is_array( $row ) ? sanitize_key( (string) ( $row['id'] ?? '' ) ) : '';
+			if ( ! in_array( $id, self::SIDEBAR_WIDGETS, true ) || isset( $seen[ $id ] ) ) {
+				continue;
+			}
+			$seen[ $id ] = true;
+			$out[]       = array(
+				'id'      => $id,
+				'enabled' => ! empty( $row['enabled'] ) && 'false' !== $row['enabled'],
+			);
+		}
+		foreach ( self::SIDEBAR_WIDGETS as $id ) {
+			if ( ! isset( $seen[ $id ] ) ) {
+				$out[] = array(
+					'id'      => $id,
+					'enabled' => true,
+				);
+			}
+		}
+		return $out;
 	}
 
 	/**
@@ -781,6 +840,8 @@ class Settings {
 
 			$raw_padding             = sanitize_key( (string) ( $input['padding_preset'] ?? 'theme' ) );
 			$clean['padding_preset'] = in_array( $raw_padding, array( 'theme', 'none', 'comfortable' ), true ) ? $raw_padding : 'theme';
+
+			$clean['sidebar_widgets'] = self::sidebar_widgets( $input['sidebar_widgets'] ?? null );
 		}
 
 		// ── Anti-Spam tab ──

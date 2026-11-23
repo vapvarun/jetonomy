@@ -92,7 +92,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_pro_ai_member_hourly_limit`<br>_filter_ ·_Pro_ | Filter the per-user hourly AI request limit. | - | `includes/extensions/ai/class-extension.php` |
 | `jetonomy_pro_ai_member_min_trust`<br>_filter_ ·_Pro_ | Filter the minimum trust level for member-facing AI. | - | `includes/extensions/ai/class-extension.php` |
 | `jetonomy_pro_ai_suggestion_space_types`<br>_filter_ ·_Pro_ | - | - | `includes/extensions/ai/class-suggester.php` |
-| `jetonomy_show_sidebar_top_members`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
+| `jetonomy_show_sidebar_top_members`<br>_filter_ | Hide the Top Members widget. Called only when the owner has it switched on (since 2.1.0). | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_after_top_members`<br>_action_ | Insert a custom widget or ad after the Top Members section. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_before_top_members`<br>_action_ | Insert a custom widget or ad before the Top Members section. | - | `templates/partials/sidebar.php` |
 | `jetonomy_space_display_fields`<br>_action_ | Fires in the space header to display custom field values (context = space). | `space` | `templates/views/space.php` |
@@ -215,8 +215,8 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_show_sidebar`<br>_filter_ | Allow bridge plugins to suppress Jetonomy's sidebar (e.g. | `show` | `templates/partials/sidebar.php` |
 | `jetonomy_show_sidebar_about`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
 | `jetonomy_show_sidebar_managed_by`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
-| `jetonomy_show_sidebar_popular_tags`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
-| `jetonomy_show_sidebar_trending`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
+| `jetonomy_show_sidebar_popular_tags`<br>_filter_ | Hide the Popular Tags widget. Called only when the owner has it switched on (since 2.1.0). | - | `templates/partials/sidebar.php` |
+| `jetonomy_show_sidebar_trending`<br>_filter_ | Hide the Trending widget. Called only when the owner has it switched on (since 2.1.0). | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_about_after_meta`<br>_action_ | Fires inside the sidebar About card, after the meta tags. | `space_id` | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_after`<br>_action_ | Fires at the bottom of the Jetonomy sidebar, after all widgets render. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_after_about`<br>_action_ | Fires in the sidebar immediately after the "About" space card closes. | - | `templates/partials/sidebar.php` |
@@ -229,6 +229,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_sidebar_before_managed_by`<br>_action_ | Insert a custom widget or ad before the Managed-by card. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_before_popular_tags`<br>_action_ | Insert a custom widget or ad before the Popular Tags section. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_before_trending`<br>_action_ | Insert a custom widget or ad before the Trending section. | - | `templates/partials/sidebar.php` |
+| `jetonomy_sidebar_widgets`<br>_filter_ | The sidebar widget list (`id`, `enabled`) in display order, after the owner's Appearance setting. The only way to switch on a widget the owner turned off, or to reorder. Since 2.1.0. | `widgets` | `includes/helpers.php` |
 | `jetonomy_space_card_after`<br>_action_ | Fires after each space card. Append a per-space badge, link, or action here. | `$space` | `templates/views/category.php`, `templates/views/home.php` |
 | `jetonomy_template_map`<br>_filter_ | Values may be relative (resolved against plugin_dir/theme_dir) or absolute paths (starting with /). | `map` | `includes/class-template-loader.php` |
 
