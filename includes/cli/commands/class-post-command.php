@@ -65,8 +65,8 @@ final class Post_Command extends Base_Command {
 	public function create( $args, $assoc ): void {
 		$result = ( new Content_Journey() )->create_post(
 			array(
-				'space_id'  => (int) ( $assoc['space'] ?? 0 ),
-				'author_id' => (int) ( $assoc['author'] ?? 0 ),
+				'space_id'  => $this->int_arg( $assoc, 'space', 0 ),
+				'author_id' => $this->int_arg( $assoc, 'author', 0 ),
 				'title'     => (string) ( $assoc['title'] ?? '' ),
 				'content'   => (string) ( $assoc['content'] ?? '' ),
 				'status'    => (string) ( $assoc['status'] ?? 'publish' ),
@@ -110,7 +110,7 @@ final class Post_Command extends Base_Command {
 	 *     wp jetonomy post update 42 --status=draft
 	 */
 	public function update( $args, $assoc ): void {
-		$id      = (int) ( $args[0] ?? 0 );
+		$id      = $this->int_arg( $args, 0, 0 );
 		$changes = array_intersect_key( $assoc, array_flip( array( 'title', 'content', 'status', 'slug' ) ) );
 		$result  = ( new Content_Journey() )->update_post( $id, $changes );
 		$this->render( $result, $assoc );
@@ -137,7 +137,7 @@ final class Post_Command extends Base_Command {
 	 *     wp jetonomy post delete 42
 	 */
 	public function delete( $args, $assoc ): void {
-		$id     = (int) ( $args[0] ?? 0 );
+		$id     = $this->int_arg( $args, 0, 0 );
 		$result = ( new Content_Journey() )->delete_post( $id );
 		$this->render( $result, $assoc );
 	}
@@ -164,7 +164,7 @@ final class Post_Command extends Base_Command {
 	 *     wp jetonomy post get 42 --format=json
 	 */
 	public function get( $args, $assoc ): void {
-		$id     = (int) ( $args[0] ?? 0 );
+		$id     = $this->int_arg( $args, 0, 0 );
 		$result = ( new Content_Journey() )->get_post( $id );
 		$this->render( $result, $assoc );
 	}

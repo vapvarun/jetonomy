@@ -57,8 +57,8 @@ final class Member_Command extends Base_Command {
 	 */
 	public function join( $args, $assoc ): void {
 		$result = ( new Member_Journey() )->join(
-			(int) ( $assoc['space'] ?? 0 ),
-			(int) ( $assoc['by'] ?? 0 ),
+			$this->int_arg( $assoc, 'space', 0 ),
+			$this->int_arg( $assoc, 'by', 0 ),
 			(string) ( $assoc['role'] ?? 'member' )
 		);
 		$this->render( $result, $assoc );
@@ -89,8 +89,8 @@ final class Member_Command extends Base_Command {
 	 */
 	public function leave( $args, $assoc ): void {
 		$result = ( new Member_Journey() )->leave(
-			(int) ( $assoc['space'] ?? 0 ),
-			(int) ( $assoc['by'] ?? 0 )
+			$this->int_arg( $assoc, 'space', 0 ),
+			$this->int_arg( $assoc, 'by', 0 )
 		);
 		$this->render( $result, $assoc );
 	}
@@ -131,8 +131,8 @@ final class Member_Command extends Base_Command {
 	 */
 	public function set_role( $args, $assoc ): void {
 		$result = ( new Member_Journey() )->set_role(
-			(int) ( $assoc['space'] ?? 0 ),
-			(int) ( $assoc['by'] ?? 0 ),
+			$this->int_arg( $assoc, 'space', 0 ),
+			$this->int_arg( $assoc, 'by', 0 ),
 			(string) ( $assoc['role'] ?? '' )
 		);
 		$this->render( $result, $assoc );
@@ -165,8 +165,8 @@ final class Member_Command extends Base_Command {
 	 */
 	public function is_member( $args, $assoc ): void {
 		$result = ( new Member_Journey() )->is_member(
-			(int) ( $assoc['space'] ?? 0 ),
-			(int) ( $assoc['by'] ?? 0 )
+			$this->int_arg( $assoc, 'space', 0 ),
+			$this->int_arg( $assoc, 'by', 0 )
 		);
 		$this->render( $result, $assoc );
 	}
@@ -198,8 +198,8 @@ final class Member_Command extends Base_Command {
 	 */
 	public function get_role( $args, $assoc ): void {
 		$result = ( new Member_Journey() )->get_role(
-			(int) ( $assoc['space'] ?? 0 ),
-			(int) ( $assoc['by'] ?? 0 )
+			$this->int_arg( $assoc, 'space', 0 ),
+			$this->int_arg( $assoc, 'by', 0 )
 		);
 		$this->render( $result, $assoc );
 	}
@@ -234,7 +234,7 @@ final class Member_Command extends Base_Command {
 	 */
 	public function list_members( $args, $assoc ): void {
 		$result = ( new Member_Journey() )->list_space_members(
-			(int) ( $assoc['space'] ?? 0 )
+			$this->int_arg( $assoc, 'space', 0 )
 		);
 		$this->render_list( $result, $assoc );
 	}
@@ -268,7 +268,7 @@ final class Member_Command extends Base_Command {
 	 */
 	public function list_user_spaces( $args, $assoc ): void {
 		$result = ( new Member_Journey() )->list_user_spaces(
-			(int) ( $assoc['by'] ?? 0 )
+			$this->int_arg( $assoc, 'by', 0 )
 		);
 		$this->render_list( $result, $assoc );
 	}
@@ -303,8 +303,8 @@ final class Member_Command extends Base_Command {
 	 */
 	public function request_join( $args, $assoc ): void {
 		$result = ( new Member_Journey() )->submit_join_request(
-			(int) ( $assoc['space'] ?? 0 ),
-			(int) ( $assoc['by'] ?? 0 ),
+			$this->int_arg( $assoc, 'space', 0 ),
+			$this->int_arg( $assoc, 'by', 0 ),
 			(string) ( $assoc['message'] ?? '' )
 		);
 		$this->render( $result, $assoc );
@@ -336,10 +336,10 @@ final class Member_Command extends Base_Command {
 	 * @subcommand approve-request
 	 */
 	public function approve_request( $args, $assoc ): void {
-		$request_id = (int) ( $args[0] ?? 0 );
+		$request_id = $this->int_arg( $args, 0, 0 );
 		$result     = ( new Member_Journey() )->approve_join_request(
 			$request_id,
-			(int) ( $assoc['reviewer'] ?? 0 )
+			$this->int_arg( $assoc, 'reviewer', 0 )
 		);
 		$this->render( $result, $assoc );
 	}
@@ -370,10 +370,10 @@ final class Member_Command extends Base_Command {
 	 * @subcommand deny-request
 	 */
 	public function deny_request( $args, $assoc ): void {
-		$request_id = (int) ( $args[0] ?? 0 );
+		$request_id = $this->int_arg( $args, 0, 0 );
 		$result     = ( new Member_Journey() )->deny_join_request(
 			$request_id,
-			(int) ( $assoc['reviewer'] ?? 0 )
+			$this->int_arg( $assoc, 'reviewer', 0 )
 		);
 		$this->render( $result, $assoc );
 	}
@@ -407,7 +407,7 @@ final class Member_Command extends Base_Command {
 	 */
 	public function list_requests( $args, $assoc ): void {
 		$result = ( new Member_Journey() )->list_pending_requests(
-			(int) ( $assoc['space'] ?? 0 )
+			$this->int_arg( $assoc, 'space', 0 )
 		);
 		$this->render_list( $result, $assoc );
 	}

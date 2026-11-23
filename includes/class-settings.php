@@ -256,7 +256,9 @@ class Settings {
 	}
 
 	/**
-	 * The stored settings for the keys in the schema, secrets masked.
+	 * The settings in effect for the keys in the schema, secrets masked: a key
+	 * the site never saved reads as the default it actually uses, never null, so
+	 * a GET body can be posted back.
 	 *
 	 * @since 2.1.0
 	 *
@@ -264,14 +266,19 @@ class Settings {
 	 * @return array<string, mixed>
 	 */
 	public static function read( ?array $keys = null ): array {
-		$stored = get_option( self::OPTION, array() );
-		$stored = is_array( $stored ) ? $stored : array();
-		$out    = array();
+		$stored   = get_option( self::OPTION, array() );
+		$stored   = is_array( $stored ) ? $stored : array();
+		$out      = array();
+		$defaults = null;
 		foreach ( self::schema() as $key => $def ) {
 			if ( null !== $keys && ! in_array( $key, $keys, true ) ) {
 				continue;
 			}
-			$value = $stored[ $key ] ?? null;
+			if ( ! isset( $stored[ $key ] ) ) {
+				$defaults ??= self::defaults();
+			}
+			// A capability-gated box the sanitizer skipped for this user is still off by default.
+			$value = $stored[ $key ] ?? $defaults[ $key ] ?? ( 'boolean' === $def['type'] ? false : null );
 			if ( ! empty( $def['secret'] ) ) {
 				$value = ( null === $value || '' === $value ) ? '' : self::MASK;
 			}
@@ -501,6 +508,23 @@ class Settings {
 	}
 
 	/**
+	 * What every section stores when the site never saved it: the sanitizer run
+	 * on each section's marker alone, plus the keys that default on.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function defaults(): array {
+		$input = self::effective( array() );
+		foreach ( self::sections() as $marker ) {
+			$input[ $marker ] = self::marker_default( $marker );
+		}
+		$notices       = self::$notices;
+		$clean         = self::sanitize( $input );
+		self::$notices = $notices;
+		return $clean;
+	}
+
+	/**
 	 * Clean a sidebar widget list: known ids only, each once, in the given
 	 * order; known ids that are missing are appended switched on, so a widget
 	 * added in a later version shows by default. Position is the order; an
@@ -629,9 +653,10 @@ class Settings {
 
 	/**
 	 * One whole-number setting from the posted form, the same rule for every
-	 * number field: digits (an optional minus) are kept within the field's range;
-	 * absent or empty means the default; anything else ("abc", "5abc", "false")
-	 * is refused by name and the stored value kept. REST and the CLI never reach
+	 * number field: absent or empty means the default; digits (an optional minus)
+	 * outside the field's range are saved as the nearest allowed value with a
+	 * notice saying so; anything else ("abc", "5abc", "false") is refused by name
+	 * and the stored value kept. REST and the CLI never reach
 	 * the refusal: write() turns those away with a 400 first.
 	 *
 	 * @param mixed  $raw      Posted value (null when absent).
@@ -656,7 +681,15 @@ class Settings {
 			$kept = \Jetonomy\strict_int( $previous );
 			return null === $kept ? $fallback : $kept;
 		}
-		return max( $min, min( $max, $value ) );
+		$kept = max( $min, min( $max, $value ) );
+		if ( $kept !== $value ) {
+			self::notice(
+				'jetonomy_invalid_' . $key,
+				/* translators: 1: settings field label, 2: lowest allowed, 3: highest allowed, 4: value saved. */
+				sprintf( __( '%1$s must be between %2$d and %3$d, so it was saved as %4$d.', 'jetonomy' ), $label, $min, $max, $kept )
+			);
+		}
+		return $kept;
 	}
 
 	/**

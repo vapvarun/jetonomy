@@ -109,6 +109,12 @@ $jt_repos  = array( 'free' => $jt_root ) + ( $jt_pro ? array( 'pro' => $jt_pro )
 $jt_report = array();
 $jt_fail   = (bool) $jt_bad_exempt;
 foreach ( $jt_repos as $jt_side => $jt_dir ) {
+	// The file list comes from `git ls-files`: outside a git checkout (an extracted
+	// zip) it is empty, which used to print "0 of 0 claimed (100%)" and pass.
+	if ( '' === trim( (string) shell_exec( 'git -C ' . escapeshellarg( $jt_dir ) . ' rev-parse --is-inside-work-tree 2>/dev/null' ) ) ) {
+		printf( "journey-coverage %s: FAIL - %s is not a git checkout, so there is no list of shipped files to check. Run it in the repo.\n", $jt_side, $jt_dir );
+		exit( 1 );
+	}
 	$jt_all = jt_cov_shipped( $jt_dir );
 	$jt_un  = array_values( array_diff( $jt_all, jt_cov_ls( $jt_dir, $jt_claim[ $jt_side ] ) ) );
 	$jt_pct = $jt_all ? 100 * ( count( $jt_all ) - count( $jt_un ) ) / count( $jt_all ) : 100;

@@ -99,8 +99,8 @@ final class Mod_Command extends Base_Command {
 	 *     wp jetonomy mod resolve 17 --resolver=1 --decision=dismissed
 	 */
 	public function resolve( $args, $assoc ): void {
-		$flag_id  = (int) ( $args[0] ?? 0 );
-		$resolver = (int) ( $assoc['resolver'] ?? 0 );
+		$flag_id  = $this->int_arg( $args, 0, 0 );
+		$resolver = $this->int_arg( $assoc, 'resolver', 0 );
 		$decision = (string) ( $assoc['decision'] ?? '' );
 		$result   = ( new Moderation_Journey() )->resolve_flag( $flag_id, $resolver, $decision );
 		$this->render( $result, $assoc );
@@ -161,10 +161,10 @@ final class Mod_Command extends Base_Command {
 			\WP_CLI::error( $flag_error );
 		}
 
-		$target   = (int) ( $assoc['target'] ?? 0 );
-		$issuer   = (int) ( $assoc['issuer'] ?? 0 );
+		$target   = $this->int_arg( $assoc, 'target', 0 );
+		$issuer   = $this->int_arg( $assoc, 'issuer', 0 );
 		$type     = (string) ( $assoc['type'] ?? 'global_ban' );
-		$space_id = isset( $assoc['space'] ) ? (int) $assoc['space'] : null;
+		$space_id = $this->int_arg( $assoc, 'space', null );
 		$reason   = isset( $assoc['reason'] ) ? (string) $assoc['reason'] : null;
 		// An IP ban stores its address where the reason goes (is_ip_banned() matches it).
 		if ( 'ip_ban' === $type ) {
@@ -224,7 +224,7 @@ final class Mod_Command extends Base_Command {
 	 *     wp jetonomy mod unban 12
 	 */
 	public function unban( $args, $assoc ): void {
-		$id     = (int) ( $args[0] ?? 0 );
+		$id     = $this->int_arg( $args, 0, 0 );
 		$result = ( new Moderation_Journey() )->unban( $id );
 		$this->render( $result, $assoc );
 	}
@@ -254,8 +254,8 @@ final class Mod_Command extends Base_Command {
 	 *     wp jetonomy mod is-banned --target=5 --space=3
 	 */
 	public function is_banned( $args, $assoc ): void {
-		$target   = (int) ( $assoc['target'] ?? 0 );
-		$space_id = isset( $assoc['space'] ) ? (int) $assoc['space'] : null;
+		$target   = $this->int_arg( $assoc, 'target', 0 );
+		$space_id = $this->int_arg( $assoc, 'space', null );
 		$result   = ( new Moderation_Journey() )->is_banned( $target, $space_id );
 		$this->render( $result, $assoc );
 	}

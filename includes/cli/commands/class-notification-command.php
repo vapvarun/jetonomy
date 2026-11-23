@@ -69,10 +69,10 @@ final class Notification_Command extends Base_Command {
 		$result = ( new Notification_Journey() )->trigger(
 			array(
 				'type'        => (string) ( $assoc['type'] ?? '' ),
-				'user_id'     => (int) ( $assoc['to'] ?? 0 ),
-				'actor_id'    => (int) ( $assoc['actor'] ?? 0 ),
+				'user_id'     => $this->int_arg( $assoc, 'to', 0 ),
+				'actor_id'    => $this->int_arg( $assoc, 'actor', 0 ),
 				'object_type' => (string) ( $assoc['object-type'] ?? '' ),
-				'object_id'   => (int) ( $assoc['object-id'] ?? 0 ),
+				'object_id'   => $this->int_arg( $assoc, 'object-id', 0 ),
 				'message'     => (string) ( $assoc['message'] ?? '' ),
 			)
 		);
@@ -119,9 +119,9 @@ final class Notification_Command extends Base_Command {
 	 */
 	public function list( $args, $assoc ): void {
 		$result = ( new Notification_Journey() )->list_for_user(
-			(int) ( $assoc['to'] ?? 0 ),
-			(int) ( $assoc['limit'] ?? 20 ),
-			(int) ( $assoc['offset'] ?? 0 )
+			$this->int_arg( $assoc, 'to', 0 ),
+			$this->int_arg( $assoc, 'limit', 20 ),
+			$this->int_arg( $assoc, 'offset', 0 )
 		);
 		$this->render_list( $result, $assoc );
 	}
@@ -150,7 +150,7 @@ final class Notification_Command extends Base_Command {
 	 */
 	public function unread_count( $args, $assoc ): void {
 		$result = ( new Notification_Journey() )->unread_count(
-			(int) ( $assoc['to'] ?? 0 )
+			$this->int_arg( $assoc, 'to', 0 )
 		);
 		$this->render( $result, $assoc );
 	}
@@ -178,7 +178,7 @@ final class Notification_Command extends Base_Command {
 	 * @subcommand mark-read
 	 */
 	public function mark_read( $args, $assoc ): void {
-		$id     = (int) ( $args[0] ?? 0 );
+		$id     = $this->int_arg( $args, 0, 0 );
 		$result = ( new Notification_Journey() )->mark_read( $id );
 		$this->render( $result, $assoc );
 	}
@@ -207,7 +207,7 @@ final class Notification_Command extends Base_Command {
 	 */
 	public function mark_all_read( $args, $assoc ): void {
 		$result = ( new Notification_Journey() )->mark_all_read(
-			(int) ( $assoc['to'] ?? 0 )
+			$this->int_arg( $assoc, 'to', 0 )
 		);
 		$this->render( $result, $assoc );
 	}
@@ -236,7 +236,7 @@ final class Notification_Command extends Base_Command {
 	 */
 	public function test_email( $args, $assoc ): void {
 		$result = ( new Notification_Journey() )->test_email(
-			(int) ( $assoc['to'] ?? 0 )
+			$this->int_arg( $assoc, 'to', 0 )
 		);
 		$this->render( $result, $assoc );
 	}

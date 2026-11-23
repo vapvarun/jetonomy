@@ -42,7 +42,7 @@ Members at trust level 2 or above, and administrators, skip this check. See [Ant
 New accounts start at trust level 0 (Newcomer). You can cap what they do each day.
 
 1. Go to **Jetonomy → Settings → Permissions**.
-2. In **Rate Limits for New Users (Level 0)**, set **Posts per Day**, **Replies per Day** and **Votes per Day**. The defaults are 3, 10 and 5.
+2. In **Rate Limits for New Users (Level 0)**, set **Posts per Day**, **Replies per Day** and **Votes per Day**. The defaults are 3, 10 and 5. An empty field goes back to its default, and 0 turns that limit off.
 3. Click **Save Settings**.
 
 Members move up on their own as they take part. In the **Trust Level Thresholds** card, each earned level has **Topics and Replies Written**, **Days Active**, **Reputation** and **Replies Received**. By default, level 1 (Member) needs 5 topics or replies and 3 days active, so a member who only answers questions still moves up. Level 1 and above have no daily limits.

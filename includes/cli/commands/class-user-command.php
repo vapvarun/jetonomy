@@ -68,7 +68,7 @@ final class User_Command extends Base_Command {
 				'email'        => (string) ( $assoc['email'] ?? '' ),
 				'password'     => (string) ( $assoc['password'] ?? '' ),
 				'role'         => (string) ( $assoc['role'] ?? 'subscriber' ),
-				'trust_level'  => (int) ( $assoc['trust-level'] ?? 0 ),
+				'trust_level'  => $this->int_arg( $assoc, 'trust-level', 0 ),
 				'display_name' => (string) ( $assoc['display-name'] ?? '' ),
 			)
 		);
@@ -102,8 +102,8 @@ final class User_Command extends Base_Command {
 	 */
 	public function set_trust( $args, $assoc ): void {
 		$result = ( new User_Journey() )->set_trust_level(
-			(int) ( $args[0] ?? 0 ),
-			(int) ( $assoc['level'] ?? 0 )
+			$this->int_arg( $args, 0, 0 ),
+			$this->int_arg( $assoc, 'level', 0 )
 		);
 		$this->render( $result, $assoc );
 	}
@@ -131,7 +131,7 @@ final class User_Command extends Base_Command {
 	 * @subcommand get-trust
 	 */
 	public function get_trust( $args, $assoc ): void {
-		$result = ( new User_Journey() )->get_trust_level( (int) ( $args[0] ?? 0 ) );
+		$result = ( new User_Journey() )->get_trust_level( $this->int_arg( $args, 0, 0 ) );
 		$this->render( $result, $assoc );
 	}
 
@@ -179,7 +179,7 @@ final class User_Command extends Base_Command {
 			$changes['avatar_url'] = (string) $assoc['avatar-url'];
 		}
 
-		$result = ( new User_Journey() )->update_profile( (int) ( $args[0] ?? 0 ), $changes );
+		$result = ( new User_Journey() )->update_profile( $this->int_arg( $args, 0, 0 ), $changes );
 		$this->render( $result, $assoc );
 	}
 
@@ -211,8 +211,8 @@ final class User_Command extends Base_Command {
 	 */
 	public function adjust_reputation( $args, $assoc ): void {
 		$result = ( new User_Journey() )->adjust_reputation(
-			(int) ( $args[0] ?? 0 ),
-			(int) ( $assoc['delta'] ?? 0 )
+			$this->int_arg( $args, 0, 0 ),
+			$this->int_arg( $assoc, 'delta', 0 )
 		);
 		$this->render( $result, $assoc );
 	}
@@ -240,7 +240,7 @@ final class User_Command extends Base_Command {
 	 * @subcommand get-profile
 	 */
 	public function get_profile( $args, $assoc ): void {
-		$result = ( new User_Journey() )->get_profile( (int) ( $args[0] ?? 0 ) );
+		$result = ( new User_Journey() )->get_profile( $this->int_arg( $args, 0, 0 ) );
 		$this->render( $result, $assoc );
 	}
 
@@ -276,7 +276,7 @@ final class User_Command extends Base_Command {
 	 * @subcommand list-online
 	 */
 	public function list_online( $args, $assoc ): void {
-		$result = ( new User_Journey() )->list_online_users( (int) ( $assoc['limit'] ?? 20 ) );
+		$result = ( new User_Journey() )->list_online_users( $this->int_arg( $assoc, 'limit', 20 ) );
 		$this->render_list( $result, $assoc );
 	}
 
@@ -308,8 +308,8 @@ final class User_Command extends Base_Command {
 	 */
 	public function ban( $args, $assoc ): void {
 		$result = ( new User_Journey() )->ban_user(
-			(int) ( $args[0] ?? 0 ),
-			(int) ( $assoc['issuer'] ?? 0 ),
+			$this->int_arg( $args, 0, 0 ),
+			$this->int_arg( $assoc, 'issuer', 0 ),
 			isset( $assoc['reason'] ) ? (string) $assoc['reason'] : null
 		);
 		$this->render( $result, $assoc );

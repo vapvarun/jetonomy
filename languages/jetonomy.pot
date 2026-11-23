@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T07:04:26+00:00\n"
+"POT-Creation-Date: 2026-11-23T07:44:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -1142,7 +1142,7 @@ msgstr ""
 #: includes/admin/class-admin.php:213
 #: includes/admin/views/activity.php:41
 #: includes/admin/views/settings.php:387
-#: includes/class-settings.php:738
+#: includes/class-settings.php:771
 msgid "Activity Log"
 msgstr ""
 
@@ -1367,7 +1367,7 @@ msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #: includes/admin/class-admin.php:419
-#: includes/admin/views/settings.php:1494
+#: includes/admin/views/settings.php:1495
 msgid "SEO Pro"
 msgstr ""
 
@@ -1378,7 +1378,7 @@ msgid "Per-%s meta titles, Open Graph, Twitter Cards, Schema.org, sitemap contro
 msgstr ""
 
 #: includes/admin/class-admin.php:420
-#: includes/admin/views/settings.php:1299
+#: includes/admin/views/settings.php:1300
 msgid "White Label"
 msgstr ""
 
@@ -1597,7 +1597,7 @@ msgid "%1$s on \"%2$s\""
 msgstr ""
 
 #: includes/admin/class-admin.php:907
-#: includes/admin/views/settings.php:650
+#: includes/admin/views/settings.php:651
 msgid "Only administrators can change the role capability mapping."
 msgstr ""
 
@@ -2491,7 +2491,7 @@ msgstr ""
 
 #: includes/admin/views/dashboard.php:135
 #: includes/admin/views/dashboard.php:179
-#: includes/admin/views/settings.php:787
+#: includes/admin/views/settings.php:788
 #: includes/class-privacy.php:394
 msgid "Action"
 msgstr ""
@@ -2881,8 +2881,8 @@ msgstr ""
 #: includes/admin/views/moderation.php:237
 #: includes/admin/views/moderation.php:348
 #: includes/admin/views/moderation.php:477
-#: includes/admin/views/settings.php:988
-#: includes/admin/views/settings.php:1022
+#: includes/admin/views/settings.php:989
+#: includes/admin/views/settings.php:1023
 #: includes/admin/views/space-edit.php:299
 #: includes/admin/views/space-edit.php:427
 #: includes/admin/views/space-edit.php:583
@@ -3097,8 +3097,8 @@ msgid "Permissions"
 msgstr ""
 
 #: includes/admin/views/settings.php:73
-#: includes/admin/views/settings.php:911
-#: includes/admin/views/settings.php:933
+#: includes/admin/views/settings.php:912
+#: includes/admin/views/settings.php:934
 #: includes/class-blocks.php:889
 #: templates/views/edit-profile.php:209
 #: templates/views/subscriptions.php:43
@@ -3156,7 +3156,7 @@ msgstr ""
 #: includes/admin/views/settings.php:162
 #: includes/class-blocks.php:612
 #: includes/class-nav-menus.php:96
-#: includes/class-settings.php:721
+#: includes/class-settings.php:754
 #: includes/functions.php:29
 #: includes/functions.php:39
 #: includes/integrations/class-fluent-community.php:1035
@@ -3168,7 +3168,7 @@ msgid "Displayed as the main heading on the community home page."
 msgstr ""
 
 #: includes/admin/views/settings.php:167
-#: includes/class-settings.php:723
+#: includes/class-settings.php:756
 msgid "Terms of Service URL"
 msgstr ""
 
@@ -3179,7 +3179,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty if you hav
 msgstr ""
 
 #: includes/admin/views/settings.php:174
-#: includes/class-settings.php:724
+#: includes/class-settings.php:757
 msgid "Privacy Policy URL"
 msgstr ""
 
@@ -3190,7 +3190,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty to use you
 msgstr ""
 
 #: includes/admin/views/settings.php:181
-#: includes/class-settings.php:725
+#: includes/class-settings.php:758
 msgid "Support URL"
 msgstr ""
 
@@ -3367,7 +3367,7 @@ msgid "E-commerce"
 msgstr ""
 
 #: includes/admin/views/settings.php:299
-#: includes/admin/views/settings.php:1445
+#: includes/admin/views/settings.php:1446
 #: includes/models/class-flag.php:31
 #: templates/partials/moderation/flag-card.php:40
 #: templates/views/moderation.php:246
@@ -3433,8 +3433,8 @@ msgstr ""
 #: includes/admin/views/settings.php:374
 #: includes/admin/views/settings.php:378
 #: includes/admin/views/space-edit.php:767
-#: includes/class-settings.php:735
-#: includes/class-settings.php:739
+#: includes/class-settings.php:768
+#: includes/class-settings.php:772
 #, php-format
 msgid "%s Per Page"
 msgstr ""
@@ -3675,520 +3675,532 @@ msgstr ""
 msgid "Only for roles that already have these permissions."
 msgstr ""
 
-#: includes/admin/views/settings.php:583
+#: includes/admin/views/settings.php:581
+msgid "Leave a field empty for that level's default (shown when you clear it). 0 means no requirement for that measure."
+msgstr ""
+
+#: includes/admin/views/settings.php:584
 msgid "Trust level names"
 msgstr ""
 
 #. translators: %s: plural member label, lowercase (e.g. members).
-#: includes/admin/views/settings.php:584
+#: includes/admin/views/settings.php:585
 #, php-format
 msgid "What %s see on profiles, hover cards and badges. Leave a field blank to keep the built-in name."
 msgstr ""
 
 #. translators: %d: trust level number.
-#: includes/admin/views/settings.php:588
+#: includes/admin/views/settings.php:589
 #, php-format
 msgid "Level %d"
 msgstr ""
 
-#: includes/admin/views/settings.php:599
-#: includes/class-settings.php:841
+#: includes/admin/views/settings.php:600
+#: includes/class-settings.php:874
 msgid "Rate Limits for New Users (Level 0)"
 msgstr ""
 
-#: includes/admin/views/settings.php:600
+#: includes/admin/views/settings.php:601
 msgid "Limit how much brand-new users can post in a single day to reduce spam."
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/admin/views/settings.php:604
-#: includes/admin/views/settings.php:608
+#: includes/admin/views/settings.php:605
+#: includes/admin/views/settings.php:609
 #, php-format
 msgid "%s per Day"
 msgstr ""
 
-#: includes/admin/views/settings.php:612
+#. translators: %d: default daily limit.
+#: includes/admin/views/settings.php:606
+#: includes/admin/views/settings.php:610
+#: includes/admin/views/settings.php:614
+#, php-format
+msgid "Leave empty for the default of %d. 0 turns this limit off."
+msgstr ""
+
+#: includes/admin/views/settings.php:613
 msgid "Votes per Day"
 msgstr ""
 
 #. translators: %s: space label, singular (e.g. "Space").
-#: includes/admin/views/settings.php:621
+#: includes/admin/views/settings.php:622
 #, php-format
 msgid "%s Moderators"
 msgstr ""
 
-#: includes/admin/views/settings.php:625
+#: includes/admin/views/settings.php:626
 msgid "Banning"
 msgstr ""
 
 #. translators: %s: space label, lowercase (e.g. "space").
-#: includes/admin/views/settings.php:629
+#: includes/admin/views/settings.php:630
 #, php-format
 msgid "%s moderators can ban members"
 msgstr ""
 
 #. translators: 1: space label, lowercase (e.g. "space").
-#: includes/admin/views/settings.php:634
+#: includes/admin/views/settings.php:635
 #, php-format
 msgid "When on, a %1$s moderator can ban a member of their own %1$s from that %1$s, and lift those bans. Moderators can never ban a %1$s admin, the %1$s owner, another moderator or a site administrator. Off by default. Only administrators can change this."
 msgstr ""
 
-#: includes/admin/views/settings.php:645
-#: includes/admin/views/settings.php:721
+#: includes/admin/views/settings.php:646
+#: includes/admin/views/settings.php:722
 msgid "Role Capability Mapping"
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/views/settings.php:646
+#: includes/admin/views/settings.php:647
 #, php-format
 msgid "Which %s capabilities each WordPress role holds. Administrators always hold every capability. Unticking a box revokes the capability on save."
 msgstr ""
 
 #. translators: 1: comma-separated role names. 2: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/settings.php:682
+#: includes/admin/views/settings.php:683
 #, php-format
 msgid "No WordPress read capability: %1$s. Their %2$s can read but cannot post, vote or join, so only Read can be ticked for them."
 msgstr ""
 
 #. translators: 1: member label, plural (e.g. "Members"). 2: role name, e.g. Customer. 3: space label, lowercase (e.g. "space").
-#: includes/admin/views/settings.php:705
+#: includes/admin/views/settings.php:706
 #, php-format
 msgid "%1$s with the %2$s role cannot read or post in any %3$s, because nothing is ticked for this role."
 msgstr ""
 
 #. translators: 1: role name. 2: member label, plural, lowercase (e.g. "members"). 3: the Subscriber role name.
-#: includes/admin/views/settings.php:710
+#: includes/admin/views/settings.php:711
 #, php-format
 msgid "Give %1$s %2$s the same access as the %3$s role"
 msgstr ""
 
-#: includes/admin/views/settings.php:717
+#: includes/admin/views/settings.php:718
 msgid "Scroll sideways to see every role. The capability column stays in place."
 msgstr ""
 
-#: includes/admin/views/settings.php:726
+#: includes/admin/views/settings.php:727
 #: includes/admin/views/space-edit.php:509
 msgid "Capability"
 msgstr ""
 
 #. translators: 1: capability label, 2: role name
-#: includes/admin/views/settings.php:742
+#: includes/admin/views/settings.php:743
 #, php-format
 msgid "%1$s for %2$s"
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/admin/views/settings.php:763
-#: includes/admin/views/settings.php:765
+#: includes/admin/views/settings.php:764
+#: includes/admin/views/settings.php:766
 #, php-format
 msgid "%s upvoted"
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/admin/views/settings.php:767
-#: includes/admin/views/settings.php:769
+#: includes/admin/views/settings.php:768
+#: includes/admin/views/settings.php:770
 #, php-format
 msgid "%s downvoted"
 msgstr ""
 
 #. translators: %s: reply label (e.g. "Reply").
-#: includes/admin/views/settings.php:771
+#: includes/admin/views/settings.php:772
 #, php-format
 msgid "%s accepted as answer"
 msgstr ""
 
-#: includes/admin/views/settings.php:772
+#: includes/admin/views/settings.php:773
 msgid "Idea moved to Planned/Shipped"
 msgstr ""
 
-#: includes/admin/views/settings.php:773
+#: includes/admin/views/settings.php:774
 msgid "Flag confirmed (reporter)"
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/admin/views/settings.php:775
+#: includes/admin/views/settings.php:776
 msgid "Content reported"
 msgstr ""
 
-#: includes/admin/views/settings.php:776
+#: includes/admin/views/settings.php:777
 msgid "Content removed by moderator"
 msgstr ""
 
-#: includes/admin/views/settings.php:781
+#: includes/admin/views/settings.php:782
 msgid "Reputation Points"
 msgstr ""
 
-#: includes/admin/views/settings.php:782
+#: includes/admin/views/settings.php:783
 msgid "How many points each action awards (or deducts). Positive numbers reward, negative numbers penalize. Leave a row at its default if you have no reason to change it."
 msgstr ""
 
-#: includes/admin/views/settings.php:788
-#: includes/admin/views/settings.php:802
+#: includes/admin/views/settings.php:789
+#: includes/admin/views/settings.php:803
 msgid "Points"
 msgstr ""
 
-#: includes/admin/views/settings.php:789
-#: includes/admin/views/settings.php:812
+#: includes/admin/views/settings.php:790
+#: includes/admin/views/settings.php:813
 #: includes/admin/views/space-edit.php:776
 #: templates/views/space-edit.php:219
 msgid "Default"
 msgstr ""
 
 #. translators: %s: reputation action label
-#: includes/admin/views/settings.php:805
+#: includes/admin/views/settings.php:806
 #, php-format
 msgid "Points for %s"
 msgstr ""
 
 #. translators: %s: member label, plural (e.g. "Members").
-#: includes/admin/views/settings.php:823
+#: includes/admin/views/settings.php:824
 #, php-format
 msgid "Let %s attach files and write anonymously"
 msgstr ""
 
 #. translators: 1: topic label, singular, lowercase. 2: reply label, singular, lowercase. 3: plural space label, lowercase. 4: member label, plural, lowercase.
-#: includes/admin/views/settings.php:825
+#: includes/admin/views/settings.php:826
 #, php-format
 msgid "Pro adds images and files on any %1$s or %2$s (in private %3$s served only to their %4$s), and anonymous writing that only site owners can reveal, with every reveal logged."
 msgstr ""
 
-#: includes/admin/views/settings.php:835
+#: includes/admin/views/settings.php:836
 msgid "Email Sender"
 msgstr ""
 
-#: includes/admin/views/settings.php:836
+#: includes/admin/views/settings.php:837
 msgid "Configure the name and address that appear in outgoing community emails."
 msgstr ""
 
-#: includes/admin/views/settings.php:840
+#: includes/admin/views/settings.php:841
 msgid "From Name"
 msgstr ""
 
-#: includes/admin/views/settings.php:846
+#: includes/admin/views/settings.php:847
 msgid "From Email"
 msgstr ""
 
-#: includes/admin/views/settings.php:852
-#: includes/class-settings.php:896
+#: includes/admin/views/settings.php:853
+#: includes/class-settings.php:929
 msgid "Email Logo"
 msgstr ""
 
-#: includes/admin/views/settings.php:855
+#: includes/admin/views/settings.php:856
 msgid "URL to your logo image for notification emails. Recommended: 200x40px, PNG or SVG. Leave empty to use site name as text."
 msgstr ""
 
-#: includes/admin/views/settings.php:859
-#: includes/class-settings.php:902
+#: includes/admin/views/settings.php:860
+#: includes/class-settings.php:935
 msgid "Email Verification Reminder"
 msgstr ""
 
-#: includes/admin/views/settings.php:862
+#: includes/admin/views/settings.php:863
 msgid "hours"
 msgstr ""
 
-#: includes/admin/views/settings.php:863
-msgid "Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if the email is still unverified. Set to 0 to disable."
+#: includes/admin/views/settings.php:864
+msgid "Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if the email is still unverified. Leave empty for the default of 24. Set to 0 to disable."
 msgstr ""
 
-#: includes/admin/views/settings.php:867
+#: includes/admin/views/settings.php:868
 msgid "Email Adapter"
 msgstr ""
 
-#: includes/admin/views/settings.php:870
+#: includes/admin/views/settings.php:871
 msgid "WordPress Default (wp_mail)"
 msgstr ""
 
-#: includes/admin/views/settings.php:872
+#: includes/admin/views/settings.php:873
 msgid "Uses your WordPress email configuration. SMTP plugins are supported."
 msgstr ""
 
-#: includes/admin/views/settings.php:876
+#: includes/admin/views/settings.php:877
 msgid "Test Email"
 msgstr ""
 
-#: includes/admin/views/settings.php:880
+#: includes/admin/views/settings.php:881
 msgid "Send Test Email"
 msgstr ""
 
 #. translators: %s: admin email
-#: includes/admin/views/settings.php:886
+#: includes/admin/views/settings.php:887
 #, php-format
 msgid "Sends a test email to %s"
 msgstr ""
 
-#: includes/admin/views/settings.php:897
+#: includes/admin/views/settings.php:898
 msgid "Notification Defaults"
 msgstr ""
 
 #. translators: %s: member label, plural (e.g. "Members").
-#: includes/admin/views/settings.php:898
+#: includes/admin/views/settings.php:899
 #, php-format
 msgid "Default on/off state for each notification type. %s can override these in their profile settings."
 msgstr ""
 
-#: includes/admin/views/settings.php:909
+#: includes/admin/views/settings.php:910
 msgid "Notification Type"
 msgstr ""
 
-#: includes/admin/views/settings.php:910
-#: includes/admin/views/settings.php:926
+#: includes/admin/views/settings.php:911
+#: includes/admin/views/settings.php:927
 #: templates/views/edit-profile.php:208
 #: templates/views/subscriptions.php:42
 msgid "Web"
 msgstr ""
 
 #. translators: %s: notification type
-#: includes/admin/views/settings.php:928
+#: includes/admin/views/settings.php:929
 #, php-format
 msgid "Web notification for %s"
 msgstr ""
 
 #. translators: %s: notification type
-#: includes/admin/views/settings.php:935
+#: includes/admin/views/settings.php:936
 #, php-format
 msgid "Email notification for %s"
 msgstr ""
 
-#: includes/admin/views/settings.php:949
+#: includes/admin/views/settings.php:950
 msgid "Email Templates"
 msgstr ""
 
-#: includes/admin/views/settings.php:951
+#: includes/admin/views/settings.php:952
 msgid "Customize subject and intro copy per notification type. Leave blank to use defaults."
 msgstr ""
 
-#: includes/admin/views/settings.php:953
+#: includes/admin/views/settings.php:954
 msgid "Placeholders:"
 msgstr ""
 
-#: includes/admin/views/settings.php:961
+#: includes/admin/views/settings.php:962
 msgid "Footer Text"
 msgstr ""
 
-#: includes/admin/views/settings.php:963
+#: includes/admin/views/settings.php:964
 msgid "You received this because you are part of the community."
 msgstr ""
 
-#: includes/admin/views/settings.php:964
+#: includes/admin/views/settings.php:965
 msgid "Appears at the bottom of every branded notification email."
 msgstr ""
 
-#: includes/admin/views/settings.php:985
+#: includes/admin/views/settings.php:986
 #: includes/api/class-base-controller.php:87
 msgid "Notification"
 msgstr ""
 
-#: includes/admin/views/settings.php:986
-#: includes/admin/views/settings.php:1006
+#: includes/admin/views/settings.php:987
+#: includes/admin/views/settings.php:1007
 msgid "Subject"
 msgstr ""
 
-#: includes/admin/views/settings.php:987
-#: includes/admin/views/settings.php:1014
+#: includes/admin/views/settings.php:988
+#: includes/admin/views/settings.php:1015
 msgid "Body / Intro"
 msgstr ""
 
 #. translators: %s: notification type
-#: includes/admin/views/settings.php:1008
+#: includes/admin/views/settings.php:1009
 #, php-format
 msgid "Email subject for %s"
 msgstr ""
 
 #. translators: %s: notification type
-#: includes/admin/views/settings.php:1016
+#: includes/admin/views/settings.php:1017
 #, php-format
 msgid "Email body for %s"
 msgstr ""
 
-#: includes/admin/views/settings.php:1024
+#: includes/admin/views/settings.php:1025
 msgid "Preview"
 msgstr ""
 
-#: includes/admin/views/settings.php:1026
 #: includes/admin/views/settings.php:1027
+#: includes/admin/views/settings.php:1028
 msgid "Send test"
 msgstr ""
 
-#: includes/admin/views/settings.php:1041
+#: includes/admin/views/settings.php:1042
 msgid "Reset to default"
 msgstr ""
 
-#: includes/admin/views/settings.php:1054
+#: includes/admin/views/settings.php:1055
 #: assets/js/admin-settings.js:14
 msgid "Email Preview"
 msgstr ""
 
-#: includes/admin/views/settings.php:1056
+#: includes/admin/views/settings.php:1057
 msgid "Preview rendered with sample data. Save the page to persist overrides."
 msgstr ""
 
-#: includes/admin/views/settings.php:1058
+#: includes/admin/views/settings.php:1059
 msgid "Email preview"
 msgstr ""
 
-#: includes/admin/views/settings.php:1060
+#: includes/admin/views/settings.php:1061
 #: includes/admin/views/tags.php:227
 #: assets/js/header.js:717
 msgid "Close"
 msgstr ""
 
-#: includes/admin/views/settings.php:1068
+#: includes/admin/views/settings.php:1069
 msgid "Email Digest"
 msgstr ""
 
 #. translators: %s: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/settings.php:1070
+#: includes/admin/views/settings.php:1071
 #, php-format
 msgid "Send daily or weekly email digests to re-engage %s who haven't visited recently."
 msgstr ""
 
-#: includes/admin/views/settings.php:1079
+#: includes/admin/views/settings.php:1080
 msgid "Theme Integration"
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/views/settings.php:1080
+#: includes/admin/views/settings.php:1081
 #, php-format
 msgid "Control how %s adopts your active theme's design tokens."
 msgstr ""
 
-#: includes/admin/views/settings.php:1084
+#: includes/admin/views/settings.php:1085
 msgid "Theme appearance"
 msgstr ""
 
-#: includes/admin/views/settings.php:1087
+#: includes/admin/views/settings.php:1088
 msgid "Fonts and colours follow your active theme automatically. To use a different accent, set one below, or leave it at the default to keep matching your theme."
 msgstr ""
 
-#: includes/admin/views/settings.php:1097
+#: includes/admin/views/settings.php:1098
 msgid "Logo"
 msgstr ""
 
-#: includes/admin/views/settings.php:1098
+#: includes/admin/views/settings.php:1099
 msgid "Your community logo. Shown in the mobile app (login + header) and anywhere a brand mark is needed. Square or wide PNG/SVG; leave empty to show the Community Title as text."
 msgstr ""
 
-#: includes/admin/views/settings.php:1102
-#: includes/class-settings.php:922
+#: includes/admin/views/settings.php:1103
+#: includes/class-settings.php:955
 msgid "Logo URL"
 msgstr ""
 
-#: includes/admin/views/settings.php:1105
+#: includes/admin/views/settings.php:1106
 msgid "Paste an image URL (e.g. from Media Library). Recommended: at least 512px on the longest side, transparent PNG."
 msgstr ""
 
-#: includes/admin/views/settings.php:1114
+#: includes/admin/views/settings.php:1115
 msgid "Color Palette"
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/views/settings.php:1115
+#: includes/admin/views/settings.php:1116
 #, php-format
 msgid "Set the community colors directly. This is useful when your theme has no color tokens for %s to inherit. A colour you set here is applied in both light and dark mode and outranks the theme. Leave a field empty to keep the default; secondary shades (hover, muted text) derive automatically."
 msgstr ""
 
-#: includes/admin/views/settings.php:1119
+#: includes/admin/views/settings.php:1120
 msgid "Accent"
 msgstr ""
 
-#: includes/admin/views/settings.php:1122
+#: includes/admin/views/settings.php:1123
 msgid "Buttons, links, active states, and notification emails."
 msgstr ""
 
-#: includes/admin/views/settings.php:1126
+#: includes/admin/views/settings.php:1127
 msgid "Text"
 msgstr ""
 
-#: includes/admin/views/settings.php:1129
+#: includes/admin/views/settings.php:1130
 msgid "Body copy and headings. Secondary and muted text derive from it."
 msgstr ""
 
-#: includes/admin/views/settings.php:1133
+#: includes/admin/views/settings.php:1134
 msgid "Background"
 msgstr ""
 
-#: includes/admin/views/settings.php:1136
+#: includes/admin/views/settings.php:1137
 msgid "Cards and content surfaces."
 msgstr ""
 
-#: includes/admin/views/settings.php:1140
+#: includes/admin/views/settings.php:1141
 msgid "Subtle Background"
 msgstr ""
 
-#: includes/admin/views/settings.php:1143
+#: includes/admin/views/settings.php:1144
 msgid "Secondary surfaces: table headers, code, quiet panels."
 msgstr ""
 
-#: includes/admin/views/settings.php:1147
+#: includes/admin/views/settings.php:1148
 msgid "Border"
 msgstr ""
 
-#: includes/admin/views/settings.php:1150
+#: includes/admin/views/settings.php:1151
 msgid "Card outlines, dividers, and input borders."
 msgstr ""
 
-#: includes/admin/views/settings.php:1164
+#: includes/admin/views/settings.php:1165
 msgid "Layout"
 msgstr ""
 
-#: includes/admin/views/settings.php:1165
+#: includes/admin/views/settings.php:1166
 msgid "Control how community pages fit inside your active theme. \"Theme Default\" leaves your theme in charge."
 msgstr ""
 
-#: includes/admin/views/settings.php:1169
+#: includes/admin/views/settings.php:1170
 msgid "Container Width"
 msgstr ""
 
-#: includes/admin/views/settings.php:1174
-#: includes/admin/views/settings.php:1199
+#: includes/admin/views/settings.php:1175
+#: includes/admin/views/settings.php:1200
 msgid "Theme Default"
 msgstr ""
 
-#: includes/admin/views/settings.php:1179
+#: includes/admin/views/settings.php:1180
 msgid "Full Width"
 msgstr ""
 
-#: includes/admin/views/settings.php:1184
-#: includes/class-settings.php:932
+#: includes/admin/views/settings.php:1185
+#: includes/class-settings.php:965
 msgid "Custom width"
 msgstr ""
 
-#: includes/admin/views/settings.php:1187
+#: includes/admin/views/settings.php:1188
 msgid "px"
 msgstr ""
 
 #. translators: %s: plural space label.
-#: includes/admin/views/settings.php:1190
+#: includes/admin/views/settings.php:1191
 #, php-format
 msgid "Applies to community pages only (%s, Discussions, Profile, etc.)."
 msgstr ""
 
-#: includes/admin/views/settings.php:1194
+#: includes/admin/views/settings.php:1195
 msgid "Page Padding"
 msgstr ""
 
-#: includes/admin/views/settings.php:1204
+#: includes/admin/views/settings.php:1205
 msgid "None (edge to edge)"
 msgstr ""
 
-#: includes/admin/views/settings.php:1209
-#: includes/admin/views/settings.php:1219
+#: includes/admin/views/settings.php:1210
+#: includes/admin/views/settings.php:1220
 msgid "Comfortable"
 msgstr ""
 
-#: includes/admin/views/settings.php:1215
+#: includes/admin/views/settings.php:1216
 msgid "Layout Density"
 msgstr ""
 
-#: includes/admin/views/settings.php:1218
+#: includes/admin/views/settings.php:1219
 msgid "Compact"
 msgstr ""
 
-#: includes/admin/views/settings.php:1220
+#: includes/admin/views/settings.php:1221
 msgid "Spacious"
 msgstr ""
 
-#: includes/admin/views/settings.php:1231
+#: includes/admin/views/settings.php:1232
 #: templates/partials/sidebar/trending.php:23
 #: templates/partials/sidebar/trending.php:25
 #: assets/js/blocks-editor.js:123
@@ -4196,13 +4208,13 @@ msgid "Trending"
 msgstr ""
 
 #. translators: %s: topic label, plural, lowercase (e.g. "topics").
-#: includes/admin/views/settings.php:1233
+#: includes/admin/views/settings.php:1234
 #, php-format
 msgid "The top-voted %s, in the current space or across the community."
 msgstr ""
 
 #. translators: %s: plural member label.
-#: includes/admin/views/settings.php:1237
+#: includes/admin/views/settings.php:1238
 #: includes/class-template-loader.php:1105
 #: includes/class-template-loader.php:1356
 #: includes/widgets/class-leaderboard-widget.php:36
@@ -4213,518 +4225,518 @@ msgid "Top %s"
 msgstr ""
 
 #. translators: %s: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/settings.php:1239
+#: includes/admin/views/settings.php:1240
 #, php-format
 msgid "The five %s with the highest reputation."
 msgstr ""
 
-#: includes/admin/views/settings.php:1242
+#: includes/admin/views/settings.php:1243
 #: templates/partials/sidebar/popular-tags.php:42
 #: templates/partials/sidebar/popular-tags.php:44
 msgid "Popular Tags"
 msgstr ""
 
-#: includes/admin/views/settings.php:1243
+#: includes/admin/views/settings.php:1244
 msgid "The most used tags across the community."
 msgstr ""
 
-#: includes/admin/views/settings.php:1250
+#: includes/admin/views/settings.php:1251
 msgid "Community Sidebar Widgets"
 msgstr ""
 
 #. translators: %s: space label, lowercase (e.g. "space").
-#: includes/admin/views/settings.php:1251
+#: includes/admin/views/settings.php:1252
 #, php-format
 msgid "Choose which widgets show in the community sidebar and drag them into the order you want. About and Managed by always show first on a %s page."
 msgstr ""
 
 #. translators: %s: widget name, e.g. Trending.
 #. translators: %s: a number and the reply label the owner renamed, e.g. "3 answers".
-#: includes/admin/views/settings.php:1263
+#: includes/admin/views/settings.php:1264
 #: includes/class-template-loader.php:1909
 #, php-format
 msgid "Show %s"
 msgstr ""
 
 #. translators: %s: widget name.
-#: includes/admin/views/settings.php:1269
+#: includes/admin/views/settings.php:1270
 #, php-format
 msgid "Move %s up"
 msgstr ""
 
 #. translators: %s: widget name.
-#: includes/admin/views/settings.php:1270
+#: includes/admin/views/settings.php:1271
 #, php-format
 msgid "Move %s down"
 msgstr ""
 
 #. translators: %s: space label, lowercase (e.g. "space").
-#: includes/admin/views/settings.php:1276
+#: includes/admin/views/settings.php:1277
 #, php-format
 msgid "No widgets selected: the sidebar will show only About, Managed by (on a %s page) and any WordPress widgets you add."
 msgstr ""
 
-#: includes/admin/views/settings.php:1284
+#: includes/admin/views/settings.php:1285
 msgid "Custom CSS"
 msgstr ""
 
-#: includes/admin/views/settings.php:1285
+#: includes/admin/views/settings.php:1286
 msgid "Extra CSS injected into the community frontend. Use browser DevTools to find selectors."
 msgstr ""
 
-#: includes/admin/views/settings.php:1300
+#: includes/admin/views/settings.php:1301
 msgid "Replace Jetonomy branding with your own community name, footer text, and wp-admin menu label and icon."
 msgstr ""
 
-#: includes/admin/views/settings.php:1309
+#: includes/admin/views/settings.php:1310
 msgid "Title Templates"
 msgstr ""
 
-#: includes/admin/views/settings.php:1310
+#: includes/admin/views/settings.php:1311
 msgid "Control how page titles are formatted for community pages."
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/admin/views/settings.php:1314
+#: includes/admin/views/settings.php:1315
 #, php-format
 msgid "%s page title"
 msgstr ""
 
-#: includes/admin/views/settings.php:1317
+#: includes/admin/views/settings.php:1318
 msgid "Tokens: {post_title}, {space_name}, {site_name}"
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
-#: includes/admin/views/settings.php:1322
+#: includes/admin/views/settings.php:1323
 #, php-format
 msgid "%s Title"
 msgstr ""
 
-#: includes/admin/views/settings.php:1325
+#: includes/admin/views/settings.php:1326
 msgid "Tokens: {space_name}, {site_name}"
 msgstr ""
 
-#: includes/admin/views/settings.php:1334
+#: includes/admin/views/settings.php:1335
 msgid "Structured Data & Indexing"
 msgstr ""
 
-#: includes/admin/views/settings.php:1335
+#: includes/admin/views/settings.php:1336
 msgid "Schema markup, sitemap inclusion, and noindex rules."
 msgstr ""
 
-#: includes/admin/views/settings.php:1339
+#: includes/admin/views/settings.php:1340
 msgid "Schema Markup"
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/admin/views/settings.php:1343
+#: includes/admin/views/settings.php:1344
 #, php-format
 msgid "Enable DiscussionForumPosting schema on %s pages"
 msgstr ""
 
-#: includes/admin/views/settings.php:1348
+#: includes/admin/views/settings.php:1349
 msgid "XML Sitemap"
 msgstr ""
 
-#: includes/admin/views/settings.php:1352
+#: includes/admin/views/settings.php:1353
 msgid "Include community pages in the WordPress XML sitemap"
 msgstr ""
 
-#: includes/admin/views/settings.php:1357
+#: includes/admin/views/settings.php:1358
 msgid "Noindex"
 msgstr ""
 
-#: includes/admin/views/settings.php:1362
+#: includes/admin/views/settings.php:1363
 msgid "Noindex user profile pages"
 msgstr ""
 
-#: includes/admin/views/settings.php:1367
+#: includes/admin/views/settings.php:1368
 msgid "Noindex search result pages"
 msgstr ""
 
-#: includes/admin/views/settings.php:1370
+#: includes/admin/views/settings.php:1371
 msgid "Moderation queues, composer pages, notifications, edit profile, and invite landings always emit noindex (administrative or personal views, not for search results)."
 msgstr ""
 
-#: includes/admin/views/settings.php:1374
+#: includes/admin/views/settings.php:1375
 msgid "Twitter / X handle"
 msgstr ""
 
-#: includes/admin/views/settings.php:1377
+#: includes/admin/views/settings.php:1378
 msgid "Site handle emitted as twitter:site on every public route. Leave blank to omit."
 msgstr ""
 
-#: includes/admin/views/settings.php:1381
-#: includes/class-settings.php:977
+#: includes/admin/views/settings.php:1382
+#: includes/class-settings.php:1010
 msgid "Default share image"
 msgstr ""
 
-#: includes/admin/views/settings.php:1384
+#: includes/admin/views/settings.php:1385
 msgid "og:image URL when a route has no image of its own. Falls back to the WordPress site logo / icon when this is empty."
 msgstr ""
 
-#: includes/admin/views/settings.php:1388
+#: includes/admin/views/settings.php:1389
 msgid "Verify SEO"
 msgstr ""
 
-#: includes/admin/views/settings.php:1391
+#: includes/admin/views/settings.php:1392
 msgid "Open XML sitemap"
 msgstr ""
 
 #. translators: 1: plural space label, 2: plural topic label, 3: plural space label.
-#: includes/admin/views/settings.php:1394
+#: includes/admin/views/settings.php:1395
 #, php-format
 msgid "Confirms /wp-sitemap.xml is reachable and that community URLs (%1$s + %2$s) are listed. New %3$s can take a few minutes to appear after the next ping."
 msgstr ""
 
-#: includes/admin/views/settings.php:1403
+#: includes/admin/views/settings.php:1404
 msgid "Social Embeds (Instagram & Facebook)"
 msgstr ""
 
-#: includes/admin/views/settings.php:1405
+#: includes/admin/views/settings.php:1406
 msgid "YouTube, Vimeo, TikTok, Twitter/X, Spotify, SoundCloud, and TED Talks embed automatically with no setup required. Instagram and Facebook require a free Meta Developer App because Meta deprecated anonymous oEmbed access in October 2020."
 msgstr ""
 
-#: includes/admin/views/settings.php:1410
+#: includes/admin/views/settings.php:1411
 msgid "Facebook App ID"
 msgstr ""
 
-#: includes/admin/views/settings.php:1413
+#: includes/admin/views/settings.php:1414
 msgid "Numeric App ID from your Meta Developer dashboard."
 msgstr ""
 
-#: includes/admin/views/settings.php:1417
+#: includes/admin/views/settings.php:1418
 msgid "Facebook App Secret"
 msgstr ""
 
-#: includes/admin/views/settings.php:1420
+#: includes/admin/views/settings.php:1421
 msgid "Secret is stored in wp_options and never exposed to the frontend."
 msgstr ""
 
-#: includes/admin/views/settings.php:1427
+#: includes/admin/views/settings.php:1428
 msgid "How to create a Facebook App (5 minutes, free)"
 msgstr ""
 
 #. translators: 1: developers.facebook.com URL, 2: Create App button label
-#: includes/admin/views/settings.php:1434
+#: includes/admin/views/settings.php:1435
 #, php-format
 msgid "Go to %1$s and log in with a Facebook account. Click %2$s in the top-right corner."
 msgstr ""
 
-#: includes/admin/views/settings.php:1436
+#: includes/admin/views/settings.php:1437
 msgid "Create App"
 msgstr ""
 
 #. translators: 1: "Other" use-case label, 2: "Business" app type label
-#: includes/admin/views/settings.php:1444
+#: includes/admin/views/settings.php:1445
 #, php-format
 msgid "When asked \"What do you want your app to do?\", pick %1$s. When asked for the app type, pick %2$s. Name it anything, e.g. \"My Forum Embeds\"."
 msgstr ""
 
-#: includes/admin/views/settings.php:1446
+#: includes/admin/views/settings.php:1447
 msgid "Business"
 msgstr ""
 
 #. translators: %s: "oEmbed Read" product label
-#: includes/admin/views/settings.php:1454
+#: includes/admin/views/settings.php:1455
 #, php-format
 msgid "On the new app's dashboard, find the %s product in the Products list and click Set Up. It's free."
 msgstr ""
 
-#: includes/admin/views/settings.php:1455
+#: includes/admin/views/settings.php:1456
 msgid "oEmbed Read"
 msgstr ""
 
 #. translators: 1: "Settings > Basic" breadcrumb, 2: App ID label, 3: App Secret label
-#: includes/admin/views/settings.php:1463
+#: includes/admin/views/settings.php:1464
 #, php-format
 msgid "Open %1$s. Copy the %2$s and %3$s and paste them into the two fields above."
 msgstr ""
 
-#: includes/admin/views/settings.php:1464
+#: includes/admin/views/settings.php:1465
 msgid "Settings → Basic"
 msgstr ""
 
-#: includes/admin/views/settings.php:1465
+#: includes/admin/views/settings.php:1466
 msgid "App ID"
 msgstr ""
 
-#: includes/admin/views/settings.php:1466
+#: includes/admin/views/settings.php:1467
 msgid "App Secret"
 msgstr ""
 
 #. translators: 1: "App Review > Requests" breadcrumb, 2: "oembed_read" permission name
-#: includes/admin/views/settings.php:1474
+#: includes/admin/views/settings.php:1475
 #, php-format
 msgid "Go to %1$s and request the %2$s permission. Meta typically approves in 1-3 business days. Your app stays in Development Mode until approved; embeds will work for the admin who created the app even before approval."
 msgstr ""
 
-#: includes/admin/views/settings.php:1475
+#: includes/admin/views/settings.php:1476
 msgid "App Review → Requests"
 msgstr ""
 
 #. translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies").
-#: includes/admin/views/settings.php:1481
+#: includes/admin/views/settings.php:1482
 #, php-format
 msgid "Save the settings here. Instagram and Facebook URLs pasted into %1$s and %2$s will now unfurl as rich embeds."
 msgstr ""
 
-#: includes/admin/views/settings.php:1485
+#: includes/admin/views/settings.php:1486
 msgid "Privacy note:"
 msgstr ""
 
-#: includes/admin/views/settings.php:1486
+#: includes/admin/views/settings.php:1487
 msgid "Jetonomy only sends oEmbed requests to Meta when a user pastes an Instagram/Facebook URL. No tracking, no user data: just the public post URL and your app token. Leave these fields blank to skip Instagram/Facebook embeds entirely; the URL will render as a plain clickable link."
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
-#: includes/admin/views/settings.php:1496
+#: includes/admin/views/settings.php:1497
 #, php-format
 msgid "Open Graph tags, per-%s canonical URLs, breadcrumb schema, and advanced robots control."
 msgstr ""
 
 #. translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). 3: link to the Akismet settings screen.
-#: includes/admin/views/settings.php:1508
+#: includes/admin/views/settings.php:1509
 #, php-format
 msgid "Akismet is active but has no API key, so new %1$s and %2$s are not checked for spam. %3$s"
 msgstr ""
 
-#: includes/admin/views/settings.php:1511
+#: includes/admin/views/settings.php:1512
 msgid "Add an Akismet API key"
 msgstr ""
 
-#: includes/admin/views/settings.php:1521
+#: includes/admin/views/settings.php:1522
 msgid "CAPTCHA Provider"
 msgstr ""
 
 #. translators: 1: topic label, lowercase (e.g. "topic"). 2: reply label, lowercase (e.g. "reply"). 3: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/settings.php:1522
+#: includes/admin/views/settings.php:1523
 #, php-format
 msgid "Protect %1$s and %2$s forms from bots. Trusted %3$s (trust level 2+) are always exempt."
 msgstr ""
 
-#: includes/admin/views/settings.php:1531
+#: includes/admin/views/settings.php:1532
 msgid "A CAPTCHA provider is selected but the Site Key and/or Secret Key is empty. The CAPTCHA will not render until both keys are filled in."
 msgstr ""
 
-#: includes/admin/views/settings.php:1533
+#: includes/admin/views/settings.php:1534
 msgid "CAPTCHA keys are saved but the Provider is set to Disabled, so no CAPTCHA renders. Select Cloudflare Turnstile or reCAPTCHA above to activate it."
 msgstr ""
 
-#: includes/admin/views/settings.php:1538
+#: includes/admin/views/settings.php:1539
 msgid "Heads up:"
 msgstr ""
 
-#: includes/admin/views/settings.php:1546
+#: includes/admin/views/settings.php:1547
 msgid "Provider"
 msgstr ""
 
-#: includes/admin/views/settings.php:1549
+#: includes/admin/views/settings.php:1550
 msgid "Disabled"
 msgstr ""
 
-#: includes/admin/views/settings.php:1550
+#: includes/admin/views/settings.php:1551
 msgid "Google reCAPTCHA v3 (invisible)"
 msgstr ""
 
-#: includes/admin/views/settings.php:1551
+#: includes/admin/views/settings.php:1552
 msgid "Cloudflare Turnstile (privacy-friendly)"
 msgstr ""
 
-#: includes/admin/views/settings.php:1556
+#: includes/admin/views/settings.php:1557
 msgid "Site Key"
 msgstr ""
 
 #. translators: %s: link to the Google reCAPTCHA admin console.
-#: includes/admin/views/settings.php:1563
+#: includes/admin/views/settings.php:1564
 #, php-format
 msgid "reCAPTCHA: get keys at %s."
 msgstr ""
 
 #. translators: %s: link to the Cloudflare Turnstile dashboard.
-#: includes/admin/views/settings.php:1569
+#: includes/admin/views/settings.php:1570
 #, php-format
 msgid "Turnstile: get keys at %s."
 msgstr ""
 
-#: includes/admin/views/settings.php:1577
+#: includes/admin/views/settings.php:1578
 msgid "Secret Key"
 msgstr ""
 
-#: includes/admin/views/settings.php:1580
+#: includes/admin/views/settings.php:1581
 msgid "Stored securely. Never shared with visitors."
 msgstr ""
 
-#: includes/admin/views/settings.php:1584
+#: includes/admin/views/settings.php:1585
 msgid "Score Threshold"
 msgstr ""
 
-#: includes/admin/views/settings.php:1587
+#: includes/admin/views/settings.php:1588
 msgid "reCAPTCHA v3 only. Scores below this value are treated as bots (0.1 = permissive, 0.9 = strict). Default: 0.5."
 msgstr ""
 
-#: includes/admin/views/settings.php:1598
+#: includes/admin/views/settings.php:1599
 msgid "Unlock Pro Extensions"
 msgstr ""
 
-#: includes/admin/views/settings.php:1600
+#: includes/admin/views/settings.php:1601
 msgid "Your community is growing. Give it reactions, messaging, polls, analytics, badges, webhooks, and more. Each feature is an independent module you enable only when you need it."
 msgstr ""
 
-#: includes/admin/views/settings.php:1604
-#: includes/admin/views/settings.php:1654
+#: includes/admin/views/settings.php:1605
+#: includes/admin/views/settings.php:1655
 msgid "View pricing"
 msgstr ""
 
-#: includes/admin/views/settings.php:1612
+#: includes/admin/views/settings.php:1613
 msgid "Free and Pro side by side"
 msgstr ""
 
-#: includes/admin/views/settings.php:1613
+#: includes/admin/views/settings.php:1614
 msgid "Each Pro extension is independent. Enable only what you need. Disabled extensions load zero code."
 msgstr ""
 
 #. translators: 1: plural space label. 2: plural topic label. 3: plural reply label (all lowercase).
-#: includes/admin/views/settings.php:1618
+#: includes/admin/views/settings.php:1619
 #, php-format
 msgid "%1$s, %2$s and %3$s with voting and accepted answers"
 msgstr ""
 
-#: includes/admin/views/settings.php:1619
+#: includes/admin/views/settings.php:1620
 msgid "Trust levels and reputation"
 msgstr ""
 
-#: includes/admin/views/settings.php:1620
+#: includes/admin/views/settings.php:1621
 msgid "Moderation queue, flags and bans"
 msgstr ""
 
-#: includes/admin/views/settings.php:1621
+#: includes/admin/views/settings.php:1622
 msgid "Search, notifications and subscriptions"
 msgstr ""
 
-#: includes/admin/views/settings.php:1622
+#: includes/admin/views/settings.php:1623
 msgid "Importers and the REST API"
 msgstr ""
 
-#: includes/admin/views/settings.php:1624
+#: includes/admin/views/settings.php:1625
 msgid "Included"
 msgstr ""
 
-#: includes/admin/views/settings.php:1625
+#: includes/admin/views/settings.php:1626
 msgid "Not included"
 msgstr ""
 
-#: includes/admin/views/settings.php:1628
+#: includes/admin/views/settings.php:1629
 msgid "What Jetonomy Free and Jetonomy Pro include"
 msgstr ""
 
-#: includes/admin/views/settings.php:1631
+#: includes/admin/views/settings.php:1632
 msgid "Feature"
 msgstr ""
 
-#: includes/admin/views/settings.php:1632
+#: includes/admin/views/settings.php:1633
 msgid "Free"
 msgstr ""
 
-#: includes/admin/views/settings.php:1633
+#: includes/admin/views/settings.php:1634
 msgid "Pro"
 msgstr ""
 
-#: includes/admin/views/settings.php:1654
 #: includes/admin/views/settings.php:1655
+#: includes/admin/views/settings.php:1656
 msgid "(opens in a new tab)"
 msgstr ""
 
-#: includes/admin/views/settings.php:1655
+#: includes/admin/views/settings.php:1656
 msgid "Read the Pro docs"
 msgstr ""
 
-#: includes/admin/views/settings.php:1661
+#: includes/admin/views/settings.php:1662
 #: templates/partials/space-tabs.php:32
 msgid "Questions"
 msgstr ""
 
-#: includes/admin/views/settings.php:1664
+#: includes/admin/views/settings.php:1665
 msgid "What happens if my licence lapses?"
 msgstr ""
 
-#: includes/admin/views/settings.php:1665
+#: includes/admin/views/settings.php:1666
 msgid "Everything keeps working. The licence only brings updates."
 msgstr ""
 
-#: includes/admin/views/settings.php:1666
+#: includes/admin/views/settings.php:1667
 msgid "Do I lose anything if I switch Pro off?"
 msgstr ""
 
-#: includes/admin/views/settings.php:1667
+#: includes/admin/views/settings.php:1668
 msgid "No. Your community, its content and its attachments stay. Only the Pro features pause until Pro is back on."
 msgstr ""
 
-#: includes/admin/views/settings.php:1668
+#: includes/admin/views/settings.php:1669
 msgid "Can I hide these suggestions?"
 msgstr ""
 
-#: includes/admin/views/settings.php:1669
+#: includes/admin/views/settings.php:1670
 msgid "Yes. Dismiss any card for yourself, or turn off \"Show Pro suggestions\" under Settings > General to hide them for every admin."
 msgstr ""
 
-#: includes/admin/views/settings.php:1677
+#: includes/admin/views/settings.php:1678
 msgid "Jetonomy Pro License"
 msgstr ""
 
-#: includes/admin/views/settings.php:1678
+#: includes/admin/views/settings.php:1679
 msgid "Activate or manage your license key to receive Pro updates. Every Pro feature works with or without it."
 msgstr ""
 
-#: includes/admin/views/settings.php:1699
+#: includes/admin/views/settings.php:1700
 msgid "BuddyPress"
 msgstr ""
 
 #. translators: %s: product name shown in wp-admin (default "Jetonomy").
-#: includes/admin/views/settings.php:1700
+#: includes/admin/views/settings.php:1701
 #, php-format
 msgid "Control how %s and BuddyPress group activity stay in sync."
 msgstr ""
 
 #. translators: %s: topic label, plural, lowercase (e.g. "topics").
-#: includes/admin/views/settings.php:1708
+#: includes/admin/views/settings.php:1709
 #, php-format
 msgid "Broadcast %s to group activity"
 msgstr ""
 
 #. translators: 1: product name shown in wp-admin (default "Jetonomy"). 2: topic label, plural, lowercase (e.g. "topics").
-#: includes/admin/views/settings.php:1713
+#: includes/admin/views/settings.php:1714
 #, php-format
 msgid "Post new %1$s %2$s to the paired BuddyPress group activity stream."
 msgstr ""
 
-#: includes/admin/views/settings.php:1718
+#: includes/admin/views/settings.php:1719
 msgid "Round-trip activity comments"
 msgstr ""
 
 #. translators: 1: product name shown in wp-admin (default "Jetonomy"). 2: reply label, plural, lowercase (e.g. "replies").
-#: includes/admin/views/settings.php:1723
+#: includes/admin/views/settings.php:1724
 #, php-format
 msgid "Mirror BuddyPress activity comments on broadcast items back as %1$s %2$s."
 msgstr ""
 
 #. translators: %s: topic label, plural, lowercase (e.g. "topics").
-#: includes/admin/views/settings.php:1725
+#: includes/admin/views/settings.php:1726
 #, php-format
 msgid "Requires \"Broadcast %s to group activity\" to be enabled."
 msgstr ""
 
-#: includes/admin/views/settings.php:1729
-#: includes/admin/views/settings.php:1763
+#: includes/admin/views/settings.php:1730
+#: includes/admin/views/settings.php:1764
 #: includes/admin/views/space-edit.php:839
 msgid "Save Settings"
 msgstr ""
 
-#: includes/admin/views/settings.php:1752
+#: includes/admin/views/settings.php:1753
 msgid "This settings tab is not available. It may belong to an extension that is turned off."
 msgstr ""
 
-#: includes/admin/views/settings.php:1753
+#: includes/admin/views/settings.php:1754
 msgid "Go to General settings"
 msgstr ""
 
@@ -7132,73 +7144,79 @@ msgstr ""
 msgid "Jetonomy: %1$s and %2$s anonymized. Personal data deleted."
 msgstr ""
 
-#: includes/class-settings.php:294
+#: includes/class-settings.php:301
 msgid "Send at least one setting."
 msgstr ""
 
 #. translators: %d: the most settings one request may change.
-#: includes/class-settings.php:298
+#: includes/class-settings.php:305
 #, php-format
 msgid "Change at most %d settings in one request."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:308
+#: includes/class-settings.php:315
 #, php-format
 msgid "%s is not a setting that can be changed here."
 msgstr ""
 
 #. translators: 1: setting key, 2: the mask.
-#: includes/class-settings.php:325
+#: includes/class-settings.php:332
 #, php-format
 msgid "%1$s: send the real secret, or exactly %2$s to keep the stored one."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:340
+#: includes/class-settings.php:347
 #, php-format
 msgid "%s lists the same id more than once."
 msgstr ""
 
 #. translators: 1: setting key, 2: lowest allowed value, 3: highest allowed value.
-#: includes/class-settings.php:354
+#: includes/class-settings.php:361
 #, php-format
 msgid "%1$s must be between %2$s and %3$s."
 msgstr ""
 
-#: includes/class-settings.php:389
+#: includes/class-settings.php:396
 msgid "Another settings change is being saved. Try again in a moment."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:457
+#: includes/class-settings.php:464
 #, php-format
 msgid "%s was not changed: the value was refused, or changing it needs an administrator."
 msgstr ""
 
 #. translators: %s: settings field label.
-#: includes/class-settings.php:654
+#: includes/class-settings.php:679
 #, php-format
 msgid "%s was not changed: it must be a whole number. The previous value was kept."
 msgstr ""
 
+#. translators: 1: settings field label, 2: lowest allowed, 3: highest allowed, 4: value saved.
+#: includes/class-settings.php:689
+#, php-format
+msgid "%1$s must be between %2$d and %3$d, so it was saved as %4$d."
+msgstr ""
+
 #. translators: %s: settings field label.
-#: includes/class-settings.php:680
+#: includes/class-settings.php:713
 #, php-format
 msgid "%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept."
 msgstr ""
 
 #. translators: %d: trust level number.
-#: includes/class-settings.php:806
+#: includes/class-settings.php:839
 #, php-format
 msgid "Trust level %d requirements"
 msgstr ""
 
-#: includes/class-settings.php:866
+#: includes/class-settings.php:899
 msgid "Reputation points were not changed for a value that is not a whole number. The previous value was kept."
 msgstr ""
 
-#: includes/class-settings.php:953
+#: includes/class-settings.php:986
 msgid "Score Threshold was not changed: it must be a number between 0.1 and 0.9. The previous value was kept."
 msgstr ""
 
@@ -10239,31 +10257,31 @@ msgstr ""
 msgid "You have been banned from this %s and cannot take part in it."
 msgstr ""
 
-#: includes/permissions/class-rate-limiter.php:127
+#: includes/permissions/class-rate-limiter.php:132
 msgid "You have reached a posting limit. Please try again later."
 msgstr ""
 
 #. translators: 1: the plural Member label, lowercase, 2: a count of topics or replies, e.g. "3 topics".
-#: includes/permissions/class-rate-limiter.php:143
-#: includes/permissions/class-rate-limiter.php:149
+#: includes/permissions/class-rate-limiter.php:148
+#: includes/permissions/class-rate-limiter.php:154
 #, php-format
 msgid "New %1$s can post %2$s a day."
 msgstr ""
 
 #. translators: %s: human-readable wait, e.g. "17 hours".
-#: includes/permissions/class-rate-limiter.php:145
+#: includes/permissions/class-rate-limiter.php:150
 #, php-format
 msgid "You can post again in about %s."
 msgstr ""
 
 #. translators: %s: human-readable wait, e.g. "45 minutes".
-#: includes/permissions/class-rate-limiter.php:151
+#: includes/permissions/class-rate-limiter.php:156
 #, php-format
 msgid "You can reply again in about %s."
 msgstr ""
 
 #. translators: 1: the plural Member label, lowercase, 2: number of votes allowed per day.
-#: includes/permissions/class-rate-limiter.php:155
+#: includes/permissions/class-rate-limiter.php:160
 #, php-format
 msgid "New %1$s can cast %2$s vote a day."
 msgid_plural "New %1$s can cast %2$s votes a day."
@@ -10271,24 +10289,24 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: human-readable wait, e.g. "2 minutes".
-#: includes/permissions/class-rate-limiter.php:157
+#: includes/permissions/class-rate-limiter.php:162
 #, php-format
 msgid "You can vote again in about %s."
 msgstr ""
 
 #. translators: 1: the plural Member label, lowercase, 2: number of actions allowed per day.
-#: includes/permissions/class-rate-limiter.php:161
+#: includes/permissions/class-rate-limiter.php:166
 #, php-format
 msgid "New %1$s are limited to %2$s of these a day."
 msgstr ""
 
 #. translators: %s: human-readable wait.
-#: includes/permissions/class-rate-limiter.php:163
+#: includes/permissions/class-rate-limiter.php:168
 #, php-format
 msgid "You can try again in about %s."
 msgstr ""
 
-#: includes/permissions/class-rate-limiter.php:177
+#: includes/permissions/class-rate-limiter.php:182
 msgid "Please try again later."
 msgstr ""
 

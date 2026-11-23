@@ -393,4 +393,32 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $this->post( array( 'reputation_points' => array( 'post_upvoted' => '' ) ), $this->admin )->get_status() );
 		$this->assertArrayNotHasKey( 'post_upvoted', get_option( 'jetonomy_settings' )['reputation_points'] );
 	}
+
+	public function test_a_fresh_site_reads_the_defaults_it_uses_and_can_post_them_back(): void {
+		delete_option( 'jetonomy_settings' );
+		wp_set_current_user( $this->admin );
+		$read = rest_do_request( new WP_REST_Request( 'GET', '/jetonomy/v1/admin/settings' ) )->get_data()['settings'];
+		$this->assertSame( array(), array_keys( array_filter( $read, 'is_null' ) ), 'no key reads as null' );
+		$this->assertSame( \Jetonomy\Permissions\Rate_Limiter::defaults(), $read['rate_limits'] );
+		$this->assertSame( \Jetonomy\Trust\Trust_Levels::defaults()[2]['posts'], $read['trust_thresholds'][2]['posts'] );
+		$this->assertFalse( $read['moderators_can_ban'] );
+		$this->assertSame( 'display_name', $read['member_name_display'] );
+
+		$back = array_intersect_key( $read, array_flip( array( 'trust_thresholds', 'trust_level_names', 'moderators_can_ban', 'member_name_display', 'rate_limits', 'reputation_points' ) ) );
+		$this->assertSame( 200, $this->post( $back, $this->admin )->get_status(), 'the read body posts back' );
+	}
+
+	public function test_an_out_of_range_form_number_is_saved_as_the_nearest_value_with_a_notice(): void {
+		$notices = new \ReflectionProperty( Settings::class, 'notices' );
+		$notices->setValue( null, array() );
+		wp_set_current_user( $this->admin );
+		$clean = Settings::sanitize(
+			array(
+				'email_from_name'             => '',
+				'verification_reminder_hours' => '-5',
+			)
+		);
+		$this->assertSame( 0, $clean['verification_reminder_hours'] );
+		$this->assertContains( 'jetonomy_invalid_verification_reminder_hours', array_column( $notices->getValue(), 'code' ) );
+	}
 }

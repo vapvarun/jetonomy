@@ -36,6 +36,11 @@ class Rate_Limiter {
 			return true; // No limit defined for this action.
 		}
 
+		// 0 turns the limit off (the settings hint and status() say so); it used to block every new member.
+		if ( $limits[ $action ] <= 0 ) {
+			return true;
+		}
+
 		$key   = "jetonomy_rate_{$user_id}_{$action}";
 		$count = (int) get_transient( $key );
 

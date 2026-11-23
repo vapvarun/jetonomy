@@ -158,7 +158,7 @@ final class Scenario_Command extends Base_Command {
 			return;
 		}
 
-		if ( ! empty( $assoc['cleanup'] ) ) {
+		if ( $this->bool_arg( $assoc, 'cleanup' ) ) {
 			\WP_CLI::log( '' );
 			\WP_CLI::log( 'Running cleanup...' );
 			$cleanup = $runner->cleanup( $name, $result->fixtures );

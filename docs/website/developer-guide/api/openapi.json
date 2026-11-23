@@ -9826,7 +9826,7 @@
         ],
         "summary": "Read site settings",
         "operationId": "adminSettingsGet",
-        "description": "Every setting the API can change, secrets masked. Requires manage_options (stricter than the settings form, which a jetonomy_manage_settings delegate can save). Returns more keys (64 today) than one POST accepts (50): send back only the keys you change, or split a full copy into two POSTs.",
+        "description": "Every setting the API can change, as the site uses it (a setting never saved reads as its default, never null), secrets masked. Requires manage_options (stricter than the settings form, which a jetonomy_manage_settings delegate can save). Returns more keys (64 today) than one POST accepts (50): send back only the keys you change, or split a full copy into two POSTs.",
         "responses": {
           "200": {
             "description": "Success",

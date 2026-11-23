@@ -533,12 +533,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							?>
 							<tr>
 								<th scope="row"><strong><?php echo esc_html( $level_names[ $level ] ); ?></strong></th>
-								<td data-colname="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( '%1$s and %2$s Written', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?>"><input type="number" aria-label="<?php /* translators: 1: topic label, plural (e.g. "Topics"). 2: reply label, plural (e.g. "Replies"). 3: trust level name. */ echo esc_attr( sprintf( __( '%1$s and %2$s written, required for %3$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( '%1$s and %2$s Written', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?>"><input type="number" aria-label="<?php /* translators: 1: topic label, plural (e.g. "Topics"). 2: reply label, plural (e.g. "Replies"). 3: trust level name. */ echo esc_attr( sprintf( __( '%1$s and %2$s written, required for %3$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" placeholder="<?php echo absint( $td['posts'] ); ?>" min="0" class="small-text" aria-describedby="jt-trust-thresholds-hint"></td>
 							<?php // A comment line on the row above would be read as this string's translator comment. ?>
-								<td data-colname="<?php esc_attr_e( 'Days Active', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: trust level name. */ __( 'Days Active for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
-								<td data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: trust level name. */ __( 'Reputation for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php esc_attr_e( 'Days Active', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: trust level name. */ __( 'Days Active for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" placeholder="<?php echo absint( $td['days_active'] ); ?>" min="0" class="small-text" aria-describedby="jt-trust-thresholds-hint"></td>
+								<td data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: trust level name. */ __( 'Reputation for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" placeholder="<?php echo absint( $td['reputation'] ); ?>" min="0" class="small-text" aria-describedby="jt-trust-thresholds-hint"></td>
 								<?php /* translators: %s: reply label, plural (e.g. "Replies"). */ ?>
-								<td data-colname="<?php echo esc_attr( sprintf( __( '%s Received', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?>"><input type="number" aria-label="<?php /* translators: 1: reply label, plural (e.g. "Replies"). 2: trust level name. */ echo esc_attr( sprintf( __( '%1$s Received for %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php echo esc_attr( sprintf( __( '%s Received', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?>"><input type="number" aria-label="<?php /* translators: 1: reply label, plural (e.g. "Replies"). 2: trust level name. */ echo esc_attr( sprintf( __( '%1$s Received for %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" placeholder="<?php echo absint( $td['replies_received'] ); ?>" min="0" class="small-text" aria-describedby="jt-trust-thresholds-hint"></td>
 
 									<td class="description" data-colname="<?php esc_attr_e( 'What this unlocks', 'jetonomy' ); ?>">
 										<?php
@@ -578,6 +578,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<?php endfor; ?>
 					</tbody>
 				</table>
+				<p class="description" id="jt-trust-thresholds-hint"><?php esc_html_e( 'Leave a field empty for that level\'s default (shown when you clear it). 0 means no requirement for that measure.', 'jetonomy' ); ?></p>
 				<?php $jt_tl_names = (array) ( $settings['trust_level_names'] ?? array() ); ?>
 				<fieldset class="jt-trust-names">
 					<legend class="jt-settings-card__title"><?php esc_html_e( 'Trust level names', 'jetonomy' ); ?></legend>
@@ -602,15 +603,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="jt-rate-posts"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s per Day', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></label></th>
-						<td><input type="number" id="jt-rate-posts" name="jetonomy_settings[rate_limits][posts]" value="<?php echo absint( $rate_limits['posts'] ?? $rl_defaults['posts'] ); ?>" min="1" class="small-text"></td>
+						<td><input type="number" id="jt-rate-posts" name="jetonomy_settings[rate_limits][posts]" value="<?php echo absint( $rate_limits['posts'] ?? $rl_defaults['posts'] ); ?>" min="0" class="small-text" aria-describedby="jt-rate-posts-hint"><p class="description" id="jt-rate-posts-hint"><?php /* translators: %d: default daily limit. */ echo esc_html( sprintf( __( 'Leave empty for the default of %d. 0 turns this limit off.', 'jetonomy' ), (int) $rl_defaults['posts'] ) ); ?></p></td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="jt-rate-replies"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s per Day', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?></label></th>
-						<td><input type="number" id="jt-rate-replies" name="jetonomy_settings[rate_limits][replies]" value="<?php echo absint( $rate_limits['replies'] ?? $rl_defaults['replies'] ); ?>" min="1" class="small-text"></td>
+						<td><input type="number" id="jt-rate-replies" name="jetonomy_settings[rate_limits][replies]" value="<?php echo absint( $rate_limits['replies'] ?? $rl_defaults['replies'] ); ?>" min="0" class="small-text" aria-describedby="jt-rate-replies-hint"><p class="description" id="jt-rate-replies-hint"><?php /* translators: %d: default daily limit. */ echo esc_html( sprintf( __( 'Leave empty for the default of %d. 0 turns this limit off.', 'jetonomy' ), (int) $rl_defaults['replies'] ) ); ?></p></td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="jt-rate-votes"><?php esc_html_e( 'Votes per Day', 'jetonomy' ); ?></label></th>
-						<td><input type="number" id="jt-rate-votes" name="jetonomy_settings[rate_limits][votes]" value="<?php echo absint( $rate_limits['votes'] ?? $rl_defaults['votes'] ); ?>" min="1" class="small-text"></td>
+						<td><input type="number" id="jt-rate-votes" name="jetonomy_settings[rate_limits][votes]" value="<?php echo absint( $rate_limits['votes'] ?? $rl_defaults['votes'] ); ?>" min="0" class="small-text" aria-describedby="jt-rate-votes-hint"><p class="description" id="jt-rate-votes-hint"><?php /* translators: %d: default daily limit. */ echo esc_html( sprintf( __( 'Leave empty for the default of %d. 0 turns this limit off.', 'jetonomy' ), (int) $rl_defaults['votes'] ) ); ?></p></td>
 					</tr>
 				</table>
 			</div>
@@ -860,7 +861,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td>
 							<input type="number" id="verification_reminder_hours" name="jetonomy_settings[verification_reminder_hours]" min="0" max="168" value="<?php echo esc_attr( (string) (int) ( $settings['verification_reminder_hours'] ?? 24 ) ); ?>" class="small-text">
 							<?php esc_html_e( 'hours', 'jetonomy' ); ?>
-							<p class="description"><?php echo esc_html__( 'Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if the email is still unverified. Set to 0 to disable.', 'jetonomy' ); ?></p>
+							<p class="description"><?php echo esc_html__( 'Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if the email is still unverified. Leave empty for the default of 24. Set to 0 to disable.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 					<tr>

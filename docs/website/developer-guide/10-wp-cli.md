@@ -7,6 +7,8 @@ The 16 free roots are the 15 domain commands listed under [Free Commands](#free-
 All free commands live under `wp jetonomy <subject> <subcommand>`.
 All Pro commands live under `wp jetonomy-pro <subject> <subcommand>` (note the separate root - Pro commands require both plugins active).
 
+Since 2.1.0 every id, count and number argument, Free and Pro, must be a whole number and every yes/no flag `true`/`false`, `1`/`0`, `yes`/`no` or `on`/`off` (any letter case; a bare flag is yes). Anything else stops the command with exit code 1 and names the argument, for example `--parent must be a whole number; got "abc".` Before 2.1.0 `--parent=abc` read as 0 and `--dry-run=false` still dry-ran.
+
 On this local dev install you must prefix every `wp` call with `--path`:
 
 ```bash

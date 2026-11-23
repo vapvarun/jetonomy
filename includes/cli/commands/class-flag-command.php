@@ -72,8 +72,8 @@ final class Flag_Command extends Base_Command {
 		$result = ( new Content_Journey() )->flag(
 			array(
 				'object_type' => (string) ( $assoc['type'] ?? '' ),
-				'object_id'   => (int) ( $assoc['id'] ?? 0 ),
-				'reporter_id' => (int) ( $assoc['reporter'] ?? 0 ),
+				'object_id'   => $this->int_arg( $assoc, 'id', 0 ),
+				'reporter_id' => $this->int_arg( $assoc, 'reporter', 0 ),
 				'reason'      => (string) ( $assoc['reason'] ?? '' ),
 				'description' => (string) ( $assoc['description'] ?? '' ),
 			)

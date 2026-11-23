@@ -66,7 +66,7 @@ final class Tag_Command extends Base_Command {
 	 *     wp jetonomy tag delete 7
 	 */
 	public function delete( $args, $assoc ): void {
-		$id     = (int) ( $args[0] ?? 0 );
+		$id     = $this->int_arg( $args, 0, 0 );
 		$result = ( new Taxonomy_Journey() )->delete_tag( $id );
 		$this->render( $result, $assoc );
 	}
@@ -123,8 +123,8 @@ final class Tag_Command extends Base_Command {
 	 *     wp jetonomy tag attach --post=42 --tag=7
 	 */
 	public function attach( $args, $assoc ): void {
-		$post_id = (int) ( $assoc['post'] ?? 0 );
-		$tag_id  = (int) ( $assoc['tag'] ?? 0 );
+		$post_id = $this->int_arg( $assoc, 'post', 0 );
+		$tag_id  = $this->int_arg( $assoc, 'tag', 0 );
 		$result  = ( new Taxonomy_Journey() )->attach_tag_to_post( $post_id, $tag_id );
 		$this->render( $result, $assoc );
 	}
@@ -153,8 +153,8 @@ final class Tag_Command extends Base_Command {
 	 *     wp jetonomy tag detach --post=42 --tag=7
 	 */
 	public function detach( $args, $assoc ): void {
-		$post_id = (int) ( $assoc['post'] ?? 0 );
-		$tag_id  = (int) ( $assoc['tag'] ?? 0 );
+		$post_id = $this->int_arg( $assoc, 'post', 0 );
+		$tag_id  = $this->int_arg( $assoc, 'tag', 0 );
 		$result  = ( new Taxonomy_Journey() )->detach_tag_from_post( $post_id, $tag_id );
 		$this->render( $result, $assoc );
 	}
@@ -189,7 +189,7 @@ final class Tag_Command extends Base_Command {
 	 * @subcommand list-for-post
 	 */
 	public function list_for_post( $args, $assoc ): void {
-		$post_id = (int) ( $assoc['post'] ?? 0 );
+		$post_id = $this->int_arg( $assoc, 'post', 0 );
 		$result  = ( new Taxonomy_Journey() )->list_tags_for_post( $post_id );
 		$this->render_list( $result, $assoc );
 	}
@@ -223,7 +223,7 @@ final class Tag_Command extends Base_Command {
 	 *     wp jetonomy tag popular --limit=5
 	 */
 	public function popular( $args, $assoc ): void {
-		$limit  = isset( $assoc['limit'] ) ? (int) $assoc['limit'] : 20;
+		$limit  = $this->int_arg( $assoc, 'limit', 20 );
 		$result = ( new Taxonomy_Journey() )->list_popular_tags( $limit );
 		$this->render_list( $result, $assoc );
 	}
@@ -261,7 +261,7 @@ final class Tag_Command extends Base_Command {
 	 */
 	public function search( $args, $assoc ): void {
 		$query  = (string) ( $assoc['query'] ?? '' );
-		$limit  = isset( $assoc['limit'] ) ? (int) $assoc['limit'] : 10;
+		$limit  = $this->int_arg( $assoc, 'limit', 10 );
 		$result = ( new Taxonomy_Journey() )->search_tags( $query, $limit );
 		$this->render_list( $result, $assoc );
 	}
