@@ -71,7 +71,7 @@ $total_pages  = max( 1, (int) ceil( $total / $per_page ) );
 if ( $paged > $total_pages ) {
 	$paged = $total_pages;
 }
-$offset = ( $paged - 1 ) * $per_page;
+$offset = jetonomy_page_offset( $paged, $per_page );
 $flags  = $total > 0
 	? Moderation_Service::list_pending_flags( $user_id, null, $per_page, $offset )
 	: array();
@@ -142,8 +142,8 @@ $jt_held_paged = min( $jt_raw_paged, $jt_held_pages );
 $jt_held       = array();
 if ( in_array( $jt_view, array( 'approvals', 'trash' ), true ) && $jt_held_count > 0 ) {
 	$jt_held = $jt_is_trash
-		? Moderation_Service::list_trashed( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page )
-		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page, $jt_held_status );
+		? Moderation_Service::list_trashed( $user_id, $jt_kind, null, $per_page, jetonomy_page_offset( $jt_held_paged, $per_page ) )
+		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, null, $per_page, jetonomy_page_offset( $jt_held_paged, $per_page ), $jt_held_status );
 }
 
 // Why each item is held, when something (Jetonomy Pro's AI review) knows: one call per page, never one per row.
@@ -199,7 +199,7 @@ $jt_bans      = 'banned' === $jt_view && $jt_ban_total > 0
 	? \Jetonomy\Models\Restriction::list_active(
 		array(
 			'limit'  => $per_page,
-			'offset' => ( $jt_ban_paged - 1 ) * $per_page,
+			'offset' => jetonomy_page_offset( $jt_ban_paged, $per_page ),
 		)
 	)
 	: array();

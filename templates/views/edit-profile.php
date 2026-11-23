@@ -268,7 +268,7 @@ if ( ! $cancel_url ) {
 		// place to review blocks; each profile's More menu adds them.
 		$jt_blocked_per  = 20;
 		$jt_blocked_page = max( 1, absint( $_GET['blocked_page'] ?? 1 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
-		$jt_blocked_rows = \Jetonomy\Models\BlockedUser::list_by_blocker( $current_user->ID, $jt_blocked_per, ( $jt_blocked_page - 1 ) * $jt_blocked_per );
+		$jt_blocked_rows = \Jetonomy\Models\BlockedUser::list_by_blocker( $current_user->ID, $jt_blocked_per, jetonomy_page_offset( $jt_blocked_page, $jt_blocked_per ) );
 		$jt_blocked_all  = \Jetonomy\Models\BlockedUser::count_by_blocker( $current_user->ID );
 		$jt_blocked_ids  = array_map( static fn( $row ) => (int) $row->blocked_id, $jt_blocked_rows );
 		cache_users( $jt_blocked_ids );

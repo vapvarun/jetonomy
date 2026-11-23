@@ -21,7 +21,7 @@ $page = max( 1, absint( wp_unslash( $_GET['pg'] ?? 1 ) ) );
 // in sync — both surfaces render the same page size so server-side and
 // client-side leaderboards stay consistent.
 $per_page = 20;
-$offset   = ( $page - 1 ) * $per_page;
+$offset   = jetonomy_page_offset( $page, $per_page );
 
 // Page slice + real total come from the model so the server-rendered board
 // and the REST endpoint share one query and one pagination rule. has_more

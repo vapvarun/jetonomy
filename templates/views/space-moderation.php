@@ -78,7 +78,7 @@ $jt_flag_total = Moderation_Service::count_pending_flags( $user_id, $space_id );
 $jt_flag_pages = max( 1, (int) ceil( $jt_flag_total / $per_page ) );
 $jt_flag_paged = min( $jt_raw_paged, $jt_flag_pages );
 $flags         = 'flags' === $jt_view && $jt_flag_total > 0
-	? Moderation_Service::list_pending_flags( $user_id, $space_id, $per_page, ( $jt_flag_paged - 1 ) * $per_page )
+	? Moderation_Service::list_pending_flags( $user_id, $space_id, $per_page, jetonomy_page_offset( $jt_flag_paged, $per_page ) )
 	: array();
 
 // Both held counts run on every render so the tab badge stays honest while the
@@ -110,8 +110,8 @@ $jt_held_paged = min( $jt_raw_paged, $jt_held_pages );
 $jt_held       = array();
 if ( 'flags' !== $jt_view && $jt_held_count > 0 ) {
 	$jt_held = $jt_is_trash
-		? Moderation_Service::list_trashed( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page )
-		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page, $jt_held_status );
+		? Moderation_Service::list_trashed( $user_id, $jt_kind, $space_id, $per_page, jetonomy_page_offset( $jt_held_paged, $per_page ) )
+		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, $space_id, $per_page, jetonomy_page_offset( $jt_held_paged, $per_page ), $jt_held_status );
 }
 
 // Batch-resolve what the cards need. Every held item is in THIS space, so only

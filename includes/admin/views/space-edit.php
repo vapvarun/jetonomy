@@ -353,7 +353,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<span class="displaying-num">
 						<?php
 						/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
-						printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( ( $member_paged - 1 ) * $member_per_page + 1 ) ), esc_html( number_format_i18n( min( $member_paged * $member_per_page, $member_total ) ) ), esc_html( number_format_i18n( $member_total ) ) );
+						printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( jetonomy_page_offset( $member_paged, $member_per_page ) + 1 ) ), esc_html( number_format_i18n( min( $member_paged * $member_per_page, $member_total ) ) ), esc_html( number_format_i18n( $member_total ) ) );
 						?>
 					</span>
 					<?php
@@ -943,7 +943,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<div class="tablenav-pages">
 					<span class="displaying-num">
 						<?php
-						$_jr_first = ( $join_paged - 1 ) * $join_per_page + 1;
+						$_jr_first = jetonomy_page_offset( $join_paged, $join_per_page ) + 1;
 						$_jr_last  = min( $join_paged * $join_per_page, $join_total );
 						/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 						printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_jr_first ) ), esc_html( number_format_i18n( $_jr_last ) ), esc_html( number_format_i18n( $join_total ) ) );

@@ -167,7 +167,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<div class="tablenav-pages">
 						<span class="displaying-num">
 							<?php
-							$_first = ( $paged_posts - 1 ) * $per_page + 1;
+							$_first = jetonomy_page_offset( $paged_posts, $per_page ) + 1;
 							$_last  = min( $paged_posts * $per_page, $total_posts );
 							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_posts ) ) );
@@ -278,7 +278,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<div class="tablenav-pages">
 						<span class="displaying-num">
 							<?php
-							$_first = ( $paged_replies - 1 ) * $per_page + 1;
+							$_first = jetonomy_page_offset( $paged_replies, $per_page ) + 1;
 							$_last  = min( $paged_replies * $per_page, $total_replies );
 							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_replies ) ) );
@@ -406,7 +406,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<div class="tablenav-pages">
 						<span class="displaying-num">
 							<?php
-							$_first = ( $paged_flags - 1 ) * $per_page + 1;
+							$_first = jetonomy_page_offset( $paged_flags, $per_page ) + 1;
 							$_last  = min( $paged_flags * $per_page, $total_flags );
 							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_flags ) ) );
@@ -537,7 +537,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<div class="tablenav-pages">
 						<span class="displaying-num">
 							<?php
-							$_first = ( $paged_banned - 1 ) * $per_page + 1;
+							$_first = jetonomy_page_offset( $paged_banned, $per_page ) + 1;
 							$_last  = min( $paged_banned * $per_page, $total_banned );
 							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_banned ) ) );

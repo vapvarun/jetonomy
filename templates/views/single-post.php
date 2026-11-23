@@ -187,7 +187,7 @@ $top_level_count = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
 $replies_per_page = \Jetonomy\replies_per_page();
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $reply_page        = max( 1, absint( wp_unslash( $_GET['rpg'] ?? 1 ) ) );
-$reply_offset      = ( $reply_page - 1 ) * $replies_per_page;
+$reply_offset      = jetonomy_page_offset( $reply_page, $replies_per_page );
 $reply_batch       = \Jetonomy\Models\Reply::get_threaded(
 	(int) $post->id,
 	$reply_sort,

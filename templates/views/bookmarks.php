@@ -25,7 +25,7 @@ $base    = \Jetonomy\base_url();
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $per_page = 20;
-$offset   = ( $page - 1 ) * $per_page;
+$offset   = jetonomy_page_offset( $page, $per_page );
 
 // Deliberately NOT block-filtered — the viewer bookmarked this content
 // themselves, on purpose. Hiding it because the author is now blocked would

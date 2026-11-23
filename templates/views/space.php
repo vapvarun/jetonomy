@@ -259,7 +259,7 @@ $paged = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 // front-end edit form sends for "use the default", view.js) would evaluate to (int) '' = 0
 // and clamp to a limit of 1. One resolver, one answer, every surface.
 $limit  = \Jetonomy\Models\Space::get_posts_per_page( (int) $space->id );
-$offset = ( $paged - 1 ) * $limit;
+$offset = jetonomy_page_offset( $paged, $limit );
 
 // Use the visibility-aware listing so private topics (is_private = 1) are
 // filtered out for non-author, non-privileged viewers — before 1.3.6 this

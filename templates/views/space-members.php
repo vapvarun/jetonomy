@@ -71,7 +71,7 @@ $jt_members_pages  = max( 1, (int) ceil( $jt_members_total / $jt_members_per_pag
 if ( $jt_members_paged > $jt_members_pages ) {
 	$jt_members_paged = $jt_members_pages;
 }
-$jt_members_offset = ( $jt_members_paged - 1 ) * $jt_members_per_page;
+$jt_members_offset = jetonomy_page_offset( $jt_members_paged, $jt_members_per_page );
 $members           = $jt_members_total > 0
 	? \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id, $jt_members_per_page, $jt_members_offset, $jt_members_search, true )
 	: array();
@@ -138,7 +138,7 @@ if ( $viewer_is_sadm ) {
 	$jt_invites_total = \Jetonomy\Models\InviteLink::count_by_space( (int) $space->id );
 	$jt_invites_pages = max( 1, (int) ceil( $jt_invites_total / $jt_invites_per_page ) );
 	$jt_invites_paged = min( $jt_invites_pages, max( 1, absint( wp_unslash( $_GET['ipg'] ?? 1 ) ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
-	$jt_invites       = \Jetonomy\Models\InviteLink::list_by_space( (int) $space->id, $jt_invites_per_page, ( $jt_invites_paged - 1 ) * $jt_invites_per_page );
+	$jt_invites       = \Jetonomy\Models\InviteLink::list_by_space( (int) $space->id, $jt_invites_per_page, jetonomy_page_offset( $jt_invites_paged, $jt_invites_per_page ) );
 }
 
 $crumbs = array();

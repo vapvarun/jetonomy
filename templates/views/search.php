@@ -18,7 +18,7 @@ if ( ! in_array( $filter, array( 'all', 'posts', 'spaces', 'tags' ), true ) ) {
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $page     = max( 1, absint( wp_unslash( $_GET['pg'] ?? 1 ) ) );
 $per_page = 20;
-$offset   = ( $page - 1 ) * $per_page;
+$offset   = jetonomy_page_offset( $page, $per_page );
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '';

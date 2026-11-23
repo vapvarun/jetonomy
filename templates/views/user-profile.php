@@ -92,7 +92,7 @@ $joined = get_date_from_gmt( (string) ( $profile && $profile->created_at ? $prof
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $per_page = 20;
-$offset   = ( $page - 1 ) * $per_page;
+$offset   = jetonomy_page_offset( $page, $per_page );
 
 $recent_posts = \Jetonomy\Models\Post::list_by_author( (int) $user->ID, $per_page, $offset );
 

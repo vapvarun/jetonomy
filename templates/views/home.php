@@ -17,7 +17,7 @@ $jt_per_page = (int) apply_filters( 'jetonomy_spaces_per_page', 24 );
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
 $jt_uncat_page        = max( 1, (int) ( $_GET['spg'] ?? 1 ) );
 $jt_uncat_total       = \Jetonomy\Models\Space::count_uncategorized();
-$uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized( null, $jt_per_page, ( $jt_uncat_page - 1 ) * $jt_per_page );
+$uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized( null, $jt_per_page, jetonomy_page_offset( $jt_uncat_page, $jt_per_page ) );
 $jt_uncat_has_more    = ( $jt_uncat_page * $jt_per_page ) < $jt_uncat_total;
 $base                 = \Jetonomy\base_url();
 

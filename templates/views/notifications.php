@@ -26,7 +26,7 @@ $filter = in_array( $filter, array( 'all', 'unread', 'mentions', 'replies', 'vot
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 $current_page = \Jetonomy\list_page();
 $page_size    = 20;
-$offset       = ( $current_page - 1 ) * $page_size;
+$offset       = jetonomy_page_offset( $current_page, $page_size );
 
 $notifications = Notification::list_for_user_with_targets( $user_id, $page_size, $offset, $filter );
 $counts        = Notification::counts_by_filter( $user_id );

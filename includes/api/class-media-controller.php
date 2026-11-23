@@ -114,7 +114,7 @@ class Media_Controller extends Base_Controller {
 			array(
 				'total'  => (int) $result['total'],
 				'page'   => (int) $result['page'],
-				'offset' => ( (int) $result['page'] - 1 ) * (int) $result['per_page'],
+				'offset' => jetonomy_page_offset( (int) $result['page'], (int) $result['per_page'] ),
 			)
 		);
 	}
