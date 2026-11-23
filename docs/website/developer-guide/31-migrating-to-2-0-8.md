@@ -87,7 +87,8 @@ Code examples for each are in [Background Jobs](./30-background-jobs.md).
   the job conversion (a background job, never on a visitor's page view), then stores the new version. If that
   request is killed midway, the lock stays held for 10 minutes, so the new version is stored only after it expires;
   the conversion job does not wait for the lock.
-- A web push run sends for about 15 seconds, then queues itself from the last member it fully sent
+- A web push run sends for about 15 seconds, then queues itself from the next device it has not sent (the cursor job
+  `jetonomy_pro_send_push_batch` gains a fourth int arg, the next member's devices already sent)
   (filter `jetonomy_pro_push_send_seconds`). Each push request waits at most 5 seconds
   (`Jetonomy_Pro\Extension::REMOTE_TIMEOUT`, was 15). Webhook deliveries still wait 15 seconds (new filter
   `jetonomy_pro_webhook_timeout`).

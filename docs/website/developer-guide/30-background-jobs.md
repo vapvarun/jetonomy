@@ -18,7 +18,7 @@ shows together under **Tools > Scheduled Actions** (filter the group by `jetonom
   job tables. (A webhook delivery carries its event payload, the one exception, because a deleted topic cannot
   be read back later.)
 - **Long sends are time-boxed.** A web push run checks the clock before every send and stops after about 15
-  seconds, then queues the rest from the last member it fully sent; each push or webhook request waits at most 5
+  seconds, then queues the rest from the next device it has not sent, so each device gets the push once; each push or webhook request waits at most 5
   seconds. A slow push service never holds a job past the host's time limit.
 - **Clean-ups are time-boxed too.** The daily trim of Jetonomy's own job history stops after 10 seconds and
   the Pro upgrade's clean-up re-queues itself in 10-second passes, so neither runs long or on a visitor's request.

@@ -349,7 +349,7 @@ queued args cannot be converted (2.0.8: the per-device push until 2.1.0, the fie
 | `jetonomy_sweep_space_roster` | Free | an access rule of a space is removed | space id | 1 per space change |
 | `jetonomy_gravatar_check` | Free | a member without a cached avatar check | user id | 1 per member, once |
 | `jetonomy_recount_backfill_batch` | Free | the counter backfill after an update | none (cursor in an option) | 1 per batch, once |
-| `jetonomy_pro_send_push_batch` | Pro | a request that created notifications for members with push | first notification id, last id handled, last notification id | 1 per push per request, chaining per 300 members who have a device (reads at most 3,000 rows a run); a run sends for about 15 s (`jetonomy_pro_push_send_seconds`, clock read before every send, 5 s per request), then continues from the last member fully sent; the continuation for the rows after its read is queued before sending |
+| `jetonomy_pro_send_push_batch` | Pro | a request that created notifications for members with push | first notification id, last id handled, last notification id, targets of the next member already sent | 1 per push per request, chaining per 300 members who have a device (reads at most 3,000 rows a run); a run sends for about 15 s (`jetonomy_pro_push_send_seconds`, clock read before every send, 5 s per request), then continues at the next unsent device (the last member fully sent plus how many of the next member's devices went out, so each device gets the push once); the continuation for the rows after its read is queued before sending |
 | `jetonomy_pro_deliver_webhook` | Pro | an event a webhook listens to | webhook id, event, payload (the rule 5 exception: the payload describes content that may be deleted before the job runs; the URL and secret are read from the webhook row) | 1 per webhook and event |
 | `jetonomy_pro_prune_webhook_deliveries` | Pro | recurring, daily | none | 1 a day |
 | `jetonomy_pro_send_digests` | Pro | the daily or weekly digest run (first batch inline) | frequency, last user id | 1 per further 50 recipients (`jetonomy_pro_digest_batch_size`) |
@@ -370,8 +370,8 @@ runs + 2 daily jobs + one weekly job (1/7 a day), about 4.1 rows a day; with Pro
 licence jobs on, about 10.4 rows a day. Reply by Email on IMAP adds 288. One topic in a 5,000-member space,
 measured on a 10,000-member seed: 20 fan-out rows + 1 to 20 push rows (one per runner request that recorded
 notifications; 6 measured) + 1 badge row. Fan-out and badge runs took under 1 second each; a push run is
-bounded by its 15-second send budget plus one send (5 seconds at most), except that the first member of a run
-is always sent in full so every run makes progress.
+bounded by its 15-second send budget plus one send (5 seconds at most); the first send of a run always goes out,
+so every run makes progress.
 
 Uninstall deletes every `jetonomy_%` row of Free (and `jetonomy_pro_%` of Pro) with its logs, failed rows
 included, in batches; the shared Action Scheduler tables are never dropped, and the runner event is
