@@ -29,7 +29,7 @@
 	--jt-admin-text-muted: #5f6b7d; /* 4.75:1 on the lightest admin grey (WCAG AA). */
 	--jt-admin-text-wp: #1d2327;
 	--jt-admin-text-wp-2: #646970;
-	--jt-admin-border-input: #8c8f94; /* WordPress form-control border grey; named so no rule carries the literal. */
+	--jt-admin-border-input: #82868c; /* Form-control outline: a step darker than WordPress's #8c8f94 (2.85:1 on the #f0f0f1 admin page) so inputs, selects and pager buttons hold 3:1 on the page (3.2) and on white (3.7). */
 	--jt-admin-text-wp-3: var(--jt-admin-text-muted); /* Text only; #8c8f94 measured 2.85:1 on #f0f0f1. */
 	--jt-admin-text-step: #666666;
 	--jt-admin-text-arrow: #cccccc;
@@ -940,7 +940,7 @@
 	min-width: 40px;
 	height: 40px;
 	padding: 0 10px;
-	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 6px;
 	background: var(--jt-admin-white, #fff);
 	color: var(--jt-admin-text-wp, #1d2327);
@@ -954,7 +954,7 @@
 .jetonomy-admin .tablenav-pages a.page-numbers:hover,
 .jetonomy-admin .tablenav-pages a.page-numbers:focus {
 	background: var(--jt-admin-surface-1, #f6f7f7);
-	border-color: var(--jt-admin-border-input, #8c8f94);
+	border-color: var(--jt-admin-border-input, #82868c);
 	color: var(--jt-admin-text-wp, #1d2327);
 	outline: none;
 }
@@ -3104,7 +3104,7 @@ tr.jetonomy-moderated td {
 	aspect-ratio: 1 / 1;
 	margin: 0;
 	padding: 0;
-	border: 1px solid var(--jt-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: var(--jt-radius, 6px);
 	cursor: pointer;
 	transition: border-color 0.15s ease, background 0.15s ease;
@@ -4215,7 +4215,7 @@ tr.jetonomy-moderated td {
 	min-width: 40px;
 	height: 40px;
 	padding: 0 10px;
-	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 6px;
 	background: var(--jt-admin-white, #fff);
 	color: var(--jt-admin-text-wp, #1d2327);
@@ -4229,7 +4229,7 @@ tr.jetonomy-moderated td {
 .jetonomy-admin .tablenav-pages .pagination-links a:hover,
 .jetonomy-admin .tablenav-pages .pagination-links a:focus {
 	background: var(--jt-admin-surface-1, #f6f7f7);
-	border-color: var(--jt-admin-border-input, #8c8f94);
+	border-color: var(--jt-admin-border-input, #82868c);
 	color: var(--jt-admin-text-wp, #1d2327);
 	outline: none;
 }
@@ -4243,7 +4243,7 @@ tr.jetonomy-moderated td {
 .jetonomy-admin .tablenav-pages .current-page {
 	height: 40px;
 	min-width: 52px;
-	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 6px;
 	text-align: center;
 	font-size: 13px;
@@ -4268,7 +4268,7 @@ tr.jetonomy-moderated td {
 .jetonomy-admin .tablenav .button {
 	height: 40px;
 	min-height: 40px;
-	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 6px;
 	box-sizing: border-box;
 	font-size: 13px;

@@ -292,7 +292,7 @@
 	width: 100%;
 	max-width: 400px;
 	padding: 8px 12px;
-	border: 1px solid var(--jt-border, #d1d5db);
+	border: 1px solid var(--jt-border-strong, #8c8f94);
 	border-radius: var(--jt-radius);
 	font-size: 0.9375rem;
 	background: var(--jt-bg, #fff);

@@ -162,7 +162,7 @@ body.jt-setup-body {
 .jt-form-group textarea {
 	width: 100%;
 	padding: 10px 14px;
-	border: 1.5px solid #e2e8f0;
+	border: 1.5px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 8px;
 	font-size: 14px;
 	color: #0f172a;
@@ -246,7 +246,7 @@ body.jt-setup-body {
 	flex-direction: column;
 	gap: 4px;
 	padding: 14px 16px;
-	border: 2px solid #e2e8f0;
+	border: 2px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 10px;
 	cursor: pointer;
 	transition: border-color .2s, background .2s;
@@ -320,7 +320,7 @@ body.jt-setup-body {
 .jt-btn--secondary {
 	background: #f1f5f9;
 	color: var(--jt-wiz-muted);
-	border: 1.5px solid #e2e8f0;
+	border: 1.5px solid var(--jt-admin-border-input, #82868c);
 }
 
 .jt-btn--secondary:hover {
@@ -341,7 +341,7 @@ body.jt-setup-body {
 .jt-btn--ghost {
 	background: transparent;
 	color: var(--jt-wiz-muted);
-	border: 1.5px solid #e2e8f0;
+	border: 1.5px solid var(--jt-admin-border-input, #82868c);
 	width: 100%;
 	padding: 13px 20px;
 	font-size: 14px;
@@ -349,7 +349,7 @@ body.jt-setup-body {
 
 .jt-btn--ghost:hover {
 	background: #f8fafc;
-	border-color: #cbd5e1;
+	border-color: var(--jt-wiz-muted);
 	color: #334155;
 }
 

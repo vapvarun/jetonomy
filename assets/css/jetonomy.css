@@ -304,11 +304,11 @@
      it and needs nothing here. */
   /* Roadmap status picker: the chosen stage and the hover preview wear the
      stage colour, so the current choice is obvious at a glance. */
-  .jt-app button.jt-idea-status-btn { color: var(--jt-text-secondary) !important; background-color: var(--jt-bg) !important; }
+  .jt-app button.jt-idea-status-btn { color: var(--jt-text-secondary) !important; background-color: var(--jt-bg) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-idea-status-btn:hover,
   .jt-app button.jt-idea-status-btn:focus-visible { background-color: color-mix(in srgb, var(--jt-ip) 12%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: color-mix(in srgb, var(--jt-ip) 40%, transparent) !important; }
   .jt-app button.jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip) !important; }
-  .jt-app button.jt-idea-status-btn.is-active { background-color: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: var(--jt-ip) !important; box-shadow: inset 0 0 0 1px var(--jt-ip) !important; }
+  .jt-app button.jt-idea-status-btn.is-active { background-color: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: var(--jt-ip-fg) !important; box-shadow: inset 0 0 0 1px var(--jt-ip) !important; }
   .jt-app button.jt-bookmark-btn.bookmarked,
   .jt-app button.jt-bookmark-toggle.bookmarked,
   .jt-app button.jt-act.voted,
@@ -400,7 +400,7 @@
   .jt-form { padding: var(--jt-space-4); }
   .jt-form-row { margin-block-end: 16px; }
   .jt-form-row label { display: block; font-weight: 600; margin-block-end: 6px; color: var(--jt-text); }
-  .jt-form-row .jt-input { width: 100%; padding: 8px 12px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); font: inherit; }
+  .jt-form-row .jt-input { width: 100%; padding: 8px 12px; border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); font: inherit; }
   /* Focus ring is owned by the global .jt-input:focus rule (border + box-shadow).
      A second outline here stacked into a double ring — removed. */
   .jt-form-row textarea.jt-input { resize: vertical; }
@@ -439,7 +439,7 @@
   .jt-icon-picker-search-icon { position: absolute; inset-inline-start: 10px; inset-block-start: 50%; transform: translateY(-50%); color: var(--jt-text-tertiary); pointer-events: none; display: inline-flex; }
   .jt-icon-picker-search-icon svg { width: 16px; height: 16px; }
   .jt-icon-picker { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
-  .jt-icon-picker .jt-icon-option { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; background: var(--jt-bg); font-weight: 400; }
+  .jt-icon-picker .jt-icon-option { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; margin: 0; padding: 0; border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius); cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; background: var(--jt-bg); font-weight: 400; }
   .jt-icon-picker .jt-icon-option:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); }
   .jt-icon-picker .jt-icon-option input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
   .jt-icon-picker .jt-icon-option.is-selected { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
@@ -1481,10 +1481,10 @@
      (planned=blue, in_progress=warn, shipped=success, declined=tertiary).
      Hover previews the semantic color as a tint so the affordance is
      still legible. */
-  .jt-idea-status-btn { font-family: inherit; cursor: pointer; background: var(--jt-bg); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
+  .jt-idea-status-btn { font-family: inherit; cursor: pointer; background: var(--jt-bg); color: var(--jt-text-secondary); border: 1px solid var(--jt-border-strong); line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
   .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 12%, transparent); color: var(--jt-ip-fg); border-color: color-mix(in srgb, var(--jt-ip) 30%, transparent); outline: none; }
   .jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip); }
-  .jt-idea-status-btn.is-active { background: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)); color: var(--jt-ip-fg); border-color: var(--jt-ip); box-shadow: inset 0 0 0 1px var(--jt-ip); }
+  .jt-idea-status-btn.is-active { background: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)); color: var(--jt-ip-fg); border-color: var(--jt-ip-fg); box-shadow: inset 0 0 0 1px var(--jt-ip); }
   .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
   /* Every choice carries its stage colour as a dot, so the row reads as a set
      of options on touch screens too, where there is no hover to hint at it. */
@@ -2103,7 +2103,7 @@
   .jt-member-role-select {
     appearance: auto;
     padding: var(--jt-space-1) var(--jt-space-2);
-    border: 1px solid var(--jt-border);
+    border: 1px solid var(--jt-border-strong);
     border-radius: var(--jt-radius);
     background: var(--jt-bg);
     color: var(--jt-text);
@@ -2130,7 +2130,7 @@
   .jt-search-page-form { margin-bottom: 24px; }
   /* The field is the wrapper; the input inside it is the tap target, so it
      carries the 40px height (it was 24px inside 14px of dead padding). */
-  .jt-search-page-input { display: flex !important; align-items: center; gap: var(--jt-space-3); width: 100%; padding: var(--jt-space-1) var(--jt-space-5); border: 2px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); transition: border-color 0.2s, box-shadow 0.2s; }
+  .jt-search-page-input { display: flex !important; align-items: center; gap: var(--jt-space-3); width: 100%; padding: var(--jt-space-1) var(--jt-space-5); border: 2px solid var(--jt-border-strong); border-radius: var(--jt-radius); background: var(--jt-bg); transition: border-color 0.2s, box-shadow 0.2s; }
   .jt-search-page-input:focus-within { border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
   .jt-search-page-icon { flex-shrink: 0; color: var(--jt-text-tertiary); }
   .jt-search-page-input input { flex: 1; min-block-size: calc(var(--jt-tap) + var(--jt-space-2)); border: none !important; background: none !important; outline: none !important; padding: 0 !important; margin: 0 !important; font-family: inherit; font-size: inherit; color: var(--jt-text); box-shadow: none !important; }
@@ -2226,7 +2226,7 @@
   .jt-invite-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--jt-space-3); margin-top: var(--jt-space-3); }
   .jt-invite-field { display: flex; flex-direction: column; gap: var(--jt-space-1); }
   .jt-invite-label { font-size: var(--jt-text-xs); font-weight: 600; color: var(--jt-text-secondary); }
-  .jt-invite-input { min-height: var(--jt-tap); padding: var(--jt-space-2) var(--jt-space-3); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); font-family: var(--jt-font); font-size: var(--jt-text-sm); }
+  .jt-invite-input { min-height: var(--jt-tap); padding: var(--jt-space-2) var(--jt-space-3); border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); font-family: var(--jt-font); font-size: var(--jt-text-sm); }
   .jt-invite-input:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 1px; }
   .jt-invite-error { margin: var(--jt-space-3) 0 0; color: var(--jt-danger); font-size: var(--jt-text-xs); }
   .jt-invite-list { list-style: none; margin: var(--jt-space-4) 0 0; padding: 0; }
@@ -2489,9 +2489,6 @@
 
   /* Load More button — centered, prominent */
   .jt-load-more { text-align: center; padding: 24px 0; }
-  .jt-load-more-btn { width: 100%; max-width: 400px; justify-content: center; padding: 12px 24px; font-size: 0.9375rem; font-weight: 600; border: 2px solid var(--jt-border); border-radius: var(--jt-radius-full); transition: all 0.2s; }
-  .jt-load-more-btn:hover { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
-  .jt-load-more-btn:disabled { opacity: 0.6; cursor: wait; }
 
   /* ── Thread collapse/expand ── */
   .jt-thread-toggle-btn {
@@ -3253,7 +3250,7 @@ button.jt-mobile-tab { background: none; border: 0; font: inherit; font-size: 0.
 .jt-modal-picker-source-label { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.6875rem; font-weight: 600; color: var(--jt-text-tertiary); }
 .jt-modal-picker-source-name { color: var(--jt-text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .jt-modal-picker-search { margin-bottom: 10px; }
-.jt-modal-picker-input { width: 100%; padding: 8px 12px; font-size: 0.9375rem; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box; }
+.jt-modal-picker-input { width: 100%; padding: 8px 12px; font-size: 0.9375rem; border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box; }
 .jt-modal-picker-input:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-light, rgba(59, 130, 246, 0.18)); }
 .jt-modal-picker-results { max-height: 320px; min-height: 80px; overflow-y: auto; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); margin-bottom: 16px; }
 .jt-modal-picker-results.is-loading { opacity: 0.7; }
