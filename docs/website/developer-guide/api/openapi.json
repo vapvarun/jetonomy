@@ -12425,6 +12425,10 @@
             "maxItems": 50,
             "description": "Settings section: trust."
           },
+          "moderators_can_ban": {
+            "type": "boolean",
+            "description": "Settings section: trust. Space moderators may ban members of their own space and lift those bans (since 2.1.0). Default false; only a manage_options holder changes it."
+          },
           "member_name_display": {
             "type": "string",
             "maxLength": 1000,

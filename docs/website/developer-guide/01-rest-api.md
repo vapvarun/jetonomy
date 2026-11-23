@@ -366,8 +366,8 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | GET | `/moderation/flags` | Moderator | List all open flags |
 | POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag (`valid` or `dismissed`) |
 | GET | `/moderation/ban` | Moderator | List active restrictions. An IP address ban carries the address in `ip`, a null `user` and a null `reason` |
-| POST | `/moderation/ban` | Moderator | Ban a user (global ban, space ban, silence) or an IP address (`type: ip_ban` with `ip`; no `user_id`) |
-| DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
+| POST | `/moderation/ban` | Moderator; for `space_ban` also that space's admin, or its moderator when `moderators_can_ban` is on (since 2.1.0) | Ban a user (global ban, space ban, silence) or an IP address (`type: ip_ban` with `ip`; no `user_id`). A space moderator may target only a member or viewer on that space's roster who is not its author (`403 jetonomy_cannot_ban_space_staff`, `404 jetonomy_not_space_member`) |
+| DELETE | `/moderation/ban/{id}` | Moderator; for a space ban also whoever may issue it (space admin, or space moderator when allowed) | Remove a ban. Before 2.1.0 a space admin without site caps was refused here |
 | GET | `/spaces/{id}/moderation/flags` | Space Admin | List flags filed within a specific space |
 | POST | `/spaces/{id}/moderation/flags/{flag_id}/resolve` | Space Admin | Resolve a flag within a specific space |
 | POST | `/spaces/{id}/moderation/{action}/{type}/{obj_id}` | Space Admin | Moderate content in a specific space (`action`: `approve`, `spam`, or `trash`; `type`: `post` or `reply`). `approve` on trashed content restores it |

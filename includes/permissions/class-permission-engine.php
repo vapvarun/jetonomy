@@ -727,6 +727,33 @@ class Permission_Engine {
 	}
 
 	/**
+	 * Whether the owner lets space moderators ban members of their own space
+	 * (Settings > Permissions, off by default).
+	 *
+	 * @since 2.1.0
+	 */
+	public static function moderators_can_ban(): bool {
+		$settings = get_option( 'jetonomy_settings', array() );
+		return is_array( $settings ) && ! empty( $settings['moderators_can_ban'] );
+	}
+
+	/**
+	 * Whether this user may issue or lift a ban from this space through their
+	 * place on its roster: a space admin always, a space moderator when
+	 * moderators_can_ban() is on. Site moderation caps are checked by the caller;
+	 * who may be TARGETED is Restriction::actor_may_restrict().
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param int $user_id  Acting user.
+	 * @param int $space_id Space.
+	 */
+	public static function can_space_ban( int $user_id, int $space_id ): bool {
+		return self::is_space_admin( $user_id, $space_id )
+			|| ( self::moderators_can_ban() && 'moderator' === SpaceMember::get_role( $space_id, $user_id ) );
+	}
+
+	/**
 	 * Check if a space role meets a restriction level.
 	 *
 	 * @param string $role        User's space role (viewer/member/moderator/admin).

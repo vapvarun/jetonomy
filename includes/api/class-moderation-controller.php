@@ -258,7 +258,8 @@ class Moderation_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'unban_user' ),
-				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
+				// Space admins (and opted-in space moderators) lift their own space bans; lift_error() decides.
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 			)
 		);
 
@@ -656,11 +657,11 @@ class Moderation_Controller extends Base_Controller {
 	/**
 	 * POST /moderation/ban — Issue a ban, space ban, silence, or IP ban.
 	 *
-	 * REST_Auth gates this on `jetonomy_moderate` OR `manage_options`. Space
-	 * admins legitimately need to issue `space_ban` for their own space even
-	 * without those caps, so the route-level callback above accepts the broad
-	 * pair and we re-resolve the space-admin delegation here. Global bans /
-	 * silences always require the upfront caps; space-bans accept space-admins.
+	 * The route only requires a signed-in member; the cap matrix runs here.
+	 * Global bans, silences and IP bans need `jetonomy_moderate` or
+	 * `manage_options`. A `space_ban` also accepts whoever may ban from that
+	 * space through its roster (Permission_Engine::can_space_ban: the space
+	 * admin, or a space moderator when the owner allows it, since 2.1.0).
 	 */
 	public function ban_user( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id    = absint( $request->get_param( 'user_id' ) );
@@ -671,14 +672,15 @@ class Moderation_Controller extends Base_Controller {
 
 		// Ban cap matrix:
 		// - jetonomy_moderate OR manage_options always passes.
-		// - space_ban additionally accepts the space-admin delegate from the
-		// body-supplied space_id.
-		// Global bans / silences without either cap are rejected.
+		// - space_ban additionally accepts whoever may ban from that space through
+		// its roster (Permission_Engine::can_space_ban: space admin, or space
+		// moderator when the owner allows it).
+		// Global bans / silences / IP bans without either cap are rejected.
 		$actor_id = get_current_user_id();
 		$has_caps = current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' );
 		if ( ! $has_caps ) {
 			if ( 'space_ban' !== $type || ! $space_id
-				|| ! \Jetonomy\Permissions\Permission_Engine::is_space_admin( $actor_id, $space_id ) ) {
+				|| ! \Jetonomy\Permissions\Permission_Engine::can_space_ban( $actor_id, $space_id ) ) {
 				return $this->permission_error();
 			}
 		}
@@ -704,37 +706,21 @@ class Moderation_Controller extends Base_Controller {
 			return $this->not_found( 'User' );
 		}
 
-		// Who may be TARGETED. The cap matrix above only checks the actor, so without this
-		// any user with jetonomy_moderate (the editor role, by default) could issue a
-		// global_ban against the site administrator - and a global ban makes REST_Auth reject
-		// that account's mutations, locking the owner out of their own community.
-		//
-		// Rules, mirroring the ones user-blocking already enforces:
-		// - nobody restricts themselves,
-		// - nobody restricts an administrator over REST,
-		// - a moderator cannot restrict another moderator; only an admin can.
-		if ( $user_id === $actor_id ) {
-			return new WP_Error(
-				'jetonomy_cannot_ban_self',
-				__( 'You cannot restrict your own account.', 'jetonomy' ),
-				array( 'status' => 400 )
-			);
+		// Who may be TARGETED: one rule for every entry point and for lifting
+		// (Restriction::actor_may_restrict): not yourself, not an administrator,
+		// a moderator only by an administrator, and a space moderator only a
+		// member or viewer of their space who is not its author.
+		$allowed = Restriction::actor_may_restrict( $user_id, $actor_id, 'space_ban' === $type ? $space_id : null );
+		if ( is_wp_error( $allowed ) ) {
+			if ( 'jetonomy_cannot_ban_peer_moderator' === $allowed->get_error_code() ) {
+				// The REST code this route has always answered with.
+				return new WP_Error( 'jetonomy_cannot_ban_moderator', __( 'Only an administrator can restrict a moderator.', 'jetonomy' ), array( 'status' => 403 ) );
+			}
+			return $allowed;
 		}
-
+		// Stricter than the model over REST: not even an administrator restricts another administrator here.
 		if ( user_can( $user_id, 'manage_options' ) ) {
-			return new WP_Error(
-				'jetonomy_cannot_ban_admin',
-				__( 'Administrators cannot be restricted.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		if ( user_can( $user_id, 'jetonomy_moderate' ) && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error(
-				'jetonomy_cannot_ban_moderator',
-				__( 'Only an administrator can restrict a moderator.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
+			return new WP_Error( 'jetonomy_cannot_ban_admin', __( 'Administrators cannot be restricted.', 'jetonomy' ), array( 'status' => 403 ) );
 		}
 
 		return $this->issue_restriction( $user_id, $type, $space_id, $reason, $expires_at, null );

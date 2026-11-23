@@ -61,6 +61,8 @@ The **Code** column is the identifier the REST API returns. You will see it in a
 | You cannot restrict your own account. | `jetonomy_cannot_ban_self` | You cannot ban your own account. |
 | Administrators cannot be restricted. | `jetonomy_cannot_ban_admin` | Site administrators cannot be banned from inside Jetonomy. Change their WordPress role first. |
 | Only an administrator can restrict a moderator. | `jetonomy_cannot_ban_moderator` | Moderators cannot be banned by another moderator. Demote them first. |
+| A moderator cannot restrict the owner, an admin or a moderator of this space. | `jetonomy_cannot_ban_space_staff` | A space moderator can ban only members and viewers of their space. Ask a space admin. |
+| This person is not a member here. | `jetonomy_not_space_member` | A space moderator can ban only people on the space's member list. A space admin can ban anyone from the space. |
 | Failed to issue restriction. | `jetonomy_ban_failed` |  |
 | Failed to remove restriction. | `jetonomy_unban_failed` |  |
 | You cannot report your own content. | `jetonomy_flag_self` | Members cannot report their own content. |

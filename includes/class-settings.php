@@ -151,6 +151,7 @@ class Settings {
 				)
 			),
 			'trust_level_names'             => $s( 'trust', 'array', $texts ),
+			'moderators_can_ban'            => $s( 'trust', 'boolean' ),
 			'member_name_display'           => $s( 'member_name', 'string', array( 'enum' => array( 'display_name', 'handle', 'both' ) ) ),
 			'rate_limits'                   => $s( 'rate_limits', 'object', array( 'additionalProperties' => array_merge( $count, array( 'maximum' => 100000 ) ) ) ),
 			'reputation_points'             => $s(
@@ -736,6 +737,10 @@ class Settings {
 			// No wp_unslash(): options.php has already unslashed the posted value.
 			foreach ( range( 0, 5 ) as $level ) {
 				$clean['trust_level_names'][ $level ] = sanitize_text_field( (string) ( $raw_names[ $level ] ?? '' ) );
+			}
+			// Who may ban is role administration: a delegated settings manager keeps the stored value.
+			if ( current_user_can( 'manage_options' ) ) {
+				$clean['moderators_can_ban'] = ! empty( $input['moderators_can_ban'] );
 			}
 		}
 

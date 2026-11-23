@@ -95,6 +95,8 @@ foreach ( $jt_member_users as $jt_u ) {
 $category       = $space->category_id ? \Jetonomy\Models\Category::find_visible( (int) $space->category_id ) : null;
 $viewer_id      = get_current_user_id();
 $viewer_is_sadm = \Jetonomy\Permissions\Permission_Engine::is_space_admin( $viewer_id, (int) $space->id );
+// Space admins, and space moderators when the owner allows it (since 2.1.0), ban from this space.
+$viewer_can_ban = $viewer_id && \Jetonomy\Permissions\Permission_Engine::can_space_ban( $viewer_id, (int) $space->id );
 $viewer_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, (int) $space->id );
 
 // Pending join requests, surfaced to space moderators/admins on the front-end
@@ -414,7 +416,7 @@ $role_labels = \Jetonomy\space_role_labels();
 				// One query each for the page: who is banned from this space
 				// (space admins see Lift instead of Ban), and whom the viewer
 				// has blocked (shown to the viewer only).
-				$jt_space_bans = $viewer_is_sadm ? \Jetonomy\Models\Restriction::active_rows_for_users( $jt_page_user_ids, (int) $space->id ) : array();
+				$jt_space_bans = $viewer_can_ban ? \Jetonomy\Models\Restriction::active_rows_for_users( $jt_page_user_ids, (int) $space->id ) : array();
 				$jt_blocked    = $viewer_id ? array_flip( \Jetonomy\Models\BlockedUser::blocked_ids( $viewer_id ) ) : array();
 				?>
 				<div class="jt-card jt-card-flush">
@@ -482,6 +484,16 @@ $role_labels = \Jetonomy\space_role_labels();
 										</option>
 									<?php endforeach; ?>
 								</select>
+							<?php endif; ?>
+							<?php
+							// A moderator sees Ban only on rows they may ban (members and viewers, not the
+							// owner or site staff); the server re-checks every request.
+							$jt_row_bannable = $viewer_can_ban && (int) $member->user_id !== $viewer_id
+								&& ( $viewer_is_sadm || ( in_array( $member->role, array( 'member', 'viewer' ), true )
+									&& (int) $member->user_id !== (int) $space->author_id
+									&& ! user_can( (int) $member->user_id, 'jetonomy_moderate' ) ) );
+							?>
+							<?php if ( $jt_row_bannable ) : ?>
 								<?php $jt_ban = $jt_space_bans[ (int) $member->user_id ] ?? null; ?>
 								<?php if ( $jt_ban ) : ?>
 									<span class="jt-badge jt-badge-danger jt-member-badge"><?php esc_html_e( 'Banned', 'jetonomy' ); ?></span>

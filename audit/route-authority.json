@@ -34,9 +34,9 @@
       "reason": "auth_mutation(jetonomy_manage_categories). Observed: a subscriber is refused, an administrator passes."
     },
     "DELETE /jetonomy/v1/moderation/ban/(?P<id>\\d+)": {
-      "audience": "admin",
-      "permission_callback": "REST_Auth::auth_mutation(caps=jetonomy_moderate; opts=)",
-      "reason": "auth_mutation(jetonomy_moderate). Observed: a subscriber is refused, an administrator passes."
+      "audience": "guarded",
+      "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
+      "reason": "auth_mutation(read) since 2.1.0: Moderation_Permissions::lift_error() decides. Site moderators and administrators lift; without site caps only a space_ban from a space the caller may ban from (space admin, or space moderator when moderators_can_ban is on), on a target actor_may_restrict allows. Proved in ModeratorBanTest."
     },
     "DELETE /jetonomy/v1/notifications/(?P<id>\\d+)": {
       "audience": "member",
@@ -630,7 +630,7 @@
     "POST /jetonomy/v1/moderation/ban": {
       "audience": "guarded",
       "permission_callback": "REST_Auth::auth_mutation(caps=read; opts=)",
-      "reason": "auth_mutation(read) gate; the handler requires jetonomy_moderate (or manage_options) for a global ban and space admin (Permission_Engine::is_space_admin) for a space ban, and refuses banning staff. Observed: a plain member space-banning the space admin is refused 403."
+      "reason": "auth_mutation(read) gate; the handler requires jetonomy_moderate (or manage_options) for a global ban and space admin (Permission_Engine::is_space_admin) for a space ban (or a space moderator when moderators_can_ban is on, since 2.1.0: Permission_Engine::can_space_ban), and refuses banning staff (Restriction::actor_may_restrict). Observed: a plain member space-banning the space admin is refused 403."
     },
     "POST /jetonomy/v1/moderation/bulk": {
       "audience": "admin",

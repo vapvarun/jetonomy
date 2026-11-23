@@ -615,6 +615,30 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
+			<!-- Space moderators may ban (2.1.0) -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php /* translators: %s: space label, singular (e.g. "Space"). */ echo esc_html( sprintf( __( '%s Moderators', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></p>
+				</div>
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Banning', 'jetonomy' ); ?></th>
+						<td>
+							<label for="jt-moderators-can-ban">
+								<input type="checkbox" id="jt-moderators-can-ban" name="jetonomy_settings[moderators_can_ban]" value="1" aria-describedby="jt-moderators-can-ban-hint" <?php checked( ! empty( $settings['moderators_can_ban'] ) ); ?> <?php disabled( ! current_user_can( 'manage_options' ) ); ?>>
+								<?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( '%s moderators can ban members', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
+							</label>
+							<p class="description" id="jt-moderators-can-ban-hint">
+								<?php
+								/* translators: 1: space label, lowercase (e.g. "space"). */
+								echo esc_html( sprintf( __( 'When on, a %1$s moderator can ban a member of their own %1$s from that %1$s, and lift those bans. Moderators can never ban a %1$s admin, the %1$s owner, another moderator or a site administrator. Off by default. Only administrators can change this.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+								?>
+							</p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
 			<!-- Role -> Capability Mapping (editable) -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">

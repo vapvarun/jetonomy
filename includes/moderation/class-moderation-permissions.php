@@ -212,7 +212,14 @@ class Moderation_Permissions {
 			return user_can( $user_id, 'manage_options' ) ? null : new \WP_Error( 'jetonomy_ip_ban_admin_only', __( 'Only a site administrator can lift an IP address ban.', 'jetonomy' ), array( 'status' => 403 ) );
 		}
 
-		$allowed = \Jetonomy\Models\Restriction::actor_may_restrict( (int) $restriction->user_id, $user_id );
+		// Without site caps, only a ban from a space the user may ban from (the same rule as issuing one).
+		$space_id = 'space_ban' === $restriction->type && ! empty( $restriction->space_id ) ? (int) $restriction->space_id : null;
+		if ( ! user_can( $user_id, 'jetonomy_moderate' ) && ! user_can( $user_id, 'manage_options' )
+			&& ( ! $space_id || ! Permission_Engine::can_space_ban( $user_id, $space_id ) ) ) {
+			return \Jetonomy\API\REST_Auth::forbidden();
+		}
+
+		$allowed = \Jetonomy\Models\Restriction::actor_may_restrict( (int) $restriction->user_id, $user_id, $space_id );
 		if ( true === $allowed ) {
 			return null;
 		}

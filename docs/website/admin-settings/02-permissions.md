@@ -79,6 +79,12 @@ For small communities (under 200 members), lower the thresholds. Members can fee
 
 > **Note:** The anti-spam exemption at Level 2 is important. Members who have earned Level 2 are trusted enough to skip reCAPTCHA and Turnstile checks entirely. This keeps the experience smooth for your most active members.
 
+## Space Moderators
+
+**Setting:** `moderators_can_ban` (since 2.1.0, off by default)
+
+Tick **Space moderators can ban members** to let a space's moderators ban members of that space from it, and lift those bans, from the space's **Members** page. A moderator can ban only members and viewers on that space's roster. They can never ban the space's owner, its admins, another moderator, a site moderator or a site administrator, and they cannot issue site-wide bans, silences or IP bans. Only administrators can change this setting. Space admins can always ban from their space, with or without it.
+
 ## Rate Limits
 
 **Setting:** `rate_limits`
