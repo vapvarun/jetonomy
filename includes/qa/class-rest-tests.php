@@ -853,7 +853,12 @@ class REST_Tests {
 				libxml_clear_errors();
 				libxml_use_internal_errors( $prev );
 			}
-			$this->check( 'E32b: feed with a trimmed excerpt and pasted control characters is valid XML', $probe_id > 0 && $xml_ok, $probe_id ? $xml_error : 'probe topic not created' );
+			if ( ! function_exists( 'simplexml_load_string' ) ) {
+				// No XML reader on this server: nothing to check with, which is not a failure.
+				$this->skip( 'E32b: feed is valid XML', $xml_error );
+			} else {
+				$this->check( 'E32b: feed with a trimmed excerpt and pasted control characters is valid XML', $probe_id > 0 && $xml_ok, $probe_id ? $xml_error : 'probe topic not created' );
+			}
 			if ( $probe_id ) {
 				$this->rest( 'DELETE', "/posts/{$probe_id}", array( 'force' => true ), $this->admin_id );
 			}
