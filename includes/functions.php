@@ -1386,7 +1386,7 @@ function time_span( string $gmt ): string {
  */
 function time_ago( string $gmt ): string {
 	$span = time_span( $gmt );
-	/* translators: %s: human-readable time difference, e.g. "2 hours". */
+	/* translators: %s: human-readable time difference. */
 	return '' === $span ? '' : sprintf( __( '%s ago', 'jetonomy' ), $span );
 }
 

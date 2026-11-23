@@ -304,7 +304,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 		<?php // The Me sheet: header.js shows it, appending the top-nav-only links (Moderation, Pro's Messages) once. ?>
 		<div id="jt-mobile-tab-menu" class="jt-mobile-tab-menu" role="menu" hidden>
 			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>"><?php jetonomy_echo_icon( 'user', 18 ); ?><span><?php esc_html_e( 'My profile', 'jetonomy' ); ?></span></a>
-			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( trailingslashit( \Jetonomy\get_profile_url( $user_id ) ) . 'posts/' ); ?>"><?php jetonomy_echo_icon( 'file-text', 18 ); ?><span><?php echo esc_html( sprintf( /* translators: %s: topic label, plural. */ __( 'My %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></span></a>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( trailingslashit( \Jetonomy\get_profile_url( $user_id ) ) . 'posts/' ); ?>"><?php jetonomy_echo_icon( 'file-text', 18 ); ?><span><?php echo esc_html( sprintf( /* translators: %s: a plural label the site owner configured (e.g. spaces, groups, topics). */ __( 'My %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></span></a>
 			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'bookmarks' ) ); ?>"><?php jetonomy_echo_icon( 'bookmark', 18 ); ?><span><?php esc_html_e( 'Bookmarks', 'jetonomy' ); ?></span></a>
 			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>"><?php jetonomy_echo_icon( 'award', 18 ); ?><span><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span></a>
 			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'edit-profile', get_userdata( $user_id )->user_nicename ) ); ?>"><?php jetonomy_echo_icon( 'settings', 18 ); ?><span><?php esc_html_e( 'Settings', 'jetonomy' ); ?></span></a>
@@ -340,7 +340,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 				<?php else : ?>
 					<?php /* translators: 1: the plural space label, lowercase (e.g. "spaces"). 2: the topic label, singular, lowercase. */ ?>
 					<p class="jt-mobile-tab-menu__note"><?php echo esc_html( sprintf( __( 'Join one of the %1$s to start a %2$s.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></p>
-					<?php /* translators: %s: the plural space label, lowercase (e.g. "spaces"). */ ?>
+					<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 					<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( $base . '/' ); ?>"><?php jetonomy_echo_icon( 'layout-grid', 18 ); ?><span><?php echo esc_html( sprintf( __( 'Browse %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></span></a>
 				<?php endif; ?>
 			</div>

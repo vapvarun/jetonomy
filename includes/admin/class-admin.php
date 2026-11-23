@@ -684,7 +684,7 @@ class Admin {
 		);
 		$lines   = array();
 		foreach ( $missing as $ext ) {
-			$lines[] = sprintf( /* translators: 1: PHP extension name, 2: what is limited without it. */ __( '%1$s (%2$s)', 'jetonomy' ), $ext, $effects[ $ext ] ?? '' );
+			$lines[] = sprintf( /* translators: 1: a name (a PHP extension or a membership level). 2: what it limits, or what kind of level it is (e.g. Course, Group). */ __( '%1$s (%2$s)', 'jetonomy' ), $ext, $effects[ $ext ] ?? '' );
 		}
 		printf(
 			'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p></div>',

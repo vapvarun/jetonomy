@@ -718,7 +718,7 @@ class Blocks {
 					</a>
 				<?php endif; ?>
 				<a href="<?php echo esc_url( $my_spaces_url ); ?>" <?php echo $jt_link_attrs( 'my_spaces_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
-					<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
+					<?php /* translators: %s: a plural label the site owner configured (e.g. spaces, groups, topics). */ ?>
 					<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></span>
 				</a>
 				<a href="<?php echo esc_url( $subs_url ); ?>" <?php echo $jt_link_attrs( 'subs_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>

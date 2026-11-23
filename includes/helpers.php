@@ -716,7 +716,7 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 			// unusable from a screen reader's button list. The visible word stays in the name.
 			/* translators: %s: space title. */
 			$jt_label_off = sprintf( __( 'Follow %s', 'jetonomy' ), (string) $space->title );
-			/* translators: %s: space title. Shown while the member follows the space. */
+			/* translators: %s: a space: the space label the site owner configured (e.g. space, group), or a space title. */
 			$jt_label_on = sprintf( __( 'Following %s', 'jetonomy' ), (string) $space->title );
 			?>
 			<li class="jt-card jt-space-card<?php echo '' !== $jt_cover ? ' jt-space-card--cover' : ''; ?>">

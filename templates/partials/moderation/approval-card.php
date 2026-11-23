@@ -98,8 +98,13 @@ $jt_ac_describe = ' aria-describedby="' . esc_attr( $jt_ac_target ) . '"';
 		</a>
 		<span class="jt-mod-flag-reporter">
 			<?php
-			/* translators: 1: a person's display name; 2: human-readable time elapsed. */
-			echo esc_html( '' === $jt_age ? sprintf( __( 'by %s', 'jetonomy' ), $jt_author_name ) : sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_author_name, $jt_age ) );
+			echo esc_html(
+				'' === $jt_age
+					/* translators: %s: a person's display name. */
+					? sprintf( __( 'by %s', 'jetonomy' ), $jt_author_name )
+					/* translators: 1: a person's display name; 2: human-readable time elapsed. */
+					: sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_author_name, $jt_age )
+			);
 			?>
 		</span>
 	</div>

@@ -820,7 +820,7 @@ class AccessRule extends Model {
 			'kind'      => $described['kind'],
 			// "Gold (Level)" is noise; "(Course)" / "(Group)" tells two ways in apart.
 			'label'     => '' !== $described['kind'] && ! $purchase
-				/* translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group). */
+				/* translators: 1: a name (a PHP extension or a membership level). 2: what it limits, or what kind of level it is (e.g. Course, Group). */
 				? sprintf( __( '%1$s (%2$s)', 'jetonomy' ), $described['value'], $described['kind'] )
 				: $described['value'],
 			'url'       => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( $level_id ),

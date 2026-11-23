@@ -1206,7 +1206,7 @@ class Template_Loader {
 						$parts['title'] = __( 'You are invited', 'jetonomy' );
 						break;
 					case 'my-spaces':
-						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
+						/* translators: %s: a plural label the site owner configured (e.g. spaces, groups, topics). */
 						$parts['title'] = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						break;
 					case 'subscriptions':
@@ -1497,7 +1497,7 @@ class Template_Loader {
 						$noindex   = true; // One-shot landing.
 						break;
 					case 'my-spaces':
-						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
+						/* translators: %s: a plural label the site owner configured (e.g. spaces, groups, topics). */
 						$title = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						/* translators: 1: plural space label, 2: plural space label, 3: site title. */
 						$desc      = sprintf( __( '%1$s you run and %2$s you are part of on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), \Jetonomy\space_label( true, true ), $site_name );
@@ -1900,7 +1900,7 @@ class Template_Loader {
 			'networkError'          => __( 'Network error. Please try again.', 'jetonomy' ),
 			'follow'                => __( 'Follow', 'jetonomy' ),
 			'following'             => __( 'Following', 'jetonomy' ),
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			/* translators: %s: a space: the space label the site owner configured (e.g. space, group), or a space title. */
 			'followingSpace'        => sprintf( __( 'Following %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			/* translators: %s: the unfollowed space or topic title. */
 			'unfollowedSpace'       => sprintf( __( 'Unfollowed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
@@ -1984,7 +1984,7 @@ class Template_Loader {
 			'replyingTo'            => __( 'Replying to %s', 'jetonomy' ), // jt-terms-ok: verb.
 			/* translators: %s: singular member label. */
 			'thisMember'            => sprintf( __( 'this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
-			/* translators: %s: a number and the reply label the owner renamed, e.g. "3 answers". */
+			/* translators: %s: what to show: a sidebar widget name (e.g. Trending), or a count with the reply label (e.g. "3 answers"). */
 			'showCount'             => __( 'Show %s', 'jetonomy' ),
 			/* translators: %s: the singular reply label the site owner configured (lowercase). */
 			'cancelReply'           => sprintf( __( 'Cancel %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),

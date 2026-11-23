@@ -1263,7 +1263,7 @@ $jetonomy_schema = \Jetonomy\Settings::schema();
 							<div class="jt-widget-main">
 								<label>
 									<input type="checkbox" class="jt-widget-on" name="jetonomy_settings[sidebar_widgets][<?php echo (int) $jt_i; ?>][enabled]" value="1" <?php checked( $jt_w['enabled'] ); ?>>
-									<?php /* translators: %s: widget name, e.g. Trending. */ echo esc_html( sprintf( __( 'Show %s', 'jetonomy' ), $jt_name ) ); ?>
+									<?php /* translators: %s: what to show: a sidebar widget name (e.g. Trending), or a count with the reply label (e.g. "3 answers"). */ echo esc_html( sprintf( __( 'Show %s', 'jetonomy' ), $jt_name ) ); ?>
 								</label>
 								<span class="jt-widget-hint"><?php echo esc_html( $jt_widget_meta[ $jt_w['id'] ][1] ); ?></span>
 							</div>
