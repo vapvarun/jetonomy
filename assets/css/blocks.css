@@ -352,8 +352,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
    field boundary measured 1.34:1 against the card and read as invisible (WCAG
    1.4.11 asks 3:1 for a control boundary). The field is now legible primarily
    because it stays on --jt-bg while the card sits on --jt-bg-subtle, so the
-   input is a distinct surface in BOTH modes rather than a hairline outline. */
-.jt-login-label > input {
+   input is a distinct surface in BOTH modes rather than a hairline outline.
+   Scoped under .jt-login-form so a theme's equal-weight input[type="text"]
+   rule (Reign's form border, 2.81:1 in dark) loaded later cannot replace it. */
+.jt-login-form .jt-login-label > input {
 	padding: 9px 12px;
 	min-height: var(--jt-tap);
 	border: 1.5px solid var(--jt-border-strong);
@@ -1031,7 +1033,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 		font-size: 0.9375rem;
 	}
 	.jt-login-tab { font-size: 0.875rem; padding: 9px 10px; }
-	.jt-login-label > input { font-size: 16px; } /* avoid iOS zoom */
+	.jt-login-form .jt-login-label > input { font-size: 16px; } /* avoid iOS zoom */
 	.jt-shortcode-post { padding: 10px 6px; }
 	:is(.jt-shortcode-recent-posts, .jt-shortcode-trending-posts, .jt-shortcode-leaderboard, .jt-shortcode-members) { padding: var(--jt-space-4); }
 	.jt-shortcode-spaces { grid-template-columns: 1fr; gap: var(--jt-space-3); }

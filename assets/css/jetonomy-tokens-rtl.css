@@ -325,37 +325,38 @@
     /* Light mode only (dark reassigns both below). Each colour is scaled in
        linear sRGB, which keeps its hue and darkens it to an exact luminance:
        - accent ink (links, accent text, focus ring, active underline): at
-         most 0.1828 (Reign #1d76da's own), which is 4.5:1 on white and 3:1
-         or more as a line on any light surface. An accent already that dark keeps its exact
-         colour (#0073aa, Reign #1d76da); a light accent such as #ffd34d
-         darkens to the same hue.
+         most 0.17, which is 4.5:1 on white and on the subtle surfaces
+         (#f9fafb, Reign's #fafbfd page) and 3:1 or more as a line. An
+         accent already that dark keeps its exact colour (#0073aa); Reign
+         #1d76da (0.183) is a shade darker as ink and unchanged as a fill; a
+         light accent such as #ffd34d darkens to the same hue.
        - control outline: 50% of the text colour over the card, then at most
          0.24, which is 3:1 or more on the card, the page and the muted
          tints for any host text colour.
-       - secondary and tertiary text: their mix, then at most 0.16, which is
-         4.5:1 on the muted tints. Only a light host text colour (#6b7280,
+       - secondary and tertiary text: their mix, then at most 0.13, which is
+         4.5:1 on the muted and accent tints (hover backgrounds). Only a light host text colour (#6b7280,
          a pastel) is darkened; --jt-text itself stays the host's. */
     :root {
       --jt-accent-ink: color(from var(--jt-accent) srgb-linear
-        calc(r * min(1, 0.1828 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
-        calc(g * min(1, 0.1828 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
-        calc(b * min(1, 0.1828 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
+        calc(r * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(g * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(b * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
       --jt-accent-ink-hover: color(from var(--jt-accent-hover) srgb-linear
-        calc(r * min(1, 0.1828 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
-        calc(g * min(1, 0.1828 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
-        calc(b * min(1, 0.1828 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
+        calc(r * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(g * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(b * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
       --jt-border-strong: color(from color-mix(in srgb, var(--jt-text) 50%, var(--jt-bg)) srgb-linear
         calc(r * min(1, 0.24 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
         calc(g * min(1, 0.24 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
         calc(b * min(1, 0.24 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
       --jt-text-secondary: color(from color-mix(in srgb, var(--jt-text) 92%, var(--jt-bg)) srgb-linear
-        calc(r * min(1, 0.16 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
-        calc(g * min(1, 0.16 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
-        calc(b * min(1, 0.16 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
+        calc(r * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(g * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(b * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
       --jt-text-tertiary: color(from color-mix(in srgb, var(--jt-text) 88%, var(--jt-bg)) srgb-linear
-        calc(r * min(1, 0.16 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
-        calc(g * min(1, 0.16 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
-        calc(b * min(1, 0.16 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
+        calc(r * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(g * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(b * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
     }
   }
 
@@ -465,11 +466,12 @@
       --jt-accent-ink: oklch(from var(--jt-accent) max(l, 0.72) c h);
       --jt-accent-ink-hover: oklch(from var(--jt-accent-hover) max(l, 0.72) c h);
       /* The dark control outline gets a lightness floor the same way: 50% of
-         a dim host text colour on a lifted card fell under 3:1. */
-      --jt-border-strong: oklch(from color-mix(in srgb, var(--jt-text) 50%, var(--jt-bg)) max(l, 0.62) c h);
-      /* And muted text a floor of 0.72, 4.5:1 on the lifted tints, for a dim
-         host text colour such as #9ca3af. */
-      --jt-text-secondary: oklch(from color-mix(in srgb, var(--jt-text) 86%, var(--jt-bg)) max(l, 0.72) c h);
-      --jt-text-tertiary: oklch(from color-mix(in srgb, var(--jt-text) 76%, var(--jt-bg)) max(l, 0.72) c h);
+         a dim host text colour on a lifted card or a tinted panel fell under
+         3:1 (0.62 measured 2.93 on the notification prompt). */
+      --jt-border-strong: oklch(from color-mix(in srgb, var(--jt-text) 50%, var(--jt-bg)) max(l, 0.68) c h);
+      /* And muted text a floor of 0.76, 4.5:1 on the lifted and accent tints,
+         for a dim host text colour such as #9ca3af. */
+      --jt-text-secondary: oklch(from color-mix(in srgb, var(--jt-text) 86%, var(--jt-bg)) max(l, 0.76) c h);
+      --jt-text-tertiary: oklch(from color-mix(in srgb, var(--jt-text) 76%, var(--jt-bg)) max(l, 0.76) c h);
     }
   }

@@ -781,9 +781,9 @@ class Template_Loader {
 	 * Server-computed light-mode accent ink for an accent hex the server knows.
 	 *
 	 * Same rule as the light guard in jetonomy-tokens.css: the colour scaled in
-	 * linear sRGB to a relative luminance of at most 0.1828 (4.5:1 on white),
+	 * linear sRGB to a relative luminance of at most 0.17 (4.5:1 on white and the subtle surfaces),
 	 * so a light accent such as #ffd34d gets a readable ink of the same hue and
-	 * an accent already that dark (#0073aa, #1d76da) keeps its exact colour.
+	 * an accent already that dark (#0073aa) keeps its exact colour.
 	 * Emitted under LIGHT_ROOT only: dark mode lifts the ink instead.
 	 *
 	 * @param string      $accent A #rrggbb / #rgb accent colour.
@@ -799,7 +799,7 @@ class Template_Loader {
 		$ink  = static function ( array $c ): string {
 			$lin = self::linear( $c );
 			$lum = 0.2126 * $lin[0] + 0.7152 * $lin[1] + 0.0722 * $lin[2];
-			$k   = $lum > 0.1829 ? 0.1828 / $lum : 1.0; // An accent at the limit (Reign #1d76da, 0.18280) keeps its exact hex.
+			$k   = $lum > 0.17 ? 0.17 / $lum : 1.0;
 			$out = '#';
 			foreach ( $lin as $v ) {
 				$v   *= $k;
