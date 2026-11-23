@@ -200,6 +200,9 @@
   .jt-space-head__actions .jt-more-menu { margin-inline-start: 0; }
   .jt-space-head__actions .jt-btn svg { flex-shrink: 0; }
   .jt-follow-space-btn, .jt-membership-trigger { display: inline-flex; align-items: center; gap: var(--jt-space-1); }
+  /* Every header action is one height, the --jt-tap target the Joined menu trigger already used (QA J37:
+     Follow was 34px beside a 40px Joined). The phone rule below raises --jt-tap to 44px. */
+  .jt-space-head__actions .jt-btn { min-height: var(--jt-tap); }
   /* Description, custom fields and the edit / queue links: one row below. */
   .jt-space-head__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); flex: 1 1 100%; }
   .jt-space-head__meta:empty { display: none; }
@@ -1239,7 +1242,7 @@
     .jt-space-head__identity { flex-basis: 100%; }
     .jt-space-head__actions { margin-inline-start: 0; }
     /* 44px like the other header and row controls on phones (QA J37: Follow / Joined were 40px). */
-    .jt-space-head__actions .jt-btn { --jt-tap: 44px; min-height: var(--jt-tap); }
+    .jt-space-head__actions .jt-btn { --jt-tap: 44px; }
     .jt-space-emoji { width: 40px; height: 40px; }
     .jt-space-emoji svg { width: 20px; height: 20px; }
 
