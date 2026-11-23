@@ -33,7 +33,7 @@ class TemplateLoaderPaletteTest extends WP_UnitTestCase {
 		// stays legible on any accent in every browser (accent_fg()). #10b981 is
 		// light enough that black text wins.
 		$this->assertSame(
-			':root{--jt-accent:#10b981;--jt-accent-fg:#000000;--jt-accent-hover-fg:#000000;}',
+			':root{--jt-accent:#10b981;--jt-accent-fg:#000000;--jt-accent-hover-fg:#000000;}' . Template_Loader::LIGHT_ROOT . '{--jt-accent-ink:#08875d;--jt-accent-ink-hover:#0a875d;}',
 			Template_Loader::palette_css( array( 'accent_color' => '#10b981' ) )
 		);
 	}
@@ -49,7 +49,7 @@ class TemplateLoaderPaletteTest extends WP_UnitTestCase {
 			)
 		);
 		$this->assertSame(
-			':root{--jt-accent:#10b981;--jt-text:#111827;--jt-bg:#ffffff;--jt-bg-subtle:#f3f4f6;--jt-border:#e5e7eb;--jt-accent-fg:#000000;--jt-accent-hover-fg:#000000;}',
+			':root{--jt-accent:#10b981;--jt-text:#111827;--jt-bg:#ffffff;--jt-bg-subtle:#f3f4f6;--jt-border:#e5e7eb;--jt-accent-fg:#000000;--jt-accent-hover-fg:#000000;}' . Template_Loader::LIGHT_ROOT . '{--jt-accent-ink:#08875d;--jt-accent-ink-hover:#0a875d;}',
 			$css
 		);
 	}
@@ -90,7 +90,7 @@ class TemplateLoaderPaletteTest extends WP_UnitTestCase {
 			)
 		);
 		$this->assertSame(
-			':root{--jt-accent:#10b981;--jt-text:#111827;--jt-accent-fg:#000000;--jt-accent-hover-fg:#000000;}',
+			':root{--jt-accent:#10b981;--jt-text:#111827;--jt-accent-fg:#000000;--jt-accent-hover-fg:#000000;}' . Template_Loader::LIGHT_ROOT . '{--jt-accent-ink:#08875d;--jt-accent-ink-hover:#0a875d;}',
 			$css
 		);
 	}
@@ -99,9 +99,20 @@ class TemplateLoaderPaletteTest extends WP_UnitTestCase {
 		// The computed foreground flips with the accent's luminance: a dark
 		// accent gets white text, a light one black (see the emerald cases above).
 		$this->assertSame(
-			':root{--jt-accent:#7c3aed;--jt-accent-fg:#ffffff;--jt-accent-hover-fg:#ffffff;}',
+			':root{--jt-accent:#7c3aed;--jt-accent-fg:#ffffff;--jt-accent-hover-fg:#ffffff;}' . Template_Loader::LIGHT_ROOT . '{--jt-accent-ink:#7c3aed;--jt-accent-ink-hover:#6931c9;}',
 			Template_Loader::palette_css( array( 'accent_color' => '#7c3aed' ) )
 		);
+	}
+
+	public function test_light_accent_ink_reaches_text_contrast_and_dark_brand_keeps_its_colour(): void {
+		// A light accent's light-mode ink is darkened to 4.5:1 on white, same hue;
+		// an accent already that dark keeps its exact colour (Reign, the default).
+		$this->assertSame( array( '--jt-accent-ink' => '#8d7326', '--jt-accent-ink-hover' => '#8d7327' ), Template_Loader::accent_ink_tokens( '#ffd34d' ) );
+		$this->assertSame( '#1d76da', Template_Loader::accent_ink_tokens( '#1d76da' )['--jt-accent-ink'] );
+		$this->assertSame( '#0073aa', Template_Loader::accent_ink_tokens( '#0073aa' )['--jt-accent-ink'] );
+		$this->assertSame( array(), Template_Loader::accent_ink_tokens( 'var(--x)' ) );
+		// The ink pair is light-only: it never lands on a dark root.
+		$this->assertStringContainsString( ':root:not(.jt-dark):not([data-theme="dark"]):not([data-bx-mode="dark"]){--jt-accent-ink:#8d7326;', Template_Loader::palette_css( array( 'accent_color' => '#ffd34d' ) ) );
 	}
 
 	public function test_sanitizer_persists_valid_hex_and_blanks_invalid(): void {

@@ -62,7 +62,7 @@
 }
 .jt-bp-forum-head .bp-primary-action:hover {
 	background: var(--jt-accent-hover, #2563eb);
-	color: var(--jt-accent-fg, #fff); /* follows the accent, so a light accent still reads */
+	color: var(--jt-accent-hover-fg, #fff); /* the label picked for the hover fill */
 }
 
 .jt-bp-empty {

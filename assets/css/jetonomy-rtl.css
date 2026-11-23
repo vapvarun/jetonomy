@@ -1199,7 +1199,7 @@
 
     /* Sticky Reply on long threads: one tap to the composer (single-post.php). */
     .jt-app a.jt-reply-fab { position: fixed; inset-inline-end: var(--jt-space-4); bottom: max(var(--jt-space-4), calc(var(--jt-tab-bar-clearance, 0px) - var(--jt-space-2))); z-index: 998; display: inline-flex; align-items: center; gap: var(--jt-space-2); min-height: var(--jt-tap); padding-inline: var(--jt-space-4); border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-accent-fg); font-weight: 600; text-decoration: none; box-shadow: var(--jt-shadow-md); }
-    .jt-app a.jt-reply-fab:hover, .jt-app a.jt-reply-fab:focus-visible { color: var(--jt-accent-fg); background: var(--jt-accent-strong); }
+    .jt-app a.jt-reply-fab:hover, .jt-app a.jt-reply-fab:focus-visible { color: var(--jt-accent-hover-fg); background: var(--jt-accent-hover); }
     .jt-container { padding-block-start: 0; }
 
     /* Composer toolbars (reply, new topic) stay on one row: the 44px
@@ -1471,7 +1471,7 @@
   .jt-idea-pill-planned { --jt-ip: var(--jt-accent); --jt-ip-fg: var(--jt-accent-strong); }
   .jt-idea-pill-in_progress { --jt-ip: var(--jt-warn); --jt-ip-fg: var(--jt-warn-strong); }
   .jt-idea-pill-shipped { --jt-ip: var(--jt-success); --jt-ip-fg: var(--jt-success-strong); }
-  .jt-idea-pill-declined { --jt-ip: var(--jt-text-tertiary); --jt-ip-fg: var(--jt-text-secondary); }
+  .jt-idea-pill-declined { --jt-ip: var(--jt-text-tertiary); --jt-ip-fg: var(--jt-text); } /* secondary text on its own tint fell to 4.29:1 on a mid-grey host text */
 
   /* Roadmap status picker (moderator only on Ideas spaces). Each option
      is a pill button that mirrors the read-only pill above; the active
@@ -2580,18 +2580,9 @@
     to { opacity: 1; transform: translateY(0); max-height: 60px; padding: 8px 14px; }
   }
 
-  /* ── Post actions — hover reveal on pointer devices only ─────────
-     On touch devices there's no hover, so always show full opacity
-     or the `…` / Share / Bookmark buttons look disabled. Use
-     `hover: hover` media feature to gate the reveal effect. */
-  .jt-post-foot .jt-act { opacity: 1; transition: opacity 0.15s; }
-  @media (hover: hover) and (pointer: fine) {
-    .jt-post-foot .jt-act { opacity: 0.72; }
-    .jt-post-foot:hover .jt-act,
-    .jt-post-foot .jt-act:hover,
-    .jt-post-foot .jt-act:focus-visible { opacity: 1; }
-    .jt-post-foot .jt-act:first-child { opacity: 1; }
-  }
+  /* Post actions are not faded with opacity until hover: .jt-act is already
+     the quiet --jt-text-tertiary, and fading it further took Share and Reply
+     under 4.5:1 on a host with a mid-dark text colour (Reign #404855: 4.17). */
 
   /* ── Smooth focus transitions ── */
   .jt-editor-body:focus { box-shadow: inset 0 0 0 1px var(--jt-accent-muted); }
@@ -2682,8 +2673,8 @@
   .jt-member-item:hover { background: var(--jt-bg-hover); }
 
   /* User profile links */
-  .jt-user-link { transition: opacity 0.15s; }
-  .jt-user-link:hover { opacity: 0.8; }
+  /* No opacity fade on hover: the underlined name is the hover cue, and a
+     fade took the name under 4.5:1 on a mid-dark host text colour. */
 
   /* Buttons — press effect */
   .jt-btn:active { transform: scale(0.97); }
@@ -3134,7 +3125,7 @@ button.jt-mobile-tab { background: none; border: 0; font: inherit; font-size: 0.
   background: var(--jt-accent); color: var(--jt-accent-fg, #fff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
 }
-.jt-mobile-tab--primary:hover .jt-mobile-tab__bubble, .jt-mobile-tab--primary.active .jt-mobile-tab__bubble { background: var(--jt-accent-strong); }
+.jt-mobile-tab--primary:hover .jt-mobile-tab__bubble, .jt-mobile-tab--primary.active .jt-mobile-tab__bubble { background: var(--jt-accent-hover); color: var(--jt-accent-hover-fg); }
 .jt-mobile-tab--primary:hover svg, .jt-mobile-tab--primary.active svg { color: inherit; }
 .jt-mobile-tab:hover, .jt-mobile-tab.active { color: var(--jt-accent-strong); }
 .jt-mobile-tab:hover svg, .jt-mobile-tab.active svg { color: var(--jt-accent-ink); }
@@ -3231,6 +3222,7 @@ button.jt-mobile-tab { background: none; border: 0; font: inherit; font-size: 0.
 .jt-modal-actions .jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
 .jt-modal-actions .jt-btn-danger { background: var(--jt-danger-solid); color: var(--jt-danger-fg); }
 .jt-modal-actions .jt-btn-danger:hover { background: var(--jt-danger-solid); filter: brightness( 0.93 ); color: var(--jt-danger-fg); }
+.jt-modal-actions .jt-btn:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
 @media ( max-width: 640px ) {
 	.jt-modal-box { padding: 16px; max-width: calc(100vw - 16px); }
 	.jt-modal-actions { flex-direction: column-reverse; gap: 6px; }

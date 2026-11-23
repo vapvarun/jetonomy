@@ -178,6 +178,10 @@ class Theme_Integration {
 		$css = '';
 		if ( ! empty( $light ) ) {
 			$css .= ':root{' . $this->build_token_css( $light ) . '}';
+			$ink  = isset( $light['--jt-accent'] ) ? \Jetonomy\Template_Loader::accent_ink_tokens( $light['--jt-accent'], $light['--jt-accent-hover'] ?? null ) : array();
+			if ( ! empty( $ink ) ) {
+				$css .= \Jetonomy\Template_Loader::LIGHT_ROOT . '{' . $this->build_token_css( $ink ) . '}';
+			}
 		}
 		if ( ! empty( $dark ) ) {
 			$css .= '.jt-dark,[data-theme="dark"]{' . $this->build_token_css( $dark ) . '}';
