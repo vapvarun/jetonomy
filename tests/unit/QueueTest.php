@@ -149,4 +149,17 @@ class QueueTest extends WP_UnitTestCase {
 		$this->assertTrue( Queue::is_queued( self::HOOK, array() ), 'a running copy counts by default' );
 		$this->assertFalse( Queue::is_queued( self::HOOK, array(), false ), 'false as the third argument: pending only, as in 2.0.7' );
 	}
+
+	/** next() answers for a WP-Cron copy with any args, like the Action Scheduler branch. */
+	public function test_next_finds_a_wp_cron_copy_with_args(): void {
+		$hook = 'jetonomy_test_next_args';
+		$at   = time() + 600;
+		wp_schedule_single_event( $at, $hook, array( 7 ) );
+		try {
+			$this->assertSame( $at, Queue::next( $hook ) );
+		} finally {
+			wp_clear_scheduled_hook( $hook, array( 7 ) );
+		}
+		$this->assertSame( 0, Queue::next( $hook ) );
+	}
 }

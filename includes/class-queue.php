@@ -264,7 +264,13 @@ final class Queue {
 				return $next;
 			}
 		}
-		return (int) wp_next_scheduled( $hook );
+		// WP-Cron: wp_next_scheduled() matches one exact args list, so scan for the soonest copy with any args.
+		foreach ( (array) _get_cron_array() as $time => $events ) { // Sorted by time.
+			if ( isset( $events[ $hook ] ) ) {
+				return (int) $time;
+			}
+		}
+		return 0;
 	}
 
 	/**
