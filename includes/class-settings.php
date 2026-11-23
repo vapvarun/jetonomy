@@ -45,6 +45,14 @@ class Settings {
 	private static string $source = '';
 
 	/**
+	 * While write() runs: the touched sections as they were, cleaned. announce()
+	 * compares against this instead of the raw stored option.
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	private static ?array $baseline = null;
+
+	/**
 	 * The sanitizer runs a section only when that section's marker key is in
 	 * the input, the way each settings tab posts its own fields. write() fills
 	 * a touched section from the stored values so a one-key change never resets
@@ -233,11 +241,12 @@ class Settings {
 		$stored   = is_array( $stored ) ? $stored : array();
 		$sections = self::sections();
 		$touched  = array_unique( array_map( static fn( string $k ): string => (string) $schema[ $k ]['section'], array_keys( $patch ) ) );
+		$current  = self::effective( $stored );
 		$input    = array();
 		foreach ( $touched as $section ) {
 			foreach ( $schema as $key => $def ) {
-				if ( $section === $def['section'] && array_key_exists( $key, $stored ) ) {
-					$input[ $key ] = $stored[ $key ];
+				if ( $section === $def['section'] && array_key_exists( $key, $current ) ) {
+					$input[ $key ] = $current[ $key ];
 				}
 			}
 			$marker = $sections[ $section ] ?? '';
@@ -245,20 +254,52 @@ class Settings {
 				$input[ $marker ] = self::marker_default( $marker );
 			}
 		}
-		$input = array_replace( $input, $patch );
 
-		self::$notices = array();
-		$clean         = self::sanitize( $input );
-		$notices       = self::$notices;
+		// What the touched sections hold today once cleaned, so the announcement
+		// names only keys whose value really changed (a first write also stores
+		// the section's defaults, which is not a change).
+		self::$notices  = array();
+		self::$baseline = self::sanitize( $input );
+		self::$notices  = array();
+		$clean          = self::sanitize( array_replace( $input, $patch ) );
+		$notices        = self::$notices;
 
 		self::$source = $source;
 		update_option( self::OPTION, $clean );
-		self::$source = '';
+		self::$source   = '';
+		self::$baseline = null;
 
 		return array(
 			'settings' => self::read( $sent ),
 			'notices'  => $notices,
 		);
+	}
+
+	/**
+	 * The stored settings plus the defaults the settings screen shows for keys
+	 * never saved, so a partial write starts from what the owner sees. Only keys
+	 * whose "absent" reading differs from the sanitizer's are listed: checkboxes
+	 * that default on (absent input means off to the sanitizer).
+	 *
+	 * @param array<string, mixed> $stored Stored settings.
+	 * @return array<string, mixed>
+	 */
+	private static function effective( array $stored ): array {
+		foreach ( array( 'seo_schema', 'seo_sitemap', 'seo_noindex_profiles', 'seo_noindex_search' ) as $key ) {
+			$stored[ $key ] = $stored[ $key ] ?? true;
+		}
+		$notif = is_array( $stored['notification_defaults'] ?? null ) ? $stored['notification_defaults'] : array();
+		foreach ( array_keys( array_filter( \Jetonomy\Admin\Admin::email_types(), static fn( array $t ): bool => $t['toggle'] ) ) as $type ) {
+			if ( ! is_array( $notif[ $type ] ?? null ) ) {
+				// Same reading as the Notification Defaults table: web on, email per the notifier.
+				$notif[ $type ] = array(
+					'web'   => true,
+					'email' => \Jetonomy\Notifications\Notifier::default_email( $type, $notif ),
+				);
+			}
+		}
+		$stored['notification_defaults'] = $notif;
+		return $stored;
 	}
 
 	/**
@@ -299,7 +340,7 @@ class Settings {
 	 * @param mixed $value     New value.
 	 */
 	public static function announce( $old_value, $value ): void {
-		$old     = is_array( $old_value ) ? $old_value : array();
+		$old     = self::$baseline ?? ( is_array( $old_value ) ? $old_value : array() );
 		$new     = is_array( $value ) ? $value : array();
 		$changed = array();
 		foreach ( array_unique( array_merge( array_keys( $old ), array_keys( $new ) ) ) as $key ) {

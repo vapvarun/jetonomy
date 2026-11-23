@@ -155,11 +155,43 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 		$this->post( array( 'accent_color' => '#444444' ), $this->admin );
 		update_option( 'jetonomy_settings', array_merge( get_option( 'jetonomy_settings' ), array( 'custom_css' => '' ) ) );
 
-		// The first Appearance write also stores that section's defaults, as the form does.
-		$this->assertContains( 'accent_color', $seen[0][0] );
-		$this->assertNotContains( 'seo_post_title', $seen[0][0], 'Another section is not rewritten.' );
-		$this->assertSame( 'rest', $seen[0][1] );
+		// The first Appearance write also stores that section's defaults; only the sent key changed.
+		$this->assertSame( array( array( 'accent_color' ), 'rest' ), $seen[0] );
 		$this->assertSame( array( array( 'custom_css' ), 'form' ), $seen[1] );
+	}
+
+	public function test_a_one_key_write_on_a_fresh_option_keeps_default_on_checkboxes_on(): void {
+		delete_option( 'jetonomy_settings' );
+		$seen = array();
+		add_action(
+			'jetonomy_settings_updated',
+			static function ( array $changed ) use ( &$seen ): void {
+				$seen[] = $changed;
+			}
+		);
+
+		$this->assertSame( 200, $this->post( array( 'seo_twitter_handle' => 'abc' ), $this->admin )->get_status() );
+		$stored = get_option( 'jetonomy_settings' );
+		foreach ( array( 'seo_schema', 'seo_sitemap', 'seo_noindex_profiles', 'seo_noindex_search' ) as $key ) {
+			$this->assertTrue( $stored[ $key ], $key . ' was turned off by a write that did not send it.' );
+		}
+		$this->assertSame( array( array( 'seo_twitter_handle' ) ), $seen );
+
+		// Notification defaults keep the table's reading: web on, email per the notifier.
+		$this->post( array( 'email_from_name' => 'Team' ), $this->admin );
+		$notif = get_option( 'jetonomy_settings' )['notification_defaults'];
+		$this->assertTrue( $notif['mention']['web'] );
+		$this->assertSame( \Jetonomy\Notifications\Notifier::default_email( 'mention', array() ), $notif['mention']['email'] );
+		$this->assertTrue( $notif['join_request_result']['email'] ?? true, 'Email-on-when-unset types stay on.' );
+		$this->assertSame( array( 'email_from_name' ), $seen[1] );
+	}
+
+	/** @covers-existing The form's unchecked-box rule must survive the default fill in write(). */
+	public function test_the_form_still_turns_an_unchecked_box_off(): void {
+		update_option( 'jetonomy_settings', array_merge( get_option( 'jetonomy_settings' ), array( 'seo_schema' => true ) ) );
+		// The SEO tab posts its fields; an unchecked box posts nothing.
+		update_option( 'jetonomy_settings', Settings::sanitize( array( 'seo_post_title' => '{post_title}' ) ) );
+		$this->assertFalse( get_option( 'jetonomy_settings' )['seo_schema'] );
 	}
 
 	/**
