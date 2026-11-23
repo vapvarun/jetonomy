@@ -19,7 +19,7 @@ Jetonomy Pro is a peer plugin to free Jetonomy. Install and activate free Jetono
 2. Paste the license key from your purchase receipt.
 3. Click **Activate**. Jetonomy validates the key against the store and shows your tier and expiry.
 
-Your license controls automatic updates only. Every Pro feature keeps working without one: if the license is missing, expired or not activated for this site, updates stop and the License tab, the Plugins screen and a short line on Jetonomy's own screens say why. There is no per-extension tier.
+Your license controls automatic updates only. Every Pro feature keeps working without one: if the license is missing, expired or not activated for this site, updates stop and the License tab, the Plugins screen and a short line on Jetonomy's own screens say why. A valid license shows no notice and no renewal reminder, and no Pro notice appears outside Jetonomy's screens. There is no per-extension tier.
 
 > **Note:** Free and Pro always ship the same `x.y.z` version. Keep both updated together so the contracts between them stay in sync.
 
