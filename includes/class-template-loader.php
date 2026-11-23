@@ -736,38 +736,46 @@ class Template_Loader {
 	}
 
 	/**
-	 * Black or white, whichever reads better on the given accent hex.
+	 * Server-computed label colours for an accent hex the server knows (a
+	 * picked palette accent, or a theme accent the theme bridge reads).
 	 *
-	 * The runtime `oklch()` contrast guard in jetonomy-tokens.css derives
-	 * --jt-accent-fg for a THEME-token accent the server never sees. When the
-	 * owner PICKS an accent, the server knows the exact colour, so it computes
-	 * the readable foreground here and emits it as a concrete hex — which works
-	 * in every browser, including those without relative-colour oklch (Safari
-	 * < 16.4 / Chrome < 111), where the guard would otherwise fall back to plain
-	 * white and turn a light accent's button text invisible.
+	 * Same rule as the relative-colour guard in jetonomy-tokens.css: white
+	 * while white reaches 4.5:1 on the fill (relative luminance 0.1833 or
+	 * less), else black (4.67:1 or more). Hover gets the same rule on the
+	 * hover fill, which defaults to the CSS hover (the accent 15% toward
+	 * black). A concrete hex works in every browser, including those without
+	 * relative colour syntax, where the CSS guard falls back to white.
 	 *
-	 * @param string $hex A #rrggbb / #rgb accent colour.
-	 * @return string '#ffffff' or '#000000'.
+	 * @param string      $accent A #rrggbb / #rgb accent colour.
+	 * @param string|null $hover  The hover fill, when the caller sets its own.
+	 * @return array<string,string> --jt-accent-fg and --jt-accent-hover-fg; empty when $accent is not a hex.
 	 */
-	private static function accent_fg( string $hex ): string {
-		$hex = ltrim( $hex, '#' );
-		if ( 3 === strlen( $hex ) ) {
-			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
-		}
-		if ( 6 !== strlen( $hex ) ) {
-			return '#ffffff';
-		}
-		$lin = static function ( float $c ): float {
-			$c /= 255;
-			return $c <= 0.03928 ? $c / 12.92 : pow( ( $c + 0.055 ) / 1.055, 2.4 );
+	public static function accent_fg_tokens( string $accent, ?string $hover = null ): array {
+		$rgb = static function ( string $hex ): ?array {
+			$hex = ltrim( $hex, '#' );
+			if ( 3 === strlen( $hex ) ) {
+				$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+			}
+			return preg_match( '/^[0-9a-f]{6}$/i', $hex ) ? array_map( 'hexdec', str_split( $hex, 2 ) ) : null;
 		};
-		$lum = 0.2126 * $lin( (float) hexdec( substr( $hex, 0, 2 ) ) )
-			+ 0.7152 * $lin( (float) hexdec( substr( $hex, 2, 2 ) ) )
-			+ 0.0722 * $lin( (float) hexdec( substr( $hex, 4, 2 ) ) );
-		// Contrast of white vs black against this background; pick the higher.
-		$white_ratio = 1.05 / ( $lum + 0.05 );
-		$black_ratio = ( $lum + 0.05 ) / 0.05;
-		return $white_ratio >= $black_ratio ? '#ffffff' : '#000000';
+		$label = static function ( ?array $c ): string {
+			if ( null === $c ) {
+				return '#ffffff';
+			}
+			$lin = static fn( float $v ): float => ( $v /= 255 ) <= 0.04045 ? $v / 12.92 : pow( ( $v + 0.055 ) / 1.055, 2.4 );
+			$lum = 0.2126 * $lin( (float) $c[0] ) + 0.7152 * $lin( (float) $c[1] ) + 0.0722 * $lin( (float) $c[2] );
+			return $lum <= 0.1833 ? '#ffffff' : '#000000';
+		};
+		$fill = $rgb( $accent );
+		if ( null === $fill ) {
+			return array(); // Not a hex (a var() or rgb() from a theme): leave the CSS derivation in charge.
+		}
+		$over = null !== $hover ? $rgb( $hover ) : array_map( static fn( $v ) => $v * 0.85, $fill );
+
+		return array(
+			'--jt-accent-fg'       => $label( $fill ),
+			'--jt-accent-hover-fg' => $label( $over ),
+		);
 	}
 
 	/**
@@ -817,9 +825,7 @@ class Template_Loader {
 		// stays legible on a light accent in ALL browsers — not only those the
 		// oklch guard covers.
 		if ( isset( $tokens['--jt-accent'] ) ) {
-			$fg                             = self::accent_fg( $tokens['--jt-accent'] );
-			$tokens['--jt-accent-fg']       = $fg;
-			$tokens['--jt-accent-hover-fg'] = $fg;
+			$tokens += self::accent_fg_tokens( $tokens['--jt-accent'] );
 		}
 
 		return $tokens;

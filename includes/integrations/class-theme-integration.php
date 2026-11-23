@@ -166,6 +166,15 @@ class Theme_Integration {
 		// specificity. $dark is legitimately EMPTY on BuddyX Free (no dark mode) or for any mod
 		// the owner left unset, so a light `.jt-app` block with no dark counterpart would pin
 		// the app light on a dark page - the bug this bridge exists to prevent.
+		// The server knows this accent, so the label pair is a concrete hex too:
+		// legible in browsers without relative colour syntax, where the CSS
+		// guard falls back to white.
+		$with_fg = static fn( array $map ): array => isset( $map['--jt-accent'] )
+			? $map + \Jetonomy\Template_Loader::accent_fg_tokens( $map['--jt-accent'], $map['--jt-accent-hover'] ?? null )
+			: $map;
+		$light   = $with_fg( $light );
+		$dark    = $with_fg( $dark );
+
 		$css = '';
 		if ( ! empty( $light ) ) {
 			$css .= ':root{' . $this->build_token_css( $light ) . '}';
