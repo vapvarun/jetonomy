@@ -297,10 +297,34 @@ if ( $qa_post_id && isset( rest_get_server()->get_routes()['/jetonomy/v1/posts/(
 }
 if ( $qa_post_id && defined( 'JETONOMY_PRO_VERSION' ) && 0 === \Jetonomy\Models\Attachment::count_for( 'post', $qa_post_id ) ) {
 	$image = get_posts( array( 'post_type' => 'attachment', 'post_mime_type' => 'image', 'numberposts' => 1, 'fields' => 'ids' ) );
-	if ( $image ) {
-		\Jetonomy\Models\Attachment::link( 'post', $qa_post_id, (int) $image[0] );
-		$out['image_on'] = $qa_post_id;
+	if ( ! $image ) {
+		// Empty media library (fresh install): make a placeholder PNG so the
+		// lightbox open state has an image to open.
+		if ( ! function_exists( 'imagecreatetruecolor' ) ) {
+			fwrite( STDERR, "seed-qa-content: no image in the media library and no GD to make one; the lightbox step will fail.\n" );
+			exit( 1 );
+		}
+		$img = imagecreatetruecolor( 400, 300 );
+		imagefill( $img, 0, 0, imagecolorallocate( $img, 59, 125, 216 ) );
+		ob_start();
+		imagepng( $img );
+		$upload = wp_upload_bits( 'jt-qa-image.png', null, ob_get_clean() );
+		$img_id = empty( $upload['error'] ) ? wp_insert_attachment(
+			array(
+				'post_title'     => 'jt-qa-image.png',
+				'post_mime_type' => 'image/png',
+				'post_status'    => 'inherit',
+			),
+			$upload['file']
+		) : 0;
+		if ( ! $img_id || is_wp_error( $img_id ) ) {
+			fwrite( STDERR, "seed-qa-content: could not create the placeholder image; the lightbox step will fail.\n" );
+			exit( 1 );
+		}
+		$image = array( $img_id );
 	}
+	\Jetonomy\Models\Attachment::link( 'post', $qa_post_id, (int) $image[0] );
+	$out['image_on'] = $qa_post_id;
 }
 // A plain file renders Pro's download chip, a bordered link (second attachment).
 if ( $qa_post_id && defined( 'JETONOMY_PRO_VERSION' ) && \Jetonomy\Models\Attachment::count_for( 'post', $qa_post_id ) < 2 ) {
@@ -340,6 +364,13 @@ if ( $qa_post_id && defined( 'JETONOMY_PRO_VERSION' ) && \Jetonomy\Models\Attach
 			$out['pdf_on'] = $qa_post_id;
 		}
 	}
+}
+
+// A tag on the fixture topic puts tag chips (.jt-tags > a.jt-tag, with a
+// hover tint) in the search results for "dark". Idempotent (INSERT IGNORE).
+if ( $qa_post_id ) {
+	\Jetonomy\Models\Tag::attach_to_post( $qa_post_id, \Jetonomy\Models\Tag::find_or_create( 'dark-mode' ) );
+	$out['tag_on'] = $qa_post_id;
 }
 
 $out['search_needle'] = JT_QA_SEARCH_NEEDLE;

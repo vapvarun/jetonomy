@@ -25,7 +25,8 @@
 //    and a card link (title plus meta) by its text: a faint card frame is
 //    listed under cards, not counted. A text link whose only edge is a single
 //    border side (a footer link under a divider) is listed the same way, and
-//    so is a core block's own field (theme form styles, not Jetonomy's).
+//    so is a core block's own field (theme form styles, not Jetonomy's); a
+//    core block's button inside Jetonomy markup must still draw an edge.
 //    A button with no edge is identified by its label: a text-only button
 //    passes, and a button whose only boundary is a sub-3:1 fill (hover tint,
 //    voted tint) is listed under fillOnly for review, not counted. Its text
@@ -313,8 +314,12 @@ const IN_PAGE = (args) => {
     // a divider) is identified by its text; the rule is a divider, not its edge.
     const edges = parts.filter((p) => p.k !== 'fill');
     if (nonText === 'fail' && el.tagName === 'A' && texts.length && edges.length === 1 && /^border-/.test(edges[0].k)) nonText = 'divider';
-    // A core block's own field (the Search block in a Jetonomy sidebar) is drawn
-    // by the theme's form styles, not by Jetonomy: listed, not counted.
+    // A core block's own field (the Search block input in a Jetonomy sidebar)
+    // is drawn by the theme's form styles and Jetonomy does not restyle it:
+    // listed, not counted. Its BUTTON is different: Jetonomy's button reset
+    // strips its fill, so Jetonomy owns its edge. A core-block button with no
+    // edge and no fill fails, it is not passed as a text-only button.
+    if (nonText === 'text-only' && el.tagName === 'BUTTON' && el.matches('.wp-element-button, [class*="wp-block-"]')) nonText = 'fail-no-boundary';
     if (nonText === 'fail' && isField && [...el.classList].some((c) => c.startsWith('wp-block-'))) nonText = 'host-field';
     out.push({
       i: +el.getAttribute('data-jtc'),
