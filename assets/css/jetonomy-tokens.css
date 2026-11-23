@@ -371,9 +371,16 @@
     /* Danger text on a dark surface needs a lighter red than the
        light-mode #dc2626 to pass WCAG AA (#dc2626 on #171717 is 3.71:1, fails
        the 4.5 threshold). #ef4444 (Tailwind red-500) lands at 5.33:1 and stays
-       recognisable as red. Used on .jt-more-dropdown__item--danger (Block user),
-       destructive confirm buttons, and any other "danger" foreground in dark. */
-    --jt-danger: #ef4444;
+       recognisable as red on #171717, but only 3.44:1 on Reign's lifted
+       blue-slate card (QA J50). #f87171 (Tailwind red-400) holds 4.5:1 on
+       the page and the card. Used on .jt-more-dropdown__item--danger (Block
+       user), "Ban from space", required-field asterisks, the Danger zone
+       title and any other "danger" foreground in dark.
+       The solid fill (white text on red) is re-derived darker here, 70% toward
+       black instead of 85%, so white text on it stays above 4.5:1. */
+    --jt-danger: #f87171;
+    --jt-danger-solid: #ae4f4f;
+    --jt-danger-solid: color-mix(in srgb, var(--jt-danger) 70%, black);
     /* Accent tints must invert in dark mode: the default light-mode
        recipe mixes accent with white, producing a near-white/mint wash
        (--jt-accent-muted ≈ #DBEAFE). On a dark panel that lands as a
