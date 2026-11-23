@@ -400,7 +400,7 @@
 /* Destructive button */
 .button.button--danger {
 	color: var(--jt-admin-danger);
-	border-color: var(--jt-admin-danger-border);
+	border-color: var(--jt-admin-danger); /* 4.83:1 on white; the pale --jt-admin-danger-border was 1.9:1 with no fill. */
 }
 
 .button.button--danger:hover {
