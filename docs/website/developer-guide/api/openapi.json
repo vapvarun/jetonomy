@@ -12570,20 +12570,30 @@
           },
           "sidebar_widgets": {
             "type": "array",
+            "minItems": 1,
             "maxItems": 20,
             "items": {
               "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id"
+              ],
               "properties": {
                 "id": {
                   "type": "string",
-                  "maxLength": 64
+                  "enum": [
+                    "trending",
+                    "top_members",
+                    "popular_tags"
+                  ]
                 },
                 "enabled": {
-                  "type": "boolean"
+                  "type": "boolean",
+                  "default": true
                 }
               }
             },
-            "description": "Settings section: appearance. Community sidebar widgets in display order; ids trending, top_members, popular_tags. Unknown ids are dropped and missing ones are appended switched on."
+            "description": "Settings section: appearance. Community sidebar widgets in display order. An unknown id or item key, a repeated id or an empty list answers 400 and changes nothing; widgets left out are appended switched on."
           },
           "captcha_provider": {
             "type": "string",

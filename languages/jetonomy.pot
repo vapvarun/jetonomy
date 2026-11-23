@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T05:26:44+00:00\n"
+"POT-Creation-Date: 2026-11-23T05:36:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: jetonomy\n"
@@ -3147,7 +3147,7 @@ msgstr ""
 #: includes/admin/views/settings.php:162
 #: includes/class-blocks.php:612
 #: includes/class-nav-menus.php:96
-#: includes/class-settings.php:659
+#: includes/class-settings.php:679
 #: includes/functions.php:29
 #: includes/functions.php:39
 #: includes/integrations/class-fluent-community.php:1035
@@ -3159,7 +3159,7 @@ msgid "Displayed as the main heading on the community home page."
 msgstr ""
 
 #: includes/admin/views/settings.php:167
-#: includes/class-settings.php:661
+#: includes/class-settings.php:681
 msgid "Terms of Service URL"
 msgstr ""
 
@@ -3170,7 +3170,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty if you hav
 msgstr ""
 
 #: includes/admin/views/settings.php:174
-#: includes/class-settings.php:662
+#: includes/class-settings.php:682
 msgid "Privacy Policy URL"
 msgstr ""
 
@@ -3181,7 +3181,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty to use you
 msgstr ""
 
 #: includes/admin/views/settings.php:181
-#: includes/class-settings.php:663
+#: includes/class-settings.php:683
 msgid "Support URL"
 msgstr ""
 
@@ -3857,7 +3857,7 @@ msgid "From Email"
 msgstr ""
 
 #: includes/admin/views/settings.php:852
-#: includes/class-settings.php:821
+#: includes/class-settings.php:841
 msgid "Email Logo"
 msgstr ""
 
@@ -4056,7 +4056,7 @@ msgid "Your community logo. Shown in the mobile app (login + header) and anywher
 msgstr ""
 
 #: includes/admin/views/settings.php:1102
-#: includes/class-settings.php:847
+#: includes/class-settings.php:867
 msgid "Logo URL"
 msgstr ""
 
@@ -4341,7 +4341,7 @@ msgid "Site handle emitted as twitter:site on every public route. Leave blank to
 msgstr ""
 
 #: includes/admin/views/settings.php:1381
-#: includes/class-settings.php:895
+#: includes/class-settings.php:915
 msgid "Default share image"
 msgstr ""
 
@@ -7118,46 +7118,52 @@ msgstr ""
 msgid "Jetonomy: %1$s and %2$s anonymized. Personal data deleted."
 msgstr ""
 
-#: includes/class-settings.php:288
+#: includes/class-settings.php:291
 msgid "Send at least one setting."
 msgstr ""
 
 #. translators: %d: the most settings one request may change.
-#: includes/class-settings.php:292
+#: includes/class-settings.php:295
 #, php-format
 msgid "Change at most %d settings in one request."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:302
+#: includes/class-settings.php:305
 #, php-format
 msgid "%s is not a setting that can be changed here."
 msgstr ""
 
 #. translators: 1: setting key, 2: the mask.
-#: includes/class-settings.php:319
+#: includes/class-settings.php:322
 #, php-format
 msgid "%1$s: send the real secret, or exactly %2$s to keep the stored one."
 msgstr ""
 
+#. translators: %s: setting key.
+#: includes/class-settings.php:337
+#, php-format
+msgid "%s lists the same id more than once."
+msgstr ""
+
 #. translators: 1: setting key, 2: lowest allowed value, 3: highest allowed value.
-#: includes/class-settings.php:332
+#: includes/class-settings.php:351
 #, php-format
 msgid "%1$s must be between %2$s and %3$s."
 msgstr ""
 
-#: includes/class-settings.php:360
+#: includes/class-settings.php:379
 msgid "Another settings change is being saved. Try again in a moment."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:428
+#: includes/class-settings.php:447
 #, php-format
 msgid "%s was not changed: the value was refused, or changing it needs an administrator."
 msgstr ""
 
 #. translators: %s: settings field label.
-#: includes/class-settings.php:618
+#: includes/class-settings.php:638
 #, php-format
 msgid "%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept."
 msgstr ""

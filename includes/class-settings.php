@@ -196,13 +196,16 @@ class Settings {
 				'appearance',
 				'array',
 				array(
+					'minItems' => 1,
 					'maxItems' => 20,
 					'items'    => array(
-						'type'       => 'object',
-						'properties' => array(
+						'type'                 => 'object',
+						'additionalProperties' => false,
+						'properties'           => array(
 							'id'      => array(
-								'type'      => 'string',
-								'maxLength' => 64,
+								'type'     => 'string',
+								'enum'     => self::SIDEBAR_WIDGETS,
+								'required' => true,
 							),
 							'enabled' => array( 'type' => 'boolean' ),
 						),
@@ -322,6 +325,22 @@ class Settings {
 						'key'    => (string) $key,
 					)
 				);
+			}
+			// A list keyed by id (sidebar_widgets) names each entry once: a second
+			// copy would be dropped in silence by the sanitizer.
+			if ( is_array( $value ) && isset( $schema[ $key ]['items']['properties']['id'] ) ) {
+				$ids = array_map( static fn( $row ): string => is_array( $row ) ? (string) ( $row['id'] ?? '' ) : '', $value );
+				if ( count( $ids ) !== count( array_unique( $ids ) ) ) {
+					return new \WP_Error(
+						'rest_invalid_param',
+						/* translators: %s: setting key. */
+						sprintf( __( '%s lists the same id more than once.', 'jetonomy' ), (string) $key ),
+						array(
+							'status' => 400,
+							'key'    => (string) $key,
+						)
+					);
+				}
 			}
 			// Core prints a range with %d, so 0.1 to 0.9 read "between 0 and 0".
 			if ( 'number' === ( $schema[ $key ]['type'] ?? '' ) && is_numeric( $value ) && isset( $schema[ $key ]['minimum'], $schema[ $key ]['maximum'] )
@@ -493,7 +512,8 @@ class Settings {
 			$seen[ $id ] = true;
 			$out[]       = array(
 				'id'      => $id,
-				'enabled' => ! empty( $row['enabled'] ) && 'false' !== $row['enabled'],
+				// Omitted means on, as for a widget missing from the list.
+				'enabled' => ! array_key_exists( 'enabled', $row ) || ( ! empty( $row['enabled'] ) && 'false' !== $row['enabled'] ),
 			);
 		}
 		foreach ( self::SIDEBAR_WIDGETS as $id ) {

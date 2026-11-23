@@ -251,4 +251,74 @@ class SidebarWidgetsSettingTest extends WP_UnitTestCase {
 		$this->assertSame( array( 'popular_tags', 'trending', 'top_members' ), wp_list_pluck( $stored['sidebar_widgets'], 'id' ) );
 		$this->assertFalse( $stored['sidebar_widgets'][0]['enabled'] );
 	}
+
+	/**
+	 * Each refused payload answers 400 and leaves the saved order alone (QA J23).
+	 *
+	 * @return array<string, array{0: array}>
+	 */
+	public static function refused_payloads(): array {
+		return array(
+			'invalid id only'      => array( array( array( 'id' => 'bogus' ) ) ),
+			'duplicate ids'        => array(
+				array(
+					array( 'id' => 'trending' ),
+					array(
+						'id'      => 'trending',
+						'enabled' => false,
+					),
+				),
+			),
+			'unknown item key'     => array(
+				array(
+					array(
+						'id' => 'trending',
+						'x'  => 1,
+					),
+				),
+			),
+			'xss id'               => array( array( array( 'id' => '<script>alert(1)</script>' ) ) ),
+			'valid plus invalid'   => array(
+				array(
+					array(
+						'id'      => 'popular_tags',
+						'enabled' => false,
+					),
+					array( 'id' => 'nope' ),
+				),
+			),
+			'empty list'           => array( array() ),
+		);
+	}
+
+	/**
+	 * @dataProvider refused_payloads
+	 */
+	public function test_rest_and_cli_writer_refuses_and_keeps_the_saved_order( array $payload ): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$saved = array(
+			array(
+				'id'      => 'top_members',
+				'enabled' => false,
+			),
+			array(
+				'id'      => 'popular_tags',
+				'enabled' => true,
+			),
+			array(
+				'id'      => 'trending',
+				'enabled' => true,
+			),
+		);
+		$this->set_widgets( $saved );
+		$result = Settings::write( array( 'sidebar_widgets' => $payload ), 'rest' );
+		$this->assertWPError( $result );
+		$this->assertSame( 400, $result->get_error_data()['status'] );
+		$this->assertSame( $saved, get_option( 'jetonomy_settings' )['sidebar_widgets'] );
+	}
+
+	public function test_an_omitted_enabled_means_on(): void {
+		$this->assertTrue( Settings::sidebar_widgets( array( array( 'id' => 'trending' ) ) )[0]['enabled'] );
+	}
 }
+

@@ -3472,11 +3472,16 @@ tr.jetonomy-moderated td {
 .jt-widget-moves .button { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; padding: 0 4px; }
 .jt-widget-placeholder { height: 52px; margin: 0 0 8px; border: 2px dashed var(--jt-admin-border); border-radius: 6px; }
 .jt-widget-none { margin: 0 20px 16px; }
+/* Touch widths (core's own breakpoint): 44px targets for the Show label and the arrows. */
+@media (max-width: 782px) {
+	.jt-widget-main label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+	.jt-widget-moves .button { min-width: 44px; min-height: 44px; }
+	.jt-widget-hint { margin-inline-start: 33px; } /* core's 25px touch checkbox + the 8px gap */
+}
 @media (max-width: 640px) {
 	.jt-widget-list { padding-inline: 12px; }
 	.jt-widget-row { flex-wrap: wrap; }
 	.jt-widget-handle { display: none; }
-	.jt-widget-moves .button { min-width: 40px; min-height: 40px; }
 	.jt-widget-none { margin-inline: 12px; }
 }
 
@@ -3486,6 +3491,7 @@ tr.jetonomy-moderated td {
 	width: max-content;
 	align-items: center;
 	gap: 4px;
+	min-width: 24px;
 	min-height: 24px;
 	margin-block-start: 4px;
 	font-weight: 400;
