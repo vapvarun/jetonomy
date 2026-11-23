@@ -57,7 +57,10 @@ class Media_Controller extends Base_Controller {
 							'default' => 24,
 						),
 						'author'   => array( 'type' => 'integer' ),
-						'space_id' => array( 'type' => 'integer' ),
+						'space_id' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
 						'search'   => array( 'type' => 'string' ),
 						'order'    => array(
 							'type'    => 'string',

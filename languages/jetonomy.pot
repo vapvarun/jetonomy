@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T05:36:12+00:00\n"
+"POT-Creation-Date: 2026-11-23T05:49:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: jetonomy\n"
@@ -171,7 +171,7 @@ msgstr ""
 #: includes/admin/ajax/class-categories-handler.php:69
 #: includes/admin/ajax/class-spaces-handler.php:161
 #: includes/api/class-categories-controller.php:161
-#: includes/api/class-replies-controller.php:341
+#: includes/api/class-replies-controller.php:342
 #: includes/api/class-spaces-controller.php:746
 #: includes/api/class-spaces-controller.php:756
 #, php-format
@@ -539,9 +539,9 @@ msgstr ""
 #: includes/api/class-base-controller.php:97
 #: includes/api/class-spaces-controller.php:367
 #: includes/api/class-spaces-controller.php:386
-#: includes/class-abilities.php:1470
-#: includes/class-abilities.php:1481
-#: includes/class-abilities.php:1502
+#: includes/class-abilities.php:1475
+#: includes/class-abilities.php:1486
+#: includes/class-abilities.php:1507
 #: includes/models/class-reply.php:580
 #: includes/models/class-reply.php:584
 #: includes/models/class-reply.php:659
@@ -594,7 +594,7 @@ msgstr ""
 
 #: includes/admin/ajax/class-spaces-handler.php:484
 #: includes/api/class-spaces-controller.php:1151
-#: includes/class-abilities.php:1588
+#: includes/class-abilities.php:1593
 #: includes/models/class-blocked-user.php:77
 #: templates/views/user-profile.php:20
 msgid "User not found."
@@ -885,7 +885,7 @@ msgstr ""
 #. translators: 1: a person's display name; 2: human-readable time elapsed.
 #: includes/admin/class-activity-list-table.php:259
 #: includes/admin/views/moderation.php:520
-#: includes/api/class-moderation-controller.php:889
+#: includes/api/class-moderation-controller.php:881
 #: includes/api/class-notifications-controller.php:358
 #: templates/views/moderation.php:381
 msgid "System"
@@ -900,7 +900,7 @@ msgstr ""
 #: includes/api/class-base-controller.php:937
 #: includes/api/class-notifications-controller.php:358
 #: includes/api/class-oembed-controller.php:141
-#: includes/api/class-replies-controller.php:813
+#: includes/api/class-replies-controller.php:814
 #: includes/class-author.php:60
 #: includes/integrations/class-buddypress.php:236
 #: includes/integrations/class-buddypress.php:875
@@ -2105,7 +2105,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:386
 #: includes/admin/views/moderation.php:494
 #: includes/admin/views/users.php:205
-#: includes/class-abilities.php:1533
+#: includes/class-abilities.php:1538
 #: includes/notifications/class-notifier.php:1053
 #: templates/partials/moderation/flag-card.php:69
 #: templates/views/moderation.php:576
@@ -3057,7 +3057,7 @@ msgstr ""
 #: templates/partials/pagination-nav.php:41
 #: templates/views/edit-profile.php:318
 #: templates/views/space-members.php:360
-#: templates/views/space-members.php:572
+#: templates/views/space-members.php:575
 #: templates/views/subscriptions.php:132
 #: templates/views/tag.php:160
 msgid "Previous"
@@ -3147,7 +3147,7 @@ msgstr ""
 #: includes/admin/views/settings.php:162
 #: includes/class-blocks.php:612
 #: includes/class-nav-menus.php:96
-#: includes/class-settings.php:679
+#: includes/class-settings.php:686
 #: includes/functions.php:29
 #: includes/functions.php:39
 #: includes/integrations/class-fluent-community.php:1035
@@ -3159,7 +3159,7 @@ msgid "Displayed as the main heading on the community home page."
 msgstr ""
 
 #: includes/admin/views/settings.php:167
-#: includes/class-settings.php:681
+#: includes/class-settings.php:688
 msgid "Terms of Service URL"
 msgstr ""
 
@@ -3170,7 +3170,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty if you hav
 msgstr ""
 
 #: includes/admin/views/settings.php:174
-#: includes/class-settings.php:682
+#: includes/class-settings.php:689
 msgid "Privacy Policy URL"
 msgstr ""
 
@@ -3181,7 +3181,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty to use you
 msgstr ""
 
 #: includes/admin/views/settings.php:181
-#: includes/class-settings.php:683
+#: includes/class-settings.php:690
 msgid "Support URL"
 msgstr ""
 
@@ -3857,7 +3857,7 @@ msgid "From Email"
 msgstr ""
 
 #: includes/admin/views/settings.php:852
-#: includes/class-settings.php:841
+#: includes/class-settings.php:848
 msgid "Email Logo"
 msgstr ""
 
@@ -4056,7 +4056,7 @@ msgid "Your community logo. Shown in the mobile app (login + header) and anywher
 msgstr ""
 
 #: includes/admin/views/settings.php:1102
-#: includes/class-settings.php:867
+#: includes/class-settings.php:874
 msgid "Logo URL"
 msgstr ""
 
@@ -4341,7 +4341,7 @@ msgid "Site handle emitted as twitter:site on every public route. Leave blank to
 msgstr ""
 
 #: includes/admin/views/settings.php:1381
-#: includes/class-settings.php:915
+#: includes/class-settings.php:922
 msgid "Default share image"
 msgstr ""
 
@@ -5581,7 +5581,7 @@ msgstr ""
 
 #: includes/admin/views/users.php:32
 #: templates/views/moderation.php:232
-#: templates/views/space-members.php:499
+#: templates/views/space-members.php:501
 #: templates/views/user-profile.php:66
 #: assets/js/admin-common.js:1921
 msgid "Banned"
@@ -5975,7 +5975,7 @@ msgstr ""
 
 #: includes/api/class-categories-controller.php:210
 #: includes/api/class-posts-controller.php:845
-#: includes/api/class-replies-controller.php:519
+#: includes/api/class-replies-controller.php:520
 #: includes/api/class-spaces-controller.php:911
 msgid "No fields provided for update."
 msgstr ""
@@ -5984,59 +5984,59 @@ msgstr ""
 msgid "Trailing window in days for sort=top (0 = all-time)."
 msgstr ""
 
-#: includes/api/class-media-controller.php:144
+#: includes/api/class-media-controller.php:147
 msgid "No file provided."
 msgstr ""
 
-#: includes/api/class-media-controller.php:226
+#: includes/api/class-media-controller.php:229
 msgid "Uploaded image"
 msgstr ""
 
 #. translators: %s: human-readable maximum file size.
-#: includes/api/class-media-controller.php:282
+#: includes/api/class-media-controller.php:285
 #, php-format
 msgid "File is too large. Maximum size is %s."
 msgstr ""
 
-#: includes/api/class-media-controller.php:301
+#: includes/api/class-media-controller.php:304
 msgid "This file type is not allowed."
 msgstr ""
 
-#: includes/api/class-media-controller.php:313
+#: includes/api/class-media-controller.php:316
 msgid "File contents do not match its extension."
 msgstr ""
 
-#: includes/api/class-moderation-controller.php:542
+#: includes/api/class-moderation-controller.php:548
 msgid "items must be a non-empty array."
 msgstr ""
 
-#: includes/api/class-moderation-controller.php:546
+#: includes/api/class-moderation-controller.php:552
 msgid "Invalid action; expected approve, spam, or trash."
 msgstr ""
 
-#: includes/api/class-moderation-controller.php:613
+#: includes/api/class-moderation-controller.php:619
 msgid "Invalid post id."
 msgstr ""
 
-#: includes/api/class-moderation-controller.php:717
+#: includes/api/class-moderation-controller.php:709
 msgid "Only an administrator can restrict a moderator."
 msgstr ""
 
-#: includes/api/class-moderation-controller.php:723
+#: includes/api/class-moderation-controller.php:715
 #: includes/models/class-restriction.php:77
 msgid "Administrators cannot be restricted."
 msgstr ""
 
-#: includes/api/class-moderation-controller.php:757
+#: includes/api/class-moderation-controller.php:749
 msgid "Failed to issue restriction."
 msgstr ""
 
-#: includes/api/class-moderation-controller.php:795
+#: includes/api/class-moderation-controller.php:787
 msgid "Failed to remove restriction."
 msgstr ""
 
-#: includes/api/class-moderation-controller.php:877
-#: includes/api/class-moderation-controller.php:889
+#: includes/api/class-moderation-controller.php:869
+#: includes/api/class-moderation-controller.php:881
 #: includes/class-author.php:77
 #: templates/views/moderation.php:372
 msgid "[deleted]"
@@ -6080,7 +6080,7 @@ msgid "Pin (true) or unpin (false). Omit to toggle."
 msgstr ""
 
 #: includes/api/class-posts-controller.php:489
-#: includes/api/class-replies-controller.php:253
+#: includes/api/class-replies-controller.php:254
 msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 
@@ -6102,7 +6102,7 @@ msgid "You already scheduled this for the same time. Find it in your profile und
 msgstr ""
 
 #: includes/api/class-posts-controller.php:656
-#: includes/class-abilities.php:1247
+#: includes/class-abilities.php:1252
 msgid "Failed to create post."
 msgstr ""
 
@@ -6112,7 +6112,7 @@ msgstr ""
 
 #. translators: %s: the singular Topic or Reply label, lowercase.
 #: includes/api/class-posts-controller.php:852
-#: includes/api/class-replies-controller.php:469
+#: includes/api/class-replies-controller.php:470
 #: includes/moderation/class-moderation-service.php:789
 #, php-format
 msgid "Your %s was blocked by our content policy."
@@ -6168,33 +6168,33 @@ msgid "Failed to merge %s."
 msgstr ""
 
 #. translators: %s: the singular Reply label.
-#: includes/api/class-replies-controller.php:258
-#: includes/api/class-replies-controller.php:464
+#: includes/api/class-replies-controller.php:259
+#: includes/api/class-replies-controller.php:465
 #, php-format
 msgid "%s content is required."
 msgstr ""
 
 #. translators: 1: the singular Reply label, 2: the singular Topic label, lowercase.
-#: includes/api/class-replies-controller.php:319
-#: includes/api/class-replies-controller.php:512
+#: includes/api/class-replies-controller.php:320
+#: includes/api/class-replies-controller.php:513
 #, php-format
 msgid "%1$s published_at cannot precede the parent %2$s date."
 msgstr ""
 
 #. translators: %s: the singular Reply label, lowercase.
-#: includes/api/class-replies-controller.php:591
+#: includes/api/class-replies-controller.php:592
 #, php-format
 msgid "The %s could not be deleted."
 msgstr ""
 
 #. translators: %s: the singular Topic label, lowercase.
-#: includes/api/class-replies-controller.php:746
+#: includes/api/class-replies-controller.php:747
 #, php-format
 msgid "A title is required for the new %s."
 msgstr ""
 
 #. translators: 1: the singular Reply label, lowercase, 2: the singular Topic label, lowercase.
-#: includes/api/class-replies-controller.php:766
+#: includes/api/class-replies-controller.php:767
 #, php-format
 msgid "Failed to split %1$s into new %2$s."
 msgstr ""
@@ -6343,31 +6343,31 @@ msgstr ""
 msgid "The `id` parameter is required for space or post scope."
 msgstr ""
 
-#: includes/api/class-users-controller.php:557
+#: includes/api/class-users-controller.php:558
 msgid "Choose a display name from your own name fields."
 msgstr ""
 
-#: includes/api/class-users-controller.php:579
+#: includes/api/class-users-controller.php:580
 msgid "You do not have permission to upload a profile picture."
 msgstr ""
 
-#: includes/api/class-users-controller.php:711
+#: includes/api/class-users-controller.php:712
 msgid "Site administrators can't delete their account from the app. Use the WordPress admin Users screen instead."
 msgstr ""
 
-#: includes/api/class-users-controller.php:719
+#: includes/api/class-users-controller.php:720
 msgid "Too many attempts. Please wait a while and try again."
 msgstr ""
 
-#: includes/api/class-users-controller.php:735
+#: includes/api/class-users-controller.php:736
 msgid "Type DELETE to confirm you want to permanently delete your account."
 msgstr ""
 
-#: includes/api/class-users-controller.php:750
+#: includes/api/class-users-controller.php:751
 msgid "That password is incorrect."
 msgstr ""
 
-#: includes/api/class-users-controller.php:794
+#: includes/api/class-users-controller.php:795
 msgid "We couldn't delete your account. Please try again or contact support."
 msgstr ""
 
@@ -6419,163 +6419,163 @@ msgstr ""
 msgid "Create a new topic, question, or discussion post in a community space. Supports tags and auto-subscribes the author."
 msgstr ""
 
-#: includes/class-abilities.php:196
+#: includes/class-abilities.php:197
 msgid "Get Post"
 msgstr ""
 
-#: includes/class-abilities.php:197
+#: includes/class-abilities.php:198
 msgid "Retrieve a single forum post by ID, including its author, vote score, reply count, and metadata."
 msgstr ""
 
-#: includes/class-abilities.php:246
+#: includes/class-abilities.php:247
 msgid "List Posts"
 msgstr ""
 
-#: includes/class-abilities.php:247
+#: includes/class-abilities.php:248
 msgid "List posts in a community space with pagination. Returns titles, authors, scores, and reply counts."
 msgstr ""
 
-#: includes/class-abilities.php:308
+#: includes/class-abilities.php:310
 msgid "Create Reply"
 msgstr ""
 
-#: includes/class-abilities.php:309
+#: includes/class-abilities.php:311
 msgid "Reply to an existing forum post. Supports threaded replies up to 3 levels via parent_id."
 msgstr ""
 
-#: includes/class-abilities.php:347
-#: includes/class-abilities.php:1291
-#: includes/class-abilities.php:1350
-#: includes/class-abilities.php:1789
+#: includes/class-abilities.php:349
+#: includes/class-abilities.php:1296
+#: includes/class-abilities.php:1355
+#: includes/class-abilities.php:1794
 #: includes/moderation/class-moderation-service.php:982
 msgid "Post not found."
 msgstr ""
 
-#: includes/class-abilities.php:378
+#: includes/class-abilities.php:380
 msgid "List Replies"
 msgstr ""
 
-#: includes/class-abilities.php:379
+#: includes/class-abilities.php:381
 msgid "List replies for a forum post with pagination. Includes author info, vote scores, and thread structure."
 msgstr ""
 
-#: includes/class-abilities.php:442
+#: includes/class-abilities.php:444
 msgid "Vote on Content"
 msgstr ""
 
-#: includes/class-abilities.php:443
+#: includes/class-abilities.php:445
 msgid "Upvote or downvote a post or reply. Toggles if voting the same direction again."
 msgstr ""
 
-#: includes/class-abilities.php:486
+#: includes/class-abilities.php:488
 msgid "Authentication required."
 msgstr ""
 
-#: includes/class-abilities.php:510
+#: includes/class-abilities.php:512
 msgid "List Spaces"
 msgstr ""
 
-#: includes/class-abilities.php:511
+#: includes/class-abilities.php:513
 msgid "List all community spaces (forums, Q&A boards, idea boards) the current user can access, grouped by category."
 msgstr ""
 
-#: includes/class-abilities.php:554
+#: includes/class-abilities.php:556
 msgid "Get Space Details"
 msgstr ""
 
-#: includes/class-abilities.php:555
+#: includes/class-abilities.php:557
 msgid "Retrieve detailed information about a community space including description, rules, member count, and settings."
 msgstr ""
 
-#: includes/class-abilities.php:600
+#: includes/class-abilities.php:603
 msgid "Join Space"
 msgstr ""
 
-#: includes/class-abilities.php:601
+#: includes/class-abilities.php:604
 msgid "Join a community space as a member. For private spaces, this submits a join request for moderator approval."
 msgstr ""
 
-#: includes/class-abilities.php:644
+#: includes/class-abilities.php:648
 msgid "List Space Members"
 msgstr ""
 
-#: includes/class-abilities.php:645
+#: includes/class-abilities.php:649
 msgid "List members of a community space with their roles, trust levels, and reputation."
 msgstr ""
 
-#: includes/class-abilities.php:691
+#: includes/class-abilities.php:696
 msgid "Create Space"
 msgstr ""
 
-#: includes/class-abilities.php:692
+#: includes/class-abilities.php:697
 msgid "Create a new community space (forum, Q&A, ideas, or social). Requires administrator or jetonomy_manage_settings capability."
 msgstr ""
 
-#: includes/class-abilities.php:762
+#: includes/class-abilities.php:767
 msgid "Get User Profile"
 msgstr ""
 
-#: includes/class-abilities.php:763
+#: includes/class-abilities.php:768
 msgid "Retrieve a community member's profile including bio, trust level, reputation, post/reply counts, and badges."
 msgstr ""
 
-#: includes/class-abilities.php:807
+#: includes/class-abilities.php:812
 msgid "List Notifications"
 msgstr ""
 
-#: includes/class-abilities.php:808
+#: includes/class-abilities.php:813
 msgid "List the current user's community notifications (replies, mentions, votes, badges) with read/unread status."
 msgstr ""
 
-#: includes/class-abilities.php:860
+#: includes/class-abilities.php:865
 msgid "Mark Notifications Read"
 msgstr ""
 
-#: includes/class-abilities.php:861
+#: includes/class-abilities.php:866
 msgid "Mark one or all of the current user's notifications as read."
 msgstr ""
 
-#: includes/class-abilities.php:901
+#: includes/class-abilities.php:906
 msgid "Get Activity Feed"
 msgstr ""
 
-#: includes/class-abilities.php:902
+#: includes/class-abilities.php:907
 msgid "Retrieve the community activity feed showing recent posts, replies, votes, and other events."
 msgstr ""
 
-#: includes/class-abilities.php:970
+#: includes/class-abilities.php:975
 msgid "Flag Content"
 msgstr ""
 
-#: includes/class-abilities.php:971
+#: includes/class-abilities.php:976
 msgid "Report a post, reply or member for moderator review. Provide a reason (spam, offensive, off_topic, harassment, other)."
 msgstr ""
 
-#: includes/class-abilities.php:1032
+#: includes/class-abilities.php:1037
 msgid "Moderate Content"
 msgstr ""
 
-#: includes/class-abilities.php:1033
+#: includes/class-abilities.php:1038
 msgid "Take moderation action on flagged content. Approve, trash, or mark as spam. Requires moderator or administrator role."
 msgstr ""
 
-#: includes/class-abilities.php:1085
+#: includes/class-abilities.php:1090
 msgid "List Pending Flags"
 msgstr ""
 
-#: includes/class-abilities.php:1086
+#: includes/class-abilities.php:1091
 msgid "List all pending content flags awaiting moderator review. Requires moderator or administrator role."
 msgstr ""
 
-#: includes/class-abilities.php:1133
+#: includes/class-abilities.php:1138
 msgid "Search Community"
 msgstr ""
 
-#: includes/class-abilities.php:1134
+#: includes/class-abilities.php:1139
 msgid "Full-text search across posts, spaces, and tags. Supports filtering by type (posts, spaces, tags, all) and returns ranked results."
 msgstr ""
 
-#: includes/class-abilities.php:1571
+#: includes/class-abilities.php:1576
 msgid "Failed to create space."
 msgstr ""
 
@@ -7152,18 +7152,18 @@ msgstr ""
 msgid "%1$s must be between %2$s and %3$s."
 msgstr ""
 
-#: includes/class-settings.php:379
+#: includes/class-settings.php:386
 msgid "Another settings change is being saved. Try again in a moment."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:447
+#: includes/class-settings.php:454
 #, php-format
 msgid "%s was not changed: the value was refused, or changing it needs an administrator."
 msgstr ""
 
 #. translators: %s: settings field label.
-#: includes/class-settings.php:638
+#: includes/class-settings.php:645
 #, php-format
 msgid "%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept."
 msgstr ""
@@ -9216,13 +9216,13 @@ msgid "This %s is invite-only."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/models/class-space-member.php:1027
+#: includes/models/class-space-member.php:1048
 #, php-format
 msgid "This %s must keep at least one admin. Promote someone else first."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/models/class-space-member.php:1057
+#: includes/models/class-space-member.php:1078
 #, php-format
 msgid "Only the owner of this %s or a site administrator can change the owner's role."
 msgstr ""
@@ -9309,19 +9309,19 @@ msgstr ""
 msgid "Failed to update vote."
 msgstr ""
 
-#: includes/moderation/class-moderation-permissions.php:212
+#: includes/moderation/class-moderation-permissions.php:235
 msgid "Only a site administrator can lift an IP address ban."
 msgstr ""
 
-#: includes/moderation/class-moderation-permissions.php:228
+#: includes/moderation/class-moderation-permissions.php:251
 msgid "You cannot lift a restriction on your own account."
 msgstr ""
 
-#: includes/moderation/class-moderation-permissions.php:229
+#: includes/moderation/class-moderation-permissions.php:252
 msgid "Only an administrator can lift a restriction on an administrator."
 msgstr ""
 
-#: includes/moderation/class-moderation-permissions.php:230
+#: includes/moderation/class-moderation-permissions.php:253
 msgid "Only an administrator can lift a restriction on another moderator."
 msgstr ""
 
@@ -11077,7 +11077,7 @@ msgstr ""
 #: templates/partials/pagination-nav.php:47
 #: templates/views/edit-profile.php:320
 #: templates/views/space-members.php:366
-#: templates/views/space-members.php:578
+#: templates/views/space-members.php:581
 #: templates/views/tag.php:166
 #, php-format
 msgid "Page %1$d of %2$d"
@@ -11086,7 +11086,7 @@ msgstr ""
 #: templates/partials/pagination-nav.php:52
 #: templates/views/edit-profile.php:322
 #: templates/views/space-members.php:371
-#: templates/views/space-members.php:583
+#: templates/views/space-members.php:586
 #: templates/views/subscriptions.php:135
 #: templates/views/tag.php:171
 msgid "Next"
@@ -11628,7 +11628,7 @@ msgid "Rank %d"
 msgstr ""
 
 #: templates/views/leaderboard.php:241
-#: templates/views/space-members.php:539
+#: templates/views/space-members.php:542
 msgid "rep"
 msgstr ""
 
@@ -12613,41 +12613,41 @@ msgid "No %s match your search."
 msgstr ""
 
 #. translators: %s: join date.
-#: templates/views/space-members.php:453
+#: templates/views/space-members.php:455
 #: templates/views/user-profile.php:267
 #, php-format
 msgid "Joined %s"
 msgstr ""
 
 #. translators: %s: the singular member label, lowercase (e.g. member).
-#: templates/views/space-members.php:463
+#: templates/views/space-members.php:465
 #, php-format
 msgid "You blocked this %s. Unblock from their profile."
 msgstr ""
 
 #. translators: %s: the singular member label, lowercase (e.g. member).
-#: templates/views/space-members.php:464
+#: templates/views/space-members.php:466
 msgid "Blocked"
 msgstr ""
 
 #. translators: %s: member display name
-#: templates/views/space-members.php:471
+#: templates/views/space-members.php:473
 #, php-format
 msgid "Change role for %s"
 msgstr ""
 
-#: templates/views/space-members.php:506
+#: templates/views/space-members.php:508
 msgid "Lift ban"
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
-#: templates/views/space-members.php:529
+#: templates/views/space-members.php:532
 #, php-format
 msgid "Ban from %s"
 msgstr ""
 
 #. translators: %s: plural member label.
-#: templates/views/space-members.php:568
+#: templates/views/space-members.php:571
 #, php-format
 msgid "%s pagination"
 msgstr ""

@@ -79,10 +79,10 @@ $flags  = $total > 0
 // The Banned tab needs a STRICTER cap than the page itself. The page admits
 // anyone with can_view_any_queue() - which includes a space moderator who holds
 // no site-wide cap - but the list it renders is global (every restriction on the
-// site, not just their spaces) and every Lift button posts to
-// DELETE /moderation/ban/{id}, which requires jetonomy_moderate. So a space mod
-// was shown other spaces' restrictions and a Lift that could only ever 403.
-// Mirror the REST cap exactly: no tab, no panel, no buttons that cannot work.
+// site, not just their spaces). DELETE /moderation/ban/{id} lets a space admin
+// (or an opted-in space moderator) lift their OWN space's bans, via
+// Moderation_Permissions::lift_error(), and they do that from the space's
+// Members page. This global list stays for site moderators only.
 $jt_can_manage_bans = user_can( $user_id, 'jetonomy_moderate' );
 
 // Which panel: the flags overview (default) or the banned-members list. The

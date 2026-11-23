@@ -190,6 +190,29 @@ class Moderation_Permissions {
 	}
 
 	/**
+	 * Why this user may not issue a restriction of this type, or null when they may.
+	 *
+	 * Site bans, silences and IP bans need jetonomy_moderate or manage_options; a
+	 * space_ban also accepts whoever Permission_Engine::can_space_ban() allows for
+	 * that space (its admin, or a moderator when moderators_can_ban is on). REST
+	 * and WP-CLI both ask here; who may be TARGETED is
+	 * Restriction::actor_may_restrict().
+	 *
+	 * @param int      $user_id  Acting user.
+	 * @param string   $type     Restriction type.
+	 * @param int|null $space_id Space for a space ban.
+	 * @return \WP_Error|null
+	 */
+	public static function issue_error( int $user_id, string $type, ?int $space_id ): ?\WP_Error {
+		if ( ! user_can( $user_id, 'jetonomy_moderate' ) && ! user_can( $user_id, 'manage_options' )
+			&& ( 'space_ban' !== $type || ! $space_id || ! Permission_Engine::can_space_ban( $user_id, $space_id ) ) ) {
+			return \Jetonomy\API\REST_Auth::forbidden();
+		}
+		// A silenced or banned moderator takes no moderation action.
+		return self::restriction_error( $user_id, $space_id );
+	}
+
+	/**
 	 * Why this user may not lift this restriction, or null when they may.
 	 *
 	 * Lifting takes the same authority as issuing: a restricted moderator takes

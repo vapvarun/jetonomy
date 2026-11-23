@@ -2112,6 +2112,8 @@
        line 2, full-width select so the truncation stops squeezing. */
     .jt-member-role-select { flex-basis: 100%; max-width: 100%; width: 100%; margin-top: var(--jt-space-1); }
     .jt-pending-actions { flex-basis: 100%; margin-top: var(--jt-space-1); }
+    /* Ban and Lift ban are destructive single taps: the full 44px touch target. */
+    .jt-app :is(.jt-member-ban-btn, .jt-member-lift-btn) { --jt-tap: 44px; min-block-size: var(--jt-tap); }
   }
 
   /* ── Search ── */

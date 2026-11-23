@@ -119,11 +119,12 @@ class Users_Controller extends Base_Controller {
 						'required'          => true,
 						'sanitize_callback' => 'sanitize_text_field',
 					),
+					// No absint: core sanitizes before it validates, so -1 became space 1.
 					'space_id' => array(
-						'type'              => 'integer',
-						'required'          => false,
-						'default'           => 0,
-						'sanitize_callback' => 'absint',
+						'type'     => 'integer',
+						'required' => false,
+						'default'  => 0,
+						'minimum'  => 0,
 					),
 				),
 			)

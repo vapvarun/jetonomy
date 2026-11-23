@@ -112,6 +112,7 @@ class Abilities {
 					'properties' => array(
 						'space_id'   => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Target space ID.',
 							'required'    => true,
 						),
@@ -252,6 +253,7 @@ class Abilities {
 					'properties' => array(
 						'space_id' => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Space ID.',
 							'required'    => true,
 						),
@@ -560,6 +562,7 @@ class Abilities {
 					'properties' => array(
 						'space_id' => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Space ID.',
 							'required'    => true,
 						),
@@ -606,6 +609,7 @@ class Abilities {
 					'properties' => array(
 						'space_id' => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Space to join.',
 							'required'    => true,
 						),
@@ -650,6 +654,7 @@ class Abilities {
 					'properties' => array(
 						'space_id' => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Space ID.',
 							'required'    => true,
 						),

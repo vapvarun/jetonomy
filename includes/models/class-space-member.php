@@ -611,15 +611,7 @@ class SpaceMember extends Model {
 	 * @return string|null
 	 */
 	public static function get_role( int $space_id, int $user_id ): ?string {
-		if ( ! self::$memo_registered ) {
-			self::$memo_registered = true;
-			\Jetonomy\Cache::register_memo_reset(
-				static function (): void {
-					self::$role_cache       = array();
-					self::$role_label_cache = array();
-				}
-			);
-		}
+		self::register_memo();
 
 		$key = $space_id . '|' . $user_id;
 		if ( ! array_key_exists( $key, self::$role_cache ) ) {
@@ -635,6 +627,35 @@ class SpaceMember extends Model {
 		}
 
 		return self::$role_cache[ $key ];
+	}
+
+	/**
+	 * Seed get_role() from roster rows the caller already fetched (list_by_space),
+	 * so per-row permission checks on a members page run no query of their own.
+	 *
+	 * @param object[] $rows Rows with space_id, user_id, role and source.
+	 */
+	public static function prime_roles_from_rows( array $rows ): void {
+		self::register_memo();
+		foreach ( $rows as $row ) {
+			self::$role_cache[ (int) $row->space_id . '|' . (int) $row->user_id ] = self::live_role( $row, (int) $row->user_id );
+		}
+	}
+
+	/**
+	 * Clear the role memos whenever Cache resets request memos (once per request).
+	 */
+	private static function register_memo(): void {
+		if ( self::$memo_registered ) {
+			return;
+		}
+		self::$memo_registered = true;
+		\Jetonomy\Cache::register_memo_reset(
+			static function (): void {
+				self::$role_cache       = array();
+				self::$role_label_cache = array();
+			}
+		);
 	}
 
 	/**

@@ -412,11 +412,16 @@ Error paths: `404 jetonomy_flag_target_missing` (target does not exist), `400 je
 
 ```javascript
 {
-    user_id:  123,
-    reason:   'Repeated spam',
-    duration: 7,           // days - omit for permanent ban
+    type:       'space_ban',            // global_ban | space_ban | silence | ip_ban (required)
+    user_id:    123,                    // required except for ip_ban
+    space_id:   9,                      // required for space_ban; a positive integer, 0 or less answers 400
+    reason:     'Repeated spam',
+    expires_at: '2026-12-01 00:00:00',  // omit for a permanent ban
+    ip:         '203.0.113.7',          // ip_ban only
 }
 ```
+
+A ban or lift sends the member no notification, writes no activity entry and fires no hook.
 
 **GET /spaces/{id}/moderation/flags - parameters** *(1.8.0)*
 

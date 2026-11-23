@@ -251,4 +251,42 @@ class ModeratorBanTest extends WP_UnitTestCase {
 		$id = Restriction::ban( $this->outsider, 'space_ban', 0, $this->other_space );
 		$this->assertSame( 403, $this->lift( $this->mod, $id )->get_status() );
 	}
+
+	public function test_a_non_positive_space_id_is_refused_not_turned_positive(): void {
+		foreach ( array( -1 * $this->space, -1, 0 ) as $space_id ) {
+			$res = $this->ban( $this->mod, $this->member, 'space_ban', $space_id );
+			$this->assertSame( 400, $res->get_status(), (string) $space_id );
+		}
+		$this->assertFalse( Restriction::is_space_banned( $this->member, $this->space ) );
+
+		wp_set_current_user( $this->space_admin );
+		$list = new WP_REST_Request( 'GET', '/jetonomy/v1/moderation/ban' );
+		$list->set_param( 'space_id', -1 );
+		$this->assertSame( 400, $this->server->dispatch( $list )->get_status() );
+	}
+
+	public function test_cli_ban_follows_the_toggle_and_names_the_refusal(): void {
+		$journey = new \Jetonomy\CLI\Journeys\Moderation_Journey();
+		$this->toggle( false );
+		$refused = $journey->ban_user( $this->member, $this->mod, 'space_ban', $this->space );
+		$this->assertFalse( $refused->success );
+		$this->assertStringStartsWith( 'jetonomy_forbidden:', (string) $refused->first_error() );
+		$this->assertFalse( Restriction::is_space_banned( $this->member, $this->space ) );
+
+		$this->toggle( true );
+		$staff = $journey->ban_user( $this->peer_mod, $this->mod, 'space_ban', $this->space );
+		$this->assertStringStartsWith( 'jetonomy_cannot_ban_space_staff:', (string) $staff->first_error() );
+		$this->assertTrue( $journey->ban_user( $this->member, $this->mod, 'space_ban', $this->space )->success );
+	}
+
+	public function test_a_roster_page_primes_roles_so_lift_checks_run_no_query(): void {
+		global $wpdb;
+		Restriction::ban( $this->member, 'space_ban', 0, $this->space );
+		SpaceMember::prime_roles_from_rows( SpaceMember::list_by_space( $this->space, 25 ) );
+		$before = $wpdb->num_queries;
+		$this->assertSame( 'member', SpaceMember::get_role( $this->space, $this->member ) );
+		$this->assertSame( 'moderator', SpaceMember::get_role( $this->space, $this->peer_mod ) );
+		$this->assertSame( $before, $wpdb->num_queries );
+	}
 }
+

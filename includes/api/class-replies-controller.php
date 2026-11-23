@@ -129,6 +129,7 @@ class Replies_Controller extends Base_Controller {
 					'space_id' => array(
 						'type'     => 'integer',
 						'required' => false,
+						'minimum'  => 1,
 					),
 				),
 			)

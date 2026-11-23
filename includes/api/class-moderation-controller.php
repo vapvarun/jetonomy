@@ -245,7 +245,10 @@ class Moderation_Controller extends Base_Controller {
 					// Required when type is ip_ban: the address to block.
 					'ip'         => array( 'type' => 'string' ),
 					'reason'     => array( 'type' => 'string' ),
-					'space_id'   => array( 'type' => 'integer' ),
+					'space_id'   => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+					),
 					'expires_at' => array( 'type' => 'string' ),
 				),
 			)
@@ -280,7 +283,10 @@ class Moderation_Controller extends Base_Controller {
 						'enum' => array( 'global_ban', 'space_ban', 'silence', 'ip_ban' ),
 					),
 					'user_id'  => array( 'type' => 'integer' ),
-					'space_id' => array( 'type' => 'integer' ),
+					'space_id' => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+					),
 					'limit'    => array( 'type' => 'integer' ),
 					'offset'   => array( 'type' => 'integer' ),
 				),
@@ -670,25 +676,11 @@ class Moderation_Controller extends Base_Controller {
 		$space_id   = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
 		$expires_at = $request->get_param( 'expires_at' ) ? sanitize_text_field( (string) $request->get_param( 'expires_at' ) ) : null;
 
-		// Ban cap matrix:
-		// - jetonomy_moderate OR manage_options always passes.
-		// - space_ban additionally accepts whoever may ban from that space through
-		// its roster (Permission_Engine::can_space_ban: space admin, or space
-		// moderator when the owner allows it).
-		// Global bans / silences / IP bans without either cap are rejected.
+		// Who may ISSUE this type (the same rule WP-CLI asks).
 		$actor_id = get_current_user_id();
-		$has_caps = current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' );
-		if ( ! $has_caps ) {
-			if ( 'space_ban' !== $type || ! $space_id
-				|| ! \Jetonomy\Permissions\Permission_Engine::can_space_ban( $actor_id, $space_id ) ) {
-				return $this->permission_error();
-			}
-		}
-
-		// A silenced or banned moderator takes no moderation action.
-		$restricted = \Jetonomy\Moderation\Moderation_Permissions::restriction_error( $actor_id, $space_id );
-		if ( $restricted ) {
-			return $restricted;
+		$refused  = \Jetonomy\Moderation\Moderation_Permissions::issue_error( $actor_id, $type, $space_id );
+		if ( $refused ) {
+			return $refused;
 		}
 
 		// An IP ban stands alone: no member is named or stored, so the

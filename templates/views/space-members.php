@@ -413,6 +413,8 @@ $role_labels = \Jetonomy\space_role_labels();
 				// would cost ~50 cold queries per roster page.
 				$jt_page_user_ids = array_map( static fn( $m ) => (int) $m->user_id, $members );
 				\Jetonomy\Models\UserProfile::prime( $jt_page_user_ids );
+				// Lift ban asks each banned row's space role: seed it from these rows.
+				\Jetonomy\Models\SpaceMember::prime_roles_from_rows( $members );
 				// One query each for the page: who is banned from this space
 				// (space admins see Lift instead of Ban), and whom the viewer
 				// has blocked (shown to the viewer only).
@@ -498,7 +500,7 @@ $role_labels = \Jetonomy\space_role_labels();
 								<?php if ( $jt_ban ) : ?>
 									<span class="jt-badge jt-badge-danger jt-member-badge"><?php esc_html_e( 'Banned', 'jetonomy' ); ?></span>
 									<?php if ( null === \Jetonomy\Moderation\Moderation_Permissions::lift_error( $viewer_id, $jt_ban ) ) : ?>
-										<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm"
+										<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm jt-member-lift-btn"
 											data-wp-on--click="actions.liftRestriction"
 											data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
 											data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>">
@@ -508,10 +510,11 @@ $role_labels = \Jetonomy\space_role_labels();
 									<?php endif; ?>
 								<?php else : ?>
 									<?php
-									// 1.4.0 C.3 — front-end "Ban" affordance for space admins.
-									// Issues a SPACE-scope ban via POST /moderation/ban (with
-									// space_id), so the cap-vs-role gap that blocked space mods
-									// is closed. Site-wide bans / silences stay cap-only.
+									// Front-end "Ban" for space admins, and for space moderators when
+									// Settings > Trust "moderators can ban" is on (2.1.0). Issues a
+									// SPACE-scope ban via POST /moderation/ban with space_id;
+									// Permission_Engine::can_space_ban() decides. Site-wide bans and
+									// silences stay cap-only.
 									?>
 									<?php
 									// Danger-ghost + x-circle: the identical treatment the

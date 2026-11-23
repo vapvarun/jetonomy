@@ -3826,7 +3826,7 @@
         ],
         "summary": "Issue a restriction",
         "operationId": "createBan",
-        "description": "Issue a site ban, space ban, silence or IP address ban. Requires jetonomy_moderate. Guards: cannot restrict self, a site admin, or (as a mere moderator) another moderator. type=ip_ban needs ip (refused for your own address or one already banned).",
+        "description": "Issue a site ban, space ban, silence or IP address ban. Requires jetonomy_moderate, except a space_ban, which a space admin (or a space moderator, when moderators_can_ban is on) may issue for their own space; space_id must be a positive integer. Guards: cannot restrict self, a site admin, or (as a mere moderator) another moderator. type=ip_ban needs ip (refused for your own address or one already banned).",
         "responses": {
           "201": {
             "description": "Created",
@@ -3900,7 +3900,7 @@
         ],
         "summary": "Lift a restriction",
         "operationId": "deleteBan",
-        "description": "Lift a restriction. Requires jetonomy_moderate.",
+        "description": "Lift a restriction. Requires jetonomy_moderate, except a space ban, which the space's admins (and moderators, when moderators_can_ban is on) may lift.",
         "responses": {
           "200": {
             "description": "Success",
