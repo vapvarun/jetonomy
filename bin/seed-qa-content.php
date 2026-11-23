@@ -77,6 +77,20 @@ $specs = array(
 		'type'  => 'forum',
 		'desc'  => 'Fixture with posts_per_page = 1 so Load More is one click away. Safe to delete.',
 	),
+	// Sits in a sub-category, so the community index draws a category chip
+	// group (chip link + chevron toggle) for the control-contrast crawl.
+	'jt-qa-chapter' => array(
+		'title'    => 'QA Chapter space',
+		'type'     => 'forum',
+		'desc'     => 'Fixture for the sub-category chips. Safe to delete.',
+		'category' => 'jt-qa-chapter-north',
+	),
+);
+
+/** Parent and child category for the chip group, keyed by slug (child => parent slug). */
+$categories = array(
+	'jt-qa-chapters'      => array( 'QA Chapters', '' ),
+	'jt-qa-chapter-north' => array( 'QA Chapter North', 'jt-qa-chapters' ),
 );
 
 /** Unique enough that the typeahead row cannot match real content. */
@@ -114,6 +128,13 @@ if ( $cleanup ) {
 		$removed['spaces'] += (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$spaces_t} WHERE id = %d", $space_id ) );
 	}
 
+	foreach ( array_reverse( array_keys( $categories ) ) as $cat_slug ) {
+		$cat = \Jetonomy\Models\Category::find_by_slug( $cat_slug );
+		if ( $cat ) {
+			\Jetonomy\Models\Category::delete( (int) $cat->id );
+		}
+	}
+
 	echo 'FIXTURES ' . wp_json_encode( array( 'cleaned' => $removed ) ) . "\n";
 	return;
 }
@@ -130,6 +151,18 @@ $author = (int) get_users(
 
 $out = array( 'author_id' => $author, 'spaces' => array(), 'posts' => array() );
 
+$category_ids = array();
+foreach ( $categories as $cat_slug => list( $cat_name, $parent_slug ) ) {
+	$cat                        = \Jetonomy\Models\Category::find_by_slug( $cat_slug );
+	$category_ids[ $cat_slug ] = $cat ? (int) $cat->id : (int) \Jetonomy\Models\Category::create(
+		array(
+			'name'      => $cat_name,
+			'slug'      => $cat_slug,
+			'parent_id' => $parent_slug ? ( $category_ids[ $parent_slug ] ?? 0 ) : 0,
+		)
+	);
+}
+
 foreach ( $specs as $slug => $spec ) {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$space_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$spaces_t} WHERE slug = %s", $slug ) );
@@ -144,7 +177,7 @@ foreach ( $specs as $slug => $spec ) {
 				// "uncategorized" is represented as 0 - which is why the model
 				// queries `category_id IS NULL OR category_id = 0`. Passing null
 				// here fails the insert with "Column 'category_id' cannot be null".
-				'category_id' => 0,
+				'category_id' => $category_ids[ $spec['category'] ?? '' ] ?? 0,
 				'author_id'   => $author,
 				'type'        => $spec['type'],
 				'visibility'  => 'public',
@@ -267,6 +300,24 @@ if ( $qa_post_id && defined( 'JETONOMY_PRO_VERSION' ) && 0 === \Jetonomy\Models\
 	if ( $image ) {
 		\Jetonomy\Models\Attachment::link( 'post', $qa_post_id, (int) $image[0] );
 		$out['image_on'] = $qa_post_id;
+	}
+}
+// A plain file renders Pro's download chip, a bordered link (second attachment).
+if ( $qa_post_id && defined( 'JETONOMY_PRO_VERSION' ) && \Jetonomy\Models\Attachment::count_for( 'post', $qa_post_id ) < 2 ) {
+	$upload = wp_upload_bits( 'jt-qa-notes.txt', null, "QA fixture file. Safe to delete.\n" );
+	if ( empty( $upload['error'] ) ) {
+		$file_id = wp_insert_attachment(
+			array(
+				'post_title'     => 'jt-qa-notes.txt',
+				'post_mime_type' => 'text/plain',
+				'post_status'    => 'inherit',
+			),
+			$upload['file']
+		);
+		if ( $file_id && ! is_wp_error( $file_id ) ) {
+			\Jetonomy\Models\Attachment::link( 'post', $qa_post_id, (int) $file_id );
+			$out['file_on'] = $qa_post_id;
+		}
 	}
 }
 

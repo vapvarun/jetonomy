@@ -44,6 +44,8 @@
 //  - opts.darkHostCss is extra CSS for dark runs, to stand in for a host
 //    theme's dark page on a theme with no dark mode of its own, e.g.
 //    'body{background:#121212;color:#e5e5e5}' on Twenty Twenty-Five.
+//    Add ':root{--jt-accent:#0073aa!important}' to it to test the default
+//    accent on that dark page (a dark accent on a dark surface).
 // Transitions and animations are switched off and every <details> is
 // opened before measuring, so computed values are final.
 
@@ -51,7 +53,7 @@ async (page) => {
 const FRONT = [
   '/community/', '/community/?spg=2', '/community/search/?q=dark', '/community/leaderboard/', '/community/mod/',
   '/community/my-spaces/', '/community/subscriptions/', '/community/drafts/', '/community/bookmarks/',
-  '/community/new-space/', '/community/category/product-engineering/',
+  '/community/new-space/', '/community/category/product-engineering/', '/community/category/jt-qa-chapters/',
   '/community/s/general-discussion/', '/community/s/general-discussion/members/',
   '/community/s/general-discussion/edit/', '/community/s/general-discussion/new/',
   '/community/s/general-discussion/mod/', '/community/s/feature-requests/', '/community/s/feature-requests/roadmap/',

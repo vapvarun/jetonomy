@@ -38,7 +38,7 @@ $pages = array(
 	array( 'jt-qa-sc-compose-topic', 'QA · Shortcode · Compose Topic', '[jetonomy_compose_topic]', 'shortcode' ),
 
 	// ── Blocks (8) — one page each, raw block markup ──────────────────────
-	array( 'jt-qa-block-forum-feed', 'QA · Block · Forum Feed', "<!-- wp:jetonomy/forum-feed /-->", 'block' ),
+	array( 'jt-qa-block-forum-feed', 'QA · Block · Forum Feed', '<!-- wp:jetonomy/forum-feed {"showHeader":true} /-->', 'block' ), // Header carries the "View all" link.
 	array( 'jt-qa-block-trending', 'QA · Block · Trending', "<!-- wp:jetonomy/trending /-->", 'block' ),
 	array( 'jt-qa-block-space-list', 'QA · Block · Space List', "<!-- wp:jetonomy/space-list /-->", 'block' ),
 	array( 'jt-qa-block-leaderboard', 'QA · Block · Leaderboard', "<!-- wp:jetonomy/leaderboard /-->", 'block' ),
