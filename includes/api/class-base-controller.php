@@ -392,11 +392,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// defaults to 0, so 0 means unset; ?page=2 used to answer page 1 again.
 		$limit = min( 100, max( 1, (int) ( $request->get_param( 'limit' ) ?? $request->get_param( 'per_page' ) ?? 20 ) ) );
 		if ( $after <= 0 && $offset <= 0 ) {
-			$offset = ( max( 1, (int) ( $request->get_param( 'page' ) ?? 1 ) ) - 1 ) * $limit;
+			$offset = jetonomy_page_offset( (int) ( $request->get_param( 'page' ) ?? 1 ), $limit );
 		}
 		return array(
 			'limit'  => $limit,
-			'offset' => max( 0, $after > 0 ? $after : $offset ),
+			// Capped so offset + limit stays an int (?offset=9223372036854775807 overflowed).
+			'offset' => min( JETONOMY_MAX_OFFSET, max( 0, $after > 0 ? $after : $offset ) ),
 			'sort'   => $request->get_param( 'sort' ) ?? 'latest',
 			'after'  => $after,
 			'before' => (int) ( $request->get_param( 'before' ) ?? 0 ),

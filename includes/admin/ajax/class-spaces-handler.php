@@ -879,7 +879,7 @@ class Spaces_Handler {
 		$page     = max( 1, absint( $_POST['page'] ?? 1 ) );
 		$total    = InviteLink::count_by_space( $space_id );
 		$invites  = array();
-		foreach ( InviteLink::list_by_space( $space_id, $per_page, ( $page - 1 ) * $per_page ) as $invite ) {
+		foreach ( InviteLink::list_by_space( $space_id, $per_page, jetonomy_page_offset( $page, $per_page ) ) as $invite ) {
 			$invites[] = array(
 				'id'            => (int) $invite->id,
 				'invite_url'    => $this->invite_url( (string) $invite->token ),

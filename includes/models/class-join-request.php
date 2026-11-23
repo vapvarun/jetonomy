@@ -26,6 +26,10 @@ class JoinRequest extends Model {
 	 * @return int Inserted row ID.
 	 */
 	public static function create_request( int $space_id, int $user_id, string $message = '' ): int {
+		// A request for a space that does not exist would sit in no queue forever.
+		if ( ! Space::find( $space_id ) ) {
+			return 0;
+		}
 		return self::insert(
 			array(
 				'space_id'   => $space_id,

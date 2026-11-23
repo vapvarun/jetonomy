@@ -171,7 +171,7 @@ class Revisions_List_Table extends \WP_List_Table {
 	public function prepare_items(): void {
 		$per_page = 20;
 		$paged    = max( 1, absint( $this->get_pagenum() ) );
-		$offset   = ( $paged - 1 ) * $per_page;
+		$offset   = jetonomy_page_offset( $paged, $per_page );
 
 		// Fourth element is the PRIMARY column - see the note in
 		// Activity_List_Table. Without it core falls back to the first column,

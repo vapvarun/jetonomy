@@ -322,6 +322,36 @@ if ( ! function_exists( 'jetonomy_after_content_allowed_html' ) ) {
 	}
 }
 
+if ( ! defined( 'JETONOMY_MAX_OFFSET' ) ) {
+	// Ceiling for any SQL OFFSET built from a request: half of PHP_INT_MAX, so offset + page size still fits an int.
+	define( 'JETONOMY_MAX_OFFSET', intdiv( PHP_INT_MAX, 2 ) );
+}
+
+if ( ! function_exists( 'jetonomy_page_offset' ) ) {
+	/**
+	 * SQL OFFSET of a 1-based page, safe for any page number a request sends.
+	 *
+	 * ( $page - 1 ) * $per_page leaves the int range for a page like
+	 * 9223372036854775807 and turns into a float: a typed model argument then
+	 * fatals and $wpdb->prepare() writes a negative OFFSET into the SQL. The
+	 * result is capped at JETONOMY_MAX_OFFSET instead, which is far past any
+	 * real row count (so the page is empty, as it would be anyway) and leaves
+	 * room to add a page size without overflowing.
+	 *
+	 * @param int $page     1-based page number; below 1 reads as 1.
+	 * @param int $per_page Rows per page; below 1 reads as 1.
+	 * @return int Offset between 0 and JETONOMY_MAX_OFFSET.
+	 */
+	function jetonomy_page_offset( int $page, int $per_page ): int {
+		$page     = max( 1, $page );
+		$per_page = max( 1, $per_page );
+		if ( $page - 1 > intdiv( JETONOMY_MAX_OFFSET, $per_page ) ) {
+			return JETONOMY_MAX_OFFSET;
+		}
+		return ( $page - 1 ) * $per_page;
+	}
+}
+
 if ( ! function_exists( 'jetonomy_reorder_offset' ) ) {
 	/**
 	 * Absolute index of the first row on a paginated admin screen.
@@ -337,12 +367,11 @@ if ( ! function_exists( 'jetonomy_reorder_offset' ) ) {
 	 * @return int Offset to add to each batch index.
 	 */
 	function jetonomy_reorder_offset( int $paged, int $per_page ): int {
-		$paged = max( 1, $paged );
 		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
 			$per_page = 20;
 		}
 
-		return ( $paged - 1 ) * $per_page;
+		return jetonomy_page_offset( $paged, $per_page );
 	}
 }
 

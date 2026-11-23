@@ -111,6 +111,10 @@ class Post extends Model {
 		if ( is_wp_error( $data ) ) {
 			return $data;
 		}
+		// Every topic writer lands here (REST, abilities, CLI, split, imports): no topic without its space.
+		if ( ! Space::find( (int) ( $data['space_id'] ?? 0 ) ) ) {
+			return Space::missing_error();
+		}
 		$title_error = self::title_length_error( (string) ( $data['title'] ?? '' ) );
 		if ( $title_error ) {
 			return $title_error;

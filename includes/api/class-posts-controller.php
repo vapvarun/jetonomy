@@ -338,7 +338,7 @@ class Posts_Controller extends Base_Controller {
 		// get_pagination() turned ?page=N into an offset with its default 20;
 		// with the space's own page size, page N starts at (N-1) x that size.
 		if ( ! $has_limit && empty( $query['after'] ) && empty( $query['offset'] ) ) {
-			$pagination['offset'] = ( max( 1, (int) ( $query['page'] ?? 1 ) ) - 1 ) * $limit;
+			$pagination['offset'] = jetonomy_page_offset( (int) ( $query['page'] ?? 1 ), $limit );
 		}
 
 		$posts = Post::list_by_space_visible(

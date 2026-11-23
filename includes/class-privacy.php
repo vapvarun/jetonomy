@@ -279,7 +279,7 @@ class Privacy {
 
 		global $wpdb;
 		$limit    = 100;
-		$offset   = ( max( 1, $page ) - 1 ) * $limit;
+		$offset   = jetonomy_page_offset( $page, $limit );
 		$key_col  = sanitize_key( $key_col );
 		$user_col = sanitize_key( $user_col );
 		// $key_col drives pagination + the item id ('id' for most tables; some
@@ -496,7 +496,7 @@ class Privacy {
 
 		global $wpdb;
 		$limit  = 100;
-		$offset = ( $page - 1 ) * $limit;
+		$offset = jetonomy_page_offset( $page, $limit );
 
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
@@ -547,7 +547,7 @@ class Privacy {
 
 		global $wpdb;
 		$limit  = 100;
-		$offset = ( $page - 1 ) * $limit;
+		$offset = jetonomy_page_offset( $page, $limit );
 
 		$replies = $wpdb->get_results(
 			$wpdb->prepare(

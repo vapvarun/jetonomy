@@ -220,6 +220,10 @@ class Moderation_Permissions {
 				)
 			);
 		}
+		// A ban from a space that does not exist would store an orphan row and restrict nothing.
+		if ( 'space_ban' === $type && ! \Jetonomy\Models\Space::find( (int) $space_id ) ) {
+			return \Jetonomy\Models\Space::missing_error();
+		}
 		// A silenced or banned moderator takes no moderation action.
 		return self::restriction_error( $user_id, $space_id );
 	}

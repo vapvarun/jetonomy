@@ -37,6 +37,17 @@ class Space extends Model {
 	}
 
 	/**
+	 * The 404 for a write that names a space that does not exist, so no caller
+	 * stores a row for it. One wording for every entry point.
+	 *
+	 * @return \WP_Error jetonomy_space_not_found, status 404.
+	 */
+	public static function missing_error(): \WP_Error {
+		/* translators: %s: the singular Space label, lowercase. */
+		return new \WP_Error( 'jetonomy_space_not_found', sprintf( __( 'That %s no longer exists.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 404 ) );
+	}
+
+	/**
 	 * Load several spaces into the find() cache with one query, so a list of
 	 * topics from many spaces (tag page, drafts, search) does not run one
 	 * find() query per space. Already cached ids are

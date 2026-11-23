@@ -1394,7 +1394,7 @@ class Admin {
 		$search  = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
 		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'sort_order' ) );
 		$order   = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
-		$offset  = ( $paged - 1 ) * $per_page;
+		$offset  = jetonomy_page_offset( $paged, $per_page );
 
 		$result           = Category::list_paginated( $search, $orderby, $order, $per_page, $offset );
 		$categories       = $result['rows'];
@@ -1420,7 +1420,7 @@ class Admin {
 		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'name' ) );
 		$order   = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
 
-		$offset = ( $paged - 1 ) * $per_page;
+		$offset = jetonomy_page_offset( $paged, $per_page );
 		$result = \Jetonomy\Models\Tag::list_paginated( $search, $orderby, $order, $per_page, $offset );
 
 		$tags        = $result['rows'];
@@ -1480,14 +1480,14 @@ class Admin {
 			$member_per_page = 25;
 			$member_pages    = max( 1, (int) ceil( $member_total / $member_per_page ) );
 			$member_paged    = min( $member_pages, max( 1, absint( $_GET['mpg'] ?? 1 ) ) );
-			$members         = SpaceMember::list_by_space( $space_id, $member_per_page, ( $member_paged - 1 ) * $member_per_page, $member_search );
+			$members         = SpaceMember::list_by_space( $space_id, $member_per_page, jetonomy_page_offset( $member_paged, $member_per_page ), $member_search );
 			$access_rules    = AccessRule::list_for_space( $space_id );
 			$space_settings  = Space::get_settings( $space_id );
 			$join_total      = JoinRequest::count_pending_for_space( $space_id );
 			$join_per_page   = 20;
 			$join_pages      = max( 1, (int) ceil( $join_total / $join_per_page ) );
 			$join_paged      = min( $join_pages, max( 1, absint( $_GET['jrpg'] ?? 1 ) ) );
-			$join_requests   = JoinRequest::list_pending_for_space( $space_id, $join_per_page, ( $join_paged - 1 ) * $join_per_page );
+			$join_requests   = JoinRequest::list_pending_for_space( $space_id, $join_per_page, jetonomy_page_offset( $join_paged, $join_per_page ) );
 			include JETONOMY_DIR . 'includes/admin/views/space-edit.php';
 			return;
 		}
@@ -1514,7 +1514,7 @@ class Admin {
 		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
 			$per_page = 20;
 		}
-		$offset = ( $paged - 1 ) * $per_page;
+		$offset = jetonomy_page_offset( $paged, $per_page );
 
 		// Inside one category (and nothing else filtered) the list follows the
 		// manual order members see, so drag-reorder has a coherent target.
@@ -1546,9 +1546,9 @@ class Admin {
 		$total_flags   = Flag::count_pending( $skip );
 		$total_banned  = Restriction::count_active();
 
-		$pending_posts   = Post::list_pending_with_space( $per_page, ( $paged_posts - 1 ) * $per_page, $skip );
-		$pending_replies = Reply::list_pending_with_post( $per_page, ( $paged_replies - 1 ) * $per_page, $skip );
-		$pending_flags   = Flag::list_pending( $per_page, ( $paged_flags - 1 ) * $per_page, $skip );
+		$pending_posts   = Post::list_pending_with_space( $per_page, jetonomy_page_offset( $paged_posts, $per_page ), $skip );
+		$pending_replies = Reply::list_pending_with_post( $per_page, jetonomy_page_offset( $paged_replies, $per_page ), $skip );
+		$pending_flags   = Flag::list_pending( $per_page, jetonomy_page_offset( $paged_flags, $per_page ), $skip );
 
 		$this->prime_flag_objects( $pending_flags );
 
@@ -1556,7 +1556,7 @@ class Admin {
 		$banned_users = Restriction::list_active(
 			array(
 				'limit'  => $per_page,
-				'offset' => ( $paged_banned - 1 ) * $per_page,
+				'offset' => jetonomy_page_offset( $paged_banned, $per_page ),
 			)
 		);
 		if ( $banned_users ) {
@@ -1727,7 +1727,7 @@ class Admin {
 					'object_id'   => $object_id,
 				)
 			);
-			$revisions = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id, $rev_per + 1, ( $rev_page - 1 ) * $rev_per );
+			$revisions = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id, $rev_per + 1, jetonomy_page_offset( $rev_page, $rev_per ) );
 
 			// Resolve a human-readable title for the page heading. Posts
 			// have a title column; replies fall back to the parent post
@@ -1778,7 +1778,7 @@ class Admin {
 		$filter_trust = sanitize_text_field( $_GET['trust_level'] ?? '' );
 		$paged        = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page     = 20;
-		$offset       = ( $paged - 1 ) * $per_page;
+		$offset       = jetonomy_page_offset( $paged, $per_page );
 
 		$orderby = sanitize_key( $_GET['orderby'] ?? 'reputation' );
 		$orderby = isset( UserProfile::ADMIN_SORTS[ $orderby ] ) ? $orderby : 'reputation';
@@ -1880,7 +1880,7 @@ class Admin {
 
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = 20;
-		$offset   = ( $paged - 1 ) * $per_page;
+		$offset   = jetonomy_page_offset( $paged, $per_page );
 
 		$total       = Post::count_for_admin( $filters );
 		$total_pages = (int) ceil( $total / $per_page );
@@ -1921,7 +1921,7 @@ class Admin {
 		// Pagination — 50 per page for large reply sets.
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = 50;
-		$offset   = ( $paged - 1 ) * $per_page;
+		$offset   = jetonomy_page_offset( $paged, $per_page );
 
 		$total       = Reply::count_for_admin_post( $post_id, $current_status, $search_query );
 		$total_pages = (int) ceil( $total / $per_page );

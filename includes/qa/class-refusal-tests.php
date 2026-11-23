@@ -154,6 +154,27 @@ class Refusal_Tests {
 			403 === $res->get_status() && null === SpaceMember::get_role( $space, $this->member ),
 			'status ' . $res->get_status()
 		);
+		// RF11: a ban from a space that does not exist is refused and stores no orphan row.
+		global $wpdb;
+		$missing = (int) $wpdb->get_var( "SELECT COALESCE( MAX( id ), 0 ) + 1000 FROM {$wpdb->prefix}jt_spaces" );
+		$res     = $this->rest(
+			$this->moderator,
+			'POST',
+			'/moderation/ban',
+			array(
+				'user_id'  => $this->member,
+				'type'     => 'space_ban',
+				'space_id' => $missing,
+			)
+		);
+		$direct  = Restriction::ban( $this->member, 'space_ban', $this->moderator, $missing );
+		$orphans = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_restrictions WHERE space_id = %d", $missing ) );
+		$wpdb->delete( $wpdb->prefix . 'jt_restrictions', array( 'space_id' => $missing ) ); // Leave no orphan behind when the old code fails.
+		$this->record(
+			'RF11: a ban from a missing space is a 404 and stores nothing',
+			404 === $res->get_status() && 'jetonomy_space_not_found' === ( $res->get_data()['code'] ?? '' ) && 0 === $direct && 0 === $orphans,
+			'status ' . $res->get_status() . ', model ' . $direct . ', rows ' . $orphans
+		);
 	}
 
 	private function test_invites(): void {
