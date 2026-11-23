@@ -263,8 +263,12 @@
     --jt-border: rgba(0,0,0,0.1);
     --jt-border: color-mix(in srgb, var(--jt-text) 10%, transparent);
     --jt-border: var(--bx-color-border, color-mix(in srgb, var(--jt-text) 10%, transparent));
-    --jt-border-strong: rgba(0,0,0,0.18);
-    --jt-border-strong: color-mix(in srgb, var(--jt-text) 18%, transparent);
+    /* Control outline (inputs, ghost buttons, the editor, toggles): 3:1 against
+       the page and card in light and dark (WCAG 1.4.11). 18% measured 1.47:1
+       light and 1.65:1 on Reign dark; 50% gives about 3.5:1 light and 3.7:1
+       dark. --jt-border stays subtle for cards and dividers. */
+    --jt-border-strong: rgba(0,0,0,0.5);
+    --jt-border-strong: color-mix(in srgb, var(--jt-text) 50%, transparent);
     --jt-success-strong: #15803d;
     --jt-success-strong: color-mix(in srgb, var(--jt-success) 60%, black);
     --jt-warn-strong: #795302;
