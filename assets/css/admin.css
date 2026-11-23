@@ -3451,6 +3451,26 @@ tr.jetonomy-moderated td {
 /* The badge's own padding counts inside that 100%, or it pokes 2px past a narrow card. */
 .jt-companion-badge { box-sizing: border-box; }
 
+/* ── Role Capability Mapping: Select all boxes (inserted by admin-settings.js) ── */
+.jt-role-matrix .jt-matrix-all-label {
+	display: block;
+	margin-block-start: 4px;
+	font-weight: 400;
+	font-size: 12px;
+	white-space: nowrap;
+}
+.jt-role-matrix tr.jt-cap-staff th strong::after {
+	content: " *";
+	color: var(--jt-admin-warn-dark);
+}
+.jt-role-matrix-warning {
+	margin: 12px 0 0;
+	padding: 8px 12px;
+	border-inline-start: 4px solid var(--jt-admin-warn-dark);
+	background: var(--jt-admin-warn-light);
+	color: var(--jt-admin-text);
+}
+
 /* ── Responsive ── */
 @media (max-width: 782px) {
 	.jt-fam-header { flex-wrap: wrap; }

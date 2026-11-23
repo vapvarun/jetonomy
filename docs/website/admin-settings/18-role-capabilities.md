@@ -12,6 +12,8 @@ This grid decides which Jetonomy capabilities each WordPress role carries. It is
 
 Rows are capabilities, columns are the WordPress roles on your site. Tick a box to grant, untick to revoke. Changes apply on save, to every member holding that role.
 
+To change many boxes at once, use the **All** box under a role name (every capability for that role) or the **All roles** box under a capability (that capability for every role). A partly ticked column or row shows a dash. Boxes that cannot be ticked, such as everything except Read for a role without the WordPress read capability, are skipped. Staff capabilities (moderating, managing, editing or deleting other people's posts) carry a `*`. If an **All** box gives one of them to a role that is not staff in WordPress, a note under the grid names that role before you save. It is only a reminder; Save still works. Nothing changes until you click Save.
+
 > **Only administrators can change this grid.** Other roles see it read-only with a padlock, even if they can otherwise reach the Settings screen. Granting the ability to moderate is not something a moderator should be able to grant themselves.
 
 ## Administrators are not listed

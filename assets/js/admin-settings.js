@@ -202,3 +202,106 @@
 		});
 	});
 })();
+
+/**
+ * Role Capability Mapping: a "Select all" box under each role and beside each
+ * capability (since 2.1.0). Inserted here, so without JS nothing is dead. The
+ * save path is the form's own: these boxes carry no name and post nothing.
+ */
+(function () {
+	'use strict';
+
+	var table = document.querySelector('table.jt-role-matrix');
+	if (!table || !window.wp || !wp.i18n) {
+		return;
+	}
+	var __ = wp.i18n.__, sprintf = wp.i18n.sprintf;
+	var heads = Array.prototype.slice.call(table.querySelectorAll('thead th[data-role]'));
+	var warning = table.closest('.jt-settings-card').querySelector('.jt-role-matrix-warning');
+	var bulkUsed = false;
+
+	// Enabled cells only: a role without WordPress's read capability can hold Read alone.
+	function cells(filter) {
+		return Array.prototype.filter.call(table.querySelectorAll('tbody td input[type="checkbox"]'), function (cb) {
+			return !cb.disabled && filter(cb);
+		});
+	}
+	function roleOf(cb) {
+		var m = /role_caps\]\[([^\]]+)\]/.exec(cb.name);
+		return m ? m[1] : '';
+	}
+	function box(label) {
+		var input = document.createElement('input');
+		input.type = 'checkbox';
+		input.className = 'jt-matrix-all';
+		input.setAttribute('aria-label', label);
+		return input;
+	}
+	function sync(input, list) {
+		var on = list.filter(function (cb) { return cb.checked; }).length;
+		input.checked = list.length > 0 && on === list.length;
+		input.indeterminate = on > 0 && on < list.length;
+		input.disabled = list.length === 0;
+	}
+
+	var colBoxes = heads.map(function (th) {
+		var role = th.getAttribute('data-role');
+		/* translators: %s: role name, e.g. Subscriber. */
+		var input = box(sprintf(__('All capabilities for %s', 'jetonomy'), th.textContent.trim()));
+		var label = document.createElement('label');
+		label.className = 'jt-matrix-all-label';
+		label.appendChild(input);
+		label.appendChild(document.createTextNode(' ' + __('All', 'jetonomy')));
+		th.appendChild(label);
+		input.addEventListener('change', function () {
+			cells(function (cb) { return roleOf(cb) === role; }).forEach(function (cb) { cb.checked = input.checked; });
+			bulkUsed = true;
+			syncAll();
+		});
+		return { input: input, list: function () { return cells(function (cb) { return roleOf(cb) === role; }); } };
+	});
+
+	var rowBoxes = Array.prototype.map.call(table.querySelectorAll('tbody tr'), function (tr) {
+		var th = tr.querySelector('th');
+		/* translators: %s: capability label, e.g. Create topics. */
+		var input = box(sprintf(__('Give %s to every role', 'jetonomy'), th.textContent.trim()));
+		var label = document.createElement('label');
+		label.className = 'jt-matrix-all-label';
+		label.appendChild(input);
+		label.appendChild(document.createTextNode(' ' + __('All roles', 'jetonomy')));
+		th.appendChild(label);
+		var mine = function () {
+			return Array.prototype.filter.call(tr.querySelectorAll('td input[type="checkbox"]'), function (cb) { return !cb.disabled; });
+		};
+		input.addEventListener('change', function () {
+			mine().forEach(function (cb) { cb.checked = input.checked; });
+			bulkUsed = true;
+			syncAll();
+		});
+		return { input: input, list: mine };
+	});
+
+	function syncAll() {
+		colBoxes.concat(rowBoxes).forEach(function (b) { sync(b.input, b.list()); });
+		if (!warning || !bulkUsed) {
+			return;
+		}
+		var names = heads.filter(function (th) {
+			if (th.hasAttribute('data-staff')) {
+				return false;
+			}
+			var role = th.getAttribute('data-role');
+			return cells(function (cb) { return roleOf(cb) === role && cb.checked && cb.closest('tr').classList.contains('jt-cap-staff'); }).length > 0;
+		}).map(function (th) { return th.firstChild.textContent.trim(); });
+		warning.hidden = names.length === 0;
+		/* translators: %s: comma-separated role names. */
+		warning.textContent = names.length ? sprintf(__('%s will be able to moderate or manage the community. Untick the capabilities marked * if that is not what you want.', 'jetonomy'), names.join(', ')) : '';
+	}
+
+	table.addEventListener('change', function (e) {
+		if (!e.target.classList.contains('jt-matrix-all')) {
+			syncAll();
+		}
+	});
+	syncAll();
+})();

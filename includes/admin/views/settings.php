@@ -630,11 +630,17 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					$jt_effective  = \Jetonomy\Permissions\Capabilities::effective_map();
 					$jt_map_roles  = array();
 					$jt_no_read    = array();
+					// Staff capabilities: what Editor and Administrator add by default (moderate, manage, others' content).
+					$jt_staff_caps  = array_diff( \Jetonomy\Permissions\Capabilities::default_map()['administrator'] ?? array(), \Jetonomy\Permissions\Capabilities::default_map()['author'] ?? array() );
+					$jt_staff_roles = array();
 					foreach ( get_editable_roles() as $jt_role_slug => $jt_role_info ) {
 						if ( 'administrator' === $jt_role_slug ) {
 							continue;
 						}
 						$jt_map_roles[ $jt_role_slug ] = translate_user_role( $jt_role_info['name'] );
+						if ( ! empty( $jt_role_info['capabilities']['edit_others_posts'] ) ) {
+							$jt_staff_roles[ $jt_role_slug ] = true; // Editors and the like: staff capabilities are expected there.
+						}
 						// A role nobody mapped shows what the fallback gives it, so
 						// ticking one more box adds to that rather than replacing it.
 						if ( \Jetonomy\Permissions\Capabilities::is_unmapped_role( (string) $jt_role_slug ) ) {
@@ -689,18 +695,18 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php endif; ?>
 				<div class="jt-matrix-scroll" tabindex="0" role="region" aria-label="<?php esc_attr_e( 'Role Capability Mapping', 'jetonomy' ); ?>">
 					<?php // No .wp-list-table: core's <=782px list-table rules turned this form grid into flex rows of loose checkboxes. ?>
-				<table class="widefat jt-settings-matrix jt-settings-matrix--wide" style="margin:0;border:none;box-shadow:none;border-radius:0;">
+				<table class="widefat jt-settings-matrix jt-settings-matrix--wide jt-role-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Capability', 'jetonomy' ); ?></th>
 							<?php foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) : ?>
-								<th class="jt-col-s"><?php echo esc_html( $jt_role_label ); ?></th>
+								<th class="jt-col-s" data-role="<?php echo esc_attr( $jt_role_slug ); ?>"<?php echo isset( $jt_staff_roles[ $jt_role_slug ] ) ? ' data-staff="1"' : ''; ?>><?php echo esc_html( $jt_role_label ); ?></th>
 							<?php endforeach; ?>
 						</tr>
 					</thead>
 					<tbody>
 						<?php foreach ( $jt_cap_labels as $jt_cap => $jt_cap_label ) : ?>
-							<tr>
+							<tr<?php echo in_array( $jt_cap, $jt_staff_caps, true ) ? ' class="jt-cap-staff"' : ''; ?>>
 								<?php // The capability key is for developers: a tooltip on the label, not a second line under every row. ?>
 								<th scope="row"><strong title="<?php echo esc_attr( $jt_cap ); ?>"><?php echo esc_html( $jt_cap_label ); ?></strong></th>
 								<?php foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) : ?>
@@ -718,6 +724,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</tbody>
 				</table>
 				</div><!-- /.jt-matrix-scroll -->
+					<?php // Filled by admin-settings.js after a Select all / Clear all click; informs, never blocks Save. ?>
+				<p class="jt-role-matrix-warning" role="status" hidden></p>
 				<?php endif; ?>
 			</div>
 
