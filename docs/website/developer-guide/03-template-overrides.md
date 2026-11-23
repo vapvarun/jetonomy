@@ -83,7 +83,7 @@ You do not need to copy all of these. Only create the files you want to customiz
 | `views/leaderboard.php` | `leaderboard` | `/community/leaderboard/` |
 | `views/notifications.php` | `notifications` | `/community/notifications/` |
 | `views/moderation.php` | `moderation` | `/community/mod/` |
-| `views/search.php` | `search` | `/community/search/` |
+| `views/search.php` | `search` | `/community/search/` (since 2.1.0 its space results call `jetonomy_render_space_grid()`; a theme copy from before 2.1.0 keeps its own card markup, and the `.jt-space-card-inner` / `.jt-space-card-body` rules it relies on are kept so it does not lose its layout) |
 | `views/tag.php` | `tag` | `/community/tag/{slug}/` |
 | `views/invite.php` | `invite` | `/community/invite/{code}/` |
 

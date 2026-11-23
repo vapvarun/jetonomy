@@ -62,6 +62,21 @@ class SpaceGridRendererTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'jt-space-card-inner', $html );
 	}
 
+	public function test_each_follow_button_names_its_space_and_carries_both_names(): void {
+		$followed = $this->space( array( 'title' => 'Design' ) );
+		$other    = $this->space( array( 'title' => 'Announcements' ) );
+		$user     = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $user );
+		Subscription::subscribe( $user, 'space', (int) $followed->id );
+
+		$html = $this->render( array( $followed, $other ) );
+
+		$this->assertMatchesRegularExpression( '/aria-pressed="true"\s+aria-label="Following Design"/', $html );
+		$this->assertMatchesRegularExpression( '/aria-pressed="false"\s+aria-label="Follow Announcements"/', $html );
+		$this->assertStringContainsString( 'data-label-off="Follow Announcements"', $html );
+		$this->assertStringContainsString( 'data-label-on="Following Announcements"', $html );
+	}
+
 	public function test_no_follow_button_for_a_guest(): void {
 		wp_set_current_user( 0 );
 		$html = $this->render( array( $this->space() ) );
@@ -86,7 +101,7 @@ class SpaceGridRendererTest extends WP_UnitTestCase {
 		$html    = $this->render( array( $with, $without ) );
 		$this->assertSame( 1, substr_count( $html, 'class="jt-space-card-cover"' ) );
 		$this->assertSame( 1, substr_count( $html, 'jt-space-card--cover' ) );
-		$this->assertStringContainsString( 'src="https://example.com/cover.jpg" alt="" loading="lazy"', $html );
+		$this->assertStringContainsString( 'src="https://example.com/cover.jpg" alt="" width="600" height="144" loading="lazy"', $html );
 	}
 
 	public function test_search_options_highlight_trim_and_heading_level(): void {

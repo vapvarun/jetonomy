@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T05:49:46+00:00\n"
+"POT-Creation-Date: 2026-11-23T05:59:29+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: jetonomy\n"
@@ -7693,7 +7693,7 @@ msgid "Failed to save."
 msgstr ""
 
 #: includes/class-template-loader.php:1822
-#: includes/helpers.php:709
+#: includes/helpers.php:718
 #: templates/partials/space-header.php:134
 #: templates/views/single-post.php:485
 #: templates/views/single-post.php:593
@@ -7701,7 +7701,7 @@ msgid "Follow"
 msgstr ""
 
 #: includes/class-template-loader.php:1823
-#: includes/helpers.php:709
+#: includes/helpers.php:718
 #: templates/partials/space-header.php:134
 #: templates/views/single-post.php:485
 #: templates/views/single-post.php:593
@@ -7709,7 +7709,9 @@ msgid "Following"
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
+#. translators: %s: space title. Shown while the member follows the space.
 #: includes/class-template-loader.php:1825
+#: includes/helpers.php:691
 #, php-format
 msgid "Following %s"
 msgstr ""
@@ -8272,13 +8274,19 @@ msgid "No %1$s in this %2$s yet."
 msgstr ""
 
 #. translators: %s: space title.
-#: includes/helpers.php:707
+#: includes/helpers.php:689
+#, php-format
+msgid "Follow %s"
+msgstr ""
+
+#. translators: %s: space title.
+#: includes/helpers.php:716
 #, php-format
 msgid "Get notified about new activity in %s"
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/helpers.php:758
+#: includes/helpers.php:767
 #: includes/integrations/class-buddypress.php:883
 #: templates/partials/sidebar.php:109
 #, php-format
@@ -13853,7 +13861,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: number of new replies.
-#: assets/js/view.js:4878
+#: assets/js/view.js:4881
 #, js-format
 msgid "%s new reply. Click to refresh."
 msgid_plural "%s new replies. Click to refresh."

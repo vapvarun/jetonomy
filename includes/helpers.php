@@ -683,10 +683,16 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 			$jt_follow = $viewer && \Jetonomy\Permissions\Permission_Engine::can( $viewer, 'read', (int) $space->id );
 			$jt_on     = $jt_follow && \Jetonomy\Models\Subscription::is_subscribed( $viewer, 'space', (int) $space->id );
 			$jt_desc   = (string) ( $space->description ?? '' );
+			// Each button names its space: a page of identical "Follow" buttons is
+			// unusable from a screen reader's button list. The visible word stays in the name.
+			/* translators: %s: space title. */
+			$jt_label_off = sprintf( __( 'Follow %s', 'jetonomy' ), (string) $space->title );
+			/* translators: %s: space title. Shown while the member follows the space. */
+			$jt_label_on = sprintf( __( 'Following %s', 'jetonomy' ), (string) $space->title );
 			?>
 			<li class="jt-card jt-space-card<?php echo '' !== $jt_cover ? ' jt-space-card--cover' : ''; ?>">
 				<?php if ( '' !== $jt_cover ) : ?>
-					<div class="jt-space-card-cover" aria-hidden="true"><img src="<?php echo esc_url( $jt_cover ); ?>" alt="" loading="lazy" decoding="async"></div>
+					<div class="jt-space-card-cover" aria-hidden="true"><img src="<?php echo esc_url( $jt_cover ); ?>" alt="" width="600" height="144" loading="lazy" decoding="async"></div>
 				<?php endif; ?>
 				<div class="jt-space-card-head">
 					<?php
@@ -704,6 +710,9 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-following="<?php echo esc_attr( $jt_on ? '1' : '0' ); ?>"
 							aria-pressed="<?php echo $jt_on ? 'true' : 'false'; ?>"
+							aria-label="<?php echo esc_attr( $jt_on ? $jt_label_on : $jt_label_off ); ?>"
+							data-label-off="<?php echo esc_attr( $jt_label_off ); ?>"
+							data-label-on="<?php echo esc_attr( $jt_label_on ); ?>"
 							title="<?php /* translators: %s: space title. */ echo esc_attr( sprintf( __( 'Get notified about new activity in %s', 'jetonomy' ), $space->title ) ); ?>">
 							<?php jetonomy_echo_icon( 'bell', 14 ); ?>
 							<span class="jt-follow-label"><?php echo $jt_on ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?></span>

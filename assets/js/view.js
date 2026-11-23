@@ -2509,6 +2509,9 @@ const { state, actions } = store( 'jetonomy', {
             const labelEl = btnEl.querySelector( '.jt-follow-label' ) || btnEl;
             const applyFollowingUI = ( following ) => {
                 btnEl.setAttribute( 'aria-pressed', following ? 'true' : 'false' );
+                // A grid card names its space ("Follow Design"); the header button has no such data.
+                const named = following ? btnEl.dataset.labelOn : btnEl.dataset.labelOff;
+                if ( named ) btnEl.setAttribute( 'aria-label', named );
                 if ( following ) {
                     btnEl.dataset.following = '1';
                     labelEl.textContent = state.i18n?.following || 'Following';
@@ -5200,6 +5203,12 @@ if ( window.wp?.i18n?.setLocaleData && state.localeData ) {
  */
 ( function () {
     function fallback( img ) {
+        // A space card's cover that fails to load: drop the strip, not a broken glyph.
+        const cover = img.parentElement && img.parentElement.classList.contains( 'jt-space-card-cover' ) ? img.parentElement : null;
+        if ( cover ) {
+            cover.hidden = true;
+            return;
+        }
         if ( ! img.classList || ! img.classList.contains( 'jt-avatar' ) ) return;
         const next = img.nextElementSibling;
         if ( ! next || ! next.classList.contains( 'jt-avatar-fallback' ) ) return;
@@ -5212,7 +5221,7 @@ if ( window.wp?.i18n?.setLocaleData && state.localeData ) {
     }, true );
 
     function sweep() {
-        document.querySelectorAll( 'img.jt-avatar' ).forEach( function ( img ) {
+        document.querySelectorAll( 'img.jt-avatar, .jt-space-card-cover img' ).forEach( function ( img ) {
             if ( img.complete && img.naturalWidth === 0 ) fallback( img );
         } );
     }
