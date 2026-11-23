@@ -102,7 +102,9 @@ A second implementation of any of these is a defect, even if it works.
   Without mbstring `lower()` falls back to `strtolower()`, which is ASCII-only:
   a lower-case non-ASCII query ("élite") then does not match "Élite". That is
   the known fallback, not a bug.
-- `bin/check-never-fatal.php` (in `bin/local-ci.sh`, Free and Pro) enforces
+- `bin/check-never-fatal.php` (Free's `bin/local-ci.sh` runs it on Free; Pro's
+  `bin/local-ci.sh` runs Free's copy on Pro, `php ../jetonomy/bin/check-never-fatal.php "$PWD"`,
+  so Pro keeps no copy and needs Free checked out beside it) enforces
   this through the family gate `bin/lib/extension-guard-check.php` (an
   identical copy of MediaVerse's; change the canonical file and copy it into
   each plugin) after its self-test, and fails on any `setAccessible(` in
