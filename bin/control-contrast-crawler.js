@@ -41,6 +41,12 @@
 //    or { js: selector } for a DOM click with navigation blocked) so modals,
 //    menus and pickers are measured open.
 //  - opts.guest runs the set in a fresh logged-out browser context.
+//  - opts.hostCss is extra CSS for every run, to stand in for a host setup,
+//    e.g. ':root{--text-1:initial!important;--bg:initial!important;--brand:initial!important}'
+//    drops BuddyNext's tokens so stock Reign 8.1.1 feeds --jt-text #404855.
+//  - the result's `host` lists, per mode, the active theme stylesheet and the
+//    colours Jetonomy resolved (text, surfaces, accent, edges), so any number
+//    can be compared with another run.
 //  - opts.darkHostCss is extra CSS for dark runs, to stand in for a host
 //    theme's dark page on a theme with no dark mode of its own, e.g.
 //    'body{background:#121212;color:#e5e5e5}' on Twenty Twenty-Five.
@@ -341,6 +347,7 @@ const jtcCrawl = async (page0, opts = {}) => {
   const cards = [];
   const pages = [];
   let controls = 0;
+  const host = {};
   for (const width of widths) {
     await page.setViewportSize({ width, height: width > 800 ? 900 : 844 });
     for (const entry of urls) {
@@ -351,12 +358,30 @@ const jtcCrawl = async (page0, opts = {}) => {
         await page.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {});
         try { resp = await page.goto(BASE + url, { waitUntil: 'load', timeout: 30000 }); } catch (e) { pages.push({ path, mode, width, error: String(e).slice(0, 80) }); continue; }
         const finalUrl = page.url();
-        await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important;caret-color:transparent!important}' + (mode === 'dark' && opts.darkHostCss ? opts.darkHostCss : '') });
+        await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important;caret-color:transparent!important}' + (opts.hostCss || '') + (mode === 'dark' && opts.darkHostCss ? opts.darkHostCss : '') });
         await page.evaluate((m) => {
           document.querySelectorAll('details').forEach((d) => { d.open = true; });
           if (m === 'dark') { document.documentElement.setAttribute('data-bx-mode', 'dark'); document.documentElement.setAttribute('data-theme', 'dark'); }
         }, mode);
         await page.waitForTimeout(150);
+        if (!host[mode]) {
+          host[mode] = await page.evaluate(() => {
+            const el = document.querySelector('.jt-app') || document.body;
+            const probe = document.createElement('i');
+            el.appendChild(probe);
+            const tok = {};
+            for (const t of ['text', 'text-secondary', 'bg', 'bg-subtle', 'page-bg', 'accent', 'accent-ink', 'accent-fg', 'border-strong', 'focus-ring']) {
+              probe.style.color = '';
+              probe.style.color = 'var(--jt-' + t + ')';
+              tok[t] = getComputedStyle(probe).color;
+            }
+            probe.remove();
+            const sheet = [...document.querySelectorAll('link[rel=stylesheet]')].map((l) => l.href).find((h) => /\/themes\/[^/]+\//.test(h)) || '';
+            // A block theme may load no stylesheet of its own; core's body class names it.
+            const theme = (sheet.match(/\/themes\/([^/]+)\//) || [])[1] || ((document.body.className.match(/\bwp-theme-([\w-]+)/) || [])[1] || '');
+            return { theme, themeVer: (sheet.match(/[?&]ver=([^&]+)/) || [])[1] || '', bodyBg: getComputedStyle(document.body).backgroundColor, tokens: tok, ua: navigator.userAgent.replace(/^.*(Chrome\/[\d.]+).*$/, '$1') };
+          });
+        }
         const opened = typeof entry === 'string' ? '' : await runSteps(page, entry.open);
         const n = await page.evaluate(IN_PAGE, { scope: set, tag: true });
         controls += n;
@@ -425,7 +450,7 @@ const jtcCrawl = async (page0, opts = {}) => {
   const table = Object.values(groups).map((g) => ({ sel: g.sel, label: g.label, kind: g.kind, state: g.state, mode: g.mode, widths: [...g.widths].join('/'), pages: [...g.pages].slice(0, 3).join(' ') + (g.pages.size > 3 ? ` (+${g.pages.size - 3})` : ''), surf: g.surf, fill: g.fill, parts: g.parts, text: g.text ? `${g.text.r} (${g.text.fg} on ${g.text.bg}) "${g.text.text}"` : '', rule: g.rule }));
   const fo = {};
   for (const f of fillOnly) { const k = f.sel + '|' + f.state + '|' + f.mode; if (!fo[k] || f.best < fo[k].best) fo[k] = f; }
-  return { cards: [...new Set(cards)], fillOnly: Object.values(fo).map((f) => `${f.state}/${f.mode} ${f.sel} "${f.label}" fill ${f.best}`), set, modes, widths, states, pagesLoaded: pages.length, opened: pages.filter((p) => p.opened === 'open').length, missed, controlsMeasured: controls, violationCount: violations.length, uniqueViolations: table.length, table, disabled: opts.showDisabled ? disabledInfo : disabledInfo.length, pages: opts.showPages ? pages : undefined };
+  return { host, hostCss: opts.hostCss || '', darkHostCss: opts.darkHostCss || '', guest: !!opts.guest, cards: [...new Set(cards)], fillOnly: Object.values(fo).map((f) => `${f.state}/${f.mode} ${f.sel} "${f.label}" fill ${f.best}`), set, modes, widths, states, pagesLoaded: pages.length, opened: pages.filter((p) => p.opened === 'open').length, missed, controlsMeasured: controls, violationCount: violations.length, uniqueViolations: table.length, table, disabled: opts.showDisabled ? disabledInfo : disabledInfo.length, pages: opts.showPages ? pages : undefined };
 };
 
 // Kept on the browser context so later calls can run it without re-sending this file.
