@@ -4131,6 +4131,14 @@
       "where": "includes/helpers.php",
       "consumed_by": null,
       "since": "2.1.0"
+    },
+    {
+      "name": "jetonomy_loaded",
+      "type": "action",
+      "args": "Jetonomy\\Jetonomy $jetonomy (the main object, same as jetonomy())",
+      "where": "includes/class-jetonomy.php (end of Jetonomy::init(), plugins_loaded priority 10)",
+      "consumed_by": null,
+      "notes": "Since 2.1.0. Fires once per request after boot; not when Jetonomy is paused on PHP < 8.1. Detection stays defined( JETONOMY_VERSION ) / function_exists( jetonomy )."
     }
   ],
   "buddypress_integration": {

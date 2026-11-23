@@ -9,6 +9,22 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 > The 1.8.0 attachment filters (`jetonomy_attachment_card`, `jetonomy_attachments_class`, `jetonomy_rest_attachment_data`) are documented with usage examples on the dedicated **[Attachment Hooks](24-attachment-hooks.md)** page.
 
 
+## Boot
+
+| Hook | What it does | Args | Source |
+|---|---|---|---|
+| `jetonomy_loaded` | action - Fires once per request when Jetonomy has finished booting (plugins_loaded, priority 10). Not fired when Jetonomy is paused on PHP older than 8.1. Since 2.1.0. | `Jetonomy\Jetonomy $jetonomy` (same as `jetonomy()`) | `includes/class-jetonomy.php` |
+| `jetonomy_pro_loaded` | action - Fires once per request when Jetonomy Pro has booted and loaded its extensions (plugins_loaded, priority 20). Not fired when Pro does not boot (Jetonomy missing or older than Pro). Since 2.1.0. | `Jetonomy_Pro $jetonomy_pro` (same as `Jetonomy_Pro::instance()`) | `jetonomy-pro/jetonomy-pro.php` |
+
+Use these instead of guessing plugin load order. To check whether Jetonomy is active at all, keep testing `defined( 'JETONOMY_VERSION' )` or `function_exists( 'jetonomy' )`.
+
+```php
+add_action( 'jetonomy_loaded', function ( \Jetonomy\Jetonomy $jetonomy ) {
+	// Jetonomy's classes, router and settings are ready here.
+	add_filter( 'jetonomy_attachments_class', fn( $class ) => $class . ' acme-attachments' );
+} );
+```
+
 ## Posts
 
 | Hook | What it does | Args | Source |

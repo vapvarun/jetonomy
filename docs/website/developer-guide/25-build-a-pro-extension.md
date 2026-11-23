@@ -68,6 +68,16 @@ class My_Extension extends \Jetonomy_Pro\Extension {
 | Stored DB version ≠ Pro version | `activate()` on every registered extension (including yours) |
 | Extension enabled + each request | `boot()` |
 | Pro deactivated | `deactivate()` on enabled extensions |
+| Pro has booted (`plugins_loaded:20`, after the extensions load) | `jetonomy_pro_loaded` fires once with the Pro object |
+
+Register the extension filter when your plugin file loads, as above: `jetonomy_pro_loaded` fires after Pro has collected its extensions, so it is too late to register one there. Use it for work that needs Pro booted, such as reading another extension's state:
+
+```php
+add_action( 'jetonomy_pro_loaded', function ( Jetonomy_Pro $pro ) {
+	// Pro and its enabled extensions are booted. Not fired when Jetonomy is missing or too old.
+	acme_kudos_connect_to_pro( $pro );
+} );
+```
 
 Enable/disable state lives in the `jetonomy_pro_extensions` option and is toggled from **Jetonomy → Extensions**, where your extension appears alongside the bundled ones using your `meta()` values.
 

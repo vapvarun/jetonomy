@@ -292,6 +292,20 @@ final class Jetonomy {
 		$this->maybe_seed_frontend_space_creation_roles();
 
 		Admin_Bar::register();
+
+		if ( ! did_action( 'jetonomy_loaded' ) ) {
+			/**
+			 * Fires once per request when Jetonomy has finished booting: on plugins_loaded at priority 10, after its
+			 * classes, router and settings are loaded. Hook it from a companion plugin to extend Jetonomy without
+			 * caring about plugin load order. It does not fire when Jetonomy is paused (PHP older than 8.1). To check
+			 * whether Jetonomy is active, test defined( 'JETONOMY_VERSION' ) or function_exists( 'jetonomy' ).
+			 *
+			 * @since 2.1.0
+			 *
+			 * @param \Jetonomy\Jetonomy $jetonomy The main plugin object, the same as jetonomy().
+			 */
+			do_action( 'jetonomy_loaded', $this );
+		}
 	}
 
 	/**
