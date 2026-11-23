@@ -323,6 +323,19 @@ class Settings {
 					)
 				);
 			}
+			// Core prints a range with %d, so 0.1 to 0.9 read "between 0 and 0".
+			if ( 'number' === ( $schema[ $key ]['type'] ?? '' ) && is_numeric( $value ) && isset( $schema[ $key ]['minimum'], $schema[ $key ]['maximum'] )
+				&& ( (float) $value < $schema[ $key ]['minimum'] || (float) $value > $schema[ $key ]['maximum'] ) ) {
+				return new \WP_Error(
+					'rest_invalid_param',
+					/* translators: 1: setting key, 2: lowest allowed value, 3: highest allowed value. */
+					sprintf( __( '%1$s must be between %2$s and %3$s.', 'jetonomy' ), (string) $key, number_format_i18n( $schema[ $key ]['minimum'], 1 ), number_format_i18n( $schema[ $key ]['maximum'], 1 ) ),
+					array(
+						'status' => 400,
+						'key'    => (string) $key,
+					)
+				);
+			}
 			$valid = rest_validate_value_from_schema( $value, array_diff_key( $schema[ $key ], array_flip( array( 'section', 'secret' ) ) ), (string) $key );
 			if ( is_wp_error( $valid ) ) {
 				return new \WP_Error(

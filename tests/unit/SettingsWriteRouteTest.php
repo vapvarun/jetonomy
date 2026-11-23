@@ -305,4 +305,14 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 			$this->assertSame( $stored, get_option( 'jetonomy_settings' ), $key . ' changed something on a write of its own value.' );
 		}
 	}
+
+	public function test_a_decimal_range_error_names_the_real_limits(): void {
+		wp_set_current_user( $this->admin );
+		foreach ( array( 1.5, 0.05 ) as $value ) {
+			$result = Settings::write( array( 'captcha_score_threshold' => $value ), 'rest' );
+			$this->assertWPError( $result );
+			$this->assertStringContainsString( 'between 0.1 and 0.9', $result->get_error_message() );
+		}
+		$this->assertIsArray( Settings::write( array( 'captcha_score_threshold' => 0.7 ), 'rest' ) );
+	}
 }
