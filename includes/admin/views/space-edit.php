@@ -598,7 +598,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					'cell'      => static function ( $rule, string $key ) use ( $space ): void {
 						// Membership rules store a raw level id; the adapter
 						// registry turns it back into something a human reads.
-						$display_type  = ucfirst( str_replace( '_', ' ', $rule->rule_type ) );
+						$display_type  = \Jetonomy\access_rule_type_labels()[ $rule->rule_type ] ?? (string) $rule->rule_type;
 						$display_value = ! empty( $rule->rule_value ) ? $rule->rule_value : '—';
 						if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
 							$described     = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );

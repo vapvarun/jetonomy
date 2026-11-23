@@ -1778,6 +1778,38 @@ function space_role_labels(): array {
 }
 
 /**
+ * Translated name per roadmap idea status (Post::valid_idea_statuses()), for the roadmap columns and the activity log.
+ *
+ * @since 2.1.0
+ *
+ * @return array<string, string>
+ */
+function idea_status_labels(): array {
+	return array(
+		'planned'     => __( 'Planned', 'jetonomy' ),
+		'in_progress' => __( 'In Progress', 'jetonomy' ),
+		'shipped'     => __( 'Shipped', 'jetonomy' ),
+		'declined'    => __( 'Declined', 'jetonomy' ),
+	);
+}
+
+/**
+ * Translated name per access-rule type (role, capability, trust level, membership).
+ *
+ * @since 2.1.0
+ *
+ * @return array<string, string>
+ */
+function access_rule_type_labels(): array {
+	return array(
+		'role'        => __( 'Role', 'jetonomy' ),
+		'capability'  => __( 'Capability', 'jetonomy' ),
+		'trust_level' => __( 'Trust level', 'jetonomy' ),
+		'membership'  => __( 'Membership', 'jetonomy' ),
+	);
+}
+
+/**
  * Human labels for the post/reply `status` enum, keyed by stored value.
  *
  * One map for the Content and Replies screens, which each carried their own

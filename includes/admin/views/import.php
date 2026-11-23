@@ -167,10 +167,19 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 
 					<!-- Stats -->
 					<div class="jetonomy-import-stats">
-						<?php foreach ( $info['stats'] as $key => $val ) : ?>
+						<?php
+						// The source forum's own counts (bbPress, wpForo, Asgaros), named as that plugin names them.
+						$jt_stat_labels = array( // jt-terms-ok: source plugin's nouns, not this community's.
+							'forums'  => __( 'Forums', 'jetonomy' ),
+							'topics'  => __( 'Topics', 'jetonomy' ), // jt-terms-ok: source plugin's noun.
+							'posts'   => __( 'Posts', 'jetonomy' ), // jt-terms-ok: source plugin's noun.
+							'replies' => __( 'Replies', 'jetonomy' ), // jt-terms-ok: source plugin's noun.
+						);
+						foreach ( $info['stats'] as $key => $val ) :
+							?>
 							<div class="jetonomy-import-stat">
 								<span class="jetonomy-import-stat__value"><?php echo esc_html( number_format_i18n( $val ) ); ?></span>
-								<span class="jetonomy-import-stat__label"><?php echo esc_html( ucfirst( $key ) ); ?></span>
+								<span class="jetonomy-import-stat__label"><?php echo esc_html( $jt_stat_labels[ $key ] ?? $key ); ?></span>
 							</div>
 						<?php endforeach; ?>
 					</div>

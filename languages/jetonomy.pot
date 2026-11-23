@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T08:16:45+00:00\n"
+"POT-Creation-Date: 2026-11-23T09:26:53+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -109,6 +109,7 @@ msgstr ""
 
 #: includes/adapters/class-adapter-registry.php:120
 #: includes/adapters/class-member-press-adapter.php:112
+#: includes/functions.php:1808
 msgid "Membership"
 msgstr ""
 
@@ -970,26 +971,26 @@ msgid "%1$s on %2$s"
 msgstr ""
 
 #. translators: 1: previous value. 2: new value.
-#: includes/admin/class-activity-list-table.php:480
-#: includes/admin/class-activity-list-table.php:487
+#: includes/admin/class-activity-list-table.php:479
+#: includes/admin/class-activity-list-table.php:486
 #, php-format
 msgid "%1$s to %2$s"
 msgstr ""
 
 #. translators: %s: the member's role in the space (e.g. "Moderator").
-#: includes/admin/class-activity-list-table.php:493
+#: includes/admin/class-activity-list-table.php:492
 #, php-format
 msgid "Role: %s"
 msgstr ""
 
 #. translators: %s: space name.
-#: includes/admin/class-activity-list-table.php:503
+#: includes/admin/class-activity-list-table.php:502
 #, php-format
 msgid "In %s"
 msgstr ""
 
 #. translators: %s: a topic title, or the singular topic label.
-#: includes/admin/class-activity-list-table.php:509
+#: includes/admin/class-activity-list-table.php:508
 #: templates/emails/reply-to-post.php:62
 #, php-format
 msgid "On %s"
@@ -1142,7 +1143,7 @@ msgstr ""
 #: includes/admin/class-admin.php:213
 #: includes/admin/views/activity.php:41
 #: includes/admin/views/settings.php:389
-#: includes/class-settings.php:779
+#: includes/class-settings.php:784
 msgid "Activity Log"
 msgstr ""
 
@@ -2319,7 +2320,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:156
 #: includes/admin/views/moderation.php:267
 #: includes/admin/views/replies.php:273
-#: includes/functions.php:1796
+#: includes/functions.php:1828
 #: templates/views/moderation.php:334
 #: templates/views/space-moderation.php:222
 msgid "Trash"
@@ -2329,7 +2330,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:155
 #: includes/admin/views/moderation.php:266
 #: includes/admin/views/replies.php:286
-#: includes/functions.php:1795
+#: includes/functions.php:1827
 #: includes/models/class-flag.php:27
 #: templates/partials/moderation/approval-card.php:170
 #: templates/partials/moderation/flag-card.php:33
@@ -2736,68 +2737,84 @@ msgstr ""
 msgid "Import was interrupted at phase: %1$s (offset: %2$s). Started: %3$s"
 msgstr ""
 
-#: includes/admin/views/import.php:202
-msgid "Resume Import"
-msgstr ""
-
-#: includes/admin/views/import.php:206
-msgid "Start Over"
-msgstr ""
-
-#: includes/admin/views/import.php:211
-msgid "Re-import? Only content added since the last import is brought over; anything already imported is skipped."
-msgstr ""
-
-#: includes/admin/views/import.php:214
-msgid "Re-Import"
-msgstr ""
-
-#. translators: %s: source name
-#: includes/admin/views/import.php:221
-#, php-format
-msgid "Import from %s"
-msgstr ""
-
-#: includes/admin/views/import.php:230
+#: includes/admin/views/import.php:173
+#: includes/admin/views/import.php:239
 #: includes/import/class-wpforo-importer.php:79
 #: includes/import/class-wpforo-importer.php:434
 msgid "Forums"
 msgstr ""
 
-#: includes/admin/views/import.php:241
+#: includes/admin/views/import.php:174
+#: includes/functions.php:319
+msgid "Topics"
+msgstr ""
+
+#: includes/admin/views/import.php:175
+#: templates/partials/space-tabs.php:34
+msgid "Posts"
+msgstr ""
+
+#: includes/admin/views/import.php:176
+#: includes/functions.php:320
+msgid "Replies"
+msgstr ""
+
+#: includes/admin/views/import.php:211
+msgid "Resume Import"
+msgstr ""
+
+#: includes/admin/views/import.php:215
+msgid "Start Over"
+msgstr ""
+
+#: includes/admin/views/import.php:220
+msgid "Re-import? Only content added since the last import is brought over; anything already imported is skipped."
+msgstr ""
+
+#: includes/admin/views/import.php:223
+msgid "Re-Import"
+msgstr ""
+
+#. translators: %s: source name
+#: includes/admin/views/import.php:230
+#, php-format
+msgid "Import from %s"
+msgstr ""
+
+#: includes/admin/views/import.php:250
 msgid "Profiles"
 msgstr ""
 
-#: includes/admin/views/import.php:243
+#: includes/admin/views/import.php:252
 msgid "Finalize"
 msgstr ""
 
-#: includes/admin/views/import.php:249
+#: includes/admin/views/import.php:258
 msgid "Starting..."
 msgstr ""
 
-#: includes/admin/views/import.php:278
+#: includes/admin/views/import.php:287
 msgid "Past imports"
 msgstr ""
 
-#: includes/admin/views/import.php:293
+#: includes/admin/views/import.php:302
 msgid "an unknown date"
 msgstr ""
 
 #. translators: %s: date and time
-#: includes/admin/views/import.php:296
+#: includes/admin/views/import.php:305
 #, php-format
 msgid "Nothing new was imported on %s"
 msgstr ""
 
 #. translators: 1: number of records imported, 2: date and time
-#: includes/admin/views/import.php:300
+#: includes/admin/views/import.php:309
 #, php-format
 msgid "%1$s records imported on %2$s"
 msgstr ""
 
 #. translators: %s: number of items that could not be imported
-#: includes/admin/views/import.php:319
+#: includes/admin/views/import.php:328
 #, php-format
 msgid "%s item could not be imported"
 msgid_plural "%s items could not be imported"
@@ -2805,25 +2822,25 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of examples shown, 2: total number skipped
-#: includes/admin/views/import.php:341
+#: includes/admin/views/import.php:350
 #, php-format
 msgid "Showing the first %1$s of %2$s."
 msgstr ""
 
-#: includes/admin/views/import.php:350
+#: includes/admin/views/import.php:359
 msgid "This import ran before per-item reasons were recorded, so only the count is known."
 msgstr ""
 
-#: includes/admin/views/import.php:355
+#: includes/admin/views/import.php:364
 msgid "Everything imported cleanly. Nothing was skipped."
 msgstr ""
 
-#: includes/admin/views/import.php:365
+#: includes/admin/views/import.php:374
 msgid "Private Messaging & Email Digests"
 msgstr ""
 
 #. translators: %s: member label, plural, lowercase (e.g. "members").
-#: includes/admin/views/import.php:367
+#: includes/admin/views/import.php:376
 #, php-format
 msgid "Keep %s engaged after migration with private messaging, daily/weekly email digests, and web push notifications."
 msgstr ""
@@ -3156,7 +3173,7 @@ msgstr ""
 #: includes/admin/views/settings.php:164
 #: includes/class-blocks.php:612
 #: includes/class-nav-menus.php:96
-#: includes/class-settings.php:762
+#: includes/class-settings.php:767
 #: includes/functions.php:29
 #: includes/functions.php:39
 #: includes/integrations/class-fluent-community.php:1035
@@ -3168,7 +3185,7 @@ msgid "Displayed as the main heading on the community home page."
 msgstr ""
 
 #: includes/admin/views/settings.php:169
-#: includes/class-settings.php:764
+#: includes/class-settings.php:769
 msgid "Terms of Service URL"
 msgstr ""
 
@@ -3179,7 +3196,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty if you hav
 msgstr ""
 
 #: includes/admin/views/settings.php:176
-#: includes/class-settings.php:765
+#: includes/class-settings.php:770
 msgid "Privacy Policy URL"
 msgstr ""
 
@@ -3190,7 +3207,7 @@ msgid "Shown to %s before they sign up in the mobile app. Leave empty to use you
 msgstr ""
 
 #: includes/admin/views/settings.php:183
-#: includes/class-settings.php:766
+#: includes/class-settings.php:771
 msgid "Support URL"
 msgstr ""
 
@@ -3433,8 +3450,8 @@ msgstr ""
 #: includes/admin/views/settings.php:376
 #: includes/admin/views/settings.php:380
 #: includes/admin/views/space-edit.php:767
-#: includes/class-settings.php:776
-#: includes/class-settings.php:780
+#: includes/class-settings.php:781
+#: includes/class-settings.php:785
 #, php-format
 msgid "%s Per Page"
 msgstr ""
@@ -3696,7 +3713,7 @@ msgid "Level %d"
 msgstr ""
 
 #: includes/admin/views/settings.php:602
-#: includes/class-settings.php:882
+#: includes/class-settings.php:887
 msgid "Rate Limits for New Users (Level 0)"
 msgstr ""
 
@@ -3780,6 +3797,7 @@ msgstr ""
 
 #: includes/admin/views/settings.php:729
 #: includes/admin/views/space-edit.php:509
+#: includes/functions.php:1806
 msgid "Capability"
 msgstr ""
 
@@ -3881,7 +3899,7 @@ msgid "From Email"
 msgstr ""
 
 #: includes/admin/views/settings.php:855
-#: includes/class-settings.php:932
+#: includes/class-settings.php:937
 msgid "Email Logo"
 msgstr ""
 
@@ -3890,7 +3908,7 @@ msgid "URL to your logo image for notification emails. Recommended: 200x40px, PN
 msgstr ""
 
 #: includes/admin/views/settings.php:862
-#: includes/class-settings.php:938
+#: includes/class-settings.php:943
 msgid "Email Verification Reminder"
 msgstr ""
 
@@ -4081,7 +4099,7 @@ msgid "Your community logo. Shown in the mobile app (login + header) and anywher
 msgstr ""
 
 #: includes/admin/views/settings.php:1105
-#: includes/class-settings.php:958
+#: includes/class-settings.php:963
 msgid "Logo URL"
 msgstr ""
 
@@ -4161,7 +4179,7 @@ msgid "Full Width"
 msgstr ""
 
 #: includes/admin/views/settings.php:1187
-#: includes/class-settings.php:968
+#: includes/class-settings.php:973
 msgid "Custom width"
 msgstr ""
 
@@ -4367,7 +4385,7 @@ msgid "Site handle emitted as twitter:site on every public route. Leave blank to
 msgstr ""
 
 #: includes/admin/views/settings.php:1384
-#: includes/class-settings.php:1013
+#: includes/class-settings.php:1018
 msgid "Default share image"
 msgstr ""
 
@@ -4948,7 +4966,7 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:135
 #: includes/admin/views/spaces.php:87
-#: includes/functions.php:1848
+#: includes/functions.php:1880
 #: jetonomy.php:647
 #: templates/partials/feed-card.php:130
 msgid "Open"
@@ -4956,13 +4974,13 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:136
 #: includes/admin/views/spaces.php:88
-#: includes/functions.php:1850
+#: includes/functions.php:1882
 msgid "Requires Approval"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:137
 #: includes/admin/views/spaces.php:89
-#: includes/functions.php:1852
+#: includes/functions.php:1884
 #: templates/partials/space-header.php:59
 msgid "Invite Only"
 msgstr ""
@@ -4976,14 +4994,14 @@ msgstr ""
 #: includes/admin/views/space-edit.php:163
 #: includes/admin/views/spaces.php:97
 #: includes/admin/views/spaces.php:186
-#: includes/functions.php:1825
+#: includes/functions.php:1857
 msgid "Active"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:164
 #: includes/admin/views/spaces.php:98
 #: includes/admin/views/spaces.php:187
-#: includes/functions.php:1827
+#: includes/functions.php:1859
 #: jetonomy.php:755
 msgid "Archived"
 msgstr ""
@@ -4991,7 +5009,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:165
 #: includes/admin/views/spaces.php:99
 #: includes/admin/views/spaces.php:188
-#: includes/functions.php:1829
+#: includes/functions.php:1861
 #: jetonomy.php:755
 msgid "Locked"
 msgstr ""
@@ -5080,6 +5098,7 @@ msgid "Name, username or email"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:291
+#: includes/functions.php:1805
 msgid "Role"
 msgstr ""
 
@@ -6922,15 +6941,15 @@ msgstr ""
 msgid "Confirm your email to finish signing up. Check your inbox for the link, or use \"Resend confirmation\" on the sign-in form."
 msgstr ""
 
-#: includes/class-jetonomy.php:768
+#: includes/class-jetonomy.php:782
 msgid "This unsubscribe link is invalid or has expired."
 msgstr ""
 
-#: includes/class-jetonomy.php:784
+#: includes/class-jetonomy.php:798
 msgid "You have been unsubscribed from these email notifications. You can re-enable them in your notification preferences."
 msgstr ""
 
-#: includes/class-jetonomy.php:785
+#: includes/class-jetonomy.php:799
 msgid "Unsubscribed"
 msgstr ""
 
@@ -7144,81 +7163,81 @@ msgstr ""
 msgid "Jetonomy: %1$s and %2$s anonymized. Personal data deleted."
 msgstr ""
 
-#: includes/class-settings.php:309
+#: includes/class-settings.php:314
 msgid "Send at least one setting."
 msgstr ""
 
 #. translators: %d: the most settings one request may change.
-#: includes/class-settings.php:313
+#: includes/class-settings.php:318
 #, php-format
 msgid "Change at most %d settings in one request."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:323
+#: includes/class-settings.php:328
 #, php-format
 msgid "%s is not a setting that can be changed here."
 msgstr ""
 
 #. translators: 1: setting key, 2: the mask.
-#: includes/class-settings.php:340
+#: includes/class-settings.php:345
 #, php-format
 msgid "%1$s: send the real secret, or exactly %2$s to keep the stored one."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:355
+#: includes/class-settings.php:360
 #, php-format
 msgid "%s lists the same id more than once."
 msgstr ""
 
 #. translators: 1: setting key, 2: lowest allowed value, 3: highest allowed value.
-#: includes/class-settings.php:369
+#: includes/class-settings.php:374
 #, php-format
 msgid "%1$s must be between %2$s and %3$s."
 msgstr ""
 
-#: includes/class-settings.php:404
+#: includes/class-settings.php:409
 msgid "Another settings change is being saved. Try again in a moment."
 msgstr ""
 
 #. translators: %s: setting key.
-#: includes/class-settings.php:472
+#: includes/class-settings.php:477
 #, php-format
 msgid "%s was not changed: the value was refused, or changing it needs an administrator."
 msgstr ""
 
 #. translators: %s: settings field label.
-#: includes/class-settings.php:687
+#: includes/class-settings.php:692
 #, php-format
 msgid "%s was not changed: it must be a whole number. The previous value was kept."
 msgstr ""
 
 #. translators: 1: settings field label, 2: lowest allowed, 3: highest allowed, 4: value saved.
-#: includes/class-settings.php:697
+#: includes/class-settings.php:702
 #, php-format
 msgid "%1$s must be between %2$d and %3$d, so it was saved as %4$d."
 msgstr ""
 
 #. translators: %s: settings field label.
-#: includes/class-settings.php:721
+#: includes/class-settings.php:726
 #, php-format
 msgid "%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept."
 msgstr ""
 
 #. translators: %d: trust level number.
-#: includes/class-settings.php:847
+#: includes/class-settings.php:852
 #, php-format
 msgid "Trust level %d requirements"
 msgstr ""
 
 #. translators: %s: reputation action key, e.g. post_upvoted.
-#: includes/class-settings.php:908
+#: includes/class-settings.php:913
 #, php-format
 msgid "Reputation points for %s"
 msgstr ""
 
-#: includes/class-settings.php:989
+#: includes/class-settings.php:994
 msgid "Score Threshold was not changed: it must be a number between 0.1 and 0.9. The previous value was kept."
 msgstr ""
 
@@ -7566,7 +7585,7 @@ msgstr ""
 #: includes/class-template-loader.php:1082
 #: includes/class-template-loader.php:1245
 #: templates/partials/space-tabs.php:49
-#: templates/views/space-roadmap.php:118
+#: templates/views/space-roadmap.php:107
 msgid "Roadmap"
 msgstr ""
 
@@ -8212,14 +8231,6 @@ msgstr ""
 msgid "Spaces"
 msgstr ""
 
-#: includes/functions.php:319
-msgid "Topics"
-msgstr ""
-
-#: includes/functions.php:320
-msgid "Replies"
-msgstr ""
-
 #: includes/functions.php:321
 msgid "Members"
 msgstr ""
@@ -8287,17 +8298,41 @@ msgctxt "space visibility option"
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: includes/functions.php:1793
+#: includes/functions.php:1789
+#: jetonomy.php:626
+msgid "Planned"
+msgstr ""
+
+#: includes/functions.php:1790
+#: jetonomy.php:627
+msgid "In Progress"
+msgstr ""
+
+#: includes/functions.php:1791
+#: jetonomy.php:628
+msgid "Shipped"
+msgstr ""
+
+#: includes/functions.php:1792
+#: jetonomy.php:629
+msgid "Declined"
+msgstr ""
+
+#: includes/functions.php:1807
+msgid "Trust level"
+msgstr ""
+
+#: includes/functions.php:1825
 msgid "Published"
 msgstr ""
 
-#: includes/functions.php:1794
+#: includes/functions.php:1826
 #: templates/views/moderation.php:452
 #: templates/views/space-moderation.php:257
 msgid "Pending"
 msgstr ""
 
-#: includes/functions.php:1799
+#: includes/functions.php:1831
 #: templates/views/notifications.php:113
 #: templates/views/search.php:297
 #: assets/js/admin-settings.js:256
@@ -8305,7 +8340,7 @@ msgid "All"
 msgstr ""
 
 #. translators: %s: field label, e.g. "Cover image".
-#: includes/functions.php:1938
+#: includes/functions.php:1970
 #, php-format
 msgid "%s must be a full address starting with http:// or https://."
 msgstr ""
@@ -10508,26 +10543,6 @@ msgstr ""
 msgid "Score %1$d. %2$s"
 msgstr ""
 
-#: jetonomy.php:626
-#: templates/views/space-roadmap.php:81
-msgid "Planned"
-msgstr ""
-
-#: jetonomy.php:627
-#: templates/views/space-roadmap.php:85
-msgid "In Progress"
-msgstr ""
-
-#: jetonomy.php:628
-#: templates/views/space-roadmap.php:89
-msgid "Shipped"
-msgstr ""
-
-#: jetonomy.php:629
-#: templates/views/space-roadmap.php:93
-msgid "Declined"
-msgstr ""
-
 #: jetonomy.php:671
 msgctxt "space type label"
 msgid "Q&A"
@@ -11354,10 +11369,6 @@ msgstr ""
 #: templates/partials/space-header.php:255
 #, php-format
 msgid "This %1$s is locked. New %2$s and %3$s are not allowed."
-msgstr ""
-
-#: templates/partials/space-tabs.php:34
-msgid "Posts"
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
@@ -12738,7 +12749,7 @@ msgstr[1] ""
 msgid "You need to join this %s to see its roadmap."
 msgstr ""
 
-#: templates/views/space-roadmap.php:150
+#: templates/views/space-roadmap.php:139
 msgid "No ideas here yet."
 msgstr ""
 

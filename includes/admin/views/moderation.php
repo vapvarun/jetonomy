@@ -500,7 +500,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 										'ip_ban'     => __( 'IP address ban', 'jetonomy' ),
 										/* translators: %s: singular space label. */
 										'space_ban'  => sprintf( __( '%s ban', 'jetonomy' ), \Jetonomy\space_label() ),
-										default      => ucfirst( str_replace( '_', ' ', (string) $ban->type ) ),
+										default      => (string) $ban->type, // An add-on's type: shown as stored.
 									};
 									echo '<span class="jetonomy-badge jetonomy-badge--ban">' . esc_html( $jt_ban_label ) . '</span>';
 									break;
