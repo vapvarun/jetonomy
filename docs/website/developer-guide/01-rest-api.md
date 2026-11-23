@@ -449,9 +449,11 @@ The response `meta` carries `total`, `has_more`, `count`, `offset`, and `space_i
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `period` | string | `week` | `week`, `month`, `all-time` |
-| `per_page` | int | 10 | Max 50 |
-| `space_id` | int | - | Restrict to a space |
+| `period` | string | `all` | `all`, `month` or `week` (`month` and `week` count members active in the last 30 or 7 days) |
+| `limit` | int | 20 | 1 to 100 |
+| `offset` | int | 0 | Rows to skip, for paging |
+
+Only members with reputation above 0 are ranked, highest first. Members with the same reputation share one rank, and among them the newest account is listed first (`reputation DESC, user_id DESC`). That order lets the database read the existing reputation index instead of sorting every profile, so the first pages stay fast on large communities (about 0.25 ms at 20,000 profiles, against 14 ms before 2.1.0). The win is for the first pages: a deep page still costs more, because the database works through every row before the offset (an offset of 4,990 measured about 8 ms). Page through the board with `offset` as usual; there is no cursor parameter.
 
 ---
 
