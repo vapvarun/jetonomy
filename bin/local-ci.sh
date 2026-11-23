@@ -294,7 +294,7 @@ fi
 if [ "$DO_UNIT" -eq 1 ]; then
     step "Queue proofs (no skips)"
     Q_FILTER='QueueTest|PublishRetryCapTest|DeactivationKeepsPromisedJobsTest|DueJobsRearmTest'
-    [ -n "$PRO" ] && Q_FILTER="$Q_FILTER|ProQueueShimTest|UpgradeJobsTest|WebPushHardeningTest"
+    [ -n "$PRO" ] && Q_FILTER="$Q_FILTER|ProQueueShimTest|UpgradeJobsTest|WebPushHardeningTest|WebPushNoDuplicatesTest"
     Q_OUT=$(npx wp-env run tests-cli --env-cwd=wp-content/plugins/jetonomy vendor/bin/phpunit --filter "$Q_FILTER" 2>&1)
     Q_SUM=$(echo "$Q_OUT" | grep -E "^OK|^Tests: " | tail -1)
     if echo "$Q_OUT" | grep -qE "^OK \([0-9]+ tests"; then
