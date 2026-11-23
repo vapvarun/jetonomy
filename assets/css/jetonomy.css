@@ -308,7 +308,7 @@
      stage colour, so the current choice is obvious at a glance. */
   .jt-app button.jt-idea-status-btn { color: var(--jt-text-secondary) !important; background-color: var(--jt-bg) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-idea-status-btn:hover,
-  .jt-app button.jt-idea-status-btn:focus-visible { background-color: color-mix(in srgb, var(--jt-ip) 12%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: color-mix(in srgb, var(--jt-ip) 40%, transparent) !important; }
+  .jt-app button.jt-idea-status-btn:focus-visible { background-color: color-mix(in srgb, var(--jt-ip) 12%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: var(--jt-ip-fg) !important; }
   .jt-app button.jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip) !important; }
   .jt-app button.jt-idea-status-btn.is-active { background-color: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: var(--jt-ip-fg) !important; box-shadow: inset 0 0 0 1px var(--jt-ip) !important; }
   .jt-app button.jt-bookmark-btn.bookmarked,
@@ -1484,7 +1484,7 @@
      Hover previews the semantic color as a tint so the affordance is
      still legible. */
   .jt-idea-status-btn { font-family: inherit; cursor: pointer; background: var(--jt-bg); color: var(--jt-text-secondary); border: 1px solid var(--jt-border-strong); line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
-  .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 12%, transparent); color: var(--jt-ip-fg); border-color: color-mix(in srgb, var(--jt-ip) 30%, transparent); outline: none; }
+  .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 12%, transparent); color: var(--jt-ip-fg); border-color: var(--jt-ip-fg); outline: none; }
   .jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip); }
   .jt-idea-status-btn.is-active { background: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)); color: var(--jt-ip-fg); border-color: var(--jt-ip-fg); box-shadow: inset 0 0 0 1px var(--jt-ip); }
   .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
