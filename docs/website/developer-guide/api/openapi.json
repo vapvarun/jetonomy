@@ -1859,7 +1859,7 @@
         ],
         "summary": "List badges",
         "operationId": "listBadges",
-        "description": "List active badges (paginated). Public read.",
+        "description": "List active badges, paginated by page and per_page (not limit/offset). Public read. Exception to PaginationMeta: meta.cursor_next is the next PAGE number (page + 1, or null on the last page), and meta also carries page and per_page. Send cursor_next back as page.",
         "responses": {
           "200": {
             "description": "Success",
@@ -1883,19 +1883,24 @@
         },
         "parameters": [
           {
-            "name": "limit",
+            "name": "page",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
             }
           },
           {
-            "name": "offset",
+            "name": "per_page",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
             }
           }
         ]

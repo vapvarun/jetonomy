@@ -750,6 +750,8 @@ const data = await res.json();
 | POST | `/badges/{id}/award` | Admin (`manage_options`) | Manually award the badge to a user (`user_id` in body) |
 | DELETE | `/badges/{id}/award` | Admin (`manage_options`) | Revoke the badge from a user (`user_id` in body) |
 
+`GET /badges` pages with `page` (default 1) and `per_page` (default 25, max 100), not `limit` and `offset`. It is the one route where `meta.cursor_next` is a page number: it holds `page + 1` (or `null` on the last page), so send it back as `page`. Its `meta` also carries `page` and `per_page`. Every other paginated route returns the next offset in `cursor_next`.
+
 ### Custom Fields (`custom-fields` extension)
 
 | Method | Route | Auth | Description |

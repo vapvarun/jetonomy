@@ -62,6 +62,7 @@ Two shapes appear across the API, both bounded (no unbounded `SELECT *`):
 
 - **Offset-based** (`limit` + `offset`, most list endpoints): response body is `{ "data": [...], "meta": { "count", "has_more", "cursor_next", "total", "offset" } }`. `X-WP-Total` and `X-WP-TotalPages` headers are set on most collection routes.
 - **`after` / `before`** (on posts/replies/messages): declared by the base `get_collection_params()` schema alongside `offset`. These are a stable pagination TOKEN, not keyset pagination: `after` carries an offset and `get_pagination()` folds it into `offset`, so it costs the same as `offset` and has no deep-page advantage. Use whichever your client finds convenient. Do not read `cursor_next` as a promise of keyset pagination — it is the next offset.
+- **Exception, Pro `GET /badges`:** pages with `page` + `per_page` (default 25, max 100) and returns `meta.cursor_next` as the next PAGE number (`page + 1`, or `null` on the last page), with `page` and `per_page` in `meta`. Send it back as `page`, not `offset`.
 
 Default `limit` is usually 20 (search defaults 20, capped 50; leaderboards default 20, capped 100; media default 24). Always check the specific endpoint's `args` schema in `openapi.json` for the real min/max/default.
 
@@ -398,7 +399,7 @@ Field types: `text, textarea, number, email, url, select, checkbox, radio, date`
 ### Custom Badges
 
 ```
-GET/POST          /badges                  List active (paginated) / create (manage_options)
+GET/POST          /badges                  List active (page + per_page; cursor_next is the next page) / create (manage_options)
 GET/PATCH/DELETE  /badges/{id}              Get (with earned_count) / update / deactivate
 GET               /users/{id}/badges        A user's earned badges
 POST/DELETE       /badges/{id}/award        Manual award / revoke ({user_id})
