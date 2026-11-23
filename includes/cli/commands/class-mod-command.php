@@ -164,7 +164,7 @@ final class Mod_Command extends Base_Command {
 		$target   = $this->int_arg( $assoc, 'target', 0, 0 );
 		$issuer   = $this->int_arg( $assoc, 'issuer', 0, 0 );
 		$type     = (string) ( $assoc['type'] ?? 'global_ban' );
-		$space_id = $this->int_arg( $assoc, 'space', null, 0 );
+		$space_id = $this->int_arg( $assoc, 'space', null, 1 ); // Only a space ban takes --space (ban_flag_error()).
 		$reason   = isset( $assoc['reason'] ) ? (string) $assoc['reason'] : null;
 		// An IP ban stores its address where the reason goes (is_ip_banned() matches it).
 		if ( 'ip_ban' === $type ) {

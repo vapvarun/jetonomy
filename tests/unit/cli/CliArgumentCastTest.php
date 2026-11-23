@@ -68,6 +68,8 @@ class CliArgumentCastTest extends WP_UnitTestCase {
 		$this->assertGreaterThan( 50, $calls, 'the scan found the commands' );
 		$this->assertSame( array(), $missing, 'Pass int_arg( $from, $key, $default, $min ).' );
 		$this->assertMatchesRegularExpression( "/int_arg\\( \\\$assoc, 'parent', 0, 0 \\)/", (string) file_get_contents( dirname( __DIR__, 3 ) . '/includes/cli/commands/class-reply-command.php' ) );
+		// A space ban needs a real space: --space=0 is refused by name, not by the REST layer.
+		$this->assertMatchesRegularExpression( "/int_arg\\( \\\$assoc, 'space', null, 1 \\)/", (string) file_get_contents( dirname( __DIR__, 3 ) . '/includes/cli/commands/class-mod-command.php' ) );
 	}
 }
 
