@@ -154,4 +154,27 @@ class SettingsSanitizeTest extends WP_UnitTestCase {
 		$this->assertSame( 50, \Jetonomy\Settings::sanitize( $this->general_tab( array( 'posts_per_page' => '50' ) ) )['posts_per_page'] );
 		$this->assertSame( 100, \Jetonomy\Settings::sanitize( $this->general_tab( array( 'posts_per_page' => '500' ) ) )['posts_per_page'] );
 	}
+
+	/**
+	 * Reputation points outside -10000..10000 are clamped AND named, like every other number field.
+	 */
+	public function test_out_of_range_reputation_points_say_what_was_saved(): void {
+		$notices = new \ReflectionProperty( \Jetonomy\Settings::class, 'notices' );
+		$notices->setValue( null, array() );
+		$clean = \Jetonomy\Settings::sanitize(
+			$this->general_tab(
+				array(
+					'reputation_points' => array(
+						'post_upvoted'  => '20000',
+						'post_removed'  => '-20000',
+					),
+				)
+			)
+		);
+		$this->assertSame( 10000, $clean['reputation_points']['post_upvoted'] );
+		$this->assertSame( -10000, $clean['reputation_points']['post_removed'] );
+		$messages = implode( "\n", array_column( $notices->getValue(), 'message' ) );
+		$this->assertStringContainsString( 'post_upvoted must be between -10000 and 10000, so it was saved as 10000.', $messages );
+		$this->assertStringContainsString( 'post_removed must be between -10000 and 10000, so it was saved as -10000.', $messages );
+	}
 }

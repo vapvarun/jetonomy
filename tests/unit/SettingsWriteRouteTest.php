@@ -397,8 +397,11 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 	public function test_a_fresh_site_reads_the_defaults_it_uses_and_can_post_them_back(): void {
 		delete_option( 'jetonomy_settings' );
 		wp_set_current_user( $this->admin );
-		$read = rest_do_request( new WP_REST_Request( 'GET', '/jetonomy/v1/admin/settings' ) )->get_data()['settings'];
+		$json = (string) wp_json_encode( rest_do_request( new WP_REST_Request( 'GET', '/jetonomy/v1/admin/settings' ) )->get_data() );
+		$read = json_decode( $json, true )['settings'];
 		$this->assertSame( array(), array_keys( array_filter( $read, 'is_null' ) ), 'no key reads as null' );
+		$this->assertSame( \Jetonomy\Trust\Reputation::action_points_defaults(), $read['reputation_points'], 'the points each action gives' );
+		$this->assert_maps_are_objects( $json );
 		$this->assertSame( \Jetonomy\Permissions\Rate_Limiter::defaults(), $read['rate_limits'] );
 		$this->assertSame( \Jetonomy\Trust\Trust_Levels::defaults()[2]['posts'], $read['trust_thresholds'][2]['posts'] );
 		$this->assertFalse( $read['moderators_can_ban'] );
@@ -406,6 +409,27 @@ class SettingsWriteRouteTest extends WP_UnitTestCase {
 
 		$back = array_intersect_key( $read, array_flip( array( 'trust_thresholds', 'trust_level_names', 'moderators_can_ban', 'member_name_display', 'rate_limits', 'reputation_points' ) ) );
 		$this->assertSame( 200, $this->post( $back, $this->admin )->get_status(), 'the read body posts back' );
+
+		// Saved with one override: still the full map, still objects.
+		$this->post( array( 'reputation_points' => array( 'post_upvoted' => 7 ) ), $this->admin );
+		$json = (string) wp_json_encode( rest_do_request( new WP_REST_Request( 'GET', '/jetonomy/v1/admin/settings' ) )->get_data() );
+		$this->assertSame( 7, json_decode( $json, true )['settings']['reputation_points']['post_upvoted'] );
+		$this->assertSame( count( \Jetonomy\Trust\Reputation::action_points_defaults() ), count( json_decode( $json, true )['settings']['reputation_points'] ) );
+		$this->assert_maps_are_objects( $json );
+	}
+
+	/**
+	 * Every object-typed setting serialises as a JSON object, never [].
+	 *
+	 * @param string $json GET /admin/settings body.
+	 */
+	private function assert_maps_are_objects( string $json ): void {
+		$settings = json_decode( $json, false )->settings;
+		foreach ( \Jetonomy\Settings::schema() as $key => $def ) {
+			if ( 'object' === $def['type'] ) {
+				$this->assertIsObject( $settings->{$key}, "{$key} is a JSON object" );
+			}
+		}
 	}
 
 	public function test_an_out_of_range_form_number_is_saved_as_the_nearest_value_with_a_notice(): void {

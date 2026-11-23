@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
 
 $active_tab   = sanitize_text_field( $_GET['tab'] ?? 'general' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
+// Number inputs take their limits from the settings schema, the one range the sanitizer and the API also use.
+$jetonomy_schema = \Jetonomy\Settings::schema();
 ?>
 <div class="wrap jetonomy-admin">
 	<?php
@@ -372,11 +374,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="posts_per_page"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s Per Page', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></label></th>
-						<td><input type="number" id="posts_per_page" name="jetonomy_settings[posts_per_page]" value="<?php echo absint( $settings['posts_per_page'] ?? 20 ); ?>" min="5" max="100" class="small-text"></td>
+						<td><input type="number" id="posts_per_page" name="jetonomy_settings[posts_per_page]" value="<?php echo absint( $settings['posts_per_page'] ?? 20 ); ?>" min="<?php echo (int) $jetonomy_schema['posts_per_page']['minimum']; ?>" max="<?php echo (int) $jetonomy_schema['posts_per_page']['maximum']; ?>" class="small-text"></td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="replies_per_page"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s Per Page', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?></label></th>
-						<td><input type="number" id="replies_per_page" name="jetonomy_settings[replies_per_page]" value="<?php echo absint( $settings['replies_per_page'] ?? 30 ); ?>" min="5" max="100" class="small-text"></td>
+						<td><input type="number" id="replies_per_page" name="jetonomy_settings[replies_per_page]" value="<?php echo absint( $settings['replies_per_page'] ?? 30 ); ?>" min="<?php echo (int) $jetonomy_schema['replies_per_page']['minimum']; ?>" max="<?php echo (int) $jetonomy_schema['replies_per_page']['maximum']; ?>" class="small-text"></td>
 					</tr>
 				</table>
 			</div>

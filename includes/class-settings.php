@@ -282,6 +282,14 @@ class Settings {
 			if ( ! empty( $def['secret'] ) ) {
 				$value = ( null === $value || '' === $value ) ? '' : self::MASK;
 			}
+			// Stored reputation points are only the overrides; answer the points each action really gives.
+			if ( 'reputation_points' === $key ) {
+				$value = array_merge( \Jetonomy\Trust\Reputation::action_points_defaults(), is_array( $value ) ? $value : array() );
+			}
+			// A map stays a JSON object even when empty or keyed 0..n, never [].
+			if ( 'object' === $def['type'] && is_array( $value ) ) {
+				$value = (object) $value;
+			}
 			$out[ $key ] = $value;
 		}
 		return $out;
@@ -887,23 +895,18 @@ class Settings {
 					continue;
 				}
 
-				// An empty field means "use the default", not zero. Storing 0 for a
-				// cleared box silently turned off the points for that action.
-				if ( is_string( $raw_rep[ $action_key ] ) && '' === trim( $raw_rep[ $action_key ] ) ) {
-					continue;
-				}
-				// "false", "abc" or "5abc" is refused, never read as 0 or 5: the stored override stays.
-				$points = \Jetonomy\strict_int( $raw_rep[ $action_key ] );
-				if ( null === $points ) {
-					if ( ! self::noticed( 'jetonomy_invalid_reputation_points' ) ) {
-						self::notice( 'jetonomy_invalid_reputation_points', __( 'Reputation points were not changed for a value that is not a whole number. The previous value was kept.', 'jetonomy' ) );
-					}
-					if ( isset( $existing['reputation_points'][ $action_key ] ) ) {
-						$clean_rep[ $action_key ] = (int) $existing['reputation_points'][ $action_key ];
-					}
-					continue;
-				}
-				$points = max( -10000, min( 10000, $points ) );
+				// Empty means the default (never 0); "abc" or "5abc" keeps the stored value;
+				// outside -10000..10000 is clamped and says so, like every other number field.
+				$points = self::int_setting(
+					$raw_rep[ $action_key ],
+					$existing['reputation_points'][ $action_key ] ?? null,
+					(int) $default_val,
+					-10000,
+					10000,
+					'reputation_points',
+					/* translators: %s: reputation action key, e.g. post_upvoted. */
+					sprintf( __( 'Reputation points for %s', 'jetonomy' ), $action_key )
+				);
 
 				// Store only what DIFFERS from the default. The form posts every
 				// action, so persisting them all made the first save a full set of
