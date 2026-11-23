@@ -234,23 +234,24 @@ class Theme_Integration {
 	/**
 	 * Which Wbcom theme is active: 'reign', 'buddyx-pro', 'buddyx', or '' for any other theme.
 	 *
-	 * Matched on the template slug's prefix, not equality, because a theme zip unpacks into a versioned folder
-	 * (reign-theme-8.1.1) and customers rename folders; get_template() is already the PARENT of a child theme, so a
-	 * child of any of these matches too. An exact-name check left every versioned install without its dark mirror, so
-	 * Jetonomy painted light surfaces under the theme's dark page.
+	 * Folder names vary: the official zip unpacks to reign-theme, many installs use reign, a versioned zip gives
+	 * reign-theme-8.1.1, and customers rename. So a slug matches when it IS the family name or starts with it plus
+	 * a hyphen ("reign", "reign-theme", "reign-child"), never a bare prefix ("reignite" is not Reign). The parent
+	 * (get_template()) is checked first, then the active stylesheet, so a renamed parent with a child named
+	 * after the family is still found. The old "reign-theme" prefix missed every plain "reign" folder, so on
+	 * Reign 7.9 and older the dark-mode mirror never loaded and Jetonomy stayed light under the theme's dark page.
 	 *
 	 * @return string
 	 */
 	public static function theme_family(): string {
-		$template = strtolower( (string) get_template() );
-		if ( 0 === strpos( $template, 'reign-theme' ) ) {
-			return 'reign';
-		}
-		if ( 0 === strpos( $template, 'buddyx-pro' ) ) {
-			return 'buddyx-pro';
-		}
-		if ( 0 === strpos( $template, 'buddyx' ) ) {
-			return 'buddyx';
+		foreach ( array( get_template(), get_stylesheet() ) as $slug ) {
+			$slug = strtolower( (string) $slug );
+			// buddyx-pro before buddyx: "buddyx-pro" also starts with "buddyx-".
+			foreach ( array( 'reign', 'buddyx-pro', 'buddyx' ) as $family ) {
+				if ( $family === $slug || 0 === strpos( $slug, $family . '-' ) ) {
+					return $family;
+				}
+			}
 		}
 		return '';
 	}
