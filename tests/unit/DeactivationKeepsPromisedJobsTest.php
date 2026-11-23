@@ -32,7 +32,16 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 	}
 
 	private function pending( string $hook ): int {
-		return count( as_get_scheduled_actions( array( 'hook' => $hook, 'status' => 'pending', 'per_page' => 10 ), 'ids' ) );
+		return count(
+			as_get_scheduled_actions(
+				array(
+					'hook'     => $hook,
+					'status'   => 'pending',
+					'per_page' => 10,
+				),
+				'ids'
+			)
+		);
 	}
 
 	public function test_deactivation_keeps_a_space_purge_and_a_scheduled_topic_and_cancels_recomputable_jobs(): void {
@@ -55,7 +64,7 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 	}
 
 	/** Pro: an extension's deactivate() goes through the same list. */
-	public function test_a_pro_extension_deactivation_keeps_the_announcement_and_cancels_its_sends(): void {
+	public function test_a_pro_extension_deactivation_keeps_the_announcement_deliveries_and_reindex(): void {
 		if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) {
 			$this->markTestSkipped( 'Jetonomy Pro is not active.' );
 		}
@@ -71,7 +80,7 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 			( new \Jetonomy_Pro\Extensions\Custom_Fields\Extension() )->deactivate();
 			$this->assertSame( 1, $this->pending( 'jetonomy_pro_reindex_field' ), 'a re-index in progress is kept: its cursor is in the args' );
 			$this->assertSame( 1, $this->pending( 'jetonomy_pro_announce_post' ) );
-			$this->assertSame( 0, $this->pending( 'jetonomy_pro_deliver_webhook' ) );
+			$this->assertSame( 1, $this->pending( 'jetonomy_pro_deliver_webhook' ), 'a webhook delivery is kept: its body lives only in the job' );
 		} finally {
 			Queue::cancel( 'jetonomy_pro_announce_post' );
 			Queue::cancel( 'jetonomy_pro_deliver_webhook' );
@@ -128,7 +137,13 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 			remove_filter( 'wp_doing_cron', '__return_true' );
 		}
 
-		$pending = as_get_scheduled_actions( array( 'hook' => Space_Purge::BATCH_HOOK, 'status' => 'pending', 'per_page' => 10 ) );
+		$pending = as_get_scheduled_actions(
+			array(
+				'hook'     => Space_Purge::BATCH_HOOK,
+				'status'   => 'pending',
+				'per_page' => 10,
+			)
+		);
 		$this->assertCount( 1, $pending, 'one pending copy' );
 		$this->assertSame( $args, reset( $pending )->get_args(), 'same args' );
 		$this->assertNotSame( 'failed', $this->status( $orphan ), 'the failed row is deleted' );
@@ -146,7 +161,14 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 		$this->run_row( $old );
 		$this->assertSame( 'failed', $this->status( $old ) );
 		$at = gmdate( 'Y-m-d H:i:s', time() - ( Queue::RECOVER_WINDOW_DAYS + 1 ) * DAY_IN_SECONDS );
-		$wpdb->update( $wpdb->prefix . 'actionscheduler_actions', array( 'last_attempt_gmt' => $at, 'last_attempt_local' => $at ), array( 'action_id' => $old ) ); // phpcs:ignore WordPress.DB
+		$wpdb->update(
+			$wpdb->prefix . 'actionscheduler_actions',
+			array(
+				'last_attempt_gmt'   => $at,
+				'last_attempt_local' => $at,
+			),
+			array( 'action_id' => $old )
+		); // phpcs:ignore WordPress.DB
 
 		add_action( 'jetonomy_fanout_post_subscribers', '__return_null' );
 		Queue::flag_recovery();
@@ -159,5 +181,29 @@ class DeactivationKeepsPromisedJobsTest extends WP_UnitTestCase {
 		$this->assertSame( 'failed', $this->status( $old ), 'left failed, not replayed to members' );
 		$this->assertSame( 0, $this->pending( 'jetonomy_fanout_post_subscribers' ) );
 		\ActionScheduler::store()->delete_action( (string) $old );
+	}
+
+	/** The set-based cancel touches only pending rows of the exact hooks in our group: never another group's rows. */
+	public function test_the_set_based_cancel_touches_only_our_pending_rows_of_the_given_hooks(): void {
+		$ours    = (int) as_enqueue_async_action( 'jetonomy_gravatar_check', array( 1 ), Queue::GROUP );
+		$foreign = (int) as_enqueue_async_action( 'jetonomy_gravatar_check', array( 2 ), 'another-plugin' );
+		$kept    = (int) as_enqueue_async_action( Space_Purge::BATCH_HOOK, array( 'space_id' => 5 ), Queue::GROUP );
+		$other   = (int) as_enqueue_async_action( Cron::DUE_HOOK, array(), Queue::GROUP );
+		$this->assertSame( 1, Queue::cancel_on_deactivate( array( 'jetonomy_gravatar_check', Space_Purge::BATCH_HOOK ) ) );
+		$this->assertSame( 'canceled', $this->status( $ours ) );
+		$this->assertSame( 'pending', $this->status( $foreign ), 'another group\'s row is never touched' );
+		$this->assertSame( 'pending', $this->status( $kept ), 'KEEP_ON_DEACTIVATE stays pending' );
+		$this->assertSame( 'pending', $this->status( $other ), 'a hook not passed stays pending' );
+		\ActionScheduler::store()->delete_action( (string) $foreign );
+		\ActionScheduler::store()->delete_action( (string) $other );
+	}
+
+	/** Pro's deactivation repeats its keep list (it must work with Free off): it must equal Queue's Pro entries. */
+	public function test_pros_own_keep_list_matches_queue(): void {
+		if ( ! defined( 'JETONOMY_PRO_KEEP_ON_DEACTIVATE' ) ) {
+			$this->markTestSkipped( 'Jetonomy Pro is not active.' );
+		}
+		$pro = array_values( array_filter( Queue::KEEP_ON_DEACTIVATE, static fn( $h ) => str_starts_with( $h, 'jetonomy_pro_' ) ) );
+		$this->assertEqualsCanonicalizing( $pro, JETONOMY_PRO_KEEP_ON_DEACTIVATE );
 	}
 }

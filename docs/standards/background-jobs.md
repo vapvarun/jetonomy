@@ -140,7 +140,7 @@ Always verify scheduling happened after the fact.
 
 Deactivation is step one of every routine update (deactivate, replace files, activate), so it must not break a
 promise already made to a member. It cancels only jobs that are recomputed or lost by nature (recurring jobs, the
-due-time job, digests, trust and badge sweeps, AI review, push and webhook sends, recount, the IMAP poll). Jobs that finish an action a member or the owner already committed, or carry state nothing
+due-time job, digests, trust and badge sweeps, AI review, push sends, recount, the IMAP poll). Jobs that finish an action a member or the owner already committed, or carry state nothing
 else can rebuild, stay pending. Jetonomy keeps ONE list, `\Jetonomy\Queue::KEEP_ON_DEACTIVATE`, and every
 deactivation path (Free's `Cron::unschedule()`, Pro's `deactivate()`, each extension's base `deactivate()`) cancels
 through `Queue::cancel_on_deactivate()`, which skips it:
@@ -153,6 +153,7 @@ through `Queue::cancel_on_deactivate()`, which skips it:
 | `jetonomy_pro_announce_post` | Notifies members of an announcement the owner published. | Re-queued after the next activation or version change, if it failed within 7 days of Pro |
 | `jetonomy_pro_upgrade_jobs` | Converts the old version's queued jobs; once the version is stored nothing queues it again. | Re-queued after the next activation or version change, if it failed within 7 days of Pro |
 | `jetonomy_pro_reindex_field`, `jetonomy_pro_backfill_searchable_fields` | Re-index custom fields for search; the cursor (or id list) is in the args and nothing else queues the rest. | Re-queued after the next activation or version change, if it failed within 7 days of Pro, or the Custom Fields extension switched back on |
+| `jetonomy_pro_deliver_webhook` | Delivers an event that already happened; its body lives only in the job args. | Re-queued after the next activation or version change, if it failed within 7 days of Pro, or the Webhooks extension switched back on |
 | `jetonomy_pro_attachments_lock` | Locks the files of a space made private, page by page; stopped midway, files of a private space stay reachable by URL. | Re-queued after the next activation or version change, if it failed within 7 days of Pro, or the Attachments extension switched back on |
 
 Member erasure and moderation cascades run inside the request (no job), so none is listed. While the plugin stays

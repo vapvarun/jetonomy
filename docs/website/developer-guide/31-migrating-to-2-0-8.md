@@ -73,7 +73,8 @@ Code examples for each are in [Background Jobs](./30-background-jobs.md).
   whichever comes first. A topic that never publishes costs one try and one log line a day.
 - Recurring jobs are armed on cron, wp-admin and WP-CLI requests only, never on a visitor's page view.
 - Deactivating Free or Pro leaves work already promised queued: a space purge in progress, scheduled topics,
-  subscriber notifications, a site announcement and the Pro upgrade conversion stay queued through an update
+  subscriber notifications, a site announcement, the Pro upgrade conversion, a custom-field re-index, a private
+  space's file locking and webhook deliveries stay queued through an update
   (`Queue::KEEP_ON_DEACTIVATE`); recurring sweeps, digests and sends are still cancelled and re-armed on activation.
   If one of those jobs failed while the plugin was off (another plugin's Action Scheduler ran it with no listener),
   the next activation, version change or one-click update queues it again with the same arguments, when it failed

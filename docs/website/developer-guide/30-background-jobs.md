@@ -39,9 +39,9 @@ section 9, in the plugin repository.
 ## What deactivation keeps
 
 Deactivating Jetonomy or Jetonomy Pro, the first step of every manual update, cancels jobs that are rebuilt later
-(recurring sweeps, digests, sends). It leaves pending the jobs that finish something already done: a space purge,
+(recurring sweeps, digests, push sends). It leaves pending the jobs that finish something already done: a space purge,
 scheduled topics, subscriber notifications for published content, a site announcement, the Pro upgrade conversion,
-a custom-field re-index and the locking of a private space's files. The list is
+a custom-field re-index, the locking of a private space's files and webhook deliveries. The list is
 `\Jetonomy\Queue::KEEP_ON_DEACTIVATE`. If the plugin stays off and another plugin runs Action Scheduler, a kept job
 runs with no listener and fails ("no callbacks are registered") about a minute later; after the next activation or
 version change (a one-click update fires neither hook, so the version change counts), Jetonomy queues those jobs

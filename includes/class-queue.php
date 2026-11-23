@@ -285,6 +285,7 @@ final class Queue {
 	 *   cursor (or id list) is in the args and nothing else queues the rest, so search would stay half-indexed.
 	 * - jetonomy_pro_attachments_lock: locks the files of a space made private, page by page; cancelled midway, files
 	 *   of a private space stay reachable by URL.
+	 * - jetonomy_pro_deliver_webhook: the event already happened and its body lives only in the job args.
 	 *
 	 * While the plugin is off, Action Scheduler loaded by another plugin runs these rows with no listener and marks
 	 * them FAILED ("no callbacks are registered") on its next run, about a minute; recover_kept_jobs() queues them
@@ -302,6 +303,7 @@ final class Queue {
 		'jetonomy_pro_reindex_field',
 		'jetonomy_pro_backfill_searchable_fields',
 		'jetonomy_pro_attachments_lock',
+		'jetonomy_pro_deliver_webhook',
 	);
 
 	/** Transient set on activation: recover kept jobs that failed while the plugin was off. */
@@ -401,16 +403,57 @@ final class Queue {
 	}
 
 	/**
-	 * Deactivation's cancel: cancel each hook unless it is in KEEP_ON_DEACTIVATE.
+	 * Deactivation's cancel: cancel each hook unless it is in KEEP_ON_DEACTIVATE, in both schedulers, set-based.
 	 *
 	 * @since 2.0.8
 	 *
 	 * @param string[] $hooks Hooks of the deactivated plugin or extension.
+	 * @return int Action Scheduler rows cancelled.
 	 */
-	public static function cancel_on_deactivate( array $hooks ): void {
-		foreach ( array_diff( $hooks, self::KEEP_ON_DEACTIVATE ) as $hook ) {
-			self::cancel( $hook );
+	public static function cancel_on_deactivate( array $hooks ): int {
+		$hooks = array_values( array_unique( array_diff( $hooks, self::KEEP_ON_DEACTIVATE ) ) );
+		foreach ( $hooks as $hook ) {
+			wp_unschedule_hook( $hook ); // WP-Cron copies (fallback or pre-2.0 installs).
 		}
+		return self::cancel_pending_rows( $hooks );
+	}
+
+	/** Pending rows one cancel_pending_rows() statement changes. */
+	public const CANCEL_BATCH = 10000;
+
+	/**
+	 * Cancel every pending Action Scheduler row of these exact hooks in our group, set-based: one UPDATE of at most
+	 * CANCEL_BATCH rows per statement, repeated until fewer change. Deactivation with 100,000 pending rows took
+	 * minutes row by row. Pending only, never another group's rows; Action Scheduler's per-row cancel hook does not
+	 * fire (nothing of ours listens to it). Needs no store, so it works during deactivation however early.
+	 *
+	 * @since 2.0.8
+	 *
+	 * @param string[] $hooks Exact hook names.
+	 * @return int Rows cancelled.
+	 */
+	public static function cancel_pending_rows( array $hooks ): int {
+		global $wpdb;
+		$hooks = array_values( array_filter( array_map( 'strval', $hooks ) ) );
+		if ( ! $hooks ) {
+			return 0;
+		}
+		$actions = $wpdb->prefix . 'actionscheduler_actions';
+		$groups  = $wpdb->prefix . 'actionscheduler_groups';
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- set-based cancel; Action Scheduler's API cancels row by row.
+		$group = (int) $wpdb->get_var( $wpdb->prepare( "SELECT group_id FROM {$groups} WHERE slug = %s", self::GROUP ) );
+		if ( ! $group ) {
+			return 0;
+		}
+		$in    = implode( ',', array_fill( 0, count( $hooks ), '%s' ) );
+		$sql   = $wpdb->prepare( "UPDATE {$actions} SET status = 'canceled' WHERE status = 'pending' AND group_id = %d AND hook IN ({$in}) LIMIT %d", array_merge( array( $group ), $hooks, array( self::CANCEL_BATCH ) ) );
+		$total = 0;
+		do {
+			$done   = (int) $wpdb->query( $sql );
+			$total += max( 0, $done );
+		} while ( $done >= self::CANCEL_BATCH );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		return $total;
 	}
 
 	/**
