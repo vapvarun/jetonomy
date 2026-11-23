@@ -237,11 +237,13 @@
 		input.setAttribute('aria-label', label);
 		return input;
 	}
-	function sync(input, list) {
+	function sync(input, list, locked) {
 		var on = list.filter(function (cb) { return cb.checked; }).length;
-		input.checked = list.length > 0 && on === list.length;
-		input.indeterminate = on > 0 && on < list.length;
-		input.disabled = list.length === 0;
+		// A role without WordPress read can hold Read alone: its All box stays
+		// off, showing the dash while Read is ticked, so it never reads as "all".
+		input.disabled = locked || list.length === 0;
+		input.checked = !locked && list.length > 0 && on === list.length;
+		input.indeterminate = locked ? on > 0 : on > 0 && on < list.length;
 	}
 
 	var colBoxes = heads.map(function (th) {
@@ -258,7 +260,8 @@
 			bulkUsed = true;
 			syncAll();
 		});
-		return { input: input, list: function () { return cells(function (cb) { return roleOf(cb) === role; }); } };
+		var locked = Array.prototype.some.call(table.querySelectorAll('tbody td input[type="checkbox"]'), function (cb) { return cb.disabled && roleOf(cb) === role; });
+		return { input: input, locked: locked, list: function () { return cells(function (cb) { return roleOf(cb) === role; }); } };
 	});
 
 	var rowBoxes = Array.prototype.map.call(table.querySelectorAll('tbody tr'), function (tr) {
@@ -282,7 +285,7 @@
 	});
 
 	function syncAll() {
-		colBoxes.concat(rowBoxes).forEach(function (b) { sync(b.input, b.list()); });
+		colBoxes.concat(rowBoxes).forEach(function (b) { sync(b.input, b.list(), !!b.locked); });
 		if (!warning || !bulkUsed) {
 			return;
 		}
@@ -293,9 +296,18 @@
 			var role = th.getAttribute('data-role');
 			return cells(function (cb) { return roleOf(cb) === role && cb.checked && cb.closest('tr').classList.contains('jt-cap-staff'); }).length > 0;
 		}).map(function (th) { return th.firstChild.textContent.trim(); });
+		var shown = names.join(', ');
+		if (names.length > 3) {
+			/* translators: 1: two comma-separated role names, 2: how many more roles. */
+			shown = sprintf(__('%1$s and %2$d more', 'jetonomy'), names.slice(0, 2).join(', '), names.length - 2);
+		}
+		var wasHidden = warning.hidden;
 		warning.hidden = names.length === 0;
-		/* translators: %s: comma-separated role names. */
-		warning.textContent = names.length ? sprintf(__('%s will be able to moderate or manage the community. Untick the capabilities marked * if that is not what you want.', 'jetonomy'), names.join(', ')) : '';
+		/* translators: %s: role names, e.g. "Editor, Author and 52 more". */
+		warning.textContent = names.length ? sprintf(__('%s will be able to moderate or manage the community. Untick the capabilities marked * if that is not what you want.', 'jetonomy'), shown) : '';
+		if (wasHidden && !warning.hidden && warning.getBoundingClientRect().top < 0) {
+			warning.scrollIntoView({ block: 'nearest' });
+		}
 	}
 
 	table.addEventListener('change', function (e) {

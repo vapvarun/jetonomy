@@ -909,18 +909,16 @@ class Admin {
 			}
 		}
 		if ( ! empty( $input['role_caps_submitted'] ) ) {
-			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
-			$roles      = array_keys( get_editable_roles() );
-			$overrides  = array();
-			$posted     = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
+			$roles     = array_keys( get_editable_roles() );
+			$overrides = array();
+			$posted    = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
 
 			$shown_roles = array_map( 'sanitize_key', (array) ( $input['role_caps_roles'] ?? array() ) );
 			foreach ( $roles as $role_slug ) {
 				if ( 'administrator' === $role_slug ) {
 					continue; // Admins always hold every cap - never stored.
 				}
-				$caps = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
-				$caps = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
+				$caps = \Jetonomy\Permissions\Capabilities::allowed_for_role( $role_slug, isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array() );
 				// A fallback role is shown with unmapped_caps() ticked. Posted back
 				// unchanged, or not shown on this form at all, it stays unmapped,
 				// so a save of this tab never cuts Customer/Student members off.
@@ -944,7 +942,7 @@ class Admin {
 			// table shows what the role holds and ticking only adds.
 			$reset = sanitize_key( $input['role_caps_reset'] ?? '' );
 			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) && in_array( $reset, $roles, true ) ) {
-				$overrides[ $reset ] = $overrides['subscriber'] ?? \Jetonomy\Permissions\Capabilities::effective_map()['subscriber'];
+				$overrides[ $reset ] = \Jetonomy\Permissions\Capabilities::allowed_for_role( $reset, $overrides['subscriber'] ?? \Jetonomy\Permissions\Capabilities::effective_map()['subscriber'] );
 				$roles_all           = wp_roles()->get_names();
 				add_settings_error(
 					'jetonomy_settings',

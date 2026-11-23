@@ -140,11 +140,34 @@ class Capabilities {
 				if ( 'administrator' === $role ) {
 					continue;
 				}
-				$map[ (string) $role ] = array_values( array_intersect( self::all(), array_map( 'sanitize_key', (array) $caps ) ) );
+				$map[ (string) $role ] = self::allowed_for_role( (string) $role, (array) $caps );
 			}
 		}
 		$map['administrator'] = self::all();
 		return $map;
+	}
+
+	/**
+	 * The Jetonomy caps a role may hold out of $caps: known caps only, and only
+	 * Read for a role without WordPress's `read` (its members can read but not
+	 * take part, and a staff cap such as jetonomy_moderate would otherwise pass
+	 * routes gated on that cap alone). The Permissions form writes through this
+	 * and effective_map() reads through it, so a tampered or older stored list
+	 * never reaches the live roles.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string   $role Role slug.
+	 * @param string[] $caps Candidate caps.
+	 * @return string[]
+	 */
+	public static function allowed_for_role( string $role, array $caps ): array {
+		$caps = array_values( array_intersect( self::all(), array_map( 'sanitize_key', $caps ) ) );
+		$obj  = wp_roles()->get_role( $role );
+		if ( $obj && empty( $obj->capabilities['read'] ) ) {
+			$caps = array_values( array_intersect( $caps, array( 'jetonomy_read' ) ) );
+		}
+		return $caps;
 	}
 
 	/**

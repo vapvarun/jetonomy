@@ -671,8 +671,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							$jt_effective[ $jt_role_slug ] = \Jetonomy\Permissions\Capabilities::unmapped_caps( (string) $jt_role_slug );
 						}
 						if ( empty( $jt_role_info['capabilities']['read'] ) ) {
-							$jt_no_read[ $jt_role_slug ]   = $jt_map_roles[ $jt_role_slug ];
-							$jt_effective[ $jt_role_slug ] = array_intersect( (array) ( $jt_effective[ $jt_role_slug ] ?? array() ), array( 'jetonomy_read' ) );
+							$jt_no_read[ $jt_role_slug ] = $jt_map_roles[ $jt_role_slug ]; // effective_map() already limits it to Read.
 						}
 					}
 					?>
@@ -717,6 +716,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<?php if ( count( $jt_map_roles ) > 4 ) : // More roles than fit a typical card width. ?>
 					<p class="description jt-matrix-scroll-hint" id="jt-role-matrix-hint"><?php esc_html_e( 'Scroll sideways to see every role. The capability column stays in place.', 'jetonomy' ); ?></p>
 				<?php endif; ?>
+					<?php // Filled by admin-settings.js after an All box click; sits right above the grid so it is in view, informs, never blocks Save. ?>
+				<p class="jt-role-matrix-warning" role="status" hidden></p>
 				<div class="jt-matrix-scroll" tabindex="0" role="region" aria-label="<?php esc_attr_e( 'Role Capability Mapping', 'jetonomy' ); ?>">
 					<?php // No .wp-list-table: core's <=782px list-table rules turned this form grid into flex rows of loose checkboxes. ?>
 				<table class="widefat jt-settings-matrix jt-settings-matrix--wide jt-role-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
@@ -748,8 +749,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</tbody>
 				</table>
 				</div><!-- /.jt-matrix-scroll -->
-					<?php // Filled by admin-settings.js after a Select all / Clear all click; informs, never blocks Save. ?>
-				<p class="jt-role-matrix-warning" role="status" hidden></p>
 				<?php endif; ?>
 			</div>
 

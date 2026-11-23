@@ -178,4 +178,37 @@ class RoleCapsMappingTest extends WP_UnitTestCase {
 		$this->assertTrue( get_role( 'author' )->has_cap( 'jetonomy_moderate' ), 'admin save still applies' );
 		get_role( 'editor' )->remove_cap( 'jetonomy_manage_settings' );
 	}
+
+	/**
+	 * The form disables every box but Read for a role without WordPress read;
+	 * a tampered POST must not store or apply more (QA J22).
+	 */
+	public function test_role_without_read_holds_only_read_on_the_server(): void {
+		add_role( 'jt_noread_t', 'No Read T', array() );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		( new \Jetonomy\Admin\Admin() )->sanitize_settings(
+			array(
+				'role_caps_submitted' => '1',
+				'role_caps_roles'     => array( 'jt_noread_t' ),
+				'role_caps'           => array( 'jt_noread_t' => array( 'jetonomy_read', 'jetonomy_moderate', 'jetonomy_create_posts' ) ),
+			)
+		);
+		$stored = get_option( Capabilities::ROLE_CAPS_OPTION );
+		$live   = get_role( 'jt_noread_t' );
+		remove_role( 'jt_noread_t' );
+		// Read alone is what this role shows unmapped, so it may stay unstored.
+		$this->assertNotContains( 'jetonomy_moderate', $stored['jt_noread_t'] ?? array() );
+		$this->assertNotContains( 'jetonomy_create_posts', $stored['jt_noread_t'] ?? array() );
+		$this->assertFalse( $live->has_cap( 'jetonomy_moderate' ) );
+	}
+
+	public function test_a_stored_override_beyond_read_never_reaches_the_live_role(): void {
+		add_role( 'jt_noread_s', 'No Read S', array() );
+		update_option( Capabilities::ROLE_CAPS_OPTION, array( 'jt_noread_s' => array( 'jetonomy_read', 'jetonomy_moderate' ) ), false );
+		Capabilities::register();
+		$live = get_role( 'jt_noread_s' );
+		remove_role( 'jt_noread_s' );
+		$this->assertFalse( $live->has_cap( 'jetonomy_moderate' ) );
+		$this->assertTrue( $live->has_cap( 'jetonomy_read' ) );
+	}
 }

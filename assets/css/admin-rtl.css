@@ -3482,18 +3482,40 @@ tr.jetonomy-moderated td {
 
 /* ── Role Capability Mapping: Select all boxes (inserted by admin-settings.js) ── */
 .jt-role-matrix .jt-matrix-all-label {
-	display: block;
+	display: flex;
+	width: max-content;
+	align-items: center;
+	gap: 4px;
+	min-height: 24px;
 	margin-block-start: 4px;
 	font-weight: 400;
 	font-size: 12px;
 	white-space: nowrap;
+	cursor: pointer;
 }
+/* Box above its word, at the start edge like the cell boxes below it. */
+.jt-role-matrix thead .jt-matrix-all-label {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 2px;
+}
+.jt-role-matrix .jt-matrix-all-label input { margin: 0; }
 .jt-role-matrix tr.jt-cap-staff th strong::after {
 	content: " *";
 	color: var(--jt-admin-warn-dark);
 }
+@media (max-width: 782px) {
+	/* 44px hit area (WCAG 2.5.5) on touch widths: padding on the label, not a bigger box. */
+	.jt-role-matrix .jt-matrix-all-label {
+		min-width: 44px;
+		min-height: 44px;
+		justify-content: center;
+	}
+	.jt-role-matrix thead .jt-matrix-all-label { justify-content: flex-start; }
+}
 .jt-role-matrix-warning {
-	margin: 12px 0 0;
+	margin: 0 20px 12px;
 	padding: 8px 12px;
 	border-inline-start: 4px solid var(--jt-admin-warn-dark);
 	background: var(--jt-admin-warn-light);
