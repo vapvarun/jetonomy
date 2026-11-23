@@ -709,7 +709,6 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 							data-wp-on--click="actions.followSpace"
 							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-following="<?php echo esc_attr( $jt_on ? '1' : '0' ); ?>"
-							aria-pressed="<?php echo $jt_on ? 'true' : 'false'; ?>"
 							aria-label="<?php echo esc_attr( $jt_on ? $jt_label_on : $jt_label_off ); ?>"
 							data-label-off="<?php echo esc_attr( $jt_label_off ); ?>"
 							data-label-on="<?php echo esc_attr( $jt_label_on ); ?>"

@@ -727,6 +727,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 - `c-member-subscribe-thread-and-space.18` @member #ui +dark +390: subscriptions page at 390px dark -> rows fit.
 - `c-member-subscribe-thread-and-space.19` @member #rest +private: after bob loses access to a followed space, GET /subscriptions and /bookmarks and the member pages hide that target, but a member admitted only by a rule (no roster row) still sees their follows and bookmarks there; trash a followed topic -> its row reads "No longer available" (2.0.4).
 - `c-member-subscribe-thread-and-space.20` @member #ui: on the community home, a category page and search, click the bell beside a space title -> it turns to Following without leaving the page, survives a reload, and a click elsewhere on the card still opens the space; a guest sees no bell on the cards.
+- `c-member-subscribe-thread-and-space.21` @member #ui +concurrent card:10435793944: double click, then triple click, the Follow button on a space card (also with the network throttled) -> it ends on Following with one POST and the subscription stored; the screen reader name is "Following <space>" with no "pressed"; after unfollowing the space in a second tab, a click in the first tab shows Follow without sending a request.
 
 ### C.member.accept-answer
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/api/class-replies-controller.php, includes/models/class-reply.php

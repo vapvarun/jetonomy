@@ -57,8 +57,8 @@ class SpaceGridRendererTest extends WP_UnitTestCase {
 		$this->assertSame( 2, substr_count( $html, '<li class="jt-card jt-space-card' ) );
 		$this->assertSame( 2, substr_count( $html, '<a ' ), 'The title is the only link in a card.' );
 		$this->assertSame( 2, substr_count( $html, 'jt-follow-space-btn' ) );
-		$this->assertMatchesRegularExpression( '/data-space-id="' . (int) $followed->id . '"\s+data-following="1"\s+aria-pressed="true"/', $html );
-		$this->assertMatchesRegularExpression( '/data-space-id="' . (int) $other->id . '"\s+data-following="0"\s+aria-pressed="false"/', $html );
+		$this->assertMatchesRegularExpression( '/data-space-id="' . (int) $followed->id . '"\s+data-following="1"\s+aria-label="Following/', $html );
+		$this->assertMatchesRegularExpression( '/data-space-id="' . (int) $other->id . '"\s+data-following="0"\s+aria-label="Follow /', $html );
 		$this->assertStringNotContainsString( 'jt-space-card-inner', $html );
 	}
 
@@ -71,8 +71,10 @@ class SpaceGridRendererTest extends WP_UnitTestCase {
 
 		$html = $this->render( array( $followed, $other ) );
 
-		$this->assertMatchesRegularExpression( '/aria-pressed="true"\s+aria-label="Following Design"/', $html );
-		$this->assertMatchesRegularExpression( '/aria-pressed="false"\s+aria-label="Follow Announcements"/', $html );
+		$this->assertStringContainsString( 'aria-label="Following Design"', $html );
+		$this->assertStringContainsString( 'aria-label="Follow Announcements"', $html );
+		// The name carries the state; aria-pressed as well would read "Following Design, pressed".
+		$this->assertStringNotContainsString( 'aria-pressed', $html );
 		$this->assertStringContainsString( 'data-label-off="Follow Announcements"', $html );
 		$this->assertStringContainsString( 'data-label-on="Following Announcements"', $html );
 	}

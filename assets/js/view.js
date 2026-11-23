@@ -1158,6 +1158,10 @@ function jetonomyVoteToast( data ) {
 
 let jtFieldErrorSeq = 0;
 
+// Follow toggles with a request in flight ('space:2', 'post:9'). A second click before the first
+// request settles is ignored, so it cannot read the subscription before the first write commits.
+const jtFollowBusy = new Set();
+
 /**
  * Tie a validation message to the field it is about. The field gets
  * aria-invalid and aria-describedby pointing at the message (the field's own
@@ -2442,58 +2446,64 @@ const { state, actions } = store( 'jetonomy', {
             const postId = btnEl.dataset.postId;
             const wasFollowing = btnEl.dataset.following === '1';
             if ( ! postId ) return;
-
-            const applyFollowingUI = ( following ) => {
-                if ( following ) {
-                    btnEl.dataset.following = '1';
-                    btnEl.textContent = state.i18n?.following || 'Following';
-                    btnEl.classList.remove( 'jt-btn-ghost' );
-                    btnEl.classList.add( 'jt-btn-fill', 'jt-following' );
-                } else {
-                    btnEl.dataset.following = '0';
-                    btnEl.textContent = state.i18n?.follow || 'Follow';
-                    btnEl.classList.remove( 'jt-btn-fill', 'jt-following' );
-                    btnEl.classList.add( 'jt-btn-ghost' );
-                }
-            };
-
-            // Unfollow path needs the subscription ID before we can DELETE.
-            // We resolve that BEFORE the optimistic helper runs so the
-            // helper's `fetch` is a single, atomic request whose failure can
-            // be cleanly reverted.
-            let subscriptionId = null;
-            if ( wasFollowing ) {
-                try {
-                    const res = yield window.jetonomyRest.restFetch( `/subscriptions?object_type=post&object_id=${ postId }` );
-                    if ( res.ok ) {
-                        const data = res.data || {};
-                        const subs = data.data || [];
-                        if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
+            const busyKey = `post:${ postId }`;
+            if ( jtFollowBusy.has( busyKey ) ) return;
+            jtFollowBusy.add( busyKey );
+            try {
+                const applyFollowingUI = ( following ) => {
+                    if ( following ) {
+                        btnEl.dataset.following = '1';
+                        btnEl.textContent = state.i18n?.following || 'Following';
+                        btnEl.classList.remove( 'jt-btn-ghost' );
+                        btnEl.classList.add( 'jt-btn-fill', 'jt-following' );
+                    } else {
+                        btnEl.dataset.following = '0';
+                        btnEl.textContent = state.i18n?.follow || 'Follow';
+                        btnEl.classList.remove( 'jt-btn-fill', 'jt-following' );
+                        btnEl.classList.add( 'jt-btn-ghost' );
                     }
-                } catch { /* fall through — DELETE will fail and revert */ }
-                if ( ! subscriptionId ) {
-                    // Nothing to delete; UI already in correct state.
-                    return;
-                }
-            }
+                };
 
-            yield window.jetonomyOptimistic.gen( {
-                apply: () => {
-                    applyFollowingUI( ! wasFollowing );
-                    return { wasFollowing };
-                },
-                fetch: () => wasFollowing
-                    ? window.jetonomyRest.restFetch( `/subscriptions/${ subscriptionId }`, {
-                        method: 'DELETE',
-                    } )
-                    : window.jetonomyRest.restFetch( `/subscriptions`, {
-                        method: 'POST',
-                        body: { object_type: 'post', object_id: parseInt( postId ), via: 'both' },
-                    } ),
-                revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
-                toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Failed to save.',
-            } );
+                // Unfollow path needs the subscription ID before we can DELETE.
+                // We resolve that BEFORE the optimistic helper runs so the
+                // helper's `fetch` is a single, atomic request whose failure can
+                // be cleanly reverted.
+                let subscriptionId = null;
+                if ( wasFollowing ) {
+                    try {
+                        const res = yield window.jetonomyRest.restFetch( `/subscriptions?object_type=post&object_id=${ postId }` );
+                        if ( res.ok ) {
+                            const data = res.data || {};
+                            const subs = data.data || [];
+                            if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
+                        }
+                    } catch { /* fall through — DELETE will fail and revert */ }
+                    if ( ! subscriptionId ) {
+                        // Nothing to delete; UI already in correct state.
+                        return;
+                    }
+                }
+
+                yield window.jetonomyOptimistic.gen( {
+                    apply: () => {
+                        applyFollowingUI( ! wasFollowing );
+                        return { wasFollowing };
+                    },
+                    fetch: () => wasFollowing
+                        ? window.jetonomyRest.restFetch( `/subscriptions/${ subscriptionId }`, {
+                            method: 'DELETE',
+                        } )
+                        : window.jetonomyRest.restFetch( `/subscriptions`, {
+                            method: 'POST',
+                            body: { object_type: 'post', object_id: parseInt( postId ), via: 'both' },
+                        } ),
+                    revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
+                    toastOnError: true,
+                    errorFallback: state.i18n?.failedSave || 'Failed to save.',
+                } );
+            } finally {
+                jtFollowBusy.delete( busyKey );
+            }
         },
 
         // ── Follow space ──
@@ -2503,70 +2513,79 @@ const { state, actions } = store( 'jetonomy', {
             const spaceId = btnEl.dataset.spaceId;
             const wasFollowing = btnEl.dataset.following === '1';
             if ( ! spaceId ) return;
+            // Every follow button of this space (card and header) shares one in-flight slot, so the
+            // "already unfollowed elsewhere" read below only runs when no write of ours is pending.
+            const busyKey = `space:${ spaceId }`;
+            if ( jtFollowBusy.has( busyKey ) ) return;
+            jtFollowBusy.add( busyKey );
+            try {
+                // The space header's toggle carries a bell icon beside its text, so
+                // write the label span when there is one instead of wiping the icon.
+                const labelEl = btnEl.querySelector( '.jt-follow-label' ) || btnEl;
+                const applyFollowingUI = ( following ) => {
+                    // The name carries the state ("Follow Design" / "Following Design", or the visible
+                    // word on the header button); no aria-pressed, which would say "Following, pressed".
+                    // A grid card names its space ("Follow Design"); the header button has no such data.
+                    const named = following ? btnEl.dataset.labelOn : btnEl.dataset.labelOff;
+                    if ( named ) btnEl.setAttribute( 'aria-label', named );
+                    if ( following ) {
+                        btnEl.dataset.following = '1';
+                        labelEl.textContent = state.i18n?.following || 'Following';
+                        btnEl.classList.remove( 'jt-btn-ghost' );
+                        btnEl.classList.add( 'jt-btn-fill', 'jt-following' );
+                    } else {
+                        btnEl.dataset.following = '0';
+                        labelEl.textContent = state.i18n?.follow || 'Follow';
+                        btnEl.classList.remove( 'jt-btn-fill', 'jt-following' );
+                        btnEl.classList.add( 'jt-btn-ghost' );
+                    }
+                };
 
-            // The space header's toggle carries a bell icon beside its text, so
-            // write the label span when there is one instead of wiping the icon.
-            const labelEl = btnEl.querySelector( '.jt-follow-label' ) || btnEl;
-            const applyFollowingUI = ( following ) => {
-                btnEl.setAttribute( 'aria-pressed', following ? 'true' : 'false' );
-                // A grid card names its space ("Follow Design"); the header button has no such data.
-                const named = following ? btnEl.dataset.labelOn : btnEl.dataset.labelOff;
-                if ( named ) btnEl.setAttribute( 'aria-label', named );
-                if ( following ) {
-                    btnEl.dataset.following = '1';
-                    labelEl.textContent = state.i18n?.following || 'Following';
-                    btnEl.classList.remove( 'jt-btn-ghost' );
-                    btnEl.classList.add( 'jt-btn-fill', 'jt-following' );
-                } else {
-                    btnEl.dataset.following = '0';
-                    labelEl.textContent = state.i18n?.follow || 'Follow';
-                    btnEl.classList.remove( 'jt-btn-fill', 'jt-following' );
-                    btnEl.classList.add( 'jt-btn-ghost' );
+                let subscriptionId = null;
+                if ( wasFollowing ) {
+                    let gone = false;
+                    try {
+                        const res = yield window.jetonomyRest.restFetch( `/subscriptions?object_type=space&object_id=${ spaceId }` );
+                        if ( res.ok ) {
+                            const data = res.data || {};
+                            const subs = data.data || [];
+                            if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
+                            else gone = true;
+                        }
+                    } catch { /* fall through */ }
+                    // Already unfollowed elsewhere (another tab): show the real state.
+                    if ( gone ) applyFollowingUI( false );
+                    if ( ! subscriptionId ) return;
                 }
-            };
 
-            let subscriptionId = null;
-            if ( wasFollowing ) {
-                let gone = false;
-                try {
-                    const res = yield window.jetonomyRest.restFetch( `/subscriptions?object_type=space&object_id=${ spaceId }` );
-                    if ( res.ok ) {
-                        const data = res.data || {};
-                        const subs = data.data || [];
-                        if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
-                        else gone = true;
-                    }
-                } catch { /* fall through */ }
-                // Already unfollowed elsewhere (another tab): show the real state.
-                if ( gone ) applyFollowingUI( false );
-                if ( ! subscriptionId ) return;
+                yield window.jetonomyOptimistic.gen( {
+                    apply: () => {
+                        applyFollowingUI( ! wasFollowing );
+                        return { wasFollowing };
+                    },
+                    fetch: () => wasFollowing
+                        ? window.jetonomyRest.restFetch( `/subscriptions/${ subscriptionId }`, {
+                            method: 'DELETE',
+                        } )
+                        : window.jetonomyRest.restFetch( `/subscriptions`, {
+                            method: 'POST',
+                            body: { object_type: 'space', object_id: parseInt( spaceId ), via: 'both' },
+                        } ),
+                    onSuccess: () => {
+                        if ( window.bnToast ) {
+                            window.bnToast( wasFollowing
+                                ? ( state.i18n?.unfollowedSpace || 'Unfollowed space' )
+                                : ( state.i18n?.followingSpace || 'Following space' )
+                            );
+                        }
+                    },
+                    revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
+                    toastOnError: true,
+                    errorFallback: state.i18n?.failedSave || 'Failed to save.',
+                } );
+            } finally {
+                jtFollowBusy.delete( busyKey );
             }
-
-            yield window.jetonomyOptimistic.gen( {
-                apply: () => {
-                    applyFollowingUI( ! wasFollowing );
-                    return { wasFollowing };
-                },
-                fetch: () => wasFollowing
-                    ? window.jetonomyRest.restFetch( `/subscriptions/${ subscriptionId }`, {
-                        method: 'DELETE',
-                    } )
-                    : window.jetonomyRest.restFetch( `/subscriptions`, {
-                        method: 'POST',
-                        body: { object_type: 'space', object_id: parseInt( spaceId ), via: 'both' },
-                    } ),
-                onSuccess: () => {
-                    if ( window.bnToast ) {
-                        window.bnToast( wasFollowing
-                            ? ( state.i18n?.unfollowedSpace || 'Unfollowed space' )
-                            : ( state.i18n?.followingSpace || 'Following space' )
-                        );
-                    }
-                },
-                revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
-                toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Failed to save.',
-            } );
         },
 
         // ── Leave space ──
