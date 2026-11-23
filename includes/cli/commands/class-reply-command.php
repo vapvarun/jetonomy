@@ -57,13 +57,13 @@ final class Reply_Command extends Base_Command {
 	 */
 	public function create( $args, $assoc ): void {
 		$input = array(
-			'post_id'   => $this->int_arg( $assoc, 'post', 0 ),
-			'author_id' => $this->int_arg( $assoc, 'author', 0 ),
+			'post_id'   => $this->int_arg( $assoc, 'post', 0, 0 ),
+			'author_id' => $this->int_arg( $assoc, 'author', 0, 0 ),
 			'content'   => (string) ( $assoc['content'] ?? '' ),
 			'status'    => (string) ( $assoc['status'] ?? 'publish' ),
 		);
 		if ( array_key_exists( 'parent', $assoc ) ) {
-			$input['parent_id'] = $this->int_arg( $assoc, 'parent' );
+			$input['parent_id'] = $this->int_arg( $assoc, 'parent', 0, 0 );
 		}
 		$result = ( new Content_Journey() )->create_reply( $input );
 		$this->render( $result, $assoc );
@@ -90,7 +90,7 @@ final class Reply_Command extends Base_Command {
 	 *     wp jetonomy reply delete 17
 	 */
 	public function delete( $args, $assoc ): void {
-		$id     = $this->int_arg( $args, 0, 0 );
+		$id     = $this->int_arg( $args, 0, 0, 1 );
 		$result = ( new Content_Journey() )->delete_reply( $id );
 		$this->render( $result, $assoc );
 	}
@@ -124,8 +124,8 @@ final class Reply_Command extends Base_Command {
 	 *     wp jetonomy reply accept --post=42 --reply=17
 	 */
 	public function accept( $args, $assoc ): void {
-		$post_id  = $this->int_arg( $assoc, 'post', 0 );
-		$reply_id = $this->int_arg( $assoc, 'reply', 0 );
+		$post_id  = $this->int_arg( $assoc, 'post', 0, 0 );
+		$reply_id = $this->int_arg( $assoc, 'reply', 0, 0 );
 		$result   = ( new Content_Journey() )->accept_reply( $post_id, $reply_id );
 		$this->render( $result, $assoc );
 	}
@@ -158,8 +158,8 @@ final class Reply_Command extends Base_Command {
 	 *     wp jetonomy reply unaccept --post=42 --reply=17
 	 */
 	public function unaccept( $args, $assoc ): void {
-		$post_id  = $this->int_arg( $assoc, 'post', 0 );
-		$reply_id = $this->int_arg( $assoc, 'reply', 0 );
+		$post_id  = $this->int_arg( $assoc, 'post', 0, 0 );
+		$reply_id = $this->int_arg( $assoc, 'reply', 0, 0 );
 		$result   = ( new Content_Journey() )->unaccept_reply( $post_id, $reply_id );
 		$this->render( $result, $assoc );
 	}

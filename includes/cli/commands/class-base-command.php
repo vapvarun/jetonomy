@@ -44,20 +44,32 @@ abstract class Base_Command {
 
 	/**
 	 * A whole-number argument (positional by index, or a --flag by name).
-	 * "abc" or "5abc" stops the command with exit 1 instead of being read as 0 or 5.
+	 * "abc" or "5abc" stops the command with exit 1 instead of being read as 0 or 5,
+	 * and so does a value outside the range. Every caller states its own minimum:
+	 * 1 for a required id, 0 where 0 means "none", null where any whole number is
+	 * allowed (a signed delta) or the journey checks the range itself.
 	 *
 	 * @param array<int|string,mixed> $from    $args or $assoc.
 	 * @param int|string              $key     Positional index or flag name.
-	 * @param int|null                $default Value when it is absent.
+	 * @param int|null                $default Value when it is absent (not range-checked).
+	 * @param int|null                $min     Lowest value accepted, or null for no lower limit.
+	 * @param int|null                $max     Highest value accepted, or null for no upper limit.
 	 */
-	protected function int_arg( array $from, $key, ?int $default = 0 ): ?int {
+	protected function int_arg( array $from, $key, ?int $default, ?int $min, ?int $max = null ): ?int {
 		if ( ! array_key_exists( $key, $from ) ) {
 			return $default;
 		}
+		$name  = is_int( $key ) ? sprintf( 'Argument %d', $key + 1 ) : '--' . $key;
 		$value = \Jetonomy\strict_int( $from[ $key ] );
 		if ( null === $value ) {
-			$name = is_int( $key ) ? sprintf( 'Argument %d', $key + 1 ) : '--' . $key;
 			\WP_CLI::error( sprintf( '%s must be a whole number; got "%s".', $name, (string) $from[ $key ] ) );
+		}
+		if ( ( null !== $min && $value < $min ) || ( null !== $max && $value > $max ) ) {
+			\WP_CLI::error(
+				null === $max
+					? sprintf( '%s must be %d or more; got %d.', $name, $min, $value )
+					: sprintf( '%s must be between %d and %d; got %d.', $name, (int) $min, $max, $value )
+			);
 		}
 		return $value;
 	}

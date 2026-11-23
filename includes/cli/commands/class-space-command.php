@@ -86,7 +86,7 @@ final class Space_Command extends Base_Command {
 			array(
 				'title'       => (string) ( $assoc['title'] ?? '' ),
 				'slug'        => (string) ( $assoc['slug'] ?? '' ),
-				'category_id' => $this->int_arg( $assoc, 'category', 0 ),
+				'category_id' => $this->int_arg( $assoc, 'category', 0, 0 ),
 				'description' => (string) ( $assoc['description'] ?? '' ),
 				'type'        => (string) ( $assoc['type'] ?? 'forum' ),
 				'visibility'  => (string) ( $assoc['visibility'] ?? 'public' ),
@@ -155,7 +155,7 @@ final class Space_Command extends Base_Command {
 	 *     wp jetonomy space update 5 --visibility=private
 	 */
 	public function update( $args, $assoc ): void {
-		$id      = $this->int_arg( $args, 0, 0 );
+		$id      = $this->int_arg( $args, 0, 0, 1 );
 		$changes = array();
 		foreach ( array( 'title', 'description', 'type', 'visibility', 'status' ) as $key ) {
 			if ( isset( $assoc[ $key ] ) ) {
@@ -208,7 +208,7 @@ final class Space_Command extends Base_Command {
 	 *     wp jetonomy space delete 5 --mode=purge
 	 */
 	public function delete( $args, $assoc ): void {
-		$id   = $this->int_arg( $args, 0, 0 );
+		$id   = $this->int_arg( $args, 0, 0, 1 );
 		$mode = (string) ( $assoc['mode'] ?? 'transfer' );
 
 		// Destroying other members' content deserves a prompt, and --yes is the
@@ -246,7 +246,7 @@ final class Space_Command extends Base_Command {
 	 *     wp jetonomy space get 5 --format=json
 	 */
 	public function get( $args, $assoc ): void {
-		$id     = $this->int_arg( $args, 0, 0 );
+		$id     = $this->int_arg( $args, 0, 0, 1 );
 		$result = ( new Space_Journey() )->get( $id );
 		$this->render( $result, $assoc );
 	}
@@ -283,7 +283,7 @@ final class Space_Command extends Base_Command {
 	 * @subcommand set-join-policy
 	 */
 	public function set_join_policy( $args, $assoc ): void {
-		$id     = $this->int_arg( $args, 0, 0 );
+		$id     = $this->int_arg( $args, 0, 0, 1 );
 		$policy = (string) ( $assoc['policy'] ?? '' );
 		$result = ( new Space_Journey() )->set_join_policy( $id, $policy );
 		$this->render( $result, $assoc );
@@ -321,7 +321,7 @@ final class Space_Command extends Base_Command {
 	 * @subcommand set-visibility
 	 */
 	public function set_visibility( $args, $assoc ): void {
-		$id         = $this->int_arg( $args, 0, 0 );
+		$id         = $this->int_arg( $args, 0, 0, 1 );
 		$visibility = (string) ( $assoc['visibility'] ?? '' );
 		$result     = ( new Space_Journey() )->set_visibility( $id, $visibility );
 		$this->render( $result, $assoc );
@@ -356,7 +356,7 @@ final class Space_Command extends Base_Command {
 	 *     wp jetonomy space list --category=1 --format=json
 	 */
 	public function list( $args, $assoc ): void {
-		$category_id = $this->int_arg( $assoc, 'category', 0 );
+		$category_id = $this->int_arg( $assoc, 'category', 0, 0 );
 		$result      = ( new Space_Journey() )->list_by_category( $category_id );
 		$this->render_list( $result, $assoc );
 	}

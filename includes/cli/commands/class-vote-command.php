@@ -65,10 +65,10 @@ final class Vote_Command extends Base_Command {
 	 */
 	public function cast( $args, $assoc ): void {
 		$result = ( new Content_Journey() )->vote(
-			$this->int_arg( $assoc, 'voter', 0 ),
+			$this->int_arg( $assoc, 'voter', 0, 0 ),
 			(string) ( $assoc['type'] ?? '' ),
-			$this->int_arg( $assoc, 'id', 0 ),
-			$this->int_arg( $assoc, 'value', 0 )
+			$this->int_arg( $assoc, 'id', 0, 0 ),
+			$this->int_arg( $assoc, 'value', 0, null )
 		);
 		$this->render( $result, $assoc );
 	}
