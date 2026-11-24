@@ -27,6 +27,11 @@ class DraftsScheduledAndWidgetPeriodTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'Scheduled: December 1, 2026 2:30 pm', $html );
 	}
 
+	/**
+	 * Negative control: pins behaviour that already worked, so it passes before and after the change.
+	 *
+	 * @covers-existing
+	 */
 	public function test_plain_draft_and_published_topic_show_no_schedule(): void {
 		$this->assertStringNotContainsString( 'Scheduled:', $this->badges( (object) array( 'id' => 2, 'status' => 'draft', 'published_at' => null ) ) );
 		$this->assertStringNotContainsString( 'Scheduled:', $this->badges( (object) array( 'id' => 3, 'status' => 'publish', 'published_at' => '2026-12-01 09:00:00' ) ) );

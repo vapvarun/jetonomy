@@ -21,6 +21,11 @@ class CodePlaceholderTest extends WP_UnitTestCase {
 		$this->assertSame( '<p>a b</p>', jetonomy_sanitize_editor_content( $html ) );
 	}
 
+	/**
+	 * Negative control: pins behaviour that already worked, so it passes before and after the change.
+	 *
+	 * @covers-existing
+	 */
 	public function test_content_without_a_placeholder_is_unchanged(): void {
 		$html = '<p>Run <code>npm install</code> first.</p>';
 		$this->assertSame( wp_kses_post( $html ), jetonomy_sanitize_editor_content( $html ) );

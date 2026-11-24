@@ -54,6 +54,11 @@ class TrustEvaluatorTest extends WP_UnitTestCase {
 		$this->assertEquals( 1, $level );
 	}
 
+	/**
+	 * Negative control: pins behaviour that already worked, so it passes before and after the change.
+	 *
+	 * @covers-existing
+	 */
 	public function test_an_owner_set_replies_received_threshold_is_enforced(): void {
 		$this->set_thresholds( [ 1 => [ 'posts' => 5, 'days_active' => 3, 'reputation' => 0, 'replies_received' => 10 ] ] );
 		$stats = [ 'post_count' => 5, 'days_active' => 3, 'reputation' => 0, 'replies_received' => 9 ];
@@ -78,6 +83,11 @@ class TrustEvaluatorTest extends WP_UnitTestCase {
 		$this->assertEquals( 2, Trust_Evaluator::evaluate_level( $stats ) );
 	}
 
+	/**
+	 * Negative control: pins behaviour that already worked, so it passes before and after the change.
+	 *
+	 * @covers-existing
+	 */
 	public function test_a_threshold_left_at_zero_is_not_checked(): void {
 		$this->set_thresholds( [ 1 => [ 'posts' => 0, 'days_active' => 0, 'reputation' => 0, 'replies_received' => 0 ] ] );
 		$this->assertEquals( 1, Trust_Evaluator::evaluate_level( [] ) );

@@ -64,10 +64,20 @@ class TrustSweepTest extends WP_UnitTestCase {
 		$this->assertSame( 1, $this->level_after_sweep( $this->member( 2, 3 ) ) );
 	}
 
+	/**
+	 * Negative control: pins behaviour that already worked, so it passes before and after the change.
+	 *
+	 * @covers-existing
+	 */
 	public function test_four_contributions_are_not_enough(): void {
 		$this->assertSame( 0, $this->level_after_sweep( $this->member( 2, 2 ) ) );
 	}
 
+	/**
+	 * Negative control: pins behaviour that already worked, so it passes before and after the change.
+	 *
+	 * @covers-existing
+	 */
 	public function test_the_sweep_never_lowers_a_level(): void {
 		// Level 2 set by hand for a member with no activity at all.
 		$this->assertSame( 2, $this->level_after_sweep( $this->member( 0, 0, 2 ) ) );
