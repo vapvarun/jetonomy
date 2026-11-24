@@ -1336,7 +1336,11 @@
   /* The open panel is a nested group: an accent rule and its own heading keep its spaces apart from the parent's grid below. */
   .jt-cat-sub-panel { margin-top: var(--jt-space-3); padding-inline-start: var(--jt-space-3); border-inline-start: 2px solid var(--jt-accent-ink); }
   .jt-app .jt-cat-sub-title { margin: 0 0 var(--jt-space-2); line-height: 1.35; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
-  .jt-cat-subs + * { margin-top: var(--jt-space-3); }
+  /* Whatever follows the sub-category block gets 16px, the step the heading row above it already uses. The category's own
+     space grid needs the second rule: `.jt-app .jt-space-grid { margin: 0 }` is heavier than the first, so it had cancelled
+     it and left the grid touching the chips (and sitting 12px under an open panel). */
+  .jt-cat-subs + * { margin-top: var(--jt-space-4); }
+  .jt-app .jt-cat-subs + .jt-space-grid { margin-top: var(--jt-space-4); }
   @media (prefers-reduced-motion: reduce) { .jt-app .jt-cat-chip-toggle svg { transition: none; } }
   /* No padding, and the host theme's paragraph margin zeroed: an empty
      category used to start its text 20px under the heading (8px padding + the
