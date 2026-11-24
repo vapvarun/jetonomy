@@ -2468,6 +2468,8 @@
   /* ── Draft / scheduled badges on profile ── */
   .jt-badge--draft { background: var(--jt-warn-light); color: var(--jt-warn-strong); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-block; margin-right: 8px; vertical-align: middle; }
   .jt-badge--scheduled { background: var(--jt-accent-light); color: var(--jt-accent-strong); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-block; margin-right: 8px; vertical-align: middle; }
+  /* Leading badge on a topic row (My drafts): gap after it, not before. */
+  .jt-row-title-link .jt-badge--scheduled { margin-inline: 0 6px; }
   .jt-row--draft { opacity: 0.9; }
 
   @media (max-width: 640px) {
