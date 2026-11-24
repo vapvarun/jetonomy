@@ -306,7 +306,7 @@ Space cards with Follow, a sidebar you arrange, a phone bottom bar, and a contra
 * Fix      - A very large page number in an address no longer breaks community pages, admin lists or the media library.
 * Fix      - No restriction or other row is stored for a space that does not exist.
 * Fix      - The moderation pages answer 403 to a member who cannot moderate, on every theme.
-* Fix      - Voting twice at the same moment counts once instead of showing a database error.
+* Fix      - Voting or reporting twice at the same moment counts once, with one reputation change and one notice, and the arrows show the vote you really have.
 * Fix      - Unfollowing your own topic stops its reply notices.
 * Fix      - Follow buttons ignore repeat clicks while a request is running.
 * Fix      - The report dialog closes on a duplicate report and keeps focus inside when a submit fails.
@@ -315,9 +315,17 @@ Space cards with Follow, a sidebar you arrange, a phone bottom bar, and a contra
 * Fix      - Register on the login card follows a registration plugin that redirects wp-login.php.
 * Fix      - With BuddyNext active, staff see a hidden member's online dot on Jetonomy pages, as they do on BuddyNext's own.
 * Fix      - A Jetonomy table dropped after an update is re-created within a day.
+* Fix      - Asking to join an approval space twice at the same moment tells the space admins once, and blocking someone twice announces the block once.
+* Fix      - A blank accent colour no longer makes emails white on white or leaves the app without an accent; the default accent is used.
+* Fix      - The wp jetonomy flags --model=false, --force=false, --dry-run=false and --report=false are read as false; --model=false no longer starts the full reset.
+* Fix      - The Me menu in the phone bottom bar scrolls on a short screen instead of running off the top.
+* Fix      - Space RSS feed dates are in UTC, so feeds are correct on sites outside UTC.
+* Fix      - A change to a space that a plugin refuses is reported as refused by the CLI and the access rule, not as done.
 * Dev      - Every REST response for a missing space now uses the error code jetonomy_space_not_found (was jetonomy_not_found or space_not_found); update any client that matched the old codes.
 * Dev      - New jetonomy_loaded action fires once when Jetonomy has finished booting, with the main plugin object.
 * Dev      - New jetonomy_held_item_notes filter and jetonomy_space_members_purged action.
+* Dev      - New jetonomy_before_update_space filter lets a plugin that owns a space's visibility, join policy or status refuse a change from any entry point.
+* Dev      - Times Jetonomy shows go through display_timezone() and date_label(); the jetonomy_display_timezone filter shows each member their own timezone.
 * Dev      - \Jetonomy\Queue is the one scheduler for Jetonomy and Jetonomy Pro, and recurring jobs register through the jetonomy_recurring_jobs filter.
 * Dev      - Settings are written through \Jetonomy\Settings, so the settings form, the REST settings route and wp jetonomy config set share one sanitizer.
 * Dev      - WP-CLI refuses bad numbers and flags, and every whole-number argument states its minimum.
