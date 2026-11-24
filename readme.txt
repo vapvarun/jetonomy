@@ -321,6 +321,7 @@ Space cards with Follow, a sidebar you arrange, a phone bottom bar, and a contra
 * Fix      - The Me menu in the phone bottom bar scrolls on a short screen instead of running off the top.
 * Fix      - Space RSS feed dates are in UTC, so feeds are correct on sites outside UTC.
 * Fix      - A change to a space that a plugin refuses is reported as refused by the CLI and the access rule, not as done.
+* Fix      - Import history shows times in UTC; entries saved before this update show shifted by the site timezone until the next import.
 * Dev      - Every REST response for a missing space now uses the error code jetonomy_space_not_found (was jetonomy_not_found or space_not_found); update any client that matched the old codes.
 * Dev      - New jetonomy_loaded action fires once when Jetonomy has finished booting, with the main plugin object.
 * Dev      - New jetonomy_held_item_notes filter and jetonomy_space_members_purged action.
