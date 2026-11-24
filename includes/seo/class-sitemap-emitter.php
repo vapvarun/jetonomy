@@ -39,14 +39,23 @@ class Sitemap_Emitter {
 	private const TYPES = array( 'spaces', 'posts' );
 
 	/**
+	 * Whether the community sitemap is served at all: the SEO toggle is on AND the community is public.
+	 * A private community lists nothing to a crawler, the same rule the space RSS feed follows, so the
+	 * sitemap and the robots.txt line that advertises it both ask here.
+	 */
+	public static function enabled(): bool {
+		$seo = seo_settings();
+		return ! empty( $seo['seo_sitemap'] ) && 'public' === \Jetonomy\Visibility::get_mode();
+	}
+
+	/**
 	 * Entry point from the router. Emits XML and exits.
 	 *
 	 * @param string $type Child type ('spaces'|'posts') or '' for the index.
 	 * @param int    $page 1-based child page ( >0 for a child ).
 	 */
 	public static function render( string $type, int $page ): void {
-		$seo = seo_settings();
-		if ( empty( $seo['seo_sitemap'] ) ) {
+		if ( ! self::enabled() ) {
 			status_header( 404 );
 			exit;
 		}

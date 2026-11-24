@@ -81,13 +81,16 @@ class Content_Handler {
 		$data = array();
 		if ( isset( $_POST['title'] ) ) {
 			$data['title'] = sanitize_text_field( wp_unslash( $_POST['title'] ) );
-			$title_error   = Post::title_length_error( $data['title'] );
+			$title_error   = Post::title_update_error( $data['title'] );
 			if ( $title_error ) {
 				wp_send_json_error( $title_error->get_error_message(), 400 );
 			}
 		}
 		if ( isset( $_POST['content'] ) ) {
-			$data['content']       = wp_kses_post( wp_unslash( $_POST['content'] ) );
+			$data['content'] = wp_kses_post( wp_unslash( $_POST['content'] ) );
+			if ( \jetonomy_content_is_blank( $data['content'] ) ) {
+				wp_send_json_error( __( 'The content cannot be empty.', 'jetonomy' ), 400 );
+			}
 			$data['content_plain'] = \jetonomy_content_to_plain( $data['content'] );
 		}
 		if ( isset( $_POST['status'] ) ) {
@@ -157,7 +160,10 @@ class Content_Handler {
 
 		$data = array();
 		if ( isset( $_POST['content'] ) ) {
-			$data['content']       = wp_kses_post( wp_unslash( $_POST['content'] ) );
+			$data['content'] = wp_kses_post( wp_unslash( $_POST['content'] ) );
+			if ( \jetonomy_content_is_blank( $data['content'] ) ) {
+				wp_send_json_error( __( 'The content cannot be empty.', 'jetonomy' ), 400 );
+			}
 			$data['content_plain'] = \jetonomy_content_to_plain( $data['content'] );
 		}
 		if ( isset( $_POST['status'] ) ) {

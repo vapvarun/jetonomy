@@ -59,7 +59,7 @@ class Vote extends Model {
 		do_action( 'jetonomy_after_vote', $object_type, $object_id, $user_id, 'removed' === $result['action'] ? 0 : $value );
 
 		$object = 'post' === $object_type ? Post::find( $object_id ) : Reply::find( $object_id );
-		self::adjust_reputation( $object_type, $value, $result, (int) ( $object->author_id ?? 0 ), $object_id );
+		self::adjust_reputation( $object_type, $value, $result, (int) ( $object->author_id ?? 0 ), $object_id, $user_id );
 
 		return $result;
 	}
@@ -125,6 +125,10 @@ class Vote extends Model {
 
 		try {
 			if ( ! $existing ) {
+				// Two parallel requests from one member (two tabs, the app and the web) both found no row and both
+				// insert; the unique key lets one through. The duplicate is expected, so it is not logged as a database
+				// error, and the loser answers as the winner did: the vote is recorded.
+				$errors = static::db()->suppress_errors( true );
 				$result = static::insert(
 					array(
 						'user_id'     => $user_id,
@@ -134,10 +138,18 @@ class Vote extends Model {
 						'created_at'  => now(),
 					)
 				);
+				static::db()->suppress_errors( $errors );
 				if ( false === $result ) {
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 					}
+					if ( false !== stripos( (string) static::db()->last_error, 'duplicate entry' ) ) {
+						return array(
+							'action'    => 'created',
+							'old_value' => null,
+						);
+					}
+					error_log( 'Jetonomy: vote insert failed: ' . static::db()->last_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- a real failure must stay visible.
 					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to record vote.', 'jetonomy' ), array( 'status' => 500 ) );
 				}
 				static::update_target_score( $object_type, $object_id );
@@ -528,14 +540,16 @@ class Vote extends Model {
 	 * @param array  $result    The result from Vote::cast().
 	 * @param int    $author_id The object author's user ID.
 	 * @param int    $object_id The voted post or reply, logged as the source of the change.
+	 * @param int    $voter_id  Who voted. Carried in the context so a listener can tell one voter's award from another's.
 	 */
-	private static function adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id ): void {
+	private static function adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id, int $voter_id ): void {
 		if ( ! $author_id ) {
 			return;
 		}
 		$source = array(
 			'object_type' => $type,
 			'object_id'   => $object_id,
+			'voter_id'    => $voter_id,
 		);
 		// Removing a vote takes back its award; changing direction takes back the old one.
 		$taken_back = array(

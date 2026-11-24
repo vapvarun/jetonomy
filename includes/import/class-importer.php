@@ -24,6 +24,16 @@ abstract class Importer {
 	public array $id_map    = array();
 	protected array $errors = array();
 	protected int $imported = 0;
+
+	/**
+	 * Topic and reply ids created since take_created() was last called.
+	 *
+	 * @var array{topic: int[], reply: int[]}
+	 */
+	protected array $created = array(
+		'topic' => array(),
+		'reply' => array(),
+	);
 	protected int $skipped  = 0;
 
 	/**
@@ -379,7 +389,29 @@ abstract class Importer {
 	protected function remember( string $type, $source_id, int $object_id ): void {
 		if ( '' !== $this->map_source() && ! $this->dry_run ) {
 			Import_Map::record( $this->map_source(), $type, $source_id, $object_id );
+			if ( 'post' === $type || 'reply' === $type ) {
+				$this->created[ 'post' === $type ? 'topic' : 'reply' ][] = $object_id;
+			}
 		}
+	}
+
+	/**
+	 * Topics and replies this importer created since the last call, then forget them.
+	 *
+	 * Only rows created now: one an earlier run mapped is skipped before remember(), so a re-run
+	 * returns nothing.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @return array{topic: int[], reply: int[]}
+	 */
+	public function take_created(): array {
+		$created       = $this->created;
+		$this->created = array(
+			'topic' => array(),
+			'reply' => array(),
+		);
+		return $created;
 	}
 
 	/**
@@ -489,6 +521,10 @@ abstract class Importer {
 		$thread  = (int) ( $tally['rethreaded'] ?? 0 );
 		$orphans = (array) ( $tally['orphans'] ?? array() );
 
+		// A re-run that found everything already brought over says so first, instead of reading as "imported 0".
+		if ( isset( $tally['imported'] ) && 0 === (int) $tally['imported'] && $already > 0 && 0 === $thread && ! array_filter( $orphans ) ) {
+			$lines[] = __( 'Nothing new to import: everything from this source was already brought over.', 'jetonomy' );
+		}
 		if ( $already > 0 ) {
 			/* translators: %s: number of items a previous import already brought over. */
 			$lines[] = sprintf( _n( '%s item was already imported and was skipped.', '%s items were already imported and were skipped.', $already, 'jetonomy' ), number_format_i18n( $already ) );

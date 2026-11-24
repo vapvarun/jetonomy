@@ -143,7 +143,7 @@ Once you have content, here is what your members will see.
 
 ### Community Home (`/community/`)
 
-The home page lists all categories with their spaces. Each space card shows the post count, member count, and a recent activity indicator. Badges on the card show the space type and whether it is private or hidden. For a space you belong to, a badge shows your own role there (Member, Moderator or Admin) instead of how others join. Members can sort by activity or browse by category.
+The home page lists all categories with their spaces. Each space card shows the post count, member count, and a recent activity indicator. Signed-in members can follow a space straight from its card with the bell button beside the title, and a space with a cover image shows it as a strip across the top of the card. Badges on the card show the space type and whether it is private or hidden. For a space you belong to, a badge shows your own role there (Member, Moderator or Admin) instead of how others join. Members can sort by activity or browse by category.
 
 ### Space Listing (`/community/s/space-slug/`)
 

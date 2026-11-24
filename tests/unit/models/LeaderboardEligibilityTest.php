@@ -70,4 +70,34 @@ class LeaderboardEligibilityTest extends WP_UnitTestCase {
 		\Jetonomy\Cache::delete( 'lb:sc:all:10' );
 		$this->assertStringContainsString( 'jt-shortcode-empty', do_shortcode( '[jetonomy_leaderboard count="10"]' ) );
 	}
+
+	/**
+	 * QA J37: ties break newest-member-first (user_id DESC) so the reputation_user
+	 * index serves the sort; tied members still share one rank, and the order is a
+	 * strict total order, so pages never overlap.
+	 */
+	public function test_ties_order_by_user_id_desc_and_use_the_index(): void {
+		$a = $this->member_with_rep( 20 );
+		$b = $this->member_with_rep( 20 );
+		$c = $this->member_with_rep( 20 );
+
+		$ids = array_map( 'intval', wp_list_pluck( UserProfile::list_for_leaderboard( 'all', 50, 0 ), 'user_id' ) );
+		$this->assertSame( array( $this->top, $c, $b, $a, $this->low ), $ids );
+
+		$page1 = array_map( 'intval', wp_list_pluck( UserProfile::list_for_leaderboard( 'all', 2, 0 ), 'user_id' ) );
+		$page2 = array_map( 'intval', wp_list_pluck( UserProfile::list_for_leaderboard( 'all', 2, 2 ), 'user_id' ) );
+		$this->assertSame( array( $this->top, $c ), $page1 );
+		$this->assertSame( array( $b, $a ), $page2, 'a tie straddling the page boundary neither repeats nor drops a member' );
+		$this->assertSame( array( 2, 2, 2 ), array_map( static fn( $u ) => UserProfile::rank_for_user( $u, 'all' ), array( $a, $b, $c ) ) );
+
+		// Rendered: the shortcode board lists the tied members newest first.
+		$html = do_shortcode( '[jetonomy_leaderboard limit="5"]' );
+		$pos  = array_map( static fn( $u ) => strpos( $html, (string) get_userdata( $u )->display_name ), array( $c, $b, $a ) );
+		$this->assertNotContains( false, $pos, 'every tied member is on the rendered board' );
+		$sorted = $pos;
+		sort( $sorted );
+		$this->assertSame( $sorted, $pos, 'rendered order is newest first among ties' );
+
+		$this->assertSame( "'reputation DESC, user_id DESC'", var_export( ( new \ReflectionParameter( array( UserProfile::class, 'list_for_leaderboard' ), 'order_by' ) )->getDefaultValue(), true ), 'both halves DESC, so no mixed-direction filesort' );
+	}
 }

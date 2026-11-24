@@ -92,6 +92,26 @@ A second implementation of any of these is a defect, even if it works.
   run fails if the row count of any jt_ table, or the admin's rows in plugins
   that listen to our hooks, differs afterwards.
 - Dev-only code (the `includes/qa` harness) is excluded from the release zip.
+- Free never fatals on a host missing an optional PHP extension. Every call
+  into mbstring (beyond WordPress's polyfilled mb_strlen, mb_substr and
+  mb_str_split), ctype, fileinfo, SimpleXML/libxml/dom, iconv or zip has a
+  `function_exists()` / `class_exists()` / `extension_loaded()` guard for
+  that extension in the same function body, within 12 lines before the use,
+  and a `finfo_*` call on a handle checks the handle for false first. Prefer
+  `\Jetonomy\lower()` and `\Jetonomy\is_digits()` over a guarded call.
+  Without mbstring `lower()` falls back to `strtolower()`, which is ASCII-only:
+  a lower-case non-ASCII query ("élite") then does not match "Élite". That is
+  the known fallback, not a bug.
+- `bin/check-never-fatal.php` (Free's `bin/local-ci.sh` runs it on Free; Pro's
+  `bin/local-ci.sh` runs Free's copy on Pro, `php ../jetonomy/bin/check-never-fatal.php "$PWD"`,
+  so Pro keeps no copy and needs Free checked out beside it) enforces
+  this through the family gate `bin/lib/extension-guard-check.php` (an
+  identical copy of MediaVerse's; change the canonical file and copy it into
+  each plugin) after its self-test, and fails on any `setAccessible(` in
+  includes/ or tests/. The gate cannot see calls through a variable or a
+  string, group-use aliases, or a guard in a nested `if` that closed before
+  the use. It does not scan libs/, vendor/, bin/, tools/, tests/, build/ or
+  dist/.
 
 ## 7. Suppressions are a budget
 

@@ -119,11 +119,12 @@ class Users_Controller extends Base_Controller {
 						'required'          => true,
 						'sanitize_callback' => 'sanitize_text_field',
 					),
+					// No absint: core sanitizes before it validates, so -1 became space 1.
 					'space_id' => array(
-						'type'              => 'integer',
-						'required'          => false,
-						'default'           => 0,
-						'sanitize_callback' => 'absint',
+						'type'     => 'integer',
+						'required' => false,
+						'default'  => 0,
+						'minimum'  => 0,
 					),
 				),
 			)
@@ -364,6 +365,7 @@ class Users_Controller extends Base_Controller {
 					'spaces_joined_count'  => $spaces_count,
 					'settings'             => UserProfile::get_settings( $user_id ),
 					'email_opt_out'        => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
+					'show_online'          => ! UserProfile::hides_online( $user_id ),
 					// What this member may actually do. A headless client cannot
 					// call user_can(), so without this the app has no way to know
 					// an administrator IS an administrator — every moderation and
@@ -620,6 +622,17 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
+		// "Show when I'm online". Stored as the hide flag so the default (no key) means visible. Only on sites without
+		// BuddyNext, which owns presence settings; flushing the cached verdict makes the change show at once.
+		if ( null !== $request->get_param( 'show_online' ) && UserProfile::online_choice_available() ) {
+			if ( $request->get_param( 'show_online' ) ) {
+				delete_user_meta( $user_id, 'jetonomy_hide_online' );
+			} else {
+				update_user_meta( $user_id, 'jetonomy_hide_online', 1 );
+			}
+			\Jetonomy\Cache::delete( 'online_' . $user_id );
+		}
+
 		foreach ( $name_parts as $meta_key => $value ) {
 			update_user_meta( $user_id, $meta_key, $value );
 		}
@@ -653,6 +666,7 @@ class Users_Controller extends Base_Controller {
 					'trust_level_label' => Trust_Levels::label( (int) ( $profile->trust_level ?? 0 ) ),
 					'settings'          => UserProfile::get_settings( $user_id ),
 					'email_opt_out'     => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
+					'show_online'       => ! UserProfile::hides_online( $user_id ),
 				)
 			),
 			200
@@ -1045,6 +1059,10 @@ class Users_Controller extends Base_Controller {
 				// javascript:/data: into '' (= clear). The handler validates the raw input.
 			),
 			'email_opt_out' => array(
+				'type'     => 'boolean',
+				'required' => false,
+			),
+			'show_online'   => array(
 				'type'     => 'boolean',
 				'required' => false,
 			),

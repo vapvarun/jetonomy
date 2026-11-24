@@ -166,9 +166,22 @@ class Theme_Integration {
 		// specificity. $dark is legitimately EMPTY on BuddyX Free (no dark mode) or for any mod
 		// the owner left unset, so a light `.jt-app` block with no dark counterpart would pin
 		// the app light on a dark page - the bug this bridge exists to prevent.
+		// The server knows this accent, so the label pair is a concrete hex too:
+		// legible in browsers without relative colour syntax, where the CSS
+		// guard falls back to white.
+		$with_fg = static fn( array $map ): array => isset( $map['--jt-accent'] )
+			? $map + \Jetonomy\Template_Loader::accent_fg_tokens( $map['--jt-accent'], $map['--jt-accent-hover'] ?? null )
+			: $map;
+		$light   = $with_fg( $light );
+		$dark    = $with_fg( $dark );
+
 		$css = '';
 		if ( ! empty( $light ) ) {
 			$css .= ':root{' . $this->build_token_css( $light ) . '}';
+			$ink  = isset( $light['--jt-accent'] ) ? \Jetonomy\Template_Loader::accent_ink_tokens( $light['--jt-accent'], $light['--jt-accent-hover'] ?? null ) : array();
+			if ( ! empty( $ink ) ) {
+				$css .= \Jetonomy\Template_Loader::LIGHT_ROOT . '{' . $this->build_token_css( $ink ) . '}';
+			}
 		}
 		if ( ! empty( $dark ) ) {
 			$css .= '.jt-dark,[data-theme="dark"]{' . $this->build_token_css( $dark ) . '}';
@@ -198,9 +211,7 @@ class Theme_Integration {
 			return;
 		}
 
-		$template = get_template();
-		if ( 'reign-theme' !== $template
-			&& ! in_array( $template, array( 'buddyx', 'buddyx-pro' ), true ) ) {
+		if ( '' === self::theme_family() ) {
 			return;
 		}
 
@@ -220,19 +231,42 @@ class Theme_Integration {
 	 * @return array<string,string> Token name => hex color (with leading `#`).
 	 */
 	private function resolve_token_map( $dark ) {
-		$template = get_template();
-
 		// Reign 8.0.0+ keeps --wp--preset--color--* in sync with its own
 		// --reign-* token system in BOTH light and dark, so Jetonomy's base
 		// --jt-accent chain (var(--bx-color-accent, var(--brand,
 		// var(--wp--preset--color--primary)))) already adopts the correct Reign
 		// brand per mode. The legacy reign_dark-* color mod is not read: it produced a stale,
 		// off-brand dark accent (e.g. #10b981) that overrode the chain - defer to the chain.
-		if ( in_array( $template, array( 'buddyx', 'buddyx-pro' ), true ) ) {
+		if ( in_array( self::theme_family(), array( 'buddyx', 'buddyx-pro' ), true ) ) {
 			return $this->buddyx_token_map( (bool) $dark );
 		}
 
 		return array();
+	}
+
+	/**
+	 * Which Wbcom theme is active: 'reign', 'buddyx-pro', 'buddyx', or '' for any other theme.
+	 *
+	 * Folder names vary: the official zip unpacks to reign-theme, many installs use reign, a versioned zip gives
+	 * reign-theme-8.1.1, and customers rename. So a slug matches when it IS the family name or starts with it plus
+	 * a hyphen ("reign", "reign-theme", "reign-child"), never a bare prefix ("reignite" is not Reign). The parent
+	 * (get_template()) is checked first, then the active stylesheet, so a renamed parent with a child named
+	 * after the family is still found. The old "reign-theme" prefix missed every plain "reign" folder, so on
+	 * Reign 7.9 and older the dark-mode mirror never loaded and Jetonomy stayed light under the theme's dark page.
+	 *
+	 * @return string
+	 */
+	public static function theme_family(): string {
+		foreach ( array( get_template(), get_stylesheet() ) as $slug ) {
+			$slug = strtolower( (string) $slug );
+			// buddyx-pro before buddyx: "buddyx-pro" also starts with "buddyx-".
+			foreach ( array( 'reign', 'buddyx-pro', 'buddyx' ) as $family ) {
+				if ( $family === $slug || 0 === strpos( $slug, $family . '-' ) ) {
+					return $family;
+				}
+			}
+		}
+		return '';
 	}
 
 	/**
@@ -245,7 +279,7 @@ class Theme_Integration {
 	 * @return array<string,string>
 	 */
 	private function buddyx_token_map( $dark ) {
-		if ( $dark && 'buddyx-pro' !== get_template() ) {
+		if ( $dark && 'buddyx-pro' !== self::theme_family() ) {
 			return array();
 		}
 

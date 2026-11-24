@@ -242,9 +242,18 @@
      [data-theme="dark"] sit on <body>/<html>, never on a nested surface. */
   :root,
   .jt-dark,
-  [data-theme="dark"] {
+  [data-theme="dark"],
+  [data-bx-mode="dark"] {
     --jt-accent-hover: #2563EB;
     --jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
+    /* The accent used AS a line or as text on the page (links, outlines,
+       hover borders, focus ring), never as a fill. The accent itself in
+       light; dark lifts it (below) so a dark accent stays visible on a dark
+       page. Fills keep --jt-accent / --jt-accent-hover. */
+    --jt-accent-ink: var(--jt-accent);
+    --jt-accent-ink-hover: var(--jt-accent-hover);
+    /* Keyboard focus ring. */
+    --jt-focus-ring: var(--jt-accent-ink);
     --jt-accent-light: #EFF6FF;
     --jt-accent-light: color-mix(in srgb, var(--jt-accent) 10%, white);
     --jt-accent-muted: #DBEAFE;
@@ -262,8 +271,13 @@
     --jt-border: rgba(0,0,0,0.1);
     --jt-border: color-mix(in srgb, var(--jt-text) 10%, transparent);
     --jt-border: var(--bx-color-border, color-mix(in srgb, var(--jt-text) 10%, transparent));
-    --jt-border-strong: rgba(0,0,0,0.18);
-    --jt-border-strong: color-mix(in srgb, var(--jt-text) 18%, transparent);
+    /* Control outline (inputs, ghost buttons, the editor, toggles): 3:1 against
+       the page and card in light and dark (WCAG 1.4.11). 50% of the text
+       colour is the fallback; the relative-colour guards below hold 3:1 for
+       any host text colour (50% of Reign's #404855 was 2.5:1). --jt-border
+       stays subtle for cards and dividers. */
+    --jt-border-strong: rgba(0,0,0,0.5);
+    --jt-border-strong: color-mix(in srgb, var(--jt-text) 50%, transparent);
     --jt-success-strong: #15803d;
     --jt-success-strong: color-mix(in srgb, var(--jt-success) 60%, black);
     --jt-warn-strong: #795302;
@@ -271,7 +285,8 @@
     --jt-danger-strong: #991b1b;
     --jt-danger-strong: color-mix(in srgb, var(--jt-danger) 60%, black);
     --jt-accent-strong: #1e40af;
-    --jt-accent-strong: color-mix(in srgb, var(--jt-accent) 60%, black);
+    /* From the ink, so a light accent's strong shade is dark enough for text. */
+    --jt-accent-strong: color-mix(in srgb, var(--jt-accent-ink) 60%, black);
     --jt-surface: var(--surface, var(--jt-bg));
     --jt-canvas: var(--canvas, color-mix(in srgb, var(--jt-text) 2%, var(--jt-bg)));
     --jt-warn-border: #ffe082;
@@ -280,26 +295,68 @@
 
   /* Derive readable text on the adopted accent. Split from the block above
      because relative colour syntax must be feature-gated: engines without it
-     would drop the declaration and fall back to --jt-white, which is exactly
-     the current (broken-on-light-accents) behaviour - never worse.
+     would drop the declaration and fall back to --jt-white.
 
-     The threshold is 0.7, not the mathematical crossover. White and black reach
-     equal WCAG contrast at roughly L 0.62, so a "pick whichever scores higher"
-     rule flips to black for ordinary brand colours - #1d76da, a plain blue,
-     computes to L 0.57065 and lost the old 0.57 comparison by 0.00065, painting
-     black text on a blue button. Both choices technically pass there; only one
-     of them looks like a working button. 0.7 keeps white on every normal brand
-     blue, green, purple and red, and hands black to the colours that genuinely
-     need it - yellows, ambers and pastels, which sit above 0.75. */
-  @supports (color: oklch(from red l c h)) {
+     The label is white while white reaches 4.5:1 on the fill, else black. In
+     linear sRGB the fill's relative luminance is 0.2126 r + 0.7152 g +
+     0.0722 b, and white keeps 4.5:1 up to 0.1833; above it black is 4.67:1
+     or more, so the pick never falls under 4.5:1. White is preferred, not
+     the higher of the two, so every brand colour where white already passes
+     keeps it (Reign #1d76da at 4.51:1, #0073aa, BuddyNext #5b67d0). The old
+     OKLCH L < 0.7 rule gave white at 4.29:1 on #1d7cd5 (Twenty Twenty-Five),
+     3.46:1 on #ef5455 (BuddyX) and 3.68:1 on #3b82f6; those now get black.
+     Hover is the accent 15% toward black, so it gets the same rule on its own
+     colour: a fill that rests black can hover white. */
+  @supports (color: color(from red srgb-linear r g b)) {
     :root,
     .jt-dark,
-    [data-theme="dark"] {
-      --jt-accent-fg: oklch(from var(--jt-accent) clamp(0, (0.7 - l) * 1000, 1) 0 h);
-      /* Hover is the accent mixed 85% toward black, i.e. strictly darker, so the
-         black/white choice can flip against it. Derive it from the hover colour
-         rather than reusing --jt-accent-fg and hoping. */
-      --jt-accent-hover-fg: oklch(from var(--jt-accent-hover) clamp(0, (0.7 - l) * 1000, 1) 0 h);
+    [data-theme="dark"],
+    [data-bx-mode="dark"] {
+      --jt-accent-fg: color(from var(--jt-accent) srgb-linear
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1)
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1)
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1));
+      --jt-accent-hover-fg: color(from var(--jt-accent-hover) srgb-linear
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1)
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1)
+        clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1));
+    }
+
+    /* Light mode only (dark reassigns both below). Each colour is scaled in
+       linear sRGB, which keeps its hue and darkens it to an exact luminance:
+       - accent ink (links, accent text, focus ring, active underline): at
+         most 0.17, which is 4.5:1 on white and on the subtle surfaces
+         (#f9fafb, Reign's #fafbfd page) and 3:1 or more as a line. An
+         accent already that dark keeps its exact colour (#0073aa); Reign
+         #1d76da (0.183) is a shade darker as ink and unchanged as a fill; a
+         light accent such as #ffd34d darkens to the same hue.
+       - control outline: 50% of the text colour over the card, then at most
+         0.24, which is 3:1 or more on the card, the page and the muted
+         tints for any host text colour.
+       - secondary and tertiary text: their mix, then at most 0.13, which is
+         4.5:1 on the muted and accent tints (hover backgrounds). Only a light host text colour (#6b7280,
+         a pastel) is darkened; --jt-text itself stays the host's. */
+    :root {
+      --jt-accent-ink: color(from var(--jt-accent) srgb-linear
+        calc(r * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(g * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(b * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
+      --jt-accent-ink-hover: color(from var(--jt-accent-hover) srgb-linear
+        calc(r * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(g * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(b * min(1, 0.17 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
+      --jt-border-strong: color(from color-mix(in srgb, var(--jt-text) 50%, var(--jt-bg)) srgb-linear
+        calc(r * min(1, 0.24 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(g * min(1, 0.24 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(b * min(1, 0.24 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
+      --jt-text-secondary: color(from color-mix(in srgb, var(--jt-text) 92%, var(--jt-bg)) srgb-linear
+        calc(r * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(g * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(b * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
+      --jt-text-tertiary: color(from color-mix(in srgb, var(--jt-text) 88%, var(--jt-bg)) srgb-linear
+        calc(r * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(g * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001)))
+        calc(b * min(1, 0.13 / max(0.2126 * r + 0.7152 * g + 0.0722 * b, 0.001))));
     }
   }
 
@@ -324,7 +381,8 @@
      already supported it while jetonomy.css did not — a theme that signals dark
      only via the attribute got a half-dark plugin. One list, both signals. */
   .jt-dark,
-  [data-theme="dark"] {
+  [data-theme="dark"],
+  [data-bx-mode="dark"] {
     /* Adopt the host theme's DARK palette, the same way light mode adopts
        its light one, so a card reads as a lifted piece of the theme's own
        page and not a neutral near-black dropped onto it (Reign's page is
@@ -364,9 +422,16 @@
     /* Danger text on a dark surface needs a lighter red than the
        light-mode #dc2626 to pass WCAG AA (#dc2626 on #171717 is 3.71:1, fails
        the 4.5 threshold). #ef4444 (Tailwind red-500) lands at 5.33:1 and stays
-       recognisable as red. Used on .jt-more-dropdown__item--danger (Block user),
-       destructive confirm buttons, and any other "danger" foreground in dark. */
-    --jt-danger: #ef4444;
+       recognisable as red on #171717, but only 3.44:1 on Reign's lifted
+       blue-slate card (QA J50). #f87171 (Tailwind red-400) holds 4.5:1 on
+       the page and the card. Used on .jt-more-dropdown__item--danger (Block
+       user), "Ban from space", required-field asterisks, the Danger zone
+       title and any other "danger" foreground in dark.
+       The solid fill (white text on red) is re-derived darker here, 70% toward
+       black instead of 85%, so white text on it stays above 4.5:1. */
+    --jt-danger: #f87171;
+    --jt-danger-solid: #ae4f4f;
+    --jt-danger-solid: color-mix(in srgb, var(--jt-danger) 70%, black);
     /* Accent tints must invert in dark mode: the default light-mode
        recipe mixes accent with white, producing a near-white/mint wash
        (--jt-accent-muted ≈ #DBEAFE). On a dark panel that lands as a
@@ -382,5 +447,31 @@
     --jt-success-strong: color-mix(in srgb, var(--jt-success) 60%, white);
     --jt-warn-strong: color-mix(in srgb, var(--jt-warn) 60%, white);
     --jt-danger-strong: color-mix(in srgb, var(--jt-danger) 60%, white);
-    --jt-accent-strong: color-mix(in srgb, var(--jt-accent) 60%, white);
+    /* From the lifted ink, not the raw accent: a dark accent mixed 60% toward
+       white read 4.44:1 on a tinted dark card. Same colour for a light accent. */
+    --jt-accent-strong: color-mix(in srgb, var(--jt-accent-ink) 60%, white);
+  }
+
+  /* A dark accent such as the #0073aa default drew the focus ring at 2.72:1
+     and hover text at 2.48:1 on a dark page. In dark, accent lines and accent
+     text lift only their lightness to 0.72 (OKLCH), which clears 3:1 for a
+     line and 4.5:1 for text on any dark surface; an accent that is already
+     light, such as Reign's dark blue, keeps its exact colour. Hover gets the
+     same floor on its own colour, so a dark accent's hover (darker still)
+     cannot fall under it. Browsers without relative colour keep the accent. */
+  @supports (color: oklch(from red l c h)) {
+    .jt-dark,
+    [data-theme="dark"],
+    [data-bx-mode="dark"] {
+      --jt-accent-ink: oklch(from var(--jt-accent) max(l, 0.72) c h);
+      --jt-accent-ink-hover: oklch(from var(--jt-accent-hover) max(l, 0.72) c h);
+      /* The dark control outline gets a lightness floor the same way: 50% of
+         a dim host text colour on a lifted card or a tinted panel fell under
+         3:1 (0.62 measured 2.93 on the notification prompt). */
+      --jt-border-strong: oklch(from color-mix(in srgb, var(--jt-text) 50%, var(--jt-bg)) max(l, 0.68) c h);
+      /* And muted text a floor of 0.76, 4.5:1 on the lifted and accent tints,
+         for a dim host text colour such as #9ca3af. */
+      --jt-text-secondary: oklch(from color-mix(in srgb, var(--jt-text) 86%, var(--jt-bg)) max(l, 0.76) c h);
+      --jt-text-tertiary: oklch(from color-mix(in srgb, var(--jt-text) 76%, var(--jt-bg)) max(l, 0.76) c h);
+    }
   }

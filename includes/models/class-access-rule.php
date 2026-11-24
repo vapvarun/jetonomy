@@ -274,6 +274,33 @@ class AccessRule extends Model {
 	}
 
 	/**
+	 * Fill the list_for_space() memo for several spaces with one query, so a
+	 * grid that checks read access per card does not query rules per card.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param int[] $space_ids Space ids.
+	 */
+	public static function prime_for_spaces( array $space_ids ): void {
+		$ids = array_values( array_filter( array_unique( array_map( 'intval', $space_ids ) ), static fn( int $id ): bool => $id > 0 && ! array_key_exists( $id, self::$memo ) ) );
+		if ( ! $ids ) {
+			return;
+		}
+		self::list_for_space( 0 ); // Registers the memo reset once; space 0 holds no rules.
+		$ph   = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows = static::db()->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			static::db()->prepare( 'SELECT * FROM ' . static::table() . " WHERE space_id IN ({$ph}) ORDER BY priority DESC, id ASC", ...$ids )
+		) ?: array();
+		foreach ( $ids as $id ) {
+			self::$memo[ $id ] = array();
+		}
+		foreach ( $rows as $row ) {
+			self::$memo[ (int) $row->space_id ][] = $row;
+		}
+	}
+
+	/**
 	 * List all access rules for a space, ordered by priority descending.
 	 *
 	 * Memoized per request — see $memo.
@@ -313,7 +340,7 @@ class AccessRule extends Model {
 	 */
 	public static function value_error( string $rule_type, string $rule_value ): ?\WP_Error {
 		$ok = match ( $rule_type ) {
-			'trust_level'               => ctype_digit( $rule_value ) && (int) $rule_value >= 1 && (int) $rule_value <= 5,
+			'trust_level'               => \Jetonomy\is_digits( (string) $rule_value ) && (int) $rule_value >= 1 && (int) $rule_value <= 5,
 			'role'                      => '' !== $rule_value && wp_roles()->is_role( $rule_value ),
 			'capability', 'membership'  => '' !== $rule_value,
 			default                     => true,
@@ -793,7 +820,7 @@ class AccessRule extends Model {
 			'kind'      => $described['kind'],
 			// "Gold (Level)" is noise; "(Course)" / "(Group)" tells two ways in apart.
 			'label'     => '' !== $described['kind'] && ! $purchase
-				/* translators: 1: membership level name, 2: what kind of level it is (e.g. Course, Group). */
+				/* translators: 1: a name (a PHP extension or a membership level). 2: what it limits, or what kind of level it is (e.g. Course, Group). */
 				? sprintf( __( '%1$s (%2$s)', 'jetonomy' ), $described['value'], $described['kind'] )
 				: $described['value'],
 			'url'       => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( $level_id ),

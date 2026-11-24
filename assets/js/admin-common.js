@@ -1028,8 +1028,13 @@
 
 				// remote: rows the server returned for a typed search (adapters whose
 				// preload is capped), so levels past the cap stay selectable.
-				function renderResults(query, remote) {
+				function renderResults(query, remote, failed) {
 					$results.empty();
+					$input.attr('aria-expanded', 'true').removeAttr('aria-activedescendant');
+					// The server search failed: say so, then still offer what is loaded.
+					if (failed) {
+						$results.append($('<div class="jetonomy-ac-empty" role="status"/>').text(__('Could not search the full list. Showing the levels already loaded. Try again.', 'jetonomy')));
+					}
 					// An empty query lists the first levels, so an owner can
 					// see what is on offer before knowing what to type.
 					var q = (query || '').toLowerCase();
@@ -1087,7 +1092,7 @@
 							}
 						}
 						$results.append(
-							$('<div class="jetonomy-ac-item"/>').attr('data-id', level.id).text(level.label)
+							$('<div class="jetonomy-ac-item" role="option" aria-selected="false"/>').attr({ 'data-id': level.id, id: 'jt-ac-opt-' + String(level.id).replace(/\W/g, '_') }).text(level.label)
 						);
 					});
 
@@ -1120,7 +1125,7 @@
 							}
 						}).fail(function() {
 							if (seq === searchSeq) {
-								renderResults(q);
+								renderResults(q, undefined, true);
 							}
 						});
 					}, 250);
@@ -1129,10 +1134,39 @@
 					renderResults($(this).val());
 				});
 
+				// Combobox semantics so a screen reader and the keyboard can use the list.
+				$input.attr({ role: 'combobox', 'aria-autocomplete': 'list', 'aria-expanded': 'false', 'aria-controls': $results.attr('id') });
+				$results.attr('role', 'listbox');
+
+				function moveActive(step) {
+					var $items = $results.find('.jetonomy-ac-item');
+					if (!$items.length) { return; }
+					var i = $items.index($items.filter('.is-active'));
+					i = i < 0 ? (step > 0 ? 0 : $items.length - 1) : (i + step + $items.length) % $items.length;
+					$items.removeClass('is-active').attr('aria-selected', 'false');
+					var $a = $items.eq(i).addClass('is-active').attr('aria-selected', 'true');
+					$input.attr('aria-activedescendant', $a.attr('id'));
+					if ($a[0].scrollIntoView) { $a[0].scrollIntoView({ block: 'nearest' }); }
+				}
+				$input.on('keydown', function(e) {
+					if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+						e.preventDefault();
+						if (!$results.is(':visible')) { renderResults($input.val()); }
+						moveActive(e.key === 'ArrowDown' ? 1 : -1);
+					} else if (e.key === 'Enter') {
+						var $a = $results.find('.jetonomy-ac-item.is-active');
+						if ($a.length && $results.is(':visible')) { e.preventDefault(); $a.trigger('click'); }
+					} else if (e.key === 'Escape' && $results.is(':visible')) {
+						e.preventDefault(); e.stopPropagation();
+						$results.hide(); $input.attr('aria-expanded', 'false');
+					}
+				});
+
 				$results.on('click', '.jetonomy-ac-item', function() {
 					$input.val($(this).text());
 					$hidden.val($(this).data('id'));
 					$results.hide();
+					$input.attr('aria-expanded', 'false');
 					// Setting .val() fires no input event, so refresh the hint
 					// or it keeps the typed search text instead of the pick.
 					renderRulePreview();
@@ -1985,10 +2019,13 @@
 				var strong = document.createElement('strong');
 				strong.textContent = (Jetonomy.i18n.importDone) + ' ';
 				p.appendChild(strong);
-				p.appendChild(document.createTextNode(
-					/* translators: %d: number of records imported. */
-					sprintf(_n('%d record imported successfully.', '%d records imported successfully.', processed, 'jetonomy'), processed) + ' '
-				));
+				// A re-run that brought nothing new: the server summary says "Nothing new to import", not "0 records imported".
+				if (processed > 0 || !summary) {
+					p.appendChild(document.createTextNode(
+						/* translators: %d: number of records imported. */
+						sprintf(_n('%d record imported successfully.', '%d records imported successfully.', processed, 'jetonomy'), processed) + ' '
+					));
+				}
 				// What was not created and why: already imported by an earlier run
 				// (or "0 records imported" reads as a failure), and rows left out
 				// because their topic or forum was not imported (or the source

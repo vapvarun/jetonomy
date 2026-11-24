@@ -128,7 +128,6 @@ $_jt_can_edit_space = is_user_logged_in()
 					data-wp-on--click="actions.followSpace"
 					data-space-id="<?php echo absint( $space->id ); ?>"
 					data-following="<?php echo esc_attr( $is_following_space ? '1' : '0' ); ?>"
-					aria-pressed="<?php echo $is_following_space ? 'true' : 'false'; ?>"
 					title="<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ echo esc_attr( sprintf( __( 'Get notified about new activity in this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>">
 					<?php jetonomy_echo_icon( 'bell', 14 ); ?>
 					<span class="jt-follow-label"><?php echo $is_following_space ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?></span>

@@ -408,7 +408,7 @@
         ],
         "summary": "Import demo data",
         "operationId": "adminDemoDataImport",
-        "description": "Load the demo community; replaces an earlier demo set. Requires manage_options.",
+        "description": "Load the demo community; replaces an earlier demo set. Requires manage_options and confirm=true; answers 409 jetonomy_demo_real_content while the community has its own spaces or topics unless force=true.",
         "responses": {
           "201": {
             "description": "Success",
@@ -453,6 +453,36 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "400": {
+            "description": "confirm missing or not true"
+          },
+          "409": {
+            "description": "The community already has its own content; resend with force=true"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean",
+                    "description": "Must be true."
+                  },
+                  "force": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Import even though the community has its own spaces or topics."
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -462,7 +492,7 @@
         ],
         "summary": "Remove demo data",
         "operationId": "adminDemoDataRemove",
-        "description": "Delete the demo set; owner content is untouched. Requires manage_options.",
+        "description": "Delete the demo set; owner content is untouched. Requires manage_options. Requires confirm=true.",
         "responses": {
           "200": {
             "description": "Success",
@@ -510,6 +540,28 @@
           },
           "404": {
             "description": "No demo data to remove"
+          },
+          "400": {
+            "description": "confirm missing or not true"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean",
+                    "description": "Must be true."
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1807,7 +1859,7 @@
         ],
         "summary": "List badges",
         "operationId": "listBadges",
-        "description": "List active badges (paginated). Public read.",
+        "description": "List active badges, paginated by page and per_page (not limit/offset). Public read. Exception to PaginationMeta: meta.cursor_next is the next PAGE number (page + 1, or null on the last page), and meta also carries page and per_page. Send cursor_next back as page. Out-of-range values are corrected, not rejected (still a 200): per_page above 100 is clamped to 100, and zero, negative or non-numeric values fall back to the defaults (per_page 25, page 1). meta.per_page and meta.page show the values used.",
         "responses": {
           "200": {
             "description": "Success",
@@ -1831,19 +1883,26 @@
         },
         "parameters": [
           {
-            "name": "limit",
+            "name": "page",
             "in": "query",
             "required": false,
+            "description": "Page number, default 1. Zero, negative or non-numeric values fall back to 1.",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
             }
           },
           {
-            "name": "offset",
+            "name": "per_page",
             "in": "query",
             "required": false,
+            "description": "Badges per page, default 25. Above 100 is clamped to 100; zero, negative or non-numeric values fall back to 25.",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
             }
           }
         ]
@@ -3774,7 +3833,7 @@
         ],
         "summary": "Issue a restriction",
         "operationId": "createBan",
-        "description": "Issue a site ban, space ban, silence or IP address ban. Requires jetonomy_moderate. Guards: cannot restrict self, a site admin, or (as a mere moderator) another moderator. type=ip_ban needs ip (refused for your own address or one already banned).",
+        "description": "Issue a site ban, space ban, silence or IP address ban. Requires jetonomy_moderate, except a space_ban, which a space admin (or a space moderator, when moderators_can_ban is on) may issue for their own space; space_id must be a positive integer. Guards: cannot restrict self, a site admin, or (as a mere moderator) another moderator. type=ip_ban needs ip (refused for your own address or one already banned).",
         "responses": {
           "201": {
             "description": "Created",
@@ -3848,7 +3907,7 @@
         ],
         "summary": "Lift a restriction",
         "operationId": "deleteBan",
-        "description": "Lift a restriction. Requires jetonomy_moderate.",
+        "description": "Lift a restriction. Requires jetonomy_moderate, except a space ban, which the space's admins (and moderators, when moderators_can_ban is on) may lift.",
         "responses": {
           "200": {
             "description": "Success",
@@ -5924,8 +5983,9 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
-            }
+              "type": "integer"
+            },
+            "description": "Offset of the first row to return, same as offset (wins when both are sent). Send back meta.cursor_next from the previous page. Not a row ID."
           },
           {
             "name": "before",
@@ -8312,9 +8372,9 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer"
             },
-            "description": "Cursor for next page"
+            "description": "Offset of the first row to return, same as offset (wins when both are sent). Send back meta.cursor_next from the previous page. Not a row ID."
           },
           {
             "name": "before",
@@ -9766,6 +9826,114 @@
           }
         }
       }
+    },
+    "/admin/settings": {
+      "get": {
+        "tags": [
+          "App Config"
+        ],
+        "summary": "Read site settings",
+        "operationId": "adminSettingsGet",
+        "description": "Every setting the API can change, as the site uses it (a setting never saved reads as its default, never null), secrets masked. Requires manage_options (stricter than the settings form, which a jetonomy_manage_settings delegate can save). Returns more keys (64 today) than one POST accepts (50): send back only the keys you change, or split a full copy into two POSTs.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "settings": {
+                      "$ref": "#/components/schemas/Settings"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "App Config"
+        ],
+        "summary": "Change site settings",
+        "operationId": "adminSettingsUpdate",
+        "description": "Change up to 50 settings through the settings form's sanitizer. Only keys GET /admin/settings lists are accepted: an unknown key, a value outside its schema (enum, pattern, type) or more than 50 keys answers 400 and writes nothing. Strings have a length cap (text 1,000, addresses 2,048, custom_css 65,535) and numbers the range the settings screen allows; a value outside either answers 400. On/off values take true/false, 1/0, \"1\"/\"0\" or \"true\"/\"false\" in any letter case. A number takes a JSON number or a string of digits with an optional minus; \"abc\", \"5abc\", \"0x1A\" or \"false\" answers 400. In reputation_points an empty string puts that action back on its default. Answers the cleaned values of the keys sent plus notices (for example an address that was refused and kept its old value). Fires jetonomy_settings_updated with source rest. Requires manage_options.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "settings"
+                ],
+                "properties": {
+                  "settings": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Settings"
+                      }
+                    ],
+                    "minProperties": 1,
+                    "maxProperties": 50
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "settings": {
+                      "$ref": "#/components/schemas/Settings"
+                    },
+                    "notices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "503": {
+            "description": "Another settings write held the lock for 5 seconds (jetonomy_settings_busy); nothing was saved. Retry."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9823,9 +9991,10 @@
           },
           "cursor_next": {
             "type": [
-              "string",
+              "integer",
               "null"
-            ]
+            ],
+            "description": "Offset of the next page (offset + count), or null on the last page. Send it back as offset (or after). Not a row ID or an opaque token."
           },
           "total": {
             "type": "integer"
@@ -12152,6 +12321,413 @@
             "description": "The author's public handle (user_nicename), the same string @mentions and profile links use. Since 2.0.2 it is never the WordPress login, which can be an email address."
           }
         }
+      },
+      "Settings": {
+        "type": "object",
+        "description": "Every key the API can change in jetonomy_settings (Settings::schema(), filterable with jetonomy_settings_schema). Values are cleaned by the same sanitizer as Jetonomy > Settings.",
+        "properties": {
+          "base_slug": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "community_title": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "terms_url": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Settings section: general."
+          },
+          "privacy_url": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Settings section: general."
+          },
+          "support_url": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Settings section: general."
+          },
+          "posts_per_page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Settings section: general."
+          },
+          "activity_log_retention_days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3650,
+            "description": "Settings section: general."
+          },
+          "replies_per_page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Settings section: general."
+          },
+          "default_space_type": {
+            "type": "string",
+            "maxLength": 1000,
+            "enum": [
+              "forum",
+              "qa",
+              "ideas",
+              "feed"
+            ],
+            "description": "Settings section: general."
+          },
+          "guest_read": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "front_page": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "guest_private_teasers": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "frontend_space_creation_roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "maxItems": 50,
+            "description": "Settings section: general."
+          },
+          "require_email_verification": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "allow_space_admin_purge": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "remove_data_on_uninstall": {
+            "type": "boolean",
+            "description": "Settings section: general."
+          },
+          "trust_thresholds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              }
+            },
+            "description": "Settings section: trust."
+          },
+          "trust_level_names": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "maxItems": 50,
+            "description": "Settings section: trust."
+          },
+          "moderators_can_ban": {
+            "type": "boolean",
+            "description": "Settings section: trust. Space moderators may ban members of their own space and lift those bans (since 2.1.0). Default false; only a manage_options holder changes it."
+          },
+          "member_name_display": {
+            "type": "string",
+            "maxLength": 1000,
+            "enum": [
+              "display_name",
+              "handle",
+              "both"
+            ],
+            "description": "Settings section: member_name."
+          },
+          "rate_limits": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000
+            },
+            "description": "Settings section: rate_limits."
+          },
+          "reputation_points": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "integer",
+                "string"
+              ],
+              "minimum": -10000,
+              "maximum": 10000,
+              "maxLength": 6
+            },
+            "description": "Settings section: reputation."
+          },
+          "email_from_name": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: email."
+          },
+          "email_from_email": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: email."
+          },
+          "email_logo_url": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Settings section: email."
+          },
+          "email_footer_text": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Settings section: email."
+          },
+          "verification_reminder_hours": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 168,
+            "description": "Settings section: email."
+          },
+          "notification_defaults": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "boolean"
+              }
+            },
+            "description": "Settings section: email."
+          },
+          "accent_color": {
+            "type": "string",
+            "maxLength": 1000,
+            "pattern": "^#([0-9a-fA-F]{3}){1,2}$",
+            "description": "Settings section: appearance."
+          },
+          "logo_url": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Settings section: appearance."
+          },
+          "text_color": {
+            "type": "string",
+            "maxLength": 1000,
+            "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
+            "description": "Settings section: appearance."
+          },
+          "bg_color": {
+            "type": "string",
+            "maxLength": 1000,
+            "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
+            "description": "Settings section: appearance."
+          },
+          "bg_subtle_color": {
+            "type": "string",
+            "maxLength": 1000,
+            "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
+            "description": "Settings section: appearance."
+          },
+          "border_color": {
+            "type": "string",
+            "maxLength": 1000,
+            "pattern": "^(#([0-9a-fA-F]{3}){1,2})?$",
+            "description": "Settings section: appearance."
+          },
+          "layout_density": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: appearance."
+          },
+          "custom_css": {
+            "type": "string",
+            "maxLength": 65535,
+            "description": "Settings section: appearance."
+          },
+          "container_width": {
+            "type": "string",
+            "maxLength": 1000,
+            "enum": [
+              "theme",
+              "full",
+              "custom"
+            ],
+            "description": "Settings section: appearance."
+          },
+          "container_width_custom": {
+            "type": "integer",
+            "minimum": 600,
+            "maximum": 2400,
+            "description": "Settings section: appearance."
+          },
+          "padding_preset": {
+            "type": "string",
+            "maxLength": 1000,
+            "enum": [
+              "theme",
+              "none",
+              "comfortable"
+            ],
+            "description": "Settings section: appearance."
+          },
+          "sidebar_widgets": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "trending",
+                    "top_members",
+                    "popular_tags"
+                  ]
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            },
+            "description": "Settings section: appearance. Community sidebar widgets in display order. An unknown id or item key, a repeated id or an empty list answers 400 and changes nothing; widgets left out are appended switched on."
+          },
+          "captcha_provider": {
+            "type": "string",
+            "maxLength": 1000,
+            "enum": [
+              "none",
+              "recaptcha_v3",
+              "turnstile"
+            ],
+            "description": "Settings section: antispam."
+          },
+          "captcha_site_key": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: antispam."
+          },
+          "captcha_secret_key": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Write-only: reads as \"********\" when set; sending \"********\" back keeps the stored value. Settings section: antispam."
+          },
+          "captcha_score_threshold": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 0.9,
+            "description": "Settings section: antispam."
+          },
+          "seo_post_title": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: seo."
+          },
+          "seo_space_title": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: seo."
+          },
+          "seo_schema": {
+            "type": "boolean",
+            "description": "Settings section: seo."
+          },
+          "seo_sitemap": {
+            "type": "boolean",
+            "description": "Settings section: seo."
+          },
+          "seo_noindex_profiles": {
+            "type": "boolean",
+            "description": "Settings section: seo."
+          },
+          "seo_noindex_search": {
+            "type": "boolean",
+            "description": "Settings section: seo."
+          },
+          "seo_twitter_handle": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: seo."
+          },
+          "seo_default_og_image": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Settings section: seo."
+          },
+          "fb_app_id": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: seo."
+          },
+          "fb_app_secret": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Write-only: reads as \"********\" when set; sending \"********\" back keeps the stored value. Settings section: seo."
+          },
+          "space_label_singular": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "space_label_plural": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "topic_label_singular": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "topic_label_plural": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "reply_label_singular": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "reply_label_plural": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "member_label_singular": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "member_label_plural": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "category_label_singular": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          },
+          "category_label_plural": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Settings section: general."
+          }
+        },
+        "additionalProperties": false
       }
     },
     "responses": {

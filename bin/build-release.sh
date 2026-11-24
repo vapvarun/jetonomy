@@ -203,7 +203,8 @@ cat > "$EXCLUDES_FILE" <<'EOF'
 # The QA harness (wp jetonomy qa-actions) writes test data; it is a
 # developer tool, run from a git checkout, never shipped to site owners.
 includes/qa/
-.git/
+# No slash: a git worktree's .git is a file holding a local path.
+.git
 .github/
 .githooks/
 .gitignore
@@ -253,6 +254,7 @@ Gruntfile.js
 .vscode/
 .idea/
 .distignore
+.gate-check-allow
 .wp-env.json
 .playwright-mcp/
 # Playwright run output (test-results/.last-run.json shipped in a 2.0.3 test zip).
@@ -454,6 +456,12 @@ fi
 # smoke-runbook journey must have been verified against it: the release smoke
 # walks that runbook, so a journey whose code changed since it was last read
 # would "pass" against behaviour that no longer exists.
+echo "==> script translations resolve"
+if ! php "$ROOT/bin/check-script-translations.php" "$ROOT"; then
+	echo "FAIL: a languages/*.json names a missing script or a script_translations() handle has no JSON." >&2
+	echo "      After grunt i18n run: php bin/check-script-translations.php --fix (wp i18n make-json mangles *dmin.js names)." >&2
+	exit 33
+fi
 echo "==> manifest and runbook freshness"
 if ! php "$ROOT/bin/check-manifest-fresh.php"; then
 	echo "FAIL: audit/manifest.json does not match the code. Update it, commit, rebuild." >&2

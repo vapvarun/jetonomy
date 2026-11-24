@@ -39,16 +39,36 @@ class MemberNavTargetsTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '/mod/" class="jt-nav-dup', $html, 'Moderation has no tab, so it must not be hidden as a duplicate.' );
 	}
 
-	/** The tab bar uses the page names, and My Profile is tagged for the phone menu that carries Moderation. */
+	/** @covers-existing The member bar is Home, Spaces, New, Alerts, Me; Me opens the sheet that carries Moderation. */
 	public function test_tab_bar_uses_page_names(): void {
 		wp_set_current_user( $this->factory()->user->create() );
 		$html = $this->render_header();
 		$tabs = substr( $html, (int) strpos( $html, 'jt-mobile-tabs' ) );
-		$this->assertStringContainsString( '>Leaderboard<', $tabs );
-		$this->assertStringContainsString( '>Notifications<', $tabs );
-		$this->assertStringContainsString( 'data-jt-tab="profile"', $tabs );
-		$this->assertStringNotContainsString( '>Alerts<', $tabs );
-		$this->assertStringNotContainsString( '>Ranks<', $tabs );
+		$this->assertStringContainsString( '>Alerts<', $tabs );
+		$this->assertStringContainsString( '>Me<', $tabs );
+		$this->assertStringContainsString( 'data-jt-menu="jt-mobile-tab-menu"', $tabs );
+	}
+
+	/** New outside a space: no space to post in = a sheet that says so; one space = its composer; two or more = a sheet listing them. */
+	public function test_new_tab_start_a_topic_sheet(): void {
+		$uid = $this->factory()->user->create();
+		wp_set_current_user( $uid );
+		$html = $this->render_header();
+		$this->assertStringContainsString( 'id="jt-new-sheet"', $html );
+		$this->assertStringContainsString( 'data-jt-menu="jt-new-sheet"', $html );
+		$this->assertStringNotContainsString( '/new/" role="menuitem"', $html, 'No space, so no composer rows.' );
+
+		$one = \Jetonomy\Models\Space::create( array( 'title' => 'QA One', 'slug' => 'qa-one-' . $uid, 'type' => 'forum' ) );
+		\Jetonomy\Models\SpaceMember::add( (int) $one, $uid );
+		$html = $this->render_header();
+		$this->assertStringNotContainsString( 'id="jt-new-sheet"', $html, 'One space goes straight to its composer.' );
+		$this->assertStringContainsString( 'data-jt-new-fallback="' . esc_url( \Jetonomy\route_url( 'new-post', 'qa-one-' . $uid ) ) . '"', $html );
+
+		$two = \Jetonomy\Models\Space::create( array( 'title' => 'QA Two', 'slug' => 'qa-two-' . $uid, 'type' => 'forum' ) );
+		\Jetonomy\Models\SpaceMember::add( (int) $two, $uid );
+		$html = $this->render_header();
+		$this->assertStringContainsString( 'id="jt-new-sheet"', $html );
+		$this->assertStringContainsString( esc_url( \Jetonomy\route_url( 'new-post', 'qa-two-' . $uid ) ), $html );
 	}
 
 	/** @covers-existing Topic pages paginate replies: 30 per page by default, and the owner's setting is honoured. */

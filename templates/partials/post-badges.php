@@ -22,6 +22,16 @@ defined( 'ABSPATH' ) || exit;
 <?php if ( ! empty( $post->is_closed ) ) : ?>
 	<span class="jt-badge-closed"><?php esc_html_e( 'Closed', 'jetonomy' ); ?></span>
 <?php endif; ?>
+<?php if ( 'draft' === ( $post->status ?? '' ) && ! empty( $post->published_at ) ) : ?>
+	<span class="jt-badge jt-badge--scheduled">
+		<?php
+		// A scheduled topic is a draft with a release time (stored in UTC), shown in the
+		// site timezone, as on the profile Drafts tab. My drafts lists it through this card.
+		/* translators: %s: scheduled date/time */
+		echo esc_html( sprintf( __( 'Scheduled: %s', 'jetonomy' ), get_date_from_gmt( $post->published_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ) );
+		?>
+	</span>
+<?php endif; ?>
 <?php
 /**
  * Fires after the built-in topic badges so extensions can add their own

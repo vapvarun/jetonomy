@@ -33,7 +33,7 @@ $footer_custom = '' !== $ctx['footer_text']
 	: '';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo esc_attr( get_bloginfo( 'language' ) ); ?>">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background-color:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F4F6;">

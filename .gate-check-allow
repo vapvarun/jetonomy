@@ -1,0 +1,17 @@
+# Gate exceptions. Format: ID  path-fragment  [ceiling in KB gzipped]   # reason
+# A number holds that file at an agreed size (the gate still fails if it grows); no number skips the check.
+P2 assets/css/jetonomy.css 62   # Owner 2026-11-21: held at today's 56 KB plus ~10% until the per-surface CSS split is planned (default 35 KB).
+P2 assets/css/jetonomy-rtl.css 62   # Generated right-to-left copy of jetonomy.css, same size and same agreement.
+P2 assets/js/view.js 63         # Owner 2026-11-21: held at today's 57 KB plus ~10% until the bundle is split (default 40 KB).
+P9 includes/qa/   # QA harness: loopback requests to the site's own pages, run from WP-CLI or the admin QA screen only. includes/qa is excluded from the release zip by .distignore.
+S4 includes/class-recount.php   # What is left interpolates only internal table names (table()) and a range built with %d and (int) casts; the member-id list is bound through prepare(). No request value reaches the SQL.
+P9 includes/captcha/   # Captcha verification is the request: the form (register, post, reply) is accepted or refused on the provider's answer, so it cannot be handed to a background job. A timeout fails closed.
+P9 includes/integrations/class-companion-installer.php   # An admin clicks Install on a companion plugin; the download and the single error-diagnosis probe are that click's work, never a visitor's request.
+P9 includes/adapters/class-ollama-ai-adapter.php   # The adapter only runs when Jetonomy Pro's AI client calls it: from Action Scheduler (summaries, batch review, digests) or from a user-initiated action whose answer is the response. Free itself never calls it.
+P9 includes/services/links/   # Link preview is a REST call the composer makes while the member types: rate-limited per user, cached, and its answer IS the response, so it cannot be deferred.
+P9 includes/class-embeds.php   # wp_oembed_get() resolves a pasted URL once and the result (and a miss) is cached per URL for a day, so only the first view of a NEW link makes a provider request. Known ceiling: that first view waits on the provider (WordPress default 5 s timeout). A later release can resolve embeds from Action Scheduler at save time; not done here.
+S4 includes/db/migrations/   # Upgrade-only SQL: every interpolated name is a table, column, key or column definition written as a literal in that migration (or taken from a fixed list in it); no request or user value reaches these queries, and they run once per site on upgrade.
+S4 includes/class-recount-backfill.php   # The one interpolated column ($key) comes from the STAGES constant, the table from table() with a fixed name; identifiers cannot be bound.
+S4 includes/import/class-wpforo-importer.php   # Interpolates the SOURCE plugin's table names (its fixed prefix plus a literal table) and fixed WHERE fragments from the importer's own $src map ('AND reaction = 1'); every row value is bound with prepare().
+S4 includes/import/class-asgaros-importer.php   # Interpolates the source plugin's table names (prefix plus a literal) and Jetonomy table() names only; row values are bound with prepare().
+S4 includes/import/class-bbpress-importer.php   # The id list is built from array_map('intval', ...) of IDs read from the database; everything else is $wpdb table names.

@@ -58,9 +58,10 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<td>
 						<?php
 						$jt_settings       = get_option( 'jetonomy_settings', array() );
-						$default_new_space = in_array( $jt_settings['default_space_type'] ?? 'forum', \Jetonomy\Models\Space::valid_types(), true )
-							? $jt_settings['default_space_type']
-							: 'forum';
+						$default_new_space = (string) ( $jt_settings['default_space_type'] ?? 'forum' );
+						if ( ! in_array( $default_new_space, \Jetonomy\Models\Space::valid_types(), true ) ) {
+							$default_new_space = 'forum';
+						}
 						?>
 						<select id="space-type">
 							<option value="forum" <?php selected( $default_new_space, 'forum' ); ?>><?php esc_html_e( 'Forum', 'jetonomy' ); ?></option>
@@ -200,7 +201,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<?php if ( $total ) : ?>
 					<span class="displaying-num">
 						<?php
-						$_first = ( $paged - 1 ) * $per_page + 1;
+						$_first = jetonomy_page_offset( $paged, $per_page ) + 1;
 						$_last  = min( $paged * $per_page, $total );
 						printf(
 							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
@@ -370,14 +371,12 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 		<?php endif; ?>
 	<?php endif; ?>
 </div>
-<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-<div class="jt-pro-upsell">
-	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
-	<h4><?php /* translators: %s: space label (e.g. "Space"). */ echo esc_html( sprintf( __( 'Polls, Reactions & Analytics for Every %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?></h4>
-
-	<p><?php /* translators: %s: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'Add emoji reactions, polls, and custom fields to your %s. Track engagement with the analytics dashboard.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?></p>
-	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
-	&nbsp;
-	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>
-</div>
-<?php endif; ?>
+<?php
+\Jetonomy\Admin\Admin::pro_card(
+	'spaces',
+	/* translators: %s: space label (e.g. "Space"). */
+	sprintf( __( 'Polls, Reactions & Analytics for Every %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
+	/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
+	sprintf( __( 'Add emoji reactions, polls, and custom fields to your %s. Track engagement with the analytics dashboard.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) )
+);
+?>

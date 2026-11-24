@@ -9,11 +9,28 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 > The 1.8.0 attachment filters (`jetonomy_attachment_card`, `jetonomy_attachments_class`, `jetonomy_rest_attachment_data`) are documented with usage examples on the dedicated **[Attachment Hooks](24-attachment-hooks.md)** page.
 
 
+## Boot
+
+| Hook | What it does | Args | Source |
+|---|---|---|---|
+| `jetonomy_loaded` | action - Fires once per request when Jetonomy has finished booting (plugins_loaded, priority 10). Not fired when Jetonomy is paused on PHP older than 8.1. Since 2.1.0. | `Jetonomy\Jetonomy $jetonomy` (same as `jetonomy()`) | `includes/class-jetonomy.php` |
+| `jetonomy_pro_loaded` | action - Fires once per request when Jetonomy Pro has booted and loaded its extensions (plugins_loaded, priority 20). Not fired when Pro does not boot (Jetonomy missing or older than Pro). Since 2.1.0. | `Jetonomy_Pro $jetonomy_pro` (same as `Jetonomy_Pro::instance()`) | `jetonomy-pro/jetonomy-pro.php` |
+
+Use these instead of guessing plugin load order. To check whether Jetonomy is active at all, keep testing `defined( 'JETONOMY_VERSION' )` or `function_exists( 'jetonomy' )`.
+
+```php
+add_action( 'jetonomy_loaded', function ( \Jetonomy\Jetonomy $jetonomy ) {
+	// Jetonomy's classes, router and settings are ready here.
+	add_filter( 'jetonomy_attachments_class', fn( $class ) => $class . ' acme-attachments' );
+} );
+```
+
 ## Posts
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
 | `jetonomy_after_create_post`<br>_action_ | Fires when a post is created (including one held for approval or flagged as spam) and again, with a null request, when a moderator approves a held or spam post that was never live (re-approving a post that was already live does not fire it again). Read the post's status: announce, notify or sync only when it is `publish`. Since 2.0.1 the approval fire is new. | `post_id, space_id, request` | `includes/class-abilities.php` |
+| `jetonomy_import_batch_imported`<br>_action_ | Fires once per type after each importer batch with only the topics (`topic`) or replies (`reply`) that batch newly created: `string $source`, `string $type`, `int[] $ids`. Imported history does not fire the create actions (no activity, notifications, webhooks or points), so an integration that must know about it (an external search index, a community card) listens here. A re-run that finds everything already imported fires nothing. `\Jetonomy\Import\Import_Manager::is_running()` is true while a batch runs in the current request only. |
 | `jetonomy_after_delete_post`<br>_action_ | Fires after a post is deleted. | - | `includes/api/class-posts-controller.php` |
 | `jetonomy_after_post_article`<br>_action_ | Named `_article` (not `_content`) to avoid collision with the existing `jetonomy_after_post_content` FILTER that injects HTML inside the… | `post_id` | `templates/views/single-post.php` |
 | `jetonomy_after_post_content`<br>_filter_ | - | `post_id, content` | `templates/views/single-post.php` |
@@ -79,6 +96,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_join_request_approved`<br>_action_ | - | - | `includes/models/class-join-request.php` |
 | `jetonomy_space_transferred`<br>_action_ | A space changed hands - owner account deleted, or an explicit delete that chose transfer. | `space_id, from_user_id, to_user_id` | `includes/models/class-space.php` |
 | `jetonomy_space_purged`<br>_action_ | A space and everything it owned was permanently removed. `removed` maps `table.column:ref` to rows deleted. | `space_id, removed` | `includes/class-space-purge.php` |
+| `jetonomy_space_members_purged`<br>_action_ | The members of a space that is being deleted, announced just BEFORE their rows are removed (they go in bulk, so `jetonomy_user_left_space` never fires per member). One call per chunk of up to 500 ids, ascending; it can repeat if an interrupted purge resumes, so a listener must be idempotent. Use it to take back points or badges given for joining. | `space_id, user_ids` | `includes/class-space-purge.php` |
 | `jetonomy_space_purge_batch`<br>_action_ | Action Scheduler continuation for a batched purge; re-enqueued until the space drains. Not intended as an extension point. | `args{space_id}` | `includes/class-space-purge.php` |
 | `jetonomy_join_request_created`<br>_action_ | - | `request_id` | `includes/cli/journeys/class-member-journey.php` |
 | `jetonomy_join_request_denied`<br>_action_ | - | - | `includes/models/class-join-request.php` |
@@ -90,7 +108,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_pro_ai_member_hourly_limit`<br>_filter_ ·_Pro_ | Filter the per-user hourly AI request limit. | - | `includes/extensions/ai/class-extension.php` |
 | `jetonomy_pro_ai_member_min_trust`<br>_filter_ ·_Pro_ | Filter the minimum trust level for member-facing AI. | - | `includes/extensions/ai/class-extension.php` |
 | `jetonomy_pro_ai_suggestion_space_types`<br>_filter_ ·_Pro_ | - | - | `includes/extensions/ai/class-suggester.php` |
-| `jetonomy_show_sidebar_top_members`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
+| `jetonomy_show_sidebar_top_members`<br>_filter_ | Hide the Top Members widget. Called only when the owner has it switched on (since 2.1.0). | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_after_top_members`<br>_action_ | Insert a custom widget or ad after the Top Members section. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_before_top_members`<br>_action_ | Insert a custom widget or ad before the Top Members section. | - | `templates/partials/sidebar.php` |
 | `jetonomy_space_display_fields`<br>_action_ | Fires in the space header to display custom field values (context = space). | `space` | `templates/views/space.php` |
@@ -149,6 +167,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_after_create_flag`<br>_action_ | - | - | `includes/api/class-moderation-controller.php` |
 | `jetonomy_after_resolve_flag`<br>_action_ | - | - | `includes/moderation/class-moderation-service.php` |
 | `jetonomy_content_moderated`<br>_action_ | - | `action, type, id, moderator_id` | `includes/moderation/class-moderation-service.php` |
+| `jetonomy_held_item_notes`<br>_filter_ | Why items on the moderation queue are held or marked as spam, one call per page of held items. Return `item_id => sentence`; the sentence is shown in a box under the item. Jetonomy Pro's AI review answers it; return the array you were given when you have nothing to add. | `$notes (array<int,string>), $kind ('post' or 'reply'), $ids (int[])` | `templates/views/moderation.php`, `templates/views/space-moderation.php` |
 | `jetonomy_flag_created`<br>_action_ | - | `flag_id` | `includes/api/class-posts-controller.php` |
 | `jetonomy_flag_resolved`<br>_action_ | - | `flag_id, action` | `includes/moderation/class-moderation-service.php` |
 | `jetonomy_moderation_flag_resolution`<br>_filter_ | Filter the status applied to an object's pending flags when it is moderated directly (outside the flag-resolution flow). | `flag_status, action, type, id, user_id` | `includes/moderation/class-moderation-service.php` |
@@ -161,7 +180,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_pro_ai_review_exempt_trust_level`<br>_filter_ ·_Pro_ | Filter the trust level at which members skip AI review. | - | `includes/extensions/ai/class-batch-reviewer.php` |
 | `jetonomy_pro_badge_earned`<br>_action_ ·_Pro_ | Fires when a user earns a badge. | `$user_id, $badge_id, $badge` | `includes/extensions/custom-badges/class-extension.php` |
 | `jetonomy_pro_badge_revoked`<br>_action_ ·_Pro_ | Fires when a badge is revoked from a user (`$removed` is the removed row). | `$user_id, $badge_id, $removed` | `includes/extensions/custom-badges/class-extension.php` |
-| `jetonomy_reputation_changed`<br>_action_ | of {@see award_custom()}. | `user_id, points, reason` | `includes/trust/class-reputation.php` |
+| `jetonomy_reputation_changed`<br>_action_ | Fires after a user's reputation has been adjusted. `$action` is `<original_action>_revoked` for a revocation. `$context` carries `object_type` and `object_id`, plus `voter_id` for a vote and `reporter_id` for a report. | `$user_id, $action, $delta, $context` | `includes/trust/class-reputation.php` |
 | `jetonomy_reputation_points_for`<br>_filter_ | Runs after the admin override + hardcoded fallback resolve, so filter listeners see the final number that would apply. | `$points, $action` | `includes/trust/class-reputation.php` |
 | `jetonomy_reputation_points_map`<br>_filter_ | Use this to add new action keys or wholesale-replace the scoring table (e.g. | - | `includes/trust/class-reputation.php` |
 | `jetonomy_reputation_pre_change`<br>_filter_ | Use this to scale deltas during campaigns ("double points weekend"), veto for sandboxed users (return 0), or redirect rep to an external… | - | `includes/trust/class-reputation.php` |
@@ -212,8 +231,8 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_show_sidebar`<br>_filter_ | Allow bridge plugins to suppress Jetonomy's sidebar (e.g. | `show` | `templates/partials/sidebar.php` |
 | `jetonomy_show_sidebar_about`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
 | `jetonomy_show_sidebar_managed_by`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
-| `jetonomy_show_sidebar_popular_tags`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
-| `jetonomy_show_sidebar_trending`<br>_filter_ | - | - | `templates/partials/sidebar.php` |
+| `jetonomy_show_sidebar_popular_tags`<br>_filter_ | Hide the Popular Tags widget. Called only when the owner has it switched on (since 2.1.0). | - | `templates/partials/sidebar.php` |
+| `jetonomy_show_sidebar_trending`<br>_filter_ | Hide the Trending widget. Called only when the owner has it switched on (since 2.1.0). | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_about_after_meta`<br>_action_ | Fires inside the sidebar About card, after the meta tags. | `space_id` | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_after`<br>_action_ | Fires at the bottom of the Jetonomy sidebar, after all widgets render. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_after_about`<br>_action_ | Fires in the sidebar immediately after the "About" space card closes. | - | `templates/partials/sidebar.php` |
@@ -226,7 +245,8 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_sidebar_before_managed_by`<br>_action_ | Insert a custom widget or ad before the Managed-by card. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_before_popular_tags`<br>_action_ | Insert a custom widget or ad before the Popular Tags section. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_before_trending`<br>_action_ | Insert a custom widget or ad before the Trending section. | - | `templates/partials/sidebar.php` |
-| `jetonomy_space_card_after`<br>_action_ | Fires after each space card. Append a per-space badge, link, or action here. | `$space` | `templates/views/category.php`, `templates/views/home.php` |
+| `jetonomy_sidebar_widgets`<br>_filter_ | The sidebar widget list (`id`, `enabled`) in display order, after the owner's Appearance setting. The only way to switch on a widget the owner turned off, or to reorder. Since 2.1.0. | `widgets` | `includes/helpers.php` |
+| `jetonomy_space_card_after`<br>_action_ | Fires at the end of each space card (home, category and search grids), inside the card and outside its title link since 2.1.0. Append a per-space badge, link, or action here. | `$space` | `includes/helpers.php` |
 | `jetonomy_template_map`<br>_filter_ | Values may be relative (resolved against plugin_dir/theme_dir) or absolute paths (starting with /). | `map` | `includes/class-template-loader.php` |
 
 ## Theme & CSS
@@ -301,6 +321,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_composer_toolbar`<br>_action_ | Fires inside the composer toolbar, after the built-in formatting buttons. | - | `templates/partials/composer.php` |
 | `jetonomy_cron_batch_size`<br>_filter_ | - | - | `includes/class-cron.php` |
 | `jetonomy_erase_batch_size`<br>_filter_ ·_Pro_ | Filter the batch size used by the GDPR personal-data eraser (default 1000). | - | `includes/class-privacy.php` |
+| `jetonomy_finished_action_retention_days`<br>_filter_ | Days a finished Jetonomy background job is kept before Jetonomy deletes it with its log rows (default 7). Only the `jetonomy` group is touched. Since 2.1.0. See [Background Jobs](./30-background-jobs.md). | `days` | `includes/class-queue.php` |
 | `jetonomy_footer_text`<br>_filter_ | Filter the footer text used by Jetonomy-rendered surfaces. | `text` | `includes/functions.php` |
 | `jetonomy_home_welcome_heading`<br>_filter_ | - | - | `templates/views/home.php` |
 | `jetonomy_home_welcome_subheading`<br>_filter_ | - | - | `templates/views/home.php` |
@@ -316,6 +337,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_orphan_purge_batch_seconds`<br>_filter_ | Filter the wall-clock budget (default 15) one `wp jetonomy privacy purge-orphans` slice may run before stopping cleanly at a user boundary. | `seconds` | `includes/class-privacy-backfill.php` |
 | `jetonomy_privacy_orphan_columns`<br>_filter_ | Filter the `(table, column, where)` discovery targets scanned for orphaned user ids; Pro adds its own `jt_pro_*` columns here rather than shipping a parallel sweeper. | `columns` | `includes/class-privacy-backfill.php` |
 | `jetonomy_purge_orphan_user`<br>_action_ | Purge every trace of a user id that no longer exists. Fired per orphaned id by `wp jetonomy privacy purge-orphans`; free's and Pro's `Privacy::on_user_delete()` both listen, so it reuses the real delete path. | `user_id` | `includes/class-privacy-backfill.php` |
+| `jetonomy_recurring_jobs`<br>_filter_ | Every recurring job of the Jetonomy family: hook => interval in seconds, or `array( interval, first delay )`. Pro and add-ons register through `\Jetonomy\Queue::recurring()`. Since 2.1.0. See [Background Jobs](./30-background-jobs.md). | `jobs` | `includes/class-cron.php` |
 | `jetonomy_search_filters`<br>_action_ | - | - | `templates/views/search.php` |
 | `jetonomy_show_community_nav`<br>_filter_ | Filter whether to show the Jetonomy community navigation bar. | `show` | `templates/partials/header.php` |
 | `jetonomy_theme_dark_tokens`<br>_filter_ | Return an empty array to disable the dark override. | `tokens` | `includes/integrations/class-theme-integration.php` |
@@ -347,5 +369,6 @@ Pro-only hooks (marked _Pro_ above and listed below) fire from the Jetonomy Pro 
 | `jetonomy_pro_first_reaction`<br>_action_ ·_Pro_ | Fires the first time an object receives any reaction. | `$object_type, $object_id, $user_id` | `includes/extensions/reactions/class-extension.php` |
 | `jetonomy_pro_message_sent`<br>_action_ ·_Pro_ | Fires after a message is sent. | `$message_id, $conversation_id, $sender_id` | `includes/extensions/private-messaging/class-extension.php` |
 | `jetonomy_pro_poll_created`<br>_action_ ·_Pro_ | Fires after a poll is created. | `$poll_id, $post_id, $user_id` | `includes/extensions/polls/class-extension.php` |
+| `jetonomy_pro_poll_deleted`<br>_action_ ·_Pro_ | A poll was deleted from the admin Polls screen (its votes and options went with it; it does not fire if the poll was already gone). Deleting a topic, which removes its poll too, fires `jetonomy_post_deleted` instead, so a listener that rewards polls should reverse on both. | `$poll_id, $post_id` | `includes/extensions/polls/class-extension.php` |
 | `jetonomy_pro_reaction_icon_renderer`<br>_filter_ ·_Pro_ | Sites that want the SVG look can opt in via the filter below. | `$renderer, $slug, $size` | `includes/extensions/reactions/class-extension.php` |
 | `jetonomy_pro_reaction_toggled`<br>_action_ ·_Pro_ | Fires after a reaction is toggled. | `$object_type, $object_id, $emoji, $user_id, $action` | `includes/extensions/reactions/class-extension.php` |

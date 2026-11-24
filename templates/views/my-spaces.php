@@ -48,7 +48,7 @@ if ( ! empty( $privileged_spaces ) ) {
 
 $crumbs = array(
 	array(
-		/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
+		/* translators: %s: a plural label the site owner configured (e.g. spaces, groups, topics). */
 		'label' => sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ),
 		'url'   => '',
 	),
@@ -61,7 +61,7 @@ $crumbs = array(
 		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
-				<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
+				<?php /* translators: %s: a plural label the site owner configured (e.g. spaces, groups, topics). */ ?>
 				<?php echo esc_html( sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?>
 			</h1>
 			<p class="jt-page-subtitle">

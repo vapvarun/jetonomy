@@ -46,6 +46,12 @@ Go to **Jetonomy → Settings → Attachments** to control:
 
 **SVG is never available**, because it can carry executable scripts. Every upload is re-validated against this allow-list on the server - the file extension and the actual file content must both match an allowed type - so the settings are a real security boundary, not just a UI restriction.
 
+## Managing Uploaded Files
+
+**Jetonomy > Settings > Attachments** starts with an **Uploaded files** list: every file attached to a topic or reply, newest first, 20 to a page. Each row shows the file, its type and size, who uploaded it, the topic or reply it is attached to (with its space, marked when the space is private or hidden), and the date. Search by file name, or filter by space and file type; the filters stay in place when you delete a file.
+
+**Delete** removes the file from its topic or reply. A file Jetonomy uploaded is also deleted from the media library once nothing else is attached to it; a file attached in several places stays until the last attachment goes, and a file that came from the media library or another plugin is only detached, never deleted. Deleting cannot be undone. The same list and delete are available over REST (`GET /attachments/files`, `DELETE /attachments/files/{id}`, admins only).
+
 ## What Members See
 
 Attached files render as cards under the post or reply. The base card - image thumbnail or a download chip with file name, size, and type - is rendered by the free plugin. With File Attachments enabled, Pro upgrades the card:
@@ -60,7 +66,21 @@ The cards are server-rendered on every page load, so they show correctly even wi
 
 Members only see attachment cards on topics and replies they are allowed to read, and community uploads are left out of the WordPress media API (`/wp/v2/media`) for anyone who cannot manage media, so visitors cannot browse a list of files.
 
-Like every WordPress upload, the file itself sits in your `wp-content/uploads` folder and your web server sends it to anyone who has its exact address. If your private spaces hold sensitive documents, ask your host to protect the uploads folder (for example with a rule that only serves files to signed-in visitors), or keep such documents outside the community.
+With Pro, files in a private or hidden space are served only through Jetonomy's download link, which checks that the viewer may read the topic. Pro adds a small `.htaccess` file to that file's own folder under `wp-content/uploads/jetonomy/`, so its direct address stops working on Apache and LiteSpeed servers. It does this in the background when the extension is switched on, when Pro is reactivated or updated, and whenever a space is saved as private or hidden; saving a space as public removes it again. Files in public spaces keep their normal, cacheable addresses.
+
+**Files picked from the Media Library are not locked.** A file that already lived in your Media Library (outside `wp-content/uploads/jetonomy/`) and was attached from there keeps its usual address, because other pages on your site may use it too. The card still only shows to people who can read the topic, but anyone who has the file's direct address can open it. For files that must stay private, upload them from the topic composer instead of picking them from the Media Library. If a private file was already picked from the Media Library: find it in **Jetonomy > Settings > Attachments > Uploaded files** (filter by the space), **Delete** that row to detach it, ask the author to upload the file again from the composer, then delete the original under **Media > Library** once no other page uses it, so its old address stops working.
+
+On **nginx**, `.htaccess` files are ignored. Ask your host to add a rule that blocks direct requests for folders that hold Jetonomy's marker file, for example:
+
+```nginx
+location ~ ^/wp-content/uploads/jetonomy/([0-9a-f]+)/ {
+    if (-f $document_root/wp-content/uploads/jetonomy/$1/.htaccess) { return 403; }
+}
+```
+
+Without that rule, a private file is still protected by its long random folder name, as before.
+
+Locking runs in batches in the background, so on a large site it can take a few minutes after an update. To lock every existing private-space file at once yourself, run `wp jetonomy-pro attachments lock-private` (add `--dry-run` first to see the counts). It works in batches, is safe to run again, and never moves or deletes a file. Switching the Attachments extension off, or deactivating Pro, removes Pro's `.htaccess` files so the free plugin can keep showing every attachment.
 
 ## If You Deactivate Pro
 
@@ -70,6 +90,7 @@ Attachment link records live in the free plugin as of 1.8.0. Deactivating or uni
 
 - **Removing an attachment** detaches it from the post or reply; the underlying uploaded file is left alone in case it is still referenced elsewhere.
 - **Deleting a topic or reply** removes its attachment links automatically.
+- **Deleting the plugin**, even with "remove data" on, never deletes uploaded files. They stay in `wp-content/uploads/jetonomy/` and in the media library.
 - **Orphan cleanup** runs once a day: it drops link rows whose underlying file was removed some other way, and deletes community uploads that were never linked to any post or reply within 24 hours of being uploaded. This sweep is scoped strictly to files uploaded through the community composer, so it never touches the site owner's own WordPress media library. Cleanup only removes files this plugin created, never another forum plugin's media, so a migration can never lose files.
 
 ## REST API
@@ -80,6 +101,8 @@ File Attachments registers these endpoints under `jetonomy-pro/v1`:
 |--------|----------|--------------|
 | `POST` | `/attachments` | Link an already-uploaded attachment to a post or reply |
 | `DELETE` | `/attachments/{id}` | Detach an attachment from its post or reply |
+| `GET` | `/attachments/files` | Admins: one page of attached files with filters `space_id`, `type`, `search`, `page` (response has `rows`, `page`, `has_next`) |
+| `DELETE` | `/attachments/files/{id}` | Admins: remove an attachment and, when nothing else uses it, its media-library file |
 | `GET` | `/attachments/{id}/download` | Download the file |
 | `GET` | `/attachments/batch` | Batch-read attachments for many posts or replies in one call |
 

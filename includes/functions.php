@@ -401,7 +401,7 @@ function mid_sentence( string $noun ): string {
 	if ( ! apply_filters( 'jetonomy_label_lowercase', ! in_array( strtok( $locale, '_' ), array( 'de', 'lb' ), true ), $locale ) ) {
 		return $noun;
 	}
-	return mb_strtolower( $noun );
+	return lower( $noun );
 }
 
 /**
@@ -1363,6 +1363,70 @@ function short_title( string $text, int $len = 50 ): string {
 }
 
 /**
+ * The bare span "5 minutes" for a UTC MySQL datetime, for phrases that carry their own words ("voted %s ago").
+ *
+ * @param string $gmt UTC datetime from the database.
+ * @return string Empty when the datetime is empty, invalid, or in the future beyond a few minutes of clock skew.
+ */
+function time_span( string $gmt ): string {
+	$ts = ( '' === $gmt || str_starts_with( $gmt, '0000' ) ) ? false : strtotime( $gmt . ' UTC' );
+	// A future date is not "ago": say nothing rather than claim the past.
+	if ( ! $ts || $ts > time() + 300 ) {
+		return '';
+	}
+	return human_time_diff( min( $ts, time() ), time() );
+}
+
+/**
+ * "5 minutes ago" for a UTC MySQL datetime. One translatable string, so a language can place the number and the word
+ * where it needs them (concatenating "ago" onto the number cannot be reordered).
+ *
+ * @param string $gmt UTC datetime from the database.
+ * @return string Empty when time_span() is empty.
+ */
+function time_ago( string $gmt ): string {
+	$span = time_span( $gmt );
+	/* translators: %s: human-readable time difference. */
+	return '' === $span ? '' : sprintf( __( '%s ago', 'jetonomy' ), $span );
+}
+
+/**
+ * Lower-case a string without requiring the mbstring extension (a host without it must not fatal a community page).
+ * Without mbstring the fallback is strtolower(), which is ASCII-only: "Élite" stays "Élite".
+ *
+ * @param string $text Text.
+ * @return string
+ */
+function lower( string $text ): string {
+	return function_exists( 'mb_strtolower' ) ? mb_strtolower( $text ) : strtolower( $text );
+}
+
+/**
+ * Whether a string is only ASCII digits, without requiring the ctype extension.
+ *
+ * @param string $text Text.
+ * @return bool
+ */
+function is_digits( string $text ): bool {
+	return 1 === preg_match( '/^[0-9]+$/D', $text );
+}
+
+/**
+ * PHP extensions Jetonomy needs for every feature but degrades without (it never fatals on their absence).
+ *
+ * @return string[] Names of the missing extensions.
+ */
+function missing_php_extensions(): array {
+	$missing = array();
+	foreach ( array( 'mbstring', 'dom', 'ctype' ) as $ext ) {
+		if ( ! extension_loaded( $ext ) ) {
+			$missing[] = $ext;
+		}
+	}
+	return $missing;
+}
+
+/**
  * Resolve a deep-link URL for a notification's target object.
  *
  * Single source of truth for notification deep links. Used by the notifier,
@@ -1699,6 +1763,53 @@ function space_visibility_label( string $visibility ): string {
 }
 
 /**
+ * Translated name per space role, keyed by the stored role. The one map for the members page, the admin access
+ * rules and the client-side role labels, so a role is never shown as ucfirst() of its raw value.
+ *
+ * @return array<string, string>
+ */
+function space_role_labels(): array {
+	return array(
+		'viewer'    => __( 'Viewer', 'jetonomy' ),
+		'member'    => __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
+		'moderator' => __( 'Moderator', 'jetonomy' ),
+		'admin'     => __( 'Admin', 'jetonomy' ),
+	);
+}
+
+/**
+ * Translated name per roadmap idea status (Post::valid_idea_statuses()), for the roadmap columns and the activity log.
+ *
+ * @since 2.1.0
+ *
+ * @return array<string, string>
+ */
+function idea_status_labels(): array {
+	return array(
+		'planned'     => __( 'Planned', 'jetonomy' ),
+		'in_progress' => __( 'In Progress', 'jetonomy' ),
+		'shipped'     => __( 'Shipped', 'jetonomy' ),
+		'declined'    => __( 'Declined', 'jetonomy' ),
+	);
+}
+
+/**
+ * Translated name per access-rule type (role, capability, trust level, membership).
+ *
+ * @since 2.1.0
+ *
+ * @return array<string, string>
+ */
+function access_rule_type_labels(): array {
+	return array(
+		'role'        => __( 'Role', 'jetonomy' ),
+		'capability'  => __( 'Capability', 'jetonomy' ),
+		'trust_level' => __( 'Trust level', 'jetonomy' ),
+		'membership'  => __( 'Membership', 'jetonomy' ),
+	);
+}
+
+/**
  * Human labels for the post/reply `status` enum, keyed by stored value.
  *
  * One map for the Content and Replies screens, which each carried their own
@@ -1859,4 +1970,89 @@ function invalid_url_error( string $label ): \WP_Error {
 		sprintf( __( '%s must be a full address starting with http:// or https://.', 'jetonomy' ), $label ),
 		array( 'status' => 400 )
 	);
+}
+
+/**
+ * The site's own registration page, when it has one.
+ *
+ * Returns its URL when the owner runs their own sign-up (extra fields, terms, names), so the login card's Register tab
+ * can link there like every other Jetonomy sign-up link, and '' when the default form applies and Jetonomy's short inline
+ * form can be used. A plugin can change the register_url filter (caught by wp_registration_url()) or redirect
+ * wp-login.php?action=register instead; the second kind never touches wp_registration_url(), so User Registration &
+ * Membership is recognised by its own member-registration-page setting (only while the plugin is active), and the
+ * jetonomy_external_registration_url filter lets any other plugin say the same.
+ *
+ * @since 2.1.0
+ *
+ * @return string URL of the site's registration page, or '' for the default form.
+ */
+function external_registration_url(): string {
+	$url = '';
+
+	if ( wp_registration_url() !== site_url( 'wp-login.php?action=register', 'login' ) ) {
+		$url = wp_registration_url();
+	} elseif ( class_exists( 'UserRegistration' ) ) {
+		$page_id = (int) get_option( 'user_registration_member_registration_page_id', 0 );
+		if ( $page_id > 0 && 'publish' === get_post_status( $page_id ) ) {
+			$url = (string) get_permalink( $page_id );
+		}
+	}
+
+	/**
+	 * Filter the URL of the site's own registration page. Return '' to keep Jetonomy's inline form.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string $url The detected registration page URL, or '' for the default form.
+	 */
+	return (string) apply_filters( 'jetonomy_external_registration_url', $url );
+}
+
+/**
+ * Read a yes/no value strictly: true/false, 1/0, or the strings true/false, 1/0,
+ * yes/no, on/off in any case. Anything else answers null, so a caller refuses it
+ * instead of guessing ("false" is a non-empty string, which a cast reads as true).
+ *
+ * @since 2.1.0
+ *
+ * @param mixed $raw Value from a CLI flag or a loosely typed input.
+ * @return bool|null
+ */
+function strict_bool( $raw ): ?bool {
+	if ( is_bool( $raw ) ) {
+		return $raw;
+	}
+	if ( 1 === $raw || 0 === $raw ) {
+		return 1 === $raw;
+	}
+	if ( is_string( $raw ) ) {
+		$value = strtolower( trim( $raw ) );
+		if ( in_array( $value, array( '1', 'true', 'yes', 'on' ), true ) ) {
+			return true;
+		}
+		if ( in_array( $value, array( '0', 'false', 'no', 'off' ), true ) ) {
+			return false;
+		}
+	}
+	return null;
+}
+
+/**
+ * Read a whole number strictly: an int, or a string of digits with an optional
+ * minus sign. Anything else ("abc", "5abc", "0x1A", "1.5", "") answers null, where
+ * a cast would have read 0 or 5.
+ *
+ * @since 2.1.0
+ *
+ * @param mixed $raw Value from a CLI argument or a form field.
+ * @return int|null
+ */
+function strict_int( $raw ): ?int {
+	if ( is_int( $raw ) ) {
+		return $raw;
+	}
+	if ( is_string( $raw ) && preg_match( '/^\s*-?[0-9]{1,18}\s*$/', $raw ) ) {
+		return (int) $raw;
+	}
+	return null;
 }

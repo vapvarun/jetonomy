@@ -151,13 +151,7 @@ if ( 'detail' === $mode ) :
 								printf(
 									'<span title="%1$s">%2$s</span>',
 									esc_attr( $created ),
-									esc_html(
-										sprintf(
-											/* translators: %s: human-readable time difference. */
-											__( '%s ago', 'jetonomy' ),
-											human_time_diff( $ts, time() )
-										)
-									)
+									esc_html( \Jetonomy\time_ago( gmdate( 'Y-m-d H:i:s', $ts ) ) )
 								);
 								break;
 

@@ -73,10 +73,12 @@
 		box.setAttribute( 'role', 'dialog' );
 		box.setAttribute( 'aria-modal', 'true' );
 		box.setAttribute( 'tabindex', '-1' );
-		if ( opts.title ) {
-			box.setAttribute( 'aria-labelledby', titleId );
+		// The dialog's name is its title, or its message when it has no title
+		// (Delete this post?), so it is never announced unnamed.
+		if ( opts.title || opts.message ) {
+			box.setAttribute( 'aria-labelledby', opts.title ? titleId : bodyId );
 		}
-		if ( opts.message ) {
+		if ( opts.title && opts.message ) {
 			box.setAttribute( 'aria-describedby', bodyId );
 		}
 
@@ -242,6 +244,23 @@
 	 * @param {Function} onClose Called on Escape.
 	 * @return {Function} Release: removes the listener and restores focus.
 	 */
+	// Give focus back to whatever opened a dialog. A menu item (Report, Delete...) sits inside a dropdown that has
+	// closed by now, so it cannot take focus and focus would fall to <body>; its menu's own button can.
+	function restoreFocus( el ) {
+		if ( ! el || ! el.focus ) {
+			return;
+		}
+		var target = el;
+		if ( ! el.offsetParent && el.closest ) {
+			var menu    = el.closest( '.jt-more-menu' );
+			var trigger = menu ? menu.querySelector( '[data-wp-on--click="actions.toggleMoreMenu"]' ) : null;
+			if ( trigger ) {
+				target = trigger;
+			}
+		}
+		target.focus();
+	}
+
 	window.jetonomyTrapDialog = function ( root, onClose ) {
 		var opener = document.activeElement;
 		function onKey( e ) {
@@ -255,9 +274,7 @@
 		document.addEventListener( 'keydown', onKey );
 		return function () {
 			document.removeEventListener( 'keydown', onKey );
-			if ( opener && opener.focus ) {
-				opener.focus();
-			}
+			restoreFocus( opener );
 		};
 	};
 
@@ -275,9 +292,7 @@
 				document.removeEventListener( 'keydown', onKey );
 				dom.overlay.remove();
 				document.body.style.overflow = prevBodyOverflow;
-				if ( lastFocused && lastFocused.focus ) {
-					lastFocused.focus();
-				}
+				restoreFocus( lastFocused );
 				resolve( result );
 			}
 

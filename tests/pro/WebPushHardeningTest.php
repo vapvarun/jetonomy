@@ -21,7 +21,7 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 	private int $alice;
 	private int $bob;
 
-	/** @var array[] Push payloads queued during the test. */
+	/** @var array[] Args of the push cursor jobs queued during the test. */
 	private array $queued = array();
 
 	public function set_up(): void {
@@ -43,8 +43,8 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 		$this->bob   = self::factory()->user->create( array( 'role' => 'subscriber', 'display_name' => 'Bob' ) );
 
 		$capture = function ( $pre, $event ) {
-			if ( 'jetonomy_pro_send_push' === $event->hook ) {
-				$this->queued[] = $event->args[0];
+			if ( 'jetonomy_pro_send_push_batch' === $event->hook ) {
+				$this->queued[] = $event->args;
 				return true;
 			}
 			return $pre;
@@ -53,8 +53,8 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 		add_filter(
 			'pre_as_enqueue_async_action',
 			function ( $pre, $hook, $args ) {
-				if ( 'jetonomy_pro_send_push' === $hook ) {
-					$this->queued[] = $args[0];
+				if ( 'jetonomy_pro_send_push_batch' === $hook ) {
+					$this->queued[] = $args;
 					return 1;
 				}
 				return $pre;
@@ -110,23 +110,215 @@ class WebPushHardeningTest extends WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * Send one notification through the push cursor job to Bob's app device and return the body Expo received.
+	 */
+	private function pushed_body( string $type, string $object_type, int $object_id, string $message ): ?string {
+		$device = new \ReflectionMethod( $this->ext, 'store_device' );
+		$device->invoke( $this->ext, $this->bob, 'ExponentPushToken[bob' . uniqid() . ']', 'ios', 'Phone' );
+		$id = Notification::create( array( 'user_id' => $this->bob, 'actor_id' => $this->alice, 'type' => $type, 'object_type' => $object_type, 'object_id' => $object_id, 'message' => $message ) );
+		$this->ext->on_notification_created( $id, $this->bob, $type, $object_type, $object_id, $message, '' );
+		$this->ext->flush_pending();
+		$this->assertCount( 1, $this->queued, 'one push cursor job per push' );
+
+		$bodies = array();
+		$expo   = static function ( $pre, $r, $url ) use ( &$bodies ) {
+			if ( false === strpos( (string) $url, 'exp.host' ) ) {
+				return $pre;
+			}
+			$sent     = (array) json_decode( (string) $r['body'], true );
+			$bodies[] = $sent['body'] ?? null;
+			return array( 'body' => '{"data":[]}', 'response' => array( 'code' => 200 ), 'headers' => array(), 'cookies' => array() );
+		};
+		add_filter( 'pre_http_request', $expo, 5, 3 );
+		$this->ext->do_send_batch( ...array_values( $this->queued[0] ) );
+		remove_filter( 'pre_http_request', $expo, 5 );
+		$this->assertCount( 1, $bodies );
+		return $bodies[0];
+	}
+
 	public function test_private_message_push_names_the_sender_but_not_the_text(): void {
-		$this->store( $this->bob, 'https://fcm.googleapis.com/fcm/send/b-' . uniqid(), 'k' );
-		$id = Notification::create( array( 'user_id' => $this->bob, 'actor_id' => $this->alice, 'type' => 'message', 'object_type' => 'message', 'object_id' => 7, 'message' => 'Alice: my bank PIN is 1234' ) );
-
-		$this->ext->on_notification_created( $id, $this->bob, 'message', 'message', 7, 'Alice: my bank PIN is 1234', '' );
-
-		$this->assertCount( 1, $this->queued );
-		$this->assertSame( 'New message from Alice', $this->queued[0]['body'] );
+		$this->assertSame( 'New message from Alice', $this->pushed_body( 'message', 'message', 7, 'Alice: my bank PIN is 1234' ) );
 	}
 
 	/** @covers-existing A forum notification keeps its sentence. */
 	public function test_forum_notification_push_keeps_its_message(): void {
-		$this->store( $this->bob, 'https://fcm.googleapis.com/fcm/send/b-' . uniqid(), 'k' );
-		$this->ext->on_notification_created( 1, $this->bob, 'reply_to_post', 'reply', 3, 'Alice replied to your topic', '' );
+		$this->assertSame( 'Alice replied to your topic', $this->pushed_body( 'reply_to_post', 'reply', 3, 'Alice replied to your topic' ) );
+	}
 
+	/**
+	 * A slow push service: the clock is read before every send, a run stops after its budget (the first member is
+	 * always sent in full) and queues the rest of its own rows from the last member fully sent, so every member gets
+	 * the push exactly once across runs. The clock is injected (Queue::$clock): each send costs 0.4 s of fake time,
+	 * so the test asserts the deadline logic, not wall-clock speed.
+	 */
+	public function test_a_slow_push_service_splits_the_send_across_runs_without_repeats(): void {
+		$device = new \ReflectionMethod( $this->ext, 'store_device' );
+		$members = array();
+		for ( $i = 0; $i < 5; $i++ ) {
+			$uid             = self::factory()->user->create();
+			$members[ $uid ] = 'ExponentPushToken[slow' . $i . uniqid() . ']';
+			$device->invoke( $this->ext, $uid, $members[ $uid ], 'ios', 'Phone' );
+			$id = Notification::create( array( 'user_id' => $uid, 'actor_id' => $this->alice, 'type' => 'new_post', 'object_type' => 'post', 'object_id' => 9, 'message' => 'Alice posted' ) );
+			$this->ext->on_notification_created( $id, $uid, 'new_post', 'post', 9, 'Alice posted', '' );
+		}
+		$this->ext->flush_pending();
 		$this->assertCount( 1, $this->queued );
-		$this->assertSame( 'Alice replied to your topic', $this->queued[0]['body'] );
+
+		$now               = 1000.0;
+		\Jetonomy\Queue::set_clock( static function () use ( &$now ): float {
+			return $now;
+		} );
+		$sent = array();
+		$slow = static function ( $pre, $r, $url ) use ( &$sent, &$now ) {
+			if ( false === strpos( (string) $url, 'exp.host' ) ) {
+				return $pre;
+			}
+			$now   += 0.4; // Each send takes 0.4 s of fake time.
+			$sent[] = ( (array) json_decode( (string) $r['body'], true ) )['to'] ?? '';
+			return array( 'body' => '{"data":[]}', 'response' => array( 'code' => 200 ), 'headers' => array(), 'cookies' => array() );
+		};
+		$budget = static fn() => 1;
+		add_filter( 'pre_http_request', $slow, 5, 3 );
+		add_filter( 'jetonomy_pro_push_send_seconds', $budget );
+		try {
+			$this->ext->do_send_batch( ...array_values( $this->queued[0] ) );
+			// 0.4, 0.8 and 1.2 s: the clock passes the 1 s budget after the third send, so the fourth never starts.
+			$this->assertCount( 3, $sent, 'the first run stopped at its time budget' );
+			$this->assertCount( 2, $this->queued, 'the run queued its continuation' );
+			$this->assertSame( array_values( $this->queued[0] )[2] >= array_values( $this->queued[1] )[2], true, 'the continuation stays within the first run\'s rows' );
+
+			for ( $run = 1; $run < count( $this->queued ) && $run < 10; $run++ ) {
+				$now = 1000.0;
+				$this->ext->do_send_batch( ...array_values( $this->queued[ $run ] ) );
+			}
+		} finally {
+			\Jetonomy\Queue::set_clock( null );
+			remove_filter( 'pre_http_request', $slow, 5 );
+			remove_filter( 'jetonomy_pro_push_send_seconds', $budget );
+		}
+
+		sort( $sent );
+		$expected = array_values( $members );
+		sort( $expected );
+		$this->assertSame( $expected, $sent, 'every member got the push exactly once' );
+	}
+
+	/**
+	 * A member with several slow devices: the deadline is checked between that member's devices too, and the next
+	 * run resumes at that member's next unsent device (the cursor carries how many were sent), so every device gets
+	 * the push exactly once.
+	 */
+	public function test_the_deadline_is_checked_between_one_members_devices(): void {
+		$device = new \ReflectionMethod( $this->ext, 'store_device' );
+		$tokens = array();
+		foreach ( array( 1, 3 ) as $count ) {
+			$uid = self::factory()->user->create();
+			for ( $d = 0; $d < $count; $d++ ) {
+				$tokens[ $uid ][] = 'ExponentPushToken[dev' . $count . $d . uniqid() . ']';
+				$device->invoke( $this->ext, $uid, end( $tokens[ $uid ] ), 'ios', 'Phone ' . $d );
+			}
+			$id = Notification::create( array( 'user_id' => $uid, 'actor_id' => $this->alice, 'type' => 'new_post', 'object_type' => 'post', 'object_id' => 11, 'message' => 'Alice posted again' ) );
+			$this->ext->on_notification_created( $id, $uid, 'new_post', 'post', 11, 'Alice posted again', '' );
+		}
+		$this->ext->flush_pending();
+
+		$now               = 1000.0;
+		\Jetonomy\Queue::set_clock( static function () use ( &$now ): float {
+			return $now;
+		} );
+		$sent = array();
+		$slow = static function ( $pre, $r, $url ) use ( &$sent, &$now ) {
+			if ( false === strpos( (string) $url, 'exp.host' ) ) {
+				return $pre;
+			}
+			$now   += 0.4;
+			$sent[] = ( (array) json_decode( (string) $r['body'], true ) )['to'] ?? '';
+			return array( 'body' => '{"data":[]}', 'response' => array( 'code' => 200 ), 'headers' => array(), 'cookies' => array() );
+		};
+		$budget = static fn() => 1;
+		add_filter( 'pre_http_request', $slow, 5, 3 );
+		add_filter( 'jetonomy_pro_push_send_seconds', $budget );
+		try {
+			$this->ext->do_send_batch( ...array_values( $this->queued[0] ) );
+			$this->assertCount( 3, $sent, 'member 1, then two of member 2\'s devices, then the clock stops the run' );
+			$this->assertCount( 2, $this->queued );
+			$now = 1000.0;
+			$this->ext->do_send_batch( ...array_values( $this->queued[1] ) );
+		} finally {
+			\Jetonomy\Queue::set_clock( null );
+			remove_filter( 'pre_http_request', $slow, 5 );
+			remove_filter( 'jetonomy_pro_push_send_seconds', $budget );
+		}
+		$this->assertCount( 2, $this->queued, 'the second run finished: no further continuation' );
+		$counts = array_count_values( $sent );
+		$second = array_values( $tokens )[1];
+		$this->assertSame( 1, $counts[ array_values( $tokens )[0][0] ], 'member 1 once' );
+		$this->assertSame( 1, $counts[ $second[2] ], 'the device the deadline stopped before is sent once' );
+		$this->assertSame( array( 1, 1 ), array( $counts[ $second[0] ], $counts[ $second[1] ] ), 'the devices sent before the stop are not sent again' );
+		$this->assertSame( 2, array_values( $this->queued[1] )[3], 'the continuation carries the two devices already sent' );
+	}
+
+	/**
+	 * One member with 5 devices and a time box that ends after device 2: the continuation sends devices 3 to 5 only,
+	 * no repeat and no gap. A run whose first device is already past the deadline still sends it (progress).
+	 */
+	public function test_a_stop_mid_member_resumes_at_the_next_device(): void {
+		$device = new \ReflectionMethod( $this->ext, 'store_device' );
+		$uid    = self::factory()->user->create();
+		$tokens = array();
+		for ( $d = 0; $d < 5; $d++ ) {
+			$tokens[] = 'ExponentPushToken[five' . $d . uniqid() . ']';
+			$device->invoke( $this->ext, $uid, end( $tokens ), 'ios', 'Phone ' . $d );
+		}
+		$id = Notification::create( array( 'user_id' => $uid, 'actor_id' => $this->alice, 'type' => 'new_post', 'object_type' => 'post', 'object_id' => 12, 'message' => 'Five devices' ) );
+		$this->ext->on_notification_created( $id, $uid, 'new_post', 'post', 12, 'Five devices', '' );
+		$this->ext->flush_pending();
+
+		$now = 1000.0;
+		\Jetonomy\Queue::set_clock( static function () use ( &$now ): float {
+			return $now;
+		} );
+		$sent = array();
+		$slow = static function ( $pre, $r, $url ) use ( &$sent, &$now ) {
+			if ( false === strpos( (string) $url, 'exp.host' ) ) {
+				return $pre;
+			}
+			$now   += 0.5;
+			$sent[] = ( (array) json_decode( (string) $r['body'], true ) )['to'] ?? '';
+			return array( 'body' => '{"data":[]}', 'response' => array( 'code' => 200 ), 'headers' => array(), 'cookies' => array() );
+		};
+		$budget = static fn() => 1;
+		add_filter( 'pre_http_request', $slow, 5, 3 );
+		add_filter( 'jetonomy_pro_push_send_seconds', $budget );
+		try {
+			$this->ext->do_send_batch( ...array_values( $this->queued[0] ) );
+			$this->assertSame( array_slice( $tokens, 0, 2 ), $sent, 'the time box ends after device 2' );
+			$this->assertCount( 2, $this->queued );
+			$this->assertSame( 2, array_values( $this->queued[1] )[3] );
+
+			$now  = 5000.0; // Already past this run's deadline before its first send.
+			$step = static function ( $pre ) use ( &$now ) {
+				$now += 100;
+				return $pre;
+			};
+			add_filter( 'jetonomy_pro_push_send_seconds', $step, 5 ); // Moves the clock past the deadline once computed.
+			$this->ext->do_send_batch( ...array_values( $this->queued[1] ) );
+			remove_filter( 'jetonomy_pro_push_send_seconds', $step, 5 );
+			$this->assertSame( array_slice( $tokens, 0, 3 ), $sent, 'a late run still sends one device' );
+			$this->assertSame( 3, array_values( $this->queued[2] )[3] );
+
+			$now = 9000.0;
+			for ( $run = 2; $run < count( $this->queued ) && $run < 10; $run++ ) {
+				$now = 9000.0 + $run * 100;
+				$this->ext->do_send_batch( ...array_values( $this->queued[ $run ] ) );
+			}
+		} finally {
+			\Jetonomy\Queue::set_clock( null );
+			remove_filter( 'pre_http_request', $slow, 5 );
+			remove_filter( 'jetonomy_pro_push_send_seconds', $budget );
+		}
+		$this->assertSame( $tokens, $sent, 'devices 3 to 5 follow, each once, none missing' );
 	}
 
 	/** Push args with a real P-256 key, so the send gets as far as the POST. */

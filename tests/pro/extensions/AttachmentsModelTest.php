@@ -219,14 +219,10 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The retired GC schedule is cancelled, never armed.
+	 * The retired GC schedule is cancelled once by the upgrade routine, and nothing arms or listens to it.
 	 *
-	 * Free owns the sweep now (`jetonomy_cleanup_media`), so Pro's boot() must
-	 * not schedule `jetonomy_pro_attachments_gc` and must remove a schedule an
-	 * earlier version left behind - on `action_scheduler_init`, because AS's
-	 * store is not ready when boot() runs. Pro's Queue picks Action Scheduler
-	 * or WP-Cron at runtime, so both branches are exercised here regardless of
-	 * whether the environment loaded AS.
+	 * Free owns the sweep now (`jetonomy_cleanup_media`). The hook is in retired_jobs(), so the Pro upgrade cancels a
+	 * copy an earlier version left in either scheduler; activate() schedules nothing and boot() adds no listener.
 	 *
 	 * @dataProvider scheduler_branches
 	 *
@@ -237,35 +233,25 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'Action Scheduler is not loaded.' );
 		}
 
-		$has_as = new \ReflectionProperty( \Jetonomy_Pro\Queue::class, 'has_as' );
-		$has_as->setAccessible( true );
-		$was_as = $has_as->getValue();
-		$has_as->setValue( null, $use_as );
-
-		try {
-			// A stale schedule left by a pre-retirement version.
-			if ( $use_as ) {
-				as_schedule_recurring_action( time() + HOUR_IN_SECONDS, DAY_IN_SECONDS, Extension::GC_HOOK, array(), 'jetonomy' );
-			} else {
-				wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', Extension::GC_HOOK );
-			}
-			$this->assertTrue( $this->gc_is_scheduled( $use_as ), 'fixture precondition: stale GC schedule seeded' );
-
-			$init_before = $this->callbacks_on( 'action_scheduler_init' );
-			( new Extension() )->boot();
-
-			// Fire only what boot() hooked onto action_scheduler_init, not the
-			// whole action: AS and free hang their own start-up work there.
-			foreach ( array_diff_key( $this->callbacks_on( 'action_scheduler_init' ), $init_before ) as $callback ) {
-				call_user_func( $callback['function'] );
-			}
-
-			$this->assertFalse( $this->gc_is_scheduled( $use_as ), 'boot() left the retired GC scheduled.' );
-		} finally {
-			// boot()'s other hooks (uploader, REST routes, renderer) are undone
-			// by WP_UnitTestCase's own hook backup/restore around every test.
-			$has_as->setValue( null, $was_as );
+		// A stale schedule left by a pre-retirement version.
+		if ( $use_as ) {
+			as_schedule_recurring_action( time() + HOUR_IN_SECONDS, DAY_IN_SECONDS, Extension::GC_HOOK, array(), 'jetonomy' );
+		} else {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', Extension::GC_HOOK );
 		}
+		$this->assertTrue( $this->gc_is_scheduled( $use_as ), 'fixture precondition: stale GC schedule seeded' );
+
+		$ext = new Extension();
+		$this->assertContains( Extension::GC_HOOK, $ext->retired_jobs() );
+		$this->assertNotContains( Extension::GC_HOOK, $ext->jobs() );
+
+		\Jetonomy_Pro::instance()->upgrade_jobs( '2.0.7' );
+		$this->assertFalse( $this->gc_is_scheduled( $use_as ), 'the upgrade left the retired GC scheduled.' );
+
+		$ext->activate();
+		$ext->boot();
+		$this->assertFalse( $this->gc_is_scheduled( $use_as ), 'activate() armed the retired GC.' );
+		$this->assertFalse( has_action( Extension::GC_HOOK ), 'boot() still listens to the retired GC.' );
 	}
 
 	/**
@@ -279,15 +265,6 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * gc() is a no-op: an orphan link row survives it (free's sweep owns that).
-	 */
-	public function test_retired_gc_is_a_noop(): void {
-		Model::link( 'post', 6161, 999999999, 0 ); // attachment id that does not exist.
-		( new Extension() )->gc();
-		$this->assertSame( 1, Model::count_for( 'post', 6161 ) );
-	}
-
-	/**
 	 * Whether the retired GC hook is scheduled on the given backend.
 	 *
 	 * @param bool $use_as Action Scheduler (true) or WP-Cron (false).
@@ -298,22 +275,4 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 			: (bool) wp_next_scheduled( Extension::GC_HOOK );
 	}
 
-	/**
-	 * Flat map of callbacks on a hook, keyed "priority|idx" so a diff finds new ones.
-	 *
-	 * @param string $hook Hook name.
-	 * @return array<string, array>
-	 */
-	private function callbacks_on( string $hook ): array {
-		$out = array();
-		if ( empty( $GLOBALS['wp_filter'][ $hook ] ) ) {
-			return $out;
-		}
-		foreach ( $GLOBALS['wp_filter'][ $hook ]->callbacks as $priority => $callbacks ) {
-			foreach ( $callbacks as $idx => $callback ) {
-				$out[ $priority . '|' . $idx ] = $callback;
-			}
-		}
-		return $out;
-	}
 }

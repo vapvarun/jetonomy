@@ -158,41 +158,193 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 </nav>
 <!-- Mobile bottom tab bar (visible ≤640px only, hidden when BuddyNext provides its own) -->
 <?php if ( ! did_action( 'buddynext_loaded' ) ) : ?>
-<nav class="jt-mobile-tabs" aria-label="<?php esc_attr_e( 'Mobile navigation', 'jetonomy' ); ?>">
-	<a href="<?php echo esc_url( $base . '/' ); ?>" class="jt-mobile-tab <?php echo 'home' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-		<?php jetonomy_echo_icon( 'home', 20 ); ?>
-		<span><?php esc_html_e( 'Home', 'jetonomy' ); ?></span>
-	</a>
-	<a href="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-mobile-tab <?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-		<?php jetonomy_echo_icon( 'search', 20 ); ?>
-		<span><?php esc_html_e( 'Search', 'jetonomy' ); ?></span>
-	</a>
-	<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>" class="jt-mobile-tab <?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-		<?php jetonomy_echo_icon( 'award', 20 ); ?>
-		<span><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span>
-	</a>
-	<?php if ( $user_id ) : ?>
-		<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" data-jt-unread-host="jt-mobile-tab-badge" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-			<?php jetonomy_echo_icon( 'bell', 20 ); ?>
-			<span><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></span>
-			<?php if ( $unread > 0 ) : ?>
-				<span class="jt-mobile-tab-badge"><?php echo (int) $unread; ?></span>
-			<?php endif; ?>
-		</a>
+	<?php
+	// The tabs, built as data so the order and the items can be changed with the jetonomy_mobile_tabs filter. 'primary' is the
+	// centred accent button; 'menu' marks the tab that opens the Me sheet; 'sheet' names the sheet a link tab opens instead
+	// of navigating, unless 'direct' (header.js). Where "New" goes: inside a space that space's composer; elsewhere a
+	// "Start a topic in..." sheet of the spaces the member can post in, or that one space's composer when there is only one.
+	// On a topic page jetonomy_slug is the TOPIC; the space is jetonomy_space_slug. Every other space route uses jetonomy_slug.
+	$jt_slug     = (string) get_query_var( 'post' === $current_route ? 'jetonomy_space_slug' : 'jetonomy_slug', '' );
+	$jt_in_space = '' !== $jt_slug && in_array( $current_route, array( 'space', 'new-post', 'post', 'space-members', 'space-feed' ), true );
+
+	// Spaces the member can start a topic in, most recently joined first. Rendered on every page (not only outside a space)
+	// so the sheet still works after a client-side navigation out of a space. Bounded: one indexed query for the member's
+	// space ids, then batches of 30 primed in one query each and checked from the request cache, so archived or read-only
+	// spaces at the top do not hide an older open one. Up to 30 rows; past 8 the sheet gets a filter box (header.js).
+	// ponytail: scans the 300 newest memberships; past that $jt_unscanned keeps "All my spaces" on screen (no one-space
+	// shortcut, no "Join one" note), because a space the member can post in may sit beyond the scan.
+	$jt_postable  = array();
+	$jt_unscanned = false;
+	if ( $user_id ) {
+		$jt_member_of = \Jetonomy\Models\SpaceMember::spaces_for_user( $user_id );
+		$jt_unscanned = count( $jt_member_of ) > 300;
+		foreach ( array_chunk( array_slice( $jt_member_of, 0, 300 ), 30 ) as $jt_ids ) {
+			\Jetonomy\Models\Space::prime( $jt_ids );
+			\Jetonomy\Models\SpaceMember::warm_viewer_roles( $user_id, $jt_ids );
+			foreach ( $jt_ids as $jt_sid ) {
+				$jt_sp = \Jetonomy\Models\Space::find( (int) $jt_sid );
+				if ( $jt_sp && true === \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $jt_sid )
+				&& \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $jt_sid ) ) {
+					$jt_postable[] = $jt_sp;
+				}
+			}
+			if ( count( $jt_postable ) >= 30 ) {
+				$jt_postable = array_slice( $jt_postable, 0, 30 );
+				break;
+			}
+		}
+	}
+	$jt_one_space   = 1 === count( $jt_postable ) && ! $jt_unscanned ? \Jetonomy\route_url( 'new-post', $jt_postable[0]->slug ) : '';
+	$jt_new_home    = '' !== $jt_one_space ? $jt_one_space : \Jetonomy\route_url( 'my-spaces' );
+	$jt_new_url     = $jt_in_space ? \Jetonomy\route_url( 'new-post', $jt_slug ) : $jt_new_home;
+	$jt_mobile_tabs = $user_id
+	? array(
+		array(
+			'key'    => 'home',
+			'label'  => __( 'Home', 'jetonomy' ),
+			'url'    => $base . '/',
+			'icon'   => 'home',
+			'active' => 'home' === $current_route,
+		),
+		array(
+			'key'    => 'spaces',
+			'label'  => \Jetonomy\space_label( true ),
+			'url'    => \Jetonomy\route_url( 'my-spaces' ),
+			'icon'   => 'layout-grid',
+			'active' => in_array( $current_route, array( 'my-spaces', 'space', 'category', 'post', 'space-members', 'space-feed', 'space-roadmap', 'space-moderation' ), true ),
+		),
+		array(
+			'key'     => 'new',
+			'label'   => __( 'New', 'jetonomy' ),
+			'url'     => $jt_new_url,
+			'icon'    => 'plus',
+			'primary' => true,
+			'active'  => 'new-post' === $current_route,
+			'sheet'   => '' === $jt_one_space ? 'jt-new-sheet' : '',
+			'direct'  => $jt_in_space,
+		),
+		array(
+			'key'    => 'alerts',
+			'label'  => __( 'Alerts', 'jetonomy' ),
+			'url'    => \Jetonomy\route_url( 'notifications' ),
+			'icon'   => 'bell',
+			'badge'  => $unread,
+			'host'   => 'jt-mobile-tab-badge',
+			'active' => 'notifications' === $current_route,
+		),
+		array(
+			'key'    => 'me',
+			'label'  => __( 'Me', 'jetonomy' ),
+			'url'    => \Jetonomy\get_profile_url( $user_id ),
+			'icon'   => 'user',
+			'menu'   => true,
+			'active' => in_array( $current_route, array( 'profile', 'moderation', 'bookmarks', 'drafts', 'subscriptions', 'leaderboard', 'edit-profile', 'messages', 'conversation' ), true ),
+		),
+	)
+	: array(
+		array(
+			'key'    => 'home',
+			'label'  => __( 'Home', 'jetonomy' ),
+			'url'    => $base . '/',
+			'icon'   => 'home',
+			'active' => 'home' === $current_route,
+		),
+		array(
+			'key'    => 'search',
+			'label'  => __( 'Search', 'jetonomy' ),
+			'url'    => \Jetonomy\route_url( 'search' ),
+			'icon'   => 'search',
+			'active' => 'search' === $current_route,
+		),
+		array(
+			'key'     => 'signin',
+			'label'   => __( 'Sign in', 'jetonomy' ),
+			'url'     => wp_login_url( \Jetonomy\current_url() ),
+			'icon'    => 'users',
+			'primary' => true,
+			'login'   => true,
+		),
+	);
+
+	/**
+	 * The phone bottom bar's tabs, in order. Each is array{key, label, url, icon, active?, badge?, host?, primary?, menu?, sheet?, direct?, login?}.
+	 * Return a different order or add/remove tabs; the bar is not shown at all when BuddyNext is active.
+	 *
+	 * @since 2.1.0
+	 * @param array[] $jt_mobile_tabs Tabs.
+	 * @param bool    $logged_in      Whether the viewer is signed in.
+	 */
+	$jt_mobile_tabs = (array) apply_filters( 'jetonomy_mobile_tabs', $jt_mobile_tabs, (bool) $user_id );
+	?>
+<nav class="jt-mobile-tabs" aria-label="<?php esc_attr_e( 'Mobile navigation', 'jetonomy' ); ?>"
+	data-jt-base="<?php echo esc_attr( (string) wp_parse_url( $base, PHP_URL_PATH ) ); ?>" data-jt-new-fallback="<?php echo esc_url( $jt_new_home ); ?>">
+	<?php foreach ( $jt_mobile_tabs as $jt_tab ) : ?>
 		<?php
-		// header.js turns this tab into a small menu when the top nav holds
-		// links the tab bar has no tab for (Moderation, Pro's Messages), so
-		// phones can drop that second nav row and still reach them.
+		$jt_classes = 'jt-mobile-tab' . ( ! empty( $jt_tab['primary'] ) ? ' jt-mobile-tab--primary' : '' ) . ( ! empty( $jt_tab['active'] ) ? ' active' : '' );
 		?>
-		<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" data-jt-tab="profile" class="jt-mobile-tab <?php echo in_array( $current_route, array( 'profile', 'moderation', 'space-moderation', 'messages' ), true ) ? esc_attr( 'active' ) : ''; ?>">
-			<?php jetonomy_echo_icon( 'user', 20 ); ?>
-			<span><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
-		</a>
-	<?php else : ?>
-		<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>" class="jt-mobile-tab" data-jt-login>
-			<?php jetonomy_echo_icon( 'users', 20 ); ?>
-			<span><?php esc_html_e( 'Log in', 'jetonomy' ); ?></span>
-		</a>
+		<?php // A tab that opens a menu is a button (it never navigates by itself); every other tab is a link. ?>
+		<<?php echo ! empty( $jt_tab['menu'] ) ? 'button type="button"' : 'a href="' . esc_url( $jt_tab['url'] ) . '"'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- url escaped, rest is literal. ?> class="<?php echo esc_attr( $jt_classes ); ?>" data-jt-key="<?php echo esc_attr( $jt_tab['key'] ); ?>"
+			<?php echo ! empty( $jt_tab['host'] ) ? 'data-jt-unread-host="' . esc_attr( $jt_tab['host'] ) . '"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attribute escaped above. ?>
+			<?php echo ! empty( $jt_tab['menu'] ) ? 'data-jt-menu="jt-mobile-tab-menu"' : ( ! empty( $jt_tab['sheet'] ) ? 'data-jt-menu="' . esc_attr( $jt_tab['sheet'] ) . '"' : '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attribute escaped. ?>
+			<?php echo ! empty( $jt_tab['direct'] ) ? 'data-jt-direct' : ''; ?>
+			<?php echo ! empty( $jt_tab['login'] ) ? 'data-jt-login' : ''; ?>
+			<?php echo ! empty( $jt_tab['active'] ) ? 'aria-current="page"' : ''; ?>>
+			<?php if ( ! empty( $jt_tab['primary'] ) ) : ?>
+				<span class="jt-mobile-tab__bubble"><?php jetonomy_echo_icon( (string) $jt_tab['icon'], 20 ); ?></span>
+			<?php else : ?>
+				<?php jetonomy_echo_icon( (string) $jt_tab['icon'], 20 ); ?>
+			<?php endif; ?>
+			<span><?php echo esc_html( $jt_tab['label'] ); ?></span>
+			<?php if ( ! empty( $jt_tab['badge'] ) && (int) $jt_tab['badge'] > 0 ) : ?>
+				<span class="jt-mobile-tab-badge"><?php echo esc_html( (int) $jt_tab['badge'] > 99 ? '99+' : (string) (int) $jt_tab['badge'] ); ?></span>
+			<?php endif; ?>
+		</<?php echo ! empty( $jt_tab['menu'] ) ? 'button' : 'a'; ?>>
+	<?php endforeach; ?>
+	<?php if ( $user_id ) : ?>
+		<?php // The Me sheet: header.js shows it, appending the top-nav-only links (Moderation, Pro's Messages) once. ?>
+		<div id="jt-mobile-tab-menu" class="jt-mobile-tab-menu" role="menu" hidden>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>"><?php jetonomy_echo_icon( 'user', 18 ); ?><span><?php esc_html_e( 'My profile', 'jetonomy' ); ?></span></a>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( trailingslashit( \Jetonomy\get_profile_url( $user_id ) ) . 'posts/' ); ?>"><?php jetonomy_echo_icon( 'file-text', 18 ); ?><span><?php echo esc_html( sprintf( /* translators: %s: a plural label the site owner configured (e.g. spaces, groups, topics). */ __( 'My %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></span></a>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'bookmarks' ) ); ?>"><?php jetonomy_echo_icon( 'bookmark', 18 ); ?><span><?php esc_html_e( 'Bookmarks', 'jetonomy' ); ?></span></a>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>"><?php jetonomy_echo_icon( 'award', 18 ); ?><span><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span></a>
+			<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'edit-profile', get_userdata( $user_id )->user_nicename ) ); ?>"><?php jetonomy_echo_icon( 'settings', 18 ); ?><span><?php esc_html_e( 'Settings', 'jetonomy' ); ?></span></a>
+		</div>
+		<?php if ( '' === $jt_one_space ) : ?>
+			<?php
+			/* translators: %s: the topic label, singular, lowercase (e.g. "topic", "question"). */
+			$jt_sheet_title = sprintf( __( 'Start a %s in...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) );
+			?>
+			<?php // "Start a topic in...", opened from New outside a space. With no space to post in it says so and links to the directory. ?>
+			<?php $jt_searchable = count( $jt_postable ) > 8; ?>
+			<?php // With a filter box the sheet is a dialog (a text field does not belong in a menu); otherwise a menu. ?>
+			<div id="jt-new-sheet" class="jt-mobile-tab-menu jt-mobile-tab-menu--wide" role="<?php echo $jt_searchable ? 'dialog' : 'menu'; ?>" aria-label="<?php echo esc_attr( $jt_sheet_title ); ?>" hidden>
+				<div class="jt-mobile-tab-menu__title" aria-hidden="true"><?php echo esc_html( $jt_sheet_title ); ?></div>
+				<?php if ( $jt_searchable ) : ?>
+					<?php /* translators: %s: the plural space label, lowercase (e.g. "spaces"). */ ?>
+					<?php $jt_find = sprintf( __( 'Find in your %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ); ?>
+					<label class="jt-mobile-tab-menu__search">
+						<span class="screen-reader-text"><?php echo esc_html( $jt_find ); ?></span>
+						<input type="search" data-jt-sheet-filter placeholder="<?php echo esc_attr( $jt_find ); ?>" autocomplete="off">
+					</label>
+					<p class="jt-mobile-tab-menu__note" data-jt-sheet-empty hidden><?php esc_html_e( 'No match.', 'jetonomy' ); ?></p>
+				<?php endif; ?>
+				<?php if ( $jt_postable ) : ?>
+					<?php foreach ( $jt_postable as $jt_sp ) : ?>
+						<a class="jt-more-item" <?php echo $jt_searchable ? '' : 'role="menuitem"'; ?> data-jt-sheet-row href="<?php echo esc_url( \Jetonomy\route_url( 'new-post', $jt_sp->slug ) ); ?>"><?php jetonomy_echo_icon( 'layout-grid', 18 ); ?><span><?php echo esc_html( $jt_sp->title ); ?></span></a>
+					<?php endforeach; ?>
+					<?php /* translators: %s: the plural space label, lowercase (e.g. "spaces", "groups"). */ ?>
+					<a class="jt-more-item" <?php echo $jt_searchable ? '' : 'role="menuitem"'; ?> href="<?php echo esc_url( \Jetonomy\route_url( 'my-spaces' ) ); ?>"><?php jetonomy_echo_icon( 'users', 18 ); ?><span><?php echo esc_html( sprintf( __( 'All my %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></span></a>
+				<?php elseif ( $jt_unscanned ) : ?>
+					<?php /* translators: %s: the plural space label, lowercase (e.g. "spaces", "groups"). */ ?>
+					<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( \Jetonomy\route_url( 'my-spaces' ) ); ?>"><?php jetonomy_echo_icon( 'users', 18 ); ?><span><?php echo esc_html( sprintf( __( 'All my %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></span></a>
+				<?php else : ?>
+					<?php /* translators: 1: the plural space label, lowercase (e.g. "spaces"). 2: the topic label, singular, lowercase. */ ?>
+					<p class="jt-mobile-tab-menu__note"><?php echo esc_html( sprintf( __( 'Join one of the %1$s to start a %2$s.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></p>
+					<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
+					<a class="jt-more-item" role="menuitem" href="<?php echo esc_url( $base . '/' ); ?>"><?php jetonomy_echo_icon( 'layout-grid', 18 ); ?><span><?php echo esc_html( sprintf( __( 'Browse %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></span></a>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
 	<?php endif; ?>
 </nav>
 <?php endif; ?>

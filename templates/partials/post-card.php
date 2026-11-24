@@ -25,7 +25,7 @@ $show_space           = isset( $show_space ) ? (bool) $show_space : false;
 $initials             = '' !== $display['name'] ? strtoupper( mb_substr( $display['name'], 0, 2 ) ) : '??';
 $trust                = $profile ? (int) $profile->trust_level : 0;
 $post_url             = \Jetonomy\route_url( 'post', ( $space->slug ?? '' ), $post->slug );
-$time_ago             = human_time_diff( strtotime( $post->created_at ), time() );
+$time_ago             = \Jetonomy\time_ago( (string) $post->created_at );
 $tags                 = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 $viewer_id            = get_current_user_id();
 $viewer_vote          = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
@@ -165,7 +165,7 @@ if ( $prefix_name && $space ) {
 		<div class="jt-row-time">
 			<?php
 			/* translators: %s: human-readable time difference. */
-			echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
+			echo esc_html( $time_ago );
 			?>
 		</div>
 	</div>

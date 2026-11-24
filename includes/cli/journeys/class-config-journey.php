@@ -1,6 +1,6 @@
 <?php
 /**
- * Config journey — read/write any key in the jetonomy_settings option.
+ * Config journey - read any key in the jetonomy_settings option; write the registered ones.
  *
  * @package Jetonomy
  */
@@ -121,10 +121,37 @@ final class Config_Journey {
 			$old_value = null;
 		}
 
-		$new_value = is_string( $value ) ? $this->coerce_scalar( $value ) : $value;
+		// The change goes through the same writer as the admin form and the
+		// REST route: only registered keys, every value through the form's
+		// sanitizer. Before 2.1.0 this stored the raw value.
+		$top    = explode( '.', $path )[0];
+		$schema = \Jetonomy\Settings::schema();
+		if ( ! isset( $schema[ $top ] ) ) {
+			return Journey_Result::fail( sprintf( 'jetonomy_unknown_setting: %s is not a setting that can be changed. Run `wp jetonomy config keys` for the list.', $top ) );
+		}
+		$new_value = $value;
+		if ( is_string( $value ) ) {
+			$trimmed = ltrim( $value );
+			$json    = ( '' !== $trimmed && ( '[' === $trimmed[0] || '{' === $trimmed[0] ) ) ? json_decode( $value, true ) : null;
+			if ( is_array( $json ) ) {
+				$new_value = $json;
+			} elseif ( $path !== $top || 'string' !== ( $schema[ $top ]['type'] ?? '' ) ) {
+				// A text setting keeps "42" as text; everything else is coerced.
+				$new_value = $this->coerce_scalar( $value );
+			}
+		}
 
 		$this->assign( $settings, $path, $new_value );
-		update_option( self::OPTION_KEY, $settings );
+		$result = \Jetonomy\Settings::write( array( $top => $settings[ $top ] ), 'cli' );
+		if ( is_wp_error( $result ) ) {
+			return Journey_Result::fail( $result->get_error_code() . ': ' . $result->get_error_message() );
+		}
+		// A refused value is a failure, never "Success" over the old value.
+		if ( $result['notices'] ) {
+			return Journey_Result::fail( implode( ' ', array_column( $result['notices'], 'message' ) ) );
+		}
+		$stored    = get_option( self::OPTION_KEY, array() );
+		$new_value = $this->descend( is_array( $stored ) ? $stored : array(), $path, $found );
 
 		return Journey_Result::ok(
 			array(

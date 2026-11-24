@@ -108,7 +108,7 @@ final class Privacy_Command extends Base_Command {
 	 * @subcommand purge-orphans
 	 */
 	public function purge_orphans( $args, $assoc ): void {
-		if ( isset( $assoc['dry-run'] ) ) {
+		if ( $this->bool_arg( $assoc, 'dry-run' ) ) {
 			$this->scan( $args, $assoc );
 			return;
 		}

@@ -54,9 +54,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<?php endif; ?>
 			</a>
 		<?php endif; ?>
-		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Custom Fields', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
-			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Reactions', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+		<?php $jt_pro_locked = \Jetonomy\Admin\Admin::show_pro_promo(); ?>
+		<?php if ( $jt_pro_locked ) : ?>
+			<?php \Jetonomy\Admin\Admin::pro_locked_tab( __( 'Custom Fields', 'jetonomy' ), 'jt-pro-explain-space' ); ?>
+			<?php \Jetonomy\Admin\Admin::pro_locked_tab( __( 'Reactions', 'jetonomy' ), 'jt-pro-explain-space' ); ?>
 		<?php endif; ?>
 		<?php
 		/**
@@ -68,6 +69,12 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		do_action( 'jetonomy_admin_space_edit_tabs', $space );
 		?>
 	</nav>
+	<?php
+	if ( $jt_pro_locked ) {
+		/* translators: %s: the singular space label, lowercase (e.g. "space"). */
+		\Jetonomy\Admin\Admin::pro_explainer( 'jt-pro-explain-space', sprintf( __( 'Custom Fields and Reactions are part of Pro: add polls, reactions and your own fields to this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+	}
+	?>
 
 	<?php if ( 'general' === $active_tab ) : ?>
 		<!-- General Tab -->
@@ -328,7 +335,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								<?php
 								break;
 							case 'joined':
-								echo esc_html( human_time_diff( strtotime( $member->joined_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+								echo esc_html( \Jetonomy\time_ago( (string) $member->joined_at ) );
 								break;
 							case 'actions':
 								?>
@@ -346,7 +353,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<span class="displaying-num">
 						<?php
 						/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
-						printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( ( $member_paged - 1 ) * $member_per_page + 1 ) ), esc_html( number_format_i18n( min( $member_paged * $member_per_page, $member_total ) ) ), esc_html( number_format_i18n( $member_total ) ) );
+						printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( jetonomy_page_offset( $member_paged, $member_per_page ) + 1 ) ), esc_html( number_format_i18n( min( $member_paged * $member_per_page, $member_total ) ) ), esc_html( number_format_i18n( $member_total ) ) );
 						?>
 					</span>
 					<?php
@@ -591,7 +598,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					'cell'      => static function ( $rule, string $key ) use ( $space ): void {
 						// Membership rules store a raw level id; the adapter
 						// registry turns it back into something a human reads.
-						$display_type  = ucfirst( str_replace( '_', ' ', $rule->rule_type ) );
+						$display_type  = \Jetonomy\access_rule_type_labels()[ $rule->rule_type ] ?? (string) $rule->rule_type;
 						$display_value = ! empty( $rule->rule_value ) ? $rule->rule_value : '—';
 						if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
 							$described     = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
@@ -630,7 +637,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							case 'role':
 								// The role a sync would actually store, not the raw column
 								// of a rule saved before rules were capped at Member.
-								echo '<span class="jetonomy-rule-role">' . esc_html( ucfirst( \Jetonomy\Models\AccessRule::role_for_grants( (string) $rule->grants ) ) ) . '</span>';
+								echo '<span class="jetonomy-rule-role">' . esc_html( \Jetonomy\space_role_labels()[ \Jetonomy\Models\AccessRule::role_for_grants( (string) $rule->grants ) ] ?? '' ) . '</span>';
 								break;
 							case 'actions':
 								echo '<div class="jetonomy-rule-actions">';
@@ -916,7 +923,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								echo esc_html( ! empty( $request->message ) ? $request->message : '—' );
 								break;
 							case 'requested':
-								echo esc_html( human_time_diff( strtotime( $request->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+								echo esc_html( \Jetonomy\time_ago( (string) $request->created_at ) );
 								break;
 							case 'actions':
 								?>
@@ -936,7 +943,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<div class="tablenav-pages">
 					<span class="displaying-num">
 						<?php
-						$_jr_first = ( $join_paged - 1 ) * $join_per_page + 1;
+						$_jr_first = jetonomy_page_offset( $join_paged, $join_per_page ) + 1;
 						$_jr_last  = min( $join_paged * $join_per_page, $join_total );
 						/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 						printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_jr_first ) ), esc_html( number_format_i18n( $_jr_last ) ), esc_html( number_format_i18n( $join_total ) ) );

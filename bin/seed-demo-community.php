@@ -65,7 +65,7 @@ if ( isset( $args[0] ) && 'reset' === $args[0] ) {
 	Demo_Seeder::reset_all();
 }
 $admins = get_users( array( 'role' => 'administrator', 'fields' => 'ID', 'number' => 1, 'orderby' => 'ID' ) );
-Demo_Seeder::import( (int) ( $admins[0] ?? 1 ) );
+Demo_Seeder::import( (int) ( $admins[0] ?? 1 ), true ); // A dev tool, refused on production above: seed next to anything.
 
 mt_srand( 20261015 );
 $u = static fn( string $login ): int => (int) ( get_user_by( 'login', $login )->ID ?? 0 );

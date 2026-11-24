@@ -42,7 +42,7 @@ $jt_per_page = (int) apply_filters( 'jetonomy_spaces_per_page', 24 );
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
 $jt_page     = max( 1, (int) ( $_GET['spg'] ?? 1 ) );
 $jt_total    = \Jetonomy\Models\Space::count_by_category( (int) $category->id );
-$spaces      = \Jetonomy\Models\Space::list_by_category( (int) $category->id, null, $jt_per_page, ( $jt_page - 1 ) * $jt_per_page );
+$spaces      = \Jetonomy\Models\Space::list_by_category( (int) $category->id, null, $jt_per_page, jetonomy_page_offset( $jt_page, $jt_per_page ) );
 $jt_has_more = ( $jt_page * $jt_per_page ) < $jt_total;
 $base        = \Jetonomy\base_url();
 

@@ -14,6 +14,11 @@
  * docs/qa/journey-exempt.txt (`glob - reason`, Pro globs prefixed `pro:`).
  * Covers entries for Pro files use the same `pro:` prefix.
  *
+ * Run it from a git clone of Jetonomy with the jetonomy-pro clone beside it
+ * (../jetonomy-pro): it lists shipped files with `git ls-files` and exits 1
+ * outside a git checkout, and bin/ is not in a `git archive` or release zip, so
+ * an extracted tree cannot run it. Without the Pro sibling it checks Free only.
+ *
  * Usage:
  *   php bin/check-journey-coverage.php           # exit 1 while any file is unclaimed
  *   php bin/check-journey-coverage.php --list    # also print every unclaimed file
@@ -109,6 +114,12 @@ $jt_repos  = array( 'free' => $jt_root ) + ( $jt_pro ? array( 'pro' => $jt_pro )
 $jt_report = array();
 $jt_fail   = (bool) $jt_bad_exempt;
 foreach ( $jt_repos as $jt_side => $jt_dir ) {
+	// The file list comes from `git ls-files`: outside a git checkout (an extracted
+	// zip) it is empty, which used to print "0 of 0 claimed (100%)" and pass.
+	if ( '' === trim( (string) shell_exec( 'git -C ' . escapeshellarg( $jt_dir ) . ' rev-parse --is-inside-work-tree 2>/dev/null' ) ) ) {
+		printf( "journey-coverage %s: FAIL - %s is not a git checkout, so there is no list of shipped files to check. Run it in the repo.\n", $jt_side, $jt_dir );
+		exit( 1 );
+	}
 	$jt_all = jt_cov_shipped( $jt_dir );
 	$jt_un  = array_values( array_diff( $jt_all, jt_cov_ls( $jt_dir, $jt_claim[ $jt_side ] ) ) );
 	$jt_pct = $jt_all ? 100 * ( count( $jt_all ) - count( $jt_un ) ) / count( $jt_all ) : 100;

@@ -195,6 +195,17 @@ else
     FAILED_GATES+=("comment-refs")
 fi
 
+step "Never-fatal calls (free + pro)"
+# setAccessible() is a no-op since PHP 8.1 and deprecated in 8.5. Calls into
+# optional extensions go through the family gate bin/lib/extension-guard-check.php
+# (its self-test runs first). Pro has no runner of its own here.
+if php bin/check-never-fatal.php && { [ -z "$PRO" ] || php bin/check-never-fatal.php "$PRO"; }; then
+    ok "no call that fatals or deprecates on a supported host"
+else
+    fail "never-fatal gate (php bin/check-never-fatal.php)"
+    FAILED_GATES+=("never-fatal")
+fi
+
 step "Terminology nouns (free)"
 if php bin/check-terminology.php >/dev/null; then
     ok "every user-facing noun follows Settings -> Terminology"
@@ -280,12 +291,47 @@ if [ "$DO_UNIT" -eq 1 ]; then
     UNIT_OUT_RAW=$(composer test:docker:unit 2>&1)
     if echo "$UNIT_OUT_RAW" | grep -qE "OK \([0-9]+ tests|OK, but incomplete, skipped"; then
         UNIT_OUT=$(echo "$UNIT_OUT_RAW" | grep -E "Tests: |OK" | tail -1)
-        ok "PHPUnit unit clean — $UNIT_OUT"
+        ok "PHPUnit unit clean — $UNIT_OUT (skipped: $(echo "$UNIT_OUT_RAW" | grep -oE "Skipped: [0-9]+" | tail -1 | grep -oE "[0-9]+" || echo 0))"
     else
         fail "PHPUnit unit suite has failures"
         echo "$UNIT_OUT_RAW" | grep -E "^[ ]*✘|FAILURES|Tests:" | tail -10
         FAILED_GATES+=("phpunit-unit")
     fi
+fi
+
+# --- Gate 3b: Queue proofs must RUN, never skip --------------------------
+# The rest of the suite may skip (multisite-only cases); these may not: a proof that skips passes while proving
+# nothing. With Pro present the Pro half (tests/pro/*Queue*, upgrade, web push) must run too.
+if [ "$DO_UNIT" -eq 1 ]; then
+    step "Queue proofs (no skips)"
+    Q_FILTER='QueueTest|PublishRetryCapTest|DeactivationKeepsPromisedJobsTest|DueJobsRearmTest'
+    [ -n "$PRO" ] && Q_FILTER="$Q_FILTER|ProQueueShimTest|UpgradeJobsTest|WebPushHardeningTest|WebPushNoDuplicatesTest"
+    Q_OUT=$(npx wp-env run tests-cli --env-cwd=wp-content/plugins/jetonomy vendor/bin/phpunit --filter "$Q_FILTER" 2>&1)
+    Q_SUM=$(echo "$Q_OUT" | grep -E "^OK|^Tests: " | tail -1)
+    if echo "$Q_OUT" | grep -qE "^OK \([0-9]+ tests"; then
+        ok "Queue proofs ran — $Q_SUM"
+    else
+        fail "Queue proofs failed or skipped — ${Q_SUM:-no summary}"
+        FAILED_GATES+=("queue-proofs")
+    fi
+fi
+
+# --- Gate 3c: script translations resolve ---------------------------------
+step "Script translations (free${PRO:+ + pro})"
+if php bin/check-script-translations.php && { [ -z "$PRO" ] || php bin/check-script-translations.php "$PRO"; }; then
+    ok "script translations resolve"
+else
+    fail "script translation files do not resolve (run bin/check-script-translations.php <dir> --fix)"
+    FAILED_GATES+=("script-translations")
+fi
+
+# --- Gate 3d: .pot matches the code ----------------------------------------
+step "Translation template fresh (free${PRO:+ + pro})"
+if php bin/check-pot-fresh.php && { [ -z "$PRO" ] || php bin/check-pot-fresh.php "$PRO"; }; then
+    ok ".pot matches the code"
+else
+    fail ".pot is stale (run npx grunt makepot, then commit languages/*.pot)"
+    FAILED_GATES+=("pot-fresh")
 fi
 
 # --- Gate 4: PHPUnit combo (free+pro integration) ------------------------

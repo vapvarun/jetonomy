@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     2.0.7
+ * Version:     2.1.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,23 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '2.0.7' );
+// Runtime PHP floor. The "Requires PHP" header only gates activation; a host that downgrades PHP afterwards (or a copied
+// plugin folder) would otherwise load files written for 8.1 and fatal the whole site. Nothing below is loaded on an older
+// PHP, so this block uses only syntax every PHP 7 understands.
+if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
+	add_action(
+		'admin_notices',
+		function () {
+			if ( ! current_user_can( 'activate_plugins' ) ) {
+				return;
+			}
+			echo '<div class="notice notice-error"><p><strong>Jetonomy</strong> ' . esc_html( sprintf( 'needs PHP 8.1 or newer and this server runs PHP %s, so Jetonomy is paused. Ask your host to switch this site to PHP 8.1 or newer.', PHP_VERSION ) ) . '</p></div>';
+		}
+	);
+	return;
+}
+
+define( 'JETONOMY_VERSION', '2.1.0' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -35,7 +51,7 @@ define( 'JETONOMY_VERSION', '2.0.7' );
 // upgrade block and Migration_1_9_3 never ran there. Keep this in step with
 // the newest key in Migrator::get_migrations() or the newest migration is
 // silently dead on exactly the sites that need it.
-define( 'JETONOMY_DB_VERSION', '2.0.7' );
+define( 'JETONOMY_DB_VERSION', '2.0.8.1' ); // Schema milestone, not the release number (see Migrator::get_migrations()).
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -132,6 +148,17 @@ add_action(
 			)
 		);
 	}
+);
+
+// Free has no licence for an owner to manage: drop the SDK's "Manage License" row link (added at priority 100). Not the
+// SDK's 'keyless' flag: that sends an empty key on update checks, and Free's updates authenticate with the preset key.
+add_filter(
+	'plugin_action_links_' . plugin_basename( JETONOMY_FILE ),
+	static function ( $actions ) {
+		unset( $actions['edd_sdk_manage'] );
+		return $actions;
+	},
+	101
 );
 
 // SDK lives at libs/ (committed, ships in zip). Pro reads it via the same path.
@@ -982,7 +1009,27 @@ function jetonomy_normalize_editor_html( string $content ): string {
  * @return string Normalized, kses-safe HTML.
  */
 function jetonomy_sanitize_editor_content( string $content ): string {
-	return wp_kses_post( jetonomy_normalize_editor_html( $content ) );
+	return wp_kses_post( jetonomy_strip_code_placeholders( jetonomy_normalize_editor_html( $content ) ) );
+}
+
+/**
+ * Remove the zero-width placeholder the editor's Inline Code button puts in a code run.
+ *
+ * The button opens `<code>` with a zero-width space so the caret has somewhere to sit (and leaves one after the run when
+ * the member steps out of it). A run they never typed into is dropped, and every placeholder is removed.
+ *
+ * @since 2.1.0
+ *
+ * @param string $content Body HTML.
+ * @return string Body HTML without the placeholder.
+ */
+function jetonomy_strip_code_placeholders( string $content ): string {
+	if ( false === strpos( $content, "\u{200B}" ) ) {
+		return $content;
+	}
+	// A run the member never typed into disappears; every placeholder, inside code or just outside it, is removed.
+	$content = (string) preg_replace( '#<code>\x{200B}+</code>#u', '', $content );
+	return str_replace( "\u{200B}", '', $content );
 }
 
 /**

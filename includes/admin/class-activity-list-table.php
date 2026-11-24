@@ -177,7 +177,7 @@ class Activity_List_Table extends \WP_List_Table {
 	public function prepare_items(): void {
 		$per_page = $this->get_items_per_page( 'jetonomy_activity_per_page', 20 );
 		$paged    = max( 1, absint( $this->get_pagenum() ) );
-		$offset   = ( $paged - 1 ) * $per_page;
+		$offset   = jetonomy_page_offset( $paged, $per_page );
 
 		// Fourth element is the PRIMARY column, set explicitly. Leaving it off
 		// means core resolves it via get_primary_column_name(), which validates
@@ -245,11 +245,7 @@ class Activity_List_Table extends \WP_List_Table {
 		if ( false === $ts ) {
 			return esc_html( $item->created_at );
 		}
-		$human = sprintf(
-			/* translators: %s: human-readable time difference. */
-			__( '%s ago', 'jetonomy' ),
-			human_time_diff( $ts, time() )
-		);
+		$human = \Jetonomy\time_ago( gmdate( 'Y-m-d H:i:s', $ts ) );
 		return sprintf(
 			'<span title="%1$s">%2$s</span>',
 			esc_attr( $item->created_at ),
@@ -294,10 +290,10 @@ class Activity_List_Table extends \WP_List_Table {
 		if ( '' === (string) ( $item->action ?? '' ) ) {
 			return '&mdash;';
 		}
-		// The raw code stays as a tooltip for admins debugging tracker output.
+		// The tooltip names the type (translated); the cell text can carry details such as points.
 		return sprintf(
 			'<span title="%1$s">%2$s</span>',
-			esc_attr( (string) $item->action ),
+			esc_attr( Admin::action_label( (string) $item->action ) ),
 			esc_html( self::action_text( $item ) )
 		);
 	}
@@ -473,7 +469,6 @@ class Activity_List_Table extends \WP_List_Table {
 		if ( ! $meta ) {
 			return '';
 		}
-		$humanize = static fn ( $value ): string => ucfirst( str_replace( '_', ' ', (string) $value ) );
 
 		switch ( (string) ( $row->action ?? '' ) ) {
 			case 'reputation_changed':
@@ -489,12 +484,12 @@ class Activity_List_Table extends \WP_List_Table {
 				return sprintf(
 					/* translators: 1: previous value. 2: new value. */
 					__( '%1$s to %2$s', 'jetonomy' ),
-					$humanize( $meta['old'] ?? '' ),
-					$humanize( $meta['new'] ?? '' )
+					\Jetonomy\idea_status_labels()[ $meta['old'] ?? '' ] ?? (string) ( $meta['old'] ?? '' ),
+					\Jetonomy\idea_status_labels()[ $meta['new'] ?? '' ] ?? (string) ( $meta['new'] ?? '' )
 				);
 			case 'joined_space':
 				/* translators: %s: the member's role in the space (e.g. "Moderator"). */
-				return sprintf( __( 'Role: %s', 'jetonomy' ), $humanize( $meta['role'] ?? '' ) );
+				return sprintf( __( 'Role: %s', 'jetonomy' ), \Jetonomy\space_role_labels()[ $meta['role'] ?? '' ] ?? (string) ( $meta['role'] ?? '' ) );
 		}
 
 		// Unknown action (an add-on's): readable "Key: value" pairs. A space or
@@ -513,7 +508,8 @@ class Activity_List_Table extends \WP_List_Table {
 				$parts[] = $post ? sprintf( __( 'On %s', 'jetonomy' ), jetonomy_post_title_or_excerpt( $post ) ) : self::deleted_label( 'topic' );
 				continue;
 			}
-			$parts[] = $humanize( $key ) . ': ' . ( is_scalar( $value ) ? wp_trim_words( (string) $value, 6, '…' ) : wp_json_encode( $value ) );
+			// An add-on's own metadata key: no translation exists for it, so it is shown readable, as stored.
+			$parts[] = ucfirst( str_replace( '_', ' ', (string) $key ) ) . ': ' . ( is_scalar( $value ) ? wp_trim_words( (string) $value, 6, '…' ) : wp_json_encode( $value ) );
 		}
 		return implode( ' · ', $parts );
 	}

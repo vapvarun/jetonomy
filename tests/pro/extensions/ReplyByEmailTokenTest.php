@@ -20,7 +20,6 @@ class ReplyByEmailTokenTest extends WP_UnitTestCase {
 		}
 		$extension = ( new \ReflectionClass( self::CLASS_NAME ) )->newInstanceWithoutConstructor();
 		$method    = new \ReflectionMethod( self::CLASS_NAME, 'decode_token' );
-		$method->setAccessible( true );
 
 		$result = $method->invoke( $extension, $token );
 		$this->assertInstanceOf( \WP_Error::class, $result );

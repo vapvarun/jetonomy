@@ -46,6 +46,24 @@ class Post extends Model {
 	}
 
 	/**
+	 * Validate a title being CHANGED on an existing topic: it may not be blank, and the length rule applies.
+	 * Shared by the REST edit and the wp-admin inline edit so the two cannot drift apart.
+	 *
+	 * @param string $title Sanitized title.
+	 * @return \WP_Error|null Error when the title is empty or too long, null when it is fine.
+	 */
+	public static function title_update_error( string $title ): ?\WP_Error {
+		if ( '' === trim( $title ) ) {
+			return new \WP_Error(
+				'jetonomy_title_required',
+				__( 'The title cannot be empty.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+		return self::title_length_error( $title );
+	}
+
+	/**
 	 * Get the table name suffix.
 	 *
 	 * @return string
@@ -92,6 +110,10 @@ class Post extends Model {
 		$data = apply_filters( 'jetonomy_before_create_post', $data, $data['author_id'] ?? 0, $data['space_id'] ?? 0 );
 		if ( is_wp_error( $data ) ) {
 			return $data;
+		}
+		// Every topic writer lands here (REST, abilities, CLI, split, imports): no topic without its space.
+		if ( ! Space::find( (int) ( $data['space_id'] ?? 0 ) ) ) {
+			return Space::missing_error();
 		}
 		$title_error = self::title_length_error( (string) ( $data['title'] ?? '' ) );
 		if ( $title_error ) {
@@ -2210,12 +2232,13 @@ class Post extends Model {
 	 *
 	 * Served by the status_created index (status = 'draft' is a small slice).
 	 *
+	 * @param string $after Only schedules later than this UTC 'Y-m-d H:i:s' ('' = any).
 	 * @return string|null UTC 'Y-m-d H:i:s'.
 	 */
-	public static function next_scheduled_at(): ?string {
+	public static function next_scheduled_at( string $after = '' ): ?string {
 		$table = static::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$next = static::db()->get_var( "SELECT MIN(published_at) FROM {$table} WHERE status = 'draft' AND published_at IS NOT NULL" );
+		$next = static::db()->get_var( static::db()->prepare( "SELECT MIN(published_at) FROM {$table} WHERE status = 'draft' AND published_at > %s", '' === $after ? '1000-01-01 00:00:00' : $after ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $next ? (string) $next : null;
 	}
 

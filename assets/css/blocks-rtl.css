@@ -168,7 +168,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: none;
 }
 .jt-nav-space > a:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 .jt-nav-space.is-active > a,
@@ -194,7 +194,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-nav-space.is-active .jt-nav-count,
 .jt-nav-space > a[aria-current="page"] .jt-nav-count {
 	background: var(--jt-accent);
-	color: var(--jt-bg);
+	color: var(--jt-accent-fg);
 }
 
 .jt-nav-spaces-uncategorized {
@@ -319,7 +319,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	color: var(--jt-text) !important;
 }
 .jt-login-tab:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 .jt-login-tab.is-active {
@@ -352,8 +352,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
    field boundary measured 1.34:1 against the card and read as invisible (WCAG
    1.4.11 asks 3:1 for a control boundary). The field is now legible primarily
    because it stays on --jt-bg while the card sits on --jt-bg-subtle, so the
-   input is a distinct surface in BOTH modes rather than a hairline outline. */
-.jt-login-label > input {
+   input is a distinct surface in BOTH modes rather than a hairline outline.
+   Scoped under .jt-login-form so a theme's equal-weight input[type="text"]
+   rule (Reign's form border, 2.81:1 in dark) loaded later cannot replace it. */
+.jt-login-form .jt-login-label > input {
 	padding: 9px 12px;
 	min-height: var(--jt-tap);
 	border: 1.5px solid var(--jt-border-strong);
@@ -379,7 +381,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-label > input:focus,
 .jt-login-label > input:focus-visible {
 	outline: 0;
-	border-color: var(--jt-accent);
+	border-color: var(--jt-accent-ink);
 	box-shadow: 0 0 0 3px var(--jt-accent-muted);
 }
 .jt-login-label > input::placeholder { color: var(--jt-text-secondary); }
@@ -408,7 +410,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	justify-content: center;
 	padding: 10px 16px;
 	background: var(--jt-accent);
-	color: var(--jt-bg);
+	color: var(--jt-accent-fg);
 	border: 0;
 	border-radius: var(--jt-radius-full);
 	font: inherit;
@@ -421,10 +423,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-submit:hover,
 .jt-login-submit:focus-visible {
 	background: var(--jt-accent-hover);
-	color: var(--jt-bg);
+	color: var(--jt-accent-hover-fg);
 }
 .jt-login-submit:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 .jt-login-submit:active { transform: scale(0.98); }
@@ -447,7 +449,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font: inherit;
 	font-size: var(--jt-text-sm, 0.8125rem);
 	font-weight: 500;
-	color: var(--jt-accent-strong, var(--jt-accent));
+	color: var(--jt-accent-strong, var(--jt-accent-ink));
 	text-decoration: none;
 	text-underline-offset: 2px;
 	cursor: pointer;
@@ -455,11 +457,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-login-lostpw:hover,
 .jt-login-lostpw:focus-visible {
-	color: var(--jt-accent-strong, var(--jt-accent));
+	color: var(--jt-accent-strong, var(--jt-accent-ink));
 	text-decoration: underline;
 }
 .jt-login-lostpw:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 	border-radius: var(--jt-radius-sm, 4px);
 }
@@ -588,7 +590,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	background: var(--jt-bg-hover);
 	color: var(--jt-accent-strong);
 	text-decoration: none;
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: -2px;
 }
 .jt-userpanel-link.is-active {
@@ -597,17 +599,16 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font-weight: 600;
 }
 .jt-userpanel-link--logout {
-	margin-top: 4px;
-	padding-top: 10px;
-	border-top: 1px solid var(--jt-border);
-	border-radius: 0;
+	/* Spacing, not a rule line, sets it apart: a 1px subtle divider drawn on
+	   the link read as its edge at about 1.1:1. */
+	margin-top: 8px;
 	color: var(--jt-text-secondary);
 	font-size: 0.8125rem;
 }
 .jt-userpanel-link--logout:hover,
 .jt-userpanel-link--logout:focus-visible {
 	background: transparent;
-	color: color-mix(in srgb, #dc2626 80%, var(--jt-text));
+	color: var(--jt-danger);
 }
 .jt-userpanel-badge {
 	display: inline-flex;
@@ -618,7 +619,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	padding: 0 6px;
 	border-radius: var(--jt-radius-full);
 	background: var(--jt-accent);
-	color: var(--jt-bg);
+	color: var(--jt-accent-fg);
 	font-size: 0.75rem;
 	font-weight: 700;
 	font-variant-numeric: tabular-nums;
@@ -668,11 +669,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-feed-viewall:hover,
 .jt-feed-viewall:focus-visible {
-	color: var(--jt-accent-hover);
+	color: var(--jt-accent-ink-hover);
 	text-decoration: underline;
 }
 .jt-feed-viewall:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 	border-radius: var(--jt-radius-sm, 4px);
 }
@@ -732,7 +733,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: none;
 }
 .jt-shortcode-post-title:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 
@@ -779,10 +780,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-shortcode-space:hover,
 .jt-shortcode-space:focus-visible {
 	background: var(--jt-bg-hover);
-	border-color: var(--jt-accent);
+	border-color: var(--jt-accent-ink);
 }
 .jt-shortcode-space:focus-visible {
-	outline: 2px solid var(--jt-accent);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 .jt-shortcode-space-desc {
@@ -957,6 +958,33 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	line-height: 1.35;
 }
 
+/* A theme can restyle every link in a widget or footer area (Reign: `.footer-wrap a { display: block }`), which beat
+   the row's own flex column and ran the space name into its description and topic count. Say it again, scoped. */
+[class*="widget_jetonomy_"] .jt-shortcode-space {
+	display: flex;
+	flex-direction: column;
+	gap: var(--jt-space-1);
+}
+
+/* Blocks placed in a widget area: the theme already draws the card, so the Trending block drops its own border,
+   padding, shadow and accent bar and sits flat inside it (a card inside a card left under 230px for text). */
+:is(.widget, .widget_block, .wp-block-widget-area, aside, footer) .jt-trending-block.jt-app {
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	background: transparent;
+}
+:is(.widget, .widget_block, .wp-block-widget-area, aside, footer) .jt-trending-block.jt-app::before {
+	display: none;
+}
+
+/* A reputation count is one unit: it never breaks onto two lines, and it does not shrink next to a long name. */
+.jt-shortcode-rep {
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
 /* Trending — two-column layout: rank badge + body */
 .jt-shortcode-trending-post {
 	flex-direction: row !important;
@@ -988,7 +1016,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-shortcode-trending-post:hover .jt-shortcode-trending-rank {
 	background: var(--jt-accent);
-	color: var(--jt-bg);
+	color: var(--jt-accent-fg);
 }
 
 /* ─── Responsive (390px) ───────────────────────────────────────────── */
@@ -1005,7 +1033,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 		font-size: 0.9375rem;
 	}
 	.jt-login-tab { font-size: 0.875rem; padding: 9px 10px; }
-	.jt-login-label > input { font-size: 16px; } /* avoid iOS zoom */
+	.jt-login-form .jt-login-label > input { font-size: 16px; } /* avoid iOS zoom */
 	.jt-shortcode-post { padding: 10px 6px; }
 	:is(.jt-shortcode-recent-posts, .jt-shortcode-trending-posts, .jt-shortcode-leaderboard, .jt-shortcode-members) { padding: var(--jt-space-4); }
 	.jt-shortcode-spaces { grid-template-columns: 1fr; gap: var(--jt-space-3); }
@@ -1125,13 +1153,13 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: none;
 }
 .jt-compose-topic-login-primary:focus-visible {
-	outline: 2px solid var(--jt-accent, #3b82f6);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 2px;
 }
 
 .jt-compose-topic-login-secondary {
 	font-size: 0.875rem;
-	color: var(--jt-accent-strong, var(--jt-accent, #3b82f6));
+	color: var(--jt-accent-strong, var(--jt-accent-ink, var(--jt-accent, #3b82f6)));
 	text-decoration: none;
 	border-bottom: 1px dashed currentColor;
 	padding-bottom: 1px;
@@ -1139,12 +1167,12 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-compose-topic-login-secondary:hover,
 .jt-compose-topic-login-secondary:focus-visible {
-	color: var(--jt-accent-hover, color-mix(in srgb, var(--jt-accent, #3b82f6) 78%, #000));
+	color: var(--jt-accent-ink-hover, var(--jt-accent-hover, color-mix(in srgb, var(--jt-accent, #3b82f6) 78%, #000)));
 	text-decoration: none;
 	border-bottom-color: transparent;
 }
 .jt-compose-topic-login-secondary:focus-visible {
-	outline: 2px solid var(--jt-accent, #3b82f6);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 3px;
 	border-radius: var(--jt-radius-sm);
 }
@@ -1172,9 +1200,9 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-body {
 	width: 100%;
 	padding: 0.5rem 0.75rem;
-	border: 1px solid var(--jt-border, var(--jt-border, #e5e7eb));
+	border: 1px solid var(--jt-border-strong);
 	border-radius: var(--jt-radius);
-	background: var(--jt-bg, var(--jt-bg, #ffffff));
+	background: var(--jt-bg, #ffffff);
 	color: inherit;
 	font: inherit;
 	box-sizing: border-box;
@@ -1188,7 +1216,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-space:focus-visible,
 .jt-compose-topic-title:focus-visible,
 .jt-compose-topic-body:focus-visible {
-	outline: 2px solid var(--jt-accent, #3b82f6);
+	outline: 2px solid var(--jt-focus-ring);
 	outline-offset: 1px;
 	border-color: transparent;
 }
@@ -1264,8 +1292,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font-weight: 600;
 	min-width: 8rem;
 }
-.jt-compose-topic-submit:hover:not([disabled]) {
+.jt-compose-topic-submit:hover:not([disabled]),
+.jt-compose-topic-submit:focus-visible:not([disabled]) {
 	background: var(--jt-accent-hover, color-mix(in srgb, var(--jt-accent, #3b82f6) 88%, #000));
+	/* The embed's ghost-button hover above sets the body text colour. */
+	color: var(--jt-accent-hover-fg, #fff);
 }
 .jt-compose-topic-submit[disabled],
 .jt-compose-topic-submit.is-submitting {
@@ -1350,8 +1381,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-signed-in .jt-login-signed-in-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); margin-block-start: var(--jt-space-3); }
 .jt-login-signed-in .jt-login-submit { margin-top: 0; text-decoration: none; }
 .jt-login-secondary { display: inline-flex; align-items: center; padding: 0.5625rem 0.9375rem; border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius-full); color: var(--jt-text); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }
-.jt-login-secondary:hover, .jt-login-secondary:focus-visible { border-color: var(--jt-accent); color: var(--jt-accent-strong); }
-.jt-login-secondary:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+.jt-login-secondary:hover, .jt-login-secondary:focus-visible { border-color: var(--jt-accent-ink); color: var(--jt-accent-strong); }
+.jt-login-secondary:focus-visible { outline: 2px solid var(--jt-focus-ring); outline-offset: 2px; }
 
 /* Trust level name pill (profile card shortcode). jetonomy.css is not loaded
    beside shortcodes, so the pill carries its own fill from the trust tokens. */

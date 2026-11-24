@@ -48,7 +48,11 @@ your-theme/
         ├── pagination.php
         ├── post-card.php
         ├── reply-card.php
-        └── sidebar.php
+        ├── sidebar.php
+        └── sidebar/
+            ├── trending.php
+            ├── top-members.php
+            └── popular-tags.php
 ```
 
 You do not need to copy all of these. Only create the files you want to customize - any file not present in your theme directory is loaded from the plugin.
@@ -79,7 +83,7 @@ You do not need to copy all of these. Only create the files you want to customiz
 | `views/leaderboard.php` | `leaderboard` | `/community/leaderboard/` |
 | `views/notifications.php` | `notifications` | `/community/notifications/` |
 | `views/moderation.php` | `moderation` | `/community/mod/` |
-| `views/search.php` | `search` | `/community/search/` |
+| `views/search.php` | `search` | `/community/search/` (since 2.1.0 its space results call `jetonomy_render_space_grid()`; a theme copy from before 2.1.0 keeps its own card markup, and the `.jt-space-card-inner` / `.jt-space-card-body` rules it relies on are kept so it does not lose its layout) |
 | `views/tag.php` | `tag` | `/community/tag/{slug}/` |
 | `views/invite.php` | `invite` | `/community/invite/{code}/` |
 
@@ -89,6 +93,7 @@ You do not need to copy all of these. Only create the files you want to customiz
 |------|-------------|
 | `partials/header.php` | Loaded at the top of every community page |
 | `partials/sidebar.php` | Loaded in space and home views |
+| `partials/sidebar/trending.php`, `top-members.php`, `popular-tags.php` | One sidebar widget each (since 2.1.0), rendered by `sidebar.php` in the order and on/off state set under **Settings > Appearance > Community Sidebar Widgets**. Each fetches its own data. A theme copy of `partials/sidebar.php` from before 2.1.0 keeps working but ignores that setting, so override a widget partial instead where you can. |
 | `partials/breadcrumb.php` | The breadcrumb trail on every community page that has one |
 | `partials/post-card.php` | Iterated over in space and home views |
 | `partials/reply-card.php` | Iterated over in single-post view |

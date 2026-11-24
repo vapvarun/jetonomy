@@ -293,9 +293,10 @@ class MustCoverRoutesTest extends WP_UnitTestCase {
 	}
 
 	public function test_demo_data_removal_is_for_site_admins(): void {
-		$this->assertSame( 403, $this->call( $this->mod, 'DELETE', '/admin/demo-data' )->get_status(), 'staff without manage_options cannot remove demo data' );
+		$this->assertSame( 403, $this->call( $this->mod, 'DELETE', '/admin/demo-data', array( 'confirm' => true ) )->get_status(), 'staff without manage_options cannot remove demo data' );
+		$this->assertSame( 400, $this->call( $this->admin, 'DELETE', '/admin/demo-data' )->get_status(), 'a plain DELETE does nothing' );
 		// An admin is let through; with no demo set installed the answer is 404 by design.
-		$res = $this->call( $this->admin, 'DELETE', '/admin/demo-data' );
+		$res = $this->call( $this->admin, 'DELETE', '/admin/demo-data', array( 'confirm' => true ) );
 		$this->assertSame( 'jetonomy_no_demo_data', $res->get_data()['code'] ?? '' );
 		$this->assertNotNull( Space::find( $this->public_space ), 'real spaces are untouched' );
 	}
@@ -459,10 +460,24 @@ class MustCoverRoutesTest extends WP_UnitTestCase {
 		$this->assertFalse( get_userdata( $this->outsider ) );
 	}
 
-	public function test_demo_import_is_for_site_admins(): void {
-		$this->assertSame( 403, $this->call( $this->mod, 'POST', '/admin/demo-data' )->get_status() );
-		$this->assertSame( 201, $this->call( $this->admin, 'POST', '/admin/demo-data' )->get_status() );
-		$this->assertSame( 200, $this->call( $this->admin, 'DELETE', '/admin/demo-data' )->get_status(), 'and removable again' );
+	/**
+	 * A stray admin POST never seeds a live community: it needs confirm=true, and force=true while the community has
+	 * spaces or topics of its own (this fixture has a public space).
+	 */
+	public function test_demo_import_is_for_site_admins_and_needs_confirm_then_force(): void {
+		$this->assertSame( 403, $this->call( $this->mod, 'POST', '/admin/demo-data', array( 'confirm' => true ) )->get_status() );
+
+		$this->assertSame( 400, $this->call( $this->admin, 'POST', '/admin/demo-data' )->get_status(), 'a plain POST does nothing' );
+		$this->assertSame( 400, $this->call( $this->admin, 'POST', '/admin/demo-data', array( 'confirm' => false ) )->get_status() );
+		$this->assertFalse( get_option( 'jetonomy_demo_data' ), 'nothing was seeded' );
+
+		$res = $this->call( $this->admin, 'POST', '/admin/demo-data', array( 'confirm' => true ) );
+		$this->assertSame( 409, $res->get_status(), 'the community already has its own content' );
+		$this->assertSame( 'jetonomy_demo_real_content', $res->get_data()['code'] ?? '' );
+		$this->assertFalse( get_option( 'jetonomy_demo_data' ), 'still nothing seeded' );
+
+		$this->assertSame( 201, $this->call( $this->admin, 'POST', '/admin/demo-data', array( 'confirm' => true, 'force' => true ) )->get_status() );
+		$this->assertSame( 200, $this->call( $this->admin, 'DELETE', '/admin/demo-data', array( 'confirm' => true ) )->get_status(), 'and removable again' );
 	}
 
 }

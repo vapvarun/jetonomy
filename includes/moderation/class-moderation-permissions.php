@@ -190,6 +190,46 @@ class Moderation_Permissions {
 	}
 
 	/**
+	 * Why this user may not issue a restriction of this type, or null when they may.
+	 *
+	 * Site bans, silences and IP bans need jetonomy_moderate or manage_options; a
+	 * space_ban also accepts whoever Permission_Engine::can_space_ban() allows for
+	 * that space (its admin, or a moderator when moderators_can_ban is on). REST
+	 * and WP-CLI both ask here; who may be TARGETED is
+	 * Restriction::actor_may_restrict().
+	 *
+	 * @param int      $user_id  Acting user.
+	 * @param string   $type     Restriction type.
+	 * @param int|null $space_id Space for a space ban.
+	 * @return \WP_Error|null
+	 */
+	public static function issue_error( int $user_id, string $type, ?int $space_id ): ?\WP_Error {
+		if ( ! user_can( $user_id, 'jetonomy_moderate' ) && ! user_can( $user_id, 'manage_options' )
+			&& ( 'space_ban' !== $type || ! $space_id || ! Permission_Engine::can_space_ban( $user_id, $space_id ) ) ) {
+			return \Jetonomy\API\REST_Auth::forbidden();
+		}
+		// A space ban needs its space: Restriction::ban() stores nothing without one,
+		// which REST used to answer with a 500 and the CLI with a message and no code.
+		if ( 'space_ban' === $type && ( null === $space_id || $space_id <= 0 ) ) {
+			return new \WP_Error(
+				'rest_missing_callback_param',
+				__( 'A space ban needs space_id: the space the member is banned from.', 'jetonomy' ), // jt-terms-ok: API validation error naming the space_id parameter.
+				array(
+					'status' => 400,
+					'params' => array( 'space_id' ),
+				)
+			);
+		}
+		// Any restriction naming a space that does not exist (a space ban, or a
+		// silence or site ban sent with a space_id) would store an orphan row.
+		if ( $space_id > 0 && ! \Jetonomy\Models\Space::find( $space_id ) ) {
+			return \Jetonomy\Models\Space::missing_error();
+		}
+		// A silenced or banned moderator takes no moderation action.
+		return self::restriction_error( $user_id, $space_id );
+	}
+
+	/**
 	 * Why this user may not lift this restriction, or null when they may.
 	 *
 	 * Lifting takes the same authority as issuing: a restricted moderator takes
@@ -212,7 +252,14 @@ class Moderation_Permissions {
 			return user_can( $user_id, 'manage_options' ) ? null : new \WP_Error( 'jetonomy_ip_ban_admin_only', __( 'Only a site administrator can lift an IP address ban.', 'jetonomy' ), array( 'status' => 403 ) );
 		}
 
-		$allowed = \Jetonomy\Models\Restriction::actor_may_restrict( (int) $restriction->user_id, $user_id );
+		// Without site caps, only a ban from a space the user may ban from (the same rule as issuing one).
+		$space_id = 'space_ban' === $restriction->type && ! empty( $restriction->space_id ) ? (int) $restriction->space_id : null;
+		if ( ! user_can( $user_id, 'jetonomy_moderate' ) && ! user_can( $user_id, 'manage_options' )
+			&& ( ! $space_id || ! Permission_Engine::can_space_ban( $user_id, $space_id ) ) ) {
+			return \Jetonomy\API\REST_Auth::forbidden();
+		}
+
+		$allowed = \Jetonomy\Models\Restriction::actor_may_restrict( (int) $restriction->user_id, $user_id, $space_id );
 		if ( true === $allowed ) {
 			return null;
 		}

@@ -71,6 +71,14 @@ A badge with no auto-award criteria is manual-only and is never awarded automati
 
 The member receives a notification immediately and the badge appears on their profile.
 
+### Deactivate or delete a badge
+
+**Deactivate** hides a badge and stops it being awarded, but keeps it and every award of it; **Activate** brings it back. **Delete permanently** removes the badge and takes it off every member who holds it. The confirmation tells you how many members that is. Reputation members already earned from the badge stays as it is, and deleting cannot be undone. The same permanent delete is available from the REST API (`DELETE /badges/{id}?permanent=1`) and WP-CLI (`wp jetonomy-pro badges delete <id>`).
+
+### Restore default badges
+
+Pro ships with a starter set of badges. If you delete one and later want it back, a **Restore default badges** button appears at the top of **Jetonomy > Custom Badges**, but only while at least one default is missing. The confirmation lists exactly which badges come back. Restoring only adds the missing defaults: a default you renamed or edited keeps your changes, your own badges are never touched, and nobody is awarded anything until they meet the badge's rule. The same action is available from the REST API (`POST /badges/restore-defaults`, and `GET` to list what is missing) and WP-CLI (`wp jetonomy-pro badges restore-defaults`).
+
 ## Badge Tiers
 
 Badges have three visual tiers that appear as border colors on the badge icon:
@@ -98,8 +106,9 @@ Custom Badges registers these endpoints under `jetonomy/v1`:
 | `GET` | `/badges` | List all defined badges and their settings |
 | `POST` | `/badges` | Create a badge |
 | `PATCH` | `/badges/{id}` | Update a badge |
-| `DELETE` | `/badges/{id}` | Deactivate a badge (it stays in the database and can be reactivated with `PATCH`) |
+| `DELETE` | `/badges/{id}` | Deactivate a badge (it stays in the database and can be reactivated with `PATCH`). Add `?permanent=1` to delete the badge and every award of it for good |
 | `POST` | `/users/{id}/badges` | Award a badge to a member |
+| `GET`, `POST` | `/badges/restore-defaults` | List the deleted default badges, or add them back |
 
 Badges can be created, edited, and awarded entirely through REST, so you can automate awards from your own tooling or grant a badge as part of an external workflow. Listing badges is open to any logged-in member; creating, editing, deleting, and awarding require `manage_options`. See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
 

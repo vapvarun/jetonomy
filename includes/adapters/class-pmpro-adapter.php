@@ -41,22 +41,42 @@ class PMPro_Adapter implements Membership_Adapter {
 		return in_array( $level_id, $this->get_user_levels( $user_id ), true );
 	}
 
+	/** Levels listed in the picker's page-load preload; anything more is found by typing (server search). */
+	private const MAX_PICKER_LEVELS = 100;
+
 	public function get_all_levels(): array {
-		if ( ! $this->is_active() ) {
+		return $this->search_levels( '', self::MAX_PICKER_LEVELS );
+	}
+
+	/**
+	 * Levels whose name contains the text, for the access-rule picker's server search (and, with '', its preload).
+	 *
+	 * The picker used to embed every level in the page (407 levels = 2,035 matches filtered in the browser). PMPro has no
+	 * search API, but its levels are one query, so the filter and the limit happen here and the page carries at most the
+	 * preload.
+	 *
+	 * @param string $search Text to find in the level name ('' = all).
+	 * @param int    $limit  Max rows.
+	 * @return array<int, array{id: string, label: string}>
+	 */
+	public function search_levels( string $search, int $limit ): array {
+		if ( ! $this->is_active() || ! function_exists( 'pmpro_getAllLevels' ) ) {
 			return array();
 		}
 
-		if ( ! function_exists( 'pmpro_getAllLevels' ) ) {
-			return array();
-		}
-
-		$all    = pmpro_getAllLevels( false, true );
+		$needle = \Jetonomy\lower( trim( $search ) );
 		$levels = array();
-		foreach ( $all as $level ) {
+		foreach ( (array) pmpro_getAllLevels( false, true ) as $level ) {
+			if ( '' !== $needle && ! str_contains( \Jetonomy\lower( (string) $level->name ), $needle ) ) {
+				continue;
+			}
 			$levels[] = array(
 				'id'    => 'pmpro_' . $level->id,
 				'label' => $level->name,
 			);
+			if ( count( $levels ) >= $limit ) {
+				break;
+			}
 		}
 		return $levels;
 	}

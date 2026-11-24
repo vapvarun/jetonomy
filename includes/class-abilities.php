@@ -112,6 +112,7 @@ class Abilities {
 					'properties' => array(
 						'space_id'   => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Target space ID.',
 							'required'    => true,
 						),
@@ -252,6 +253,7 @@ class Abilities {
 					'properties' => array(
 						'space_id' => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Space ID.',
 							'required'    => true,
 						),
@@ -560,6 +562,7 @@ class Abilities {
 					'properties' => array(
 						'space_id' => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Space ID.',
 							'required'    => true,
 						),
@@ -606,6 +609,7 @@ class Abilities {
 					'properties' => array(
 						'space_id' => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Space to join.',
 							'required'    => true,
 						),
@@ -650,6 +654,7 @@ class Abilities {
 					'properties' => array(
 						'space_id' => array(
 							'type'        => 'integer',
+							'minimum'     => 1,
 							'description' => 'Space ID.',
 							'required'    => true,
 						),
@@ -1467,7 +1472,7 @@ class Abilities {
 		$space = Space::find( (int) $input['space_id'] );
 		if ( ! $space ) {
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			return new WP_Error( 'jetonomy_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
+			return new WP_Error( 'jetonomy_space_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		// This had NO read gate: it answered with any space's title,
@@ -1478,7 +1483,7 @@ class Abilities {
 		// id probe cannot tell "no such space" from "not for you".
 		if ( ! $this->check_permission_or_public( 'read', (int) $space->id ) ) {
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			return new WP_Error( 'jetonomy_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
+			return new WP_Error( 'jetonomy_space_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		return array(
@@ -1499,7 +1504,7 @@ class Abilities {
 
 		if ( ! $space ) {
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
-			return new WP_Error( 'jetonomy_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
+			return new WP_Error( 'jetonomy_space_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		if ( SpaceMember::is_member( $space_id, $user_id ) ) {

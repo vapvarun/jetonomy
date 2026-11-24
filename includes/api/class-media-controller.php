@@ -57,7 +57,10 @@ class Media_Controller extends Base_Controller {
 							'default' => 24,
 						),
 						'author'   => array( 'type' => 'integer' ),
-						'space_id' => array( 'type' => 'integer' ),
+						'space_id' => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
 						'search'   => array( 'type' => 'string' ),
 						'order'    => array(
 							'type'    => 'string',
@@ -111,7 +114,7 @@ class Media_Controller extends Base_Controller {
 			array(
 				'total'  => (int) $result['total'],
 				'page'   => (int) $result['page'],
-				'offset' => ( (int) $result['page'] - 1 ) * (int) $result['per_page'],
+				'offset' => jetonomy_page_offset( (int) $result['page'], (int) $result['per_page'] ),
 			)
 		);
 	}
@@ -232,7 +235,7 @@ class Media_Controller extends Base_Controller {
 		// site owner's own media). Optional space context if the caller sends it.
 		// Only a space the uploader may post in counts as context; anything else is stored as none.
 		$space_id = (int) $request->get_param( 'space_id' );
-		if ( $space_id > 0 && ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', $space_id ) && ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_replies', $space_id ) ) {
+		if ( $space_id > 0 && ( ! \Jetonomy\Models\Space::find( $space_id ) || ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', $space_id ) && ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_replies', $space_id ) ) ) ) {
 			$space_id = 0;
 		}
 		\Jetonomy\Media_Library::tag_upload( (int) $attachment_id, $space_id );

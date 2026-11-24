@@ -101,4 +101,80 @@ class SettingsSanitizeTest extends WP_UnitTestCase {
 			'front_page'                 => [ 'front_page' ],
 		];
 	}
+
+	/**
+	 * The form's number fields: digits kept (clamped to the range), empty means
+	 * the default, anything else keeps the stored value with a notice.
+	 */
+	public function test_form_number_fields_refuse_non_numbers_and_empty_means_default(): void {
+		update_option(
+			'jetonomy_settings',
+			array(
+				'posts_per_page'    => 40,
+				'rate_limits'       => array(
+					'posts'   => 9,
+					'replies' => 9,
+					'votes'   => 9,
+				),
+				'reputation_points' => array( 'post_upvoted' => 7 ),
+			)
+		);
+		$notices = new \ReflectionProperty( \Jetonomy\Settings::class, 'notices' );
+		$notices->setValue( null, array() );
+		$clean = \Jetonomy\Settings::sanitize(
+			$this->general_tab(
+				array(
+					'posts_per_page'    => '5abc',
+					'replies_per_page'  => '',
+					'rate_limits'       => array(
+						'posts'   => 'abc',
+						'replies' => '12',
+						'votes'   => '',
+					),
+					'reputation_points' => array(
+						'post_upvoted'   => 'false',
+						'reply_upvoted'  => '0x1A',
+						'reply_accepted'  => '99999',
+					),
+				)
+			)
+		);
+		$this->assertSame( 40, $clean['posts_per_page'], '"5abc" keeps the stored value' );
+		$this->assertSame( 30, $clean['replies_per_page'], 'empty is the default' );
+		$this->assertSame( 9, $clean['rate_limits']['posts'] );
+		$this->assertSame( 12, $clean['rate_limits']['replies'] );
+		$this->assertSame( \Jetonomy\Permissions\Rate_Limiter::defaults()['votes'], $clean['rate_limits']['votes'] );
+		$this->assertSame( 7, $clean['reputation_points']['post_upvoted'], '"false" keeps the stored override' );
+		$this->assertArrayNotHasKey( 'reply_upvoted', $clean['reputation_points'], '"0x1A" with no override stays on the default' );
+		$this->assertSame( 10000, $clean['reputation_points']['reply_accepted'], 'clamped like the API range' );
+		$codes = array_column( $notices->getValue(), 'code' );
+		foreach ( array( 'jetonomy_invalid_posts_per_page', 'jetonomy_invalid_rate_limits', 'jetonomy_invalid_reputation_points' ) as $code ) {
+			$this->assertContains( $code, $codes, 'A refused number is named, not saved silently.' );
+		}
+		$this->assertSame( 50, \Jetonomy\Settings::sanitize( $this->general_tab( array( 'posts_per_page' => '50' ) ) )['posts_per_page'] );
+		$this->assertSame( 100, \Jetonomy\Settings::sanitize( $this->general_tab( array( 'posts_per_page' => '500' ) ) )['posts_per_page'] );
+	}
+
+	/**
+	 * Reputation points outside -10000..10000 are clamped AND named, like every other number field.
+	 */
+	public function test_out_of_range_reputation_points_say_what_was_saved(): void {
+		$notices = new \ReflectionProperty( \Jetonomy\Settings::class, 'notices' );
+		$notices->setValue( null, array() );
+		$clean = \Jetonomy\Settings::sanitize(
+			$this->general_tab(
+				array(
+					'reputation_points' => array(
+						'post_upvoted'  => '20000',
+						'post_removed'  => '-20000',
+					),
+				)
+			)
+		);
+		$this->assertSame( 10000, $clean['reputation_points']['post_upvoted'] );
+		$this->assertSame( -10000, $clean['reputation_points']['post_removed'] );
+		$messages = implode( "\n", array_column( $notices->getValue(), 'message' ) );
+		$this->assertStringContainsString( 'post_upvoted must be between -10000 and 10000, so it was saved as 10000.', $messages );
+		$this->assertStringContainsString( 'post_removed must be between -10000 and 10000, so it was saved as -10000.', $messages );
+	}
 }

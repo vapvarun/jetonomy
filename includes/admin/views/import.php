@@ -116,11 +116,15 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 								?>
 								&mdash;
 								<?php
-								printf(
-									/* translators: %s: number of records imported */
-									esc_html__( '%s records imported', 'jetonomy' ),
-									esc_html( number_format_i18n( $import_history[ $id ]['imported'] ) )
-								);
+								if ( 0 === (int) $import_history[ $id ]['imported'] && ! empty( $import_history[ $id ]['already'] ) ) {
+									esc_html_e( 'nothing new', 'jetonomy' );
+								} else {
+									printf(
+										/* translators: %s: number of records imported */
+										esc_html__( '%s records imported', 'jetonomy' ),
+										esc_html( number_format_i18n( $import_history[ $id ]['imported'] ) )
+									);
+								}
 								?>
 								<?php if ( ! empty( $import_history[ $id ]['already'] ) ) : ?>
 									&mdash;
@@ -163,10 +167,19 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 
 					<!-- Stats -->
 					<div class="jetonomy-import-stats">
-						<?php foreach ( $info['stats'] as $key => $val ) : ?>
+						<?php
+						// The source forum's own counts (bbPress, wpForo, Asgaros), named as that plugin names them.
+						$jt_stat_labels = array( // jt-terms-ok: source plugin's nouns, not this community's.
+							'forums'  => __( 'Forums', 'jetonomy' ),
+							'topics'  => __( 'Topics', 'jetonomy' ), // jt-terms-ok: source plugin's noun.
+							'posts'   => __( 'Posts', 'jetonomy' ), // jt-terms-ok: source plugin's noun.
+							'replies' => __( 'Replies', 'jetonomy' ), // jt-terms-ok: source plugin's noun.
+						);
+						foreach ( $info['stats'] as $key => $val ) :
+							?>
 							<div class="jetonomy-import-stat">
 								<span class="jetonomy-import-stat__value"><?php echo esc_html( number_format_i18n( $val ) ); ?></span>
-								<span class="jetonomy-import-stat__label"><?php echo esc_html( ucfirst( $key ) ); ?></span>
+								<span class="jetonomy-import-stat__label"><?php echo esc_html( $jt_stat_labels[ $key ] ?? $key ); ?></span>
 							</div>
 						<?php endforeach; ?>
 					</div>
@@ -284,16 +297,20 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						<strong><?php echo esc_html( $jt_name ); ?></strong>
 						&mdash;
 						<?php
-						printf(
-							/* translators: 1: number of records imported, 2: date and time */
-							esc_html__( '%1$s records imported on %2$s', 'jetonomy' ),
-							esc_html( number_format_i18n( (int) ( $jt_record['imported'] ?? 0 ) ) ),
-							esc_html(
-								! empty( $jt_record['completed_at'] )
-									? date_i18n( $datetime_format, strtotime( (string) $jt_record['completed_at'] ) )
-									: __( 'an unknown date', 'jetonomy' )
-							)
-						);
+						$jt_when = ! empty( $jt_record['completed_at'] )
+							? date_i18n( $datetime_format, strtotime( (string) $jt_record['completed_at'] ) )
+							: __( 'an unknown date', 'jetonomy' );
+						if ( 0 === (int) ( $jt_record['imported'] ?? 0 ) && (int) ( $jt_record['already'] ?? 0 ) > 0 ) {
+							/* translators: %s: date and time */
+							printf( esc_html__( 'Nothing new was imported on %s', 'jetonomy' ), esc_html( $jt_when ) );
+						} else {
+							printf(
+								/* translators: 1: number of records imported, 2: date and time */
+								esc_html__( '%1$s records imported on %2$s', 'jetonomy' ),
+								esc_html( number_format_i18n( (int) ( $jt_record['imported'] ?? 0 ) ) ),
+								esc_html( $jt_when )
+							);
+						}
 						?>
 					</p>
 
@@ -351,14 +368,11 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 		</div>
 	<?php endif; ?>
 </div>
-<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-<div class="jt-pro-upsell">
-	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
-	<h4><?php esc_html_e( 'Private Messaging & Email Digests', 'jetonomy' ); ?></h4>
-	<p><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Keep %s engaged after migration with private messaging, daily/weekly email digests, and web push notifications.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
-
-	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
-	&nbsp;
-	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>
-</div>
-<?php endif; ?>
+<?php
+\Jetonomy\Admin\Admin::pro_card(
+	'import',
+	__( 'Private Messaging & Email Digests', 'jetonomy' ),
+	/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+	sprintf( __( 'Keep %s engaged after migration with private messaging, daily/weekly email digests, and web push notifications.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) )
+);
+?>

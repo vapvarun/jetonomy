@@ -225,7 +225,6 @@ class BbpressStructureTest extends WP_UnitTestCase {
 		// the word, not separators.
 		$this->assertSame( 'हिंदी-चर्चा', urldecode( (string) $wpdb->get_var( $wpdb->prepare( "SELECT slug FROM {$wpdb->prefix}jt_spaces WHERE id = %d", $this->jt_id( 'space', $hi ) ) ) ) );
 		$clean = new \ReflectionMethod( \Jetonomy\Import\Importer::class, 'clean_slug' );
-		$clean->setAccessible( true );
 		foreach (
 			[
 				'हिंदी-चर्चा'              => 'हिंदी-चर्चा',

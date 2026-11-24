@@ -52,6 +52,9 @@ if ( ! $cancel_url ) {
 	<nav class="jt-space-tabs jt-space-tabs--wrap" aria-label="<?php esc_attr_e( 'Profile sections', 'jetonomy' ); ?>">
 		<a class="jt-space-tab" href="#profile-details"><?php esc_html_e( 'Profile', 'jetonomy' ); ?></a>
 		<a class="jt-space-tab" href="#notification-preferences"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></a>
+		<?php if ( \Jetonomy\Models\UserProfile::online_choice_available() ) : ?>
+			<a class="jt-space-tab" href="#privacy"><?php esc_html_e( 'Privacy', 'jetonomy' ); ?></a>
+		<?php endif; ?>
 		<a class="jt-space-tab" href="#blocked-members"><?php esc_html_e( 'People you have blocked', 'jetonomy' ); ?></a>
 	</nav>
 
@@ -188,6 +191,14 @@ if ( ! $cancel_url ) {
 		if ( \Jetonomy\messaging_active() ) {
 			$notif_types['message'] = __( 'Private message', 'jetonomy' );
 		}
+		/**
+		 * Notification types the member can switch on or off here. Jetonomy Pro adds 'announcement' while Site
+		 * announcements is enabled, so a Free-only site never shows a switch that does nothing.
+		 *
+		 * @since 2.1.0
+		 * @param array<string,string> $notif_types Type slug => label.
+		 */
+		$notif_types = (array) apply_filters( 'jetonomy_profile_notification_types', $notif_types );
 		?>
 		<div class="jt-form-group" id="notification-preferences">
 			<label class="jt-label"><?php esc_html_e( 'Notification Preferences', 'jetonomy' ); ?></label>
@@ -238,12 +249,29 @@ if ( ! $cancel_url ) {
 			?>
 		</div>
 
+		<?php if ( \Jetonomy\Models\UserProfile::online_choice_available() ) : ?>
+			<?php // Hidden when BuddyNext is active: it owns presence and its own settings, and a second toggle would fight it. ?>
+			<div class="jt-form-group" id="privacy">
+				<span class="jt-label"><?php esc_html_e( 'Privacy', 'jetonomy' ); ?></span>
+				<label class="jt-notif-optout">
+					<input type="checkbox" name="show_online" value="1" <?php checked( ! \Jetonomy\Models\UserProfile::hides_online( $current_user->ID ) ); ?>>
+					<span>
+						<strong><?php esc_html_e( "Show when I'm online", 'jetonomy' ); ?></strong><br>
+						<?php
+						/* translators: 1: member label, plural, lowercase (e.g. "members"). */
+						echo esc_html( sprintf( __( 'Off: other %1$s never see you online or when you were last active, and you do not see their status either. Moderators and admins can still see when %1$s were last active. Your posts stay visible.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) );
+						?>
+					</span>
+				</label>
+			</div>
+		<?php endif; ?>
+
 		<?php
 		// Everyone this member has blocked, newest first, 20 a page. The one
 		// place to review blocks; each profile's More menu adds them.
 		$jt_blocked_per  = 20;
 		$jt_blocked_page = max( 1, absint( $_GET['blocked_page'] ?? 1 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
-		$jt_blocked_rows = \Jetonomy\Models\BlockedUser::list_by_blocker( $current_user->ID, $jt_blocked_per, ( $jt_blocked_page - 1 ) * $jt_blocked_per );
+		$jt_blocked_rows = \Jetonomy\Models\BlockedUser::list_by_blocker( $current_user->ID, $jt_blocked_per, jetonomy_page_offset( $jt_blocked_page, $jt_blocked_per ) );
 		$jt_blocked_all  = \Jetonomy\Models\BlockedUser::count_by_blocker( $current_user->ID );
 		$jt_blocked_ids  = array_map( static fn( $row ) => (int) $row->blocked_id, $jt_blocked_rows );
 		cache_users( $jt_blocked_ids );

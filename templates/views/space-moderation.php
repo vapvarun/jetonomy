@@ -78,7 +78,7 @@ $jt_flag_total = Moderation_Service::count_pending_flags( $user_id, $space_id );
 $jt_flag_pages = max( 1, (int) ceil( $jt_flag_total / $per_page ) );
 $jt_flag_paged = min( $jt_raw_paged, $jt_flag_pages );
 $flags         = 'flags' === $jt_view && $jt_flag_total > 0
-	? Moderation_Service::list_pending_flags( $user_id, $space_id, $per_page, ( $jt_flag_paged - 1 ) * $per_page )
+	? Moderation_Service::list_pending_flags( $user_id, $space_id, $per_page, jetonomy_page_offset( $jt_flag_paged, $per_page ) )
 	: array();
 
 // Both held counts run on every render so the tab badge stays honest while the
@@ -110,8 +110,8 @@ $jt_held_paged = min( $jt_raw_paged, $jt_held_pages );
 $jt_held       = array();
 if ( 'flags' !== $jt_view && $jt_held_count > 0 ) {
 	$jt_held = $jt_is_trash
-		? Moderation_Service::list_trashed( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page )
-		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page, $jt_held_status );
+		? Moderation_Service::list_trashed( $user_id, $jt_kind, $space_id, $per_page, jetonomy_page_offset( $jt_held_paged, $per_page ) )
+		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, $space_id, $per_page, jetonomy_page_offset( $jt_held_paged, $per_page ), $jt_held_status );
 }
 
 // Batch-resolve what the cards need. Every held item is in THIS space, so only
@@ -281,6 +281,8 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<?php else : ?>
 					<div class="jt-card jt-card-flush" data-jt-mod-queue="approvals" data-space-id="<?php echo absint( $space->id ); ?>"<?php echo $jt_is_trash ? ' data-empty-text="' . esc_attr__( 'The trash is empty.', 'jetonomy' ) . '"' : ''; ?>>
 						<?php
+						// Why each item is held, when something (Jetonomy Pro's AI review) knows: one call per page.
+						$jt_held_notes = (array) apply_filters( 'jetonomy_held_item_notes', array(), $jt_kind, array_map( static fn( $r ) => (int) $r->id, $jt_held ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals -- documented in views/moderation.php.
 						foreach ( $jt_held as $jt_item ) :
 							$jt_parent = 'reply' === $jt_kind
 								? ( $jt_held_parents[ (int) $jt_item->post_id ] ?? null )
@@ -293,6 +295,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 							\Jetonomy\Template_Loader::partial(
 								'moderation/approval-card',
 								array(
+									'note'        => $jt_held_notes[ (int) $jt_item->id ] ?? '',
 									'item'        => $jt_item,
 									'kind'        => $jt_kind,
 									'space'       => $space,

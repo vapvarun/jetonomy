@@ -202,3 +202,196 @@
 		});
 	});
 })();
+
+/**
+ * Role Capability Mapping: a "Select all" box under each role and beside each
+ * capability (since 2.1.0). Inserted here, so without JS nothing is dead. The
+ * save path is the form's own: these boxes carry no name and post nothing.
+ */
+(function () {
+	'use strict';
+
+	var table = document.querySelector('table.jt-role-matrix');
+	if (!table || !window.wp || !wp.i18n) {
+		return;
+	}
+	var __ = wp.i18n.__, sprintf = wp.i18n.sprintf;
+	var heads = Array.prototype.slice.call(table.querySelectorAll('thead th[data-role]'));
+	var warning = table.closest('.jt-settings-card').querySelector('.jt-role-matrix-warning');
+	var bulkUsed = false;
+
+	// Enabled cells only: a role without WordPress's read capability can hold Read alone.
+	function cells(filter) {
+		return Array.prototype.filter.call(table.querySelectorAll('tbody td input[type="checkbox"]'), function (cb) {
+			return !cb.disabled && filter(cb);
+		});
+	}
+	function roleOf(cb) {
+		var m = /role_caps\]\[([^\]]+)\]/.exec(cb.name);
+		return m ? m[1] : '';
+	}
+	function box(label) {
+		var input = document.createElement('input');
+		input.type = 'checkbox';
+		input.className = 'jt-matrix-all';
+		input.setAttribute('aria-label', label);
+		return input;
+	}
+	function sync(input, list, locked) {
+		var on = list.filter(function (cb) { return cb.checked; }).length;
+		// A role without WordPress read can hold Read alone: its All box stays
+		// off, showing the dash while Read is ticked, so it never reads as "all".
+		input.disabled = locked || list.length === 0;
+		input.checked = !locked && list.length > 0 && on === list.length;
+		input.indeterminate = locked ? on > 0 : on > 0 && on < list.length;
+	}
+
+	var colBoxes = heads.map(function (th) {
+		var role = th.getAttribute('data-role');
+		/* translators: %s: role name, e.g. Subscriber. */
+		var input = box(sprintf(__('All capabilities for %s', 'jetonomy'), th.textContent.trim()));
+		var label = document.createElement('label');
+		label.className = 'jt-matrix-all-label';
+		label.appendChild(input);
+		label.appendChild(document.createTextNode(' ' + __('All', 'jetonomy')));
+		th.appendChild(label);
+		input.addEventListener('change', function () {
+			cells(function (cb) { return roleOf(cb) === role; }).forEach(function (cb) { cb.checked = input.checked; });
+			bulkUsed = true;
+			syncAll();
+		});
+		var locked = Array.prototype.some.call(table.querySelectorAll('tbody td input[type="checkbox"]'), function (cb) { return cb.disabled && roleOf(cb) === role; });
+		return { input: input, locked: locked, list: function () { return cells(function (cb) { return roleOf(cb) === role; }); } };
+	});
+
+	var rowBoxes = Array.prototype.map.call(table.querySelectorAll('tbody tr'), function (tr) {
+		var th = tr.querySelector('th');
+		/* translators: %s: capability label, e.g. Create topics. */
+		var input = box(sprintf(__('Give %s to every role', 'jetonomy'), th.textContent.trim()));
+		var label = document.createElement('label');
+		label.className = 'jt-matrix-all-label';
+		label.appendChild(input);
+		label.appendChild(document.createTextNode(' ' + __('All roles', 'jetonomy')));
+		th.appendChild(label);
+		var mine = function () {
+			return Array.prototype.filter.call(tr.querySelectorAll('td input[type="checkbox"]'), function (cb) { return !cb.disabled; });
+		};
+		input.addEventListener('change', function () {
+			mine().forEach(function (cb) { cb.checked = input.checked; });
+			bulkUsed = true;
+			syncAll();
+		});
+		return { input: input, list: mine };
+	});
+
+	function syncAll() {
+		colBoxes.concat(rowBoxes).forEach(function (b) { sync(b.input, b.list(), !!b.locked); });
+		if (!warning || !bulkUsed) {
+			return;
+		}
+		var names = heads.filter(function (th) {
+			if (th.hasAttribute('data-staff')) {
+				return false;
+			}
+			var role = th.getAttribute('data-role');
+			return cells(function (cb) { return roleOf(cb) === role && cb.checked && cb.closest('tr').classList.contains('jt-cap-staff'); }).length > 0;
+		}).map(function (th) { return th.firstChild.textContent.trim(); });
+		var shown = names.join(', ');
+		if (names.length > 3) {
+			/* translators: 1: two comma-separated role names, 2: how many more roles. */
+			shown = sprintf(__('%1$s and %2$d more', 'jetonomy'), names.slice(0, 2).join(', '), names.length - 2);
+		}
+		var wasHidden = warning.hidden;
+		warning.hidden = names.length === 0;
+		/* translators: %s: role names, e.g. "Editor, Author and 52 more". */
+		warning.textContent = names.length ? sprintf(__('%s will be able to moderate or manage the community. Untick the capabilities marked * if that is not what you want.', 'jetonomy'), shown) : '';
+		if (wasHidden && !warning.hidden && warning.getBoundingClientRect().top < 0) {
+			warning.scrollIntoView({ block: 'nearest' });
+		}
+	}
+
+	table.addEventListener('change', function (e) {
+		if (!e.target.classList.contains('jt-matrix-all')) {
+			syncAll();
+		}
+	});
+	syncAll();
+})();
+
+/**
+ * Community Sidebar Widgets card (since 2.1.0): drag (core jQuery UI Sortable)
+ * or Move up / Move down to reorder, re-indexing the hidden inputs so the
+ * normal Appearance form saves the order.
+ */
+(function () {
+	'use strict';
+
+	var list = document.querySelector('.jt-widget-list');
+	if (!list || !window.wp || !wp.i18n) {
+		return;
+	}
+	var __ = wp.i18n.__, sprintf = wp.i18n.sprintf;
+	var live = document.querySelector('.jt-widget-live');
+	var none = document.querySelector('.jt-widget-none');
+
+	function rows() {
+		return Array.prototype.slice.call(list.children);
+	}
+	function reindex() {
+		var all = rows();
+		all.forEach(function (li, i) {
+			li.querySelectorAll('input[name^="jetonomy_settings[sidebar_widgets]"]').forEach(function (input) {
+				input.name = input.name.replace(/\[sidebar_widgets\]\[\d+\]/, '[sidebar_widgets][' + i + ']');
+			});
+			var moves = li.querySelectorAll('.jt-widget-move');
+			moves[0].disabled = i === 0;
+			moves[1].disabled = i === all.length - 1;
+		});
+	}
+	function announce(li) {
+		var all = rows();
+		/* translators: 1: widget name, 2: new position, 3: number of widgets. */
+		live.textContent = sprintf(__('%1$s moved to position %2$d of %3$d', 'jetonomy'), li.getAttribute('data-name'), all.indexOf(li) + 1, all.length);
+	}
+
+	rows().forEach(function (li) {
+		li.querySelector('.jt-widget-moves').hidden = false;
+	});
+	list.addEventListener('click', function (e) {
+		var btn = e.target.closest('.jt-widget-move');
+		if (!btn || btn.disabled) {
+			return;
+		}
+		var li = btn.closest('.jt-widget-row');
+		var up = btn.getAttribute('data-dir') === '-1';
+		var other = up ? li.previousElementSibling : li.nextElementSibling;
+		if (!other) {
+			return;
+		}
+		list.insertBefore(li, up ? other : other.nextElementSibling);
+		reindex();
+		announce(li);
+		// Keep focus on the moved row; fall back to its other button at the ends.
+		var moves = li.querySelectorAll('.jt-widget-move');
+		var target = moves[up ? 0 : 1];
+		(target.disabled ? moves[up ? 1 : 0] : target).focus();
+	});
+	list.addEventListener('change', function (e) {
+		if (e.target.classList.contains('jt-widget-on') && none) {
+			none.hidden = list.querySelectorAll('.jt-widget-on:checked').length > 0;
+		}
+	});
+	if (window.jQuery && jQuery.fn.sortable) {
+		jQuery(list).sortable({
+			axis: 'y',
+			handle: '.jt-widget-handle',
+			placeholder: 'jt-widget-placeholder',
+			update: function (event, ui) {
+				reindex();
+				announce(ui.item[0]);
+			}
+		});
+	}
+	reindex();
+})();
+

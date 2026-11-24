@@ -58,7 +58,7 @@ final class Category_Command extends Base_Command {
 			$input['description'] = (string) $assoc['description'];
 		}
 		if ( isset( $assoc['parent'] ) ) {
-			$input['parent_id'] = (int) $assoc['parent'];
+			$input['parent_id'] = $this->int_arg( $assoc, 'parent', 0, 0 );
 		}
 
 		$result = ( new Taxonomy_Journey() )->create_category( $input );
@@ -102,7 +102,7 @@ final class Category_Command extends Base_Command {
 	 *     wp jetonomy category update 3 --parent=1 --sort=10
 	 */
 	public function update( $args, $assoc ): void {
-		$id      = (int) ( $args[0] ?? 0 );
+		$id      = $this->int_arg( $args, 0, 0, 1 );
 		$changes = array();
 		if ( isset( $assoc['name'] ) ) {
 			$changes['name'] = (string) $assoc['name'];
@@ -114,10 +114,10 @@ final class Category_Command extends Base_Command {
 			$changes['description'] = (string) $assoc['description'];
 		}
 		if ( isset( $assoc['parent'] ) ) {
-			$changes['parent_id'] = (int) $assoc['parent'];
+			$changes['parent_id'] = $this->int_arg( $assoc, 'parent', 0, 0 );
 		}
 		if ( isset( $assoc['sort'] ) ) {
-			$changes['sort_order'] = (int) $assoc['sort'];
+			$changes['sort_order'] = $this->int_arg( $assoc, 'sort', 0, 0 );
 		}
 
 		$result = ( new Taxonomy_Journey() )->update_category( $id, $changes );
@@ -145,7 +145,7 @@ final class Category_Command extends Base_Command {
 	 *     wp jetonomy category delete 3
 	 */
 	public function delete( $args, $assoc ): void {
-		$id     = (int) ( $args[0] ?? 0 );
+		$id     = $this->int_arg( $args, 0, 0, 1 );
 		$result = ( new Taxonomy_Journey() )->delete_category( $id );
 		$this->render( $result, $assoc );
 	}
@@ -171,7 +171,7 @@ final class Category_Command extends Base_Command {
 	 *     wp jetonomy category get 3
 	 */
 	public function get( $args, $assoc ): void {
-		$id     = (int) ( $args[0] ?? 0 );
+		$id     = $this->int_arg( $args, 0, 0, 1 );
 		$result = ( new Taxonomy_Journey() )->get_category( $id );
 		$this->render( $result, $assoc );
 	}
@@ -262,7 +262,7 @@ final class Category_Command extends Base_Command {
 	 *     wp jetonomy category children --parent=1
 	 */
 	public function children( $args, $assoc ): void {
-		$parent_id = (int) ( $assoc['parent'] ?? 0 );
+		$parent_id = $this->int_arg( $assoc, 'parent', 0, 0 );
 		$result    = ( new Taxonomy_Journey() )->list_category_children( $parent_id );
 		$this->render_list( $result, $assoc );
 	}

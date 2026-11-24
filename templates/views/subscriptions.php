@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 $jt_user_id  = get_current_user_id();
 $jt_per_page = 50;
 $jt_page     = isset( $_GET['pg'] ) ? max( 1, absint( $_GET['pg'] ) ) : 1;
-$jt_offset   = ( $jt_page - 1 ) * $jt_per_page;
+$jt_offset   = jetonomy_page_offset( $jt_page, $jt_per_page );
 $jt_total    = \Jetonomy\Models\Subscription::count_for_user( $jt_user_id );
 $jt_rows     = \Jetonomy\Models\Subscription::list_for_user( $jt_user_id, $jt_per_page, $jt_offset );
 $jt_base     = \Jetonomy\base_url();

@@ -18,7 +18,7 @@ if ( ! in_array( $filter, array( 'all', 'posts', 'spaces', 'tags' ), true ) ) {
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $page     = max( 1, absint( wp_unslash( $_GET['pg'] ?? 1 ) ) );
 $per_page = 20;
-$offset   = ( $page - 1 ) * $per_page;
+$offset   = jetonomy_page_offset( $page, $per_page );
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '';
@@ -149,7 +149,7 @@ $jt_result_total = $jt_posts_total + $jt_spaces_total + $jt_tags_total;
 $jt_hl_terms = array();
 if ( $jt_has_query ) {
 	foreach ( (array) preg_split( '/[^\p{L}\p{N}]+/u', $q, -1, PREG_SPLIT_NO_EMPTY ) as $jt_term ) {
-		$jt_hl_terms[] = mb_strtolower( remove_accents( (string) $jt_term ) );
+		$jt_hl_terms[] = \Jetonomy\lower( remove_accents( (string) $jt_term ) );
 	}
 }
 
@@ -167,7 +167,8 @@ if ( $jt_has_query ) {
 $jt_highlight = static function ( string $text ) use ( $jt_hl_terms ): string {
 	$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	$esc  = static fn( string $s ): string => htmlspecialchars( $s, ENT_QUOTES, 'UTF-8' );
-	if ( ! $jt_hl_terms || '' === $text ) {
+	// Without mbstring the highlighter cannot index characters: show the text unmarked rather than fatal.
+	if ( ! $jt_hl_terms || '' === $text || ! function_exists( 'mb_strtolower' ) ) {
 		return $esc( $text );
 	}
 
@@ -182,18 +183,21 @@ $jt_highlight = static function ( string $text ) use ( $jt_hl_terms ): string {
 		}
 	}
 
-	$hay  = implode( '', $folded );
+	// Match on the folded character arrays (mb_str_split is polyfilled by WordPress).
 	$mark = array();
+	$n    = count( $folded );
 	foreach ( $jt_hl_terms as $term ) {
-		$len = mb_strlen( $term );
-		$at  = 0;
-		while ( false !== ( $pos = mb_strpos( $hay, $term, $at ) ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+		$tchars = mb_str_split( $term );
+		$len    = count( $tchars );
+		for ( $pos = 0; $len && $pos + $len <= $n; $pos++ ) {
+			if ( $folded[ $pos ] !== $tchars[0] || array_slice( $folded, $pos, $len ) !== $tchars ) {
+				continue;
+			}
 			if ( 0 === $pos || ! preg_match( '/[\p{L}\p{N}]/u', $folded[ $pos - 1 ] ) ) {
 				for ( $k = $owner[ $pos ]; $k <= $owner[ $pos + $len - 1 ]; $k++ ) {
 					$mark[ $k ] = true;
 				}
 			}
-			$at = $pos + 1;
 		}
 	}
 
@@ -360,7 +364,7 @@ $crumbs = array(
 							// Authors, profiles and spaces in one query each, not per row.
 							\Jetonomy\prime_post_cards( $posts );
 							foreach ( $posts as $post ) :
-								$time_ago       = human_time_diff( strtotime( $post->created_at ), time() );
+								$time_ago       = \Jetonomy\time_ago( (string) $post->created_at );
 								$post_url       = \Jetonomy\route_url( 'post', $post->space_slug, $post->slug );
 								$excerpt        = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
 								$author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
@@ -380,7 +384,7 @@ $crumbs = array(
 											<?php echo esc_html( $post->space_title ); ?>
 											&middot;
 											<?php /* translators: %s: human-readable time difference. */ ?>
-											<?php echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ); ?>
+											<?php echo esc_html( $time_ago ); ?>
 										</div>
 										<?php if ( $excerpt ) : ?>
 											<div class="jt-row-excerpt" dir="auto"><?php echo $jt_highlight( $excerpt ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>
@@ -401,24 +405,19 @@ $crumbs = array(
 						<h2 class="jt-section-label">
 							<?php echo esc_html( \Jetonomy\space_label( true ) ); ?>
 						</h2>
-						<div class="jt-space-grid jt-mb-lg">
-							<?php foreach ( $spaces as $space ) : ?>
-								<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
-									class="jt-card jt-space-card jt-no-underline jt-block">
-									<div class="jt-space-card-inner">
-										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-icon', $space->type ?? '' ); ?>
-										<div>
-											<div class="jt-space-card-title" dir="auto"><?php echo $jt_highlight( (string) $space->title ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>
-											<?php if ( ! empty( $space->description ) ) : ?>
-												<div class="jt-space-card-excerpt jt-mt-sm" dir="auto"><?php echo $jt_highlight( wp_trim_words( $space->description, 12 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $jt_highlight escapes every segment. ?></div>
-											<?php endif; ?>
-											<div class="jt-space-card-stat jt-mt-sm">
-												<?php echo esc_html( \Jetonomy\count_label( (int) $space->post_count, 'topic' ) ); ?>
-											</div>
-										</div>
-									</div>
-								</a>
-							<?php endforeach; ?>
+						<div class="jt-mb-lg">
+							<?php
+							// The shared card renderer: highlighted title and a 12-word excerpt.
+							jetonomy_render_space_grid(
+								$spaces,
+								\Jetonomy\base_url(),
+								'',
+								array(
+									'highlight'     => $jt_highlight,
+									'excerpt_words' => 12,
+								)
+							);
+							?>
 						</div>
 					<?php endif; ?>
 

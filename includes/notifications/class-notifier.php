@@ -154,6 +154,11 @@ class Notifier {
 				'subject' => __( '[{site}] You earned a new badge', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nKeep contributing to unlock more.", 'jetonomy' ),
 			),
+			// Sent by Pro's Site announcements; {message} is "Announcement: <title>".
+			'announcement'           => array(
+				'subject' => __( '[{site}] {message}', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the community to read the full announcement.", 'jetonomy' ),
+			),
 			'vote_on_post'           => array(
 				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] Your %s received a vote', 'jetonomy' ), $topic ),
 				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to see the discussion.", 'jetonomy' ), $topic ),
@@ -514,11 +519,11 @@ class Notifier {
 	private const FANOUT_INLINE_MAX = 25;
 
 	/**
-	 * Subscribers notified per background run. Each one can send an email, so
-	 * a run stays well inside a PHP time limit; the next batch is queued from
-	 * the last user id until the list is exhausted.
+	 * Subscribers notified per background run, so a post in a 5,000-member space is about 20 runs. Each one only
+	 * records the notification and queues its email and push (those send in their own jobs), so a run stays well
+	 * inside a PHP time limit; the next batch is queued from the last user id until the list is exhausted.
 	 */
-	private const FANOUT_BATCH = 100;
+	private const FANOUT_BATCH = 250;
 
 	/**
 	 * Queue a fan-out batch off the request path: Action Scheduler first (the
@@ -549,13 +554,16 @@ class Notifier {
 	 */
 	private function fanout_batches( string $object_type, int $object_id, int $after, string $hook, array $hook_args, callable $notify, object $topic ): void {
 		do {
-			$batch = Subscription::get_subscribers( $object_type, $object_id, $after, self::FANOUT_BATCH );
+			// One row past the batch tells whether more remain, so the chain never ends on an empty run.
+			$batch = Subscription::get_subscribers( $object_type, $object_id, $after, self::FANOUT_BATCH + 1 );
+			$more  = count( $batch ) > self::FANOUT_BATCH;
+			$batch = array_slice( $batch, 0, self::FANOUT_BATCH );
 			// A subscriber who cannot read the topic (left a private space, never
 			// joined a hidden one, or the topic is private) hears nothing of it.
 			foreach ( Permission_Engine::readers_among( $topic, $batch ) as $user_id ) {
 				$notify( $user_id );
 			}
-			if ( count( $batch ) < self::FANOUT_BATCH ) {
+			if ( ! $more ) {
 				return;
 			}
 			$after = (int) end( $batch );
@@ -669,8 +677,9 @@ class Notifier {
 		// One notice per person per reply: a mention wins over every notice below.
 		$told = self::mentioned_in( $reply );
 
-		// 1. Notify post author (if not the replier).
-		if ( (int) $post->author_id !== $actor_id && ! isset( $told[ (int) $post->author_id ] ) ) {
+		// 1. Notify post author (if not the replier), unless they unfollowed their own topic.
+		if ( (int) $post->author_id !== $actor_id && ! isset( $told[ (int) $post->author_id ] )
+			&& ! \Jetonomy\Models\Subscription::has_unfollowed_own_topic( (int) $post->author_id, $post_id ) ) {
 			self::create_and_maybe_email(
 				(int) $post->author_id,
 				$actor_id,
@@ -1637,6 +1646,22 @@ class Notifier {
 	 * and filters until 2.0.2.
 	 */
 	public static function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {
+		// Subject, template defaults and layout strings in the recipient's language, not the actor's or the site's.
+		// Limit: $message was composed when the notification was created, in that request's language.
+		$switched = switch_to_user_locale( $user_id );
+		try {
+			self::send_email_in_locale( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
+		} finally {
+			if ( $switched ) {
+				restore_previous_locale();
+			}
+		}
+	}
+
+	/**
+	 * The body of send_email_notification(), run inside the recipient's locale.
+	 */
+	private static function send_email_in_locale( int $user_id, string $type, string $message, string $object_type, int $object_id, string $url, array $extra ): void {
 		$user = get_userdata( $user_id );
 		if ( ! $user || ! $user->user_email ) {
 			return;

@@ -36,6 +36,11 @@ class Rate_Limiter {
 			return true; // No limit defined for this action.
 		}
 
+		// 0 turns the limit off (the settings hint and status() say so); it used to block every new member.
+		if ( $limits[ $action ] <= 0 ) {
+			return true;
+		}
+
 		$key   = "jetonomy_rate_{$user_id}_{$action}";
 		$count = (int) get_transient( $key );
 
@@ -164,9 +169,13 @@ class Rate_Limiter {
 		}
 
 		if ( $status['retry_after'] > 0 ) {
+			// human_time_diff() says "24 hours" for a wait of 23h59m59s and "1 day" at exactly 24 hours, so the same
+			// limit read differently from one request to the next (the web UI and REST). A wait in the last half hour
+			// of the day is one day.
+			$wait = $status['retry_after'] >= DAY_IN_SECONDS - 30 * MINUTE_IN_SECONDS ? DAY_IN_SECONDS : $status['retry_after'];
 			return $allowance . ' ' . sprintf(
 				$again,
-				human_time_diff( time(), time() + $status['retry_after'] )
+				human_time_diff( time(), time() + $wait )
 			);
 		}
 

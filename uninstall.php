@@ -3,9 +3,12 @@
  * Jetonomy Uninstall
  *
  * Runs when a site administrator deletes the Jetonomy plugin from wp-admin.
- * Only when Settings > General > Data > "Remove all community data" is on, it
- * removes all database tables, options, capabilities, cron jobs, and transients
- * created by the plugin. Otherwise it leaves everything in place.
+ * Always: clears scheduled work (WP-Cron and Action Scheduler), transients, the
+ * object-cache group and the rewrite rules, so nothing fires into code that is
+ * gone and a reinstall starts clean. Only when Settings > General > Data >
+ * "Remove all community data" is on does it also remove the database tables,
+ * options, capabilities and per-member meta; otherwise the community's content
+ * stays in place for the reinstall.
  *
  * This file is intentionally standalone — it does not require or include any
  * other plugin files so it remains safe to execute after the plugin files have
@@ -20,6 +23,148 @@
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 defined( 'ABSPATH' ) || exit;
 
+global $wpdb;
+
+// -------------------------------------------------------------------------
+// ALWAYS: scheduled work, caches and rewrite rules.
+//
+// Deleting the plugin (to reinstall it, to try again) must never leave events firing into code that is gone, or
+// cached rows and rewrite rules in an old shape. None of this is member data.
+// -------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------
+// 4. Clear scheduled cron jobs.
+// -------------------------------------------------------------------------
+
+// Every WP-Cron hook named jetonomy_*, plus the licence SDK's weekly check, read
+// from the cron array itself: a hand-kept list had drifted to hook names the
+// plugin no longer uses. Pending Action Scheduler jobs are already cancelled:
+// deactivation unschedules them, and WordPress deactivates before it uninstalls.
+foreach ( (array) _get_cron_array() as $jetonomy_events ) {
+	foreach ( array_keys( (array) $jetonomy_events ) as $jetonomy_hook ) {
+		// jetonomy_pro_* jobs are Pro's: its own uninstall clears them, as with its options.
+		if ( ( str_starts_with( (string) $jetonomy_hook, 'jetonomy_' ) && ! str_starts_with( (string) $jetonomy_hook, 'jetonomy_pro_' ) ) || 'edd_sl_sdk_weekly_license_check_jetonomy' === $jetonomy_hook ) {
+			wp_unschedule_hook( $jetonomy_hook ); // Every copy, whatever its arguments.
+		}
+	}
+}
+
+// Action Scheduler keeps the history of every job it ran (complete, canceled,
+// failed) in its own tables. Deactivation cancelled the pending ones; the rows
+// of Jetonomy's jobs and their logs go too. jetonomy_pro_* rows are Pro's.
+// Batched (logs first, then their actions, JETONOMY_UNINSTALL_BATCH ids at a time) so a site with a
+// large history never runs one huge DELETE. Every status goes, failed included.
+// The shared Action Scheduler tables themselves are never dropped. Multisite
+// (one set of tables per subsite) is not handled yet.
+defined( 'JETONOMY_UNINSTALL_BATCH' ) || define( 'JETONOMY_UNINSTALL_BATCH', 2000 );
+$jetonomy_as_purge = static function () use ( $wpdb ): void {
+	$actions = $wpdb->prefix . 'actionscheduler_actions';
+	$logs    = $wpdb->prefix . 'actionscheduler_logs';
+	$groups  = $wpdb->prefix . 'actionscheduler_groups';
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- uninstall: Action Scheduler has no API to delete finished actions.
+	if ( $actions !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $actions ) ) ) ) {
+		return;
+	}
+	$has_logs = $logs === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $logs ) ) );
+	do {
+		$ids = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT action_id FROM {$actions} WHERE hook LIKE %s AND hook NOT LIKE %s LIMIT %d", $wpdb->esc_like( 'jetonomy_' ) . '%', $wpdb->esc_like( 'jetonomy_pro_' ) . '%', JETONOMY_UNINSTALL_BATCH ) ) );
+		if ( ! $ids ) {
+			break;
+		}
+		$in = implode( ',', $ids );
+		if ( $has_logs ) {
+			$wpdb->query( "DELETE FROM {$logs} WHERE action_id IN ({$in})" );
+		}
+		// A refused or empty delete would select the same ids again forever: stop instead.
+		if ( ! $wpdb->query( "DELETE FROM {$actions} WHERE action_id IN ({$in})" ) ) {
+			break;
+		}
+		$batch = count( $ids );
+	} while ( JETONOMY_UNINSTALL_BATCH === $batch );
+	// The shared 'jetonomy' group row goes once no action is left in it (Pro, if still installed, keeps it).
+	if ( $groups === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $groups ) ) ) ) {
+		$wpdb->query( "DELETE g FROM {$groups} g LEFT JOIN {$actions} a ON a.group_id = g.group_id WHERE g.slug = 'jetonomy' AND a.action_id IS NULL" );
+	}
+	// phpcs:enable
+};
+$jetonomy_as_purge();
+// The library's runner event is scheduled with args ( 'WP Cron' ), so it is cleared for every args set. Only when no other
+// active plugin ships Action Scheduler, which still needs its runner. The family rule: check by file, never class_exists(): in a single
+// `wp plugin uninstall --deactivate` process Jetonomy's own copy is still loaded, so the class always exists there.
+$jetonomy_other_as = false;
+$jetonomy_active   = array_merge( (array) get_option( 'active_plugins', array() ), array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) );
+foreach ( $jetonomy_active as $jetonomy_plugin ) {
+	$jetonomy_dir = dirname( WP_PLUGIN_DIR . '/' . $jetonomy_plugin );
+	if ( WP_PLUGIN_DIR === $jetonomy_dir || 'jetonomy' === basename( $jetonomy_dir ) ) {
+		continue; // A single-file plugin, or Jetonomy itself.
+	}
+	// The library's loader at the plugin root (the standalone plugin) or up to three folders down (libs/, vendor/woocommerce/,
+	// packages/). No GLOB_BRACE: it is undefined on Alpine (musl) PHP builds.
+	foreach ( array( '', '*/', '*/*/', '*/*/*/' ) as $jetonomy_depth ) {
+		if ( glob( $jetonomy_dir . '/' . $jetonomy_depth . 'action-scheduler/action-scheduler.php' ) ) {
+			$jetonomy_other_as = true;
+			break 2;
+		}
+	}
+	if ( file_exists( $jetonomy_dir . '/action-scheduler.php' ) ) {
+		$jetonomy_other_as = true;
+		break;
+	}
+}
+if ( ! $jetonomy_other_as ) {
+	wp_unschedule_hook( 'action_scheduler_run_queue' );
+}
+
+// -------------------------------------------------------------------------
+// 5. Delete transients created by the plugin.
+//
+// WordPress stores transients as options with the key "_transient_{name}"
+// (and "_transient_timeout_{name}" for the expiry). A LIKE query is the
+// only reliable way to bulk-delete transients by prefix.
+// -------------------------------------------------------------------------
+
+$transient_prefix = $wpdb->esc_like( '_transient_jetonomy_' );
+$timeout_prefix   = $wpdb->esc_like( '_transient_timeout_jetonomy_' );
+
+// jetonomy_pro_* transients belong to Jetonomy Pro, which may stay installed: its own uninstall clears them.
+$wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM {$wpdb->options} WHERE ( option_name LIKE %s OR option_name LIKE %s ) AND option_name NOT LIKE %s AND option_name NOT LIKE %s",
+		$transient_prefix . '%',
+		$timeout_prefix . '%',
+		$wpdb->esc_like( '_transient_jetonomy_pro_' ) . '%',
+		$wpdb->esc_like( '_transient_timeout_jetonomy_pro_' ) . '%'
+	)
+);
+
+// Jetonomy's short-prefixed transients are missed by the jetonomy_ sweep above. The prefixes are listed in full so
+// another plugin's jt_* transients are never touched. Keep this list equal to every transient prefix in includes/
+// (a self-test, UN1, fails when a new one is added without a line here).
+foreach ( array( 'jt_sitemap_', 'jt_auth_', 'jt_view_', 'jt_app_connect_', 'jt_app_bridge_', 'jt_resend_', 'jt_lp_', 'jt_oembed_short_' ) as $jetonomy_short_prefix ) {
+	$wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+			$wpdb->esc_like( '_transient_' . $jetonomy_short_prefix ) . '%',
+			$wpdb->esc_like( '_transient_timeout_' . $jetonomy_short_prefix ) . '%'
+		)
+	);
+}
+
+// A persistent object cache (Redis, Memcached) outlives the plugin: drop Jetonomy's group so a reinstall never reads
+// rows cached in an old shape.
+if ( function_exists( 'wp_cache_flush_group' ) ) {
+	wp_cache_flush_group( 'jetonomy' );
+}
+
+// -------------------------------------------------------------------------
+// 6. Flush rewrite rules.
+//
+// Remove the plugin's custom rewrite rules from the database so WordPress
+// does not attempt to resolve /community/* URLs after the plugin is gone.
+// -------------------------------------------------------------------------
+
+delete_option( 'rewrite_rules' );
+
 // Keep everything unless the owner ticked Settings > General > Data. A
 // community is years of other people's writing; deleting the plugin to
 // reinstall it must not erase it.
@@ -27,7 +172,9 @@ if ( empty( get_option( 'jetonomy_settings', array() )['remove_data_on_uninstall
 	return;
 }
 
-global $wpdb;
+// -------------------------------------------------------------------------
+// REMOVE-DATA ONLY: tables, options, capabilities and per-member meta.
+// -------------------------------------------------------------------------
 
 // -------------------------------------------------------------------------
 // 1. Drop custom database tables.
@@ -47,6 +194,13 @@ require_once __DIR__ . '/includes/db/class-schema.php';
 // -------------------------------------------------------------------------
 // 2. Delete plugin options.
 // -------------------------------------------------------------------------
+
+// The licence SDK's cached update info, named exactly as the SDK names it:
+// edd_sl_ + md5 of [plugin folder, saved licence key, beta flag]
+// (EasyDigitalDownloads\Updater\Updaters\Updater::get_cache_key()). Never by
+// pattern: other plugins on the same SDK keep theirs. Read the key before the
+// jetonomy_ sweep below deletes it.
+delete_option( 'edd_sl_' . md5( (string) wp_json_encode( array( basename( __DIR__ ), get_option( 'jetonomy_license_key' ), 0 ) ) ) );
 
 delete_option( 'jetonomy_settings' );
 delete_option( 'jetonomy_db_version' );
@@ -95,66 +249,14 @@ foreach ( wp_roles()->roles as $jetonomy_role_name => $jetonomy_role_data ) {
 	}
 }
 
-// -------------------------------------------------------------------------
-// 4. Clear scheduled cron jobs.
-// -------------------------------------------------------------------------
-
-// Every WP-Cron hook named jetonomy_*, plus the licence SDK's weekly check, read
-// from the cron array itself: a hand-kept list had drifted to hook names the
-// plugin no longer uses. Pending Action Scheduler jobs are already cancelled:
-// deactivation unschedules them, and WordPress deactivates before it uninstalls.
-foreach ( (array) _get_cron_array() as $jetonomy_events ) {
-	foreach ( array_keys( (array) $jetonomy_events ) as $jetonomy_hook ) {
-		// jetonomy_pro_* jobs are Pro's: its own uninstall clears them, as with its options.
-		if ( ( str_starts_with( (string) $jetonomy_hook, 'jetonomy_' ) && ! str_starts_with( (string) $jetonomy_hook, 'jetonomy_pro_' ) ) || 'edd_sl_sdk_weekly_license_check_jetonomy' === $jetonomy_hook ) {
-			wp_clear_scheduled_hook( $jetonomy_hook );
-		}
-	}
-}
-
-// Action Scheduler keeps the history of every job it ran (complete, canceled,
-// failed) in its own tables. Deactivation cancelled the pending ones; the rows
-// of Jetonomy's jobs and their logs go too. jetonomy_pro_* rows are Pro's. The
-// library's own runner event goes with it: another active plugin that bundles
-// Action Scheduler schedules it again on its next load.
-$jetonomy_as_actions = $wpdb->prefix . 'actionscheduler_actions';
-$jetonomy_as_logs    = $wpdb->prefix . 'actionscheduler_logs';
-if ( $jetonomy_as_actions === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jetonomy_as_actions ) ) ) ) {
-	$jetonomy_as_hook = $wpdb->esc_like( 'jetonomy_' ) . '%';
-	$jetonomy_as_pro  = $wpdb->esc_like( 'jetonomy_pro_' ) . '%';
-	// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- uninstall: Action Scheduler has no API to delete finished actions.
-	if ( $jetonomy_as_logs === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $jetonomy_as_logs ) ) ) ) {
-		$wpdb->query( $wpdb->prepare( "DELETE l FROM {$jetonomy_as_logs} l INNER JOIN {$jetonomy_as_actions} a ON a.action_id = l.action_id WHERE a.hook LIKE %s AND a.hook NOT LIKE %s", $jetonomy_as_hook, $jetonomy_as_pro ) );
-	}
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$jetonomy_as_actions} WHERE hook LIKE %s AND hook NOT LIKE %s", $jetonomy_as_hook, $jetonomy_as_pro ) );
-	// phpcs:enable
-}
-wp_clear_scheduled_hook( 'action_scheduler_run_queue' );
-
-// -------------------------------------------------------------------------
-// 5. Delete transients created by the plugin.
-//
-// WordPress stores transients as options with the key "_transient_{name}"
-// (and "_transient_timeout_{name}" for the expiry). A LIKE query is the
-// only reliable way to bulk-delete transients by prefix.
-// -------------------------------------------------------------------------
-
-$transient_prefix = $wpdb->esc_like( '_transient_jetonomy_' );
-$timeout_prefix   = $wpdb->esc_like( '_transient_timeout_jetonomy_' );
-
+// Per-member settings and verification state Jetonomy stored on user accounts (the accounts themselves stay).
+// jetonomy_pro_* keys are Jetonomy Pro's: its own uninstall clears them, as with its options.
 $wpdb->query(
 	$wpdb->prepare(
-		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-		$transient_prefix . '%',
-		$timeout_prefix . '%'
+		"DELETE FROM {$wpdb->usermeta} WHERE ( meta_key LIKE %s OR meta_key LIKE %s ) AND meta_key NOT LIKE %s AND meta_key NOT LIKE %s",
+		$wpdb->esc_like( 'jetonomy_' ) . '%',
+		$wpdb->esc_like( '_jetonomy_' ) . '%',
+		$wpdb->esc_like( 'jetonomy_pro_' ) . '%',
+		$wpdb->esc_like( '_jetonomy_pro_' ) . '%'
 	)
 );
-
-// -------------------------------------------------------------------------
-// 6. Flush rewrite rules.
-//
-// Remove the plugin's custom rewrite rules from the database so WordPress
-// does not attempt to resolve /community/* URLs after the plugin is gone.
-// -------------------------------------------------------------------------
-
-delete_option( 'rewrite_rules' );

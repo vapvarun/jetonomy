@@ -198,7 +198,7 @@ defined( 'ABSPATH' ) || exit;
 							echo absint( $cat->space_count );
 							break;
 						case 'visibility':
-							echo '<span class="jt-status-badge jt-status-badge--' . esc_attr( $cat->visibility ) . '">' . esc_html( ucfirst( $cat->visibility ) ) . '</span>';
+							echo '<span class="jt-status-badge jt-status-badge--' . esc_attr( $cat->visibility ) . '">' . esc_html( \Jetonomy\space_visibility_label( (string) $cat->visibility ) ) . '</span>';
 							break;
 					}
 				},

@@ -308,7 +308,7 @@ class Journey_Tests {
 					$post_id,
 					\Jetonomy\Models\Reply::DEFAULT_SORT,
 					$per_page,
-					( $page - 1 ) * $per_page
+					jetonomy_page_offset( $page, $per_page )
 				);
 				if ( \Jetonomy\Models\Reply::tree_contains( $batch, $rid ) ) {
 					$actual = $page;

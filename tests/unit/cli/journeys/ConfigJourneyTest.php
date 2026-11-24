@@ -121,17 +121,43 @@ class ConfigJourneyTest extends WP_UnitTestCase {
 		$this->assertFalse( $trailing->is_success() );
 	}
 
-	public function test_set_creates_new_leaf(): void {
+	public function test_set_refuses_an_unregistered_key(): void {
 		$result = $this->journey->set( 'custom_knob', 'hello' );
 
-		$this->assertTrue( $result->is_success(), implode( ',', $result->errors ) );
-		$this->assertSame( 'custom_knob', $result->data['path'] );
-		$this->assertNull( $result->data['old_value'] );
-		$this->assertSame( 'hello', $result->data['new_value'] );
+		$this->assertFalse( $result->is_success() );
+		$this->assertStringContainsString( 'jetonomy_unknown_setting', implode( ',', $result->errors ) );
+		$this->assertArrayNotHasKey( 'custom_knob', get_option( 'jetonomy_settings' ) );
+	}
 
-		$stored = get_option( 'jetonomy_settings' );
-		$this->assertArrayHasKey( 'custom_knob', $stored );
-		$this->assertSame( 'hello', $stored['custom_knob'] );
+	public function test_set_stores_the_sanitized_value_not_the_raw_one(): void {
+		$result = $this->journey->set( 'seo_post_title', '<b>Title</b> {post_title}' );
+
+		$this->assertTrue( $result->is_success(), implode( ',', $result->errors ) );
+		$this->assertSame( 'Title {post_title}', get_option( 'jetonomy_settings' )['seo_post_title'] );
+		$this->assertSame( 'Title {post_title}', $result->data['new_value'] );
+	}
+
+	public function test_set_refuses_a_value_the_schema_rejects(): void {
+		$before = get_option( 'jetonomy_settings' );
+		$result = $this->journey->set( 'accent_color', '<script>alert(1)</script>' );
+
+		$this->assertFalse( $result->is_success() );
+		$this->assertSame( $before, get_option( 'jetonomy_settings' ) );
+	}
+
+	public function test_set_fails_when_the_sanitizer_keeps_the_old_value(): void {
+		wp_set_current_user( 0 ); // WP-CLI runs with no user unless --user is passed.
+		$before = get_option( 'jetonomy_settings' );
+		foreach ( array(
+			'terms_url'                => 'javascript:alert(1)',
+			'remove_data_on_uninstall' => 'true',
+			'trust_thresholds.9.posts' => '5',
+		) as $path => $value ) {
+			$result = $this->journey->set( $path, $value );
+			$this->assertFalse( $result->is_success(), $path . ' answered success but nothing was stored.' );
+			$this->assertNotEmpty( $result->first_error(), $path );
+		}
+		$this->assertSame( $before, get_option( 'jetonomy_settings' ) );
 	}
 
 	public function test_set_updates_existing_leaf_and_returns_old(): void {
@@ -145,35 +171,32 @@ class ConfigJourneyTest extends WP_UnitTestCase {
 		$this->assertSame( 'forum', $stored['base_slug'] );
 	}
 
-	public function test_set_creates_intermediate_arrays(): void {
-		$result = $this->journey->set( 'a.b.c', 1 );
+	/** @covers-existing Nested leaves already worked; this pins them through the new writer. */
+	public function test_set_writes_a_nested_leaf(): void {
+		$result = $this->journey->set( 'trust_thresholds.2.posts', '33' );
 
-		$this->assertTrue( $result->is_success() );
-		$stored = get_option( 'jetonomy_settings' );
-		$this->assertSame( [ 'c' => 1 ], $stored['a']['b'] );
-		$this->assertSame( 1, $stored['a']['b']['c'] );
+		$this->assertTrue( $result->is_success(), implode( ',', $result->errors ) );
+		$this->assertSame( 33, get_option( 'jetonomy_settings' )['trust_thresholds'][2]['posts'] );
 	}
 
 	public function test_set_coerces_string_true_to_bool(): void {
-		$this->journey->set( 'flag_true', 'true' );
-		$this->journey->set( 'flag_false', 'false' );
-		$this->journey->set( 'flag_null', 'null' );
+		$this->journey->set( 'seo_schema', 'true' );
+		$this->journey->set( 'seo_sitemap', 'false' );
 
 		$stored = get_option( 'jetonomy_settings' );
-		$this->assertTrue( $stored['flag_true'] );
-		$this->assertFalse( $stored['flag_false'] );
-		$this->assertNull( $stored['flag_null'] );
+		$this->assertTrue( $stored['seo_schema'] );
+		$this->assertFalse( $stored['seo_sitemap'] );
 	}
 
 	public function test_set_coerces_numeric_strings(): void {
-		$this->journey->set( 'ints.count', '42' );
-		$this->journey->set( 'floats.ratio', '3.14' );
-		$this->journey->set( 'strings.name', 'abc' );
+		$this->journey->set( 'rate_limits.posts', '42' );
+		$this->journey->set( 'captcha_score_threshold', '0.7' );
+		$this->journey->set( 'community_title', '2024' );
 
 		$stored = get_option( 'jetonomy_settings' );
-		$this->assertSame( 42, $stored['ints']['count'] );
-		$this->assertSame( 3.14, $stored['floats']['ratio'] );
-		$this->assertSame( 'abc', $stored['strings']['name'] );
+		$this->assertSame( 42, $stored['rate_limits']['posts'] );
+		$this->assertSame( 0.7, $stored['captcha_score_threshold'] );
+		$this->assertSame( '2024', $stored['community_title'], 'A text setting keeps the string.' );
 	}
 
 	public function test_set_rejects_empty_path(): void {
@@ -204,7 +227,7 @@ class ConfigJourneyTest extends WP_UnitTestCase {
 	}
 
 	public function test_reset_unknown_path_unsets_leaf(): void {
-		$this->journey->set( 'temp.value', 'gone' );
+		update_option( 'jetonomy_settings', array_merge( get_option( 'jetonomy_settings' ), array( 'temp' => array( 'value' => 'gone' ) ) ) );
 
 		$result = $this->journey->reset( 'temp.value' );
 		$this->assertTrue( $result->is_success() );
@@ -249,4 +272,18 @@ class ConfigJourneyTest extends WP_UnitTestCase {
 		$this->assertContains( 'trust_thresholds', $keys );
 		$this->assertContains( 'rate_limits', $keys );
 	}
+
+	/** @covers-existing the CLI already coerced "false"; pinned beside the REST fix. */
+	public function test_set_false_or_zero_on_a_boolean_stores_false(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		foreach ( [ 'moderators_can_ban', 'allow_space_admin_purge', 'front_page' ] as $key ) {
+			foreach ( [ 'false', '0', 'FALSE' ] as $raw ) {
+				$this->assertTrue( $this->journey->set( $key, 'true' )->success, $key );
+				$this->assertTrue( $this->journey->set( $key, $raw )->success, $key . ' ' . $raw );
+				$this->assertFalse( get_option( 'jetonomy_settings' )[ $key ], $key . ' ' . $raw );
+			}
+			$this->assertFalse( $this->journey->set( $key, 'no' )->success, $key . ' no' );
+		}
+	}
 }
+

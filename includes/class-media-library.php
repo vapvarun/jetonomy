@@ -136,6 +136,9 @@ class Media_Library {
 	public static function query( array $args = array() ): array {
 		$page       = max( 1, (int) ( $args['page'] ?? 1 ) );
 		$per_page   = min( 100, max( 1, (int) ( $args['per_page'] ?? 24 ) ) );
+		// WP_Query multiplies (paged - 1) * per_page itself: cap the page so that
+		// product stays an int (a huge ?page= becomes an empty page, not a warning).
+		$page       = min( $page, intdiv( JETONOMY_MAX_OFFSET, $per_page ) + 1 );
 		$orderby_in = (string) ( $args['orderby'] ?? 'date' );
 		$orderby    = in_array( $orderby_in, array( 'date', 'title' ), true ) ? $orderby_in : 'date';
 		$order      = 'ASC' === strtoupper( (string) ( $args['order'] ?? 'DESC' ) ) ? 'ASC' : 'DESC';

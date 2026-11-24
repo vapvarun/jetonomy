@@ -38,6 +38,19 @@ Both block posting the same way. They differ in a few places:
 
 Changing status back to Active restores posting immediately. Nothing is lost in either direction.
 
+### What still works in an Archived or Locked space
+
+| Action | Archived | Locked |
+|---|---|---|
+| New topics and replies | Refused | Refused |
+| Joining, invite links, accepted join requests, and adding a member over the REST API | Refused (*"This space is archived or locked and is not taking new members."*) | Refused |
+| A site admin adding a member from **Jetonomy -> Spaces -> Members** in wp-admin | Works | Works |
+| Voting on existing topics and replies | Works | Works |
+| Editing an existing topic or reply (by its author or a moderator) | Works | Works |
+| Editing the space's settings from the front end or the REST API | Site staff only. A space admin who is not site staff gets a 409 *"This space is archived or locked, so it cannot be edited. Unarchive it first."* The one change they can make is unarchiving, where they are allowed to. | Site staff only (same 409) |
+
+A space that is being deleted permanently is set to **Locked** while the deletion runs in the background, so nobody posts into it halfway through. You may see it listed as Locked for a short while before it disappears.
+
 ### Status is not visibility
 
 Status and visibility are separate settings and it is easy to confuse them.
@@ -97,5 +110,7 @@ PATCH /wp-json/jetonomy/v1/spaces/{id}/members/{user_id}
 ```
 
 Valid roles are `viewer`, `member`, `moderator` and `admin`. The caller needs space-admin rights, and the same two guards apply.
+
+Adding someone over REST always takes two calls. `POST /wp-json/jetonomy/v1/spaces/{id}/members` with `{ "user_id": 123 }` (needs the `jetonomy_manage_spaces` capability) adds them with the **Member** role; it has no role parameter. Then send the `PATCH` above to give them a different role.
 
 See the [REST API reference](../developer-guide/01-rest-api.md) for the full endpoint list.

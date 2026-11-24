@@ -110,7 +110,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			<?php if ( $total ) : ?>
 			<span class="displaying-num">
 				<?php
-				$_first = ( $paged - 1 ) * $per_page + 1;
+				$_first = jetonomy_page_offset( $paged, $per_page ) + 1;
 				$_last  = min( $paged * $per_page, $total );
 				printf(
 					/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
@@ -204,6 +204,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 									<?php echo esc_html( $p->title ); ?>
 								<?php endif; ?>
 							</strong>
+							<span class="jt-save-feedback jt-row-feedback" role="status" aria-live="polite"></span>
 
 							<!-- Inline edit fields (hidden by default) -->
 							<div class="jt-inline-edit" style="display:none;" aria-hidden="true">
@@ -472,13 +473,10 @@ wp_localize_script(
 );
 ?>
 
-<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-<div class="jt-pro-upsell">
-	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
-	<h4><?php esc_html_e( 'Advanced Moderation & Webhooks', 'jetonomy' ); ?></h4>
-	<p><?php esc_html_e( 'Auto-moderate with keyword filters, regex patterns, and spam scoring. Connect to Slack, Zapier, or any webhook endpoint.', 'jetonomy' ); ?></p>
-	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
-	&nbsp;
-	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>
-</div>
-<?php endif; ?>
+<?php
+\Jetonomy\Admin\Admin::pro_card(
+	'moderation',
+	__( 'Advanced Moderation & Webhooks', 'jetonomy' ),
+	__( 'Auto-moderate with keyword filters, regex patterns, and spam scoring. Connect to Slack, Zapier, or any webhook endpoint.', 'jetonomy' )
+);
+?>

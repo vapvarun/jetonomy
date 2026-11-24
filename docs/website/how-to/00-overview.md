@@ -38,6 +38,7 @@ New to Jetonomy? Start with [Try It With Demo Content](07-try-it-with-demo-conte
 | Make sure members get the right emails | [Set Up Email Notifications](11-set-up-email-notifications.md) |
 | Share news everyone sees | [Post Announcements](13-post-announcements.md) |
 | Let members ask sensitive questions without their name | [Turn On Anonymous Posting](14-turn-on-anonymous-posting.md) |
+| Run the community in your members' languages | [Run Your Community in Another Language](15-run-your-community-in-another-language.md) |
 
 ## Still stuck?
 

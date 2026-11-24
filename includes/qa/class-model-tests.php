@@ -75,9 +75,9 @@ class Model_Tests {
 		$admin_id       = $this->qa_admin;
 
 		// Find a test space for membership checks.
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+		$space = $wpdb->get_row( "SELECT * FROM {$spaces_table} WHERE status = 'active' LIMIT 1" );
 
 		// ── Permission_Engine ─────────────────────────────────────────────────
 		\WP_CLI::log( '  Permission_Engine' );
@@ -210,8 +210,8 @@ class Model_Tests {
 		$this->check( 'TA11: find_by_slug returns the same row', $found_tag && (int) $found_tag->id === $tag_id );
 
 		// Cleanup tag directly.
-		$tags_t = table( 'tags' );
-		$wpdb->delete( $tags_t, array( 'id' => $tag_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$tags_tbl = table( 'tags' );
+		$wpdb->delete( $tags_tbl, array( 'id' => $tag_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// ── Notification ──────────────────────────────────────────────────────
 		\WP_CLI::log( '  Notification' );
@@ -247,6 +247,12 @@ class Model_Tests {
 		$this->test_space_ownership_transfer();
 		$this->test_space_hand_over_rules();
 		$this->test_space_purge_stops_on_db_error();
+		$this->test_space_purge_retry_cap();
+		// These cancel real jobs to observe their own: the site's queued copies are set aside and put back.
+		Queue_Isolation::run( array( \Jetonomy\Cron::PUBLISH_HOOK ), fn() => $this->test_publish_retry_cap() );
+		Queue_Isolation::run( array( \Jetonomy\Cron::DUE_HOOK ), fn() => $this->test_due_jobs() );
+		Queue_Isolation::run( array( 'jetonomy_trust_evaluation_batch' ), fn() => $this->test_trust_candidates() );
+		$this->test_recurring_registry();
 		$this->test_topic_data_integrity();
 		$this->test_category_visibility();
 		$this->test_child_space_in_category_listing();
@@ -269,6 +275,7 @@ class Model_Tests {
 		$this->test_edited_marker();
 		$this->test_upload_box_rules();
 		$this->test_queue_cancel();
+		$this->test_queue_prune_history();
 		$this->test_ability_mark_read_scope();
 		$this->test_app_strings_defined();
 		$this->test_import_map();
@@ -285,6 +292,7 @@ class Model_Tests {
 		$this->check_subspace_listing();
 		$this->check_split_leaves_a_trace();
 		$this->check_follow_visibility();
+		$this->check_online_status_visibility();
 		$this->check_reparent_on_delete();
 		$this->check_2_0_7_fixes();
 
@@ -310,7 +318,7 @@ class Model_Tests {
 	 * MN1     the public members search never matches an email address (10430894693)
 	 * LV1     the leave confirm follows the join policy (10483409032)
 	 * RM1-RM3 Permissions: the reset copies Subscriber, ticking only adds, Join matches the route (10463415760)
-	 * RM4-RM5 a role without WordPress read is shown only Read, and is refused writes even when ticked (10483588613)
+	 * RM4-RM5 a role without WordPress read is shown only Read, and never holds a ticked write (10483588613, QA J22)
 	 * SI1     space and topic pages fall back to the Default share image, SEO Pro on or off (10483605549)
 	 * RT1-RT2 Report follows Permission_Engine::can( flag ) on the route and the buttons (10483720093)
 	 * SX1     a new space drops the cached sitemap (10430894693)
@@ -568,8 +576,9 @@ class Model_Tests {
 			\Jetonomy\Permissions\Capabilities::register();
 			$this->check( 'RM3: a role without WordPress read is not offered Join, which the join route refuses', ! SpaceMember::may_join_spaces( $pm_bare ) );
 			$this->check( 'RM4: the Permissions column for a role without WordPress read ticks only Read, the one thing it gets', array( 'jetonomy_read' ) === \Jetonomy\Permissions\Capabilities::unmapped_caps( 'jt_qa_pmx_' . $suffix ) && ! Permission_Engine::can( $pm_bare, 'create_posts', $space ) );
-			// RM5. The owner ticks Create topics for that role anyway: the engine
-			// still refuses it, as the write route does, so no New Topic is shown.
+			// RM5. A stored list ticking Create topics for that role anyway (older
+			// data or a tampered save) is applied as Read only since 2.1.0, and the
+			// engine refuses it as the write route does, so no New Topic is shown.
 			SpaceMember::add( $space, $pm_bare, 'member' );
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array( 'jt_qa_pmx_' . $suffix => array( 'jetonomy_read', 'jetonomy_create_posts', 'jetonomy_create_replies' ) ), false );
 			\Jetonomy\Permissions\Capabilities::register();
@@ -580,7 +589,7 @@ class Model_Tests {
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $pm_caps_was, false );
 			\Jetonomy\Permissions\Capabilities::register();
 			\Jetonomy\Cache::reset_memos();
-			$this->check( 'RM5: a role without WordPress read is refused writes the owner ticked for it, as the write routes refuse them', $rm5_ticked && ! $rm5_offers, $rm5_ticked ? '' : 'the ticked cap did not reach the role' );
+			$this->check( 'RM5: a role without WordPress read never gets writes ticked for it, and the engine refuses them as the write routes do', ! $rm5_ticked && ! $rm5_offers, $rm5_ticked ? 'the ticked cap reached the role' : 'the engine offered a write' );
 			remove_role( 'jt_qa_pm_' . $suffix );
 			remove_role( 'jt_qa_pmx_' . $suffix );
 
@@ -659,13 +668,57 @@ class Model_Tests {
 		$sm = (int) Space::create( array( 'title' => 'QA 207 sitemap ' . $suffix, 'slug' => 'qa-207-sm-' . $suffix, 'type' => 'forum' ) );
 		$this->check( 'SX1: a new space drops the cached sitemap so it is listed now', $sm > 0 && false === get_transient( 'jt_sitemap_cursors_spaces' ) );
 
+		// UT1: uninstall removes every short-prefixed transient family the plugin creates.
+		$un_src   = (string) file_get_contents( JETONOMY_DIR . 'uninstall.php' );
+		$un_found = array();
+		$un_iter  = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( JETONOMY_DIR . 'includes', \FilesystemIterator::SKIP_DOTS ) );
+		foreach ( $un_iter as $un_file ) {
+			if ( 'php' !== $un_file->getExtension() || false !== strpos( $un_file->getPathname(), '/qa/' ) ) {
+				continue;
+			}
+			$un_code = (string) file_get_contents( $un_file->getPathname() );
+			// A literal first argument to a transient call, or a PREFIX constant that feeds one.
+			preg_match_all( "/(?:set|get|delete)_transient\(\s*'(jt_[a-z_]+?_?)(?:'|\\\$)/", $un_code, $un_a );
+			preg_match_all( "/const\s+\w*PREFIX\w*\s*=\s*'(jt_[a-z_]+_)'/", $un_code, $un_b );
+			// A prefix literal concatenated with a variable ('jt_resend_' . $hash) that becomes a transient key.
+			preg_match_all( "/'(jt_[a-z]+(?:_[a-z]+)*_)'\\s*\\./", $un_code, $un_c );
+			foreach ( array_merge( $un_a[1], $un_b[1], $un_c[1] ) as $un_prefix ) {
+				$un_found[ rtrim( $un_prefix, '_' ) . '_' ] = true;
+			}
+		}
+		$un_missing = array();
+		foreach ( array_keys( $un_found ) as $un_prefix ) {
+			// jt_sitemap_cursors_ is covered by jt_sitemap_; a family is listed when uninstall names it or a shorter family of it.
+			$covered = false;
+			foreach ( array( $un_prefix, preg_replace( '/^(jt_[a-z]+_).*/', '$1', $un_prefix ) ) as $try ) {
+				if ( false !== strpos( $un_src, "'" . $try . "'" ) ) {
+					$covered = true;
+				}
+			}
+			if ( ! $covered ) {
+				$un_missing[] = $un_prefix;
+			}
+		}
+		$this->check( 'UT1: uninstall removes every jt_ transient family in the code', ! $un_missing && count( $un_found ) >= 6, 'missing: ' . implode( ', ', $un_missing ) . '; found ' . count( $un_found ) );
+
+		// UT2: Action Scheduler's runner event carries args, so only an all-args unschedule clears it, and only when no
+		// other active plugin still loads the library.
+		// The guard looks for another active plugin's copy by file: class_exists() is always true in a one-process
+		// `wp plugin uninstall --deactivate`, where Jetonomy's own copy is still loaded, so the runner was never cleared.
+		$un_runner = (bool) preg_match( '/if\s*\(\s*!\s*\$jetonomy_other_as\s*\)\s*\{\s*wp_unschedule_hook\(\s*\'action_scheduler_run_queue\'\s*\)/', $un_src )
+			&& false !== strpos( $un_src, "'action-scheduler/action-scheduler.php' )" )
+			&& false === strpos( $un_src, "class_exists( 'ActionScheduler' )" )
+			&& false === strpos( $un_src, "wp_clear_scheduled_hook( 'action_scheduler_run_queue' )" );
+		$this->check( 'UT2: uninstall clears the Action Scheduler runner for all args, only when no other plugin loads it', $un_runner, 'guarded wp_unschedule_hook missing' );
+		if ( wp_next_scheduled( 'action_scheduler_run_queue', array( 'WP Cron' ) ) ) {
+			$this->check( 'UT2: the runner event has args, so a no-args clear would miss it', false === wp_next_scheduled( 'action_scheduler_run_queue' ) );
+		}
+
 		// IS1-IS2.
 		$clean = new \ReflectionMethod( \Jetonomy\Import\Importer::class, 'clean_slug' );
-		$clean->setAccessible( true );
 		$this->check( 'IS1: decomposed (NFD) accents fold to plain letters in an imported slug', 'naive-uber' === $clean->invoke( null, "nai\u{0308}ve u\u{0308}ber" ) );
 		if ( method_exists( \Jetonomy\Import\WPForo_Importer::class, 'board_category_slug' ) ) {
 			$board = new \ReflectionMethod( \Jetonomy\Import\WPForo_Importer::class, 'board_category_slug' );
-			$board->setAccessible( true );
 			$taken = array();
 			$a     = $board->invokeArgs( null, array( 'Café', 2, &$taken ) );
 			$b     = $board->invokeArgs( null, array( 'Cafe!', 3, &$taken ) );
@@ -717,20 +770,65 @@ class Model_Tests {
 	 * no access to was listed by title, and a trashed topic vanished with no
 	 * way to stop following it.
 	 */
+	/**
+	 * OS1-OS3: a member who hides their online status. With BuddyNext active its presence rules apply on Jetonomy
+	 * pages too, the same answer BuddyNext's own profile gives: staff still see the dot, other members and guests do
+	 * not. Before: Jetonomy returned false for everyone, staff included, before asking BuddyNext. Without BuddyNext:
+	 * nobody else sees it.
+	 */
+	private function check_online_status_visibility(): void {
+		$hidden = (int) wp_insert_user( array( 'user_login' => 'jt_qa_os_h_' . uniqid(), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
+		$other  = (int) wp_insert_user( array( 'user_login' => 'jt_qa_os_o_' . uniqid(), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
+		if ( $hidden <= 0 || $other <= 0 ) {
+			$this->skip( 'OS1: online status of a member who hides it', 'fixture users failed' );
+			return;
+		}
+		update_user_meta( $hidden, 'jetonomy_hide_online', 1 );
+		$prev = get_current_user_id();
+		$sees = static function ( int $viewer ) use ( $hidden ): bool {
+			wp_set_current_user( $viewer );
+			return UserProfile::is_online( $hidden );
+		};
+		if ( ! UserProfile::online_choice_available() && class_exists( '\\BuddyNext\\Realtime\\PresenceService' ) ) {
+			\BuddyNext\Realtime\PresenceService::write( $hidden, time() );
+			// The same answer BuddyNext's own profile gives (BlockService::is_user_online(): can_see() and is_online()).
+			$bn = static function ( int $viewer ) use ( $hidden ): bool {
+				wp_set_current_user( $viewer );
+				return \BuddyNext\Realtime\PresenceService::can_see( $viewer, $hidden ) && \BuddyNext\Realtime\PresenceService::is_online( $hidden );
+			};
+			$diff = array();
+			foreach ( array( 'self' => $hidden, 'staff' => $this->qa_admin, 'member' => $other, 'guest' => 0 ) as $who => $viewer ) {
+				if ( $sees( $viewer ) !== $bn( $viewer ) ) {
+					$diff[] = $who;
+				}
+			}
+			$this->check( 'OS1: BuddyNext active, Jetonomy shows a hidden member\'s dot exactly as BuddyNext does (self, staff, member, guest)', ! $diff, 'differs for: ' . implode( ', ', $diff ) );
+			$this->check( 'OS2: BuddyNext active, staff still see the dot', $sees( $this->qa_admin ) );
+			$this->check( 'OS3: BuddyNext active, another member and a guest do not', ! $sees( $other ) && ! $sees( 0 ) );
+		} else {
+			UserProfile::update_last_seen( $hidden );
+			\Jetonomy\Cache::delete( 'online_' . $hidden );
+			$this->check( 'OS3: without BuddyNext, another member and a guest do not see a hidden member online', ! $sees( $other ) && ! $sees( 0 ) );
+		}
+		wp_set_current_user( $prev );
+		wp_delete_user( $hidden );
+		wp_delete_user( $other );
+	}
+
 	private function check_follow_visibility(): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
-		$posts_t  = table( 'posts' );
-		$space    = static function ( string $visibility ) use ( $wpdb, $spaces_t ): int {
-			$wpdb->insert( $spaces_t, array( 'title' => 'QA follow ' . $visibility, 'slug' => 'qa-follow-' . wp_generate_password( 8, false, false ), 'visibility' => $visibility, 'status' => 'active', 'type' => 'forum', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$spaces_table = table( 'spaces' );
+		$posts_tbl  = table( 'posts' );
+		$space    = static function ( string $visibility ) use ( $wpdb, $spaces_table ): int {
+			$wpdb->insert( $spaces_table, array( 'title' => 'QA follow ' . $visibility, 'slug' => 'qa-follow-' . wp_generate_password( 8, false, false ), 'visibility' => $visibility, 'status' => 'active', 'type' => 'forum', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			return (int) $wpdb->insert_id;
 		};
 		$private = $space( 'private' );
 		$public  = $space( 'public' );
 		$ruled   = $space( 'private' );
 		$rule_id = $ruled > 0 ? AccessRule::create( array( 'space_id' => $ruled, 'rule_type' => 'logged_in', 'rule_value' => '1', 'grants' => 'read' ) ) : 0;
-		$wpdb->insert( $posts_t, array( 'space_id' => $public, 'author_id' => $this->qa_admin, 'title' => 'QA followed topic', 'slug' => 'qa-followed-' . wp_generate_password( 8, false, false ), 'content' => 'probe', 'status' => 'trash', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->insert( $posts_tbl, array( 'space_id' => $public, 'author_id' => $this->qa_admin, 'title' => 'QA followed topic', 'slug' => 'qa-followed-' . wp_generate_password( 8, false, false ), 'content' => 'probe', 'status' => 'trash', 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$topic  = (int) $wpdb->insert_id;
 		$member = wp_insert_user( array( 'user_login' => 'jt_qa_fl_' . uniqid(), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
 		$member = is_wp_error( $member ) ? 0 : (int) $member;
@@ -767,11 +865,11 @@ class Model_Tests {
 		$wpdb->delete( table( 'restrictions' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( table( 'space_members' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( table( 'subscriptions' ), array( 'user_id' => $member ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->delete( $posts_t, array( 'id' => $topic ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $posts_tbl, array( 'id' => $topic ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( table( 'access_rules' ), array( 'space_id' => $ruled ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		AccessRule::reset_memo();
 		foreach ( array( $private, $public, $ruled ) as $id ) {
-			$wpdb->delete( $spaces_t, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $spaces_table, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 		if ( $member > 0 ) {
 			wp_delete_user( $member );
@@ -808,9 +906,9 @@ class Model_Tests {
 	private function check_split_leaves_a_trace(): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_table} WHERE status = 'active' LIMIT 1" );
 
 		if ( $space_id <= 0 ) {
 			$this->skip( 'SP1: a split leaves a trace in the source thread', 'no active space' );
@@ -843,9 +941,9 @@ class Model_Tests {
 
 		$new_post_id = (int) Reply::split_to_topic( $reply_id, 'QA split target' );
 
-		$replies_t = table( 'replies' );
+		$replies_tbl = table( 'replies' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, status, content FROM {$replies_t} WHERE post_id = %d", $post_id ) );
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, status, content FROM {$replies_tbl} WHERE post_id = %d", $post_id ) );
 
 		$trace  = false;
 		$moved  = false;
@@ -886,11 +984,11 @@ class Model_Tests {
 	private function check_subspace_listing(): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		$author   = $this->qa_admin;
-		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_t, $author ): int {
+		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_table, $author ): int {
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-				$spaces_t,
+				$spaces_table,
 				array(
 					'category_id' => 0,
 					'parent_id'   => $parent,
@@ -929,7 +1027,7 @@ class Model_Tests {
 		);
 
 		foreach ( array( $hidden, $open, $parent ) as $id ) {
-			$wpdb->delete( $spaces_t, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $spaces_table, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 	}
 
@@ -1023,9 +1121,9 @@ class Model_Tests {
 		// to members AND to the moderation queue) or, in strict mode, threw the
 		// row away. Checking the value against the column is the only test that
 		// could have caught it.
-		$replies_t = table( 'replies' );
+		$replies_tbl = table( 'replies' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$column = (array) $wpdb->get_row( "SHOW COLUMNS FROM {$replies_t} LIKE 'status'", ARRAY_A );
+		$column = (array) $wpdb->get_row( "SHOW COLUMNS FROM {$replies_tbl} LIKE 'status'", ARRAY_A );
 		$allowed = array();
 		if ( ! empty( $column['Type'] ) && preg_match_all( "/'([^']+)'/", (string) $column['Type'], $m ) ) {
 			$allowed = $m[1];
@@ -1066,8 +1164,8 @@ class Model_Tests {
 	private function check_scheduled_contract(): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
-		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} WHERE status = 'active' LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$spaces_table = table( 'spaces' );
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_table} WHERE status = 'active' LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		if ( $space_id <= 0 ) {
 			$this->skip( 'SC-A1: approving a scheduled draft', 'no active space' );
 			return;
@@ -1091,8 +1189,8 @@ class Model_Tests {
 			return;
 		}
 
-		$posts_t = table( 'posts' );
-		$wpdb->update( $posts_t, array( 'published_at' => $future ), array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$posts_tbl = table( 'posts' );
+		$wpdb->update( $posts_tbl, array( 'published_at' => $future ), array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		$fired = array();
 		$probe = static function ( $id ) use ( &$fired ) {
@@ -1131,10 +1229,10 @@ class Model_Tests {
 			)
 		);
 		$overdue_id = is_wp_error( $overdue_id ) ? 0 : (int) $overdue_id;
-		$wpdb->update( $posts_t, array( 'published_at' => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ) ), array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->update( $posts_tbl, array( 'published_at' => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ) ), array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$queued = array_map( 'intval', (array) $wpdb->get_col( "SELECT id FROM {$posts_t} WHERE status = 'draft' AND published_at IS NOT NULL" ) );
+		$queued = array_map( 'intval', (array) $wpdb->get_col( "SELECT id FROM {$posts_tbl} WHERE status = 'draft' AND published_at IS NOT NULL" ) );
 
 		$this->check(
 			'SC-A3: an overdue queued post stays in the Scheduled listing',
@@ -1239,8 +1337,8 @@ class Model_Tests {
 		// store a value. The admin JS must not coerce '' to 'members', which would turn an
 		// open community into members-only whenever the owner touched any other field on
 		// that tab.
-		$spaces_t = table( 'spaces' );
-		$space_id = (int) $this->db_insert_probe_space( $spaces_t );
+		$spaces_table = table( 'spaces' );
+		$space_id = (int) $this->db_insert_probe_space( $spaces_table );
 		if ( $space_id > 0 ) {
 			Space::update(
 				$space_id,
@@ -1253,7 +1351,7 @@ class Model_Tests {
 			);
 
 			global $wpdb;
-			$wpdb->delete( $spaces_t, array( 'id' => $space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $spaces_table, array( 'id' => $space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		} else {
 			$this->skip( 'SV3: empty post restriction unsets the key', 'probe space insert failed' );
 		}
@@ -1286,14 +1384,14 @@ class Model_Tests {
 	/**
 	 * Insert a throwaway active space for a settings probe.
 	 *
-	 * @param string $spaces_t Prefixed spaces table.
+	 * @param string $spaces_table Prefixed spaces table.
 	 * @return int Row id, or 0.
 	 */
-	private function db_insert_probe_space( string $spaces_t ): int {
+	private function db_insert_probe_space( string $spaces_table ): int {
 		global $wpdb;
 
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$spaces_t,
+			$spaces_table,
 			array(
 				'category_id' => 0,
 				'parent_id'   => 0,
@@ -1348,12 +1446,12 @@ class Model_Tests {
 		$this->check( 'SR2: the notice is never shown to visitors', empty( $leaked ), 'leaked from: ' . implode( ', ', $leaked ) );
 
 		// SR3/SR4: a slug and its numeric id must resolve identically.
-		$spaces_t = $wpdb->prefix . 'jt_spaces';
-		$cats_t   = $wpdb->prefix . 'jt_categories';
+		$spaces_table = $wpdb->prefix . 'jt_spaces';
+		$cats_tbl   = $wpdb->prefix . 'jt_categories';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$space = $wpdb->get_row( "SELECT id, slug FROM {$spaces_t} ORDER BY id ASC LIMIT 1", ARRAY_A );
+		$space = $wpdb->get_row( "SELECT id, slug FROM {$spaces_table} ORDER BY id ASC LIMIT 1", ARRAY_A );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$cat = $wpdb->get_row( "SELECT id, slug FROM {$cats_t} ORDER BY id ASC LIMIT 1", ARRAY_A );
+		$cat = $wpdb->get_row( "SELECT id, slug FROM {$cats_tbl} ORDER BY id ASC LIMIT 1", ARRAY_A );
 
 		if ( is_array( $space ) && ! empty( $space['slug'] ) ) {
 			$by_slug = do_shortcode( '[jetonomy_space_members space_id="' . $space['slug'] . '"]' );
@@ -1387,9 +1485,9 @@ class Model_Tests {
 	private function check_delete_contract( int $admin_id ): void {
 		global $wpdb;
 
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" );
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_table} ORDER BY id ASC LIMIT 1" );
 		if ( ! $space_id ) {
 			// Skip rather than fail, matching how the REST phase handles an
 			// unseeded site. A missing fixture is not a broken delete contract,
@@ -1532,8 +1630,8 @@ class Model_Tests {
 			require_once ABSPATH . 'wp-admin/includes/user.php';
 		}
 
-		$spaces_t  = table( 'spaces' );
-		$members_t = table( 'space_members' );
+		$spaces_table  = table( 'spaces' );
+		$members_tbl = table( 'space_members' );
 		$suffix    = (string) time();
 
 		$owner  = wp_insert_user(
@@ -1580,7 +1678,7 @@ class Model_Tests {
 		// B: a second admin remains -> nothing is stranded, leave it running.
 		$shared = $make_space( 'qa-transfer-shared-' . $suffix, (int) $owner );
 		$wpdb->insert(
-			$members_t,
+			$members_tbl,
 			array(
 				'space_id'  => $shared,
 				'user_id'   => (int) $co_admin,
@@ -1605,9 +1703,9 @@ class Model_Tests {
 
 		remove_action( 'jetonomy_space_transferred', $spy, 10 );
 
-		$row = static function ( int $id ) use ( $wpdb, $spaces_t ) {
+		$row = static function ( int $id ) use ( $wpdb, $spaces_table ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-			return $wpdb->get_row( $wpdb->prepare( "SELECT author_id, status FROM {$spaces_t} WHERE id = %d", $id ) );
+			return $wpdb->get_row( $wpdb->prepare( "SELECT author_id, status FROM {$spaces_table} WHERE id = %d", $id ) );
 		};
 
 		$a = $row( $sole );
@@ -1617,7 +1715,7 @@ class Model_Tests {
 		$this->check( 'ST2: stranded space is parked', $a && 'archived' === $a->status, $a->status ?? 'missing' );
 		$this->check(
 			'ST3: successor holds an admin row (author_id alone is unmanageable)',
-			$a && (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members_t} WHERE space_id = %d AND user_id = %d AND role = 'admin'", $sole, (int) $a->author_id ) ) > 0 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			$a && (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members_tbl} WHERE space_id = %d AND user_id = %d AND role = 'admin'", $sole, (int) $a->author_id ) ) > 0 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		);
 
 		// The guard assertion.
@@ -1745,6 +1843,196 @@ class Model_Tests {
 	 * A failed topic-id read used to look like "no topics left", so the purge
 	 * deleted the space row and orphaned every reply.
 	 */
+	/**
+	 * PR1-PR2: a purge that keeps hitting a database error retries 3 times with backoff, then stops. Before: a new
+	 * job every minute, forever.
+	 */
+	private function test_space_purge_retry_cap(): void {
+		$retry = new \ReflectionMethod( \Jetonomy\Space_Purge::class, 'retry_later' );
+		$hook = \Jetonomy\Space_Purge::BATCH_HOOK;
+		$sid  = 999971; // No such space: nothing runs against it, the jobs are only inspected and cancelled.
+		$at   = array();
+		foreach ( array( 0, 1, 2, 3 ) as $attempt ) {
+			$retry->invoke( null, $sid, $attempt );
+			$next = $attempt < 3 ? array( 'space_id' => $sid, 'attempt' => $attempt + 1 ) : array( 'space_id' => $sid, 'attempt' => 4 );
+			$at[ $attempt ] = \Jetonomy\Queue::is_queued( $hook, $next );
+		}
+		$this->check( 'PR1: retries 1 to 3 are queued', $at[0] && $at[1] && $at[2] );
+		$this->check( 'PR2: after the third retry nothing more is queued', ! $at[3] );
+		// Action Scheduler is bundled, so the retries are AS rows; clear this space's only.
+		foreach ( array( 1, 2, 3 ) as $n ) {
+			as_unschedule_all_actions( $hook, array( 'space_id' => $sid, 'attempt' => $n ), \Jetonomy\Queue::GROUP );
+		}
+	}
+
+	/**
+	 * PS1-PS5: a scheduled topic that fails to publish does not hold up the others, is retried 3 times with the
+	 * attempt in the job args, then logs one line and waits for the next schedule. Before, the run re-armed itself
+	 * the moment it finished, so a topic that always failed ran the publisher on every queue run.
+	 */
+	private function test_publish_retry_cap(): void {
+		global $wpdb;
+		$posts = \Jetonomy\table( 'posts' );
+		$slug  = 'qa-ps-' . wp_generate_password( 6, false, false );
+		$space = (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA PS', 'slug' => $slug, 'type' => 'forum', 'author_id' => $this->qa_admin ), $this->qa_admin );
+		$now   = current_time( 'mysql', true );
+		$ids   = array();
+		// No publisher may be queued, or a background runner could publish the probe topics outside this process.
+		\Jetonomy\Queue::cancel( \Jetonomy\Cron::PUBLISH_HOOK );
+		foreach ( array( 'bad' => '-1 hour', 'good' => '-1 hour', 'later' => '+1 day' ) as $k => $when ) {
+			$wpdb->insert( $posts, array( 'space_id' => $space, 'author_id' => $this->qa_admin, 'title' => 'PS ' . $k, 'slug' => "{$slug}-{$k}", 'content' => 'x', 'content_plain' => 'x', 'status' => 'draft', 'published_at' => gmdate( 'Y-m-d H:i:s', strtotime( $when ) ), 'created_at' => $now, 'last_reply_at' => $now ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$ids[ $k ] = (int) $wpdb->insert_id;
+		}
+		$bad   = $ids['bad'];
+		$throw = static function ( $sql ) use ( $posts, $bad ) {
+			if ( 0 === strpos( ltrim( (string) $sql ), 'UPDATE' ) && false !== strpos( (string) $sql, $posts ) && preg_match( "/`id` = '?{$bad}\\b/", (string) $sql ) ) {
+				throw new \RuntimeException( 'qa ps' );
+			}
+			return $sql;
+		};
+		$hook = \Jetonomy\Cron::PUBLISH_HOOK;
+		$cron = ( new \ReflectionClass( \Jetonomy\Cron::class ) )->newInstanceWithoutConstructor();
+		$log  = wp_tempnam( 'qa-ps' );
+		$prev = ini_set( 'error_log', $log ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		$got  = array();
+		$kept = false;
+		add_filter( 'query', $throw );
+		try {
+			foreach ( array( 0, 1, 2, 3 ) as $attempt ) {
+				try {
+					$cron->publish_scheduled_posts( $attempt );
+				} catch ( \Throwable $e ) {
+					$got[ $attempt ] = 'threw';
+					continue;
+				}
+				$got[ $attempt ] = \Jetonomy\Queue::is_queued( $hook, array( $attempt + 1 ) );
+				if ( 0 === $attempt ) {
+					\Jetonomy\Cron::arm_scheduled_publish(); // As a topic write or an admin page would.
+					$kept = \Jetonomy\Queue::is_queued( $hook, array( 1 ) );
+				}
+			}
+		} finally {
+			remove_filter( 'query', $throw );
+			ini_set( 'error_log', (string) $prev ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		}
+		$next  = \Jetonomy\Queue::next( $hook );
+		$later = (int) strtotime( (string) $wpdb->get_var( $wpdb->prepare( "SELECT published_at FROM {$posts} WHERE id = %d", $ids['later'] ) ) . ' UTC' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$lines = array_values( array_filter( explode( "\n", (string) file_get_contents( $log ) ), static fn( $l ) => false !== strpos( $l, 'did not publish' ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+		$this->check( 'PS1: a topic that fails does not stop a due topic beside it', 'publish' === ( \Jetonomy\Models\Post::find( $ids['good'] )->status ?? '' ) );
+		$this->check( 'PS2: retries 1 to 3 are queued with the attempt in the args', true === ( $got[0] ?? null ) && true === ( $got[1] ?? null ) && true === ( $got[2] ?? null ), wp_json_encode( $got ) );
+		$this->check( 'PS3: a topic write while a retry waits keeps the retry (no reset of the count)', $kept );
+		$this->check( 'PS4: after the third retry nothing more is retried and the publisher waits for the next schedule', false === ( $got[3] ?? null ) && is_int( $next ) && $next > time() && $next <= $later, "next {$next} later {$later}" ); // Another real schedule may come first.
+		$this->check( 'PS5: giving up logs one line naming the topic', 1 === count( $lines ) && false !== strpos( $lines[0], (string) $bad ), (string) count( $lines ) );
+
+		wp_delete_file( $log );
+		\Jetonomy\Queue::cancel( $hook );
+		$wpdb->query( "DELETE FROM {$posts} WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		\Jetonomy\Cron::arm_scheduled_publish();
+		\Jetonomy\Space_Purge::purge( $space );
+	}
+
+	/**
+	 * DJ1-DJ4: the expired-restriction cleanup, verification reminder and roster backstop are one job armed when
+	 * something is due, instead of three hourly jobs that ran whether or not there was work.
+	 */
+	private function test_due_jobs(): void {
+		if ( ! method_exists( \Jetonomy\Cron::class, 'arm_due_jobs' ) ) {
+			$this->check( 'DJ1: one due-time job replaces the three hourly jobs', false, 'Cron::arm_due_jobs() missing' );
+			return;
+		}
+		global $wpdb;
+		$hook = \Jetonomy\Cron::DUE_HOOK;
+		\Jetonomy\Cron::ensure_scheduled();
+		$hourly = array_filter( \Jetonomy\Cron::RETIRED_HOOKS, static fn( $h ) => \Jetonomy\Queue::is_queued( $h ) );
+		$this->check( 'DJ1: the hourly cleanup, reminder and roster jobs are not scheduled', ! $hourly, implode( ',', $hourly ) );
+
+		// A restriction that expires in 10 minutes arms the job for that moment (or sooner if something else is due).
+		$member  = (int) wp_insert_user( array( 'user_login' => 'jt_qa_dj_' . wp_rand( 1000, 9999 ), 'user_pass' => wp_generate_password(), 'user_email' => 'dj' . wp_rand( 1000, 9999 ) . '@example.test' ) );
+		$expires = time() + 10 * MINUTE_IN_SECONDS;
+		$ban     = \Jetonomy\Models\Restriction::ban( $member, 'silence', $this->qa_admin, null, 'QA DJ', gmdate( 'Y-m-d H:i:s', $expires ) );
+		$next    = \Jetonomy\Queue::next( $hook );
+		$this->check( 'DJ2: a restriction expiring in 10 minutes arms the job by then', $ban > 0 && is_int( $next ) && $next <= $expires, "ban {$ban} next " . wp_json_encode( $next ) . " expires {$expires}" );
+
+		// Run the job as the queue would once it has expired: the row is gone and the next run is at least a minute out.
+		$table = \Jetonomy\table( 'restrictions' );
+		$wpdb->update( $table, array( 'expires_at' => gmdate( 'Y-m-d H:i:s', time() - 60 ) ), array( 'id' => $ban ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// Real work still waiting after the run: a second restriction expiring in 30 minutes.
+		$later_member = (int) wp_insert_user( array( 'user_login' => 'jt_qa_dj2_' . wp_rand( 1000, 9999 ), 'user_pass' => wp_generate_password(), 'user_email' => 'dj2' . wp_rand( 1000, 9999 ) . '@example.test' ) );
+		$later        = time() + 30 * MINUTE_IN_SECONDS;
+		\Jetonomy\Models\Restriction::ban( $later_member, 'silence', $this->qa_admin, null, 'QA DJ', gmdate( 'Y-m-d H:i:s', $later ) );
+		\Jetonomy\Queue::cancel( $hook );
+		( new \ReflectionClass( \Jetonomy\Cron::class ) )->newInstanceWithoutConstructor()->run_due_jobs();
+		$left  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE id = %d", $ban ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$after = \Jetonomy\Queue::next( $hook );
+		$this->check( 'DJ3: the job removes an expired restriction when it runs', 0 === $left );
+		$this->check( 'DJ4: after a run the job is re-armed for the work still due, never sooner than a minute', $after >= time() + MINUTE_IN_SECONDS - 5 && $after <= $later, "next {$after}, due {$later}" );
+
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( $member );
+		wp_delete_user( $later_member );
+		\Jetonomy\Queue::cancel( $hook );
+		\Jetonomy\Cron::arm_due_jobs();
+	}
+
+	/**
+	 * TR1-TR2: the 12-hour trust sweep reads only members who could reach the level above their own, and a sweep
+	 * with nobody to move up queues no batch action.
+	 */
+	private function test_trust_candidates(): void {
+		$next = array(
+			1 => array( 'posts' => 5, 'days_active' => 0, 'reputation' => 0 ),
+			2 => array( 'posts' => 50, 'days_active' => 0, 'reputation' => 0 ),
+			3 => array( 'posts' => 500, 'days_active' => 0, 'reputation' => 0 ),
+		);
+		$profiles = \Jetonomy\table( 'user_profiles' );
+		global $wpdb;
+		$low  = (int) wp_insert_user( array( 'user_login' => 'jt_qa_tr_low_' . wp_rand( 1000, 9999 ), 'user_pass' => wp_generate_password(), 'user_email' => 'trl' . wp_rand( 1000, 9999 ) . '@example.test' ) );
+		$high = (int) wp_insert_user( array( 'user_login' => 'jt_qa_tr_high_' . wp_rand( 1000, 9999 ), 'user_pass' => wp_generate_password(), 'user_email' => 'trh' . wp_rand( 1000, 9999 ) . '@example.test' ) );
+		\Jetonomy\Models\UserProfile::find_or_create( $low );
+		\Jetonomy\Models\UserProfile::find_or_create( $high );
+		$wpdb->update( $profiles, array( 'trust_level' => 0, 'post_count' => 1, 'reply_count' => 0 ), array( 'user_id' => $low ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->update( $profiles, array( 'trust_level' => 0, 'post_count' => 4, 'reply_count' => 2 ), array( 'user_id' => $high ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$rows = wp_list_pluck( \Jetonomy\Models\UserProfile::list_for_trust_batch( min( $low, $high ) - 1, 50, $next ), 'user_id' );
+		$rows = array_map( 'intval', $rows );
+		$this->check( 'TR1: the sweep reads a member who could move up and skips one who cannot', in_array( $high, $rows, true ) && ! in_array( $low, $rows, true ), wp_json_encode( $rows ) );
+
+		// Nobody can move up under thresholds no member meets: the 12-hour run queues no batch.
+		$none = static fn(): array => array( 'posts' => PHP_INT_MAX >> 1, 'days_active' => 0, 'reputation' => 0, 'replies_received' => 0 );
+		$probe                     = (array) get_option( 'jetonomy_settings', array() );
+		$probe['trust_thresholds'] = array( 1 => $none(), 2 => $none(), 3 => $none() );
+		$hold                      = static fn() => $probe;
+		add_filter( 'pre_option_jetonomy_settings', $hold );
+		\Jetonomy\Queue::cancel( 'jetonomy_trust_evaluation_batch' );
+		( new \ReflectionClass( \Jetonomy\Cron::class ) )->newInstanceWithoutConstructor()->evaluate_trust_levels();
+		remove_filter( 'pre_option_jetonomy_settings', $hold );
+		$this->check( 'TR2: a sweep with nobody to move up queues no batch action', ! \Jetonomy\Queue::is_queued( 'jetonomy_trust_evaluation_batch' ) );
+
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( $low );
+		wp_delete_user( $high );
+	}
+
+	/**
+	 * RJ1: a recurring job registered with Queue::recurring() (as Pro's extensions do) is armed by Free's scheduler,
+	 * with its first-run delay.
+	 */
+	private function test_recurring_registry(): void {
+		if ( ! method_exists( \Jetonomy\Queue::class, 'recurring' ) ) {
+			$this->check( 'RJ1: Queue::recurring() registers a job with Free\'s scheduler', false, 'missing' );
+			return;
+		}
+		$hook = 'jetonomy_qa_recurring_probe'; // Test-only hook.
+		\Jetonomy\Queue::cancel( $hook );
+		\Jetonomy\Queue::recurring( $hook, DAY_IN_SECONDS, HOUR_IN_SECONDS );
+		\Jetonomy\Cron::ensure_scheduled();
+		$next = \Jetonomy\Queue::next( $hook );
+		\Jetonomy\Queue::cancel( $hook );
+		// The registration lives for the rest of this process: take the probe back out so no later run arms it.
+		add_filter( 'jetonomy_recurring_jobs', static fn( array $jobs ): array => array_diff_key( $jobs, array( $hook => 0 ) ), PHP_INT_MAX );
+		$this->check( 'RJ1: Queue::recurring() is armed by Free\'s scheduler after its first-run delay', is_int( $next ) && abs( $next - ( time() + HOUR_IN_SECONDS ) ) < MINUTE_IN_SECONDS, wp_json_encode( $next ) );
+	}
+
 	private function test_space_purge_stops_on_db_error(): void {
 		global $wpdb;
 		$slug  = 'qa-pg-' . wp_generate_password( 6, false, false );
@@ -1933,6 +2221,8 @@ class Model_Tests {
 		}
 		$topic( $p, 'DI newer quiet' );
 		$list = \Jetonomy\Models\Post::list_by_space_visible( $p, 0, false, 'popular', 5 );
+		// Pro's Site Announcements pins a topic from ANOTHER space to the top of every list; judge only this space's rows.
+		$list = array_values( array_filter( (array) $list, static fn( $r ) => (int) $r->space_id === $p ) );
 		$this->check( 'DI6: Popular breaks vote ties by replies', $list && (int) $list[0]->id === $older );
 
 		foreach ( array( $a, $b, $q, $p, $m1, $m2 ) as $sid ) {
@@ -2620,15 +2910,15 @@ class Model_Tests {
 		);
 
 		[ $avatar_id, $avatar_file ] = $mk_used( 'QA media as avatar' );
-		$profiles                    = \Jetonomy\table( 'user_profiles' );
-		$prev_avatar                 = $wpdb->get_var( "SELECT avatar_url FROM {$profiles} WHERE user_id = 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles} SET avatar_url = %s WHERE user_id = 1", content_url( '/uploads/' . $avatar_file ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$profiles_tbl                = \Jetonomy\table( 'user_profiles' );
+		$prev_avatar                 = $wpdb->get_var( "SELECT avatar_url FROM {$profiles_tbl} WHERE user_id = 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles_tbl} SET avatar_url = %s WHERE user_id = 1", content_url( '/uploads/' . $avatar_file ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		[ $cover_id, $cover_file ] = $mk_used( 'QA media as space cover' );
-		$spaces_t                  = \Jetonomy\table( 'spaces' );
-		$cover_space               = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$prev_cover                = $wpdb->get_var( $wpdb->prepare( "SELECT cover_image FROM {$spaces_t} WHERE id = %d", $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_t} SET cover_image = %s WHERE id = %d", content_url( '/uploads/' . $cover_file ), $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$spaces_table                  = \Jetonomy\table( 'spaces' );
+		$cover_space               = (int) $wpdb->get_var( "SELECT id FROM {$spaces_table} ORDER BY id ASC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$prev_cover                = $wpdb->get_var( $wpdb->prepare( "SELECT cover_image FROM {$spaces_table} WHERE id = %d", $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_table} SET cover_image = %s WHERE id = %d", content_url( '/uploads/' . $cover_file ), $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$first = \Jetonomy\Media_Library::cleanup_abandoned_uploads();
 		$this->check(
@@ -2659,8 +2949,8 @@ class Model_Tests {
 
 		// Restore the rows the in-use fixtures borrowed.
 		Reply::delete( $reply_id );
-		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles} SET avatar_url = %s WHERE user_id = 1", $prev_avatar ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_t} SET cover_image = %s WHERE id = %d", $prev_cover, $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles_tbl} SET avatar_url = %s WHERE user_id = 1", $prev_avatar ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_table} SET cover_image = %s WHERE id = %d", $prev_cover, $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		foreach ( $used as $id ) {
 			if ( get_post( $id ) ) {
@@ -2690,7 +2980,7 @@ class Model_Tests {
 		global $wpdb;
 		$hook   = 'jetonomy_fanout_post_subscribers';
 		$author = $this->qa_admin; // Never a real member: posting earns reputation that the topic's deletion does not take back.
-		$fake   = range( 990000001, 990000250 );
+		$fake   = range( 990000001, 990000600 );
 		$space  = Space::create( array( 'title' => 'QA FO', 'slug' => 'jt-qa-fo-' . wp_generate_password( 6, false, false ), 'author_id' => $author ) );
 		$post   = 0;
 
@@ -2702,10 +2992,10 @@ class Model_Tests {
 			$seen  = array();
 			$after = 0;
 			do {
-				$batch = \Jetonomy\Models\Subscription::get_subscribers( 'space', $space, $after, 100 );
+				$batch = \Jetonomy\Models\Subscription::get_subscribers( 'space', $space, $after, 250 );
 				$seen  = array_merge( $seen, $batch );
 				$after = $batch ? (int) end( $batch ) : $after;
-			} while ( 100 === count( $batch ) );
+			} while ( 250 === count( $batch ) );
 			$this->check( 'FO1: cursor batches cover every subscriber once, in order', $fake === $seen );
 
 			$post = Post::create( array( 'space_id' => $space, 'author_id' => $author, 'title' => 'QA FO', 'slug' => 'jt-qa-fo-p-' . wp_generate_password( 6, false, false ), 'content' => '<p>FO</p>' ) );
@@ -2713,31 +3003,30 @@ class Model_Tests {
 			$this->check( 'FO2: a post to a large space queues the fan-out on Action Scheduler', function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, array( $post, $space ), 'jetonomy' ) );
 
 			$count = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_notifications WHERE object_type = 'post' AND object_id = %d AND type = 'new_post_in_sub'", $post ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			do_action( $hook, $post, $space );
-			$this->check( 'FO3: one run notifies one batch and queues the rest from its cursor', 100 === $count() && as_has_scheduled_action( $hook, array( $post, $space, 990000100 ), 'jetonomy' ) );
-
-			// Run each continuation by hand, first taking it off the queue so a
-			// background Action Scheduler runner cannot run the same batch too.
+			// Each run is made by hand, first taking it off the queue so a background Action Scheduler runner cannot run
+			// the same batch too.
 			$own = static function ( array $args ) use ( $hook ): void {
-				if ( function_exists( 'as_unschedule_all_actions' ) ) {
-					as_unschedule_all_actions( $hook, $args, 'jetonomy' );
-				}
+				as_unschedule_all_actions( $hook, $args, 'jetonomy' );
 			};
-			$own( array( $post, $space, 990000100 ) );
-			do_action( $hook, $post, $space, 990000100 );
-			$own( array( $post, $space, 990000200 ) );
-			do_action( $hook, $post, $space, 990000200 );
-			$this->check( 'FO4: following the cursor reaches every subscriber exactly once', 250 === $count(), 'notified ' . $count() );
+			$own( array( $post, $space ) );
+			do_action( $hook, $post, $space );
+			$this->check( 'FO3: one run notifies a batch of 250 and queues the rest from its cursor', 250 === $count() && as_has_scheduled_action( $hook, array( $post, $space, 990000250 ), 'jetonomy' ), 'notified ' . $count() );
+
+			$own( array( $post, $space, 990000250 ) );
+			do_action( $hook, $post, $space, 990000250 );
+			$own( array( $post, $space, 990000500 ) );
+			do_action( $hook, $post, $space, 990000500 );
+			$this->check( 'FO4: following the cursor reaches every subscriber exactly once', 600 === $count(), 'notified ' . $count() );
 		} finally {
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
 				as_unschedule_all_actions( $hook, array(), 'jetonomy' );
-				foreach ( array( array( $post, $space ), array( $post, $space, 990000100 ), array( $post, $space, 990000200 ) ) as $args ) {
+				foreach ( array( array( $post, $space ), array( $post, $space, 990000250 ), array( $post, $space, 990000500 ) ) as $args ) {
 					as_unschedule_all_actions( $hook, $args, 'jetonomy' );
 				}
 			}
 			wp_clear_scheduled_hook( $hook, array( $post, $space ) );
-			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_notifications WHERE user_id BETWEEN 990000001 AND 990000250" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_subscriptions WHERE user_id BETWEEN 990000001 AND 990000250" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_notifications WHERE user_id BETWEEN 990000001 AND 990000600" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_subscriptions WHERE user_id BETWEEN 990000001 AND 990000600" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			\Jetonomy\Space_Purge::purge( $space );
 		}
 	}
@@ -2818,6 +3107,76 @@ class Model_Tests {
 		$queued = \Jetonomy\Queue::is_queued( $hook, array( 999981 ) );
 		\Jetonomy\Queue::cancel( $hook );
 		$this->check( 'QU1: Queue::cancel() removes per-member jobs whatever their arguments', $queued && ! \Jetonomy\Queue::is_queued( $hook, array( 999981 ) ) && ! \Jetonomy\Queue::is_queued( $hook, array( 999982 ) ) );
+	}
+
+	/**
+	 * HP1-HP5: Queue::prune_history() deletes our completed jobs older than 7 days, with their logs, and nothing else:
+	 * not a recent one, not a failed one, not another plugin's group. Before: only Action Scheduler's own 31-day cleaner.
+	 */
+	private function test_queue_prune_history(): void {
+		if ( ! \Jetonomy\Queue::has_as() || ! did_action( 'action_scheduler_init' ) ) {
+			$this->skip( 'HP1: old completed Jetonomy jobs are pruned with their logs', 'Action Scheduler not loaded' );
+			return;
+		}
+		if ( ! method_exists( \Jetonomy\Queue::class, 'prune_history' ) ) {
+			$this->check( 'HP1: old completed Jetonomy jobs are pruned with their logs', false, 'Queue::prune_history() missing' );
+			return;
+		}
+		global $wpdb;
+		$hook  = 'jetonomy_qa_history_probe'; // Test-only hook.
+		$store = \ActionScheduler::store();
+		// A job scheduled and finished $age_days ago: the prune ages finished rows by their last attempt.
+		$make = static function ( int $age_days, string $group, string $end ) use ( $hook, $store, $wpdb ): int {
+			$id = (int) as_schedule_single_action( time() - $age_days * DAY_IN_SECONDS, $hook, array( wp_rand() ), $group );
+			'failed' === $end ? $store->mark_failure( $id ) : $store->mark_complete( $id );
+			$at = gmdate( 'Y-m-d H:i:s', time() - $age_days * DAY_IN_SECONDS );
+			$wpdb->update( $wpdb->prefix . 'actionscheduler_actions', array( 'last_attempt_gmt' => $at, 'last_attempt_local' => $at ), array( 'action_id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			return $id;
+		};
+		$old    = $make( 8, 'jetonomy', 'complete' );
+		$recent = $make( 1, 'jetonomy', 'complete' );
+		$failed = $make( 8, 'jetonomy', 'failed' );
+		$other  = $make( 8, 'jt-qa-other-group', 'complete' );
+		$logs   = $wpdb->prefix . 'actionscheduler_logs';
+		$had    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$logs} WHERE action_id = %d", $old ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		// One call, as the daily cleanup makes it: it works through up to 50 runs of 200 rows itself.
+		\Jetonomy\Queue::prune_history();
+		$exists = static fn( int $id ): bool => (bool) $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$wpdb->prefix}actionscheduler_actions WHERE action_id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$left   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$logs} WHERE action_id = %d", $old ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$this->check( 'HP1: a Jetonomy job completed 8 days ago is deleted with its log rows', ! $exists( $old ) && $had > 0 && 0 === $left, "exists={$exists( $old )} logs {$had}->{$left}" );
+		$this->check( 'HP2: a recent job, a failed job and another plugin\'s job are kept', $exists( $recent ) && $exists( $failed ) && $exists( $other ) );
+
+		// HP4: Action Scheduler 3.x never purges failed rows, so a Jetonomy job that failed over 90 days ago goes here.
+		$stale_failed = $make( 91, 'jetonomy', 'failed' );
+		$other_failed = $make( 91, 'jt-qa-other-group', 'failed' );
+		\Jetonomy\Queue::prune_history();
+		$this->check( 'HP4: a Jetonomy job that failed 91 days ago is deleted; another plugin\'s is kept', ! $exists( $stale_failed ) && $exists( $other_failed ) );
+		$store->delete_action( $other_failed );
+
+		// HP3: the family-wide retention filter shortens the window.
+		$keep_one = static fn(): int => 1;
+		add_filter( 'jetonomy_finished_action_retention_days', $keep_one );
+		$two_days = $make( 2, 'jetonomy', 'complete' );
+		\Jetonomy\Queue::prune_history();
+		remove_filter( 'jetonomy_finished_action_retention_days', $keep_one );
+		$this->check( 'HP3: jetonomy_finished_action_retention_days = 1 deletes a job finished 2 days ago', ! $exists( $two_days ) );
+
+		// HP5: one call clears more than one 200-row run.
+		$many = array();
+		for ( $i = 0; $i < 250; $i++ ) {
+			$many[] = $make( 8, 'jetonomy', 'complete' );
+		}
+		\Jetonomy\Queue::prune_history();
+		$kept = array_filter( $many, $exists );
+		$this->check( 'HP5: one daily prune deletes 250 old jobs, more than one 200-row run', ! $kept, count( $kept ) . ' left' );
+		foreach ( $kept as $id ) {
+			$store->delete_action( $id );
+		}
+		foreach ( array( $recent, $failed, $other, $two_days ) as $id ) {
+			if ( $exists( $id ) ) {
+				$store->delete_action( $id );
+			}
+		}
 	}
 
 	/**
@@ -3029,10 +3388,20 @@ class Model_Tests {
 		$this->check( 'DD1: /admin/demo-data answers GET, POST and DELETE', ! array_diff( array( 'GET', 'POST', 'DELETE' ), $methods ) );
 
 		$previous = get_current_user_id();
+		$guest    = new \WP_REST_Request( 'POST', '/jetonomy/v1/admin/demo-data' );
+		$guest->set_param( 'confirm', true );
 		wp_set_current_user( 0 );
-		$status = rest_do_request( new \WP_REST_Request( 'POST', '/jetonomy/v1/admin/demo-data' ) )->get_status();
+		$status = rest_do_request( $guest )->get_status();
 		wp_set_current_user( $previous );
 		$this->check( 'DD2: a guest cannot import demo data', 401 === $status );
+
+		// A plain POST (no confirm) must never seed: it is refused before the seeder runs.
+		$before = get_option( 'jetonomy_demo_data' );
+		$admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
+		wp_set_current_user( (int) ( $admins[0] ?? 0 ) );
+		$plain = rest_do_request( new \WP_REST_Request( 'POST', '/jetonomy/v1/admin/demo-data' ) )->get_status();
+		wp_set_current_user( $previous );
+		$this->check( 'DD3: a plain admin POST to /admin/demo-data is refused and seeds nothing', 400 === $plain && get_option( 'jetonomy_demo_data' ) === $before, "status {$plain}" );
 	}
 
 	/**
@@ -3422,9 +3791,9 @@ class Model_Tests {
 		// A gate documented as "zero FAIL lines" that fails for no defect teaches
 		// people to ignore red, which is what let the 2.0.0 migration blocker
 		// through in the first place.
-		$spaces_t = table( 'spaces' );
+		$spaces_table = table( 'spaces' );
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$spaces_t,
+			$spaces_table,
 			array(
 				'category_id' => 0,
 				'parent_id'   => 0,
@@ -3469,7 +3838,7 @@ class Model_Tests {
 			'a different source or type must not resolve to our row'
 		);
 
-		$wpdb->delete( $spaces_t, array( 'id' => $probe_space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $spaces_table, array( 'id' => $probe_space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->delete( $table, array( 'source' => $source ) );
@@ -3605,8 +3974,6 @@ class Model_Tests {
 		$def    = \Jetonomy\Admin\Ajax\Demo_Content::users()[0];
 		$create = new \ReflectionMethod( $seeder, 'create_users' );
 		$delete = new \ReflectionMethod( $seeder, 'delete_demo_users' );
-		$create->setAccessible( true );
-		$delete->setAccessible( true );
 
 		$real  = 0;
 		$post  = 0;
@@ -3660,13 +4027,13 @@ class Model_Tests {
 	private function test_recount_backfill(): void {
 		global $wpdb;
 
-		$posts_t   = \Jetonomy\table( 'posts' );
-		$replies_t = \Jetonomy\table( 'replies' );
+		$posts_tbl   = \Jetonomy\table( 'posts' );
+		$replies_tbl = \Jetonomy\table( 'replies' );
 		$suffix    = wp_generate_password( 6, false, false );
 
-		$mk_post = function ( string $title ) use ( $wpdb, $posts_t ) {
+		$mk_post = function ( string $title ) use ( $wpdb, $posts_tbl ) {
 			$wpdb->insert(
-				$posts_t,
+				$posts_tbl,
 				array(
 					'space_id'     => 1,
 					'author_id'    => $this->qa_admin,
@@ -3689,7 +4056,7 @@ class Model_Tests {
 		// One published reply each, so the truthful count is 1 apiece.
 		foreach ( array( $low, $high ) as $pid ) {
 			$wpdb->insert(
-				$replies_t,
+				$replies_tbl,
 				array(
 					'post_id'    => $pid,
 					'author_id'  => $this->qa_admin,
@@ -3701,9 +4068,9 @@ class Model_Tests {
 		}
 
 		// Drift both, the way an upgrading site carries it.
-		$wpdb->query( $wpdb->prepare( "UPDATE {$posts_t} SET reply_count = 9 WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$posts_tbl} SET reply_count = 9 WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		$stored = static fn( int $id ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT reply_count FROM {$posts_t} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$stored = static fn( int $id ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT reply_count FROM {$posts_tbl} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		// A slice that starts exactly at $low must include $low.
 		\Jetonomy\Recount::run( 'posts', $low, $low + 1 );
@@ -3739,8 +4106,8 @@ class Model_Tests {
 			update_option( 'jetonomy_recount_backfill', $saved, false );
 		}
 
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$replies_t} WHERE post_id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$posts_t} WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$replies_tbl} WHERE post_id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$posts_tbl} WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 }

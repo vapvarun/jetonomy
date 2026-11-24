@@ -1,0 +1,28 @@
+# Allowed CREATE TABLE statements. Editing this file needs the owner's yes in the commit body.
+# Standard: wbcom-scope-and-schema-standard.md
+$table_name
+jt_access_rules
+jt_activity_log
+jt_attachments
+jt_blocked_users x2
+jt_bookmarks x2
+jt_categories
+jt_flags
+jt_import_map x2
+jt_invite_links
+jt_join_requests
+jt_notifications
+jt_post_tags
+jt_posts
+jt_read_status
+jt_replies
+jt_restrictions
+jt_revisions
+jt_space_members
+jt_spaces
+jt_subscriptions
+jt_tags
+jt_user_profiles
+jt_votes
+{$new}
+{$table_name} x3

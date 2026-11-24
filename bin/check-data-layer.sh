@@ -10,7 +10,9 @@ BASELINE=audit/wpdb-baseline.txt
 # One-time and repair code (imports, the demo seeder, GDPR export/erase, backfills,
 # recount, the purge service) runs once per site, so it may keep its own queries.
 # includes/search/ is the full-text search backend: building those queries is its job.
-ALLOWED='^(includes/models/|includes/search/|includes/db/|includes/cli/|includes/qa/|includes/class-cli\.php|includes/import/|includes/admin/ajax/class-demo-seeder\.php|includes/class-privacy(-backfill)?\.php|includes/class-[a-z-]+-backfill\.php|includes/class-recount\.php|includes/class-space-purge\.php)'
+# includes/class-queue.php is the scheduler backend: its queries read and write Action Scheduler's own tables
+# (claim-first cancels, recovery, history prune), which no Jetonomy model owns.
+ALLOWED='^(includes/models/|includes/search/|includes/db/|includes/cli/|includes/qa/|includes/class-cli\.php|includes/import/|includes/admin/ajax/class-demo-seeder\.php|includes/class-privacy(-backfill)?\.php|includes/class-[a-z-]+-backfill\.php|includes/class-recount\.php|includes/class-space-purge\.php|includes/class-queue\.php)'
 
 current=$(grep -rnF '$wpdb' includes templates --include='*.php' 2>/dev/null \
 	| grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|\*|/\*|#)' \

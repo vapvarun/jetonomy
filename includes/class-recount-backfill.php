@@ -137,7 +137,7 @@ final class Recount_Backfill {
 	 * @return void
 	 */
 	public static function ensure_scheduled(): void {
-		if ( ! Cron::is_scheduling_request() ) {
+		if ( ! Queue::is_scheduling_request() ) {
 			return;
 		}
 		$state = self::state();
@@ -162,7 +162,7 @@ final class Recount_Backfill {
 	 * @return void
 	 */
 	private static function enqueue(): void {
-		Queue::async( self::BATCH_HOOK, array(), true, MINUTE_IN_SECONDS );
+		Queue::async_once( self::BATCH_HOOK ); // Requests arriving together queue one continuation.
 	}
 
 	/**
@@ -257,11 +257,11 @@ final class Recount_Backfill {
 			return 0;
 		}
 
-		$t   = table( $spec['table'] );
-		$key = $spec['key'];
+		$table = table( $spec['table'] );
+		$key   = $spec['key'];
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table() is a trusted prefixed name; $key is from the STAGES constant.
-		return (int) $wpdb->get_var( "SELECT MAX({$key}) FROM {$t}" );
+		return (int) $wpdb->get_var( "SELECT MAX({$key}) FROM {$table}" );
 	}
 
 	/**
@@ -290,14 +290,5 @@ final class Recount_Backfill {
 		$state = get_option( self::OPTION, null );
 
 		return is_array( $state ) ? $state : null;
-	}
-
-	/**
-	 * Drop any queued continuation. Called on deactivation.
-	 *
-	 * @return void
-	 */
-	public static function clear_scheduled(): void {
-		Queue::cancel( self::BATCH_HOOK );
 	}
 }

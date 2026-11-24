@@ -216,10 +216,10 @@ $restriction_labels = array(
 						echo absint( $u->reply_count );
 						break;
 					case 'joined':
-						echo esc_html( $u->user_registered ? human_time_diff( strtotime( $u->user_registered ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '—' );
+						echo esc_html( $u->user_registered ? \Jetonomy\time_ago( (string) $u->user_registered ) : '—' );
 						break;
 					case 'last-seen':
-						echo esc_html( $u->last_seen_at ? human_time_diff( strtotime( $u->last_seen_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : __( 'Never', 'jetonomy' ) );
+						echo esc_html( $u->last_seen_at ? \Jetonomy\time_ago( (string) $u->last_seen_at ) : __( 'Never', 'jetonomy' ) );
 						break;
 				}
 			},
@@ -316,13 +316,10 @@ $restriction_labels = array(
 		</div>
 	</div>
 </div>
-<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-<div class="jt-pro-upsell">
-	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
-	<h4><?php esc_html_e( 'Custom Badges & Advanced Moderation', 'jetonomy' ); ?></h4>
-	<p><?php esc_html_e( 'Auto-award badges based on activity, create custom fields for profiles, and set up keyword-based auto-moderation rules.', 'jetonomy' ); ?></p>
-	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
-	&nbsp;
-	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>
-</div>
-<?php endif; ?>
+<?php
+\Jetonomy\Admin\Admin::pro_card(
+	'badges',
+	__( 'Custom Badges & Advanced Moderation', 'jetonomy' ),
+	__( 'Auto-award badges based on activity, create custom fields for profiles, and set up keyword-based auto-moderation rules.', 'jetonomy' )
+);
+?>

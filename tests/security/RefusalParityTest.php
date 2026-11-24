@@ -159,11 +159,14 @@ class RefusalParityTest extends WP_UnitTestCase {
 			$this->assertSame( 403, $status, "{$method} listed private{$suffix}" );
 		}
 
-		[ $status, $code ] = $this->call( $this->outsider, 'POST', "/spaces/{$this->hidden_space}/members" );
-		$this->assertSame( array( 404, 'jetonomy_not_found' ), array( $status, $code ) );
+		// A hidden space answers exactly like a missing one: same status, same code.
+		foreach ( array( $this->hidden_space, 999999 ) as $space_id ) {
+			[ $status, $code ] = $this->call( $this->outsider, 'POST', "/spaces/{$space_id}/members" );
+			$this->assertSame( array( 404, 'jetonomy_space_not_found' ), array( $status, $code ) );
 
-		[ $status, $code ] = $this->call( $this->outsider, 'POST', "/spaces/{$this->hidden_space}/posts", array( 'title' => 'Knock knock', 'content' => 'Anyone home?' ) );
-		$this->assertSame( array( 404, 'jetonomy_not_found' ), array( $status, $code ) );
+			[ $status, $code ] = $this->call( $this->outsider, 'POST', "/spaces/{$space_id}/posts", array( 'title' => 'Knock knock', 'content' => 'Anyone home?' ) );
+			$this->assertSame( array( 404, 'jetonomy_space_not_found' ), array( $status, $code ) );
+		}
 	}
 
 	/** @covers-existing Guard: the new 404 rule must not hide the named ban message banned members already got. */

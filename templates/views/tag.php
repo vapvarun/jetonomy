@@ -34,7 +34,7 @@ if ( ! in_array( $sort, array( 'latest', 'popular' ), true ) ) {
 $per_page = 30;
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $paged       = \Jetonomy\list_page();
-$offset      = ( $paged - 1 ) * $per_page;
+$offset      = jetonomy_page_offset( $paged, $per_page );
 $total_posts = \Jetonomy\Models\Post::count_by_tag_visible( (int) $tag->id );
 $total_pages = (int) ceil( max( 1, $total_posts ) / $per_page );
 

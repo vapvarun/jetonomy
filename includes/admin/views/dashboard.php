@@ -180,7 +180,7 @@ $stat_cards = array(
 									<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:<?php echo esc_attr( $dot_color ); ?>;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span><?php echo esc_html( $action_label ); ?>
 								</td>
 								<td data-colname="<?php esc_attr_e( 'Object', 'jetonomy' ); ?>"><?php echo wp_kses( $object_html, array( 'a' => array( 'href' => array() ) ) ); ?></td>
-								<td data-colname="<?php esc_attr_e( 'When', 'jetonomy' ); ?>"><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td data-colname="<?php esc_attr_e( 'When', 'jetonomy' ); ?>"><?php echo esc_html( \Jetonomy\time_ago( (string) $activity->created_at ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -310,8 +310,7 @@ $stat_cards = array(
 						</p>
 					<?php endif; ?>
 					<p><?php esc_html_e( 'Pro adds full history, engagement and moderation analytics, top contributors, and CSV export.', 'jetonomy' ); ?></p>
-					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
-					<a class="jt-pulse-dismiss" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'jetonomy_dismiss_pulse', '1' ), 'jetonomy_dismiss_pulse' ) ); ?>"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></a>
+					<?php \Jetonomy\Admin\Admin::pro_promo_actions( 'pulse' ); ?>
 				</div>
 			<?php endif; ?>
 

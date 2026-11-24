@@ -135,7 +135,8 @@ class MemberFacingTemplateFixesTest extends WP_UnitTestCase {
 		$_GET['filter'] = 'spaces'; // Spaces search by LIKE; the test tables carry no FULLTEXT index.
 		$html           = $this->render_view( 'search' );
 
-		$this->assertMatchesRegularExpression( '/class="jt-space-card-title" dir="auto">.*تجربتي/u', $html );
+		// Since 2.1.0 the shared grid card: the title link carries the direction.
+		$this->assertMatchesRegularExpression( '/class="jt-space-card-link" href="[^"]*" dir="auto">.*تجربتي/u', $html );
 	}
 
 	public function test_reply_composer_has_an_announced_slot_for_the_empty_reply_error(): void {

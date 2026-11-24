@@ -91,8 +91,9 @@ abstract class Base_Controller extends WP_REST_Controller {
 			/* translators: %s: singular topic or space label, lowercase. */
 			'Target space' => sprintf( __( 'Target %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 		);
+		// A missing space has one code everywhere, the same as Space::missing_error().
 		return new WP_Error(
-			'jetonomy_not_found',
+			in_array( $what, array( 'Space', 'Target space' ), true ) ? 'jetonomy_space_not_found' : 'jetonomy_not_found',
 			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			sprintf( __( '%s not found.', 'jetonomy' ), $labels[ $what ] ?? __( 'Item', 'jetonomy' ) ),
 			array( 'status' => 404 )
@@ -392,11 +393,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// defaults to 0, so 0 means unset; ?page=2 used to answer page 1 again.
 		$limit = min( 100, max( 1, (int) ( $request->get_param( 'limit' ) ?? $request->get_param( 'per_page' ) ?? 20 ) ) );
 		if ( $after <= 0 && $offset <= 0 ) {
-			$offset = ( max( 1, (int) ( $request->get_param( 'page' ) ?? 1 ) ) - 1 ) * $limit;
+			$offset = jetonomy_page_offset( (int) ( $request->get_param( 'page' ) ?? 1 ), $limit );
 		}
 		return array(
 			'limit'  => $limit,
-			'offset' => max( 0, $after > 0 ? $after : $offset ),
+			// Capped so offset + limit stays an int (?offset=9223372036854775807 overflowed).
+			'offset' => min( JETONOMY_MAX_OFFSET, max( 0, $after > 0 ? $after : $offset ) ),
 			'sort'   => $request->get_param( 'sort' ) ?? 'latest',
 			'after'  => $after,
 			'before' => (int) ( $request->get_param( 'before' ) ?? 0 ),
@@ -487,7 +489,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'after'  => array(
 				'type'        => 'integer',
 				'default'     => 0,
-				'description' => 'Forward cursor: send back the `meta.cursor_next` from the previous page. Opaque to clients — treat it as a token, not a row ID.',
+				'description' => 'Offset of the first row to return, same as `offset` (wins when both are sent). Send back `meta.cursor_next` from the previous page, which is that page\'s offset plus its count. Not a row ID.',
 			),
 			'before' => array(
 				'type'        => 'integer',
@@ -1015,7 +1017,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $author_last_seen ),
 			'trust_level'             => $trust_level,
 			'reputation'              => $reputation,
-			'time_ago'                => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'time_ago'                => $post->created_at ? \Jetonomy\time_ago( (string) $post->created_at ) : '',
 			'profile_url'             => $profile_url,
 			// Space context
 			'space_title'             => $space ? $space->title : '',

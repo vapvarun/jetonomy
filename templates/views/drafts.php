@@ -25,7 +25,7 @@ $base    = \Jetonomy\base_url();
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $per_page = 20;
-$offset   = ( $page - 1 ) * $per_page;
+$offset   = jetonomy_page_offset( $page, $per_page );
 
 $drafts = \Jetonomy\Models\Post::list_drafts_by_user( $user_id, $per_page, $offset );
 

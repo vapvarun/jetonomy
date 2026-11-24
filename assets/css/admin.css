@@ -29,6 +29,7 @@
 	--jt-admin-text-muted: #5f6b7d; /* 4.75:1 on the lightest admin grey (WCAG AA). */
 	--jt-admin-text-wp: #1d2327;
 	--jt-admin-text-wp-2: #646970;
+	--jt-admin-border-input: #82868c; /* Form-control outline: a step darker than WordPress's #8c8f94 (2.85:1 on the #f0f0f1 admin page) so inputs, selects and pager buttons hold 3:1 on the page (3.2) and on white (3.7). */
 	--jt-admin-text-wp-3: var(--jt-admin-text-muted); /* Text only; #8c8f94 measured 2.85:1 on #f0f0f1. */
 	--jt-admin-text-step: #666666;
 	--jt-admin-text-arrow: #cccccc;
@@ -83,6 +84,8 @@
 	--jt-admin-pro: #8B5CF6;
 	--jt-admin-pro-2: #6366F1;
 	--jt-admin-pro-dark: #7c3aed;
+	--jt-admin-pro-darker: #6d28d9;
+	--jt-admin-pro-2-dark: #4f46e5;
 	--jt-admin-pro-light: #f3e8fd;
 	--jt-admin-pro-bg: #F8F7FF;
 	--jt-admin-pro-border: #C4B5FD;
@@ -283,13 +286,20 @@
 	padding-bottom: 12px;
 }
 
+/* Every core text field and select on a Jetonomy screen (this file only
+   loads there) gets a 3:1 edge: core's #949494 is 2.66:1 on the grey page and
+   2.83:1 on #f6f7f7 panels. Unfocused only, so core's blue focus border wins. */
+#wpbody-content :where(input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="number"], input[type="password"], input[type="tel"], input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea):not(:focus) {
+	border-color: var(--jt-admin-border-input, #82868c);
+}
+
 .jetonomy-admin .form-table input[type="text"],
 .jetonomy-admin .form-table input[type="email"],
 .jetonomy-admin .form-table input[type="number"],
 .jetonomy-admin .form-table input[type="url"],
 .jetonomy-admin .form-table select,
 .jetonomy-admin .form-table textarea {
-	border: 1.5px solid var(--jt-admin-border-strong);
+	border: 1.5px solid var(--jt-admin-border-input, #82868c); /* 3:1 edge on white; --jt-admin-border-strong is a divider tone (1.48:1). */
 	border-radius: 6px;
 	padding: 6px 12px;
 	transition: border-color 0.15s, box-shadow 0.15s;
@@ -335,21 +345,29 @@
    ═══════════════════════════════════════════════════════════ */
 
 .jetonomy-stat-cards {
+	/* Six cards: one row only on wide screens, otherwise 3 x 2, 2 x 3, then one column. minmax(0, 1fr) (not 1fr,
+	   whose minimum is the longest word) keeps a long translated label from pushing the row past the screen. */
 	display: grid;
-	grid-template-columns: repeat(6, 1fr);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 16px;
 	margin: 20px 0;
 }
 
-@media (max-width: 1200px) {
+@media (min-width: 1440px) {
 	.jetonomy-stat-cards {
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(6, minmax(0, 1fr));
 	}
 }
 
 @media (max-width: 782px) {
 	.jetonomy-stat-cards {
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 600px) {
+	.jetonomy-stat-cards {
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -371,18 +389,18 @@
 }
 
 .jetonomy-stat-card--warning {
-	border-left: 4px solid var(--jt-admin-warn);
+	border-inline-start: 4px solid var(--jt-admin-warn);
 }
 
 /* Shared card warning state — used on dashboard demo notice, etc. */
 .jt-card--warning {
-	border-left: 4px solid var(--jt-admin-warn);
+	border-inline-start: 4px solid var(--jt-admin-warn);
 }
 
 /* Destructive button */
 .button.button--danger {
 	color: var(--jt-admin-danger);
-	border-color: var(--jt-admin-danger-border);
+	border-color: var(--jt-admin-danger); /* 4.83:1 on white; the pale --jt-admin-danger-border was 1.9:1 with no fill. */
 }
 
 .button.button--danger:hover {
@@ -420,7 +438,13 @@
 	color: var(--jt-admin-text-wp);
 }
 
+.jetonomy-stat-card__content {
+	min-width: 0;
+}
+
 .jetonomy-stat-card__label {
+	overflow-wrap: break-word;
+	hyphens: auto;
 	font-size: 12px;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
@@ -431,6 +455,8 @@
 /* "Review flags →" link inside the Pending Flags stat card (1.5.0). */
 .jetonomy-stat-card__cta {
 	display: inline-block;
+	max-width: 100%;
+	overflow-wrap: break-word;
 	margin-top: 6px;
 	font-size: 12px;
 	font-weight: 600;
@@ -921,7 +947,7 @@
 	min-width: 40px;
 	height: 40px;
 	padding: 0 10px;
-	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 6px;
 	background: var(--jt-admin-white, #fff);
 	color: var(--jt-admin-text-wp, #1d2327);
@@ -935,19 +961,19 @@
 .jetonomy-admin .tablenav-pages a.page-numbers:hover,
 .jetonomy-admin .tablenav-pages a.page-numbers:focus {
 	background: var(--jt-admin-surface-1, #f6f7f7);
-	border-color: #8c8f94;
+	border-color: var(--jt-admin-border-input, #82868c);
 	color: var(--jt-admin-text-wp, #1d2327);
 	outline: none;
 }
 .jetonomy-admin .tablenav-pages a.page-numbers:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--jt-admin-blue-wp, #2271b1);
 	outline-offset: 2px;
-	border-color: #2271b1;
+	border-color: var(--jt-admin-blue-wp, #2271b1);
 }
 .jetonomy-admin .tablenav-pages .page-numbers.current {
-	background: #2271b1;
-	border-color: #2271b1;
-	color: #fff;
+	background: var(--jt-admin-blue-wp, #2271b1);
+	border-color: var(--jt-admin-blue-wp, #2271b1);
+	color: var(--jt-admin-white, #fff);
 	cursor: default;
 }
 .jetonomy-admin .tablenav-pages .page-numbers.dots {
@@ -1642,6 +1668,11 @@ tr.jetonomy-moderated td {
 	border-bottom: 1px solid var(--jt-admin-surface-wp);
 }
 
+.jetonomy-ac-item.is-active {
+	outline: 2px solid var(--wp-admin-theme-color, currentColor);
+	outline-offset: -2px;
+}
+
 .jetonomy-ac-item:hover {
 	background: var(--jt-admin-blue-surface);
 }
@@ -2148,7 +2179,7 @@ tr.jetonomy-moderated td {
 		flex-wrap: wrap;
 		gap: 8px 12px;
 		padding: 9px 10px;
-		border-top: 1px solid #f0f0f1;
+		border-top: 1px solid var(--jt-admin-surface-wp, #f0f0f1);
 	}
 
 	.jetonomy-admin .wp-list-table tr.is-expanded td:not(.column-primary)::before {
@@ -2212,9 +2243,10 @@ tr.jetonomy-moderated td {
 /* Pro Badge */
 .jt-pro-badge {
 	display: inline-block;
-	background: linear-gradient(135deg, var(--jt-admin-pro), var(--jt-admin-pro-2));
+	/* Darker stops: white text stays at 4.5:1 or more across the gradient. */
+	background: linear-gradient(135deg, var(--jt-admin-pro-dark), var(--jt-admin-pro-2-dark));
 	color: var(--jt-admin-white);
-	font-size: 10px;
+	font-size: 11px;
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
@@ -2353,12 +2385,133 @@ tr.jetonomy-moderated td {
 	font-size: 12px;
 }
 
-.jt-pulse-dismiss {
-	display: block;
-	margin-top: 8px;
-	font-size: 11px;
+/* Pro promo card actions: "See what Pro adds" + a per-admin Dismiss (Admin::pro_promo_actions()). */
+.jt-pro-upsell__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 8px 16px;
+	margin: 0;
+}
+
+/* Locked Pro tab: a link to the explainer on the same page, styled as unavailable. */
+.jt-pro-locked-tab {
 	color: var(--jt-admin-text-3);
-	text-decoration: none;
+}
+
+/* One-line explainer a locked Pro tab points at (aria-describedby target). */
+.jt-pro-explainer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+	margin: 12px 0;
+	padding: 8px 12px;
+	border: 1px dashed var(--jt-admin-pro-border);
+	border-radius: 8px;
+	background: var(--jt-admin-pro-bg);
+	color: var(--jt-admin-text-2);
+	font-size: 13px;
+}
+
+.jt-pro-explainer a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+}
+
+/* Free vs Pro table. */
+.jt-fvp-table {
+	border: 0;
+	box-shadow: none;
+}
+
+.jt-fvp-table th[scope="row"] {
+	font-weight: 400;
+}
+
+.jt-fvp-table__desc {
+	display: block;
+	margin-block-start: 2px;
+	color: var(--jt-admin-text-3);
+	font-size: 12.5px;
+}
+
+.jt-fvp-table .jt-fvp-table__col {
+	width: 72px;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.jt-fvp-table .dashicons-yes {
+	color: var(--jt-admin-pro);
+}
+
+.jt-fvp-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 16px;
+	margin: 0;
+}
+
+.jt-fvp-links .button {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+}
+
+@media (max-width: 640px) {
+	.jt-fvp-table .jt-fvp-table__col {
+		width: 48px;
+	}
+}
+
+/* Core sets .button to 40px under 782px; the 44px target rule wins here. Pro colours, not the admin colour
+   scheme's: a scheme colour (sunrise amber) fell under 4.5:1 on the Pro card background. */
+.jt-pro-upsell__actions .button {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	color: var(--jt-admin-pro-dark);
+	border-color: var(--jt-admin-pro-dark);
+}
+
+.jt-pro-upsell__actions .button:hover,
+.jt-pro-upsell__actions .button:focus {
+	color: var(--jt-admin-pro-darker);
+	border-color: var(--jt-admin-pro-darker);
+}
+
+.jt-pro-upsell__dismiss {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding-inline: 4px;
+	font-size: 13px;
+	color: var(--jt-admin-text-3);
+}
+
+.jt-pro-upsell__dismiss:hover,
+.jt-pro-upsell__dismiss:focus {
+	color: var(--jt-admin-text);
+}
+
+.jt-pro-faq {
+	margin: 0;
+	padding: 0 16px 16px;
+}
+
+.jt-pro-faq dt {
+	margin-top: 12px;
+	font-weight: 600;
+	color: var(--jt-admin-text);
+}
+
+.jt-pro-faq dd {
+	margin: 4px 0 0;
+	color: var(--jt-admin-text-3);
 }
 
 @media (max-width: 640px) {
@@ -2789,10 +2942,6 @@ tr.jetonomy-moderated td {
    ═══════════════════════════════════════════════════════════ */
 
 @media (max-width: 782px) {
-	.jetonomy-stat-cards {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
 	.jetonomy-import-sources {
 		grid-template-columns: 1fr;
 	}
@@ -2835,9 +2984,11 @@ tr.jetonomy-moderated td {
 		padding: 8px 10px;
 		font-size: 13px;
 		box-sizing: border-box;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
+		/* A long translated label (German "Berechtigungen") wraps, hyphenated where the language allows, instead
+		   of being cut off: text-overflow cannot show an ellipsis on a flex row, so overflow: hidden only clipped it. */
+		min-width: 0;
+		overflow-wrap: anywhere;
+		hyphens: auto;
 	}
 
 	.jt-snav-link:not(:has(.dashicons))::before {
@@ -2866,10 +3017,6 @@ tr.jetonomy-moderated td {
 }
 
 @media (max-width: 600px) {
-	.jetonomy-stat-cards {
-		grid-template-columns: 1fr;
-	}
-
 	.jetonomy-modal__content {
 		width: 95%;
 		padding: 16px;
@@ -2906,7 +3053,7 @@ tr.jetonomy-moderated td {
 
 .jt-fc-admin-slug {
 	font-size: 11px;
-	color: #646970;
+	color: var(--jt-admin-text-wp-2, #646970);
 }
 
 .jt-fc-admin-submit {
@@ -2940,7 +3087,7 @@ tr.jetonomy-moderated td {
 	inset-inline-start: 10px;
 	inset-block-start: 50%;
 	transform: translateY(-50%);
-	color: #646970;
+	color: var(--jt-admin-text-wp-2, #646970);
 	pointer-events: none;
 	display: inline-flex;
 }
@@ -2964,7 +3111,7 @@ tr.jetonomy-moderated td {
 	aspect-ratio: 1 / 1;
 	margin: 0;
 	padding: 0;
-	border: 1px solid var(--jt-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: var(--jt-radius, 6px);
 	cursor: pointer;
 	transition: border-color 0.15s ease, background 0.15s ease;
@@ -3314,10 +3461,96 @@ tr.jetonomy-moderated td {
 	color: var(--jt-admin-text-wp-2, #646970);
 }
 
+/* Long translations (German compounds): the card's head wraps and words break inside the card, never past it. */
+.jt-companion-card { overflow-wrap: anywhere; }
+.jt-companion-card__head { flex-wrap: wrap; }
+.jt-companion-card__title { min-width: 0; }
+.jt-companion-card .button,
+.jt-companion-badge { white-space: normal; height: auto; max-width: 100%; }
+/* The badge's own padding counts inside that 100%, or it pokes 2px past a narrow card. */
+.jt-companion-badge { box-sizing: border-box; }
+
+/* ── Community Sidebar Widgets (Appearance tab) ── */
+.jt-widget-list { margin: 0; padding: 8px 20px 4px; list-style: none; }
+.jt-widget-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0 0 8px;
+	padding: 10px 12px;
+	border: 1px solid var(--jt-admin-border);
+	border-radius: 6px;
+	background: var(--jt-admin-white);
+}
+.jt-widget-handle { cursor: grab; color: var(--jt-admin-text-muted); }
+.jt-widget-main { flex: 1; min-width: 0; }
+.jt-widget-main label { font-weight: 600; }
+.jt-widget-hint { display: block; margin-inline-start: 24px; color: var(--jt-admin-text-muted); font-size: 12px; }
+.jt-widget-moves { display: flex; gap: 4px; }
+.jt-widget-moves[hidden] { display: none; }
+.jt-widget-moves .button { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; padding: 0 4px; }
+.jt-widget-placeholder { height: 52px; margin: 0 0 8px; border: 2px dashed var(--jt-admin-border); border-radius: 6px; }
+.jt-widget-none { margin: 0 20px 16px; }
+/* Touch widths (core's own breakpoint): 44px targets for the Show label and the arrows. */
+@media (max-width: 782px) {
+	.jt-widget-main label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+	.jt-widget-moves .button { min-width: 44px; min-height: 44px; }
+	.jt-widget-hint { margin-inline-start: 33px; } /* core's 25px touch checkbox + the 8px gap */
+}
+@media (max-width: 640px) {
+	.jt-widget-list { padding-inline: 12px; }
+	.jt-widget-row { flex-wrap: wrap; }
+	.jt-widget-handle { display: none; }
+	.jt-widget-none { margin-inline: 12px; }
+}
+
+/* ── Role Capability Mapping: Select all boxes (inserted by admin-settings.js) ── */
+.jt-role-matrix .jt-matrix-all-label {
+	display: flex;
+	width: max-content;
+	align-items: center;
+	gap: 4px;
+	min-width: 24px;
+	min-height: 24px;
+	margin-block-start: 4px;
+	font-weight: 400;
+	font-size: 12px;
+	white-space: nowrap;
+	cursor: pointer;
+}
+/* Box above its word, at the start edge like the cell boxes below it. */
+.jt-role-matrix thead .jt-matrix-all-label {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 2px;
+}
+.jt-role-matrix .jt-matrix-all-label input { margin: 0; }
+.jt-role-matrix tr.jt-cap-staff th strong::after {
+	content: " *";
+	color: var(--jt-admin-warn-dark);
+}
+@media (max-width: 782px) {
+	/* 44px hit area (WCAG 2.5.5) on touch widths: padding on the label, not a bigger box. */
+	.jt-role-matrix .jt-matrix-all-label {
+		min-width: 44px;
+		min-height: 44px;
+		justify-content: center;
+	}
+	.jt-role-matrix thead .jt-matrix-all-label { justify-content: flex-start; }
+}
+.jt-role-matrix-warning {
+	margin: 0 20px 12px;
+	padding: 8px 12px;
+	border-inline-start: 4px solid var(--jt-admin-warn-dark);
+	background: var(--jt-admin-warn-light);
+	color: var(--jt-admin-text);
+}
+
 /* ── Responsive ── */
 @media (max-width: 782px) {
 	.jt-fam-header { flex-wrap: wrap; }
-	.jt-companions-grid { grid-template-columns: 1fr; }
+	.jt-companions-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -3989,7 +4222,7 @@ tr.jetonomy-moderated td {
 	min-width: 40px;
 	height: 40px;
 	padding: 0 10px;
-	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 6px;
 	background: var(--jt-admin-white, #fff);
 	color: var(--jt-admin-text-wp, #1d2327);
@@ -4003,12 +4236,12 @@ tr.jetonomy-moderated td {
 .jetonomy-admin .tablenav-pages .pagination-links a:hover,
 .jetonomy-admin .tablenav-pages .pagination-links a:focus {
 	background: var(--jt-admin-surface-1, #f6f7f7);
-	border-color: #8c8f94;
+	border-color: var(--jt-admin-border-input, #82868c);
 	color: var(--jt-admin-text-wp, #1d2327);
 	outline: none;
 }
 .jetonomy-admin .tablenav-pages .pagination-links a:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--jt-admin-blue-wp, #2271b1);
 	outline-offset: 2px;
 }
 .jetonomy-admin .tablenav-pages .tablenav-pages-navspan {
@@ -4017,7 +4250,7 @@ tr.jetonomy-moderated td {
 .jetonomy-admin .tablenav-pages .current-page {
 	height: 40px;
 	min-width: 52px;
-	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 6px;
 	text-align: center;
 	font-size: 13px;
@@ -4042,7 +4275,7 @@ tr.jetonomy-moderated td {
 .jetonomy-admin .tablenav .button {
 	height: 40px;
 	min-height: 40px;
-	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border: 1px solid var(--jt-admin-border-input, #82868c);
 	border-radius: 6px;
 	box-sizing: border-box;
 	font-size: 13px;
@@ -4104,7 +4337,7 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin select::picker(select) {
 		border: 1px solid var(--jt-admin-border, #dcdcde);
 		border-radius: 6px;
-		background: #fff;
+		background: var(--jt-admin-white, #fff);
 		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 		padding: 4px;
 		margin-block-start: 4px;
@@ -4278,9 +4511,6 @@ tr.jetonomy-moderated td {
 }
 
 /* Pro extension tier badge on the Free vs Pro tab. */
-.jetonomy-admin .jt-tier-badge { margin-inline-start: auto; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; background: var(--jt-admin-success-light, #f0fdf4); color: var(--jt-admin-success-dark, #166534); }
-.jetonomy-admin .jt-tier-badge--agency { background: var(--jt-admin-warn-light, #fef3c7); color: var(--jt-admin-warn-dark, #92400e); }
-.jetonomy-admin .jt-tier-badge--growth { background: var(--jt-admin-info-light, #e0e7ff); color: var(--jt-admin-info-dark, #3730a3); }
 
 
 /* ── Trust level names (Settings > Permissions, Trust Levels card) ──
@@ -4383,7 +4613,7 @@ tr.jetonomy-moderated td {
 	box-sizing: border-box;
 	border: 1px solid var(--jt-admin-border, #dcdcde);
 	border-radius: 50%;
-	background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2350575e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 16px no-repeat;
+	background: var(--jt-admin-white, #fff) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2350575e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 16px no-repeat;
 	transition: transform 0.15s;
 }
 .jt-settings-card--disclosure[open] > summary::after {
@@ -4529,4 +4759,26 @@ tr.jetonomy-moderated td {
 		padding-block-start: 8px;
 		border-block-start: 1px solid var(--jt-admin-border);
 	}
+}
+
+/* Inline edit feedback (Content and Replies screens): the message after Save. */
+.jt-save-feedback {
+	margin-inline-start: 8px;
+	font-size: 13px;
+}
+.jt-save-feedback--success {
+	color: var(--jt-admin-success);
+}
+.jt-save-feedback--error {
+	color: var(--jt-admin-danger-wp);
+}
+
+/* Space edit, Members tab: the search form sat flush against the table below it. */
+.jt-spacedit-member-search {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--jt-space-2, 8px);
+	float: none;
+	margin: 0 0 var(--jt-space-4, 16px);
 }

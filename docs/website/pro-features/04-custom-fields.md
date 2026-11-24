@@ -59,17 +59,16 @@ A generic WordPress profile has a bio and a website URL. That is not enough for 
 
 For the **Select** and **Radio** types, you define the options in the field editor - one per line. Select renders a dropdown; Radio renders a set of radio buttons.
 
-## Visibility Options
+## Who Can See a Profile Field
 
-Each field has one of three visibility settings:
+A **profile** field has a **Who can see it** setting in the field form (it only appears when the context is Profile):
 
-| Visibility | Who sees the value |
-|------------|--------------------|
-| **Public** | Anyone, including logged-out visitors |
-| **Members only** | Logged-in community members |
-| **Private** | Only the member themselves and admins |
+| Setting | Who sees the value |
+|---------|--------------------|
+| **Everyone who can see the profile** (default) | Anyone who can view the member's profile |
+| **Only the member and site moderators** | The member, moderators and admins |
 
-Private fields are still editable by the member but do not appear on their public profile. They are accessible to admins via the admin Users page.
+A private field is left out of the profile page and of the REST API (`GET /users/{id}/fields` and the profile response) for everyone else, not just hidden on the page. The member is told who can see it under the field in their edit form: "Only you and site moderators can see this." On their profile the member and site moderators also see a lock and "Only you and site moderators" next to the value, and the field list in the admin marks private fields with a **Private** badge. Topic and space fields are always visible to anyone who can see the topic or space. Over REST, set `visibility` to `everyone` or `owner` when you create or update a field.
 
 ## How Members Fill In Fields
 
@@ -123,7 +122,7 @@ Members can only update their own fields. Admins can update any member's fields.
 
 **Setting one value at a time:** if you want to set a single field on a single object rather than sending the whole `custom_fields` object, `POST /custom-field-values` with the field key, the target object type and ID, and the value. This is the lightweight path used by the edit-profile form and is handy for partial updates from custom tooling.
 
-**How fields surface in output:** once a field is configured, its value is embedded automatically in the relevant REST responses - the `custom_fields` object on `/users` and `/posts` (and their list endpoints) - and rendered on the matching frontend surface (the member profile for profile fields, the post for post fields), subject to the field's visibility setting. You do not register a separate read endpoint per field; the value rides along with the object it belongs to.
+**How fields surface in output:** a topic field's value is embedded in the REST responses for topics (the `custom_fields` object on `/posts` and its list endpoints) and rendered on the topic. A profile field's value is read with `GET /users/{id}/fields` and rendered in the **Profile Details** block on the member's profile; it is not part of the `/users` responses. Private profile fields are left out for everyone except the member and site moderators. Everyone who is signed in can see a field's name and slug in `GET /fields` (the app needs them to build the edit form); only guests are never sent the name of a private field. You do not register a separate route for any of this.
 
 See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
 

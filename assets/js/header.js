@@ -136,7 +136,7 @@
 				badge.className = cls;
 				host.appendChild(badge);
 			}
-			badge.textContent = String(count);
+			badge.textContent = count > 99 ? '99+' : String(count);
 		} else if (badge) {
 			badge.remove();
 		}
@@ -295,10 +295,15 @@
 	function tabMenuExtras() {
 		return Array.prototype.slice.call(document.querySelectorAll('.jt-community-nav-links > a:not(.jt-nav-dup)'));
 	}
+	// Bar tabs that open a sheet name it in data-jt-menu: Me (jt-mobile-tab-menu) and, outside a space, New
+	// (jt-new-sheet, "Start a topic in..."). A link tab marked data-jt-direct navigates instead (New inside a space).
+	function sheetTrigger(menu) {
+		return menu ? document.querySelector('.jt-mobile-tab[data-jt-menu="' + menu.id + '"]') : null;
+	}
 	function closeTabMenu(returnFocus) {
-		var menu = document.querySelector('.jt-mobile-tab-menu');
-		var tab = document.querySelector('.jt-mobile-tab[data-jt-tab="profile"]');
-		if (!menu || menu.hidden) { return; }
+		var menu = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
+		if (!menu) { return; }
+		var tab = sheetTrigger(menu);
 		menu.hidden = true;
 		if (tab) {
 			tab.setAttribute('aria-expanded', 'false');
@@ -306,61 +311,117 @@
 		}
 	}
 	function prepareProfileTab() {
-		var tab = document.querySelector('.jt-mobile-tab[data-jt-tab="profile"]');
-		if (!tab || !tabMenuExtras().length) { return; }
-		tab.setAttribute('aria-haspopup', 'menu');
-		tab.setAttribute('aria-expanded', 'false');
-		tab.setAttribute('aria-controls', 'jt-mobile-tab-menu');
-	}
-	function openTabMenu(tab) {
-		var bar = tab.closest('.jt-mobile-tabs');
-		var menu = document.getElementById('jt-mobile-tab-menu');
-		if (menu) { menu.remove(); }
-		menu = document.createElement('div');
-		menu.id = 'jt-mobile-tab-menu';
-		menu.className = 'jt-mobile-tab-menu';
-		menu.setAttribute('role', 'menu');
-		var own = document.createElement('a');
-		own.href = tab.href;
-		var ownIcon = tab.querySelector('svg');
-		if (ownIcon) { own.appendChild(ownIcon.cloneNode(true)); }
-		var ownLabel = document.createElement('span');
-		ownLabel.textContent = (tab.querySelector('span') || tab).textContent.trim();
-		own.appendChild(ownLabel);
-		[own].concat(tabMenuExtras().map(function (a) { return a.cloneNode(true); })).forEach(function (a) {
-			a.className = 'jt-more-item';
-			a.removeAttribute('title');
-			a.setAttribute('role', 'menuitem');
-			menu.appendChild(a);
+		document.querySelectorAll('.jt-mobile-tab[data-jt-menu]').forEach(function (tab) {
+			var id = tab.getAttribute('data-jt-menu');
+			if (!document.getElementById(id) || tab.hasAttribute('data-jt-direct')) {
+				tab.removeAttribute('aria-haspopup');
+				tab.removeAttribute('aria-expanded');
+				tab.removeAttribute('aria-controls');
+				return;
+			}
+			tab.setAttribute('aria-haspopup', 'dialog' === document.getElementById(id).getAttribute('role') ? 'dialog' : 'menu');
+			tab.setAttribute('aria-expanded', 'false');
+			tab.setAttribute('aria-controls', id);
 		});
-		bar.appendChild(menu);
+	}
+	// The Me sheet is rendered by header.php (profile, my topics, bookmarks, leaderboard, settings). Opening it adds
+	// the top-nav-only links (Moderation, Pro's Messages) once, cloned so the hook output is never rendered twice.
+	function openTabMenu(tab) {
+		var menu = document.getElementById(tab.getAttribute('data-jt-menu'));
+		if (!menu) { return; }
+		if ('jt-mobile-tab-menu' === menu.id && !menu.querySelector('[data-jt-extra]')) {
+			tabMenuExtras().forEach(function (a) {
+				var c = a.cloneNode(true);
+				c.className = 'jt-more-item';
+				c.setAttribute('data-jt-extra', '1');
+				c.removeAttribute('title');
+				c.setAttribute('role', 'menuitem');
+				menu.appendChild(c);
+			});
+		}
+		menu.hidden = false;
 		tab.setAttribute('aria-expanded', 'true');
 		var first = menu.querySelector('a');
 		if (first) { first.focus(); }
 	}
+	/**
+	 * Keep the bottom bar true after a client-side navigation (the header is not re-rendered): the active tab, aria-current,
+	 * and where New goes (the space you are in, else the "Start a topic in..." sheet or the one space's composer).
+	 * A full page load is rendered by the server already.
+	 */
+	function syncMobileTabs() {
+		var bar = document.querySelector('.jt-mobile-tabs');
+		if (!bar) { return; }
+		var base = (bar.getAttribute('data-jt-base') || '').replace(/\/$/, '');
+		var rel = location.pathname.indexOf(base) === 0 ? location.pathname.slice(base.length) : location.pathname;
+		var space = rel.match(/^\/s\/([^/]+)/);
+		var key = '';
+		if (/^\/?$/.test(rel)) { key = 'home'; }
+		else if (/^\/s\/[^/]+\/new\/?$/.test(rel)) { key = 'new'; }
+		else if (/^\/(my-spaces|s\/|category\/)/.test(rel)) { key = 'spaces'; }
+		else if (/^\/notifications/.test(rel)) { key = 'alerts'; }
+		else if (/^\/search/.test(rel)) { key = 'search'; }
+		else if (/^\/(u\/|bookmarks|drafts|subscriptions|leaderboard|mod|messages)/.test(rel)) { key = 'me'; }
+		bar.querySelectorAll(':scope > .jt-mobile-tab[data-jt-key]').forEach(function (t) {
+			var on = t.getAttribute('data-jt-key') === key;
+			t.classList.toggle('active', on);
+			if (on) { t.setAttribute('aria-current', 'page'); } else { t.removeAttribute('aria-current'); }
+		});
+		var add = bar.querySelector('.jt-mobile-tab[data-jt-key="new"]');
+		if (add && add.tagName === 'A') {
+			add.setAttribute('href', space ? base + '/s/' + space[1] + '/new/' : bar.getAttribute('data-jt-new-fallback'));
+			add.toggleAttribute('data-jt-direct', !!space);
+		}
+	}
+	// The "Start a topic in..." sheet past 8 spaces: filter the loaded rows by name as the member types.
+	document.addEventListener('input', function (e) {
+		var box = e.target && e.target.closest ? e.target.closest('[data-jt-sheet-filter]') : null;
+		if (!box) { return; }
+		var sheet = box.closest('.jt-mobile-tab-menu');
+		var q = box.value.trim().toLowerCase();
+		var shown = 0;
+		sheet.querySelectorAll('[data-jt-sheet-row]').forEach(function (row) {
+			var hit = !q || row.textContent.toLowerCase().indexOf(q) !== -1;
+			row.hidden = !hit;
+			if (hit) { shown++; }
+		});
+		var empty = sheet.querySelector('[data-jt-sheet-empty]');
+		if (empty) { empty.hidden = shown > 0; }
+	});
 	prepareProfileTab();
 	document.addEventListener('jetonomy:navigated', function () {
 		closeTabMenu(false);
+		syncMobileTabs();
 		prepareProfileTab();
+	});
+	// Tabbing out of a sheet closes it (it has no scrim, so it must not be left open over the page).
+	document.addEventListener('focusin', function (e) {
+		var menu = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
+		if (menu && e.target && !menu.contains(e.target) && e.target !== sheetTrigger(menu)) { closeTabMenu(false); }
 	});
 	document.addEventListener('click', function (e) {
 		if (!e.target || !e.target.closest) { return; }
-		var tab = e.target.closest('.jt-mobile-tab[data-jt-tab="profile"]');
-		if (tab && tabMenuExtras().length) {
+		var tab = e.target.closest('.jt-mobile-tab[data-jt-menu]:not([data-jt-direct])');
+		if (tab && document.getElementById(tab.getAttribute('data-jt-menu'))) {
 			e.preventDefault();
 			var open = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
-			if (open) { closeTabMenu(false); } else { openTabMenu(tab); }
+			var mine = open && open.id === tab.getAttribute('data-jt-menu');
+			closeTabMenu(false);
+			if (!mine) { openTabMenu(tab); }
 			return;
 		}
 		// A click outside the menu, or on one of its links, closes it.
 		if (!e.target.closest('.jt-mobile-tab-menu') || e.target.closest('.jt-mobile-tab-menu a')) { closeTabMenu(false); }
-	});
+	}, true); // Capture: New is a real link, so the sheet must claim the click before the client-side router sees it.
 	document.addEventListener('keydown', function (e) {
 		var menu = document.querySelector('.jt-mobile-tab-menu:not([hidden])');
 		if (!menu) { return; }
 		if ('Escape' === e.key) {
 			closeTabMenu(true);
-		} else if (menu.contains(document.activeElement) && window.jetonomySmartDropdown && window.jetonomySmartDropdown.menuKeys) {
+		} else if ('Tab' === e.key && e.shiftKey && document.activeElement === menu.querySelector('input, a')) {
+			// Shift+Tab from the first row goes back to the tab that opened it: close the sheet behind it.
+			closeTabMenu(false);
+		} else if (menu.contains(document.activeElement) && !('INPUT' === document.activeElement.tagName && /^(Home|End)$/.test(e.key)) && window.jetonomySmartDropdown && window.jetonomySmartDropdown.menuKeys) {
 			window.jetonomySmartDropdown.menuKeys(menu, e);
 		}
 	});

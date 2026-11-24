@@ -139,6 +139,17 @@ class PermissionEngineTest extends WP_UnitTestCase {
 		$this->assertTrue( $allowed );
 	}
 
+	public function test_a_rate_limit_of_zero_turns_the_limit_off(): void {
+		$user_id  = $this->factory()->user->create();
+		$settings = (array) get_option( 'jetonomy_settings', array() );
+		update_option( 'jetonomy_settings', array_merge( $settings, array( 'rate_limits' => array( 'posts' => 0, 'replies' => 10, 'votes' => 5 ) ) ) );
+		try {
+			$this->assertTrue( Rate_Limiter::check( $user_id, 'create_posts', 0 ), '0 is no limit, not a ban on new members' );
+		} finally {
+			update_option( 'jetonomy_settings', $settings );
+		}
+	}
+
 	public function test_rate_limiter_blocks_after_threshold(): void {
 		$user_id = $this->factory()->user->create();
 

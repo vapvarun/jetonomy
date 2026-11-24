@@ -521,7 +521,14 @@ class Moderation_Service {
 			foreach ( $resolved as $row ) {
 				$reporter_id = (int) ( $row->reporter_id ?? 0 );
 				if ( $reporter_id > 0 && $reporter_id !== $author_id ) {
-					Reputation::award( $reporter_id, 'flag_validated' );
+					Reputation::award(
+						$reporter_id,
+						'flag_validated',
+						array(
+							'object_type' => 'flag',
+							'object_id'   => (int) ( $row->id ?? 0 ),
+						)
+					);
 				}
 			}
 		}
@@ -724,6 +731,7 @@ class Moderation_Service {
 				array(
 					'object_type' => $object_type,
 					'object_id'   => $object_id,
+					'reporter_id' => $reporter_id,
 				)
 			);
 		}
@@ -1059,18 +1067,6 @@ class Moderation_Service {
 				)
 			);
 		}
-		// A moderator removing their OWN content is a self-delete: no penalty.
-		if ( in_array( $action, array( 'spam', 'trash' ), true ) && ! $was_removed && ! empty( $row->author_id ) && (int) $row->author_id !== $user_id ) {
-			Reputation::award_once(
-				(int) $row->author_id,
-				'post_removed',
-				array(
-					'object_type' => $type,
-					'object_id'   => $id,
-				)
-			);
-		}
-
 		/**
 		 * Fires after a moderation action is applied to a post or reply.
 		 *
@@ -1082,6 +1078,21 @@ class Moderation_Service {
 		 * @param int    $user_id Acting user ID (0 = system).
 		 */
 		do_action( 'jetonomy_content_moderated', $action, $type, $id, $user_id );
+
+		// The moderator penalty comes AFTER the moderation event, not before it: listeners to the event
+		// (a points plugin taking back the participation award) settle first, so the penalty is cut from
+		// what the member still holds and a small balance is never pushed below zero by the two together.
+		// A moderator removing their OWN content is a self-delete: no penalty.
+		if ( in_array( $action, array( 'spam', 'trash' ), true ) && ! $was_removed && ! empty( $row->author_id ) && (int) $row->author_id !== $user_id ) {
+			Reputation::award_once(
+				(int) $row->author_id,
+				'post_removed',
+				array(
+					'object_type' => $type,
+					'object_id'   => $id,
+				)
+			);
+		}
 
 		return true;
 	}

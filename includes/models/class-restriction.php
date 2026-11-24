@@ -43,11 +43,17 @@ class Restriction extends Model {
 	 * of a decision, or a moderator reaching someone at or above their own
 	 * level.
 	 *
-	 * @param int $target_id User being restricted.
-	 * @param int $issued_by Actor issuing it; 0 or less means system-issued.
+	 * With a space (a space ban, since 2.1.0), an actor whose only authority is
+	 * being that space's moderator may reach only a member or viewer on its
+	 * roster who is not the space's author. A space admin keeps the site rules
+	 * alone.
+	 *
+	 * @param int      $target_id User being restricted.
+	 * @param int      $issued_by Actor issuing it; 0 or less means system-issued.
+	 * @param int|null $space_id  Space of a space ban, else null.
 	 * @return true|\WP_Error True when allowed.
 	 */
-	public static function actor_may_restrict( int $target_id, int $issued_by ) {
+	public static function actor_may_restrict( int $target_id, int $issued_by, ?int $space_id = null ) {
 		if ( $issued_by <= 0 ) {
 			return true;
 		}
@@ -79,6 +85,27 @@ class Restriction extends Model {
 				__( 'Only an administrator can restrict another moderator.', 'jetonomy' ),
 				array( 'status' => 403 )
 			);
+		}
+
+		if ( $space_id && ! user_can( $issued_by, 'jetonomy_moderate' ) && 'moderator' === SpaceMember::get_role( $space_id, $issued_by ) ) {
+			$target_role = SpaceMember::get_role( $space_id, $target_id );
+			if ( null === $target_role ) {
+				return new \WP_Error(
+					'jetonomy_not_space_member',
+					/* translators: %s: member label, singular, lowercase (e.g. "member"). */
+					sprintf( __( 'This person is not a %s here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
+					array( 'status' => 404 )
+				);
+			}
+			$space = Space::find( $space_id );
+			if ( ! in_array( $target_role, array( 'member', 'viewer' ), true ) || ( $space && (int) $space->author_id === $target_id ) ) {
+				return new \WP_Error(
+					'jetonomy_cannot_ban_space_staff',
+					/* translators: %s: space label, singular, lowercase (e.g. "space"). */
+					sprintf( __( 'A moderator cannot restrict the owner, an admin or a moderator of this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					array( 'status' => 403 )
+				);
+			}
 		}
 
 		return true;
@@ -185,14 +212,16 @@ class Restriction extends Model {
 			$user_id = 0;
 		}
 
-		$blocked = self::actor_may_restrict( $user_id, $issued_by );
+		$blocked = self::actor_may_restrict( $user_id, $issued_by, 'space_ban' === $type ? $space_id : null );
 		if ( is_wp_error( $blocked ) ) {
 			return 0;
 		}
 
 		// is_space_banned() matches an exact space, so a space ban with no
-		// space restricts nothing while every caller reports success
-		if ( 'space_ban' === $type && ! $space_id ) {
+		// space restricts nothing while every caller reports success. Any type
+		// naming a space that does not exist would store an orphan row (every
+		// writer lands here).
+		if ( ( 'space_ban' === $type && ! $space_id ) || ( $space_id && ! Space::find( $space_id ) ) ) {
 			return 0;
 		}
 
@@ -231,6 +260,9 @@ class Restriction extends Model {
 		// after banning; the QA suite bans then asserts denial).
 		self::reset_memo();
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
+		if ( $id && null !== $expires_at ) {
+			\Jetonomy\Cron::arm_due_jobs(); // Its row is cleaned up when it expires.
+		}
 
 		return $id;
 	}
@@ -645,6 +677,16 @@ class Restriction extends Model {
 		self::reset_memo();
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 		return $result;
+	}
+
+	/**
+	 * Earliest expiry among restrictions that expire (expires index), or null.
+	 *
+	 * @return string|null UTC 'Y-m-d H:i:s'.
+	 */
+	public static function next_expiry(): ?string {
+		$next = static::db()->get_var( 'SELECT MIN(expires_at) FROM ' . static::table() . ' WHERE expires_at IS NOT NULL' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name only.
+		return $next ? (string) $next : null;
 	}
 
 	/**

@@ -46,8 +46,10 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 			<?php /* translators: %d: number of currently banned members. */ ?>
 			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), absint( $total_banned ) ); ?>
 		</a>
-		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Auto-Rules', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+		<?php $jt_pro_locked = \Jetonomy\Admin\Admin::show_pro_promo(); ?>
+		<?php if ( $jt_pro_locked ) : ?>
+			<?php // Locked, not dead: a keyboard-reachable link to the explainer below, announced as unavailable. ?>
+			<?php \Jetonomy\Admin\Admin::pro_locked_tab( __( 'Auto-Rules', 'jetonomy' ), 'jt-pro-explain-auto-rules' ); ?>
 		<?php endif; ?>
 		<?php
 		/**
@@ -59,6 +61,24 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 		do_action( 'jetonomy_admin_moderation_tabs', $active_tab );
 		?>
 	</nav>
+
+	<?php
+	if ( $jt_pro_locked ) {
+		// A busy queue (5 or more waiting, from the counts already on this page) gets the dismissible card; otherwise,
+		// or once dismissed, the one-line explainer. Either way the locked tab's describedby target is on screen.
+		$jt_queue = absint( $total_posts ) + absint( $total_replies ) + absint( $total_flags );
+		$jt_card  = $jt_queue >= 5 && \Jetonomy\Admin\Admin::pro_card(
+			'moderation-busy',
+			__( 'Tired of reviewing the same spam by hand?', 'jetonomy' ),
+			/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. */
+			sprintf( __( 'Pro Auto-Rules filter new %1$s and %2$s by keyword, link count and spam score before they reach your queue.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+			'jt-pro-explain-auto-rules'
+		);
+		if ( ! $jt_card ) {
+			\Jetonomy\Admin\Admin::pro_explainer( 'jt-pro-explain-auto-rules', __( 'Auto-Rules is part of Pro: keyword, link and spam-score filters that hold content before it reaches this queue.', 'jetonomy' ) );
+		}
+	}
+	?>
 
 	<?php if ( 'posts' === $active_tab ) : ?>
 		<!-- Pending Posts -->
@@ -126,7 +146,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo esc_html( $p->space_title ?? '—' );
 									break;
 								case 'date':
-									echo esc_html( human_time_diff( strtotime( $p->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+									echo esc_html( \Jetonomy\time_ago( (string) $p->created_at ) );
 									break;
 								case 'actions':
 									?>
@@ -147,7 +167,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<div class="tablenav-pages">
 						<span class="displaying-num">
 							<?php
-							$_first = ( $paged_posts - 1 ) * $per_page + 1;
+							$_first = jetonomy_page_offset( $paged_posts, $per_page ) + 1;
 							$_last  = min( $paged_posts * $per_page, $total_posts );
 							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_posts ) ) );
@@ -237,7 +257,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo esc_html( $r->post_title ?? '#' . $r->post_id );
 									break;
 								case 'date':
-									echo esc_html( human_time_diff( strtotime( $r->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+									echo esc_html( \Jetonomy\time_ago( (string) $r->created_at ) );
 									break;
 								case 'actions':
 									?>
@@ -258,7 +278,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<div class="tablenav-pages">
 						<span class="displaying-num">
 							<?php
-							$_first = ( $paged_replies - 1 ) * $per_page + 1;
+							$_first = jetonomy_page_offset( $paged_replies, $per_page ) + 1;
 							$_last  = min( $paged_replies * $per_page, $total_replies );
 							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_replies ) ) );
@@ -356,7 +376,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									}
 									break;
 								case 'reason':
-									echo '<span class="jetonomy-badge jetonomy-badge--flag-' . esc_attr( $f->reason ) . '">' . esc_html( ucfirst( str_replace( '_', ' ', $f->reason ) ) ) . '</span>';
+									echo '<span class="jetonomy-badge jetonomy-badge--flag-' . esc_attr( $f->reason ) . '">' . esc_html( \Jetonomy\Models\Flag::reason_labels()[ $f->reason ] ?? ucfirst( str_replace( '_', ' ', $f->reason ) ) ) . '</span>';
 									break;
 								case 'description':
 									echo esc_html( $f->description ? $f->description : '—' );
@@ -366,7 +386,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo esc_html( $reporter ? $reporter->display_name : __( 'Unknown', 'jetonomy' ) );
 									break;
 								case 'date':
-									echo esc_html( human_time_diff( strtotime( $f->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+									echo esc_html( \Jetonomy\time_ago( (string) $f->created_at ) );
 									break;
 								case 'actions':
 									?>
@@ -386,7 +406,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<div class="tablenav-pages">
 						<span class="displaying-num">
 							<?php
-							$_first = ( $paged_flags - 1 ) * $per_page + 1;
+							$_first = jetonomy_page_offset( $paged_flags, $per_page ) + 1;
 							$_last  = min( $paged_flags * $per_page, $total_flags );
 							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_flags ) ) );
@@ -480,7 +500,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 										'ip_ban'     => __( 'IP address ban', 'jetonomy' ),
 										/* translators: %s: singular space label. */
 										'space_ban'  => sprintf( __( '%s ban', 'jetonomy' ), \Jetonomy\space_label() ),
-										default      => ucfirst( str_replace( '_', ' ', (string) $ban->type ) ),
+										default      => (string) $ban->type, // An add-on's type: shown as stored.
 									};
 									echo '<span class="jetonomy-badge jetonomy-badge--ban">' . esc_html( $jt_ban_label ) . '</span>';
 									break;
@@ -517,7 +537,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<div class="tablenav-pages">
 						<span class="displaying-num">
 							<?php
-							$_first = ( $paged_banned - 1 ) * $per_page + 1;
+							$_first = jetonomy_page_offset( $paged_banned, $per_page ) + 1;
 							$_last  = min( $paged_banned * $per_page, $total_banned );
 							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_banned ) ) );

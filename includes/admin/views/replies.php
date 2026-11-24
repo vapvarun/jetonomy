@@ -148,7 +148,7 @@ if ( ! empty( $trash_count ) ) {
 			<?php if ( $total ) : ?>
 				<span class="displaying-num">
 					<?php
-					$_first = ( $paged - 1 ) * $per_page + 1;
+					$_first = jetonomy_page_offset( $paged, $per_page ) + 1;
 					$_last  = min( $paged * $per_page, $total );
 					printf(
 						/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
@@ -322,10 +322,7 @@ if ( ! empty( $trash_count ) ) {
 							<span title="<?php echo esc_attr( $r->created_at ?? '' ); ?>">
 								<?php
 								if ( ! empty( $r->created_at ) ) {
-									echo esc_html(
-										human_time_diff( strtotime( $r->created_at ), time() )
-										. ' ' . __( 'ago', 'jetonomy' )
-									);
+									echo esc_html( \Jetonomy\time_ago( (string) $r->created_at ) );
 								} else {
 									echo '&mdash;';
 								}

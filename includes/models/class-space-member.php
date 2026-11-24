@@ -63,7 +63,7 @@ class SpaceMember extends Model {
 		// A membership plugin, automation or access rule can still name a space the
 		// owner deleted; joining it would store an orphan row on every enrolment.
 		if ( $space_id <= 0 || ! Space::find( $space_id ) ) {
-			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'That %s no longer exists.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 404 ) );
+			return Space::missing_error();
 		}
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
@@ -374,7 +374,7 @@ class SpaceMember extends Model {
 		$space = Space::find( $space_id );
 		if ( ! $space || Space::concealed_from_viewer( $space, $user_id ) ) {
 			return new \WP_Error(
-				'jetonomy_not_found',
+				'jetonomy_space_not_found',
 				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 				array( 'status' => 404 )
@@ -611,15 +611,7 @@ class SpaceMember extends Model {
 	 * @return string|null
 	 */
 	public static function get_role( int $space_id, int $user_id ): ?string {
-		if ( ! self::$memo_registered ) {
-			self::$memo_registered = true;
-			\Jetonomy\Cache::register_memo_reset(
-				static function (): void {
-					self::$role_cache       = array();
-					self::$role_label_cache = array();
-				}
-			);
-		}
+		self::register_memo();
 
 		$key = $space_id . '|' . $user_id;
 		if ( ! array_key_exists( $key, self::$role_cache ) ) {
@@ -635,6 +627,35 @@ class SpaceMember extends Model {
 		}
 
 		return self::$role_cache[ $key ];
+	}
+
+	/**
+	 * Seed get_role() from roster rows the caller already fetched (list_by_space),
+	 * so per-row permission checks on a members page run no query of their own.
+	 *
+	 * @param object[] $rows Rows with space_id, user_id, role and source.
+	 */
+	public static function prime_roles_from_rows( array $rows ): void {
+		self::register_memo();
+		foreach ( $rows as $row ) {
+			self::$role_cache[ (int) $row->space_id . '|' . (int) $row->user_id ] = self::live_role( $row, (int) $row->user_id );
+		}
+	}
+
+	/**
+	 * Clear the role memos whenever Cache resets request memos (once per request).
+	 */
+	private static function register_memo(): void {
+		if ( self::$memo_registered ) {
+			return;
+		}
+		self::$memo_registered = true;
+		\Jetonomy\Cache::register_memo_reset(
+			static function (): void {
+				self::$role_cache       = array();
+				self::$role_label_cache = array();
+			}
+		);
 	}
 
 	/**
@@ -865,6 +886,25 @@ class SpaceMember extends Model {
 			$out[ (int) $row->user_id ] = (string) $row->role;
 		}
 		return $out;
+	}
+
+	/**
+	 * The next page of a space's member ids, by keyset on the primary key (space_id, user_id): one indexed read per
+	 * batch, so a broadcast to a large space never deep-OFFSETs.
+	 *
+	 * @param int $space_id Space.
+	 * @param int $after    Last user id already handled (0 to start).
+	 * @param int $limit    Page size.
+	 * @return int[] User ids, ascending.
+	 */
+	public static function user_ids_after( int $space_id, int $after, int $limit ): array {
+		if ( $space_id <= 0 ) {
+			return array();
+		}
+		$db    = static::db();
+		$table = static::table();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return array_map( 'intval', $db->get_col( $db->prepare( "SELECT user_id FROM {$table} WHERE space_id = %d AND user_id > %d ORDER BY user_id ASC LIMIT %d", $space_id, $after, max( 1, $limit ) ) ) ?: array() );
 	}
 
 	/**

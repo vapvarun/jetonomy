@@ -47,7 +47,7 @@ The full `--jt-accent` adoption chain and the WCAG contrast guard that derives r
 | Category | Tokens |
 |----------|--------|
 | Typography | `--jt-font`, `--jt-font-heading`, `--jt-font-mono` |
-| Accent | `--jt-accent`, `--jt-accent-hover`, `--jt-accent-light`, `--jt-accent-muted` |
+| Accent | `--jt-accent`, `--jt-accent-hover`, `--jt-accent-light`, `--jt-accent-muted`, `--jt-accent-fg`, `--jt-accent-hover-fg`, `--jt-accent-ink`, `--jt-accent-ink-hover`, `--jt-focus-ring` |
 | Text | `--jt-text`, `--jt-text-secondary`, `--jt-text-tertiary` |
 | Background | `--jt-bg`, `--jt-bg-subtle`, `--jt-bg-muted`, `--jt-bg-hover` |
 | Border | `--jt-border`, `--jt-border-strong` |
@@ -92,21 +92,35 @@ Source: `assets/css/jetonomy-tokens.css` (the `:root` block, `--jt-accent`). The
 
 To pin an exact accent instead of the adopted one, set **Settings → Appearance → Accent Color** to any value other than the `#0073aa` default. That emits `:root{--jt-accent:<chosen>}` inline via `Template_Loader::palette_css()`, which outranks the static chain on every theme. Leaving it at `#0073aa` (the "not set" sentinel) keeps adoption active - `palette_tokens()` deliberately skips that exact value (`includes/class-template-loader.php:819`).
 
-### WCAG contrast guard (1.8.0)
+### WCAG contrast guard
 
-Adopting an arbitrary theme brand colour and painting hard-coded white text on it fails WCAG AA on pale or muted brand colours (measured: 7 of 11 themes failed, Reign's lavender at 2.13:1). The fix cannot run in PHP - `--jt-accent` usually resolves to a theme token the browser only learns at runtime, so the server never sees the final colour. Instead the readable foreground is **derived in CSS** from whatever colour was adopted:
+Adopting an arbitrary theme brand colour and painting hard-coded white text on it fails WCAG AA on pale or mid-tone brand colours. When `--jt-accent` resolves to a theme token, only the browser learns the final colour, so the readable label is **derived in CSS** from whatever colour was adopted:
 
 ```css
-/* assets/css/jetonomy-tokens.css */
-@supports (color: oklch(from red l c h)) {
+/* assets/css/jetonomy-tokens.css (shortened: the same expression fills all three channels) */
+@supports (color: color(from red srgb-linear r g b)) {
     :root {
-        --jt-accent-fg:       oklch(from var(--jt-accent)       clamp(0, (0.57 - l) * 1000, 1) 0 h);
-        --jt-accent-hover-fg: oklch(from var(--jt-accent-hover) clamp(0, (0.57 - l) * 1000, 1) 0 h);
+        --jt-accent-fg: color(from var(--jt-accent) srgb-linear
+            clamp(0, (0.1833 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 100000, 1) ...);
+        --jt-accent-hover-fg: color(from var(--jt-accent-hover) srgb-linear ...);
     }
 }
 ```
 
-It pulls the lightness (`l`) out of the accent, snaps it across the `0.57` threshold, and forces chroma `0` - so the text resolves to pure black on light accents and pure white on dark ones. The threshold is derived, not chosen: sweeping `0.40–0.80` against 11 real theme accents, `0.56–0.58` is the only band where all 11 clear AA. Hover gets its own derivation because `--jt-accent-hover` is the accent mixed 85% toward black and can flip the black/white choice. Buttons consume it - `.jt-btn-fill { color: var(--jt-accent-fg); }` in `assets/css/jetonomy.css`. The rule is feature-gated behind `@supports`; engines without relative-colour syntax fall back to the plain `--jt-accent-fg: var(--jt-white)` default declared in `:root`, so behaviour is never worse than before. The theme's brand colour itself is untouched; only the text on top of it adapts.
+The expression is the fill's WCAG relative luminance. The label is white while white reaches 4.5:1 on the fill (luminance 0.1833 or less), and black above that (4.67:1 or more), so it never falls under 4.5:1. White is preferred whenever it passes, so brand colours where white already reads (Reign `#1d76da`, the default `#0073aa`) keep white. Hover gets the same rule on its own fill, so a fill that rests with a black label can show a white one on hover. Buttons consume it: `.jt-btn-fill { color: var(--jt-accent-fg); }`.
+
+**Browser limit.** The derivation needs relative colour syntax: Chrome 119+, Safari 16.4+, Firefox 128+. In an older engine the `@supports` block is skipped and the label falls back to white, which is below 4.5:1 on mid-tone accents (`#1d7cd5` 4.29:1, `#ef5455` 3.46:1). That gap applies only to an accent the browser resolves from the theme. When the server knows the accent, it writes the label pair as concrete hex values that work in every browser:
+
+- an accent picked under **Jetonomy → Settings → Appearance → Color Palette**;
+- the BuddyX and BuddyX Pro Customizer colours, read by the theme bridge (light and dark).
+
+Both use `Template_Loader::accent_fg_tokens()`, which applies the same rule as the CSS.
+
+**Accent as a line or text.** `--jt-accent-ink` and `--jt-accent-ink-hover` are the accent used for text, outlines, hover borders and the focus ring, never as a fill. In light, a light accent is darkened in linear sRGB to a relative luminance of at most 0.17, the same hue at 4.5:1 on white and on the subtle surfaces (`#ffd34d` becomes `#886f24`); an accent already that dark keeps its exact colour (the default `#0073aa`), and Reign's `#1d76da` is a shade darker as ink (`#1b72d3`) while its fills stay `#1d76da`. In dark they lift a dark accent to OKLCH lightness 0.72, so the default `#0073aa` stays readable on a dark page (a line at 3:1 or more, text at 4.5:1 or more); the hover colour gets the same floor, so it cannot drop below it. An accent that is already light, such as Reign's dark blue, keeps its exact colour. When the server knows the accent (the Appearance picker, the BuddyX bridge), `Template_Loader::accent_ink_tokens()` writes the light pair as hex under `Template_Loader::LIGHT_ROOT` (`:root` while no dark signal is on it). `--jt-accent-strong`, the accent shade for text on an accent tint, is mixed from the ink. Use `--jt-accent` only where the accent is a fill.
+
+**Hover fills.** A hover fill is `--jt-accent-hover` and its label is `--jt-accent-hover-fg`, picked by the same luminance rule on the hover colour. Never pair a hover or strong fill with `--jt-accent-fg`: that label was picked for the resting fill.
+
+**Edges and muted text for any host text colour.** `--jt-border-strong` (control outlines) is 50% of `--jt-text` over the card, then held to 3:1 against the card, page and muted tints: in light at most luminance 0.24, in dark at least OKLCH lightness 0.68. `--jt-text-secondary` and `--jt-text-tertiary` are held to 4.5:1 on the muted and accent tints the same way (light at most 0.13, dark at least 0.76). Every Jetonomy `<button>` that draws a border takes `--jt-border-strong`: the plugin's button reset sets it, so a theme or a component cannot leave a button with a faint edge. A host text colour such as Reign's `#404855` or a mid-grey `#6b7280` therefore still gets 3:1 control edges; `--jt-text` itself always stays the host's colour.
 
 See `docs/standards/host-theme-color-adoption.md` in the plugin repo for the full verified token map per theme, the compliance checklist, and guidance on themes that expose no recognizable brand token.
 

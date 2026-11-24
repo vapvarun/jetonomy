@@ -139,6 +139,7 @@ class Membership_Roster_Sync {
 			// ends. Only genuinely new rows are stamped 'tier'.
 			SpaceMember::add( (int) $rule->space_id, $user_id, $role, self::SOURCE );
 		}
+		\Jetonomy\Cron::arm_due_jobs(); // Tier rows now exist: the hourly backstop re-checks them.
 	}
 
 	/**
@@ -196,7 +197,7 @@ class Membership_Roster_Sync {
 	 * Keyset-paged on the (space_id, user_id) primary key so a large roster is
 	 * never loaded at once and the walk is stable under concurrent deletes.
 	 *
-	 * Scheduled hourly-ish by Cron (jetonomy_reconcile_rosters).
+	 * Run by the due-time job (Cron::DUE_HOOK) an hour after the last run while tier rows exist.
 	 *
 	 * ponytail: full reconcile per run, paged. If a site ever has millions of
 	 * tier rows, carry a cross-run cursor like the trust evaluator does.

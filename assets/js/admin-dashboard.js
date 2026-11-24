@@ -48,14 +48,25 @@
 		return typeof window.jetonomyConfirm === 'function' ? window.jetonomyConfirm(msg, opts) : Promise.resolve(false);
 	};
 
-	function run(btn, path, method, confirmMsg, busyLabel, done, danger) {
+	// data: request body (the demo-data routes need confirm: true). When the import answers 409 because the community
+	// already has its own content, the owner is asked once more and the request is resent with force: true.
+	function run(btn, path, method, confirmMsg, busyLabel, done, danger, data) {
 		btn.addEventListener('click', function () {
 			_confirm(confirmMsg, { danger: danger }).then(function (ok) {
 				if (!ok) { return; }
 				var label = Array.prototype.slice.call(btn.childNodes);
 				btn.disabled = true;
 				btn.textContent = busyLabel;
-				wp.apiFetch({ path: path, method: method })
+				var send = function (body) {
+					return wp.apiFetch({ path: path, method: method, data: body }).catch(function (err) {
+						if (!err || 'jetonomy_demo_real_content' !== err.code) { throw err; }
+						return _confirm(err.message, { danger: true }).then(function (again) {
+							if (!again) { throw { code: 'jetonomy_cancelled' }; }
+							return send(Object.assign({}, body, { force: true }));
+						});
+					});
+				};
+				send(data)
 					.then(function () {
 						var url = new URL(window.location.href);
 						url.searchParams.set('jt_demo', done);
@@ -64,6 +75,7 @@
 					.catch(function (err) {
 						btn.disabled = false;
 						btn.replaceChildren.apply(btn, label);
+						if (err && 'jetonomy_cancelled' === err.code) { return; }
 						// apiFetch reports a request that never got an answer as
 						// fetch_error with core's generic wording; name the cause.
 						_alert(err && 'fetch_error' === err.code ? i18n.network : ((err && err.message) || i18n.error));
@@ -74,11 +86,11 @@
 
 	var remove = document.getElementById('jetonomy-cleanup-demo');
 	if (remove) {
-		run(remove, '/jetonomy/v1/admin/demo-data', 'DELETE', i18n.removeConfirm, i18n.removing, 'removed', true);
+		run(remove, '/jetonomy/v1/admin/demo-data', 'DELETE', i18n.removeConfirm, i18n.removing, 'removed', true, { confirm: true });
 	}
 	var add = document.getElementById('jetonomy-import-demo');
 	if (add) {
-		run(add, '/jetonomy/v1/admin/demo-data', 'POST', i18n.importConfirm, i18n.importing, 'imported', false);
+		run(add, '/jetonomy/v1/admin/demo-data', 'POST', i18n.importConfirm, i18n.importing, 'imported', false, { confirm: true });
 	}
 	var recount = document.getElementById('jetonomy-recount');
 	if (recount) {

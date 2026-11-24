@@ -26,18 +26,18 @@ Jetonomy uses six trust levels (0 through 5) to gradually extend posting privile
 | 4 | Leader | Manual - granted by moderator or admin |
 | 5 | Veteran | Manual - granted by admin only |
 
-The cron job runs every 12 hours and re-evaluates every member against the configured thresholds. Demotion is also possible - if a member is muted or receives too many spam flags, their trust level can drop.
+The cron job runs every 12 hours and re-evaluates every member against the configured thresholds. Levels 1 to 3 only go up automatically: a member who later falls below a level keeps it, so nobody loses abilities without warning. To lower a member's level, change it by hand on the Users screen.
 
 ## Trust Level Thresholds
 
 **Setting:** `trust_thresholds`
 **Location:** Permissions tab → Trust Levels section
 
-Each auto-promotion level (1, 2, and 3) has a configurable set of thresholds. A member must meet all thresholds for a level to be promoted to it.
+Each auto-promotion level (1, 2, and 3) has a configurable set of thresholds. A member must meet all four thresholds for a level to be promoted to it, and the levels are cleared in order. A threshold left at 0 is not checked, so you turn one off by clearing it.
 
 | Threshold | Description | Configurable |
 |---|---|---|
-| `posts` | Minimum posts created | Yes |
+| `posts` | Minimum topics and replies written | Yes |
 | `days_active` | Minimum days since registration | Yes |
 | `reputation` | Minimum reputation score | Yes |
 | `replies_received` | Minimum replies received on own posts | Yes |
@@ -49,7 +49,9 @@ Each auto-promotion level (1, 2, and 3) has a configurable set of thresholds. A 
 | `posts` | 5 |
 | `days_active` | 3 |
 | `reputation` | 0 |
-| `replies_received` | 10 |
+| `replies_received` | 0 |
+
+A member who only answers questions still reaches Level 1: replies count toward `posts`, and no replies on their own topics are required by default. Communities that saved their own thresholds before this change keep the values they saved; clear **Replies Received** on Level 1 to let reply-only members through.
 
 For small communities (under 200 members), lower the thresholds. Members can feel stuck if Level 1 requirements take weeks to meet. For larger communities, raise the thresholds to protect against spam waves.
 
@@ -77,6 +79,12 @@ For small communities (under 200 members), lower the thresholds. Members can fee
 
 > **Note:** The anti-spam exemption at Level 2 is important. Members who have earned Level 2 are trusted enough to skip reCAPTCHA and Turnstile checks entirely. This keeps the experience smooth for your most active members.
 
+## Space Moderators
+
+**Setting:** `moderators_can_ban` (since 2.1.0, off by default)
+
+Tick **Space moderators can ban members** to let a space's moderators ban members of that space from it, and lift those bans, from the space's **Members** page. A moderator can ban only members and viewers on that space's roster. They can never ban the space's owner, its admins, another moderator, a site moderator or a site administrator, and they cannot issue site-wide bans, silences or IP bans. Only administrators can change this setting. Space admins can always ban from their space, with or without it.
+
 ## Rate Limits
 
 **Setting:** `rate_limits`
@@ -91,6 +99,8 @@ Rate limits cap how many actions a member can take in a given time window. They 
 | Vote | 5 | per day |
 
 Trust Level 1+ members are exempt from all rate limits.
+
+An empty field goes back to its default (3, 10 or 5). `0` turns that limit off, so new members can post, reply or vote without a daily cap (before 2.1.0 a `0` blocked them completely). The trust level thresholds follow the same rule: an empty field takes that level's default, and `0` means no requirement for that measure. A number outside a field's range is saved as the nearest allowed value and the screen says so.
 
 For high-traffic communities, raise these limits. For communities experiencing spam problems, lower them. Changes take effect immediately - no cache flush needed.
 

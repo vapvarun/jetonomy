@@ -34,6 +34,10 @@ final class Jetonomy {
 		// Active theme's theme.json always wins — this provides sensible defaults for classic themes.
 		add_filter( 'wp_theme_json_data_default', array( $this, 'register_plugin_theme_json' ) );
 
+		// One "settings changed" action for every writer: form, REST, CLI, direct update_option().
+		add_action( 'update_option_' . Settings::OPTION, array( Settings::class, 'announce' ), 10, 2 );
+		add_action( 'add_option_' . Settings::OPTION, array( Settings::class, 'announce' ), 10, 2 );
+
 		// 1.4.0 C.3: a globally banned user must not be able to log in. Without
 		// this filter, a banned user retained their session cookie across the
 		// ban (and could re-authenticate after logout) — Permission_Engine
@@ -140,6 +144,7 @@ final class Jetonomy {
 
 		require_once JETONOMY_DIR . 'includes/db/class-schema.php';
 		DB\Schema::create_tables();
+		Queue::flag_recovery(); // Kept jobs that failed while Jetonomy was off are queued again on the next scheduling request.
 
 		require_once JETONOMY_DIR . 'includes/permissions/class-capabilities.php';
 		Permissions\Capabilities::register();
@@ -263,11 +268,7 @@ final class Jetonomy {
 	public function deactivate(): void {
 		// Delete the versioned flush-key so the next activation triggers a fresh flush.
 		delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
-		Cron::unschedule();
-		// In-flight space purges too, in both schedulers - the background-jobs
-		// standard requires deactivation to leave nothing queued.
-		Space_Purge::clear_scheduled();
-		Recount_Backfill::clear_scheduled();
+		Cron::unschedule(); // Leaves the jobs in Queue::KEEP_ON_DEACTIVATE pending.
 		flush_rewrite_rules();
 	}
 
@@ -285,10 +286,26 @@ final class Jetonomy {
 		$this->check_db_version();
 		$this->load_dependencies();
 		$this->maybe_backfill_activity();
-		$this->maybe_seed_verification_reminder_defaults();
+		// The seed builds a translated email template, so it waits for init, after load_textdomain() (priority 1):
+		// on plugins_loaded it triggered WordPress's "translation loaded too early" notice.
+		add_action( 'init', array( $this, 'maybe_seed_verification_reminder_defaults' ), 2 );
 		$this->maybe_seed_frontend_space_creation_roles();
 
 		Admin_Bar::register();
+
+		if ( ! did_action( 'jetonomy_loaded' ) ) {
+			/**
+			 * Fires once per request when Jetonomy has finished booting: on plugins_loaded at priority 10, after its
+			 * classes, router and settings are loaded. Hook it from a companion plugin to extend Jetonomy without
+			 * caring about plugin load order. It does not fire when Jetonomy is paused (PHP older than 8.1). To check
+			 * whether Jetonomy is active, test defined( 'JETONOMY_VERSION' ) or function_exists( 'jetonomy' ).
+			 *
+			 * @since 2.1.0
+			 *
+			 * @param \Jetonomy\Jetonomy $jetonomy The main plugin object, the same as jetonomy().
+			 */
+			do_action( 'jetonomy_loaded', $this );
+		}
 	}
 
 	/**
@@ -332,7 +349,7 @@ final class Jetonomy {
 	 * single option so the work only happens once per site, identical
 	 * pattern to maybe_backfill_activity() above.
 	 */
-	private function maybe_seed_verification_reminder_defaults(): void {
+	public function maybe_seed_verification_reminder_defaults(): void {
 		if ( get_option( 'jetonomy_verification_reminder_seeded' ) ) {
 			return;
 		}
@@ -438,6 +455,7 @@ final class Jetonomy {
 			require_once JETONOMY_DIR . 'includes/db/class-schema.php';
 			DB\Schema::create_tables();
 
+			Queue::flag_recovery(); // One-click updates deactivate silently: recover kept jobs failed during the swap.
 			update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
 			delete_transient( $lock );
 			return;
@@ -456,9 +474,11 @@ final class Jetonomy {
 	/**
 	 * Create any schema table that is missing even though db_version is at target.
 	 *
-	 * Runs at most once per plugin version (an autoloaded option flag short-circuits
-	 * it), and the SHOW TABLES sentinel only triggers real work when a table is
-	 * actually absent — so the steady-state cost is a single option read.
+	 * Runs once per plugin version (the autoloaded jetonomy_schema_checked flag), then
+	 * again at most once a day on an admin request (the jetonomy_schema_recheck
+	 * transient), so a table dropped after the version check is recreated too. The
+	 * SHOW TABLES sentinel only triggers real work when a table is actually absent, so
+	 * the steady-state cost is one option read plus, in wp-admin, one transient read.
 	 *
 	 * The sentinel is EVERY table the schema defines, compared in one SHOW TABLES
 	 * query, so a table added later is repaired too even when the version constant was
@@ -470,9 +490,14 @@ final class Jetonomy {
 	 * whenever the table is absent is safe.
 	 */
 	private function maybe_repair_schema(): void {
-		if ( get_option( 'jetonomy_schema_checked' ) === JETONOMY_VERSION ) {
+		// Once per plugin version, and then at most once a day on an admin request: a table dropped after the version check
+		// ran (a partial restore, a hosting clean-up) would otherwise stay missing, with an error on every query, until the
+		// plugin was deactivated and activated again. The steady-state cost is one transient read.
+		if ( get_option( 'jetonomy_schema_checked' ) === JETONOMY_VERSION
+			&& ( ! is_admin() || get_transient( 'jetonomy_schema_recheck' ) ) ) {
 			return;
 		}
+		set_transient( 'jetonomy_schema_recheck', 1, DAY_IN_SECONDS );
 
 		global $wpdb;
 
@@ -696,10 +721,10 @@ final class Jetonomy {
 		}
 
 		global $wpdb;
-		$activity_t = table( 'activity_log' );
+		$activity_table = table( 'activity_log' );
 
 		// Only backfill if activity_log is empty (first run).
-		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$activity_t}" );
+		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$activity_table}" );
 		if ( $count > 0 ) {
 			update_option( 'jetonomy_activity_backfilled', true );
 			return;
@@ -711,21 +736,21 @@ final class Jetonomy {
 
 		// Posts.
 		$wpdb->query(
-			"INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
+			"INSERT INTO {$activity_table} (user_id, action, object_type, object_id, metadata, created_at)
              SELECT author_id, 'created_post', 'post', id, JSON_OBJECT('space_id', space_id), created_at
              FROM {$posts_t} WHERE status = 'publish'"
 		);
 
 		// Replies.
 		$wpdb->query(
-			"INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
+			"INSERT INTO {$activity_table} (user_id, action, object_type, object_id, metadata, created_at)
              SELECT author_id, 'created_reply', 'reply', id, JSON_OBJECT('post_id', post_id), created_at
              FROM {$replies_t} WHERE status = 'publish'"
 		);
 
 		// Space memberships.
 		$wpdb->query(
-			"INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
+			"INSERT INTO {$activity_table} (user_id, action, object_type, object_id, metadata, created_at)
              SELECT user_id, 'joined_space', 'space', space_id, JSON_OBJECT('role', role), joined_at
              FROM {$members_t}"
 		);

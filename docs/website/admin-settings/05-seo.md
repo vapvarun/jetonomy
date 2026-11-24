@@ -36,14 +36,15 @@ Post slugs are auto-generated from the post title, truncated at 60 characters, a
 **Default:** On
 **Location:** SEO tab → Sitemap section
 
-When enabled, Jetonomy registers a custom sitemap provider with WordPress's built-in sitemap API. Community pages appear at `/wp-sitemap.xml` alongside your regular WordPress content.
+When enabled, Jetonomy serves its own sitemap at `/community-sitemap.xml` (the `community` part follows your community base URL) and adds it to your `robots.txt`. It is separate from WordPress's `/wp-sitemap.xml`.
 
 The sitemap includes:
 - All public spaces
-- All public posts (paginated if over 2,000)
-- User profile pages
+- All public topics (split into pages of 5,000)
 
-Private, hidden, and archived spaces are excluded. Draft and scheduled posts are excluded.
+Private, hidden, and archived spaces are excluded. Draft and scheduled topics are excluded. User profile pages are not listed.
+
+A community set to **Private** (Community Access: members only) serves no sitemap at all and leaves the `robots.txt` line out, because a crawler cannot read the pages. It returns again as soon as the community is public.
 
 > **Tip:** Check **Settings → Reading → Search engine visibility** is not set to "Discourage search engines" or your sitemap will be disregarded.
 

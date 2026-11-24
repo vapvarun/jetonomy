@@ -16,7 +16,7 @@ Approving, marking as spam, and trashing all act on a single piece of content. B
 
 You ban and unban members from the **Jetonomy → Users** page in the WordPress admin. The page lists every community member with their trust level and stats, and gives each row a **Ban / Unban** control (plus a quick **Silence** link). Currently banned members also appear on the **Banned Users** tab of the [Moderation Queue](03-moderation-queue.md), where you can lift each ban.
 
-Banning requires the `jetonomy_moderate` capability - the same capability that gates the moderation queue itself. WordPress administrators and the Editor role have it by default. A member's trust level never grants it, TL4 and TL5 included.
+Site-wide bans, silences and IP bans, and this admin page, require the `jetonomy_moderate` capability - the same capability that gates the moderation queue itself. WordPress administrators and the Editor role have it by default. A member's trust level never grants it, TL4 and TL5 included. A **space ban** needs no site capability: a space admin can issue and lift one for their own space, and so can a space moderator when the owner allows it (see [Lifting a Ban Early](#lifting-a-ban-early)).
 
 ## The Ban Dialog
 
@@ -61,7 +61,9 @@ The same gate also stops members who have not confirmed their email (pending ver
 
 To remove a ban before it expires, click **Unban** on the member's row (on the Users page or the Banned Users tab). The restriction is cleared and the member can participate again immediately.
 
-Space admins can also ban and unban from the front end. On a space's **Members** page each member row has **Ban from space**; once a member is banned the row shows a **Banned** badge and a **Lift ban** button instead. A banned or silenced account also cannot start a new space, even if its role is allowed to create spaces.
+Space admins can also ban and unban from the front end. On a space's **Members** page each member row has **Ban from space**; once a member is banned the row shows a **Banned** badge and a **Lift ban** button instead. Space moderators get the same buttons, on member and viewer rows only, when **Settings > Permissions > Space moderators can ban members** is on (since 2.1.0). They cannot ban the space owner, an admin, another moderator or site staff. A banned or silenced account also cannot start a new space, even if its role is allowed to create spaces.
+
+What a ban does not do today: the member gets no notification, nothing is written to the activity log and no action hook fires when a ban is issued or lifted. The restriction row records who issued it; lifting deletes the row, so who lifted a ban is not kept.
 
 ## When to Ban vs. Act on Content
 

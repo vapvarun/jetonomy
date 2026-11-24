@@ -75,7 +75,7 @@ class Leaderboards_Controller extends Base_Controller {
 				// user_id tiebreaker is load-bearing under LIMIT/OFFSET: without
 				// it MySQL may order tied rows differently per page, so a member
 				// tied on reputation can show up on two pages or on none.
-				'order_by' => 'reputation DESC, user_id ASC',
+				'order_by' => 'reputation DESC, user_id DESC',
 				'limit'    => $limit,
 				'offset'   => $offset,
 			)

@@ -240,6 +240,10 @@ class Community_Notification_Contract {
 				'label'       => __( 'Join requests to review', 'jetonomy' ),
 				'description' => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Someone requested to join one of the %s you moderate.', 'jetonomy' ), $spaces ),
 			),
+			'announcement'        => array(
+				'label'       => __( 'Site announcements', 'jetonomy' ),
+				'description' => __( 'The community owner pinned an announcement.', 'jetonomy' ),
+			),
 			'mention'             => array(
 				'label'       => __( 'Mentions', 'jetonomy' ),
 				'description' => __( 'Someone mentioned you.', 'jetonomy' ),

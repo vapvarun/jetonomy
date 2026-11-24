@@ -29,7 +29,8 @@ class NotificationVetoTest extends WP_UnitTestCase {
 		parent::set_up();
 		Schema::create_tables();
 
-		$this->recipient = self::factory()->user->create();
+		// A mentionable login: the factory's "User 0000018" has a space, so "@User 0000018" is not a mention.
+		$this->recipient = self::factory()->user->create( array( 'user_login' => 'nvrecipient' . uniqid() ) );
 		$this->actor     = self::factory()->user->create();
 	}
 
@@ -66,8 +67,13 @@ class NotificationVetoTest extends WP_UnitTestCase {
 
 		add_filter( 'jetonomy_notification_should_send', '__return_false' );
 
+		// A topic needs a real space since 2.1.0 (Post::create refuses an orphan row).
+		$cat     = \Jetonomy\Models\Category::create( array( 'name' => 'NV', 'slug' => 'nv-' . uniqid() ) );
+		$space   = \Jetonomy\Models\Space::create( array( 'title' => 'NV', 'slug' => 'nv-' . uniqid(), 'category_id' => $cat ) );
 		$post_id = \Jetonomy\Models\Post::create(
 			[
+				'space_id'  => (int) $space,
+				'status'    => 'publish',
 				'author_id' => $this->actor,
 				'title'     => 'Imported topic',
 				'content'   => 'Hi @' . get_userdata( $this->recipient )->user_login,

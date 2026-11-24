@@ -50,6 +50,10 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 		}
 		update_option( 'jetonomy_settings', array( 'remove_data_on_uninstall' => 1 ) );
 		update_option( 'widget_jetonomy_leaderboard', array( '_multiwidget' => 1 ) );
+		update_option( 'jetonomy_license_key', 'probe-key' );
+		$sdk_cache = 'edd_sl_' . md5( (string) wp_json_encode( array( basename( untrailingslashit( JETONOMY_DIR ) ), 'probe-key', 0 ) ) );
+		update_option( $sdk_cache, array( 'timeout' => time() + HOUR_IN_SECONDS ) );
+		update_option( 'edd_sl_' . md5( 'another-plugin' ), array( 'timeout' => 1 ) );
 		wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'jetonomy_trust_evaluation' );
 		wp_schedule_event( time() + HOUR_IN_SECONDS, 'weekly', 'edd_sl_sdk_weekly_license_check_jetonomy' );
 		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'jetonomy_pro_digest_daily' );
@@ -74,6 +78,9 @@ class UninstallKeepsDataTest extends WP_UnitTestCase {
 			$this->assertFalse( wp_next_scheduled( 'jetonomy_trust_evaluation' ), 'plugin cron job cleared' );
 			$this->assertFalse( wp_next_scheduled( 'edd_sl_sdk_weekly_license_check_jetonomy' ), 'licence check cleared' );
 			$this->assertFalse( get_option( 'widget_jetonomy_leaderboard' ), 'widget settings removed' );
+			$this->assertFalse( get_option( $sdk_cache ), "the licence SDK's update cache removed" );
+			$this->assertFalse( get_option( 'jetonomy_license_key' ), 'licence key removed' );
+			$this->assertNotFalse( get_option( 'edd_sl_' . md5( 'another-plugin' ) ), "another plugin's SDK cache kept" );
 			$this->assertNotFalse( wp_next_scheduled( 'jetonomy_pro_digest_daily' ), "Pro's jobs are left to Pro's uninstall" );
 
 			$dropped = implode( "\n", $drops );

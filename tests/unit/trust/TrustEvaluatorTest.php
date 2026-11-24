@@ -32,14 +32,76 @@ class TrustEvaluatorTest extends WP_UnitTestCase {
 	}
 
 	public function test_partial_level_1_stays_at_zero(): void {
-		// Has post count and days but not replies_received.
+		// Has the days but not enough topics and replies written.
+		$level = Trust_Evaluator::evaluate_level( [
+			'post_count'       => 4,
+			'days_active'      => 3,
+			'reputation'       => 0,
+			'replies_received' => 50,
+		] );
+		$this->assertEquals( 0, $level );
+	}
+
+	public function test_reply_only_member_reaches_level_1_on_defaults(): void {
+		// Wrote 5 replies, started no topics, nobody has replied to them: the case that stayed at
+		// Level 0 forever when Level 1 needed 10 replies received.
 		$level = Trust_Evaluator::evaluate_level( [
 			'post_count'       => 5,
 			'days_active'      => 3,
 			'reputation'       => 0,
-			'replies_received' => 9,
+			'replies_received' => 0,
 		] );
-		$this->assertEquals( 0, $level );
+		$this->assertEquals( 1, $level );
+	}
+
+	/**
+	 * Negative control: pins behaviour that already worked, so it passes before and after the change.
+	 *
+	 * @covers-existing
+	 */
+	public function test_an_owner_set_replies_received_threshold_is_enforced(): void {
+		$this->set_thresholds( [ 1 => [ 'posts' => 5, 'days_active' => 3, 'reputation' => 0, 'replies_received' => 10 ] ] );
+		$stats = [ 'post_count' => 5, 'days_active' => 3, 'reputation' => 0, 'replies_received' => 9 ];
+		$this->assertEquals( 0, Trust_Evaluator::evaluate_level( $stats ) );
+		$stats['replies_received'] = 10;
+		$this->assertEquals( 1, Trust_Evaluator::evaluate_level( $stats ) );
+	}
+
+	public function test_a_reputation_threshold_on_level_1_is_enforced(): void {
+		$this->set_thresholds( [ 1 => [ 'posts' => 5, 'days_active' => 3, 'reputation' => 20, 'replies_received' => 0 ] ] );
+		$stats = [ 'post_count' => 5, 'days_active' => 3, 'reputation' => 19, 'replies_received' => 0 ];
+		$this->assertEquals( 0, Trust_Evaluator::evaluate_level( $stats ) );
+		$stats['reputation'] = 20;
+		$this->assertEquals( 1, Trust_Evaluator::evaluate_level( $stats ) );
+	}
+
+	public function test_a_replies_received_threshold_on_level_2_is_enforced(): void {
+		$this->set_thresholds( [ 2 => [ 'posts' => 30, 'days_active' => 20, 'reputation' => 50, 'replies_received' => 25 ] ] );
+		$stats = [ 'post_count' => 30, 'days_active' => 20, 'reputation' => 50, 'replies_received' => 24 ];
+		$this->assertEquals( 1, Trust_Evaluator::evaluate_level( $stats ) );
+		$stats['replies_received'] = 25;
+		$this->assertEquals( 2, Trust_Evaluator::evaluate_level( $stats ) );
+	}
+
+	/**
+	 * Negative control: pins behaviour that already worked, so it passes before and after the change.
+	 *
+	 * @covers-existing
+	 */
+	public function test_a_threshold_left_at_zero_is_not_checked(): void {
+		$this->set_thresholds( [ 1 => [ 'posts' => 0, 'days_active' => 0, 'reputation' => 0, 'replies_received' => 0 ] ] );
+		$this->assertEquals( 1, Trust_Evaluator::evaluate_level( [] ) );
+	}
+
+	/**
+	 * Save thresholds the way the Permissions screen does, for one test.
+	 *
+	 * @param array $thresholds Level => thresholds.
+	 */
+	private function set_thresholds( array $thresholds ): void {
+		$settings                     = get_option( 'jetonomy_settings', [] );
+		$settings['trust_thresholds'] = $thresholds;
+		update_option( 'jetonomy_settings', $settings );
 	}
 
 	public function test_partial_level_1_missing_days_active(): void {

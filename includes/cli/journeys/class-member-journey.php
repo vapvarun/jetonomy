@@ -266,6 +266,9 @@ final class Member_Journey {
 		if ( $space_id <= 0 || $user_id <= 0 ) {
 			return Journey_Result::fail( 'space_id and user_id must both be positive.' );
 		}
+		if ( ! \Jetonomy\Models\Space::find( $space_id ) ) {
+			return Journey_Result::from_wp_error( \Jetonomy\Models\Space::missing_error() );
+		}
 
 		$id = JoinRequest::create_request( $space_id, $user_id, $message );
 		if ( ! $id ) {

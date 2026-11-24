@@ -71,7 +71,7 @@ $total_pages  = max( 1, (int) ceil( $total / $per_page ) );
 if ( $paged > $total_pages ) {
 	$paged = $total_pages;
 }
-$offset = ( $paged - 1 ) * $per_page;
+$offset = jetonomy_page_offset( $paged, $per_page );
 $flags  = $total > 0
 	? Moderation_Service::list_pending_flags( $user_id, null, $per_page, $offset )
 	: array();
@@ -79,10 +79,10 @@ $flags  = $total > 0
 // The Banned tab needs a STRICTER cap than the page itself. The page admits
 // anyone with can_view_any_queue() - which includes a space moderator who holds
 // no site-wide cap - but the list it renders is global (every restriction on the
-// site, not just their spaces) and every Lift button posts to
-// DELETE /moderation/ban/{id}, which requires jetonomy_moderate. So a space mod
-// was shown other spaces' restrictions and a Lift that could only ever 403.
-// Mirror the REST cap exactly: no tab, no panel, no buttons that cannot work.
+// site, not just their spaces). DELETE /moderation/ban/{id} lets a space admin
+// (or an opted-in space moderator) lift their OWN space's bans, via
+// Moderation_Permissions::lift_error(), and they do that from the space's
+// Members page. This global list stays for site moderators only.
 $jt_can_manage_bans = user_can( $user_id, 'jetonomy_moderate' );
 
 // Which panel: the flags overview (default) or the banned-members list. The
@@ -142,9 +142,20 @@ $jt_held_paged = min( $jt_raw_paged, $jt_held_pages );
 $jt_held       = array();
 if ( in_array( $jt_view, array( 'approvals', 'trash' ), true ) && $jt_held_count > 0 ) {
 	$jt_held = $jt_is_trash
-		? Moderation_Service::list_trashed( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page )
-		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page, $jt_held_status );
+		? Moderation_Service::list_trashed( $user_id, $jt_kind, null, $per_page, jetonomy_page_offset( $jt_held_paged, $per_page ) )
+		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, null, $per_page, jetonomy_page_offset( $jt_held_paged, $per_page ), $jt_held_status );
 }
+
+// Why each item is held, when something (Jetonomy Pro's AI review) knows: one call per page, never one per row.
+/**
+ * Notes to show on held or spam items in the moderation queue.
+ *
+ * @since 2.1.0
+ * @param array<int,string> $notes Item id => sentence (empty by default).
+ * @param string            $kind  'post' or 'reply'.
+ * @param int[]             $ids   Ids of the items on this page.
+ */
+$jt_held_notes = $jt_held ? (array) apply_filters( 'jetonomy_held_item_notes', array(), $jt_kind, array_map( static fn( $r ) => (int) $r->id, $jt_held ) ) : array();
 
 // Batch-resolve everything the cards need: parent posts (replies only), spaces,
 // and the WP user cache. Done here rather than inside approval-card.php so a
@@ -188,7 +199,7 @@ $jt_bans      = 'banned' === $jt_view && $jt_ban_total > 0
 	? \Jetonomy\Models\Restriction::list_active(
 		array(
 			'limit'  => $per_page,
-			'offset' => ( $jt_ban_paged - 1 ) * $per_page,
+			'offset' => jetonomy_page_offset( $jt_ban_paged, $per_page ),
 		)
 	)
 	: array();
@@ -347,7 +358,7 @@ $crumbs = array(
 					$jt_banned_user = get_userdata( (int) $jt_ban->user_id );
 					$jt_issuer      = (int) $jt_ban->issued_by ? get_userdata( (int) $jt_ban->issued_by ) : null;
 					$jt_ban_label   = $jt_ban_types[ $jt_ban->type ] ?? $jt_ban_types['global_ban'];
-					$jt_ban_age     = human_time_diff( strtotime( $jt_ban->created_at ), time() );
+					$jt_ban_age     = \Jetonomy\time_span( (string) $jt_ban->created_at );
 					$jt_ban_space   = $jt_ban->space_id ? ( $jt_ban_spaces[ (int) $jt_ban->space_id ] ?? null ) : null;
 					$jt_is_ip_ban   = 'ip_ban' === $jt_ban->type;
 					?>
@@ -366,8 +377,14 @@ $crumbs = array(
 							<?php endif; ?>
 							<span class="jt-mod-flag-age">
 								<?php
-								/* translators: 1: a person's display name; 2: human-readable time elapsed. */
-								echo esc_html( sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_issuer ? \Jetonomy\user_display_name( $jt_issuer ) : __( 'System', 'jetonomy' ), $jt_ban_age ) );
+								$jt_by = $jt_issuer ? \Jetonomy\user_display_name( $jt_issuer ) : __( 'System', 'jetonomy' );
+								echo esc_html(
+									'' === $jt_ban_age
+										/* translators: %s: a person's display name. */
+										? sprintf( __( 'by %s', 'jetonomy' ), $jt_by )
+										/* translators: 1: a person's display name; 2: human-readable time elapsed. */
+										: sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_by, $jt_ban_age )
+								);
 								?>
 							</span>
 						</div>
@@ -482,6 +499,7 @@ $crumbs = array(
 					\Jetonomy\Template_Loader::partial(
 						'moderation/approval-card',
 						array(
+							'note'        => $jt_held_notes[ (int) $jt_item->id ] ?? '',
 							'item'        => $jt_item,
 							'kind'        => $jt_kind,
 							'space'       => $jt_item_space,
@@ -566,7 +584,7 @@ $crumbs = array(
 					/* translators: 1: newest reporter's display name; 2: number of other members who reported the same item. */
 					$reporter_name = sprintf( _n( '%1$s and %2$s other', '%1$s and %2$s others', $jt_reports - 1, 'jetonomy' ), $reporter_name, number_format_i18n( $jt_reports - 1 ) );
 				}
-				$age           = human_time_diff( strtotime( $flag->created_at ), time() );
+				$age           = \Jetonomy\time_span( (string) $flag->created_at );
 				$content_plain = (string) ( $obj->content_plain ?? wp_strip_all_tags( (string) ( $obj->content ?? '' ) ) );
 				$excerpt       = trim( mb_substr( $content_plain, 0, 140 ) );
 				if ( mb_strlen( $content_plain ) > 140 ) {
@@ -599,7 +617,7 @@ $crumbs = array(
 						<span class="jt-mod-flag-age">
 							<?php
 							/* translators: %s: human-readable time difference. */
-							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $age ) );
+							echo esc_html( '' === $age ? '' : sprintf( __( '%s ago', 'jetonomy' ), $age ) );
 							?>
 						</span>
 					</div>

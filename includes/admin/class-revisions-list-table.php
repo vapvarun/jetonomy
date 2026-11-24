@@ -171,7 +171,7 @@ class Revisions_List_Table extends \WP_List_Table {
 	public function prepare_items(): void {
 		$per_page = 20;
 		$paged    = max( 1, absint( $this->get_pagenum() ) );
-		$offset   = ( $paged - 1 ) * $per_page;
+		$offset   = jetonomy_page_offset( $paged, $per_page );
 
 		// Fourth element is the PRIMARY column - see the note in
 		// Activity_List_Table. Without it core falls back to the first column,
@@ -345,11 +345,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		if ( false === $ts ) {
 			return esc_html( $raw );
 		}
-		$human = sprintf(
-			/* translators: %s: human-readable time difference. */
-			__( '%s ago', 'jetonomy' ),
-			human_time_diff( $ts, time() )
-		);
+		$human = \Jetonomy\time_ago( gmdate( 'Y-m-d H:i:s', $ts ) );
 		return sprintf(
 			'<span title="%1$s">%2$s</span>',
 			esc_attr( $raw ),

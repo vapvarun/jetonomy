@@ -208,26 +208,22 @@ final class Moderation_Journey {
 				sprintf( 'type must be one of: %s.', implode( ', ', self::BAN_TYPES ) )
 			);
 		}
-		if ( 'space_ban' === $type && ( null === $space_id || $space_id <= 0 ) ) {
-			return Journey_Result::fail( 'space_id is required and must be positive for space_ban.' );
-		}
-
-		// Restriction::ban() answers a refusal with 0; ask the same checks first so the
-		// operator gets the reason rather than "insert failed".
-		$allowed = Restriction::actor_may_restrict( $user_id, $issued_by );
-		if ( is_wp_error( $allowed ) ) {
-			return Journey_Result::fail( $allowed->get_error_message() );
-		}
-		if ( 'ip_ban' === $type ) {
-			$ip = Restriction::validate_ip_ban( (string) $reason, $issued_by );
-			if ( is_wp_error( $ip ) ) {
-				return Journey_Result::fail( $ip->get_error_message() );
+		// Restriction::ban() answers a refusal with 0; ask the same checks as REST
+		// first (issuer authority incl. the moderators_can_ban toggle, then the
+		// target rules for this space) so the operator gets the real code and reason.
+		$space_scope = 'space_ban' === $type ? $space_id : null;
+		$checks      = array(
+			// The full space_id, as REST passes it: a space named by any type must exist.
+			static fn() => \Jetonomy\Moderation\Moderation_Permissions::issue_error( $issued_by, $type, $space_id ),
+			static fn() => Restriction::actor_may_restrict( $user_id, $issued_by, $space_scope ),
+			static fn() => 'ip_ban' === $type ? Restriction::validate_ip_ban( (string) $reason, $issued_by ) : null,
+			static fn() => Restriction::validate_not_duplicate( $user_id, $type, $space_id ),
+		);
+		foreach ( $checks as $check ) {
+			$error = $check();
+			if ( is_wp_error( $error ) ) {
+				return Journey_Result::fail( $error->get_error_code() . ': ' . $error->get_error_message() );
 			}
-		}
-
-		$duplicate = Restriction::validate_not_duplicate( $user_id, $type, $space_id );
-		if ( is_wp_error( $duplicate ) ) {
-			return Journey_Result::fail( $duplicate->get_error_message() );
 		}
 
 		$id = Restriction::ban( $user_id, $type, $issued_by, $space_id, $reason, $expires_at );

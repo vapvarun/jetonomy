@@ -55,6 +55,8 @@ Following a space subscribes you to new post notifications from that space. Ever
 
 Click **Following** in the space header to toggle it off. The button returns to **Follow** and you stop receiving new post notifications from that space.
 
+On a topic you started, **Following** is on by default, and it is also what tells you when someone replies. Click it to turn it off and you stop getting reply notices for that topic (bell and email). You still hear when someone mentions you, and moderation notices still arrive. Click **Follow** to turn it back on. Topics imported from another forum have no follow setting yet, so their authors keep being notified until they choose.
+
 Following a space does not make you a member of the space. In Open spaces, you can follow without joining - you will receive notifications but you will not be listed as a member and cannot post until you join.
 
 ### What You Get Notified About

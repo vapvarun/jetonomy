@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Notifications\Verification_Reminder;
 use Jetonomy\Trust\Trust_Evaluator;
+use Jetonomy\Trust\Trust_Levels;
 
 class Cron {
 
@@ -30,6 +31,31 @@ class Cron {
 	 */
 	private static bool $publishing = false;
 
+	/** Retries of a publisher run that failed to publish a due topic, 1, 2 then 4 minutes apart. */
+	private const PUBLISH_MAX_RETRIES = 3;
+
+	/** Rows a batch-limited job handles per pass; the default of the jetonomy_cron_batch_size filter. */
+	public const BATCH_SIZE = 500;
+
+	/** Activity-log rows deleted per statement by prune_activity_log(). */
+	private const ACTIVITY_PRUNE_BATCH = 5000;
+
+	/** Seconds a daily or weekly clean-up may run; whatever is left waits for the next run. */
+	private const CLEANUP_SECONDS = 20;
+
+	/** Retry argument of the run queued when a scheduled topic gives up: one more try a day (or at the next schedule). */
+	private const PUBLISH_GAVE_UP = self::PUBLISH_MAX_RETRIES;
+
+	/**
+	 * Expired restrictions, verification reminders and the roster backstop, in one single action armed at the
+	 * earliest moment one of them is due ({@see arm_due_jobs()}). They used to tick hourly each, 72 actions a day on a
+	 * site with nothing to do.
+	 */
+	public const DUE_HOOK = 'jetonomy_due_jobs';
+
+	/** The hourly jobs DUE_HOOK replaced (2.1.0); cancelled on upgrade. */
+	public const RETIRED_HOOKS = array( 'jetonomy_cleanup_expired', 'jetonomy_verification_reminder', 'jetonomy_reconcile_rosters' );
+
 	/** Keyset cursor (last processed user_id) for the batched trust sweep. */
 	private const TRUST_CURSOR_OPTION = 'jetonomy_trust_eval_cursor';
 
@@ -42,14 +68,8 @@ class Cron {
 	 */
 	private const RECURRING = array(
 		'jetonomy_trust_evaluation'      => 12 * HOUR_IN_SECONDS,
-		'jetonomy_cleanup_expired'       => HOUR_IN_SECONDS,
 		'jetonomy_prune_activity'        => DAY_IN_SECONDS,
 		'jetonomy_cleanup_notifications' => WEEK_IN_SECONDS,
-		'jetonomy_verification_reminder' => HOUR_IN_SECONDS,
-		// Roster expiry backstop: some membership adapters (BN Pro) hold access
-		// until expires_at and never fire jetonomy_membership_deactivated, so a
-		// lapsed plan's 'tier' roster row is never removed by the event listener.
-		'jetonomy_reconcile_rosters'     => HOUR_IN_SECONDS,
 		// Abandoned composer uploads. Lived only in Pro's attachments
 		// extension, while the upload endpoint that creates these rows is in
 		// free (Media_Controller -> Media_Library::tag_upload), so a free-only
@@ -58,22 +78,43 @@ class Cron {
 	);
 
 	public function __construct() {
-		// Handler listeners — fire whether scheduled via AS or (legacy) WP-Cron.
+		// Job listeners, whichever scheduler queued the job.
 		add_action( 'jetonomy_trust_evaluation', array( $this, 'evaluate_trust_levels' ) );
 		add_action( 'jetonomy_trust_evaluation_batch', array( $this, 'evaluate_trust_batch' ) );
-		add_action( 'jetonomy_cleanup_expired', array( $this, 'cleanup_expired_restrictions' ) );
+		add_action( self::DUE_HOOK, array( $this, 'run_due_jobs' ) );
 		add_action( 'jetonomy_prune_activity', array( $this, 'prune_activity_log' ) );
 		add_action( 'jetonomy_cleanup_notifications', array( $this, 'cleanup_old_notifications' ) );
-		add_action( 'jetonomy_publish_scheduled', array( $this, 'publish_scheduled_posts' ) );
-		add_action( 'jetonomy_verification_reminder', array( Verification_Reminder::class, 'run' ) );
-		add_action( 'jetonomy_reconcile_rosters', array( Membership_Roster_Sync::class, 'reconcile' ) );
+		add_action( 'jetonomy_publish_scheduled', array( $this, 'publish_scheduled_posts' ) ); // A retry passes its attempt number.
 		add_action( 'jetonomy_cleanup_media', array( \Jetonomy\Media_Library::class, 'run_scheduled_cleanup' ) );
+		// After activation: re-queue kept jobs that failed with no listener while the plugin was off. wp_loaded, so Pro's
+		// listeners are registered and its kept hooks count too.
+		add_action(
+			'wp_loaded',
+			static function (): void {
+				Queue::recover_kept_jobs(); // Returns the count for tests and CLI; an action listener returns nothing.
+			}
+		);
+		// Core's one-click update deactivates silently (no deactivation or activation hook), so the update itself flags
+		// recovery. Runs with the code that was installed before the update, from the version after this one.
+		add_action(
+			'upgrader_process_complete',
+			static function ( $upgrader, $extra ): void {
+				$ours = array( 'jetonomy/jetonomy.php', 'jetonomy-pro/jetonomy-pro.php' );
+				if ( 'plugin' === ( $extra['type'] ?? '' ) && array_intersect( $ours, (array) ( $extra['plugins'] ?? $extra['plugin'] ?? array() ) ) ) {
+					Queue::flag_recovery();
+				}
+			},
+			10,
+			2
+		);
 
 		// Self-heal: ensure every recurring action is registered. We hook the
 		// 'action_scheduler_init' action AS fires once its data store is ready
 		// (not 'init', which can run before AS's data store is wired up and
 		// would emit "called incorrectly" notices on every page load).
 		add_action( 'action_scheduler_init', array( self::class, 'ensure_scheduled' ) );
+		// Action Scheduler's daily re-arm run: a recurring row lost on a site with no admin visits comes back within a day.
+		add_action( 'action_scheduler_ensure_recurring_actions', array( self::class, 'ensure_scheduled' ) );
 	}
 
 	/**
@@ -88,107 +129,171 @@ class Cron {
 	}
 
 	/**
-	 * Unschedule all cron events on plugin deactivation.
+	 * Deactivation: cancel Free's jobs in both schedulers, except the ones in Queue::KEEP_ON_DEACTIVATE (they finish
+	 * something already done and are recovered if they fail while the plugin is off).
 	 *
 	 * Clears both AS-scheduled actions (current) and any legacy WP-Cron entries
 	 * (idempotent — safe to call regardless of which scheduler the install was on).
 	 */
 	public static function unschedule(): void {
-		// The recurring jobs plus the one-off ones: trust-sweep batches, per-member
-		// Gravatar checks, the scheduled-topic publisher, the per-space roster sweep and the
-		// subscriber fan-out batches.
-		$hooks = array_merge( array_keys( self::RECURRING ), array( 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK, Membership_Roster_Sync::SWEEP_HOOK, 'jetonomy_fanout_post_subscribers', 'jetonomy_fanout_reply_subscribers' ) );
-		foreach ( $hooks as $hook ) {
-			Queue::cancel( $hook );
-		}
+		// Every Free job; Queue::cancel_on_deactivate() leaves the ones in Queue::KEEP_ON_DEACTIVATE pending (the space
+		// purge, the scheduled-topic publisher, the subscriber fan-out).
+		Queue::cancel_on_deactivate(
+			array_merge(
+				array_keys( self::RECURRING ),
+				self::RETIRED_HOOKS,
+				array( self::DUE_HOOK, 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK, Membership_Roster_Sync::SWEEP_HOOK, 'jetonomy_fanout_post_subscribers', 'jetonomy_fanout_reply_subscribers', Space_Purge::BATCH_HOOK, Recount_Backfill::BATCH_HOOK )
+			)
+		);
 		delete_option( self::TRUST_CURSOR_OPTION );
 	}
 
 	/**
 	 * Is this a request where recurring schedules should be checked and armed?
 	 *
-	 * Each check is a database lookup (as_has_scheduled_action, plus the one-time
-	 * migration flags), and running them on every page, REST call and heartbeat
-	 * made them part of every request's query floor. Check only in the cron runner
-	 * (which re-arms a lost job within one tick), wp-admin page loads and WP-CLI.
-	 * See docs/standards/background-jobs.md.
+	 * Kept working through 2.1.x for Pro 2.0.7 and older, which call it on every
+	 * request; removal no earlier than 2.2.0. Under WP_DEBUG it writes one log line
+	 * per request instead of _deprecated_function(), whose notice would print on
+	 * every page (and break REST JSON) on a site with WP_DEBUG_DISPLAY on.
+	 *
+	 * @deprecated 2.1.0 Use \Jetonomy\Queue::is_scheduling_request(), the one implementation for Free and Pro. Removal: 2.2.0 or later.
 	 *
 	 * @return bool
 	 */
 	public static function is_scheduling_request(): bool {
-		return wp_doing_cron()
-			|| ( is_admin() && ! wp_doing_ajax() )
-			|| ( defined( 'WP_CLI' ) && WP_CLI );
+		static $logged = false;
+		if ( ! $logged && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			$logged = true;
+			error_log( 'Jetonomy: Cron::is_scheduling_request() is deprecated since 2.1.0 and will be removed in 2.2.0 or later; use Queue::is_scheduling_request() (update Jetonomy Pro).' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- a log line only, never page output.
+		}
+		return Queue::is_scheduling_request();
 	}
 
 	/**
-	 * Idempotent scheduler — ensures every recurring action exists in AS exactly
-	 * once. On first run after upgrade from <1.4.4, also wipes the legacy WP-Cron
-	 * registrations so the same handler doesn't fire from two schedulers.
+	 * Idempotent scheduler: every recurring action exists in Action Scheduler exactly once, and the two due-time jobs
+	 * are armed if something is due.
 	 */
 	public static function ensure_scheduled(): void {
-		if ( ! self::is_scheduling_request() ) {
+		if ( ! Queue::is_scheduling_request() ) {
 			return;
 		}
 		if ( ! function_exists( 'as_schedule_recurring_action' ) ) {
 			return; // AS not booted yet (e.g. activation request before plugins_loaded). Retry next request.
 		}
 
-		// One-time migration: drop legacy WP-Cron registrations so AS owns these hooks.
-		if ( ! get_option( 'jetonomy_cron_as_migrated' ) ) {
-			foreach ( array_keys( self::RECURRING ) as $hook ) {
-				wp_clear_scheduled_hook( $hook );
-			}
-			update_option( 'jetonomy_cron_as_migrated', 1, false );
+		/**
+		 * Recurring jobs of the Jetonomy family, armed here and only here: hook => interval in seconds, or
+		 * array( interval, seconds before the first run ). Pro's extensions add theirs from boot.
+		 *
+		 * @since 2.1.0
+		 *
+		 * @param array<string,int|array{0:int,1:int}> $jobs Jobs.
+		 */
+		foreach ( (array) apply_filters( 'jetonomy_recurring_jobs', self::RECURRING ) as $hook => $job ) {
+			$job = (array) $job;
+			Queue::ensure_recurring( (string) $hook, time() + (int) ( $job[1] ?? 0 ), (int) $job[0] );
 		}
-
-		$now = time();
-		foreach ( self::RECURRING as $hook => $interval ) {
-			if ( as_has_scheduled_action( $hook, array(), Queue::GROUP ) ) {
-				continue;
-			}
-			// Verification reminder starts +1h so it doesn't compete with everything else at time().
-			$start = ( 'jetonomy_verification_reminder' === $hook ) ? $now + HOUR_IN_SECONDS : $now;
-			as_schedule_recurring_action( $start, $interval, $hook, array(), Queue::GROUP );
+		// Self-heal for the two due-time jobs (one lookup each); the writes that make something due arm them
+		// themselves. Deactivation cancels DUE_HOOK (PUBLISH_HOOK is kept: Queue::KEEP_ON_DEACTIVATE), so
+		// activation arms it again here.
+		if ( ! Queue::is_queued( self::DUE_HOOK ) ) {
+			self::arm_due_jobs();
 		}
-
-		// Deactivation cancels the scheduled-topic publisher, so every
-		// activation arms it again for whatever is already scheduled
-		// (idempotent: it replaces what is queued).
-		delete_option( 'jetonomy_publish_single_armed' ); // Retired 2.0.1 one-time flag.
-		self::arm_scheduled_publish();
+		if ( ! Queue::is_queued( self::PUBLISH_HOOK ) ) {
+			self::arm_scheduled_publish();
+		}
 	}
 
 	/**
-	 * Arm the publisher for the earliest scheduled topic, or disarm it when
-	 * nothing is scheduled. Idempotent: replaces whatever was queued, so it
-	 * never stacks. Called by Post on every write that sets or clears a
-	 * schedule, and after each run.
+	 * Arm the publisher for the earliest scheduled topic. Called by Post on every write that sets a schedule, after
+	 * each run, and by ensure_scheduled() as a self-heal. Nothing scheduled, nothing queued; a run left queued for a
+	 * schedule that was cleared finds nothing due and stops, so clearing a schedule needs no cancel. One lookup: a copy
+	 * armed for that moment is left alone, so it never stacks. While the earliest topic is overdue (a schedule can only
+	 * be set in the future, so that is a topic that failed to publish), a queued run is kept: a retry, or the daily
+	 * give-up run, so the retry cap holds; it moves only for another topic due before it. Otherwise the run moves to the earliest schedule, so moving
+	 * a topic later moves the run with it. The insert is unique, so two requests arriving together queue one run.
 	 */
 	public static function arm_scheduled_publish(): void {
 		if ( self::$publishing ) {
 			return; // publish_scheduled_posts() re-arms once when it finishes.
 		}
-		// Action Scheduler's store is not ready before action_scheduler_init;
-		// an early call would silently no-op, so defer it.
-		if ( function_exists( 'as_schedule_single_action' ) && ! did_action( 'action_scheduler_init' ) ) {
-			if ( ! has_action( 'action_scheduler_init', array( self::class, 'arm_scheduled_publish' ) ) ) {
-				add_action( 'action_scheduler_init', array( self::class, 'arm_scheduled_publish' ), 20 );
+		Queue::when_ready(
+			static function (): void {
+				$next = \Jetonomy\Models\Post::next_scheduled_at();
+				if ( null === $next ) {
+					return;
+				}
+				$when   = max( (int) strtotime( $next . ' UTC' ), time() );
+				$queued = Queue::next( self::PUBLISH_HOOK );
+				if ( $queued && $when <= time() ) {
+					$later = \Jetonomy\Models\Post::next_scheduled_at( gmdate( 'Y-m-d H:i:s' ) );
+					$when  = null === $later ? 0 : (int) strtotime( $later . ' UTC' );
+					if ( ! $when || $queued <= $when ) {
+						return; // A run is already coming (a retry, or the give-up run of a failing topic) and nothing is due before it.
+					}
+				} elseif ( $queued === $when ) {
+					return;
+				}
+				Queue::cancel( self::PUBLISH_HOOK );
+				Queue::at( $when, self::PUBLISH_HOOK, array(), true );
 			}
-			return;
-		}
+		);
+	}
 
-		$next = \Jetonomy\Models\Post::next_scheduled_at();
-		$when = null === $next ? 0 : max( (int) strtotime( $next . ' UTC' ), time() );
+	/**
+	 * Arm DUE_HOOK for the earliest moment there is work: a restriction expires, a sign-up is owed its verification
+	 * reminder, or (hourly) 'tier' roster rows exist to re-check. Nothing due, nothing queued. Called by the writes
+	 * that create such work, by the job itself after each run, and by ensure_scheduled() as a self-heal.
+	 *
+	 * @param int $not_before Earliest time to arm for (0 = no floor).
+	 */
+	public static function arm_due_jobs( int $not_before = 0 ): void {
+		Queue::when_ready(
+			static function () use ( $not_before ): void {
+				$when   = self::next_due_at();
+				$when   = $when ? max( $when, $not_before ) : 0;
+				$queued = Queue::next( self::DUE_HOOK );
+				if ( ! $when || ( $queued && $queued <= $when ) ) {
+					return; // Nothing due, or already armed for that moment or sooner.
+				}
+				Queue::cancel( self::DUE_HOOK );
+				Queue::at( $when, self::DUE_HOOK, array(), true ); // Unique: two requests arriving together queue one run.
+			}
+		);
+	}
 
-		// Already armed for that instant (e.g. a later schedule was added):
-		// leave it, rather than cancel and re-queue an identical action.
-		if ( $when && Queue::next( self::PUBLISH_HOOK ) === $when ) {
-			return;
+	/**
+	 * Earliest moment DUE_HOOK has work, or 0 for none.
+	 *
+	 * @return int Unix time.
+	 */
+	public static function next_due_at(): int {
+		$due     = array();
+		$expires = \Jetonomy\Models\Restriction::next_expiry();
+		if ( null !== $expires ) {
+			$due[] = (int) strtotime( $expires . ' UTC' );
 		}
-		Queue::cancel( self::PUBLISH_HOOK );
-		if ( $when ) {
-			Queue::at( $when, self::PUBLISH_HOOK );
+		$remind = Verification_Reminder::next_due_at();
+		if ( $remind ) {
+			$due[] = $remind;
+		}
+		if ( \Jetonomy\Models\SpaceMember::list_tier_rows_after( 0, 0, 1 ) ) {
+			$due[] = time() + HOUR_IN_SECONDS; // Some adapters let a plan lapse without telling us: re-check hourly.
+		}
+		return $due ? max( time(), min( $due ) ) : 0;
+	}
+
+	/**
+	 * DUE_HOOK: run each job (each one does nothing when it has nothing to do), then arm the next due moment.
+	 */
+	public function run_due_jobs(): void {
+		try {
+			$this->cleanup_expired_restrictions();
+			Verification_Reminder::run();
+			Membership_Roster_Sync::reconcile();
+		} finally {
+			// A minute at the least, so a backlog drains in steps and a job that cannot progress never spins.
+			self::arm_due_jobs( time() + MINUTE_IN_SECONDS );
 		}
 	}
 
@@ -201,7 +306,8 @@ class Cron {
 	 */
 	public function evaluate_trust_levels(): void {
 		update_option( self::TRUST_CURSOR_OPTION, 0, false );
-		self::enqueue_trust_batch();
+		// First slice in this run: a site with few members who could move up finishes here, no batch action.
+		$this->evaluate_trust_batch();
 	}
 
 	/**
@@ -211,7 +317,7 @@ class Cron {
 	 */
 	public function evaluate_trust_batch(): void {
 		$after  = (int) get_option( self::TRUST_CURSOR_OPTION, 0 );
-		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'evaluate_trust_levels' );
+		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', self::BATCH_SIZE, 'evaluate_trust_levels' );
 		$result = self::run_trust_batch( $after, $batch );
 
 		if ( 0 === $result['count'] ) {
@@ -237,18 +343,31 @@ class Cron {
 	}
 
 	/**
+	 * Thresholds of trust levels 1-3, keyed by level: what a member one level below must reach to move up.
+	 *
+	 * @return array<int,array>
+	 */
+	private static function next_level_thresholds(): array {
+		$levels = range( 1, 3 );
+		return array_combine( $levels, array_map( array( Trust_Levels::class, 'get_requirements' ), $levels ) );
+	}
+
+	/**
 	 * Evaluate one keyset-paginated slice of profiles with trust_level < 4 and
 	 * user_id > $after. Shared by the cron worker AND the WP-CLI trust-evaluate
 	 * command so there is one implementation (no parallel logic, no OOM on the
 	 * CLI). Served by the user_profiles trust_user (trust_level, user_id) index.
 	 *
-	 * @param int $after Keyset cursor — return rows with user_id greater than this.
-	 * @param int $limit Slice size.
+	 * @param int  $after   Keyset cursor — return rows with user_id greater than this.
+	 * @param int  $limit   Slice size.
+	 * @param bool $dry_run Count the promotions that WOULD happen and write nothing (no profile update, no action).
 	 * @return array{last_id:int,count:int,promoted:int} Max user_id seen, rows
-	 *                                                    processed, promotions made.
+	 *                                                    processed, promotions made (or that would be made).
 	 */
-	public static function run_trust_batch( int $after, int $limit ): array {
-		$profiles = UserProfile::list_for_trust_batch( $after, $limit );
+	public static function run_trust_batch( int $after, int $limit, bool $dry_run = false ): array {
+		// Only members who could reach the next level, unless something filters the level (it may raise anyone).
+		$next     = has_filter( 'jetonomy_trust_level_pre_change' ) ? array() : self::next_level_thresholds();
+		$profiles = UserProfile::list_for_trust_batch( $after, $limit, $next );
 
 		if ( empty( $profiles ) ) {
 			return array(
@@ -276,7 +395,8 @@ class Cron {
 				: 0;
 
 			$stats = array(
-				'post_count'       => (int) $profile->post_count,
+				// Topics plus replies written: a member who only answers questions counts too.
+				'post_count'       => (int) $profile->post_count + (int) $profile->reply_count,
 				'days_active'      => $days_active,
 				'reputation'       => (int) $profile->reputation,
 				'replies_received' => $replies_received_map[ (int) $profile->user_id ] ?? 0,
@@ -300,6 +420,10 @@ class Cron {
 			$new_level = (int) apply_filters( 'jetonomy_trust_level_pre_change', $new_level, (int) $profile->user_id, $stats );
 
 			if ( $new_level > (int) $profile->trust_level ) {
+				if ( $dry_run ) {
+					++$promoted;
+					continue;
+				}
 				// Through the model, not raw $wpdb: update_profile() busts
 				// profile:{id} BEFORE the action below fires, so its four
 				// listeners (activity tracker, notifier, Pro badges, Pro
@@ -328,13 +452,13 @@ class Cron {
 	}
 
 	/**
-	 * Remove expired bans/restrictions (runs hourly).
+	 * Remove expired bans/restrictions (part of DUE_HOOK, armed for the earliest expiry).
 	 *
 	 * Processes at most jetonomy_cron_batch_size rows per run (default 500)
 	 * to avoid long-running DELETE locks on large communities.
 	 */
 	public function cleanup_expired_restrictions(): void {
-		\Jetonomy\Models\Restriction::delete_expired( (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_expired_restrictions' ) );
+		\Jetonomy\Models\Restriction::delete_expired( (int) apply_filters( 'jetonomy_cron_batch_size', self::BATCH_SIZE, 'cleanup_expired_restrictions' ) );
 	}
 
 	/**
@@ -342,21 +466,25 @@ class Cron {
 	 *
 	 * Retention period is configurable via jetonomy_settings['activity_log_retention_days'].
 	 * Defaults to 90 days. Set to 0 to keep forever.
-	 * Deletes in batches of 5 000 to avoid lock contention, looping until all expired rows are removed.
+	 * Deletes ACTIVITY_PRUNE_BATCH rows per statement to avoid lock contention, within CLEANUP_SECONDS; the rest waits
+	 * for tomorrow. Then trims Jetonomy's own Action Scheduler history (Queue::prune_history(), its own time budget),
+	 * in finally, so neither prune can stop the other.
 	 */
 	public function prune_activity_log(): void {
-		$settings = get_option( 'jetonomy_settings', array() );
-		$days     = (int) ( $settings['activity_log_retention_days'] ?? 90 );
-		if ( $days <= 0 ) {
-			return; // 0 = keep forever.
+		try {
+			$settings = get_option( 'jetonomy_settings', array() );
+			$days     = (int) ( $settings['activity_log_retention_days'] ?? 90 );
+			if ( $days <= 0 ) {
+				return; // 0 = keep forever.
+			}
+			$cutoff   = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+			$deadline = Queue::now() + self::CLEANUP_SECONDS;
+			do {
+				$deleted = \Jetonomy\Models\ActivityLog::delete_before( $cutoff, self::ACTIVITY_PRUNE_BATCH );
+			} while ( $deleted >= self::ACTIVITY_PRUNE_BATCH && Queue::now() < $deadline );
+		} finally {
+			Queue::prune_history();
 		}
-		$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
-		// Delete in batches to avoid lock contention, loop until done.
-		// Within a 20 s budget like cleanup_old_notifications(); the rest waits for tomorrow.
-		$deadline = microtime( true ) + 20;
-		do {
-			$deleted = \Jetonomy\Models\ActivityLog::delete_before( $cutoff, 5000 );
-		} while ( $deleted >= 5000 && microtime( true ) < $deadline );
 	}
 
 	/**
@@ -368,41 +496,70 @@ class Cron {
 	 */
 	public function cleanup_old_notifications(): void {
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( 30 * DAY_IN_SECONDS ) );
-		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_old_notifications' );
+		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', self::BATCH_SIZE, 'cleanup_old_notifications' );
 
-		// Batches until the backlog is clear, within a 20 s budget: one 500-row
+		// Batches until the backlog is clear, within CLEANUP_SECONDS: one 500-row
 		// pass a week fell behind on any community producing more than that.
 		// Index read_created makes each pass a range read; whatever the budget
 		// leaves is picked up next week.
-		$deadline = microtime( true ) + 20;
+		$deadline = Queue::now() + self::CLEANUP_SECONDS;
 		do {
 			$done = \Jetonomy\Models\Notification::mark_read_before( $cutoff, $batch );
-		} while ( $done >= $batch && microtime( true ) < $deadline );
+		} while ( $done >= $batch && Queue::now() < $deadline );
 	}
 
 	/**
-	 * Publish any posts whose published_at datetime has passed (runs hourly).
+	 * Publish the topics whose schedule has passed, at most jetonomy_cron_batch_size (default 500) per run.
 	 *
-	 * Processes at most jetonomy_cron_batch_size due posts per run (default 500)
-	 * to keep each invocation time-bounded on large communities.
+	 * A topic that fails to publish does not stop the others. The run is then retried with the attempt number in its
+	 * args, 1, 2 and 4 minutes later; after the third retry it logs one line and queues one more run at the next
+	 * schedule or a day later, whichever comes first (PUBLISH_GAVE_UP in its args; arm_scheduled_publish() keeps it).
+	 * A topic that never publishes costs one try and one log line a day, not a loop.
+	 *
+	 * @param int $attempt Retry number (0 = the scheduled run, PUBLISH_GAVE_UP = the daily run after giving up).
 	 */
-	public function publish_scheduled_posts(): void {
-		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'publish_scheduled_posts' );
+	public function publish_scheduled_posts( $attempt = 0 ): void {
+		$attempt   = (int) $attempt;
+		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', self::BATCH_SIZE, 'publish_scheduled_posts' );
 		$due_posts = \Jetonomy\Models\Post::get_due_scheduled( $batch );
+		$failed    = array();
+		$error     = '';
 
 		self::$publishing = true;
 		try {
 			foreach ( $due_posts as $post ) {
-				\Jetonomy\Models\Post::publish_scheduled( (int) $post->id );
+				try {
+					$ok = \Jetonomy\Models\Post::publish_scheduled( (int) $post->id );
+				} catch ( \Throwable $e ) {
+					$ok    = false;
+					$error = $e->getMessage();
+				}
+				$row = $ok ? null : \Jetonomy\Models\Post::find( (int) $post->id );
+				if ( $row && 'draft' === $row->status && ! empty( $row->published_at ) ) {
+					$failed[] = (int) $post->id;
+				}
 			}
 		} finally {
 			self::$publishing = false;
-			// Next schedule, or the rest of a backlog larger than one batch
-			// (a past-due MIN arms at time(), so it runs again right away).
-			// In finally so a failed run is retried instead of stranding every
-			// later schedule. ponytail: a post that fails every time retries on
-			// each queue run; a per-post failure counter if that ever shows up.
-			self::arm_scheduled_publish();
 		}
+
+		if ( ! $failed ) {
+			// Next schedule, or the rest of a backlog larger than one batch (a past-due MIN arms at time()).
+			self::arm_scheduled_publish();
+			return;
+		}
+		Queue::cancel( self::PUBLISH_HOOK );
+		if ( $attempt < self::PUBLISH_MAX_RETRIES ) {
+			Queue::at( time() + MINUTE_IN_SECONDS * ( 2 ** $attempt ), self::PUBLISH_HOOK, array( $attempt + 1 ) );
+			return;
+		}
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- one line when a scheduled topic gives up.
+		error_log( sprintf( 'Jetonomy: scheduled topics %s did not publish after %d retries%s; trying again at the next schedule or in a day.', implode( ',', $failed ), self::PUBLISH_MAX_RETRIES, '' !== $error ? ' (' . $error . ')' : '' ) );
+		$later = \Jetonomy\Models\Post::next_scheduled_at( gmdate( 'Y-m-d H:i:s' ) );
+		$when  = time() + DAY_IN_SECONDS;
+		if ( null !== $later ) {
+			$when = min( $when, (int) strtotime( $later . ' UTC' ) );
+		}
+		Queue::at( $when, self::PUBLISH_HOOK, array( self::PUBLISH_GAVE_UP ) );
 	}
 }

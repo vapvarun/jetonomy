@@ -366,8 +366,8 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | GET | `/moderation/flags` | Moderator | List all open flags |
 | POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag (`valid` or `dismissed`) |
 | GET | `/moderation/ban` | Moderator | List active restrictions. An IP address ban carries the address in `ip`, a null `user` and a null `reason` |
-| POST | `/moderation/ban` | Moderator | Ban a user (global ban, space ban, silence) or an IP address (`type: ip_ban` with `ip`; no `user_id`) |
-| DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
+| POST | `/moderation/ban` | Moderator; for `space_ban` also that space's admin, or its moderator when `moderators_can_ban` is on (since 2.1.0) | Ban a user (global ban, space ban, silence) or an IP address (`type: ip_ban` with `ip`; no `user_id`). A space moderator may target only a member or viewer on that space's roster who is not its author (`403 jetonomy_cannot_ban_space_staff`, `404 jetonomy_not_space_member`) |
+| DELETE | `/moderation/ban/{id}` | Moderator; for a space ban also whoever may issue it (space admin, or space moderator when allowed) | Remove a ban. Before 2.1.0 a space admin without site caps was refused here |
 | GET | `/spaces/{id}/moderation/flags` | Space Admin | List flags filed within a specific space |
 | POST | `/spaces/{id}/moderation/flags/{flag_id}/resolve` | Space Admin | Resolve a flag within a specific space |
 | POST | `/spaces/{id}/moderation/{action}/{type}/{obj_id}` | Space Admin | Moderate content in a specific space (`action`: `approve`, `spam`, or `trash`; `type`: `post` or `reply`). `approve` on trashed content restores it |
@@ -412,11 +412,16 @@ Error paths: `404 jetonomy_flag_target_missing` (target does not exist), `400 je
 
 ```javascript
 {
-    user_id:  123,
-    reason:   'Repeated spam',
-    duration: 7,           // days - omit for permanent ban
+    type:       'space_ban',            // global_ban | space_ban | silence | ip_ban (required)
+    user_id:    123,                    // required except for ip_ban
+    space_id:   9,                      // required for space_ban; a positive integer, 0 or less answers 400
+    reason:     'Repeated spam',
+    expires_at: '2026-12-01 00:00:00',  // omit for a permanent ban
+    ip:         '203.0.113.7',          // ip_ban only
 }
 ```
+
+A ban or lift sends the member no notification, writes no activity entry and fires no hook.
 
 **GET /spaces/{id}/moderation/flags - parameters** *(1.8.0)*
 
@@ -444,9 +449,22 @@ The response `meta` carries `total`, `has_more`, `count`, `offset`, and `space_i
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `period` | string | `week` | `week`, `month`, `all-time` |
-| `per_page` | int | 10 | Max 50 |
-| `space_id` | int | - | Restrict to a space |
+| `period` | string | `all` | `all`, `month` or `week` (`month` and `week` count members active in the last 30 or 7 days) |
+| `limit` | int | 20 | 1 to 100 |
+| `offset` | int | 0 | Rows to skip, for paging |
+
+Only members with reputation above 0 are ranked, highest first. Members with the same reputation share one rank, and among them the newest account is listed first (`reputation DESC, user_id DESC`). That order lets the database read the existing reputation index instead of sorting every profile, so the first pages stay fast on large communities (about 0.25 ms at 20,000 profiles, against 14 ms before 2.1.0). The win is for the first pages: a deep page still costs more, because the database works through every row before the offset (an offset of 4,990 measured about 8 ms). Page through the board with `offset`; the route takes no cursor parameter.
+
+**Response `meta`**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `count` | int | Rows in this page |
+| `total` | int | Ranked members for the period |
+| `offset` | int | The offset this page was read from |
+| `period` | string | The period this page was built for |
+| `has_more` | bool | True when another page exists |
+| `cursor_next` | int or null | The offset of the next page (`offset` + `count`), or `null` on the last page. Despite the name it is not an opaque cursor: send it back as `offset` to read the next page. |
 
 ---
 
@@ -564,8 +582,10 @@ These endpoints require the `manage_options` capability (administrators only).
 | POST | `/admin/recount` | Admin (`manage_options`) | Rebuild all denormalized counters (reply counts, vote scores, post counts) |
 | POST | `/admin/users/trust-level` | `jetonomy_manage_users` | Manually set a user's trust level. Non-admins cannot change their own level, an administrator's or a moderator's (skipped as `forbidden`). |
 | GET | `/admin/demo-data` | Admin (`manage_options`) | Whether demo data is loaded: `{ active, counts: { users, categories, spaces, posts, replies } }` |
-| POST | `/admin/demo-data` | Admin (`manage_options`) | Import the demo community (replaces an earlier demo set). Returns `201` with the same shape plus `message` |
-| DELETE | `/admin/demo-data` | Admin (`manage_options`) | Remove the demo data; your own content is untouched. `404` when there is none |
+| POST | `/admin/demo-data` | Admin (`manage_options`) | Import the demo community (replaces an earlier demo set). Body `confirm: true` is required (`400` without it). While the community has spaces or topics of its own the answer is `409` (`jetonomy_demo_real_content`) unless the body also sends `force: true`. Returns `201` with the same shape plus `message` |
+| DELETE | `/admin/demo-data` | Admin (`manage_options`) | Remove the demo data; your own content is untouched. Body `confirm: true` is required (`400` without it). `404` when there is none |
+| GET | `/admin/settings` | Admin (`manage_options`) | Every setting the API can change, as the site uses it: `{ settings: { key: value } }`. A setting the site never saved reads as its default (since 2.1.0 never `null`), so a body read here can be posted back. `reputation_points` reads as the points every action gives (the defaults with the site's overrides on top), and every map-valued setting (`reputation_points`, `rate_limits`, `trust_thresholds`, `notification_defaults`) is a JSON object, never `[]`. Secrets (`captcha_secret_key`, `fb_app_secret`) read as `"********"` when set. This returns more keys (64 today) than one POST accepts (50), so posting the whole GET body back answers `400`: send only the keys you change, or split a full copy into two POSTs. Since 2.1.0 |
+| POST | `/admin/settings` | Admin (`manage_options`) | Change settings. Body `{ "settings": { "accent_color": "#336699" } }`, at most 50 keys. Each value goes through the same sanitizer as Jetonomy > Settings, so HTML is stripped. Strings have a length cap (text 1,000 characters, addresses 2,048, `custom_css` 65,535), lists an item cap (50 items of up to 200 characters for `trust_level_names` and `frontend_space_creation_roles`, 20 for `sidebar_widgets`) and numbers the range the settings screen allows; a value outside any of them answers `400`. An on/off setting takes `true`/`false`, `1`/`0`, `"1"`/`"0"` or `"true"`/`"false"` in any letter case (`"FALSE"`, `"True"`; also inside `notification_defaults`), and anything else, `null` included, answers `400`. A number setting takes a JSON number or a string of digits with an optional minus (`"12"`, `"-3"`); `"abc"`, `"5abc"`, `"0x1A"`, `"false"` or `true` answers `400` (`rest_invalid_param`), never a silent 0 or 5. In `reputation_points` an empty string `""` puts that action back on its default. An unknown key (`jetonomy_unknown_setting`), a value outside the key's schema (`rest_invalid_param`) or more than 50 keys answers `400` and writes nothing. Sending exactly `"********"` for a secret keeps the stored one; any other all-asterisk value answers `400`. Returns `{ settings, notices }`: the cleaned values of the keys sent, and a notice for every value that was refused and kept its old one (`jetonomy_invalid_<key>` for an address, `jetonomy_setting_not_stored` otherwise). When every value sent is refused nothing is saved. Writes are serialised: a write waits up to 5 seconds for another one to finish, then answers `503` (`jetonomy_settings_busy`) without saving. Fires `jetonomy_settings_updated` with only the keys whose value changed. Stricter than the form on purpose: a `jetonomy_manage_settings` delegate can save the form but not call this route. The role capability mapping is not reachable here. Since 2.1.0 |
 
 ---
 
@@ -729,6 +749,8 @@ const data = await res.json();
 | GET | `/users/{id}/badges` | Public | List the badges a user has earned |
 | POST | `/badges/{id}/award` | Admin (`manage_options`) | Manually award the badge to a user (`user_id` in body) |
 | DELETE | `/badges/{id}/award` | Admin (`manage_options`) | Revoke the badge from a user (`user_id` in body) |
+
+`GET /badges` pages with `page` (default 1) and `per_page` (default 25, max 100), not `limit` and `offset`. It is the one route where `meta.cursor_next` is a page number: it holds `page + 1` (or `null` on the last page), so send it back as `page`. Its `meta` also carries `page` and `per_page`. Out-of-range values are corrected, not rejected, and the response is still a 200: a `per_page` above 100 is clamped to 100, and zero, negative or non-numeric values fall back to the defaults (`per_page` 25, `page` 1). `meta.per_page` and `meta.page` show the values the server used. Every other paginated route returns the next offset in `cursor_next`.
 
 ### Custom Fields (`custom-fields` extension)
 
@@ -930,10 +952,11 @@ Common error codes:
 | Code | HTTP | Meaning |
 |------|------|---------|
 | `rest_forbidden` | 401/403 | Not logged in, or a missing or expired nonce |
-| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this. Only given for something you can see: a topic, reply or hidden space you cannot read answers `jetonomy_not_found` instead, on write routes too |
+| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this. Only given for something you can see: a topic or reply you cannot read answers `jetonomy_not_found`, and a hidden space `jetonomy_space_not_found`, instead, on write routes too |
 | `jetonomy_user_banned` | 403 | The authenticated user is banned from the community (mutation routes) |
 | `jetonomy_pending_verification` | 403 | The authenticated user has not confirmed their email yet (mutation routes) |
 | `jetonomy_not_found` | 404 | Resource does not exist (or is not visible to you) |
+| `jetonomy_space_not_found` | 404 | The space does not exist (or is hidden from you). Every route, ability and WP-CLI command that names a space answers this one code, reads and writes alike, since 2.1.0 (before, most read routes said `jetonomy_not_found`) |
 | `jetonomy_validation` | 400 | Invalid or missing parameters |
 | `jetonomy_rate_limited` | 429 | Too many requests from this user |
 

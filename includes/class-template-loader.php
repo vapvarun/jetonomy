@@ -434,11 +434,7 @@ class Template_Loader {
 					'pickerReplySingular'    => esc_html( sprintf( __( '%%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
 					/* translators: %d: number of replies; %s: the reply label (substituted server-side). */
 					'pickerReplyPlural'      => esc_html( sprintf( __( '%%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ),
-					'roleLabels'             => array(
-						'member'    => __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
-						'moderator' => __( 'Moderator', 'jetonomy' ),
-						'admin'     => __( 'Admin', 'jetonomy' ),
-					),
+					'roleLabels'             => \Jetonomy\space_role_labels(),
 					'failedSaveProfile'      => __( 'Failed to save profile.', 'jetonomy' ),
 					// space-members ban dialog (translator placeholders).
 					/* translators: 1: member display name (substituted client-side); 2: singular space label; 3: plural topic label; 4: plural reply label. */
@@ -736,42 +732,123 @@ class Template_Loader {
 		// so listing .jt-app here would pin every app surface light in dark mode
 		// the moment an owner sets a palette colour. :root is an ancestor of
 		// .jt-app anyway, so the extra selector never bought any reach.
-		return '' !== $vars ? ':root{' . $vars . '}' : '';
+		$css = '' !== $vars ? ':root{' . $vars . '}' : '';
+
+		$tokens = self::palette_tokens( $settings );
+		if ( isset( $tokens['--jt-accent'] ) ) {
+			$ink = '';
+			foreach ( self::accent_ink_tokens( $tokens['--jt-accent'] ) as $token => $hex ) {
+				$ink .= $token . ':' . $hex . ';';
+			}
+			$css .= '' !== $ink ? self::LIGHT_ROOT . '{' . $ink . '}' : '';
+		}
+
+		return $css;
 	}
 
 	/**
-	 * Black or white, whichever reads better on the given accent hex.
-	 *
-	 * The runtime `oklch()` contrast guard in jetonomy-tokens.css derives
-	 * --jt-accent-fg for a THEME-token accent the server never sees. When the
-	 * owner PICKS an accent, the server knows the exact colour, so it computes
-	 * the readable foreground here and emits it as a concrete hex — which works
-	 * in every browser, including those without relative-colour oklch (Safari
-	 * < 16.4 / Chrome < 111), where the guard would otherwise fall back to plain
-	 * white and turn a light accent's button text invisible.
-	 *
-	 * @param string $hex A #rrggbb / #rgb accent colour.
-	 * @return string '#ffffff' or '#000000'.
+	 * Selector for light-mode-only tokens: the root while no dark signal is
+	 * on it. A dark signal on <body> re-declares the tokens there, so it wins
+	 * by inheritance; this keeps a light value off a dark <html>.
 	 */
-	private static function accent_fg( string $hex ): string {
+	const LIGHT_ROOT = ':root:not(.jt-dark):not([data-theme="dark"]):not([data-bx-mode="dark"])';
+
+	/**
+	 * A #rrggbb / #rgb hex as [r, g, b] 0-255, or null when it is not a hex.
+	 *
+	 * @param string $hex Colour.
+	 * @return int[]|null
+	 */
+	private static function hex_rgb( string $hex ): ?array {
 		$hex = ltrim( $hex, '#' );
 		if ( 3 === strlen( $hex ) ) {
 			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
 		}
-		if ( 6 !== strlen( $hex ) ) {
-			return '#ffffff';
+		return preg_match( '/^[0-9a-f]{6}$/i', $hex ) ? array_map( 'hexdec', str_split( $hex, 2 ) ) : null;
+	}
+
+	/**
+	 * Linear-sRGB channels (0-1) of a 0-255 colour.
+	 *
+	 * @param array $c [r, g, b] 0-255.
+	 * @return float[]
+	 */
+	private static function linear( array $c ): array {
+		return array_map( static fn( $v ): float => ( $v /= 255 ) <= 0.04045 ? $v / 12.92 : pow( ( $v + 0.055 ) / 1.055, 2.4 ), $c );
+	}
+
+	/**
+	 * Server-computed light-mode accent ink for an accent hex the server knows.
+	 *
+	 * Same rule as the light guard in jetonomy-tokens.css: the colour scaled in
+	 * linear sRGB to a relative luminance of at most 0.17 (4.5:1 on white and the subtle surfaces),
+	 * so a light accent such as #ffd34d gets a readable ink of the same hue and
+	 * an accent already that dark (#0073aa) keeps its exact colour.
+	 * Emitted under LIGHT_ROOT only: dark mode lifts the ink instead.
+	 *
+	 * @param string      $accent A #rrggbb / #rgb accent colour.
+	 * @param string|null $hover  The hover colour, when the caller sets its own.
+	 * @return array<string,string> --jt-accent-ink and --jt-accent-ink-hover; empty when $accent is not a hex.
+	 */
+	public static function accent_ink_tokens( string $accent, ?string $hover = null ): array {
+		$fill = self::hex_rgb( $accent );
+		if ( null === $fill ) {
+			return array();
 		}
-		$lin = static function ( float $c ): float {
-			$c /= 255;
-			return $c <= 0.03928 ? $c / 12.92 : pow( ( $c + 0.055 ) / 1.055, 2.4 );
+		$over = ( null !== $hover ? self::hex_rgb( $hover ) : null ) ?? array_map( static fn( $v ) => $v * 0.85, $fill );
+		$ink  = static function ( array $c ): string {
+			$lin = self::linear( $c );
+			$lum = 0.2126 * $lin[0] + 0.7152 * $lin[1] + 0.0722 * $lin[2];
+			$k   = $lum > 0.17 ? 0.17 / $lum : 1.0;
+			$out = '#';
+			foreach ( $lin as $v ) {
+				$v   *= $k;
+				$g    = $v <= 0.0031308 ? 12.92 * $v : 1.055 * pow( $v, 1 / 2.4 ) - 0.055;
+				$out .= sprintf( '%02x', (int) floor( max( 0.0, min( 1.0, $g ) ) * 255 + 1e-6 ) ); // Down, so rounding never lifts it past the limit.
+			}
+			return $out;
 		};
-		$lum = 0.2126 * $lin( (float) hexdec( substr( $hex, 0, 2 ) ) )
-			+ 0.7152 * $lin( (float) hexdec( substr( $hex, 2, 2 ) ) )
-			+ 0.0722 * $lin( (float) hexdec( substr( $hex, 4, 2 ) ) );
-		// Contrast of white vs black against this background; pick the higher.
-		$white_ratio = 1.05 / ( $lum + 0.05 );
-		$black_ratio = ( $lum + 0.05 ) / 0.05;
-		return $white_ratio >= $black_ratio ? '#ffffff' : '#000000';
+
+		return array(
+			'--jt-accent-ink'       => $ink( $fill ),
+			'--jt-accent-ink-hover' => $ink( $over ),
+		);
+	}
+
+	/**
+	 * Server-computed label colours for an accent hex the server knows (a
+	 * picked palette accent, or a theme accent the theme bridge reads).
+	 *
+	 * Same rule as the relative-colour guard in jetonomy-tokens.css: white
+	 * while white reaches 4.5:1 on the fill (relative luminance 0.1833 or
+	 * less), else black (4.67:1 or more). Hover gets the same rule on the
+	 * hover fill, which defaults to the CSS hover (the accent 15% toward
+	 * black). A concrete hex works in every browser, including those without
+	 * relative colour syntax, where the CSS guard falls back to white.
+	 *
+	 * @param string      $accent A #rrggbb / #rgb accent colour.
+	 * @param string|null $hover  The hover fill, when the caller sets its own.
+	 * @return array<string,string> --jt-accent-fg and --jt-accent-hover-fg; empty when $accent is not a hex.
+	 */
+	public static function accent_fg_tokens( string $accent, ?string $hover = null ): array {
+		$label = static function ( ?array $c ): string {
+			if ( null === $c ) {
+				return '#ffffff';
+			}
+			$lin = self::linear( $c );
+			$lum = 0.2126 * $lin[0] + 0.7152 * $lin[1] + 0.0722 * $lin[2];
+			return $lum <= 0.1833 ? '#ffffff' : '#000000';
+		};
+		$fill  = self::hex_rgb( $accent );
+		if ( null === $fill ) {
+			return array(); // Not a hex (a var() or rgb() from a theme): leave the CSS derivation in charge.
+		}
+		$over = null !== $hover ? self::hex_rgb( $hover ) : array_map( static fn( $v ) => $v * 0.85, $fill );
+
+		return array(
+			'--jt-accent-fg'       => $label( $fill ),
+			'--jt-accent-hover-fg' => $label( $over ),
+		);
 	}
 
 	/**
@@ -821,9 +898,7 @@ class Template_Loader {
 		// stays legible on a light accent in ALL browsers — not only those the
 		// oklch guard covers.
 		if ( isset( $tokens['--jt-accent'] ) ) {
-			$fg                             = self::accent_fg( $tokens['--jt-accent'] );
-			$tokens['--jt-accent-fg']       = $fg;
-			$tokens['--jt-accent-hover-fg'] = $fg;
+			$tokens += self::accent_fg_tokens( $tokens['--jt-accent'] );
 		}
 
 		return $tokens;
@@ -1131,7 +1206,7 @@ class Template_Loader {
 						$parts['title'] = __( 'You are invited', 'jetonomy' );
 						break;
 					case 'my-spaces':
-						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
+						/* translators: %s: a plural label the site owner configured (e.g. spaces, groups, topics). */
 						$parts['title'] = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						break;
 					case 'subscriptions':
@@ -1422,7 +1497,7 @@ class Template_Loader {
 						$noindex   = true; // One-shot landing.
 						break;
 					case 'my-spaces':
-						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
+						/* translators: %s: a plural label the site owner configured (e.g. spaces, groups, topics). */
 						$title = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						/* translators: 1: plural space label, 2: plural space label, 3: site title. */
 						$desc      = sprintf( __( '%1$s you run and %2$s you are part of on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), \Jetonomy\space_label( true, true ), $site_name );
@@ -1651,6 +1726,17 @@ class Template_Loader {
 		$missing = false;
 
 		switch ( $data['route'] ) {
+			case 'moderation':
+				// The view also says "no permission", but only after the theme has started output, when a classic theme
+				// has already sent a 200. Decide the status here, before any output, so every theme answers 403.
+				$mod_viewer = get_current_user_id();
+				if ( $mod_viewer > 0
+					&& ! \Jetonomy\Moderation\Moderation_Permissions::can_view_admin_dashboard( $mod_viewer )
+					&& ! \Jetonomy\Moderation\Moderation_Permissions::can_view_any_queue( $mod_viewer ) ) {
+					status_header( 403 );
+				}
+				break;
+
 			case 'space':
 			case 'space-members':
 			case 'space-roadmap':
@@ -1661,6 +1747,12 @@ class Template_Loader {
 					// is concealed, same as the view templates render. Missing and concealed are indistinguishable.
 					if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 						$missing = true;
+					}
+					// The view also refuses a viewer who may not moderate this space, but only after the theme has
+					// started output (a 200 on block themes): decide the status before output, as for /mod/.
+					if ( ! $missing && 'space-moderation' === $data['route'] && get_current_user_id() > 0
+						&& ! \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( get_current_user_id(), (int) $space->id ) ) {
+						status_header( 403 );
 					}
 				}
 				break;
@@ -1808,7 +1900,7 @@ class Template_Loader {
 			'networkError'          => __( 'Network error. Please try again.', 'jetonomy' ),
 			'follow'                => __( 'Follow', 'jetonomy' ),
 			'following'             => __( 'Following', 'jetonomy' ),
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			/* translators: %s: a space: the space label the site owner configured (e.g. space, group), or a space title. */
 			'followingSpace'        => sprintf( __( 'Following %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			/* translators: %s: the unfollowed space or topic title. */
 			'unfollowedSpace'       => sprintf( __( 'Unfollowed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
@@ -1892,7 +1984,7 @@ class Template_Loader {
 			'replyingTo'            => __( 'Replying to %s', 'jetonomy' ), // jt-terms-ok: verb.
 			/* translators: %s: singular member label. */
 			'thisMember'            => sprintf( __( 'this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
-			/* translators: %s: a number and the reply label the owner renamed, e.g. "3 answers". */
+			/* translators: %s: what to show: a sidebar widget name (e.g. Trending), or a count with the reply label (e.g. "3 answers"). */
 			'showCount'             => __( 'Show %s', 'jetonomy' ),
 			/* translators: %s: the singular reply label the site owner configured (lowercase). */
 			'cancelReply'           => sprintf( __( 'Cancel %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),

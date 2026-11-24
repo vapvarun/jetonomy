@@ -69,17 +69,18 @@
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
 			body: params.toString()
 		}).then(function (res) {
-			if (!res.ok) { throw new Error(res.statusText); }
-			return res.json();
+			// A 4xx still carries the server's own message as JSON ({success:false,data:...}), shown as is.
+			return res.json().catch(function () { throw new Error(res.statusText); });
 		});
 	}
 
 	function showFeedback(el, message, type) {
 		el.textContent = message;
-		el.className = 'jt-save-feedback jt-save-feedback--' + type;
+		el.classList.remove('jt-save-feedback--success', 'jt-save-feedback--error');
+		el.classList.add('jt-save-feedback--' + type);
 		setTimeout(function () {
 			el.textContent = '';
-			el.className = 'jt-save-feedback';
+			el.classList.remove('jt-save-feedback--success', 'jt-save-feedback--error');
 		}, 3500);
 	}
 
@@ -116,7 +117,7 @@
 			var titleEl = saveRow.querySelector('.jt-edit-title');
 			var contentEl = saveRow.querySelector('.jt-edit-content');
 			var spinner = saveRow.querySelector('.jt-save-spinner');
-			var feedback = saveRow.querySelector('.jt-save-feedback');
+			var feedback = saveRow.querySelector('.jt-inline-edit .jt-save-feedback');
 
 			saveBtn.disabled = true;
 			spinner.classList.add('is-active');
@@ -140,9 +141,10 @@
 					saveRow.querySelector('.jt-inline-edit').setAttribute('aria-hidden', 'true');
 					titleView.style.display = '';
 					saveRow.querySelector('.row-actions').style.display = '';
-					showFeedback(feedback, cfg.i18n.saved, 'success');
+					// The panel above just closed, so the message goes where the title is.
+					showFeedback(saveRow.querySelector('.jt-row-feedback'), cfg.i18n.saved, 'success');
 				} else {
-					showFeedback(feedback, (res.data && res.data.message) || cfg.i18n.saveError, 'error');
+					showFeedback(feedback, ('string' === typeof res.data ? res.data : (res.data && res.data.message)) || cfg.i18n.saveError, 'error');
 				}
 			}).catch(function () {
 				saveBtn.disabled = false;

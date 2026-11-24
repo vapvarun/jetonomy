@@ -71,7 +71,7 @@ $jt_members_pages  = max( 1, (int) ceil( $jt_members_total / $jt_members_per_pag
 if ( $jt_members_paged > $jt_members_pages ) {
 	$jt_members_paged = $jt_members_pages;
 }
-$jt_members_offset = ( $jt_members_paged - 1 ) * $jt_members_per_page;
+$jt_members_offset = jetonomy_page_offset( $jt_members_paged, $jt_members_per_page );
 $members           = $jt_members_total > 0
 	? \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id, $jt_members_per_page, $jt_members_offset, $jt_members_search, true )
 	: array();
@@ -95,6 +95,8 @@ foreach ( $jt_member_users as $jt_u ) {
 $category       = $space->category_id ? \Jetonomy\Models\Category::find_visible( (int) $space->category_id ) : null;
 $viewer_id      = get_current_user_id();
 $viewer_is_sadm = \Jetonomy\Permissions\Permission_Engine::is_space_admin( $viewer_id, (int) $space->id );
+// Space admins, and space moderators when the owner allows it (since 2.1.0), ban from this space.
+$viewer_can_ban = $viewer_id && \Jetonomy\Permissions\Permission_Engine::can_space_ban( $viewer_id, (int) $space->id );
 $viewer_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, (int) $space->id );
 
 // Pending join requests, surfaced to space moderators/admins on the front-end
@@ -136,7 +138,7 @@ if ( $viewer_is_sadm ) {
 	$jt_invites_total = \Jetonomy\Models\InviteLink::count_by_space( (int) $space->id );
 	$jt_invites_pages = max( 1, (int) ceil( $jt_invites_total / $jt_invites_per_page ) );
 	$jt_invites_paged = min( $jt_invites_pages, max( 1, absint( wp_unslash( $_GET['ipg'] ?? 1 ) ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
-	$jt_invites       = \Jetonomy\Models\InviteLink::list_by_space( (int) $space->id, $jt_invites_per_page, ( $jt_invites_paged - 1 ) * $jt_invites_per_page );
+	$jt_invites       = \Jetonomy\Models\InviteLink::list_by_space( (int) $space->id, $jt_invites_per_page, jetonomy_page_offset( $jt_invites_paged, $jt_invites_per_page ) );
 }
 
 $crumbs = array();
@@ -155,12 +157,7 @@ $crumbs[] = array(
 	'url'   => '',
 );
 
-$role_labels = array(
-	'viewer'    => __( 'Viewer', 'jetonomy' ),
-	'member'    => __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
-	'moderator' => __( 'Moderator', 'jetonomy' ),
-	'admin'     => __( 'Admin', 'jetonomy' ),
-);
+$role_labels = \Jetonomy\space_role_labels();
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -206,13 +203,15 @@ $role_labels = array(
 									<button type="button" class="jt-btn jt-btn-sm jt-btn-fill"
 										data-wp-on--click="actions.approveJoinRequest"
 										data-space-id="<?php echo absint( $space->id ); ?>"
-										data-request-id="<?php echo absint( $jt_req->id ); ?>">
+										data-request-id="<?php echo absint( $jt_req->id ); ?>"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: member display name. */ __( 'Approve join request from %s', 'jetonomy' ), $jt_req_name ) ); ?>">
 										<?php esc_html_e( 'Approve', 'jetonomy' ); ?>
 									</button>
 									<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost"
 										data-wp-on--click="actions.denyJoinRequest"
 										data-space-id="<?php echo absint( $space->id ); ?>"
-										data-request-id="<?php echo absint( $jt_req->id ); ?>">
+										data-request-id="<?php echo absint( $jt_req->id ); ?>"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: member display name. */ __( 'Deny join request from %s', 'jetonomy' ), $jt_req_name ) ); ?>">
 										<?php esc_html_e( 'Deny', 'jetonomy' ); ?>
 									</button>
 								</div>
@@ -416,10 +415,12 @@ $role_labels = array(
 				// would cost ~50 cold queries per roster page.
 				$jt_page_user_ids = array_map( static fn( $m ) => (int) $m->user_id, $members );
 				\Jetonomy\Models\UserProfile::prime( $jt_page_user_ids );
+				// Lift ban asks each banned row's space role: seed it from these rows.
+				\Jetonomy\Models\SpaceMember::prime_roles_from_rows( $members );
 				// One query each for the page: who is banned from this space
 				// (space admins see Lift instead of Ban), and whom the viewer
 				// has blocked (shown to the viewer only).
-				$jt_space_bans = $viewer_is_sadm ? \Jetonomy\Models\Restriction::active_rows_for_users( $jt_page_user_ids, (int) $space->id ) : array();
+				$jt_space_bans = $viewer_can_ban ? \Jetonomy\Models\Restriction::active_rows_for_users( $jt_page_user_ids, (int) $space->id ) : array();
 				$jt_blocked    = $viewer_id ? array_flip( \Jetonomy\Models\BlockedUser::blocked_ids( $viewer_id ) ) : array();
 				?>
 				<div class="jt-card jt-card-flush">
@@ -487,13 +488,24 @@ $role_labels = array(
 										</option>
 									<?php endforeach; ?>
 								</select>
+							<?php endif; ?>
+							<?php
+							// A moderator sees Ban only on rows they may ban (members and viewers, not the
+							// owner or site staff); the server re-checks every request.
+							$jt_row_bannable = $viewer_can_ban && (int) $member->user_id !== $viewer_id
+								&& ( $viewer_is_sadm || ( in_array( $member->role, array( 'member', 'viewer' ), true )
+									&& (int) $member->user_id !== (int) $space->author_id
+									&& ! user_can( (int) $member->user_id, 'jetonomy_moderate' ) ) );
+							?>
+							<?php if ( $jt_row_bannable ) : ?>
 								<?php $jt_ban = $jt_space_bans[ (int) $member->user_id ] ?? null; ?>
 								<?php if ( $jt_ban ) : ?>
 									<span class="jt-badge jt-badge-danger jt-member-badge"><?php esc_html_e( 'Banned', 'jetonomy' ); ?></span>
 									<?php if ( null === \Jetonomy\Moderation\Moderation_Permissions::lift_error( $viewer_id, $jt_ban ) ) : ?>
-										<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm"
+										<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm jt-member-lift-btn"
 											data-wp-on--click="actions.liftRestriction"
 											data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
+											aria-label="<?php echo esc_attr( sprintf( /* translators: %s: member display name. */ __( 'Lift ban for %s', 'jetonomy' ), \Jetonomy\user_display_name( $mu ) ) ); ?>"
 											data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>">
 											<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
 											<?php esc_html_e( 'Lift ban', 'jetonomy' ); ?>
@@ -501,10 +513,11 @@ $role_labels = array(
 									<?php endif; ?>
 								<?php else : ?>
 									<?php
-									// 1.4.0 C.3 — front-end "Ban" affordance for space admins.
-									// Issues a SPACE-scope ban via POST /moderation/ban (with
-									// space_id), so the cap-vs-role gap that blocked space mods
-									// is closed. Site-wide bans / silences stay cap-only.
+									// Front-end "Ban" for space admins, and for space moderators when
+									// Settings > Trust "moderators can ban" is on (2.1.0). Issues a
+									// SPACE-scope ban via POST /moderation/ban with space_id;
+									// Permission_Engine::can_space_ban() decides. Site-wide bans and
+									// silences stay cap-only.
 									?>
 									<?php
 									// Danger-ghost + x-circle: the identical treatment the
@@ -516,7 +529,8 @@ $role_labels = array(
 										class="jt-btn jt-btn-ghost jt-btn-danger jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
 										data-space-id="<?php echo absint( $space->id ); ?>"
 										data-user-id="<?php echo absint( $member->user_id ); ?>"
-										data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>">
+										data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: 1: member display name, 2: the singular space label the site owner configured (e.g. space, group). */ __( 'Ban %1$s from this %2$s', 'jetonomy' ), \Jetonomy\user_display_name( $mu ), \Jetonomy\space_label( false, true ) ) ); ?>">
 										<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
 										<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 										<?php echo esc_html( sprintf( __( 'Ban from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>

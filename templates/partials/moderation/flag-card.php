@@ -41,7 +41,7 @@ $reason_labels = array(
 );
 
 $reporter = get_userdata( (int) $flag->reporter_id );
-$time_ago = human_time_diff( strtotime( $flag->created_at ), time() );
+$time_ago = \Jetonomy\time_ago( (string) $flag->created_at );
 
 // Deliberately NOT block-filtered anywhere on this card or the moderation
 // queue it belongs to: a blocked user's flagged content MUST still reach
@@ -114,8 +114,7 @@ if ( ! isset( $context->topic ) ) {
 			<?php
 			/* translators: %s: reporter's display name */
 			echo esc_html( sprintf( __( 'Reported by %s', 'jetonomy' ), $jt_fc_reporter ) );
-			/* translators: %s: human-readable time difference. */
-			echo ' &middot; ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
+			echo '' === $time_ago ? '' : ' &middot; ' . esc_html( $time_ago );
 			?>
 		</span>
 	</div>

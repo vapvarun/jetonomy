@@ -110,6 +110,11 @@
 				var msg = (res.data && typeof res.data === 'object' && res.data.message)
 					? String(res.data.message)
 					: __( 'Something went wrong. Please try again.', 'jetonomy' );
+				// The community already has its own content: ask once, then send force.
+				if (res.data && 'jetonomy_demo_real_content' === res.data.code && !data.force && window.confirm(msg)) {
+					doAjax(action, Object.assign({}, data, { force: 1 }), btn, errorId, onSuccess);
+					return;
+				}
 				showError(errorId, msg);
 			}
 		}).catch(function () {

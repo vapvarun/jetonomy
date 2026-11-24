@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "jetonomy",
     "name": "Jetonomy",
-    "version": "2.0.7",
+    "version": "2.1.0",
     "namespace": "Jetonomy",
     "main_file": "jetonomy.php",
     "text_domain": "jetonomy",
@@ -13,9 +13,9 @@
   },
   "rest": {
     "namespace": "jetonomy/v1",
-    "route_count": 84,
-    "method_endpoints": 115,
-    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-10-31 for 2.0.7, 115 pairs after PATCH /access-rules/{rule_id} (first derived 2026-10-06 from rest_get_server() filtered to free controller classes). route_count INCLUDES the /jetonomy/v1 index route itself (82 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 88 entries covering 82 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
+    "route_count": 85,
+    "method_endpoints": 117,
+    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-10-31 for 2.0.7, 115 pairs after PATCH /access-rules/{rule_id}; 2.1.0 adds GET+POST /admin/settings (85 routes, 117 pairs) (first derived 2026-10-06 from rest_get_server() filtered to free controller classes). route_count INCLUDES the /jetonomy/v1 index route itself (82 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 88 entries covering 82 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
     "endpoints": [
       {
         "route": "/app/config",
@@ -856,7 +856,7 @@
         "auth": "login_required",
         "capability": "jetonomy_moderate",
         "ownership_check": "handler_enforces",
-        "audit_notes": "1.8.1: GET list_bans implemented (was documented-but-missing) - paginated active restrictions enriched with banned user + issuer + space, backed by Restriction::list_active(). POST ban_user unchanged. Space bans also accept the target space's admin. 2.0.2: type enum gains ip_ban with a required `ip` param (validated by Restriction::validate_ip_ban - valid IPv4/IPv6, not the caller's own IP, not already banned; same target rules as a ban, needs jetonomy_moderate or manage_options); the IP is stored in `reason`. GET default list now includes ip_ban rows so they can be lifted; GET type enum also accepts ip_ban."
+        "audit_notes": "1.8.1: GET list_bans implemented (was documented-but-missing) - paginated active restrictions enriched with banned user + issuer + space, backed by Restriction::list_active(). POST ban_user unchanged. Space bans also accept the target space's admin. 2.0.2: type enum gains ip_ban with a required `ip` param (validated by Restriction::validate_ip_ban - valid IPv4/IPv6, not the caller's own IP, not already banned; same target rules as a ban, needs jetonomy_moderate or manage_options); the IP is stored in `reason`. GET default list now includes ip_ban rows so they can be lifted; GET type enum also accepts ip_ban. 2.1.0: space_ban also accepts a space moderator when moderators_can_ban is on (Permission_Engine::can_space_ban); target rules are Restriction::actor_may_restrict( target, actor, space_id ) for every entry point (space moderator: roster member/viewer, not the author)."
       },
       {
         "route": "/moderation/ban/(?P<id>\\d+)",
@@ -867,9 +867,9 @@
         "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Unban user",
         "auth": "login_required",
-        "capability": "jetonomy_moderate",
+        "capability": "read",
         "ownership_check": "handler_enforces",
-        "audit_notes": "Unban user"
+        "audit_notes": "Unban user 2.1.0: gate moved from auth_mutation(jetonomy_moderate) to auth_mutation(read); Moderation_Permissions::lift_error() decides: site moderators/admins, or for a space_ban whoever Permission_Engine::can_space_ban() allows (space admin; space moderator when moderators_can_ban is on). Space admins without site caps were refused here before."
       },
       {
         "route": "/spaces/(?P<id>\\d+)/moderation/flags",
@@ -1174,6 +1174,20 @@
         "capability": "manage_options",
         "ownership_check": "not_applicable",
         "audit_notes": "2.0.1. 401 guest, 403 member (qa-actions DD1-DD2)."
+      },
+      {
+        "route": "/admin/settings",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Admin_Controller::get_settings / update_settings",
+        "permission": "REST_Auth::auth_mutation (closure)",
+        "purpose": "Read (secrets masked) and change jetonomy_settings through Settings::write(): only Settings::schema() keys, the form sanitizer, at most 50 keys; the same writer as wp jetonomy config set",
+        "auth": "login_required",
+        "capability": "manage_options",
+        "ownership_check": "not_applicable",
+        "audit_notes": "2.1.0. Stricter than the form (jetonomy_manage_settings delegate 403). Unknown key, schema miss or 51 keys 400 with nothing written. SettingsWriteRouteTest."
       },
       {
         "route": "/spaces/(?P<id>\\d+)/join-requests/mine",
@@ -1630,8 +1644,8 @@
       "group": "jetonomy_settings",
       "type": "array",
       "default": {},
-      "controls": "base_slug, front_page, accent_color, text_color, bg_color, bg_subtle_color, border_color, default_space_type, notification_defaults, trust_thresholds, trust_level_names, rate_limits, activity_log_retention_days, require_email_verification, frontend_space_creation_roles, reputation_points, terms_url, privacy_url",
-      "notes": " 1.4.3: gained reputation_points array (action_slug → int) for the new configurable-reputation settings card; sanitize_settings filters to known action slugs from Reputation::action_points_defaults(). 1.5.0: gained front_page (bool, default false) - \"Community as Homepage\"; 1.8.0: that request-filter injection (Router::maybe_serve_front_page) is GONE. It made the front page's query vars non-empty, which broke WP's own is_front_page() resolution and left the real page unqueryable — so the owner's per-page SEO on it (e.g. their Yoast title) was unreachable. Router::handle_request() now derives the home route at template_redirect via is_mapped_front_page(), leaving WP's resolution intact, and Template_Loader::set_seo_meta() defers entirely on that mapped page because a real page owns its own SEO. 1.5.0: gained the Color Palette set (text_color, bg_color, bg_subtle_color, border_color; empty = no override) - Template_Loader::palette_tokens()/palette_css() emit root token overrides whenever a palette field is set (accent_color treats its #0073aa default as a \"not set\" sentinel, which is what makes theme adoption the default); Theme_Integration light bridge subtracts palette-set tokens so explicit admin picks beat auto theme bridging. 1.7.1: gained terms_url + privacy_url (Settings -> General -> Community Setup) - consumed by GET /app/config for the mobile app's pre-login EULA screen; privacy_url falls back to get_privacy_policy_url() when unset. 1.8.0: inherit_fonts + inherit_colors REMOVED — both option keys and both checkboxes. inherit_fonts did nothing: measured byte-identical across 11 themes, because the --jt-font chain already ends in `inherit`, so the token resolves empty and .jt-app inherits the theme font either way — a checkbox governing a font setting that does not exist. inherit_colors was worse than dead: checked by default, it made palette_tokens() return empty, so an owner who picked an accent had it silently discarded, and the first Save destroyed a colour that had been applying (the key was absent, so the runtime had read it as unchecked). Theme adoption is now unconditional via the chains in jetonomy.css; the accent field is the single override."
+      "controls": "base_slug, front_page, accent_color, text_color, bg_color, bg_subtle_color, border_color, default_space_type, notification_defaults, trust_thresholds, trust_level_names, rate_limits, activity_log_retention_days, require_email_verification, frontend_space_creation_roles, reputation_points, terms_url, privacy_url, moderators_can_ban",
+      "notes": " 1.4.3: gained reputation_points array (action_slug → int) for the new configurable-reputation settings card; sanitize_settings filters to known action slugs from Reputation::action_points_defaults(). 1.5.0: gained front_page (bool, default false) - \"Community as Homepage\"; 1.8.0: that request-filter injection (Router::maybe_serve_front_page) is GONE. It made the front page's query vars non-empty, which broke WP's own is_front_page() resolution and left the real page unqueryable — so the owner's per-page SEO on it (e.g. their Yoast title) was unreachable. Router::handle_request() now derives the home route at template_redirect via is_mapped_front_page(), leaving WP's resolution intact, and Template_Loader::set_seo_meta() defers entirely on that mapped page because a real page owns its own SEO. 1.5.0: gained the Color Palette set (text_color, bg_color, bg_subtle_color, border_color; empty = no override) - Template_Loader::palette_tokens()/palette_css() emit root token overrides whenever a palette field is set (accent_color treats its #0073aa default as a \"not set\" sentinel, which is what makes theme adoption the default); Theme_Integration light bridge subtracts palette-set tokens so explicit admin picks beat auto theme bridging. 1.7.1: gained terms_url + privacy_url (Settings -> General -> Community Setup) - consumed by GET /app/config for the mobile app's pre-login EULA screen; privacy_url falls back to get_privacy_policy_url() when unset. 1.8.0: inherit_fonts + inherit_colors REMOVED — both option keys and both checkboxes. inherit_fonts did nothing: measured byte-identical across 11 themes, because the --jt-font chain already ends in `inherit`, so the token resolves empty and .jt-app inherits the theme font either way — a checkbox governing a font setting that does not exist. inherit_colors was worse than dead: checked by default, it made palette_tokens() return empty, so an owner who picked an accent had it silently discarded, and the first Save destroyed a colour that had been applying (the key was absent, so the runtime had read it as unchecked). Theme adoption is now unconditional via the chains in jetonomy.css; the accent field is the single override. 2.1.0: one writer for every entry point. Jetonomy\\Settings::sanitize() holds the form sanitizer (Admin::sanitize_settings keeps only the role-caps branch and delegates); Settings::schema() is the allowlist (filter jetonomy_settings_schema) read by GET/POST /admin/settings and wp jetonomy config set, which before 2.1.0 stored values unsanitized. Settings::write() fills a touched section from the stored values so a one-key write never resets its neighbours. jetonomy_settings_updated fires on every write (update/add_option hook) with source form|rest|cli. 2.1.0: gained moderators_can_ban (bool, default false, Permissions tab, manage_options only): Permission_Engine::moderators_can_ban() / can_space_ban() let a space moderator issue and lift space bans in their space; Restriction::actor_may_restrict( target, actor, ?space_id ) keeps their targets to roster members/viewers who are not the space author. DELETE /moderation/ban/{id} gate moved to auth_mutation(read) so space admins can lift their own space bans (Moderation_Permissions::lift_error decides). Also gained sidebar_widgets (Appearance)."
     },
     {
       "key": "jetonomy_email_templates",
@@ -2687,6 +2701,13 @@
       "notes": "Rows erased per personal-data erasure batch. Lower it on hosts with short max_execution_time. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
     },
     {
+      "name": "jetonomy_external_registration_url",
+      "type": "filter",
+      "args": "$url",
+      "where": "includes/functions.php",
+      "consumed_by": null
+    },
+    {
       "name": "jetonomy_fanout_post_subscribers",
       "type": "action",
       "args_count": 2,
@@ -2707,6 +2728,14 @@
       ],
       "where": "includes/notifications/class-notifier.php:227",
       "consumed_by": "jetonomy"
+    },
+    {
+      "name": "jetonomy_finished_action_retention_days",
+      "type": "filter",
+      "args": "days (int, default 7)",
+      "where": "includes/class-queue.php Queue::prune_history()",
+      "consumed_by": null,
+      "audit_notes": "2.1.0: days a completed job in the jetonomy Action Scheduler group is kept before Jetonomy deletes it with its log rows. Only Jetonomy rows; the site-wide action_scheduler_retention_period is never touched. Family naming convention {prefix}_finished_action_retention_days."
     },
     {
       "name": "jetonomy_flag_created",
@@ -2744,6 +2773,13 @@
       "consumed_by": "jetonomy-pro"
     },
     {
+      "name": "jetonomy_held_item_notes",
+      "type": "filter",
+      "args": "$notes, $kind, $ids",
+      "where": "templates/views/moderation.php",
+      "consumed_by": null
+    },
+    {
       "name": "jetonomy_home_member_hint",
       "type": "filter",
       "args_count": 1,
@@ -2773,6 +2809,13 @@
       "args": "",
       "where": "includes/models/class-post.php",
       "consumed_by": []
+    },
+    {
+      "name": "jetonomy_import_batch_imported",
+      "type": "action",
+      "args": "$source, $type, $ids",
+      "where": "includes/import/class-import-manager.php",
+      "consumed_by": null
     },
     {
       "name": "jetonomy_import_batch_seconds",
@@ -2980,6 +3023,13 @@
       "where": "includes/adapters/class-adapter-registry.php (Adapter_Registry::membership_level_url)",
       "consumed_by": null,
       "notes": "1.8.1. Where a visitor buys the membership level a space is gated on - the href of the button on the \"this space is included with VIP\" gate. Resolved from the owning adapter's OPTIONAL get_level_url() (probed with method_exists so third-party adapters implementing the interface are not fataled by a new method), then filtered. Adapters whose level is granted rather than sold - WP Roles, WP Fusion tags, SureMembers, tag-membership - intentionally resolve to \"\" and the gate renders the requirement with no button; this filter is how such a site supplies its own destination. A wrong button is worse than none."
+    },
+    {
+      "name": "jetonomy_mobile_tabs",
+      "type": "filter",
+      "args": "$tabs, $logged_in",
+      "where": "templates/partials/header.php",
+      "consumed_by": null
     },
     {
       "name": "jetonomy_moderation_flag_resolution",
@@ -3232,6 +3282,13 @@
       "notes": "2.0.3. Renders extra fields inside #notification-preferences on the profile edit page (Pro: None/Daily/Weekly digest)."
     },
     {
+      "name": "jetonomy_profile_notification_types",
+      "type": "filter",
+      "args": "$types",
+      "where": "templates/views/edit-profile.php",
+      "consumed_by": null
+    },
+    {
       "name": "jetonomy_profile_response",
       "type": "filter",
       "args": "response, user",
@@ -3272,6 +3329,20 @@
       "notes": "1.8.0. Fired once per orphaned (already-deleted) user id during 'wp jetonomy privacy purge-orphans'. Free and Pro both listen via on_user_delete, so the backfill replays the real delete path rather than reimplementing it."
     },
     {
+      "name": "jetonomy_qa_actions_end",
+      "type": "action",
+      "args": "none",
+      "where": "includes/class-cli.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_qa_actions_start",
+      "type": "action",
+      "args": "none",
+      "where": "includes/class-cli.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
       "name": "jetonomy_recount_backfill_batch",
       "type": "action",
       "args_count": 0,
@@ -3286,6 +3357,14 @@
       "where": "includes/class-recount-backfill.php (Recount_Backfill::complete)",
       "consumed_by": null,
       "notes": "2.0.0. Fired once the upgrade-time recount of reply/post counters has finished on a site."
+    },
+    {
+      "name": "jetonomy_recurring_jobs",
+      "type": "filter",
+      "args": "jobs (array hook => interval seconds | array(interval, first_delay))",
+      "where": "includes/class-cron.php Cron::ensure_scheduled(); includes/class-queue.php Queue::recurring() adds to it",
+      "consumed_by": "jetonomy-pro",
+      "audit_notes": "2.1.0: the one registry of recurring jobs for Free and Pro. Pro extensions register through Queue::recurring(); Pro keeps no scheduler of its own."
     },
     {
       "name": "jetonomy_replies_query_args",
@@ -3530,19 +3609,19 @@
     {
       "name": "jetonomy_show_sidebar_popular_tags",
       "type": "filter",
-      "where": "templates/partials/sidebar.php:358",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_show_sidebar_top_members",
       "type": "filter",
-      "where": "templates/partials/sidebar.php:302",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_show_sidebar_trending",
       "type": "filter",
-      "where": "templates/partials/sidebar.php:237",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
@@ -3575,19 +3654,19 @@
     {
       "name": "jetonomy_sidebar_after_popular_tags",
       "type": "action",
-      "where": "templates/partials/sidebar.php:387",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_sidebar_after_top_members",
       "type": "action",
-      "where": "templates/partials/sidebar.php:345",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_sidebar_after_trending",
       "type": "action",
-      "where": "templates/partials/sidebar.php:289",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
@@ -3619,19 +3698,19 @@
     {
       "name": "jetonomy_sidebar_before_popular_tags",
       "type": "action",
-      "where": "templates/partials/sidebar.php:356",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_sidebar_before_top_members",
       "type": "action",
-      "where": "templates/partials/sidebar.php:300",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
       "name": "jetonomy_sidebar_before_trending",
       "type": "action",
-      "where": "templates/partials/sidebar.php:235",
+      "where": "templates/partials/sidebar.php (widget loop, owner order since 2.1.0)",
       "consumed_by": []
     },
     {
@@ -3670,8 +3749,9 @@
       "name": "jetonomy_space_card_after",
       "type": "action",
       "args": "$space",
-      "where": "templates/views/home.php, templates/views/category.php",
-      "consumed_by": []
+      "where": "includes/helpers.php (jetonomy_render_space_grid: home, category, search)",
+      "consumed_by": [],
+      "notes": "2.1.0: fires inside the card <li>, after the stats and outside the stretched title link (was after the card <a>)."
     },
     {
       "name": "jetonomy_space_display_fields",
@@ -3738,6 +3818,14 @@
       "type": "filter",
       "where": "templates/views/space-members.php:29",
       "consumed_by": []
+    },
+    {
+      "name": "jetonomy_space_members_purged",
+      "type": "action",
+      "args": "$space_id, $user_ids (up to 500, ascending; may repeat if a purge is retried)",
+      "where": "includes/class-space-purge.php:announce_members",
+      "consumed_by": null,
+      "notes": "Fires before a deleted space's member rows are removed, so points or badges given for joining can be reversed."
     },
     {
       "name": "jetonomy_space_pending_requests_shown",
@@ -4021,6 +4109,36 @@
       "args": "",
       "where": "includes/models/class-vote.php",
       "consumed_by": []
+    },
+    {
+      "name": "jetonomy_settings_schema",
+      "type": "filter",
+      "args": "array $schema",
+      "where": "includes/class-settings.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_settings_updated",
+      "type": "action",
+      "args": "string[] $changed, string $source (form|rest|cli)",
+      "where": "includes/class-settings.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_sidebar_widgets",
+      "type": "filter",
+      "args": "array $widgets",
+      "where": "includes/helpers.php",
+      "consumed_by": null,
+      "since": "2.1.0"
+    },
+    {
+      "name": "jetonomy_loaded",
+      "type": "action",
+      "args": "Jetonomy\\Jetonomy $jetonomy (the main object, same as jetonomy())",
+      "where": "includes/class-jetonomy.php (end of Jetonomy::init(), plugins_loaded priority 10)",
+      "consumed_by": null,
+      "notes": "Since 2.1.0. Fires once per request after boot; not when Jetonomy is paused on PHP < 8.1. Detection stays defined( JETONOMY_VERSION ) / function_exists( jetonomy )."
     }
   ],
   "buddypress_integration": {
@@ -4117,51 +4235,94 @@
   "cron": [
     {
       "hook": "jetonomy_trust_evaluation",
-      "schedule": "twicedaily",
-      "purpose": "Evaluate and update user trust levels",
-      "handler": "Cron::evaluate_trust_levels"
+      "schedule": "every 12 hours (recurring)",
+      "purpose": "Evaluate trust levels: first slice inline, then one jetonomy_trust_evaluation_batch cursor chain; 2.1.0 reads only members who could reach the next level, so a run with nobody to promote queues no batch",
+      "handler": "Cron::evaluate_trust_levels",
+      "keep_on_deactivate": false
     },
     {
-      "hook": "jetonomy_reconcile_rosters",
-      "schedule": "hourly",
-      "purpose": "Drop 'tier' roster rows whose membership grant has lapsed (backstop for adapters like BN Pro that never fire jetonomy_membership_deactivated)",
-      "handler": "Membership_Roster_Sync::reconcile"
-    },
-    {
-      "hook": "jetonomy_cleanup_expired",
-      "schedule": "hourly",
-      "purpose": "Clean up expired restrictions and bans",
-      "handler": "Cron::cleanup_expired_restrictions"
+      "hook": "jetonomy_due_jobs",
+      "schedule": "single, armed at the next due time (Cron::arm_due_jobs): next restriction expiry, next owed verification reminder, or an hour out while tier roster rows exist; nothing queued when nothing is due",
+      "purpose": "2.1.0: one job for expired-restriction cleanup, verification reminders and the membership roster backstop, replacing three hourly jobs (jetonomy_cleanup_expired, jetonomy_verification_reminder, jetonomy_reconcile_rosters; their old schedules are cancelled by migration 2.1.0.1)",
+      "handler": "Cron::run_due_jobs",
+      "keep_on_deactivate": false
     },
     {
       "hook": "jetonomy_prune_activity",
       "schedule": "daily",
       "purpose": "Prune old activity log entries (configurable retention via jetonomy_settings.activity_log_retention_days, default 90; 0 disables)",
-      "handler": "Cron::prune_activity_log"
+      "handler": "Cron::prune_activity_log",
+      "keep_on_deactivate": false
     },
     {
       "hook": "jetonomy_cleanup_notifications",
       "schedule": "weekly",
       "purpose": "Mark old unread notifications as read (30-day cutoff)",
-      "handler": "Cron::cleanup_old_notifications"
+      "handler": "Cron::cleanup_old_notifications",
+      "keep_on_deactivate": false
     },
     {
       "hook": "jetonomy_publish_scheduled",
       "schedule": "single (armed at the earliest scheduled published_at, re-armed after each run; Cron::arm_scheduled_publish)",
       "purpose": "Publish posts whose published_at datetime has passed. 2.0.1: replaced the hourly recurring poll so topics go live on time and nothing runs when nothing is scheduled",
-      "handler": "Cron::publish_scheduled_posts"
-    },
-    {
-      "hook": "jetonomy_verification_reminder",
-      "schedule": "hourly",
-      "purpose": "Send single-shot nudge email to users who never verified after `jetonomy_settings.verification_reminder_hours` (default 24, 0 disables). Rate-limited via `jt_user_profiles.verification_reminder_sent_at` column (1.4.1 migration). Self-heals: also lazy-scheduled on init to upgrade installs without re-activate (1.4.1 A10).",
-      "handler": "Verification_Reminder::run"
+      "handler": "Cron::publish_scheduled_posts",
+      "keep_on_deactivate": true
     },
     {
       "hook": "jetonomy_cleanup_media",
       "interval": "DAY_IN_SECONDS",
       "where": "includes/class-cron.php",
-      "purpose": "Delete community uploads never attached to a post or reply (first run reports only)."
+      "purpose": "Delete community uploads never attached to a post or reply (first run reports only).",
+      "keep_on_deactivate": false
+    },
+    {
+      "hook": "jetonomy_fanout_post_subscribers",
+      "schedule": "single cursor job, args (object id, space id, last user id)",
+      "purpose": "Notify subscribers of a big space or topic, 250 per run (Notifier::FANOUT_BATCH); chains only while more subscribers remain",
+      "handler": "Notifier",
+      "keep_on_deactivate": true
+    },
+    {
+      "hook": "jetonomy_fanout_reply_subscribers",
+      "schedule": "single cursor job, args (object id, space id, last user id)",
+      "purpose": "Notify subscribers of a big space or topic, 250 per run (Notifier::FANOUT_BATCH); chains only while more subscribers remain",
+      "handler": "Notifier",
+      "keep_on_deactivate": true
+    },
+    {
+      "hook": "jetonomy_trust_evaluation_batch",
+      "schedule": "async cursor continuation of the trust sweep",
+      "purpose": "Evaluate the next 500 members who could move up a trust level; cursor in jetonomy_trust_eval_cursor",
+      "handler": "Cron::evaluate_trust_batch",
+      "keep_on_deactivate": false
+    },
+    {
+      "hook": "jetonomy_space_purge_batch",
+      "schedule": "async, when a space is deleted; retries carry attempt (max 3)",
+      "purpose": "Delete the rows of a deleted space in batches",
+      "handler": "Space_Purge::run_batch",
+      "keep_on_deactivate": true
+    },
+    {
+      "hook": "jetonomy_sweep_space_roster",
+      "schedule": "async, when an access rule of a space is removed",
+      "purpose": "Re-check the space's members against its remaining access rules",
+      "handler": "Membership_Roster_Sync::sweep_space",
+      "keep_on_deactivate": false
+    },
+    {
+      "hook": "jetonomy_gravatar_check",
+      "schedule": "async, once per member without a cached avatar check",
+      "purpose": "Cache whether a member has a Gravatar",
+      "handler": "Avatar::run_gravatar_check",
+      "keep_on_deactivate": false
+    },
+    {
+      "hook": "jetonomy_recount_backfill_batch",
+      "schedule": "async cursor, once after an update",
+      "purpose": "Backfill denormalized counters in batches; cursor in an option",
+      "handler": "Recount_Backfill::run_batch",
+      "keep_on_deactivate": false
     }
   ],
   "wp_cli": [
@@ -4394,7 +4555,14 @@
       "grid_track_overflow_risks: 4 bare 1fr tracks in fixed-column grids. Risk rated low (current cell content fits). Fix on next CSS sweep - convert to minmax(0, 1fr) for content-overflow safety."
     ],
     "changes_2_0_1": "2.0.1 (branch 2.0.1): base_slug() helper replaced ~20 inline reads; Router hooks pre_handle_404 (preempt_route_404) so resolved routes skip core's 404/no-store path; old-base 301 only on is_404(); Importer base gained map_source/find_imported/remember/import_category/get_tally and results()['already']; Import_Map gained find_many/record_many/match_legacy/legacy_category; bbPress importer reads _bbp_sticky_topics/_bbp_super_sticky_topics, _bbp_reply_to (parent_id) and links BuddyPress groups via _bbp_group_ids. No new hooks fired, no schema change. Later on 2.0.1: Post::delete/Reply::delete cascade via Space_Purge::delete_dependents() (replies batched 500, per-reply hooks kept); DELETE ?force=true on posts/replies; DELETE (non-force) or PATCH on an already-trashed post/reply returns 409 jetonomy_already_trashed (Base_Controller::already_trashed_error); scheduled drafts validated server-side (jetonomy_schedule_time_required / jetonomy_schedule_in_past 400, jetonomy_duplicate_scheduled 409 via Post::find_scheduled_duplicate) and published by a single armed action (Post::next_scheduled_at + Cron::arm_scheduled_publish, one-time option jetonomy_publish_single_armed); admin Trash filter + jetonomy_delete_content_permanently; Notifier::should_web()/delivery_channel() + Subscription::attach_delivery(); leaderboard_period_where requires reputation > 0; single jt_viewed cookie + jetonomy_view_dedupe_cookie filter + Privacy policy text; Importer::skip_orphan()/describe_tally()/load_mapped()/clean_slug()/is_source_active(), paged 'members' import phase, jetonomy_import_id_map option retired.",
-    "changes_2_0_2": "2.0.2 surface delta (no new routes/tables; DB 2.0.2 = Migration_2_0_2). Capabilities::UPLOAD_CAPS + can_upload() (media route + image buttons; Subscriber holds jetonomy_upload_media by default); Permissions save skips untouched empty rows, locked third-party roles get a notice + role_caps_reset; Trust_Levels abilities list only enforced effects. SpaceMember::set_role()/remove() take $keep_last_admin (wp-admin + REST pass true; revocations do not). Restriction::ban() refuses space_ban without space; Users dialog offers global ban + silence. Post::merge_into() returns WP_Error for private sources, moves votes/subscriptions/bookmarks, copies the opening post as a 'Merged from' reply. Router answers the_seo_framework_query_supports_seo=false on jetonomy_route requests. Admin: Plain-permalink error notice; footer text names Jetonomy on its screens. Author::for_display() now used by approval cards and wp-admin Content/Replies/Moderation lists. Basecamp cards: see 2.0.2 commits. Bug round (2026-10-15): Trust_Levels::default_label() holds built-in level names, label() reads settings trust_level_names (Settings > Permissions); TL5 name is Veteran; REST user payloads add trust_level_label. jetonomy_vote_attrs() (jetonomy.php) renders vote button title/aria-label + data-jt-label-on/off. Bio is stored in WP user meta 'description' (UserProfile hydrates ->bio; Migration_2_0_2::move_bios_to_wordpress). Leaderboard shortcode/widget/block take period=all|month|week. Login block renders a signed-in notice unless context=sidebar. window.jetonomyLabels (wp-admin only) carries the terminology map; bin/check-terminology.php gates hardcoded nouns. Votes: a retraction (pressing your active vote) is never rate-limited and never counted; topic and reply votes share jetonomyVoteToast() (Vote added / Vote removed). Unknown or switched-off community routes render templates/views/not-found.php (404, title 'Page not available'). Capabilities::can_set_image() gates new avatar_url / cover_image over REST."
+    "changes_2_0_2": "2.0.2 surface delta (no new routes/tables; DB 2.0.2 = Migration_2_0_2). Capabilities::UPLOAD_CAPS + can_upload() (media route + image buttons; Subscriber holds jetonomy_upload_media by default); Permissions save skips untouched empty rows, locked third-party roles get a notice + role_caps_reset; Trust_Levels abilities list only enforced effects. SpaceMember::set_role()/remove() take $keep_last_admin (wp-admin + REST pass true; revocations do not). Restriction::ban() refuses space_ban without space; Users dialog offers global ban + silence. Post::merge_into() returns WP_Error for private sources, moves votes/subscriptions/bookmarks, copies the opening post as a 'Merged from' reply. Router answers the_seo_framework_query_supports_seo=false on jetonomy_route requests. Admin: Plain-permalink error notice; footer text names Jetonomy on its screens. Author::for_display() now used by approval cards and wp-admin Content/Replies/Moderation lists. Basecamp cards: see 2.0.2 commits. Bug round (2026-10-15): Trust_Levels::default_label() holds built-in level names, label() reads settings trust_level_names (Settings > Permissions); TL5 name is Veteran; REST user payloads add trust_level_label. jetonomy_vote_attrs() (jetonomy.php) renders vote button title/aria-label + data-jt-label-on/off. Bio is stored in WP user meta 'description' (UserProfile hydrates ->bio; Migration_2_0_2::move_bios_to_wordpress). Leaderboard shortcode/widget/block take period=all|month|week. Login block renders a signed-in notice unless context=sidebar. window.jetonomyLabels (wp-admin only) carries the terminology map; bin/check-terminology.php gates hardcoded nouns. Votes: a retraction (pressing your active vote) is never rate-limited and never counted; topic and reply votes share jetonomyVoteToast() (Vote added / Vote removed). Unknown or switched-off community routes render templates/views/not-found.php (404, title 'Page not available'). Capabilities::can_set_image() gates new avatar_url / cover_image over REST.",
+    "queue": {
+      "entry_point": "\\Jetonomy\\Queue (Free and Pro); register of every job with args and costs: docs/standards/background-jobs.md section 9, checked against this cron list by bin/check-manifest-fresh.php",
+      "keep_on_deactivate": "Queue::KEEP_ON_DEACTIVATE: jobs deactivation leaves pending (space purge, scheduled publish, subscriber fan-out, Pro announcement, upgrade conversion, field re-index, attachments lock, webhook deliveries). Deactivation cancels the rest with one set-based UPDATE per 10,000 rows (Queue::cancel_pending_rows); Pro registers jetonomy_pro_deactivate() before its Free-present guard",
+      "recovery": "Queue::flag_recovery() sets transient jetonomy_recover_kept_jobs (1 week) on activation, version change, one-click update and extension switch-on; Queue::recover_kept_jobs() (wp_loaded, scheduling requests only) re-queues kept rows failed with 'no callbacks are registered' in the last 7 days, 200 per request",
+      "options": "jetonomy_qa_queue_aside (QA only, non-autoloaded: copies set aside by Queue_Isolation, deleted when put back); Pro jetonomy_pro_upgrade.lock (core WP_Upgrader lock row for run_upgrade)",
+      "timeouts": "Pro Extension::REMOTE_TIMEOUT = 5 s for push services; webhook deliveries wait 15 s (filter jetonomy_pro_webhook_timeout)"
+    }
   },
   "generated": {
     "delta_2026_10_06_2_0_1": "2.0.1 release reconciliation, re-derived from source and the live site. REST: 83 routes / 113 method endpoints (+GET/POST/DELETE /admin/demo-data). AJAX: 44 (-jetonomy_cleanup_sample_data, superseded by Demo_Seeder::remove() behind REST). Hooks: +jetonomy_breadcrumb_placement, +jetonomy_community_notification_read, +jetonomy_search_adapter, +jetonomy_email_from_email, +jetonomy_email_from_name; jetonomy_search_query_args now fires from Fulltext_Search::query() and its return value is used; jetonomy_post_updated / jetonomy_reply_updated also fire from wp-admin edits. New interface Adapters\\Search_Query_Adapter and class Search\\Search_Indexer. Unchanged: 23 tables, 23 capabilities, 8 blocks, 8 shortcodes, 8 cron hooks, 16 CLI groups, 15 admin pages. qa-actions 469 pass + 1 environment skip.",

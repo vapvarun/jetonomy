@@ -1822,6 +1822,10 @@ class Reply extends Model {
 		if ( $target_space_id <= 0 ) {
 			$target_space_id = (int) $source_post->space_id;
 		}
+		// Refuse before any reply moves: Post::create() would refuse later, after the subtree moved.
+		if ( ! Space::find( $target_space_id ) ) {
+			return Space::missing_error();
+		}
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		// Move the split reply's whole subtree, not only its direct children, so

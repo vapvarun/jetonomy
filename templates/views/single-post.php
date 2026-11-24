@@ -148,7 +148,7 @@ $category          = ( $space && $space->category_id ) ? \Jetonomy\Models\Catego
 
 $author_id = (int) $post->author_id;
 $trust     = $profile ? (int) $profile->trust_level : 0;
-$time_ago  = human_time_diff( strtotime( $post->created_at ), time() );
+$time_ago  = \Jetonomy\time_ago( (string) $post->created_at );
 $base      = \Jetonomy\base_url();
 $post_url  = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
 
@@ -187,7 +187,7 @@ $top_level_count = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
 $replies_per_page = \Jetonomy\replies_per_page();
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $reply_page        = max( 1, absint( wp_unslash( $_GET['rpg'] ?? 1 ) ) );
-$reply_offset      = ( $reply_page - 1 ) * $replies_per_page;
+$reply_offset      = jetonomy_page_offset( $reply_page, $replies_per_page );
 $reply_batch       = \Jetonomy\Models\Reply::get_threaded(
 	(int) $post->id,
 	$reply_sort,
@@ -553,7 +553,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<span>
 							<?php
 							/* translators: %s: human-readable time difference. */
-							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
+							echo esc_html( $time_ago );
 							?>
 						</span>
 						<?php \Jetonomy\Template_Loader::partial( 'edited-mark', array( 'item' => $post ) ); ?>

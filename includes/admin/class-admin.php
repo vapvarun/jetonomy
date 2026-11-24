@@ -26,11 +26,19 @@ use function Jetonomy\now;
 
 class Admin {
 
+	/** Jetonomy Pro's product page; the only place a Pro promo links off site. */
+	public const PRO_URL = 'https://store.wbcomdesigns.com/jetonomy-pro/';
+
+	/** User meta: the Pro promo ids this admin dismissed (array). Removed on uninstall with every jetonomy_ key. */
+	private const PROMO_DISMISS_META = 'jetonomy_dismissed_promos';
+
 	public function __construct() {
+		add_action( 'admin_post_jetonomy_dismiss_promo', array( __CLASS__, 'dismiss_pro_promo' ) );
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_page_access_denied', array( $this, 'explain_access_rules_refusal' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_notices', array( $this, 'render_permalink_notice' ) );
+		add_action( 'admin_notices', array( $this, 'render_php_extensions_notice' ) );
 		add_action( 'admin_init', array( $this, 'maybe_render_setup_wizard' ) );
 		// A6: intercepts the CSV export request before any output is sent so
 		// the download streams cleanly without admin-header HTML interleaving.
@@ -289,6 +297,195 @@ class Admin {
 	}
 
 	/**
+	 * Whether a Pro promotion may show here: never with Pro active, never after the site owner turned
+	 * "Show Pro suggestions" off, and (for a dismissible card, $id) not once this admin dismissed it.
+	 *
+	 * @param string $id Promo id, or '' for a non-dismissible spot such as a locked tab.
+	 */
+	public static function show_pro_promo( string $id = '' ): bool {
+		if ( defined( 'JETONOMY_PRO_VERSION' ) || ! empty( get_option( 'jetonomy_settings', array() )['hide_pro_suggestions'] ) ) {
+			return false;
+		}
+		return '' === $id || ! in_array( $id, (array) get_user_meta( get_current_user_id(), self::PROMO_DISMISS_META, true ), true );
+	}
+
+	/** "See what Pro adds" (our own Free vs Pro screen) and a per-user Dismiss, for a promo card. */
+	public static function pro_promo_actions( string $id ): void {
+		printf(
+			'<p class="jt-pro-upsell__actions"><a class="button" href="%1$s">%2$s</a> <a class="jt-pro-upsell__dismiss" href="%3$s">%4$s</a></p>',
+			esc_url( admin_url( 'admin.php?page=jetonomy-settings&tab=free-vs-pro' ) ),
+			esc_html__( 'See what Pro adds', 'jetonomy' ),
+			esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=jetonomy_dismiss_promo&promo=' . rawurlencode( $id ) ), 'jetonomy_dismiss_promo' ) ),
+			esc_html__( 'Dismiss', 'jetonomy' )
+		);
+	}
+
+	/**
+	 * A dismissible Pro card on our own screens: badge, title, one value sentence, See what Pro adds and Dismiss.
+	 * Prints nothing with Pro active, with "Show Pro suggestions" off, or once this admin dismissed $id.
+	 *
+	 * @param string $id     Promo id (per-user dismiss key).
+	 * @param string $title  Card title.
+	 * @param string $copy   One sentence in the owner's words.
+	 * @param string $anchor Optional element id, so a locked tab can point at the card.
+	 * @return bool Whether the card was printed.
+	 */
+	public static function pro_card( string $id, string $title, string $copy, string $anchor = '' ): bool {
+		if ( ! self::show_pro_promo( $id ) ) {
+			return false;
+		}
+		printf(
+			'<div class="jt-pro-upsell"%1$s><span class="jt-pro-badge">%2$s</span><h4>%3$s</h4><p>%4$s</p>',
+			'' !== $anchor ? ' id="' . esc_attr( $anchor ) . '"' : '',
+			esc_html__( 'PRO', 'jetonomy' ),
+			esc_html( $title ),
+			esc_html( $copy )
+		);
+		self::pro_promo_actions( $id );
+		echo '</div>';
+		return true;
+	}
+
+	/**
+	 * A locked Pro tab: a link to the explainer on this page, announced as unavailable and described by it.
+	 *
+	 * @param string $label  Tab label.
+	 * @param string $anchor Id of the explainer ({@see pro_explainer()} or a {@see pro_card()} anchor).
+	 */
+	public static function pro_locked_tab( string $label, string $anchor ): void {
+		printf(
+			'<a class="nav-tab jt-pro-locked-tab" href="#%1$s" aria-disabled="true" aria-describedby="%1$s">%2$s <span class="jt-pro-badge">%3$s</span></a>',
+			esc_attr( $anchor ),
+			esc_html( $label ),
+			esc_html__( 'PRO', 'jetonomy' )
+		);
+	}
+
+	/**
+	 * The visible one-line explainer a locked tab points at. Not dismissible: it explains a control that stays on screen.
+	 *
+	 * @param string $anchor Element id the locked tab references.
+	 * @param string $copy   One sentence.
+	 */
+	public static function pro_explainer( string $anchor, string $copy ): void {
+		printf(
+			'<p id="%1$s" class="jt-pro-explainer"><span class="jt-pro-badge">%2$s</span> <span>%3$s</span> <a href="%4$s">%5$s</a></p>',
+			esc_attr( $anchor ),
+			esc_html__( 'PRO', 'jetonomy' ),
+			esc_html( $copy ),
+			esc_url( admin_url( 'admin.php?page=jetonomy-settings&tab=free-vs-pro' ) ),
+			esc_html__( 'See what Pro adds', 'jetonomy' )
+		);
+	}
+
+	/**
+	 * Every Pro extension, keyed by Pro's extension id, for the Free vs Pro table. Pro's QA run checks that each
+	 * extension Pro registers has a row here, so a new extension cannot be missing from the table.
+	 *
+	 * @return array<string, array{name: string, desc: string}>
+	 */
+	public static function pro_extensions(): array {
+		$topics  = \Jetonomy\jetonomy_label( 'topic', true, true );
+		$replies = \Jetonomy\jetonomy_label( 'reply', true, true );
+		$members = \Jetonomy\jetonomy_label( 'member', true, true );
+		return array(
+			'reactions'           => array(
+				'name' => __( 'Emoji Reactions', 'jetonomy' ),
+				/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). */
+				'desc' => sprintf( __( 'Like, love, and celebrate with Slack-style reactions on %1$s and %2$s.', 'jetonomy' ), $topics, $replies ),
+			),
+			'private-messaging'   => array(
+				'name' => __( 'Private Messaging', 'jetonomy' ),
+				/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+				'desc' => sprintf( __( 'One-on-one and group conversations between community %s.', 'jetonomy' ), $members ),
+			),
+			'polls'               => array(
+				'name' => __( 'Polls', 'jetonomy' ),
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				'desc' => sprintf( __( 'Create polls within %s for community voting and decision-making.', 'jetonomy' ), $topics ),
+			),
+			'analytics'           => array(
+				'name' => __( 'Analytics Dashboard', 'jetonomy' ),
+				/* translators: 1: the plural space label the site owner configured (e.g. spaces, groups). 2: topic label, lowercase (e.g. "topic"). */
+				'desc' => sprintf( __( 'Engagement graphs, user growth, top %1$s, %2$s trends, and CSV export.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			),
+			'email-digest'        => array(
+				'name' => __( 'Email Digests', 'jetonomy' ),
+				'desc' => __( 'Daily and weekly email digests of community activity for subscribed users.', 'jetonomy' ),
+			),
+			'web-push'            => array(
+				'name' => __( 'Web Push', 'jetonomy' ),
+				/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
+				'desc' => sprintf( __( 'Browser push notifications for %s, mentions, and forum events.', 'jetonomy' ), $replies ),
+			),
+			'webhooks'            => array(
+				'name' => __( 'Webhooks', 'jetonomy' ),
+				'desc' => __( 'Fire HTTP POST requests to Zapier, Slack, n8n, or any endpoint on forum events.', 'jetonomy' ), // jt-terms-ok: the HTTP method.
+			),
+			'reply-by-email'      => array(
+				'name' => __( 'Reply by Email', 'jetonomy' ), // jt-terms-ok: Pro add-on name.
+				/* translators: %s: member label, plural (e.g. "Members"). */
+				'desc' => sprintf( __( '%s reply to notifications by email. No login required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ), // jt-terms-ok: "reply" is the verb.
+			),
+			'custom-badges'       => array(
+				'name' => __( 'Custom Badges', 'jetonomy' ),
+				'desc' => __( 'Create and auto-award custom badges based on community activity criteria.', 'jetonomy' ),
+			),
+			'custom-fields'       => array(
+				'name' => __( 'Custom Fields', 'jetonomy' ),
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				'desc' => sprintf( __( 'Add custom fields to %s and user profiles: text, select, checkbox, date, and more.', 'jetonomy' ), $topics ),
+			),
+			'advanced-moderation' => array(
+				'name' => __( 'Advanced Moderation', 'jetonomy' ),
+				'desc' => __( 'Auto-moderation rules engine: keyword filters, regex, link limits, and spam scoring.', 'jetonomy' ),
+			),
+			'ai'                  => array(
+				'name' => __( 'AI Assistant', 'jetonomy' ),
+				/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. */
+				'desc' => sprintf( __( 'Spam and toxicity review, summaries and suggested answers for %1$s and %2$s, with the AI provider you choose.', 'jetonomy' ), $topics, $replies ),
+			),
+			'anonymous-posting'   => array(
+				'name' => __( 'Anonymous Posting', 'jetonomy' ),
+				/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+				'desc' => sprintf( __( 'Let %s write without showing their name; only site owners can reveal the author, and every reveal is logged.', 'jetonomy' ), $members ),
+			),
+			'site-announcements'  => array(
+				'name' => __( 'Site Announcements', 'jetonomy' ),
+				/* translators: 1: topic label, singular, lowercase. 2: the plural space label, lowercase (e.g. "spaces"). */
+				'desc' => sprintf( __( 'Feature an important %1$s at the top of every one of your %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( true, true ) ),
+			),
+			'attachments'         => array(
+				'name' => __( 'File Attachments', 'jetonomy' ),
+				/* translators: 1: topic label, plural, lowercase. 2: reply label, plural, lowercase. 3: space label, singular, lowercase. 4: member label, plural, lowercase. */
+				'desc' => sprintf( __( 'Attach images and files to %1$s and %2$s; files in a private %3$s are served only to its %4$s.', 'jetonomy' ), $topics, $replies, \Jetonomy\space_label( false, true ), $members ),
+			),
+			'seo-pro'             => array(
+				'name' => __( 'SEO Pro', 'jetonomy' ),
+				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+				'desc' => sprintf( __( 'Per-%s meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			),
+			'white-label'         => array(
+				'name' => __( 'White Label', 'jetonomy' ),
+				'desc' => __( 'Replace Jetonomy branding: community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ),
+			),
+		);
+	}
+
+	/** admin-post handler: remember one dismissed promo for the current admin, then go back. */
+	public static function dismiss_pro_promo(): void {
+		check_admin_referer( 'jetonomy_dismiss_promo' );
+		$id = sanitize_key( wp_unslash( $_GET['promo'] ?? '' ) );
+		if ( '' !== $id ) {
+			$ids = (array) get_user_meta( get_current_user_id(), self::PROMO_DISMISS_META, true );
+			update_user_meta( get_current_user_id(), self::PROMO_DISMISS_META, array_values( array_unique( array_merge( array_filter( $ids ), array( $id ) ) ) ) );
+		}
+		wp_safe_redirect( wp_get_referer() ?: admin_url( 'admin.php?page=jetonomy' ) );
+		exit;
+	}
+
+
+	/**
 	 * The product name wp-admin shows in headings, banners and help text.
 	 *
 	 * One source for every "Jetonomy ..." heading, so Pro's White Label (which
@@ -411,6 +608,8 @@ class Admin {
 			/* translators: 1: singular topic label, lowercase. 2: singular space label, lowercase. */
 			'new_post_in_sub'        => array( sprintf( __( 'New %1$s in subscribed %2$s', 'jetonomy' ), $topic, \Jetonomy\space_label( false, true ) ), true ),
 			'badge_earned'           => array( __( 'Badge earned', 'jetonomy' ), true ),
+			// Sent by Jetonomy Pro's Site announcements when an announcement is pinned. Email is off unless the member or owner turns it on.
+			'announcement'           => array( __( 'Site announcements', 'jetonomy' ), true ),
 			/* translators: %s: singular topic label, lowercase. */
 			'vote_on_post'           => array( sprintf( __( 'Vote on your %s', 'jetonomy' ), $topic ), true ),
 			/* translators: %s: singular topic label, lowercase. */
@@ -462,6 +661,35 @@ class Admin {
 			esc_html__( 'your community cannot be reached while permalinks are set to Plain. Visitors see the homepage instead.', 'jetonomy' ),
 			esc_url( admin_url( 'options-permalink.php' ) ),
 			esc_html__( 'Choose a permalink structure', 'jetonomy' )
+		);
+	}
+
+	/**
+	 * A PHP build without mbstring, dom or ctype keeps working (the affected features step aside); say so on
+	 * Jetonomy's own screens so the owner can ask the host to enable them.
+	 */
+	public function render_php_extensions_notice(): void {
+		$page = sanitize_key( wp_unslash( $_GET['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! current_user_can( 'manage_options' ) || 0 !== strpos( $page, 'jetonomy' ) ) {
+			return;
+		}
+		$missing = \Jetonomy\missing_php_extensions();
+		if ( ! $missing ) {
+			return;
+		}
+		$effects = array(
+			'mbstring' => __( 'search highlighting and non-English text matching are limited', 'jetonomy' ),
+			'dom'      => __( 'link previews show only a plain link', 'jetonomy' ),
+			'ctype'    => __( 'a few number checks use a slower fallback', 'jetonomy' ),
+		);
+		$lines   = array();
+		foreach ( $missing as $ext ) {
+			$lines[] = sprintf( /* translators: 1: a name (a PHP extension or a membership level). 2: what it limits, or what kind of level it is (e.g. Course, Group). */ __( '%1$s (%2$s)', 'jetonomy' ), $ext, $effects[ $ext ] ?? '' );
+		}
+		printf(
+			'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p></div>',
+			esc_html( sprintf( /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ __( '%s:', 'jetonomy' ), self::brand_name() ) ),
+			esc_html( sprintf( /* translators: %s: list of missing PHP extensions with what each limits. */ __( 'your server is missing: %s. Jetonomy keeps working; ask your host to enable them.', 'jetonomy' ), implode( '; ', $lines ) ) )
 		);
 	}
 
@@ -707,34 +935,8 @@ class Admin {
 		return $clean;
 	}
 
-	/**
-	 * One address setting from the posted form: cleaned, or refused by name with
-	 * the stored value kept, so the save never shows "saved" over a broken value.
-	 *
-	 * @param array  $input Posted settings.
-	 * @param array  $clean Settings being built (holds the stored values).
-	 * @param string $key   Setting key.
-	 * @param string $label What the owner sees the field called.
-	 * @return string
-	 */
-	private function url_setting( array $input, array $clean, string $key, string $label ): string {
-		$url = \Jetonomy\absolute_url( (string) ( $input[ $key ] ?? '' ) );
-		if ( null !== $url ) {
-			return $url;
-		}
-		add_settings_error(
-			'jetonomy_settings',
-			'jetonomy_invalid_' . $key,
-			/* translators: %s: settings field label. */
-			sprintf( __( '%s was not changed: it must be a full address starting with http:// or https://. The previous value was kept.', 'jetonomy' ), $label )
-		);
-		return (string) ( $clean[ $key ] ?? '' );
-	}
-
 	public function sanitize_settings( $input ): array {
-		// Merge with existing settings so saving one tab doesn't wipe another.
-		$existing = get_option( 'jetonomy_settings', array() );
-		$clean    = is_array( $existing ) ? $existing : array();
+		$input = is_array( $input ) ? $input : array();
 
 		// ── Permissions tab: role -> capability mapping ──
 		// Lives in its own option (not jetonomy_settings) and resyncs the live
@@ -758,18 +960,16 @@ class Admin {
 			}
 		}
 		if ( ! empty( $input['role_caps_submitted'] ) ) {
-			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
-			$roles      = array_keys( get_editable_roles() );
-			$overrides  = array();
-			$posted     = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
+			$roles     = array_keys( get_editable_roles() );
+			$overrides = array();
+			$posted    = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
 
 			$shown_roles = array_map( 'sanitize_key', (array) ( $input['role_caps_roles'] ?? array() ) );
 			foreach ( $roles as $role_slug ) {
 				if ( 'administrator' === $role_slug ) {
 					continue; // Admins always hold every cap - never stored.
 				}
-				$caps = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
-				$caps = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
+				$caps = \Jetonomy\Permissions\Capabilities::allowed_for_role( $role_slug, isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array() );
 				// A fallback role is shown with unmapped_caps() ticked. Posted back
 				// unchanged, or not shown on this form at all, it stays unmapped,
 				// so a save of this tab never cuts Customer/Student members off.
@@ -793,7 +993,7 @@ class Admin {
 			// table shows what the role holds and ticking only adds.
 			$reset = sanitize_key( $input['role_caps_reset'] ?? '' );
 			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) && in_array( $reset, $roles, true ) ) {
-				$overrides[ $reset ] = $overrides['subscriber'] ?? \Jetonomy\Permissions\Capabilities::effective_map()['subscriber'];
+				$overrides[ $reset ] = \Jetonomy\Permissions\Capabilities::allowed_for_role( $reset, $overrides['subscriber'] ?? \Jetonomy\Permissions\Capabilities::effective_map()['subscriber'] );
 				$roles_all           = wp_roles()->get_names();
 				add_settings_error(
 					'jetonomy_settings',
@@ -813,260 +1013,8 @@ class Admin {
 			unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'], $input['role_caps_roles'] );
 		}
 
-		// ── General tab ──
-		// Only process if base_slug is present (General tab was submitted).
-		if ( isset( $input['base_slug'] ) ) {
-			// The base the site is running on now; old links point at it.
-			$old_base = \Jetonomy\base_slug();
-			// A cleared field keeps that base: an empty one would unmount the community.
-			$new_slug = sanitize_title( $input['base_slug'] ) ?: $old_base;
-			if ( $new_slug !== $old_base ) {
-				// Delete the versioned flush key so Router re-registers rules on next load.
-				delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
-
-				// Store the old slug so Router can 301-redirect old URLs.
-				update_option( 'jetonomy_old_base_slug', $old_base, false );
-			}
-			// Moving back onto the old slug retires the redirect.
-			if ( get_option( 'jetonomy_old_base_slug', '' ) === $new_slug ) {
-				delete_option( 'jetonomy_old_base_slug' );
-			}
-			$clean['base_slug']       = $new_slug;
-			$clean['community_title'] = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
-			// Mobile app EULA screen (Apple Guideline 1.2) reads these via /app/config.
-			$clean['terms_url']   = $this->url_setting( $input, $clean, 'terms_url', __( 'Terms of Service URL', 'jetonomy' ) );
-			$clean['privacy_url'] = $this->url_setting( $input, $clean, 'privacy_url', __( 'Privacy Policy URL', 'jetonomy' ) );
-			$clean['support_url'] = $this->url_setting( $input, $clean, 'support_url', __( 'Support URL', 'jetonomy' ) );
-			// Product-noun label overrides (singular / plural). Empty = keep the
-			// default. One loop over every renamable noun so the save side cannot
-			// drift from the Terminology settings block that renders them.
-			foreach ( array_keys( \Jetonomy\label_defaults() ) as $jt_noun ) {
-				$clean[ $jt_noun . '_label_singular' ] = sanitize_text_field( $input[ $jt_noun . '_label_singular' ] ?? '' );
-				$clean[ $jt_noun . '_label_plural' ]   = sanitize_text_field( $input[ $jt_noun . '_label_plural' ] ?? '' );
-			}
-			// Clamp to the UI max (100) so a crafted POST can't store a huge
-			// value that flows straight into a SQL LIMIT on a big-site query.
-			$clean['posts_per_page'] = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
-			// Activity-log retention: 1 day to ~10 years. Consumed by the daily
-			// jetonomy_prune_activity cron (class-cron.php).
-			$clean['activity_log_retention_days'] = min( 3650, max( 1, absint( $input['activity_log_retention_days'] ?? 90 ) ) );
-			$clean['replies_per_page']            = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
-			$raw_space_type                       = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
-			$clean['default_space_type']          = in_array( $raw_space_type, Space::valid_types(), true ) ? $raw_space_type : 'forum';
-			// Community access mode — radio stores "1" (public) or "0" (private).
-			$clean['guest_read'] = isset( $input['guest_read'] ) ? (bool) (int) $input['guest_read'] : true;
-			// Community as homepage — unchecked checkboxes don't submit, so
-			// absence inside a General-tab save means OFF (default).
-			$clean['front_page'] = ! empty( $input['front_page'] );
-			// Private spaces as locked teasers for logged-out visitors (default off).
-			$clean['guest_private_teasers'] = ! empty( $input['guest_private_teasers'] );
-			if ( $clean['guest_private_teasers'] !== ! empty( $existing['guest_private_teasers'] ) ) {
-				Space::bump_tree_generation(); // Cached guest listings must re-read.
-			}
-
-			// Front-end space creation role allowlist (G6). Validate each
-			// posted role against the live wp_roles() registry so a stale or
-			// malformed input can't smuggle in an arbitrary string. Empty
-			// array (no checkboxes ticked) keeps the gate admin-only.
-			$raw_roles                              = is_array( $input['frontend_space_creation_roles'] ?? null ) ? $input['frontend_space_creation_roles'] : array();
-			$known_keys                             = function_exists( 'wp_roles' ) ? array_keys( wp_roles()->get_names() ) : array();
-			$clean['frontend_space_creation_roles'] = array_values(
-				array_intersect( array_map( 'sanitize_key', $raw_roles ), $known_keys )
-			);
-
-			// Email verification gate for new signups. When ON, the Login
-			// block's register flow holds the new account in pending state
-			// until the visitor clicks the confirmation link in the email.
-			// The reject_pending_verification_login authenticate filter only
-			// gates accounts that ALREADY have the pending meta — flipping
-			// this setting on does NOT retroactively lock existing users.
-			$clean['require_email_verification'] = ! empty( $input['require_email_verification'] );
-
-			// Both of these shipped in 1.9.3 as checkboxes on this tab and were
-			// never added here, so sanitize_settings() dropped them on every
-			// save. $clean starts as $existing, so an unwritten key silently
-			// keeps its old value - the box appeared to tick, the page reloaded
-			// showing it unticked, and the feature behind it stayed off. That is
-			// what made "let space admins delete a space" impossible to turn on:
-			// the AJAX guard reads allow_space_admin_purge, which could never
-			// become true.
-			//
-			// An unchecked checkbox submits nothing, so absence inside a
-			// General-tab save means OFF - the same rule front_page above uses.
-			$clean['allow_space_admin_purge'] = ! empty( $input['allow_space_admin_purge'] );
-			// Arming data removal on delete is for whoever can delete plugins; a
-			// delegated settings manager keeps the stored value.
-			if ( current_user_can( 'manage_options' ) ) {
-				$clean['remove_data_on_uninstall'] = ! empty( $input['remove_data_on_uninstall'] );
-			}
-		}
-
-		// ── Permissions tab ──
-		// Only process if trust_thresholds is present (Permissions tab was submitted).
-		if ( isset( $input['trust_thresholds'] ) ) {
-			$raw_thresholds = is_array( $input['trust_thresholds'] ) ? $input['trust_thresholds'] : array();
-			$tl_defaults    = \Jetonomy\Trust\Trust_Levels::defaults();
-			foreach ( array( 1, 2, 3 ) as $level ) {
-				$td                                  = $tl_defaults[ $level ];
-				$lv                                  = is_array( $raw_thresholds[ $level ] ?? null ) ? $raw_thresholds[ $level ] : array();
-				$clean['trust_thresholds'][ $level ] = array(
-					'posts'            => absint( $lv['posts'] ?? $td['posts'] ),
-					'days_active'      => absint( $lv['days_active'] ?? $td['days_active'] ),
-					'reputation'       => absint( $lv['reputation'] ?? $td['reputation'] ),
-					'replies_received' => absint( $lv['replies_received'] ?? $td['replies_received'] ),
-				);
-			}
-			// Display names per level; blank keeps the built-in name.
-			$raw_names                  = is_array( $input['trust_level_names'] ?? null ) ? $input['trust_level_names'] : array();
-			$clean['trust_level_names'] = array();
-			// No wp_unslash(): options.php has already unslashed the posted value.
-			foreach ( range( 0, 5 ) as $level ) {
-				$clean['trust_level_names'][ $level ] = sanitize_text_field( (string) ( $raw_names[ $level ] ?? '' ) );
-			}
-		}
-
-		// How members are identified on bylines, member lists and REST.
-		// Allowlisted rather than trusted: this string is read on every name
-		// render, so an unrecognised value must fall back rather than reach
-		// user_display_name().
-		if ( isset( $input['member_name_display'] ) ) {
-			$mode                         = sanitize_key( wp_unslash( $input['member_name_display'] ) );
-			$clean['member_name_display'] = in_array( $mode, array( 'display_name', 'handle', 'both' ), true )
-				? $mode
-				: 'display_name';
-		}
-
-		// Only process if rate_limits is present (Permissions tab was submitted).
-		if ( isset( $input['rate_limits'] ) ) {
-			$raw_limits           = is_array( $input['rate_limits'] ) ? $input['rate_limits'] : array();
-			$rl_defaults          = \Jetonomy\Permissions\Rate_Limiter::defaults();
-			$clean['rate_limits'] = array(
-				'posts'   => absint( $raw_limits['posts'] ?? $rl_defaults['posts'] ),
-				'replies' => absint( $raw_limits['replies'] ?? $rl_defaults['replies'] ),
-				'votes'   => absint( $raw_limits['votes'] ?? $rl_defaults['votes'] ),
-			);
-		}
-
-		// Reputation point overrides — only persist the keys we recognise so
-		// a stale POST body can't smuggle in arbitrary action names. Values
-		// are signed ints (negative penalties allowed).
-		if ( isset( $input['reputation_points'] ) ) {
-			$raw_rep   = is_array( $input['reputation_points'] ) ? $input['reputation_points'] : array();
-			$defaults  = \Jetonomy\Trust\Reputation::action_points_defaults();
-			$clean_rep = array();
-			foreach ( $defaults as $action_key => $default_val ) {
-				if ( ! array_key_exists( $action_key, $raw_rep ) ) {
-					continue;
-				}
-
-				// An empty field means "use the default", not zero. Storing 0 for a
-				// cleared box silently turned off the points for that action.
-				if ( '' === trim( (string) $raw_rep[ $action_key ] ) ) {
-					continue;
-				}
-
-				// Store only what DIFFERS from the default. The form posts every
-				// action, so persisting them all made the first save a full set of
-				// overrides - after which the jetonomy_reputation_points_map filter
-				// could never apply again, because Reputation::points_for() reads a
-				// stored override ahead of the filtered map. An owner who never
-				// touched this tab had their integration's ladder silently frozen
-				// by visiting Permissions once.
-				if ( (int) $raw_rep[ $action_key ] === (int) $default_val ) {
-					continue;
-				}
-
-				$clean_rep[ $action_key ] = (int) $raw_rep[ $action_key ];
-			}
-			$clean['reputation_points'] = $clean_rep;
-		}
-
-		// ── Email tab ──
-		// Only process if email_from_name is present (Email tab was submitted).
-		if ( isset( $input['email_from_name'] ) ) {
-			$clean['email_from_name']   = sanitize_text_field( $input['email_from_name'] ?? '' );
-			$clean['email_from_email']  = sanitize_email( $input['email_from_email'] ?? '' );
-			$clean['email_logo_url']    = $this->url_setting( $input, $clean, 'email_logo_url', __( 'Email Logo', 'jetonomy' ) );
-			$clean['email_footer_text'] = sanitize_text_field( $input['email_footer_text'] ?? '' );
-
-			// Verification-reminder cadence (hours). 0 = disabled; clamp to a
-			// week so a typo can't schedule an absurd delay. Consumed by the
-			// verification-reminder cron (Verification_Reminder).
-			$clean['verification_reminder_hours'] = min( 168, max( 0, absint( $input['verification_reminder_hours'] ?? 24 ) ) );
-
-			// Notification defaults — checkbox values absent when unchecked, so default false if not present.
-			// Same single list as the Notification Defaults table. Pro's `message`
-			// is only in it (rendered, and so submitted) while messaging is live.
-			$notif_types = array_keys( array_filter( self::email_types(), static fn( array $t ): bool => $t['toggle'] ) );
-			$raw_notif   = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : array();
-			foreach ( $notif_types as $nt ) {
-				$nt_data                               = is_array( $raw_notif[ $nt ] ?? null ) ? $raw_notif[ $nt ] : array();
-				$clean['notification_defaults'][ $nt ] = array(
-					'web'   => ! empty( $nt_data['web'] ),
-					'email' => ! empty( $nt_data['email'] ),
-				);
-			}
-		}
-
-		// ── Appearance tab ──
-		// Only process if accent_color is present (Appearance tab was submitted).
-		if ( isset( $input['accent_color'] ) ) {
-			$clean['accent_color'] = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
-			$clean['logo_url']     = $this->url_setting( $input, $clean, 'logo_url', __( 'Logo URL', 'jetonomy' ) );
-			// Color palette — empty string means "no override, keep the default".
-			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {
-				$clean[ $palette_key ] = sanitize_hex_color( (string) ( $input[ $palette_key ] ?? '' ) ) ?: '';
-			}
-			$clean['layout_density'] = sanitize_text_field( $input['layout_density'] ?? 'comfortable' );
-			$clean['custom_css']     = wp_strip_all_tags( $input['custom_css'] ?? '' );
-
-			$raw_width                       = sanitize_key( (string) ( $input['container_width'] ?? 'theme' ) );
-			$clean['container_width']        = in_array( $raw_width, array( 'theme', 'full', 'custom' ), true ) ? $raw_width : 'theme';
-			$clean['container_width_custom'] = max( 600, min( 2400, absint( $input['container_width_custom'] ?? 1280 ) ) );
-
-			$raw_padding             = sanitize_key( (string) ( $input['padding_preset'] ?? 'theme' ) );
-			$clean['padding_preset'] = in_array( $raw_padding, array( 'theme', 'none', 'comfortable' ), true ) ? $raw_padding : 'theme';
-		}
-
-		// ── Anti-Spam tab ──
-		// Only process if captcha_provider is present (Anti-Spam tab was submitted).
-		if ( isset( $input['captcha_provider'] ) ) {
-			$allowed_providers                = array( 'none', 'recaptcha_v3', 'turnstile' );
-			$raw_provider                     = sanitize_text_field( $input['captcha_provider'] ?? 'none' );
-			$clean['captcha_provider']        = in_array( $raw_provider, $allowed_providers, true ) ? $raw_provider : 'none';
-			$clean['captcha_site_key']        = sanitize_text_field( $input['captcha_site_key'] ?? '' );
-			$clean['captcha_secret_key']      = sanitize_text_field( $input['captcha_secret_key'] ?? '' );
-			$raw_threshold                    = (float) ( $input['captcha_score_threshold'] ?? 0.5 );
-			$clean['captcha_score_threshold'] = max( 0.1, min( 0.9, $raw_threshold ) );
-		}
-
-		// ── SEO tab ──
-		// Only process if seo_post_title is present (SEO tab was submitted).
-		if ( isset( $input['seo_post_title'] ) ) {
-			$clean['seo_post_title']       = sanitize_text_field( $input['seo_post_title'] ?? '{post_title} - {space_name} | {site_name}' );
-			$clean['seo_space_title']      = sanitize_text_field( $input['seo_space_title'] ?? '{space_name} | {site_name}' );
-			$clean['seo_schema']           = ! empty( $input['seo_schema'] );
-			$clean['seo_sitemap']          = ! empty( $input['seo_sitemap'] );
-			$clean['seo_noindex_profiles'] = ! empty( $input['seo_noindex_profiles'] );
-			$clean['seo_noindex_search']   = ! empty( $input['seo_noindex_search'] );
-
-			// Twitter / X site handle (D.6) — emitted as `twitter:site` on
-			// every public route. Strip leading @ if the admin types it; the
-			// emitter prepends it back so the value stored is a plain handle.
-			$raw_twitter                 = trim( (string) ( $input['seo_twitter_handle'] ?? '' ) );
-			$clean['seo_twitter_handle'] = preg_replace( '/[^A-Za-z0-9_]/', '', ltrim( $raw_twitter, '@' ) );
-
-			// Default share image URL (D.6) — falls back into the og:image
-			// chain (route image → admin default → custom logo → site icon).
-			$clean['seo_default_og_image'] = $this->url_setting( $input, $clean, 'seo_default_og_image', __( 'Default share image', 'jetonomy' ) );
-
-			// Social embeds — Meta developer app credentials for Instagram/Facebook oEmbed.
-			// App IDs are numeric; secrets are 32-char hex strings. Strip whitespace only.
-			$clean['fb_app_id']     = preg_replace( '/\D/', '', (string) ( $input['fb_app_id'] ?? '' ) );
-			$clean['fb_app_secret'] = trim( sanitize_text_field( $input['fb_app_secret'] ?? '' ) );
-		}
-
-		return $clean;
+		// Every other section: the one sanitizer the REST route and the CLI share.
+		return \Jetonomy\Settings::sanitize( $input );
 	}
 
 	// ── Assets ──
@@ -1413,7 +1361,7 @@ class Admin {
 			wp_enqueue_script(
 				'jetonomy-admin-settings',
 				JETONOMY_URL . 'assets/js/admin-settings.js',
-				array( 'jetonomy-admin', 'wp-i18n' ),
+				array( 'jetonomy-admin', 'wp-i18n', 'jquery-ui-sortable' ),
 				JETONOMY_VERSION,
 				true
 			);
@@ -1443,12 +1391,10 @@ class Admin {
 		// blurred screenshot — the widget demonstrates what Pro's analytics
 		// does). Dismissible per user; cached 1h so it costs the dashboard
 		// nothing on repeat views.
-		if ( isset( $_GET['jetonomy_dismiss_pulse'] ) && check_admin_referer( 'jetonomy_dismiss_pulse' ) ) {
-			update_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', 1 );
-		}
-		$pulse = get_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', true )
-			? null
-			: $this->weekly_pulse();
+		// jetonomy_pulse_dismissed is the pre-2.1.0 dismiss of this same card; honoured so nobody sees it again.
+		$pulse = self::show_pro_promo( 'pulse' ) && ! get_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', true )
+			? $this->weekly_pulse()
+			: null;
 
 		include JETONOMY_DIR . 'includes/admin/views/dashboard.php';
 	}
@@ -1499,7 +1445,7 @@ class Admin {
 		$search  = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
 		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'sort_order' ) );
 		$order   = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
-		$offset  = ( $paged - 1 ) * $per_page;
+		$offset  = jetonomy_page_offset( $paged, $per_page );
 
 		$result           = Category::list_paginated( $search, $orderby, $order, $per_page, $offset );
 		$categories       = $result['rows'];
@@ -1525,7 +1471,7 @@ class Admin {
 		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'name' ) );
 		$order   = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
 
-		$offset = ( $paged - 1 ) * $per_page;
+		$offset = jetonomy_page_offset( $paged, $per_page );
 		$result = \Jetonomy\Models\Tag::list_paginated( $search, $orderby, $order, $per_page, $offset );
 
 		$tags        = $result['rows'];
@@ -1585,14 +1531,14 @@ class Admin {
 			$member_per_page = 25;
 			$member_pages    = max( 1, (int) ceil( $member_total / $member_per_page ) );
 			$member_paged    = min( $member_pages, max( 1, absint( $_GET['mpg'] ?? 1 ) ) );
-			$members         = SpaceMember::list_by_space( $space_id, $member_per_page, ( $member_paged - 1 ) * $member_per_page, $member_search );
+			$members         = SpaceMember::list_by_space( $space_id, $member_per_page, jetonomy_page_offset( $member_paged, $member_per_page ), $member_search );
 			$access_rules    = AccessRule::list_for_space( $space_id );
 			$space_settings  = Space::get_settings( $space_id );
 			$join_total      = JoinRequest::count_pending_for_space( $space_id );
 			$join_per_page   = 20;
 			$join_pages      = max( 1, (int) ceil( $join_total / $join_per_page ) );
 			$join_paged      = min( $join_pages, max( 1, absint( $_GET['jrpg'] ?? 1 ) ) );
-			$join_requests   = JoinRequest::list_pending_for_space( $space_id, $join_per_page, ( $join_paged - 1 ) * $join_per_page );
+			$join_requests   = JoinRequest::list_pending_for_space( $space_id, $join_per_page, jetonomy_page_offset( $join_paged, $join_per_page ) );
 			include JETONOMY_DIR . 'includes/admin/views/space-edit.php';
 			return;
 		}
@@ -1619,7 +1565,7 @@ class Admin {
 		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
 			$per_page = 20;
 		}
-		$offset = ( $paged - 1 ) * $per_page;
+		$offset = jetonomy_page_offset( $paged, $per_page );
 
 		// Inside one category (and nothing else filtered) the list follows the
 		// manual order members see, so drag-reorder has a coherent target.
@@ -1651,9 +1597,9 @@ class Admin {
 		$total_flags   = Flag::count_pending( $skip );
 		$total_banned  = Restriction::count_active();
 
-		$pending_posts   = Post::list_pending_with_space( $per_page, ( $paged_posts - 1 ) * $per_page, $skip );
-		$pending_replies = Reply::list_pending_with_post( $per_page, ( $paged_replies - 1 ) * $per_page, $skip );
-		$pending_flags   = Flag::list_pending( $per_page, ( $paged_flags - 1 ) * $per_page, $skip );
+		$pending_posts   = Post::list_pending_with_space( $per_page, jetonomy_page_offset( $paged_posts, $per_page ), $skip );
+		$pending_replies = Reply::list_pending_with_post( $per_page, jetonomy_page_offset( $paged_replies, $per_page ), $skip );
+		$pending_flags   = Flag::list_pending( $per_page, jetonomy_page_offset( $paged_flags, $per_page ), $skip );
 
 		$this->prime_flag_objects( $pending_flags );
 
@@ -1661,7 +1607,7 @@ class Admin {
 		$banned_users = Restriction::list_active(
 			array(
 				'limit'  => $per_page,
-				'offset' => ( $paged_banned - 1 ) * $per_page,
+				'offset' => jetonomy_page_offset( $paged_banned, $per_page ),
 			)
 		);
 		if ( $banned_users ) {
@@ -1832,7 +1778,7 @@ class Admin {
 					'object_id'   => $object_id,
 				)
 			);
-			$revisions = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id, $rev_per + 1, ( $rev_page - 1 ) * $rev_per );
+			$revisions = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id, $rev_per + 1, jetonomy_page_offset( $rev_page, $rev_per ) );
 
 			// Resolve a human-readable title for the page heading. Posts
 			// have a title column; replies fall back to the parent post
@@ -1883,7 +1829,7 @@ class Admin {
 		$filter_trust = sanitize_text_field( $_GET['trust_level'] ?? '' );
 		$paged        = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page     = 20;
-		$offset       = ( $paged - 1 ) * $per_page;
+		$offset       = jetonomy_page_offset( $paged, $per_page );
 
 		$orderby = sanitize_key( $_GET['orderby'] ?? 'reputation' );
 		$orderby = isset( UserProfile::ADMIN_SORTS[ $orderby ] ) ? $orderby : 'reputation';
@@ -1985,7 +1931,7 @@ class Admin {
 
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = 20;
-		$offset   = ( $paged - 1 ) * $per_page;
+		$offset   = jetonomy_page_offset( $paged, $per_page );
 
 		$total       = Post::count_for_admin( $filters );
 		$total_pages = (int) ceil( $total / $per_page );
@@ -2026,7 +1972,7 @@ class Admin {
 		// Pagination — 50 per page for large reply sets.
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = 50;
-		$offset   = ( $paged - 1 ) * $per_page;
+		$offset   = jetonomy_page_offset( $paged, $per_page );
 
 		$total       = Reply::count_for_admin_post( $post_id, $current_status, $search_query );
 		$total_pages = (int) ceil( $total / $per_page );

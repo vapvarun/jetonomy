@@ -57,7 +57,7 @@ $display = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply );
 $jt_is_masked = (int) $display['id'] !== (int) $reply->author_id;
 $profile      = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
 $trust        = $profile ? (int) $profile->trust_level : 0;
-$time_ago     = human_time_diff( strtotime( $reply->created_at ), time() );
+$time_ago     = \Jetonomy\time_ago( (string) $reply->created_at );
 $is_op        = (int) $reply->author_id > 0 && (int) $reply->author_id === (int) $post->author_id; // Two deleted accounts (author 0) are not one person.
 $is_accepted  = (int) $reply->is_accepted;
 
@@ -154,7 +154,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		<span class="jt-reply-time">
 			<?php
 			/* translators: %s: human-readable time difference. */
-			$jt_time_text = sprintf( __( '%s ago', 'jetonomy' ), $time_ago );
+			$jt_time_text = $time_ago;
 			// Stored UTC -> site timezone for the machine-readable value, per
 			// the date/time standard. The visible text stays relative.
 			$jt_time_iso = get_date_from_gmt( (string) $reply->created_at, 'c' );

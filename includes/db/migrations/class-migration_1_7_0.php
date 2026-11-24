@@ -51,7 +51,7 @@ class Migration_1_7_0 {
 				continue;
 			}
 
-			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN {$column} tinyint(1) NOT NULL DEFAULT 0 AFTER {$after}" );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i tinyint(1) NOT NULL DEFAULT 0 AFTER %i', $table, $column, $after ) );
 		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange
 	}

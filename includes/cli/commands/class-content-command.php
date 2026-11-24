@@ -50,7 +50,7 @@ final class Content_Command extends Base_Command {
 	 * @subcommand scan-plain
 	 */
 	public function scan_plain( $args, $assoc ): void {
-		$this->report( Content_Backfill::run_batch( false, (float) ( $assoc['seconds'] ?? 15 ) ), $assoc, false );
+		$this->report( Content_Backfill::run_batch( false, $this->seconds( $assoc ) ), $assoc, false );
 	}
 
 	/**
@@ -81,7 +81,7 @@ final class Content_Command extends Base_Command {
 	 * @subcommand backfill-plain
 	 */
 	public function backfill_plain( $args, $assoc ): void {
-		$this->report( Content_Backfill::run_batch( true, (float) ( $assoc['seconds'] ?? 15 ) ), $assoc, true );
+		$this->report( Content_Backfill::run_batch( true, $this->seconds( $assoc ) ), $assoc, true );
 	}
 
 	/**
@@ -118,5 +118,18 @@ final class Content_Command extends Base_Command {
 				? sprintf( 'Backfill complete. %d row(s) rewritten.', (int) $result['fixed'] )
 				: sprintf( 'Scan complete. %d row(s) would be rewritten.', (int) $result['stale'] )
 		);
+	}
+
+	/**
+	 * The --seconds budget: a positive number, or the command stops and says why.
+	 *
+	 * @param array<string,mixed> $assoc Associative args.
+	 */
+	private function seconds( array $assoc ): float {
+		$raw = $assoc['seconds'] ?? 15;
+		if ( ! is_numeric( $raw ) || (float) $raw <= 0 ) {
+			\WP_CLI::error( sprintf( '--seconds must be a positive number; got "%s".', is_scalar( $raw ) ? (string) $raw : '' ) );
+		}
+		return (float) $raw;
 	}
 }

@@ -44,7 +44,7 @@ The **Code** column is the identifier the REST API returns. You will see it in a
 | Your account has been banned from this community. | `jetonomy_user_banned` | The account was banned at **Jetonomy -> Users**. Bans block reading and posting everywhere. Unban from the same screen. |
 | Your account is currently silenced and cannot post. | `jetonomy_user_silenced` | The account is silenced: it can still read, but not post. Also managed at **Jetonomy -> Users**. |
 | This post is closed and cannot receive new replies. | `jetonomy_post_closed` | The topic is closed. Members cannot reply. **Moderators can** - they see the composer and their reply is accepted, and the topic stays closed afterwards. If a moderator sees this error, they lack the `moderate` permission in that space. |
-| This space is archived or locked and no longer accepts new content. | `jetonomy_space_restricted` | The space status is Archived or Locked, so it accepts no new topics or replies. Change the status on the space's edit screen. Archived also hides the space from listings; Locked leaves it visible and readable. |
+| This space is archived or locked and no longer accepts new content. | `jetonomy_space_restricted` | The space status is Archived or Locked, so it accepts no new topics or replies. Change the status on the space's edit screen. Neither status hides the space: it stays in listings (with an Archived or Locked badge), in the REST API and readable, and its visibility setting still decides who can see it. |
 | User is not a member of this space. | `jetonomy_not_member` | The space requires membership and the member has not joined. Either they join, or an admin adds them on the space's Members tab. |
 | You do not have permission to perform this action. | `jetonomy_forbidden` | The member lacks the permission this action needs. Check their space role and trust level at **Settings -> Permissions**. |
 | You have been banned from this space and cannot take part in it. | `jetonomy_user_space_banned` | A moderator banned the member from this one space. They can still use the rest of the community. Lift it at **Jetonomy -> Moderation -> Banned**. |
@@ -61,6 +61,8 @@ The **Code** column is the identifier the REST API returns. You will see it in a
 | You cannot restrict your own account. | `jetonomy_cannot_ban_self` | You cannot ban your own account. |
 | Administrators cannot be restricted. | `jetonomy_cannot_ban_admin` | Site administrators cannot be banned from inside Jetonomy. Change their WordPress role first. |
 | Only an administrator can restrict a moderator. | `jetonomy_cannot_ban_moderator` | Moderators cannot be banned by another moderator. Demote them first. |
+| A moderator cannot restrict the owner, an admin or a moderator of this space. | `jetonomy_cannot_ban_space_staff` | A space moderator can ban only members and viewers of their space. Ask a space admin. |
+| This person is not a member here. | `jetonomy_not_space_member` | A space moderator can ban only people on the space's member list. A space admin can ban anyone from the space. |
 | Failed to issue restriction. | `jetonomy_ban_failed` |  |
 | Failed to remove restriction. | `jetonomy_unban_failed` |  |
 | You cannot report your own content. | `jetonomy_flag_self` | Members cannot report their own content. |

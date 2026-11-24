@@ -369,7 +369,32 @@ class UserProfile extends Model {
 		if ( get_current_user_id() === $user_id || current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' ) ) {
 			return $last_seen;
 		}
-		return strtotime( $last_seen ) > ( time() - self::ONLINE_WINDOW ) ? \Jetonomy\now() : null;
+		// Everyone else learns only what the dot shows, so one rule (is_online) decides: a member who hides their status
+		// reveals nothing here, and BuddyNext's presence decides when it is active.
+		return self::is_online( $user_id ) ? \Jetonomy\now() : null;
+	}
+
+	/**
+	 * Whether a member chose not to appear online ("Show when I'm online" off).
+	 *
+	 * One usermeta key, like the email pause switch. Honoured on every site, with BuddyNext or without: a member who
+	 * hid their status before BuddyNext was switched on stays hidden.
+	 *
+	 * @param int $user_id Member.
+	 * @return bool
+	 */
+	public static function hides_online( int $user_id ): bool {
+		return $user_id > 0 && (bool) get_user_meta( $user_id, 'jetonomy_hide_online', true );
+	}
+
+	/**
+	 * Whether this site lets members choose to hide their status. Off when BuddyNext is active: it owns presence and
+	 * its settings, so Jetonomy shows no second toggle (an existing hidden choice is still honoured).
+	 *
+	 * @return bool
+	 */
+	public static function online_choice_available(): bool {
+		return ! did_action( 'buddynext_loaded' );
 	}
 
 	/**
@@ -382,6 +407,24 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function is_online( int $user_id ): bool {
+		// BuddyNext owns presence when active: its service decides who is online and who may see it, including a
+		// member who hid their status (still shown to themselves and to staff, as on BuddyNext's own pages). It reads
+		// jetonomy_hide_online too, so it is asked before the opt-out check below.
+		if ( ! self::online_choice_available() && class_exists( '\\BuddyNext\\Realtime\\PresenceService' ) ) {
+			return \BuddyNext\Realtime\PresenceService::visible_to_viewer( get_current_user_id() )
+				&& \BuddyNext\Realtime\PresenceService::is_online( $user_id );
+		}
+
+		// Without BuddyNext: never a dot for a member who opted out.
+		if ( self::hides_online( $user_id ) ) {
+			return false;
+		}
+
+		// A member who hides their own status also stops seeing other members' (they cannot see what they do not share).
+		if ( get_current_user_id() !== $user_id && self::hides_online( get_current_user_id() ) ) {
+			return false;
+		}
+
 		$key    = 'online_' . $user_id;
 		$cached = Cache::get( $key );
 
@@ -401,6 +444,20 @@ class UserProfile extends Model {
 		Cache::set( $key, (int) $online, self::ONLINE_TTL );
 
 		return $online;
+	}
+
+	/**
+	 * The next page of site user ids, by keyset on the users primary key (never a deep OFFSET), for broadcasts to every
+	 * member.
+	 *
+	 * @param int $after Last user id already handled (0 to start).
+	 * @param int $limit Page size.
+	 * @return int[] User ids, ascending.
+	 */
+	public static function site_user_ids_after( int $after, int $limit ): array {
+		$db = static::db();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return array_map( 'intval', $db->get_col( $db->prepare( "SELECT ID FROM {$db->users} WHERE ID > %d ORDER BY ID ASC LIMIT %d", $after, max( 1, $limit ) ) ) ?: array() );
 	}
 
 	/**
@@ -532,15 +589,20 @@ class UserProfile extends Model {
 	 * @param string $order_by ORDER BY clause. Trusted: callers pass a fixed
 	 *                         literal or a value already vetted via the
 	 *                         `jetonomy_users_query_args` filter. Defaults to
-	 *                         'reputation DESC, user_id ASC'. The user_id half is
+	 *                         'reputation DESC, user_id DESC'. The user_id half is
 	 *                         load-bearing, not cosmetic: under LIMIT/OFFSET,
 	 *                         MySQL may return tied rows in a different order for
 	 *                         each page, so without it a member tied on
 	 *                         reputation could appear on both pages of the board
-	 *                         or on neither.
+	 *                         or on neither. Both halves DESC so the
+	 *                         reputation_user (reputation, user_id) index serves
+	 *                         the sort as a backward scan: a mixed ASC/DESC order
+	 *                         filesorts the whole table on every page view
+	 *                         (14 ms vs 0.25 ms at 20k profiles). Tied members
+	 *                         share one competition rank either way.
 	 * @return object[] Profile rows for the page (empty array when none).
 	 */
-	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC, user_id ASC' ): array {
+	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC, user_id DESC' ): array {
 		// Deliberately NOT block-filtered — a ranking, not a content feed.
 		// Per-viewer filtering would re-rank the board and leak "you blocked
 		// someone" via rank gaps.
@@ -722,22 +784,40 @@ class UserProfile extends Model {
 
 	/**
 	 * One keyset slice of profiles still eligible for automatic promotion
-	 * (trust level below 4), by user id. Served by the trust_user index.
+	 * (trust level below 4), by user id.
 	 *
-	 * @param int $after Return rows with user_id greater than this.
-	 * @param int $limit Slice size.
+	 * With $next (the thresholds of levels 1-3) only members whose topic and reply count, reputation and account age
+	 * reach the level above their own are returned: nobody else can be promoted, so the sweep skips them. Replies
+	 * received is still checked by the caller.
+	 *
+	 * @param int              $after Return rows with user_id greater than this.
+	 * @param int              $limit Slice size.
+	 * @param array<int,array> $next  Level => thresholds (posts, days_active, reputation); empty = every row below 4.
 	 * @return object[] Rows with user_id, post_count, reply_count, reputation, trust_level, created_at.
 	 */
-	public static function list_for_trust_batch( int $after, int $limit ): array {
+	public static function list_for_trust_batch( int $after, int $limit, array $next = array() ): array {
+		$where = 'trust_level < 4';
+		$args  = array();
+		if ( $next ) {
+			$any = array();
+			for ( $level = 0; $level < 3; $level++ ) {
+				$req    = (array) ( $next[ $level + 1 ] ?? array() );
+				$clause = 'trust_level = %d AND post_count + reply_count >= %d AND reputation >= %d';
+				array_push( $args, $level, (int) ( $req['posts'] ?? 0 ), (int) ( $req['reputation'] ?? 0 ) );
+				$days = (int) ( $req['days_active'] ?? 0 );
+				if ( $days > 0 ) {
+					$clause .= ' AND created_at <= %s';
+					$args[]  = gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS );
+				}
+				$any[] = "( {$clause} )";
+			}
+			$where = '( ' . implode( ' OR ', $any ) . ' )';
+		}
+		array_push( $args, $after, $limit );
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT user_id, post_count, reply_count, reputation, trust_level, created_at
-				 FROM ' . static::table() . '
-				 WHERE trust_level < 4 AND user_id > %d
-				 ORDER BY user_id ASC
-				 LIMIT %d',
-				$after,
-				$limit
+				'SELECT user_id, post_count, reply_count, reputation, trust_level, created_at FROM ' . static::table() . " WHERE {$where} AND user_id > %d ORDER BY user_id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where holds placeholders only.
+				...$args
 			)
 		) ?: array();
 	}

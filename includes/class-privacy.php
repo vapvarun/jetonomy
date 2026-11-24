@@ -279,7 +279,7 @@ class Privacy {
 
 		global $wpdb;
 		$limit    = 100;
-		$offset   = ( max( 1, $page ) - 1 ) * $limit;
+		$offset   = jetonomy_page_offset( $page, $limit );
 		$key_col  = sanitize_key( $key_col );
 		$user_col = sanitize_key( $user_col );
 		// $key_col drives pagination + the item id ('id' for most tables; some
@@ -496,7 +496,7 @@ class Privacy {
 
 		global $wpdb;
 		$limit  = 100;
-		$offset = ( $page - 1 ) * $limit;
+		$offset = jetonomy_page_offset( $page, $limit );
 
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
@@ -547,7 +547,7 @@ class Privacy {
 
 		global $wpdb;
 		$limit  = 100;
-		$offset = ( $page - 1 ) * $limit;
+		$offset = jetonomy_page_offset( $page, $limit );
 
 		$replies = $wpdb->get_results(
 			$wpdb->prepare(
@@ -807,9 +807,9 @@ class Privacy {
 		if ( $space_ids ) {
 			$sp = table( 'spaces' );
 			$sm = table( 'space_members' );
-			$in = implode( ',', $space_ids );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->query( "UPDATE {$sp} SET member_count = ( SELECT COUNT(*) FROM {$sm} sm WHERE sm.space_id = {$sp}.id ) WHERE id IN ({$in})" );
+			$in = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( "UPDATE {$sp} SET member_count = ( SELECT COUNT(*) FROM {$sm} sm WHERE sm.space_id = {$sp}.id ) WHERE id IN ({$in})", $space_ids ) );
 
 			// A set-based UPDATE cannot name the rows it touched, so it busts no
 			// cache on its own (Caching Standard §4d) — and member_count is served

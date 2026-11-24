@@ -76,24 +76,13 @@ $jt_status_counts   = \Jetonomy\Models\Post::count_ideas_by_status( (int) $space
 // (accent = committed/queued, warn = in flight, success = shipped). It is not an
 // inline style here: that paints the raw status hue as title text (2.4-2.9:1) and
 // boxes the header on themes that style div borders.
-$columns = array(
-	'planned'     => array(
-		'label' => __( 'Planned', 'jetonomy' ),
+$columns = array();
+foreach ( \Jetonomy\idea_status_labels() as $jt_col_status => $jt_col_label ) {
+	$columns[ $jt_col_status ] = array(
+		'label' => $jt_col_label,
 		'posts' => array(),
-	),
-	'in_progress' => array(
-		'label' => __( 'In Progress', 'jetonomy' ),
-		'posts' => array(),
-	),
-	'shipped'     => array(
-		'label' => __( 'Shipped', 'jetonomy' ),
-		'posts' => array(),
-	),
-	'declined'    => array(
-		'label' => __( 'Declined', 'jetonomy' ),
-		'posts' => array(),
-	),
-);
+	);
+}
 
 foreach ( array_keys( $columns ) as $jt_col_status ) {
 	$columns[ $jt_col_status ]['posts'] = \Jetonomy\Models\Post::list_ideas_by_status( (int) $space->id, $jt_col_status, $jt_viewer_id, $jt_is_priv, $jt_roadmap_col_cap );

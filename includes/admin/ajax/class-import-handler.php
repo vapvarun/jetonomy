@@ -75,7 +75,7 @@ class Import_Handler {
 		);
 
 		// Run one batch.
-		$result = $importer->run_batch( $phase, $offset, $batch_size );
+		$result = \Jetonomy\Import\Import_Manager::track_batch( $source, $importer, fn() => $importer->run_batch( $phase, $offset, $batch_size ) );
 
 		// Accumulate this batch's non-fatal errors (an attachment whose file could
 		// not be recovered, say) across batches, the same way the id_map is
