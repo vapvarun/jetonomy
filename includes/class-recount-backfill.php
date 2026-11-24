@@ -162,7 +162,7 @@ final class Recount_Backfill {
 	 * @return void
 	 */
 	private static function enqueue(): void {
-		Queue::async( self::BATCH_HOOK, array(), true, MINUTE_IN_SECONDS );
+		Queue::async_once( self::BATCH_HOOK ); // Requests arriving together queue one continuation.
 	}
 
 	/**

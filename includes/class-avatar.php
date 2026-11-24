@@ -255,7 +255,8 @@ class Avatar {
 		}
 		update_user_meta( $user_id, self::META_HAS_GRAVATAR, 'p' . time() );
 
-		Queue::async( self::CHECK_HOOK, array( $user_id ), true, 30 );
+		// async_once: requests arriving together (all past the flag read above) queue one check.
+		Queue::async_once( self::CHECK_HOOK, array( $user_id ) );
 	}
 
 	/**
