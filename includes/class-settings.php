@@ -30,6 +30,28 @@ class Settings {
 	/** What a secret reads as over REST. Sending it back keeps the stored secret. */
 	public const MASK = '********';
 
+	/**
+	 * The accent a community uses until its owner picks one.
+	 */
+	public const DEFAULT_ACCENT = '#0073aa';
+
+	/**
+	 * The accent colour in effect: the saved one when it is a valid hex colour, otherwise the default.
+	 *
+	 * An empty or invalid stored value (a blank Appearance field used to be saved as an empty string) must never reach
+	 * a reader: an empty `background:` in an email or the app's branding renders white on white. Every reader of the
+	 * accent goes through here.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param array<string,mixed>|null $settings The jetonomy_settings option, or null to read it.
+	 * @return string Hex colour.
+	 */
+	public static function accent_color( ?array $settings = null ): string {
+		$settings ??= (array) get_option( self::OPTION, array() );
+		return sanitize_hex_color( (string) ( $settings['accent_color'] ?? '' ) ) ?: self::DEFAULT_ACCENT;
+	}
+
 	/** Above this serialized size the option is not autoloaded (core's own threshold, 150 KB). */
 	private const AUTOLOAD_MAX_BYTES = 150000;
 
@@ -281,6 +303,10 @@ class Settings {
 			$value = $stored[ $key ] ?? $defaults[ $key ] ?? ( 'boolean' === $def['type'] ? false : null );
 			if ( ! empty( $def['secret'] ) ) {
 				$value = ( null === $value || '' === $value ) ? '' : self::MASK;
+			}
+			// A blank accent saved before this was normalised reads as the default, so a GET body can be posted back.
+			if ( 'accent_color' === $key ) {
+				$value = self::accent_color( $stored );
 			}
 			// Stored reputation points are only the overrides; answer the points each action really gives.
 			if ( 'reputation_points' === $key ) {
@@ -586,7 +612,7 @@ class Settings {
 			case 'base_slug':
 				return base_slug();
 			case 'accent_color':
-				return '#0073aa';
+				return self::DEFAULT_ACCENT;
 			case 'captcha_provider':
 				return 'none';
 			case 'member_name_display':
@@ -959,7 +985,8 @@ class Settings {
 		// ── Appearance tab ──
 		// Only process if accent_color is present (Appearance tab was submitted).
 		if ( isset( $input['accent_color'] ) ) {
-			$clean['accent_color'] = sanitize_hex_color( $input['accent_color'] );
+			// A blank or invalid colour is saved as the default, never as an empty string (which renders white on white).
+			$clean['accent_color'] = sanitize_hex_color( (string) $input['accent_color'] ) ?: self::DEFAULT_ACCENT;
 			$clean['logo_url']     = self::url_setting( $input, $clean, 'logo_url', __( 'Logo URL', 'jetonomy' ) );
 			// Color palette — empty string means "no override, keep the default".
 			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {
