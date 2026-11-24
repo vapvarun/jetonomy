@@ -1,23 +1,12 @@
 {
-  "version": "2.0.7",
-  "approved": "2026-11-10",
+  "version": "2.1.0",
+  "approved": "2026-11-24",
   "by": "Varun Dubey (owner)",
-  "reason": "80 of 95 journeys pass in full and are stamped at their walk commits (final code Free a531ef5d / Pro 44fcc6e). The 15 below were walked in the browser; every check passed except these, which this setup cannot run or the owner moved to 2.0.8. ENV (cannot run here): c-admin-akismet-staff-bypass.5 (live Akismet key); c-site-host-integrations.11 (BuddyX has no site dark mode) and .18 (Divi not installed); F.firefox-desktop and F.safari-ios and c-member-scheduled-post.14 (non-Chromium engines); e-web-push.3/.6/.7 (real push delivery over HTTPS); e-pro-license-and-lockstep.5 (live licence server); e-membership-gating-adapters.9/.13/.14 (WP Fusion, SureMembers, WooCommerce Memberships not installed); e-email-digest.13 (3,000-subscriber scale); e-analytics.16 (wp-admin has no dark scheme; Pro admin cards use raw colours); e-lms-course-spaces-and-automator.9/.10/.11 (Uncanny Automator recipes) and .12 (Learnomy student dashboard). Owner decided for 2.0.8: c-member-reply-create.3 (topic author notified after Unfollow); e-extensions-manager.12 (concurrent toggles lose an update); e-membership-gating-adapters.11 (PMPro picker embeds every level); e-attachments.18 (no admin list for attachments); f-a11y.10 (Pro poll builder Remove poll / Add option links and sidebar Top Members names and tag chips under the 40px touch size); f-rtl.2 (code blocks render right-to-left in Arabic topics); f-rtl.4 (the @mention popup shows the login as alice@ in RTL).",
+  "reason": "Approved by the owner in chat on 2026-11-24 (answer: waive the runbook freshness gate for 2.1.0). No journey was re-walked or re-stamped for 2.1.0: 92 of 95 journeys still carry stamps from 2.0.7-era commits and 8 walk records are not at the current commits. This waiver does not claim otherwise. What backs 2.1.0 instead: QA browser passes J21 to J60 by area (settings strictness, space grid card and Follow, sidebar widgets on/off/order, role matrix Select all, space moderators can ban, paging overflow and missing-space error code, contrast and accessibility); the control contrast crawler with 0 violations and 0 failed steps on 11 runs (stock Reign light and dark, Twenty Twenty-Five, guest, admin, accent #ffd34d); wp jetonomy qa-actions 662/662; wp jetonomy qa 326/326 with 1 warning; full PHPUnit 1992 tests, 0 failures, 93 skipped; Gate G security review with no finding rated high or above reachable by any role. NOT walked or verified for 2.1.0: Firefox and Safari; RTL on the last contrast pass; host text #6b7280 in dark; WP Vanguard (G4) scan; the setup wizard sample-data confirm on the rebuilt setup-wizard.min.js (QA re-check requested). Journey-depth records not current: c-member-subscribe-thread-and-space checks .20 and .21 are missing from its walk record; C.member.scheduled-post, C.admin.akismet-staff-bypass, E.analytics, F.firefox-desktop, F.safari-ios, F.rtl and F.a11y have walk records at older commits. Items carried from the 2.0.7 waiver that still cannot run here: live Akismet key; BuddyX site dark mode; Divi; real push delivery over HTTPS; live licence server; WP Fusion, SureMembers and WooCommerce Memberships; 3,000-subscriber digest scale; Uncanny Automator recipes and the Learnomy student dashboard. Owner-moved items still open: topic author notified after Unfollow; concurrent extension toggles lose an update; PMPro picker embeds every level; no admin list for attachments; 40px touch targets (.jt-v-btn, .jt-act, .jt-userpanel-link, .jt-tag) at 390; code blocks render right-to-left in Arabic topics; the @mention popup shows the login as alice@ in RTL.",
   "walked": [
-    "C.member.reply-create",
-    "C.admin.akismet-staff-bypass",
-    "C.site.host-integrations",
-    "E.analytics",
-    "E.email-digest",
-    "E.web-push",
-    "E.pro-license-and-lockstep",
-    "E.extensions-manager",
-    "E.membership-gating-adapters",
-    "E.lms-course-spaces-and-automator",
-    "E.attachments",
-    "F.firefox-desktop and F.safari-ios",
-    "C.member.scheduled-post",
-    "F.a11y",
-    "F.rtl"
+    "QA browser passes J21 to J60 (by area, not stamped journeys)",
+    "Contrast crawler: 11 runs, 0 violations",
+    "qa-actions 662/662 and wp jetonomy qa 326/326",
+    "PHPUnit full suite 1992 tests, 0 failures"
   ]
 }
