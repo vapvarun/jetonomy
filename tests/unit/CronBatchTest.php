@@ -132,9 +132,10 @@ class CronBatchTest extends WP_UnitTestCase {
 			}
 		);
 
-		// Fresh cursor (no option yet) => start at user_id 0; evaluate_trust_batch()
-		// applies the jetonomy_cron_batch_size filter (=> 2) and runs one slice.
-		( new Cron() )->evaluate_trust_batch();
+		// Fresh cursor (no option yet) => start at user_id 0. Fired by hook name, as
+		// Action Scheduler runs it; evaluate_trust_batch() applies the
+		// jetonomy_cron_batch_size filter (=> 2) and runs one slice.
+		do_action( 'jetonomy_trust_evaluation_batch' );
 
 		remove_all_filters( 'jetonomy_cron_batch_size' );
 
