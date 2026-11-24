@@ -1,5 +1,5 @@
 {
-    "about": "Uncovered items the runtime coverage gate tolerates. It may only shrink: cover an item, then remove it with bin/qa-runtime-coverage.php --update-baseline. Must-cover items can never be listed here.",
+    "about": "Uncovered items the runtime coverage gate tolerates. It may only shrink: cover an item, then remove it with bin/qa-runtime-coverage.php --update-baseline. Must-cover items can never be listed here. Exception approved by the owner on 2026-11-24 for 2.1.0: hook:jetonomy_qa_actions_start and hook:jetonomy_qa_actions_end are fired only by the qa-actions developer command, which cannot run inside PHPUnit and is not counted toward coverage.",
     "uncovered": [
         "ajax:jetonomy_add_access_rule",
         "ajax:jetonomy_add_space_member",
@@ -85,6 +85,8 @@
         "hook:jetonomy_privacy_orphan_columns",
         "hook:jetonomy_pro_first_reaction",
         "hook:jetonomy_purge_orphan_user",
+        "hook:jetonomy_qa_actions_end",
+        "hook:jetonomy_qa_actions_start",
         "hook:jetonomy_recount_backfill_complete",
         "hook:jetonomy_reply_split",
         "hook:jetonomy_rest_prepare_notification",
