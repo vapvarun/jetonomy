@@ -21,9 +21,9 @@ class Migration_2_0_7 {
 		global $wpdb;
 		$rules = $wpdb->prefix . 'jt_access_rules';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "UPDATE {$rules} SET grants = 'participate' WHERE grants = 'full'" );
+		$wpdb->query( $wpdb->prepare( "UPDATE %i SET grants = 'participate' WHERE grants = 'full'", $rules ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "UPDATE {$rules} SET space_role = IF( grants = 'read', 'viewer', 'member' )" );
+		$wpdb->query( $wpdb->prepare( "UPDATE %i SET space_role = IF( grants = 'read', 'viewer', 'member' )", $rules ) );
 		\Jetonomy\Cache::flush();
 	}
 }

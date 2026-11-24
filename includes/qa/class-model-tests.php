@@ -1927,7 +1927,7 @@ class Model_Tests {
 
 		wp_delete_file( $log );
 		\Jetonomy\Queue::cancel( $hook );
-		$wpdb->query( "DELETE FROM {$posts} WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', $posts, ...$ids ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		\Jetonomy\Cron::arm_scheduled_publish();
 		\Jetonomy\Space_Purge::purge( $space );
 	}

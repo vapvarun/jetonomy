@@ -260,8 +260,8 @@ final class Recount_Backfill {
 		$table = table( $spec['table'] );
 		$key   = $spec['key'];
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table() is a trusted prefixed name; $key is from the STAGES constant.
-		return (int) $wpdb->get_var( "SELECT MAX({$key}) FROM {$table}" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the column and table are identifiers (%i); $key is from the STAGES constant.
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(%i) FROM %i', $key, $table ) );
 	}
 
 	/**
