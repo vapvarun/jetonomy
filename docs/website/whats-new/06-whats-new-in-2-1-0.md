@@ -25,7 +25,7 @@ Space cards with a Follow button, a sidebar you arrange yourself, a bottom bar o
 - **Space moderators can ban.** A new setting, off by default, lets a space moderator ban a member of their own space and lift those bans. Moderators can never ban a space admin, the space owner, another moderator or a site administrator. Only administrators can change the setting.
 - **Why an item is held.** The moderation queue shows the reason each item is waiting.
 - **Leaderboard ties.** Members with the same reputation are listed newest first.
-- **Trust levels.** Every threshold on the settings screen is checked, replies count, and levels never go down on their own. `wp jetonomy trust-evaluate --dry-run` lists who would be promoted and changes nothing.
+- **Trust levels.** Every threshold on the settings screen is checked, replies count, and levels never go down on their own. `wp jetonomy trust-evaluate --dry-run` reports how many members would be promoted and changes nothing.
 - **Sample data.** Load Sample Data asks first when the community already has content of its own.
 - **Private communities.** A private community is left out of the sitemap and robots.txt.
 

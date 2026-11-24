@@ -276,7 +276,7 @@ Space cards with Follow, a sidebar you arrange, a phone bottom bar, and a contra
 * New      - Members can hide their online status, so other members see no online dot or last-seen time.
 * New      - The moderation queue shows why each item is held.
 * New      - Site announcement emails have a default template you can see and a working Preview.
-* New      - wp jetonomy trust-evaluate --dry-run lists who would be promoted and changes nothing.
+* New      - wp jetonomy trust-evaluate --dry-run reports how many members would be promoted and changes nothing.
 * Improve  - Every control edge, focus ring and label meets WCAG AA contrast in light and dark mode, with any accent colour and on any host theme.
 * Improve  - Text in a light accent colour is darker so it stays readable, and buttons on the BuddyX coral accent get a black label.
 * Improve  - Controls and labels no longer fade out with transparency, so muted and disabled text stays readable.
