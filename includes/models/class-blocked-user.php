@@ -90,7 +90,7 @@ class BlockedUser extends Model {
 			);
 		}
 
-		static::db()->query(
+		$inserted = static::db()->query(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- static::table() is a trusted prefixed table name, not user input.
 				'INSERT IGNORE INTO ' . static::table() . ' (blocker_id, blocked_id, created_at) VALUES (%d, %d, %s)',
@@ -101,6 +101,12 @@ class BlockedUser extends Model {
 		);
 
 		self::bust_cache( $blocker_id );
+
+		// Already blocked, or a parallel request stored the block first: it is a success, but nothing happened here, so
+		// the hook (which the request that stored the row fires) does not fire again.
+		if ( 1 !== $inserted ) {
+			return true;
+		}
 
 		/**
 		 * Fires after a user blocks another user.
@@ -124,15 +130,21 @@ class BlockedUser extends Model {
 		$blocker_id = absint( $blocker_id );
 		$blocked_id = absint( $blocked_id );
 
-		$deleted = false !== static::db()->delete(
+		$removed = static::db()->delete(
 			static::table(),
 			array(
 				'blocker_id' => $blocker_id,
 				'blocked_id' => $blocked_id,
 			)
 		);
+		$deleted = false !== $removed;
 
 		self::bust_cache( $blocker_id );
+
+		// Nothing to unblock (never blocked, or a parallel request already did): not an event.
+		if ( ! $removed ) {
+			return $deleted;
+		}
 
 		/**
 		 * Fires after a user unblocks another user.
