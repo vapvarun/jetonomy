@@ -20,14 +20,30 @@ class QueueTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 		$this->assertTrue( Queue::has_as(), 'Action Scheduler ships with Jetonomy: these proofs must run, never skip' );
+		$this->clear_jetonomy_jobs();
 	}
 
 	public function tear_down(): void {
 		Queue::set_clock( null );
-		global $wpdb;
-		$wpdb->delete( $wpdb->prefix . 'actionscheduler_actions', array( 'hook' => self::HOOK ) ); // phpcs:ignore WordPress.DB
+		$this->clear_jetonomy_jobs();
 		wp_unschedule_hook( self::HOOK );
 		parent::tear_down();
+	}
+
+	/**
+	 * Empty the scheduler of Jetonomy's own jobs. The history prune and the one-copy checks work across the whole
+	 * `jetonomy` action group, so rows left in a long-lived test database by other jobs and earlier runs (gravatar checks,
+	 * the test hook itself) changed their counts: these proofs assume an empty group, as a fresh CI database is.
+	 */
+	private function clear_jetonomy_jobs(): void {
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$group = (int) $wpdb->get_var( $wpdb->prepare( "SELECT group_id FROM {$wpdb->prefix}actionscheduler_groups WHERE slug = %s", Queue::GROUP ) );
+		if ( $group > 0 ) {
+			$wpdb->delete( $wpdb->prefix . 'actionscheduler_actions', array( 'group_id' => $group ) );
+		}
+		$wpdb->delete( $wpdb->prefix . 'actionscheduler_actions', array( 'hook' => self::HOOK ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/** Our rows of the test hook, any status. */
