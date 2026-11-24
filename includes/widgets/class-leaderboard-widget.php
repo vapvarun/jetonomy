@@ -57,10 +57,12 @@ class Leaderboard_Widget extends \WP_Widget {
 	}
 
 	public function update( $new_instance, $old_instance ): array {
+		$period = (string) ( $new_instance['period'] ?? 'all' );
+
 		return array(
 			'title'  => sanitize_text_field( $new_instance['title'] ?? '' ),
 			'count'  => absint( $new_instance['count'] ?? 5 ),
-			'period' => in_array( $new_instance['period'] ?? 'all', array( 'all', 'month', 'week' ), true ) ? $new_instance['period'] : 'all',
+			'period' => in_array( $period, array( 'all', 'month', 'week' ), true ) ? $period : 'all',
 		);
 	}
 }
