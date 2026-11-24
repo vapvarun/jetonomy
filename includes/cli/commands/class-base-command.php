@@ -32,6 +32,17 @@ abstract class Base_Command {
 	 * @param bool                $default Value when the flag is absent.
 	 */
 	protected function bool_arg( array $assoc, string $key, bool $default = false ): bool {
+		return self::flag_arg( $assoc, $key, $default );
+	}
+
+	/**
+	 * The same yes/no flag reading for code outside a command class (the older `wp jetonomy` commands).
+	 *
+	 * @param array<string,mixed> $assoc   Associative args.
+	 * @param string              $key     Flag name without the dashes.
+	 * @param bool                $default Value when the flag is absent.
+	 */
+	public static function flag_arg( array $assoc, string $key, bool $default = false ): bool {
 		if ( ! array_key_exists( $key, $assoc ) ) {
 			return $default;
 		}

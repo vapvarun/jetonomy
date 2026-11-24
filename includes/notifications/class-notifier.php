@@ -232,7 +232,7 @@ class Notifier {
 		 * @param string $accent Hex color.
 		 * @param string $type   Notification type.
 		 */
-		return (string) apply_filters( 'jetonomy_email_accent_color', (string) ( $settings['accent_color'] ?? '#0073aa' ), $type );
+		return (string) apply_filters( 'jetonomy_email_accent_color', \Jetonomy\Settings::accent_color( (array) $settings ), $type );
 	}
 
 	/**

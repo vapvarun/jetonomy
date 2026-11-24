@@ -1214,6 +1214,25 @@ function jtInlineEditorEmpty( editable ) {
     jtFlagField( editable, errEl, () => { errEl.hidden = true; errEl.textContent = ''; } );
 }
 
+/**
+ * Light the arrows for the vote the member really has, when the response says (user_vote: 1, -1 or 0).
+ *
+ * Two requests from one member can cross (up in one tab, down in another): the loser's own click says which arrow it
+ * pressed, but the stored vote is the other one. Returns false when the response carries no stored vote, so the
+ * caller falls back to what the click implies.
+ *
+ * @param {Object}      data   REST vote response.
+ * @param {HTMLElement} upEl   The upvote button, or null.
+ * @param {HTMLElement} downEl The downvote button, or null.
+ * @return {boolean} Whether the stored vote was applied.
+ */
+function jetonomyShowStoredVote( data, upEl, downEl ) {
+    if ( ! data || typeof data.user_vote !== 'number' ) return false;
+    jetonomySetVoted( upEl, data.user_vote > 0 );
+    jetonomySetVoted( downEl, data.user_vote < 0 );
+    return true;
+}
+
 function jetonomySetVoted( el, on ) {
     if ( ! el ) return;
     el.classList.toggle( 'voted', !! on );
@@ -2142,7 +2161,9 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data && data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    if ( data && data.action === 'removed' ) {
+                    if ( jetonomyShowStoredVote( data, btnEl, downSibling ) ) {
+                        // The member's stored vote decides the arrows.
+                    } else if ( data && data.action === 'removed' ) {
                         jetonomySetVoted( btnEl, false );
                     } else {
                         jetonomySetVoted( btnEl, true );
@@ -2196,7 +2217,9 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data && data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    if ( data && data.action === 'removed' ) {
+                    if ( jetonomyShowStoredVote( data, upSibling, btnEl ) ) {
+                        // The member's stored vote decides the arrows.
+                    } else if ( data && data.action === 'removed' ) {
                         jetonomySetVoted( btnEl, false );
                     } else {
                         jetonomySetVoted( btnEl, true );
@@ -2251,7 +2274,9 @@ const { state, actions } = store( 'jetonomy', {
                         state.replyScores[ replyId ] = data.score;
                         if ( scoreEl ) scoreEl.textContent = String( data.score );
                     }
-                    if ( data && data.action === 'removed' ) {
+                    if ( jetonomyShowStoredVote( data, btnEl, downSibling ) ) {
+                        // The member's stored vote decides the arrows.
+                    } else if ( data && data.action === 'removed' ) {
                         jetonomySetVoted( btnEl, false );
                     } else {
                         jetonomySetVoted( btnEl, true );
@@ -2310,7 +2335,9 @@ const { state, actions } = store( 'jetonomy', {
                         state.replyScores[ replyId ] = data.score;
                         if ( scoreEl ) scoreEl.textContent = String( data.score );
                     }
-                    if ( data && data.action === 'removed' ) {
+                    if ( jetonomyShowStoredVote( data, upSibling, btnEl ) ) {
+                        // The member's stored vote decides the arrows.
+                    } else if ( data && data.action === 'removed' ) {
                         jetonomySetVoted( btnEl, false );
                     } else {
                         jetonomySetVoted( btnEl, true );

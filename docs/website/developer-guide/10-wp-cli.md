@@ -455,6 +455,24 @@ wp jetonomy content backfill-plain
 wp jetonomy content backfill-plain --seconds=60
 ```
 
+### Maintenance commands
+
+Four commands keep the community's stored numbers and rules in step. They take no id, and the yes/no flags follow the same rule as every other command.
+
+| Command | Description |
+|---------|-------------|
+| `recount` | Rebuild the stored counts and scores from the real rows: each topic's reply count, each space's topic and member counts, each member's topic and reply counts, and the vote scores of topics and replies. `--type=<type>` limits it to `posts`, `spaces`, `votes` or `users` (default `all`). Prints the number of rows it changed for each step. |
+| `trust-evaluate` | Work out every member's trust level and promote those who now qualify. Levels never go down on their own. Prints how many profiles it checked and how many members it promoted. `--dry-run` reports how many would be promoted (a count, not a list) and changes nothing. |
+| `flush-rules` | Flush and regenerate WordPress's rewrite rules (the same as saving Settings > Permalinks), for forum addresses that return a not-found page. |
+| `backfill-activity` | Add the missing activity-log entries for published topics, replies and space joins that exist but were never logged (after installing the activity tracker, or after a migration). Skips what is already logged, so running it twice adds nothing new. |
+
+```bash
+wp jetonomy recount --type=posts
+wp jetonomy trust-evaluate --dry-run
+wp jetonomy flush-rules
+wp jetonomy backfill-activity
+```
+
 ### demo-seed / demo-cleanup
 
 Load or remove the sample community: about 20 members, 4 categories, 20 spaces, 220 topics and their replies, votes, accepted answers and pending flags, plus Pro reactions, polls and DM threads when Jetonomy Pro is active. Only the rows the seeder records are removed, so your own content is never touched. The Dashboard's **Demo Data** card and `POST`/`DELETE /jetonomy/v1/admin/demo-data` run the same code.

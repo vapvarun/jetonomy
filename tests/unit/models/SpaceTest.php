@@ -14,19 +14,26 @@ class SpaceTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 		Schema::create_tables();
-		$this->category_id = Category::create( [ 'name' => 'General', 'slug' => 'general-' . uniqid() ] );
+		$this->category_id = Category::create(
+			array(
+				'name' => 'General',
+				'slug' => 'general-' . uniqid(),
+			)
+		);
 	}
 
-	private function make_space( array $overrides = [] ): int {
-		return Space::create( array_merge(
-			[
-				'title'       => 'Test Space',
-				'slug'        => 'test-space-' . uniqid(),
-				'category_id' => $this->category_id,
-				'visibility'  => 'public',
-			],
-			$overrides
-		) );
+	private function make_space( array $overrides = array() ): int {
+		return Space::create(
+			array_merge(
+				array(
+					'title'       => 'Test Space',
+					'slug'        => 'test-space-' . uniqid(),
+					'category_id' => $this->category_id,
+					'visibility'  => 'public',
+				),
+				$overrides
+			)
+		);
 	}
 
 	public function test_create_returns_id(): void {
@@ -35,7 +42,12 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_find_returns_object(): void {
-		$id    = $this->make_space( [ 'title' => 'My Forum', 'slug' => 'my-forum' ] );
+		$id    = $this->make_space(
+			array(
+				'title' => 'My Forum',
+				'slug'  => 'my-forum',
+			)
+		);
 		$space = Space::find( $id );
 		$this->assertIsObject( $space );
 		$this->assertEquals( 'My Forum', $space->title );
@@ -43,7 +55,12 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_find_by_slug(): void {
-		$this->make_space( [ 'title' => 'Dev Talk', 'slug' => 'dev-talk' ] );
+		$this->make_space(
+			array(
+				'title' => 'Dev Talk',
+				'slug'  => 'dev-talk',
+			)
+		);
 		$space = Space::find_by_slug( 'dev-talk' );
 		$this->assertNotNull( $space );
 		$this->assertEquals( 'Dev Talk', $space->title );
@@ -54,16 +71,23 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_by_category(): void {
-		$cat2 = Category::create( [ 'name' => 'Other', 'slug' => 'other-cat' ] );
+		$cat2 = Category::create(
+			array(
+				'name' => 'Other',
+				'slug' => 'other-cat',
+			)
+		);
 
-		$id1 = $this->make_space( [ 'slug' => 'space-a' ] );
-		$id2 = $this->make_space( [ 'slug' => 'space-b' ] );
-		Space::create( [
-			'title'       => 'Different Cat',
-			'slug'        => 'diff-cat',
-			'category_id' => $cat2,
-			'visibility'  => 'public',
-		] );
+		$id1 = $this->make_space( array( 'slug' => 'space-a' ) );
+		$id2 = $this->make_space( array( 'slug' => 'space-b' ) );
+		Space::create(
+			array(
+				'title'       => 'Different Cat',
+				'slug'        => 'diff-cat',
+				'category_id' => $cat2,
+				'visibility'  => 'public',
+			)
+		);
 
 		$spaces = Space::list_by_category( $this->category_id );
 		$ids    = array_map( fn( $s ) => (int) $s->id, $spaces );
@@ -79,8 +103,13 @@ class SpaceTest extends WP_UnitTestCase {
 	public function test_list_by_category_excludes_hidden_for_guest(): void {
 		wp_set_current_user( 0 );
 
-		$public_id = $this->make_space( [ 'slug' => 'public-vis' ] );
-		$hidden_id = $this->make_space( [ 'slug' => 'hidden-vis', 'visibility' => 'hidden' ] );
+		$public_id = $this->make_space( array( 'slug' => 'public-vis' ) );
+		$hidden_id = $this->make_space(
+			array(
+				'slug'       => 'hidden-vis',
+				'visibility' => 'hidden',
+			)
+		);
 
 		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id ) );
 
@@ -92,25 +121,25 @@ class SpaceTest extends WP_UnitTestCase {
 		// Spaces seed their creator as admin, so we make them with creator_user_id=0
 		// to keep the viewer cleanly outside the membership of the hidden space.
 		$public_id = (int) Space::create(
-			[
+			array(
 				'title'       => 'Public space NM',
 				'slug'        => 'public-vis-nm-' . uniqid(),
 				'category_id' => $this->category_id,
 				'visibility'  => 'public',
-			],
+			),
 			0
 		);
 		$hidden_id = (int) Space::create(
-			[
+			array(
 				'title'       => 'Hidden space NM',
 				'slug'        => 'hidden-vis-nm-' . uniqid(),
 				'category_id' => $this->category_id,
 				'visibility'  => 'hidden',
-			],
+			),
 			0
 		);
 
-		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		wp_set_current_user( $user_id );
 
 		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id ) );
@@ -120,10 +149,15 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_by_category_shows_hidden_to_member(): void {
-		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		wp_set_current_user( $user_id );
 
-		$hidden_id = $this->make_space( [ 'slug' => 'hidden-vis-member', 'visibility' => 'hidden' ] );
+		$hidden_id = $this->make_space(
+			array(
+				'slug'       => 'hidden-vis-member',
+				'visibility' => 'hidden',
+			)
+		);
 		SpaceMember::add( $hidden_id, $user_id, 'member' );
 
 		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id ) );
@@ -132,10 +166,15 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_by_category_shows_hidden_to_admin(): void {
-		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $admin_id );
 
-		$hidden_id = $this->make_space( [ 'slug' => 'hidden-vis-admin', 'visibility' => 'hidden' ] );
+		$hidden_id = $this->make_space(
+			array(
+				'slug'       => 'hidden-vis-admin',
+				'visibility' => 'hidden',
+			)
+		);
 
 		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id ) );
 
@@ -143,22 +182,22 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_uncategorized_applies_visibility_predicate(): void {
-		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		$guest_id = 0;
 
 		$public_id = (int) Space::create(
-			[
+			array(
 				'title'      => 'Uncat public',
 				'slug'       => 'uncat-public-' . uniqid(),
 				'visibility' => 'public',
-			]
+			)
 		);
 		$hidden_id = (int) Space::create(
-			[
+			array(
 				'title'      => 'Uncat hidden',
 				'slug'       => 'uncat-hidden-' . uniqid(),
 				'visibility' => 'hidden',
-			]
+			)
 		);
 
 		wp_set_current_user( $guest_id );
@@ -172,11 +211,16 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_by_category_explicit_user_id_overrides_current_user(): void {
-		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		$sub_id   = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$sub_id   = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		wp_set_current_user( $sub_id );
 
-		$hidden_id = $this->make_space( [ 'slug' => 'hidden-explicit', 'visibility' => 'hidden' ] );
+		$hidden_id = $this->make_space(
+			array(
+				'slug'       => 'hidden-explicit',
+				'visibility' => 'hidden',
+			)
+		);
 
 		// Explicitly ask for the admin's view despite current user being a subscriber.
 		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id, $admin_id ) );
@@ -188,21 +232,25 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_children(): void {
-		$parent = $this->make_space( [ 'slug' => 'parent-space' ] );
-		$child1 = Space::create( [
-			'title'       => 'Child A',
-			'slug'        => 'child-a',
-			'category_id' => $this->category_id,
-			'parent_id'   => $parent,
-			'visibility'  => 'public',
-		] );
-		$child2 = Space::create( [
-			'title'       => 'Child B',
-			'slug'        => 'child-b',
-			'category_id' => $this->category_id,
-			'parent_id'   => $parent,
-			'visibility'  => 'public',
-		] );
+		$parent = $this->make_space( array( 'slug' => 'parent-space' ) );
+		$child1 = Space::create(
+			array(
+				'title'       => 'Child A',
+				'slug'        => 'child-a',
+				'category_id' => $this->category_id,
+				'parent_id'   => $parent,
+				'visibility'  => 'public',
+			)
+		);
+		$child2 = Space::create(
+			array(
+				'title'       => 'Child B',
+				'slug'        => 'child-b',
+				'category_id' => $this->category_id,
+				'parent_id'   => $parent,
+				'visibility'  => 'public',
+			)
+		);
 
 		$children = Space::list_children( $parent );
 		$this->assertCount( 2, $children );
@@ -237,12 +285,19 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_settings_returns_decoded_array(): void {
-		$id = Space::create( [
-			'title'       => 'Settings Space',
-			'slug'        => 'settings-space',
-			'category_id' => $this->category_id,
-			'settings'    => json_encode( [ 'allow_anonymous' => true, 'max_posts' => 100 ] ),
-		] );
+		$id = Space::create(
+			array(
+				'title'       => 'Settings Space',
+				'slug'        => 'settings-space',
+				'category_id' => $this->category_id,
+				'settings'    => json_encode(
+					array(
+						'allow_anonymous' => true,
+						'max_posts'       => 100,
+					)
+				),
+			)
+		);
 
 		$settings = Space::get_settings( $id );
 		$this->assertIsArray( $settings );
@@ -258,7 +313,7 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_create_increments_category_space_count(): void {
-		$cat_before = Category::find( $this->category_id );
+		$cat_before   = Category::find( $this->category_id );
 		$count_before = (int) $cat_before->space_count;
 
 		$this->make_space();
@@ -269,8 +324,13 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_update(): void {
-		$id = $this->make_space( [ 'title' => 'Original Title', 'slug' => 'original-title' ] );
-		Space::update( $id, [ 'title' => 'Updated Title' ] );
+		$id = $this->make_space(
+			array(
+				'title' => 'Original Title',
+				'slug'  => 'original-title',
+			)
+		);
+		Space::update( $id, array( 'title' => 'Updated Title' ) );
 		$space = Space::find( $id );
 		$this->assertEquals( 'Updated Title', $space->title );
 	}
@@ -300,13 +360,49 @@ class SpaceTest extends WP_UnitTestCase {
 	}
 
 	public function test_validate_visibility_join_policy_accepts_public_and_private(): void {
-		foreach ( [ 'public', 'private' ] as $vis ) {
-			foreach ( [ 'open', 'approval', 'invite' ] as $jp ) {
+		foreach ( array( 'public', 'private' ) as $vis ) {
+			foreach ( array( 'open', 'approval', 'invite' ) as $jp ) {
 				$this->assertTrue(
 					Space::validate_visibility_join_policy( $vis, $jp ),
 					"$vis + $jp should be allowed"
 				);
 			}
 		}
+	}
+
+	public function test_a_filter_can_refuse_a_space_update_and_nothing_is_written(): void {
+		$id     = $this->make_space( array( 'visibility' => 'public' ) );
+		$refuse = static fn( $proceed, $space_id, $data ) => ( isset( $data['visibility'] ) ? new \WP_Error( 'refused', 'No.', array( 'status' => 409 ) ) : $proceed );
+
+		$this->assertTrue( Space::update( $id, array( 'title' => 'Renamed' ) ), 'With no filter an update is written.' );
+
+		add_filter( 'jetonomy_before_update_space', $refuse, 10, 3 );
+		$refused = Space::update( $id, array( 'visibility' => 'private' ) );
+		$allowed = Space::update( $id, array( 'title' => 'Renamed again' ) );
+		remove_filter( 'jetonomy_before_update_space', $refuse, 10 );
+
+		$this->assertWPError( $refused );
+		$this->assertSame( 'refused', $refused->get_error_code() );
+		$this->assertSame( 'public', Space::find( $id )->visibility, 'A refused update changes nothing.' );
+		$this->assertTrue( $allowed, 'The filter only refused what it chose to.' );
+		$this->assertSame( 'Renamed again', Space::find( $id )->title );
+	}
+
+	public function test_a_hand_over_refused_by_the_filter_answers_with_the_refusal_and_leaves_the_space_as_it_was(): void {
+		$owner = $this->factory()->user->create();
+		$heir  = $this->factory()->user->create();
+		$id    = $this->make_space( [ 'author_id' => $owner ] );
+		SpaceMember::add( $id, $owner, 'admin' );
+		$refuse = static fn( $proceed, $space_id, $data ) => ( isset( $data['status'] ) ? new \WP_Error( 'refused', 'No.', [ 'status' => 409 ] ) : $proceed );
+
+		add_filter( 'jetonomy_before_update_space', $refuse, 10, 3 );
+		$result = Space::hand_over( $id, $heir, true, true );
+		remove_filter( 'jetonomy_before_update_space', $refuse, 10 );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'refused', $result->get_error_code(), 'The refusal is reported, not a generic hand-over failure.' );
+		$this->assertSame( 'active', Space::find( $id )->status );
+		$this->assertSame( $owner, (int) Space::find( $id )->author_id, 'Ownership did not move.' );
+		$this->assertNull( SpaceMember::get_role( $id, $heir ), 'The heir is back to what they were.' );
 	}
 }

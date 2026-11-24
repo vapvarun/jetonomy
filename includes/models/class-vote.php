@@ -38,11 +38,12 @@ class Vote extends Model {
 	 * @param string $object_type 'post' or 'reply'.
 	 * @param int    $object_id   Target object ID.
 	 * @param int    $value       Vote value (1 or -1).
-	 * @return array{action: string, old_value: int|null}|\WP_Error
+	 * @return array{action: string, old_value: int|null}|\WP_Error `action` is created, updated, removed, or
+	 *         unchanged when a parallel request had already made the same change: nothing fires and no reputation moves.
 	 */
 	public static function record( int $user_id, string $object_type, int $object_id, int $value ): array|\WP_Error {
 		$result = static::cast( $user_id, $object_type, $object_id, $value );
-		if ( is_wp_error( $result ) ) {
+		if ( is_wp_error( $result ) || 'unchanged' === $result['action'] ) {
 			return $result;
 		}
 
@@ -76,7 +77,12 @@ class Vote extends Model {
 	 * @param string $object_type 'post' or 'reply'.
 	 * @param int    $object_id   Target object ID.
 	 * @param int    $value       Vote value (e.g. 1 or -1).
-	 * @return array{action: string, old_value: int|null}|\WP_Error Refused for a new or changed vote on the voter's own content.
+	 * Each write is decided by the rows it changed, not by what was read first: two parallel requests from one
+	 * member (two tabs, the app and the web) both read the same row, and only the one whose write lands has
+	 * done anything. The other answers `unchanged`, so its hooks and reputation never fire a second time.
+	 *
+	 * @return array{action: string, old_value: int|null}|\WP_Error `action` is created, updated, removed or
+	 *         unchanged. Refused for a new or changed vote on the voter's own content.
 	 */
 	public static function cast( int $user_id, string $object_type, int $object_id, int $value ): array|\WP_Error {
 		/**
@@ -125,9 +131,9 @@ class Vote extends Model {
 
 		try {
 			if ( ! $existing ) {
-				// Two parallel requests from one member (two tabs, the app and the web) both found no row and both
-				// insert; the unique key lets one through. The duplicate is expected, so it is not logged as a database
-				// error, and the loser answers as the winner did: the vote is recorded.
+				// Two parallel requests from one member both found no row and both insert; the unique key lets one
+				// through. The duplicate is expected, so it is not logged as a database error, and the loser changed
+				// nothing: it answers `unchanged`, and the winner has already fired the hooks and awarded the reputation.
 				$errors = static::db()->suppress_errors( true );
 				$result = static::insert(
 					array(
@@ -139,17 +145,19 @@ class Vote extends Model {
 					)
 				);
 				static::db()->suppress_errors( $errors );
-				if ( false === $result ) {
+				if ( 0 === $result ) {
+					// Read before ROLLBACK: running any query clears wpdb's last error.
+					$insert_error = (string) static::db()->last_error;
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 					}
-					if ( false !== stripos( (string) static::db()->last_error, 'duplicate entry' ) ) {
+					if ( false !== stripos( $insert_error, 'duplicate entry' ) ) {
 						return array(
-							'action'    => 'created',
+							'action'    => 'unchanged',
 							'old_value' => null,
 						);
 					}
-					error_log( 'Jetonomy: vote insert failed: ' . static::db()->last_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- a real failure must stay visible.
+					error_log( 'Jetonomy: vote insert failed: ' . $insert_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- a real failure must stay visible.
 					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to record vote.', 'jetonomy' ), array( 'status' => 500 ) );
 				}
 				static::update_target_score( $object_type, $object_id );
@@ -186,12 +194,29 @@ class Vote extends Model {
 			$old_value = (int) $existing->value;
 
 			if ( $old_value === $value ) {
-				$result = static::delete( (int) $existing->id );
-				if ( false === $result ) {
+				// Only the request that actually removes the row takes the reputation back: a parallel retract finds
+				// it gone (0 rows) and changes nothing.
+				$removed = static::db()->delete(
+					static::table(),
+					array(
+						'id'    => (int) $existing->id,
+						'value' => $old_value,
+					)
+				);
+				if ( false === $removed ) {
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 					}
 					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to remove vote.', 'jetonomy' ), array( 'status' => 500 ) );
+				}
+				if ( 0 === $removed ) {
+					if ( null !== $started ) {
+						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					}
+					return array(
+						'action'    => 'unchanged',
+						'old_value' => $old_value,
+					);
 				}
 				static::update_target_score( $object_type, $object_id );
 				if ( static::db()->last_error ) {
@@ -220,15 +245,29 @@ class Vote extends Model {
 				);
 			}
 
-			$result = static::update(
-				(int) $existing->id,
-				array( 'value' => $value )
+			// Flipped only from the value that was read: if a parallel request already changed it, this one did nothing.
+			$flipped = static::db()->update(
+				static::table(),
+				array( 'value' => $value ),
+				array(
+					'id'    => (int) $existing->id,
+					'value' => $old_value,
+				)
 			);
-			if ( false === $result ) {
+			if ( false === $flipped ) {
 				if ( null !== $started ) {
 					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				}
 				return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update vote.', 'jetonomy' ), array( 'status' => 500 ) );
+			}
+			if ( 0 === $flipped ) {
+				if ( null !== $started ) {
+					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				}
+				return array(
+					'action'    => 'unchanged',
+					'old_value' => $old_value,
+				);
 			}
 			static::update_target_score( $object_type, $object_id );
 			if ( static::db()->last_error ) {

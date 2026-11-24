@@ -1391,6 +1391,74 @@ function time_ago( string $gmt ): string {
 }
 
 /**
+ * The one timezone a stored time is shown in.
+ *
+ * Every time is stored in UTC and shown through date_label(), which asks here, so an admin screen, a member page and an
+ * email never disagree about which day a moment falls on. The default is the site's timezone; the filter lets a site show
+ * each member their own.
+ *
+ * @since 2.1.0
+ *
+ * @param int $user_id Member the time is shown to, 0 for the current context.
+ * @return \DateTimeZone
+ */
+function display_timezone( int $user_id = 0 ): \DateTimeZone {
+	/**
+	 * Filter the timezone Jetonomy shows times in.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param \DateTimeZone $timezone The site timezone.
+	 * @param int           $user_id  Member the time is shown to, 0 when not known.
+	 */
+	return apply_filters( 'jetonomy_display_timezone', wp_timezone(), $user_id );
+}
+
+/**
+ * Format a stored UTC time for display, in display_timezone(). The one formatter for every time Jetonomy shows.
+ *
+ * @since 2.1.0
+ *
+ * @param string|int|null $utc      UTC 'Y-m-d H:i:s' (a string with its own offset is honoured), or a Unix timestamp.
+ * @param string          $fallback Returned for a blank, zero or unparseable time.
+ * @param string|null     $format   PHP date format; the site's date format when null.
+ * @param int             $user_id  Member the time is shown to, for the display_timezone filter.
+ * @return string
+ */
+function date_label( $utc, string $fallback = '', ?string $format = null, int $user_id = 0 ): string {
+	if ( is_int( $utc ) ) {
+		$timestamp = $utc;
+	} else {
+		$utc = trim( (string) $utc );
+		if ( '' === $utc || 0 === strpos( $utc, '0000-00-00' ) ) {
+			return $fallback;
+		}
+		try {
+			$timestamp = ( new \DateTimeImmutable( $utc, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+		} catch ( \Exception $e ) {
+			return $fallback;
+		}
+	}
+	$label = (string) wp_date( $format ?? (string) get_option( 'date_format' ), $timestamp, display_timezone( $user_id ) );
+	return '' === $label ? $fallback : $label;
+}
+
+/**
+ * A stored UTC time as the value of a datetime-local input, in display_timezone(): `Y-m-dTH:i`.
+ *
+ * The inverse of the parse the save routes already do (typed time in display_timezone() to UTC), so a time never moves
+ * on save. Take substr( 0, 10 ) for a date input.
+ *
+ * @since 2.1.0
+ *
+ * @param string|null $utc Stored UTC time.
+ * @return string Empty for a blank or unparseable time.
+ */
+function datetime_local_input( ?string $utc ): string {
+	return date_label( (string) $utc, '', 'Y-m-d\TH:i' );
+}
+
+/**
  * Lower-case a string without requiring the mbstring extension (a host without it must not fatal a community page).
  * Without mbstring the fallback is strtolower(), which is ASCII-only: "Élite" stays "Élite".
  *

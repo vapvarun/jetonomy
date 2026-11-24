@@ -123,6 +123,23 @@ class Space extends Model {
 			return $invalid;
 		}
 
+		/**
+		 * Filter whether a space update may be written. Return a WP_Error to refuse it.
+		 *
+		 * Every writer funnels through here (REST, the wp-admin forms, access rules, WP-CLI, the integrations), so this is
+		 * the one place a plugin that owns a space's state can refuse a change that would contradict it.
+		 *
+		 * @since 2.1.0
+		 *
+		 * @param true|\WP_Error      $proceed Default true.
+		 * @param int                 $id      Space ID.
+		 * @param array<string,mixed> $data    Column data about to be written.
+		 */
+		$allowed = apply_filters( 'jetonomy_before_update_space', true, $id, $data );
+		if ( is_wp_error( $allowed ) ) {
+			return $allowed;
+		}
+
 		// The hand-over marker lets an owner undo the archive their hand-over
 		// made. Every status change clears it, whatever else the write carries
 		// (the wp-admin form saves settings alongside status); hand_over() sets
@@ -429,6 +446,13 @@ class Space extends Model {
 			$data['status'] = 'archived';
 		}
 		$written = self::update( $space_id, $data );
+
+		// A refused update (jetonomy_before_update_space) says why: put the heir back and answer with its own error, not
+		// the generic "could not be handed over".
+		if ( is_wp_error( $written ) ) {
+			$failed();
+			return $written;
+		}
 
 		$after = self::find( $space_id );
 		if ( true !== $written || ! $after || (int) $after->author_id !== $to_user_id || ( $archive && 'archived' !== (string) $after->status ) ) {

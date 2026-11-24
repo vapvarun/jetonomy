@@ -118,6 +118,89 @@ class ReactionsTest extends WP_UnitTestCase {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Count the reaction hooks, and play the other request: $other runs once, the moment the request under test makes its
+	 * first query that matches $when (after it has read the existing state, before it writes).
+	 *
+	 * @return array<string,int> Times each hook fired.
+	 */
+	private function with_parallel_request( string $when, callable $other, callable $run ): array {
+		$fired = [ 'toggled' => 0, 'first' => 0 ];
+		add_action( 'jetonomy_pro_reaction_toggled', function () use ( &$fired ): void { ++$fired['toggled']; } );
+		add_action( 'jetonomy_pro_first_reaction', function () use ( &$fired ): void { ++$fired['first']; } );
+		$done = false;
+		add_filter( 'query', static function ( $sql ) use ( &$done, $when, $other ) {
+			if ( ! $done && 1 === preg_match( $when, $sql ) ) {
+				$done = true;
+				$other();
+			}
+			return $sql;
+		} );
+		$run();
+		return $fired;
+	}
+
+	private function reaction_rows(): int {
+		global $wpdb;
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_pro_reactions WHERE user_id = %d AND object_id = %d", $this->user_id, $this->post_id ) );
+	}
+
+	/**
+	 * Twenty parallel first reactions from one member left one row but fired the toggled hook 20 times and told the author
+	 * up to 16 times that their post got its first reaction.
+	 */
+	public function test_a_parallel_first_reaction_fires_nothing_and_notifies_nobody(): void {
+		global $wpdb;
+		$response = null;
+		$fired    = $this->with_parallel_request(
+			'/SELECT COUNT\(\*\) FROM .*jt_pro_reactions/',
+			function () use ( $wpdb ): void {
+				$wpdb->insert( $wpdb->prefix . 'jt_pro_reactions', [ 'user_id' => $this->user_id, 'object_type' => 'post', 'object_id' => $this->post_id, 'emoji' => 'thumbsup', 'created_at' => gmdate( 'Y-m-d H:i:s' ) ] );
+			},
+			function () use ( &$response ): void {
+				$response = $this->toggle( 'thumbsup', $this->user_id );
+			}
+		);
+
+		$this->assertSame( 1, $this->reaction_rows() );
+		$this->assertSame( 0, $fired['toggled'], 'The request that stored the row fires the hook, not this one.' );
+		$this->assertSame( 0, $fired['first'], 'And it is the one that tells the author.' );
+		$this->assertSame( 'added', $response->get_data()['action'], 'The page still shows the reaction the member has.' );
+	}
+
+	public function test_a_parallel_remove_fires_once(): void {
+		global $wpdb;
+		$this->toggle( 'thumbsup', $this->user_id );
+		$response = null;
+		$fired    = $this->with_parallel_request(
+			'/^\s*DELETE FROM .*jt_pro_reactions/',
+			function () use ( $wpdb ): void {
+				$wpdb->delete( $wpdb->prefix . 'jt_pro_reactions', [ 'user_id' => $this->user_id, 'object_id' => $this->post_id ] );
+			},
+			function () use ( &$response ): void {
+				$response = $this->toggle( 'thumbsup', $this->user_id );
+			}
+		);
+
+		$this->assertSame( 0, $this->reaction_rows() );
+		$this->assertSame( 0, $fired['toggled'] );
+		$this->assertSame( 'removed', $response->get_data()['action'] );
+	}
+
+	public function test_without_a_parallel_request_add_swap_and_remove_each_fire_once(): void {
+		$fired = [ 'toggled' => 0, 'first' => 0 ];
+		add_action( 'jetonomy_pro_reaction_toggled', function () use ( &$fired ): void { ++$fired['toggled']; } );
+		add_action( 'jetonomy_pro_first_reaction', function () use ( &$fired ): void { ++$fired['first']; } );
+
+		$this->assertSame( 'added', $this->toggle( 'thumbsup', $this->user_id )->get_data()['action'] );
+		$this->assertSame( 'added', $this->toggle( 'heart', $this->user_id )->get_data()['action'], 'A different emoji swaps the reaction.' );
+		$this->assertSame( 1, $this->reaction_rows(), 'Still one reaction per member.' );
+		$this->assertSame( 'removed', $this->toggle( 'heart', $this->user_id )->get_data()['action'] );
+
+		$this->assertSame( 3, $fired['toggled'] );
+		$this->assertSame( 1, $fired['first'], 'Only the first reaction is announced to the author, not the swap.' );
+	}
+
+	/**
 	 * A topic in a hidden space answers exactly like a missing one, for reading
 	 * and for reacting; a 403 there used to confirm the topic exists.
 	 */

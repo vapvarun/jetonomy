@@ -299,6 +299,9 @@ final class Space_Journey {
 		}
 
 		$ok = Space::update( $id, array( 'join_policy' => $policy ) );
+		if ( is_wp_error( $ok ) ) {
+			return Journey_Result::from_wp_error( $ok );
+		}
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Space::update(%d) returned false.', $id ) );
 		}
@@ -339,6 +342,9 @@ final class Space_Journey {
 		}
 
 		$ok = Space::update( $id, array( 'visibility' => $visibility ) );
+		if ( is_wp_error( $ok ) ) {
+			return Journey_Result::from_wp_error( $ok );
+		}
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Space::update(%d) returned false.', $id ) );
 		}
@@ -376,6 +382,9 @@ final class Space_Journey {
 		$merged = Space::merge_settings( $id, $settings );
 
 		$ok = Space::update( $id, array( 'settings' => wp_json_encode( $merged ) ) );
+		if ( is_wp_error( $ok ) ) {
+			return Journey_Result::from_wp_error( $ok );
+		}
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Space::update(%d) returned false.', $id ) );
 		}

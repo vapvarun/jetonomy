@@ -608,7 +608,12 @@ class Spaces_Handler {
 		// "configured but content still accessible" report). When
 		// such a rule is attached to a public space, switch the space to Private
 		// so the rule actually restricts access, and tell the admin what happened.
-		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
+		$made_private = AccessRule::ensure_gate( $space_id, $rule_type );
+		if ( is_wp_error( $made_private ) ) {
+			// The rule cannot restrict a space that has to stay public: do not keep it and call it added.
+			AccessRule::delete( (int) $id );
+			wp_send_json_error( $made_private->get_error_message() );
+		}
 
 		$message = AccessRule::added_message( $space_id, $made_private, $rule_type, (string) $rule->grants );
 

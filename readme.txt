@@ -127,7 +127,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 **Developer Tools**
 - 85 REST routes (117 method-endpoints) at `/wp-json/jetonomy/v1/`
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
-- 273 action hooks and filters for customization (122 actions, 151 filters)
+- 275 action hooks and filters for customization (122 actions, 153 filters)
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
 - RTL stylesheet included
@@ -256,7 +256,7 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 85 REST routes / 117 method-endpoints (144 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 273 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 85 REST routes / 117 method-endpoints (144 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 275 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
@@ -276,7 +276,7 @@ Space cards with Follow, a sidebar you arrange, a phone bottom bar, and a contra
 * New      - Members can hide their online status, so other members see no online dot or last-seen time.
 * New      - The moderation queue shows why each item is held.
 * New      - Site announcement emails have a default template you can see and a working Preview.
-* New      - wp jetonomy trust-evaluate --dry-run lists who would be promoted and changes nothing.
+* New      - wp jetonomy trust-evaluate --dry-run reports how many members would be promoted and changes nothing.
 * Improve  - Every control edge, focus ring and label meets WCAG AA contrast in light and dark mode, with any accent colour and on any host theme.
 * Improve  - Text in a light accent colour is darker so it stays readable, and buttons on the BuddyX coral accent get a black label.
 * Improve  - Controls and labels no longer fade out with transparency, so muted and disabled text stays readable.
@@ -306,7 +306,7 @@ Space cards with Follow, a sidebar you arrange, a phone bottom bar, and a contra
 * Fix      - A very large page number in an address no longer breaks community pages, admin lists or the media library.
 * Fix      - No restriction or other row is stored for a space that does not exist.
 * Fix      - The moderation pages answer 403 to a member who cannot moderate, on every theme.
-* Fix      - Voting twice at the same moment counts once instead of showing a database error.
+* Fix      - Voting or reporting twice at the same moment counts once, with one reputation change and one notice, and the arrows show the vote you really have.
 * Fix      - Unfollowing your own topic stops its reply notices.
 * Fix      - Follow buttons ignore repeat clicks while a request is running.
 * Fix      - The report dialog closes on a duplicate report and keeps focus inside when a submit fails.
@@ -315,9 +315,18 @@ Space cards with Follow, a sidebar you arrange, a phone bottom bar, and a contra
 * Fix      - Register on the login card follows a registration plugin that redirects wp-login.php.
 * Fix      - With BuddyNext active, staff see a hidden member's online dot on Jetonomy pages, as they do on BuddyNext's own.
 * Fix      - A Jetonomy table dropped after an update is re-created within a day.
+* Fix      - Asking to join an approval space twice at the same moment tells the space admins once, and blocking someone twice announces the block once.
+* Fix      - A blank accent colour no longer makes emails white on white or leaves the app without an accent; the default accent is used.
+* Fix      - The wp jetonomy flags --model=false, --force=false, --dry-run=false and --report=false are read as false; --model=false no longer starts the full reset.
+* Fix      - The Me menu in the phone bottom bar scrolls on a short screen instead of running off the top.
+* Fix      - Space RSS feed dates are in UTC, so feeds are correct on sites outside UTC.
+* Fix      - A change to a space that a plugin refuses is reported as refused by the CLI and the access rule, not as done.
+* Fix      - Import history shows times in UTC; entries saved before this update show shifted by the site timezone until the next import.
 * Dev      - Every REST response for a missing space now uses the error code jetonomy_space_not_found (was jetonomy_not_found or space_not_found); update any client that matched the old codes.
 * Dev      - New jetonomy_loaded action fires once when Jetonomy has finished booting, with the main plugin object.
 * Dev      - New jetonomy_held_item_notes filter and jetonomy_space_members_purged action.
+* Dev      - New jetonomy_before_update_space filter lets a plugin that owns a space's visibility, join policy or status refuse a change from any entry point.
+* Dev      - Times Jetonomy shows go through display_timezone() and date_label(); the jetonomy_display_timezone filter shows each member their own timezone.
 * Dev      - \Jetonomy\Queue is the one scheduler for Jetonomy and Jetonomy Pro, and recurring jobs register through the jetonomy_recurring_jobs filter.
 * Dev      - Settings are written through \Jetonomy\Settings, so the settings form, the REST settings route and wp jetonomy config set share one sanitizer.
 * Dev      - WP-CLI refuses bad numbers and flags, and every whole-number argument states its minimum.

@@ -69,7 +69,7 @@ class Import_Handler {
 				'phase'      => $phase,
 				'offset'     => $offset,
 				'batch_size' => $batch_size,
-				'started_at' => $new_run ? current_time( 'mysql' ) : ( $existing_resume['started_at'] ?? current_time( 'mysql' ) ),
+				'started_at' => $new_run ? \Jetonomy\now() : ( $existing_resume['started_at'] ?? \Jetonomy\now() ),
 			),
 			false
 		);
@@ -170,7 +170,7 @@ class Import_Handler {
 			// Save completion record to import history.
 			$history            = get_option( 'jetonomy_import_history', array() );
 			$history[ $source ] = array(
-				'completed_at' => current_time( 'mysql' ),
+				'completed_at' => \Jetonomy\now(),
 				'imported'     => $tally['imported'],
 				'already'      => $tally['already'],
 				'rethreaded'   => $tally['rethreaded'],

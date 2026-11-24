@@ -13,6 +13,7 @@ use Jetonomy\Trust\Trust_Evaluator;
 use Jetonomy\Import\Import_Manager;
 use Jetonomy\Admin\Ajax\Demo_Seeder;
 use Jetonomy\Recount;
+use Jetonomy\CLI\Commands\Base_Command;
 use function Jetonomy\table;
 
 class CLI {
@@ -70,7 +71,7 @@ class CLI {
 		 * @return int Rows per batch.
 		 */
 		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', Cron::BATCH_SIZE, 'evaluate_trust_levels' );
-		$dry_run   = ! empty( $assoc_args['dry-run'] );
+		$dry_run   = Base_Command::flag_arg( $assoc_args, 'dry-run' );
 		$after     = 0;
 		$processed = 0;
 		$promoted  = 0;
@@ -108,7 +109,7 @@ class CLI {
 	 */
 	public function import( $args, $assoc_args ): void {
 		$source  = $args[0] ?? '';
-		$dry_run = ! empty( $assoc_args['dry-run'] );
+		$dry_run = Base_Command::flag_arg( $assoc_args, 'dry-run' );
 
 		Import_Manager::init();
 
@@ -313,7 +314,9 @@ class CLI {
 	 * @subcommand demo-seed
 	 */
 	public function demo_seed( $args, $assoc_args ): void {
-		$model = ! empty( $assoc_args['model'] );
+		// Both flags are read before anything runs: `--model=false` must not start a destructive reset.
+		$model = Base_Command::flag_arg( $assoc_args, 'model' );
+		$force = Base_Command::flag_arg( $assoc_args, 'force' );
 
 		if ( $model ) {
 			if ( 'production' === wp_get_environment_type() ) {
@@ -330,7 +333,7 @@ class CLI {
 
 		$existing = get_option( 'jetonomy_demo_data', array() );
 		if ( ! $model && ! empty( $existing ) ) {
-			if ( empty( $assoc_args['force'] ) ) {
+			if ( ! $force ) {
 				\WP_CLI::error( 'Demo data already exists. Run with --force to replace it, or run `wp jetonomy demo-cleanup` first.' );
 				return;
 			}
@@ -349,7 +352,7 @@ class CLI {
 		);
 
 		\WP_CLI::log( 'Seeding demo users...' );
-		$demo = Demo_Seeder::import( $admin_id, $model || ! empty( $assoc_args['force'] ) );
+		$demo = Demo_Seeder::import( $admin_id, $model || $force );
 		if ( is_wp_error( $demo ) ) {
 			\WP_CLI::error( $demo->get_error_message() . ' Run with --force to seed anyway.' );
 			return;
@@ -418,7 +421,7 @@ class CLI {
 	public function qa( $args, $assoc_args ): void {
 		global $wpdb;
 
-		$write_report = isset( $assoc_args['report'] );
+		$write_report = Base_Command::flag_arg( $assoc_args, 'report' );
 		$version      = defined( 'JETONOMY_VERSION' ) ? JETONOMY_VERSION : '?';
 		$pro_version  = defined( 'JETONOMY_PRO_VERSION' ) ? JETONOMY_PRO_VERSION : null;
 
@@ -587,7 +590,7 @@ class CLI {
 				'reason'     => 'QA test ban',
 				'issued_by'  => $admin_id,
 				'expires_at' => null,
-				'created_at' => current_time( 'mysql' ),
+				'created_at' => now(),
 			)
 		);
 		$ban_id      = $wpdb->insert_id;

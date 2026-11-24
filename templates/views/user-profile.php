@@ -86,7 +86,7 @@ $wp_date_format = get_option( 'date_format' );
 $wp_time_format = get_option( 'time_format' );
 
 // Both columns are UTC; show the date in the site timezone.
-$joined = get_date_from_gmt( (string) ( $profile && $profile->created_at ? $profile->created_at : $user->user_registered ), $wp_date_format );
+$joined = \Jetonomy\date_label( (string) ( $profile && $profile->created_at ? $profile->created_at : $user->user_registered ), '', $wp_date_format );
 
 // Recent posts by this user (paginated).
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -544,7 +544,7 @@ $crumbs = array(
 											// is the canonical UTC-to-site-local formatter —
 											// date_i18n( strtotime( $utc ) ) would print the raw
 											// UTC clock time, showing the wrong scheduled time.
-											$sched_date = get_date_from_gmt( $dr_post->published_at, $datetime_format );
+											$sched_date = \Jetonomy\date_label( (string) $dr_post->published_at, '', $datetime_format );
 											/* translators: %s: scheduled date/time */
 											echo esc_html( sprintf( __( 'Scheduled: %s', 'jetonomy' ), $sched_date ) );
 											?>

@@ -287,8 +287,8 @@
 }
 
 /* Every core text field and select on a Jetonomy screen (this file only
-   loads there) gets a 3:1 edge: core's #949494 is 2.66:1 on the grey page and
-   2.83:1 on #f6f7f7 panels. Unfocused only, so core's blue focus border wins. */
+   loads there) gets a 3:1 edge: core's default grey border is 2.66:1 on the grey page and
+   2.83:1 on the light panels. Unfocused only, so core's blue focus border wins. */
 #wpbody-content :where(input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="number"], input[type="password"], input[type="tel"], input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea):not(:focus) {
 	border-color: var(--jt-admin-border-input, #82868c);
 }

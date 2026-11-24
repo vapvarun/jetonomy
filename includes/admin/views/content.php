@@ -347,8 +347,9 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 							$jt_is_overdue = $jt_is_queued
 								&& strtotime( (string) $p->published_at . ' UTC' ) <= time();
 							if ( $jt_is_queued ) :
-								$jt_when = get_date_from_gmt(
+								$jt_when = \Jetonomy\date_label(
 									(string) $p->published_at,
+									'',
 									get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
 								);
 								?>

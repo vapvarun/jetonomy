@@ -235,7 +235,10 @@ class Flag extends Model {
 			$data
 		);
 
-		$id = static::insert( $data );
+		// A member's report is stored once per object. check_flag() refuses a repeat, but two parallel requests
+		// both pass it, so the row is only written when none exists yet, in the one statement that checks and
+		// inserts. 0 means the other request got there first. A system report (reporter 0) is never deduplicated.
+		$id = ! empty( $data['reporter_id'] ) ? self::insert_unless_reported( $data ) : static::insert( $data );
 
 		// A new report invalidates any memoized "not reported" answer for this
 		// request (e.g. the response shaped after the write).
@@ -248,6 +251,38 @@ class Flag extends Model {
 		}
 
 		return $id;
+	}
+
+	/**
+	 * Insert a member's flag unless that member already reported the same object.
+	 *
+	 * One INSERT ... SELECT ... WHERE NOT EXISTS, so the check and the write are not two steps another request
+	 * can slip between. No schema change: a unique key would settle it for good but changes the table.
+	 *
+	 * @param array<string,mixed> $data Column data, with reporter_id, object_type and object_id.
+	 * @return int New flag id, or 0 when this member had already reported the object (or the insert failed).
+	 */
+	private static function insert_unless_reported( array $data ): int {
+		$db     = static::db();
+		$cols   = array();
+		$values = array();
+		foreach ( $data as $col => $value ) {
+			$cols[] = '`' . preg_replace( '/\W/', '', (string) $col ) . '`';
+			if ( null === $value ) {
+				$values[] = 'NULL';
+			} else {
+				$values[] = $db->prepare( is_int( $value ) ? '%d' : '%s', $value );
+			}
+		}
+		$rows = $db->query(
+			$db->prepare(
+				'INSERT INTO ' . static::table() . ' (' . implode( ',', $cols ) . ') SELECT ' . implode( ',', $values ) . ' FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM ' . static::table() . ' WHERE reporter_id = %d AND object_type = %s AND object_id = %d )', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- columns are code-supplied identifiers, every value was prepared above.
+				(int) $data['reporter_id'],
+				(string) ( $data['object_type'] ?? 'post' ),
+				(int) ( $data['object_id'] ?? 0 )
+			)
+		);
+		return 1 === $rows ? (int) $db->insert_id : 0;
 	}
 
 	/**

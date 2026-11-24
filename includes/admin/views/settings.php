@@ -1121,7 +1121,7 @@ $jetonomy_schema = \Jetonomy\Settings::schema();
 					<tr>
 						<th scope="row"><label for="accent_color"><?php esc_html_e( 'Accent', 'jetonomy' ); ?></label></th>
 						<td>
-							<input type="text" id="accent_color" name="jetonomy_settings[accent_color]" value="<?php echo esc_attr( $settings['accent_color'] ?? '#0073aa' ); ?>" class="jetonomy-color-picker">
+							<input type="text" id="accent_color" name="jetonomy_settings[accent_color]" value="<?php echo esc_attr( \Jetonomy\Settings::accent_color() ); ?>" class="jetonomy-color-picker">
 							<p class="description"><?php esc_html_e( 'Buttons, links, active states, and notification emails.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
@@ -1624,8 +1624,8 @@ $jetonomy_schema = \Jetonomy\Settings::schema();
 					__( 'Search, notifications and subscriptions', 'jetonomy' ),
 					__( 'Importers and the REST API', 'jetonomy' ),
 				);
-				$jt_yes = '<span class="dashicons dashicons-yes" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__( 'Included', 'jetonomy' ) . '</span>';
-				$jt_no  = '<span aria-hidden="true">&#8211;</span><span class="screen-reader-text">' . esc_html__( 'Not included', 'jetonomy' ) . '</span>';
+				$jt_yes       = '<span class="dashicons dashicons-yes" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__( 'Included', 'jetonomy' ) . '</span>';
+				$jt_no        = '<span aria-hidden="true">&#8211;</span><span class="screen-reader-text">' . esc_html__( 'Not included', 'jetonomy' ) . '</span>';
 				?>
 				<table class="widefat striped jt-fvp-table"><!-- jetonomy-audit-table-ok: static read-only comparison of shipped features, no data rows -->
 					<caption class="screen-reader-text"><?php esc_html_e( 'What Jetonomy Free and Jetonomy Pro include', 'jetonomy' ); ?></caption>

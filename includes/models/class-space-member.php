@@ -422,7 +422,17 @@ class SpaceMember extends Model {
 				);
 			}
 
-			JoinRequest::create_request( $space_id, $user_id, $message );
+			// Only the request that stored the row announces it. One that lost to a parallel request from the same member
+			// answers as the pending one does, and the admins are told once, not once per request.
+			if ( JoinRequest::create_request( $space_id, $user_id, $message ) <= 0 ) {
+				if ( JoinRequest::find_pending( $space_id, $user_id ) ) {
+					return array(
+						'status'          => 'pending',
+						'already_pending' => true,
+					);
+				}
+				return new \WP_Error( 'jetonomy_join_request_failed', __( 'The request could not be sent. Please try again.', 'jetonomy' ), array( 'status' => 500 ) );
+			}
 
 			/**
 			 * Fires after a user submits a request to join an approval-only space.

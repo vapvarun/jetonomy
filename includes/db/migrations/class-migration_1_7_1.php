@@ -54,8 +54,8 @@ class Migration_1_7_1 {
 
 		if ( $has_old && ! $has_new ) {
 			// The normal path: the table simply changes name, so no rows move.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "RENAME TABLE {$old} TO {$new}" );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( $wpdb->prepare( 'RENAME TABLE %i TO %i', $old, $new ) );
 		} elseif ( $has_old && $has_new ) {
 			/*
 			 * BOTH exist, and skipping the move here would silently destroy every
@@ -90,8 +90,8 @@ class Migration_1_7_1 {
 			);
 
 			if ( 0 === $missing ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$wpdb->query( "DROP TABLE {$old}" );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+				$wpdb->query( $wpdb->prepare( 'DROP TABLE %i', $old ) );
 			}
 		}
 

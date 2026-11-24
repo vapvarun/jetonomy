@@ -407,7 +407,12 @@ class Spaces_Controller extends Base_Controller {
 			return new WP_Error( 'jetonomy_rule_create_failed', __( 'Failed to create access rule.', 'jetonomy' ), array( 'status' => 500 ) );
 		}
 
-		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
+		$made_private = AccessRule::ensure_gate( $space_id, $rule_type );
+		if ( is_wp_error( $made_private ) ) {
+			// The rule cannot restrict a space that has to stay public: do not keep it and call it added.
+			AccessRule::delete( (int) $id );
+			return $made_private;
+		}
 
 		$rule = AccessRule::find( (int) $id );
 

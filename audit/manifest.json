@@ -2428,6 +2428,13 @@
       "consumed_by": "veto hook for programmatic role changes; symmetry with jetonomy_before_join_space"
     },
     {
+      "name": "jetonomy_before_update_space",
+      "type": "filter",
+      "args": "proceed(true|WP_Error), space_id, data",
+      "where": "includes/models/class-space.php (update)",
+      "consumed_by": "veto hook: a plugin that owns a space's visibility, join policy or status (BuddyNext, for a forum linked to a Space) refuses a write from any entry point"
+    },
+    {
       "name": "jetonomy_before_vote",
       "type": "filter",
       "args": "user_id, object_type, object_id, vote_value",
@@ -2600,6 +2607,13 @@
         "WP_User $user"
       ],
       "where": "includes/functions.php:296"
+    },
+    {
+      "name": "jetonomy_display_timezone",
+      "type": "filter",
+      "args": "timezone(DateTimeZone), user_id",
+      "where": "includes/functions.php (display_timezone)",
+      "consumed_by": "the one timezone every stored UTC time is shown in (date_label, datetime_local_input and the schedule and invite-expiry save parsers); a site can show each member their own"
     },
     {
       "name": "jetonomy_disposable_email_domains",

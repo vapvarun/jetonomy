@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
 		// A scheduled topic is a draft with a release time (stored in UTC), shown in the
 		// site timezone, as on the profile Drafts tab. My drafts lists it through this card.
 		/* translators: %s: scheduled date/time */
-		echo esc_html( sprintf( __( 'Scheduled: %s', 'jetonomy' ), get_date_from_gmt( $post->published_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ) );
+		echo esc_html( sprintf( __( 'Scheduled: %s', 'jetonomy' ), \Jetonomy\date_label( (string) $post->published_at, '', get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ) );
 		?>
 	</span>
 <?php endif; ?>

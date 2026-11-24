@@ -167,7 +167,7 @@ add_filter( 'jetonomy_email_html', function ( string $html, string $type, \WP_Us
 
 ### `jetonomy_email_accent_color`
 
-Filter the hex accent color used in notification email templates for the header bar and CTA button. Defaults to the `accent_color` setting, falling back to `#3B82F6`.
+Filter the hex accent color used in notification email templates for the header bar and CTA button. Defaults to the `accent_color` setting, falling back to `#0073aa` when it is blank or not a valid hex colour.
 
 **Parameters**
 

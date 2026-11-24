@@ -147,7 +147,7 @@ class App_Config_Controller extends Base_Controller {
 	 * @return array{accent_color:string,logo_url:string,login_bg_url:string}
 	 */
 	private function branding( array $settings ): array {
-		$accent   = (string) ( $settings['accent_color'] ?? '#0073aa' );
+		$accent   = \Jetonomy\Settings::accent_color( $settings );
 		$logo     = \Jetonomy\absolute_url( (string) ( $settings['logo_url'] ?? '' ) ) ?? '';
 		$login_bg = '';
 

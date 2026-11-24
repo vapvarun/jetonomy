@@ -368,7 +368,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							sprintf(
 								/* translators: %s: scheduled publish date and time. */
 								__( 'Scheduled to publish on %s. It is hidden from the community until then.', 'jetonomy' ),
-								get_date_from_gmt( $post->published_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) )
+								\Jetonomy\date_label( (string) $post->published_at, '', get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) )
 							)
 						);
 					} elseif ( 'draft' === $post->status ) {

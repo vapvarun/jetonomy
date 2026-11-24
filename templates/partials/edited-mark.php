@@ -24,8 +24,8 @@ if ( ! $jt_edited || ! $jt_posted || $jt_edited - $jt_posted <= MINUTE_IN_SECOND
 }
 ?>
 <span class="jt-edited">
-	<time datetime="<?php echo esc_attr( get_date_from_gmt( (string) $item->edited_at, 'c' ) ); ?>"
-		title="<?php echo esc_attr( get_date_from_gmt( (string) $item->edited_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?>">
+	<time datetime="<?php echo esc_attr( \Jetonomy\date_label( (string) $item->edited_at, '', 'c' ) ); ?>"
+		title="<?php echo esc_attr( \Jetonomy\date_label( (string) $item->edited_at, '', get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?>">
 		<?php
 		$jt_span = \Jetonomy\time_span( (string) $item->edited_at );
 		/* translators: %s: human-readable time since the edit, e.g. "2 hours". */

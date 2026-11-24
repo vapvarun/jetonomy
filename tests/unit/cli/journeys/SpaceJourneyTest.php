@@ -379,4 +379,24 @@ class SpaceJourneyTest extends WP_UnitTestCase {
 		$result = $this->journey->set_visibility( $id, 'hidden' );
 		$this->assertFalse( $result->success );
 	}
+
+	public function test_a_space_change_refused_by_a_plugin_is_reported_as_failed_not_done(): void {
+		$id = (int) Space::create( [ 'title' => 'Refused', 'slug' => 'refused-' . $this->suffix, 'category_id' => $this->category_id, 'visibility' => 'public' ] );
+		$refuse = static fn( $proceed ) => new \WP_Error( 'refused', 'This forum follows its Space.', [ 'status' => 409 ] );
+		add_filter( 'jetonomy_before_update_space', $refuse );
+
+		foreach ( [
+			'set_visibility'  => [ $id, 'private' ],
+			'set_join_policy' => [ $id, 'approval' ],
+			'update'          => [ $id, [ 'visibility' => 'private' ] ],
+		] as $method => $args ) {
+			$result = $this->journey->$method( ...$args );
+			$this->assertFalse( $result->success, "$method reports the refusal, not success." );
+		}
+		$refused_rule = \Jetonomy\Models\AccessRule::enforce_gate_on_public_space( $id, 'membership' );
+		remove_filter( 'jetonomy_before_update_space', $refuse );
+
+		$this->assertFalse( $refused_rule, 'An access rule that cannot privatise the space does not claim it did.' );
+		$this->assertSame( 'public', Space::find( $id )->visibility );
+	}
 }

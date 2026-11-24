@@ -107,10 +107,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 									/* translators: %s: date and time of last import */
 									esc_html__( 'Last imported: %s', 'jetonomy' ),
 									esc_html(
-										date_i18n(
-											$datetime_format,
-											strtotime( $import_history[ $id ]['completed_at'] )
-										)
+										\Jetonomy\date_label( (string) $import_history[ $id ]['completed_at'], '', $datetime_format )
 									)
 								);
 								?>
@@ -154,10 +151,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 									esc_html( $resume_state['phase'] ?? '' ),
 									esc_html( number_format_i18n( $resume_state['offset'] ?? 0 ) ),
 									esc_html(
-										date_i18n(
-											$datetime_format,
-											strtotime( $resume_state['started_at'] ?? '' )
-										)
+										\Jetonomy\date_label( (string) ( $resume_state['started_at'] ?? '' ), '', $datetime_format )
 									)
 								);
 								?>
@@ -298,7 +292,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						&mdash;
 						<?php
 						$jt_when = ! empty( $jt_record['completed_at'] )
-							? date_i18n( $datetime_format, strtotime( (string) $jt_record['completed_at'] ) )
+							? \Jetonomy\date_label( (string) $jt_record['completed_at'], '', $datetime_format )
 							: __( 'an unknown date', 'jetonomy' );
 						if ( 0 === (int) ( $jt_record['imported'] ?? 0 ) && (int) ( $jt_record['already'] ?? 0 ) > 0 ) {
 							/* translators: %s: date and time */

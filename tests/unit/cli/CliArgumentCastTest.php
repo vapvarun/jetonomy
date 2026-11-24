@@ -71,5 +71,29 @@ class CliArgumentCastTest extends WP_UnitTestCase {
 		// A space ban needs a real space: --space=0 is refused by name, not by the REST layer.
 		$this->assertMatchesRegularExpression( "/int_arg\\( \\\$assoc, 'space', null, 1 \\)/", (string) file_get_contents( dirname( __DIR__, 3 ) . '/includes/cli/commands/class-mod-command.php' ) );
 	}
+
+	/**
+	 * The older `wp jetonomy` commands (class-cli.php) sit outside the command folders, so the scans above never read
+	 * them: `demo-seed --model=false` started a destructive reset and `import --dry-run=false` still dry-ran.
+	 */
+	public function test_the_older_wp_jetonomy_commands_read_their_flags_through_flag_arg(): void {
+		$source = (string) file_get_contents( dirname( __DIR__, 3 ) . '/includes/class-cli.php' );
+		foreach ( array( 'dry-run', 'force', 'model', 'report' ) as $flag ) {
+			$this->assertDoesNotMatchRegularExpression( '/(?:empty|isset)\(\s*\$assoc_args\[\s*\'' . preg_quote( $flag, '/' ) . '\'\s*\]/', $source, "--{$flag} is read by presence, so --{$flag}=false counts as yes." );
+			$this->assertStringContainsString( "flag_arg( \$assoc_args, '{$flag}' )", $source, "--{$flag} goes through flag_arg()." );
+		}
+	}
+
+	public function test_flag_arg_reads_a_false_value_as_no(): void {
+		$read = static fn( $value ) => \Jetonomy\CLI\Commands\Base_Command::flag_arg( array( 'f' => $value ), 'f' );
+
+		$this->assertTrue( $read( true ), 'A bare --flag is yes.' );
+		$this->assertTrue( $read( 'true' ) );
+		foreach ( array( 'false', '0', 'no', 'off', false ) as $no ) {
+			$this->assertFalse( $read( $no ), 'A false value is no: ' . var_export( $no, true ) );
+		}
+		$this->assertFalse( \Jetonomy\CLI\Commands\Base_Command::flag_arg( array(), 'f' ), 'Absent is the default.' );
+		$this->assertTrue( \Jetonomy\CLI\Commands\Base_Command::flag_arg( array(), 'f', true ) );
+	}
 }
 

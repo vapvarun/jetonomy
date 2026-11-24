@@ -63,7 +63,7 @@ class InviteLink extends Model {
 		}
 		$date_only = (bool) preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw );
 		try {
-			$local = new \DateTimeImmutable( $date_only ? $raw . ' 23:59:59' : $raw, wp_timezone() );
+			$local = new \DateTimeImmutable( $date_only ? $raw . ' 23:59:59' : $raw, \Jetonomy\display_timezone() );
 		} catch ( \Exception $e ) {
 			$local = null;
 		}
@@ -78,7 +78,7 @@ class InviteLink extends Model {
 	 * none). The one formatter for the template, REST and admin lists.
 	 */
 	public static function expiry_label( object $invite ): string {
-		return $invite->expires_at ? (string) wp_date( (string) get_option( 'date_format' ), (int) strtotime( $invite->expires_at . ' UTC' ) ) : '';
+		return \Jetonomy\date_label( (string) $invite->expires_at );
 	}
 
 	/**

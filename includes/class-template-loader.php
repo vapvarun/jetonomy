@@ -884,7 +884,7 @@ class Template_Loader {
 			if ( empty( $settings[ $key ] ) ) {
 				continue;
 			}
-			if ( 'accent_color' === $key && '#0073aa' === $settings[ $key ] ) {
+			if ( 'accent_color' === $key && \Jetonomy\Settings::DEFAULT_ACCENT === $settings[ $key ] ) {
 				continue;
 			}
 			$hex = sanitize_hex_color( (string) $settings[ $key ] );
