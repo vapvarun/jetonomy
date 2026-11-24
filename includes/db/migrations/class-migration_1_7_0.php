@@ -51,8 +51,7 @@ class Migration_1_7_0 {
 				continue;
 			}
 
-			// Identifiers cannot be bound; $column and $after come from the $specs list above.
-			$wpdb->query( 'ALTER TABLE `' . $table . '` ADD COLUMN ' . esc_sql( $column ) . ' tinyint(1) NOT NULL DEFAULT 0 AFTER ' . esc_sql( $after ) );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i tinyint(1) NOT NULL DEFAULT 0 AFTER %i', $table, $column, $after ) );
 		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange
 	}

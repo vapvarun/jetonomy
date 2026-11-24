@@ -497,10 +497,9 @@ final class Queue {
 			return 0;
 		}
 		$in    = implode( ',', array_fill( 0, count( $hooks ), '%s' ) );
-		$sql   = $wpdb->prepare( "UPDATE {$actions} SET status = 'canceled' WHERE status = 'pending' AND group_id = %d AND hook IN ({$in}) LIMIT %d", array_merge( array( $group ), $hooks, array( self::CANCEL_BATCH ) ) );
 		$total = 0;
 		do {
-			$done   = (int) $wpdb->query( $sql );
+			$done   = (int) $wpdb->query( $wpdb->prepare( "UPDATE {$actions} SET status = 'canceled' WHERE status = 'pending' AND group_id = %d AND hook IN ({$in}) LIMIT %d", array_merge( array( $group ), $hooks, array( self::CANCEL_BATCH ) ) ) );
 			$total += max( 0, $done );
 		} while ( $done >= self::CANCEL_BATCH );
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
