@@ -3163,11 +3163,14 @@ button.jt-mobile-tab { background: none; border: 0; font: inherit; font-size: 0.
   min-width: 12rem; padding: var(--jt-space-1) 0;
   background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg);
   box-shadow: var(--jt-shadow-md);
+  /* It opens upward from the bar, so with no limit a long menu on a short screen ran off the top where nothing could
+     scroll it into view. Capped to the screen and scrollable; dvh follows the phone's collapsing browser bars. */
+  max-block-size: 60vh; max-block-size: 60dvh; overflow-y: auto; overscroll-behavior: contain;
 }
 .jt-mobile-tab-menu .jt-more-item { min-height: max(var(--jt-tap), 44px); padding-inline: var(--jt-space-4); font-size: 0.9375rem; }
 .jt-mobile-tab-menu .jt-more-item svg { flex-shrink: 0; width: 18px; height: 18px; color: var(--jt-text-secondary); }
 /* "Start a topic in..." (New outside a space): full width above the bar, long space names end in an ellipsis. */
-.jt-mobile-tab-menu--wide { inset-inline: var(--jt-space-2); max-block-size: 60vh; overflow-y: auto; }
+.jt-mobile-tab-menu--wide { inset-inline: var(--jt-space-2); }
 .jt-mobile-tab-menu--wide .jt-more-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .jt-mobile-tab-menu__title { padding: var(--jt-space-2) var(--jt-space-4) var(--jt-space-1); font-size: var(--jt-text-xs); font-weight: 600; color: var(--jt-text-secondary); }
 .jt-mobile-tab-menu__search { display: block; padding: var(--jt-space-1) var(--jt-space-4) var(--jt-space-2); }
