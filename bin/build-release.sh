@@ -203,7 +203,8 @@ cat > "$EXCLUDES_FILE" <<'EOF'
 # The QA harness (wp jetonomy qa-actions) writes test data; it is a
 # developer tool, run from a git checkout, never shipped to site owners.
 includes/qa/
-.git/
+# No slash: a git worktree's .git is a file holding a local path.
+.git
 .github/
 .githooks/
 .gitignore
@@ -253,6 +254,7 @@ Gruntfile.js
 .vscode/
 .idea/
 .distignore
+.gate-check-allow
 .wp-env.json
 .playwright-mcp/
 # Playwright run output (test-results/.last-run.json shipped in a 2.0.3 test zip).
