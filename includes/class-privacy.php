@@ -154,12 +154,17 @@ class Privacy {
 	 */
 	private static function hand_over_or_assign( int $space_id, int $successor, bool $archive ): void {
 		$handed = \Jetonomy\Models\Space::hand_over( $space_id, $successor, $archive );
+		// A plugin that owns the space's status (BuddyNext, for a forum linked to a Space) can refuse the archive. The
+		// archive is only a safeguard: the space must still end up with a manager, so hand it over without it.
+		if ( $archive && is_wp_error( $handed ) && 'jetonomy_transfer_noop' !== $handed->get_error_code() ) {
+			$handed = \Jetonomy\Models\Space::hand_over( $space_id, $successor, false );
+		}
 		if ( is_wp_error( $handed ) && 'jetonomy_transfer_noop' !== $handed->get_error_code() ) {
-			$fields = array( 'author_id' => $successor );
+			// The owner and the archive are written separately, so a refused archive cannot block the owner.
+			\Jetonomy\Models\Space::update( $space_id, array( 'author_id' => $successor ) );
 			if ( $archive ) {
-				$fields['status'] = 'archived';
+				\Jetonomy\Models\Space::update( $space_id, array( 'status' => 'archived' ) );
 			}
-			\Jetonomy\Models\Space::update( $space_id, $fields );
 		}
 	}
 
