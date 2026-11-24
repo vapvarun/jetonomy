@@ -638,6 +638,7 @@ final class Queue {
 			return;
 		}
 		as_schedule_recurring_action( $first, max( MINUTE_IN_SECONDS, $interval ), $hook, array(), self::GROUP, true );
+		self::keep_one_pending( $hook, array() ); // Requests arriving together on the hybrid store.
 	}
 
 	/**
