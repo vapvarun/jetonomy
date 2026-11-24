@@ -30,7 +30,10 @@ class JoinRequest extends Model {
 		if ( ! Space::find( $space_id ) ) {
 			return 0;
 		}
-		return self::insert(
+		// Two parallel requests from one member both pass the "not pending yet" check and both insert; the unique key lets
+		// one through. The duplicate is expected, so it is not logged as a database error: 0 tells the caller it lost.
+		$errors = self::db()->suppress_errors( true );
+		$id     = self::insert(
 			array(
 				'space_id'   => $space_id,
 				'user_id'    => $user_id,
@@ -39,10 +42,16 @@ class JoinRequest extends Model {
 				'created_at' => now(),
 			)
 		);
+		self::db()->suppress_errors( $errors );
+		return $id;
 	}
 
 	/**
 	 * Find an existing pending request for a user/space combination.
+	 *
+	 * Reads the database, so the answer changes between two calls (a parallel request can store one in between).
+	 *
+	 * @phpstan-impure
 	 *
 	 * @param int $space_id
 	 * @param int $user_id
