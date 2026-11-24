@@ -704,6 +704,11 @@ class Moderation_Service {
 			)
 		);
 		if ( ! $flag_id ) {
+			// A parallel request from the same member stored the report first: answer as check_flag() does for a repeat.
+			$repeat = self::check_flag( $reporter_id, $object_type, $object_id );
+			if ( is_wp_error( $repeat ) ) {
+				return $repeat;
+			}
 			return new WP_Error(
 				'jetonomy_flag_failed',
 				__( 'Failed to create flag.', 'jetonomy' ),

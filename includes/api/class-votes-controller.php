@@ -146,8 +146,9 @@ class Votes_Controller extends Base_Controller {
 		}
 
 		// Count new and changed votes only. Keyed on what cast() actually did, not
-		// the pre-read above, so parallel requests cannot slip an uncounted vote in.
-		if ( 'removed' !== $result['action'] ) {
+		// the pre-read above, so parallel requests cannot slip an uncounted vote in
+		// (and a parallel duplicate that changed nothing is not counted twice).
+		if ( in_array( $result['action'], array( 'created', 'updated' ), true ) ) {
 			\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
 		}
 
@@ -156,7 +157,7 @@ class Votes_Controller extends Base_Controller {
 		$score   = is_wp_error( $updated ) ? 0 : (int) ( $updated->vote_score ?? 0 );
 
 		return new WP_REST_Response(
-			array_merge( $result, array( 'score' => $score ) ),
+			array_merge( $this->visible_outcome( $result, $user_id, $type, $id ), array( 'score' => $score ) ),
 			200
 		);
 	}
@@ -218,9 +219,31 @@ class Votes_Controller extends Base_Controller {
 		$score   = is_wp_error( $updated ) ? 0 : (int) ( $updated->vote_score ?? 0 );
 
 		return new WP_REST_Response(
-			array_merge( $result, array( 'score' => $score ) ),
+			array_merge( $this->visible_outcome( $result, $user_id, $type, $id ), array( 'score' => $score ) ),
 			200
 		);
+	}
+
+	/**
+	 * What the member should see after a vote request, for the response body.
+	 *
+	 * A request that changed nothing because a parallel one had already made the change (`unchanged`) is a
+	 * success, but the page reads `action` to show whether the vote is on or off, so it is reported as the
+	 * state the member now has: `created` while a vote is recorded, `removed` once it is gone.
+	 *
+	 * @param array{action: string, old_value: int|null} $result  From Vote::record().
+	 * @param int                                        $user_id Voter.
+	 * @param string                                     $type    'post' or 'reply'.
+	 * @param int                                        $id      Object ID.
+	 * @return array<string, mixed>
+	 */
+	private function visible_outcome( array $result, int $user_id, string $type, int $id ): array {
+		if ( 'unchanged' !== $result['action'] ) {
+			return $result;
+		}
+		$result['unchanged'] = true;
+		$result['action']    = Vote::get_user_vote( $user_id, $type, $id ) ? 'created' : 'removed';
+		return $result;
 	}
 
 	/**

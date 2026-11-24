@@ -163,11 +163,6 @@ parameters:
 			path: includes/models/class-vote.php
 
 		-
-			message: "#^Strict comparison using \\=\\=\\= between false and int will always evaluate to false\\.$#"
-			count: 1
-			path: includes/models/class-vote.php
-
-		-
 			message: "#^Unsafe call to private method Jetonomy\\\\Models\\\\Vote\\:\\:update_target_score\\(\\) through static\\:\\:\\.$#"
 			count: 3
 			path: includes/models/class-vote.php
