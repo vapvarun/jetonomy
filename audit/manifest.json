@@ -2428,6 +2428,13 @@
       "consumed_by": "veto hook for programmatic role changes; symmetry with jetonomy_before_join_space"
     },
     {
+      "name": "jetonomy_before_update_space",
+      "type": "filter",
+      "args": "proceed(true|WP_Error), space_id, data",
+      "where": "includes/models/class-space.php (update)",
+      "consumed_by": "veto hook: a plugin that owns a space's visibility, join policy or status (BuddyNext, for a forum linked to a Space) refuses a write from any entry point"
+    },
+    {
       "name": "jetonomy_before_vote",
       "type": "filter",
       "args": "user_id, object_type, object_id, vote_value",
