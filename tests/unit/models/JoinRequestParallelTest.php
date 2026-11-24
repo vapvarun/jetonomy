@@ -64,6 +64,7 @@ class JoinRequestParallelTest extends WP_UnitTestCase {
 		$this->assertSame( 0, $this->announced, 'The winner announced the request; the loser does not.' );
 	}
 
+	/** @covers-existing Pins behaviour that must not change; the fix is proved by the sibling tests. */
 	public function test_a_single_request_is_announced_once_and_a_repeat_is_already_pending(): void {
 		$first = SpaceMember::join( $this->space_id, $this->user_id );
 		$again = SpaceMember::join( $this->space_id, $this->user_id );

@@ -58,6 +58,7 @@ class BlankAccentColorTest extends WP_UnitTestCase {
 		$this->assertSame( '#0073aa', $config['branding']['accent_color'] ?? $config['accent_color'] ?? null );
 	}
 
+	/** @covers-existing Pins behaviour that must not change; the fix is proved by the sibling tests. */
 	public function test_the_settings_route_still_refuses_an_empty_accent(): void {
 		$schema = Settings::schema();
 		$this->assertSame( '^#([0-9a-fA-F]{3}){1,2}$', $schema['accent_color']['pattern'], 'The REST pattern is not loosened.' );

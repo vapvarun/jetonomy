@@ -71,6 +71,7 @@ class AccessRuleOnProtectedSpaceTest extends WP_UnitTestCase {
 		$this->assertSame( 'public', Space::find( $this->space_id )->visibility );
 	}
 
+	/** @covers-existing Pins behaviour that must not change; the fix is proved by the sibling tests. */
 	public function test_without_a_refusal_the_rule_still_privatises_the_space_and_is_kept(): void {
 		$res = $this->add_rule( 'capability' );
 
@@ -80,6 +81,7 @@ class AccessRuleOnProtectedSpaceTest extends WP_UnitTestCase {
 		$this->assertSame( 'private', Space::find( $this->space_id )->visibility );
 	}
 
+	/** @covers-existing Pins behaviour that must not change; the fix is proved by the sibling tests. */
 	public function test_a_rule_that_needs_no_gate_is_unaffected_by_a_refusing_filter(): void {
 		$refuse = static fn() => new \WP_Error( 'refused', 'No.', array( 'status' => 409 ) );
 		add_filter( 'jetonomy_before_update_space', $refuse );

@@ -122,6 +122,7 @@ class VoteParallelRequestsTest extends WP_UnitTestCase {
 		$this->assertSame( 0, $this->fired['jetonomy_reputation_changed'] );
 	}
 
+	/** @covers-existing Pins behaviour that must not change; the fix is proved by the sibling tests. */
 	public function test_without_a_parallel_request_every_outcome_still_fires_once(): void {
 		$this->assertSame( 'created', Vote::record( $this->voter_id, 'post', $this->post_id, 1 )['action'] );
 		$this->assertSame( 'updated', Vote::record( $this->voter_id, 'post', $this->post_id, -1 )['action'] );
