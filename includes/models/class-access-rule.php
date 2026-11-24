@@ -81,6 +81,23 @@ class AccessRule extends Model {
 	 * @return bool True when the space was switched to Private.
 	 */
 	public static function enforce_gate_on_public_space( int $space_id, string $rule_type ): bool {
+		return true === self::ensure_gate( $space_id, $rule_type );
+	}
+
+	/**
+	 * Make a restrictive rule bite, and say so when it cannot.
+	 *
+	 * Same job as enforce_gate_on_public_space(), but a space that cannot be made Private (a plugin that owns the space's
+	 * visibility refuses the change through jetonomy_before_update_space, as BuddyNext does for a forum linked to a Space)
+	 * answers with that refusal instead of false. The rule is inert on a public space, so the caller must not keep it and
+	 * tell the owner it was added.
+	 *
+	 * @param int    $space_id  Space the rule was attached to.
+	 * @param string $rule_type Rule type just created.
+	 * @return bool|\WP_Error True when the space was switched to Private, false when nothing was needed, a WP_Error when
+	 *                        it was needed and refused.
+	 */
+	public static function ensure_gate( int $space_id, string $rule_type ): bool|\WP_Error {
 		if ( ! in_array( $rule_type, self::RESTRICTIVE_TYPES, true ) ) {
 			return false;
 		}
@@ -91,7 +108,8 @@ class AccessRule extends Model {
 		}
 
 		// A refused update is a WP_Error, which a (bool) cast would read as done.
-		return true === \Jetonomy\Models\Space::update( $space_id, array( 'visibility' => 'private' ) );
+		$written = \Jetonomy\Models\Space::update( $space_id, array( 'visibility' => 'private' ) );
+		return is_wp_error( $written ) ? $written : true === $written;
 	}
 
 	/**

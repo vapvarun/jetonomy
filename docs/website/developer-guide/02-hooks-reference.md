@@ -91,6 +91,7 @@ add_action( 'jetonomy_loaded', function ( \Jetonomy\Jetonomy $jetonomy ) {
 |---|---|---|---|
 | `jetonomy_after_create_space`<br>_action_ | Fires after a space is created. | `space_id, request` | `includes/api/class-spaces-controller.php` |
 | `jetonomy_after_update_space`<br>_action_ | Fires after a space is updated. | `space, context{space_id,user_id,request}` | `includes/api/class-spaces-controller.php` |
+| `jetonomy_before_update_space`<br>_filter_ | Filter whether a space update may be written; return a `WP_Error` to refuse it. Every writer (REST, wp-admin, access rules, WP-CLI, integrations) passes through `Space::update()`, so a plugin that owns a space's visibility, join policy or status can refuse a change from any entry point. | `proceed (true\|WP_Error), space_id, data` | `includes/models/class-space.php` |
 | `jetonomy_before_join_space`<br>_filter_ | Filter whether a user should be allowed to join a space. | `user_id, space_id` | `includes/models/class-space-member.php` |
 | `jetonomy_import_space_visibility`<br>_filter_ | - | `access, source, forum` | `includes/import/class-asgaros-importer.php` |
 | `jetonomy_join_request_approved`<br>_action_ | - | - | `includes/models/class-join-request.php` |
@@ -127,6 +128,7 @@ add_action( 'jetonomy_loaded', function ( \Jetonomy\Jetonomy $jetonomy ) {
 | `jetonomy_use_frontend_space_edit`<br>_filter_ | Default true since G5 shipped in 1.4.0. | `use_frontend` | `includes/functions.php` |
 | `jetonomy_user_joined_space`<br>_action_ | - | `user_id, space_id` | `includes/models/class-space-member.php` |
 | `jetonomy_user_left_space`<br>_action_ | Fires when a user is removed from a space. | - | `includes/models/class-space-member.php` |
+| `jetonomy_display_timezone`<br>_filter_ | The one timezone every stored UTC time is shown in; return another `DateTimeZone` to show a member their own. Used by `display_timezone()`, `date_label()`, `datetime_local_input()` and the schedule and invite-expiry save parsers. | `timezone (DateTimeZone), user_id` | `includes/functions.php` |
 
 ## Profiles
 
