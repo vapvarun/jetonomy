@@ -90,7 +90,8 @@ class AccessRule extends Model {
 			return false;
 		}
 
-		return (bool) \Jetonomy\Models\Space::update( $space_id, array( 'visibility' => 'private' ) );
+		// A refused update is a WP_Error, which a (bool) cast would read as done.
+		return true === \Jetonomy\Models\Space::update( $space_id, array( 'visibility' => 'private' ) );
 	}
 
 	/**
