@@ -147,4 +147,37 @@ class VoteParallelRequestsTest extends WP_UnitTestCase {
 		$system = Flag::create( array( 'reporter_id' => 0, 'object_type' => 'post', 'object_id' => $this->post_id, 'reason' => 'spam' ) );
 		$this->assertGreaterThan( 0, $system, 'A system report is not deduplicated.' );
 	}
+
+	/**
+	 * Up in one tab, down in another: the request that lost reports the vote the member really has, so the page lights
+	 * the right arrow instead of the one it clicked.
+	 */
+	public function test_the_vote_response_reports_the_stored_vote_when_a_parallel_request_decided_otherwise(): void {
+		get_user_by( 'id', $this->voter_id )->add_cap( 'jetonomy_vote' );
+		do_action( 'rest_api_init' );
+		wp_set_current_user( $this->voter_id );
+		$this->interleave( fn() => $this->raw_vote( -1 ) );
+
+		$request = new \WP_REST_Request( 'POST', "/jetonomy/v1/posts/{$this->post_id}/vote" );
+		$request->set_body_params( [ 'value' => 1 ] );
+		$data = rest_do_request( $request )->get_data();
+
+		$this->assertSame( -1, $data['user_vote'], 'The stored vote is the downvote the other request cast.' );
+		$this->assertTrue( $data['unchanged'] );
+		$this->assertSame( 1, $this->vote_row_count() );
+	}
+
+	public function test_an_ordinary_vote_response_carries_the_stored_vote(): void {
+		get_user_by( 'id', $this->voter_id )->add_cap( 'jetonomy_vote' );
+		do_action( 'rest_api_init' );
+		wp_set_current_user( $this->voter_id );
+
+		$up = new \WP_REST_Request( 'POST', "/jetonomy/v1/posts/{$this->post_id}/vote" );
+		$up->set_body_params( [ 'value' => 1 ] );
+		$this->assertSame( 1, rest_do_request( $up )->get_data()['user_vote'] );
+
+		$again = new \WP_REST_Request( 'POST', "/jetonomy/v1/posts/{$this->post_id}/vote" );
+		$again->set_body_params( [ 'value' => 1 ] );
+		$this->assertSame( 0, rest_do_request( $again )->get_data()['user_vote'], 'Pressing the active vote again takes it back.' );
+	}
 }

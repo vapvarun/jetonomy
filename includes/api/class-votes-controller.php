@@ -157,7 +157,14 @@ class Votes_Controller extends Base_Controller {
 		$score   = is_wp_error( $updated ) ? 0 : (int) ( $updated->vote_score ?? 0 );
 
 		return new WP_REST_Response(
-			array_merge( $this->visible_outcome( $result, $user_id, $type, $id ), array( 'score' => $score ) ),
+			array_merge(
+				$this->visible_outcome( $result, $user_id, $type, $id ),
+				array(
+					'score'     => $score,
+					// What the member has now, so the page lights the right arrow even when a parallel request decided otherwise.
+					'user_vote' => (int) Vote::get_user_vote( $user_id, $type, $id ),
+				)
+			),
 			200
 		);
 	}
@@ -219,7 +226,14 @@ class Votes_Controller extends Base_Controller {
 		$score   = is_wp_error( $updated ) ? 0 : (int) ( $updated->vote_score ?? 0 );
 
 		return new WP_REST_Response(
-			array_merge( $this->visible_outcome( $result, $user_id, $type, $id ), array( 'score' => $score ) ),
+			array_merge(
+				$this->visible_outcome( $result, $user_id, $type, $id ),
+				array(
+					'score'     => $score,
+					// What the member has now, so the page lights the right arrow even when a parallel request decided otherwise.
+					'user_vote' => (int) Vote::get_user_vote( $user_id, $type, $id ),
+				)
+			),
 			200
 		);
 	}
