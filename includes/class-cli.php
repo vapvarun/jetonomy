@@ -590,7 +590,7 @@ class CLI {
 				'reason'     => 'QA test ban',
 				'issued_by'  => $admin_id,
 				'expires_at' => null,
-				'created_at' => current_time( 'mysql' ),
+				'created_at' => now(),
 			)
 		);
 		$ban_id      = $wpdb->insert_id;

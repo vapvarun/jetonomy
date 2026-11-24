@@ -433,7 +433,7 @@ $role_labels = \Jetonomy\space_role_labels();
 						$mp         = \Jetonomy\Models\UserProfile::find_by_user( (int) $member->user_id );
 						$trust      = $mp ? (int) $mp->trust_level : 0;
 						$initials   = strtoupper( substr( \Jetonomy\user_display_name( $mu ), 0, 2 ) );
-						$joined     = get_date_from_gmt( (string) $member->joined_at, get_option( 'date_format' ) );
+						$joined     = \Jetonomy\date_label( (string) $member->joined_at );
 						$role_label = $role_labels[ $member->role ] ?? $member->role;
 						?>
 						<div class="jt-member-item">

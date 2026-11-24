@@ -157,7 +157,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			$jt_time_text = $time_ago;
 			// Stored UTC -> site timezone for the machine-readable value, per
 			// the date/time standard. The visible text stays relative.
-			$jt_time_iso = get_date_from_gmt( (string) $reply->created_at, 'c' );
+			$jt_time_iso = \Jetonomy\date_label( (string) $reply->created_at, '', 'c' );
 			?>
 			<?php if ( '' !== $jt_reply_permalink ) : ?>
 				<a class="jt-reply-permalink" href="<?php echo esc_url( $jt_reply_permalink ); ?>"

@@ -18,7 +18,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $id_prefix = isset( $id_prefix ) && '' !== (string) $id_prefix ? (string) $id_prefix : 'jt-post-published';
-$jt_local  = ! empty( $utc_value ) ? get_date_from_gmt( (string) $utc_value, 'Y-m-d H:i' ) : '';
+$jt_local  = ! empty( $utc_value ) ? \Jetonomy\datetime_local_input( (string) $utc_value ) : '';
 $jt_date   = '' !== $jt_local ? substr( $jt_local, 0, 10 ) : '';
 $jt_hour   = '' !== $jt_local ? substr( $jt_local, 11, 2 ) : '';
 $jt_minute = '' !== $jt_local ? substr( $jt_local, 14, 2 ) : '';

@@ -247,7 +247,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Timezone contract (matches the WordPress core post scheduler):
 	 *  - A naive wall-clock value (`Y-m-d H:i:s`, `Y-m-dTH:i:s`, or date-only
 	 *    `Y-m-d`) is interpreted in the SITE timezone — the Settings -> General
-	 *    timezone via {@see wp_timezone()} — then converted to UTC. So "3 PM"
+	 *    timezone via {@see \Jetonomy\display_timezone()} — then converted to UTC. So "3 PM"
 	 *    means 3 PM in the site's timezone regardless of the author's location
 	 *    or the server's clock.
 	 *  - A value carrying an explicit offset or `Z` (`...+05:30`, `...Z`) is an
@@ -273,7 +273,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// interpreted in the SITE timezone so the WP timezone setting is always
 		// respected.
 		$has_tz     = (bool) preg_match( '/(Z|[+-]\d{2}:?\d{2})$/', $raw );
-		$parse_zone = $has_tz ? $utc : wp_timezone();
+		$parse_zone = $has_tz ? $utc : \Jetonomy\display_timezone();
 
 		// Leading `!` resets every field not present in the format to the Unix
 		// epoch, so a date-only input ('Y-m-d') yields 00:00:00 instead of

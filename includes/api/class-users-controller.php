@@ -646,7 +646,7 @@ class Users_Controller extends Base_Controller {
 		}
 
 		if ( ! empty( $profile_data ) ) {
-			$profile_data['updated_at'] = current_time( 'mysql' );
+			$profile_data['updated_at'] = \Jetonomy\now();
 			UserProfile::update_profile( $user_id, $profile_data );
 		}
 

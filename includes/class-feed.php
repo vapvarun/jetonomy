@@ -69,7 +69,7 @@ class Feed {
 
 		status_header( 200 );
 		header( 'Content-Type: application/rss+xml; charset=' . esc_attr( get_option( 'blog_charset' ) ) );
-		header( 'Last-Modified: ' . mysql2date( 'D, d M Y H:i:s', $newest, false ) . ' GMT' );
+		header( 'Last-Modified: ' . self::http_date( $newest ) );
 
 		echo '<?xml version="1.0" encoding="' . esc_attr( get_option( 'blog_charset' ) ) . '"?>' . "\n";
 		?>
@@ -80,7 +80,7 @@ class Feed {
 	<atom:link href="<?php echo esc_url( $self_url ); ?>" rel="self" type="application/rss+xml" />
 	<description><?php echo self::xml( wp_strip_all_tags( (string) ( $space->description ?? '' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></description>
 	<language><?php echo self::xml( get_bloginfo( 'language' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></language>
-	<lastBuildDate><?php echo self::xml( mysql2date( 'r', $newest, false ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></lastBuildDate>
+	<lastBuildDate><?php echo self::xml( self::rss_date( $newest ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></lastBuildDate>
 	<generator>Jetonomy <?php echo self::xml( JETONOMY_VERSION ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></generator>
 		<?php foreach ( $posts as $post ) : ?>
 			<?php
@@ -92,7 +92,7 @@ class Feed {
 		<title><?php echo self::xml( wp_specialchars_decode( (string) $post->title, ENT_QUOTES ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></title>
 		<link><?php echo esc_url( $post_url ); ?></link>
 		<guid isPermaLink="true"><?php echo esc_url( $post_url ); ?></guid>
-		<pubDate><?php echo self::xml( mysql2date( 'r', (string) $post->created_at, false ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></pubDate>
+		<pubDate><?php echo self::xml( self::rss_date( (string) $post->created_at ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></pubDate>
 		<dc:creator><?php echo self::xml( '' !== $display['name'] ? $display['name'] : \Jetonomy\jetonomy_label( 'member' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></dc:creator>
 		<description><?php echo self::xml( $excerpt ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- xml() returns esc_xml(). ?></description>
 	</item>
@@ -101,6 +101,31 @@ class Feed {
 </rss>
 		<?php
 		exit;
+	}
+
+	/**
+	 * A stored UTC time as an RFC 2822 date for an RSS element.
+	 *
+	 * The feed states its dates in UTC from the stored value. mysql2date() read the stored UTC time as the site's local
+	 * time and labelled it with the site's offset, so on any site outside UTC every date in the feed was wrong.
+	 *
+	 * @param string $utc Stored UTC time.
+	 * @return string
+	 */
+	private static function rss_date( string $utc ): string {
+		$timestamp = strtotime( $utc . ' UTC' );
+		return false === $timestamp ? '' : gmdate( 'r', $timestamp );
+	}
+
+	/**
+	 * A stored UTC time as an HTTP Last-Modified header value.
+	 *
+	 * @param string $utc Stored UTC time.
+	 * @return string
+	 */
+	private static function http_date( string $utc ): string {
+		$timestamp = strtotime( $utc . ' UTC' );
+		return false === $timestamp ? '' : gmdate( 'D, d M Y H:i:s', $timestamp ) . ' GMT';
 	}
 
 	/**

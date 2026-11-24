@@ -2609,6 +2609,13 @@
       "where": "includes/functions.php:296"
     },
     {
+      "name": "jetonomy_display_timezone",
+      "type": "filter",
+      "args": "timezone(DateTimeZone), user_id",
+      "where": "includes/functions.php (display_timezone)",
+      "consumed_by": "the one timezone every stored UTC time is shown in (date_label, datetime_local_input and the schedule and invite-expiry save parsers); a site can show each member their own"
+    },
+    {
       "name": "jetonomy_disposable_email_domains",
       "type": "filter",
       "args": "domains",
