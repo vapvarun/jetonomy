@@ -22,8 +22,8 @@
  * - delete_rows() deletes every row of a retired hook (the 2.0.7 webhook rows held URLs and secrets); MediaVerse has
  *   none and deletes by hook list in uninstall.
  * - No adopt_pending() or LEGACY_GROUPS: Jetonomy never used another group.
- * - at( ..., $unique ) and async_once() insert with Action Scheduler's unique flag, so two requests arriving together
- *   queue one copy; at() adds a plain copy when only a RUNNING copy blocked the insert, so a job re-arms from its run.
+ * - at( ..., $unique ) and async_once() insert with Action Scheduler's unique flag and then cancel any extra pending
+ *   copy (keep_one_pending(): the hybrid store's unique insert is not atomic), so requests arriving together leave one; at() adds a plain copy when only a RUNNING copy blocked the insert, so a job re-arms from its run.
  * - Deactivation: cancel_on_deactivate( $hooks ) cancels each hook not in KEEP_ON_DEACTIVATE (MediaVerse:
  *   cancel_pending( $hooks ), set-based, returns a count).
  * - Recovery of kept jobs failed while the plugin was off: flag_recovery() + recover_kept_jobs(), RECOVER_BATCH,
@@ -165,8 +165,39 @@ final class Queue {
 		if ( ! self::has_as() ) {
 			return self::is_pending( $hook, $args ) || self::async( $hook, $args );
 		}
-		// ponytail: a request racing a running copy can still add a second pending copy; it is harmless (one extra pass).
-		return as_enqueue_async_action( $hook, $args, self::GROUP, true ) || self::as_pending( $hook, $args ) || self::async( $hook, $args );
+		$queued = as_enqueue_async_action( $hook, $args, self::GROUP, true ) || self::as_pending( $hook, $args ) || self::async( $hook, $args );
+		self::keep_one_pending( $hook, $args );
+		return $queued;
+	}
+
+	/**
+	 * Cancel every pending copy of a job but the oldest. Action Scheduler's unique insert is one atomic statement only on
+	 * its DB store; on the hybrid store a fresh site uses until its store migration has run, it checks then inserts, so
+	 * requests arriving together each added a copy. Each request runs this after its own insert, so the last one to look
+	 * sees every copy and only the oldest survives.
+	 *
+	 * @param string $hook Action hook.
+	 * @param array  $args Exact arguments.
+	 */
+	private static function keep_one_pending( string $hook, array $args ): void {
+		$ids = array_map(
+			'intval',
+			as_get_scheduled_actions(
+				array(
+					'hook'     => $hook,
+					'args'     => $args,
+					'group'    => self::GROUP,
+					'status'   => \ActionScheduler_Store::STATUS_PENDING,
+					'per_page' => 20,
+					'orderby'  => 'none',
+				),
+				'ids'
+			)
+		);
+		sort( $ids );
+		foreach ( array_slice( $ids, 1 ) as $id ) {
+			\ActionScheduler::store()->cancel_action( $id );
+		}
 	}
 
 	/**
@@ -177,19 +208,21 @@ final class Queue {
 	 * @param int    $timestamp Unix time.
 	 * @param string $hook      Action hook.
 	 * @param array  $args      Hook arguments.
-	 * @param bool   $unique    Insert only when no pending copy with these arguments exists (one atomic insert, so
-	 *                          requests arriving together add one copy). A running copy does not count, so a job may
+	 * @param bool   $unique    Insert only when no pending copy with these arguments exists (requests arriving
+	 *                          together leave one pending copy, see keep_one_pending()). A running copy does not count, so a job may
 	 *                          re-arm itself from inside its run. WP-Cron already drops a duplicate within ten minutes.
 	 * @return bool Whether a scheduler accepted the job (false when $unique found a pending copy).
 	 */
 	public static function at( int $timestamp, string $hook, array $args = array(), bool $unique = false ): bool {
 		if ( self::has_as() ) {
-			if ( as_schedule_single_action( $timestamp, $hook, $args, self::GROUP, $unique ) ) {
-				return true;
-			}
 			// Action Scheduler's unique insert also refuses while a copy RUNS, so a job re-arming itself from inside its
 			// own run would get nothing. Only a pending copy means the later run is already coming.
-			return $unique && ! self::as_pending( $hook, $args ) && (bool) as_schedule_single_action( $timestamp, $hook, $args, self::GROUP );
+			$queued = as_schedule_single_action( $timestamp, $hook, $args, self::GROUP, $unique )
+				|| ( $unique && ! self::as_pending( $hook, $args ) && as_schedule_single_action( $timestamp, $hook, $args, self::GROUP ) );
+			if ( $unique ) {
+				self::keep_one_pending( $hook, $args );
+			}
+			return $queued;
 		}
 		return true === wp_schedule_single_event( $timestamp, $hook, array_values( $args ), true );
 	}

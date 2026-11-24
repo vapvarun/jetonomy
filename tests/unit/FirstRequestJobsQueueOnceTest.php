@@ -41,4 +41,20 @@ class FirstRequestJobsQueueOnceTest extends WP_UnitTestCase {
 		}
 		$this->assertSame( 1, $this->pending( Recount_Backfill::BATCH_HOOK, array() ) );
 	}
+
+	public function test_copies_added_by_a_store_without_an_atomic_unique_insert_collapse_to_one(): void {
+		// The hybrid store (fresh sites, before Action Scheduler's store migration) checks then inserts, so three
+		// requests together each add a copy. The next unique enqueue leaves only the oldest.
+		foreach ( array( 'async' => 'jt_test_hybrid_async', 'at' => 'jt_test_hybrid_at' ) as $kind => $hook ) {
+			for ( $i = 0; $i < 3; $i++ ) {
+				as_enqueue_async_action( $hook, array( 7 ), 'jetonomy' );
+			}
+			if ( 'async' === $kind ) {
+				\Jetonomy\Queue::async_once( $hook, array( 7 ) );
+			} else {
+				\Jetonomy\Queue::at( time() + 60, $hook, array( 7 ), true );
+			}
+			$this->assertSame( 1, $this->pending( $hook, array( 7 ) ), $kind );
+		}
+	}
 }
