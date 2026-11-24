@@ -387,4 +387,22 @@ class SpaceTest extends WP_UnitTestCase {
 		$this->assertTrue( $allowed, 'The filter only refused what it chose to.' );
 		$this->assertSame( 'Renamed again', Space::find( $id )->title );
 	}
+
+	public function test_a_hand_over_refused_by_the_filter_answers_with_the_refusal_and_leaves_the_space_as_it_was(): void {
+		$owner = $this->factory()->user->create();
+		$heir  = $this->factory()->user->create();
+		$id    = $this->make_space( [ 'author_id' => $owner ] );
+		SpaceMember::add( $id, $owner, 'admin' );
+		$refuse = static fn( $proceed, $space_id, $data ) => ( isset( $data['status'] ) ? new \WP_Error( 'refused', 'No.', [ 'status' => 409 ] ) : $proceed );
+
+		add_filter( 'jetonomy_before_update_space', $refuse, 10, 3 );
+		$result = Space::hand_over( $id, $heir, true, true );
+		remove_filter( 'jetonomy_before_update_space', $refuse, 10 );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'refused', $result->get_error_code(), 'The refusal is reported, not a generic hand-over failure.' );
+		$this->assertSame( 'active', Space::find( $id )->status );
+		$this->assertSame( $owner, (int) Space::find( $id )->author_id, 'Ownership did not move.' );
+		$this->assertNull( SpaceMember::get_role( $id, $heir ), 'The heir is back to what they were.' );
+	}
 }

@@ -447,6 +447,13 @@ class Space extends Model {
 		}
 		$written = self::update( $space_id, $data );
 
+		// A refused update (jetonomy_before_update_space) says why: put the heir back and answer with its own error, not
+		// the generic "could not be handed over".
+		if ( is_wp_error( $written ) ) {
+			$failed();
+			return $written;
+		}
+
 		$after = self::find( $space_id );
 		if ( true !== $written || ! $after || (int) $after->author_id !== $to_user_id || ( $archive && 'archived' !== (string) $after->status ) ) {
 			return $failed();
