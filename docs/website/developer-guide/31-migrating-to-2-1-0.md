@@ -37,6 +37,7 @@ a deprecation notice until 2.1.1.
 | Pro `Custom_Badges\Extension::evaluate_badges_batch( array $batch )` | One offset chunk | `evaluate_badges_batch( $after )`: a cursor job from the last member id. |
 | Pro `Email_Digest\Extension::process_digest_batch( array $batch )` | One offset chunk | `process_digest_batch( $frequency, $after )`: a cursor job per frequency from the last member id. |
 | `\Jetonomy\Queue::cancel( $hook )` | Every copy | `cancel( $hook, array $args = array() )`: every copy, or only the copy with these arguments. |
+| Pro `Jetonomy_Pro\Queue` (2.0.7 add-ons used `use Jetonomy_Pro\Queue`) | The scheduling entry point for Pro add-ons | Deprecated shim: every method keeps its 2.0.7 signature, calls `\Jetonomy\Queue` and logs a deprecation notice. Removed in 2.1.1. Switch to `\Jetonomy\Queue`. |
 | Pro `Webhooks\Extension::do_dispatch( $id, $url, $secret, $payload, $event )` | Sent one delivery | Deprecated shim, removed in 2.1.1. Queued deliveries call `deliver( $id, $event, $payload )`. |
 | Pro `Custom_Fields\Extension::run_searchable_backfill( $post_ids )` | Re-indexed topics | Deprecated shim, removed in 2.1.1. Use `queue_reindex( $field_id )`. |
 | Pro `Custom_Fields\Extension::queue_reindex( array $post_ids )` | Queued 500-topic chunks | Takes a field id and queues one cursor job. An array still works (deprecated): the topics are queued in 500-topic chunks, as before. |

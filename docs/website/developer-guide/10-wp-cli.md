@@ -656,6 +656,25 @@ wp jetonomy-pro custom-badges award --badge=5 --to=42
 
 ---
 
+### attachments
+
+Maintain the files attached through the File Attachments extension. It must be enabled, or the command stops and says so.
+
+| Subcommand | Description |
+|------------|-------------|
+| `lock-private` | Lock every existing file in a private or hidden space against direct addresses now, instead of on its first view. It writes the same deny-all `.htaccess` a page view would into each file's own `uploads/jetonomy/` folder, counts folders that are already locked without rewriting them, and never moves or deletes a file. Safe to run again. Prints the number of private spaces, files, files locked (or that would be), files already locked and files skipped (missing, or not uploaded by Jetonomy). |
+
+**Flags - lock-private:** `[--dry-run]` (count what would be locked and write nothing) `[--batch=<n>]` (attachments read per query, default 200, at least 1)
+
+```bash
+wp jetonomy-pro attachments lock-private --dry-run
+wp jetonomy-pro attachments lock-private
+```
+
+On nginx the `.htaccess` file has no effect; add the rule shown in [File Attachments](../pro-features/17-file-attachments.md).
+
+---
+
 ### polls
 
 Create and manage polls attached to posts.

@@ -100,6 +100,8 @@ Rate limits cap how many actions a member can take in a given time window. They 
 
 Trust Level 1+ members are exempt from all rate limits.
 
+Administrators and moderators are never rate limited. A member who reaches a limit gets a 429 `jetonomy_rate_limited` answer that names the limit and how long to wait.
+
 An empty field goes back to its default (3, 10 or 5). `0` turns that limit off, so new members can post, reply or vote without a daily cap (before 2.1.0 a `0` blocked them completely). The trust level thresholds follow the same rule: an empty field takes that level's default, and `0` means no requirement for that measure. A number outside a field's range is saved as the nearest allowed value and the screen says so.
 
 For high-traffic communities, raise these limits. For communities experiencing spam problems, lower them. Changes take effect immediately - no cache flush needed.

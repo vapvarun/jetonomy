@@ -49,6 +49,8 @@ The same toggle works in reverse too: if you accidentally remove a bookmark, re-
 
 Visit any space and click the **Follow** button in the space header. The button changes to **Following** immediately.
 
+Since 2.1.0 you can also follow from the space cards on the community home, category and search pages. Each card has a **Follow** button beside the space title, for signed-in members who can read that space, and it turns into **Following** at once. Repeat clicks are ignored while the request is running, and screen readers hear the space name in the button ("Follow Announcements").
+
 Following a space subscribes you to new post notifications from that space. Every time a new topic is published in a space you follow, you receive a notification in your notification bell.
 
 ### Unfollowing

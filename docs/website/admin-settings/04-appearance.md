@@ -130,6 +130,15 @@ Adjusts the inline padding around the community canvas.
 
 When you change this setting, Jetonomy adds `data-jt-density="compact"` (or `"comfortable"`) to the `.jt-app` wrapper element. CSS rules keyed to this attribute apply the appropriate spacing.
 
+## Phone bottom bar
+
+Since 2.1.0, community pages show a bar of tabs along the bottom of the screen on phones (640px wide and narrower). There is no setting for it; it follows the member's state.
+
+- **Signed-in members** get **Home**, **Spaces**, **New**, **Alerts** (with the unread count) and **Me**. **New** opens the composer inside a space, and elsewhere opens a "Start a topic in..." list of the spaces the member can post in (with a filter box past eight), or goes straight to the composer when there is only one. **Me** opens a menu with My profile, My topics (named after your topic label), Bookmarks, Leaderboard and Edit profile, plus Moderation and Messages where the member has them.
+- **Guests** get **Home**, **Search** and **Sign in**.
+
+The bar is not shown when BuddyNext is active, because BuddyNext provides its own. Developers can reorder, add or remove tabs with the `jetonomy_mobile_tabs` filter (see the [hooks reference](../developer-guide/02-hooks-reference.md)).
+
 ## Custom CSS
 
 **Setting:** `custom_css`

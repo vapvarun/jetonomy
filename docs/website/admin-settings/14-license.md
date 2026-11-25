@@ -33,9 +33,14 @@ To move your license to a different site, click **Deactivate License** on the st
 
 ## Troubleshooting
 
-- **"License is not active for this site."** - The key is valid but its activation limit is reached, or it is registered to a different site. Deactivate it on the other site, or check your plan's site limit.
-- **Expired license** - Everything keeps working. Renew from your store account and re-activate to get updates again.
-- **Key not accepted** - Confirm you pasted the full key with no trailing spaces, and that you are using the Pro license key (not an order number).
+The License tab, the Jetonomy Pro row on the Plugins screen and a short line on Jetonomy's own screens all show the same reason when updates are off. A valid license shows no line and no renewal reminder. The Plugins row and the line on Jetonomy's screens end with a **Manage license** link, and the line on Jetonomy's screens adds "All Pro features keep working." The License tab shows a **Renew license** button when the license has expired.
+
+- **No license key has been added yet.** - Paste your key on the License tab and click **Activate License**.
+- **Your license key is not activated for this site.** - The key is valid but not active here, or its activation limit is reached. Deactivate it on another site, or check your plan's site limit.
+- **Your license key has been revoked.** - The store no longer accepts the key. Contact support with your order details.
+- **Your license key was not recognised for this product.** - Confirm you pasted the full key with no trailing spaces, and that it is the Jetonomy Pro key, not an order number.
+- **Your license expired on (date).** - Everything keeps working. Renew from your store account, then enter the new key to get updates again.
+- **Your license could not be confirmed.** - The store could not be reached or gave an unclear answer. The last known status is kept until the store answers; the check repeats weekly.
 
 ## What's Next?
 

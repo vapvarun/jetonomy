@@ -604,7 +604,7 @@ Endpoints that power the [Jetonomy mobile app](../mobile-app/00-mobile-app-overv
 
 Public - the app reads it on connect to theme itself per site before a user signs in. `app_name` comes from **Settings -> General -> Community Title** (falling back to the site name). `space_label` carries the singular and plural of the configurable "Space" noun so the app labels match the web. `accent_color`, `logo_url`, and `login_bg_url` come from branding: the Pro white-label row when Pro is active, otherwise the free **Settings -> Appearance** values. The `features` map reflects which Pro extensions are active, so the app gates its UI on them.
 
-`app_enabled` is the fail-closed gate that decides whether the mobile app signs in at all. It defaults to `false` in the free plugin. Jetonomy Pro flips it to `true` through the `jetonomy_app_config` filter, and only when the site holds a valid Pro license. When it is `false`, the app shows a "requires Jetonomy Pro" screen and refuses to sign in, so the app never runs against a free-only or unlicensed install.
+`app_enabled` is the fail-closed gate that decides whether the mobile app signs in at all. It defaults to `false` in the free plugin. Jetonomy Pro flips it to `true` through the `jetonomy_app_config` filter, whenever Pro is active. The Pro license controls updates only, so an expired or missing license does not turn the app off. When it is `false` (a free-only install), the app shows a "requires Jetonomy Pro" screen and refuses to sign in.
 
 Dark mode is not part of this payload - the app follows the device/OS theme.
 
@@ -741,7 +741,7 @@ const data = await res.json();
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| GET | `/badges` | Public | List all defined badges |
+| GET | `/badges` | Public | List active badges, 25 a page by default (`per_page` up to 100, `page` from 1; a zero, negative or non-numeric value falls back to the default). The response's `meta` has `total`, `page`, `per_page`, `count`, `has_more` and `cursor_next`, which since 2.1.0 is the next page number (or `null` on the last page), not an opaque cursor. |
 | POST | `/badges` | Admin (`manage_options`) | Create a new badge definition |
 | GET | `/badges/{id}` | Public | Get a single badge with its earned count |
 | PATCH | `/badges/{id}` | Admin (`manage_options`) | Update a badge definition |

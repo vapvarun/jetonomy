@@ -16,7 +16,7 @@ The community leaderboard is available at `/community/leaderboard/`. Any member 
 
 ![Leaderboard page](../images/leaderboard.webp)
 
-Members are ranked by total reputation score, highest first. Only members with a reputation above zero are ranked: a new member starts at 0 and appears on the board, the Top Members widget and the "Your rank" badge once they earn their first point. Members whose score has dropped to zero or below are left off too. The total shown next to "Your rank" counts the same ranked members. The leaderboard updates in real time as reputation changes - there is no daily cache delay between earning reputation and appearing in the rankings.
+Members are ranked by total reputation score, highest first. Members tied on the same score are listed newest account first, in the leaderboard, the Top Members widget and the API. Only members with a reputation above zero are ranked: a new member starts at 0 and appears on the board, the Top Members widget and the "Your rank" badge once they earn their first point. Members whose score has dropped to zero or below are left off too. The total shown next to "Your rank" counts the same ranked members. The leaderboard updates in real time as reputation changes - there is no daily cache delay between earning reputation and appearing in the rankings.
 
 ### How Reputation Is Earned
 

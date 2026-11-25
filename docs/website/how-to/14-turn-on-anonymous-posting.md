@@ -18,7 +18,7 @@ This guide is for community owners who run sensitive spaces, such as support, fe
 
 ## Before you start
 
-- You need Jetonomy Pro, active and licensed, and you must be a WordPress administrator.
+- You need Jetonomy Pro active, and you must be a WordPress administrator.
 - Decide which spaces really need this. Leave it off everywhere else.
 - Tell your moderators how it works. They will see "Anonymous" on community pages like everyone else.
 

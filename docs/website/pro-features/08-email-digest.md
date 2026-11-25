@@ -67,11 +67,13 @@ New members default to **Daily** digest. You can change this default in the Emai
 Before going live, send yourself a test digest to check formatting and content:
 
 1. Go to **Jetonomy → Settings → Email Digest**.
-2. Scroll to the **Test Send** section.
-3. Enter an email address (pre-filled with your admin email).
-4. Click **Send Test Digest**.
+2. In the **Actions** card, click **Preview Digest** to see it on screen, or **Send Test Daily** or **Send Test Weekly** to email it.
 
-The test digest uses real community data from the last 7 days. If your community is new and has little activity, the digest may look sparse - that is expected.
+The test goes to your own account's email address and uses real community data for the chosen frequency. If your community is new and has little activity, the digest may look sparse - that is expected.
+
+## Language
+
+Since 2.1.0 each digest is written in the recipient's own language: the subject, headings, labels and dates all follow the language set on the member's profile. A test digest follows yours. If the member's language is not installed on the site, the digest goes out in the site language, and a test send says which language was used and that you can install the translation under **Settings > General**.
 
 ## Digest Statistics
 

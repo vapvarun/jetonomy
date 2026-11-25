@@ -62,6 +62,10 @@ Push notifications are sent for the same events that trigger bell notifications,
 
 Members control which of these events trigger a push in **Profile → Notification Settings**.
 
+## How Sending Works
+
+Pushes go out in the background, not while a member's request is waiting. Since 2.1.0 one run sends for about 15 seconds, then queues the rest and carries on from the last member it reached, so each device gets one notice even when a send is slow or a run is cut short. Developers on a host with a short PHP time limit can lower the 15 seconds with the `jetonomy_pro_push_send_seconds` filter.
+
 ## Browser Support
 
 Web Push works on all major modern browsers without any app installation:

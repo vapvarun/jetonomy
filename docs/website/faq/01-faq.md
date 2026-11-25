@@ -112,7 +112,7 @@ Yes. When a long-lived tab's REST nonce expires, the bundled client fetches a fr
 Usually visibility, not a bug - check whether the space (or its category) is Private or Hidden, and whether the member has actually joined. See [A member cannot see a space](../troubleshooting/00-overview.md#a-member-cannot-see-a-space).
 
 **Why is a Jetonomy menu missing for one of my staff, or showing "Not allowed"?**
-Almost always a missing capability, an inactive Pro license, or a disabled extension. See [Admin menu items are missing, or show "Not allowed"](../troubleshooting/00-overview.md#admin-menu-items-are-missing-or-show-not-allowed).
+Almost always a missing capability or a disabled extension. The Pro license never hides a menu, because it controls updates only. See [Admin menu items are missing, or show "Not allowed"](../troubleshooting/00-overview.md#admin-menu-items-are-missing-or-show-not-allowed).
 
 **Why does a search with a short word ignore that word?**
 MySQL's FULLTEXT index does not store words under 4 characters. Next to a longer word, a short word is dropped. On its own (for example `QA` or `v2`), it still matches as a plain substring, just without relevance ranking. See [Search shows no results](../troubleshooting/00-overview.md#search-shows-no-results).
@@ -124,4 +124,4 @@ Usually Application Passwords, HTTPS, or a security plugin. See [Mobile app sign
 Per-type toggles, the "Pause all email" switch, and whether they actually followed the space - Jetonomy has no "mute". See [Members are not getting notifications](../troubleshooting/00-overview.md#members-are-not-getting-notifications).
 
 **A Pro feature I was using disappeared after updating. Why?**
-Check whether the extension is still enabled, your license is still valid, and clear any page cache. See [A feature is missing after updating](../troubleshooting/00-overview.md#a-feature-is-missing-after-updating).
+Check whether the extension is still switched on under **Jetonomy > Extensions**, and clear any page cache. The license has no effect on features: it controls updates only. See [A feature is missing after updating](../troubleshooting/00-overview.md#a-feature-is-missing-after-updating).
