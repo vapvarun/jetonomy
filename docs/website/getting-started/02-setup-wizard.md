@@ -79,6 +79,8 @@ Jetonomy imports a demo community into your site:
 
 This lets you experience the full community interface as a regular member would see it, without writing any content yourself.
 
+> **Since 2.1.0:** if the community already has spaces or topics of its own, loading the sample data first asks "This community already has N spaces and topics of its own. Add the sample content anyway?" and adds nothing until you confirm. The same question appears when you use **Import Demo Data** on the Dashboard, and a request to the REST route or a stray page load can no longer seed a live community.
+
 When you are ready to go live, go to **Jetonomy → Dashboard** and click **Remove All Demo Data** on the **Demo Data Active** card. Every demo post, reply, space, category, and user record is deleted in a single operation. Any real content you added alongside the demo data is preserved. If you skipped the sample data, the same card has an import button so you can add it later.
 
 > **Note:** Demo data is tracked internally via a `jetonomy_demo_data` record. Removal is precise and does not affect any content you created yourself.

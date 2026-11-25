@@ -134,6 +134,7 @@ add_action( 'jetonomy_loaded', function ( \Jetonomy\Jetonomy $jetonomy ) {
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
+| `jetonomy_profile_notification_types`<br>_filter_ | Notification types a member can switch on or off on **Edit Profile** (type slug to label). Jetonomy Pro adds `announcement` while Site announcements is on. Since 2.1.0. | `array $notif_types` | `templates/views/edit-profile.php` |
 | `jetonomy_profile_after_stats`<br>_action_ | Fires after the user stats bar on the profile page. | `user_id` | `templates/views/user-profile.php` |
 | `jetonomy_profile_display_fields`<br>_action_ | Fires after the stats bar to display custom profile field values. | `user_id` | `templates/views/user-profile.php` |
 | `jetonomy_profile_edit_fields`<br>_action_ | Fires after the standard profile edit fields, before submit. | `user_id` | `templates/views/edit-profile.php` |
@@ -224,6 +225,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
+| `jetonomy_mobile_tabs`<br>_filter_ | The tabs of the phone bottom bar, in order. Each tab is `key`, `label`, `url`, `icon` and optional `active`, `badge`, `host`, `primary`, `menu`, `sheet`, `direct`, `login`. Reorder, add or remove tabs. The bar is not shown when BuddyNext is active. Since 2.1.0. | `array $tabs`, `bool $logged_in` | `templates/partials/header.php` |
 | `jetonomy_after_content`<br>_action_ | Fires after the main content container closes, before the app wrapper closes. | `type, object_id` | `includes/class-template-loader.php` |
 | `jetonomy_before_content`<br>_action_ | Fires inside the Jetonomy app wrapper, before the header partial and content container. | `type, object_id` | `includes/class-template-loader.php` |
 | `jetonomy_check_content`<br>_filter_ | Check content against moderation rules before it is stored or published. Return `null`, `'flag'`, `'hold'`, `'block'` or `'spam'`. Runs on every create and publish path (REST, draft publish and scheduled publish, abilities, reply by email) and on edits. | `action, data, space_id, author_id` | `includes/moderation/class-moderation-service.php` |
@@ -282,6 +284,8 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
+| `jetonomy_settings_schema`<br>_filter_ | The settings a REST or CLI write may set (key to JSON schema plus `section`). Add a key only together with the sanitizer branch that cleans it, or it is accepted and not saved. Since 2.1.0. | `array $schema` | `includes/class-settings.php` |
+| `jetonomy_settings_updated`<br>_action_ | Fires after the Jetonomy settings option changed, from the settings form, REST, WP-CLI or a direct write. Since 2.1.0. | `string[] $changed` (keys whose value changed), `string $source` (`form`, `rest` or `cli`) | `includes/class-settings.php` |
 | `jetonomy_admin_dashboard_after_stats`<br>_action_ | Fires after the dashboard stat cards. | - | `includes/admin/views/dashboard.php` |
 | `jetonomy_admin_dashboard_widgets`<br>_action_ | Fires to render additional dashboard widgets. | - | `includes/admin/views/dashboard.php` |
 | `jetonomy_admin_footer_text`<br>_filter_ | Filter the admin footer text shown on Jetonomy admin pages. | `text` | `includes/admin/class-admin.php` |
@@ -319,6 +323,7 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
+| `jetonomy_external_registration_url`<br>_filter_ | The URL of the site's own registration page, used by the Register link on the login card. Detected from WordPress and User Registration; return `''` to keep Jetonomy's inline form. Since 2.1.0. | `string $url` | `includes/functions.php` |
 | `jetonomy_author_can_reveal`<br>_filter_ | Whether the current viewer may see the real author of an anonymous post/reply. Free always returns `false` - anonymous stays masked for everyone. Pro's Anonymous Posting extension grants an explicit-reveal context to site admins only. Since 1.7.0. | `can_reveal, object, viewer_id` | `includes/class-author.php` |
 | `jetonomy_composer_toolbar`<br>_action_ | Fires inside the composer toolbar, after the built-in formatting buttons. | - | `templates/partials/composer.php` |
 | `jetonomy_cron_batch_size`<br>_filter_ | - | - | `includes/class-cron.php` |
@@ -372,5 +377,7 @@ Pro-only hooks (marked _Pro_ above and listed below) fire from the Jetonomy Pro 
 | `jetonomy_pro_message_sent`<br>_action_ ·_Pro_ | Fires after a message is sent. | `$message_id, $conversation_id, $sender_id` | `includes/extensions/private-messaging/class-extension.php` |
 | `jetonomy_pro_poll_created`<br>_action_ ·_Pro_ | Fires after a poll is created. | `$poll_id, $post_id, $user_id` | `includes/extensions/polls/class-extension.php` |
 | `jetonomy_pro_poll_deleted`<br>_action_ ·_Pro_ | A poll was deleted from the admin Polls screen (its votes and options went with it; it does not fire if the poll was already gone). Deleting a topic, which removes its poll too, fires `jetonomy_post_deleted` instead, so a listener that rewards polls should reverse on both. | `$poll_id, $post_id` | `includes/extensions/polls/class-extension.php` |
+| `jetonomy_pro_push_send_seconds`<br>_filter_ ·_Pro_ | Seconds one web push run sends before queueing the rest. Default 15; lower it on a host with a short PHP time limit. Since 2.1.0. | `int $seconds` | `includes/extensions/web-push/class-extension.php` |
 | `jetonomy_pro_reaction_icon_renderer`<br>_filter_ ·_Pro_ | Sites that want the SVG look can opt in via the filter below. | `$renderer, $slug, $size` | `includes/extensions/reactions/class-extension.php` |
 | `jetonomy_pro_reaction_toggled`<br>_action_ ·_Pro_ | Fires after a reaction is toggled. | `$object_type, $object_id, $emoji, $user_id, $action` | `includes/extensions/reactions/class-extension.php` |
+| `jetonomy_pro_webhook_timeout`<br>_filter_ ·_Pro_ | Seconds Jetonomy waits for a webhook endpoint to answer before the delivery counts as failed. Default 15; the value is kept at 1 or more. Since 2.1.0. | `int $seconds` | `includes/extensions/webhooks/class-extension.php` |

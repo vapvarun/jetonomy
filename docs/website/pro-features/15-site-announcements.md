@@ -45,6 +45,15 @@ Community announcements are **administrator-only**. The control is gated by the 
 
 The post is immediately featured across the community. The button changes to **Unpin from community**, and an **Announcement** badge appears on the post.
 
+## Members Are Notified Once
+
+Since 2.1.0, pinning a post to the community also notifies members, once each:
+
+- A post in a public space goes to every member of the site. A post in a private or hidden space goes only to that space's members, so a members-only announcement is not offered to everyone.
+- Each member gets one notification in their bell, reading "Announcement: (title)". Email is off by default; the **Site announcements** row on **Jetonomy > Settings > Email** and each member's own notification settings control it. The email has its own template, which you can preview under **Email Templates** (see [Email](../admin-settings/03-email.md#email-templates)).
+- The author of the post is not notified. A member who already has the notification for that post is skipped, so pinning it again, or a retry, never sends a second one. A member who cannot read the post is not sent it.
+- Notices go out in batches in the background, so a large community does not slow the Pin button. If the post is unpinned before the batches finish, the rest are not sent.
+
 ## Where Announcements Appear
 
 A community announcement is shown in two places:

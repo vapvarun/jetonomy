@@ -101,6 +101,8 @@ The invitation and the button only appear for a visitor who is actually allowed 
 
 > **Note:** Space cards on the community home and category listings also carry an "Active [time] ago" recency signal (for example, "Active 2 hours ago"), so members can tell a thriving space from a dormant one at a glance. A space with no recorded activity shows no label.
 
+> **Since 2.1.0:** a space that has a cover image shows it as a strip across the top of its card on the home, category and search pages, and each card has a **Follow** button beside the space title (see [Following Spaces](../discussions/04-bookmarks-following.md#following-spaces)). Developers can add their own badge or button to a card with the `jetonomy_space_card_after` action, which fires inside the card.
+
 ## Changing the Space Type
 
 You can change the type of an existing space at any time. Either open it in **Jetonomy → Spaces** in wp-admin, or use the **Edit space** button on the space header itself (front-end edit), and update the **Type** field.

@@ -23,7 +23,7 @@ Space cards with a Follow button, a sidebar you arrange yourself, a bottom bar o
 - **Sidebar widgets.** Under **Settings > Appearance**, choose which community sidebar widgets show and drag them into the order you want.
 - **Select all in the role matrix.** Each role on the **Permissions** tab has Select all and Clear all.
 - **Space moderators can ban.** A new setting, off by default, lets a space moderator ban a member of their own space and lift those bans. Moderators can never ban a space admin, the space owner, another moderator or a site administrator. Only administrators can change the setting.
-- **Why an item is held.** The moderation queue shows the reason each item is waiting.
+- **Why an item is held.** The moderation queue shows the reason an item is waiting when one is known, such as the verdict kept by Pro's AI review.
 - **Leaderboard ties.** Members with the same reputation are listed newest first.
 - **Trust levels.** Every threshold on the settings screen is checked, replies count, and levels never go down on their own. `wp jetonomy trust-evaluate --dry-run` reports how many members would be promoted and changes nothing.
 - **Sample data.** Load Sample Data asks first when the community already has content of its own.
@@ -70,6 +70,9 @@ Space cards with a Follow button, a sidebar you arrange yourself, a bottom bar o
 - **Badges.** Delete a badge permanently, with a confirm that says how many members hold it, and restore deleted default badges.
 - **Webhooks.** Deliveries from private and hidden spaces are opt-in per webhook. Deliveries wait 15 seconds again, filterable with `jetonomy_pro_webhook_timeout`.
 - **Site announcements.** Pinning an announcement notifies members once.
+- **Auto-Rules.** Filter the rule list by type, action and keyword.
+- **AI review.** The reason an item was held is kept and shown in the held queue.
+- **Web push.** Sends for about 15 seconds a run and continues from the last member sent, so each device gets one notice.
 - **Email digest.** Written in each recipient's language, test digests included.
 - **Accessibility.** PDF attachment cards have a visible outline, and the image lightbox is named and has a Close button.
 - **Developers.** `GET /badges` pages by page number, and its `cursor_next` is the next page number.

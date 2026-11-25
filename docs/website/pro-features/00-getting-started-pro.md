@@ -1,6 +1,6 @@
 # Getting Started with Pro
 
-Activate your license, switch on the extensions you need, and understand which capabilities gate each Pro feature.
+Activate your license, switch on the extensions you need, and understand which capabilities gate each Pro feature. The license brings updates only.
 
 > **PRO** - This section covers [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
@@ -17,7 +17,7 @@ Jetonomy Pro is a peer plugin to free Jetonomy. Install and activate free Jetono
 
 1. Go to **Jetonomy → Settings → License** in your WordPress admin (License is a tab inside the free plugin's Settings page, not a standalone page).
 2. Paste the license key from your purchase receipt.
-3. Click **Activate**. Jetonomy validates the key against the store and shows your tier and expiry.
+3. Click **Activate**. Jetonomy validates the key against the store and shows the masked key and the expiry date.
 
 Your license controls automatic updates only. Every Pro feature keeps working without one: if the license is missing, expired or not activated for this site, updates stop and the License tab, the Plugins screen and a short line on Jetonomy's own screens say why. A site with no license key yet counts as missing, so the Jetonomy Pro row on the Plugins screen shows "Updates are off: No license key has been added yet." with a Manage license link. This is intended: the row tells an administrator why updates are not arriving, while the features keep working. A valid license shows no notice and no renewal reminder, and no Pro notice appears outside Jetonomy's screens and that Plugins row. There is no per-extension tier.
 

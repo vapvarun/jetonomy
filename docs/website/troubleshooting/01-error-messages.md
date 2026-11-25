@@ -77,7 +77,7 @@ The **Code** column is the identifier the REST API returns. You will see it in a
 
 | Message | Code | What it means |
 |---|---|---|
-| Space not found. | `jetonomy_space_not_found` | No space with that id or slug. After changing a space slug, old links 404 until they are updated. |
+| That space no longer exists. | `jetonomy_space_not_found` | No space with that id or slug. Every route, ability and WP-CLI command that names a space gives this one code since 2.1.0. After changing a space slug, old links 404 until they are updated. |
 | A space must keep at least one admin. Promote someone else first. | `jetonomy_last_admin_required` | Every space keeps at least one admin. Promote someone else before removing or demoting the last one. |
 | You cannot remove your own admin role. Ask another admin to do it. | `jetonomy_cannot_self_demote` | You cannot remove your own admin role from a space - someone else has to. |
 | No one else can take over this space, so it cannot be transferred. An administrator must delete it permanently instead. | `jetonomy_no_successor` |  |
@@ -86,6 +86,7 @@ The **Code** column is the identifier the REST API returns. You will see it in a
 | Failed to create access rule. | `jetonomy_rule_create_failed` |  |
 | Failed to delete access rule. | `jetonomy_rule_delete_failed` |  |
 | At least one user_id is required. | `jetonomy_empty_user_ids` |  |
+| This community already has N spaces and topics of its own. Add the sample content anyway? | `jetonomy_demo_real_content` | HTTP 409. Loading the sample community stops when the site already has its own content. Confirm in the dialog, or send `force: true` to `POST /admin/demo-data`. |
 
 ## Uploads
 

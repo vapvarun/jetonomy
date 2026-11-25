@@ -41,6 +41,10 @@ Advanced Moderation complements the free trust level system. Auto-moderation rul
 
 New rules start active. Use the **Disable** and **Enable** buttons in the **Active Rules** list below the form to switch a rule off without deleting it. **Edit** reopens the form and the button reads **Update Rule**. A rule scoped to a specific space needs a space chosen, or it is refused.
 
+### Finding a rule
+
+The **Active Rules** list shows 50 rules a page, active ones first, then newest. Above it, search by rule name or pattern, filter by **Type** (Keyword Filter, Regex Pattern, Link Limit, New User Restriction, Spam Score) and by **Action** (Flag for Review, Hold for Approval, Block, Mark as Spam), then click **Filter**. The filters are in the page address, so a filtered view can be bookmarked, and **Clear filters** appears while any are set. When nothing matches, the list says "No rules match these filters."
+
 ## Pattern Types
 
 ### Keyword Filter

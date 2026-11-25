@@ -92,11 +92,11 @@ The values you set here are the starting defaults for new members. Individual me
 
 Below the notification toggles is a table with one row per notification type, where you can rewrite the subject line and the body intro Jetonomy sends. Leave a row empty and it uses the built-in default, so you only need to fill in the ones you actually want to change.
 
-The twelve types are: welcome, reply to your post, reply to your reply, mention, accepted answer, idea status changed, new post in a subscription, badge earned, vote on your post, moderation notice, join request, and verification reminder.
+Every empty field shows its built-in default as grey placeholder text, so you can see what will be sent before you change anything. The rows are: welcome, reply to your topic, reply in a topic you follow, reply to your reply, mention, your answer accepted, idea roadmap status changed, new topic in a followed space, badge earned, site announcements, vote on your topic, reaction on your topic, moderator action on your content, new report for moderators, your report was reviewed, space join request, your join request answered, confirm your email (new accounts), verification reminder, and emailed reply not posted. With Jetonomy Pro's private messaging on, a Private message row is added. The site announcement row is used by Jetonomy Pro's [Site announcements](../pro-features/15-site-announcements.md); its default body reads "Hi {user}, {message} Open the community to read the full announcement.", where `{message}` is "Announcement: (title)".
 
 ### Placeholders
 
-Four placeholders are substituted when the email is sent:
+These placeholders are substituted when the email is sent:
 
 | Placeholder | Becomes |
 |---|---|
@@ -104,16 +104,21 @@ Four placeholders are substituted when the email is sent:
 | `{user}` | The recipient's display name |
 | `{message}` | The generated body of the notification - who did what, and to which topic |
 | `{url}` | The link to the relevant topic, reply or screen |
+| `{type}` | The notification type |
+| `{post_title}` | The title of the topic the email is about |
+| `{actor_display_name}` | The member who did the thing |
+| `{reply_excerpt}` | A short excerpt of the reply |
+| `{space_title}` | The name of the space |
 
 `{message}` is the important one. It carries the actual content of the notification, so a body that omits it produces an email that says nothing useful. If you are rewriting a body, keep `{message}` somewhere in it and add your wording around it.
 
-The default subject is `[{site}] {message}` and the default body is built around `{message}` for exactly this reason.
+A row you leave empty uses its built-in default subject and body. Most defaults are built around `{message}` for exactly this reason, and the generic fallback subject is `[{site}] {message}`.
 
 ### Preview, test and reset
 
 Each row has three buttons:
 
-- **Preview** renders the email with sample data, so you can see the result without sending anything.
+- **Preview** renders the email with sample data, so you can see the result without sending anything. A row you left empty previews the default that will be sent. Since 2.1.0 this works for every row, including site announcements.
 - **Send test** emails the rendered version to your admin address. Use this after changing a subject, since subject lines are where a stray placeholder is most visible.
 - **Reset** discards your version of that row and returns it to the built-in default. It affects that row only.
 

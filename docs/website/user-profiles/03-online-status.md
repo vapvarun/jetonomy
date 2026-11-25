@@ -8,7 +8,8 @@ The online status green dot shows which members are currently active in your com
 - Where online status is displayed across the community
 - Where it is intentionally not shown and why
 - How Jetonomy tracks activity without overloading the database
-- That no setup is needed - it works automatically
+- How a member hides their online status
+- That no site setup is needed - it works automatically
 
 ## When the Green Dot Appears
 
@@ -18,7 +19,7 @@ A green dot appears on a member's avatar when they have been active in the commu
 
 After 5 minutes of inactivity, the dot disappears automatically on the next page load that renders it.
 
-There is no manual "appear offline" or "appear online" toggle. Online status reflects real activity.
+Online status reflects real activity. Members who prefer not to show it can switch it off (see [Hiding your online status](#hiding-your-online-status)).
 
 ## Where Online Status Appears
 
@@ -46,9 +47,22 @@ If a member loads 10 pages in 30 seconds, Jetonomy writes to the database once. 
 
 The online status check itself (reading whether a member is active) is cached for 60 seconds using the WordPress object cache. On a page with 10 reply cards by different authors, Jetonomy makes at most a small batch of cache reads rather than 10 individual queries.
 
+## Hiding Your Online Status
+
+Each member decides whether they appear online. Go to **Edit Profile > Privacy** and turn off **Show when I'm online**. It is on by default.
+
+When it is off:
+
+- Other members see no green dot and no last-seen time for that member.
+- The member does not see other members' online status either.
+- Their posts and replies stay visible.
+- Moderators and admins can still see when the member was last active.
+
+When BuddyNext is active, BuddyNext owns presence, so this option is not shown on the Jetonomy profile screen. A choice made before BuddyNext was switched on is still honoured, and staff see a hidden member's dot on Jetonomy pages as they do on BuddyNext's own.
+
 ## No Setup Required
 
-Online status is automatic. There is no setting to enable, no API key to configure, and no JavaScript polling. It works the moment Jetonomy is activated.
+Online status is automatic. There is no site setting to enable, no API key to configure, and no JavaScript polling. It works the moment Jetonomy is activated.
 
 > **Note:** Online status is only tracked for logged-in members. Guests who browse your community are not tracked and do not show an online indicator.
 

@@ -95,6 +95,10 @@ Space moderators work at `/community/mod/` (everything they moderate) or
 Each tab carries a count so you can see there is work waiting without opening
 it, and each list is paginated.
 
+### Why an item is held
+
+Since 2.1.0, when something can explain why an item is waiting, the queue shows that sentence in a box under the item, on the **Awaiting approval** and **Trash** lists, both on the front-end queue and in a space's own queue. Jetonomy Pro's AI review is the built-in source: it keeps the reason behind each held or spam verdict (see [AI](../pro-features/13-ai.md)). Without Pro, or for items held by the space's *require approval* setting or by a person, no box is shown. Developers can supply notes with the `jetonomy_held_item_notes` filter.
+
 > **New in 1.9.4:** the **Awaiting approval** tab. Before this, content held by
 > *require approval* never appeared in the front-end queue at all - it only
 > existed in wp-admin. A space moderator without dashboard access had no way to
